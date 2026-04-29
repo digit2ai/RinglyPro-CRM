@@ -827,7 +827,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   ];
 
   function sectorOptions(selected, placeholder) {
-    var h = '<option value="">'+(placeholder||'All sectors')+'</option>';
+    var h = '<option value="">'+(placeholder||'Todos los sectores')+'</option>';
     SECTORS.forEach(function(s) { h += '<option value="'+s.v+'"'+(selected===s.v?' selected':'')+'>'+s.label+'</option>'; });
     return h;
   }
@@ -838,7 +838,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   ];
 
   function regionOptions(selected) {
-    var h = '<option value="">All regions</option>';
+    var h = '<option value="">Todas las regiones</option>';
     REGIONS.forEach(function(r) { h += '<option value="'+r.id+'"'+(selected==r.id?' selected':'')+'>'+r.name+'</option>'; });
     return h;
   }
@@ -920,19 +920,19 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var html = '<div class="panel"><h2>Informacion Personal</h2>';
       html += '<div id="profileMsg"></div>';
       html += '<form id="profileForm" class="form-grid">';
-      html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name)+'"></div>';
-      html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name)+'"></div>';
-      html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
-      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select your sector --')+'</select></div>';
-      html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
-      html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
-      html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
-      html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+      html += '<div class="form-group"><label>Nombre</label><input name="first_name" value="'+esc(m.first_name)+'"></div>';
+      html += '<div class="form-group"><label>Apellido</label><input name="last_name" value="'+esc(m.last_name)+'"></div>';
+      html += '<div class="form-group"><label>Pais</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Selecciona tu sector --')+'</select></div>';
+      html += '<div class="form-group"><label>Sub-especialidad</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
+      html += '<div class="form-group"><label>Anos de Experiencia</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
+      html += '<div class="form-group"><label>Idiomas (separados por coma)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+      html += '<div class="form-group"><label>Empresa</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
       html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
-      html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
-      html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
-      html += '<div class="form-group"><label>Website URL</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
-      html += '<div class="form-group"><label>Membership</label><div><span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type||'individual')+'</span></div></div>';
+      html += '<div class="form-group"><label>Telefono</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
+      html += '<div class="form-group"><label>URL de LinkedIn</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
+      html += '<div class="form-group"><label>URL del Sitio Web</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
+      html += '<div class="form-group"><label>Membresia</label><div><span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type||'individual')+'</span></div></div>';
       html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Guardar Cambios</button></div>';
       html += '</form></div>';
 
@@ -1099,7 +1099,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
       var isSelf = currentMember && currentMember.id === m.id;
       if (isAdmin || isSelf) {
-        html += '<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="dirEditBtn" data-mid="'+m.id+'">'+(isSelf?'Edit My Profile':'Edit (Admin)')+'</button></div>';
+        html += '<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="dirEditBtn" data-mid="'+m.id+'">'+(isSelf?'Editar Mi Perfil':'Editar (Admin)')+'</button></div>';
       }
       openModal(html);
       var ebtn = document.getElementById('dirEditBtn');
@@ -1128,22 +1128,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       } catch (e) { /* fall back to no dropdown */ }
     }
 
-    var html = '<h2>Edit '+esc(m.first_name)+' '+esc(m.last_name)+'</h2>';
+    var html = '<h2>Editar '+esc(m.first_name)+' '+esc(m.last_name)+'</h2>';
     if (isAdmin && !isSelf) html += '<div class="text-sm text-muted" style="margin-bottom:8px">Admin edit - changes apply to '+esc(m.email)+'</div>';
     html += '<div id="memEditMsg"></div>';
     html += '<form id="memEditForm" class="form-grid">';
-    html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name||'')+'"></div>';
-    html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name||'')+'"></div>';
-    html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select sector --')+'</select></div>';
-    html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
-    html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
-    html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
-    html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Nombre</label><input name="first_name" value="'+esc(m.first_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Apellido</label><input name="last_name" value="'+esc(m.last_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Pais</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Selecciona sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Sub-especialidad</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
+    html += '<div class="form-group"><label>Anos de Experiencia</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
+    html += '<div class="form-group"><label>Idiomas (separados por coma)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+    html += '<div class="form-group"><label>Empresa</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
     html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
-    html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
-    html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
-    html += '<div class="form-group full"><label>Website URL</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
+    html += '<div class="form-group"><label>Telefono</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
+    html += '<div class="form-group"><label>URL de LinkedIn</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
+    html += '<div class="form-group full"><label>URL del Sitio Web</label><input name="website_url" value="'+esc(m.website_url||'')+'"></div>';
 
     // Admin-only: governance role + access level + region
     if (canGlobal) {
@@ -1177,7 +1177,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '</select></div>';
     }
 
-    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-outline" id="memEditCancel">Cancel</button></div>';
+    html += '<div class="form-group full mt-12" style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Guardar</button><button type="button" class="btn btn-outline" id="memEditCancel">Cancelar</button></div>';
     html += '</form>';
     openModal(html);
     document.getElementById('memEditCancel').addEventListener('click', function() { showMemberModal(m.id); });
@@ -1240,7 +1240,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group full"><label>Describe what you need</label><textarea id="matchQuery" rows="3" placeholder="E.g.: I need a healthcare partner in Orlando with insurance billing experience"></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select id="matchSector">'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Region</label><select id="matchRegion">'+regionOptions()+'</select></div>';
-    html += '<div class="form-group"><label>Country</label><input id="matchCountry" placeholder="e.g. United States"></div>';
+    html += '<div class="form-group"><label>Pais</label><input id="matchCountry" placeholder="e.g. United States"></div>';
     html += '<div class="form-group"><button class="btn btn-primary mt-16" id="matchBtn" style="margin-top:20px">Buscar</button></div>';
     html += '</div></div>';
     html += '<div id="matchResults"></div>';
@@ -1595,20 +1595,20 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   function showNewProjectForm() {
     // P2B Stage 0 Wizard - Step 1: Vision input
-    var html = '<h2 style="margin-bottom:8px">New P2B Project</h2>';
-    html += '<p class="text-muted text-sm mb-16">Step 1 of 2 -- Tell us your vision. Claude will draft a complete business plan you can edit.</p>';
+    var html = '<h2 style="margin-bottom:8px">Nuevo Proyecto P2B</h2>';
+    html += '<p class="text-muted text-sm mb-16">Paso 1 de 2 -- Cuentanos tu vision. Claude redactara un plan de negocios completo que podras editar.</p>';
     html += '<div id="newProjMsg"></div>';
     html += '<form id="newProjForm" class="form-grid">';
-    html += '<div class="form-group full"><label>Vision (50-1500 chars, ~2 paragraphs)</label>';
+    html += '<div class="form-group full"><label>Vision (50-1500 caracteres, ~2 parrafos)</label>';
     html += '<textarea name="vision" rows="6" required minlength="50" maxlength="1500" ';
-    html += 'placeholder="Paragraph 1: What are you building? Why now?\nParagraph 2: Who is it for? How does it scale through the chamber network?"></textarea></div>';
+    html += 'placeholder="Parrafo 1: Que estas construyendo? Por que ahora?\nParrafo 2: Para quien es? Como escala a traves de la red de camaras?"></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
-    html += '<div class="form-group"><label>Budget Tier</label><select name="budget_tier" required>';
-    html += '<option value="small">Small ($50k-$200k)</option>';
-    html += '<option value="medium" selected>Medium ($200k-$1M)</option>';
-    html += '<option value="large">Large ($1M+)</option></select></div>';
-    html += '<div class="form-group full"><label>Countries (comma-separated)</label><input name="countries" placeholder="USA, Mexico, Espana, Argentina"></div>';
-    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generate Business Plan with AI</button></div>';
+    html += '<div class="form-group"><label>Nivel de Presupuesto</label><select name="budget_tier" required>';
+    html += '<option value="small">Pequeno ($50k-$200k)</option>';
+    html += '<option value="medium" selected>Mediano ($200k-$1M)</option>';
+    html += '<option value="large">Grande ($1M+)</option></select></div>';
+    html += '<div class="form-group full"><label>Paises (separados por coma)</label><input name="countries" placeholder="USA, Mexico, Espana, Argentina"></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generar Plan de Negocio con IA</button></div>';
     html += '</form>';
     openModal(html);
 
@@ -1636,7 +1636,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } else {
           msg.innerHTML = '<div class="error-msg">'+(res.error||'Error generating plan')+'</div>';
           btn.disabled = false;
-          btn.textContent = 'Generate Business Plan with AI';
+          btn.textContent = 'Generar Plan de Negocio con IA';
         }
       } catch(e) {
         msg.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
@@ -2100,7 +2100,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var p = window._amendingPlan;
     var h = '<div style="position:sticky;top:0;background:var(--white);padding:18px 28px 12px;margin:-28px -28px 16px;border-bottom:2px solid #7b1fa2;z-index:5">';
     h += '<div class="flex-between"><h2 style="margin:0;color:#7b1fa2">Amend Plan</h2>';
-    h += '<div><button class="btn btn-outline btn-sm" id="amendCancelBtn">Cancel</button> ';
+    h += '<div><button class="btn btn-outline btn-sm" id="amendCancelBtn">Cancelar</button> ';
     h += '<button class="btn btn-primary btn-sm" id="amendSubmitBtn" style="background:#7b1fa2">Submit Amendment</button></div></div>';
     h += '<p class="text-muted text-sm" style="margin-top:6px"><strong>Warning:</strong> Submitting this amendment will invalidate ALL existing signatures. All participants must re-sign the new version.</p>';
     h += '<div class="form-group" style="margin-top:8px"><label style="font-weight:600">Reason for amendment (will be visible in version history)</label><textarea id="amendReason" rows="2" required style="width:100%" placeholder="e.g., Adjusted budget after Final Meeting feedback; tightened timeline by 1 month"></textarea></div>';
@@ -2290,7 +2290,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     // My Assigned Milestones widget
     if (Array.isArray(d.my_milestones) && d.my_milestones.length > 0) {
-      h += '<div class="panel"><h2>My Assigned Milestones</h2>';
+      h += '<div class="panel"><h2>Mis Hitos Asignados</h2>';
       d.my_milestones.forEach(function(m) {
         var col = m.status === 'completed' ? '#28a745' : (m.status === 'in_progress' ? 'var(--primary)' : '#999');
         h += '<div style="padding:8px 0;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between"><span><strong>M'+(m.target_month||'?')+': '+esc(m.title)+'</strong></span>';
@@ -2299,7 +2299,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       h += '</div>';
     }
 
-    h += '<div class="panel"><h2>Recent Activity</h2>';
+    h += '<div class="panel"><h2>Actividad Reciente</h2>';
     if (d.recent_activity.length === 0) {
       h += '<p class="text-muted text-sm">No activity yet.</p>';
     } else {
@@ -2321,7 +2321,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var cols = { todo:[], doing:[], review:[], done:[], blocked:[] };
     tasks.forEach(function(t){ if (cols[t.status]) cols[t.status].push(t); });
 
-    var h = '<div class="flex-between mb-12"><div></div><button class="btn btn-primary btn-sm" id="newTaskBtn">+ New Task</button></div>';
+    var h = '<div class="flex-between mb-12"><div></div><button class="btn btn-primary btn-sm" id="newTaskBtn">+ Nueva Tarea</button></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">';
     Object.keys(cols).forEach(function(key) {
       var bg = { todo:'#e3f2fd', doing:'#fff3e0', review:'#f3e5f5', done:'#e8f5e9', blocked:'#fce4ec' }[key];
@@ -2347,13 +2347,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   function showNewTaskForm(pid) {
-    var h = '<h2>New Task</h2><form id="newTaskForm" class="form-grid">';
+    var h = '<h2>Nueva Tarea</h2><form id="newTaskForm" class="form-grid">';
     h += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
     h += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3"></textarea></div>';
     h += '<div class="form-group"><label>Status</label><select name="status"><option value="todo">To Do</option><option value="doing">Doing</option><option value="review">Review</option><option value="done">Done</option><option value="blocked">Blocked</option></select></div>';
     h += '<div class="form-group"><label>Priority</label><select name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>';
     h += '<div class="form-group"><label>Due Date</label><input name="due_date" type="date"></div>';
-    h += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Create Task</button> <button type="button" class="btn btn-outline" id="cancelTaskBtn">Cancel</button></div>';
+    h += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Crear Tarea</button> <button type="button" class="btn btn-outline" id="cancelTaskBtn">Cancelar</button></div>';
     h += '<div id="newTaskMsg"></div></form>';
     openModal(h);
     document.getElementById('cancelTaskBtn').addEventListener('click', function(){ openWorkspaceModal(pid); });
@@ -2429,7 +2429,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (ms.length === 0) {
       h = '<div class="panel"><p class="text-muted">No milestones yet. Initialize the workspace from the plan to auto-generate.</p></div>';
     } else {
-      h = '<div class="panel"><h2>Milestones</h2>';
+      h = '<div class="panel"><h2>Hitos</h2>';
       ms.forEach(function(m) {
         var col = m.status === 'completed' ? '#28a745' : (m.status === 'in_progress' ? 'var(--primary)' : '#999');
         h += '<div style="border:1px solid var(--gray-200);border-left:4px solid '+col+';border-radius:6px;padding:12px;margin-bottom:10px">';
@@ -2516,7 +2516,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     });
     h += '</div>';
     h += '<div id="assignMsg"></div>';
-    h += '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="assignSaveBtn">Save Assignment</button> <button class="btn btn-outline btn-sm" id="assignCancelBtn">Cancel</button></div>';
+    h += '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="assignSaveBtn">Guardar Asignacion</button> <button class="btn btn-outline btn-sm" id="assignCancelBtn">Cancelar</button></div>';
     openModal(h);
 
     document.getElementById('assignCancelBtn').addEventListener('click', function() { openWorkspaceModal(pid); window._wsActiveTab='milestones'; setTimeout(function(){document.querySelectorAll('button[data-ws-tab]').forEach(function(b){b.classList.toggle('active', b.dataset.wsTab==='milestones');}); loadWorkspaceTab('milestones');},100); });
@@ -2573,7 +2573,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (docs.length === 0) {
       h = '<div class="panel"><p class="text-muted text-sm">No documents yet.</p></div>';
     } else {
-      h = '<div class="panel"><h2>Documents</h2>';
+      h = '<div class="panel"><h2>Documentos</h2>';
       docs.forEach(function(d) {
         h += '<div style="padding:8px 0;border-bottom:1px solid var(--gray-200);font-size:13px">';
         h += '<div class="flex-between"><div><strong>'+esc(d.title)+'</strong> <span class="text-muted text-sm">('+esc(d.doc_type||'other')+')</span></div>';
@@ -2583,11 +2583,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
       h += '</div>';
     }
-    h += '<form id="newDocForm" class="panel" style="margin-top:14px"><h2>Add Document</h2>';
+    h += '<form id="newDocForm" class="panel" style="margin-top:14px"><h2>Agregar Documento</h2>';
     h += '<div class="form-group"><label>Title</label><input name="title" required></div>';
     h += '<div class="form-group"><label>File URL</label><input name="file_url" type="url" required placeholder="https://..."></div>';
     h += '<div class="form-group"><label>Type</label><select name="doc_type"><option value="other">Other</option><option value="contract">Contract</option><option value="nda">NDA</option><option value="financial">Financial</option><option value="pitch">Pitch</option></select></div>';
-    h += '<button class="btn btn-primary btn-sm" type="submit">Add Document</button></form>';
+    h += '<button class="btn btn-primary btn-sm" type="submit">Agregar Documento</button></form>';
     el.innerHTML = h;
     document.getElementById('newDocForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -2647,7 +2647,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     h += '<input type="text" name="typed_name" id="signTypedName" required minlength="3" placeholder="Your full legal name"></div>';
     h += '<div id="signMsg" style="margin-top:10px"></div>';
     h += '<div style="margin-top:14px;display:flex;gap:8px"><button type="submit" class="btn btn-primary">Sign Off</button>';
-    h += '<button type="button" class="btn btn-outline" id="signCancel">Cancel</button></div>';
+    h += '<button type="button" class="btn btn-outline" id="signCancel">Cancelar</button></div>';
     h += '</form>';
     openModal(h);
 
@@ -3186,7 +3186,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<div id="compEditMsg"></div>';
       html += '<form id="compEditForm" class="form-grid">';
       html += '<div class="form-group"><label>Name</label><input name="name" value="'+esc(c.name||'')+'" required></div>';
-      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(c.sector,'-- Select sector --')+'</select></div>';
+      html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(c.sector,'-- Selecciona sector --')+'</select></div>';
       html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="2">'+esc(c.description||'')+'</textarea></div>';
       html += '<div class="form-group"><label>Employees</label><input name="employee_count" type="number" value="'+(c.employee_count||'')+'"></div>';
       html += '<div class="form-group"><label>Revenue Range</label><select name="annual_revenue_range">'+
@@ -3873,8 +3873,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Temporary Password (leave blank to auto-generate)</label><input name="password"></div>';
     html += '<div class="form-group"><label>First Name *</label><input name="first_name" required></div>';
     html += '<div class="form-group"><label>Last Name *</label><input name="last_name" required></div>';
-    html += '<div class="form-group"><label>Country</label><input name="country"></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(null,'-- Select sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Pais</label><input name="country"></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(null,'-- Selecciona sector --')+'</select></div>';
     html += '<div class="form-group"><label>Region</label><select name="region_id" id="newMemRegion"><option value="">-- Global --</option></select></div>';
     html += '<div class="form-group"><label>Membership Type</label><select name="membership_type"><option value="individual">Individual</option><option value="empresarial">Empresarial</option><option value="corporativo">Corporativo</option><option value="fundador">Fundador</option></select></div>';
     var canGlobal = currentMember.access_level === 'superadmin' || currentMember.access_level === 'admin_global';
