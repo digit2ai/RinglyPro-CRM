@@ -79,6 +79,63 @@ router.post('/admin/login', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
+    // Platform-admin invariant: this email is a superadmin in EVERY chamber.
+    // Backfill any chambers where the row is missing or has a lower role.
+    // Every successful admin login keeps the invariant true, so newly-created
+    // chambers get auto-enrolled on the operator's next visit -- no separate
+    // migration step required.
+    try {
+      const sharedHash = matched.password_hash;
+      const fn = matched.first_name || 'Platform';
+      const ln = matched.last_name || 'Admin';
+
+      // Upgrade rows that exist but aren't superadmin yet.
+      const [, upgradeMeta] = await sequelize.query(
+        `UPDATE members
+         SET access_level = 'superadmin', status = 'active', updated_at = NOW()
+         WHERE email = :email
+           AND (access_level IS DISTINCT FROM 'superadmin' OR status IS DISTINCT FROM 'active')`,
+        { replacements: { email: lowerEmail } }
+      );
+
+      // Insert rows for chambers that don't have this email at all yet.
+      const missing = await sequelize.query(
+        `SELECT c.id, c.slug FROM chambers c
+         WHERE NOT EXISTS (
+           SELECT 1 FROM members m WHERE m.chamber_id = c.id AND m.email = :email
+         )`,
+        { replacements: { email: lowerEmail }, type: QueryTypes.SELECT }
+      );
+      for (const c of missing) {
+        // eslint-disable-next-line no-await-in-loop
+        await sequelize.query(
+          `INSERT INTO members
+           (chamber_id, email, password_hash, first_name, last_name,
+            membership_type, governance_role, access_level, verification_level,
+            status, trust_score, created_at, updated_at)
+           VALUES
+           (:c, :email, :hash, :fn, :ln,
+            'individual', 'member', 'superadmin', 'email',
+            'active', 1.0, NOW(), NOW())
+           ON CONFLICT (chamber_id, email) DO UPDATE
+             SET access_level = 'superadmin', status = 'active', updated_at = NOW()`,
+          {
+            replacements: {
+              c: c.id, email: lowerEmail, hash: sharedHash, fn, ln
+            }
+          }
+        );
+      }
+
+      if (missing.length > 0) {
+        console.log(`[platform-admin] enrolled ${lowerEmail} as superadmin in ${missing.length} new chamber(s):`,
+          missing.map(c => c.slug).join(', '));
+      }
+    } catch (err) {
+      // Backfill failure must not block login -- log and continue.
+      console.error('[platform-admin enrollment]', err.message);
+    }
+
     const token = jwt.sign(
       {
         platform_admin: true,
