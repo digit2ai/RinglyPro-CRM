@@ -1184,7 +1184,8 @@ let calYear, calMonth;
 // =====================================================
 // CALENDAR (Outlook-style Month / Week / Day views)
 // =====================================================
-let calView = localStorage.getItem('cal_view') || 'month';
+// Default = week, but auto-fall-back to day on phones (< 640px) for usable touch targets
+let calView = localStorage.getItem('cal_view') || (window.innerWidth < 640 ? 'day' : 'week');
 let calCursor = null; // YYYY-MM-DD anchor date for week/day views
 
 const TYPE_COLORS = {
@@ -1490,6 +1491,42 @@ function setupCalendarDrag() {
   const wrap = document.querySelector('.cal-week-columns');
   if (!wrap) return;
   wrap.addEventListener('mousedown', _onCalMouseDown);
+  // Touch support: route touch events through the same mouse handlers
+  wrap.addEventListener('touchstart', _onCalTouchStart, { passive: false });
+}
+
+function _touchToMouseEvent(touchEvent, type) {
+  const t = touchEvent.touches[0] || touchEvent.changedTouches[0];
+  return {
+    button: 0,
+    clientX: t.clientX,
+    clientY: t.clientY,
+    target: document.elementFromPoint(t.clientX, t.clientY) || touchEvent.target,
+    preventDefault: () => touchEvent.preventDefault(),
+    type: type
+  };
+}
+function _onCalTouchStart(e) {
+  if (e.touches.length !== 1) return;
+  // Don't start drag on existing event
+  const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  if (target && target.closest('.cal-event')) return;
+  e.preventDefault();
+  _onCalMouseDown(_touchToMouseEvent(e, 'mousedown'));
+  document.addEventListener('touchmove', _onCalTouchMove, { passive: false });
+  document.addEventListener('touchend', _onCalTouchEnd);
+  document.addEventListener('touchcancel', _onCalTouchEnd);
+}
+function _onCalTouchMove(e) {
+  if (!_calDrag) return;
+  e.preventDefault();
+  _onCalMouseMove(_touchToMouseEvent(e, 'mousemove'));
+}
+function _onCalTouchEnd(e) {
+  document.removeEventListener('touchmove', _onCalTouchMove);
+  document.removeEventListener('touchend', _onCalTouchEnd);
+  document.removeEventListener('touchcancel', _onCalTouchEnd);
+  _onCalMouseUp(_touchToMouseEvent(e, 'mouseup'));
 }
 
 function _onCalMouseDown(e) {
