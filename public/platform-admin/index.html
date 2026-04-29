@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Platform Admin -- CamaraVirtual</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',sans-serif; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); color:#fff; }
+  .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .login-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:36px 32px; max-width:420px; width:100%; backdrop-filter:blur(12px); }
+  .login-card .logo { display:block; margin:0 auto 14px; height:96px; width:96px; border-radius:16px; background:white; padding:6px; object-fit:cover; box-shadow:0 4px 14px rgba(0,0,0,0.35); }
+  .login-card h1 { font-size:22px; font-weight:800; margin:0 0 4px; text-align:center; }
+  .login-card p.tagline { color:rgba(255,255,255,0.65); font-size:13px; text-align:center; margin:0 0 22px; }
+  label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:16px; font-family:inherit; }
+  input:focus { border-color:#FCD116; }
+  button.primary { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+  button.primary:hover { background:#a50d1e; }
+  button.primary:disabled { opacity:0.55; cursor:not-allowed; }
+  .msg { margin-top:14px; padding:11px; border-radius:7px; font-size:13px; text-align:center; }
+  .msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+
+  /* Authenticated view */
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 28px; background:rgba(0,0,0,0.25); border-bottom:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:12px; }
+  .topbar .brand { display:flex; align-items:center; gap:14px; }
+  .topbar .brand img { height:48px; width:48px; border-radius:10px; background:white; padding:3px; object-fit:cover; }
+  .topbar .brand h1 { font-size:18px; font-weight:800; margin:0; }
+  .topbar .brand p { margin:0; color:rgba(255,255,255,0.6); font-size:12px; }
+  .topbar .actions { display:flex; gap:10px; align-items:center; font-size:13px; }
+  .topbar .actions span { color:rgba(255,255,255,0.7); }
+  .topbar .actions button { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#fff; padding:8px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+  .topbar .actions button:hover { background:rgba(255,255,255,0.16); }
+
+  .container { max-width:1200px; margin:0 auto; padding:32px 28px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:28px; }
+  .stat { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:16px 18px; }
+  .stat .v { font-size:28px; font-weight:800; color:#FCD116; }
+  .stat .l { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.55); margin-top:2px; }
+
+  table { width:100%; border-collapse:collapse; background:rgba(255,255,255,0.04); border-radius:10px; overflow:hidden; }
+  thead th { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.6); text-align:left; padding:14px 16px; background:rgba(0,0,0,0.2); border-bottom:1px solid rgba(255,255,255,0.08); }
+  tbody td { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; vertical-align:middle; }
+  tbody tr:hover { background:rgba(255,255,255,0.04); }
+  tbody td.slug { font-family:Menlo,monospace; color:#FCD116; font-size:13px; }
+  tbody td .chamber-name { font-weight:600; }
+  tbody td .meta { color:rgba(255,255,255,0.55); font-size:11px; margin-top:2px; }
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:10px; text-transform:uppercase; letter-spacing:0.6px; }
+  .badge-active { background:rgba(39,174,96,0.18); color:#7ee2a0; }
+  .badge-pending { background:rgba(252,209,22,0.16); color:#FCD116; }
+  .badge-suspended { background:rgba(192,57,43,0.18); color:#ff8b8b; }
+  .badge-archived { background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.7); }
+  td.actions { white-space:nowrap; }
+  td.actions a { display:inline-block; margin-right:6px; padding:6px 11px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none; }
+  td.actions a.dash { background:#003DA5; color:#fff; }
+  td.actions a.dash:hover { background:#002670; }
+  td.actions a.land { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.16); }
+  td.actions a.land:hover { background:rgba(255,255,255,0.16); }
+  .loading, .empty { text-align:center; padding:30px; color:rgba(255,255,255,0.55); font-style:italic; }
+
+  @media (max-width: 720px) {
+    .container { padding:20px 14px; }
+    table, thead, tbody, tr, th, td { display:block; }
+    thead { display:none; }
+    tbody tr { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; margin-bottom:12px; padding:12px; }
+    tbody td { border:0; padding:6px 0; }
+    tbody td:before { content: attr(data-label); display:block; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,0.5); margin-bottom:2px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+(function() {
+  var TOKEN_KEY = 'cv_platform_admin_token';
+  var DEFAULT_LOGO = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png';
+
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function statusBadge(status) {
+    var cls = 'badge-archived';
+    if (status === 'active') cls = 'badge-active';
+    else if (status === 'pending') cls = 'badge-pending';
+    else if (status === 'suspended') cls = 'badge-suspended';
+    else if (status === 'archived') cls = 'badge-archived';
+    return '<span class="badge ' + cls + '">' + esc(status || '--') + '</span>';
+  }
+  function fmtDate(s) {
+    if (!s) return '--';
+    try { return new Date(s).toLocaleDateString(); } catch(e) { return s; }
+  }
+
+  function renderLogin(errorMsg) {
+    document.getElementById('app').innerHTML =
+      '<div class="login-wrap">' +
+        '<div class="login-card">' +
+          '<img class="logo" src="' + DEFAULT_LOGO + '" alt="CamaraVirtual">' +
+          '<h1>Platform Admin</h1>' +
+          '<p class="tagline">Access every chamber on CamaraVirtual.app</p>' +
+          '<form id="loginForm">' +
+            '<label for="email">Email</label>' +
+            '<input id="email" type="email" required autocomplete="email">' +
+            '<label for="password">Password</label>' +
+            '<input id="password" type="password" required autocomplete="current-password">' +
+            '<button class="primary" type="submit" id="loginBtn">Sign in</button>' +
+            (errorMsg ? '<div class="msg error">' + esc(errorMsg) + '</div>' : '') +
+          '</form>' +
+        '</div>' +
+      '</div>';
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('loginBtn');
+      btn.disabled = true; btn.textContent = 'Signing in...';
+      try {
+        var res = await fetch('/api/platform/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password').value
+          })
+        });
+        var data = await res.json();
+        if (data.success && data.data && data.data.token) {
+          setToken(data.data.token);
+          renderApp();
+        } else {
+          renderLogin(data.error || 'Invalid credentials');
+        }
+      } catch(err) {
+        renderLogin('Connection error. Please try again.');
+      }
+    });
+  }
+
+  async function renderApp() {
+    var token = getToken();
+    if (!token) return renderLogin();
+
+    document.getElementById('app').innerHTML =
+      '<div class="topbar">' +
+        '<div class="brand">' +
+          '<img src="' + DEFAULT_LOGO + '" alt="CamaraVirtual">' +
+          '<div>' +
+            '<h1>Platform Admin</h1>' +
+            '<p id="adminEmail">Loading...</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button id="refreshBtn">Refresh</button>' +
+          '<button id="logoutBtn">Sign out</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="container">' +
+        '<div class="stats" id="statsBox"></div>' +
+        '<table id="chambersTable">' +
+          '<thead><tr>' +
+            '<th>Slug</th><th>Chamber</th><th>Country</th><th>Members</th>' +
+            '<th>Projects</th><th>Status</th><th>Created</th><th>Actions</th>' +
+          '</tr></thead>' +
+          '<tbody><tr><td colspan="8" class="loading">Loading chambers...</td></tr></tbody>' +
+        '</table>' +
+      '</div>';
+
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      clearToken(); renderLogin();
+    });
+    document.getElementById('refreshBtn').addEventListener('click', loadChambers);
+
+    // Hydrate me + chambers in parallel
+    try {
+      var meRes = await fetch('/api/platform/admin/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (meRes.status === 401 || meRes.status === 403) {
+        clearToken(); return renderLogin('Session expired. Please sign in again.');
+      }
+      var meData = await meRes.json();
+      if (meData.success && meData.data) {
+        document.getElementById('adminEmail').textContent =
+          (meData.data.first_name || '') + ' ' + (meData.data.last_name || '') +
+          ' (' + meData.data.email + ')';
+      }
+    } catch(e) { /* fall through, chambers call will catch auth issues */ }
+
+    loadChambers();
+  }
+
+  async function loadChambers() {
+    var token = getToken();
+    var tbody = document.querySelector('#chambersTable tbody');
+    tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading chambers...</td></tr>';
+    try {
+      var res = await fetch('/api/platform/admin/chambers', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.status === 401 || res.status === 403) {
+        clearToken(); return renderLogin('Session expired. Please sign in again.');
+      }
+      var data = await res.json();
+      if (!data.success) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">' + esc(data.error || 'Error') + '</td></tr>';
+        return;
+      }
+      var chambers = (data.data && data.data.chambers) || [];
+      // Stats
+      var totalMembers = chambers.reduce(function(s, c){ return s + (c.active_member_count||0); }, 0);
+      var totalProjects = chambers.reduce(function(s, c){ return s + (c.project_count||0); }, 0);
+      var activeChambers = chambers.filter(function(c){ return c.status === 'active'; }).length;
+      document.getElementById('statsBox').innerHTML =
+        '<div class="stat"><div class="v">' + chambers.length + '</div><div class="l">Total chambers</div></div>' +
+        '<div class="stat"><div class="v">' + activeChambers + '</div><div class="l">Active</div></div>' +
+        '<div class="stat"><div class="v">' + totalMembers + '</div><div class="l">Active members</div></div>' +
+        '<div class="stat"><div class="v">' + totalProjects + '</div><div class="l">Projects</div></div>';
+
+      if (chambers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No chambers yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = chambers.map(function(c) {
+        return '<tr>' +
+          '<td class="slug" data-label="Slug">' + esc(c.slug) + '</td>' +
+          '<td data-label="Chamber"><div class="chamber-name">' + esc(c.name) + '</div>' +
+            (c.brand_domain ? '<div class="meta">' + esc(c.brand_domain) + ' &middot; ' + esc(c.primary_language || '') + '</div>' : '') +
+          '</td>' +
+          '<td data-label="Country">' + esc(c.country || '--') + '</td>' +
+          '<td data-label="Members">' + (c.active_member_count||0) + ' <span class="meta" style="color:rgba(255,255,255,0.4)">/ ' + (c.member_count||0) + '</span></td>' +
+          '<td data-label="Projects">' + (c.project_count||0) + '</td>' +
+          '<td data-label="Status">' + statusBadge(c.status) + '</td>' +
+          '<td data-label="Created">' + fmtDate(c.created_at) + '</td>' +
+          '<td data-label="Actions" class="actions">' +
+            '<a class="dash" href="' + esc(c.dashboard_url) + '" target="_blank" rel="noopener">Dashboard</a>' +
+            '<a class="land" href="' + esc(c.landing_url) + '" target="_blank" rel="noopener">Landing</a>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">Error: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  // Boot
+  if (getToken()) renderApp();
+  else renderLogin();
+})();
+</script>
+</body>
+</html>

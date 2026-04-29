@@ -775,6 +775,18 @@ try {
     console.log('Per-chamber routing not available:', error.message);
 }
 
+// Platform Admin (cross-chamber operator console served at /admin)
+try {
+    const platformAdminRouter = require('./routes/platform-admin');
+    app.use('/api/platform', platformAdminRouter);
+    app.get(['/admin', '/admin/'], (req, res) => {
+        return res.sendFile(require('path').join(__dirname, '..', 'public', 'platform-admin', 'index.html'));
+    });
+    console.log('🛡️ Platform Admin mounted: GET /admin (UI) + /api/platform/admin/*');
+} catch (error) {
+    console.log('Platform admin not available:', error.message);
+}
+
 // Multi-Tenant Unified Chamber Routes (cv-* / vc-* slugs)
 // Mounted under /:chamber_slug/api/* with chamber-resolver middleware.
 // Chambers using the unified schema (cv-1, cv-2, cv-3, and any cv-101+ / vc-101+
