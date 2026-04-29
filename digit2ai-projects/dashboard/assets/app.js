@@ -1184,7 +1184,7 @@ let calYear, calMonth;
 // =====================================================
 // CALENDAR (Outlook-style Month / Week / Day views)
 // =====================================================
-let calView = localStorage.getItem('cal_view') || 'week';
+let calView = localStorage.getItem('cal_view') || 'day';
 let calCursor = null; // YYYY-MM-DD anchor date for week/day views
 
 const TYPE_COLORS = {
