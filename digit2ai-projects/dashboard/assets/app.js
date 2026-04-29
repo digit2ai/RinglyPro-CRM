@@ -1161,70 +1161,128 @@ async function printProjectsPDF() {
 // CALENDAR
 // =====================================================
 let calYear, calMonth;
+// =====================================================
+// CALENDAR (Outlook-style Month / Week / Day views)
+// =====================================================
+let calView = localStorage.getItem('cal_view') || 'week';
+let calCursor = null; // YYYY-MM-DD anchor date for week/day views
+
+const TYPE_COLORS = {
+  meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b',
+  milestone: '#10b981', event: '#3b82f6', task: '#8b5cf6'
+};
+const HOUR_START = 6;   // earliest hour shown
+const HOUR_END = 22;    // last hour shown (exclusive)
+const PX_PER_HOUR = 56;
+const PX_PER_MIN = PX_PER_HOUR / 60;
+
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function startOfWeek(d) { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - x.getDay()); return x; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function fmtTimeLabel(h) { const ap = h < 12 ? 'AM' : 'PM'; const hh = h % 12 === 0 ? 12 : h % 12; return `${hh} ${ap}`; }
+
 async function renderCalendar(container) {
   const now = new Date();
+  if (!calCursor) calCursor = ymd(now);
   if (!calYear) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
+
+  const headerHTML = `
+    <div class="section-header">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">&#9664;</button>
+        <h3 id="cal-title" style="margin:0;min-width:220px"></h3>
+        <button class="btn btn-ghost btn-sm" onclick="calNav(1)">&#9654;</button>
+        <button class="btn btn-ghost btn-sm" onclick="calToday()">Today</button>
+        <div style="display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+          <button class="btn btn-sm ${calView==='month'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none" onclick="setCalView('month')">Month</button>
+          <button class="btn btn-sm ${calView==='week'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setCalView('week')">Week</button>
+          <button class="btn btn-sm ${calView==='day'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setCalView('day')">Day</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ New Event</button>
+    </div>
+    <div id="cal-body"></div>
+  `;
+  container.innerHTML = headerHTML;
+
+  if (calView === 'month') await renderMonthGrid();
+  else if (calView === 'week') await renderTimeGrid(7);
+  else await renderTimeGrid(1);
+}
+
+function setCalView(v) {
+  calView = v;
+  localStorage.setItem('cal_view', v);
+  renderCalendar(document.getElementById('view-container'));
+}
+
+function calToday() {
+  const now = new Date();
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+  calCursor = ymd(now);
+  renderCalendar(document.getElementById('view-container'));
+}
+
+function calNav(dir) {
+  if (calView === 'month') {
+    calMonth += dir;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    calCursor = ymd(new Date(calYear, calMonth, 1));
+  } else {
+    const step = calView === 'week' ? 7 : 1;
+    const cur = new Date(calCursor + 'T00:00:00');
+    const next = addDays(cur, dir * step);
+    calCursor = ymd(next);
+    calYear = next.getFullYear(); calMonth = next.getMonth();
+  }
+  renderCalendar(document.getElementById('view-container'));
+}
+
+// ----- Month view (original) -----
+async function renderMonthGrid() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent = `${monthNames[calMonth]} ${calYear}`;
 
   const monthStart = new Date(calYear, calMonth, 1);
   const monthEnd = new Date(calYear, calMonth + 1, 0);
   const startParam = new Date(calYear, calMonth, 1 - monthStart.getDay()).toISOString();
   const endParam = new Date(calYear, calMonth + 1, 6 - monthEnd.getDay()).toISOString();
-
   const res = await api(`/calendar?start=${startParam}&end=${endParam}`);
   const events = res.success ? res.data : [];
 
-  // Group events by LOCAL date (not UTC)
   const eventsByDate = {};
   events.forEach(e => {
     const local = new Date(e.start_time);
-    const d = `${local.getFullYear()}-${String(local.getMonth()+1).padStart(2,'0')}-${String(local.getDate()).padStart(2,'0')}`;
+    const d = ymd(local);
     if (!eventsByDate[d]) eventsByDate[d] = [];
     eventsByDate[d].push(e);
   });
 
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  container.innerHTML = `
-    <div class="section-header">
-      <div style="display:flex;align-items:center;gap:16px">
-        <button class="btn btn-ghost btn-sm" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar(document.getElementById('view-container'))">&#9664;</button>
-        <h3>${monthNames[calMonth]} ${calYear}</h3>
-        <button class="btn btn-ghost btn-sm" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar(document.getElementById('view-container'))">&#9654;</button>
-        <button class="btn btn-ghost btn-sm" onclick="calYear=${now.getFullYear()};calMonth=${now.getMonth()};renderCalendar(document.getElementById('view-container'))">Today</button>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ New Event</button>
-    </div>
-    <div class="calendar-grid" id="cal-grid"></div>
-  `;
-
+  const body = document.getElementById('cal-body');
+  body.innerHTML = '<div class="calendar-grid" id="cal-grid"></div>';
   const grid = document.getElementById('cal-grid');
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  grid.innerHTML = days.map(d => `<div class="calendar-header-cell">${d}</div>`).join('');
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  grid.innerHTML = dayNames.map(d => `<div class="calendar-header-cell">${d}</div>`).join('');
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = ymd(new Date());
 
-  // Prev month fill
   const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
   for (let i = firstDay - 1; i >= 0; i--) {
     const day = prevMonthDays - i;
     grid.innerHTML += `<div class="calendar-cell other-month"><div class="calendar-day">${day}</div></div>`;
   }
-
-  // Current month
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = dateStr === todayStr;
     const dayEvents = eventsByDate[dateStr] || [];
-    const typeColors = { meeting: '#2563eb', deadline: '#ef4444', followup: '#f59e0b', milestone: '#10b981', event: '#3b82f6', task: '#8b5cf6' };
-    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => {
+    grid.innerHTML += `<div class="calendar-cell${isToday ? ' today' : ''}" onclick="jumpToDay('${dateStr}')"><div class="calendar-day">${d}</div>${dayEvents.slice(0,3).map(e => {
       const click = e.source === 'task' ? `showTaskDetail(${e.task_id})` : `showEventDetail(${e.id})`;
-      return `<div class="calendar-event-dot" style="background:${typeColors[e.event_type]||'#2563eb'};color:white;cursor:pointer" onclick="${click}">${e.source === 'task' ? '&#9989; ' : ''}${e.title}</div>`;
+      return `<div class="calendar-event-dot" style="background:${TYPE_COLORS[e.event_type]||'#2563eb'};color:white;cursor:pointer" onclick="event.stopPropagation();${click}">${e.source === 'task' ? '&#9989; ' : ''}${escapeHtml(e.title)}</div>`;
     }).join('')}${dayEvents.length > 3 ? `<div style="font-size:10px;color:var(--text-muted)">+${dayEvents.length-3} more</div>` : ''}</div>`;
   }
-
-  // Next month fill
   const totalCells = firstDay + daysInMonth;
   const remaining = 7 - (totalCells % 7);
   if (remaining < 7) {
@@ -1232,6 +1290,138 @@ async function renderCalendar(container) {
       grid.innerHTML += `<div class="calendar-cell other-month"><div class="calendar-day">${d}</div></div>`;
     }
   }
+}
+
+function jumpToDay(dateStr) {
+  calCursor = dateStr;
+  setCalView('day');
+}
+
+// ----- Outlook-style Week (7-day) and Day (1-day) time grid -----
+async function renderTimeGrid(numDays) {
+  const cursor = new Date(calCursor + 'T00:00:00');
+  const start = numDays === 7 ? startOfWeek(cursor) : new Date(cursor);
+  start.setHours(0,0,0,0);
+  const end = addDays(start, numDays); end.setHours(23,59,59,999);
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  if (numDays === 1) {
+    document.getElementById('cal-title').textContent =
+      `${start.toLocaleDateString(undefined,{weekday:'long'})}, ${monthNames[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()}`;
+  } else {
+    const last = addDays(start, 6);
+    document.getElementById('cal-title').textContent =
+      `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[last.getMonth()]} ${last.getDate()}, ${last.getFullYear()}`;
+  }
+
+  const res = await api(`/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
+  const events = res.success ? res.data : [];
+
+  // Build day columns
+  const days = [];
+  for (let i = 0; i < numDays; i++) days.push(addDays(start, i));
+  const dayCols = days.map(d => {
+    const dStr = ymd(d);
+    const dayEvents = events.filter(e => ymd(new Date(e.start_time)) === dStr);
+    return { date: d, dateStr: dStr, events: dayEvents };
+  });
+
+  const body = document.getElementById('cal-body');
+  const totalHours = HOUR_END - HOUR_START;
+  const gridHeight = totalHours * PX_PER_HOUR;
+
+  // Column header row
+  const headerRow = `
+    <div class="cal-week-headers" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+      <div></div>
+      ${dayCols.map(c => {
+        const isToday = c.dateStr === ymd(new Date());
+        return `<div class="cal-week-day-header${isToday?' is-today':''}" onclick="jumpToDay('${c.dateStr}')">
+          <div style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">${c.date.toLocaleDateString(undefined,{weekday:'short'})}</div>
+          <div style="font-size:18px;font-weight:600;color:${isToday?'var(--accent)':'var(--text-primary)'}">${c.date.getDate()}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // Time gutter + day columns body
+  const timeLabels = [];
+  for (let h = HOUR_START; h < HOUR_END; h++) {
+    timeLabels.push(`<div class="cal-hour-label" style="height:${PX_PER_HOUR}px">${fmtTimeLabel(h)}</div>`);
+  }
+  const dayColumnsHTML = dayCols.map((c, idx) => {
+    const slots = [];
+    for (let h = HOUR_START; h < HOUR_END; h++) {
+      const isoSlot = `${c.dateStr}T${String(h).padStart(2,'0')}:00`;
+      const isoSlot30 = `${c.dateStr}T${String(h).padStart(2,'0')}:30`;
+      slots.push(`
+        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR}px;height:${PX_PER_HOUR/2}px"
+             onclick="event.stopPropagation();openEventModalAt('${isoSlot}')"></div>
+        <div class="cal-slot cal-slot-half" style="top:${(h-HOUR_START)*PX_PER_HOUR + PX_PER_HOUR/2}px;height:${PX_PER_HOUR/2}px"
+             onclick="event.stopPropagation();openEventModalAt('${isoSlot30}')"></div>
+      `);
+    }
+    // Position events
+    const evHTML = c.events.map(e => {
+      const startD = new Date(e.start_time);
+      const endD = e.end_time ? new Date(e.end_time) : new Date(startD.getTime() + 60*60*1000);
+      const startMin = startD.getHours()*60 + startD.getMinutes();
+      const endMin = endD.getHours()*60 + endD.getMinutes();
+      const top = Math.max(0, (startMin - HOUR_START*60) * PX_PER_MIN);
+      const height = Math.max(20, (Math.min(endMin, HOUR_END*60) - Math.max(startMin, HOUR_START*60)) * PX_PER_MIN);
+      const click = e.source === 'task' ? `showTaskDetail(${e.task_id})` : `showEventDetail(${e.id})`;
+      const color = TYPE_COLORS[e.event_type] || '#2563eb';
+      const timeStr = startD.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+      return `<div class="cal-event" style="top:${top}px;height:${height}px;background:${color}1f;border-left:3px solid ${color};color:var(--text-primary)"
+              onclick="event.stopPropagation();${click}">
+        <div class="cal-event-time" style="color:${color}">${timeStr}</div>
+        <div class="cal-event-title">${escapeHtml(e.title)}</div>
+      </div>`;
+    }).join('');
+    const isToday = c.dateStr === ymd(new Date());
+    return `<div class="cal-day-col${isToday?' is-today':''}" style="height:${gridHeight}px">${slots.join('')}${evHTML}</div>`;
+  }).join('');
+
+  // Now-line indicator
+  const now = new Date();
+  let nowLineHTML = '';
+  if (now.getHours() >= HOUR_START && now.getHours() < HOUR_END) {
+    const nowMin = now.getHours()*60 + now.getMinutes();
+    const top = (nowMin - HOUR_START*60) * PX_PER_MIN;
+    nowLineHTML = `<div class="cal-now-line" style="top:${top}px"></div>`;
+  }
+
+  body.innerHTML = `
+    ${headerRow}
+    <div class="cal-week-body" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+      <div class="cal-time-gutter">${timeLabels.join('')}</div>
+      <div class="cal-week-columns" style="grid-template-columns: repeat(${numDays}, 1fr); height:${gridHeight}px; position:relative">
+        ${dayColumnsHTML}
+        ${nowLineHTML}
+      </div>
+    </div>
+  `;
+
+  // Auto-scroll so 8 AM is near the top
+  const scrollWrap = body.querySelector('.cal-week-body');
+  if (scrollWrap) scrollWrap.scrollTop = (8 - HOUR_START) * PX_PER_HOUR - 10;
+}
+
+function escapeHtml(s) { return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// Open New-Event modal pre-filled with a clicked time slot
+// isoSlot format: "YYYY-MM-DDTHH:MM"
+function openEventModalAt(isoSlot) {
+  openEventModal();
+  setTimeout(() => {
+    const startEl = document.getElementById('m-estart');
+    const endEl = document.getElementById('m-eend');
+    if (startEl) startEl.value = isoSlot;
+    if (endEl) {
+      const d = new Date(isoSlot);
+      d.setHours(d.getHours() + 1);
+      endEl.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+  }, 50);
 }
 
 // =====================================================
