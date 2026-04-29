@@ -575,6 +575,30 @@ body {
 .cal-week-day-header:hover { background: var(--bg-hover); }
 .cal-week-day-header.is-today { background: var(--accent-muted); }
 
+.cal-allday-row {
+  display: grid; gap: 0;
+  border: 1px solid var(--border); border-bottom: none; border-top: none;
+  background: var(--bg-secondary);
+}
+.cal-allday-label {
+  padding: 6px 8px; font-size: 10px; text-transform: uppercase;
+  color: var(--text-muted); text-align: right;
+  border-right: 1px solid var(--border);
+}
+.cal-allday-cell {
+  padding: 4px 2px; min-height: 28px;
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.cal-span-bar {
+  border-radius: 4px; padding: 3px 8px;
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+  margin: 0 -2px;  /* visually bleed across day-cell borders */
+}
+.cal-span-bar:hover { filter: brightness(1.1); }
+
 .cal-week-body {
   display: grid; gap: 0;
   border: 1px solid var(--border);

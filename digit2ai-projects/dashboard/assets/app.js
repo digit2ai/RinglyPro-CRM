@@ -1273,10 +1273,16 @@ async function renderMonthGrid() {
 
   const eventsByDate = {};
   events.forEach(e => {
-    const local = new Date(e.start_time);
-    const d = ymd(local);
-    if (!eventsByDate[d]) eventsByDate[d] = [];
-    eventsByDate[d].push(e);
+    const startD = new Date(e.start_time);
+    const endD = e.end_time ? new Date(e.end_time) : startD;
+    const cur = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate());
+    const last = new Date(endD.getFullYear(), endD.getMonth(), endD.getDate());
+    while (cur <= last) {
+      const d = ymd(cur);
+      if (!eventsByDate[d]) eventsByDate[d] = [];
+      eventsByDate[d].push(e);
+      cur.setDate(cur.getDate() + 1);
+    }
   });
 
   const body = document.getElementById('cal-body');
@@ -1337,20 +1343,55 @@ async function renderTimeGrid(numDays) {
   const res = await api(`/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
   const events = res.success ? res.data : [];
 
-  // Build day columns
+  // Build day columns. Events are expanded into every day they span:
+  //   - a "timed" event has both start_time and end_time on the same calendar day
+  //   - a "spanning" event covers >= 1 calendar day; rendered as an all-day bar
+  function eventTouchesDay(e, dStr) {
+    const startD = new Date(e.start_time);
+    const endD = e.end_time ? new Date(e.end_time) : startD;
+    const sStr = ymd(startD);
+    const eStr = ymd(endD);
+    return dStr >= sStr && dStr <= eStr;
+  }
+  function isSpanning(e) {
+    const startD = new Date(e.start_time);
+    const endD = e.end_time ? new Date(e.end_time) : startD;
+    return ymd(startD) !== ymd(endD);
+  }
   const days = [];
   for (let i = 0; i < numDays; i++) days.push(addDays(start, i));
   const dayCols = days.map(d => {
     const dStr = ymd(d);
-    const dayEvents = events.filter(e => ymd(new Date(e.start_time)) === dStr);
-    return { date: d, dateStr: dStr, events: dayEvents };
+    const dayEvents = events.filter(e => eventTouchesDay(e, dStr));
+    return {
+      date: d,
+      dateStr: dStr,
+      timedEvents: dayEvents.filter(e => !isSpanning(e)),
+      spanEvents: dayEvents.filter(e => isSpanning(e))
+    };
   });
 
   const body = document.getElementById('cal-body');
   const totalHours = HOUR_END - HOUR_START;
   const gridHeight = totalHours * PX_PER_HOUR;
 
-  // Column header row
+  // Column header row + all-day spanning row
+  const anySpan = dayCols.some(c => c.spanEvents.length > 0);
+  const allDayRow = anySpan ? `
+    <div class="cal-allday-row" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+      <div class="cal-allday-label">all-day</div>
+      ${dayCols.map(c => `
+        <div class="cal-allday-cell">
+          ${c.spanEvents.map(e => {
+            const click = e.source === 'task' ? `showTaskDetail(${e.task_id})` : `showEventDetail(${e.id})`;
+            const color = TYPE_COLORS[e.event_type] || '#2563eb';
+            const isStart = c.dateStr === ymd(new Date(e.start_time));
+            return `<div class="cal-span-bar" style="background:${color};color:white"
+                    onclick="event.stopPropagation();${click}">${isStart ? escapeHtml(e.title) : '&nbsp;'}</div>`;
+          }).join('')}
+        </div>`).join('')}
+    </div>` : '';
+
   const headerRow = `
     <div class="cal-week-headers" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
       <div></div>
@@ -1361,7 +1402,8 @@ async function renderTimeGrid(numDays) {
           <div style="font-size:18px;font-weight:600;color:${isToday?'var(--accent)':'var(--text-primary)'}">${c.date.getDate()}</div>
         </div>`;
       }).join('')}
-    </div>`;
+    </div>
+    ${allDayRow}`;
 
   // Time gutter + day columns body
   const timeLabels = [];
@@ -1380,8 +1422,8 @@ async function renderTimeGrid(numDays) {
              onclick="event.stopPropagation();openEventModalAt('${isoSlot30}')"></div>
       `);
     }
-    // Position events
-    const evHTML = c.events.map(e => {
+    // Position events (timed only — spanning multi-day events render in the all-day row)
+    const evHTML = c.timedEvents.map(e => {
       const startD = new Date(e.start_time);
       const endD = e.end_time ? new Date(e.end_time) : new Date(startD.getTime() + 60*60*1000);
       const startMin = startD.getHours()*60 + startD.getMinutes();
