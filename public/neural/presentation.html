@@ -225,6 +225,89 @@
     content: "↘"; display: block; margin-top: 4px; color: #06b6d4; font-size: 18px;
   }
 
+  /* Agentic Taskforce */
+  .taskforce-intro {
+    background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.05));
+    border: 1px solid rgba(139,92,246,.2);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin-bottom: 28px;
+  }
+  .taskforce-intro p { color: #cbd5e1; font-size: 15.5px; }
+  .taskforce-intro p b { color: #fff; }
+
+  .agents-grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  }
+  .agent {
+    background: linear-gradient(180deg, rgba(139,92,246,.06), rgba(6,182,212,.03));
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    transition: border-color .2s, transform .2s;
+  }
+  .agent:hover { border-color: rgba(139,92,246,.4); transform: translateY(-2px); }
+  .agent .head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .agent .avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-weight: 800; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .agent .meta .name { font-size: 16px; font-weight: 700; color: #fff; }
+  .agent .meta .role { font-size: 12px; color: #c4b5fd; text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+  .agent .desc { font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
+  .agent .owns {
+    font-size: 12.5px; color: #94a3b8;
+    border-top: 1px dashed rgba(139,92,246,.18);
+    padding-top: 10px;
+  }
+  .agent .owns b { color: #c4b5fd; font-weight: 600; }
+  .agent .status {
+    position: absolute; top: 14px; right: 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #4ade80; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .8px;
+  }
+  .agent .status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px rgba(74,222,128,.7);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
+  }
+
+  .orchestration {
+    margin-top: 28px;
+    background: rgba(7,9,15,.6);
+    border: 1px solid rgba(139,92,246,.2);
+    border-radius: 14px;
+    padding: 26px;
+  }
+  .orchestration h3 { color: #c4b5fd; font-size: 18px; margin-bottom: 14px; }
+  .orchestration .flow {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin-top: 10px;
+  }
+  .orchestration .pill {
+    background: rgba(139,92,246,.1);
+    border: 1px solid rgba(139,92,246,.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #c4b5fd;
+    font-weight: 600;
+  }
+  .orchestration .pill.lead { background: rgba(6,182,212,.1); border-color: rgba(6,182,212,.3); color: #67e8f9; }
+  .orchestration .pill.outcome { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.3); color: #86efac; }
+  .orchestration .arr { color: #64748b; font-size: 16px; }
+
   @media (max-width: 640px) {
     .voice-cta { display: none; }
     .step { flex-direction: column; gap: 12px; }
@@ -243,6 +326,7 @@
       <a href="#what">What</a>
       <a href="#why">Why</a>
       <a href="#benefits">Benefits</a>
+      <a href="#taskforce">Taskforce</a>
       <a href="#how">How</a>
       <a href="#diagram">Architecture</a>
       <a href="#talk">Key Messages</a>
@@ -351,6 +435,166 @@
         <p>We meet prospects where they already are — even if they aren't on RinglyPro yet.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- AGENTIC TASKFORCE -->
+<section class="block" id="taskforce">
+  <div class="wrap">
+    <h2>The Agentic Taskforce</h2>
+    <p class="lede">When a finding is activated, you are not configuring software. You are deploying an AI agent. Every fix workflow is owned by a specialist that runs around the clock inside the customer's account — like a Google Enterprise agent team, but tuned for the sales floor.</p>
+
+    <div class="taskforce-intro">
+      <p>Each agent has a <b>name</b>, a <b>role</b>, and a <b>specific KPI it owns</b>. They run in parallel, hand off context to each other, and report back to a single supervisor. The customer keeps full visibility — every action is logged, every outcome is measured.</p>
+    </div>
+
+    <div class="agents-grid">
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">R</div>
+          <div class="meta">
+            <div class="name">Rachel</div>
+            <div class="role">Voice Concierge</div>
+          </div>
+        </div>
+        <div class="desc">Answers every inbound call, qualifies the caller, books the meeting. The face of the front desk that never sleeps.</div>
+        <div class="owns"><b>Owns:</b> Missed Calls · After-Hours Coverage</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">A</div>
+          <div class="meta">
+            <div class="name">Ana</div>
+            <div class="role">Bilingual Lead Responder</div>
+          </div>
+        </div>
+        <div class="desc">Calls every new lead within 60 seconds in English or Spanish. Closes the speed-to-lead gap that kills most pipelines.</div>
+        <div class="owns"><b>Owns:</b> Lead Response Time · Hispanic Market Coverage</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">L</div>
+          <div class="meta">
+            <div class="name">Lina</div>
+            <div class="role">Pipeline Nurturer</div>
+          </div>
+        </div>
+        <div class="desc">Reactivates stale leads with personalized sequences, scores intent, and only escalates the warm ones to a human rep.</div>
+        <div class="owns"><b>Owns:</b> Stale Leads · Engagement Failures</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">S</div>
+          <div class="meta">
+            <div class="name">Sentinel</div>
+            <div class="role">Pipeline Health Monitor</div>
+          </div>
+        </div>
+        <div class="desc">Watches every deal stage continuously. Flags stuck deals, missing next-steps, and forecast risk before the sales manager has to ask.</div>
+        <div class="owns"><b>Owns:</b> Pipeline Health · Deal Velocity</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">N</div>
+          <div class="meta">
+            <div class="name">Nova</div>
+            <div class="role">No-Show Reducer</div>
+          </div>
+        </div>
+        <div class="desc">Confirms appointments, sends smart reminders, and auto-rebooks missed meetings into the next available slot.</div>
+        <div class="owns"><b>Owns:</b> No-Shows · Meeting Conversion</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">V</div>
+          <div class="meta">
+            <div class="name">Vault</div>
+            <div class="role">Revenue Leak Hunter</div>
+          </div>
+        </div>
+        <div class="desc">Cross-checks calls, contacts, and deals to surface unbilled work, abandoned quotes, and contracts close to expiration.</div>
+        <div class="owns"><b>Owns:</b> Revenue Leaks · Renewals</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">O</div>
+          <div class="meta">
+            <div class="name">Origin</div>
+            <div class="role">Source ROI Auditor</div>
+          </div>
+        </div>
+        <div class="desc">Ranks every lead source by close rate and cost. Tells marketing exactly where to double down and where to cut spend.</div>
+        <div class="owns"><b>Owns:</b> Lead Sources · Marketing Attribution</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">C</div>
+          <div class="meta">
+            <div class="name">Coach</div>
+            <div class="role">Conversion Reviewer</div>
+          </div>
+        </div>
+        <div class="desc">Listens to call transcripts, scores rep performance, and produces weekly coaching notes per rep — without a manager lifting a finger.</div>
+        <div class="owns"><b>Owns:</b> Call Conversion · Rep Performance</div>
+      </div>
+
+      <div class="agent">
+        <div class="status"><span class="dot"></span>Live</div>
+        <div class="head">
+          <div class="avatar">+</div>
+          <div class="meta">
+            <div class="name">Custom Agent</div>
+            <div class="role">Built On Demand</div>
+          </div>
+        </div>
+        <div class="desc">Need an agent that does something specific to your industry? We build and deploy it on the same orchestration layer in days, not months.</div>
+        <div class="owns"><b>Owns:</b> Whatever your business needs</div>
+      </div>
+
+    </div>
+
+    <div class="orchestration">
+      <h3>How they work together</h3>
+      <p style="color:#cbd5e1;font-size:15px;">A single supervisor agent routes work between the specialists, carries context from one step to the next, and escalates to a human only when judgment is required. The customer sees one dashboard; the work happens across the whole team.</p>
+      <div class="flow">
+        <span class="pill lead">New Lead Arrives</span>
+        <span class="arr">→</span>
+        <span class="pill">Ana qualifies in 60s</span>
+        <span class="arr">→</span>
+        <span class="pill">Nova schedules meeting</span>
+        <span class="arr">→</span>
+        <span class="pill">Sentinel tracks the deal</span>
+        <span class="arr">→</span>
+        <span class="pill">Lina nurtures if it stalls</span>
+        <span class="arr">→</span>
+        <span class="pill outcome">Closed Deal</span>
+      </div>
+      <p style="color:#94a3b8;font-size:13.5px;margin-top:14px;font-style:italic;">No prompts. No "tell the agent what to do." The taskforce already knows.</p>
+    </div>
+
+    <h3>Why this matters versus a single chatbot</h3>
+    <ul class="plain">
+      <li><b>Specialization beats generalization.</b> One agent trying to do everything performs worse than ten agents that each own one job — same reason a hospital has specialists, not one super-doctor.</li>
+      <li><b>Parallel, not sequential.</b> The taskforce works on dozens of leads, deals, and conversations simultaneously. A human team of the same size would cost millions.</li>
+      <li><b>Audit-ready by default.</b> Every agent decision is logged with the data it acted on, the rule it applied, and the outcome it produced. Compliance, fraud, and coaching all benefit.</li>
+      <li><b>One bill, one supervisor, one dashboard.</b> The complexity is on our side. The customer just sees results.</li>
+    </ul>
   </div>
 </section>
 
