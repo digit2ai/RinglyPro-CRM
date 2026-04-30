@@ -103,7 +103,8 @@
 @media (max-width:640px) { .dnx-brand-logo { height:56px; } }
 @media (max-width:420px) { .dnx-brand-logo { height:44px; } }
 /* elevenlabs widget hide powered-by */
-.dnx-convai-mount { position:fixed; bottom:20px; right:20px; z-index:9998; }
+.dnx-convai-mount { position:fixed; top:78px; left:50%; transform:translateX(-50%); z-index:9998; }
+elevenlabs-convai { position:fixed !important; top:78px !important; left:50% !important; right:auto !important; bottom:auto !important; transform:translateX(-50%) !important; z-index:9998 !important; }
 elevenlabs-convai a[href*="elevenlabs"],
 elevenlabs-convai [class*="powered" i],
 elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !important; overflow:hidden !important; }
@@ -789,7 +790,7 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-ftr-brand img.dnx-brand-logo { height:72px; }
 
   /* ElevenLabs widget — lift slightly above iOS safe-area */
-  elevenlabs-convai { bottom:max(16px, env(safe-area-inset-bottom)) !important; right:12px !important; }
+  elevenlabs-convai { top:max(70px, env(safe-area-inset-top)) !important; bottom:auto !important; right:auto !important; left:50% !important; transform:translateX(-50%) !important; }
 }
 
 @media (max-width:420px) {
