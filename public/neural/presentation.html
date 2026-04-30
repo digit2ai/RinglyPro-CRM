@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RinglyPro Neural — What It Is, Why It Matters, How It Works</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #07090f;
+    color: #e2e8f0;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #c4b5fd; text-decoration: none; }
+  a:hover { color: #fff; }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(7,9,15,.9); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(139,92,246,.15);
+    padding: 14px 0;
+  }
+  header .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+  .logo-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: #fff;
+  }
+  .logo span { background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-links { display: flex; gap: 18px; font-size: 13px; color: #94a3b8; flex-wrap: wrap; }
+  .nav-links a:hover { color: #c4b5fd; }
+
+  /* Hero */
+  .hero { padding: 72px 0 48px; text-align: center; }
+  .hero h1 { font-size: clamp(32px, 5vw, 52px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+  .hero h1 em { font-style: normal; background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: #94a3b8; font-size: 18px; max-width: 720px; margin: 0 auto 28px; }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 26px; border-radius: 10px;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-weight: 600; font-size: 15px;
+    transition: transform .15s, box-shadow .2s;
+  }
+  .hero-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,92,246,.35); color: #fff; }
+  .voice-hint {
+    display: inline-block; margin-top: 18px; padding: 8px 16px;
+    border: 1px dashed rgba(139,92,246,.35); border-radius: 999px;
+    font-size: 13px; color: #c4b5fd;
+  }
+
+  /* Section */
+  section.block { padding: 48px 0; border-top: 1px solid rgba(139,92,246,.08); }
+  section.block h2 {
+    font-size: 28px; font-weight: 800; margin-bottom: 8px;
+  }
+  section.block .lede {
+    color: #94a3b8; font-size: 16px; margin-bottom: 28px; max-width: 760px;
+  }
+  section.block h3 {
+    font-size: 18px; font-weight: 700; margin: 28px 0 10px; color: #c4b5fd;
+  }
+
+  /* Plain bullet list */
+  ul.plain { list-style: none; padding: 0; }
+  ul.plain li {
+    padding: 12px 0 12px 32px;
+    position: relative;
+    border-bottom: 1px solid rgba(139,92,246,.08);
+    font-size: 15.5px;
+  }
+  ul.plain li:last-child { border-bottom: none; }
+  ul.plain li::before {
+    content: "→";
+    position: absolute; left: 4px; top: 12px;
+    color: #06b6d4; font-weight: 700;
+  }
+  ul.plain li b { color: #fff; }
+
+  /* Card grid (benefits) */
+  .grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .card {
+    background: rgba(139,92,246,.05);
+    border: 1px solid rgba(139,92,246,.15);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .card .ico {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(139,92,246,.25), rgba(6,182,212,.25));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: #c4b5fd;
+    margin-bottom: 14px;
+  }
+  .card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+  .card p { font-size: 14px; color: #94a3b8; }
+
+  /* Steps (How it works) */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex; gap: 20px; padding: 20px;
+    background: rgba(139,92,246,.04);
+    border: 1px solid rgba(139,92,246,.1);
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-weight: 800; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body h4 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .step-body p { font-size: 14.5px; color: #cbd5e1; }
+  .step-body .tip { display: block; margin-top: 8px; font-size: 13px; color: #94a3b8; font-style: italic; }
+
+  /* Diagram */
+  .diagram {
+    background: #0b0f1a;
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 14px;
+    padding: 30px 22px;
+    overflow-x: auto;
+  }
+  .diagram-stack { display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 640px; }
+  .layer {
+    width: 100%; max-width: 720px;
+    border: 1px solid rgba(139,92,246,.25);
+    border-radius: 12px;
+    padding: 16px 20px;
+    background: rgba(139,92,246,.05);
+    text-align: center;
+  }
+  .layer .lname { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #06b6d4; font-weight: 700; margin-bottom: 6px; }
+  .layer .ldetail { font-size: 14px; color: #e2e8f0; }
+  .layer.user { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.3); }
+  .layer.brain { background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.4); }
+  .layer.brain .ldetail b { color: #c4b5fd; }
+  .layer.action { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.3); }
+  .layer.action .lname { color: #4ade80; }
+  .arrow { color: #64748b; font-size: 22px; }
+
+  .analyzer-row {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px; margin-top: 12px;
+  }
+  .analyzer {
+    background: rgba(7,9,15,.5);
+    border: 1px solid rgba(139,92,246,.15);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #c4b5fd;
+    text-align: left;
+  }
+
+  /* Talking points */
+  .talkbox {
+    background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.05));
+    border: 1px solid rgba(139,92,246,.25);
+    border-left: 4px solid #8b5cf6;
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-top: 18px;
+  }
+  .talkbox h4 { color: #c4b5fd; font-size: 14px; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px; }
+  .talkbox blockquote { font-size: 16px; color: #e2e8f0; line-height: 1.7; font-style: italic; }
+  .talkbox blockquote::before { content: "“"; font-size: 32px; color: #8b5cf6; margin-right: 4px; vertical-align: -8px; }
+  .talkbox blockquote::after { content: "”"; font-size: 32px; color: #8b5cf6; margin-left: 4px; vertical-align: -8px; }
+
+  /* FAQ */
+  details {
+    background: rgba(139,92,246,.04);
+    border: 1px solid rgba(139,92,246,.12);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+  details[open] { border-color: rgba(139,92,246,.3); }
+  summary {
+    cursor: pointer; font-weight: 600; color: #fff; font-size: 15px;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "+ "; color: #06b6d4; font-weight: 800; }
+  details[open] summary::before { content: "− "; }
+  details p { margin-top: 10px; color: #94a3b8; font-size: 14.5px; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid rgba(139,92,246,.12);
+    padding: 30px 0 60px;
+    text-align: center;
+    color: #64748b; font-size: 13px;
+  }
+  footer a { color: #94a3b8; }
+
+  /* ElevenLabs widget callout */
+  .voice-cta {
+    position: fixed; bottom: 24px; left: 24px;
+    background: rgba(7,9,15,.85); backdrop-filter: blur(10px);
+    border: 1px solid rgba(139,92,246,.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px; color: #c4b5fd;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    z-index: 40;
+    max-width: 240px;
+    pointer-events: none;
+  }
+  .voice-cta b { color: #fff; }
+  .voice-cta::after {
+    content: "↘"; display: block; margin-top: 4px; color: #06b6d4; font-size: 18px;
+  }
+
+  @media (max-width: 640px) {
+    .voice-cta { display: none; }
+    .step { flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap row">
+    <div class="logo">
+      <div class="logo-icon">N</div>
+      <div>RinglyPro <span>Neural</span></div>
+    </div>
+    <nav class="nav-links">
+      <a href="#what">What</a>
+      <a href="#why">Why</a>
+      <a href="#benefits">Benefits</a>
+      <a href="#how">How</a>
+      <a href="#diagram">Architecture</a>
+      <a href="#talk">Talking Points</a>
+      <a href="dashboard.html">Live Demo →</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero wrap">
+  <h1>RinglyPro <em>Neural</em><br>The 30-Second CRM Health Check</h1>
+  <p>Drop in any CRM export. In half a minute, see exactly where revenue is leaking — and activate one-click fixes.</p>
+  <a class="hero-cta" href="dashboard.html">Try The Live Demo →</a>
+  <div class="voice-hint">Tip: tap the voice agent in the corner to have this page explained out loud.</div>
+</div>
+
+<!-- WHAT IT IS -->
+<section class="block" id="what">
+  <div class="wrap">
+    <h2>What It Is</h2>
+    <p class="lede">RinglyPro Neural is a free, instant diagnostic tool. A prospect uploads a contact or call export from their CRM, and the page scores their sales operation, lists every problem it can find, and offers a one-click fix for each one.</p>
+    <ul class="plain">
+      <li><b>A diagnostic, not a database.</b> Nothing is stored on our servers. The whole analysis happens in the visitor's browser.</li>
+      <li><b>Works with the four CRMs that matter.</b> GoHighLevel, HubSpot, Zoho, and RinglyPro itself.</li>
+      <li><b>Built for sales conversations.</b> The output is a screen the prospect wants to talk about — that's the demo opener.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- WHAT IT IS USED FOR -->
+<section class="block" id="usedfor">
+  <div class="wrap">
+    <h2>What It Is Used For</h2>
+    <p class="lede">It is the top of the funnel. Three jobs, in this order:</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ico">1</div>
+        <h4>Lead generation</h4>
+        <p>Anyone with a CRM can drop a file in and get value. They become a known prospect the moment they upload.</p>
+      </div>
+      <div class="card">
+        <div class="ico">2</div>
+        <h4>Sales conversation starter</h4>
+        <p>Instead of pitching features, our reps walk into a call and discuss findings the prospect already accepts as real.</p>
+      </div>
+      <div class="card">
+        <div class="ico">3</div>
+        <h4>Workflow activation</h4>
+        <p>Each finding has a fix workflow. Click "Activate" and our automation engine takes the action — that's the upsell hook.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY IT IS NEEDED -->
+<section class="block" id="why">
+  <div class="wrap">
+    <h2>Why It Is Needed</h2>
+    <p class="lede">Three painful truths about most sales operations:</p>
+    <ul class="plain">
+      <li><b>Most teams don't know what's broken.</b> Their CRM has the answer, but no one has time to dig through it. Findings stay invisible until they cost a deal.</li>
+      <li><b>Generic pitches don't convert.</b> A salesperson saying "we improve sales" gets ignored. A salesperson saying "you missed 47 calls last month and 12 of those leads went cold" gets a meeting.</li>
+      <li><b>Tools sell themselves when the problem is concrete.</b> Once the prospect sees their own gaps with their own numbers, the question shifts from "do I need this?" to "how fast can I have it?"</li>
+    </ul>
+    <div class="talkbox">
+      <h4>One-line summary</h4>
+      <blockquote>Neural turns the prospect's own data into the strongest sales argument we will ever make.</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="block" id="benefits">
+  <div class="wrap">
+    <h2>The Benefits</h2>
+    <p class="lede">For the prospect, for our sales team, and for the business:</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ico">⚡</div>
+        <h4>Instant value</h4>
+        <p>30 seconds from drop to diagnosis. No signup, no email gate, no waiting.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔒</div>
+        <h4>Private by design</h4>
+        <p>The CSV never leaves the browser. Big talking point for security-sensitive buyers.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🎯</div>
+        <h4>Specific findings</h4>
+        <p>Real numbers from their data — missed calls, stale leads, slow response times — not generic claims.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🛠</div>
+        <h4>One-click fixes</h4>
+        <p>Every problem ships with a workflow that solves it. The prospect sees the answer in the same screen as the diagnosis.</p>
+      </div>
+      <div class="card">
+        <div class="ico">📈</div>
+        <h4>Higher demo conversion</h4>
+        <p>Prospects who see their own gaps book demos at a much higher rate than cold marketing traffic.</p>
+      </div>
+      <div class="card">
+        <div class="ico">🤝</div>
+        <h4>Works for any CRM</h4>
+        <p>We meet prospects where they already are — even if they aren't on RinglyPro yet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="block" id="how">
+  <div class="wrap">
+    <h2>How It Works — In Plain English</h2>
+    <p class="lede">Seven steps, all happening live in the prospect's browser.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>The prospect drops a file</h4>
+          <p>They export contacts or calls from their CRM as a CSV — every CRM has this — and drag it onto our page.</p>
+          <span class="tip">Or they click one of our four sample files and skip the export step entirely.</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>We read the file</h4>
+          <p>The browser opens the CSV and reads its column names and rows. Nothing is uploaded anywhere.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>We figure out which CRM it came from</h4>
+          <p>Each CRM has its own column-name fingerprint. We look at the headers and say "this is HubSpot" — the green banner that pops up confirming the match is what builds trust.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>We translate everything to a common language</h4>
+          <p>Different CRMs use different field names — "First Name" vs "firstName" vs "FIRSTNAME." We rename everything to one shared format so the rest of the analysis doesn't care where the data came from.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Ten checks scan the data</h4>
+          <p>Each check looks for one specific problem — missed calls, slow lead response, no-shows, stale pipeline, after-hours coverage gaps, and so on. Each one that finds an issue creates a "Finding."</p>
+          <span class="tip">These are smart, hand-tuned business rules — not a black box. Reproducible and explainable.</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h4>We score the operation</h4>
+          <p>Start at 100, subtract points for each finding (more for critical ones, less for medium ones). The result is the big health score in the ring.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <h4>We show findings + fixes side-by-side</h4>
+          <p>Every finding has an "Activate Fix" button. Clicking it launches a real automation workflow on our backend — that is the moment the prospect becomes a paying customer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH DIAGRAM -->
+<section class="block" id="diagram">
+  <div class="wrap">
+    <h2>Technical Architecture</h2>
+    <p class="lede">Top to bottom — what happens when a prospect uploads a file:</p>
+
+    <div class="diagram">
+      <div class="diagram-stack">
+
+        <div class="layer user">
+          <div class="lname">User</div>
+          <div class="ldetail">Prospect's browser — drops a CSV file</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Static Page</div>
+          <div class="ldetail">dashboard.html (delivered by Render / Express static)</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Step 1 — Read</div>
+          <div class="ldetail">Browser reads the CSV using FileReader. <b>Zero network calls.</b></div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Step 2 — Detect CRM</div>
+          <div class="ldetail">Match column headers → GoHighLevel, HubSpot, Zoho, or RinglyPro</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Step 3 — Normalize</div>
+          <div class="ldetail">Translate every CRM's field names into one shared schema</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer brain">
+          <div class="lname">Step 4 — Neural Analyzer Pack</div>
+          <div class="ldetail">Ten independent business-rule checks running in parallel:</div>
+          <div class="analyzer-row">
+            <div class="analyzer">Missed Calls</div>
+            <div class="analyzer">Call Conversion</div>
+            <div class="analyzer">Lead Response</div>
+            <div class="analyzer">No-Shows</div>
+            <div class="analyzer">Engagement</div>
+            <div class="analyzer">Lead Sources</div>
+            <div class="analyzer">Stale Leads</div>
+            <div class="analyzer">After-Hours</div>
+            <div class="analyzer">Revenue Leaks</div>
+            <div class="analyzer">Pipeline Health</div>
+          </div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Step 5 — Score + Findings</div>
+          <div class="ldetail">Health score (0–100) + list of findings, each with a pre-built fix workflow</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer">
+          <div class="lname">Step 6 — Render</div>
+          <div class="ldetail">Score ring, KPI cards, finding cards with Show Fix / Activate Fix buttons</div>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="layer action">
+          <div class="lname">Step 7 — Activate</div>
+          <div class="ldetail">Click "Activate Fix" → POST to RinglyPro automation engine → real workflow runs in the customer's account</div>
+        </div>
+
+      </div>
+    </div>
+
+    <h3>What's special about this design</h3>
+    <ul class="plain">
+      <li><b>Browser-only analysis.</b> No infrastructure cost per prospect. The page can serve a million CSVs without scaling a backend.</li>
+      <li><b>Privacy is automatic.</b> Because the browser does the work, the prospect's contact list never touches our servers.</li>
+      <li><b>Pluggable analyzers.</b> Adding a new check is one function — no architecture changes, no DB migrations.</li>
+      <li><b>Activate is the seam.</b> That single button is where free demo becomes paid customer. Everything before it is generosity; everything after it is product.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SPEAKER TALKING POINTS -->
+<section class="block" id="talk">
+  <div class="wrap">
+    <h2>Talking Points (When You're Presenting)</h2>
+    <p class="lede">Quick lines you can use depending on who's in the room:</p>
+
+    <div class="talkbox">
+      <h4>For a CEO / business buyer</h4>
+      <blockquote>Most CRMs are 80 percent unused. Neural surfaces the 20 percent of activity that's costing you deals — in the time it takes to refill your coffee.</blockquote>
+    </div>
+
+    <div class="talkbox">
+      <h4>For a Sales VP</h4>
+      <blockquote>Drop your team's last 90 days of calls into Neural and you'll see exactly which reps are leaking revenue, which sources never get followed up, and where pipeline goes to die.</blockquote>
+    </div>
+
+    <div class="talkbox">
+      <h4>For a technical buyer / IT</h4>
+      <blockquote>It runs entirely in the browser. Your data never hits our servers, so there's nothing to vet, nothing to sign, nothing to worry about.</blockquote>
+    </div>
+
+    <div class="talkbox">
+      <h4>For an investor / partner</h4>
+      <blockquote>Neural is our customer acquisition engine. It converts skeptical strangers into informed prospects in 30 seconds, then hands them a one-click upsell.</blockquote>
+    </div>
+
+    <div class="talkbox">
+      <h4>The killer demo line</h4>
+      <blockquote>Don't take our word for it. Drop in your own export and we'll show you what's broken before you finish reading this sentence.</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="block">
+  <div class="wrap">
+    <h2>Anticipated Questions</h2>
+    <p class="lede">Be ready for these:</p>
+
+    <details>
+      <summary>Is the "Neural" name AI?</summary>
+      <p>The findings come from carefully tuned business rules, not a generative model. We chose rules over AI on purpose: rules are reproducible, explainable, and cannot hallucinate a problem the data doesn't actually show. The "Neural" branding refers to the network of checks running in parallel.</p>
+    </details>
+
+    <details>
+      <summary>Where does the data go?</summary>
+      <p>Nowhere. The CSV is read inside the browser tab and discarded when the tab closes. No server upload, no logging, no storage.</p>
+    </details>
+
+    <details>
+      <summary>What happens when I click "Activate Fix"?</summary>
+      <p>That is where Neural connects to the RinglyPro platform. Activating a fix triggers a real automation workflow inside the customer's account — for example, an auto-callback for missed calls or a reminder sequence for stale leads.</p>
+    </details>
+
+    <details>
+      <summary>What if my CRM isn't one of the four supported?</summary>
+      <p>Most CRMs can export in a CSV format close to one of the supported four — usually HubSpot's. We can also add a custom mapper in a few hours.</p>
+    </details>
+
+    <details>
+      <summary>How is the health score calculated?</summary>
+      <p>The score starts at 100 and loses points for each finding. Critical findings cost more, medium findings cost less. The exact weights are tuned so the score lines up with what an experienced sales operator would say after looking at the same data.</p>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>RinglyPro Neural — <a href="dashboard.html">live demo</a> · <a href="index.html">overview</a> · <a href="intelligence.html">intelligence</a></div>
+    <div style="margin-top:8px;">Voice agent powered by ElevenLabs · CSV analyzed entirely in your browser.</div>
+  </div>
+</footer>
+
+<div class="voice-cta">Have this page <b>explained out loud</b> — tap the voice agent</div>
+
+<!-- ElevenLabs Conversational AI Widget -->
+<elevenlabs-convai agent-id="agent_5001kn4s9jsqernanpgc4ejh1a0e"></elevenlabs-convai>
+<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+</body>
+</html>
