@@ -403,7 +403,10 @@ app.get('*', (req, res) => {
     if (fs.existsSync(intakeFieldsMigrationPath)) {
       try {
         const sql = fs.readFileSync(intakeFieldsMigrationPath, 'utf8');
-        const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('--'));
+        // Strip line comments first, THEN split on ; (so a chunk that starts
+        // with a -- comment block doesn't get filtered out wholesale)
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
         for (const stmt of statements) {
           try { await sequelize.query(stmt + ';'); } catch (e) {
             if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
