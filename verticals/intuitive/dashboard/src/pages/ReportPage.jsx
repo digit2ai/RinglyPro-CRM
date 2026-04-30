@@ -165,8 +165,10 @@ export default function ReportPage({ projectId: propId }) {
 
   return (
     <div className="report-root bg-white text-slate-900 min-h-screen">
-      {/* Print CSS injected once */}
+      {/* Print CSS + professional report typography */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700;8..60,900&family=Inter:wght@400;500;600;700&display=swap');
+
         @media print {
           body { background: white !important; }
           .no-print { display: none !important; }
@@ -176,14 +178,22 @@ export default function ReportPage({ projectId: propId }) {
           .report-root { padding: 0 !important; }
           .report-page { padding: 0.5in 0.6in !important; max-width: 100% !important; }
           @page { size: letter portrait; margin: 0; }
-          h1, h2, h3 { color: #0f172a !important; }
+          h1, h2, h3, h4 { color: #0f172a !important; }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
         }
-        .report-root { font-family: 'Georgia', 'Times New Roman', serif; }
-        .report-root .font-sans, .report-root table, .report-root .text-xs, .report-root .text-sm,
-        .report-root .text-\\[10px\\], .report-root .text-\\[11px\\] { font-family: 'Inter', system-ui, sans-serif; }
-        .font-serif { font-family: 'Georgia', 'Times New Roman', serif; }
+        .report-root { font-family: 'Source Serif 4', 'Source Serif Pro', 'Charter', 'Cambria', Georgia, serif; font-feature-settings: "kern" 1, "liga" 1, "onum" 1; -webkit-font-smoothing: antialiased; }
+        .report-root h1, .report-root h2, .report-root h3, .report-root h4, .report-root .font-serif {
+          font-family: 'Source Serif 4', 'Source Serif Pro', 'Charter', 'Cambria', Georgia, serif;
+          font-feature-settings: "kern" 1, "liga" 1, "lnum" 1;
+          letter-spacing: -0.01em;
+        }
+        .report-root table, .report-root .font-sans,
+        .report-root .text-xs, .report-root .text-sm,
+        .report-root .text-\\[10px\\], .report-root .text-\\[11px\\] {
+          font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+          font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+        }
       `}</style>
 
       {/* Toolbar (hidden in print) */}
@@ -207,9 +217,9 @@ export default function ReportPage({ projectId: propId }) {
         {/* ─── COVER PAGE ─── */}
         <div className="cover-page text-center" style={{ minHeight: '9in', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingTop: '1.2in', paddingBottom: '0.6in' }}>
           <div>
-            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" style={{ width: '180px', height: 'auto', margin: '0 auto', filter: 'invert(0.85)' }} />
-            <div className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-500">SurgicalMind AI</div>
-            <div className="text-[10px] text-slate-400 mt-1">Powered by RinglyPro</div>
+            <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" style={{ width: '200px', height: 'auto', margin: '0 auto' }} />
+            <div className="mt-4 text-xs uppercase tracking-[0.3em] text-slate-600 font-sans font-semibold">SurgicalMind AI</div>
+            <div className="text-[10px] text-slate-500 mt-1 font-sans tracking-wider uppercase">Powered by Digit2AI</div>
           </div>
 
           <div className="text-center">
@@ -596,9 +606,9 @@ export default function ReportPage({ projectId: propId }) {
             <li>Implementation timeline and Go/No-Go decision</li>
           </ol>
 
-          <div className="mt-10 pt-6 border-t border-slate-300 text-xs text-slate-500">
-            <p>Prepared by SurgicalMind AI -- Powered by RinglyPro -- {reportDate}</p>
-            <p className="mt-1">Report ID: {p.project_code || `INTV-${id}`} -- Confidential</p>
+          <div className="mt-10 pt-6 border-t border-slate-300 text-xs text-slate-500 font-sans">
+            <p>Prepared by SurgicalMind AI &middot; Powered by Digit2AI &middot; {reportDate}</p>
+            <p className="mt-1">Report ID: {p.project_code || `INTV-${id}`} &middot; Confidential</p>
           </div>
         </Section>
       </div>
