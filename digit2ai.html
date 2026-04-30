@@ -144,13 +144,30 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-nav.dnx-open { display:flex; }
   .dnx-nav a { padding:12px 16px; }
   .dnx-menubtn { display:flex; }
-  /* compact sign-in on tablet */
+  /* compact CTAs on tablet */
   .dnx-hdr-cta .dnx-btn-primary { padding:8px 14px; font-size:13px; }
   .dnx-hdr-cta .dnx-btn-presentation { padding:8px 12px; font-size:13px; }
 }
 @media (max-width:560px) {
-  /* hide sign-in button in header on small screens — it's in the nav menu */
-  .dnx-hdr-cta .dnx-btn-primary { display:none; }
+  /* Keep Presentation + Project Request visible on phones --
+     they are the primary conversion CTAs and were getting lost
+     in the hamburger menu. Tighten padding/font so they fit. */
+  .dnx-hdr-cta { gap:6px; }
+  .dnx-hdr-cta .dnx-lang { padding:6px 8px; font-size:12px; }
+  .dnx-hdr-cta .dnx-btn-presentation {
+    padding:6px 10px; font-size:11px; gap:3px;
+  }
+  .dnx-hdr-cta .dnx-btn-presentation svg { width:11px; height:11px; }
+  .dnx-hdr-cta .dnx-btn-primary {
+    padding:6px 10px; font-size:11px;
+  }
+  .dnx-hdr-cta .dnx-btn-primary .dnx-arrow { display:none; }
+  /* Brand logo a touch smaller so all buttons + hamburger fit one row */
+  .dnx-brand-logo { max-height:28px; }
+}
+@media (max-width:380px) {
+  /* Last-resort: hide the Presentation ghost button on very narrow
+     phones; Project Request stays as the primary CTA. */
   .dnx-hdr-cta .dnx-btn-presentation { display:none; }
 }
 
