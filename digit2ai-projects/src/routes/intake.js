@@ -92,7 +92,8 @@ router.post('/public/request', async (req, res) => {
 
     // Sensitive data: collapse free-text answer to boolean + keep detail
     const sensitiveAnswer = (b.sensitive_data || '').toString().trim();
-    const sensitiveBool = sensitiveAnswer && /^yes|pii|phi|hipaa|financial|banking|regulated/i.test(sensitiveAnswer);
+    const sensitiveBool = sensitiveAnswer.length > 0
+      && /^yes|pii|phi|hipaa|financial|banking|regulated/i.test(sensitiveAnswer);
 
     // 3) Project + intake row
     const project = await Project.create({
