@@ -349,6 +349,53 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
 }
 
 /* ============================================================
+   NEURAL COMPONENTS (metrics, agents, arch, pillars, table, use, trust)
+   ============================================================ */
+.dnx-metric-bar { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+.dnx-metric-tile { padding:28px 24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); text-align:left; }
+.dnx-metric-num { font-family:var(--font-display); font-style:italic; font-weight:400; font-size:48px; line-height:1; background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:10px; }
+.dnx-metric-lbl { font-size:13px; color:var(--text-dim); font-weight:500; letter-spacing:0.02em; }
+@media (max-width:920px) { .dnx-metric-bar { grid-template-columns:repeat(2, 1fr); } }
+@media (max-width:600px) { .dnx-metric-bar { grid-template-columns:1fr; } }
+
+.dnx-agent-card { padding:24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); transition:border-color 240ms ease, background 240ms ease; }
+.dnx-agent-card:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
+.dnx-agent-name { font-size:20px; font-weight:600; letter-spacing:-0.01em; margin-bottom:4px; color:var(--text); }
+.dnx-agent-role { font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em; color:var(--accent-cyan); text-transform:uppercase; margin-bottom:14px; }
+.dnx-agent-owns { font-size:12.5px; color:var(--text-faint); margin-bottom:12px; line-height:1.5; }
+.dnx-agent-owns strong { color:var(--text-dim); font-weight:500; }
+.dnx-agent-tag { font-size:14px; color:var(--text-dim); line-height:1.55; font-style:italic; }
+
+.dnx-arch-stack { display:flex; flex-direction:column; gap:10px; max-width:880px; margin:0 auto; }
+.dnx-arch-layer { padding:18px 22px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); display:grid; grid-template-columns:200px 1fr; gap:18px; align-items:center; }
+.dnx-arch-layer.dnx-arch-core { background:linear-gradient(180deg, rgba(34,211,238,0.08), rgba(139,92,246,0.04)); border-color:rgba(34,211,238,0.35); }
+.dnx-arch-label { font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; color:var(--accent-cyan); font-weight:600; text-transform:uppercase; }
+.dnx-arch-desc { font-size:14px; color:var(--text-dim); line-height:1.55; }
+@media (max-width:600px) { .dnx-arch-layer { grid-template-columns:1fr; gap:8px; } }
+
+.dnx-pillar-card { padding:28px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); }
+.dnx-pillar-card h3 { font-size:20px; font-weight:600; margin-bottom:14px; letter-spacing:-0.01em; }
+.dnx-pillar-card ul { list-style:none; padding:0; margin:0; }
+.dnx-pillar-card li { font-size:14px; color:var(--text-dim); padding:7px 0 7px 18px; position:relative; line-height:1.5; }
+.dnx-pillar-card li::before { content:""; position:absolute; left:0; top:13px; width:8px; height:8px; border-radius:50%; background:var(--grad-primary); }
+
+.dnx-cmp-table { width:100%; border-collapse:separate; border-spacing:0; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:var(--bg-card); }
+.dnx-cmp-table thead th { font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); padding:18px 20px; text-align:left; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); font-weight:600; }
+.dnx-cmp-table thead th:last-child { color:var(--accent-cyan); }
+.dnx-cmp-table tbody td { padding:16px 20px; font-size:14px; color:var(--text-dim); border-bottom:1px solid var(--border); line-height:1.5; }
+.dnx-cmp-table tbody tr:last-child td { border-bottom:none; }
+.dnx-cmp-table tbody td:first-child { color:var(--text); font-weight:500; }
+.dnx-cmp-table tbody td:last-child { color:var(--text); background:rgba(34,211,238,0.04); }
+.dnx-cmp-wrap { overflow-x:auto; }
+
+.dnx-trust-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+.dnx-trust-item { padding:22px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); }
+.dnx-trust-lbl { font-size:15px; font-weight:600; color:var(--text); margin-bottom:6px; letter-spacing:-0.005em; }
+.dnx-trust-desc { font-size:13.5px; color:var(--text-dim); line-height:1.5; }
+@media (max-width:920px) { .dnx-trust-grid { grid-template-columns:repeat(2, 1fr); } }
+@media (max-width:600px) { .dnx-trust-grid { grid-template-columns:1fr; } }
+
+/* ============================================================
    BENTO / PORTFOLIO
    ============================================================ */
 .dnx-bento {
@@ -1160,6 +1207,282 @@ html, body { max-width:100%; overflow-x:hidden; }
             <h3>Measure and report</h3>
             <p>Every action is logged with the data it acted on, the rule it applied, and the outcome it produced. The score moves; the next finding starts the loop again.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEURAL METRICS -->
+    <section class="dnx-sec" id="neural-metrics" style="padding-top:40px;">
+      <div class="dnx-wrap">
+        <div class="dnx-metric-bar dnx-reveal">
+          <div class="dnx-metric-tile">
+            <div class="dnx-metric-num">8+</div>
+            <div class="dnx-metric-lbl">Specialized AI Agents</div>
+          </div>
+          <div class="dnx-metric-tile">
+            <div class="dnx-metric-num">10</div>
+            <div class="dnx-metric-lbl">Neural Analyzers</div>
+          </div>
+          <div class="dnx-metric-tile">
+            <div class="dnx-metric-num">30s</div>
+            <div class="dnx-metric-lbl">To First Finding</div>
+          </div>
+          <div class="dnx-metric-tile">
+            <div class="dnx-metric-num">24/7</div>
+            <div class="dnx-metric-lbl">Auto-Fix Coverage</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENT ROSTER -->
+    <section class="dnx-sec" id="agents">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">THE TASKFORCE</div>
+          <h2 class="dnx-sec-title">Eight specialists. <em>One supervisor.</em> Every channel.</h2>
+          <p class="dnx-sec-sub" style="margin:0 auto;">A pre-built team of named agents — each owns a domain, each owns a KPI, each operates 24/7 under the MCP server.</p>
+        </div>
+
+        <div class="dnx-grid-3">
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Rachel</div>
+            <div class="dnx-agent-role">Voice Concierge</div>
+            <div class="dnx-agent-owns">Owns <strong>Missed Calls · After-Hours Coverage</strong></div>
+            <div class="dnx-agent-tag">"Answers every inbound call, qualifies the caller, and books the meeting."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Ana</div>
+            <div class="dnx-agent-role">Bilingual Lead Responder</div>
+            <div class="dnx-agent-owns">Owns <strong>Lead Response Time · Hispanic Coverage</strong></div>
+            <div class="dnx-agent-tag">"Calls every new lead inside sixty seconds in English or Spanish."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Lina</div>
+            <div class="dnx-agent-role">Pipeline Nurturer</div>
+            <div class="dnx-agent-owns">Owns <strong>Stale Leads · Engagement Failures</strong></div>
+            <div class="dnx-agent-tag">"Reactivates stale leads with personalized sequences, scores intent."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Sentinel</div>
+            <div class="dnx-agent-role">Pipeline Health Monitor</div>
+            <div class="dnx-agent-owns">Owns <strong>Pipeline Health · Deal Velocity</strong></div>
+            <div class="dnx-agent-tag">"Watches every deal stage continuously. Flags stuck deals."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Nova</div>
+            <div class="dnx-agent-role">No-Show Reducer</div>
+            <div class="dnx-agent-owns">Owns <strong>No-Shows · Meeting Conversion</strong></div>
+            <div class="dnx-agent-tag">"Confirms appointments, sends smart reminders, auto-rebooks missed meetings."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Vault</div>
+            <div class="dnx-agent-role">Revenue Leak Hunter</div>
+            <div class="dnx-agent-owns">Owns <strong>Revenue Leaks · Renewals</strong></div>
+            <div class="dnx-agent-tag">"Cross-checks calls, contacts, and deals to surface unbilled work."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Origin</div>
+            <div class="dnx-agent-role">Source ROI Auditor</div>
+            <div class="dnx-agent-owns">Owns <strong>Lead Sources · Marketing Attribution</strong></div>
+            <div class="dnx-agent-tag">"Ranks every lead source by close rate and cost."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal">
+            <div class="dnx-agent-name">Coach</div>
+            <div class="dnx-agent-role">Conversion Reviewer</div>
+            <div class="dnx-agent-owns">Owns <strong>Call Conversion · Rep Performance</strong></div>
+            <div class="dnx-agent-tag">"Listens to call transcripts, scores rep performance."</div>
+          </div>
+          <div class="dnx-agent-card dnx-reveal" style="border-color:rgba(34,211,238,0.4); background:linear-gradient(180deg, rgba(34,211,238,0.06), rgba(139,92,246,0.03));">
+            <div class="dnx-agent-name">Custom Agent</div>
+            <div class="dnx-agent-role">Built To Spec</div>
+            <div class="dnx-agent-owns">Owns <strong>Whatever your business needs</strong></div>
+            <div class="dnx-agent-tag">"Industry-specific work? We build and deploy in days, not months."</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MCP ARCHITECTURE -->
+    <section class="dnx-sec" id="mcp-architecture">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">MCP ARCHITECTURE</div>
+          <h2 class="dnx-sec-title">A single <em>protocol-native</em> backbone for the entire fleet.</h2>
+        </div>
+
+        <div class="dnx-arch-stack dnx-reveal">
+          <div class="dnx-arch-layer">
+            <div class="dnx-arch-label">Experience Layer</div>
+            <div class="dnx-arch-desc">Voice · Web · SMS · WhatsApp · Email · Mobile · API · MCP Client</div>
+          </div>
+          <div class="dnx-arch-layer dnx-arch-core">
+            <div class="dnx-arch-label">MCP Server</div>
+            <div class="dnx-arch-desc">Orchestration backbone — routes findings to the right agent, carries shared context, enforces protocols, logs every call.</div>
+          </div>
+          <div class="dnx-arch-layer">
+            <div class="dnx-arch-label">Agent Runtime</div>
+            <div class="dnx-arch-desc">The taskforce — Rachel · Ana · Lina · Sentinel · Nova · Vault · Origin · Coach + custom agents.</div>
+          </div>
+          <div class="dnx-arch-layer">
+            <div class="dnx-arch-label">Reasoning</div>
+            <div class="dnx-arch-desc">LLM router (Opus · Sonnet · Haiku · Gemini · GPT) + Neural rule engine.</div>
+          </div>
+          <div class="dnx-arch-layer">
+            <div class="dnx-arch-label">Memory</div>
+            <div class="dnx-arch-desc">Per-tenant context store, conversation history, customer record cache.</div>
+          </div>
+          <div class="dnx-arch-layer">
+            <div class="dnx-arch-label">Tools</div>
+            <div class="dnx-arch-desc">CRM writes · calendar · payments · ticketing · email/SMS · custom webhooks.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLATFORM PILLARS -->
+    <section class="dnx-sec" id="pillars">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">PLATFORM PILLARS</div>
+          <h2 class="dnx-sec-title">Build, deploy, govern, and observe — <em>from one place.</em></h2>
+        </div>
+
+        <div class="dnx-grid-4">
+          <div class="dnx-pillar-card dnx-reveal">
+            <h3>Build</h3>
+            <ul>
+              <li>Visual workflow builder</li>
+              <li>Pre-trained voice personas</li>
+              <li>Plug in your own knowledge base</li>
+              <li>No-code prompt + tool wiring</li>
+              <li>Code-first SDK for power users</li>
+            </ul>
+          </div>
+          <div class="dnx-pillar-card dnx-reveal">
+            <h3>Deploy</h3>
+            <ul>
+              <li>Inbound + outbound voice (PSTN)</li>
+              <li>Web chat + SMS + WhatsApp</li>
+              <li>Mobile SDK (iOS + Android)</li>
+              <li>REST API + MCP server</li>
+              <li>One-click rollback</li>
+            </ul>
+          </div>
+          <div class="dnx-pillar-card dnx-reveal">
+            <h3>Govern</h3>
+            <ul>
+              <li>Role-based access (RBAC)</li>
+              <li>Multi-tenant isolation</li>
+              <li>Full audit trail per action</li>
+              <li>SOC2-style logging + retention</li>
+              <li>Data residency controls</li>
+            </ul>
+          </div>
+          <div class="dnx-pillar-card dnx-reveal">
+            <h3>Observe</h3>
+            <ul>
+              <li>Real-time KPI dashboards</li>
+              <li>Call transcripts + sentiment</li>
+              <li>Per-agent ROI tracking</li>
+              <li>Anomaly + escalation alerts</li>
+              <li>Eval harness for prompt regressions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPARISON TABLE -->
+    <section class="dnx-sec" id="comparison">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">THE DIFFERENCE</div>
+          <h2 class="dnx-sec-title">Not another chatbot. Not a DIY toolkit. <em>A finished platform.</em></h2>
+        </div>
+
+        <div class="dnx-cmp-wrap dnx-reveal">
+          <table class="dnx-cmp-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Single Chatbot</th>
+                <th>DIY on Hyperscaler</th>
+                <th>Digit2ai Neural</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Time to first value</td><td>Days</td><td>Months</td><td>30 seconds</td></tr>
+              <tr><td>Pre-built agents</td><td>1 generic</td><td>0 — you build them</td><td>8 specialists + custom</td></tr>
+              <tr><td>Channel coverage</td><td>Web only</td><td>Whatever you wire up</td><td>Voice · Web · SMS · WhatsApp · Email · API · MCP</td></tr>
+              <tr><td>Agent-to-agent protocol</td><td>None</td><td>Build your own</td><td>MCP-native</td></tr>
+              <tr><td>Auto-detect business gaps</td><td>No</td><td>You write the rules</td><td>10 neural analyzers built-in</td></tr>
+              <tr><td>Pricing</td><td>Per seat</td><td>Per token + engineering salaries</td><td>Per resolved outcome</td></tr>
+              <tr><td>Audit + governance</td><td>Limited</td><td>Six-month security review</td><td>Enterprise-ready day one</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- USE CASES -->
+    <section class="dnx-sec" id="use-cases">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">USE CASES</div>
+          <h2 class="dnx-sec-title">Where Neural <em>finds the most money.</em></h2>
+        </div>
+
+        <div class="dnx-grid-3">
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">SALES OPS</span>
+            <h3>Sales Operations</h3>
+            <p>Catch missed calls, slow lead response, stuck pipelines, and stale leads before they cost a deal.</p>
+          </div>
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">SUPPORT</span>
+            <h3>Customer Support</h3>
+            <p>Auto-triage tickets, deflect FAQs, escalate hot issues, and ship coaching summaries to managers.</p>
+          </div>
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">FIELD</span>
+            <h3>Field Services</h3>
+            <p>Confirm appointments, reduce no-shows, dispatch follow-ups, and surface unbilled work.</p>
+          </div>
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">HEALTHCARE</span>
+            <h3>Healthcare Practices</h3>
+            <p>Patient outreach, appointment reminders, intake processing, and after-hours triage.</p>
+          </div>
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">REAL ESTATE</span>
+            <h3>Real Estate</h3>
+            <p>Speed-to-lead inside sixty seconds, listing inquiries answered 24/7, showing scheduling on autopilot.</p>
+          </div>
+          <div class="dnx-card dnx-reveal">
+            <span class="dnx-card-num">LEGAL</span>
+            <h3>Legal &amp; Professional Services</h3>
+            <p>Bilingual intake, conflict-of-interest checks, contract renewal monitoring, and unbilled-time recovery.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRUST & SECURITY -->
+    <section class="dnx-sec" id="trust">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">TRUST &amp; SECURITY</div>
+          <h2 class="dnx-sec-title">Enterprise-grade <em>from day one.</em></h2>
+        </div>
+
+        <div class="dnx-trust-grid dnx-reveal">
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Multi-Tenant Isolation</div><div class="dnx-trust-desc">Hard boundaries per customer.</div></div>
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Full Audit Trail</div><div class="dnx-trust-desc">Every agent decision logged.</div></div>
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">RBAC + SSO</div><div class="dnx-trust-desc">Role-based access controls.</div></div>
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Data Residency</div><div class="dnx-trust-desc">US, EU, regional options.</div></div>
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">99.9% Uptime SLA</div><div class="dnx-trust-desc">Production-grade infrastructure.</div></div>
+          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Secrets Vault</div><div class="dnx-trust-desc">No credentials in prompts.</div></div>
         </div>
       </div>
     </section>
