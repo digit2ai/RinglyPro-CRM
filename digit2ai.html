@@ -387,12 +387,25 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
 .dnx-stat-lbl { font-size:14px; font-weight:600; color:var(--text); margin-bottom:6px; }
 .dnx-stat-desc { font-size:13px; color:var(--text-faint); line-height:1.55; }
 
+@media (max-width:1100px) {
+  .dnx-grid-5 { grid-template-columns:repeat(3, 1fr); }
+}
 @media (max-width:920px) {
   .dnx-grid-3, .dnx-grid-4, .dnx-grid-5 { grid-template-columns:repeat(2, 1fr); }
 }
 @media (max-width:600px) {
   .dnx-grid-3, .dnx-grid-4, .dnx-grid-5, .dnx-grid-2 { grid-template-columns:1fr; }
   .dnx-sec { padding:70px 0; }
+  .dnx-step-card { padding-top:38px; }
+  .dnx-step-num { top:-16px; left:16px; width:32px; height:32px; font-size:13px; }
+  .dnx-agent-card { padding:20px; }
+  .dnx-agent-name { font-size:18px; }
+  .dnx-pillar-card { padding:22px; }
+  .dnx-pillar-card h3 { font-size:18px; }
+  .dnx-arch-layer { padding:14px 16px; }
+  .dnx-metric-tile { padding:22px 18px; }
+  .dnx-metric-num { font-size:40px; }
+  .dnx-trust-item { padding:18px; }
 }
 
 /* ============================================================
@@ -434,6 +447,17 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
 .dnx-cmp-table tbody td:first-child { color:var(--text); font-weight:500; }
 .dnx-cmp-table tbody td:last-child { color:var(--text); background:rgba(34,211,238,0.04); }
 .dnx-cmp-wrap { overflow-x:auto; }
+@media (max-width:600px) {
+  .dnx-cmp-wrap { overflow-x:visible; }
+  .dnx-cmp-table, .dnx-cmp-table thead, .dnx-cmp-table tbody, .dnx-cmp-table tr, .dnx-cmp-table td { display:block; width:100%; }
+  .dnx-cmp-table { border:none; background:transparent; }
+  .dnx-cmp-table thead { display:none; }
+  .dnx-cmp-table tbody tr { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
+  .dnx-cmp-table tbody td { padding:8px 0; border:none; font-size:13.5px; display:grid; grid-template-columns:120px 1fr; gap:10px; align-items:start; }
+  .dnx-cmp-table tbody td:first-child { font-size:15px; font-weight:600; color:var(--text); padding:0 0 8px; border-bottom:1px solid var(--border); margin-bottom:8px; display:block; }
+  .dnx-cmp-table tbody td:not(:first-child)::before { content:attr(data-label); font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint); padding-top:2px; }
+  .dnx-cmp-table tbody td:last-child { background:transparent; color:var(--accent-cyan); font-weight:500; }
+}
 
 .dnx-trust-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
 .dnx-trust-item { padding:22px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); }
@@ -1480,13 +1504,13 @@ html, body { max-width:100%; overflow-x:hidden; }
               </tr>
             </thead>
             <tbody>
-              <tr><td>Time to first value</td><td>Days</td><td>Months</td><td>30 seconds</td></tr>
-              <tr><td>Pre-built agents</td><td>1 generic</td><td>0 — you build them</td><td>8 specialists + custom</td></tr>
-              <tr><td>Channel coverage</td><td>Web only</td><td>Whatever you wire up</td><td>Voice · Web · SMS · WhatsApp · Email · API · MCP</td></tr>
-              <tr><td>Agent-to-agent protocol</td><td>None</td><td>Build your own</td><td>MCP-native</td></tr>
-              <tr><td>Auto-detect business gaps</td><td>No</td><td>You write the rules</td><td>10 neural analyzers built-in</td></tr>
-              <tr><td>Pricing</td><td>Per seat</td><td>Per token + engineering salaries</td><td>Per resolved outcome</td></tr>
-              <tr><td>Audit + governance</td><td>Limited</td><td>Six-month security review</td><td>Enterprise-ready day one</td></tr>
+              <tr><td>Time to first value</td><td data-label="Single Chatbot">Days</td><td data-label="DIY Hyperscaler">Months</td><td data-label="Digit2ai Neural">30 seconds</td></tr>
+              <tr><td>Pre-built agents</td><td data-label="Single Chatbot">1 generic</td><td data-label="DIY Hyperscaler">0 — you build them</td><td data-label="Digit2ai Neural">8 specialists + custom</td></tr>
+              <tr><td>Channel coverage</td><td data-label="Single Chatbot">Web only</td><td data-label="DIY Hyperscaler">Whatever you wire up</td><td data-label="Digit2ai Neural">Voice · Web · SMS · WhatsApp · Email · API · MCP</td></tr>
+              <tr><td>Agent-to-agent protocol</td><td data-label="Single Chatbot">None</td><td data-label="DIY Hyperscaler">Build your own</td><td data-label="Digit2ai Neural">MCP-native</td></tr>
+              <tr><td>Auto-detect business gaps</td><td data-label="Single Chatbot">No</td><td data-label="DIY Hyperscaler">You write the rules</td><td data-label="Digit2ai Neural">10 neural analyzers built-in</td></tr>
+              <tr><td>Pricing</td><td data-label="Single Chatbot">Per seat</td><td data-label="DIY Hyperscaler">Per token + engineering salaries</td><td data-label="Digit2ai Neural">Per resolved outcome</td></tr>
+              <tr><td>Audit + governance</td><td data-label="Single Chatbot">Limited</td><td data-label="DIY Hyperscaler">Six-month security review</td><td data-label="Digit2ai Neural">Enterprise-ready day one</td></tr>
             </tbody>
           </table>
         </div>
