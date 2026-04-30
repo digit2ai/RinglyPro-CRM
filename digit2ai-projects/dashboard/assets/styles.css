@@ -709,13 +709,18 @@ body {
   .cal-week-day-header { padding: 6px 2px; font-size: 10px; }
   .cal-event-title { font-size: 11px; }
   .cal-event-time { font-size: 9px; }
-  /* Force the week header / all-day row to keep 7 horizontal day columns
-     even on narrow viewports (the inline style sets this on desktop, but
-     some narrow-window cases were collapsing to a 2-col grid). */
-  .cal-week-headers { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
-  .cal-allday-row   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
-  .cal-week-body    { grid-template-columns: 40px 1fr !important; }
-  .cal-week-columns { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; }
+  /* Force horizontal columns regardless of viewport. The data-days attribute
+     reflects how many day columns the JS rendered (1 for Day view, 7 for Week)
+     so the CSS picks the correct grid template. Without this, Day view was
+     getting squished to 1/7 of the screen width because earlier rules forced
+     repeat(7, ...) unconditionally. */
+  .cal-week-headers[data-days="7"] { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-allday-row[data-days="7"]   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-week-columns[data-days="7"] { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; }
+  .cal-week-headers[data-days="1"] { grid-template-columns: 40px 1fr !important; }
+  .cal-allday-row[data-days="1"]   { grid-template-columns: 40px 1fr !important; }
+  .cal-week-columns[data-days="1"] { grid-template-columns: 1fr !important; }
+  .cal-week-body                   { grid-template-columns: 40px 1fr !important; }
 }
 
 /* ===========================================
@@ -744,9 +749,13 @@ body {
      day pills wrapped vertically. */
   .cal-time-gutter { width: 40px; }
   .cal-hour-label { font-size: 10px; padding-right: 3px; }
-  .cal-week-headers { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
-  .cal-week-body    { grid-template-columns: 40px 1fr !important; }
-  .cal-allday-row   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  /* data-days-aware grid (the 768 px block has the full set; these are the
+     phone-specific copies) */
+  .cal-week-headers[data-days="7"] { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-allday-row[data-days="7"]   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-week-headers[data-days="1"] { grid-template-columns: 40px 1fr !important; }
+  .cal-allday-row[data-days="1"]   { grid-template-columns: 40px 1fr !important; }
+  .cal-week-body                   { grid-template-columns: 40px 1fr !important; }
   .cal-allday-label { font-size: 9px; padding: 4px; }
   .cal-week-day-header { padding: 6px 1px !important; }
   .cal-week-day-header > div:first-child { font-size: 9px !important; }

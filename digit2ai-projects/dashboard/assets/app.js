@@ -1184,7 +1184,14 @@ let calYear, calMonth;
 // =====================================================
 // CALENDAR (Outlook-style Month / Week / Day views)
 // =====================================================
-// Default = week on every screen size now (mobile day-columns shrink but stay readable)
+// Default = week on every screen size now (mobile day-columns shrink but stay readable).
+// One-time migration: bump CAL_VIEW_VERSION to force-reset stored preferences when
+// the default changes (otherwise users keep stale 'day' / 'month' from earlier builds).
+const CAL_VIEW_VERSION = '2026-04-30';
+if (localStorage.getItem('cal_view_version') !== CAL_VIEW_VERSION) {
+  localStorage.setItem('cal_view', 'week');
+  localStorage.setItem('cal_view_version', CAL_VIEW_VERSION);
+}
 let calView = localStorage.getItem('cal_view') || 'week';
 let calCursor = null; // YYYY-MM-DD anchor date for week/day views
 
@@ -1381,7 +1388,7 @@ async function renderTimeGrid(numDays) {
   // Column header row + all-day spanning row
   const anySpan = dayCols.some(c => c.spanEvents.length > 0);
   const allDayRow = anySpan ? `
-    <div class="cal-allday-row" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+    <div class="cal-allday-row" data-days="${numDays}" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
       <div class="cal-allday-label">all-day</div>
       ${dayCols.map(c => `
         <div class="cal-allday-cell">
@@ -1396,7 +1403,7 @@ async function renderTimeGrid(numDays) {
     </div>` : '';
 
   const headerRow = `
-    <div class="cal-week-headers" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
+    <div class="cal-week-headers" data-days="${numDays}" style="grid-template-columns: 60px repeat(${numDays}, 1fr)">
       <div></div>
       ${dayCols.map(c => {
         const isToday = c.dateStr === ymd(new Date());
@@ -1454,9 +1461,9 @@ async function renderTimeGrid(numDays) {
 
   body.innerHTML = `
     ${headerRow}
-    <div class="cal-week-body" style="grid-template-columns: 60px 1fr">
+    <div class="cal-week-body" data-days="${numDays}" style="grid-template-columns: 60px 1fr">
       <div class="cal-time-gutter">${timeLabels.join('')}</div>
-      <div class="cal-week-columns" style="grid-template-columns: repeat(${numDays}, 1fr); height:${gridHeight}px; position:relative">
+      <div class="cal-week-columns" data-days="${numDays}" style="grid-template-columns: repeat(${numDays}, 1fr); height:${gridHeight}px; position:relative">
         ${dayColumnsHTML}
         ${nowLineHTML}
       </div>
