@@ -225,6 +225,97 @@
     content: "↘"; display: block; margin-top: 4px; color: #06b6d4; font-size: 18px;
   }
 
+  /* Enterprise Agent Platform */
+  .platform-hero {
+    background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.06));
+    border: 1px solid rgba(139,92,246,.3);
+    border-radius: 16px;
+    padding: 28px 30px;
+    margin-bottom: 28px;
+  }
+  .platform-hero .eyebrow {
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #06b6d4; font-weight: 700; margin-bottom: 8px;
+  }
+  .platform-hero h3 { font-size: 24px; color: #fff; margin-bottom: 10px; }
+  .platform-hero p { color: #cbd5e1; font-size: 15.5px; }
+
+  .pillars {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    margin-bottom: 30px;
+  }
+  .pillar {
+    background: rgba(139,92,246,.05);
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 12px;
+    padding: 22px 20px;
+    transition: border-color .2s;
+  }
+  .pillar:hover { border-color: rgba(139,92,246,.4); }
+  .pillar .label {
+    font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+    color: #06b6d4; font-weight: 700; margin-bottom: 8px;
+  }
+  .pillar h4 { color: #fff; font-size: 18px; margin-bottom: 10px; font-weight: 700; }
+  .pillar ul { list-style: none; padding: 0; }
+  .pillar ul li {
+    font-size: 13.5px; color: #cbd5e1; padding: 4px 0 4px 16px; position: relative;
+  }
+  .pillar ul li::before {
+    content: "•"; color: #8b5cf6; position: absolute; left: 4px; font-weight: 800;
+  }
+
+  .stack {
+    background: #0b0f1a;
+    border: 1px solid rgba(139,92,246,.2);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 30px;
+  }
+  .stack h3 { color: #c4b5fd; font-size: 17px; margin-bottom: 16px; }
+  .stack-row {
+    display: flex; align-items: stretch; gap: 0;
+    margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .stack-tier {
+    flex: 1; min-width: 200px;
+    border: 1px solid rgba(139,92,246,.25);
+    background: rgba(139,92,246,.06);
+    padding: 14px 18px;
+    text-align: left;
+  }
+  .stack-tier:first-child { border-radius: 10px 0 0 10px; }
+  .stack-tier:last-child { border-radius: 0 10px 10px 0; }
+  .stack-tier.full { flex-basis: 100%; border-radius: 10px; margin-bottom: 8px; }
+  .stack-tier.top { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.3); }
+  .stack-tier.top .tier-label { color: #4ade80; }
+  .stack-tier.middle { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.3); }
+  .stack-tier.middle .tier-label { color: #67e8f9; }
+  .stack-tier.bottom { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.4); }
+  .stack-tier.bottom .tier-label { color: #c4b5fd; }
+  .stack-tier .tier-label {
+    font-size: 11px; letter-spacing: 1.3px; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px;
+  }
+  .stack-tier .tier-content { font-size: 13.5px; color: #e2e8f0; }
+  .stack-tier .tier-content b { color: #fff; }
+
+  .channels {
+    display: grid; gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    margin-top: 12px;
+  }
+  .channel {
+    background: rgba(7,9,15,.5);
+    border: 1px solid rgba(139,92,246,.15);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+    font-size: 13px; color: #c4b5fd; font-weight: 600;
+  }
+  .channel small { display: block; color: #64748b; font-size: 11px; font-weight: 400; margin-top: 2px; }
+
   /* Agentic Taskforce */
   .taskforce-intro {
     background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.05));
@@ -326,6 +417,7 @@
       <a href="#what">What</a>
       <a href="#why">Why</a>
       <a href="#benefits">Benefits</a>
+      <a href="#platform">Platform</a>
       <a href="#taskforce">Taskforce</a>
       <a href="#how">How</a>
       <a href="#diagram">Architecture</a>
@@ -434,6 +526,138 @@
         <h4>Works for any CRM</h4>
         <p>We meet prospects where they already are — even if they aren't on RinglyPro yet.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENTERPRISE AGENT PLATFORM -->
+<section class="block" id="platform">
+  <div class="wrap">
+    <h2>RinglyPro Enterprise Agent Platform</h2>
+    <p class="lede">The infrastructure underneath every Neural finding, every voice agent, and every fix workflow. One platform that lets an organization build, deploy, govern, and observe a team of AI agents — without stitching together a dozen vendors.</p>
+
+    <div class="platform-hero">
+      <div class="eyebrow">The Platform In One Sentence</div>
+      <h3>An enterprise-grade operating system for AI agents.</h3>
+      <p>Think of it as the layer between your business systems and a fleet of specialized agents. The platform handles the hard parts — identity, telephony, data connectors, audit logs, billing, multi-tenant isolation — so each agent can focus on doing one job extremely well.</p>
+    </div>
+
+    <h3>The Four Pillars</h3>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="label">Build</div>
+        <h4>Design any agent in hours</h4>
+        <ul>
+          <li>Visual workflow builder</li>
+          <li>Pre-trained voice personas (Rachel, Ana, Lina)</li>
+          <li>Plug-in your own knowledge base</li>
+          <li>No-code prompt + tool wiring</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="label">Deploy</div>
+        <h4>Anywhere your customers are</h4>
+        <ul>
+          <li>Inbound + outbound voice (PSTN)</li>
+          <li>Web chat + SMS + WhatsApp</li>
+          <li>Mobile app SDK</li>
+          <li>API + MCP for system-to-system</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="label">Govern</div>
+        <h4>Enterprise controls baked in</h4>
+        <ul>
+          <li>Role-based access (RBAC)</li>
+          <li>Multi-tenant isolation</li>
+          <li>Full audit trail per action</li>
+          <li>SOC2-style logging + retention</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="label">Observe</div>
+        <h4>See and tune every conversation</h4>
+        <ul>
+          <li>Real-time KPI dashboards</li>
+          <li>Call transcripts + sentiment</li>
+          <li>Per-agent ROI tracking</li>
+          <li>Anomaly + escalation alerts</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>Platform Stack — top to bottom</h3>
+
+      <div class="stack-row">
+        <div class="stack-tier top full">
+          <div class="tier-label">Experience Layer</div>
+          <div class="tier-content"><b>Voice · Web · SMS · WhatsApp · Mobile · API</b> — every channel a customer can reach you on, served by the same agent.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-tier middle full">
+          <div class="tier-label">Agent Runtime</div>
+          <div class="tier-content"><b>Orchestration supervisor + specialist agents</b> (Rachel, Ana, Lina, Sentinel, Nova, Vault, Origin, Coach) running in parallel, with handoff and escalation logic.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-tier middle">
+          <div class="tier-label">Reasoning</div>
+          <div class="tier-content">LLM router + business-rule engine (Neural analyzers). Picks the cheapest model that can answer.</div>
+        </div>
+        <div class="stack-tier middle">
+          <div class="tier-label">Memory</div>
+          <div class="tier-content">Per-tenant context store + conversation history + customer record cache.</div>
+        </div>
+        <div class="stack-tier middle">
+          <div class="tier-label">Tools / Actions</div>
+          <div class="tier-content">CRM writes, calendar booking, payment capture, ticketing, email/SMS send, custom webhooks.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-tier bottom full">
+          <div class="tier-label">Integrations</div>
+          <div class="tier-content"><b>HubSpot · GoHighLevel · Zoho · Salesforce · Twilio · Stripe · Google Calendar · Outlook · n8n · MCP</b> — and any REST API via custom connector.</div>
+        </div>
+      </div>
+
+      <div class="stack-row">
+        <div class="stack-tier bottom full">
+          <div class="tier-label">Foundation</div>
+          <div class="tier-content"><b>Multi-tenant isolation · RBAC · Audit log · Billing · Observability · 24/7 infrastructure</b> — the part most companies underestimate the cost of building themselves.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Where the Agents Run</h3>
+    <p style="color:#94a3b8;font-size:14.5px;margin-bottom:14px;">One agent, eight channels. Customers do not care which one they pick — the platform makes them all feel the same.</p>
+    <div class="channels">
+      <div class="channel">Voice<small>Inbound + Outbound</small></div>
+      <div class="channel">Web Chat<small>Embed widget</small></div>
+      <div class="channel">SMS<small>2-way text</small></div>
+      <div class="channel">WhatsApp<small>Business API</small></div>
+      <div class="channel">Email<small>Sequenced</small></div>
+      <div class="channel">Mobile App<small>iOS + Android SDK</small></div>
+      <div class="channel">REST API<small>System-to-system</small></div>
+      <div class="channel">MCP<small>Agent-to-agent</small></div>
+    </div>
+
+    <h3>Why Customers Choose The Platform Over A Single Tool</h3>
+    <ul class="plain">
+      <li><b>One vendor instead of twelve.</b> Voice provider, chat widget, SMS gateway, calendar plugin, transcription service, analytics dashboard — replaced by one platform with one bill.</li>
+      <li><b>Agents share context.</b> Rachel's call transcript is instantly available to Lina's nurture sequence. No data silos, no copy-paste, no lost context.</li>
+      <li><b>Custom agents in days, not quarters.</b> The hard infrastructure already exists. Adding a new agent is configuration, not engineering.</li>
+      <li><b>Enterprise-ready from day one.</b> Audit logs, role permissions, multi-tenant isolation, and SLA-grade uptime — without a six-month security review.</li>
+      <li><b>Pricing scales with outcomes.</b> You pay per resolved conversation, not per seat. The platform's incentive aligns with yours: do the work, prove the result.</li>
+    </ul>
+
+    <div class="talkbox">
+      <h4>The Platform Pitch — 30 seconds</h4>
+      <blockquote>Most companies don't need another AI tool — they need an operating system that lets a team of AI agents run their business safely. RinglyPro is that operating system. Neural is the front door. The Taskforce is what shows up when you open it.</blockquote>
     </div>
   </div>
 </section>
