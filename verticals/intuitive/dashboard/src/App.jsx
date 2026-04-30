@@ -228,6 +228,26 @@ export default function App() {
     localStorage.removeItem('intuitive_user')
   }
 
+  // Sync currentProject from URL whenever the user navigates to a project-specific page
+  useEffect(() => {
+    if (!user) return
+    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys)\/(\d+)/)
+    if (!m) return
+    const pid = parseInt(m[1])
+    if (!pid || pid === currentProject) return
+    const token = localStorage.getItem('intuitive_token')
+    fetch(`/intuitive/api/v1/projects/${pid}`, {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    }).then(r => r.ok ? r.json() : null).then(data => {
+      const proj = data?.data || data?.project || data
+      if (proj && (proj.id || proj.hospital_name)) {
+        setCurrentProject(pid)
+        setCurrentProjectName(proj.hospital_name || '')
+        localStorage.setItem('intuitive_project_id', pid)
+      }
+    }).catch(() => {})
+  }, [location.pathname, user, currentProject])
+
   // Dynamically pass context to ElevenLabs widget based on current page
   useEffect(() => {
     if (!user) return
