@@ -88,7 +88,12 @@ router.post('/public/request', async (req, res) => {
     } else if (b.ai_category && String(b.ai_category).trim()) {
       aiCategoryArr = [String(b.ai_category).trim()];
     }
-    const aiCategoryDisplay = aiCategoryArr.join(', ') || 'Neural AI';
+    const aiCategoryJoined = aiCategoryArr.join(', ') || 'Neural AI';
+    // d2_projects.category is VARCHAR(100) — truncate the display label.
+    // Full multi-select stays in ai_category TEXT[] untruncated.
+    const aiCategoryDisplay = aiCategoryJoined.length > 100
+      ? aiCategoryJoined.slice(0, 97) + '...'
+      : aiCategoryJoined;
 
     // Sensitive data: collapse free-text answer to boolean + keep detail
     const sensitiveAnswer = (b.sensitive_data || '').toString().trim();
