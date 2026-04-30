@@ -93,6 +93,12 @@
     font-size: clamp(16px, 2vw, 19px); color: #94a3b8;
     max-width: 760px; margin: 0 auto 32px;
   }
+  .hero-svg {
+    max-width: 760px; margin: 0 auto 28px;
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(34,211,238,.12), 0 0 0 1px rgba(139,92,246,.18);
+  }
+  .hero-svg svg { display: block; width: 100%; height: auto; }
   .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
@@ -470,9 +476,331 @@
   <div class="glow purple"></div>
   <div class="glow cyan"></div>
   <div class="wrap hero-inner">
-    <div class="hero-eyebrow">Enterprise Agent Platform</div>
-    <h1>An MCP server with a team of <em>AI agents</em><br>that find money leaks and fix them <em>automatically</em>.</h1>
-    <p class="hero-sub">Digit2ai Neural analyzes every workflow in your business, detects where revenue is leaking, prescribes the right fix, and dispatches a specialized AI agent to execute it — across voice, web, SMS, and every channel your customers use.</p>
+    <div class="hero-svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" role="img" preserveAspectRatio="xMidYMid meet">
+<title>MCP server with AI agents finding and fixing money leaks</title>
+<desc>Animated illustration of a central MCP server orchestrating a team of AI agents that detect leaks in money pipelines and patch them automatically</desc>
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#0a1024"/>
+<stop offset="0.55" stop-color="#101a3a"/>
+<stop offset="1" stop-color="#1a2750"/>
+</linearGradient>
+<radialGradient id="serverGlow" cx="0.5" cy="0.5">
+<stop offset="0" stop-color="#22d3ee" stop-opacity="0.28"/>
+<stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="pipe" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#92400e"/>
+<stop offset="0.5" stop-color="#d97706"/>
+<stop offset="1" stop-color="#451a03"/>
+</linearGradient>
+<clipPath id="pipeClip">
+<rect x="20" y="388" width="640" height="24" rx="12"/>
+</clipPath>
+<style>
+.bg{fill:url(#sky)}
+.glow-svg{fill:url(#serverGlow)}
+.title{fill:#f1f5f9;font-family:system-ui,sans-serif;font-weight:500;font-size:24px;letter-spacing:0.3px}
+.subtitle{fill:#22d3ee;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:2.5px}
+.caption{fill:#94a3b8;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:1.5px}
+.serverBody{fill:#1e293b;stroke:#475569;stroke-width:1}
+.serverEdge{fill:#0f172a}
+.serverScreen{fill:#022c22;stroke:#10b981;stroke-width:0.6}
+.serverBay{fill:#020617;stroke:#1e293b;stroke-width:0.5}
+.led-g{fill:#10b981}
+.led-a{fill:#fbbf24}
+.led-c{fill:#22d3ee}
+.vent{stroke:#475569;stroke-width:0.6;fill:none}
+.tag{fill:#22d3ee;font-family:ui-monospace,monospace;font-weight:500;font-size:8px;letter-spacing:0.5px}
+.tagS{fill:#94a3b8;font-family:ui-monospace,monospace;font-size:7px}
+.tagG{fill:#10b981;font-family:ui-monospace,monospace;font-weight:500;font-size:8px}
+.agent{fill:#1e293b;stroke:#22d3ee;stroke-width:1.4}
+.agentS{fill:#0c4a6e;stroke:#22d3ee;stroke-width:0.5}
+.agentEye{fill:#22d3ee}
+.agentAnt{stroke:#22d3ee;stroke-width:1;fill:none}
+.connect{stroke:#22d3ee;stroke-width:0.7;fill:none;opacity:0.5;stroke-dasharray:3 3}
+.connectFix{stroke:#10b981;stroke-width:1;fill:none;opacity:0.75;stroke-dasharray:4 4}
+.scanArc{stroke:#22d3ee;stroke-width:0.5;fill:none}
+.dollar{fill:#fde68a;font-family:system-ui,sans-serif;font-weight:700;font-size:14px}
+.dollarSm{fill:#fcd34d;font-family:system-ui,sans-serif;font-weight:700;font-size:9px}
+.drop{fill:#fbbf24}
+.dropDark{fill:#92400e}
+.crack{stroke:#fef3c7;stroke-width:1.2;fill:none;stroke-linecap:round}
+.patch{fill:#10b981;stroke:#064e3b;stroke-width:1}
+.patchBolt{fill:#022c22}
+.checkmark{stroke:#022c22;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.dot-svg{fill:#475569;opacity:0.5}
+.cross{stroke:#334155;stroke-width:0.6;fill:none}
+.wrench{fill:#94a3b8;stroke:#475569;stroke-width:0.4}
+</style>
+</defs>
+
+<rect class="bg" width="680" height="460"/>
+
+<g>
+<circle class="dot-svg" cx="40" cy="50" r="1"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3s" repeatCount="indefinite"/></circle>
+<circle class="dot-svg" cx="120" cy="30" r="1"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="4s" repeatCount="indefinite"/></circle>
+<circle class="dot-svg" cx="200" cy="60" r="1"/>
+<circle class="dot-svg" cx="540" cy="40" r="1"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3.5s" repeatCount="indefinite"/></circle>
+<circle class="dot-svg" cx="620" cy="80" r="1"><animate attributeName="opacity" values="0.1;0.6;0.1" dur="2.5s" repeatCount="indefinite"/></circle>
+<circle class="dot-svg" cx="660" cy="50" r="1"/>
+<circle class="dot-svg" cx="50" cy="180" r="1"/>
+<circle class="dot-svg" cx="630" cy="180" r="1"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="3.2s" repeatCount="indefinite"/></circle>
+<circle class="dot-svg" cx="20" cy="240" r="1"/>
+<circle class="dot-svg" cx="660" cy="240" r="1"/>
+<circle class="dot-svg" cx="180" cy="440" r="1"/>
+<circle class="dot-svg" cx="500" cy="445" r="1"/>
+<g class="cross"><line x1="78" y1="100" x2="84" y2="100"/><line x1="81" y1="97" x2="81" y2="103"/></g>
+<g class="cross"><line x1="600" y1="120" x2="606" y2="120"/><line x1="603" y1="117" x2="603" y2="123"/></g>
+<g class="cross"><line x1="160" y1="420" x2="166" y2="420"/><line x1="163" y1="417" x2="163" y2="423"/></g>
+<g class="cross"><line x1="540" y1="430" x2="546" y2="430"/><line x1="543" y1="427" x2="543" y2="433"/></g>
+</g>
+
+<text class="subtitle" x="340" y="42" text-anchor="middle">MODEL CONTEXT PROTOCOL  ·  AI AGENT TEAM</text>
+<text class="title" x="340" y="76" text-anchor="middle">Find money leaks. Fix them automatically.</text>
+
+<circle class="glow-svg" cx="340" cy="240" r="180">
+<animate attributeName="r" values="170;195;170" dur="4s" repeatCount="indefinite"/>
+</circle>
+
+<circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
+<animate attributeName="r" values="80;180;80" dur="5s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="0.6;0;0.6" dur="5s" repeatCount="indefinite"/>
+</circle>
+<circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
+<animate attributeName="r" values="80;180;80" dur="5s" begin="1.7s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="0.6;0;0.6" dur="5s" begin="1.7s" repeatCount="indefinite"/>
+</circle>
+<circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
+<animate attributeName="r" values="80;180;80" dur="5s" begin="3.3s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="0.6;0;0.6" dur="5s" begin="3.3s" repeatCount="indefinite"/>
+</circle>
+
+<line class="connect" x1="290" y1="190" x2="140" y2="195">
+<animate attributeName="stroke-dashoffset" from="0" to="-30" dur="2s" repeatCount="indefinite"/>
+</line>
+<line class="connect" x1="390" y1="190" x2="540" y2="195">
+<animate attributeName="stroke-dashoffset" from="0" to="30" dur="2s" repeatCount="indefinite"/>
+</line>
+<line class="connect" x1="290" y1="260" x2="120" y2="320">
+<animate attributeName="stroke-dashoffset" from="0" to="-30" dur="2.4s" repeatCount="indefinite"/>
+</line>
+<line class="connect" x1="390" y1="260" x2="560" y2="320">
+<animate attributeName="stroke-dashoffset" from="0" to="30" dur="2.4s" repeatCount="indefinite"/>
+</line>
+
+<g>
+<path stroke="#451a03" stroke-width="22" stroke-linecap="round" fill="none" d="M 20 400 L 660 400"/>
+<path stroke="url(#pipe)" stroke-width="14" stroke-linecap="round" fill="none" d="M 20 400 L 660 400"/>
+<path stroke="#fbbf24" stroke-width="2" fill="none" opacity="0.5" d="M 20 394 L 660 394"/>
+<circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="120" cy="400" r="2.5"/>
+<circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="260" cy="400" r="2.5"/>
+<circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="420" cy="400" r="2.5"/>
+<circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="560" cy="400" r="2.5"/>
+</g>
+
+<g clip-path="url(#pipeClip)">
+<g>
+<text class="dollar" x="-90" y="406" text-anchor="middle">$</text>
+<text class="dollar" x="40" y="406" text-anchor="middle">$</text>
+<text class="dollar" x="220" y="406" text-anchor="middle">$</text>
+<text class="dollar" x="380" y="406" text-anchor="middle">$</text>
+<text class="dollar" x="510" y="406" text-anchor="middle">$</text>
+<text class="dollar" x="640" y="406" text-anchor="middle">$</text>
+<animateTransform attributeName="transform" type="translate" from="0 0" to="160 0" dur="3.5s" repeatCount="indefinite"/>
+</g>
+</g>
+
+<g transform="translate(290 130)">
+<rect class="serverBody" x="0" y="0" width="100" height="170" rx="6"/>
+<rect class="serverEdge" x="0" y="0" width="100" height="6" rx="2"/>
+<rect class="serverBay" x="8" y="14" width="84" height="28" rx="2"/>
+<circle class="led-g" cx="16" cy="22" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite"/></circle>
+<circle class="led-g" cx="24" cy="22" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/></circle>
+<circle class="led-a" cx="32" cy="22" r="2"><animate attributeName="opacity" values="0.4;1;0.4" dur="0.8s" repeatCount="indefinite"/></circle>
+<line class="vent" x1="50" y1="20" x2="86" y2="20"/>
+<line class="vent" x1="50" y1="24" x2="86" y2="24"/>
+<line class="vent" x1="50" y1="28" x2="86" y2="28"/>
+<line class="vent" x1="50" y1="32" x2="86" y2="32"/>
+<text class="tagS" x="16" y="38">CORE-01</text>
+
+<rect class="serverBay" x="8" y="48" width="84" height="28" rx="2"/>
+<circle class="led-c" cx="16" cy="56" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
+<circle class="led-g" cx="24" cy="56" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite"/></circle>
+<circle class="led-g" cx="32" cy="56" r="2"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.3s" repeatCount="indefinite"/></circle>
+<line class="vent" x1="50" y1="54" x2="86" y2="54"/>
+<line class="vent" x1="50" y1="58" x2="86" y2="58"/>
+<line class="vent" x1="50" y1="62" x2="86" y2="62"/>
+<line class="vent" x1="50" y1="66" x2="86" y2="66"/>
+<text class="tagS" x="16" y="72">CORE-02</text>
+
+<rect class="serverScreen" x="8" y="82" width="84" height="46" rx="2"/>
+<text class="tag" x="50" y="98" text-anchor="middle" fill="#10b981">MCP</text>
+<text x="50" y="113" text-anchor="middle" fill="#10b981" font-family="ui-monospace,monospace" font-weight="700" font-size="11" letter-spacing="1">SERVER</text>
+<line stroke="#10b981" stroke-width="0.5" x1="14" y1="118" x2="86" y2="118" opacity="0.6"/>
+<text class="tagS" x="50" y="125" text-anchor="middle" fill="#10b981">4 agents · online</text>
+
+<rect class="serverBay" x="8" y="134" width="84" height="28" rx="2"/>
+<circle class="led-g" cx="16" cy="146" r="2"><animate attributeName="opacity" values="1;0.4;1" dur="1.4s" repeatCount="indefinite"/></circle>
+<circle class="led-g" cx="24" cy="146" r="2"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.7s" repeatCount="indefinite"/></circle>
+<circle class="led-g" cx="32" cy="146" r="2"><animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite"/></circle>
+<circle class="led-c" cx="40" cy="146" r="2"><animate attributeName="opacity" values="0.3;1;0.3" dur="0.9s" repeatCount="indefinite"/></circle>
+<circle class="led-c" cx="48" cy="146" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/></circle>
+<text class="tagG" x="58" y="148">●ALL OK</text>
+<text class="tagS" x="16" y="158">ORCHESTRATOR</text>
+</g>
+
+<text class="tag" x="340" y="318" text-anchor="middle">▼ MCP-SERVER</text>
+
+<g transform="translate(60 170)">
+<line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
+<circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.3s" repeatCount="indefinite"/></circle>
+<rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
+<rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
+<ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;3;3;0.4;3" dur="4s" repeatCount="indefinite"/>
+</ellipse>
+<ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;3;3;0.4;3" dur="4s" repeatCount="indefinite"/>
+</ellipse>
+<line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
+<text class="tag" x="40" y="42" text-anchor="middle">DETECTOR</text>
+<text class="tagS" x="40" y="64" text-anchor="middle">scanning logs</text>
+</g>
+
+<g transform="translate(540 170)">
+<line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
+<circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/></circle>
+<rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
+<rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
+<ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;3;0.4;3;3" dur="5s" repeatCount="indefinite"/>
+</ellipse>
+<ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;3;0.4;3;3" dur="5s" repeatCount="indefinite"/>
+</ellipse>
+<line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
+<text class="tag" x="40" y="42" text-anchor="middle">ANALYZER</text>
+<text class="tagS" x="40" y="64" text-anchor="middle">root cause</text>
+</g>
+
+<g transform="translate(40 295)">
+<line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
+<circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite"/></circle>
+<rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
+<rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
+<ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;0.4;3;3;3" dur="4.5s" repeatCount="indefinite"/>
+</ellipse>
+<ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;3;0.4;3;3;3" dur="4.5s" repeatCount="indefinite"/>
+</ellipse>
+<line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
+<text class="tag" x="40" y="42" text-anchor="middle">AUDITOR</text>
+<text class="tagS" x="40" y="64" text-anchor="middle">found a leak</text>
+</g>
+
+<g transform="translate(560 295)">
+<line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
+<circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite"/></circle>
+<rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
+<rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
+<ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;0.4;3;3;3;3" dur="4.2s" repeatCount="indefinite"/>
+</ellipse>
+<ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
+<animate attributeName="ry" values="3;0.4;3;3;3;3" dur="4.2s" repeatCount="indefinite"/>
+</ellipse>
+<line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
+<text class="tag" x="40" y="42" text-anchor="middle">REPAIR</text>
+<text class="tagS" x="40" y="64" text-anchor="middle">patching now</text>
+</g>
+
+<line class="connectFix" x1="80" y1="345" x2="170" y2="390">
+<animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.5s" repeatCount="indefinite"/>
+</line>
+<line class="connectFix" x1="600" y1="345" x2="510" y2="390">
+<animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.5s" repeatCount="indefinite"/>
+</line>
+
+<g transform="translate(170 400)">
+<path class="crack" d="M -6 -10 L -2 -3 M 1 -10 L 5 -2 M -3 -8 L 3 -7"/>
+<g>
+<ellipse class="drop" cx="0" cy="0" rx="3.5" ry="5.5">
+<animate attributeName="cy" values="2;48" dur="1.6s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="1.6s" repeatCount="indefinite"/>
+</ellipse>
+</g>
+<g>
+<ellipse class="drop" cx="-3" cy="0" rx="2.8" ry="4.5">
+<animate attributeName="cy" values="2;48" dur="1.6s" begin="0.55s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="1.6s" begin="0.55s" repeatCount="indefinite"/>
+</ellipse>
+</g>
+<g>
+<ellipse class="dropDark" cx="3" cy="0" rx="2.2" ry="3.5">
+<animate attributeName="cy" values="2;48" dur="1.6s" begin="1.1s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="1.6s" begin="1.1s" repeatCount="indefinite"/>
+</ellipse>
+</g>
+<text class="dollarSm" x="-3" y="0" opacity="0">
+<animate attributeName="y" values="6;52" dur="2.2s" begin="0.3s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="0;1;1;0" dur="2.2s" begin="0.3s" repeatCount="indefinite"/>
+$</text>
+</g>
+
+<g transform="translate(340 400)">
+<rect class="patch" x="-16" y="-13" width="32" height="16" rx="3"/>
+<circle class="patchBolt" cx="-11" cy="-9" r="1.3"/>
+<circle class="patchBolt" cx="11" cy="-9" r="1.3"/>
+<circle class="patchBolt" cx="-11" cy="-1" r="1.3"/>
+<circle class="patchBolt" cx="11" cy="-1" r="1.3"/>
+<path class="checkmark" d="M -6 -5 L -2 -1 L 6 -9"/>
+<text class="tagG" x="0" y="-20" text-anchor="middle">●SEALED<animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/></text>
+</g>
+
+<g transform="translate(510 400)">
+<rect class="patch" x="-13" y="-11" width="26" height="14" rx="2" opacity="0.9"/>
+<circle class="patchBolt" cx="-9" cy="-7" r="1.2"/>
+<circle class="patchBolt" cx="9" cy="-7" r="1.2"/>
+<circle class="patchBolt" cx="-9" cy="-1" r="1.2"/>
+<circle class="patchBolt" cx="9" cy="-1" r="1.2"/>
+<g transform="translate(14 -16)">
+<g>
+<rect class="wrench" x="-1.5" y="-10" width="3" height="14" rx="1"/>
+<circle class="wrench" cx="0" cy="-12" r="3"/>
+<circle fill="#1e293b" cx="0" cy="-12" r="1.5"/>
+<animateTransform attributeName="transform" type="rotate" values="20;50;20" dur="1.2s" repeatCount="indefinite"/>
+</g>
+</g>
+</g>
+
+<g transform="translate(60 400)">
+<path class="crack" d="M -3 -8 L 1 -3"/>
+<ellipse class="drop" cx="0" cy="0" rx="2" ry="3">
+<animate attributeName="cy" values="2;30" dur="2s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="2s" repeatCount="indefinite"/>
+</ellipse>
+</g>
+
+<g transform="translate(620 400)">
+<path class="crack" d="M -3 -8 L 1 -3 M -2 -10 L 3 -7"/>
+<ellipse class="drop" cx="0" cy="0" rx="2.2" ry="3.2">
+<animate attributeName="cy" values="2;30" dur="1.8s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="1.8s" repeatCount="indefinite"/>
+</ellipse>
+<ellipse class="dropDark" cx="-2" cy="0" rx="1.8" ry="2.5">
+<animate attributeName="cy" values="2;30" dur="1.8s" begin="0.6s" repeatCount="indefinite"/>
+<animate attributeName="opacity" values="1;1;0" dur="1.8s" begin="0.6s" repeatCount="indefinite"/>
+</ellipse>
+</g>
+
+<text class="caption" x="340" y="448" text-anchor="middle">ORCHESTRATED BY MCP  ·  AGENTS DETECT, DIAGNOSE, PATCH  ·  AUTONOMOUS</text>
+
+</svg>
+    </div>
+    <p class="hero-sub">Digit2ai Neural analyzes every workflow in your business, detects where revenue is leaking, prescribes the right fix, and dispatches a specialized AI agent to execute it &mdash; across voice, web, SMS, and every channel your customers use.</p>
     <div class="hero-ctas">
       <a href="https://aiagent.ringlypro.com/neural/dashboard.html" class="btn btn-primary btn-arrow">Try Live Demo</a>
       <a href="https://aiagent.ringlypro.com/neural/presentation.html" class="btn btn-ghost btn-arrow">See Full Pitch</a>
@@ -480,35 +808,6 @@
     <div class="hero-trust">
       <span class="pulse"></span>
       <span>Live agents. Real automation. MCP-native architecture.</span>
-    </div>
-
-    <!-- Animated agent network -->
-    <div class="agent-net">
-      <svg viewBox="0 0 880 280" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
-            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.6"/>
-          </linearGradient>
-        </defs>
-        <line x1="440" y1="140" x2="120" y2="50" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="280" y2="40" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="600" y2="40" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="760" y2="50" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="120" y2="240" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="280" y2="250" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="600" y2="250" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-        <line x1="440" y1="140" x2="760" y2="240" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
-      </svg>
-      <div class="node center">MCP<br>Server</div>
-      <div class="node" style="top:18px;left:88px;">R</div>
-      <div class="node" style="top:8px;left:248px;">A</div>
-      <div class="node" style="top:8px;left:568px;">L</div>
-      <div class="node" style="top:18px;left:728px;">S</div>
-      <div class="node" style="bottom:18px;left:88px;">N</div>
-      <div class="node" style="bottom:8px;left:248px;">V</div>
-      <div class="node" style="bottom:8px;left:568px;">O</div>
-      <div class="node" style="bottom:18px;left:728px;">C</div>
     </div>
   </div>
 </section>
