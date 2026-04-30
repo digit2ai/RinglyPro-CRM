@@ -107,7 +107,7 @@
 elevenlabs-convai a[href*="elevenlabs"],
 elevenlabs-convai [class*="powered" i],
 elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !important; overflow:hidden !important; }
-.dnx-nav { display:flex; align-items:center; gap:4px; }
+.dnx-nav { display:none; align-items:center; gap:4px; }
 .dnx-nav a {
   padding:8px 14px; border-radius:10px; font-size:14px; font-weight:500;
   color:var(--text-dim); transition:color 160ms ease, background 160ms ease;
@@ -197,11 +197,58 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   background:var(--grad-primary); filter:blur(48px); opacity:0.22; z-index:-1;
 }
 .dnx-hero-svg {
-  max-width:1100px; margin:0 auto 32px; border-radius:18px; overflow:hidden;
+  border-radius:18px; overflow:hidden;
   box-shadow:0 20px 60px rgba(34,211,238,0.12), 0 0 0 1px rgba(139,92,246,0.18);
   background:rgba(10,16,36,0.4);
 }
 .dnx-hero-svg svg { display:block; width:100%; height:auto; }
+
+.dnx-app-shell {
+  display:grid; grid-template-columns:240px minmax(0, 1fr); gap:28px;
+  align-items:start; margin-bottom:32px;
+}
+.dnx-sidebar {
+  position:sticky; top:96px;
+  padding:18px; border-radius:18px;
+  background:rgba(15,23,42,0.6); border:1px solid var(--border);
+  backdrop-filter:blur(18px);
+  display:flex; flex-direction:column; gap:6px;
+}
+.dnx-sidebar-group-lbl {
+  font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--text-faint);
+  padding:10px 12px 6px; font-weight:600;
+}
+.dnx-sidebar-link {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 12px; border-radius:10px; font-size:13.5px; font-weight:500;
+  color:var(--text-dim); transition:background 160ms ease, color 160ms ease;
+  border:1px solid transparent;
+}
+.dnx-sidebar-link:hover {
+  color:var(--text); background:var(--bg-card); border-color:var(--border);
+}
+.dnx-sidebar-link.is-active {
+  color:var(--text); background:rgba(34,211,238,0.08);
+  border-color:rgba(34,211,238,0.3);
+}
+.dnx-sidebar-dot {
+  width:6px; height:6px; border-radius:50%; background:var(--text-faint);
+  flex-shrink:0; transition:background 160ms ease;
+}
+.dnx-sidebar-link:hover .dnx-sidebar-dot,
+.dnx-sidebar-link.is-active .dnx-sidebar-dot { background:var(--accent-cyan); }
+.dnx-sidebar-divider { height:1px; background:var(--border); margin:8px 8px; }
+
+@media (max-width:920px) {
+  .dnx-app-shell { grid-template-columns:1fr; gap:18px; }
+  .dnx-sidebar {
+    position:static; flex-direction:row; flex-wrap:nowrap; overflow-x:auto;
+    gap:6px; padding:10px; -webkit-overflow-scrolling:touch;
+  }
+  .dnx-sidebar-group-lbl, .dnx-sidebar-divider { display:none; }
+  .dnx-sidebar-link { white-space:nowrap; padding:8px 12px; font-size:12.5px; }
+}
 .dnx-hero-sub {
   font-size:clamp(16px, 1.5vw, 20px);
   color:var(--text-dim);
@@ -750,12 +797,13 @@ html, body { max-width:100%; overflow-x:hidden; }
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="DIGIT2AI" class="dnx-brand-logo">
         </a>
         <nav class="dnx-nav" id="dnxNav">
-          <a href="#opportunity">Opportunity</a>
-          <a href="#platforms">Portfolio</a>
-          <a href="#model">Model</a>
-          <a href="#traction">Traction</a>
-          <a href="#faq">FAQ</a>
-          <a href="#contact">Contact</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#agents">Taskforce</a>
+          <a href="#mcp-architecture">Architecture</a>
+          <a href="#pillars">Pillars</a>
+          <a href="#comparison">Compare</a>
+          <a href="#use-cases">Use Cases</a>
+          <a href="#trust">Trust</a>
           <a href="https://aiagent.ringlypro.com/projects/intake/request.html" class="dnx-nav-signin" style="color:var(--accent-cyan); font-weight:600;">Project Request →</a>
         </nav>
         <div class="dnx-hdr-cta">
@@ -772,6 +820,25 @@ html, body { max-width:100%; overflow-x:hidden; }
     <!-- HERO -->
     <section class="dnx-hero" id="top">
       <div class="dnx-wrap">
+        <div class="dnx-app-shell">
+          <aside class="dnx-sidebar dnx-reveal" aria-label="Section navigation">
+            <div class="dnx-sidebar-group-lbl">The Platform</div>
+            <a href="#workflow" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Workflow</a>
+            <a href="#agents" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Taskforce</a>
+            <a href="#mcp-architecture" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Architecture</a>
+            <a href="#pillars" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Pillars</a>
+            <a href="#comparison" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Compare</a>
+            <a href="#use-cases" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Use Cases</a>
+            <a href="#trust" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Trust</a>
+            <div class="dnx-sidebar-divider"></div>
+            <div class="dnx-sidebar-group-lbl">The Business</div>
+            <a href="#opportunity" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Opportunity</a>
+            <a href="#platforms" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Portfolio</a>
+            <a href="#model" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Model</a>
+            <a href="#traction" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Traction</a>
+            <a href="#faq" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>FAQ</a>
+            <a href="#contact" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Contact</a>
+          </aside>
         <div class="dnx-hero-svg dnx-reveal">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" role="img" preserveAspectRatio="xMidYMid meet">
           <title>MCP server with AI agents finding and fixing money leaks</title>
@@ -1095,6 +1162,7 @@ html, body { max-width:100%; overflow-x:hidden; }
           <text class="caption" x="340" y="448" text-anchor="middle">ORCHESTRATED BY MCP  ·  AGENTS DETECT, DIAGNOSE, PATCH  ·  AUTONOMOUS</text>
           </svg>
         </div>
+        </div><!-- /.dnx-app-shell -->
         <p class="dnx-hero-sub dnx-reveal">
           DIGIT2AI builds full-stack, industry-specific AI platforms — voice agents, vertical SaaS, and automation — for the SMBs big tech ignores. Production today. Scalable tomorrow.
         </p>
@@ -2174,6 +2242,30 @@ html, body { max-width:100%; overflow-x:hidden; }
     document.querySelectorAll('.dnx-reveal').forEach(function(el){ io.observe(el); });
   } else {
     document.querySelectorAll('.dnx-reveal').forEach(function(el){ el.classList.add('dnx-in'); });
+  }
+
+  // sidebar scroll-spy
+  var sideLinks = document.querySelectorAll('.dnx-sidebar-link');
+  if (sideLinks.length && 'IntersectionObserver' in window) {
+    var byId = {};
+    sideLinks.forEach(function(a){
+      var id = (a.getAttribute('href') || '').replace('#','');
+      if (id) byId[id] = a;
+    });
+    var spy = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        var link = byId[e.target.id];
+        if (!link) return;
+        if (e.isIntersecting) {
+          sideLinks.forEach(function(l){ l.classList.remove('is-active'); });
+          link.classList.add('is-active');
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+    Object.keys(byId).forEach(function(id){
+      var sec = document.getElementById(id);
+      if (sec) spy.observe(sec);
+    });
   }
 
   // card spotlight
