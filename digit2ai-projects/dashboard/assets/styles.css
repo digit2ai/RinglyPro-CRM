@@ -690,6 +690,13 @@ body {
   .cal-week-day-header { padding: 6px 2px; font-size: 10px; }
   .cal-event-title { font-size: 11px; }
   .cal-event-time { font-size: 9px; }
+  /* Force the week header / all-day row to keep 7 horizontal day columns
+     even on narrow viewports (the inline style sets this on desktop, but
+     some narrow-window cases were collapsing to a 2-col grid). */
+  .cal-week-headers { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-allday-row   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-week-body    { grid-template-columns: 40px 1fr !important; }
+  .cal-week-columns { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; }
 }
 
 /* ===========================================
