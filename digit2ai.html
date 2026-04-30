@@ -146,10 +146,12 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-menubtn { display:flex; }
   /* compact sign-in on tablet */
   .dnx-hdr-cta .dnx-btn-primary { padding:8px 14px; font-size:13px; }
+  .dnx-hdr-cta .dnx-btn-presentation { padding:8px 12px; font-size:13px; }
 }
 @media (max-width:560px) {
   /* hide sign-in button in header on small screens — it's in the nav menu */
   .dnx-hdr-cta .dnx-btn-primary { display:none; }
+  .dnx-hdr-cta .dnx-btn-presentation { display:none; }
 }
 
 /* ============================================================
@@ -834,6 +836,10 @@ html, body { max-width:100%; overflow-x:hidden; }
         </nav>
         <div class="dnx-hdr-cta">
           <a href="https://aiagent.ringlypro.com/digit2ai-es" class="dnx-lang">ES</a>
+          <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" class="dnx-btn dnx-btn-ghost dnx-btn-presentation">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="margin-right:2px;"><path d="M5 4l7 4-7 4V4z" fill="currentColor"/></svg>
+            Presentation
+          </a>
           <a href="https://aiagent.ringlypro.com/projects/intake/request.html" class="dnx-btn dnx-btn-primary">
             Project Request
             <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
