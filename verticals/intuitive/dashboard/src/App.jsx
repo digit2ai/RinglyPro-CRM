@@ -27,6 +27,7 @@ import PresentationPage from './pages/PresentationPage'
 import BusinessPlanPage from './pages/BusinessPlanPage'
 import SurveyManagerPage from './pages/SurveyManagerPage'
 import TrackingDashboardPage from './pages/TrackingDashboardPage'
+import ReportPage from './pages/ReportPage'
 import { api } from './lib/api'
 
 // Dynamic Rachel context builder -- generates presentation context from live project data
@@ -150,6 +151,7 @@ const NAV_STEPS = [
   { to: '/business-plan', label: 'Business Plan', num: 5, icon: 'B', section: 'project' },
   { to: '/surveys', label: 'Surgeon Surveys', num: 6, icon: 'S', section: 'project' },
   { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T', section: 'project' },
+  { to: '/report', label: 'Report', num: 8, icon: 'R', section: 'project' },
 ]
 
 export default function App() {
@@ -231,7 +233,7 @@ export default function App() {
   // Sync currentProject from URL whenever the user navigates to a project-specific page
   useEffect(() => {
     if (!user) return
-    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys)\/(\d+)/)
+    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report)\/(\d+)/)
     if (!m) return
     const pid = parseInt(m[1])
     if (!pid || pid === currentProject) return
@@ -394,6 +396,8 @@ export default function App() {
           <Route path="/surveys/:projectId" element={<SurveyManagerPage />} />
           <Route path="/tracking" element={<TrackingDashboardPage />} />
           <Route path="/tracking/:planId" element={<TrackingDashboardPage />} />
+          <Route path="/report" element={<ReportPage projectId={currentProject} />} />
+          <Route path="/report/:projectId" element={<ReportPage />} />
         </Routes>
         </ErrorBoundary>
       </main>
