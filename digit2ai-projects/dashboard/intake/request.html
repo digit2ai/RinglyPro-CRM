@@ -20,6 +20,25 @@
   select option { background:#0b1220; }
   textarea { resize:vertical; min-height:80px; }
   .req::after { content:' *'; color:#fb7185; }
+  /* Multi-select chip picker */
+  .chip-group {
+    display:flex; flex-wrap:wrap; gap:8px;
+    background:#0b1220; border:1px solid #1e293b; border-radius:8px;
+    padding:10px;
+  }
+  .chip-opt {
+    padding:8px 14px; border-radius:999px; font-size:13px; font-weight:600;
+    color:#cbd5e1; background:#0f172a; border:1px solid #1e293b;
+    cursor:pointer; transition:all .15s; user-select:none;
+  }
+  .chip-opt:hover { border-color:#38bdf8; color:#e6edf3; }
+  .chip-opt.selected {
+    background:rgba(56,189,248,.15); color:#7dd3fc; border-color:#38bdf8;
+    box-shadow:0 0 0 1px rgba(56,189,248,.4);
+  }
+  .chip-opt .check { display:none; margin-right:4px; }
+  .chip-opt.selected .check { display:inline; }
+  .chip-hint { font-size:11px; color:#64748b; margin-top:6px; }
   .btn-primary {
     background:#38bdf8; color:#020617; border:none; border-radius:8px;
     padding:14px 24px; font-weight:700; font-size:15px; cursor:pointer;
@@ -110,17 +129,19 @@
       <div class="space-y-4">
         <div class="field-group">
           <div>
-            <label>AI category</label>
-            <select id="ai_category">
-              <option value="">-- pick one --</option>
-              <option>Voice agent (inbound / outbound)</option>
-              <option>Conversational AI / chatbot</option>
-              <option>Document understanding (OCR, extraction)</option>
-              <option>Computer vision</option>
-              <option>Compliance / wire-screening / fraud</option>
-              <option>Predictive analytics / forecasting</option>
-              <option>Other / not sure</option>
-            </select>
+            <label>AI category (select all that apply)</label>
+            <div id="ai_category_chips" class="chip-group" role="group" aria-label="AI category">
+              <span class="chip-opt" data-value="Voice agent (inbound / outbound)"><span class="check">&#10003;</span>Voice agent (inbound / outbound)</span>
+              <span class="chip-opt" data-value="Conversational AI / chatbot"><span class="check">&#10003;</span>Conversational AI / chatbot</span>
+              <span class="chip-opt" data-value="Document understanding (OCR, extraction)"><span class="check">&#10003;</span>Document understanding (OCR, extraction)</span>
+              <span class="chip-opt" data-value="Computer vision"><span class="check">&#10003;</span>Computer vision</span>
+              <span class="chip-opt" data-value="Compliance / wire-screening / fraud"><span class="check">&#10003;</span>Compliance / wire-screening / fraud</span>
+              <span class="chip-opt" data-value="Predictive analytics / forecasting"><span class="check">&#10003;</span>Predictive analytics / forecasting</span>
+              <span class="chip-opt" data-value="Generative AI / content generation"><span class="check">&#10003;</span>Generative AI / content generation</span>
+              <span class="chip-opt" data-value="Recommendation / personalization"><span class="check">&#10003;</span>Recommendation / personalization</span>
+              <span class="chip-opt" data-value="Other / not sure"><span class="check">&#10003;</span>Other / not sure</span>
+            </div>
+            <div class="chip-hint">Click each one that applies. You can select multiple.</div>
           </div>
           <div>
             <label>Sensitive / regulated data?</label>
@@ -192,6 +213,15 @@ const form = document.getElementById('intake_form');
 const errEl = document.getElementById('form_err');
 const btn = document.getElementById('submit_btn');
 
+// Multi-select chip behavior for AI category
+document.querySelectorAll('#ai_category_chips .chip-opt').forEach(el => {
+  el.addEventListener('click', () => el.classList.toggle('selected'));
+});
+function getSelectedAiCategories() {
+  return Array.from(document.querySelectorAll('#ai_category_chips .chip-opt.selected'))
+    .map(el => el.dataset.value);
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   errEl.classList.add('hidden');
@@ -202,7 +232,7 @@ form.addEventListener('submit', async (e) => {
     'full_name','email','phone','country',
     'company_name','company_website','industry',
     'project_title','project_description','problem','target_users','current_process',
-    'ai_category','sensitive_data','data_sources','existing_stack',
+    'sensitive_data','data_sources','existing_stack',
     'timeline','budget_range','success_metrics','heard_from','best_time'
   ];
   const payload = {};
@@ -210,6 +240,7 @@ form.addEventListener('submit', async (e) => {
     const el = document.getElementById(f);
     if (el) payload[f] = el.value.trim();
   }
+  payload.ai_category = getSelectedAiCategories();
 
   try {
     const r = await fetch('/projects/api/v1/intake/public/request', {

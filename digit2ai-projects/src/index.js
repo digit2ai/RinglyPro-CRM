@@ -398,6 +398,25 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 003 — Project Intake Fields + AI Plan + Business Plan
+    const intakeFieldsMigrationPath = path.join(__dirname, '..', 'migrations', '003_project_intake_fields.sql');
+    if (fs.existsSync(intakeFieldsMigrationPath)) {
+      try {
+        const sql = fs.readFileSync(intakeFieldsMigrationPath, 'utf8');
+        const statements = sql.split(';').map(s => s.trim()).filter(s => s.length > 0 && !s.startsWith('--'));
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 003_intake_fields notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 003_intake_fields migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 003_intake_fields error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

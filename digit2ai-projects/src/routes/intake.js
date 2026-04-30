@@ -81,6 +81,19 @@ router.post('/public/request', async (req, res) => {
       notes: `Prospect-submitted Neural AI project intake.${b.heard_from ? '\nReferral: ' + b.heard_from : ''}${b.best_time ? '\nBest contact time: ' + b.best_time : ''}`
     }, { transaction: t });
 
+    // Normalize ai_category to TEXT[] (multi-select)
+    let aiCategoryArr = [];
+    if (Array.isArray(b.ai_category)) {
+      aiCategoryArr = b.ai_category.map(s => String(s).trim()).filter(Boolean);
+    } else if (b.ai_category && String(b.ai_category).trim()) {
+      aiCategoryArr = [String(b.ai_category).trim()];
+    }
+    const aiCategoryDisplay = aiCategoryArr.join(', ') || 'Neural AI';
+
+    // Sensitive data: collapse free-text answer to boolean + keep detail
+    const sensitiveAnswer = (b.sensitive_data || '').toString().trim();
+    const sensitiveBool = sensitiveAnswer && /^yes|pii|phi|hipaa|financial|banking|regulated/i.test(sensitiveAnswer);
+
     // 3) Project + intake row
     const project = await Project.create({
       workspace_id: 1,
@@ -91,7 +104,25 @@ router.post('/public/request', async (req, res) => {
       stage: 'initiation',
       priority: b.timeline && /urgent|asap|now/i.test(b.timeline) ? 'high' : 'medium',
       tags: ['neural-ai-intake', 'pending-review'],
-      category: b.ai_category || 'Neural AI'
+      category: aiCategoryDisplay,
+      // Intake fields (migration 003)
+      submitter_name: b.full_name || null,
+      submitter_email: b.email || null,
+      submitter_phone: b.phone || null,
+      country: b.country || null,
+      target_users: b.target_users || null,
+      current_process: b.current_process || null,
+      data_sources: b.data_sources || null,
+      timeline: b.timeline || null,
+      budget_range: b.budget_range || null,
+      success_metrics: b.success_metrics || null,
+      ai_category: aiCategoryArr,
+      sensitive_data: sensitiveBool,
+      sensitive_data_detail: sensitiveAnswer || null,
+      existing_stack: b.existing_stack || null,
+      heard_from: b.heard_from || null,
+      best_contact_time: b.best_time || null,
+      intake_status: 'pending_review'
     }, { transaction: t });
 
     await ProjectIntake.create({
@@ -110,7 +141,7 @@ router.post('/public/request', async (req, res) => {
       ['Timeline / urgency?', b.timeline],
       ['Budget range?', b.budget_range],
       ['Expected outcomes / success metrics?', b.success_metrics],
-      ['Which Neural AI category fits best?', b.ai_category],
+      ['Which Neural AI categories fit best?', aiCategoryArr.length ? aiCategoryArr.join(', ') : ''],
       ['Does this involve sensitive / regulated data?', b.sensitive_data],
       ['Existing tech stack / integration requirements?', b.existing_stack]
     ];
@@ -699,6 +730,138 @@ router.get('/companies/:id/tokens', intakeAuth, requireAdmin, async (req, res) =
     });
     res.json({ success: true, data: tokens });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
+// INBOX APPROVE / REJECT (admin) — wired to Claude milestone-generator
+// =====================================================
+const milestoneGenerator = require('../services/milestone-generator');
+
+// POST /projects/:id/approve
+// Generates milestones via Claude, inserts them, marks project approved.
+router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const project = await Project.findByPk(req.params.id, { transaction: t });
+    if (!project) {
+      await t.rollback();
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+    if (project.intake_status !== 'pending_review') {
+      await t.rollback();
+      return res.status(400).json({ success: false, error: `Project is not pending review (current: ${project.intake_status})` });
+    }
+
+    // Build intake_answers from joined Q&A
+    const questions = await ProjectQuestion.findAll({
+      where: { project_id: project.id },
+      include: [{ model: QuestionResponse, as: 'responses' }],
+      order: [['position', 'ASC']],
+      transaction: t
+    });
+    const intakeAnswers = {};
+    for (const q of questions) {
+      const resps = q.responses || [];
+      if (resps.length) intakeAnswers[q.question_text] = resps.map(r => r.response_text).join('\n');
+    }
+    // Also surface the structured fields directly
+    if (project.target_users) intakeAnswers['target_users'] = project.target_users;
+    if (project.current_process) intakeAnswers['current_process'] = project.current_process;
+    if (project.data_sources) intakeAnswers['data_sources'] = project.data_sources;
+    if (project.success_metrics) intakeAnswers['success_metrics'] = project.success_metrics;
+    if (project.existing_stack) intakeAnswers['existing_stack'] = project.existing_stack;
+    if (project.country) intakeAnswers['country'] = project.country;
+
+    let result;
+    try {
+      result = await milestoneGenerator.generatePlan({
+        project_name: project.name,
+        description: project.description,
+        intake_answers: intakeAnswers,
+        timeline: project.timeline,
+        budget_range: project.budget_range,
+        ai_category: project.ai_category
+      });
+    } catch (genErr) {
+      await t.rollback();
+      console.error('[D2AI-Intake] milestone gen error:', genErr.message);
+      return res.status(502).json({ success: false, error: 'Claude milestone generation failed: ' + genErr.message });
+    }
+
+    const { plan, usage } = result;
+
+    // Insert milestones
+    for (const m of plan.milestones) {
+      await ProjectMilestone.create({
+        project_id: project.id,
+        title: m.title,
+        description: m.description + (m.deliverable ? '\n\nDeliverable: ' + m.deliverable : '') + (m.owner_role ? '\nOwner: ' + m.owner_role : ''),
+        due_date: m.due_date,
+        status: 'pending',
+        sort_order: m.order_index
+      }, { transaction: t });
+    }
+
+    // Update project state
+    project.intake_status = 'approved';
+    project.ai_milestone_generation_at = new Date();
+    project.status = 'active';
+    if (plan.estimated_completion_date) project.due_date = plan.estimated_completion_date;
+    if (plan.kickoff_recommendation) {
+      project.notes = (project.notes ? project.notes + '\n\n' : '') + 'Kickoff (AI-generated):\n' + plan.kickoff_recommendation;
+    }
+    if (Array.isArray(plan.next_steps) && plan.next_steps.length) {
+      project.next_step = plan.next_steps[0];
+    }
+    await project.save({ transaction: t });
+
+    // Also bump the discussion intake row
+    await ProjectIntake.update(
+      { intake_status: 'approved' },
+      { where: { project_id: project.id }, transaction: t }
+    );
+
+    await t.commit();
+
+    res.status(201).json({
+      success: true,
+      project_id: project.id,
+      milestones_created: plan.milestones.length,
+      estimated_completion_date: plan.estimated_completion_date,
+      next_steps: plan.next_steps,
+      kickoff_recommendation: plan.kickoff_recommendation,
+      usage
+    });
+  } catch (err) {
+    try { await t.rollback(); } catch (_) {}
+    console.error('[D2AI-Intake] approve error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /projects/:id/reject
+router.post('/projects/:id/reject', intakeAuth, requireAdmin, async (req, res) => {
+  try {
+    const project = await Project.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (project.intake_status !== 'pending_review') {
+      return res.status(400).json({ success: false, error: `Project is not pending review (current: ${project.intake_status})` });
+    }
+    const reason = (req.body && req.body.reason) ? String(req.body.reason).trim() : '';
+    project.intake_status = 'rejected';
+    if (reason) {
+      project.notes = (project.notes ? project.notes + '\n\n' : '') + 'Rejection reason:\n' + reason;
+    }
+    await project.save();
+    await ProjectIntake.update(
+      { intake_status: 'rejected' },
+      { where: { project_id: project.id } }
+    );
+    res.json({ success: true, project_id: project.id });
+  } catch (err) {
+    console.error('[D2AI-Intake] reject error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

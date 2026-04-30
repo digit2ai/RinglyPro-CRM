@@ -3,8 +3,9 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, sequelize } = require('../models');
+const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, sequelize } = require('../models');
 const { logActivity } = require('../services/activityService');
+const planGenerator = require('../../../chamber-template/lib/plan-generator');
 
 // GET /api/v1/projects - List projects
 router.get('/', async (req, res) => {
@@ -39,6 +40,67 @@ router.get('/', async (req, res) => {
     res.json({ success: true, data: rows, total: count, page: parseInt(page), pages: Math.ceil(count / parseInt(limit)) });
   } catch (error) {
     console.error('[D2AI] Projects list error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// INBOX (intake_status='pending_review')
+// =====================================================
+
+// GET /api/v1/projects/inbox/count -> { count: N }
+router.get('/inbox/count', async (req, res) => {
+  try {
+    const count = await Project.count({
+      where: { workspace_id: 1, archived_at: null, intake_status: 'pending_review' }
+    });
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error('[D2AI] Inbox count error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/projects/inbox -> full pending review list with intake answers
+router.get('/inbox', async (req, res) => {
+  try {
+    const rows = await Project.findAll({
+      where: { workspace_id: 1, archived_at: null, intake_status: 'pending_review' },
+      include: [{ model: Company, as: 'company', attributes: ['id', 'name'] }],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Pull Q&A and batch share token for each
+    const enriched = await Promise.all(rows.map(async (p) => {
+      const obj = p.toJSON();
+      const questions = await ProjectQuestion.findAll({
+        where: { project_id: p.id },
+        include: [{ model: QuestionResponse, as: 'responses', attributes: ['response_text', 'responder_name'] }],
+        order: [['position', 'ASC']]
+      });
+      obj.intake_qa = questions.map(q => ({
+        question: q.question_text,
+        answers: (q.responses || []).map(r => r.response_text)
+      }));
+
+      // Find share token (first reviewer-role token tied to this project's batch)
+      const { ProjectIntake } = require('../models');
+      const intake = await ProjectIntake.findOne({ where: { project_id: p.id } });
+      if (intake) {
+        const token = await CompanyAccessToken.findOne({
+          where: { batch_id: intake.batch_id },
+          order: [['created_at', 'ASC']]
+        });
+        obj.batch_id = intake.batch_id;
+        obj.share_token = token ? token.token : null;
+      }
+
+      return obj;
+    }));
+
+    res.json({ success: true, data: enriched, total: enriched.length });
+  } catch (error) {
+    console.error('[D2AI] Inbox list error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -227,6 +289,98 @@ router.post('/:id/updates', async (req, res) => {
     // Touch project updated_at
     await Project.update({ updated_at: new Date() }, { where: { id: req.params.id } });
     res.status(201).json({ success: true, data: update });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// AI BUSINESS PLAN GENERATION (reuses chamber-template/lib/plan-generator.js)
+// =====================================================
+
+function mapBudgetTier(budget_range) {
+  if (!budget_range) return 'medium';
+  const s = String(budget_range).toLowerCase();
+  if (/under\s*\$?\s*10k|under\s*\$?\s*50k|<\s*\$?\s*50k|<\s*10k/.test(s)) return 'small';
+  if (/\$?\s*1m\+|>\s*\$?\s*1m|\$?\s*250k\s*-\s*\$?\s*1m/.test(s)) return 'large';
+  return 'medium';
+}
+
+// POST /api/v1/projects/:id/generate-business-plan
+router.post('/:id/generate-business-plan', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    // Pull problem from intake Q&A
+    let problemAnswer = '';
+    const questions = await ProjectQuestion.findAll({
+      where: { project_id: project.id },
+      include: [{ model: QuestionResponse, as: 'responses', attributes: ['response_text'] }],
+      order: [['position', 'ASC']]
+    });
+    const problemQ = questions.find(q => /problem.*solve/i.test(q.question_text));
+    if (problemQ && problemQ.responses && problemQ.responses.length) {
+      problemAnswer = problemQ.responses.map(r => r.response_text).join('\n');
+    }
+
+    const visionParts = [];
+    if (project.description) visionParts.push(project.description);
+    if (problemAnswer) visionParts.push('Problem: ' + problemAnswer);
+    if (project.target_users) visionParts.push('Target users: ' + project.target_users);
+    if (project.current_process) visionParts.push('Current process: ' + project.current_process);
+    if (project.success_metrics) visionParts.push('Success metrics: ' + project.success_metrics);
+    if (project.existing_stack) visionParts.push('Existing stack: ' + project.existing_stack);
+    let vision = visionParts.join('\n\n');
+    if (vision.length < 80) {
+      vision = (project.description || project.name) + '\n\n' + (problemAnswer || 'Build an AI-powered solution to solve a business problem at scale.');
+    }
+    if (vision.length < 80) {
+      vision = vision + '\n\nDeliver measurable ROI by automating manual workflows, improving accuracy, and reducing time-to-resolution. Build trust through reliable, observable AI behavior.';
+    }
+
+    const sectorList = Array.isArray(project.ai_category) && project.ai_category.length
+      ? project.ai_category.join(' / ')
+      : (project.category || 'Neural AI');
+    const countries = project.country ? [project.country] : [];
+    const budget_tier = mapBudgetTier(project.budget_range);
+
+    let result;
+    try {
+      result = await planGenerator.generatePlan({ vision, sector: sectorList, countries, budget_tier });
+    } catch (genErr) {
+      console.error('[D2AI] Business plan gen error:', genErr.message);
+      return res.status(502).json({ success: false, error: 'Claude business plan generation failed: ' + genErr.message });
+    }
+
+    await project.update({
+      business_plan_json: result.plan,
+      business_plan_generated_at: new Date()
+    });
+    await logActivity(req.user?.email, 'generated_business_plan', 'project', project.id, project.name);
+
+    res.json({ success: true, plan: result.plan, usage: result.usage, generated_at: project.business_plan_generated_at });
+  } catch (error) {
+    console.error('[D2AI] generate-business-plan error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/projects/:id/business-plan
+router.get('/:id/business-plan', async (req, res) => {
+  try {
+    const project = await Project.findOne({
+      where: { id: req.params.id, workspace_id: 1 },
+      attributes: ['id', 'name', 'business_plan_json', 'business_plan_generated_at']
+    });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (!project.business_plan_json) return res.status(404).json({ success: false, error: 'No business plan generated yet' });
+    res.json({
+      success: true,
+      plan: project.business_plan_json,
+      generated_at: project.business_plan_generated_at,
+      project_name: project.name
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

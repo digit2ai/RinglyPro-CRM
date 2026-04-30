@@ -65,7 +65,31 @@ async function showApp() {
   loadVerticals();
   loadStaff();
   loadRoles();
+  refreshInboxBadge();
+  if (!window._inboxBadgePoll) {
+    window._inboxBadgePoll = setInterval(() => {
+      if (document.hidden) return;
+      refreshInboxBadge();
+    }, 60000);
+  }
   navigateTo('calendar');
+}
+
+// =====================================================
+// INBOX BADGE (pending project requests)
+// =====================================================
+async function refreshInboxBadge() {
+  try {
+    const res = await api('/projects/inbox/count');
+    const badge = document.getElementById('inbox-badge');
+    if (!badge) return;
+    if (res && res.success && res.count > 0) {
+      badge.textContent = res.count > 99 ? '99+' : res.count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch (e) { /* silent */ }
 }
 
 async function doLogin() {
@@ -140,7 +164,7 @@ function navigateTo(view) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', contacts: 'People & Pipeline', projects: 'My Projects',
+    overview: 'Home', inbox: 'Project Request Inbox', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -154,6 +178,7 @@ async function renderView(view) {
   try {
     switch (view) {
       case 'overview': await renderOverview(container); break;
+      case 'inbox': await renderInbox(container); break;
       case 'contacts': await renderContacts(container); break;
       case 'projects': await renderProjects(container); break;
       case 'calendar': await renderCalendar(container); break;
@@ -1025,6 +1050,155 @@ async function deleteWorkflow(id) {
   if (!confirm('Delete this workflow permanently?')) return;
   await api(`/workflows/${id}`, { method: 'DELETE' });
   renderWorkflows(document.getElementById('contacts-tab-content'));
+}
+
+// =====================================================
+// INBOX (Project request queue)
+// =====================================================
+function fmtRelative(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`;
+  return d.toLocaleDateString();
+}
+
+async function renderInbox(container) {
+  const res = await api('/projects/inbox');
+  if (!res.success) {
+    container.innerHTML = `<div class="empty-state"><h3>Inbox unavailable</h3><p>${res.error || 'Could not load pending requests'}</p></div>`;
+    return;
+  }
+  const items = res.data || [];
+  const countLine = items.length === 0
+    ? 'No pending requests right now.'
+    : `<strong>${items.length}</strong> request${items.length === 1 ? '' : 's'} awaiting review`;
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="detail-panel">
+        <h2 style="margin-top:0">Project Request Inbox</h2>
+        <p style="color:var(--text-muted)">${countLine}</p>
+        <div class="empty-state" style="margin-top:24px">
+          <h3>All caught up</h3>
+          <p>New prospect submissions from <a href="/projects/intake/request.html" target="_blank" style="color:var(--accent)">/projects/intake/request.html</a> will appear here.</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="detail-panel">
+      <h2 style="margin-top:0">Project Request Inbox</h2>
+      <p style="color:var(--text-muted);margin-bottom:18px">${countLine}</p>
+      <div id="inbox-list" style="display:flex;flex-direction:column;gap:14px">
+        ${items.map(p => renderInboxCard(p)).join('')}
+      </div>
+    </div>`;
+}
+
+function renderInboxCard(p) {
+  const cats = Array.isArray(p.ai_category) && p.ai_category.length ? p.ai_category : (p.category ? [p.category] : []);
+  const catChips = cats.map(c => `<span class="tag">${escHtml(String(c))}</span>`).join(' ');
+  const company = p.company ? p.company.name : (p.submitter_name || 'Unknown');
+  const sub = p.submitter_name || p.submitter_email || '';
+  const meta = [
+    p.country ? '&#127759; ' + escHtml(p.country) : null,
+    p.timeline ? '&#9201; ' + escHtml(p.timeline) : null,
+    p.budget_range ? '&#128176; ' + escHtml(p.budget_range) : null
+  ].filter(Boolean).join('  &middot;  ');
+  const qaList = (p.intake_qa || []).filter(q => q.answers && q.answers.length).map(q => `
+    <div style="margin-top:10px">
+      <div style="font-size:12px;color:var(--accent);font-weight:600">${escHtml(q.question)}</div>
+      <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-top:2px">${escHtml(q.answers.join('\n'))}</div>
+    </div>`).join('');
+  const shareUrl = p.share_token ? `/projects/intake/batch.html?token=${p.share_token}` : null;
+
+  return `
+    <details class="card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--bg-card)" data-project-id="${p.id}">
+      <summary style="cursor:pointer;list-style:none">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <strong style="font-size:15px;color:var(--text-primary)">${escHtml(p.name)}</strong>
+              ${catChips}
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary)">
+              ${escHtml(company)}${sub && sub !== company ? ' &middot; ' + escHtml(sub) : ''}
+              ${p.submitter_email ? ' &middot; <span style="color:var(--text-muted)">' + escHtml(p.submitter_email) + '</span>' : ''}
+            </div>
+            ${meta ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">${meta}</div>` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap">${fmtRelative(p.created_at)}</div>
+        </div>
+      </summary>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        ${p.description ? `<div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:10px"><strong style="color:var(--text-primary)">Description:</strong> ${escHtml(p.description)}</div>` : ''}
+        ${qaList}
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm" onclick="approveInboxItem(${p.id})" id="approve-btn-${p.id}">&#10003; Approve &amp; generate plan</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectInboxItem(${p.id})" id="reject-btn-${p.id}">&times; Reject</button>
+          ${shareUrl ? `<a class="btn btn-ghost btn-sm" href="${shareUrl}" target="_blank" rel="noopener">Open discussion</a>` : ''}
+          <span id="inbox-status-${p.id}" style="margin-left:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
+        </div>
+      </div>
+    </details>`;
+}
+
+async function approveInboxItem(projectId) {
+  const card = document.querySelector(`details[data-project-id="${projectId}"]`);
+  const status = document.getElementById(`inbox-status-${projectId}`);
+  const aBtn = document.getElementById(`approve-btn-${projectId}`);
+  const rBtn = document.getElementById(`reject-btn-${projectId}`);
+  if (aBtn) aBtn.disabled = true;
+  if (rBtn) rBtn.disabled = true;
+  if (status) status.textContent = 'Calling Claude to generate milestones...';
+
+  try {
+    const res = await api(`/intake/projects/${projectId}/approve`, { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) {
+      if (status) status.textContent = 'Error: ' + (res.error || 'approve failed');
+      if (aBtn) aBtn.disabled = false;
+      if (rBtn) rBtn.disabled = false;
+      return;
+    }
+    if (status) status.textContent = `Approved. ${res.milestones_created} milestones created.`;
+    if (card) card.style.opacity = '0.5';
+    setTimeout(() => { if (card) card.remove(); }, 1500);
+    refreshInboxBadge();
+    setTimeout(() => navigateTo('inbox'), 1600);
+  } catch (e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+    if (aBtn) aBtn.disabled = false;
+    if (rBtn) rBtn.disabled = false;
+  }
+}
+
+async function rejectInboxItem(projectId) {
+  const reason = prompt('Reason for rejection (optional):', '');
+  if (reason === null) return; // cancelled
+  const card = document.querySelector(`details[data-project-id="${projectId}"]`);
+  const status = document.getElementById(`inbox-status-${projectId}`);
+  if (status) status.textContent = 'Rejecting...';
+  try {
+    const res = await api(`/intake/projects/${projectId}/reject`, { method: 'POST', body: JSON.stringify({ reason: reason || '' }) });
+    if (!res.success) {
+      if (status) status.textContent = 'Error: ' + (res.error || 'reject failed');
+      return;
+    }
+    if (status) status.textContent = 'Rejected.';
+    if (card) card.style.opacity = '0.5';
+    setTimeout(() => { if (card) card.remove(); }, 1000);
+    refreshInboxBadge();
+  } catch (e) {
+    if (status) status.textContent = 'Error: ' + e.message;
+  }
 }
 
 // =====================================================
@@ -2447,9 +2621,14 @@ async function showProjectDetail(id) {
           <h2>${p.name}</h2>
           ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           <button class="btn btn-danger btn-sm" onclick="archiveProject(${p.id})">Archive</button>
+          ${p.business_plan_generated_at
+            ? `<button class="btn btn-primary btn-sm" onclick="showBusinessPlanModal(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">View Business Plan</button>
+               <button class="btn btn-ghost btn-sm" onclick="generateBusinessPlan(${p.id})" title="Regenerate">&#8635;</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="generateBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">&#10024; AI Generate Business Plan</button>`
+          }
         </div>
       </div>
       <div class="detail-meta">
@@ -2538,6 +2717,192 @@ async function archiveContact(id) { if (confirm('Archive this contact?')) { awai
 async function deleteContact(id) { if (confirm('Permanently delete this contact? This cannot be undone.')) { await api(`/contacts/${id}`, { method: 'DELETE' }); navigateTo('contacts'); } }
 async function archiveProject(id) { if (confirm('Archive this project?')) { await api(`/projects/${id}/archive`, { method: 'PUT' }); navigateTo('projects'); } }
 
+// =====================================================
+// AI BUSINESS PLAN GENERATION
+// =====================================================
+async function generateBusinessPlan(projectId) {
+  if (!confirm('Generate business plan with Claude? This takes about 30 seconds and costs API tokens.')) return;
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = 'Generating Business Plan';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="text-align:center;padding:30px 0">
+      <div class="spinner" style="margin:0 auto"></div>
+      <p style="margin-top:16px;color:var(--text-secondary)" id="bp-status">Calling Claude...</p>
+      <p style="font-size:12px;color:var(--text-muted)">This usually takes 20-40 seconds.</p>
+    </div>`;
+  document.getElementById('modal-cancel').style.display = 'none';
+  document.getElementById('modal-save').style.display = 'none';
+  overlay.classList.remove('hidden');
+
+  try {
+    setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Building plan...'; }, 4000);
+    setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Saving...'; }, 18000);
+    const res = await api(`/projects/${projectId}/generate-business-plan`, { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) {
+      document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger)">Error: ${res.error || 'failed'}</p>`;
+      document.getElementById('modal-cancel').style.display = '';
+      document.getElementById('modal-cancel').textContent = 'Close';
+      return;
+    }
+    closeModal();
+    document.getElementById('modal-cancel').style.display = '';
+    document.getElementById('modal-save').style.display = '';
+    document.getElementById('modal-cancel').textContent = 'Cancel';
+    showBusinessPlanModalWithData(projectId, res.plan, res.generated_at);
+    // Refresh project detail (so the button flips to "View Business Plan")
+    setTimeout(() => showProjectDetail(projectId), 800);
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger)">Error: ${e.message}</p>`;
+    document.getElementById('modal-cancel').style.display = '';
+    document.getElementById('modal-cancel').textContent = 'Close';
+  }
+}
+
+async function showBusinessPlanModal(projectId) {
+  const res = await api(`/projects/${projectId}/business-plan`);
+  if (!res.success) { alert('No business plan: ' + (res.error || 'not generated yet')); return; }
+  showBusinessPlanModalWithData(projectId, res.plan, res.generated_at);
+}
+
+function fmtUsd(n) {
+  if (typeof n !== 'number' || isNaN(n)) return '-';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+}
+
+function showBusinessPlanModalWithData(projectId, plan, generatedAt) {
+  const tabs = [
+    { key: 'summary', label: 'Executive Summary' },
+    { key: 'market', label: 'Problem & Market' },
+    { key: 'solution', label: 'Solution' },
+    { key: 'gtm', label: 'Go-to-Market' },
+    { key: 'revenue', label: 'Revenue Model' },
+    { key: 'team', label: 'Team Roles' },
+    { key: 'budget', label: 'Budget' },
+    { key: 'timeline', label: 'Timeline' },
+    { key: 'risks', label: 'Risks' },
+    { key: 'kpis', label: 'KPIs' }
+  ];
+  const tabBar = tabs.map((t, i) => `
+    <button class="bp-tab ${i === 0 ? 'active' : ''}" data-tab="${t.key}"
+      style="padding:8px 14px;font-size:13px;font-weight:600;background:transparent;border:none;border-bottom:2px solid ${i === 0 ? 'var(--accent)' : 'transparent'};color:${i === 0 ? 'var(--accent)' : 'var(--text-muted)'};cursor:pointer;white-space:nowrap"
+      onclick="switchBusinessPlanTab('${t.key}', this)">${t.label}</button>`).join('');
+
+  const sections = {
+    summary: `
+      <h3 style="margin-top:0">${escHtml(plan.title || 'Business Plan')}</h3>
+      <p style="font-size:14px;line-height:1.6;color:var(--text-secondary);white-space:pre-wrap">${escHtml(plan.executive_summary || '')}</p>`,
+    market: (() => {
+      const pm = plan.problem_market || {};
+      return `
+        <h4>Problem statement</h4>
+        <p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${escHtml(pm.problem_statement || '-')}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
+          <div class="card" style="padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted)">TAM</div><div style="font-size:20px;font-weight:700;color:var(--accent)">${fmtUsd(pm.tam_usd)}</div></div>
+          <div class="card" style="padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted)">SAM</div><div style="font-size:20px;font-weight:700;color:var(--accent)">${fmtUsd(pm.sam_usd)}</div></div>
+          <div class="card" style="padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted)">SOM</div><div style="font-size:20px;font-weight:700;color:var(--accent)">${fmtUsd(pm.som_usd)}</div></div>
+        </div>
+        <h4 style="margin-top:18px">Target segments</h4>
+        <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px">${(pm.target_segments || []).map(s => `<li>${escHtml(s)}</li>`).join('') || '<li>-</li>'}</ul>`;
+    })(),
+    solution: (() => {
+      const s = plan.solution || {};
+      return `
+        <h4>Description</h4>
+        <p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${escHtml(s.description || '-')}</p>
+        <h4>Key differentiators</h4>
+        <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px">${(s.key_differentiators || []).map(d => `<li>${escHtml(d)}</li>`).join('') || '<li>-</li>'}</ul>
+        <h4>Tech stack / methodology</h4>
+        <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px">${(s.tech_stack_or_methodology || []).map(d => `<li>${escHtml(d)}</li>`).join('') || '<li>-</li>'}</ul>`;
+    })(),
+    gtm: (() => {
+      const g = plan.go_to_market || {};
+      const phases = (g.phases || []).map(p => `
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <strong>${escHtml(p.name || '')}</strong> <span style="color:var(--text-muted);font-size:12px">(${p.duration_months || '-'} months)</span>
+          <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px;margin-top:6px">${(p.activities || []).map(a => `<li>${escHtml(a)}</li>`).join('')}</ul>
+        </div>`).join('');
+      const regions = (g.regional_priorities || []).map(r => `<li><strong>${escHtml(r.region || '')}:</strong> ${escHtml(r.rationale || '')}</li>`).join('');
+      return `
+        <h4>Phases</h4>${phases || '<p style="color:var(--text-muted)">-</p>'}
+        <h4>Channel strategy</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${escHtml(g.channel_strategy || '-')}</p>
+        <h4>Regional priorities</h4><ul style="font-size:13px;color:var(--text-secondary);padding-left:20px">${regions || '<li>-</li>'}</ul>`;
+    })(),
+    revenue: (() => {
+      const r = plan.revenue_model || {};
+      const tiers = (r.pricing_tiers || []).map(t => `
+        <div class="card" style="padding:12px"><div style="font-size:13px;color:var(--text-muted)">${escHtml(t.name || '')}</div><div style="font-size:18px;font-weight:700">${fmtUsd(t.price_usd)} <span style="font-size:11px;color:var(--text-muted)">/ ${escHtml(t.period || '')}</span></div></div>`).join('');
+      return `
+        <h4>Pricing tiers</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">${tiers || '<p style="color:var(--text-muted)">-</p>'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px">
+          <div class="card" style="padding:14px"><div style="font-size:11px;color:var(--text-muted)">Year 1 estimate</div><div style="font-size:20px;font-weight:700;color:var(--success)">${fmtUsd(r.year1_revenue_estimate_usd)}</div></div>
+          <div class="card" style="padding:14px"><div style="font-size:11px;color:var(--text-muted)">Year 3 estimate</div><div style="font-size:20px;font-weight:700;color:var(--success)">${fmtUsd(r.year3_revenue_estimate_usd)}</div></div>
+        </div>`;
+    })(),
+    team: (() => {
+      const roles = plan.team_roles_required || [];
+      return roles.map(r => `
+        <div class="card" style="padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+            <strong style="font-size:15px">${escHtml(r.role_title || '')}</strong>
+            <div>${r.must_have ? '<span class="tag" style="background:rgba(244,63,94,.14);color:#fb7185">Must-have</span>' : ''} <span class="tag">${r.commitment_pct || 0}% commitment</span></div>
+          </div>
+          ${(r.responsibilities || []).length ? `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">Responsibilities</div><ul style="font-size:13px;color:var(--text-secondary);padding-left:20px">${r.responsibilities.map(x => `<li>${escHtml(x)}</li>`).join('')}</ul>` : ''}
+          ${(r.required_skills || []).length ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Required skills:</div> <div>${r.required_skills.map(x => `<span class="tag">${escHtml(x)}</span>`).join(' ')}</div>` : ''}
+        </div>`).join('') || '<p style="color:var(--text-muted)">-</p>';
+    })(),
+    budget: (() => {
+      const items = plan.budget_breakdown || [];
+      const total = items.reduce((s, b) => s + (Number(b.amount_usd) || 0), 0);
+      return `
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Category</th><th style="text-align:left;padding:8px">Phase</th><th style="text-align:right;padding:8px">Amount</th></tr></thead>
+          <tbody>${items.map(b => `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">${escHtml(b.category || '')}</td><td style="padding:8px;color:var(--text-muted)">${escHtml(b.phase || '')}</td><td style="padding:8px;text-align:right;font-family:monospace">${fmtUsd(b.amount_usd)}</td></tr>`).join('') || '<tr><td colspan=3 style="padding:8px;color:var(--text-muted)">-</td></tr>'}</tbody>
+          <tfoot><tr><td colspan=2 style="padding:8px;font-weight:700">Total</td><td style="padding:8px;text-align:right;font-weight:700;color:var(--accent);font-family:monospace">${fmtUsd(total)}</td></tr></tfoot>
+        </table>`;
+    })(),
+    timeline: (() => {
+      const ms = plan.timeline_milestones || [];
+      return ms.map(m => `<div class="timeline-item" style="border-left:3px solid var(--accent);padding-left:14px;margin-bottom:10px"><div class="timeline-content"><strong>Month ${m.month || '?'}: ${escHtml(m.milestone || '')}</strong><br><span style="font-size:13px;color:var(--text-secondary)">${escHtml(m.deliverable || '')}</span></div></div>`).join('') || '<p style="color:var(--text-muted)">-</p>';
+    })(),
+    risks: (() => {
+      const rs = plan.risks || [];
+      return rs.map(r => `<div class="card" style="padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${escHtml(r.risk || '')}</strong><span class="tag">${escHtml(String(r.likelihood || ''))}</span></div><div style="font-size:13px;color:var(--text-secondary);margin-top:6px">Mitigation: ${escHtml(r.mitigation || '')}</div></div>`).join('') || '<p style="color:var(--text-muted)">-</p>';
+    })(),
+    kpis: (() => {
+      const ks = plan.success_kpis || [];
+      return `<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">KPI</th><th style="text-align:left;padding:8px">Target</th><th style="text-align:left;padding:8px">Period</th></tr></thead><tbody>${ks.map(k => `<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">${escHtml(k.kpi || '')}</td><td style="padding:8px;color:var(--accent)">${escHtml(k.target || '')}</td><td style="padding:8px;color:var(--text-muted)">${escHtml(k.measurement_period || '')}</td></tr>`).join('') || '<tr><td colspan=3 style="padding:8px;color:var(--text-muted)">-</td></tr>'}</tbody></table>`;
+    })()
+  };
+
+  // Stash sections globally so tab switcher can read them
+  window._bpSections = sections;
+
+  document.getElementById('modal-title').textContent = 'AI-Generated Business Plan';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Generated ${generatedAt ? new Date(generatedAt).toLocaleString() : ''}</div>
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;margin-bottom:14px;white-space:nowrap">${tabBar}</div>
+    <div id="bp-content" style="max-height:60vh;overflow:auto">${sections.summary}</div>`;
+  document.getElementById('modal-cancel').textContent = 'Close';
+  document.getElementById('modal-save').style.display = 'none';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function switchBusinessPlanTab(key, btn) {
+  document.querySelectorAll('.bp-tab').forEach(b => {
+    b.classList.remove('active');
+    b.style.borderBottomColor = 'transparent';
+    b.style.color = 'var(--text-muted)';
+  });
+  btn.classList.add('active');
+  btn.style.borderBottomColor = 'var(--accent)';
+  btn.style.color = 'var(--accent)';
+  const content = document.getElementById('bp-content');
+  if (content && window._bpSections && window._bpSections[key]) {
+    content.innerHTML = window._bpSections[key];
+  }
+}
+
 async function completeMilestone(projectId, milestoneId) {
   await api(`/projects/${projectId}/milestones/${milestoneId}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
   showProjectDetail(projectId);
@@ -2596,6 +2961,9 @@ function openModal(title, bodyHtml, onSave) {
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.add('hidden');
+  document.getElementById('modal-save').style.display = '';
+  document.getElementById('modal-cancel').style.display = '';
+  document.getElementById('modal-cancel').textContent = 'Cancel';
   modalSaveHandler = null;
 }
 

@@ -115,7 +115,28 @@ const Project = sequelize.define('Project', {
   ai_summary: DataTypes.TEXT,
   tags: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
   progress: { type: DataTypes.INTEGER, defaultValue: 0 },
-  archived_at: DataTypes.DATE
+  archived_at: DataTypes.DATE,
+  // Intake fields (added in migration 003)
+  submitter_name: DataTypes.STRING(255),
+  submitter_email: DataTypes.STRING(255),
+  submitter_phone: DataTypes.STRING(50),
+  country: DataTypes.STRING(100),
+  target_users: DataTypes.TEXT,
+  current_process: DataTypes.TEXT,
+  data_sources: DataTypes.TEXT,
+  timeline: DataTypes.STRING(255),
+  budget_range: DataTypes.STRING(100),
+  success_metrics: DataTypes.TEXT,
+  ai_category: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
+  sensitive_data: { type: DataTypes.BOOLEAN, defaultValue: false },
+  sensitive_data_detail: DataTypes.STRING(255),
+  existing_stack: DataTypes.TEXT,
+  heard_from: DataTypes.STRING(255),
+  best_contact_time: DataTypes.STRING(255),
+  intake_status: { type: DataTypes.STRING(30), defaultValue: 'none' },
+  business_plan_json: DataTypes.JSONB,
+  business_plan_generated_at: DataTypes.DATE,
+  ai_milestone_generation_at: DataTypes.DATE
 }, { tableName: 'd2_projects' });
 
 // =====================================================
