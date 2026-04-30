@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2ai Neural — The Enterprise Agent Platform</title>
+<meta name="description" content="An MCP server with a team of AI agents that analyze your business workflow, detect money leaks, prescribe fixes, and execute them automatically. Build, deploy, govern, and observe the whole agent fleet from one place.">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #07090f;
+    color: #e2e8f0;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: #c4b5fd; text-decoration: none; transition: color .15s; }
+  a:hover { color: #fff; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  img { max-width: 100%; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Background glow accents */
+  .glow {
+    position: absolute; border-radius: 50%; filter: blur(80px);
+    pointer-events: none; z-index: 0;
+  }
+  .glow.purple { background: rgba(139,92,246,.18); }
+  .glow.cyan { background: rgba(6,182,212,.14); }
+
+  /* NAV */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,9,15,.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(139,92,246,.12);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; max-width: 1280px; margin: 0 auto;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; }
+  .nav-logo .nl-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; color: #fff;
+  }
+  .nav-logo .nl-text {
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .nav-links { display: flex; gap: 26px; font-size: 14px; color: #94a3b8; }
+  .nav-cta {
+    display: inline-flex; padding: 8px 18px; border-radius: 8px;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-weight: 600; font-size: 13.5px;
+    transition: opacity .15s, transform .15s;
+  }
+  .nav-cta:hover { color: #fff; opacity: .92; transform: translateY(-1px); }
+  @media (max-width: 880px) { .nav-links { display: none; } }
+
+  /* HERO */
+  .hero {
+    position: relative; padding: 100px 0 90px; text-align: center;
+    overflow: hidden;
+  }
+  .hero .glow.purple { width: 540px; height: 540px; top: -120px; left: -160px; }
+  .hero .glow.cyan { width: 420px; height: 420px; bottom: -100px; right: -100px; }
+  .hero-inner { position: relative; z-index: 1; }
+  .hero-eyebrow {
+    display: inline-block;
+    padding: 6px 16px; border-radius: 999px;
+    background: rgba(139,92,246,.12);
+    border: 1px solid rgba(139,92,246,.3);
+    font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: #c4b5fd;
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(38px, 6vw, 68px); font-weight: 800;
+    line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 22px;
+    max-width: 1000px; margin-left: auto; margin-right: auto;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 19px); color: #94a3b8;
+    max-width: 760px; margin: 0 auto 32px;
+  }
+  .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: 10px;
+    font-size: 15px; font-weight: 600; transition: all .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: #fff;
+  }
+  .btn-primary:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(139,92,246,.4); }
+  .btn-ghost {
+    background: rgba(139,92,246,.08); color: #c4b5fd;
+    border: 1px solid rgba(139,92,246,.25);
+  }
+  .btn-ghost:hover { background: rgba(139,92,246,.15); color: #fff; }
+  .btn-arrow::after { content: "→"; transition: transform .2s; }
+  .btn-arrow:hover::after { transform: translateX(3px); }
+  .hero-trust {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #64748b;
+  }
+  .hero-trust .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: #4ade80;
+    box-shadow: 0 0 10px rgba(74,222,128,.7);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+  /* AGENT NETWORK VISUAL */
+  .agent-net {
+    position: relative; max-width: 880px; margin: 50px auto 0;
+    height: 280px;
+  }
+  .agent-net svg { position: absolute; top:0; left:0; width: 100%; height: 100%; }
+  .agent-net .node {
+    position: absolute; width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #fff;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    border: 3px solid #07090f;
+    box-shadow: 0 4px 20px rgba(139,92,246,.4);
+    z-index: 2;
+  }
+  .agent-net .node.center {
+    width: 110px; height: 110px; font-size: 14px;
+    background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+    box-shadow: 0 0 40px rgba(139,92,246,.5);
+    text-align: center; line-height: 1.1;
+    top: 85px; left: 50%; transform: translateX(-50%);
+  }
+  .agent-net .node.center::after {
+    content: ""; position: absolute; inset: -8px;
+    border-radius: 50%; border: 2px dashed rgba(139,92,246,.4);
+    animation: spin 30s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 720px) { .agent-net { display: none; } }
+
+  /* STATS BAND */
+  .stats {
+    background: linear-gradient(180deg, rgba(139,92,246,.04), transparent);
+    border-top: 1px solid rgba(139,92,246,.12);
+    border-bottom: 1px solid rgba(139,92,246,.12);
+    padding: 50px 0;
+  }
+  .stats-grid {
+    display: grid; gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    text-align: center;
+  }
+  .stat .num {
+    font-size: clamp(36px, 5vw, 52px); font-weight: 800;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .stat .label { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; }
+
+  /* SECTION */
+  section { padding: 90px 0; position: relative; }
+  .sec-eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #06b6d4;
+    margin-bottom: 14px;
+  }
+  .sec-title {
+    font-size: clamp(28px, 4vw, 42px); font-weight: 800;
+    line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.01em;
+  }
+  .sec-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sec-lede { font-size: 17px; color: #94a3b8; max-width: 740px; margin-bottom: 50px; }
+  .sec-head-center { text-align: center; }
+  .sec-head-center .sec-lede { margin-left: auto; margin-right: auto; }
+
+  /* FLOW: Detect -> Diagnose -> Prescribe -> Auto-fix -> Verify */
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .flow-step {
+    position: relative;
+    background: rgba(139,92,246,.04);
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 14px;
+    padding: 30px 22px 26px;
+    transition: border-color .25s, transform .25s;
+  }
+  .flow-step:hover { border-color: rgba(139,92,246,.45); transform: translateY(-3px); }
+  .flow-step .num {
+    position: absolute; top: -14px; left: 22px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .flow-step h3 { font-size: 18px; color: #fff; margin: 8px 0 8px; font-weight: 700; }
+  .flow-step .verb { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: #06b6d4; font-weight: 700; }
+  .flow-step p { font-size: 14px; color: #cbd5e1; }
+
+  /* AGENT GALLERY */
+  .agents {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .agent {
+    background: linear-gradient(180deg, rgba(139,92,246,.06), rgba(6,182,212,.03));
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all .25s;
+  }
+  .agent::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+    opacity: 0; transition: opacity .25s;
+  }
+  .agent:hover { border-color: rgba(139,92,246,.45); transform: translateY(-4px); }
+  .agent:hover::before { opacity: 1; }
+  .agent .head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .agent .avatar {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    color: #fff; font-weight: 800; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .agent .name { font-size: 17px; font-weight: 700; color: #fff; }
+  .agent .role { font-size: 11.5px; color: #c4b5fd; text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+  .agent .desc { font-size: 14px; color: #cbd5e1; min-height: 60px; margin-bottom: 14px; }
+  .agent .owns {
+    font-size: 12.5px; color: #94a3b8;
+    border-top: 1px dashed rgba(139,92,246,.18);
+    padding-top: 12px;
+  }
+  .agent .owns b { color: #c4b5fd; font-weight: 600; }
+  .agent .live {
+    position: absolute; top: 16px; right: 16px;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: #4ade80;
+  }
+  .agent .live .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+    box-shadow: 0 0 6px rgba(74,222,128,.7); animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  /* MCP ARCHITECTURE */
+  .arch {
+    background: #0a0e18;
+    border: 1px solid rgba(139,92,246,.2);
+    border-radius: 18px;
+    padding: 36px 30px;
+    overflow-x: auto;
+  }
+  .arch-stack { display: flex; flex-direction: column; gap: 12px; min-width: 700px; }
+  .arch-row { display: flex; gap: 0; align-items: stretch; }
+  .arch-tier {
+    flex: 1;
+    border: 1px solid rgba(139,92,246,.25);
+    background: rgba(139,92,246,.05);
+    padding: 16px 20px;
+    text-align: left;
+  }
+  .arch-tier:not(:last-child) { border-right: none; }
+  .arch-tier:first-child { border-radius: 10px 0 0 10px; }
+  .arch-tier:last-child { border-radius: 0 10px 10px 0; }
+  .arch-tier.full { border-radius: 10px; }
+  .arch-tier .tlabel {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.3px;
+    text-transform: uppercase; color: #06b6d4;
+    margin-bottom: 6px;
+  }
+  .arch-tier .tcontent { font-size: 14px; color: #e2e8f0; }
+  .arch-tier .tcontent b { color: #fff; }
+  .arch-tier.experience { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.3); }
+  .arch-tier.experience .tlabel { color: #67e8f9; }
+  .arch-tier.mcp {
+    background: linear-gradient(90deg, rgba(139,92,246,.18), rgba(6,182,212,.18));
+    border-color: rgba(139,92,246,.45);
+  }
+  .arch-tier.mcp .tlabel { color: #c4b5fd; }
+  .arch-tier.taskforce { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.35); }
+  .arch-tier.foundation { background: rgba(34,197,94,.06); border-color: rgba(34,197,94,.25); }
+  .arch-tier.foundation .tlabel { color: #4ade80; }
+  .arch-arrow { text-align: center; color: #475569; font-size: 18px; }
+
+  /* PILLARS */
+  .pillars {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .pillar {
+    background: rgba(139,92,246,.05);
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 14px;
+    padding: 26px;
+    transition: all .25s;
+  }
+  .pillar:hover { border-color: rgba(139,92,246,.45); transform: translateY(-3px); }
+  .pillar .picon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(139,92,246,.3), rgba(6,182,212,.3));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #fff;
+    margin-bottom: 16px;
+  }
+  .pillar h3 { color: #fff; font-size: 19px; font-weight: 700; margin-bottom: 12px; }
+  .pillar ul { list-style: none; padding: 0; }
+  .pillar ul li {
+    font-size: 13.5px; color: #cbd5e1;
+    padding: 5px 0 5px 18px; position: relative;
+  }
+  .pillar ul li::before {
+    content: "•"; color: #8b5cf6; position: absolute; left: 4px; font-weight: 800;
+  }
+
+  /* COMPARISON */
+  .compare {
+    overflow-x: auto;
+    border: 1px solid rgba(139,92,246,.18);
+    border-radius: 14px;
+  }
+  .compare table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 14px; }
+  .compare th, .compare td {
+    padding: 16px 18px; text-align: left;
+    border-bottom: 1px solid rgba(139,92,246,.1);
+  }
+  .compare th {
+    background: rgba(139,92,246,.08);
+    color: #c4b5fd;
+    font-weight: 700; font-size: 12.5px;
+    text-transform: uppercase; letter-spacing: .8px;
+  }
+  .compare th.us {
+    background: linear-gradient(135deg, rgba(139,92,246,.2), rgba(6,182,212,.15));
+    color: #fff;
+  }
+  .compare td:first-child { color: #94a3b8; font-weight: 600; }
+  .compare td.us {
+    background: rgba(139,92,246,.05);
+    color: #fff; font-weight: 500;
+  }
+  .compare tr:last-child th, .compare tr:last-child td { border-bottom: none; }
+
+  /* USE CASES */
+  .uses {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .use-card {
+    background: rgba(139,92,246,.04);
+    border: 1px solid rgba(139,92,246,.15);
+    border-radius: 14px;
+    padding: 24px;
+    transition: all .25s;
+  }
+  .use-card:hover { border-color: rgba(139,92,246,.4); transform: translateY(-3px); }
+  .use-card .uicon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(139,92,246,.25), rgba(6,182,212,.25));
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px; color: #c4b5fd; font-weight: 800;
+  }
+  .use-card h4 { color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .use-card p { color: #94a3b8; font-size: 13.5px; }
+
+  /* TRUST */
+  .trust-row {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .trust-item {
+    background: rgba(139,92,246,.04);
+    border: 1px solid rgba(139,92,246,.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .trust-item .ticon { font-size: 22px; margin-bottom: 8px; color: #06b6d4; }
+  .trust-item .tname { font-size: 13px; color: #fff; font-weight: 600; margin-bottom: 4px; }
+  .trust-item .tsub { font-size: 12px; color: #64748b; }
+
+  /* CTA BANNER */
+  .cta-banner {
+    background: linear-gradient(135deg, rgba(139,92,246,.15), rgba(6,182,212,.1));
+    border: 1px solid rgba(139,92,246,.35);
+    border-radius: 18px;
+    padding: 60px 40px;
+    text-align: center;
+    margin: 0 auto;
+    max-width: 1100px;
+  }
+  .cta-banner h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; margin-bottom: 14px; }
+  .cta-banner p { font-size: 16px; color: #cbd5e1; max-width: 620px; margin: 0 auto 28px; }
+  .cta-banner .hero-ctas { margin-bottom: 0; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(139,92,246,.12);
+    padding: 50px 0 40px;
+    color: #64748b; font-size: 13px;
+    text-align: center;
+  }
+  footer .links { margin-bottom: 16px; }
+  footer .links a { margin: 0 12px; color: #94a3b8; }
+
+  /* Voice CTA hint */
+  .voice-cta {
+    position: fixed; bottom: 28px; left: 24px;
+    background: rgba(7,9,15,.9); backdrop-filter: blur(10px);
+    border: 1px solid rgba(139,92,246,.35);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px; color: #c4b5fd;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    z-index: 40; max-width: 230px;
+    pointer-events: none;
+    animation: floaty 3s ease-in-out infinite;
+  }
+  @keyframes floaty { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+  .voice-cta b { color: #fff; }
+  @media (max-width: 720px) { .voice-cta { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="https://aiagent.ringlypro.com/neural/" class="nav-logo" aria-label="Digit2ai Neural">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2ai Neural" style="height:56px;width:auto;display:block;">
+    </a>
+    <div class="nav-links">
+      <a href="#flow">How It Works</a>
+      <a href="#agents">Agents</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#pillars">Platform</a>
+      <a href="#compare">Why Neural</a>
+      <a href="https://aiagent.ringlypro.com/neural/presentation.html">Pitch</a>
+    </div>
+    <a href="https://aiagent.ringlypro.com/neural/dashboard.html" class="nav-cta">Live Demo →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="glow purple"></div>
+  <div class="glow cyan"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-eyebrow">Enterprise Agent Platform</div>
+    <h1>An MCP server with a team of <em>AI agents</em><br>that find money leaks and fix them <em>automatically</em>.</h1>
+    <p class="hero-sub">Digit2ai Neural analyzes every workflow in your business, detects where revenue is leaking, prescribes the right fix, and dispatches a specialized AI agent to execute it — across voice, web, SMS, and every channel your customers use.</p>
+    <div class="hero-ctas">
+      <a href="https://aiagent.ringlypro.com/neural/dashboard.html" class="btn btn-primary btn-arrow">Try Live Demo</a>
+      <a href="https://aiagent.ringlypro.com/neural/presentation.html" class="btn btn-ghost btn-arrow">See Full Pitch</a>
+    </div>
+    <div class="hero-trust">
+      <span class="pulse"></span>
+      <span>Live agents. Real automation. MCP-native architecture.</span>
+    </div>
+
+    <!-- Animated agent network -->
+    <div class="agent-net">
+      <svg viewBox="0 0 880 280" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.6"/>
+          </linearGradient>
+        </defs>
+        <line x1="440" y1="140" x2="120" y2="50" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="280" y2="40" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="600" y2="40" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="760" y2="50" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="120" y2="240" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="280" y2="250" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="600" y2="250" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="440" y1="140" x2="760" y2="240" stroke="url(#line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </svg>
+      <div class="node center">MCP<br>Server</div>
+      <div class="node" style="top:18px;left:88px;">R</div>
+      <div class="node" style="top:8px;left:248px;">A</div>
+      <div class="node" style="top:8px;left:568px;">L</div>
+      <div class="node" style="top:18px;left:728px;">S</div>
+      <div class="node" style="bottom:18px;left:88px;">N</div>
+      <div class="node" style="bottom:8px;left:248px;">V</div>
+      <div class="node" style="bottom:8px;left:568px;">O</div>
+      <div class="node" style="bottom:18px;left:728px;">C</div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats" style="padding:50px 0;">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat"><div class="num">8+</div><div class="label">Specialized AI Agents</div></div>
+      <div class="stat"><div class="num">10</div><div class="label">Neural Analyzers</div></div>
+      <div class="stat"><div class="num">30s</div><div class="label">To First Finding</div></div>
+      <div class="stat"><div class="num">24/7</div><div class="label">Auto-Fix Coverage</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">The Workflow</div>
+      <h2 class="sec-title">From signal to <em>fix</em> &mdash; without humans in the loop.</h2>
+      <p class="sec-lede">Five stages run continuously across your business. Each stage is owned by a different agent. The MCP server orchestrates the handoffs.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="num">1</div>
+        <div class="verb">Detect</div>
+        <h3>Scan every workflow</h3>
+        <p>Ten Neural analyzers continuously inspect calls, leads, bookings, pipeline, transcripts, and CRM activity. Anomalies and revenue gaps get flagged in real time.</p>
+      </div>
+      <div class="flow-step">
+        <div class="num">2</div>
+        <div class="verb">Diagnose</div>
+        <h3>Route to the right specialist</h3>
+        <p>The MCP server reads each finding, identifies which specialist agent owns the domain, and forwards full context &mdash; data, history, urgency, dependencies.</p>
+      </div>
+      <div class="flow-step">
+        <div class="num">3</div>
+        <div class="verb">Prescribe</div>
+        <h3>Recommend a fix</h3>
+        <p>The receiving agent proposes a workflow: a callback, a nurture sequence, a re-pricing, a re-book, an outbound campaign &mdash; with the expected outcome and risk.</p>
+      </div>
+      <div class="flow-step">
+        <div class="num">4</div>
+        <div class="verb">Auto-Fix</div>
+        <h3>Execute autonomously</h3>
+        <p>Pre-approved fixes run immediately. Higher-risk ones surface to a human for one-click approval. Either way, the agent owns the action end-to-end.</p>
+      </div>
+      <div class="flow-step">
+        <div class="num">5</div>
+        <div class="verb">Verify</div>
+        <h3>Measure and report</h3>
+        <p>Every action is logged with the data it acted on, the rule it applied, and the outcome it produced. The score moves; the next finding starts the loop again.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AGENT GALLERY -->
+<section id="agents" style="background: linear-gradient(180deg, transparent, rgba(139,92,246,.03), transparent);">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">The Agentic Taskforce</div>
+      <h2 class="sec-title">Eight specialists. <em>One supervisor.</em> Every channel.</h2>
+      <p class="sec-lede">Each agent is pre-trained for a specific job and owns a measurable KPI. They run in parallel, share context through the MCP server, and escalate to a human only when judgment is required.</p>
+    </div>
+
+    <div class="agents">
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">R</div><div><div class="name">Rachel</div><div class="role">Voice Concierge</div></div></div>
+        <div class="desc">Answers every inbound call, qualifies the caller, and books the meeting. The face of the front desk that never sleeps.</div>
+        <div class="owns"><b>Owns:</b> Missed Calls &middot; After-Hours Coverage</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">A</div><div><div class="name">Ana</div><div class="role">Bilingual Lead Responder</div></div></div>
+        <div class="desc">Calls every new lead inside sixty seconds in English or Spanish. Closes the speed-to-lead gap that kills most pipelines.</div>
+        <div class="owns"><b>Owns:</b> Lead Response Time &middot; Hispanic Coverage</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">L</div><div><div class="name">Lina</div><div class="role">Pipeline Nurturer</div></div></div>
+        <div class="desc">Reactivates stale leads with personalized sequences, scores intent, and only escalates the warm ones to a human rep.</div>
+        <div class="owns"><b>Owns:</b> Stale Leads &middot; Engagement Failures</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">S</div><div><div class="name">Sentinel</div><div class="role">Pipeline Health Monitor</div></div></div>
+        <div class="desc">Watches every deal stage continuously. Flags stuck deals, missing next steps, and forecast risk before the manager has to ask.</div>
+        <div class="owns"><b>Owns:</b> Pipeline Health &middot; Deal Velocity</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">N</div><div><div class="name">Nova</div><div class="role">No-Show Reducer</div></div></div>
+        <div class="desc">Confirms appointments, sends smart reminders, and auto-rebooks missed meetings into the next available slot.</div>
+        <div class="owns"><b>Owns:</b> No-Shows &middot; Meeting Conversion</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">V</div><div><div class="name">Vault</div><div class="role">Revenue Leak Hunter</div></div></div>
+        <div class="desc">Cross-checks calls, contacts, and deals to surface unbilled work, abandoned quotes, and contracts close to expiration.</div>
+        <div class="owns"><b>Owns:</b> Revenue Leaks &middot; Renewals</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">O</div><div><div class="name">Origin</div><div class="role">Source ROI Auditor</div></div></div>
+        <div class="desc">Ranks every lead source by close rate and cost. Tells marketing where to double down and where to cut spend.</div>
+        <div class="owns"><b>Owns:</b> Lead Sources &middot; Marketing Attribution</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>Live</div>
+        <div class="head"><div class="avatar">C</div><div><div class="name">Coach</div><div class="role">Conversion Reviewer</div></div></div>
+        <div class="desc">Listens to call transcripts, scores rep performance, and ships weekly coaching notes per rep without a manager lifting a finger.</div>
+        <div class="owns"><b>Owns:</b> Call Conversion &middot; Rep Performance</div>
+      </div>
+
+      <div class="agent">
+        <div class="live"><span class="dot"></span>On Demand</div>
+        <div class="head"><div class="avatar">+</div><div><div class="name">Custom Agent</div><div class="role">Built To Spec</div></div></div>
+        <div class="desc">Industry-specific work? We build and deploy a custom agent on the same MCP orchestration layer in days, not months.</div>
+        <div class="owns"><b>Owns:</b> Whatever your business needs</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">MCP Architecture</div>
+      <h2 class="sec-title">A single <em>protocol-native</em> backbone for the entire fleet.</h2>
+      <p class="sec-lede">The Model Context Protocol (MCP) is the open standard for agent-to-agent and agent-to-tool communication. Neural is built on it natively &mdash; every layer speaks MCP, so any agent can call any tool and any other agent without custom integration code.</p>
+    </div>
+
+    <div class="arch">
+      <div class="arch-stack">
+
+        <div class="arch-row">
+          <div class="arch-tier experience full">
+            <div class="tlabel">Experience Layer</div>
+            <div class="tcontent"><b>Voice &middot; Web &middot; SMS &middot; WhatsApp &middot; Email &middot; Mobile &middot; API &middot; MCP Client</b> &mdash; every channel a customer reaches you on, served by the same agent fleet.</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&#8597;</div>
+
+        <div class="arch-row">
+          <div class="arch-tier mcp full">
+            <div class="tlabel">MCP Server &mdash; Orchestration Backbone</div>
+            <div class="tcontent">Routes findings to the right agent &middot; carries shared context &middot; enforces protocols &middot; logs every call &middot; resolves agent-to-agent and agent-to-tool requests.</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&#8597;</div>
+
+        <div class="arch-row">
+          <div class="arch-tier taskforce full">
+            <div class="tlabel">Agent Runtime &mdash; The Taskforce</div>
+            <div class="tcontent">Rachel &middot; Ana &middot; Lina &middot; Sentinel &middot; Nova &middot; Vault &middot; Origin &middot; Coach + custom agents &mdash; all running concurrently, each owning a KPI, all coordinated by the MCP supervisor.</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&#8597;</div>
+
+        <div class="arch-row">
+          <div class="arch-tier">
+            <div class="tlabel">Reasoning</div>
+            <div class="tcontent">LLM router (Opus &middot; Sonnet &middot; Haiku &middot; Gemini &middot; GPT) + Neural rule engine.</div>
+          </div>
+          <div class="arch-tier">
+            <div class="tlabel">Memory</div>
+            <div class="tcontent">Per-tenant context store, conversation history, customer record cache.</div>
+          </div>
+          <div class="arch-tier">
+            <div class="tlabel">Tools</div>
+            <div class="tcontent">CRM writes &middot; calendar &middot; payments &middot; ticketing &middot; email/SMS &middot; custom webhooks.</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&#8597;</div>
+
+        <div class="arch-row">
+          <div class="arch-tier full">
+            <div class="tlabel">Integrations</div>
+            <div class="tcontent"><b>HubSpot &middot; GoHighLevel &middot; Zoho &middot; Salesforce &middot; Twilio &middot; Stripe &middot; Google &middot; Outlook &middot; n8n &middot; MCP</b> &mdash; and any REST API via custom connector.</div>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&#8597;</div>
+
+        <div class="arch-row">
+          <div class="arch-tier foundation full">
+            <div class="tlabel">Foundation</div>
+            <div class="tcontent"><b>Multi-tenant isolation &middot; RBAC &middot; audit log &middot; billing &middot; observability &middot; 24/7 infrastructure.</b> The part most companies underestimate the cost of building themselves.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section id="pillars" style="background: rgba(139,92,246,.025);">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">The Platform</div>
+      <h2 class="sec-title">Build, deploy, govern, and observe &mdash; <em>from one place</em>.</h2>
+      <p class="sec-lede">Four enterprise-grade pillars that cover the full agent lifecycle. The hard infrastructure already exists, so adding a new agent is configuration, not engineering.</p>
+    </div>
+
+    <div class="pillars">
+      <div class="pillar">
+        <div class="picon">B</div>
+        <h3>Build</h3>
+        <ul>
+          <li>Visual workflow builder</li>
+          <li>Pre-trained voice personas</li>
+          <li>Plug in your own knowledge base</li>
+          <li>No-code prompt + tool wiring</li>
+          <li>Code-first SDK for power users</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="picon">D</div>
+        <h3>Deploy</h3>
+        <ul>
+          <li>Inbound + outbound voice (PSTN)</li>
+          <li>Web chat + SMS + WhatsApp</li>
+          <li>Mobile SDK (iOS + Android)</li>
+          <li>REST API + MCP server</li>
+          <li>One-click rollback</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="picon">G</div>
+        <h3>Govern</h3>
+        <ul>
+          <li>Role-based access (RBAC)</li>
+          <li>Multi-tenant isolation</li>
+          <li>Full audit trail per action</li>
+          <li>SOC2-style logging + retention</li>
+          <li>Data residency controls</li>
+        </ul>
+      </div>
+      <div class="pillar">
+        <div class="picon">O</div>
+        <h3>Observe</h3>
+        <ul>
+          <li>Real-time KPI dashboards</li>
+          <li>Call transcripts + sentiment</li>
+          <li>Per-agent ROI tracking</li>
+          <li>Anomaly + escalation alerts</li>
+          <li>Eval harness for prompt regressions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">Why Neural</div>
+      <h2 class="sec-title">Not another chatbot. Not a DIY toolkit. <em>A finished platform.</em></h2>
+      <p class="sec-lede">Most companies don't need another AI tool &mdash; they need an operating system that lets a team of AI agents run their business safely, today.</p>
+    </div>
+
+    <div class="compare">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Single Chatbot</th>
+            <th>DIY on a Hyperscaler</th>
+            <th class="us">Digit2ai Neural</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Time to first value</td><td>Days</td><td>Months</td><td class="us">30 seconds</td></tr>
+          <tr><td>Pre-built agents</td><td>1 generic</td><td>0 &mdash; you build them</td><td class="us">8 specialists + custom</td></tr>
+          <tr><td>Channel coverage</td><td>Web only</td><td>Whatever you wire up</td><td class="us">Voice &middot; Web &middot; SMS &middot; WhatsApp &middot; Email &middot; API &middot; MCP</td></tr>
+          <tr><td>Agent-to-agent protocol</td><td>None</td><td>Build your own</td><td class="us">MCP-native</td></tr>
+          <tr><td>Auto-detect business gaps</td><td>No</td><td>You write the rules</td><td class="us">10 neural analyzers built-in</td></tr>
+          <tr><td>Pricing</td><td>Per seat</td><td>Per token + engineering salaries</td><td class="us">Per resolved outcome</td></tr>
+          <tr><td>Audit + governance</td><td>Limited</td><td>Six-month security review</td><td class="us">Enterprise-ready day one</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section id="usecases" style="background: linear-gradient(180deg, transparent, rgba(139,92,246,.03), transparent);">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">Use Cases</div>
+      <h2 class="sec-title">Where Neural finds the most <em>money</em>.</h2>
+      <p class="sec-lede">Common deployments across industries. Neural is sector-agnostic &mdash; anywhere there's a CRM, a phone line, or a customer record, the analyzers find revenue.</p>
+    </div>
+
+    <div class="uses">
+      <div class="use-card">
+        <div class="uicon">$</div>
+        <h4>Sales Operations</h4>
+        <p>Catch missed calls, slow lead response, stuck pipelines, and stale leads before they cost a deal.</p>
+      </div>
+      <div class="use-card">
+        <div class="uicon">!</div>
+        <h4>Customer Support</h4>
+        <p>Auto-triage tickets, deflect FAQs, escalate hot issues, and ship coaching summaries to managers.</p>
+      </div>
+      <div class="use-card">
+        <div class="uicon">*</div>
+        <h4>Field Services</h4>
+        <p>Confirm appointments, reduce no-shows, dispatch follow-ups, and surface unbilled work.</p>
+      </div>
+      <div class="use-card">
+        <div class="uicon">+</div>
+        <h4>Healthcare Practices</h4>
+        <p>Patient outreach, appointment reminders, intake processing, and after-hours triage.</p>
+      </div>
+      <div class="use-card">
+        <div class="uicon">#</div>
+        <h4>Real Estate</h4>
+        <p>Speed-to-lead inside sixty seconds, listing inquiries answered 24/7, showing scheduling on autopilot.</p>
+      </div>
+      <div class="use-card">
+        <div class="uicon">&sect;</div>
+        <h4>Legal &amp; Professional Services</h4>
+        <p>Bilingual intake, conflict-of-interest checks, contract renewal monitoring, and unbilled-time recovery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section id="trust">
+  <div class="wrap">
+    <div class="sec-head-center">
+      <div class="sec-eyebrow">Trust &amp; Security</div>
+      <h2 class="sec-title">Enterprise-grade from <em>day one</em>.</h2>
+      <p class="sec-lede">Built so you don't have to choose between speed and safety. Every action logged, every tenant isolated, every credential vaulted.</p>
+    </div>
+
+    <div class="trust-row">
+      <div class="trust-item"><div class="ticon">&#9919;</div><div class="tname">Multi-Tenant Isolation</div><div class="tsub">Hard boundaries per customer</div></div>
+      <div class="trust-item"><div class="ticon">&#9999;</div><div class="tname">Full Audit Trail</div><div class="tsub">Every agent decision logged</div></div>
+      <div class="trust-item"><div class="ticon">&#9874;</div><div class="tname">RBAC + SSO</div><div class="tsub">Role-based access controls</div></div>
+      <div class="trust-item"><div class="ticon">&#9728;</div><div class="tname">Data Residency</div><div class="tsub">US, EU, regional options</div></div>
+      <div class="trust-item"><div class="ticon">&#9201;</div><div class="tname">99.9% Uptime SLA</div><div class="tsub">Production-grade infrastructure</div></div>
+      <div class="trust-item"><div class="ticon">&#9919;</div><div class="tname">Secrets Vault</div><div class="tsub">No credentials in prompts</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section style="padding: 60px 0 100px;">
+  <div class="cta-banner">
+    <h2>Find every money leak. <span style="background:linear-gradient(90deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Fix it automatically.</span></h2>
+    <p>Drop a CRM export and see Neural diagnose your business in 30 seconds &mdash; or book a discovery call to deploy the agent taskforce inside your stack.</p>
+    <div class="hero-ctas">
+      <a href="https://aiagent.ringlypro.com/neural/dashboard.html" class="btn btn-primary btn-arrow">Try Live Demo</a>
+      <a href="https://ringlypro.com/demo" class="btn btn-ghost btn-arrow">Book Discovery Call</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="https://aiagent.ringlypro.com/neural/dashboard.html">Live Demo</a>
+      <a href="https://aiagent.ringlypro.com/neural/presentation.html">Full Pitch</a>
+      <a href="#agents">Agents</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#pillars">Platform</a>
+      <a href="https://ringlypro.com">RinglyPro</a>
+    </div>
+    <div>&copy; 2026 Digit2ai. Neural is the enterprise agent platform built on MCP.</div>
+  </div>
+</footer>
+
+<div class="voice-cta">Tap the voice agent to <b>have this page narrated</b> by Rachel</div>
+
+<!-- ElevenLabs Conversational AI Widget -->
+<elevenlabs-convai agent-id="agent_0201kqfcxknxfjz8wf833tj0pq1t"></elevenlabs-convai>
+<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+</body>
+</html>
