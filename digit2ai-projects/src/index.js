@@ -141,37 +141,6 @@ app.post('/api/v1/intake-seed/admin', express.json(), async (req, res) => {
   }
 });
 
-// One-time migration trigger (gated by INTAKE_SEED_SECRET) — runs 003 manually
-app.post('/api/v1/intake-seed/run-003', express.json(), async (req, res) => {
-  try {
-    const secret = req.query.secret || req.body.secret;
-    if (!secret || secret !== (process.env.INTAKE_SEED_SECRET || 'd2ai-larry-ting-2026')) {
-      return res.status(401).json({ success: false, error: 'Bad seed secret' });
-    }
-    const migrationPath = path.join(__dirname, '..', 'migrations', '003_project_intake_fields.sql');
-    if (!fs.existsSync(migrationPath)) {
-      return res.status(500).json({ success: false, error: 'migration file missing' });
-    }
-    const sql = fs.readFileSync(migrationPath, 'utf8');
-    const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
-    const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
-    const { sequelize } = require('./models');
-    const results = [];
-    for (const stmt of statements) {
-      try {
-        await sequelize.query(stmt + ';');
-        results.push({ ok: true, sql: stmt.substring(0, 80) });
-      } catch (e) {
-        results.push({ ok: false, sql: stmt.substring(0, 80), err: e.message.substring(0, 200) });
-      }
-    }
-    const [cols] = await sequelize.query("SELECT column_name FROM information_schema.columns WHERE table_name='d2_projects' AND column_name IN ('submitter_name','intake_status','ai_category','business_plan_json')");
-    res.json({ success: true, statements_run: results.length, results, present_columns: cols.map(c => c.column_name) });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message, stack: err.stack });
-  }
-});
-
 // Seed trigger (gated by INTAKE_SEED_SECRET) — idempotent Larry & Ting batch
 app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
   try {
