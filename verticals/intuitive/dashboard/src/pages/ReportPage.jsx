@@ -165,9 +165,9 @@ export default function ReportPage({ projectId: propId }) {
 
   return (
     <div className="report-root bg-white text-slate-900 min-h-screen">
-      {/* Print CSS + professional report typography */}
+      {/* Print CSS + Intuitive brand typography (Helvetica Now stack with Inter web fallback) */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700;8..60,900&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
         @media print {
           body { background: white !important; }
@@ -182,16 +182,26 @@ export default function ReportPage({ projectId: propId }) {
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
         }
-        .report-root { font-family: 'Source Serif 4', 'Source Serif Pro', 'Charter', 'Cambria', Georgia, serif; font-feature-settings: "kern" 1, "liga" 1, "onum" 1; -webkit-font-smoothing: antialiased; }
-        .report-root h1, .report-root h2, .report-root h3, .report-root h4, .report-root .font-serif {
-          font-family: 'Source Serif 4', 'Source Serif Pro', 'Charter', 'Cambria', Georgia, serif;
-          font-feature-settings: "kern" 1, "liga" 1, "lnum" 1;
-          letter-spacing: -0.01em;
+        /* Intuitive brand: Helvetica Now Display/Text -> Helvetica Neue -> Inter (web fallback) -> Arial */
+        .report-root {
+          font-family: 'Helvetica Now Text', 'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;
+          font-weight: 400;
+          font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          color: #1a1a1a;
         }
+        .report-root h1, .report-root h2, .report-root h3, .report-root h4, .report-root .font-serif {
+          font-family: 'Helvetica Now Display', 'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;
+          font-feature-settings: "kern" 1, "liga" 1, "lnum" 1;
+          letter-spacing: -0.02em;
+          font-weight: 700;
+        }
+        .report-root h1 { letter-spacing: -0.035em; font-weight: 800; }
         .report-root table, .report-root .font-sans,
         .report-root .text-xs, .report-root .text-sm,
         .report-root .text-\\[10px\\], .report-root .text-\\[11px\\] {
-          font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+          font-family: 'Helvetica Now Text', 'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;
           font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
         }
       `}</style>
