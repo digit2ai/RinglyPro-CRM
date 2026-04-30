@@ -103,8 +103,7 @@
 @media (max-width:640px) { .dnx-brand-logo { height:56px; } }
 @media (max-width:420px) { .dnx-brand-logo { height:44px; } }
 /* elevenlabs widget hide powered-by */
-.dnx-convai-mount { position:fixed; top:78px; left:50%; transform:translateX(-50%); z-index:9998; }
-elevenlabs-convai { position:fixed !important; top:78px !important; left:50% !important; right:auto !important; bottom:auto !important; transform:translateX(-50%) !important; z-index:9998 !important; }
+.dnx-convai-mount { position:fixed; bottom:20px; right:20px; z-index:9998; }
 elevenlabs-convai a[href*="elevenlabs"],
 elevenlabs-convai [class*="powered" i],
 elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !important; overflow:hidden !important; }
@@ -790,7 +789,7 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
   .dnx-ftr-brand img.dnx-brand-logo { height:72px; }
 
   /* ElevenLabs widget — lift slightly above iOS safe-area */
-  elevenlabs-convai { top:max(70px, env(safe-area-inset-top)) !important; bottom:auto !important; right:auto !important; left:50% !important; transform:translateX(-50%) !important; }
+  elevenlabs-convai { bottom:max(16px, env(safe-area-inset-bottom)) !important; right:12px !important; }
 }
 
 @media (max-width:420px) {
@@ -830,6 +829,7 @@ html, body { max-width:100%; overflow-x:hidden; }
           <a href="#comparison">Compare</a>
           <a href="#use-cases">Use Cases</a>
           <a href="#trust">Trust</a>
+          <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html">Presentation</a>
           <a href="https://aiagent.ringlypro.com/projects/intake/request.html" class="dnx-nav-signin" style="color:var(--accent-cyan); font-weight:600;">Project Request →</a>
         </nav>
         <div class="dnx-hdr-cta">
@@ -856,6 +856,7 @@ html, body { max-width:100%; overflow-x:hidden; }
             <a href="#comparison" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Compare</a>
             <a href="#use-cases" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Use Cases</a>
             <a href="#trust" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Trust</a>
+            <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" class="dnx-sidebar-link" style="color:var(--accent-cyan);"><span class="dnx-sidebar-dot" style="background:var(--accent-cyan);"></span>Presentation &rarr;</a>
             <div class="dnx-sidebar-divider"></div>
             <div class="dnx-sidebar-group-lbl">The Business</div>
             <a href="#opportunity" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Opportunity</a>
