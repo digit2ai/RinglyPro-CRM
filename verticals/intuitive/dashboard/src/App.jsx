@@ -155,6 +155,7 @@ const NAV_STEPS = [
 export default function App() {
   const location = useLocation()
   const [currentProject, setCurrentProject] = useState(null)
+  const [currentProjectName, setCurrentProjectName] = useState('')
   const [user, setUser] = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
 
@@ -184,13 +185,36 @@ export default function App() {
     }
   }, [])
 
+  // Validate stored project on mount (after auth) — clear if it no longer exists
   useEffect(() => {
+    if (!user) return
     const saved = localStorage.getItem('intuitive_project_id')
-    if (saved) setCurrentProject(parseInt(saved))
-  }, [])
+    if (!saved) return
+    const pid = parseInt(saved)
+    if (!pid) { localStorage.removeItem('intuitive_project_id'); return }
+    const token = localStorage.getItem('intuitive_token')
+    fetch(`/intuitive/api/v1/projects/${pid}`, {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    }).then(r => r.ok ? r.json() : null).then(data => {
+      const proj = data?.data || data?.project || data
+      if (proj && (proj.id || proj.hospital_name)) {
+        setCurrentProject(pid)
+        setCurrentProjectName(proj.hospital_name || '')
+      } else {
+        localStorage.removeItem('intuitive_project_id')
+        setCurrentProject(null)
+        setCurrentProjectName('')
+      }
+    }).catch(() => {
+      localStorage.removeItem('intuitive_project_id')
+      setCurrentProject(null)
+      setCurrentProjectName('')
+    })
+  }, [user])
 
-  function selectProject(id) {
+  function selectProject(id, name) {
     setCurrentProject(id)
+    if (name) setCurrentProjectName(name)
     localStorage.setItem('intuitive_project_id', id)
   }
 
@@ -297,19 +321,33 @@ export default function App() {
             </NavLink>
           ))}
 
-          {currentProject && (
-            <>
-              <div className="border-t border-slate-800 my-2"></div>
-              <div className="px-3 py-1 text-[9px] text-slate-600 uppercase tracking-widest">Hospital Workflow</div>
-              {NAV_STEPS.filter(s => s.section === 'project').map(step => (
-                <NavLink key={step.to} to={step.to} end={false}
-                  className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname.startsWith(step.to) ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.num}</span>
-                  {step.label}
-                </NavLink>
-              ))}
-            </>
+          <div className="border-t border-slate-800 my-2"></div>
+          <div className="px-3 py-1 text-[9px] text-slate-600 uppercase tracking-widest">Hospital Workflow</div>
+          {currentProjectName && (
+            <div className="px-3 pb-1 text-[10px] text-intuitive-300 truncate" title={currentProjectName}>{currentProjectName}</div>
           )}
+          {!currentProject && (
+            <div className="px-3 pb-1 text-[10px] text-slate-500 italic">Pick a hospital from the Dashboard</div>
+          )}
+          {NAV_STEPS.filter(s => s.section === 'project').map(step => {
+            const disabled = !currentProject
+            const cls = `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${disabled ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`
+            if (disabled) {
+              return (
+                <div key={step.to} className={cls} aria-disabled="true">
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold bg-slate-800 text-slate-600">{step.num}</span>
+                  {step.label}
+                </div>
+              )
+            }
+            return (
+              <NavLink key={step.to} to={step.to} end={false}
+                className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname.startsWith(step.to) ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.num}</span>
+                {step.label}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="p-3 pb-20 border-t border-slate-800">
