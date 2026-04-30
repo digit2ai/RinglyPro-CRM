@@ -1,0 +1,57 @@
+Contact Name,Email,Phone,Lead Source,Created Date,Last Activity,Call Direction,Call Status,Call Duration (sec),Agent,Appointment Date,Appointment Status,Deal Stage,Deal Value,Tags,Response Time (min),Notes
+John Mitchell,john.mitchell@gmail.com,+1-555-4001,Google Ads,2026-04-22,2026-04-26,inbound,answered,210,Rachel,2026-04-25,completed,Closed Won,850,"hvac-repair,google-ads",3,Booked AC repair on first call - tech dispatched same day
+Linda Carter,linda.carter@gmail.com,+1-555-4002,Referral,2026-04-20,2026-04-24,inbound,answered,180,Rachel,2026-04-23,completed,Closed Won,450,"plumbing,referral",2,Drain cleaning - referred by neighbor
+David Chen,d.chen@outlook.com,+1-555-4003,Website,2026-04-18,2026-04-25,inbound,answered,265,Rachel,2026-04-22,completed,Closed Won,2200,"water-heater,website",4,Water heater replacement - installed Tuesday
+Maria Lopez,maria.lopez@yahoo.com,+1-555-4004,Google Ads,2026-04-15,2026-04-19,inbound,answered,145,Ana,2026-04-18,completed,Closed Won,295,"ac-tuneup,spanish",5,Spanish speaker - Ana handled flawlessly
+Carlos Mendoza,carlos.m@hotmail.com,+1-555-4005,Yelp,2026-04-12,2026-04-21,inbound,answered,420,Ana,2026-04-19,completed,Closed Won,7800,"hvac-install,spanish,big-ticket",8,Full HVAC install - Spanish customer - referred two friends
+Sarah Johnson,sjohnson@gmail.com,+1-555-4006,Referral,2026-04-10,2026-04-17,inbound,answered,195,Rachel,2026-04-16,completed,Closed Won,1850,"electrical,referral",4,Electrical panel upgrade
+Roberto Gonzalez,rgonzalez@gmail.com,+1-555-4007,Angi,2026-04-08,2026-04-13,inbound,answered,165,Ana,2026-04-12,completed,Closed Won,625,"plumbing-emergency,spanish",6,Burst pipe emergency - Ana dispatched within an hour
+Jennifer Davis,j.davis@outlook.com,+1-555-4008,Website,2026-04-05,2026-04-11,inbound,answered,135,Rachel,2026-04-10,completed,Closed Won,580,"duct-cleaning,website",3,Annual duct cleaning - converted to maintenance plan
+James Wilson,jwilson@email.com,+1-555-4101,Google Ads,2026-04-26,2026-04-26,inbound,missed,0,,,,,1200,"hvac-repair,after-hours",,Saturday 8:14pm - went to voicemail - never called back
+Miguel Hernandez,miguel.h@gmail.com,+1-555-4102,Facebook Ads,2026-04-26,2026-04-26,inbound,missed,0,,,,,950,"plumbing,weekend,spanish",,Sunday 10:22am - Spanish caller - no one available
+Patricia Brown,p.brown@yahoo.com,+1-555-4103,Website,2026-04-24,2026-04-24,inbound,missed,0,,,,,2200,"water-heater-emergency,after-hours",,Thursday 11:47pm - emergency water heater leak
+Luis Ramirez,luisr@hotmail.com,+1-555-4104,Google Ads,2026-04-22,2026-04-22,inbound,missed,0,,,,,1850,"electrical,early-morning,spanish",,Monday 7:18am - Spanish caller - business not open
+Nancy Taylor,nancy.t@gmail.com,+1-555-4105,Referral,2026-04-21,2026-04-21,inbound,missed,0,,,,,2000,"emergency,referral",,Emergency repair - went to competitor after no callback
+Carmen Diaz,c.diaz@email.com,+1-555-4106,Google Ads,2026-04-19,2026-04-19,inbound,missed,0,,,,,1100,"plumbing,spanish",,Spanish caller - Rachel could not communicate - no Ana available
+Robert Anderson,r.anderson@gmail.com,+1-555-4107,Bing Ads,2026-04-18,2026-04-18,inbound,missed,0,,,,,3200,"hvac-emergency",,Major water leak - went unanswered
+Sofia Martinez,sofia.m@outlook.com,+1-555-4108,Facebook Ads,2026-04-17,2026-04-17,inbound,missed,0,,,,,890,"ac-repair,after-hours,spanish",,Friday 9:33pm - Spanish caller after-hours
+Christopher Lee,clee@gmail.com,+1-555-4201,Website,2026-04-25,2026-04-26,inbound,answered,95,Rachel,2026-05-02,scheduled,Qualified,1400,"hvac-tuneup,slow-response",240,Web form submitted Tuesday morning - first call back 4 hours later
+Isabel Vargas,i.vargas@yahoo.com,+1-555-4202,Google Ads,2026-04-23,2026-04-24,inbound,answered,80,Ana,,,Contacted,1100,"plumbing,spanish,slow-response",480,8 hour delay - customer mentioned they almost called competitor
+Michelle White,m.white@email.com,+1-555-4203,Facebook Ads,2026-04-21,2026-04-23,inbound,voicemail,45,,2026-04-30,cancelled,Closed Lost,1750,"slow-response,lost",1440,24-hour delay - went with another company
+Diego Castro,diego.c@gmail.com,+1-555-4204,Yelp,2026-04-20,2026-04-21,inbound,answered,110,Ana,,,Closed Lost,2400,"slow-response,lost,spanish",360,6 hour delay - quote rejected - chose competitor for faster response
+Amanda Harris,amanda.h@hotmail.com,+1-555-4205,Website,2026-04-18,2026-04-19,inbound,answered,75,Rachel,,,Contacted,950,"slow-response,cold",720,12 hour delay - went cold after first call
+Eduardo Flores,e.flores@gmail.com,+1-555-4206,Google Ads,2026-04-15,2026-04-17,inbound,voicemail,30,,,,Closed Lost,1300,"slow-response,lost,spanish",2880,48 hour delay - lead is dead - feedback was poor responsiveness
+Daniel Garcia,d.garcia@email.com,+1-555-4301,Google Ads,2026-04-19,2026-04-22,inbound,answered,180,Ana,2026-04-25,no-show,Contacted,1200,"no-show,spanish",4,Booked HVAC tuneup - never showed - no rebook attempt
+Gloria Reyes,g.reyes@yahoo.com,+1-555-4302,Referral,2026-04-16,2026-04-19,inbound,answered,220,Ana,2026-04-23,no-show,Contacted,850,"no-show,spanish",2,Plumbing inspection no-show - one reminder sent
+Anthony Wright,a.wright@gmail.com,+1-555-4303,Website,2026-04-12,2026-04-15,inbound,answered,310,Rachel,2026-04-19,no-show,Closed Lost,3400,"no-show,big-ticket,lost",6,Major HVAC install no-show - never rescheduled - significant loss
+Lucia Torres,lucia.t@email.com,+1-555-4304,Yelp,2026-04-08,2026-04-10,inbound,answered,155,Ana,2026-04-15,no-show,Contacted,695,"no-show,spanish",3,Drain cleaning no-show - went silent
+Kevin Walker,k.walker@outlook.com,+1-555-4305,Angi,2026-04-05,2026-04-08,inbound,answered,240,Rachel,2026-04-12,no-show,Contacted,2100,"no-show",5,Water heater no-show - rebooking attempt failed
+Pedro Sanchez,pedro.s@gmail.com,+1-555-4401,Google Ads,2026-02-15,2026-02-22,inbound,answered,295,Ana,2026-02-25,completed,Proposal Sent,4500,"stale-quote,spanish,big-ticket",4,Mini-split install quote sent 9 weeks ago - radio silence
+Nicole Hall,n.hall@email.com,+1-555-4402,Website,2026-01-28,2026-02-05,inbound,answered,180,Rachel,,,Qualified,2200,"stale-lead,no-followup",6,Quoted in February - no follow-up since
+Andres Ortiz,a.ortiz@hotmail.com,+1-555-4403,Facebook Ads,2026-02-10,2026-02-12,inbound,voicemail,40,,,,Contacted,1850,"stale-lead,voicemail-only,spanish",,Voicemail only - never circled back
+Ryan King,r.king@gmail.com,+1-555-4404,Google Ads,2026-01-22,2026-02-01,inbound,answered,210,Rachel,2026-02-08,completed,Proposal Sent,3100,"stale-quote,no-followup",3,Site visit done - quote sent - no follow-up in 12 weeks
+Rosa Jimenez,rosa.j@yahoo.com,+1-555-4405,Yelp,2026-02-08,2026-02-10,inbound,answered,125,Ana,,,Qualified,980,"stale-lead,spanish",5,Spanish customer - qualified - never quoted
+Brian Scott,bscott@outlook.com,+1-555-4406,Referral,2026-01-15,2026-01-25,inbound,answered,420,Rachel,2026-02-01,completed,Proposal Sent,5200,"stale-quote,big-ticket",2,Whole-home electrical rewire quote - 14 weeks no follow-up - high value lost
+Elena Morales,e.morales@gmail.com,+1-555-4407,Google Ads,2026-02-18,2026-02-20,inbound,answered,90,Ana,,,Contacted,1400,"stale-lead,spanish",4,Spanish lead - one call - never recontacted
+Joshua Green,j.green@email.com,+1-555-4408,Website,2026-01-30,2026-02-02,inbound,answered,75,Rachel,,,New Lead,750,"stale-lead,small-ticket",5,Small repair lead - dropped from pipeline
+Adriana Cruz,a.cruz@gmail.com,+1-555-4409,Facebook Ads,2026-02-12,2026-02-15,inbound,answered,135,Ana,,,Qualified,1800,"stale-lead,spanish",6,Spanish customer qualified - no follow-through
+Steven Adams,s.adams@hotmail.com,+1-555-4410,Google Ads,2026-02-22,2026-02-26,inbound,answered,260,Rachel,2026-03-02,completed,Proposal Sent,2900,"stale-quote",4,Quote sent end of February - silence since
+Manuel Soto,m.soto@gmail.com,+1-555-4501,Website,2026-03-25,2026-03-28,inbound,answered,485,Ana,2026-03-30,completed,Proposal Sent,8500,"stuck-pipeline,big-ticket,spanish",3,High value HVAC install - proposal sent 33 days ago - no movement
+Rachel Baker,r.baker@email.com,+1-555-4502,Referral,2026-03-20,2026-03-22,inbound,answered,310,Rachel,2026-03-26,completed,Qualified,4200,"stuck-pipeline,referral",4,Site visit complete - sitting in qualified for 40 days
+Yolanda Pena,y.pena@yahoo.com,+1-555-4503,Google Ads,2026-03-28,2026-03-31,inbound,answered,395,Ana,2026-04-02,completed,Proposal Sent,6700,"stuck-pipeline,spanish,big-ticket",5,Spanish customer - solar+HVAC bundle quoted - 30 days no decision
+Mark Nelson,mark.n@gmail.com,+1-555-4504,Angi,2026-03-15,2026-03-18,inbound,answered,225,Rachel,2026-03-22,completed,Qualified,3800,"stuck-pipeline",6,Stuck in qualified stage for 45 days - no manager review
+Camila Rios,c.rios@outlook.com,+1-555-4505,Website,2026-03-22,2026-03-26,inbound,answered,355,Ana,2026-03-29,completed,Proposal Sent,5500,"stuck-pipeline,spanish",4,Quoted 38 days ago - reminder sequence broken
+Tyler Bennett,t.bennett@gmail.com,+1-555-4601,TikTok Ads,2026-04-23,2026-04-23,inbound,answered,55,Rachel,,,Closed Lost,0,"low-quality-source,tiktok",8,TikTok lead - tire kicker - immediately disqualified
+Fernando Aguilar,f.aguilar@email.com,+1-555-4602,TikTok Ads,2026-04-20,2026-04-21,inbound,answered,40,Ana,,,Closed Lost,0,"low-quality-source,tiktok,spanish",12,TikTok lead - went silent after first call
+Stephanie Cooper,s.cooper@yahoo.com,+1-555-4603,Yelp,2026-04-19,2026-04-23,inbound,answered,165,Rachel,2026-04-22,completed,Closed Won,400,"yelp,small-win",4,Small drain repair - Yelp lead - good quality
+Veronica Vega,v.vega@gmail.com,+1-555-4604,Angi,2026-04-17,2026-04-22,inbound,answered,210,Ana,2026-04-21,completed,Qualified,2700,"angi,spanish",6,Site visit done - quote pending
+Jacob Hill,j.hill@hotmail.com,+1-555-4605,Bing Ads,2026-04-15,2026-04-15,inbound,voicemail,25,,,,Closed Lost,0,"bing-ads,ghost",,Bing Ads lead - voicemail only - went silent
+Hector Romero,h.romero@gmail.com,+1-555-4606,Door Hanger,2026-04-14,2026-04-18,inbound,answered,140,Ana,2026-04-17,completed,Closed Won,1100,"door-hanger,spanish",5,Door hanger campaign worked - small ticket conversion
+Olivia Ward,o.ward@email.com,+1-555-4607,Facebook Ads,2026-04-12,2026-04-16,inbound,answered,120,Rachel,2026-04-15,no-show,Closed Lost,1500,"facebook-ads,no-show,lost",4,Facebook lead - no-show - never recovered
+Raul Mendez,r.mendez@gmail.com,+1-555-4608,Referral,2026-04-09,2026-04-15,inbound,answered,520,Ana,2026-04-14,completed,Closed Won,4800,"referral,big-ticket,spanish",2,Strong referral - high value win - Spanish customer
+Nathan Torres,n.torres@email.com,+1-555-4701,Website,2026-04-25,2026-04-25,,,,,,,New Lead,0,"engagement-failure,no-followup",,Web form submitted - no agent ever called
+Alejandra Suarez,a.suarez@gmail.com,+1-555-4702,Google Ads,2026-04-23,2026-04-23,,,,,,,New Lead,0,"engagement-failure,spanish,no-followup",,Spanish lead from Google Ads - no contact attempt logged
+Henry Rivera,h.rivera@yahoo.com,+1-555-4703,Facebook Ads,2026-04-21,2026-04-21,,,,,,,New Lead,0,"engagement-failure,spanish",,Spanish lead - no Spanish agent assigned - dropped
+Ramon Castillo,r.castillo@gmail.com,+1-555-4704,Yelp,2026-04-18,2026-04-18,,,,,,,New Lead,0,"engagement-failure,spanish",,Yelp inquiry - no follow-up
+Dylan Foster,d.foster@outlook.com,+1-555-4705,Website,2026-04-16,2026-04-16,,,,,,,New Lead,0,"engagement-failure,no-followup",,Web form - never contacted - 14 days stale
+Beatriz Ortega,b.ortega@gmail.com,+1-555-4706,Google Ads,2026-04-14,2026-04-14,,,,,,,New Lead,0,"engagement-failure,spanish",,Spanish Google Ads lead - dropped from queue
