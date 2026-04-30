@@ -1208,19 +1208,21 @@ async function renderCalendar(container) {
   if (!calYear) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
 
   const headerHTML = `
-    <div class="section-header">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">&#9664;</button>
-        <h3 id="cal-title" style="margin:0;min-width:220px"></h3>
-        <button class="btn btn-ghost btn-sm" onclick="calNav(1)">&#9654;</button>
+    <div class="section-header cal-section-header">
+      <div class="cal-nav-row">
+        <button class="btn btn-ghost btn-sm cal-nav-btn" onclick="calNav(-1)" aria-label="Previous">&#9664;</button>
+        <h3 id="cal-title" class="cal-title"></h3>
+        <button class="btn btn-ghost btn-sm cal-nav-btn" onclick="calNav(1)" aria-label="Next">&#9654;</button>
+      </div>
+      <div class="cal-actions-row">
         <button class="btn btn-ghost btn-sm" onclick="calToday()">Today</button>
-        <div style="display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <div class="cal-view-group" style="display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
           <button class="btn btn-sm ${calView==='month'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none" onclick="setCalView('month')">Month</button>
           <button class="btn btn-sm ${calView==='week'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setCalView('week')">Week</button>
           <button class="btn btn-sm ${calView==='day'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setCalView('day')">Day</button>
         </div>
+        <button class="btn btn-primary btn-sm cal-new-event-btn" onclick="openEventModal()">+ New Event</button>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ New Event</button>
     </div>
     <div id="cal-body"></div>
   `;

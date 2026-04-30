@@ -545,7 +545,26 @@ body {
 .calendar-cell {
   background: var(--bg-card); padding: 8px; min-height: 90px;
   cursor: pointer;
+  min-width: 0;       /* prevent long event titles from blowing out grid columns */
+  overflow: hidden;
 }
+
+/* Calendar header layout (desktop + mobile shared) */
+.cal-section-header { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.cal-nav-row {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%;
+}
+.cal-nav-row .cal-title {
+  flex: 1; text-align: center; margin: 0; font-size: 18px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-nav-btn { flex: 0 0 auto; min-width: 36px; }
+.cal-actions-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  justify-content: center;
+}
+.cal-actions-row .cal-new-event-btn { margin-left: auto; }
 .calendar-cell:hover { background: var(--bg-hover); }
 .calendar-cell.today { border: 2px solid var(--accent); }
 .calendar-cell.other-month { opacity: 0.4; }
@@ -706,29 +725,15 @@ body {
   /* Force the page to never scroll horizontally on mobile */
   body, .content, .view-container { overflow-x: hidden; max-width: 100vw; }
 
-  /* Section header: stack vertically, full-width children, no min-width
-     on the title (the 220px min-width was pushing the row past the viewport
-     and forcing the whole calendar grid below it into horizontal scroll). */
-  .section-header {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px;
-  }
-  .section-header > div {
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-    justify-content: center !important;
-    width: 100%;
-  }
-  .section-header h3 {
-    flex: 1 0 100%;
-    text-align: center;
-    min-width: 0 !important;
-    font-size: 15px;
-    margin: 0 !important;
-  }
-  .section-header .btn-sm { padding: 5px 9px; font-size: 11px; }
-  .section-header > .btn-primary { width: 100%; }
+  /* Calendar header on mobile: keep ◀ Title ▶ on row 1, actions on row 2.
+     Title shrinks to fit; arrows stay visible at fixed width. */
+  .cal-section-header { gap: 8px; }
+  .cal-nav-row { gap: 6px; }
+  .cal-nav-row .cal-title { font-size: 14px; }
+  .cal-nav-btn { min-width: 32px; padding: 4px 8px !important; }
+  .cal-actions-row { gap: 6px; }
+  .cal-actions-row .btn-sm { padding: 5px 9px; font-size: 11px; }
+  .cal-actions-row .cal-new-event-btn { margin-left: 0; flex: 1 1 100%; }
 
   /* Calendar body: shorter so the controls + calendar both fit one screen */
   .cal-week-body { max-height: calc(100vh - 240px); }
