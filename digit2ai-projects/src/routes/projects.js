@@ -212,6 +212,42 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/v1/projects/:id - Hard delete project (cascade through children)
+router.delete('/:id', async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 }, transaction: t });
+    if (!project) {
+      await t.rollback();
+      return res.status(404).json({ success: false, error: 'Project not found' });
+    }
+    const projectName = project.name;
+    const ids = [project.id];
+    // Cascade through intake-related tables (FKs are CASCADE on most, but be explicit
+    // for d2_project_questions / d2_question_responses which lose the chain otherwise)
+    await sequelize.query('DELETE FROM d2_question_responses WHERE question_id IN (SELECT id FROM d2_project_questions WHERE project_id = :pid)', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_questions WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_milestones WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_updates WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_intake WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_priority_votes WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_comments WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('DELETE FROM d2_project_contacts WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    // Tasks + calendar events: detach (FK ON DELETE SET NULL in schema, but enforce here)
+    await sequelize.query('UPDATE d2_tasks SET project_id = NULL WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    await sequelize.query('UPDATE d2_calendar_events SET project_id = NULL WHERE project_id = :pid', { replacements: { pid: project.id }, transaction: t });
+    // Finally delete the project itself
+    await project.destroy({ transaction: t });
+    await t.commit();
+    await logActivity(req.user?.email, 'deleted', 'project', null, projectName);
+    res.json({ success: true, message: 'Project deleted', project_name: projectName });
+  } catch (error) {
+    try { await t.rollback(); } catch (_) {}
+    console.error('[D2AI] Delete project error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // PUT /api/v1/projects/:id/archive - Archive project
 router.put('/:id/archive', async (req, res) => {
   try {

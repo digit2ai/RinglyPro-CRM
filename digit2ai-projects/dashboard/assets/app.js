@@ -2623,9 +2623,10 @@ async function showProjectDetail(id) {
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="archiveProject(${p.id})">Archive</button>
+          <button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>
           ${p.business_plan_generated_at
-            ? `<button class="btn btn-primary btn-sm" onclick="showBusinessPlanModal(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">View Business Plan</button>
+            ? `<button class="btn btn-primary btn-sm" onclick="openBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">View Business Plan</button>
                <button class="btn btn-ghost btn-sm" onclick="generateBusinessPlan(${p.id})" title="Regenerate">&#8635;</button>`
             : `<button class="btn btn-primary btn-sm" onclick="generateBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">&#10024; AI Generate Business Plan</button>`
           }
@@ -2717,51 +2718,60 @@ async function archiveContact(id) { if (confirm('Archive this contact?')) { awai
 async function deleteContact(id) { if (confirm('Permanently delete this contact? This cannot be undone.')) { await api(`/contacts/${id}`, { method: 'DELETE' }); navigateTo('contacts'); } }
 async function archiveProject(id) { if (confirm('Archive this project?')) { await api(`/projects/${id}/archive`, { method: 'PUT' }); navigateTo('projects'); } }
 
-// =====================================================
-// AI BUSINESS PLAN GENERATION
-// =====================================================
-async function generateBusinessPlan(projectId) {
-  if (!confirm('Generate business plan with Claude? This takes about 30 seconds and costs API tokens.')) return;
-  const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = 'Generating Business Plan';
-  document.getElementById('modal-body').innerHTML = `
-    <div style="text-align:center;padding:30px 0">
-      <div class="spinner" style="margin:0 auto"></div>
-      <p style="margin-top:16px;color:var(--text-secondary)" id="bp-status">Calling Claude...</p>
-      <p style="font-size:12px;color:var(--text-muted)">This usually takes 20-40 seconds.</p>
-    </div>`;
-  document.getElementById('modal-cancel').style.display = 'none';
-  document.getElementById('modal-save').style.display = 'none';
-  overlay.classList.remove('hidden');
-
+async function deleteProject(id, name) {
+  const label = name || 'this project';
+  if (!confirm('PERMANENTLY DELETE "' + label + '"?\n\nThis cannot be undone. All milestones, intake answers, comments, votes, and Q&A will be removed. Linked tasks and calendar events will be unlinked.')) return;
+  const typed = prompt('Type DELETE to confirm:');
+  if (typed !== 'DELETE') return;
   try {
-    setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Building plan...'; }, 4000);
-    setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Saving...'; }, 18000);
-    const res = await api(`/projects/${projectId}/generate-business-plan`, { method: 'POST', body: JSON.stringify({}) });
-    if (!res.success) {
-      document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger)">Error: ${res.error || 'failed'}</p>`;
-      document.getElementById('modal-cancel').style.display = '';
-      document.getElementById('modal-cancel').textContent = 'Close';
-      return;
-    }
-    closeModal();
-    document.getElementById('modal-cancel').style.display = '';
-    document.getElementById('modal-save').style.display = '';
-    document.getElementById('modal-cancel').textContent = 'Cancel';
-    showBusinessPlanModalWithData(projectId, res.plan, res.generated_at);
-    // Refresh project detail (so the button flips to "View Business Plan")
-    setTimeout(() => showProjectDetail(projectId), 800);
+    const res = await api(`/projects/${id}`, { method: 'DELETE' });
+    if (!res.success) { alert('Delete failed: ' + (res.error || 'unknown')); return; }
+    navigateTo('projects');
+    refreshInboxBadge();
   } catch (e) {
-    document.getElementById('modal-body').innerHTML = `<p style="color:var(--danger)">Error: ${e.message}</p>`;
-    document.getElementById('modal-cancel').style.display = '';
-    document.getElementById('modal-cancel').textContent = 'Close';
+    alert('Delete failed: ' + e.message);
   }
 }
 
-async function showBusinessPlanModal(projectId) {
+// =====================================================
+// AI BUSINESS PLAN GENERATION (full-view, not modal)
+// =====================================================
+async function generateBusinessPlan(projectId) {
+  if (!confirm('Generate business plan with Claude? This takes about 30 seconds and costs API tokens.')) return;
+  const container = document.getElementById('view-container');
+  document.getElementById('page-title').textContent = 'Generating Business Plan...';
+  container.innerHTML = `
+    <div class="detail-panel" style="max-width:720px;margin:60px auto;text-align:center">
+      <h2 style="margin-top:0">Generating Business Plan</h2>
+      <div class="spinner" style="margin:24px auto"></div>
+      <p style="color:var(--text-secondary)" id="bp-status">Calling Claude...</p>
+      <p style="font-size:12px;color:var(--text-muted)">This usually takes 20-40 seconds. Do not close the tab.</p>
+    </div>`;
+  setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Building plan (TAM, GTM, team roles, budget...)'; }, 4000);
+  setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Saving...'; }, 18000);
+  try {
+    const res = await api(`/projects/${projectId}/generate-business-plan`, { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) {
+      container.innerHTML = `<div class="detail-panel" style="max-width:600px;margin:60px auto"><h2>Generation failed</h2><p style="color:var(--danger)">${res.error || 'Unknown error'}</p><button class="btn btn-ghost" onclick="showProjectDetail(${projectId})">&#8592; Back to project</button></div>`;
+      return;
+    }
+    showBusinessPlanView(projectId, res.plan, res.generated_at);
+  } catch (e) {
+    container.innerHTML = `<div class="detail-panel" style="max-width:600px;margin:60px auto"><h2>Generation failed</h2><p style="color:var(--danger)">${e.message}</p><button class="btn btn-ghost" onclick="showProjectDetail(${projectId})">&#8592; Back to project</button></div>`;
+  }
+}
+
+async function openBusinessPlan(projectId) {
+  const container = document.getElementById('view-container');
+  container.innerHTML = '<div class="spinner"></div>';
+  document.getElementById('page-title').textContent = 'Business Plan';
   const res = await api(`/projects/${projectId}/business-plan`);
-  if (!res.success) { alert('No business plan: ' + (res.error || 'not generated yet')); return; }
-  showBusinessPlanModalWithData(projectId, res.plan, res.generated_at);
+  if (!res.success) {
+    alert('No business plan: ' + (res.error || 'not generated yet'));
+    showProjectDetail(projectId);
+    return;
+  }
+  showBusinessPlanView(projectId, res.plan, res.generated_at);
 }
 
 function fmtUsd(n) {
@@ -2769,7 +2779,9 @@ function fmtUsd(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 }
 
-function showBusinessPlanModalWithData(projectId, plan, generatedAt) {
+function showBusinessPlanView(projectId, plan, generatedAt) {
+  document.getElementById('page-title').textContent = 'Business Plan';
+  const container = document.getElementById('view-container');
   const tabs = [
     { key: 'summary', label: 'Executive Summary' },
     { key: 'market', label: 'Problem & Market' },
@@ -2784,7 +2796,7 @@ function showBusinessPlanModalWithData(projectId, plan, generatedAt) {
   ];
   const tabBar = tabs.map((t, i) => `
     <button class="bp-tab ${i === 0 ? 'active' : ''}" data-tab="${t.key}"
-      style="padding:8px 14px;font-size:13px;font-weight:600;background:transparent;border:none;border-bottom:2px solid ${i === 0 ? 'var(--accent)' : 'transparent'};color:${i === 0 ? 'var(--accent)' : 'var(--text-muted)'};cursor:pointer;white-space:nowrap"
+      style="padding:10px 16px;font-size:13px;font-weight:600;background:transparent;border:none;border-bottom:2px solid ${i === 0 ? 'var(--accent)' : 'transparent'};color:${i === 0 ? 'var(--accent)' : 'var(--text-muted)'};cursor:pointer;white-space:nowrap"
       onclick="switchBusinessPlanTab('${t.key}', this)">${t.label}</button>`).join('');
 
   const sections = {
@@ -2878,14 +2890,22 @@ function showBusinessPlanModalWithData(projectId, plan, generatedAt) {
   // Stash sections globally so tab switcher can read them
   window._bpSections = sections;
 
-  document.getElementById('modal-title').textContent = 'AI-Generated Business Plan';
-  document.getElementById('modal-body').innerHTML = `
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Generated ${generatedAt ? new Date(generatedAt).toLocaleString() : ''}</div>
-    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;margin-bottom:14px;white-space:nowrap">${tabBar}</div>
-    <div id="bp-content" style="max-height:60vh;overflow:auto">${sections.summary}</div>`;
-  document.getElementById('modal-cancel').textContent = 'Close';
-  document.getElementById('modal-save').style.display = 'none';
-  document.getElementById('modal-overlay').classList.remove('hidden');
+  container.innerHTML = `
+    <div class="detail-panel" style="max-width:1100px;margin:0 auto">
+      <div class="detail-header" style="margin-bottom:8px">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="showProjectDetail(${projectId})" style="margin-bottom:8px">&#8592; Back to Project</button>
+          <h2 style="margin:0;background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${escHtml(plan.title || 'AI-Generated Business Plan')}</h2>
+          <p style="color:var(--text-muted);font-size:12px;margin-top:4px">Generated ${generatedAt ? new Date(generatedAt).toLocaleString() : ''}</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="window.print()" title="Print or save as PDF">&#128424; Print</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateBusinessPlan(${projectId})" title="Regenerate (overwrites)">&#8635; Regenerate</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;margin-bottom:18px;white-space:nowrap;position:sticky;top:0;background:var(--bg-base);z-index:5">${tabBar}</div>
+      <div id="bp-content" style="padding:8px 4px 60px">${sections.summary}</div>
+    </div>`;
 }
 
 function switchBusinessPlanTab(key, btn) {
