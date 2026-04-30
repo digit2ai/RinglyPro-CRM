@@ -288,7 +288,15 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
    ============================================================ */
 .dnx-grid-3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
 .dnx-grid-4 { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+.dnx-grid-5 { display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; }
 .dnx-grid-2 { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; }
+
+.dnx-step-card { position:relative; padding:32px 22px 24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); transition:border-color 240ms ease, background 240ms ease; }
+.dnx-step-card:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
+.dnx-step-num { position:absolute; top:-18px; left:24px; width:36px; height:36px; border-radius:50%; background:var(--grad-primary); color:#0a1024; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(34,211,238,0.35); }
+.dnx-step-kicker { font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--accent-cyan); text-transform:uppercase; margin:6px 0 12px; font-weight:600; }
+.dnx-step-card h3 { font-size:18px; font-weight:600; letter-spacing:-0.015em; margin-bottom:12px; line-height:1.25; }
+.dnx-step-card p { font-size:14px; color:var(--text-dim); line-height:1.6; }
 
 .dnx-card {
   position:relative;
@@ -333,10 +341,10 @@ elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !import
 .dnx-stat-desc { font-size:13px; color:var(--text-faint); line-height:1.55; }
 
 @media (max-width:920px) {
-  .dnx-grid-3, .dnx-grid-4 { grid-template-columns:repeat(2, 1fr); }
+  .dnx-grid-3, .dnx-grid-4, .dnx-grid-5 { grid-template-columns:repeat(2, 1fr); }
 }
 @media (max-width:600px) {
-  .dnx-grid-3, .dnx-grid-4, .dnx-grid-2 { grid-template-columns:1fr; }
+  .dnx-grid-3, .dnx-grid-4, .dnx-grid-5, .dnx-grid-2 { grid-template-columns:1fr; }
   .dnx-sec { padding:70px 0; }
 }
 
@@ -1111,6 +1119,50 @@ html, body { max-width:100%; overflow-x:hidden; }
         <div class="dnx-marquee-item">CamaraVirtual</div>
       </div>
     </div>
+
+    <!-- WORKFLOW -->
+    <section class="dnx-sec" id="workflow">
+      <div class="dnx-wrap">
+        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
+          <div class="dnx-kicker">THE WORKFLOW</div>
+          <h2 class="dnx-sec-title">From signal to <em>fix</em> — without humans in the loop.</h2>
+          <p class="dnx-sec-sub" style="margin:0 auto;">Five stages run continuously across your business. Each stage is owned by a different agent. The MCP server orchestrates the handoffs.</p>
+        </div>
+
+        <div class="dnx-grid-5" style="row-gap:36px;">
+          <div class="dnx-step-card dnx-reveal">
+            <div class="dnx-step-num">1</div>
+            <div class="dnx-step-kicker">Detect</div>
+            <h3>Scan every workflow</h3>
+            <p>Ten Neural analyzers continuously inspect calls, leads, bookings, pipeline, transcripts, and CRM activity. Anomalies and revenue gaps get flagged in real time.</p>
+          </div>
+          <div class="dnx-step-card dnx-reveal">
+            <div class="dnx-step-num">2</div>
+            <div class="dnx-step-kicker">Diagnose</div>
+            <h3>Route to the right specialist</h3>
+            <p>The MCP server reads each finding, identifies which specialist agent owns the domain, and forwards full context — data, history, urgency, dependencies.</p>
+          </div>
+          <div class="dnx-step-card dnx-reveal">
+            <div class="dnx-step-num">3</div>
+            <div class="dnx-step-kicker">Prescribe</div>
+            <h3>Recommend a fix</h3>
+            <p>The receiving agent proposes a workflow: a callback, a nurture sequence, a re-pricing, a re-book, an outbound campaign — with the expected outcome and risk.</p>
+          </div>
+          <div class="dnx-step-card dnx-reveal">
+            <div class="dnx-step-num">4</div>
+            <div class="dnx-step-kicker">Auto-Fix</div>
+            <h3>Execute autonomously</h3>
+            <p>Pre-approved fixes run immediately. Higher-risk ones surface to a human for one-click approval. Either way, the agent owns the action end-to-end.</p>
+          </div>
+          <div class="dnx-step-card dnx-reveal">
+            <div class="dnx-step-num">5</div>
+            <div class="dnx-step-kicker">Verify</div>
+            <h3>Measure and report</h3>
+            <p>Every action is logged with the data it acted on, the rule it applied, and the outcome it produced. The score moves; the next finding starts the loop again.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- OPPORTUNITY -->
     <section class="dnx-sec" id="opportunity">
