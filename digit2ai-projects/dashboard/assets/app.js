@@ -1184,8 +1184,8 @@ let calYear, calMonth;
 // =====================================================
 // CALENDAR (Outlook-style Month / Week / Day views)
 // =====================================================
-// Default = week, but auto-fall-back to day on phones (< 640px) for usable touch targets
-let calView = localStorage.getItem('cal_view') || (window.innerWidth < 640 ? 'day' : 'week');
+// Default = week on every screen size now (mobile day-columns shrink but stay readable)
+let calView = localStorage.getItem('cal_view') || 'week';
 let calCursor = null; // YYYY-MM-DD anchor date for week/day views
 
 const TYPE_COLORS = {

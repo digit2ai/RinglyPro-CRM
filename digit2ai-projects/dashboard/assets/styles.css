@@ -726,12 +726,15 @@ body {
   /* Calendar body: shorter so the controls + calendar both fit one screen */
   .cal-week-body { max-height: calc(100vh - 240px); }
 
-  /* Time gutter narrower so day columns get more room */
+  /* Time gutter narrower so day columns get more room.
+     IMPORTANT: keep 7 day columns in headers/all-day row -- previous
+     override to '40px 1fr' collapsed them into a 2-col grid and the
+     day pills wrapped vertically. */
   .cal-time-gutter { width: 40px; }
   .cal-hour-label { font-size: 10px; padding-right: 3px; }
-  .cal-week-headers { grid-template-columns: 40px 1fr !important; }
-  .cal-week-body { grid-template-columns: 40px 1fr !important; }
-  .cal-allday-row { grid-template-columns: 40px 1fr !important; }
+  .cal-week-headers { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
+  .cal-week-body    { grid-template-columns: 40px 1fr !important; }
+  .cal-allday-row   { grid-template-columns: 40px repeat(7, minmax(0, 1fr)) !important; }
   .cal-allday-label { font-size: 9px; padding: 4px; }
   .cal-week-day-header { padding: 6px 1px !important; }
   .cal-week-day-header > div:first-child { font-size: 9px !important; }
