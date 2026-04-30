@@ -32,6 +32,134 @@ router.get('/health', (req, res) => {
 });
 
 // =====================================================
+// PUBLIC PROSPECT REQUEST (no auth) -- Neural AI Projects intake
+// =====================================================
+// POST /public/request { full_name, email, phone, company_name, company_website,
+//   industry, country, project_title, project_description, problem, target_users,
+//   current_process, data_sources, timeline, budget_range, success_metrics,
+//   ai_category, sensitive_data, existing_stack, heard_from, best_time }
+// -> creates company + batch (status=pending_review) + project + intake +
+//    questions/responses + access token; returns { url, token }
+router.post('/public/request', async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const b = req.body || {};
+    const required = ['full_name', 'email', 'project_title', 'problem'];
+    for (const f of required) {
+      if (!b[f] || !String(b[f]).trim()) {
+        await t.rollback();
+        return res.status(400).json({ success: false, error: `${f} is required` });
+      }
+    }
+
+    const companyName = (b.company_name || b.full_name).toString().trim();
+
+    // 1) Company (find-or-create by name)
+    let [company] = await Company.findOrCreate({
+      where: { workspace_id: 1, name: companyName },
+      defaults: {
+        workspace_id: 1,
+        name: companyName,
+        website: b.company_website || null,
+        industry: b.industry || null,
+        email: b.email,
+        phone: b.phone || null,
+        notes: `Auto-created from Neural AI prospect intake on ${new Date().toISOString()}.\nSubmitter: ${b.full_name} <${b.email}>${b.country ? '\nCountry: ' + b.country : ''}`
+      },
+      transaction: t
+    });
+
+    // 2) Batch (one per submission, status=pending_review)
+    const batch = await IntakeBatch.create({
+      workspace_id: 1,
+      company_id: company.id,
+      title: `Neural AI Project Request -- ${b.project_title}`,
+      meeting_date: null,
+      submitted_by_email: b.email,
+      submitted_by_name: b.full_name,
+      status: 'pending_review',
+      notes: `Prospect-submitted Neural AI project intake.${b.heard_from ? '\nReferral: ' + b.heard_from : ''}${b.best_time ? '\nBest contact time: ' + b.best_time : ''}`
+    }, { transaction: t });
+
+    // 3) Project + intake row
+    const project = await Project.create({
+      workspace_id: 1,
+      company_id: company.id,
+      name: b.project_title,
+      description: b.project_description || b.problem,
+      status: 'planning',
+      stage: 'initiation',
+      priority: b.timeline && /urgent|asap|now/i.test(b.timeline) ? 'high' : 'medium',
+      tags: ['neural-ai-intake', 'pending-review'],
+      category: b.ai_category || 'Neural AI'
+    }, { transaction: t });
+
+    await ProjectIntake.create({
+      project_id: project.id,
+      batch_id: batch.id,
+      contacts_notes: `Submitter: ${b.full_name} <${b.email}>${b.phone ? ' / ' + b.phone : ''}`,
+      intake_status: 'discussion'
+    }, { transaction: t });
+
+    // 4) Auto-create Q&A pairs from the prospect's answers
+    const qa = [
+      ['What problem are you trying to solve?', b.problem],
+      ['Who are the target users / audience?', b.target_users],
+      ['What is the current process or system in place?', b.current_process],
+      ['What data sources or volume are involved?', b.data_sources],
+      ['Timeline / urgency?', b.timeline],
+      ['Budget range?', b.budget_range],
+      ['Expected outcomes / success metrics?', b.success_metrics],
+      ['Which Neural AI category fits best?', b.ai_category],
+      ['Does this involve sensitive / regulated data?', b.sensitive_data],
+      ['Existing tech stack / integration requirements?', b.existing_stack]
+    ];
+    for (let i = 0; i < qa.length; i++) {
+      const [qText, answer] = qa[i];
+      const q = await ProjectQuestion.create({
+        project_id: project.id,
+        question_text: qText,
+        position: i,
+        created_by_email: 'intake-form'
+      }, { transaction: t });
+      if (answer && String(answer).trim()) {
+        await QuestionResponse.create({
+          question_id: q.id,
+          responder_email: b.email,
+          responder_name: b.full_name,
+          response_text: String(answer).trim()
+        }, { transaction: t });
+      }
+    }
+
+    // 5) Access token for the prospect to revisit / track
+    const accessToken = await CompanyAccessToken.create({
+      company_id: company.id,
+      batch_id: batch.id,
+      grantee_email: b.email,
+      grantee_name: b.full_name,
+      role: 'reviewer',
+      expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
+    }, { transaction: t });
+
+    await t.commit();
+
+    const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    res.status(201).json({
+      success: true,
+      batch_id: batch.id,
+      project_id: project.id,
+      token: accessToken.token,
+      url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`
+    });
+  } catch (err) {
+    try { await t.rollback(); } catch (_) {}
+    console.error('[D2AI-Intake] public request error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
 // POST /share/:token/identify { email, name }

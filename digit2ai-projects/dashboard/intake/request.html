@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a Neural AI Project - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#05060f; color:#e6edf3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .grad-title { background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .card { background:linear-gradient(180deg,rgba(15,23,42,.85),rgba(2,6,23,.85)); }
+  label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  input, textarea, select {
+    width:100%; background:#0b1220; border:1px solid #1e293b; color:#e6edf3;
+    border-radius:8px; padding:10px 12px; font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.15);
+  }
+  select option { background:#0b1220; }
+  textarea { resize:vertical; min-height:80px; }
+  .req::after { content:' *'; color:#fb7185; }
+  .btn-primary {
+    background:#38bdf8; color:#020617; border:none; border-radius:8px;
+    padding:14px 24px; font-weight:700; font-size:15px; cursor:pointer;
+    transition:all .15s; width:100%;
+  }
+  .btn-primary:hover { background:#0ea5e9; }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .field-group { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width: 640px) { .field-group { grid-template-columns:1fr; } }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- LOGO BAND -->
+<div class="border-b border-slate-800 bg-slate-950">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 flex justify-center">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/68e1ceaedd63a48d8059af0a.png"
+         alt="Digit2AI" class="h-20 sm:h-28 w-auto" />
+  </div>
+</div>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+  <!-- HEADER -->
+  <div class="text-center mb-10">
+    <h1 class="text-3xl sm:text-4xl font-bold grad-title mb-3">Request a Neural AI Project</h1>
+    <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+      Tell us about your use case. We will review your submission and get back to you with a feasibility assessment, timeline, and proposed scope. All fields marked <span class="text-rose-400">*</span> are required.
+    </p>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="success" class="hidden card border border-emerald-700/40 rounded-2xl p-8" style="box-shadow:0 0 40px rgba(16,185,129,.18);">
+    <h2 class="text-2xl font-bold text-emerald-300 mb-3">Submission received</h2>
+    <p class="text-slate-300 mb-4">Thanks -- your Neural AI project request is now in our review queue. A member of the Digit2AI team will reach out within one business day.</p>
+    <p class="text-sm text-slate-400 mb-2">Bookmark this private link to revisit your submission, add comments, or upload more detail:</p>
+    <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 mb-4 break-all">
+      <a id="success_url" href="#" class="text-cyan-400 hover:text-cyan-300 text-sm font-mono"></a>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('success_url').href).then(()=>{this.textContent='Copied'})"
+              class="btn-primary" style="width:auto">Copy link</button>
+      <a id="success_open" href="#" class="btn-primary" style="background:#1e293b;color:#e6edf3;width:auto;text-decoration:none;display:inline-block;text-align:center">Open my submission</a>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <form id="intake_form" class="card border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">About you</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div><label class="req">Full name</label><input id="full_name" type="text" required></div>
+          <div><label class="req">Email</label><input id="email" type="email" required></div>
+        </div>
+        <div class="field-group">
+          <div><label>Phone</label><input id="phone" type="tel"></div>
+          <div><label>Country</label><input id="country" type="text" placeholder="e.g. United States"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Your organization</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div><label>Company name</label><input id="company_name" type="text"></div>
+          <div><label>Industry</label><input id="industry" type="text" placeholder="e.g. Healthcare, Logistics, Banking"></div>
+        </div>
+        <div><label>Website</label><input id="company_website" type="url" placeholder="https://"></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Project</h3>
+      <div class="space-y-4">
+        <div><label class="req">Project / use-case title</label><input id="project_title" type="text" required placeholder="e.g. AI assistant for inbound claims triage"></div>
+        <div><label>Short description</label><textarea id="project_description" placeholder="One paragraph elevator pitch of what you want to build"></textarea></div>
+        <div><label class="req">What problem are you trying to solve?</label><textarea id="problem" required placeholder="Pain point, current bottleneck, what's broken"></textarea></div>
+        <div><label>Target users / audience</label><textarea id="target_users" placeholder="Who will interact with the system? Internal staff? External customers?"></textarea></div>
+        <div><label>Current process / system in place</label><textarea id="current_process" placeholder="What do you do today? Manual? Existing software?"></textarea></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Neural AI specifics</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div>
+            <label>AI category</label>
+            <select id="ai_category">
+              <option value="">-- pick one --</option>
+              <option>Voice agent (inbound / outbound)</option>
+              <option>Conversational AI / chatbot</option>
+              <option>Document understanding (OCR, extraction)</option>
+              <option>Computer vision</option>
+              <option>Compliance / wire-screening / fraud</option>
+              <option>Predictive analytics / forecasting</option>
+              <option>Other / not sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Sensitive / regulated data?</label>
+            <select id="sensitive_data">
+              <option value="">-- pick one --</option>
+              <option>No</option>
+              <option>Yes - PII</option>
+              <option>Yes - PHI / HIPAA</option>
+              <option>Yes - financial / banking</option>
+              <option>Yes - other regulated</option>
+              <option>Not sure</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Data sources / volume</label><textarea id="data_sources" placeholder="What data feeds the system? Roughly how much? Where does it live?"></textarea></div>
+        <div><label>Existing tech stack / integration requirements</label><textarea id="existing_stack" placeholder="CRMs, ERPs, telephony, cloud providers, internal APIs..."></textarea></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Engagement</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div>
+            <label>Timeline / urgency</label>
+            <select id="timeline">
+              <option value="">-- pick one --</option>
+              <option>ASAP / urgent</option>
+              <option>Within 1 month</option>
+              <option>1-3 months</option>
+              <option>3-6 months</option>
+              <option>6+ months / exploring</option>
+            </select>
+          </div>
+          <div>
+            <label>Budget range</label>
+            <select id="budget_range">
+              <option value="">-- pick one --</option>
+              <option>Under $10K</option>
+              <option>$10K - $50K</option>
+              <option>$50K - $250K</option>
+              <option>$250K - $1M</option>
+              <option>$1M+</option>
+              <option>Not yet defined</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Expected outcomes / success metrics</label><textarea id="success_metrics" placeholder="What does success look like? KPIs, ROI targets, qualitative goals."></textarea></div>
+        <div class="field-group">
+          <div><label>How did you hear about us?</label><input id="heard_from" type="text" placeholder="Referral, LinkedIn, conference..."></div>
+          <div><label>Best time to contact</label><input id="best_time" type="text" placeholder="e.g. Weekdays 9-5 EST"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pt-2">
+      <button id="submit_btn" type="submit" class="btn-primary">Submit project request</button>
+      <p id="form_err" class="text-rose-400 text-sm mt-3 hidden"></p>
+    </div>
+  </form>
+
+  <p class="text-xs text-slate-600 text-center mt-8">
+    Your submission is encrypted in transit and stored on our private infrastructure. We will only contact you about this request.
+  </p>
+</main>
+
+<script>
+const form = document.getElementById('intake_form');
+const errEl = document.getElementById('form_err');
+const btn = document.getElementById('submit_btn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  const fields = [
+    'full_name','email','phone','country',
+    'company_name','company_website','industry',
+    'project_title','project_description','problem','target_users','current_process',
+    'ai_category','sensitive_data','data_sources','existing_stack',
+    'timeline','budget_range','success_metrics','heard_from','best_time'
+  ];
+  const payload = {};
+  for (const f of fields) {
+    const el = document.getElementById(f);
+    if (el) payload[f] = el.value.trim();
+  }
+
+  try {
+    const r = await fetch('/projects/api/v1/intake/public/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'Submission failed');
+
+    // Show success panel
+    form.classList.add('hidden');
+    const succ = document.getElementById('success');
+    succ.classList.remove('hidden');
+    document.getElementById('success_url').href = d.url;
+    document.getElementById('success_url').textContent = d.url;
+    document.getElementById('success_open').href = d.url;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    errEl.textContent = err.message || 'Submission failed';
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Submit project request';
+  }
+});
+</script>
+</body>
+</html>
