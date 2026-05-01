@@ -842,6 +842,48 @@ export default function BusinessPlanPage({ projectId: propId }) {
   const [recalculating, setRecalculating] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [error, setError] = useState(null)
+  const [surveyAgg, setSurveyAgg] = useState(null) // live commitments aggregation
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    api.listSurveys(id).then(async (sres) => {
+      const surveys = sres?.surveys || sres?.data || []
+      let totalRecipients = 0
+      let totalResponses = 0
+      let totalCommitted = 0
+      const responders = []
+      for (const s of surveys) {
+        totalRecipients += (s.recipient_count || (s.recipients || []).length || 0)
+        const rRes = await api.getSurveyResponses(s.id).catch(() => ({ responses: [] }))
+        const rs = rRes?.responses || rRes?.data || []
+        totalResponses += rs.length
+        for (const r of rs) {
+          const cases = Number(r.committed_cases || r.case_commitment || (r.incremental_cases_monthly ? r.incremental_cases_monthly * 12 : 0)) || 0
+          totalCommitted += cases
+          responders.push({
+            name: r.surgeon_name || r.respondent_name || 'Surgeon',
+            specialty: r.surgeon_specialty || r.specialty || '',
+            cases,
+            committed: !!(r.willing_to_commit),
+            submitted_at: r.completed_at || r.submitted_at || r.created_at,
+          })
+        }
+      }
+      if (cancelled) return
+      const responseRate = totalRecipients ? Math.round(100 * totalResponses / totalRecipients) : null
+      const top5 = responders.sort((a, b) => b.cases - a.cases).slice(0, 5)
+      setSurveyAgg({
+        totalSurveys: surveys.length,
+        totalRecipients,
+        totalResponses,
+        totalCommitted,
+        responseRate,
+        top5,
+      })
+    }).catch(() => setSurveyAgg(null))
+    return () => { cancelled = true }
+  }, [id, plan?.id])
 
   const loadPlan = useCallback(async () => {
     if (!id) { setLoading(false); return }
@@ -936,6 +978,43 @@ export default function BusinessPlanPage({ projectId: propId }) {
         <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200 ml-3">dismiss</button>
+        </div>
+      )}
+
+      {/* ─── Surgeon Commitments aggregation card (live from surveys, Wave 2.2) ─── */}
+      {surveyAgg && surveyAgg.totalSurveys > 0 && (
+        <div className="bg-gradient-to-br from-emerald-900/20 to-slate-900/40 border border-emerald-700/40 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest font-bold text-emerald-300">Surgeon Commitments &mdash; live from surveys</div>
+              <div className="text-sm text-slate-300 mt-1">
+                <strong className="text-emerald-200">{surveyAgg.totalResponses}</strong> of {surveyAgg.totalRecipients || '?'} surgeons responded
+                {surveyAgg.responseRate != null && <span className="text-slate-400"> ({surveyAgg.responseRate}% response rate)</span>}
+                {' · '}
+                <strong className="text-emerald-200">{Number(surveyAgg.totalCommitted).toLocaleString()}</strong> committed cases
+              </div>
+            </div>
+            <button
+              onClick={() => navigate(`/surveys/${id}`)}
+              className="text-xs text-emerald-400 hover:text-emerald-200 font-semibold"
+            >
+              View Surveys &rarr;
+            </button>
+          </div>
+          {surveyAgg.top5.length > 0 && (
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
+              {surveyAgg.top5.map((s, i) => (
+                <div key={i} className="bg-slate-800/40 border border-slate-700 rounded-lg px-3 py-2">
+                  <div className="text-xs font-semibold text-slate-200 truncate">{s.name}</div>
+                  <div className="text-[10px] text-slate-500">{s.specialty || '--'}</div>
+                  <div className="text-sm font-bold text-emerald-300 mt-1">{Number(s.cases).toLocaleString()} <span className="text-[10px] text-slate-400 font-normal">cases</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {surveyAgg.totalResponses === 0 && (
+            <div className="text-xs text-slate-400 mt-2 italic">Surveys are out but no responses yet. Aggregations will populate as surgeons submit.</div>
+          )}
         </div>
       )}
 

@@ -383,6 +383,25 @@ export default function ReportPage({ projectId: propId }) {
               ['Cardiac', p.specialty_cardiac ? `${p.specialty_cardiac}%` : '--'],
             ].filter(row => row[1] !== '--')}
           />
+
+          {/* ─── Competitive Landscape (Wave 2.3) ─── */}
+          {(p.nearby_davinci_hospitals && p.nearby_davinci_hospitals.length > 0) ? (
+            <>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">Competitive Landscape &mdash; da Vinci Installed Base Within ~50 Miles</h3>
+              <p className="text-sm text-slate-600 mb-3">A competitor is any hospital with at least one installed da Vinci system. Includes academic centers, cancer centers, large community hospitals, and major health-system networks.</p>
+              <Table
+                columns={['Hospital', 'City', 'Type', 'Est. Systems', 'Distance (mi)']}
+                rows={p.nearby_davinci_hospitals.slice(0, 20).map(h => [
+                  h.name || '--',
+                  h.city || '--',
+                  h.type || '--',
+                  fmt(h.system_count_estimate),
+                  h.miles != null ? h.miles : '--',
+                ])}
+              />
+              <p className="text-xs text-slate-500 italic mt-2">Source: AI-researched + curated installed-base seed list. Confirm specifics with field intelligence before quoting in CFO discussions.</p>
+            </>
+          ) : null}
         </Section>
 
         {/* ─── 3. CASES THAT CHANGE YOUR TOP LINE (three-bucket CFO language) ─── */}

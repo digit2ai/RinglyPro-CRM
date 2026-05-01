@@ -14,6 +14,54 @@
 const fs = require('fs');
 const path = require('path');
 
+// ── da Vinci installed-base seed list (curated, merged with AI-researched competitors) ──
+let _davinciInstalledBase = null;
+function loadDavinciInstalledBase() {
+  if (_davinciInstalledBase) return _davinciInstalledBase;
+  try {
+    const file = path.join(__dirname, '..', '..', 'data', 'davinci-installed-base.json');
+    _davinciInstalledBase = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    _davinciInstalledBase = {};
+  }
+  return _davinciInstalledBase;
+}
+
+// Merge AI-researched nearby da Vinci hospitals with the curated seed list, dedup by name
+function mergeNearbyDaVinciHospitals(aiList, state) {
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const out = new Map();
+  for (const h of (aiList || [])) {
+    if (!h || !h.name) continue;
+    out.set(norm(h.name), { ...h, source: h.source || 'ai_researched' });
+  }
+  if (state) {
+    const seed = loadDavinciInstalledBase()[String(state).toUpperCase()] || [];
+    for (const h of seed) {
+      const k = norm(h.name);
+      if (!out.has(k)) {
+        out.set(k, { ...h, source: 'curated_seed', miles: h.miles ?? null });
+      } else {
+        // Enrich AI entry with seed metadata where missing
+        const existing = out.get(k);
+        out.set(k, {
+          ...existing,
+          city: existing.city || h.city,
+          type: existing.type || h.type,
+          system_count_estimate: existing.system_count_estimate || h.system_count_estimate,
+          notes: existing.notes || h.notes,
+          source: existing.source === 'ai_researched' ? 'ai+seed' : existing.source,
+        });
+      }
+    }
+  }
+  return Array.from(out.values()).sort((a, b) => {
+    const ad = a.miles == null ? 9999 : Number(a.miles);
+    const bd = b.miles == null ? 9999 : Number(b.miles);
+    return ad - bd;
+  });
+}
+
 // ── Lazy-loaded dependencies ──────────────────────────────────────────
 let _anthropic = null;
 function getAnthropic() {
@@ -318,6 +366,9 @@ Return ONLY a valid JSON object with these exact fields:
   "value_based_contract_pct": number,
   "competitor_robot_nearby": boolean,
   "competitor_details": "string",
+  "nearby_davinci_hospitals": [
+    { "name": "string -- full hospital name", "city": "string", "miles": number, "system_count_estimate": number, "type": "academic OR cancer_center OR community OR specialty" }
+  ],
   "primary_goal": "volume_growth OR cost_reduction OR competitive OR quality OR recruitment",
   "notes": "Key facts, recent expansions, robotic program history, Magnet status",
   "research_sources": ["list"],
@@ -334,6 +385,18 @@ IMPORTANT:
 - Specialty percentages MUST sum to exactly 100
 - Bed count: use LICENSED beds, account for recent expansions
 - Surgical volume must be proportional to bed count (20-50/bed/year)
+
+COMPETITIVE LANDSCAPE -- BE EXHAUSTIVE:
+- For "nearby_davinci_hospitals", list ALL hospitals within 50 miles that have ANY da Vinci system installed.
+- Include: academic medical centers, cancer centers, large community hospitals, HCA/AdventHealth/Mayo/Cleveland Clinic
+  network facilities, Memorial network, university health systems, specialty cancer hospitals.
+- A "competitor" is ANY facility with installed da Vinci -- not only direct service-line rivals.
+- Aim for 5-15 entries when in a major metro. Florida examples within ~50 miles of Tampa/Orlando MUST include
+  Moffitt Cancer Center, Tampa General, AdventHealth Orlando, Mayo Clinic Jacksonville, Cleveland Clinic Florida,
+  Memorial Regional, HCA Florida network hospitals, UF Health Shands when geographically appropriate.
+- If unsure of exact distance, estimate from city-to-city; do not omit a known da Vinci facility just because
+  precise distance is unknown.
+
 - Return ONLY the JSON object`;
 
   const message = await getAnthropic().messages.create({
@@ -664,6 +727,7 @@ function buildProjectData(data) {
     value_based_contract_pct: data.value_based_contract_pct || 20,
     competitor_robot_nearby: data.competitor_robot_nearby || false,
     competitor_details: data.competitor_details || '',
+    nearby_davinci_hospitals: mergeNearbyDaVinciHospitals(data.nearby_davinci_hospitals || [], data.state),
     primary_goal: data.primary_goal || 'volume_growth',
     notes: data.notes || '',
     extended_data: {

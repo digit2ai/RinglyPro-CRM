@@ -1,0 +1,89 @@
+{
+  "_meta": {
+    "description": "Seed list of US hospitals known to have installed da Vinci systems (Intuitive Surgical) by state. Used to augment AI-researched competitive landscapes so well-known competitors are not omitted. Curated, not exhaustive -- merge with AI research and dedupe by hospital name.",
+    "last_updated": "2026-05-01",
+    "source_notes": "Public information: hospital websites, robotic surgery program announcements, cancer center listings, news of da Vinci acquisitions. Confirm before quoting in CFO-facing material."
+  },
+  "FL": [
+    { "name": "Moffitt Cancer Center", "city": "Tampa", "type": "cancer_center", "system_count_estimate": 6, "notes": "NCI-designated comprehensive cancer center; high-volume robotic urology and gynecologic oncology" },
+    { "name": "Tampa General Hospital", "city": "Tampa", "type": "academic", "system_count_estimate": 5, "notes": "USF Health affiliate; large robotic program across urology, GYN, thoracic, colorectal" },
+    { "name": "AdventHealth Orlando", "city": "Orlando", "type": "community", "system_count_estimate": 6, "notes": "AdventHealth flagship; multi-specialty robotic program" },
+    { "name": "AdventHealth Wesley Chapel", "city": "Wesley Chapel", "type": "community", "system_count_estimate": 2 },
+    { "name": "Mayo Clinic Jacksonville", "city": "Jacksonville", "type": "academic", "system_count_estimate": 4, "notes": "Mayo Clinic Florida campus; cardiac, urology, GI" },
+    { "name": "Cleveland Clinic Florida (Weston)", "city": "Weston", "type": "academic", "system_count_estimate": 3 },
+    { "name": "UF Health Shands Hospital", "city": "Gainesville", "type": "academic", "system_count_estimate": 4 },
+    { "name": "UF Health Jacksonville", "city": "Jacksonville", "type": "academic", "system_count_estimate": 2 },
+    { "name": "Memorial Regional Hospital", "city": "Hollywood", "type": "community", "system_count_estimate": 3 },
+    { "name": "Memorial Hospital West", "city": "Pembroke Pines", "type": "community", "system_count_estimate": 1 },
+    { "name": "Baptist Hospital of Miami", "city": "Miami", "type": "community", "system_count_estimate": 4 },
+    { "name": "Jackson Memorial Hospital", "city": "Miami", "type": "academic", "system_count_estimate": 3 },
+    { "name": "Sylvester Comprehensive Cancer Center (UM)", "city": "Miami", "type": "cancer_center", "system_count_estimate": 2 },
+    { "name": "HCA Florida Blake Hospital", "city": "Bradenton", "type": "community", "system_count_estimate": 1 },
+    { "name": "HCA Florida Largo Hospital", "city": "Largo", "type": "community", "system_count_estimate": 2 },
+    { "name": "HCA Florida Brandon Hospital", "city": "Brandon", "type": "community", "system_count_estimate": 1 },
+    { "name": "HCA Florida Memorial Hospital (Jacksonville)", "city": "Jacksonville", "type": "community", "system_count_estimate": 1 },
+    { "name": "Sarasota Memorial Hospital", "city": "Sarasota", "type": "community", "system_count_estimate": 2 },
+    { "name": "Lee Health (Lee Memorial)", "city": "Fort Myers", "type": "community", "system_count_estimate": 2 },
+    { "name": "Orlando Health Regional Medical Center", "city": "Orlando", "type": "community", "system_count_estimate": 3 },
+    { "name": "Orlando Health UF Health Cancer Center", "city": "Orlando", "type": "cancer_center", "system_count_estimate": 2 },
+    { "name": "BayCare Morton Plant Hospital", "city": "Clearwater", "type": "community", "system_count_estimate": 2 },
+    { "name": "BayCare St. Joseph's Hospital", "city": "Tampa", "type": "community", "system_count_estimate": 3 }
+  ],
+  "TX": [
+    { "name": "MD Anderson Cancer Center", "city": "Houston", "type": "cancer_center", "system_count_estimate": 8 },
+    { "name": "Houston Methodist Hospital", "city": "Houston", "type": "academic", "system_count_estimate": 6 },
+    { "name": "Memorial Hermann-Texas Medical Center", "city": "Houston", "type": "academic", "system_count_estimate": 5 },
+    { "name": "UT Southwestern Medical Center", "city": "Dallas", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Baylor University Medical Center", "city": "Dallas", "type": "academic", "system_count_estimate": 4 },
+    { "name": "Methodist Dallas Medical Center", "city": "Dallas", "type": "community", "system_count_estimate": 3 },
+    { "name": "St. David's Medical Center", "city": "Austin", "type": "community", "system_count_estimate": 3 },
+    { "name": "Seton Medical Center Austin", "city": "Austin", "type": "community", "system_count_estimate": 2 }
+  ],
+  "CA": [
+    { "name": "Stanford Hospital", "city": "Stanford", "type": "academic", "system_count_estimate": 6 },
+    { "name": "UCLA Medical Center", "city": "Los Angeles", "type": "academic", "system_count_estimate": 6 },
+    { "name": "Cedars-Sinai Medical Center", "city": "Los Angeles", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Kaiser Permanente Sunset", "city": "Los Angeles", "type": "community", "system_count_estimate": 4 },
+    { "name": "UCSF Medical Center", "city": "San Francisco", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Sutter Medical Center Sacramento", "city": "Sacramento", "type": "community", "system_count_estimate": 3 },
+    { "name": "City of Hope", "city": "Duarte", "type": "cancer_center", "system_count_estimate": 4 }
+  ],
+  "NY": [
+    { "name": "Memorial Sloan Kettering Cancer Center", "city": "New York", "type": "cancer_center", "system_count_estimate": 8 },
+    { "name": "NewYork-Presbyterian Hospital", "city": "New York", "type": "academic", "system_count_estimate": 7 },
+    { "name": "Mount Sinai Hospital", "city": "New York", "type": "academic", "system_count_estimate": 5 },
+    { "name": "NYU Langone Medical Center", "city": "New York", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Roswell Park Comprehensive Cancer Center", "city": "Buffalo", "type": "cancer_center", "system_count_estimate": 3 }
+  ],
+  "OH": [
+    { "name": "Cleveland Clinic", "city": "Cleveland", "type": "academic", "system_count_estimate": 8, "notes": "Headquarters of the Cleveland Clinic Foundation; very high robotic volume" },
+    { "name": "University Hospitals Cleveland Medical Center", "city": "Cleveland", "type": "academic", "system_count_estimate": 4 },
+    { "name": "The Ohio State University Wexner Medical Center", "city": "Columbus", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Christ Hospital", "city": "Cincinnati", "type": "community", "system_count_estimate": 3 }
+  ],
+  "PA": [
+    { "name": "Hospital of the University of Pennsylvania", "city": "Philadelphia", "type": "academic", "system_count_estimate": 6 },
+    { "name": "UPMC Presbyterian", "city": "Pittsburgh", "type": "academic", "system_count_estimate": 6 },
+    { "name": "Penn State Health Hershey Medical Center", "city": "Hershey", "type": "academic", "system_count_estimate": 3 }
+  ],
+  "MA": [
+    { "name": "Massachusetts General Hospital", "city": "Boston", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Brigham and Women's Hospital", "city": "Boston", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Dana-Farber/Brigham Cancer Center", "city": "Boston", "type": "cancer_center", "system_count_estimate": 3 }
+  ],
+  "IL": [
+    { "name": "Northwestern Memorial Hospital", "city": "Chicago", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Rush University Medical Center", "city": "Chicago", "type": "academic", "system_count_estimate": 4 },
+    { "name": "University of Chicago Medical Center", "city": "Chicago", "type": "academic", "system_count_estimate": 4 }
+  ],
+  "GA": [
+    { "name": "Emory University Hospital", "city": "Atlanta", "type": "academic", "system_count_estimate": 5 },
+    { "name": "Piedmont Hospital", "city": "Atlanta", "type": "community", "system_count_estimate": 4 },
+    { "name": "Northside Hospital Atlanta", "city": "Atlanta", "type": "community", "system_count_estimate": 3 }
+  ],
+  "NC": [
+    { "name": "Duke University Hospital", "city": "Durham", "type": "academic", "system_count_estimate": 6 },
+    { "name": "UNC Hospitals", "city": "Chapel Hill", "type": "academic", "system_count_estimate": 4 },
+    { "name": "Wake Forest Baptist Medical Center", "city": "Winston-Salem", "type": "academic", "system_count_estimate": 3 }
+  ]
+}

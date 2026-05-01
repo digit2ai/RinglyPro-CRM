@@ -89,7 +89,101 @@ router.post('/:token/submit', async (req, res) => {
 
     await survey.increment('response_count');
 
-    res.json({ success: true, message: 'Thank you for your response!' });
+    // ─── Auto-import as SurgeonCommitment on the active Business Plan (Wave 2.1) ───
+    // Idempotent: matches existing commitments by (business_plan_id, surgeon_email or surgeon_name)
+    // and updates rather than duplicates on re-submission.
+    let autoImport = { performed: false };
+    try {
+      const { IntuitiveBusinessPlan, IntuitiveSurgeonCommitment } = req.models;
+      if (IntuitiveBusinessPlan && IntuitiveSurgeonCommitment && survey.project_id) {
+        const plans = await IntuitiveBusinessPlan.findAll({
+          where: { project_id: survey.project_id },
+          order: [['updated_at', 'DESC'], ['created_at', 'DESC']],
+          limit: 5,
+        });
+        const activePlan = plans.find(pl => (pl.status || '').toLowerCase() !== 'archived') || plans[0];
+
+        if (activePlan) {
+          let drgLib;
+          try { drgLib = require('../services/drg-reimbursement'); } catch (e) {}
+
+          const procs = (procedure_breakdown || []).map(pb => {
+            const monthlyCases = Math.round((Number(incremental_cases_monthly) || 0) * (Number(pb.percentage) || 0) / 100);
+            let reimbursement = 0;
+            if (drgLib && pb.procedure_type) {
+              const drgEntry = drgLib.lookupByProcedure(pb.procedure_type);
+              if (drgEntry) reimbursement = drgEntry.avg_blended_rate;
+            }
+            return {
+              procedure_type: pb.procedure_type || 'unknown',
+              procedure_name: pb.procedure_name || pb.procedure_type || 'Unknown',
+              incremental_cases_monthly: monthlyCases,
+              incremental_cases_annual: monthlyCases * 12,
+              reimbursement_rate: reimbursement,
+              competitive_leakage_cases: 0,
+            };
+          });
+          let totalAnnual = procs.reduce((s, x) => s + (x.incremental_cases_annual || 0), 0);
+          if (totalAnnual === 0 && incremental_cases_monthly) totalAnnual = Number(incremental_cases_monthly) * 12;
+          const totalRevenue = procs.reduce((s, x) => s + (x.incremental_cases_annual || 0) * (x.reimbursement_rate || 0), 0);
+
+          // Find existing commitment by survey_response_id, or by (plan + surgeon identity)
+          const { Op } = require('sequelize');
+          const surgeonIdentity = response.surgeon_email
+            ? { surgeon_email: response.surgeon_email }
+            : { surgeon_name: response.surgeon_name };
+          let existing = await IntuitiveSurgeonCommitment.findOne({
+            where: {
+              business_plan_id: activePlan.id,
+              [Op.or]: [
+                { survey_response_id: response.id },
+                surgeonIdentity,
+              ],
+            },
+          });
+
+          const commitmentPayload = {
+            business_plan_id: activePlan.id,
+            project_id: activePlan.project_id,
+            surgeon_name: response.surgeon_name,
+            surgeon_email: response.surgeon_email,
+            surgeon_specialty: response.surgeon_specialty,
+            procedures: procs,
+            total_incremental_annual: totalAnnual,
+            total_revenue_impact: totalRevenue,
+            source: 'survey',
+            survey_response_id: response.id,
+            status: response.willing_to_commit ? 'confirmed' : 'draft',
+            confirmed_at: response.willing_to_commit ? new Date() : null,
+          };
+
+          if (existing) {
+            await existing.update(commitmentPayload);
+            autoImport = { performed: true, action: 'updated', commitment_id: existing.id, plan_id: activePlan.id };
+          } else {
+            const created = await IntuitiveSurgeonCommitment.create(commitmentPayload);
+            autoImport = { performed: true, action: 'created', commitment_id: created.id, plan_id: activePlan.id };
+          }
+
+          // Best-effort plan recompute (don't fail the survey submit if this errors)
+          try {
+            const calc = require('../services/business-plan-calculator');
+            if (calc && typeof calc.recomputePlan === 'function') {
+              await calc.recomputePlan(activePlan.id, req.models);
+            }
+          } catch (_) {}
+        } else {
+          autoImport = { performed: false, reason: 'no_active_business_plan' };
+        }
+      } else {
+        autoImport = { performed: false, reason: 'models_unavailable' };
+      }
+    } catch (e) {
+      console.error('[SurveyPublic] auto-import error:', e.message || e);
+      autoImport = { performed: false, error: e.message || String(e) };
+    }
+
+    res.json({ success: true, message: 'Thank you for your response!', auto_import: autoImport });
   } catch (err) {
     console.error('Survey submit error:', err);
     res.status(500).json({ error: err.message });
