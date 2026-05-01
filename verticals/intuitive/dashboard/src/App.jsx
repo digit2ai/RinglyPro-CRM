@@ -28,6 +28,8 @@ import BusinessPlanPage from './pages/BusinessPlanPage'
 import SurveyManagerPage from './pages/SurveyManagerPage'
 import TrackingDashboardPage from './pages/TrackingDashboardPage'
 import ReportPage from './pages/ReportPage'
+import AskPage from './pages/AskPage'
+import ChatWidget from './components/ChatWidget'
 import { api } from './lib/api'
 
 // Dynamic Rachel context builder -- generates presentation context from live project data
@@ -144,6 +146,7 @@ SPEAKING GUIDELINES:
 
 const NAV_STEPS = [
   { to: '/', label: 'Dashboard', num: 0, icon: 'D', section: 'main' },
+  { to: '/ask', label: 'Ask', num: 0, icon: '?', section: 'main' },
   { to: '/intake', label: 'Hospital Intake', num: 1, icon: 'H', section: 'main' },
   { to: '/surveys', label: 'Surgeon Surveys', num: 2, icon: 'S', section: 'project' },
   { to: '/analysis', label: 'Analysis', num: 3, icon: 'A', section: 'project' },
@@ -398,7 +401,9 @@ export default function App() {
           <Route path="/tracking/:planId" element={<TrackingDashboardPage />} />
           <Route path="/report" element={<ReportPage projectId={currentProject} />} />
           <Route path="/report/:projectId" element={<ReportPage />} />
+          <Route path="/ask" element={<AskPage />} />
         </Routes>
+        <ChatWidget currentProjectId={currentProject} />
         </ErrorBoundary>
       </main>
     </div>
