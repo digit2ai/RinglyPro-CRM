@@ -402,6 +402,28 @@ export default function ReportPage({ projectId: propId }) {
               <p className="text-xs text-slate-500 italic mt-2">Source: AI-researched + curated installed-base seed list. Confirm specifics with field intelligence before quoting in CFO discussions.</p>
             </>
           ) : null}
+
+          {/* ─── Phase A: Federal-source citation chain (CFO-defensible footer) ─── */}
+          {(() => {
+            const citations = (p.extended_data && p.extended_data.citations) || []
+            if (!citations.length) return null
+            return (
+              <>
+                <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">Data Sources &amp; Citations</h3>
+                <p className="text-sm text-slate-600 mb-3">Every quantitative field above traces to a public federal or state filing. Below is the full audit chain for this report.</p>
+                <ul className="text-xs text-slate-700 space-y-1">
+                  {citations.map((c, i) => (
+                    <li key={i} className="leading-relaxed">
+                      <strong>{c.field}</strong>: {typeof c.value === 'number' ? c.value.toLocaleString() : c.value} &mdash;
+                      <span className="ml-1 text-slate-600">{c.source_name}</span>
+                      {c.source_url && <span className="ml-1 text-slate-500"> &lt;{c.source_url}&gt;</span>}
+                      {c.last_updated_at && <span className="ml-1 text-slate-500"> ({c.last_updated_at})</span>}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )
+          })()}
         </Section>
 
         {/* ─── 3. CASES THAT CHANGE YOUR TOP LINE (three-bucket CFO language) ─── */}

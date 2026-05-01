@@ -183,13 +183,14 @@ const KNOWN_SYSTEMS = {
 // ══════════════════════════════════════════════════════════════════════
 // PASS 0: DATA GATHERER (code, no AI)
 // ══════════════════════════════════════════════════════════════════════
-async function gatherExternalData(hospitalName, state, progress) {
+async function gatherExternalData(hospitalName, state, progress, models) {
   const externalData = {
     cms_metrics: null,
     cms_provider: null,
     web_search_results: null,
     known_system_bounds: null,
-    national_ratios: NATIONAL_ROBOTIC_RATIOS
+    national_ratios: NATIONAL_ROBOTIC_RATIOS,
+    __models: models || null,
   };
 
   // 1. CMS Hospital Compare lookup
@@ -270,6 +271,61 @@ async function gatherExternalData(hospitalName, state, progress) {
     }
   }
 
+  // 4. New public-source connectors (NPI, HCRIS, Open Payments, MPUP, IRS 990, FL AHCA)
+  const dbModels = externalData.__models;
+  const providerId = externalData.cms_provider?.provider_id;
+  const hospitalAddress = externalData.cms_provider?.address || '';
+  const zip = externalData.cms_provider?.zip || externalData.cms_provider?.postal_code || '';
+
+  // Step 4a: NPI Registry (parallel-safe; depends only on hospital address/state)
+  progress('Pass 0: Fetching NPI Registry surgeon roster...');
+  let npiResult = null;
+  try {
+    const npiSource = require('./data-sources/npi-registry');
+    npiResult = await npiSource.fetchFor(hospitalName, state, { zip, address: hospitalAddress, models: dbModels });
+    if (npiResult?.data?.surgeons?.length) {
+      progress(`Pass 0: NPI Registry found ${npiResult.data.surgeons.length} surgeons`);
+    } else {
+      progress('Pass 0: NPI Registry -- no surgeons matched at this address');
+    }
+  } catch (e) {
+    progress('Pass 0: NPI Registry failed: ' + e.message);
+  }
+  externalData.npi_registry = npiResult?.data || null;
+
+  const npiList = (npiResult?.data?.surgeons || []).map(s => s.npi);
+
+  // Step 4b: parallel batch — HCRIS, Open Payments, MPUP, IRS 990, FL AHCA
+  progress('Pass 0: Fetching HCRIS, Open Payments, MPUP, IRS 990' + (state === 'FL' ? ', FL AHCA' : '') + '...');
+  const [hcrisRes, openpayRes, mpupRes, irs990Res, ahcaRes] = await Promise.all([
+    (async () => { try { return await require('./data-sources/cms-hcris').fetchFor(hospitalName, state, { providerId, models: dbModels }); } catch (e) { return { error: e.message }; } })(),
+    (async () => { try { return await require('./data-sources/cms-open-payments').fetchFor(npiList, { models: dbModels }); } catch (e) { return { error: e.message }; } })(),
+    (async () => { try { return await require('./data-sources/cms-physician-volume').fetchFor(npiList, { models: dbModels }); } catch (e) { return { error: e.message }; } })(),
+    (async () => { try { return await require('./data-sources/propublica-990').fetchFor(hospitalName, state, { models: dbModels }); } catch (e) { return { error: e.message }; } })(),
+    (async () => {
+      if (state !== 'FL') return null;
+      try { return await require('./data-sources/florida-ahca').fetchFor(hospitalName, { models: dbModels }); } catch (e) { return { error: e.message }; }
+    })(),
+  ]);
+
+  externalData.hcris = hcrisRes?.data || null;
+  externalData.open_payments = openpayRes?.data || null;
+  externalData.physician_procedure_volume = mpupRes?.data || null;
+  externalData.irs_990 = irs990Res?.data || null;
+  externalData.state_ahca = ahcaRes?.data || null;
+
+  // Aggregate citations from every source for the report layer
+  externalData.citations = [
+    ...(npiResult?.citations || []),
+    ...(hcrisRes?.citations || []),
+    ...(openpayRes?.citations || []),
+    ...(mpupRes?.citations || []),
+    ...(irs990Res?.citations || []),
+    ...(ahcaRes?.citations || []),
+  ];
+
+  progress(`Pass 0: collected ${externalData.citations.length} citations across ${[npiResult, hcrisRes, openpayRes, mpupRes, irs990Res, ahcaRes].filter(x => x?.data).length} sources`);
+
   return externalData;
 }
 
@@ -310,6 +366,77 @@ async function runMaker(hospitalName, externalData, progress) {
     const ksb = externalData.known_system_bounds;
     contextBlock += `\nKNOWN HOSPITAL SYSTEM DATA:\n`;
     contextBlock += `System: ${ksb.system_name} -- typical beds per facility: ${ksb.typical_beds} (range: ${ksb.min_beds}-${ksb.max_beds}), typical type: ${ksb.type}\n`;
+  }
+
+  // ── Phase A new public-source data ──
+  if (externalData.npi_registry?.surgeons?.length) {
+    const reg = externalData.npi_registry;
+    contextBlock += `\n\nNPI REGISTRY (CONFIRMED -- USE EXACTLY):\n`;
+    contextBlock += `Total surgeons found at this address: ${reg.total_surgeons_found || reg.surgeons.length}\n`;
+    contextBlock += `By specialty: ${JSON.stringify(reg.confirmed_surgeon_count_by_specialty || {})}\n`;
+    contextBlock += `Top 10 surgeons (NPI, name, specialty):\n`;
+    reg.surgeons.slice(0, 10).forEach(s => {
+      contextBlock += `- ${s.npi} ${s.full_name}${s.credential ? ', ' + s.credential : ''} -- ${s.specialty_label}\n`;
+    });
+  }
+
+  if (externalData.hcris) {
+    const h = externalData.hcris;
+    contextBlock += `\nCMS HCRIS COST REPORT (CONFIRMED -- AUDITED FILING):\n`;
+    contextBlock += `Fiscal Year: ${h.fiscal_year}\n`;
+    if (h.total_revenue) contextBlock += `Total Revenue: $${Number(h.total_revenue).toLocaleString()}\n`;
+    if (h.total_expenses) contextBlock += `Total Expenses: $${Number(h.total_expenses).toLocaleString()}\n`;
+    if (h.beds_staffed) contextBlock += `Beds Staffed: ${h.beds_staffed}\n`;
+    if (h.beds_available) contextBlock += `Beds Available: ${h.beds_available}\n`;
+    if (h.total_or_count) contextBlock += `Total OR Count: ${h.total_or_count}\n`;
+    if (h.total_surgical_cases) contextBlock += `Total Surgical Cases: ${h.total_surgical_cases}\n`;
+    if (h.payer_medicare_pct) contextBlock += `Payer Mix: Medicare ${h.payer_medicare_pct}%, Medicaid ${h.payer_medicaid_pct || 0}%, Self-Pay ${h.payer_self_pay_pct || 0}%\n`;
+  }
+
+  if (externalData.open_payments?.surgeon_payments?.length) {
+    const op = externalData.open_payments;
+    contextBlock += `\nCMS OPEN PAYMENTS (CONFIRMED -- INTUITIVE PAYMENTS TO SURGEONS):\n`;
+    contextBlock += `Top surgeons by Intuitive payments (last 2 fiscal years):\n`;
+    op.surgeon_payments.slice(0, 5).forEach(sp => {
+      contextBlock += `- NPI ${sp.npi}: $${sp.total_payments_2yr.toLocaleString()} across [${(sp.payment_categories || []).join(', ')}], champion_score=${sp.champion_score}/100\n`;
+    });
+  }
+
+  if (externalData.physician_procedure_volume?.surgeon_volumes?.length) {
+    const mp = externalData.physician_procedure_volume;
+    contextBlock += `\nCMS PHYSICIAN PROCEDURE VOLUME (CONFIRMED -- ROBOTIC-RELEVANT CPT VOLUMES):\n`;
+    contextBlock += `Top surgeons by robotic-relevant case volume (most recent fiscal year):\n`;
+    mp.surgeon_volumes.slice(0, 5).forEach(sv => {
+      contextBlock += `- NPI ${sv.npi}: ${sv.total_robotic_cases_last_yr} cases (FY ${sv.fiscal_year}), breakdown=${JSON.stringify(sv.procedure_breakdown)}\n`;
+    });
+  }
+
+  if (externalData.irs_990) {
+    const ir = externalData.irs_990;
+    contextBlock += `\nIRS FORM 990 (CONFIRMED -- AUDITED NONPROFIT FILING):\n`;
+    if (ir.tax_year) contextBlock += `Tax Year: ${ir.tax_year}\n`;
+    if (ir.total_revenue) contextBlock += `Total Revenue: $${Number(ir.total_revenue).toLocaleString()}\n`;
+    if (ir.total_expenses) contextBlock += `Total Expenses: $${Number(ir.total_expenses).toLocaleString()}\n`;
+    if (ir.ceo_name) contextBlock += `CEO: ${ir.ceo_name}${ir.ceo_compensation ? ' ($' + Number(ir.ceo_compensation).toLocaleString() + ')' : ''}\n`;
+    if (ir.charity_care_dollars) contextBlock += `Charity Care: $${Number(ir.charity_care_dollars).toLocaleString()}\n`;
+  }
+
+  if (externalData.state_ahca) {
+    const a = externalData.state_ahca;
+    contextBlock += `\nFLORIDA AHCA (CONFIRMED -- STATE LICENSING):\n`;
+    if (a.licensed_beds) contextBlock += `Licensed Beds: ${a.licensed_beds}\n`;
+    if (a.staffed_beds) contextBlock += `Staffed Beds: ${a.staffed_beds}\n`;
+    if (a.total_or_count) contextBlock += `Total ORs: ${a.total_or_count}\n`;
+    if (a.total_admissions) contextBlock += `Total Admissions: ${a.total_admissions}\n`;
+    if (a.fiscal_year) contextBlock += `Fiscal Year: ${a.fiscal_year}\n`;
+  }
+
+  if (externalData.citations?.length) {
+    contextBlock += `\nCONFIRMED CITATIONS COLLECTED (${externalData.citations.length} fields with source URLs):\n`;
+    externalData.citations.slice(0, 15).forEach(c => {
+      contextBlock += `- ${c.field} = ${typeof c.value === 'number' ? c.value.toLocaleString() : c.value} (source: ${c.source_name})\n`;
+    });
+    contextBlock += `\nIMPORTANT: For every field above, mark "confirmed" in field_confidence and set evidence_url to the corresponding source_url.\n`;
   }
 
   contextBlock += `\nNATIONAL ROBOTIC-TO-OPEN RATIOS (use for specialty robotic estimates):\n`;
@@ -369,6 +496,14 @@ Return ONLY a valid JSON object with these exact fields:
   "nearby_davinci_hospitals": [
     { "name": "string -- full hospital name", "city": "string", "miles": number, "system_count_estimate": number, "type": "academic OR cancer_center OR community OR specialty" }
   ],
+  "ceo_name": "string or null (from IRS 990 if nonprofit)",
+  "ceo_compensation": number,
+  "confirmed_surgeons": [
+    { "npi": "string", "name": "string", "specialty": "string", "intuitive_payments_2yr": number, "robotic_cases_last_yr": number, "champion_score": number }
+  ],
+  "data_reconciliations": [
+    { "field": "string", "ai_estimate": "any", "source_value": "any", "source_name": "string", "resolution": "used_source OR used_estimate OR flagged" }
+  ],
   "primary_goal": "volume_growth OR cost_reduction OR competitive OR quality OR recruitment",
   "notes": "Key facts, recent expansions, robotic program history, Magnet status",
   "research_sources": ["list"],
@@ -382,8 +517,14 @@ The "field_confidence" object should map each major field to "confirmed" or "est
 
 IMPORTANT:
 - USE CMS DATA when available -- it is the most reliable source
+- PREFER CONFIRMED VALUES from external data sources (NPI Registry, HCRIS, Open Payments, MPUP, IRS 990, FL AHCA) over your own estimates whenever a source provides a value.
+- For any field that is populated from a confirmed source, mark it "confirmed" in the field_confidence map AND attach the source URL as evidence_url.
+- Format field_confidence as { "field_name": { "confidence": "confirmed" | "estimated", "evidence_url": "https://..." | null, "source_name": "..." | null } }
+- Surgeon counts: when NPI Registry provided confirmed_surgeon_count_by_specialty, use it directly.
+- CEO data: when IRS 990 provided ceo_name + ceo_compensation, populate those fields.
+- confirmed_surgeons array: populate from NPI Registry + Open Payments + MPUP merge (top surgeons by champion_score).
 - Specialty percentages MUST sum to exactly 100
-- Bed count: use LICENSED beds, account for recent expansions
+- Bed count: use LICENSED beds, account for recent expansions; prefer state AHCA / HCRIS over CMS Hospital Compare when there is conflict.
 - Surgical volume must be proportional to bed count (20-50/bed/year)
 
 COMPETITIVE LANDSCAPE -- BE EXHAUSTIVE:
@@ -481,12 +622,88 @@ Return ONLY valid JSON.`;
 // ══════════════════════════════════════════════════════════════════════
 // PASS 3: DETERMINISTIC VALIDATOR (code, no AI)
 // ══════════════════════════════════════════════════════════════════════
-function runDeterministicValidator(data, progress) {
+function runDeterministicValidator(data, progress, externalData) {
   progress('Pass 3 (Validator): Running deterministic math checks...');
   const issues = [];
+  const reconciliations = [];
   const type = data.hospital_type || 'community';
   const bench = INDUSTRY_BENCHMARKS[type] || INDUSTRY_BENCHMARKS.community;
-  const beds = data.bed_count || 200;
+  let beds = data.bed_count || 200;
+
+  // ── Reconciliation pre-step: prefer confirmed sources over Maker estimates ──
+  if (externalData) {
+    // HCRIS beds_staffed > CMS Hospital Compare beds: prefer HCRIS
+    const hcrisBeds = externalData.hcris?.beds_staffed;
+    const ahcaBeds = externalData.state_ahca?.licensed_beds;
+    if (hcrisBeds && Math.abs(hcrisBeds - beds) >= Math.max(5, beds * 0.05)) {
+      reconciliations.push({ field: 'beds_staffed', ai_estimate: beds, source_value: hcrisBeds, source_name: 'CMS HCRIS', resolution: 'used_source' });
+      data.bed_count = hcrisBeds;
+      beds = hcrisBeds;
+    }
+    if (ahcaBeds && Math.abs(ahcaBeds - beds) >= Math.max(5, beds * 0.05)) {
+      reconciliations.push({ field: 'licensed_beds', ai_estimate: beds, source_value: ahcaBeds, source_name: 'Florida AHCA', resolution: 'used_source' });
+      data.bed_count = ahcaBeds;
+      beds = ahcaBeds;
+    }
+    // IRS 990 total_revenue: replace AI estimate if >20% off
+    const irsRevenue = externalData.irs_990?.total_revenue;
+    if (irsRevenue && data.total_revenue) {
+      const drift = Math.abs(irsRevenue - data.total_revenue) / Math.max(irsRevenue, 1);
+      if (drift > 0.20) {
+        reconciliations.push({ field: 'total_revenue', ai_estimate: data.total_revenue, source_value: irsRevenue, source_name: 'IRS Form 990', resolution: 'used_source' });
+        data.total_revenue = irsRevenue;
+      }
+    } else if (irsRevenue && !data.total_revenue) {
+      data.total_revenue = irsRevenue;
+    }
+    // NPI Registry credentialed_robotic_surgeons: prefer when present and conflicts with estimate
+    const npiCounts = externalData.npi_registry?.confirmed_surgeon_count_by_specialty;
+    if (npiCounts) {
+      const robotCapableSpecialties = ['urology', 'gynecology', 'general', 'thoracic', 'colorectal', 'head_neck'];
+      const npiRoboticCapable = robotCapableSpecialties.reduce((sum, key) => sum + (npiCounts[key] || 0), 0);
+      if (npiRoboticCapable > 0 && Math.abs(npiRoboticCapable - (data.credentialed_robotic_surgeons || 0)) > 5) {
+        reconciliations.push({
+          field: 'credentialed_robotic_surgeons',
+          ai_estimate: data.credentialed_robotic_surgeons || 0,
+          source_value: npiRoboticCapable,
+          source_name: 'NPI Registry (NPPES)',
+          resolution: 'used_source',
+        });
+        data.credentialed_robotic_surgeons = npiRoboticCapable;
+      }
+    }
+    // Backfill ceo_name + ceo_compensation from IRS 990
+    if (externalData.irs_990?.ceo_name && !data.ceo_name) {
+      data.ceo_name = externalData.irs_990.ceo_name;
+      data.ceo_compensation = externalData.irs_990.ceo_compensation || 0;
+    }
+    // Build confirmed_surgeons array from NPI + Open Payments + MPUP
+    if (!data.confirmed_surgeons || !data.confirmed_surgeons.length) {
+      const npiSurgeons = externalData.npi_registry?.surgeons || [];
+      const opMap = {};
+      (externalData.open_payments?.surgeon_payments || []).forEach(p => { opMap[p.npi] = p; });
+      const mpMap = {};
+      (externalData.physician_procedure_volume?.surgeon_volumes || []).forEach(v => { mpMap[v.npi] = v; });
+      const merged = npiSurgeons.map(s => {
+        const op = opMap[s.npi] || {};
+        const mp = mpMap[s.npi] || {};
+        return {
+          npi: s.npi,
+          name: s.full_name,
+          specialty: s.specialty_label,
+          intuitive_payments_2yr: op.total_payments_2yr || 0,
+          robotic_cases_last_yr: mp.total_robotic_cases_last_yr || 0,
+          champion_score: op.champion_score || 0,
+        };
+      }).sort((a, b) => (b.champion_score + b.robotic_cases_last_yr / 10) - (a.champion_score + a.robotic_cases_last_yr / 10));
+      data.confirmed_surgeons = merged.slice(0, 25);
+    }
+  }
+  data.data_reconciliations = reconciliations;
+  // Surface aggregated citations on the data object so buildProjectData can persist them
+  if (externalData?.citations?.length) {
+    data.citations = externalData.citations;
+  }
 
   // 1. Specialty percentages must sum to exactly 100
   const specFields = ['specialty_urology', 'specialty_gynecology', 'specialty_general',
@@ -597,7 +814,7 @@ function runDeterministicValidator(data, progress) {
 // ══════════════════════════════════════════════════════════════════════
 // MAIN: researchHospital (4-pass orchestrator)
 // ══════════════════════════════════════════════════════════════════════
-async function researchHospital(hospitalName, progressCallback) {
+async function researchHospital(hospitalName, progressCallback, models) {
   const progress = progressCallback || (() => {});
   progress('Starting 4-pass research for: ' + hospitalName);
 
@@ -610,8 +827,8 @@ async function researchHospital(hospitalName, progressCallback) {
 
   let researchData;
   try {
-    // Pass 0: Gather external data
-    const externalData = await gatherExternalData(hospitalName, null, progress);
+    // Pass 0: Gather external data (pass models so new public-source connectors can use Sequelize)
+    const externalData = await gatherExternalData(hospitalName, null, progress, models);
 
     // Pass 1: Maker
     const makerData = await runMaker(hospitalName, externalData, progress);
@@ -619,8 +836,8 @@ async function researchHospital(hospitalName, progressCallback) {
     // Pass 2: Checker
     const checkerData = await runChecker(hospitalName, makerData, externalData, progress);
 
-    // Pass 3: Deterministic validator
-    researchData = runDeterministicValidator(checkerData, progress);
+    // Pass 3: Deterministic validator (with externalData for source-based reconciliations)
+    researchData = runDeterministicValidator(checkerData, progress, externalData);
 
     // Merge sources
     researchData.research_sources = [
@@ -739,7 +956,13 @@ function buildProjectData(data) {
       checker_corrections: data.checker_corrections || [],
       deterministic_fixes: data.deterministic_fixes || [],
       data_notes: data.data_notes || '',
-      researched_at: new Date().toISOString()
+      researched_at: new Date().toISOString(),
+      // Phase A additions
+      ceo_name: data.ceo_name || null,
+      ceo_compensation: data.ceo_compensation || null,
+      confirmed_surgeons: data.confirmed_surgeons || [],
+      data_reconciliations: data.data_reconciliations || [],
+      citations: data.citations || [],
     }
   };
 }
@@ -752,7 +975,7 @@ async function runFullPipeline(hospitalName, models, progressCallback) {
   let dollarizationEngine; try { dollarizationEngine = require('./clinical-dollarization'); } catch (e) {}
 
   progress('step:research');
-  const projectData = await researchHospital(hospitalName, progress);
+  const projectData = await researchHospital(hospitalName, progress, models);
 
   progress('step:project');
   progress('Creating project for ' + projectData.hospital_name + '...');

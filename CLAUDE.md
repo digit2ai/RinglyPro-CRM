@@ -103,6 +103,33 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 - `SENDGRID_API_KEY` — SendGrid API key for outbound surgeon-survey emails (verticals/intuitive). When unset, the survey `/send` endpoint generates magic links but does not transmit; set both this and `SENDGRID_FROM_EMAIL` to enable auto-send.
 - `SENDGRID_FROM_EMAIL` — Verified SendGrid sender address used as the From: line on surgeon survey invitations.
 - `INTUITIVE_ENGAGEMENT_GO` — Set to `1` to enable Wave 4 (Snowflake connector + NL Q&A + white-label) of the multi-wave Intuitive build. Default unset = skipped.
+- `BRAVE_SEARCH_API_KEY` — Optional. When set, the AI Business Analyst Agent uses Brave Search; otherwise falls back to DuckDuckGo HTML scrape (no key required).
+- `CHAT_DAILY_CAP_PER_USER` — Per-user daily message cap for `/api/v1/chat`. Default 200. Lower for cost control.
+
+## Phase A — Public Source Refresh Schedule (Intuitive)
+
+Six public-source connectors back the Hospital Intake bulletproof citation chain:
+
+| Source | Refresh cadence | Script | URL |
+|---|---|---|---|
+| CMS Hospital Compare | monthly (1st Sunday) | (already wired in services/cms-hospital-compare.js) | https://data.cms.gov |
+| CMS HCRIS | quarterly (Mar/Jun/Sep/Dec, 1st Sunday) | `verticals/intuitive/scripts/ingest-hcris.js` | https://www.cms.gov/Research-Statistics-Data-and-Systems/Files-for-Order/CostReports |
+| CMS Open Payments | annually (July 15, 1st Sunday after) | `verticals/intuitive/scripts/ingest-open-payments.js` | https://www.cms.gov/openpayments/data/dataset-downloads |
+| CMS MPUP (Physician Volume) | annually (April 15, 1st Sunday after) | `verticals/intuitive/scripts/ingest-physician-volume.js` | https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners |
+| Florida AHCA | quarterly | `verticals/intuitive/scripts/ingest-florida-ahca.js` | https://ahca.myflorida.com |
+| NPI Registry (NPPES) | live API per Hospital Intake call (24h cache) | (no script — connector caches inline) | https://npiregistry.cms.hhs.gov |
+| ProPublica Form 990 | live API per Hospital Intake call (24h cache) | (no script — connector caches inline) | https://projects.propublica.org/nonprofits |
+
+Run scripts manually for the initial population:
+```bash
+# Download bulk files manually first (CMS download URLs vary by year), then:
+node verticals/intuitive/scripts/ingest-hcris.js --file=/path/to/hosp10_2024.csv
+node verticals/intuitive/scripts/ingest-open-payments.js --file=/path/to/OP_DTL_GNRL_PG2024.csv
+node verticals/intuitive/scripts/ingest-physician-volume.js --file=/path/to/MUP_PHY_R24_P2024_NPI_HCPCS.csv
+node verticals/intuitive/scripts/ingest-florida-ahca.js --file=/path/to/florida_hospitals_2024.csv
+```
+
+TODO: wire actual Render cron jobs once first quarterly refresh window approaches.
 
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table

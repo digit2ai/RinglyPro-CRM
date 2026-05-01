@@ -21,6 +21,23 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
   const [aiStep, setAiStep] = useState(null)
   const aiPollRef = useRef(null)
 
+  // Phase A: load extended_data from currentProject for citation/reconciliation/champions surface
+  const [projectExtended, setProjectExtended] = useState(null)
+  useEffect(() => {
+    if (!currentProject) { setProjectExtended(null); return }
+    api.getProject(currentProject).then(res => {
+      const p = res?.project || res?.data || res
+      setProjectExtended({
+        citations: p?.extended_data?.citations || [],
+        reconciliations: p?.extended_data?.data_reconciliations || [],
+        confirmedSurgeons: p?.extended_data?.confirmed_surgeons || [],
+        ceoName: p?.extended_data?.ceo_name,
+        ceoCompensation: p?.extended_data?.ceo_compensation,
+        nearbyDavinci: p?.nearby_davinci_hospitals || [],
+      })
+    }).catch(() => setProjectExtended(null))
+  }, [currentProject])
+
   // Poll AI research job status
   useEffect(() => {
     if (!aiJobId) return
@@ -218,6 +235,107 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
           </div>
         )}
       </div>
+
+      {/* Phase A: Federal-citation summary banner (shown when project has citations) */}
+      {projectExtended && projectExtended.citations.length > 0 && (
+        <div className="bg-emerald-950/40 border border-emerald-700/40 rounded-xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-700/40 flex items-center justify-center text-emerald-300 text-lg">&#10003;</div>
+              <div>
+                <h3 className="text-emerald-100 font-bold text-base">Federal Source Citations</h3>
+                <p className="text-emerald-300/70 text-xs">{projectExtended.citations.length} fields confirmed from public government sources (CMS / NPI / IRS / state)</p>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-emerald-300 bg-emerald-900/50 border border-emerald-700/40 px-3 py-1 rounded-full font-semibold">CFO-defensible</span>
+          </div>
+          <details className="mt-2">
+            <summary className="text-xs text-emerald-300 cursor-pointer hover:text-emerald-100">View all citations &rarr;</summary>
+            <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
+              {projectExtended.citations.map((c, i) => (
+                <div key={i} className="text-xs flex items-start gap-3 py-1 border-b border-emerald-900/40">
+                  <span className="text-emerald-300 font-mono w-44 truncate">{c.field}</span>
+                  <span className="text-slate-300 flex-1">{typeof c.value === 'number' ? c.value.toLocaleString() : c.value}</span>
+                  <a href={c.source_url} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-200 underline truncate max-w-xs">{c.source_name}</a>
+                </div>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
+
+      {/* Phase A: Reconciliation card (shown when sources disagreed with AI estimates) */}
+      {projectExtended && projectExtended.reconciliations.length > 0 && (
+        <div className="bg-amber-950/40 border border-amber-700/40 rounded-xl p-5 mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-700/40 flex items-center justify-center text-amber-300 text-lg">!</div>
+            <div>
+              <h3 className="text-amber-100 font-bold text-base">Data sources disagree on {projectExtended.reconciliations.length} {projectExtended.reconciliations.length === 1 ? 'field' : 'fields'}</h3>
+              <p className="text-amber-300/70 text-xs">AI estimate replaced with confirmed federal source. Review before sending to CFO.</p>
+            </div>
+          </div>
+          <ul className="space-y-2">
+            {projectExtended.reconciliations.map((r, i) => (
+              <li key={i} className="text-xs text-amber-200 flex items-start gap-3 py-1 border-b border-amber-900/40">
+                <span className="text-amber-300 font-mono w-44 truncate">{r.field}</span>
+                <span className="text-slate-400 line-through">{typeof r.ai_estimate === 'number' ? r.ai_estimate.toLocaleString() : r.ai_estimate}</span>
+                <span className="text-amber-300">&rarr;</span>
+                <span className="text-emerald-300 font-semibold">{typeof r.source_value === 'number' ? r.source_value.toLocaleString() : r.source_value}</span>
+                <span className="text-slate-500 italic ml-auto">({r.source_name})</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Phase A: Surgeon Champions panel */}
+      {projectExtended && projectExtended.confirmedSurgeons.length > 0 && (
+        <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-white font-bold text-base">Surgeon Champions <span className="text-slate-500 text-xs font-normal">(NPI Registry &middot; CMS Open Payments &middot; CMS Procedure Volume)</span></h3>
+              <p className="text-slate-400 text-xs mt-1">Top surgeons at this hospital, ranked by Intuitive payment magnitude and robotic case volume.</p>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-violet-300 bg-violet-900/50 border border-violet-700/40 px-3 py-1 rounded-full font-semibold">{projectExtended.confirmedSurgeons.length} surgeons</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[10px] uppercase text-slate-500 border-b border-slate-700">
+                  <th className="text-left py-2 pr-4">Surgeon</th>
+                  <th className="text-left py-2 pr-4">Specialty</th>
+                  <th className="text-right py-2 pr-4">Robotic Cases (last yr)</th>
+                  <th className="text-right py-2 pr-4">Intuitive $ (2 yr)</th>
+                  <th className="text-right py-2 pr-4">Champion</th>
+                  <th className="text-right py-2">NPI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projectExtended.confirmedSurgeons.slice(0, 10).map((s, i) => (
+                  <tr key={s.npi} className="border-b border-slate-800 hover:bg-slate-800/40">
+                    <td className="py-2 pr-4 text-slate-200 font-semibold">{s.name}</td>
+                    <td className="py-2 pr-4 text-slate-400">{s.specialty}</td>
+                    <td className="py-2 pr-4 text-right text-slate-300">{Number(s.robotic_cases_last_yr || 0).toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right text-emerald-300">${Number(s.intuitive_payments_2yr || 0).toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.champion_score >= 70 ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/40' : s.champion_score >= 40 ? 'bg-amber-900/60 text-amber-300 border border-amber-700/40' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>{s.champion_score}/100</span>
+                    </td>
+                    <td className="py-2 text-right text-slate-500 font-mono text-[10px]">
+                      <a href={`https://openpaymentsdata.cms.gov/physician/${s.npi}`} target="_blank" rel="noreferrer" className="hover:text-violet-400">{s.npi}</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {projectExtended.ceoName && (
+            <div className="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400">
+              CEO: <span className="text-slate-200 font-semibold">{projectExtended.ceoName}</span>
+              {projectExtended.ceoCompensation > 0 && <span className="text-slate-500"> &middot; ${Number(projectExtended.ceoCompensation).toLocaleString()} (IRS Form 990)</span>}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Demo Generation Card */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 mb-8 flex items-center justify-between">
