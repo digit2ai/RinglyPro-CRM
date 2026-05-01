@@ -92,15 +92,16 @@
 
 ## Slide 5 — Deployment Model
 
-**Headline:** Your data stays in your Snowflake. Our product runs on top.
+**Headline:** Your data stays in your Snowflake. SurgicalMind makes it actionable.
 
 **Architecture:**
 1. **White-label as "Intuitive Insights"** (or chosen brand). Custom logo, color palette (Intuitive blue #0066B2), font stack matched to intuitive.com.
 2. **Single sign-on** with Intuitive identity (Okta / Azure AD / Ping). Rep authentication is your existing IdP.
-3. **Data stays in your Snowflake.** SurgicalMind reads via direct connector (encrypted credentials per tenant). Tables map to internal SurgicalMind schema.
-4. **Natural-language Q&A** runs SurgicalMind's Claude-powered SQL generation against your Snowflake views — same data ThoughtSpot is reading, far more capable surface.
-5. **AI research, presentation generation, surgeon survey, business plan, tracking** — these are SurgicalMind features rolled in with no additional Intuitive build effort.
-6. **Compliance:** PHI-aware, SOC 2 Type II posture (in progress), all data encrypted at rest and in transit. Tenant isolation enforced at the application layer.
+3. **Snowflake stays in place. SurgicalMind reads via direct connector** — encrypted credentials per tenant, audit-logged queries. We do not copy, mirror, or warehouse Intuitive data outside Intuitive's environment.
+4. **Same data, different surface.** ThoughtSpot returns Snowflake answers as a chart. SurgicalMind takes the same answer and folds it into a populated Hospital Intake form, runs 16 analyses on top of it, generates the CFO deck, sends the surgeon survey, builds the proforma, and tracks the deal.
+5. **The Snowflake-augmented Hospital Intake briefing.** When a rep types a hospital name, the agent merges public sources (CMS, web, reference data) with Intuitive's own warehouse: prior proposals, system installed-base, surgeon training history, service contract status, last meeting notes. The output is the briefing the rep wishes they could walk into a meeting with — not just public facts, Intuitive's institutional memory of the account on one screen.
+6. **AI research, presentation generation, surgeon survey, business plan, tracking, executive PDF, voice AI, Neural Intelligence** — these are SurgicalMind features rolled in with no additional Intuitive build effort.
+7. **Compliance:** PHI-aware, SOC 2 Type II posture (in progress), all data encrypted at rest and in transit. Tenant isolation enforced at the application layer. Snowflake credentials encrypted with a tenant-specific key.
 
 **Timeline to first production rep cohort:** 30 days. (Shorter if Intuitive provides Snowflake credentials and IdP federation in week 1.)
 
