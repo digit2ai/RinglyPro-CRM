@@ -33,6 +33,59 @@ function RiskBadge({ level }) {
   return <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${colors[level] || colors.low}`}>{level}</span>
 }
 
+// ─── Three-bucket CFO volume cards ─────────────────────────
+export function VolumeBucketStrip({ buckets, compact = false }) {
+  if (!buckets) return null
+  const fmt = (n) => (n != null && !isNaN(n)) ? Number(n).toLocaleString() : '0'
+  const fmtMoney = (n) => (n != null && !isNaN(n)) ? '$' + Number(n).toLocaleString() : '$0'
+  const c = buckets.conversions || {}
+  const m = buckets.incremental_market || {}
+  const s = buckets.incremental_surgeon || {}
+  return (
+    <div className={`mb-6 ${compact ? '' : ''}`}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Conversion */}
+        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-5">
+          <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Conversion</div>
+          <div className="text-3xl font-black text-slate-200 mt-1">{fmt(c.cases)}</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">cases</div>
+          <div className="border-t border-slate-700 my-3"></div>
+          <div className="text-xs text-slate-400">Revenue delta: <strong className="text-slate-200">{fmtMoney(c.revenue_delta)}</strong></div>
+          <div className="text-xs text-slate-400">Margin uplift: <strong className="text-emerald-300">{fmtMoney(c.margin_delta)}</strong></div>
+          <div className="text-[10px] text-slate-500 mt-2 leading-snug">{c.explanation}</div>
+        </div>
+        {/* Market Incremental */}
+        <div className="bg-violet-950/40 border border-violet-700/60 rounded-xl p-5">
+          <div className="text-[10px] uppercase tracking-widest text-violet-300 font-bold">Market Incremental</div>
+          <div className="text-3xl font-black text-violet-200 mt-1">{fmt(m.cases)}</div>
+          <div className="text-[11px] text-violet-400 mt-0.5">new cases</div>
+          <div className="border-t border-violet-800/60 my-3"></div>
+          <div className="text-xs text-violet-300">New revenue: <strong className="text-violet-100">{fmtMoney(m.revenue_delta)}</strong></div>
+          <div className="text-xs text-violet-300">New margin: <strong className="text-emerald-300">{fmtMoney(m.margin_delta)}</strong></div>
+          <div className="text-[10px] text-violet-400 mt-2 leading-snug">{m.explanation}</div>
+        </div>
+        {/* Surgeon Incremental */}
+        <div className={`border rounded-xl p-5 ${s.empty ? 'bg-slate-800/40 border-slate-700 border-dashed' : 'bg-emerald-950/40 border-emerald-700/60'}`}>
+          <div className={`text-[10px] uppercase tracking-widest font-bold ${s.empty ? 'text-slate-500' : 'text-emerald-300'}`}>Surgeon Incremental</div>
+          <div className={`text-3xl font-black mt-1 ${s.empty ? 'text-slate-600' : 'text-emerald-200'}`}>{fmt(s.cases)}</div>
+          <div className={`text-[11px] mt-0.5 ${s.empty ? 'text-slate-500' : 'text-emerald-400'}`}>committed cases &middot; {s.committed_surgeon_count || 0} surgeons</div>
+          <div className={`border-t my-3 ${s.empty ? 'border-slate-700' : 'border-emerald-800/60'}`}></div>
+          {s.empty ? (
+            <div className="text-[11px] text-slate-500 leading-snug">No surgeon commitments yet. Run Surgeon Surveys (step 2) to populate signed commitments.</div>
+          ) : (
+            <>
+              <div className="text-xs text-emerald-300">New revenue: <strong className="text-emerald-100">{fmtMoney(s.revenue_delta)}</strong></div>
+              <div className="text-xs text-emerald-300">New margin: <strong className="text-emerald-100">{fmtMoney(s.margin_delta)}</strong></div>
+              <div className="text-[10px] text-emerald-400 mt-2 leading-snug">{s.explanation}</div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="mt-3 text-[11px] text-slate-500 italic">{buckets.cfo_footnote || 'Incremental = NEW top-line revenue. Conversion = same revenue, better margin.'}</div>
+    </div>
+  )
+}
+
 function SectionCard({ title, subtitle, children }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
@@ -55,6 +108,9 @@ export default function AnalysisPage({ projectId: propId }) {
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const [surveyResponseCount, setSurveyResponseCount] = useState(null)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+
   useEffect(() => {
     if (!id) { setLoading(false); return }
     Promise.all([api.getProject(id), api.getResults(id)])
@@ -62,6 +118,25 @@ export default function AnalysisPage({ projectId: propId }) {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    if (!id) return
+    api.listSurveys(id).then(res => {
+      const surveys = res?.surveys || res?.data || []
+      let total = 0
+      Promise.all(surveys.map(s => api.getSurveyResponses(s.id).catch(() => ({ responses: [] }))))
+        .then(rs => {
+          rs.forEach(r => { total += (r?.responses || r?.data || []).length })
+          setSurveyResponseCount(total)
+        })
+    }).catch(() => setSurveyResponseCount(0))
+    setBannerDismissed(sessionStorage.getItem(`intuitive_fidelity_banner_${id}`) === '1')
+  }, [id])
+
+  function dismissBanner() {
+    sessionStorage.setItem(`intuitive_fidelity_banner_${id}`, '1')
+    setBannerDismissed(true)
+  }
 
   if (!id) return <div className="p-10 text-slate-400">No project selected. Complete the intake form first.</div>
   if (loading) {
@@ -81,6 +156,7 @@ export default function AnalysisPage({ projectId: propId }) {
   if (!results) return <div className="p-10 text-slate-400">No results yet. Run the analysis first.</div>
 
   const vol = results.volume_projection || {}
+  const buckets = results.volume_buckets || vol.volume_buckets || null
   const util = results.utilization_forecast || {}
   const surgeon = results.surgeon_capacity || {}
   const infra = results.infrastructure_assessment || {}
@@ -99,6 +175,17 @@ export default function AnalysisPage({ projectId: propId }) {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10 animate-fade-in">
+      {/* ─── Fidelity warning banner (when no surgeon survey responses) ─── */}
+      {!bannerDismissed && surveyResponseCount === 0 && (
+        <div className="mb-6 flex items-start justify-between gap-4 bg-amber-900/30 border border-amber-700/60 rounded-lg px-4 py-3">
+          <div className="text-sm text-amber-200">
+            <strong className="font-semibold">Limited fidelity</strong> &mdash; no surgeon commitments collected yet.
+            Run <button onClick={() => navigate(`/surveys/${id}`)} className="underline font-semibold hover:text-amber-100">Surgeon Surveys (step 2)</button> for accurate Year-1 incremental volume.
+          </div>
+          <button onClick={dismissBanner} className="text-amber-300 hover:text-amber-100 text-xs">Dismiss</button>
+        </div>
+      )}
+
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -109,6 +196,18 @@ export default function AnalysisPage({ projectId: propId }) {
           View System Recommendation &rarr;
         </button>
       </div>
+
+      {/* ─── Three-bucket CFO volume language (Greg fix) ─── */}
+      {buckets && (
+        <div className="mb-6">
+          <SectionCard
+            title="Cases That Change Your Top Line"
+            subtitle="Conversion vs market-share incremental vs surgeon-committed incremental"
+          >
+            <VolumeBucketStrip buckets={buckets} />
+          </SectionCard>
+        </div>
+      )}
 
       {/* ─── 1. KPI Strip (8 cards) ─── */}
       <div className="grid grid-cols-4 lg:grid-cols-8 gap-3 mb-8">

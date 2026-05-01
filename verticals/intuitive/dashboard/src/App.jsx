@@ -145,11 +145,11 @@ SPEAKING GUIDELINES:
 const NAV_STEPS = [
   { to: '/', label: 'Dashboard', num: 0, icon: 'D', section: 'main' },
   { to: '/intake', label: 'Hospital Intake', num: 1, icon: 'H', section: 'main' },
-  { to: '/analysis', label: 'Analysis', num: 2, icon: 'A', section: 'project' },
-  { to: '/recommendations', label: 'System Match', num: 3, icon: 'M', section: 'project' },
-  { to: '/presentation', label: 'Presentation', num: 4, icon: 'P', section: 'project' },
-  { to: '/business-plan', label: 'Business Plan', num: 5, icon: 'B', section: 'project' },
-  { to: '/surveys', label: 'Surgeon Surveys', num: 6, icon: 'S', section: 'project' },
+  { to: '/surveys', label: 'Surgeon Surveys', num: 2, icon: 'S', section: 'project' },
+  { to: '/analysis', label: 'Analysis', num: 3, icon: 'A', section: 'project' },
+  { to: '/recommendations', label: 'System Match', num: 4, icon: 'M', section: 'project' },
+  { to: '/presentation', label: 'Presentation', num: 5, icon: 'P', section: 'project' },
+  { to: '/business-plan', label: 'Business Plan', num: 6, icon: 'B', section: 'project' },
   { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T', section: 'project' },
   { to: '/report', label: 'Report', num: 8, icon: 'R', section: 'project' },
 ]

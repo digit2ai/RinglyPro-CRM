@@ -100,6 +100,9 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 
 **Environment Variables:**
 - `WEBHOOK_API_KEY` — Secret for authenticating inbound machine event webhooks
+- `SENDGRID_API_KEY` — SendGrid API key for outbound surgeon-survey emails (verticals/intuitive). When unset, the survey `/send` endpoint generates magic links but does not transmit; set both this and `SENDGRID_FROM_EMAIL` to enable auto-send.
+- `SENDGRID_FROM_EMAIL` — Verified SendGrid sender address used as the From: line on surgeon survey invitations.
+- `INTUITIVE_ENGAGEMENT_GO` — Set to `1` to enable Wave 4 (Snowflake connector + NL Q&A + white-label) of the multi-wave Intuitive build. Default unset = skipped.
 
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table

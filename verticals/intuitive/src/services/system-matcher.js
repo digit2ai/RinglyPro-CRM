@@ -134,6 +134,14 @@ async function runAll(models, projectId) {
   results.financial_deep_dive = computeFinancialDeepDive(project, results.model_matching, results.volume_projection, results.roi_calculation);
   results.growth_extrapolation = computeGrowthExtrapolation(project, results.volume_projection, results.utilization_forecast);
 
+  // Three-bucket CFO volume language: conversion vs market-incremental vs surgeon-committed
+  results.volume_buckets = await computeVolumeBuckets(models, projectId, project, results.volume_projection, results.growth_extrapolation);
+  // Mirror onto volume_projection so legacy consumers can find it inline
+  results.volume_projection.volume_buckets = results.volume_buckets;
+
+  // Reconciliation alternates: surface BOTH the per-procedure clinical winner AND the volume-math winner
+  results.model_matching.alternates = computeReconciliationAlternates(results.model_matching, results.robot_compatibility_matrix);
+
   // Store each result
   for (const [type, data] of Object.entries(results)) {
     await storeResult(models, projectId, type, data);
@@ -255,8 +263,10 @@ function computeVolumeProjection(p) {
       laparoscopic: { cases: currentLap, pct: currentLapPct },
       robotic: { cases: currentRobotic, pct: currentRoboticPct }
     },
-    // da Vinci opportunity
+    // DEPRECATED LABEL: this number is approach CONVERSION (open/lap -> robotic, same hospital revenue), not true incremental.
+    // Prefer results.volume_buckets for CFO-facing language. Kept here for backward compatibility with older consumers.
     total_incremental_opportunity: totalIncrementalOpportunity,
+    total_conversion_opportunity: totalIncrementalOpportunity, // explicit alias, accurate label
     convertible_laparoscopic: convertibleLap,
     weighted_conversion_rate: Math.round(weightedConversion * 100),
     // Per-specialty breakdown
@@ -268,6 +278,110 @@ function computeVolumeProjection(p) {
     design_year_new_cases: projections[2]?.new_robotic_cases || 0,
     // Current state
     current_robotic: currentRobotic
+  };
+}
+
+// ─── VOLUME BUCKETS (three-bucket CFO language) ───
+// Splits projected volume into the three categories Greg flagged:
+//   - conversions: open/lap -> robotic (same top line, margin uplift only)
+//   - incremental_market: NEW cases captured from competitors / unmet demand (new top line)
+//   - incremental_surgeon: NEW cases from surgeon survey commitments (signed)
+async function computeVolumeBuckets(models, projectId, project, volumeProj, growthExtrap) {
+  const REVENUE_PER_CASE = Number(project.avg_revenue_per_case) || 18000;
+  const ROBOTIC_MARGIN_PER_CASE = Number(project.avg_robotic_margin_per_case) || 6500;
+  const NON_ROBOTIC_MARGIN_PER_CASE = Number(project.avg_non_robotic_margin_per_case) || 4200;
+  const marginUpliftPerCase = ROBOTIC_MARGIN_PER_CASE - NON_ROBOTIC_MARGIN_PER_CASE;
+
+  // 1) CONVERSION bucket (same top line, margin uplift)
+  const conversionCases = Math.max(0, Math.round(volumeProj.total_conversion_opportunity || volumeProj.total_incremental_opportunity || 0));
+
+  // 2) MARKET-SHARE INCREMENTAL bucket (from growth extrapolation base scenario)
+  let marketCases = 0;
+  if (growthExtrap && Array.isArray(growthExtrap.scenarios)) {
+    const base = growthExtrap.scenarios.find(s => /base|moderate|expected/i.test(s.name || s.label || '')) || growthExtrap.scenarios[0] || {};
+    const y3 = Number(base.year3_cases || base.cases_y3 || 0);
+    marketCases = Math.max(0, y3 - conversionCases - (volumeProj.current_robotic || 0));
+  } else {
+    marketCases = Math.round(conversionCases * 0.15); // conservative default if no scenarios
+  }
+
+  // 3) SURGEON-COMMITTED INCREMENTAL bucket (from active surveys + committed surgeon responses)
+  let surgeonCases = 0;
+  let committedSurgeonCount = 0;
+  try {
+    if (models && projectId) {
+      const SurveyModel = models.IntuitiveSurvey;
+      const ResponseModel = models.IntuitiveSurveyResponse;
+      const CommitmentModel = models.IntuitiveSurgeonCommitment;
+      if (SurveyModel && ResponseModel) {
+        const surveys = await SurveyModel.findAll({ where: { project_id: projectId } });
+        const surveyIds = surveys.map(s => s.id);
+        if (surveyIds.length) {
+          const responses = await ResponseModel.findAll({ where: { survey_id: surveyIds } });
+          for (const resp of responses) {
+            const cases = Number(resp.committed_cases || resp.case_commitment || 0);
+            if (cases > 0) {
+              surgeonCases += cases;
+              committedSurgeonCount += 1;
+            }
+          }
+        }
+      }
+      if (!surgeonCases && CommitmentModel) {
+        // Fallback: any surgeon commitments attached to this project's plans, with status committed/signed
+        const PlanModel = models.IntuitiveBusinessPlan;
+        if (PlanModel) {
+          const plans = await PlanModel.findAll({ where: { project_id: projectId } });
+          const planIds = plans.map(p => p.id);
+          if (planIds.length) {
+            const commits = await CommitmentModel.findAll({ where: { business_plan_id: planIds } });
+            for (const c of commits) {
+              const status = (c.commitment_status || c.status || '').toLowerCase();
+              if (status === 'committed' || status === 'signed') {
+                surgeonCases += Number(c.committed_cases || 0);
+                committedSurgeonCount += 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Surveys / models missing -> surgeon bucket stays at zero
+  }
+
+  return {
+    conversions: {
+      cases: conversionCases,
+      revenue_delta: 0,
+      margin_delta: Math.round(conversionCases * marginUpliftPerCase),
+      label: 'Approach Conversion (same top line, margin uplift only)',
+      explanation: 'Cases shifted from open or laparoscopic to robotic. Revenue is unchanged; the gain is contribution margin per case.',
+    },
+    incremental_market: {
+      cases: marketCases,
+      revenue_delta: Math.round(marketCases * REVENUE_PER_CASE),
+      margin_delta: Math.round(marketCases * ROBOTIC_MARGIN_PER_CASE),
+      label: 'Market-Share Incremental (new top-line revenue)',
+      explanation: 'NEW cases captured from competitors or unmet demand. Net-new revenue to the hospital.',
+    },
+    incremental_surgeon: {
+      cases: surgeonCases,
+      revenue_delta: Math.round(surgeonCases * REVENUE_PER_CASE),
+      margin_delta: Math.round(surgeonCases * ROBOTIC_MARGIN_PER_CASE),
+      source: 'surgeon_survey',
+      committed_surgeon_count: committedSurgeonCount,
+      label: 'Surgeon-Committed Incremental (new top-line, signed commitments)',
+      explanation: 'NEW cases backed by surgeon survey responses with committed annual case counts.',
+      empty: surgeonCases === 0,
+    },
+    assumptions: {
+      revenue_per_case: REVENUE_PER_CASE,
+      robotic_margin_per_case: ROBOTIC_MARGIN_PER_CASE,
+      non_robotic_margin_per_case: NON_ROBOTIC_MARGIN_PER_CASE,
+      margin_uplift_per_case: marginUpliftPerCase,
+    },
+    cfo_footnote: 'Incremental = NEW top-line revenue. Conversion = same revenue, better margin.',
   };
 }
 
@@ -378,11 +492,61 @@ function computeModelMatching(p, volumeProj) {
   };
 }
 
+// ─── RECONCILIATION ALTERNATES ───
+// Surfaces the two valid recommendations when per-procedure clinical fit and volume-math
+// converge on different systems (Greg fix). Always returns an alternates array; consumers
+// inspect `divergent` to decide whether to render the TWO PATHS card.
+function computeReconciliationAlternates(matching, compatMatrix) {
+  if (!matching || !matching.ranked) return [];
+  const volume = matching.primary_recommendation || matching.ranked[0] || {};
+  const volumeKey = volume.model || volume.system || null;
+  const volumeScore = Number(volume.score || 0);
+
+  let clinicalKey = null;
+  let clinicalScore = 0;
+  let perProcSampleSize = 0;
+  if (compatMatrix) {
+    clinicalKey = compatMatrix.overall_best_model || compatMatrix.best_overall_model || null;
+    const procs = compatMatrix.compatibility_matrix || compatMatrix.procedures || [];
+    if (clinicalKey && procs.length) {
+      const k = String(clinicalKey).toLowerCase();
+      const scores = procs.map(pr => Number(pr[`${k}_score`] || pr[k] || pr[`${k}_fit`] || 0)).filter(v => v > 0);
+      if (scores.length) {
+        clinicalScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        perProcSampleSize = scores.length;
+      }
+    }
+  }
+
+  const divergent = !!(clinicalKey && volumeKey && (clinicalKey !== volumeKey || Math.abs(clinicalScore - volumeScore) > 10));
+
+  return [
+    {
+      label: 'Clinical Excellence Path',
+      basis: 'per_procedure_fit',
+      model: clinicalKey,
+      score: clinicalScore,
+      sample_size: perProcSampleSize,
+      tagline: 'Best per-procedure clinical fit across this hospital procedure mix.',
+      choose_if: 'Surgeon outcomes and latest-generation technology drive the decision.',
+    },
+    {
+      label: 'Volume Capacity Path',
+      basis: 'volume_math',
+      model: volumeKey,
+      score: volumeScore,
+      tagline: 'Highest throughput at the projected case volume; mature workflow.',
+      choose_if: 'Maximizing case capacity and capital ROI is the primary driver.',
+    },
+    { _meta: { divergent } },
+  ];
+}
+
 // ─── UTILIZATION FORECAST ───
 function computeUtilizationForecast(p, volumeProj) {
   const designCases = volumeProj.design_year_cases;
   const surgeons = (p.credentialed_robotic_surgeons || 0) + (p.surgeons_interested || 0);
-  const operatingDays = 250; // ~50 weeks * 5 days
+  const operatingDays = Number(p.or_days_per_year) || 250; // ~50 weeks * 5 days
   const casesPerDay = designCases / operatingDays;
   const casesPerWeek = designCases / 50;
 
@@ -398,14 +562,27 @@ function computeUtilizationForecast(p, volumeProj) {
   }
   const avgCaseDuration = totalWeight > 0 ? weightedDuration / totalWeight : 2.0;
   const setupTurnover = 0.75; // hours per case for setup/turnover
-  const totalHoursPerCase = avgCaseDuration + setupTurnover;
 
-  const availableHoursPerDay = 10; // OR operating hours
+  // Per-project tunable: average robotic case hours including turnover (default 2.5)
+  const avgRoboticCaseHours = Number(p.avg_robotic_case_hours) || Number(p.avg_case_hours) || (avgCaseDuration + setupTurnover) || 2.5;
+
+  const totalHoursPerCase = avgRoboticCaseHours;
+
+  // ─── PEAK-HOUR CAPACITY MODEL (Greg fix) ───────────────────
+  // Capacity is constrained by peak surgical hours (7:30am-noon) at target utilization,
+  // not by raw 10-hour OR availability. This eliminates the "4 systems for 644 cases" bug.
+  const peakWindowHoursPerDay = Number(p.peak_window_hours_per_day) || 4.5; // 7:30am - noon
+  const targetUtilization = Number(p.target_utilization) || 0.70;           // 70% target
+  const orDaysPerYear = operatingDays;
+  const casesPerRobotPerYear = Math.floor((peakWindowHoursPerDay * targetUtilization * orDaysPerYear) / totalHoursPerCase);
+  const systemsNeeded = casesPerRobotPerYear > 0 ? Math.max(1, Math.ceil(designCases / casesPerRobotPerYear)) : 1;
+
+  // Legacy raw-availability stats kept for reference / diagnostic only
+  const availableHoursPerDay = 10;
   const maxCasesPerSystem = Math.floor(availableHoursPerDay / totalHoursPerCase);
-  const maxCasesPerSystemYear = maxCasesPerSystem * operatingDays;
+  const maxCasesPerSystemYear = maxCasesPerSystem * orDaysPerYear;
 
-  const systemsNeeded = Math.ceil(designCases / (maxCasesPerSystemYear * 0.8)); // 80% target utilization
-  const utilization = systemsNeeded > 0 ? Math.round((designCases / (systemsNeeded * maxCasesPerSystemYear)) * 100) : 0;
+  const utilization = systemsNeeded > 0 ? Math.round((designCases / (systemsNeeded * casesPerRobotPerYear)) * 100) : 0;
 
   return {
     design_cases: designCases,
@@ -413,12 +590,27 @@ function computeUtilizationForecast(p, volumeProj) {
     cases_per_week: Math.round(casesPerWeek * 10) / 10,
     avg_case_duration_hrs: Math.round(avgCaseDuration * 10) / 10,
     total_time_per_case_hrs: Math.round(totalHoursPerCase * 10) / 10,
-    max_cases_per_system_day: maxCasesPerSystem,
-    max_cases_per_system_year: maxCasesPerSystemYear,
+    // Peak-hour capacity model (primary)
+    capacity_model: {
+      peak_window_hours_per_day: peakWindowHoursPerDay,
+      target_utilization: targetUtilization,
+      or_days_per_year: orDaysPerYear,
+      avg_robotic_case_hours: avgRoboticCaseHours,
+      cases_per_robot_per_year: casesPerRobotPerYear,
+      systems_needed: systemsNeeded,
+      rationale: 'Capacity constrained by peak surgical hours (7:30am-noon) at 70% utilization. Raw OR availability is not the binding constraint -- prime-time block scheduling is.',
+    },
+    // Diagnostic (legacy raw-hour math)
+    raw_max_cases_per_system_day: maxCasesPerSystem,
+    raw_max_cases_per_system_year: maxCasesPerSystemYear,
+    // Primary outputs
+    cases_per_robot_per_year: casesPerRobotPerYear,
+    max_cases_per_system_day: maxCasesPerSystem, // kept for legacy consumers
+    max_cases_per_system_year: casesPerRobotPerYear, // shadowed to peak-hour value for legacy callers
     systems_needed: systemsNeeded,
     projected_utilization_pct: utilization,
     available_surgeons: surgeons,
-    operating_days_year: operatingDays,
+    operating_days_year: orDaysPerYear,
     utilization_risk: utilization < 60 ? 'high' : utilization < 75 ? 'moderate' : 'low'
   };
 }

@@ -163,6 +163,37 @@ export default function ReportPage({ projectId: propId }) {
   const days = weekday.days || []
   const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
+  // Greg fix data: three-bucket volume + capacity model + reconciliation alternates
+  const buckets = r.volume_buckets || vol.volume_buckets || null
+  const utilForecast = r.utilization_forecast || {}
+  const capacityModel = utilForecast.capacity_model || null
+  const alternates = (match.alternates || []).filter(a => !a._meta)
+  const altMeta = (match.alternates || []).find(a => a._meta) || {}
+  const showReconciliation = altMeta._meta && altMeta._meta.divergent
+
+  // Aggregate clinical dollarization across plans (Section 1 promotion)
+  let clinicalTotalValue = 0
+  let losValue = 0
+  let complicationValue = 0
+  let readmissionValue = 0
+  for (const pl of plans || []) {
+    const o = pl.outcomes || {}
+    clinicalTotalValue += Number(o.total_savings || o.total_value || 0)
+    losValue += Number(o.los_value || o.length_of_stay_value || 0)
+    complicationValue += Number(o.complication_value || 0)
+    readmissionValue += Number(o.readmission_value || 0)
+  }
+
+  function modelLabel(m) {
+    if (!m) return '--'
+    const k = String(m).toUpperCase()
+    if (k === 'DV5') return 'da Vinci 5'
+    if (k === 'XI') return 'da Vinci Xi'
+    if (k === 'X') return 'da Vinci X'
+    if (k === 'SP') return 'da Vinci SP'
+    return `da Vinci ${m}`
+  }
+
   return (
     <div className="report-root bg-white text-slate-900 min-h-screen">
       {/* Print CSS + Intuitive brand typography (Helvetica Now stack with Inter web fallback) */}
@@ -291,8 +322,42 @@ export default function ReportPage({ projectId: propId }) {
           </div>
         </Section>
 
-        {/* ─── HOSPITAL PROFILE ─── */}
-        <Section title="1. Hospital Profile" subtitle="Intake parameters and operational baseline">
+        {/* ─── 1. QUANTIFIED CLINICAL VALUE (PROMOTED -- Greg's "most important slide") ─── */}
+        <Section
+          title="1. The Quantified Clinical Value"
+          subtitle="What Intuitive cannot show you today &mdash; hospital-specific dollar value of robotic outcomes vs. open/laparoscopic baseline"
+        >
+          <p className="text-sm text-slate-700 leading-relaxed mb-5">
+            This calculation is unique to SurgicalMind. It quantifies, in dollars, the operational savings from clinical
+            outcome improvements tied to robotic surgery &mdash; reduced length of stay, fewer complications, lower readmission
+            rates &mdash; applied to <strong>{p.hospital_name || 'this hospital’s'}</strong> own case volume and payer mix.
+            No manufacturer-supplied tool produces this number today.
+          </p>
+
+          <div className="grid grid-cols-4 gap-3 mb-4">
+            <Stat label="Total Clinical Value" value={fmtMoney(clinicalTotalValue)} sub="vs. open/lap baseline" />
+            <Stat label="LOS Reduction Value" value={fmtMoney(losValue)} sub="bed-day savings" />
+            <Stat label="Complication Avoidance" value={fmtMoney(complicationValue)} sub="event cost avoided" />
+            <Stat label="Readmission Avoidance" value={fmtMoney(readmissionValue)} sub="30-day readmits" />
+          </div>
+
+          {!clinicalTotalValue && (
+            <div className="text-xs text-slate-500 italic mt-2">
+              Clinical dollarization is computed once a Business Plan is created and clinical outcomes are saved.
+              Open the Business Plan tab to populate this section.
+            </div>
+          )}
+
+          <div className="mt-6 border-l-4 border-slate-900 pl-4 py-2 bg-slate-50">
+            <p className="text-xs text-slate-700 leading-relaxed">
+              <strong>For the CFO:</strong> these dollars sit on top of conversion margin uplift and incremental
+              revenue, and they accrue every year the program operates &mdash; they are not a one-time benefit.
+            </p>
+          </div>
+        </Section>
+
+        {/* ─── 2. HOSPITAL PROFILE ─── */}
+        <Section title="2. Hospital Profile" subtitle="Intake parameters and operational baseline">
           <div className="grid grid-cols-3 gap-3 mb-4">
             <Stat label="Hospital Name" value={p.hospital_name || '--'} />
             <Stat label="Type" value={p.hospital_type || '--'} />
@@ -320,10 +385,58 @@ export default function ReportPage({ projectId: propId }) {
           />
         </Section>
 
-        {/* ─── ANALYSIS FINDINGS ─── */}
-        <Section title="2. Analysis Findings" subtitle="Quantitative findings across procedure, scheduling, capacity, and financial dimensions">
+        {/* ─── 3. CASES THAT CHANGE YOUR TOP LINE (three-bucket CFO language) ─── */}
+        <Section
+          title="3. Cases That Change Your Top Line"
+          subtitle="Conversion vs market-share incremental vs surgeon-committed incremental &mdash; the language every hospital CFO needs"
+        >
+          {buckets ? (
+            <>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="border border-slate-300 rounded p-4 bg-slate-50">
+                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversion</div>
+                  <div className="text-2xl font-bold text-slate-900 mt-1">{fmt((buckets.conversions || {}).cases)}</div>
+                  <div className="text-[11px] text-slate-500">cases (open/lap &rarr; robotic)</div>
+                  <div className="border-t border-slate-300 my-2"></div>
+                  <div className="text-xs text-slate-700">Revenue delta: <strong>$0</strong></div>
+                  <div className="text-xs text-slate-700">Margin uplift: <strong>{fmtMoney((buckets.conversions || {}).margin_delta)}</strong></div>
+                </div>
+                <div className="border border-violet-300 rounded p-4 bg-violet-50">
+                  <div className="text-[10px] uppercase tracking-wider font-bold text-violet-700">Market Incremental</div>
+                  <div className="text-2xl font-bold text-violet-900 mt-1">{fmt((buckets.incremental_market || {}).cases)}</div>
+                  <div className="text-[11px] text-violet-700">NEW cases (market share)</div>
+                  <div className="border-t border-violet-300 my-2"></div>
+                  <div className="text-xs text-violet-800">New revenue: <strong>{fmtMoney((buckets.incremental_market || {}).revenue_delta)}</strong></div>
+                  <div className="text-xs text-violet-800">New margin: <strong>{fmtMoney((buckets.incremental_market || {}).margin_delta)}</strong></div>
+                </div>
+                <div className={`border rounded p-4 ${(buckets.incremental_surgeon || {}).empty ? 'border-slate-300 border-dashed bg-slate-50' : 'border-emerald-300 bg-emerald-50'}`}>
+                  <div className={`text-[10px] uppercase tracking-wider font-bold ${(buckets.incremental_surgeon || {}).empty ? 'text-slate-500' : 'text-emerald-700'}`}>Surgeon Incremental</div>
+                  <div className={`text-2xl font-bold mt-1 ${(buckets.incremental_surgeon || {}).empty ? 'text-slate-500' : 'text-emerald-900'}`}>{fmt((buckets.incremental_surgeon || {}).cases)}</div>
+                  <div className={`text-[11px] ${(buckets.incremental_surgeon || {}).empty ? 'text-slate-500' : 'text-emerald-700'}`}>committed &middot; {(buckets.incremental_surgeon || {}).committed_surgeon_count || 0} surgeons</div>
+                  <div className={`border-t my-2 ${(buckets.incremental_surgeon || {}).empty ? 'border-slate-300' : 'border-emerald-300'}`}></div>
+                  {(buckets.incremental_surgeon || {}).empty ? (
+                    <div className="text-[11px] text-slate-600 leading-snug">No surgeon commitments yet. Run Surgeon Surveys to populate signed commitments.</div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-emerald-800">New revenue: <strong>{fmtMoney((buckets.incremental_surgeon || {}).revenue_delta)}</strong></div>
+                      <div className="text-xs text-emerald-800">New margin: <strong>{fmtMoney((buckets.incremental_surgeon || {}).margin_delta)}</strong></div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="text-xs text-slate-700 italic border-l-4 border-slate-900 pl-3 py-1">
+                {buckets.cfo_footnote || 'Incremental = NEW top-line revenue. Conversion = same revenue, better margin.'}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500 italic">Three-bucket model not yet computed. Re-run analysis to populate.</p>
+          )}
+        </Section>
+
+        {/* ─── 4. ANALYSIS FINDINGS ─── */}
+        <Section title="4. Analysis Findings" subtitle="Quantitative findings across procedure, scheduling, capacity, and financial dimensions">
           {/* Procedure Pareto */}
-          <h3 className="text-base font-serif font-bold text-slate-900 mb-2">2.1 Procedure Pareto (ABC Analysis)</h3>
+          <h3 className="text-base font-serif font-bold text-slate-900 mb-2">4.1 Procedure Pareto (ABC Analysis)</h3>
           <p className="text-sm text-slate-600 mb-3">Concentration measured via Gini coefficient. Top procedures drive the majority of volume and should anchor system selection.</p>
           <div className="grid grid-cols-3 gap-3 mb-3">
             <Stat label="Gini Coefficient" value={pareto.gini_coefficient?.toFixed?.(3) || pareto.gini || '--'} />
@@ -343,22 +456,12 @@ export default function ReportPage({ projectId: propId }) {
             />
           )}
 
-          {/* Seasonality */}
-          {months.length > 0 && (
-            <>
-              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">2.2 Monthly Seasonality</h3>
-              <p className="text-sm text-slate-600 mb-3">CoV: <strong>{seasonality.coefficient_of_variation || seasonality.cov || '--'}</strong> -- Peak: <strong>{seasonality.peak_month || '--'}</strong></p>
-              <Table
-                columns={['Month', 'Cases']}
-                rows={months.map(m => [m.month || m.label || '--', fmt(m.cases || m.volume || m.count)])}
-              />
-            </>
-          )}
+          {/* Seasonality moved to Appendix A (Greg feedback: not exec-relevant). */}
 
           {/* Weekday */}
           {days.length > 0 && (
             <>
-              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">2.3 Weekday Distribution</h3>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">4.2 Weekday Distribution</h3>
               <p className="text-sm text-slate-600 mb-3">Peak day: <strong>{weekday.peak_day || '--'}</strong></p>
               <Table
                 columns={['Weekday', 'Cases']}
@@ -368,7 +471,7 @@ export default function ReportPage({ projectId: propId }) {
           )}
 
           {/* Design Day */}
-          <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">2.4 Design Day Analysis</h3>
+          <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">4.3 Design Day Analysis</h3>
           <p className="text-sm text-slate-600 mb-3">P75 is the planning basis -- system capacity should comfortably absorb this load on most days.</p>
           <div className="grid grid-cols-4 gap-3">
             <Stat label="P50 (Median)" value={fmt((designDay.p50 || {}).cases || 0)} sub="cases/day" />
@@ -380,7 +483,7 @@ export default function ReportPage({ projectId: propId }) {
           {/* Volume Projection */}
           {yearlyProj.length > 0 && (
             <>
-              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">2.5 5-Year Volume Projection</h3>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">4.4 5-Year Volume Projection</h3>
               <p className="text-sm text-slate-600 mb-3">Adoption ramp at <strong>{vol.adoption_rate || vol.ramp_rate || '--'}%</strong> per year</p>
               <Table
                 columns={['Year', 'Robotic Cases', 'Total Surgical', '% Robotic']}
@@ -397,7 +500,7 @@ export default function ReportPage({ projectId: propId }) {
           {/* Risk */}
           {(risk.risk_factors || risk.factors || []).length > 0 && (
             <>
-              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">2.6 Risk Assessment</h3>
+              <h3 className="text-base font-serif font-bold text-slate-900 mb-2 mt-6">4.5 Risk Assessment</h3>
               <p className="text-sm text-slate-600 mb-3">Overall: <strong className="uppercase">{risk.overall_risk || 'n/a'}</strong></p>
               <Table
                 columns={['Risk Factor', 'Severity', 'Mitigation']}
@@ -411,8 +514,54 @@ export default function ReportPage({ projectId: propId }) {
           )}
         </Section>
 
-        {/* ─── SYSTEM MATCH ─── */}
-        <Section title="3. System Match Recommendation" subtitle="Matching the optimal da Vinci system configuration to the operational profile">
+        {/* ─── 5. SYSTEM MATCH ─── */}
+        <Section title="5. System Match Recommendation" subtitle="Matching the optimal da Vinci system configuration to the operational profile">
+
+          {/* Reconciliation card (when clinical and volume paths diverge) */}
+          {showReconciliation && alternates.length === 2 && (
+            <div className="mb-6 border-2 border-slate-900 rounded">
+              <div className="bg-slate-900 text-white px-4 py-2">
+                <div className="text-[10px] uppercase tracking-widest font-bold">Two Paths -- Choose Based on Strategic Priority</div>
+                <div className="text-xs text-slate-300">Per-procedure scoring and volume-capacity math identify different systems. Both are valid; the choice depends on the decision driver.</div>
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-slate-300">
+                {alternates.map((alt, i) => (
+                  <div key={i} className="p-4 bg-slate-50">
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-slate-600">{alt.label}</div>
+                    <h4 className="text-xl font-bold text-slate-900 mt-1">{modelLabel(alt.model)}</h4>
+                    <div className="text-sm text-slate-700 mt-1">{alt.basis === 'per_procedure_fit' ? 'Per-procedure clinical fit' : 'Volume-math fit'}: <strong>{Math.round(alt.score || 0)}/100</strong></div>
+                    <p className="text-xs text-slate-700 mt-2 leading-relaxed">{alt.tagline}</p>
+                    <p className="text-[11px] text-slate-600 mt-2 italic">Choose if: {alt.choose_if}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Capacity model breakdown (peak-hour math) */}
+          {capacityModel && (
+            <div className="mb-6 border border-slate-300 rounded p-4 bg-slate-50">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-600">Capacity Model</div>
+                  <div className="text-xs text-slate-700">{capacityModel.rationale}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-slate-900">{capacityModel.systems_needed}</div>
+                  <div className="text-[10px] text-slate-600 uppercase">systems needed</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                <div className="bg-white border border-slate-200 rounded p-2"><strong>{capacityModel.peak_window_hours_per_day}h</strong><br/><span className="text-[10px] text-slate-500">peak window</span></div>
+                <div className="bg-white border border-slate-200 rounded p-2"><strong>{Math.round((capacityModel.target_utilization || 0) * 100)}%</strong><br/><span className="text-[10px] text-slate-500">target util.</span></div>
+                <div className="bg-white border border-slate-200 rounded p-2"><strong>{capacityModel.or_days_per_year}</strong><br/><span className="text-[10px] text-slate-500">OR days/yr</span></div>
+                <div className="bg-white border border-slate-200 rounded p-2"><strong>{capacityModel.avg_robotic_case_hours}h</strong><br/><span className="text-[10px] text-slate-500">hrs/case</span></div>
+                <div className="bg-slate-900 text-white border border-slate-900 rounded p-2"><strong>{fmt(capacityModel.cases_per_robot_per_year)}</strong><br/><span className="text-[10px]">cases/robot/yr</span></div>
+              </div>
+              <div className="text-[10px] text-slate-600 mt-2 italic">Math: ({capacityModel.peak_window_hours_per_day} &times; {Math.round((capacityModel.target_utilization || 0) * 100)}% &times; {capacityModel.or_days_per_year}) / {capacityModel.avg_robotic_case_hours} &asymp; {fmt(capacityModel.cases_per_robot_per_year)} cases/robot/year. Then ceil(annual robotic cases / cases-per-robot) = {capacityModel.systems_needed} systems.</div>
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-3 mb-5">
             <Stat label="Primary Recommendation" value={`da Vinci ${primary.system || match.recommended_model || '--'}`} />
             <Stat label="Fit Score" value={`${Math.round(primary.score || match.fit_score || 0)}/100`} />
@@ -460,7 +609,7 @@ export default function ReportPage({ projectId: propId }) {
         </Section>
 
         {/* ─── PRESENTATION (high-level talking points) ─── */}
-        <Section title="4. Stakeholder Presentation Summary" subtitle="Talking points used in the executive presentation">
+        <Section title="6. Stakeholder Presentation Summary" subtitle="Talking points used in the executive presentation">
           <ol className="list-decimal pl-6 space-y-2 text-sm text-slate-700">
             <li><strong>Hospital baseline:</strong> {p.hospital_name || '--'} with {fmt(p.annual_surgical_volume)} annual surgical cases across {p.total_or_count || '--'} ORs.</li>
             <li><strong>Procedure concentration:</strong> Gini {pareto.gini_coefficient?.toFixed?.(3) || pareto.gini || '--'} -- {topProcs[0]?.name || 'top procedure'} alone drives a meaningful share of volume.</li>
@@ -474,7 +623,7 @@ export default function ReportPage({ projectId: propId }) {
         </Section>
 
         {/* ─── BUSINESS PLAN ─── */}
-        <Section title="5. Business Plan" subtitle={`${plans.length} active plan${plans.length === 1 ? '' : 's'} -- pro forma, surgeon commitments, and clinical dollarization`}>
+        <Section title="7. Business Plan" subtitle={`${plans.length} active plan${plans.length === 1 ? '' : 's'} -- pro forma, surgeon commitments, and clinical dollarization`}>
           {plans.length === 0 && <p className="text-sm text-slate-500 italic">No business plans created yet for this project.</p>}
           {plans.map((plan, idx) => {
             const f = plan.full || plan
@@ -524,7 +673,7 @@ export default function ReportPage({ projectId: propId }) {
         </Section>
 
         {/* ─── SURGEON SURVEYS ─── */}
-        <Section title="6. Surgeon Surveys" subtitle="Voice-of-surgeon data: commitment intent, training readiness, procedure preferences">
+        <Section title="8. Surgeon Surveys" subtitle="Voice-of-surgeon data: commitment intent, training readiness, procedure preferences">
           {surveys.length === 0 && <p className="text-sm text-slate-500 italic">No surveys created yet for this project.</p>}
           {surveys.map((s, idx) => {
             const responses = s.responses || []
@@ -559,7 +708,7 @@ export default function ReportPage({ projectId: propId }) {
         </Section>
 
         {/* ─── PLAN TRACKING ─── */}
-        <Section title="7. Plan Tracking & Variance Analysis" subtitle="Actuals vs. proforma -- monitoring program execution post-placement">
+        <Section title="9. Plan Tracking & Variance Analysis" subtitle="Actuals vs. proforma -- monitoring program execution post-placement">
           {plans.filter(p => p.comparison || p.exec).length === 0 && (
             <p className="text-sm text-slate-500 italic">No tracking data yet -- import actuals to populate variance analysis.</p>
           )}
@@ -599,7 +748,7 @@ export default function ReportPage({ projectId: propId }) {
         </Section>
 
         {/* ─── CONCLUSION ─── */}
-        <Section title="8. Conclusion & Next Steps">
+        <Section title="10. Conclusion & Next Steps">
           <p className="text-sm text-slate-700 leading-relaxed mb-4">
             The data supports placement of <strong>da Vinci {primary.system || match.recommended_model || '--'}</strong> at <strong>{p.hospital_name || 'the hospital'}</strong>.
             Procedure mix, surgeon capacity, OR availability, and projected case volume align with the recommended configuration's clinical and economic profile.
@@ -621,6 +770,25 @@ export default function ReportPage({ projectId: propId }) {
             <p className="mt-1">Report ID: {p.project_code || `INTV-${id}`} &middot; Confidential</p>
           </div>
         </Section>
+
+        {/* ─── APPENDIX A — SEASONAL PATTERNS (demoted from Section 2 -- Greg feedback) ─── */}
+        {months.length > 0 && (
+          <Section
+            title="Appendix A &mdash; Seasonal Patterns"
+            subtitle="Monthly volume distribution. Operationally useful for inventory and OR scheduling; not a primary executive decision driver."
+          >
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <Stat label="Coefficient of Variation" value={seasonality.coefficient_of_variation || seasonality.cov || '--'} />
+              <Stat label="Peak Month" value={seasonality.peak_month || '--'} />
+              <Stat label="Seasonality Class" value={seasonality.seasonality_label || seasonality.seasonality_class || '--'} />
+            </div>
+            <Table
+              columns={['Month', 'Cases']}
+              rows={months.map(m => [m.month || m.label || '--', fmt(m.cases || m.volume || m.count)])}
+            />
+            <p className="text-xs text-slate-600 italic mt-3">Seasonality data is informational. The executive committee’s system-placement decision should not turn on month-by-month variation.</p>
+          </Section>
+        )}
       </div>
     </div>
   )

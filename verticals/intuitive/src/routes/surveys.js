@@ -106,7 +106,10 @@ router.post('/:id/send', async (req, res) => {
     });
     if (!survey) return res.status(404).json({ error: 'Survey not found' });
 
-    const channel = req.body.channel || survey.distribution_method || 'link';
+    // Auto-default to 'email' when SendGrid is configured; falls back to 'link' otherwise.
+    const sendgridReady = !!(process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL);
+    const requestedChannel = req.body.channel || survey.distribution_method;
+    const channel = requestedChannel || (sendgridReady ? 'email' : 'link');
     const surgeonIds = req.body.surgeon_ids; // optional: only send to specific recipients
 
     await survey.update({ status: 'active' });
@@ -124,19 +127,37 @@ router.post('/:id/send', async (req, res) => {
 
     for (const recipient of recipientsToSend) {
       const link = `${baseUrl}/survey/${recipient.personal_token}`;
-
-      // Try distributing via the requested channel
       let sendResult = { channel: 'link', success: true, message: 'Link generated (manual distribution)' };
+      let recipStatus = 'link_generated';
+      let recipSentAt = null;
 
-      if (distribution && channel !== 'link') {
-        try {
+      const wantsEmail = channel === 'email';
+      const canSendEmail = wantsEmail && sendgridReady && recipient.surgeon_email && distribution;
+
+      try {
+        if (canSendEmail) {
+          sendResult = await distribution.distributeToRecipient(survey, recipient, 'email');
+          recipStatus = sendResult.success ? 'sent' : 'pending';
+          recipSentAt = sendResult.success ? new Date() : null;
+        } else if (distribution && channel !== 'link' && channel !== 'email') {
           sendResult = await distribution.distributeToRecipient(survey, recipient, channel);
-        } catch (e) {
-          sendResult = { channel, success: false, error: e.message };
+          recipStatus = sendResult.success ? 'sent' : 'pending';
+          recipSentAt = sendResult.success ? new Date() : null;
+        } else if (wantsEmail && !sendgridReady) {
+          sendResult = { channel: 'email', success: false, mode: 'stub', message: 'SENDGRID_API_KEY/SENDGRID_FROM_EMAIL not configured. Link generated; distribute manually.' };
+          console.warn('[SurveyDistribution] SendGrid env vars missing; returning link-only for recipient', recipient.id);
+        } else if (wantsEmail && !recipient.surgeon_email) {
+          sendResult = { channel: 'email', success: false, message: 'Recipient has no surgeon_email; link returned for manual distribution.' };
         }
+      } catch (e) {
+        // Per-recipient failure must not break the batch
+        console.error('[SurveyDistribution] error sending to recipient', recipient.id, e.message || e);
+        sendResult = { channel, success: false, error: e.message || String(e) };
+        recipStatus = 'pending';
+        recipSentAt = null;
       }
 
-      await recipient.update({ status: sendResult.success ? 'sent' : 'pending', sent_at: sendResult.success ? new Date() : null });
+      try { await recipient.update({ status: recipStatus, sent_at: recipSentAt }); } catch (_) {}
 
       links.push({
         surgeon_name: recipient.surgeon_name,
@@ -151,18 +172,23 @@ router.post('/:id/send', async (req, res) => {
     const successCount = sendResults.filter(r => r.success).length;
     await survey.update({ sent_count: successCount });
 
-    // Also provide the general survey link
     const generalLink = `${baseUrl}/${survey.survey_url_token}`;
+    const note = sendgridReady && channel === 'email'
+      ? `${successCount} of ${links.length} emails sent via SendGrid.`
+      : 'SendGrid not configured (SENDGRID_API_KEY + SENDGRID_FROM_EMAIL). Magic-link URLs generated; distribute manually or set env vars to auto-send.';
 
     res.json({
       success: true,
       data: {
         survey_id: survey.id,
         status: 'active',
+        channel,
+        sendgrid_ready: sendgridReady,
         general_link: generalLink,
         recipient_links: links,
-        total_sent: links.length,
-        note: 'Links generated. Distribute via email/SMS manually or integrate with SendGrid/Twilio.'
+        total_sent: successCount,
+        total_recipients: links.length,
+        note,
       }
     });
   } catch (err) {

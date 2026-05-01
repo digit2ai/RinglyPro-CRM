@@ -337,6 +337,12 @@ function buildSlideHTML(analysis, hospitalName) {
   const roboticPct = (approachMix.robotic && approachMix.robotic.pct) || (totalHospitalVol > 0 ? Math.round(roboticCases / totalHospitalVol * 100) : 15);
   const totalIncrementalOpp = volProj.total_incremental_opportunity || procedurePareto.total_incremental_opportunity || 0;
 
+  // Three-bucket CFO volume language (Greg fix)
+  const volumeBuckets = a.volume_buckets || volProj.volume_buckets || null;
+  const bConv = (volumeBuckets && volumeBuckets.conversions) || {};
+  const bMkt = (volumeBuckets && volumeBuckets.incremental_market) || {};
+  const bSurg = (volumeBuckets && volumeBuckets.incremental_surgeon) || {};
+
   // Monthly -- compute peak
   const months = monthlySeason.monthly_data || monthlySeason.months || [];
   const peakMonth = months.length > 0 ? months.reduce((max, m) => (m.cases || 0) > (max.cases || 0) ? m : max, months[0]) : {};
@@ -476,7 +482,73 @@ function buildSlideHTML(analysis, hospitalName) {
       ${specialties.length > 0 ? chartBox('chartSpecialtyPie', 200) : ''}
       ${specialties.length > 0 ? `<table class="data-table"><tr><th>Specialty</th><th>% Mix</th></tr>${specialties.map(s => `<tr><td>${esc(s.name)}</td><td>${s.pct}%</td></tr>`).join('')}</table>` : ''}` },
 
-    // Slide 2: Current Surgical Approach Mix (NEW)
+    // Slide 2: The Quantified Clinical Value (PROMOTED — Greg's "most important slide")
+    { title: 'The Quantified Clinical Value -- What Intuitive Cannot Show You Today', html: (() => {
+      const hasData = dollarSpecialties.length > 0 || totalClinicalSavings > 0;
+      return `
+      <div class="info-box" style="border-color:#8b5cf6;background:rgba(139,92,246,0.12);margin-bottom:20px">
+        <strong>Hospital-specific dollar value of robotic outcomes</strong> vs. open/laparoscopic baseline. This calculation is unique to SurgicalMind &mdash; not available from any manufacturer-supplied tool today.
+      </div>
+      <div class="metrics-grid">${metric('Total Clinical Value', totalClinicalSavings > 0 ? '$' + fmt(Math.round(totalClinicalSavings)) : '--', '#10b981')}${metric('Specialties Analyzed', fmt(specialtiesAnalyzed), '#0ea5e9')}${metric('Outcome Metrics', fmt(outcomeMetrics), '#eab308')}${metric('Journal Citations', fmt(journalCitations), '#8b5cf6')}</div>
+      ${hasData ? chartBox('chartDollarizationHero', 240) : ''}
+      ${(() => {
+        const rows = [];
+        dollarSpecialties.forEach(s => {
+          const metricEntries = Object.entries(s.details || {});
+          const topMetrics = metricEntries.sort((a, b) => (b[1].savings || 0) - (a[1].savings || 0)).slice(0, 2);
+          topMetrics.forEach(([key, m]) => {
+            rows.push(`<tr><td>${esc(s.specialty)}</td><td>${esc(m.metric_name || key)}</td><td>${m.current_weighted_avg != null ? m.current_weighted_avg + ' days' : (m.current_events != null ? fmt(Math.round(m.current_events)) + ' events' : '--')}</td><td>${m.projected_weighted_avg != null ? m.projected_weighted_avg + ' days' : (m.projected_events != null ? fmt(Math.round(m.projected_events)) + ' events' : '--')}</td><td>${m.events_avoided != null ? fmt(Math.round(m.events_avoided)) : (m.total_days_avoided != null ? fmt(Math.round(m.total_days_avoided)) + ' days' : '--')}</td><td style="color:#10b981;font-weight:600">$${fmt(Math.round(m.savings || 0))}</td></tr>`);
+          });
+          if (metricEntries.length > 2) {
+            rows.push(`<tr style="background:rgba(16,185,129,0.05)"><td><strong>${esc(s.specialty)}</strong></td><td colspan="4" style="text-align:right"><em>${metricEntries.length} metrics total</em></td><td style="color:#10b981;font-weight:700">$${fmt(Math.round(s.savings))}</td></tr>`);
+          }
+        });
+        return rows.length > 0 ? `<table class="data-table"><tr><th>Specialty</th><th>Top Metric</th><th>Current</th><th>Projected</th><th>Reduction</th><th>Annual Savings</th></tr>${rows.join('')}</table>` : '<div class="info-box">Dollarization engine populates per-specialty savings when clinical evidence library is wired and case data is available.</div>';
+      })()}`;
+    })() },
+
+    // Slide 3: Cases That Change Your Top Line (CFO three-bucket)
+    { title: 'Cases That Change Your Top Line', html: (() => {
+      const hasBuckets = volumeBuckets != null;
+      if (!hasBuckets) {
+        return `<div class="info-box">Three-bucket volume model not yet computed for this project. Re-run analysis to populate.</div>`;
+      }
+      const moneyOrDash = (n) => n != null && !isNaN(n) && Number(n) > 0 ? '$' + fmt(Math.round(n)) : '--';
+      return `
+      <div class="info-box" style="border-color:#0ea5e9;background:rgba(14,165,233,0.08);margin-bottom:20px">
+        <strong>CFO note:</strong> Conversion = same revenue, better margin. Incremental = NEW top-line revenue. The two cards on the right are what change your top line.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+        <div style="background:rgba(100,116,139,0.12);border:1px solid rgba(148,163,184,0.4);border-radius:12px;padding:18px">
+          <div style="text-transform:uppercase;font-size:10px;letter-spacing:2px;color:#94a3b8;font-weight:700">Conversion</div>
+          <div style="font-size:34px;font-weight:800;color:#cbd5e1;margin-top:4px">${fmt(bConv.cases || 0)}</div>
+          <div style="font-size:11px;color:#94a3b8">cases (open/lap &rarr; robotic)</div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.2);font-size:12px;color:#cbd5e1">Revenue delta: <strong>$0</strong></div>
+          <div style="font-size:12px;color:#10b981">Margin uplift: <strong>${moneyOrDash(bConv.margin_delta)}</strong></div>
+          <div style="font-size:10px;color:#64748b;margin-top:8px;line-height:1.4">${esc(bConv.explanation || 'Same top line, better margin per case.')}</div>
+        </div>
+        <div style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.4);border-radius:12px;padding:18px">
+          <div style="text-transform:uppercase;font-size:10px;letter-spacing:2px;color:#a78bfa;font-weight:700">Market Incremental</div>
+          <div style="font-size:34px;font-weight:800;color:#c4b5fd;margin-top:4px">${fmt(bMkt.cases || 0)}</div>
+          <div style="font-size:11px;color:#a78bfa">NEW cases (market share)</div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(139,92,246,0.3);font-size:12px;color:#c4b5fd">New revenue: <strong>${moneyOrDash(bMkt.revenue_delta)}</strong></div>
+          <div style="font-size:12px;color:#10b981">New margin: <strong>${moneyOrDash(bMkt.margin_delta)}</strong></div>
+          <div style="font-size:10px;color:#7c3aed;margin-top:8px;line-height:1.4">${esc(bMkt.explanation || 'NEW top-line revenue from competitive capture.')}</div>
+        </div>
+        <div style="background:${bSurg.empty ? 'rgba(100,116,139,0.08)' : 'rgba(16,185,129,0.12)'};border:${bSurg.empty ? '1px dashed rgba(148,163,184,0.4)' : '1px solid rgba(16,185,129,0.4)'};border-radius:12px;padding:18px">
+          <div style="text-transform:uppercase;font-size:10px;letter-spacing:2px;color:${bSurg.empty ? '#64748b' : '#34d399'};font-weight:700">Surgeon Incremental</div>
+          <div style="font-size:34px;font-weight:800;color:${bSurg.empty ? '#475569' : '#a7f3d0'};margin-top:4px">${fmt(bSurg.cases || 0)}</div>
+          <div style="font-size:11px;color:${bSurg.empty ? '#64748b' : '#34d399'}">committed &middot; ${bSurg.committed_surgeon_count || 0} surgeons</div>
+          ${bSurg.empty ? `<div style="font-size:11px;color:#64748b;margin-top:12px;line-height:1.4">No surgeon commitments yet. Run Surgeon Surveys (step 2) to populate signed commitments.</div>` : `
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(16,185,129,0.3);font-size:12px;color:#a7f3d0">New revenue: <strong>${moneyOrDash(bSurg.revenue_delta)}</strong></div>
+          <div style="font-size:12px;color:#10b981">New margin: <strong>${moneyOrDash(bSurg.margin_delta)}</strong></div>
+          <div style="font-size:10px;color:#34d399;margin-top:8px;line-height:1.4">${esc(bSurg.explanation || 'NEW top line, signed commitments.')}</div>`}
+        </div>
+      </div>
+      <div class="info-box" style="border-color:#10b981;background:rgba(16,185,129,0.08);margin-top:16px"><strong>${esc(volumeBuckets.cfo_footnote || 'Incremental = NEW top-line revenue. Conversion = same revenue, better margin.')}</strong></div>`;
+    })() },
+
+    // Slide 4: Current Surgical Approach Mix
     { title: 'Current Surgical Approach Mix', html: `
       <div class="info-box" style="border-color:#0ea5e9;background:rgba(14,165,233,0.08);margin-bottom:16px"><strong>CFO View:</strong> Three-layer breakdown of your ${fmt(totalHospitalVol)} annual surgical cases by approach type, revealing the incremental robotic conversion opportunity.</div>
       <div class="metrics-grid">${metric('Total Hospital Volume', fmt(totalHospitalVol))}${metric('Open Cases', fmt(openCases) + ' (' + openPct + '%)', '#ef4444')}${metric('Laparoscopic Cases', fmt(lapCases) + ' (' + lapPct + '%)', '#eab308')}${metric('Robotic Cases', fmt(roboticCases) + ' (' + roboticPct + '%)', '#10b981')}</div>
@@ -525,10 +597,9 @@ function buildSlideHTML(analysis, hospitalName) {
       <div class="info-box"><strong>Note:</strong> Blended rates represent weighted average of Medicare and commercial payer mix. Actual rates vary by payer contract and geography.</div>`;
     })() },
 
-    // Slide 5: Monthly Seasonality
-    { title: 'Monthly Surgical Volume', html: `
-      <div class="metrics-grid">${metric('CoV', (monthlySeason.coefficient_of_variation || '--') + '%')}${metric('Peak Month', esc(peakMonth.month || '--'), '#10b981')}${metric('Peak Cases', fmt(peakMonth.cases || 0))}${metric('Seasonal Class', monthlySeason.seasonality_label || monthlySeason.seasonality_class || '--', '#eab308')}</div>
-      ${months.length > 0 ? chartBox('chartMonthlySeason', 220) : '<div class="info-box">No monthly data available.</div>'}` },
+    // [REMOVED per Greg feedback] Monthly Seasonality slide demoted to deep Analysis only.
+    // Seasonality is not decision-relevant for execs; keep it accessible in the Analysis page,
+    // but do not show it in the executive-facing proposal/presentation flow.
 
     // Slide 6: Weekday Distribution
     { title: 'Weekday Surgical Distribution', html: `
@@ -565,29 +636,7 @@ function buildSlideHTML(analysis, hospitalName) {
       ${(financialDeep.breakeven_months || financialDeep.breakeven) ? chartBox('chartBreakeven', 200) : ''}
       <div class="info-box"><strong>Investment Summary:</strong> Includes system acquisition, annual service, instruments per procedure, and facility modifications. ROI accounts for improved outcomes, shorter LOS, and reduced complications.</div>` },
 
-    // Slide 12: Clinical Outcome Dollarization (NEW)
-    { title: 'Clinical Outcome Dollarization', html: (() => {
-      const hasData = dollarSpecialties.length > 0 || totalClinicalSavings > 0;
-      return `
-      <div class="info-box" style="border-color:#8b5cf6;background:rgba(139,92,246,0.08);margin-bottom:16px"><strong>Evidence-Based Savings:</strong> Quantified clinical outcome improvements from robotic surgery, derived from peer-reviewed literature and applied to your hospital's case volume.</div>
-      <div class="metrics-grid">${metric('Total Clinical Savings', totalClinicalSavings > 0 ? '$' + fmt(Math.round(totalClinicalSavings)) : '--', '#10b981')}${metric('Specialties Analyzed', fmt(specialtiesAnalyzed), '#0ea5e9')}${metric('Outcome Metrics', fmt(outcomeMetrics), '#eab308')}${metric('Journal Citations', fmt(journalCitations), '#8b5cf6')}</div>
-      ${hasData ? chartBox('chartDollarization', 240) : ''}
-      ${(() => {
-        // Flatten: for each specialty, show top 2 metrics + subtotal
-        const rows = [];
-        dollarSpecialties.forEach(s => {
-          const metricEntries = Object.entries(s.details || {});
-          const topMetrics = metricEntries.sort((a, b) => (b[1].savings || 0) - (a[1].savings || 0)).slice(0, 2);
-          topMetrics.forEach(([key, m]) => {
-            rows.push(`<tr><td>${esc(s.specialty)}</td><td>${esc(m.metric_name || key)}</td><td>${m.current_weighted_avg != null ? m.current_weighted_avg + ' days' : (m.current_events != null ? fmt(Math.round(m.current_events)) + ' events' : '--')}</td><td>${m.projected_weighted_avg != null ? m.projected_weighted_avg + ' days' : (m.projected_events != null ? fmt(Math.round(m.projected_events)) + ' events' : '--')}</td><td>${m.events_avoided != null ? fmt(Math.round(m.events_avoided)) : (m.total_days_avoided != null ? fmt(Math.round(m.total_days_avoided)) + ' days' : '--')}</td><td style="color:#10b981;font-weight:600">$${fmt(Math.round(m.savings || 0))}</td></tr>`);
-          });
-          if (metricEntries.length > 2) {
-            rows.push(`<tr style="background:rgba(16,185,129,0.05)"><td><strong>${esc(s.specialty)}</strong></td><td colspan="4" style="text-align:right"><em>${metricEntries.length} metrics total</em></td><td style="color:#10b981;font-weight:700">$${fmt(Math.round(s.savings))}</td></tr>`);
-          }
-        });
-        return rows.length > 0 ? `<table class="data-table"><tr><th>Specialty</th><th>Top Metric</th><th>Current</th><th>Projected</th><th>Reduction</th><th>Annual Savings</th></tr>${rows.join('')}</table>` : '<div class="info-box">Dollarization engine will populate detailed per-specialty savings when clinical evidence library is available.</div>';
-      })()}`;
-    })() },
+    // [Slide 12 removed] Clinical Outcome Dollarization promoted to Slide 2 (executive priority -- Greg feedback).
 
     // Slide 13: Combined 3-Layer ROI (NEW)
     { title: 'Combined 3-Layer ROI', html: `
