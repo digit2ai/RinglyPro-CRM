@@ -34,7 +34,20 @@ a{color:inherit;text-decoration:none}
 
 /* HERO */
 .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:140%;height:80%;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(99,102,241,0.10) 0%,transparent 70%);pointer-events:none}
+.hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:140%;height:80%;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(99,102,241,0.10) 0%,transparent 70%);pointer-events:none;z-index:0}
+/* Animated hero background */
+.sm-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.sm-bg__grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%)}
+.sm-bg__orb{position:absolute;border-radius:50%;filter:blur(40px);will-change:transform}
+.sm-bg__orb--1{width:600px;height:600px;top:-150px;left:-100px;background:radial-gradient(circle,rgba(124,92,255,.55),rgba(124,92,255,0) 65%);animation:smDrift1 22s ease-in-out infinite}
+.sm-bg__orb--2{width:520px;height:520px;bottom:-120px;right:-80px;background:radial-gradient(circle,rgba(74,159,255,.45),rgba(74,159,255,0) 65%);animation:smDrift2 28s ease-in-out infinite}
+.sm-bg__orb--3{width:380px;height:380px;top:40%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(93,221,250,.35),rgba(93,221,250,0) 65%);animation:smDrift3 18s ease-in-out infinite}
+.sm-bg__particles{position:absolute;inset:0;width:100%;height:100%}
+.sm-bg__vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.7) 100%)}
+@keyframes smDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(80px,60px) scale(1.1)}}
+@keyframes smDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-40px) scale(1.15)}}
+@keyframes smDrift3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(calc(-50% + 50px),calc(-50% - 30px)) scale(.9)}}
+@media (prefers-reduced-motion:reduce){.sm-bg__orb,.sm-bg__particles{animation:none!important}}
 .hero-inner{max-width:860px;position:relative;z-index:1}
 .hero-logo{width:480px;max-width:80vw;height:auto;margin:0 auto 12px;display:block}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
@@ -221,6 +234,14 @@ a{color:inherit;text-decoration:none}
 
 <!-- HERO -->
 <section class="hero">
+  <div class="sm-bg" aria-hidden="true">
+    <div class="sm-bg__grid"></div>
+    <div class="sm-bg__orb sm-bg__orb--1"></div>
+    <div class="sm-bg__orb sm-bg__orb--2"></div>
+    <div class="sm-bg__orb sm-bg__orb--3"></div>
+    <canvas class="sm-bg__particles" id="smParticles"></canvas>
+    <div class="sm-bg__vignette"></div>
+  </div>
   <div class="hero-inner">
     <h1>SurgicalMind <span class="grad">AI</span></h1>
     <p class="hero-desc">The Comprehensive Business Planning Platform for da Vinci Robotic Surgery. Transform a hospital name into a complete, defensible, and trackable business plan in minutes.</p>
@@ -876,6 +897,56 @@ a{color:inherit;text-decoration:none}
     <p>SurgicalMind AI -- A <a href="https://digit2ai.com" target="_blank">Digit2AI</a> Platform &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; April 2026</p>
   </div>
 </footer>
+
+<script>
+(function(){
+  const canvas=document.getElementById('smParticles');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  let W=0,H=0;
+  function resize(){
+    const rect=canvas.getBoundingClientRect();
+    W=rect.width;H=rect.height;
+    canvas.width=W*dpr;canvas.height=H*dpr;
+    ctx.setTransform(1,0,0,1,0,0);ctx.scale(dpr,dpr);
+  }
+  resize();window.addEventListener('resize',resize);
+  const COUNT=60,LINK_DIST=140;
+  const points=Array.from({length:COUNT},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-0.5)*0.15,vy:(Math.random()-0.5)*0.15,
+    r:Math.random()*1.2+0.4
+  }));
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of points){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+    }
+    ctx.lineWidth=0.5;
+    for(let i=0;i<COUNT;i++){
+      for(let j=i+1;j<COUNT;j++){
+        const dx=points[i].x-points[j].x,dy=points[i].y-points[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<LINK_DIST){
+          const a=(1-d/LINK_DIST)*0.18;
+          ctx.strokeStyle='rgba(160,180,255,'+a+')';
+          ctx.beginPath();ctx.moveTo(points[i].x,points[i].y);
+          ctx.lineTo(points[j].x,points[j].y);ctx.stroke();
+        }
+      }
+    }
+    ctx.fillStyle='rgba(180,200,255,0.5)';
+    for(const p of points){
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) tick();
+})();
+</script>
 
 </body>
 </html>
