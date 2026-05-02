@@ -3743,29 +3743,52 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
     } else if (tab === 'governance') {
       try {
-        var res = await apiFetch('/admin/roles');
-        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
-        var board = res.data.governance_board || [];
-        var h = '<h3 style="margin-bottom:16px;font-size:18px;">Current Board of Directors</h3>';
+        var rolesP = apiFetch('/admin/roles');
+        var membersP = apiFetch('/admin/members?limit=500');
+        var regionsP = apiFetch('/admin/regions');
+        var rolesRes = await rolesP;
+        if (!rolesRes.success) { ac.innerHTML = '<div class="error-msg">' + esc(rolesRes.error) + '</div>'; return; }
+        var membersRes = await membersP; var regionsRes = await regionsP;
+        var board = rolesRes.data.governance_board || [];
+        var availableRoles = rolesRes.data.available_roles || [];
+        var accessLevels = rolesRes.data.access_levels || ['member','admin_regional','admin_global','superadmin'];
+        var allMembers = (membersRes && membersRes.success && membersRes.data && membersRes.data.members) || [];
+        var regions = (regionsRes && regionsRes.success && regionsRes.data) || [];
+        window._boardData = { board: board, members: allMembers, regions: regions, roles: availableRoles, access: accessLevels };
+
+        var h = '<div class="flex-between mb-16" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">';
+        h += '<h3 style="margin:0;font-size:18px;">Current Board of Directors</h3>';
+        h += '<button class="btn btn-primary" onclick="adminBoardOpen(null,\'add\')" style="padding:8px 18px;">+ Add Board Member</button>';
+        h += '</div>';
+
         if (board.length === 0) {
-          h += '<p class="text-muted">No governance roles assigned yet.</p>';
+          h += '<p class="text-muted">No governance roles assigned yet. Click <strong>+ Add Board Member</strong> to grant the first role.</p>';
         } else {
           h += '<div class="table-wrap"><table><thead><tr><th>Member</th><th>Role</th><th>Access</th><th>Region</th><th>Membership</th><th>Action</th></tr></thead><tbody>';
           board.forEach(function(m) {
             h += '<tr><td><strong>' + esc(m.first_name) + ' ' + esc(m.last_name) + '</strong><br><span style="font-size:12px;color:var(--gray-500);">' + esc(m.email) + '</span></td>';
             h += '<td><span class="badge badge-gold">' + esc(m.governance_role.replace(/_/g,' ')) + '</span></td>';
             h += '<td>' + esc(m.access_level) + '</td><td>' + esc(m.region_name||'Global') + '</td><td>' + esc(m.membership_type) + '</td>';
-            h += '<td><button onclick="adminRemoveRole(' + m.id + ')" style="padding:4px 10px;font-size:12px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;">Remove</button></td></tr>';
+            h += '<td style="display:flex;gap:6px;flex-wrap:wrap;">';
+            h += '<button onclick="adminBoardOpen(' + m.id + ',\'edit\')" style="padding:4px 10px;font-size:12px;background:var(--accent);color:var(--navy);border:none;border-radius:4px;cursor:pointer;font-weight:600;">Edit</button>';
+            if (m.governance_role !== 'superadmin') {
+              h += '<button onclick="adminRemoveRole(' + m.id + ')" style="padding:4px 10px;font-size:12px;background:var(--red);color:white;border:none;border-radius:4px;cursor:pointer;">Remove</button>';
+            }
+            h += '</td></tr>';
           });
           h += '</tbody></table></div>';
         }
+
         h += '<div style="margin-top:24px;padding:20px;background:var(--gray-50);border-radius:8px;">';
         h += '<h4 style="margin-bottom:12px;">Available roles:</h4>';
         h += '<p style="font-size:13px;color:var(--gray-700);line-height:1.8;">';
-        (res.data.available_roles || []).forEach(function(r) {
+        availableRoles.forEach(function(r) {
           h += '<span class="badge badge-gray" style="margin:2px;">' + r.replace(/_/g,' ') + '</span> ';
         });
         h += '</p></div>';
+
+        h += '<div id="boardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;"></div>';
+
         ac.innerHTML = h;
       } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
 
@@ -3925,6 +3948,104 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var res = await apiFetch('/admin/roles/' + id, 'DELETE');
     alert(res.success ? 'Role removed' : 'Error: ' + (res.error||''));
     if (res.success) loadAdminTab('governance');
+  };
+
+  window.adminBoardOpen = function(memberId, mode) {
+    var d = window._boardData || {};
+    var modal = document.getElementById('boardModal');
+    if (!modal) return;
+    var existing = memberId ? (d.board || []).find(function(m){ return m.id === memberId; }) : null;
+    var isEdit = mode === 'edit' && existing;
+    var boardIds = (d.board || []).map(function(m){ return m.id; });
+    var addable = (d.members || []).filter(function(m){ return boardIds.indexOf(m.id) === -1 && m.status !== 'deleted'; });
+
+    var html = '<div style="background:white;border-radius:12px;padding:28px;max-width:540px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;">';
+    html += '<h3 style="margin-bottom:6px;">' + (isEdit ? 'Edit Board Member' : 'Add Board Member') + '</h3>';
+    html += '<p class="text-muted text-sm" style="margin-bottom:18px;">' + (isEdit ? 'Update role, access level, or region for this board member.' : 'Promote an existing chamber member to the Board of Directors and grant entitlements.') + '</p>';
+    html += '<form id="boardForm" onsubmit="event.preventDefault();adminBoardSave(' + (isEdit ? memberId : 'null') + ');">';
+
+    if (isEdit) {
+      html += '<div class="form-group"><label>Member</label><div style="padding:10px 12px;background:var(--gray-50);border-radius:6px;font-weight:600;">' + esc(existing.first_name + ' ' + existing.last_name) + '<br><span style="font-size:12px;font-weight:400;color:var(--gray-500);">' + esc(existing.email) + '</span></div></div>';
+    } else {
+      html += '<div class="form-group"><label>Member *</label>';
+      html += '<input type="text" id="bdSearch" placeholder="Search by name or email..." oninput="adminBoardFilter(this.value)" style="width:100%;padding:8px 10px;margin-bottom:6px;border:1px solid var(--gray-300);border-radius:6px;">';
+      html += '<select id="bdMember" required size="6" style="width:100%;padding:6px;border:1px solid var(--gray-300);border-radius:6px;">';
+      if (addable.length === 0) {
+        html += '<option value="" disabled>No eligible members &mdash; all members are already on the board</option>';
+      } else {
+        addable.forEach(function(m) {
+          var label = (m.first_name||'') + ' ' + (m.last_name||'') + ' (' + (m.email||'') + ')';
+          html += '<option value="' + m.id + '" data-search="' + esc(label.toLowerCase()) + '">' + esc(label) + '</option>';
+        });
+      }
+      html += '</select></div>';
+    }
+
+    html += '<div class="form-group"><label>Governance Role *</label><select id="bdRole" required style="width:100%;padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;">';
+    (d.roles || []).forEach(function(r) {
+      var sel = isEdit && r === existing.governance_role ? ' selected' : '';
+      html += '<option value="' + r + '"' + sel + '>' + r.replace(/_/g,' ') + '</option>';
+    });
+    html += '</select></div>';
+
+    html += '<div class="form-group"><label>Access Level *</label><select id="bdAccess" required style="width:100%;padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;">';
+    (d.access || ['member','admin_regional','admin_global','superadmin']).forEach(function(a) {
+      var sel = isEdit && a === existing.access_level ? ' selected' : '';
+      html += '<option value="' + a + '"' + sel + '>' + a.replace(/_/g,' ') + '</option>';
+    });
+    html += '</select>';
+    html += '<p class="text-muted text-sm" style="margin-top:4px;font-size:11px;">superadmin: full control &middot; admin_global: all regions &middot; admin_regional: assigned region only &middot; member: read-only</p>';
+    html += '</div>';
+
+    html += '<div class="form-group"><label>Region (for chapter / regional roles)</label><select id="bdRegion" style="width:100%;padding:8px 10px;border:1px solid var(--gray-300);border-radius:6px;">';
+    html += '<option value="">-- Global / no region --</option>';
+    (d.regions || []).forEach(function(r) {
+      var sel = isEdit && existing.region_id === r.id ? ' selected' : '';
+      html += '<option value="' + r.id + '"' + sel + '>' + esc(r.name) + '</option>';
+    });
+    html += '</select></div>';
+
+    html += '<div id="bdMsg" style="display:none;margin:12px 0;padding:10px;border-radius:6px;"></div>';
+    html += '<div style="display:flex;gap:10px;margin-top:18px;">';
+    html += '<button type="submit" class="btn btn-primary" style="flex:1;padding:10px;">' + (isEdit ? 'Save Changes' : 'Add to Board') + '</button>';
+    html += '<button type="button" class="btn btn-secondary" onclick="adminBoardClose()" style="padding:10px 18px;">Cancel</button>';
+    html += '</div></form></div>';
+
+    modal.innerHTML = html;
+    modal.style.display = 'flex';
+  };
+
+  window.adminBoardClose = function() {
+    var m = document.getElementById('boardModal');
+    if (m) { m.style.display = 'none'; m.innerHTML = ''; }
+  };
+
+  window.adminBoardFilter = function(q) {
+    q = (q || '').toLowerCase();
+    var sel = document.getElementById('bdMember');
+    if (!sel) return;
+    Array.prototype.forEach.call(sel.options, function(opt) {
+      var s = opt.dataset.search || '';
+      opt.style.display = s.indexOf(q) >= 0 ? '' : 'none';
+    });
+  };
+
+  window.adminBoardSave = async function(memberId) {
+    var msg = document.getElementById('bdMsg');
+    function showError(t) { msg.style.display='block'; msg.style.background='var(--red)'; msg.style.color='white'; msg.textContent = t; }
+    var id = memberId || (document.getElementById('bdMember') && parseInt(document.getElementById('bdMember').value, 10));
+    if (!id) { showError('Please select a member'); return; }
+    var role = document.getElementById('bdRole').value;
+    var access = document.getElementById('bdAccess').value;
+    var regionVal = document.getElementById('bdRegion').value;
+    var body = { access_level: access, governance_role: role, region_id: regionVal ? parseInt(regionVal, 10) : null };
+    var res = await apiFetch('/admin/members/' + id + '/access', 'PUT', body);
+    if (res.success) {
+      adminBoardClose();
+      loadAdminTab('governance');
+    } else {
+      showError('Error: ' + (res.error || 'Update failed'));
+    }
   };
 
   window.adminEditProfile = async function(id) {
