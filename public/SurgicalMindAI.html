@@ -48,6 +48,24 @@ a{color:inherit;text-decoration:none}
 @keyframes smDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-40px) scale(1.15)}}
 @keyframes smDrift3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(calc(-50% + 50px),calc(-50% - 30px)) scale(.9)}}
 @media (prefers-reduced-motion:reduce){.sm-bg__orb,.sm-bg__particles{animation:none!important}}
+/* Demo provider modal */
+.sm-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.sm-modal.open{display:flex}
+.sm-modal__panel{background:#0f172a;border:1px solid #1e293b;border-radius:16px;max-width:440px;width:100%;padding:28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.sm-modal__close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:8px;background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center}
+.sm-modal__close:hover{background:#1e293b;color:#fff}
+.sm-modal__title{font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:6px}
+.sm-modal__sub{font-size:.88rem;color:#94a3b8;margin-bottom:20px}
+.sm-modal__list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sm-modal__btn{display:flex;align-items:center;gap:10px;padding:14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-size:.92rem;font-weight:600;transition:all .15s}
+.sm-modal__btn:hover{background:#334155;transform:translateY(-1px)}
+.sm-modal__btn .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sm-modal__btn .gmail{background:#ea4335}
+.sm-modal__btn .outlook{background:#0078d4}
+.sm-modal__btn .yahoo{background:#6001d2}
+.sm-modal__btn .apple{background:#94a3b8}
+.sm-modal__copy{margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;font-size:.78rem;color:#64748b;text-align:center}
+.sm-modal__copy a{color:#94a3b8;cursor:pointer;text-decoration:underline}
 .hero-inner{max-width:860px;position:relative;z-index:1}
 .hero-logo{width:480px;max-width:80vw;height:auto;margin:0 auto 12px;display:block}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
@@ -227,7 +245,7 @@ a{color:inherit;text-decoration:none}
       <a href="https://aiagent.ringlypro.com/surgicalmind-whitepaper.html" class="nav-link">White Paper</a>
       <a href="/intuitive/proposal/84" class="nav-link">Demo</a>
       <a href="/intuitive/" class="nav-btn-outline">Login</a>
-      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mstagg@digit2ai.com&su=SurgicalMind%20AI%20Demo%20Request&body=Hi%20Manuel%2C%0A%0AI%20am%20interested%20in%20a%20live%20demo%20of%20SurgicalMind%20AI%20for%20our%20hospital%20%2F%20organization.%0A%0AHospital%20%2F%20Organization%3A%20%0AName%3A%20%0ARole%3A%20%0APhone%3A%20%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AThank%20you." target="_blank" rel="noopener" class="nav-cta">Request Demo</a>
+      <a href="#" onclick="openDemoModal(event)" class="nav-cta">Request Demo</a>
     </div>
   </div>
 </nav>
@@ -887,7 +905,7 @@ a{color:inherit;text-decoration:none}
     <h2>Ready to see SurgicalMind AI<br>build a business plan?</h2>
     <p>One demo. One hospital profile. See exactly how the platform transforms raw surgeon data into a defensible, dollarized business case.</p>
     <span class="cta-email">mstagg@digit2ai.com</span>
-    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mstagg@digit2ai.com&su=SurgicalMind%20AI%20Demo%20Request&body=Hi%20Manuel%2C%0A%0AI%20am%20interested%20in%20a%20live%20demo%20of%20SurgicalMind%20AI%20for%20our%20hospital%20%2F%20organization.%0A%0AHospital%20%2F%20Organization%3A%20%0AName%3A%20%0ARole%3A%20%0APhone%3A%20%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AThank%20you." target="_blank" rel="noopener" class="btn-primary">Request a Demo</a>
+    <a href="#" onclick="openDemoModal(event)" class="btn-primary">Request a Demo</a>
   </div>
 </section>
 
@@ -897,6 +915,47 @@ a{color:inherit;text-decoration:none}
     <p>SurgicalMind AI -- A <a href="https://digit2ai.com" target="_blank">Digit2AI</a> Platform &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; April 2026</p>
   </div>
 </footer>
+
+<!-- Demo provider modal -->
+<div class="sm-modal" id="demoModal" onclick="if(event.target===this) closeDemoModal()">
+  <div class="sm-modal__panel">
+    <button class="sm-modal__close" onclick="closeDemoModal()" aria-label="Close">&times;</button>
+    <div class="sm-modal__title">Request a Demo</div>
+    <div class="sm-modal__sub">Choose your email provider -- we'll prefill the message.</div>
+    <div class="sm-modal__list">
+      <a class="sm-modal__btn" id="demoGmail" target="_blank" rel="noopener"><span class="dot gmail"></span>Gmail</a>
+      <a class="sm-modal__btn" id="demoOutlook" target="_blank" rel="noopener"><span class="dot outlook"></span>Outlook</a>
+      <a class="sm-modal__btn" id="demoYahoo" target="_blank" rel="noopener"><span class="dot yahoo"></span>Yahoo</a>
+      <a class="sm-modal__btn" id="demoApple"><span class="dot apple"></span>Apple Mail</a>
+    </div>
+    <div class="sm-modal__copy">
+      Or email <a onclick="copyDemoEmail(this)">mstagg@digit2ai.com</a> directly.
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const TO='mstagg@digit2ai.com';
+  const SUBJ='SurgicalMind AI Demo Request';
+  const BODY='Hi Manuel,\n\nI am interested in a live demo of SurgicalMind AI for our hospital / organization.\n\nHospital / Organization: \nName: \nRole: \nPhone: \n\nPlease let me know your availability.\n\nThank you.';
+  const eSubj=encodeURIComponent(SUBJ);
+  const eBody=encodeURIComponent(BODY);
+  const eTo=encodeURIComponent(TO);
+  document.getElementById('demoGmail').href='https://mail.google.com/mail/?view=cm&fs=1&to='+eTo+'&su='+eSubj+'&body='+eBody;
+  document.getElementById('demoOutlook').href='https://outlook.live.com/mail/0/deeplink/compose?to='+eTo+'&subject='+eSubj+'&body='+eBody;
+  document.getElementById('demoYahoo').href='https://compose.mail.yahoo.com/?to='+eTo+'&subject='+eSubj+'&body='+eBody;
+  document.getElementById('demoApple').href='mailto:'+TO+'?subject='+eSubj+'&body='+eBody;
+})();
+function openDemoModal(e){if(e) e.preventDefault(); document.getElementById('demoModal').classList.add('open');}
+function closeDemoModal(){document.getElementById('demoModal').classList.remove('open');}
+function copyDemoEmail(el){
+  navigator.clipboard.writeText('mstagg@digit2ai.com').then(function(){
+    const orig=el.textContent;el.textContent='Copied!';setTimeout(function(){el.textContent=orig;},1500);
+  }).catch(function(){});
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape') closeDemoModal();});
+</script>
 
 <script>
 (function(){
