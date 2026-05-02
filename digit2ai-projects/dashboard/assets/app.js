@@ -1103,7 +1103,7 @@ async function renderInbox(container) {
     </div>`;
 }
 
-function buildMeetingMailto({ toEmail, toName, company, projectName, shareUrl }) {
+function buildMeetingEmail({ toEmail, toName, company, projectName, shareUrl }) {
   const firstName = (toName || '').trim().split(/\s+/)[0] || 'there';
   const subject = `Initial meeting -- ${projectName || 'your project request'}`;
   const lines = [
@@ -1128,10 +1128,55 @@ function buildMeetingMailto({ toEmail, toName, company, projectName, shareUrl })
   lines.push('Manuel Stagg');
   lines.push('Digit2AI');
   lines.push('mstagg@digit2ai.com');
-  const body = lines.join('\n');
-  return 'mailto:' + encodeURIComponent(toEmail)
-    + '?subject=' + encodeURIComponent(subject)
-    + '&body=' + encodeURIComponent(body);
+  return { subject, body: lines.join('\n'), toEmail, toName, projectName };
+}
+
+let __meetingDraft = null;
+function openMeetingChooser(projectId) {
+  const draft = window.__meetingDrafts && window.__meetingDrafts[projectId];
+  if (!draft) return;
+  __meetingDraft = draft;
+  const eTo = encodeURIComponent(draft.toEmail);
+  const eSu = encodeURIComponent(draft.subject);
+  const eBody = encodeURIComponent(draft.body);
+  const gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + eTo + '&su=' + eSu + '&body=' + eBody;
+  const outlook = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + eTo + '&subject=' + eSu + '&body=' + eBody;
+  const yahoo = 'https://compose.mail.yahoo.com/?to=' + eTo + '&subject=' + eSu + '&body=' + eBody;
+  const apple = 'mailto:' + draft.toEmail + '?subject=' + eSu + '&body=' + eBody;
+
+  let modal = document.getElementById('meetingChooserModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'meetingChooserModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px';
+    modal.onclick = function (e) { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:14px;max-width:480px;width:100%;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#fff">
+      <button onclick="document.getElementById('meetingChooserModal').remove()" aria-label="Close" style="position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:20px">&times;</button>
+      <div style="font-size:1.15rem;font-weight:700;margin-bottom:4px">Send Meeting Request</div>
+      <div style="font-size:.85rem;color:#94a3b8;margin-bottom:6px">To: <span style="color:#cbd5e1">${escHtml(draft.toName || draft.toEmail)} &lt;${escHtml(draft.toEmail)}&gt;</span></div>
+      <div style="font-size:.78rem;color:#64748b;margin-bottom:18px">Choose your email client -- the message is already prefilled.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <a href="${gmail}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#ea4335"></span>Gmail</a>
+        <a href="${outlook}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#0078d4"></span>Outlook</a>
+        <a href="${yahoo}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#6001d2"></span>Yahoo</a>
+        <a href="${apple}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8"></span>Apple Mail</a>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;font-size:.78rem;color:#64748b;text-align:center">
+        Or <a onclick="copyMeetingDraft(this)" style="color:#94a3b8;cursor:pointer;text-decoration:underline">copy the message to clipboard</a> and paste anywhere.
+      </div>
+    </div>`;
+}
+function copyMeetingDraft(el) {
+  if (!__meetingDraft) return;
+  const text = 'To: ' + __meetingDraft.toEmail + '\nSubject: ' + __meetingDraft.subject + '\n\n' + __meetingDraft.body;
+  navigator.clipboard.writeText(text).then(function () {
+    const orig = el.textContent;
+    el.textContent = 'Copied to clipboard';
+    setTimeout(function () { el.textContent = orig; }, 1500);
+  });
 }
 
 function renderInboxCard(p) {
@@ -1151,15 +1196,18 @@ function renderInboxCard(p) {
     </div>`).join('');
   const shareUrl = p.share_token ? `/projects/intake/batch.html?token=${p.share_token}` : null;
   const absShareUrl = shareUrl ? (location.origin + shareUrl) : null;
-  const meetingHref = p.submitter_email
-    ? buildMeetingMailto({
-        toEmail: p.submitter_email,
-        toName: p.submitter_name || '',
-        company: company,
-        projectName: p.name,
-        shareUrl: absShareUrl
-      })
-    : null;
+  let hasMeetingDraft = false;
+  if (p.submitter_email) {
+    window.__meetingDrafts = window.__meetingDrafts || {};
+    window.__meetingDrafts[p.id] = buildMeetingEmail({
+      toEmail: p.submitter_email,
+      toName: p.submitter_name || '',
+      company: company,
+      projectName: p.name,
+      shareUrl: absShareUrl
+    });
+    hasMeetingDraft = true;
+  }
 
   return `
     <details class="card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--bg-card)" data-project-id="${p.id}">
@@ -1185,7 +1233,7 @@ function renderInboxCard(p) {
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
           <button class="btn btn-success btn-sm" onclick="approveInboxItem(${p.id})" id="approve-btn-${p.id}">&#10003; Approve &amp; generate plan</button>
           <button class="btn btn-danger btn-sm" onclick="rejectInboxItem(${p.id})" id="reject-btn-${p.id}">&times; Reject</button>
-          ${meetingHref ? `<a class="btn btn-ghost btn-sm" href="${meetingHref}">&#128231; Meeting Request</a>` : ''}
+          ${hasMeetingDraft ? `<button class="btn btn-ghost btn-sm" onclick="openMeetingChooser(${p.id})">&#128231; Meeting Request</button>` : ''}
           ${shareUrl ? `<a class="btn btn-ghost btn-sm" href="${shareUrl}" target="_blank" rel="noopener">Open discussion</a>` : ''}
           <span id="inbox-status-${p.id}" style="margin-left:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
         </div>
