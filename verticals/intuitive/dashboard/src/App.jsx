@@ -292,8 +292,12 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchOpen, setSearchOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const searchRef = React.useRef(null)
   const navigate = useNavigate()
+
+  // Close mobile drawer on route change
+  useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
 
   useEffect(() => {
     if (!user) return
@@ -331,8 +335,31 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen">
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-12 bg-[#0a1628] border-b border-slate-800 flex items-center justify-between px-3 z-40">
+        <button
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="Open menu"
+          className="p-2 rounded-lg text-slate-300 hover:bg-slate-800/60"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="h-7 w-auto" />
+        <div className="w-10" />
+      </div>
+
+      {/* Mobile drawer backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50">
+      <aside className={`w-60 bg-[#0a1628] border-r border-slate-800 flex flex-col fixed h-full z-50 transition-transform duration-200 ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-4 border-b border-slate-800 flex justify-center">
           <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" className="w-44 h-auto" />
         </div>
@@ -382,7 +409,7 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-60 min-h-screen relative">
+      <main className="flex-1 ml-0 md:ml-60 pt-12 md:pt-0 min-h-screen relative">
         <ErrorBoundary>
         <Routes>
           <Route path="/" element={<DashboardPage onSelectProject={selectProject} />} />

@@ -35,9 +35,9 @@ const TYPE_OPTIONS  = ['All', 'academic', 'community', 'specialty', 'VA', 'rural
 
 function KpiCard({ label, value, color = 'text-white' }) {
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
-      <div className={`text-3xl font-black ${color}`}>{value}</div>
-      <div className="text-xs font-semibold text-slate-400 mt-1.5 uppercase tracking-wide">{label}</div>
+    <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 md:p-6 text-center">
+      <div className={`text-2xl md:text-3xl font-black ${color}`}>{value}</div>
+      <div className="text-[10px] md:text-xs font-semibold text-slate-400 mt-1 md:mt-1.5 uppercase tracking-wide">{label}</div>
     </div>
   )
 }
@@ -248,13 +248,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200">
-      <div className="max-w-[1600px] mx-auto px-6 py-8">
+      <div className="max-w-[1600px] mx-auto px-3 py-4 md:px-6 md:py-8">
 
         {/* Header */}
-        <h1 className="text-2xl font-bold text-white mb-6">SurgicalMind AI -- Sales Operations Dashboard</h1>
+        <h1 className="text-lg md:text-2xl font-bold text-white mb-4 md:mb-6">SurgicalMind AI -- Sales Operations Dashboard</h1>
 
         {/* KPI Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-8">
           <KpiCard label="Total Hospitals" value={summary.total_hospitals ?? 0} color="text-white" />
           <KpiCard label="Pending Actions" value={summary.pending_actions ?? 0} color="text-yellow-400" />
           <KpiCard label="Active Surveys" value={summary.active_surveys ?? 0} color="text-intuitive-400" />
@@ -263,14 +263,14 @@ export default function DashboardPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input
               type="text"
               value={hospitalFilter}
               onChange={e => setHospitalFilter(e.target.value)}
               placeholder="Filter hospitals..."
-              className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg pl-9 pr-3 py-2 w-56 focus:outline-none focus:border-intuitive-500"
+              className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg pl-9 pr-3 py-2 w-full sm:w-56 focus:outline-none focus:border-intuitive-500"
             />
           </div>
           <select
@@ -309,8 +309,8 @@ export default function DashboardPage() {
 
         {/* Pipeline Table */}
         <div className="bg-slate-800/30 border border-slate-700 rounded-xl overflow-hidden mb-8">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-3 md:mx-0">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-slate-800/50 sticky top-0 z-10">
                 <tr>
                   <SortHeader col="hospital_name">Hospital</SortHeader>
