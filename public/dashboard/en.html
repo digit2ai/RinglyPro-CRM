@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CamaraVirtual.app -- Panel de Miembros</title>
+<title>VirtualChamber.app -- Member Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -597,14 +597,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           <h2>${chamberName}</h2>
           <p>Sign in to your member panel</p>
           <form id="dashLoginForm">
-            <label>Correo electronico</label>
-            <input type="email" id="loginEmail" required placeholder="tu@correo.com" autocomplete="email">
-            <label>Contrasena</label>
-            <input type="password" id="loginPass" required placeholder="Tu contrasena" autocomplete="current-password">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required placeholder="you@email.com" autocomplete="email">
+            <label>Password</label>
+            <input type="password" id="loginPass" required placeholder="Your password" autocomplete="current-password">
             <button type="submit" id="loginBtn">Sign In</button>
             ${errorMsg ? '<div class="login-msg error">' + errorMsg + '</div>' : '<div id="loginMsg"></div>'}
           </form>
-          <a href="${BASE || '/'}" class="login-back">&larr; Volver al sitio</a>
+          <a href="${BASE || '/'}" class="login-back">&larr; Back to site</a>
         </div>
       </div>
     `;
@@ -3477,7 +3477,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var angle = hciPct * 3.6;
       var bgGrad = 'conic-gradient(var(--primary) 0deg, var(--primary) '+angle+'deg, var(--gray-200) '+angle+'deg)';
 
-      var html = '<h2>CamaraVirtual.app -- Indice Compuesto (HCI)</h2>';
+      var html = '<h2>VirtualChamber.app -- Composite Index (HCI)</h2>';
       html += '<div class="gauge-wrap"><div class="gauge" style="background:'+bgGrad+'"><div class="gauge-inner"><div class="gauge-value">'+hciPct+'%</div><div class="gauge-label">HCI Score</div></div></div></div>';
       html += '<p class="text-muted text-sm" style="text-align:center">Target: '+targetPct+'%</p>';
 
