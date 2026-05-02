@@ -601,6 +601,7 @@
             <div class="form-group"><label>Pais</label><input type="text" name="country" placeholder="Espana"></div>
             <div class="form-group"><label>Email de contacto *</label><input type="email" name="contact_email" required placeholder="contacto@tucamara.org"></div>
           </div>
+          <div class="form-group"><label>URL del Logo <span style="font-weight:400;opacity:0.6;">(opcional)</span></label><input type="url" name="logo_url" placeholder="https://..."></div>
           <div class="form-row">
             <div class="form-group"><label>Tu nombre *</label><input type="text" name="owner_first_name" required placeholder="Carlos"></div>
             <div class="form-group"><label>Tu apellido *</label><input type="text" name="owner_last_name" required placeholder="Rodriguez"></div>
@@ -791,6 +792,7 @@
       owner_first_name: form.owner_first_name.value.trim(),
       owner_last_name: form.owner_last_name.value.trim(),
       owner_password: form.owner_password.value,
+      logo_url: form.logo_url ? form.logo_url.value.trim() : '',
       brand_domain: 'camaravirtual.app'
     };
 

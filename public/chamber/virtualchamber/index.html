@@ -653,6 +653,7 @@
             <div class="form-group"><label>Country</label><input type="text" name="country" placeholder="United States"></div>
             <div class="form-group"><label>Contact Email *</label><input type="email" name="contact_email" required placeholder="contact@yourchamber.org"></div>
           </div>
+          <div class="form-group"><label>Logo URL <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input type="url" name="logo_url" placeholder="https://..."></div>
           <div class="form-row">
             <div class="form-group"><label>First Name *</label><input type="text" name="owner_first_name" required placeholder="Alex"></div>
             <div class="form-group"><label>Last Name *</label><input type="text" name="owner_last_name" required placeholder="Smith"></div>
@@ -847,6 +848,7 @@
       owner_first_name: form.owner_first_name.value.trim(),
       owner_last_name: form.owner_last_name.value.trim(),
       owner_password: form.owner_password.value,
+      logo_url: form.logo_url ? form.logo_url.value.trim() : '',
       brand_domain: 'virtualchamber.app'
     };
 
