@@ -279,7 +279,7 @@
       <li><a href="#programs">How it works</a></li>
       <li><a href="#projects">Use Cases</a></li>
       <li><a href="#screening">Screening</a></li>
-      <li><a href="#register" style="color:var(--yellow);font-weight:600;">Request a Demo</a></li>
+      <li><a href="#register" style="color:var(--yellow);font-weight:600;">Register My Chamber</a></li>
       <li><a id="adminLink" href="/chamber/virtualchamber/platform-admin/" style="font-size:11px;opacity:0.5;">Admin</a></li>
     </ul>
   </nav>
@@ -307,7 +307,7 @@
     <p>Neural Intelligence AI activates your digital chamber in minutes, not weeks, connecting entrepreneurs and opportunities through intelligent matching, strategic collaboration, and network analytics that turn your membership into measurable growth.</p>
     <p style="margin-top:16px;font-size:15px;color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-weight:500;letter-spacing:1px;">Powered by Digit2AI -- Neural Intelligence and Business Match Algorithms</p>
     <div class="hero-ctas">
-      <a href="#register" class="btn-primary">Request a Demo</a>
+      <a href="#register" class="btn-primary">Register My Chamber</a>
       <a href="#about" class="btn-outline">See what is inside</a>
     </div>
     <div class="hero-stats">
@@ -614,7 +614,7 @@
   </div>
 </section>
 
-<!-- REQUEST A DEMO -->
+<!-- REGISTER MY CHAMBER -->
 <section class="section reg-section section-full" id="register">
   <div class="section-inner">
     <div class="reg-grid">
@@ -630,8 +630,8 @@
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Private Directory with Trust Scores</li>
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Collaboration with Monte Carlo Simulation</li>
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Business Exchange Marketplace</li>
-            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Network Analytics Analitica de Red y Dashboard HCI HCI Dashboard</li>
-            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Payments Pagos y Fideicomiso (Stripe) Escrow (Stripe)</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Network Analytics &amp; HCI Dashboard</li>
+            <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Payments &amp; Escrow (Stripe)</li>
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Admin Governance Panel</li>
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> MCP AI Orchestrator (8 tools)</li>
             <li style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow);font-weight:700;">&#10003;</span> Data Isolation (14 private tables)</li>
@@ -640,43 +640,47 @@
         </div>
       </div>
       <div>
-        <form class="reg-form" id="demoForm" onsubmit="handleDemo(event)">
-          <div style="text-align:center;margin-bottom:24px;">
-            <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">REQUEST A DEMO</div>
-            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">We will show you how it works live</div>
+        <form class="reg-form" id="signupForm" onsubmit="handleSignup(event)">
+          <div style="text-align:center;margin-bottom:18px;">
+            <div style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);margin-bottom:6px;">REGISTER MY CHAMBER</div>
+            <div style="font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.6);">Your digital chamber, ready in less than 90 seconds</div>
+          </div>
+          <div style="background:var(--yellow);color:var(--blue-dark);padding:10px 14px;border-radius:8px;text-align:center;font-weight:700;font-size:13px;margin-bottom:18px;">
+            FREE Chamber Registration &middot; Each member pays their own subscription
+          </div>
+          <div class="form-group"><label>Chamber Name *</label><input type="text" name="chamber_name" required placeholder="Chamber of Commerce of..."></div>
+          <div class="form-row">
+            <div class="form-group"><label>Country</label><input type="text" name="country" placeholder="United States"></div>
+            <div class="form-group"><label>Contact Email *</label><input type="email" name="contact_email" required placeholder="contact@yourchamber.org"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>First Name</label><input type="text" name="first_name" required placeholder="Alex"></div>
-            <div class="form-group"><label>Last Name</label><input type="text" name="last_name" required placeholder="Smith"></div>
+            <div class="form-group"><label>First Name *</label><input type="text" name="owner_first_name" required placeholder="Alex"></div>
+            <div class="form-group"><label>Last Name *</label><input type="text" name="owner_last_name" required placeholder="Smith"></div>
           </div>
-          <div class="form-group"><label>Email</label><input type="email" name="email" required placeholder="alex@chamber.org"></div>
-          <div class="form-group"><label>Chamber of Commerce Name</label><input type="text" name="chamber_name" required placeholder="Chamber of Commerce of..."></div>
-          <div class="form-row">
-            <div class="form-group"><label>Country / Region</label>
-              <select name="region" required>
-                <option value="">--</option>
-                <option value="north_america">North America</option>
-                <option value="latam">Latin America</option>
-                <option value="europe">Europe</option>
-                <option value="middle_east">Middle East / Africa</option>
-                <option value="apac">Asia Pacific</option>
-                <option value="other">Other</option>
-              </select>
+          <div class="form-group">
+            <label>Password (min 8 characters) *</label>
+            <div style="position:relative">
+              <input type="password" name="owner_password" id="ownerPwd" required minlength="8" placeholder="Create a strong password" style="padding-right:64px;width:100%">
+              <button type="button" id="pwdToggle" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px">SHOW</button>
             </div>
-            <div class="form-group"><label>Number of Members</label>
-              <select name="members_count" required>
-                <option value="">--</option>
-                <option value="1-50">1 - 50</option>
-                <option value="51-200">51 - 200</option>
-                <option value="201-500">201 - 500</option>
-                <option value="501-1000">501 - 1,000</option>
-                <option value="1000+">1,000+</option>
-              </select>
+            <div style="margin-top:6px;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+              <div id="pwdBar" style="height:100%;width:0%;transition:width 0.2s,background 0.2s;background:#dc2626"></div>
             </div>
+            <div id="pwdLabel" style="font-size:11px;margin-top:4px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif">&nbsp;</div>
           </div>
-          <div class="form-group"><label>Message <span style="font-weight:400;opacity:0.6;">(optional)</span></label><input type="text" name="message" placeholder="Tell us about your chamber..."></div>
-          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Request a Demo</button>
+          <div class="form-group">
+            <label>Confirm password *</label>
+            <div style="position:relative">
+              <input type="password" name="owner_password_confirm" id="ownerPwdConfirm" required placeholder="Repeat password" style="padding-right:64px;width:100%">
+              <button type="button" id="pwdToggleConfirm" tabindex="-1" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px">SHOW</button>
+            </div>
+            <div id="pwdMatchLabel" style="font-size:11px;margin-top:4px;color:rgba(255,255,255,0.5);font-family:'Inter',sans-serif">&nbsp;</div>
+          </div>
+          <button type="submit" class="btn-submit" style="font-size:16px;padding:16px;">Create my Chamber &mdash; Free</button>
           <div class="form-msg" id="formMsg"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;margin-top:10px;">
+            By continuing you accept the terms of service. No credit card required.
+          </div>
         </form>
       </div>
     </div>
@@ -696,7 +700,7 @@
       <a href="#pillars">Modules</a>
       <a href="#programs">How It Works</a>
       <a href="#projects">Use Cases</a>
-      <a href="#register">Request a Demo</a>
+      <a href="#register">Register My Chamber</a>
       <a href="#technology">Technology</a>
     </div>
     <div class="footer-col">
@@ -754,39 +758,118 @@
     var v=d.hci||d.bci||d.score||d.value; document.getElementById('hciValue').textContent=v!==undefined?parseFloat(v).toFixed(2):'0.82';
   }).catch(function(){document.getElementById('hciValue').textContent='0.82';});
 
-  window.handleDemo = function(e) {
+  // Password show/hide toggle (both fields)
+  function wirePwdToggle(inputId, btnId) {
+    var input = document.getElementById(inputId);
+    var btn = document.getElementById(btnId);
+    if (!input || !btn) return;
+    btn.addEventListener('click', function() {
+      var isPwd = input.type === 'password';
+      input.type = isPwd ? 'text' : 'password';
+      btn.textContent = isPwd ? 'HIDE' : 'SHOW';
+    });
+  }
+  wirePwdToggle('ownerPwd', 'pwdToggle');
+  wirePwdToggle('ownerPwdConfirm', 'pwdToggleConfirm');
+
+  // Live password-match indicator
+  var pwdInput = document.getElementById('ownerPwd');
+  var pwdConfirm = document.getElementById('ownerPwdConfirm');
+  var pwdMatchLabel = document.getElementById('pwdMatchLabel');
+  function checkMatch() {
+    if (!pwdInput || !pwdConfirm || !pwdMatchLabel) return;
+    if (!pwdConfirm.value) { pwdMatchLabel.textContent = ' '; pwdMatchLabel.style.color = 'rgba(255,255,255,0.5)'; return; }
+    if (pwdInput.value === pwdConfirm.value) { pwdMatchLabel.textContent = '✓ Passwords match'; pwdMatchLabel.style.color = '#16a34a'; }
+    else { pwdMatchLabel.textContent = '✗ Passwords do not match'; pwdMatchLabel.style.color = '#dc2626'; }
+  }
+  if (pwdInput && pwdConfirm) {
+    pwdInput.addEventListener('input', checkMatch);
+    pwdConfirm.addEventListener('input', checkMatch);
+  }
+
+  // Password strength meter
+  function scorePwd(p) {
+    if (!p) return { pct: 0, label: '', color: '#dc2626' };
+    var score = 0;
+    if (p.length >= 8) score++;
+    if (p.length >= 12) score++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+    if (/\d/.test(p)) score++;
+    if (/[^a-zA-Z0-9]/.test(p)) score++;
+    var pct = Math.min(100, score * 20);
+    var label, color;
+    if (score <= 1) { label = 'Very weak'; color = '#dc2626'; }
+    else if (score === 2) { label = 'Weak'; color = '#ea580c'; }
+    else if (score === 3) { label = 'Acceptable'; color = '#ca8a04'; }
+    else if (score === 4) { label = 'Strong'; color = '#16a34a'; }
+    else { label = 'Very strong'; color = '#15803d'; }
+    return { pct: pct, label: label, color: color };
+  }
+  var pwdBar = document.getElementById('pwdBar');
+  var pwdLabel = document.getElementById('pwdLabel');
+  if (pwdInput && pwdBar && pwdLabel) {
+    pwdInput.addEventListener('input', function() {
+      var s = scorePwd(this.value);
+      pwdBar.style.width = s.pct + '%';
+      pwdBar.style.background = s.color;
+      pwdLabel.textContent = s.label || ' ';
+      pwdLabel.style.color = s.color;
+    });
+  }
+
+  // Free chamber registration -- no payment required
+  window.handleSignup = function(e) {
     e.preventDefault();
-    var form=e.target, btn=form.querySelector('.btn-submit'), msg=document.getElementById('formMsg');
-    btn.disabled=true; btn.textContent='Sending request...'; msg.className='form-msg'; msg.style.display='';
-    var d={
-      first_name:form.first_name.value.trim(),
-      last_name:form.last_name.value.trim(),
-      email:form.email.value.trim(),
-      chamber_name:form.chamber_name.value.trim(),
-      region:form.region.value,
-      members_count:form.members_count.value,
-      message:form.message?form.message.value.trim():''
+    var form = e.target;
+    var btn = form.querySelector('.btn-submit');
+    var msg = document.getElementById('formMsg');
+    var origLabel = 'Create my Chamber &mdash; Free';
+    btn.disabled = true;
+    btn.textContent = 'Creating your chamber...';
+    msg.className = 'form-msg';
+    msg.style.display = '';
+
+    function fail(text) {
+      msg.className = 'form-msg error';
+      msg.textContent = text;
+      btn.disabled = false;
+      btn.innerHTML = origLabel;
+    }
+
+    if (form.owner_password.value !== form.owner_password_confirm.value) {
+      return fail('Passwords do not match.');
+    }
+
+    var body = {
+      chamber_name: form.chamber_name.value.trim(),
+      country: form.country.value.trim(),
+      contact_email: form.contact_email.value.trim().toLowerCase(),
+      owner_first_name: form.owner_first_name.value.trim(),
+      owner_last_name: form.owner_last_name.value.trim(),
+      owner_password: form.owner_password.value,
+      brand_domain: 'virtualchamber.app'
     };
-    fetch(BASE+'/api/demo-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.success){
-        msg.className='form-msg success';
-        msg.textContent='Request received. We will be in touch shortly.';
-        form.reset();
+
+    fetch('/api/chambers/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Source-Domain': 'virtualchamber.app' },
+      body: JSON.stringify(body)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(json) {
+      if (json.success) {
+        msg.className = 'form-msg success';
+        msg.innerHTML = 'Chamber created: <strong>' + json.data.chamber.slug + '</strong>. Redirecting to your panel...';
+        try {
+          localStorage.setItem('chamber_token', json.data.token);
+          localStorage.setItem('chamber_slug', json.data.chamber.slug);
+        } catch (e) {}
+        setTimeout(function() { window.location.href = json.data.chamber.dashboard_url || ('/' + json.data.chamber.slug + '/dashboard/'); }, 1500);
       } else {
-        msg.className='form-msg error';
-        msg.textContent=res.error||'Failed to send. Please try again.';
+        fail(json.error || 'Failed to create chamber. Please try again.');
       }
     })
-    .catch(function(){
-      msg.className='form-msg error';
-      msg.textContent='Connection error. Please try again.';
-    })
-    .finally(function(){
-      btn.disabled=false;
-      btn.textContent='Request a Demo';
-    });
+    .catch(function(err) { fail('Error: ' + (err.message || 'unknown')); });
   };
 
   var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:0.1});
