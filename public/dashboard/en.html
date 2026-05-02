@@ -569,7 +569,23 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (headerImg) headerImg.src = logo;
   }
 
-  async function showLoginScreen(errorMsg) {
+  // Accepts either a string or { message, checkout_url } so the login screen
+  // can render a clickable "finish checkout" link when the API returns
+  // PAYMENT_REQUIRED with a Stripe URL.
+  async function showLoginScreen(errorArg) {
+    var errorMsg = (errorArg && typeof errorArg === 'object') ? errorArg.message : errorArg;
+    var checkoutUrl = (errorArg && typeof errorArg === 'object') ? errorArg.checkout_url : null;
+    var errorHtml = '';
+    if (errorMsg) {
+      if (checkoutUrl) {
+        errorHtml = '<div class="login-msg error"><a href="' + checkoutUrl + '" style="color:inherit;text-decoration:underline;cursor:pointer">' + errorMsg + '</a></div>';
+      } else {
+        errorHtml = '<div class="login-msg error">' + errorMsg + '</div>';
+      }
+    }
+    return showLoginScreenInner(errorHtml);
+  }
+  async function showLoginScreenInner(errorHtml) {
     var info = await loadChamberInfo();
     var chamberName = (info && info.name) || 'VirtualChamber.app';
     var chamberLogo = resolveChamberLogo(info);
@@ -602,7 +618,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             <label>Password</label>
             <input type="password" id="loginPass" required placeholder="Your password" autocomplete="current-password">
             <button type="submit" id="loginBtn">Sign In</button>
-            ${errorMsg ? '<div class="login-msg error">' + errorMsg + '</div>' : '<div id="loginMsg"></div>'}
+            ${errorHtml || '<div id="loginMsg"></div>'}
           </form>
           <a href="${BASE || '/'}" class="login-back">&larr; Back to site</a>
         </div>
@@ -624,11 +640,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (data.success && data.data && data.data.token) {
           setToken(data.data.token);
           location.reload();
+        } else if (data.code === 'PAYMENT_REQUIRED' && data.checkout_url) {
+          showLoginScreen({ message: data.error, checkout_url: data.checkout_url });
         } else {
-          showLoginScreen(data.error || 'Credenciales invalidas');
+          showLoginScreen(data.error || 'Invalid credentials');
         }
       } catch(e) {
-        showLoginScreen('Error de conexion. Intenta de nuevo.');
+        showLoginScreen('Connection error. Please try again.');
       }
     });
   }

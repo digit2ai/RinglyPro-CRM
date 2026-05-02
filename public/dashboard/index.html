@@ -577,7 +577,23 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (headerImg) headerImg.src = logo;
   }
 
-  async function showLoginScreen(errorMsg) {
+  // Accepts either a string or { message, checkout_url } so the login screen
+  // can render a clickable "finish checkout" link when the API returns
+  // PAYMENT_REQUIRED with a Stripe URL.
+  async function showLoginScreen(errorArg) {
+    var errorMsg = (errorArg && typeof errorArg === 'object') ? errorArg.message : errorArg;
+    var checkoutUrl = (errorArg && typeof errorArg === 'object') ? errorArg.checkout_url : null;
+    var errorHtml = '';
+    if (errorMsg) {
+      if (checkoutUrl) {
+        errorHtml = '<div class="login-msg error"><a href="' + checkoutUrl + '" style="color:inherit;text-decoration:underline;cursor:pointer">' + errorMsg + '</a></div>';
+      } else {
+        errorHtml = '<div class="login-msg error">' + errorMsg + '</div>';
+      }
+    }
+    return showLoginScreenInner(errorHtml);
+  }
+  async function showLoginScreenInner(errorHtml) {
     // Pull chamber name + logo so the login screen reflects the chamber the
     // visitor actually clicked into, not a generic CamaraVirtual.app shell.
     var info = await loadChamberInfo();
@@ -612,7 +628,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             <label>Contrasena</label>
             <input type="password" id="loginPass" required placeholder="Tu contrasena" autocomplete="current-password">
             <button type="submit" id="loginBtn">Iniciar Sesion</button>
-            ${errorMsg ? '<div class="login-msg error">' + errorMsg + '</div>' : '<div id="loginMsg"></div>'}
+            ${errorHtml || '<div id="loginMsg"></div>'}
           </form>
           <a href="${BASE || '/'}" class="login-back">&larr; Volver al sitio</a>
         </div>
@@ -634,6 +650,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (data.success && data.data && data.data.token) {
           setToken(data.data.token);
           location.reload();
+        } else if (data.code === 'PAYMENT_REQUIRED' && data.checkout_url) {
+          showLoginScreen({ message: data.error, checkout_url: data.checkout_url });
         } else {
           showLoginScreen(data.error || 'Credenciales invalidas');
         }

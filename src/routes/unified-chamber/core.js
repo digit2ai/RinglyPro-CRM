@@ -68,10 +68,78 @@ router.post('/auth/login', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Account ' + member.status });
     }
     if (member.status === 'pending_payment') {
+      // Mint a fresh Stripe Checkout so the login screen can offer a
+      // clickable resume link. Existing Checkout sessions on the row may
+      // already be expired (24h limit), so always create a new one.
+      let checkoutUrl = null;
+      try {
+        const stripeKey = process.env.STRIPE_SECRET_KEY;
+        if (stripeKey) {
+          const stripe = require('stripe')(stripeKey);
+          const baseUrl = `${req.protocol}://${req.get('host')}`;
+          const slug = req.chamber.slug;
+          const chamberName = req.chamber.name;
+          const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer_email: member.email,
+            metadata: {
+              chamber_id: String(req.chamber_id),
+              chamber_slug: slug,
+              member_id: String(member.id),
+              member_email: member.email,
+              flow: 'member_signup'
+            },
+            subscription_data: {
+              metadata: {
+                chamber_id: String(req.chamber_id),
+                chamber_slug: slug,
+                member_id: String(member.id)
+              }
+            },
+            line_items: [
+              {
+                price_data: {
+                  currency: 'usd',
+                  product_data: {
+                    name: `${chamberName} -- One-Time Setup Fee`,
+                    description: 'Account provisioning, onboarding, and platform activation'
+                  },
+                  unit_amount: 2500
+                },
+                quantity: 1
+              },
+              {
+                price_data: {
+                  currency: 'usd',
+                  product_data: {
+                    name: `${chamberName} -- Monthly Membership`,
+                    description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
+                  },
+                  unit_amount: 1000,
+                  recurring: { interval: 'month' }
+                },
+                quantity: 1
+              }
+            ],
+            mode: 'subscription',
+            success_url: `${baseUrl}/${slug}/login?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${baseUrl}/${slug}/login?payment=cancelled`
+          });
+          checkoutUrl = session.url;
+          await sequelize.query(
+            `UPDATE members SET stripe_customer_id = :cs, updated_at = NOW()
+             WHERE chamber_id = :c AND id = :id`,
+            { replacements: { c: req.chamber_id, id: member.id, cs: session.id } }
+          );
+        }
+      } catch (stripeErr) {
+        console.error('[/auth/login resume-checkout]', stripeErr.message);
+      }
       return res.status(402).json({
         success: false,
         error: 'Membership payment incomplete. Please finish checkout to activate your account.',
-        code: 'PAYMENT_REQUIRED'
+        code: 'PAYMENT_REQUIRED',
+        checkout_url: checkoutUrl
       });
     }
     const ok = await bcrypt.compare(password, member.password_hash);
