@@ -1103,6 +1103,37 @@ async function renderInbox(container) {
     </div>`;
 }
 
+function buildMeetingMailto({ toEmail, toName, company, projectName, shareUrl }) {
+  const firstName = (toName || '').trim().split(/\s+/)[0] || 'there';
+  const subject = `Initial meeting -- ${projectName || 'your project request'}`;
+  const lines = [
+    `Hi ${firstName},`,
+    '',
+    `Thank you for submitting your project request${company ? ' on behalf of ' + company : ''}. I'd like to schedule a brief 20-30 minute call so I can ask a few clarifying questions before we lock the scope and timeline.`,
+    '',
+    'A few times that work on my side this week and next:',
+    '  - [propose 2-3 windows in your timezone]',
+    '',
+    'If none of those work, please reply with two or three times that suit you and I will send a calendar invite.',
+    ''
+  ];
+  if (shareUrl) {
+    lines.push('In the meantime you can review and add notes to the request directly in our shared workspace:');
+    lines.push(shareUrl);
+    lines.push('');
+  }
+  lines.push('Looking forward to speaking with you.');
+  lines.push('');
+  lines.push('Best,');
+  lines.push('Manuel Stagg');
+  lines.push('Digit2AI');
+  lines.push('mstagg@digit2ai.com');
+  const body = lines.join('\n');
+  return 'mailto:' + encodeURIComponent(toEmail)
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body=' + encodeURIComponent(body);
+}
+
 function renderInboxCard(p) {
   const cats = Array.isArray(p.ai_category) && p.ai_category.length ? p.ai_category : (p.category ? [p.category] : []);
   const catChips = cats.map(c => `<span class="tag">${escHtml(String(c))}</span>`).join(' ');
@@ -1119,6 +1150,16 @@ function renderInboxCard(p) {
       <div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-top:2px">${escHtml(q.answers.join('\n'))}</div>
     </div>`).join('');
   const shareUrl = p.share_token ? `/projects/intake/batch.html?token=${p.share_token}` : null;
+  const absShareUrl = shareUrl ? (location.origin + shareUrl) : null;
+  const meetingHref = p.submitter_email
+    ? buildMeetingMailto({
+        toEmail: p.submitter_email,
+        toName: p.submitter_name || '',
+        company: company,
+        projectName: p.name,
+        shareUrl: absShareUrl
+      })
+    : null;
 
   return `
     <details class="card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--bg-card)" data-project-id="${p.id}">
@@ -1144,6 +1185,7 @@ function renderInboxCard(p) {
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
           <button class="btn btn-success btn-sm" onclick="approveInboxItem(${p.id})" id="approve-btn-${p.id}">&#10003; Approve &amp; generate plan</button>
           <button class="btn btn-danger btn-sm" onclick="rejectInboxItem(${p.id})" id="reject-btn-${p.id}">&times; Reject</button>
+          ${meetingHref ? `<a class="btn btn-ghost btn-sm" href="${meetingHref}">&#128231; Meeting Request</a>` : ''}
           ${shareUrl ? `<a class="btn btn-ghost btn-sm" href="${shareUrl}" target="_blank" rel="noopener">Open discussion</a>` : ''}
           <span id="inbox-status-${p.id}" style="margin-left:auto;font-size:12px;color:var(--text-muted);align-self:center"></span>
         </div>
