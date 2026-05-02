@@ -48,24 +48,30 @@ a{color:inherit;text-decoration:none}
 @keyframes smDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-60px,-40px) scale(1.15)}}
 @keyframes smDrift3{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(calc(-50% + 50px),calc(-50% - 30px)) scale(.9)}}
 @media (prefers-reduced-motion:reduce){.sm-bg__orb,.sm-bg__particles{animation:none!important}}
-/* Demo provider modal */
-.sm-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+/* Demo Request Form Modal */
+.sm-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;overflow-y:auto}
 .sm-modal.open{display:flex}
 .sm-modal__panel{background:#0f172a;border:1px solid #1e293b;border-radius:16px;max-width:440px;width:100%;padding:28px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.sm-modal__close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:8px;background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center}
+.sm-modal__panel--form{max-width:560px;max-height:90vh;overflow-y:auto}
+.sm-modal__close{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:8px;background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:1}
 .sm-modal__close:hover{background:#1e293b;color:#fff}
-.sm-modal__title{font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:6px}
+.sm-modal__title{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:6px}
 .sm-modal__sub{font-size:.88rem;color:#94a3b8;margin-bottom:20px}
-.sm-modal__list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sm-modal__btn{display:flex;align-items:center;gap:10px;padding:14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-size:.92rem;font-weight:600;transition:all .15s}
-.sm-modal__btn:hover{background:#334155;transform:translateY(-1px)}
-.sm-modal__btn .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.sm-modal__btn .gmail{background:#ea4335}
-.sm-modal__btn .outlook{background:#0078d4}
-.sm-modal__btn .yahoo{background:#6001d2}
-.sm-modal__btn .apple{background:#94a3b8}
-.sm-modal__copy{margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;font-size:.78rem;color:#64748b;text-align:center}
-.sm-modal__copy a{color:#94a3b8;cursor:pointer;text-decoration:underline}
+.sm-form{display:flex;flex-direction:column;gap:12px}
+.sm-form__row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.sm-form__row{grid-template-columns:1fr}}
+.sm-form__field{display:flex;flex-direction:column;gap:6px}
+.sm-form__field span{font-size:.78rem;font-weight:600;color:#cbd5e1;letter-spacing:.02em}
+.sm-form__field span em{color:#f87171;font-style:normal;margin-left:2px}
+.sm-form__field input,.sm-form__field textarea{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 12px;color:#fff;font-size:.92rem;font-family:inherit;width:100%;transition:border-color .15s}
+.sm-form__field input:focus,.sm-form__field textarea:focus{outline:none;border-color:#7c5cff;box-shadow:0 0 0 3px rgba(124,92,255,.15)}
+.sm-form__field textarea{resize:vertical;min-height:72px}
+.sm-form__field input::placeholder,.sm-form__field textarea::placeholder{color:#64748b}
+.sm-form__error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5;padding:10px 12px;border-radius:8px;font-size:.85rem}
+.sm-form__submit{margin-top:6px;padding:13px 24px;background:linear-gradient(135deg,#7c5cff,#5b3eff);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s;font-family:inherit}
+.sm-form__submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px -8px rgba(124,92,255,.6)}
+.sm-form__submit:disabled{opacity:.6;cursor:not-allowed}
+.sm-form__note{font-size:.74rem;color:#64748b;text-align:center;margin-top:4px}
 .hero-inner{max-width:860px;position:relative;z-index:1}
 .hero-logo{width:480px;max-width:80vw;height:auto;margin:0 auto 12px;display:block}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:.78rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:28px}
@@ -916,43 +922,121 @@ a{color:inherit;text-decoration:none}
   </div>
 </footer>
 
-<!-- Demo provider modal -->
+<!-- Demo Request Form Modal -->
 <div class="sm-modal" id="demoModal" onclick="if(event.target===this) closeDemoModal()">
-  <div class="sm-modal__panel">
+  <div class="sm-modal__panel sm-modal__panel--form">
     <button class="sm-modal__close" onclick="closeDemoModal()" aria-label="Close">&times;</button>
-    <div class="sm-modal__title">Request a Demo</div>
-    <div class="sm-modal__sub">Choose your email provider -- we'll prefill the message.</div>
-    <div class="sm-modal__list">
-      <a class="sm-modal__btn" id="demoGmail" target="_blank" rel="noopener"><span class="dot gmail"></span>Gmail</a>
-      <a class="sm-modal__btn" id="demoOutlook" target="_blank" rel="noopener"><span class="dot outlook"></span>Outlook</a>
-      <a class="sm-modal__btn" id="demoYahoo" target="_blank" rel="noopener"><span class="dot yahoo"></span>Yahoo</a>
-      <a class="sm-modal__btn" id="demoApple"><span class="dot apple"></span>Apple Mail</a>
+    <div id="demoFormView">
+      <div class="sm-modal__title">Request a Demo</div>
+      <div class="sm-modal__sub">Tell us about your hospital -- we'll be in touch within one business day.</div>
+      <form id="demoForm" class="sm-form" onsubmit="submitDemoForm(event)">
+        <div class="sm-form__row">
+          <label class="sm-form__field">
+            <span>Full name <em>*</em></span>
+            <input name="full_name" type="text" required autocomplete="name" />
+          </label>
+          <label class="sm-form__field">
+            <span>Work email <em>*</em></span>
+            <input name="email" type="email" required autocomplete="email" />
+          </label>
+        </div>
+        <div class="sm-form__row">
+          <label class="sm-form__field">
+            <span>Hospital / Organization <em>*</em></span>
+            <input name="company_name" type="text" required />
+          </label>
+          <label class="sm-form__field">
+            <span>Role / Title</span>
+            <input name="role" type="text" placeholder="e.g. Director of Robotic Surgery" />
+          </label>
+        </div>
+        <div class="sm-form__row">
+          <label class="sm-form__field">
+            <span>Phone</span>
+            <input name="phone" type="tel" autocomplete="tel" />
+          </label>
+          <label class="sm-form__field">
+            <span>Best time to reach you</span>
+            <input name="best_time" type="text" placeholder="e.g. weekday mornings ET" />
+          </label>
+        </div>
+        <label class="sm-form__field">
+          <span>What would you like to see in the demo?</span>
+          <textarea name="message" rows="3" placeholder="Specific use case, surgical specialty, or question (optional)"></textarea>
+        </label>
+        <div class="sm-form__error" id="demoFormError" style="display:none"></div>
+        <button type="submit" class="sm-form__submit" id="demoSubmitBtn">Send Request</button>
+        <div class="sm-form__note">Submitted to the SurgicalMind AI inbox -- no email client needed.</div>
+      </form>
     </div>
-    <div class="sm-modal__copy">
-      Or email <a onclick="copyDemoEmail(this)">mstagg@digit2ai.com</a> directly.
+    <div id="demoSuccessView" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:48px;line-height:1;margin-bottom:14px">&#10003;</div>
+      <div class="sm-modal__title">Request received</div>
+      <div class="sm-modal__sub" style="margin-bottom:24px">Thank you. We'll reach out shortly to schedule your demo.</div>
+      <button onclick="closeDemoModal()" class="sm-form__submit" style="max-width:200px;margin:0 auto">Close</button>
     </div>
   </div>
 </div>
 
 <script>
-(function(){
-  const TO='mstagg@digit2ai.com';
-  const SUBJ='SurgicalMind AI Demo Request';
-  const BODY='Hi Manuel,\n\nI am interested in a live demo of SurgicalMind AI for our hospital / organization.\n\nHospital / Organization: \nName: \nRole: \nPhone: \n\nPlease let me know your availability.\n\nThank you.';
-  const eSubj=encodeURIComponent(SUBJ);
-  const eBody=encodeURIComponent(BODY);
-  const eTo=encodeURIComponent(TO);
-  document.getElementById('demoGmail').href='https://mail.google.com/mail/?view=cm&fs=1&to='+eTo+'&su='+eSubj+'&body='+eBody;
-  document.getElementById('demoOutlook').href='https://outlook.live.com/mail/0/deeplink/compose?to='+eTo+'&subject='+eSubj+'&body='+eBody;
-  document.getElementById('demoYahoo').href='https://compose.mail.yahoo.com/?to='+eTo+'&subject='+eSubj+'&body='+eBody;
-  document.getElementById('demoApple').href='mailto:'+TO+'?subject='+eSubj+'&body='+eBody;
-})();
 function openDemoModal(e){if(e) e.preventDefault(); document.getElementById('demoModal').classList.add('open');}
-function closeDemoModal(){document.getElementById('demoModal').classList.remove('open');}
-function copyDemoEmail(el){
-  navigator.clipboard.writeText('mstagg@digit2ai.com').then(function(){
-    const orig=el.textContent;el.textContent='Copied!';setTimeout(function(){el.textContent=orig;},1500);
-  }).catch(function(){});
+function closeDemoModal(){
+  document.getElementById('demoModal').classList.remove('open');
+  setTimeout(function(){
+    document.getElementById('demoFormView').style.display='';
+    document.getElementById('demoSuccessView').style.display='none';
+    var f=document.getElementById('demoForm'); if(f) f.reset();
+    var err=document.getElementById('demoFormError'); if(err){err.style.display='none';err.textContent='';}
+  }, 250);
+}
+async function submitDemoForm(e){
+  e.preventDefault();
+  var form=e.target;
+  var btn=document.getElementById('demoSubmitBtn');
+  var errBox=document.getElementById('demoFormError');
+  errBox.style.display='none'; errBox.textContent='';
+  btn.disabled=true; var origLabel=btn.textContent; btn.textContent='Sending...';
+
+  var data=new FormData(form);
+  var role=(data.get('role')||'').trim();
+  var message=(data.get('message')||'').trim();
+  var hospital=(data.get('company_name')||'').trim();
+  var problemParts=['Demo request for SurgicalMind AI from '+hospital+'.'];
+  if(role) problemParts.push('Role: '+role);
+  if(message) problemParts.push('Notes: '+message);
+
+  var payload={
+    full_name: data.get('full_name'),
+    email: data.get('email'),
+    phone: data.get('phone') || null,
+    company_name: hospital,
+    industry: 'Healthcare / Hospital',
+    project_title: 'SurgicalMind AI Demo Request -- '+hospital,
+    project_description: 'Prospect requested a live demo of SurgicalMind AI (da Vinci business planning platform).',
+    problem: problemParts.join('\n'),
+    ai_category: ['SurgicalMind AI'],
+    heard_from: 'SurgicalMind landing page (surgicalmind.app)',
+    best_time: data.get('best_time') || null
+  };
+
+  try{
+    var res=await fetch('https://aiagent.ringlypro.com/projects/api/v1/intake/public/request',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    var json=await res.json().catch(function(){return {};});
+    if(!res.ok || !json.success){
+      throw new Error(json.error || ('Server returned '+res.status));
+    }
+    document.getElementById('demoFormView').style.display='none';
+    document.getElementById('demoSuccessView').style.display='';
+  }catch(err){
+    errBox.textContent='Could not submit: '+err.message+'. Please email mstagg@digit2ai.com directly.';
+    errBox.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent=origLabel;
+  }
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape') closeDemoModal();});
 </script>
