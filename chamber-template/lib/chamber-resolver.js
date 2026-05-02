@@ -27,7 +27,7 @@ async function lookupChamber(slug) {
   if (cached && cached.expiresAt > Date.now()) return cached.chamber;
   const [row] = await sequelize.query(
     `SELECT id, slug, name, brand_domain, primary_language, country, status,
-            logo_url, contact_email, owner_member_id,
+            logo_url, contact_email, contact_phone, owner_member_id,
             stripe_customer_id, subscription_status, theme_config
      FROM chambers WHERE slug = :slug`,
     { replacements: { slug }, type: QueryTypes.SELECT }

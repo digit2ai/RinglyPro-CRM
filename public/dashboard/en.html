@@ -3679,6 +3679,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       { id:'members', label:'Member Management', access:true },
       { id:'governance', label:'Board of Directors', access:isGlobalAdmin },
       { id:'regions', label:'Regional Delegations', access:true },
+      { id:'chamber', label:'Chamber Settings', access:isSuperadmin },
       { id:'system', label:'System', access:isSuperadmin }
     ];
     var tabBar = c.querySelector('.admin-tabs');
@@ -3801,6 +3802,65 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         h += '</div>';
         ac.innerHTML = h;
+      } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
+
+    } else if (tab === 'chamber') {
+      try {
+        var res = await apiFetch('/admin/chamber');
+        if (!res.success) { ac.innerHTML = '<div class="error-msg">' + esc(res.error) + '</div>'; return; }
+        var ch = res.data;
+        var h = '<h3 style="margin-bottom:8px;">Chamber Settings</h3>';
+        h += '<p class="text-muted text-sm" style="margin-bottom:18px;">Update the public-facing details of your chamber. Changes apply immediately across the landing page, dashboard, and member guide.</p>';
+        h += '<form id="chamberSettingsForm" style="max-width:640px;display:grid;gap:14px;">';
+        h += '<div class="form-group"><label>Chamber Name *</label><input type="text" name="name" value="' + esc(ch.name||'') + '" required></div>';
+        h += '<div class="form-group"><label>Contact Email *</label><input type="email" name="contact_email" value="' + esc(ch.contact_email||'') + '" required></div>';
+        h += '<div class="form-group"><label>Phone Number</label><input type="tel" name="contact_phone" value="' + esc(ch.contact_phone||'') + '" placeholder="+1 555 123 4567"></div>';
+        h += '<div class="form-group"><label>Logo URL</label><input type="url" name="logo_url" value="' + esc(ch.logo_url||'') + '" placeholder="https://..."></div>';
+        h += '<div class="form-group"><label>Country</label><input type="text" name="country" value="' + esc(ch.country||'') + '"></div>';
+        h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-500);">';
+        h += '<div><strong>Slug:</strong><br>' + esc(ch.slug||'') + '</div>';
+        h += '<div><strong>Brand Domain:</strong><br>' + esc(ch.brand_domain||'') + '</div>';
+        h += '<div><strong>Language:</strong><br>' + esc(ch.primary_language||'') + '</div>';
+        h += '</div>';
+        h += '<div id="chamberSettingsMsg" style="display:none;"></div>';
+        h += '<button type="submit" class="btn btn-primary" style="justify-self:start;padding:12px 28px;">Save Changes</button>';
+        h += '</form>';
+        ac.innerHTML = h;
+        document.getElementById('chamberSettingsForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          var f = e.target;
+          var msg = document.getElementById('chamberSettingsMsg');
+          var btn = f.querySelector('button[type=submit]');
+          btn.disabled = true; btn.textContent = 'Saving...';
+          msg.style.display = 'none';
+          var body = {
+            name: f.name.value.trim(),
+            contact_email: f.contact_email.value.trim(),
+            contact_phone: f.contact_phone.value.trim(),
+            logo_url: f.logo_url.value.trim(),
+            country: f.country.value.trim()
+          };
+          try {
+            var r = await apiFetch('/admin/chamber', 'PUT', body);
+            if (r.success) {
+              msg.className = 'success-msg';
+              msg.style.display = 'block';
+              msg.textContent = 'Chamber settings saved.';
+              _chamberInfo = null;
+              applyChamberBranding && applyChamberBranding();
+            } else {
+              msg.className = 'error-msg';
+              msg.style.display = 'block';
+              msg.textContent = r.error || 'Failed to save.';
+            }
+          } catch (err) {
+            msg.className = 'error-msg';
+            msg.style.display = 'block';
+            msg.textContent = err.message || 'Save failed.';
+          } finally {
+            btn.disabled = false; btn.textContent = 'Save Changes';
+          }
+        });
       } catch(e) { ac.innerHTML = '<div class="error-msg">Error: ' + esc(e.message) + '</div>'; }
 
     } else if (tab === 'system') {

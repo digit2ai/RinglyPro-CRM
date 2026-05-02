@@ -41,7 +41,8 @@ router.get('/public/info', async (req, res) => {
       data: {
         slug: chamber.slug, name: chamber.name, brand_domain: chamber.brand_domain,
         primary_language: chamber.primary_language, country: chamber.country,
-        logo_url: chamber.logo_url, member_count: parseInt(memberCount),
+        logo_url: chamber.logo_url, contact_email: chamber.contact_email,
+        contact_phone: chamber.contact_phone, member_count: parseInt(memberCount),
         recent_projects: projects, open_rfqs: rfqs, top_sectors: sectors
       }
     });
@@ -892,6 +893,68 @@ router.get('/payments/history', authMiddleware, async (req, res) => {
 // =====================================================================
 // ADMIN
 // =====================================================================
+// GET /admin/chamber -- chamber settings the chamber admin can edit
+router.get('/admin/chamber', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const [row] = await sequelize.query(
+      `SELECT id, slug, name, brand_domain, primary_language, country,
+              logo_url, contact_email, contact_phone, status,
+              subscription_status, created_at, updated_at
+       FROM chambers WHERE id = :c`,
+      { replacements: { c: req.chamber_id }, type: QueryTypes.SELECT }
+    );
+    if (!row) return res.status(404).json({ success: false, error: 'Chamber not found' });
+    return res.json({ success: true, data: row });
+  } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// PUT /admin/chamber -- update editable chamber metadata
+router.put('/admin/chamber', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const allowed = ['name', 'contact_email', 'contact_phone', 'logo_url', 'country'];
+    const sets = [];
+    const repl = { c: req.chamber_id };
+    for (const k of allowed) {
+      if (Object.prototype.hasOwnProperty.call(req.body, k)) {
+        let v = req.body[k];
+        if (typeof v === 'string') v = v.trim();
+        if (v === '') v = null;
+        if (k === 'name' && !v) {
+          return res.status(400).json({ success: false, error: 'name cannot be empty' });
+        }
+        if (k === 'contact_email' && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+          return res.status(400).json({ success: false, error: 'Invalid contact_email' });
+        }
+        if (k === 'logo_url' && v && !/^https?:\/\//i.test(v)) {
+          return res.status(400).json({ success: false, error: 'logo_url must start with http(s)://' });
+        }
+        sets.push(`${k} = :${k}`);
+        repl[k] = v;
+      }
+    }
+    if (sets.length === 0) {
+      return res.status(400).json({ success: false, error: 'No editable fields supplied' });
+    }
+    sets.push('updated_at = NOW()');
+    const [updated] = await sequelize.query(
+      `UPDATE chambers SET ${sets.join(', ')} WHERE id = :c
+       RETURNING id, slug, name, brand_domain, primary_language, country,
+                 logo_url, contact_email, contact_phone, status, updated_at`,
+      { replacements: repl, type: QueryTypes.SELECT }
+    );
+    // Drop both the chamber-resolver cache (slug-keyed) so subsequent
+    // requests pick up the new logo/name immediately.
+    try {
+      const { invalidateCache } = require('../../../chamber-template/lib/chamber-resolver');
+      invalidateCache(req.chamber.slug);
+    } catch (_) {}
+    return res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error('[PUT /admin/chamber]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/admin/members', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 100, 500);
