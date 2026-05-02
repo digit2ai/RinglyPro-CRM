@@ -770,7 +770,19 @@ try {
         } catch (e) { return next(e); }
     });
 
-    console.log('🏛️ Per-chamber routing active for cv-*/vc-* slugs (landing + dashboard + login)');
+    // Per-chamber member guide (Spanish vs English by primary_language)
+    app.get(['/:chamber_slug/guide', '/:chamber_slug/guide/'], async (req, res, next) => {
+        const slug = req.params.chamber_slug;
+        if (!isChamberSlug(slug)) return next();
+        try {
+            const chamber = await lookupChamber(slug);
+            if (!chamber) return res.status(404).send('Chamber not found');
+            const file = chamber.primary_language === 'en' ? 'en.html' : 'index.html';
+            return res.sendFile(path.join(__dirname, '..', 'public', 'guide', file));
+        } catch (e) { return next(e); }
+    });
+
+    console.log('🏛️ Per-chamber routing active for cv-*/vc-* slugs (landing + dashboard + login + guide)');
 } catch (error) {
     console.log('Per-chamber routing not available:', error.message);
 }

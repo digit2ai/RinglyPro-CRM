@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guia del Miembro -- CamaraVirtual.app</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#003DA5;--blue-dark:#002670;--yellow:#FCD116;--red:#CE1126;--gray-50:#f8fafc;--gray-200:#e5e7eb;--gray-500:#64748b;--gray-900:#0f172a;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;color:var(--gray-900);background:var(--gray-50);line-height:1.6;}
+.topbar{background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue) 100%);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px;}
+.topbar img{height:48px;width:48px;border-radius:8px;background:#fff;padding:4px;object-fit:cover;}
+.topbar h1{font-size:18px;font-weight:800;letter-spacing:0.5px;}
+.topbar h1 span{color:var(--yellow);}
+.topbar .back{margin-left:auto;color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.25);padding:8px 14px;border-radius:8px;}
+.topbar .back:hover{background:rgba(255,255,255,0.08);}
+.layout{display:grid;grid-template-columns:260px 1fr;max-width:1200px;margin:0 auto;gap:32px;padding:32px 24px;}
+.toc{position:sticky;top:24px;align-self:start;background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:18px;}
+.toc h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray-500);margin-bottom:12px;}
+.toc a{display:block;padding:8px 10px;color:var(--gray-900);text-decoration:none;font-size:13.5px;font-weight:500;border-radius:6px;}
+.toc a:hover{background:var(--gray-50);color:var(--blue);}
+.content{max-width:780px;}
+.content h1{font-size:32px;font-weight:800;margin-bottom:8px;color:var(--blue-dark);}
+.content .subtitle{color:var(--gray-500);font-size:16px;margin-bottom:32px;}
+.content section{background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:28px;margin-bottom:20px;}
+.content h2{font-size:22px;font-weight:800;color:var(--blue-dark);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.content h2 .num{background:var(--yellow);color:var(--blue-dark);font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px;flex-shrink:0;}
+.content h3{font-size:16px;font-weight:700;color:var(--gray-900);margin:20px 0 8px;}
+.content p{font-size:15px;color:var(--gray-900);margin-bottom:12px;}
+.content ul,.content ol{padding-left:22px;margin-bottom:12px;}
+.content li{font-size:15px;margin-bottom:6px;}
+.content code{background:var(--gray-50);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--blue);}
+.callout{background:rgba(252,209,22,0.12);border-left:4px solid var(--yellow);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px;}
+.callout-tip{background:rgba(0,61,165,0.08);border-left-color:var(--blue);}
+.callout strong{color:var(--blue-dark);}
+.footer{text-align:center;padding:32px 24px;color:var(--gray-500);font-size:13px;}
+.footer a{color:var(--blue);}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.toc{position:static;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img id="brandLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69eacc56821e8babd85501cc.png" alt="CamaraVirtual">
+  <h1 id="brandName">Camara<span>Virtual</span></h1>
+  <a href="#" id="dashLink" class="back">&larr; Volver al Panel</a>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <h3>Contenido</h3>
+    <a href="#bienvenida">1. Bienvenida</a>
+    <a href="#registro">2. Registro y Pago</a>
+    <a href="#perfil">3. Mi Perfil</a>
+    <a href="#directorio">4. Directorio</a>
+    <a href="#matching">5. Match con IA</a>
+    <a href="#proyectos">6. Proyectos</a>
+    <a href="#invitaciones">7. Invitaciones</a>
+    <a href="#intercambio">8. Intercambio (RFQs)</a>
+    <a href="#metricas">9. Metricas y HCI</a>
+    <a href="#pagos">10. Pagos</a>
+    <a href="#tips">11. Consejos</a>
+    <a href="#soporte">12. Soporte</a>
+  </nav>
+
+  <main class="content">
+    <h1>Guia del Miembro</h1>
+    <p class="subtitle">Como aprovechar al maximo tu camara digital en CamaraVirtual.app</p>
+
+    <section id="bienvenida">
+      <h2><span class="num">1</span> Bienvenida</h2>
+      <p>Bienvenido a tu camara de comercio digital. Esta plataforma conecta a empresarios y profesionales hispanohablantes mediante inteligencia artificial -- desde el directorio privado y matching con IA hasta proyectos colaborativos, intercambio comercial (RFQs) y analitica de red.</p>
+      <p>Esta guia explica cada modulo y como obtener valor desde el primer dia.</p>
+      <div class="callout callout-tip"><strong>Acceso 24/7:</strong> Tu cuenta esta activa todo el tiempo. Inicia sesion desde cualquier dispositivo en la pagina de tu camara.</div>
+    </section>
+
+    <section id="registro">
+      <h2><span class="num">2</span> Registro y Pago</h2>
+      <h3>Crear tu cuenta</h3>
+      <ol>
+        <li>Visita la pagina de tu camara y haz clic en <strong>Unirme a la Camara</strong>.</li>
+        <li>Completa el formulario de registro: nombre, apellido, email, sector, region, empresa.</li>
+        <li>Crea una contrasena segura (minimo 8 caracteres).</li>
+        <li>Revisa los costos: <strong>$25 USD</strong> de configuracion inicial + <strong>$10 USD/mes</strong> de membresia.</li>
+        <li>Continua a Stripe Checkout para pagar de forma segura con tarjeta.</li>
+      </ol>
+      <h3>Si no terminaste el pago</h3>
+      <p>Si cerraste el navegador antes de completar el checkout, intenta iniciar sesion. Veras un mensaje "Pago de membresia incompleto" como un enlace clicable que te llevara a un nuevo Stripe Checkout para terminar.</p>
+      <div class="callout"><strong>Importante:</strong> Tu cuenta no se activa hasta que el pago se confirme. Mientras este pendiente no podras acceder al panel.</div>
+    </section>
+
+    <section id="perfil">
+      <h2><span class="num">3</span> Mi Perfil</h2>
+      <p>Tu perfil es la base de todas las interacciones en la plataforma. Cuanto mas completo este, mejores resultados obtendras del matching con IA y mas confianza generaras en otros miembros.</p>
+      <h3>Campos clave</h3>
+      <ul>
+        <li><strong>Sector y sub-especialidad:</strong> Determina con quien te emparejara la IA.</li>
+        <li><strong>Pais y region:</strong> Permite filtros geograficos en busquedas y proyectos.</li>
+        <li><strong>Bio profesional:</strong> Resumen breve de tu experiencia y oferta.</li>
+        <li><strong>Anos de experiencia, idiomas:</strong> Senales de credibilidad para otros miembros.</li>
+        <li><strong>LinkedIn, sitio web, telefono:</strong> Canales de contacto verificables.</li>
+      </ul>
+      <h3>Como editar</h3>
+      <ol>
+        <li>Haz clic en <strong>Mi Perfil</strong> en la barra lateral.</li>
+        <li>Pulsa <strong>Editar perfil</strong>.</li>
+        <li>Actualiza los campos y guarda.</li>
+      </ol>
+      <div class="callout callout-tip"><strong>Consejo:</strong> Un perfil con bio completa y LinkedIn obtiene un Trust Score inicial mas alto.</div>
+    </section>
+
+    <section id="directorio">
+      <h2><span class="num">4</span> Directorio</h2>
+      <p>El directorio es la lista privada de todos los miembros de tu camara. Solo es visible para miembros activos -- no esta indexado por buscadores externos.</p>
+      <h3>Que puedes hacer</h3>
+      <ul>
+        <li>Filtrar por <strong>sector, region, pais</strong>.</li>
+        <li>Buscar por nombre, empresa o palabra clave.</li>
+        <li>Ver el perfil completo de cada miembro: bio, sectores, idiomas, Trust Score, contacto.</li>
+        <li>Iniciar contacto directo via email o LinkedIn (si el miembro publico esos enlaces).</li>
+      </ul>
+      <div class="callout callout-tip"><strong>Tip:</strong> Usa el filtro por region para encontrar partners locales o internacionales segun el alcance de tu proyecto.</div>
+    </section>
+
+    <section id="matching">
+      <h2><span class="num">5</span> Match con IA</h2>
+      <p>El motor de matching usa similitud coseno sobre tu perfil + un Trust Score ponderado para rankear prospectos relevantes. Es la forma mas rapida de encontrar socios alineados.</p>
+      <h3>Como ejecutar un match</h3>
+      <ol>
+        <li>Abre <strong>Match con IA</strong> en la barra lateral.</li>
+        <li>Describe en lenguaje natural lo que buscas. Ejemplo: <em>"Busco proveedor de empaques sostenibles en Mexico con experiencia exportando a EE.UU."</em></li>
+        <li>La IA devuelve los miembros mejor clasificados con su <strong>score de similitud</strong> y <strong>Trust Score</strong>.</li>
+        <li>Haz clic en cualquiera para ver su perfil completo y enviar una invitacion o iniciar conversacion.</li>
+      </ol>
+      <h3>Como leer los scores</h3>
+      <ul>
+        <li><strong>Similitud (0.0 -- 1.0):</strong> Que tan alineado esta el perfil del prospecto con tu busqueda.</li>
+        <li><strong>Trust Score (0.0 -- 1.0):</strong> Reputacion acumulada del miembro: completitud del perfil, antiguedad, proyectos completados, valoraciones.</li>
+      </ul>
+    </section>
+
+    <section id="proyectos">
+      <h2><span class="num">6</span> Proyectos</h2>
+      <p>Los proyectos son colaboraciones multi-miembro con un ciclo de vida de seis fases: <strong>idea, plan, equipo, ejecucion, entrega, cierre</strong>. La IA ayuda a generar el plan inicial, ensamblar el equipo correcto y simular viabilidad con Monte Carlo.</p>
+      <h3>Crear un proyecto</h3>
+      <ol>
+        <li>Abre <strong>Proyectos</strong> y pulsa <strong>Nuevo proyecto</strong>.</li>
+        <li>Describe el problema, alcance, sector, regiones objetivo y plazo.</li>
+        <li>La IA genera un plan inicial con hitos y roles sugeridos.</li>
+        <li>Acepta o edita el plan y publicalo para reclutar miembros.</li>
+      </ol>
+      <h3>Reclutar al equipo</h3>
+      <p>Los miembros con perfil compatible reciben una invitacion. Pueden aceptar, rechazar o contraproponer. Una vez completo el equipo, el proyecto avanza a ejecucion.</p>
+      <h3>Simulacion Monte Carlo</h3>
+      <p>Antes de bloquear el equipo, la plataforma corre 10,000 simulaciones para estimar la probabilidad de exito basada en los Trust Scores y experiencia del equipo. Veras un porcentaje y rango de confianza.</p>
+      <div class="callout callout-tip"><strong>Tip:</strong> Proyectos con visibilidad publica aparecen en la pagina principal de la camara y atraen interes externo.</div>
+    </section>
+
+    <section id="invitaciones">
+      <h2><span class="num">7</span> Invitaciones</h2>
+      <p>Aqui ves todas las invitaciones a proyectos donde te han propuesto como miembro del equipo. El badge rojo en la barra lateral muestra cuantas tienes pendientes.</p>
+      <h3>Acciones disponibles</h3>
+      <ul>
+        <li><strong>Aceptar:</strong> Te unes al equipo del proyecto.</li>
+        <li><strong>Rechazar:</strong> Declinas con un comentario opcional.</li>
+        <li><strong>Contraproponer:</strong> Sugieres cambios al rol o alcance antes de aceptar.</li>
+      </ul>
+    </section>
+
+    <section id="intercambio">
+      <h2><span class="num">8</span> Intercambio (RFQs)</h2>
+      <p>El Intercambio es el marketplace privado de la camara. Los miembros publican <strong>Solicitudes de Cotizacion (RFQs)</strong> y otros responden con propuestas.</p>
+      <h3>Publicar una RFQ</h3>
+      <ol>
+        <li>Abre <strong>Intercambio</strong> y pulsa <strong>Nueva RFQ</strong>.</li>
+        <li>Describe que necesitas, sector, rango de presupuesto y plazo.</li>
+        <li>Publica como visible para todos los miembros, o restringida por region/sector.</li>
+        <li>Las respuestas llegan a tu bandeja de invitaciones.</li>
+      </ol>
+      <h3>Responder a una RFQ</h3>
+      <ol>
+        <li>Filtra las RFQs abiertas por sector que te interese.</li>
+        <li>Pulsa <strong>Enviar propuesta</strong>, adjunta tu cotizacion y plazo de entrega.</li>
+        <li>El emisor recibira una notificacion para revisarla.</li>
+      </ol>
+    </section>
+
+    <section id="metricas">
+      <h2><span class="num">9</span> Metricas y HCI</h2>
+      <p>El <strong>HCI (Health Composite Index)</strong> es el indicador en vivo de la salud de la camara. Combina cinco pilares:</p>
+      <ul>
+        <li><strong>Equidad regional (1 - Gini):</strong> Que tan distribuida esta la membresia entre regiones.</li>
+        <li><strong>Confianza promedio:</strong> Trust Score promedio ponderado.</li>
+        <li><strong>Valor de red (Metcalfe):</strong> Crecimiento de conexiones potenciales.</li>
+        <li><strong>Exito de proyectos:</strong> % de proyectos completados con calificacion positiva.</li>
+        <li><strong>Activacion de miembros:</strong> % de miembros activos en los ultimos 30 dias.</li>
+      </ul>
+      <p>Cada miembro contribuye al HCI: completar tu perfil, terminar proyectos, responder RFQs y mantener conexiones activas mejora el indice de toda la camara.</p>
+    </section>
+
+    <section id="pagos">
+      <h2><span class="num">10</span> Pagos</h2>
+      <p>La pestana <strong>Pagos</strong> muestra tu historial de transacciones, suscripcion activa y proximos cargos. Todo procesado de forma segura por Stripe.</p>
+      <h3>Que veras aqui</h3>
+      <ul>
+        <li>Recibo del pago inicial ($25) + cargos mensuales ($10).</li>
+        <li>Estado de tu suscripcion: activa, en periodo de gracia, cancelada.</li>
+        <li>Boton para gestionar metodo de pago o cancelar suscripcion (via Stripe Customer Portal).</li>
+        <li>Si la camara opera con fideicomiso (escrow) para proyectos, veras los fondos retenidos por proyecto.</li>
+      </ul>
+    </section>
+
+    <section id="tips">
+      <h2><span class="num">11</span> Consejos para Sacar Maximo Valor</h2>
+      <ol>
+        <li><strong>Completa tu perfil al 100%</strong> en la primera semana -- impacta directamente en tu Trust Score y en los matches que recibes.</li>
+        <li><strong>Ejecuta un match con IA</strong> en los primeros dias para descubrir miembros relevantes.</li>
+        <li><strong>Publica una RFQ pequena</strong> para activar el ciclo de intercambio y conocer la dinamica.</li>
+        <li><strong>Acepta invitaciones a proyectos</strong> aunque sean pequenas -- cada proyecto completado sube tu Trust Score.</li>
+        <li><strong>Mantente activo</strong>: la activacion de miembros (uso en ultimos 30 dias) es uno de los pilares del HCI.</li>
+        <li><strong>Verifica la informacion de contacto</strong> de otros miembros (LinkedIn, sitio web) antes de comprometerte en un proyecto grande.</li>
+      </ol>
+    </section>
+
+    <section id="soporte">
+      <h2><span class="num">12</span> Soporte</h2>
+      <p>Si tienes problemas tecnicos, dudas o feedback:</p>
+      <ul>
+        <li><strong>Email:</strong> <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a></li>
+        <li><strong>Sitio:</strong> <a href="https://camaravirtual.app" target="_blank">camaravirtual.app</a></li>
+      </ul>
+      <p>Para temas de pago contacta directamente al administrador de tu camara desde el directorio.</p>
+    </section>
+  </main>
+</div>
+
+<div class="footer">
+  &copy; <span id="copyYear"></span> CamaraVirtual.app -- Camara de Comercio Digital para el Mundo Hispanohablante
+</div>
+
+<script>
+(function(){
+  document.getElementById('copyYear').textContent = new Date().getFullYear();
+  var pathParts = location.pathname.split('/').filter(Boolean);
+  var slug = pathParts[0] && /^(cv|vc)-\d+$/.test(pathParts[0]) ? pathParts[0] : null;
+  var dashHref = slug ? ('/' + slug + '/dashboard/') : '/';
+  var dashLink = document.getElementById('dashLink');
+  if (dashLink) dashLink.href = dashHref;
+
+  if (slug) {
+    fetch('/' + slug + '/api/public/info')
+      .then(function(r){return r.json();})
+      .then(function(json){
+        if (!json || !json.success || !json.data) return;
+        var d = json.data;
+        if (d.name) document.getElementById('brandName').textContent = d.name;
+        if (d.logo_url) document.getElementById('brandLogo').src = d.logo_url;
+      })
+      .catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

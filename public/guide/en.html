@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Member Guide -- VirtualChamber.app</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#003DA5;--blue-dark:#002670;--yellow:#FCD116;--red:#CE1126;--gray-50:#f8fafc;--gray-200:#e5e7eb;--gray-500:#64748b;--gray-900:#0f172a;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;color:var(--gray-900);background:var(--gray-50);line-height:1.6;}
+.topbar{background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue) 100%);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px;}
+.topbar img{height:48px;width:48px;border-radius:8px;background:#fff;padding:4px;object-fit:cover;}
+.topbar h1{font-size:18px;font-weight:800;letter-spacing:0.5px;}
+.topbar h1 span{color:var(--yellow);}
+.topbar .back{margin-left:auto;color:rgba(255,255,255,0.85);text-decoration:none;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.25);padding:8px 14px;border-radius:8px;}
+.topbar .back:hover{background:rgba(255,255,255,0.08);}
+.layout{display:grid;grid-template-columns:260px 1fr;max-width:1200px;margin:0 auto;gap:32px;padding:32px 24px;}
+.toc{position:sticky;top:24px;align-self:start;background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:18px;}
+.toc h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray-500);margin-bottom:12px;}
+.toc a{display:block;padding:8px 10px;color:var(--gray-900);text-decoration:none;font-size:13.5px;font-weight:500;border-radius:6px;}
+.toc a:hover{background:var(--gray-50);color:var(--blue);}
+.content{max-width:780px;}
+.content h1{font-size:32px;font-weight:800;margin-bottom:8px;color:var(--blue-dark);}
+.content .subtitle{color:var(--gray-500);font-size:16px;margin-bottom:32px;}
+.content section{background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:28px;margin-bottom:20px;}
+.content h2{font-size:22px;font-weight:800;color:var(--blue-dark);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.content h2 .num{background:var(--yellow);color:var(--blue-dark);font-size:13px;font-weight:800;padding:4px 10px;border-radius:6px;flex-shrink:0;}
+.content h3{font-size:16px;font-weight:700;color:var(--gray-900);margin:20px 0 8px;}
+.content p{font-size:15px;color:var(--gray-900);margin-bottom:12px;}
+.content ul,.content ol{padding-left:22px;margin-bottom:12px;}
+.content li{font-size:15px;margin-bottom:6px;}
+.content code{background:var(--gray-50);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--blue);}
+.callout{background:rgba(252,209,22,0.12);border-left:4px solid var(--yellow);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px;}
+.callout-tip{background:rgba(0,61,165,0.08);border-left-color:var(--blue);}
+.callout strong{color:var(--blue-dark);}
+.footer{text-align:center;padding:32px 24px;color:var(--gray-500);font-size:13px;}
+.footer a{color:var(--blue);}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.toc{position:static;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img id="brandLogo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69ee8f070d66f2a66567d208.png" alt="VirtualChamber">
+  <h1 id="brandName">Virtual<span>Chamber</span></h1>
+  <a href="#" id="dashLink" class="back">&larr; Back to Dashboard</a>
+</div>
+
+<div class="layout">
+  <nav class="toc">
+    <h3>Contents</h3>
+    <a href="#welcome">1. Welcome</a>
+    <a href="#signup">2. Signup &amp; Payment</a>
+    <a href="#profile">3. My Profile</a>
+    <a href="#directory">4. Directory</a>
+    <a href="#matching">5. AI Matching</a>
+    <a href="#projects">6. Projects</a>
+    <a href="#invitations">7. Invitations</a>
+    <a href="#exchange">8. Exchange (RFQs)</a>
+    <a href="#metrics">9. Metrics &amp; HCI</a>
+    <a href="#payments">10. Payments</a>
+    <a href="#tips">11. Tips</a>
+    <a href="#support">12. Support</a>
+  </nav>
+
+  <main class="content">
+    <h1>Member Guide</h1>
+    <p class="subtitle">How to get the most out of your digital chamber on VirtualChamber.app</p>
+
+    <section id="welcome">
+      <h2><span class="num">1</span> Welcome</h2>
+      <p>Welcome to your digital chamber of commerce. This platform connects entrepreneurs and professionals with artificial intelligence -- private directory, AI matching, collaborative projects, business exchange (RFQs), and live network analytics.</p>
+      <p>This guide explains every module and how to extract value from day one.</p>
+      <div class="callout callout-tip"><strong>24/7 access:</strong> Your account is always on. Sign in from any device on your chamber's landing page.</div>
+    </section>
+
+    <section id="signup">
+      <h2><span class="num">2</span> Signup &amp; Payment</h2>
+      <h3>Create your account</h3>
+      <ol>
+        <li>Visit your chamber's page and click <strong>Join Chamber</strong>.</li>
+        <li>Fill out the signup form: first name, last name, email, sector, region, company.</li>
+        <li>Create a strong password (minimum 8 characters).</li>
+        <li>Review the costs: <strong>$25 USD</strong> one-time setup + <strong>$10 USD/month</strong> membership.</li>
+        <li>Continue to Stripe Checkout for secure card payment.</li>
+      </ol>
+      <h3>If you didn't finish payment</h3>
+      <p>If you closed the browser before completing checkout, try signing in. You'll see a "Membership payment incomplete" message rendered as a clickable link that opens a fresh Stripe Checkout to finish.</p>
+      <div class="callout"><strong>Important:</strong> Your account doesn't activate until payment is confirmed. While pending you cannot access the dashboard.</div>
+    </section>
+
+    <section id="profile">
+      <h2><span class="num">3</span> My Profile</h2>
+      <p>Your profile is the foundation of every interaction on the platform. The more complete it is, the better your AI match results and the more trust you generate with other members.</p>
+      <h3>Key fields</h3>
+      <ul>
+        <li><strong>Sector and sub-specialty:</strong> Drives who the AI matches you with.</li>
+        <li><strong>Country and region:</strong> Enables geographic filters in searches and projects.</li>
+        <li><strong>Professional bio:</strong> Short summary of your experience and offering.</li>
+        <li><strong>Years of experience, languages:</strong> Credibility signals for other members.</li>
+        <li><strong>LinkedIn, website, phone:</strong> Verifiable contact channels.</li>
+      </ul>
+      <h3>How to edit</h3>
+      <ol>
+        <li>Click <strong>My Profile</strong> in the sidebar.</li>
+        <li>Press <strong>Edit profile</strong>.</li>
+        <li>Update fields and save.</li>
+      </ol>
+      <div class="callout callout-tip"><strong>Tip:</strong> A profile with a complete bio and LinkedIn earns a higher initial Trust Score.</div>
+    </section>
+
+    <section id="directory">
+      <h2><span class="num">4</span> Directory</h2>
+      <p>The directory is the private list of all members in your chamber. It is only visible to active members -- not indexed by external search engines.</p>
+      <h3>What you can do</h3>
+      <ul>
+        <li>Filter by <strong>sector, region, country</strong>.</li>
+        <li>Search by name, company, or keyword.</li>
+        <li>View each member's full profile: bio, sectors, languages, Trust Score, contact.</li>
+        <li>Reach out directly via email or LinkedIn (if the member published those links).</li>
+      </ul>
+      <div class="callout callout-tip"><strong>Tip:</strong> Use the region filter to find local or international partners depending on your project's scope.</div>
+    </section>
+
+    <section id="matching">
+      <h2><span class="num">5</span> AI Matching</h2>
+      <p>The matching engine uses cosine similarity over your profile + a weighted Trust Score to rank relevant prospects. It's the fastest way to find aligned partners.</p>
+      <h3>How to run a match</h3>
+      <ol>
+        <li>Open <strong>AI Matching</strong> in the sidebar.</li>
+        <li>Describe in natural language what you're looking for. Example: <em>"Looking for a sustainable packaging supplier in Mexico with experience exporting to the U.S."</em></li>
+        <li>The AI returns the top-ranked members with their <strong>similarity score</strong> and <strong>Trust Score</strong>.</li>
+        <li>Click any of them to see the full profile and send an invitation or start a conversation.</li>
+      </ol>
+      <h3>How to read the scores</h3>
+      <ul>
+        <li><strong>Similarity (0.0 -- 1.0):</strong> How aligned the prospect's profile is with your search.</li>
+        <li><strong>Trust Score (0.0 -- 1.0):</strong> The member's accumulated reputation: profile completeness, tenure, completed projects, ratings.</li>
+      </ul>
+    </section>
+
+    <section id="projects">
+      <h2><span class="num">6</span> Projects</h2>
+      <p>Projects are multi-member collaborations with a six-phase lifecycle: <strong>idea, plan, team, execution, delivery, close</strong>. The AI helps generate the initial plan, assemble the right team, and simulate viability with Monte Carlo.</p>
+      <h3>Create a project</h3>
+      <ol>
+        <li>Open <strong>Projects</strong> and press <strong>New project</strong>.</li>
+        <li>Describe the problem, scope, sector, target regions, and timeline.</li>
+        <li>The AI generates an initial plan with milestones and suggested roles.</li>
+        <li>Accept or edit the plan and publish it to recruit members.</li>
+      </ol>
+      <h3>Recruit the team</h3>
+      <p>Members with compatible profiles receive an invitation. They can accept, decline, or counter-propose. Once the team is complete, the project advances to execution.</p>
+      <h3>Monte Carlo simulation</h3>
+      <p>Before locking the team, the platform runs 10,000 simulations to estimate success probability based on the team's Trust Scores and experience. You'll see a percentage and confidence range.</p>
+      <div class="callout callout-tip"><strong>Tip:</strong> Projects with public visibility appear on the chamber's main page and attract external interest.</div>
+    </section>
+
+    <section id="invitations">
+      <h2><span class="num">7</span> Invitations</h2>
+      <p>Here you see every invitation to projects where you've been proposed as a team member. The red badge in the sidebar shows how many are pending.</p>
+      <h3>Available actions</h3>
+      <ul>
+        <li><strong>Accept:</strong> You join the project team.</li>
+        <li><strong>Decline:</strong> You decline with an optional comment.</li>
+        <li><strong>Counter-propose:</strong> Suggest changes to role or scope before accepting.</li>
+      </ul>
+    </section>
+
+    <section id="exchange">
+      <h2><span class="num">8</span> Exchange (RFQs)</h2>
+      <p>The Exchange is the chamber's private marketplace. Members post <strong>Requests for Quotes (RFQs)</strong> and others respond with proposals.</p>
+      <h3>Post an RFQ</h3>
+      <ol>
+        <li>Open <strong>Exchange</strong> and press <strong>New RFQ</strong>.</li>
+        <li>Describe what you need, sector, budget range, and deadline.</li>
+        <li>Publish as visible to all members, or restricted by region/sector.</li>
+        <li>Responses arrive in your invitations inbox.</li>
+      </ol>
+      <h3>Respond to an RFQ</h3>
+      <ol>
+        <li>Filter open RFQs by the sector that interests you.</li>
+        <li>Press <strong>Submit proposal</strong>, attach your quote and delivery timeline.</li>
+        <li>The poster gets a notification to review it.</li>
+      </ol>
+    </section>
+
+    <section id="metrics">
+      <h2><span class="num">9</span> Metrics &amp; HCI</h2>
+      <p>The <strong>HCI (Health Composite Index)</strong> is the live indicator of chamber health. It combines five pillars:</p>
+      <ul>
+        <li><strong>Regional equity (1 - Gini):</strong> How distributed membership is across regions.</li>
+        <li><strong>Average trust:</strong> Weighted average Trust Score.</li>
+        <li><strong>Network value (Metcalfe):</strong> Growth of potential connections.</li>
+        <li><strong>Project success:</strong> % of projects completed with positive ratings.</li>
+        <li><strong>Member activation:</strong> % of members active in the last 30 days.</li>
+      </ul>
+      <p>Every member contributes to HCI: completing your profile, finishing projects, responding to RFQs, and keeping connections active raises the index for the whole chamber.</p>
+    </section>
+
+    <section id="payments">
+      <h2><span class="num">10</span> Payments</h2>
+      <p>The <strong>Payments</strong> tab shows your transaction history, active subscription, and upcoming charges. All processed securely by Stripe.</p>
+      <h3>What you'll see</h3>
+      <ul>
+        <li>Receipt for the initial payment ($25) + monthly charges ($10).</li>
+        <li>Subscription status: active, in grace period, cancelled.</li>
+        <li>Button to manage payment method or cancel subscription (via Stripe Customer Portal).</li>
+        <li>If your chamber operates with escrow on projects, you'll see funds held per project.</li>
+      </ul>
+    </section>
+
+    <section id="tips">
+      <h2><span class="num">11</span> Tips to Get Maximum Value</h2>
+      <ol>
+        <li><strong>Complete your profile to 100%</strong> in the first week -- it directly impacts your Trust Score and the matches you receive.</li>
+        <li><strong>Run an AI match</strong> in the first few days to discover relevant members.</li>
+        <li><strong>Post a small RFQ</strong> to activate the exchange cycle and learn the dynamics.</li>
+        <li><strong>Accept project invitations</strong> even small ones -- every completed project raises your Trust Score.</li>
+        <li><strong>Stay active:</strong> member activation (use in last 30 days) is one of the HCI pillars.</li>
+        <li><strong>Verify other members' contact info</strong> (LinkedIn, website) before committing to a large project.</li>
+      </ol>
+    </section>
+
+    <section id="support">
+      <h2><span class="num">12</span> Support</h2>
+      <p>If you have technical issues, questions, or feedback:</p>
+      <ul>
+        <li><strong>Email:</strong> <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a></li>
+        <li><strong>Site:</strong> <a href="https://virtualchamber.app" target="_blank">virtualchamber.app</a></li>
+      </ul>
+      <p>For payment matters, contact your chamber's administrator directly through the directory.</p>
+    </section>
+  </main>
+</div>
+
+<div class="footer">
+  &copy; <span id="copyYear"></span> VirtualChamber.app -- Digital Chamber of Commerce for the Modern World
+</div>
+
+<script>
+(function(){
+  document.getElementById('copyYear').textContent = new Date().getFullYear();
+  var pathParts = location.pathname.split('/').filter(Boolean);
+  var slug = pathParts[0] && /^(cv|vc)-\d+$/.test(pathParts[0]) ? pathParts[0] : null;
+  var dashHref = slug ? ('/' + slug + '/dashboard/') : '/';
+  var dashLink = document.getElementById('dashLink');
+  if (dashLink) dashLink.href = dashHref;
+
+  if (slug) {
+    fetch('/' + slug + '/api/public/info')
+      .then(function(r){return r.json();})
+      .then(function(json){
+        if (!json || !json.success || !json.data) return;
+        var d = json.data;
+        if (d.name) document.getElementById('brandName').textContent = d.name;
+        if (d.logo_url) document.getElementById('brandLogo').src = d.logo_url;
+      })
+      .catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

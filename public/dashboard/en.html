@@ -465,6 +465,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Payments
       </div>
+      <a class="sidebar-nav-item" id="guideNavLink" href="#" target="_blank" style="text-decoration:none;color:inherit;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        Member Guide
+      </a>
       <div class="sidebar-nav-item" data-page="admin" id="adminNavItem" style="display:none;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:16px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         <span style="color:var(--accent);font-weight:600;">Admin</span>
@@ -510,6 +514,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   var slugMatch = pathParts[0] && /^(cv|vc)-\d+$/.test(pathParts[0]) ? pathParts[0] : null;
   var BASE = slugMatch ? ('/' + slugMatch)
            : (pathParts[0] === 'chamber' && pathParts[1] ? '/chamber/' + pathParts[1] : '');
+
+  // Wire member-guide link in sidebar
+  (function(){
+    var g = document.getElementById('guideNavLink');
+    if (g) g.href = (BASE || '') + '/guide';
+  })();
 
   // -- State --
   const API = BASE + '/api';
