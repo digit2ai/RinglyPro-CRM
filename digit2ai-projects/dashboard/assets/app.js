@@ -1142,7 +1142,7 @@ function openMeetingChooser(projectId) {
   const gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + eTo + '&su=' + eSu + '&body=' + eBody;
   const outlook = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + eTo + '&subject=' + eSu + '&body=' + eBody;
   const yahoo = 'https://compose.mail.yahoo.com/?to=' + eTo + '&subject=' + eSu + '&body=' + eBody;
-  // Apple Mail: download a .eml with X-Unsent:1 -- opening it launches Mail.app as a NEW DRAFT
+  const apple = 'mailto:' + draft.toEmail + '?subject=' + eSu + '&body=' + eBody;
 
   let modal = document.getElementById('meetingChooserModal');
   if (!modal) {
@@ -1162,41 +1162,37 @@ function openMeetingChooser(projectId) {
         <a href="${gmail}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#ea4335"></span>Gmail</a>
         <a href="${outlook}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#0078d4"></span>Outlook</a>
         <a href="${yahoo}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#6001d2"></span>Yahoo</a>
-        <button onclick="downloadMeetingEml()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;font-weight:600;font-size:.92rem;cursor:pointer;font-family:inherit;text-align:left"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8"></span>Apple Mail</button>
+        <a href="${apple}" onclick="onAppleMailClick()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b;border:1px solid #334155;border-radius:10px;color:#fff;text-decoration:none;font-weight:600;font-size:.92rem"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8"></span>Apple Mail</a>
       </div>
-      <div id="meetingChooserHint" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.3);border-radius:8px;font-size:.8rem;color:#cbd5e1;line-height:1.45">
-        Downloaded <code style="background:#1e293b;padding:1px 6px;border-radius:4px">meeting-request.eml</code>. Open it from your Downloads to launch Apple Mail with the prefilled draft.
+      <div id="meetingChooserHint" style="display:none;margin-top:12px;padding:12px 14px;background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.3);border-radius:8px;font-size:.8rem;color:#cbd5e1;line-height:1.55">
+        <strong style="color:#fff">Apple Mail did not open?</strong> Chrome needs a one-time setup to route mailto: links to Mail.app:
+        <ol style="margin:8px 0 0 18px;padding:0">
+          <li>In Chrome, paste this in the address bar and press Enter: <code style="background:#1e293b;padding:1px 6px;border-radius:4px;color:#a5b4fc">chrome://settings/handlers</code></li>
+          <li>Toggle <strong>Sites can ask to handle protocols</strong> ON.</li>
+          <li>Open <strong>Mail.app</strong> &rarr; <strong>Settings</strong> &rarr; <strong>General</strong> &rarr; set <strong>Default email reader</strong> to <em>Mail</em>.</li>
+          <li>Come back here, click <strong>Apple Mail</strong> again -- Chrome will prompt to allow Mail.app to open mailto: links. Click <strong>Allow</strong>.</li>
+        </ol>
+        <div style="margin-top:6px;color:#94a3b8">After that, every Apple Mail click in this dashboard opens Mail.app instantly with the draft prefilled.</div>
       </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;font-size:.78rem;color:#64748b;text-align:center">
         Or <a onclick="copyMeetingDraft(this)" style="color:#94a3b8;cursor:pointer;text-decoration:underline">copy the message to clipboard</a> and paste anywhere.
       </div>
     </div>`;
 }
-function downloadMeetingEml() {
-  if (!__meetingDraft) return;
-  const d = __meetingDraft;
-  const eol = '\r\n';
-  // RFC822 with X-Unsent: 1 -- macOS Mail / Outlook open this as a NEW DRAFT
-  const headers = [
-    'X-Unsent: 1',
-    'From: mstagg@digit2ai.com',
-    'To: ' + d.toEmail,
-    'Subject: ' + d.subject,
-    'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: 8bit'
-  ].join(eol);
-  const eml = headers + eol + eol + d.body.replace(/\n/g, eol);
-  const blob = new Blob([eml], { type: 'message/rfc822' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'meeting-request.eml';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-  const hint = document.getElementById('meetingChooserHint');
-  if (hint) hint.style.display = 'block';
+function onAppleMailClick() {
+  // Detect whether the mailto: actually triggered a handler.
+  // If Chrome routes it to Mail.app, the page loses focus within ~400ms;
+  // if no handler is registered, focus stays put -- show the setup hint then.
+  let triggered = false;
+  const onBlur = function () { triggered = true; };
+  window.addEventListener('blur', onBlur, { once: true });
+  setTimeout(function () {
+    window.removeEventListener('blur', onBlur);
+    if (!triggered) {
+      const hint = document.getElementById('meetingChooserHint');
+      if (hint) hint.style.display = 'block';
+    }
+  }, 700);
 }
 function copyMeetingDraft(el) {
   if (!__meetingDraft) return;
