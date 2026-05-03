@@ -2023,6 +2023,61 @@ app.get('/marketing-guidelines', (req, res) => {
 
 // DIGIT2AI investor page with Open Graph meta tags
 // Served via iframe from digit2ai.com (GHL). Keep X-Frame-Options OFF for this route.
+//
+// Language routing:
+//   - Default: English at /digit2ai
+//   - Spanish-speaking countries (geo-detected client-side) auto-redirect to /digit2ai-es
+//   - User override via ?lang=en|es persists in localStorage to suppress future redirects
+const D2AI_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
+(function(){
+  try {
+    var TARGET = ${JSON.stringify(targetLang)}; // 'en' or 'es' = the page being served
+    var url = new URL(window.location.href);
+    var override = url.searchParams.get('lang');
+    var STORE_KEY = 'd2ai_lang';
+    var safeGet = function(){ try { return localStorage.getItem(STORE_KEY); } catch(e){ return null; } };
+    var safeSet = function(v){ try { localStorage.setItem(STORE_KEY, v); } catch(e){} };
+    // Explicit override wins and persists
+    if (override === 'en' || override === 'es') {
+      safeSet(override);
+      if (override !== TARGET) {
+        window.location.replace(override === 'es' ? '/digit2ai-es' : '/digit2ai');
+      }
+      return;
+    }
+    var stored = safeGet();
+    if (stored === 'en' || stored === 'es') {
+      if (stored !== TARGET) {
+        window.location.replace(stored === 'es' ? '/digit2ai-es' : '/digit2ai');
+      }
+      return;
+    }
+    // First visit: geo-detect, but only redirect FROM English TO Spanish.
+    // Spanish-speaking visitors landing on /digit2ai-es directly should stay there.
+    if (TARGET === 'es') { safeSet('es'); return; }
+    var SPANISH_COUNTRIES = ['ES','MX','AR','CO','PE','VE','CL','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PR','UY','GQ'];
+    var done = false;
+    var html = document.documentElement;
+    html.style.visibility = 'hidden';
+    var finish = function(toEs){
+      if (done) return; done = true;
+      html.style.visibility = '';
+      if (toEs) { safeSet('es'); window.location.replace('/digit2ai-es'); }
+      else { safeSet('en'); }
+    };
+    // Safety: never block render for more than 1200ms
+    setTimeout(function(){ finish(false); }, 1200);
+    fetch('https://ipapi.co/json/', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var c = d && d.country_code ? String(d.country_code).toUpperCase() : '';
+        finish(SPANISH_COUNTRIES.indexOf(c) !== -1);
+      })
+      .catch(function(){ finish(false); });
+  } catch(e) { /* fail open: stay on current page */ }
+})();
+</script>`;
+
 app.get('/digit2ai', (req, res) => {
   const contentPath = path.join(__dirname, '../digit2ai.html');
   const content = fs.readFileSync(contentPath, 'utf8');
@@ -2035,6 +2090,7 @@ app.get('/digit2ai', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${D2AI_GEO_REDIRECT_SCRIPT('en')}
 <title>DIGIT2AI - AI-Native Platforms for Small Business</title>
 <meta name="description" content="DIGIT2AI builds and scales AI-powered vertical platforms. 21 live products across 22 industries. The operating system of vertical AI.">
 <meta property="og:type" content="website">
@@ -2062,26 +2118,31 @@ app.get('/digit2ai-es', (req, res) => {
   const contentPath = path.join(__dirname, '../digit2ai-es.html');
   const content = fs.readFileSync(contentPath, 'utf8');
   const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  // Allow framing from digit2ai.com (same as /digit2ai)
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGIT2AI - Oportunidad de Inversion | Portafolio de SaaS Vertical con AI</title>
-<meta name="description" content="DIGIT2AI construye y escala plataformas verticales con AI. 12 productos en vivo en 11 industrias. Oportunidad de inversion en el futuro de la automatizacion AI.">
+${D2AI_GEO_REDIRECT_SCRIPT('es')}
+<title>DIGIT2AI - Plataformas AI-Nativas para Pequeñas Empresas</title>
+<meta name="description" content="DIGIT2AI construye y escala plataformas verticales con AI. 21 productos en vivo en 22 industrias. El sistema operativo del AI vertical.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://aiagent.ringlypro.com/digit2ai-es">
-<meta property="og:title" content="DIGIT2AI Oportunidad de Inversion">
-<meta property="og:description" content="12 plataformas AI en vivo en 11 verticales industriales. Agentes de voz, SaaS vertical y automatizacion -- listos para escalar en cada mercado desatendido.">
+<meta property="og:title" content="DIGIT2AI — Plataformas AI-Nativas para Pequeñas Empresas">
+<meta property="og:description" content="21 plataformas AI en vivo en 22 verticales industriales. Agentes de voz, SaaS vertical y automatización.">
 <meta property="og:image" content="${ogImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DIGIT2AI Oportunidad de Inversion">
-<meta name="twitter:description" content="12 plataformas AI en vivo en 11 verticales industriales. Agentes de voz, SaaS vertical y automatizacion -- listos para escalar.">
+<meta name="twitter:title" content="DIGIT2AI — Plataformas AI-Nativas para Pequeñas Empresas">
+<meta name="twitter:description" content="21 plataformas AI en vivo en 22 verticales industriales.">
 <meta name="twitter:image" content="${ogImage}">
+<style>html,body{margin:0;padding:0;background:#05070e;}</style>
 </head>
-<body style="margin:0;padding:0;">
+<body>
 ${content}
 </body>
 </html>`;
