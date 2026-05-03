@@ -1354,8 +1354,19 @@ async function renderProjects(container) {
     </table>
   `;
 
-  document.getElementById('projects-tbody').innerHTML = res.data.length > 0
-    ? res.data.map(p => {
+  // Sort by priority: critical > high > medium > low (then by due_date ascending within each tier)
+  const prioOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  const sorted = [...res.data].sort((a, b) => {
+    const pa = prioOrder[a.priority] ?? 9;
+    const pb = prioOrder[b.priority] ?? 9;
+    if (pa !== pb) return pa - pb;
+    const da = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+    const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    return da - db;
+  });
+
+  document.getElementById('projects-tbody').innerHTML = sorted.length > 0
+    ? sorted.map(p => {
         const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
         return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
           <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
