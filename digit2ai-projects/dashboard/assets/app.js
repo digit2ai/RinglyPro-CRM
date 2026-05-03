@@ -239,6 +239,7 @@ async function renderOverview(container) {
       <button class="quick-action-btn" onclick="openTaskModal()"><span class="qa-icon">&#9989;</span><span class="qa-label">Add To-Do</span></button>
       <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-icon">&#128197;</span><span class="qa-label">Schedule Event</span></button>
       <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-icon">&#10024;</span><span class="qa-label">Ask AI</span></button>
+      <button class="quick-action-btn" onclick="openZoomMeeting()"><span class="qa-icon">&#127909;</span><span class="qa-label">Zoom Meeting</span></button>
     </div>`;
 
   container.innerHTML = `
