@@ -1343,6 +1343,7 @@ async function renderProjects(container) {
           <option value="low">Low</option>
         </select>
       </div>
+      <button class="btn btn-ghost btn-sm" onclick="openZoomMeeting()" title="Open Zoom (info@digit2ai.com) in a new tab" style="color:#2D8CFF;border-color:#2D8CFF">&#127909; Zoom Meeting</button>
       <button class="btn btn-ghost btn-sm" onclick="printProjectsPDF()" title="Print / Export PDF">Print PDF</button>
       <button class="btn btn-primary btn-sm" onclick="openProjectModal()">+ New Project</button>
     </div>
@@ -1378,6 +1379,14 @@ async function renderProjects(container) {
         </tr>`;
       }).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet.<br><br><button class="btn btn-primary" onclick="openProjectModal()">&#128203; Create Your First Project</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Start a new project called Website Redesign"</span></td></tr>';
+}
+
+// Open Zoom Meetings dashboard (info@digit2ai.com session) in a new tab.
+// If the user is signed into Zoom in this browser, it lands on the Meetings page;
+// otherwise Zoom prompts for login first, then redirects.
+function openZoomMeeting() {
+  const url = 'https://zoom.us/meeting/schedule?login_hint=' + encodeURIComponent('info@digit2ai.com');
+  window.open(url, '_blank', 'noopener');
 }
 
 // Print Projects as PDF — full detail for every project
