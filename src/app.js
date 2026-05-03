@@ -2037,18 +2037,30 @@ const D2AI_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
     var STORE_KEY = 'd2ai_lang';
     var safeGet = function(){ try { return localStorage.getItem(STORE_KEY); } catch(e){ return null; } };
     var safeSet = function(v){ try { localStorage.setItem(STORE_KEY, v); } catch(e){} };
+    // Navigate the top window when embedded in an iframe (e.g. digit2ai.com via GHL).
+    // Falls back to in-frame navigation if cross-origin access to top is blocked.
+    var nav = function(path){
+      var dest = 'https://aiagent.ringlypro.com' + path;
+      try {
+        if (window.top && window.top !== window.self) {
+          window.top.location.replace(dest);
+          return;
+        }
+      } catch(e) { /* cross-origin: fall through */ }
+      window.location.replace(path);
+    };
     // Explicit override wins and persists
     if (override === 'en' || override === 'es') {
       safeSet(override);
       if (override !== TARGET) {
-        window.location.replace(override === 'es' ? '/digit2ai-es' : '/digit2ai');
+        nav(override === 'es' ? '/digit2ai-es' : '/digit2ai');
       }
       return;
     }
     var stored = safeGet();
     if (stored === 'en' || stored === 'es') {
       if (stored !== TARGET) {
-        window.location.replace(stored === 'es' ? '/digit2ai-es' : '/digit2ai');
+        nav(stored === 'es' ? '/digit2ai-es' : '/digit2ai');
       }
       return;
     }
@@ -2062,7 +2074,7 @@ const D2AI_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
     var finish = function(toEs){
       if (done) return; done = true;
       html.style.visibility = '';
-      if (toEs) { safeSet('es'); window.location.replace('/digit2ai-es'); }
+      if (toEs) { safeSet('es'); nav('/digit2ai-es'); }
       else { safeSet('en'); }
     };
     // Safety: never block render for more than 1200ms
