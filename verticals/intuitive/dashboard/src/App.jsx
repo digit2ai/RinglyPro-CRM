@@ -157,6 +157,145 @@ const NAV_STEPS = [
   { to: '/report', label: 'Report', num: 8, icon: 'R', section: 'project' },
 ]
 
+// Process documentation -- shown when user clicks the (i) icon next to a step
+const STEP_DOCS = {
+  '/intake': {
+    title: '1. Hospital Intake',
+    purpose: 'Onboards a new prospect hospital and auto-enriches its profile from public + licensed data sources before any human research.',
+    how: [
+      'User enters hospital name + state. AI Research Agent searches the web and resolves the matching CMS facility.',
+      'NPI Registry (NPPES) is queried live for the affiliated robotic surgeons (24h cache).',
+      'CMS Hospital Compare provides bed count, ownership, quality star ratings.',
+      'CMS HCRIS pulls the latest cost report (operating margin, total revenue, charity care).',
+      'ProPublica Form 990 is hit live for tax-exempt financials (24h cache).',
+      'CMS Open Payments enriches surgeon-level industry payment exposure.',
+      'For Florida hospitals, AHCA quarterly utilization is overlaid for procedure-level discharge counts.',
+      'Result is persisted as a Project record and used as the seed for every downstream step.',
+    ],
+    sources: [
+      'CMS Hospital Compare (monthly refresh)',
+      'CMS HCRIS cost reports (quarterly refresh)',
+      'CMS Open Payments (annual, July refresh)',
+      'CMS MPUP physician volume (annual, April refresh)',
+      'NPI Registry / NPPES (live API, 24h cache)',
+      'ProPublica Nonprofits Form 990 (live API, 24h cache)',
+      'Florida AHCA hospital utilization (quarterly)',
+      'AI Research Agent (Brave Search or DuckDuckGo fallback)',
+    ],
+  },
+  '/surveys': {
+    title: '2. Surgeon Surveys',
+    purpose: 'Captures first-party surgeon intent, current caseload mix, and openness to robotic conversion -- the only signal not available from public data.',
+    how: [
+      'For each credentialed surgeon discovered in Hospital Intake, a magic-link survey invitation is generated.',
+      'When SENDGRID_API_KEY + SENDGRID_FROM_EMAIL are set, invitations are auto-emailed via SendGrid; otherwise links are exposed for manual distribution.',
+      'Surgeons answer caseload, specialty mix, robotic experience, and conversion intent on a public token-protected form.',
+      'Responses feed the Surgeon Capacity model used by Analysis (interested vs credentialed counts) and System Match.',
+    ],
+    sources: [
+      'Internal: surgeons table seeded from NPPES during Intake',
+      'SendGrid Marketing API (outbound)',
+      'Public survey portal (token-authenticated, no login required)',
+    ],
+  },
+  '/analysis': {
+    title: '3. Analysis',
+    purpose: 'Runs 12+ analytical models against the hospital + surgeon data to produce the quantitative backbone of the recommendation.',
+    how: [
+      'Procedure Pareto -- ABC classification with Gini coefficient over the procedure mix.',
+      'Monthly seasonality + weekday + hourly distributions -- coefficient of variation and peak windows.',
+      'Design Day Analysis -- P50 / P75 / P90 / P95 cases per day for capacity planning.',
+      'Robot Compatibility Matrix -- scores every procedure against dV5 / Xi / X / SP capabilities.',
+      '5-Year Volume Projection with adoption ramp curve.',
+      'Financial Deep Dive -- TCO, breakeven months, per-procedure cost, 5-year ROI.',
+      'Growth Extrapolation across conservative / base / aggressive scenarios.',
+      'Risk Assessment with weighted factor scoring.',
+      'All results are cached per analysis_type so re-runs are incremental.',
+    ],
+    sources: [
+      'Project record from Hospital Intake',
+      'Surgeon survey responses',
+      'CMS MPUP physician volume (procedure HCPCS counts)',
+      'Florida AHCA discharge data (where applicable)',
+      'Internal robot capability matrix (dV5/Xi/X/SP specs)',
+      'DRG reimbursement table (Medicare base rates by MS-DRG)',
+    ],
+  },
+  '/recommendations': {
+    title: '4. System Match',
+    purpose: 'Translates the analytical scores into a specific da Vinci model recommendation, quantity, and fit score with rationale.',
+    how: [
+      'System Matcher service ingests procedure mix, design-day capacity, and surgeon credentialing.',
+      'Each candidate model (dV5, Xi, X, SP) is scored on procedural fit, capacity match, financial fit, and surgeon-readiness.',
+      'Outputs primary recommendation + quantity, fit score 0-100, projected annual cases, and a plain-English rationale.',
+      'May recommend a multi-system mix (e.g., one Xi + one SP) when specialty load justifies it.',
+    ],
+    sources: [
+      'Analysis cache (Procedure Pareto, Design Day, Robot Compatibility)',
+      'Internal model capability + price catalog',
+      'Surgeon Capacity output from surveys',
+    ],
+  },
+  '/presentation': {
+    title: '5. Presentation',
+    purpose: 'Auto-generates a 13-slide assessment deck for the prospect meeting and arms Rachel (Voice AI) with the live numbers.',
+    how: [
+      'Builds slides directly from the Project + Analysis cache so there is no manual copy-paste.',
+      'Slides cover: title, hospital profile, procedure pareto, seasonality, weekday, hourly, robot matrix, design day, volume projection, financials, growth scenarios, system recommendation, next steps.',
+      'On page load, the ElevenLabs convai widget is bound to a context string containing every slide value, so Rachel can answer ad-hoc questions during the presentation.',
+    ],
+    sources: [
+      'Project record',
+      'Analysis cache (all 12 models)',
+      'System Match output',
+      'ElevenLabs Conversational AI agent (Rachel)',
+    ],
+  },
+  '/business-plan': {
+    title: '6. Business Plan',
+    purpose: 'Converts the recommendation into a financial proforma + execution roadmap the hospital CFO and OR director can sign off on.',
+    how: [
+      'Generates 5-year P&L (revenue by payer mix, direct cost, contribution margin, EBITDA) using DRG reimbursement + TCO from Analysis.',
+      'Builds an implementation timeline (procurement, OR retrofit, surgeon training, go-live).',
+      'Defines KPIs and milestones that Plan Tracking will measure against.',
+      'Locks the assumptions into a baseline so post-go-live actuals can be compared.',
+    ],
+    sources: [
+      'System Match output',
+      'Financial Deep Dive (Analysis)',
+      'CMS DRG reimbursement table',
+      'Hospital payer mix from HCRIS',
+    ],
+  },
+  '/tracking': {
+    title: '7. Plan Tracking',
+    purpose: 'Compares the locked Business Plan baseline against monthly actuals once the system is live, so variance is caught early.',
+    how: [
+      'Monthly actuals are ingested via CSV upload (proforma-tracking route) or wired from the hospital EHR.',
+      'Dashboard renders plan vs actual for cases, revenue, contribution margin, and utilization.',
+      'Variance > threshold triggers alerts to the account team for intervention.',
+    ],
+    sources: [
+      'Business Plan baseline (locked at signoff)',
+      'Hospital actuals CSV ingest (actuals-csv-ingester service)',
+      'Optional EHR integration for case-level data',
+    ],
+  },
+  '/report': {
+    title: '8. Report',
+    purpose: 'Final narrative + data export for executive sign-off, audit trail, or handoff to the post-sale clinical team.',
+    how: [
+      'Aggregates Project, Analysis, System Match, Business Plan, and latest Plan Tracking variance into a single document.',
+      'Includes the bulletproof citation chain -- every quoted public-source figure is linked back to its CMS / NPPES / 990 record.',
+      'Exportable as PDF for board packets and as JSON for downstream BI.',
+    ],
+    sources: [
+      'All upstream step outputs',
+      'Citation index (CMS, NPPES, ProPublica, AHCA records used)',
+    ],
+  },
+}
+
 export default function App() {
   const location = useLocation()
   const [currentProject, setCurrentProject] = useState(null)
@@ -293,6 +432,7 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([])
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [docOpen, setDocOpen] = useState(null) // path key into STEP_DOCS, or null
   const searchRef = React.useRef(null)
   const navigate = useNavigate()
 
@@ -365,13 +505,25 @@ export default function App() {
         </div>
 
         <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
-          {NAV_STEPS.filter(s => s.section === 'main').map(step => (
-            <NavLink key={step.to} to={step.to} end={step.to === '/'}
-              className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname === step.to ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.icon}</span>
-              {step.label}
-            </NavLink>
-          ))}
+          {NAV_STEPS.filter(s => s.section === 'main').map(step => {
+            const hasDoc = !!STEP_DOCS[step.to]
+            return (
+              <NavLink key={step.to} to={step.to} end={step.to === '/'}
+                className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname === step.to ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.icon}</span>
+                <span className="flex-1">{step.label}</span>
+                {hasDoc && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDocOpen(step.to) }}
+                    className="ml-auto w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold bg-slate-800 text-slate-400 hover:bg-intuitive-700 hover:text-white transition-colors"
+                    title={`How "${step.label}" works`}
+                    aria-label={`How "${step.label}" works`}
+                  >i</button>
+                )}
+              </NavLink>
+            )
+          })}
 
           <div className="border-t border-slate-800 my-2"></div>
           <div className="px-3 py-1 text-[9px] text-slate-600 uppercase tracking-widest">Hospital Workflow</div>
@@ -383,12 +535,23 @@ export default function App() {
           )}
           {NAV_STEPS.filter(s => s.section === 'project').map(step => {
             const disabled = !currentProject
+            const hasDoc = !!STEP_DOCS[step.to]
+            const InfoBtn = hasDoc ? (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDocOpen(step.to) }}
+                className="ml-auto w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold bg-slate-800 text-slate-400 hover:bg-intuitive-700 hover:text-white transition-colors"
+                title={`How "${step.label}" works`}
+                aria-label={`How "${step.label}" works`}
+              >i</button>
+            ) : null
             const cls = `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${disabled ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`
             if (disabled) {
               return (
                 <div key={step.to} className={cls} aria-disabled="true">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold bg-slate-800 text-slate-600">{step.num}</span>
-                  {step.label}
+                  <span className="flex-1">{step.label}</span>
+                  {InfoBtn}
                 </div>
               )
             }
@@ -396,7 +559,8 @@ export default function App() {
               <NavLink key={step.to} to={step.to} end={false}
                 className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'bg-intuitive-900/60 text-intuitive-300 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}>
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${location.pathname.startsWith(step.to) ? 'bg-intuitive-600 text-white' : 'bg-slate-700 text-slate-400'}`}>{step.num}</span>
-                {step.label}
+                <span className="flex-1">{step.label}</span>
+                {InfoBtn}
               </NavLink>
             )
           })}
@@ -407,6 +571,56 @@ export default function App() {
           <button onClick={handleLogout} className="w-full text-left text-[10px] text-slate-500 hover:text-red-400 transition-colors">Sign Out</button>
         </div>
       </aside>
+
+      {/* Process documentation modal */}
+      {docOpen && STEP_DOCS[docOpen] && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4"
+          onClick={() => setDocOpen(null)}
+        >
+          <div
+            className="bg-[#0a1628] border border-slate-700 rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between p-5 border-b border-slate-800 sticky top-0 bg-[#0a1628]">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-intuitive-400 mb-1">Process Step</div>
+                <h2 className="text-xl font-bold text-slate-100">{STEP_DOCS[docOpen].title}</h2>
+              </div>
+              <button
+                onClick={() => setDocOpen(null)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                aria-label="Close"
+              >X</button>
+            </div>
+            <div className="p-5 space-y-5 text-sm">
+              <section>
+                <h3 className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Purpose</h3>
+                <p className="text-slate-300 leading-relaxed">{STEP_DOCS[docOpen].purpose}</p>
+              </section>
+              <section>
+                <h3 className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">How It Works</h3>
+                <ol className="space-y-1.5 list-decimal list-inside text-slate-300">
+                  {STEP_DOCS[docOpen].how.map((line, i) => (
+                    <li key={i} className="leading-relaxed pl-1">{line}</li>
+                  ))}
+                </ol>
+              </section>
+              <section>
+                <h3 className="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Source Systems</h3>
+                <ul className="space-y-1 text-slate-300">
+                  {STEP_DOCS[docOpen].sources.map((src, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-intuitive-400">&bull;</span>
+                      <span>{src}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 ml-0 md:ml-60 pt-12 md:pt-0 min-h-screen relative">
