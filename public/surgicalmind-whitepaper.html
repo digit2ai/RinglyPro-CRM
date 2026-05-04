@@ -98,7 +98,91 @@
             width: 80%;
             height: 200%;
             background: radial-gradient(ellipse, rgba(0,163,224,0.06) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
         }
+
+        /* Animated background (mirrors surgicalmind.app hero) */
+        .sm-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .sm-bg__grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+        }
+        .sm-bg__orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            will-change: transform;
+        }
+        .sm-bg__orb--1 {
+            width: 600px;
+            height: 600px;
+            top: -150px;
+            left: -100px;
+            background: radial-gradient(circle, rgba(124,92,255,.55), rgba(124,92,255,0) 65%);
+            animation: smDrift1 22s ease-in-out infinite;
+        }
+        .sm-bg__orb--2 {
+            width: 520px;
+            height: 520px;
+            bottom: -120px;
+            right: -80px;
+            background: radial-gradient(circle, rgba(74,159,255,.45), rgba(74,159,255,0) 65%);
+            animation: smDrift2 28s ease-in-out infinite;
+        }
+        .sm-bg__orb--3 {
+            width: 380px;
+            height: 380px;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(93,221,250,.35), rgba(93,221,250,0) 65%);
+            animation: smDrift3 18s ease-in-out infinite;
+        }
+        .sm-bg__particles {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .sm-bg__vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.7) 100%);
+        }
+        @keyframes smDrift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(80px, 60px) scale(1.1); }
+        }
+        @keyframes smDrift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-60px, -40px) scale(1.15); }
+        }
+        @keyframes smDrift3 {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(calc(-50% + 50px), calc(-50% - 30px)) scale(.9); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sm-bg__orb, .sm-bg__particles { animation: none !important; }
+        }
+
+        .cover-badge,
+        .cover-title,
+        .cover-subtitle,
+        .cover-divider,
+        .cover-meta { position: relative; z-index: 2; }
 
         .cover-badge {
             background: rgba(197,165,90,0.15);
@@ -542,6 +626,7 @@
             .top-bar,
             .btn-pdf,
             elevenlabs-convai,
+            .sm-bg,
             script { display: none !important; }
 
             .content { padding-top: 0 !important; }
@@ -783,6 +868,14 @@
 
 <!-- Cover Page -->
 <div class="cover-page">
+    <div class="sm-bg" aria-hidden="true">
+        <div class="sm-bg__grid"></div>
+        <div class="sm-bg__orb sm-bg__orb--1"></div>
+        <div class="sm-bg__orb sm-bg__orb--2"></div>
+        <div class="sm-bg__orb sm-bg__orb--3"></div>
+        <canvas class="sm-bg__particles" id="smParticles"></canvas>
+        <div class="sm-bg__vignette"></div>
+    </div>
     <div class="cover-badge">CONFIDENTIAL &mdash; STRATEGIC TECHNOLOGY BRIEF</div>
     <h1 class="cover-title">SurgicalMind AI</h1>
     <p class="cover-subtitle">The All-in-One Sales App for Intuitive Surgical &mdash; Chatbot, Analytics, Workflow, and Neural Intelligence in One Login</p>
@@ -1549,6 +1642,62 @@
 <!-- ElevenLabs Voice Agent -->
 <elevenlabs-convai agent-id="agent_5001kn4s9jsqernanpgc4ejh1a0e"></elevenlabs-convai>
 <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+<!-- Animated background particles (cover page) -->
+<script>
+(function(){
+    const canvas = document.getElementById('smParticles');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    let W = 0, H = 0;
+    function resize(){
+        const rect = canvas.getBoundingClientRect();
+        W = rect.width; H = rect.height;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    const COUNT = 60, LINK_DIST = 140;
+    const points = Array.from({ length: COUNT }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15,
+        r: Math.random() * 1.2 + 0.4
+    }));
+    function tick(){
+        ctx.clearRect(0, 0, W, H);
+        for (const p of points){
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > W) p.vx *= -1;
+            if (p.y < 0 || p.y > H) p.vy *= -1;
+        }
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < COUNT; i++){
+            for (let j = i + 1; j < COUNT; j++){
+                const dx = points[i].x - points[j].x, dy = points[i].y - points[j].y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d < LINK_DIST){
+                    const a = (1 - d / LINK_DIST) * 0.18;
+                    ctx.strokeStyle = 'rgba(160,180,255,' + a + ')';
+                    ctx.beginPath();
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[j].x, points[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        ctx.fillStyle = 'rgba(180,200,255,0.5)';
+        for (const p of points){
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        requestAnimationFrame(tick);
+    }
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) tick();
+})();
+</script>
 
 </body>
 </html>
