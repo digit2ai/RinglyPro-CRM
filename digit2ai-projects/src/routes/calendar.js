@@ -5,6 +5,12 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const { CalendarEvent, Project, Contact, Task, StaffMember } = require('../models');
 const { logActivity } = require('../services/activityService');
+const zoomService = require('../services/zoom');
+
+// GET /api/v1/calendar/zoom/status — returns whether Zoom integration is configured
+router.get('/zoom/status', (req, res) => {
+  res.json({ success: true, configured: zoomService.isConfigured() });
+});
 
 // Convert a Task row into a calendar-event-shaped object
 function taskToEvent(task) {
@@ -130,13 +136,48 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/calendar - Create event
+// POST /api/v1/calendar - Create event (optionally provisions a Zoom meeting)
 router.post('/', async (req, res) => {
   try {
-    const data = { workspace_id: 1, user_email: req.user?.email, ...req.body };
+    const { create_zoom, ...rest } = req.body || {};
+    const data = { workspace_id: 1, user_email: req.user?.email, ...rest };
+
+    // Optionally create a Zoom meeting first so we can attach the join URL on create.
+    let zoomWarning = null;
+    if (create_zoom) {
+      if (!zoomService.isConfigured()) {
+        zoomWarning = 'Zoom integration not configured on the server';
+      } else if (!data.start_time) {
+        zoomWarning = 'Cannot create Zoom meeting without a start time';
+      } else {
+        try {
+          const start = new Date(data.start_time);
+          const end = data.end_time ? new Date(data.end_time) : null;
+          const durationMinutes = end ? Math.max(15, Math.round((end - start) / 60000)) : 30;
+          const meeting = await zoomService.createMeeting({
+            topic: data.title || 'Meeting',
+            startISO: start.toISOString(),
+            durationMinutes,
+            timezone: 'America/New_York',
+            agenda: data.description || ''
+          });
+          data.zoom_meeting_id = meeting.id;
+          data.zoom_join_url = meeting.join_url;
+          data.zoom_start_url = meeting.start_url;
+          data.zoom_password = meeting.password;
+          // Surface the join URL in the location field too, so existing calendar
+          // views that show "location" automatically render it.
+          if (!data.location) data.location = meeting.join_url;
+        } catch (zErr) {
+          console.error('[D2AI] Zoom meeting creation failed:', zErr.response?.data || zErr.message);
+          zoomWarning = 'Zoom meeting creation failed: ' + (zErr.response?.data?.message || zErr.message);
+        }
+      }
+    }
+
     const event = await CalendarEvent.create(data);
     await logActivity(req.user?.email, 'created', 'calendar_event', event.id, event.title);
-    res.status(201).json({ success: true, data: event });
+    res.status(201).json({ success: true, data: event, zoom_warning: zoomWarning });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

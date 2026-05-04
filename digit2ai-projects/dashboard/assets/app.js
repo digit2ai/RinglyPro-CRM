@@ -2056,7 +2056,20 @@ async function showEventDetail(id) {
         ${isPast ? '<span class="status-badge status-completed">Past</span>' : '<span class="status-badge status-active">Upcoming</span>'}
         ${e.all_day ? '<span class="status-badge status-planning">All Day</span>' : ''}
         ${e.recurrence_group_id ? '<span class="status-badge" style="background:rgba(167,139,250,.15);color:#c4b5fd">Recurring</span>' : ''}
+        ${e.zoom_join_url ? '<span class="status-badge" style="background:rgba(45,140,255,.15);color:#2D8CFF">&#127909; Zoom</span>' : ''}
       </div>
+      ${e.zoom_join_url ? `
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.3);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:600;color:#2D8CFF">&#127909; Zoom meeting ready</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;word-break:break-all">${e.zoom_join_url}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${e.zoom_join_url}').then(()=>alert('Join link copied'))">Copy</button>
+            <a class="btn btn-primary btn-sm" href="${e.zoom_join_url}" target="_blank" rel="noopener" style="background:#2D8CFF;border-color:#2D8CFF">Join Zoom</a>
+          </div>
+        </div>
+      ` : ''}
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
         <div>
@@ -3325,11 +3338,19 @@ function openEventModal() {
       </div>
     </div>
     <div class="form-group"><label>Description</label><textarea id="m-edesc"></textarea></div>
+    <div class="form-group" style="background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.3);border-radius:8px;padding:10px 12px;margin-top:4px">
+      <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;font-weight:500">
+        <input type="checkbox" id="m-ezoom" style="width:16px;height:16px;cursor:pointer">
+        <span style="color:#2D8CFF">&#127909; Add Zoom meeting</span>
+      </label>
+      <small style="color:var(--text-muted);display:block;margin-top:4px;margin-left:24px">Auto-creates a Zoom meeting on info@digit2ai.com and adds the join link to this event.</small>
+    </div>
   `, async () => {
     const baseStart = localInputToIso(document.getElementById('m-estart').value);
     const baseEnd   = localInputToIso(document.getElementById('m-eend').value);
     const recur = document.getElementById('m-erecur').value;
     const count = recur === 'none' ? 1 : Math.max(1, Math.min(52, Number(document.getElementById('m-ecount').value) || 1));
+    const wantsZoom = document.getElementById('m-ezoom').checked;
     const base = {
       title: document.getElementById('m-etitle').value.trim(),
       event_type: document.getElementById('m-etype').value,
@@ -3342,15 +3363,23 @@ function openEventModal() {
     const groupId = (count > 1 && typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null;
     const calls = [];
     for (let i = 0; i < count; i++) {
+      // Only the first occurrence of a recurring series gets a Zoom meeting —
+      // attendees can reuse the same join link, and we avoid spamming the
+      // Zoom account with N meetings for a weekly series.
+      const isFirst = i === 0;
       calls.push(api('/calendar', { method: 'POST', body: JSON.stringify({
         ...base,
         start_time: shiftIsoForRecurrence(baseStart, recur, i),
         end_time: baseEnd ? shiftIsoForRecurrence(baseEnd, recur, i) : null,
-        recurrence_group_id: groupId
+        recurrence_group_id: groupId,
+        create_zoom: wantsZoom && isFirst
       }) }));
     }
-    await Promise.all(calls);
+    const results = await Promise.all(calls);
     closeModal();
+    // Surface a soft warning if Zoom creation failed (event still saved).
+    const warn = results.find(r => r && r.zoom_warning);
+    if (warn) alert('Note: ' + warn.zoom_warning);
     navigateTo('calendar');
   });
 }

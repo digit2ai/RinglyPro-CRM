@@ -442,6 +442,26 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 005 — Zoom meeting columns on d2_calendar_events
+    const zoomMigrationPath = path.join(__dirname, '..', 'migrations', '005_zoom_meeting.sql');
+    if (fs.existsSync(zoomMigrationPath)) {
+      try {
+        const sql = fs.readFileSync(zoomMigrationPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 005_zoom notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 005_zoom_meeting migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 005_zoom_meeting error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

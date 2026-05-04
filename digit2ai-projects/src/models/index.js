@@ -214,7 +214,11 @@ const CalendarEvent = sequelize.define('CalendarEvent', {
   location: DataTypes.STRING(500),
   reminder_minutes: { type: DataTypes.INTEGER, defaultValue: 30 },
   reminder_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
-  recurrence_group_id: { type: DataTypes.UUID, allowNull: true }
+  recurrence_group_id: { type: DataTypes.UUID, allowNull: true },
+  zoom_meeting_id: DataTypes.STRING(64),
+  zoom_join_url: DataTypes.TEXT,
+  zoom_start_url: DataTypes.TEXT,
+  zoom_password: DataTypes.STRING(64)
 }, { tableName: 'd2_calendar_events' });
 
 // =====================================================
