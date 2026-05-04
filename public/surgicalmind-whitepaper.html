@@ -521,16 +521,252 @@
         }
 
         /* Print */
+        @page {
+            size: Letter;
+            margin: 0.6in 0.65in;
+        }
+
         @media print {
-            .top-bar { display: none; }
-            .cover-page { min-height: auto; padding: 60px 32px; page-break-after: always; }
-            .section { page-break-inside: avoid; padding: 32px; }
-            body { font-size: 12px; }
-            .problem-grid { grid-template-columns: 1fr 1fr; }
-            .system-grid { grid-template-columns: 1fr 1fr; }
-            .live-section { background: #eee; color: #000; }
-            .live-section h3, .live-section p { color: #000; }
-            elevenlabs-convai { display: none; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            html, body {
+                background: #fff !important;
+                font-size: 10.5pt;
+                line-height: 1.55;
+            }
+
+            .top-bar,
+            .btn-pdf,
+            elevenlabs-convai,
+            script { display: none !important; }
+
+            .content { padding-top: 0 !important; }
+
+            /* Cover page — full bleed, single page */
+            .cover-page {
+                min-height: 9.5in;
+                height: 9.5in;
+                padding: 1.2in 0.8in 0.8in;
+                page-break-after: always;
+                background: linear-gradient(160deg, #0a1f33 0%, #0F2B46 40%, #163d5e 100%) !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .cover-page::before { display: none; }
+
+            .cover-badge {
+                font-size: 9pt;
+                padding: 6px 18px;
+                margin-bottom: 36px;
+                background: rgba(197,165,90,0.18) !important;
+                border: 1px solid #C5A55A !important;
+                color: #C5A55A !important;
+            }
+
+            .cover-title {
+                font-size: 44pt !important;
+                line-height: 1.05;
+                margin-bottom: 14px;
+                color: #fff !important;
+            }
+
+            .cover-subtitle {
+                font-size: 13pt !important;
+                max-width: 5.8in;
+                margin: 0 auto 28px;
+                color: rgba(255,255,255,0.85) !important;
+                line-height: 1.45;
+            }
+
+            .cover-divider { margin: 0 auto 28px; }
+
+            .cover-meta {
+                font-size: 10pt;
+                color: rgba(255,255,255,0.7) !important;
+                line-height: 1.9;
+            }
+
+            .cover-meta strong { color: rgba(255,255,255,0.95) !important; }
+
+            /* Sections — clean breaks, never split awkwardly */
+            .section {
+                max-width: 100%;
+                padding: 0.25in 0 0.35in;
+                page-break-inside: auto;
+                page-break-before: auto;
+            }
+
+            .section:first-of-type { page-break-before: avoid; }
+
+            .section-header {
+                page-break-after: avoid;
+                margin-bottom: 18px;
+            }
+
+            .section-title {
+                font-size: 18pt;
+                page-break-after: avoid;
+            }
+
+            .section-number {
+                width: 32px;
+                height: 32px;
+                font-size: 12pt;
+            }
+
+            .section p, .section ul { orphans: 3; widows: 3; }
+
+            h3, h4 { page-break-after: avoid; }
+
+            /* Cards — keep together, no page breaks mid-card */
+            .card,
+            .problem-card,
+            .system-card,
+            .summary-card,
+            .highlight-box,
+            .flow-step,
+            .module-item {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+            }
+
+            .card { padding: 16px 20px; margin-bottom: 12px; }
+            .card h4 { font-size: 11pt; }
+            .card p { font-size: 10pt; }
+
+            /* Problem grid — preserve 2-col layout, smaller cards */
+            .problem-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .problem-card {
+                padding: 14px 16px;
+                page-break-inside: avoid;
+            }
+
+            .problem-card h4 { font-size: 9pt; }
+            .problem-card h3 { font-size: 11pt; }
+            .problem-card p { font-size: 9.5pt; line-height: 1.5; }
+
+            /* System grid */
+            .system-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .system-card { padding: 14px 16px; }
+            .system-card h4 { font-size: 11pt; }
+            .system-card .price { font-size: 10pt; }
+            .system-card p { font-size: 9.5pt; }
+
+            /* Tables — never split across pages, repeat headers */
+            .data-table {
+                page-break-inside: auto;
+                font-size: 9.5pt;
+            }
+
+            .data-table thead {
+                display: table-header-group;
+            }
+
+            .data-table tbody tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .data-table th {
+                background: #0F2B46 !important;
+                color: #fff !important;
+                padding: 8px 10px;
+                font-size: 9pt;
+            }
+
+            .data-table td { padding: 7px 10px; }
+
+            .data-table tr:nth-child(even) td { background: #F7F9FC !important; }
+
+            /* Flow diagram */
+            .flow-content {
+                padding: 14px 18px;
+                margin-bottom: 8px;
+            }
+
+            .flow-content h4 { font-size: 11pt; }
+            .flow-content p { font-size: 10pt; }
+
+            /* Module list — compact */
+            .module-item {
+                padding: 7px 0;
+                font-size: 10pt;
+            }
+
+            .module-name { font-size: 10.5pt; }
+            .module-desc { font-size: 10pt; }
+
+            /* Summary card */
+            .summary-card {
+                padding: 22px 24px;
+                background: #f0f7fc !important;
+                border: 1.5px solid #00A3E0 !important;
+            }
+
+            .summary-card h3 { font-size: 13pt; }
+            .summary-row { padding: 6px 0; font-size: 10pt; }
+
+            /* Highlight box */
+            .highlight-box {
+                background: #FEF9E7 !important;
+                border-left: 3px solid #C5A55A !important;
+                padding: 14px 18px;
+                margin: 14px 0;
+            }
+
+            .highlight-box p { font-size: 10pt; }
+
+            /* Live section — print-friendly, no pure dark fill */
+            .live-section {
+                background: #f0f7fc !important;
+                border: 1.5px solid #0F2B46 !important;
+                padding: 24px;
+                page-break-inside: avoid;
+            }
+
+            .live-section h3 { color: #0F2B46 !important; font-size: 14pt; }
+            .live-section p { color: #1a1a2e !important; font-size: 10pt; }
+            .live-section a {
+                background: #C5A55A !important;
+                color: #0F2B46 !important;
+                padding: 9px 22px;
+                font-size: 11pt;
+                text-decoration: none;
+            }
+
+            /* Feature lists */
+            .feature-list li {
+                font-size: 10pt;
+                padding: 4px 0 4px 22px;
+                page-break-inside: avoid;
+            }
+
+            .feature-list li::before { top: 11px; }
+
+            /* Footer */
+            .footer {
+                padding: 18px 0 0;
+                font-size: 9pt;
+                page-break-before: avoid;
+            }
+
+            /* Hyperlinks — print as plain text color */
+            a { color: #0F2B46 !important; text-decoration: none; }
         }
     </style>
 </head>
