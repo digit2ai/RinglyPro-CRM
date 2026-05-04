@@ -6,10 +6,16 @@ const { Op } = require('sequelize');
 const { CalendarEvent, Project, Contact, Task, StaffMember } = require('../models');
 const { logActivity } = require('../services/activityService');
 const zoomService = require('../services/zoom');
+const inviteService = require('../services/meetingInvite');
 
 // GET /api/v1/calendar/zoom/status — returns whether Zoom integration is configured
 router.get('/zoom/status', (req, res) => {
   res.json({ success: true, configured: zoomService.isConfigured() });
+});
+
+// GET /api/v1/calendar/invite/status — returns whether SendGrid invites are configured
+router.get('/invite/status', (req, res) => {
+  res.json({ success: true, configured: inviteService.isConfigured() });
 });
 
 // Convert a Task row into a calendar-event-shaped object
@@ -136,11 +142,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/calendar - Create event (optionally provisions a Zoom meeting)
+// POST /api/v1/calendar - Create event (optionally provisions a Zoom meeting + sends invites)
 router.post('/', async (req, res) => {
   try {
-    const { create_zoom, ...rest } = req.body || {};
+    const { create_zoom, invite_emails, invite_message, ...rest } = req.body || {};
     const data = { workspace_id: 1, user_email: req.user?.email, ...rest };
+    const inviteList = inviteService.normalizeEmails(invite_emails);
+    if (inviteList.length) data.invited_emails = inviteList;
 
     // Optionally create a Zoom meeting first so we can attach the join URL on create.
     let zoomWarning = null;
@@ -177,8 +185,58 @@ router.post('/', async (req, res) => {
 
     const event = await CalendarEvent.create(data);
     await logActivity(req.user?.email, 'created', 'calendar_event', event.id, event.title);
-    res.status(201).json({ success: true, data: event, zoom_warning: zoomWarning });
+
+    // Fire invites if any addresses were provided. Event already saved, so a
+    // SendGrid failure is a soft warning rather than a 500 — caller still gets
+    // their event back.
+    let inviteResult = null;
+    if (inviteList.length) {
+      try {
+        inviteResult = await inviteService.sendInvites({
+          event,
+          emails: inviteList,
+          customMessage: invite_message,
+          organizerName: req.user?.display_name || null,
+          organizerEmail: req.user?.email || null
+        });
+      } catch (iErr) {
+        console.error('[D2AI] invite send error:', iErr.message);
+        inviteResult = { sent: [], failed: inviteList.map(e => ({ email: e, error: iErr.message })) };
+      }
+    }
+
+    res.status(201).json({ success: true, data: event, zoom_warning: zoomWarning, invite_result: inviteResult });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/v1/calendar/:id/invite — send invites to additional attendees on an existing event
+router.post('/:id/invite', async (req, res) => {
+  try {
+    const event = await CalendarEvent.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+    const newEmails = inviteService.normalizeEmails(req.body?.emails);
+    if (!newEmails.length) {
+      return res.status(400).json({ success: false, error: 'No valid email addresses provided' });
+    }
+    const result = await inviteService.sendInvites({
+      event,
+      emails: newEmails,
+      customMessage: req.body?.message,
+      organizerName: req.user?.display_name || null,
+      organizerEmail: req.user?.email || null
+    });
+    // Merge successful sends into the persisted invitee list (dedup).
+    const existing = Array.isArray(event.invited_emails) ? event.invited_emails : [];
+    const merged = Array.from(new Set([...existing, ...result.sent]));
+    if (merged.length !== existing.length) {
+      event.invited_emails = merged;
+      await event.save();
+    }
+    res.json({ success: true, data: event, invite_result: result });
+  } catch (error) {
+    console.error('[D2AI] /:id/invite error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

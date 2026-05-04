@@ -218,7 +218,8 @@ const CalendarEvent = sequelize.define('CalendarEvent', {
   zoom_meeting_id: DataTypes.STRING(64),
   zoom_join_url: DataTypes.TEXT,
   zoom_start_url: DataTypes.TEXT,
-  zoom_password: DataTypes.STRING(64)
+  zoom_password: DataTypes.STRING(64),
+  invited_emails: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] }
 }, { tableName: 'd2_calendar_events' });
 
 // =====================================================

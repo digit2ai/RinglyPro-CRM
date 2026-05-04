@@ -462,6 +462,26 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 006 — Calendar invitees
+    const invitedEmailsMigrationPath = path.join(__dirname, '..', 'migrations', '006_invited_emails.sql');
+    if (fs.existsSync(invitedEmailsMigrationPath)) {
+      try {
+        const sql = fs.readFileSync(invitedEmailsMigrationPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 006_invited_emails notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 006_invited_emails migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 006_invited_emails error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

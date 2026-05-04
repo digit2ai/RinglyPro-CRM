@@ -2070,6 +2070,22 @@ async function showEventDetail(id) {
           </div>
         </div>
       ` : ''}
+      <div style="margin-top:14px;padding:12px 14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:600">&#9993; Attendees</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+              ${(e.invited_emails && e.invited_emails.length) ? e.invited_emails.length + ' invited' : 'No one invited yet'}
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openInviteMoreModal(${e.id})">+ Invite${(e.invited_emails && e.invited_emails.length) ? ' more' : ' attendees'}</button>
+        </div>
+        ${(e.invited_emails && e.invited_emails.length) ? `
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
+            ${e.invited_emails.map(em => `<span style="background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:12px;font-size:12px">${escapeHtml(em)}</span>`).join('')}
+          </div>
+        ` : ''}
+      </div>
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
         <div>
@@ -2095,6 +2111,36 @@ async function showEventDetail(id) {
       </div>
     </div>
   `;
+}
+
+function openInviteMoreModal(eventId) {
+  openModal('Invite attendees', `
+    <div class="form-group">
+      <label>Email addresses *</label>
+      <input type="text" id="m-iv-emails" placeholder="alice@example.com, bob@example.com">
+      <small style="color:var(--text-muted)">Comma-separated. Anyone already invited will be silently deduped.</small>
+    </div>
+    <div class="form-group">
+      <label>Personal note (optional)</label>
+      <textarea id="m-iv-msg" rows="3" placeholder="Adding you to the meeting we discussed."></textarea>
+    </div>
+  `, async () => {
+    const emails = document.getElementById('m-iv-emails').value.trim();
+    const message = document.getElementById('m-iv-msg').value.trim();
+    if (!emails) { alert('Add at least one email address'); return; }
+    const res = await api(`/calendar/${eventId}/invite`, {
+      method: 'POST',
+      body: JSON.stringify({ emails, message })
+    });
+    if (!res.success) { alert('Send failed: ' + (res.error || 'unknown')); return; }
+    closeModal();
+    const ir = res.invite_result || { sent: [], failed: [] };
+    let msg = '';
+    if (ir.sent.length) msg += `Invites sent to ${ir.sent.length} attendee${ir.sent.length === 1 ? '' : 's'}.`;
+    if (ir.failed.length) msg += (msg ? '\n\n' : '') + `Failed: ${ir.failed.map(f => f.email + ' (' + f.error + ')').join(', ')}`;
+    if (msg) alert(msg);
+    showEventDetail(eventId);
+  });
 }
 
 async function openEventEditModal(id) {
@@ -3345,12 +3391,23 @@ function openEventModal() {
       </label>
       <small style="color:var(--text-muted);display:block;margin-top:4px;margin-left:24px">Auto-creates a Zoom meeting on info@digit2ai.com and adds the join link to this event.</small>
     </div>
+    <div class="form-group">
+      <label>Invite attendees (optional)</label>
+      <input type="text" id="m-einvitees" placeholder="alice@example.com, bob@example.com">
+      <small style="color:var(--text-muted)">Comma-separated emails. Each attendee gets a meeting invite with the Zoom link and an .ics calendar attachment.</small>
+    </div>
+    <div class="form-group">
+      <label>Personal note to attendees (optional)</label>
+      <textarea id="m-einvitemsg" rows="3" placeholder="Looking forward to chatting!"></textarea>
+    </div>
   `, async () => {
     const baseStart = localInputToIso(document.getElementById('m-estart').value);
     const baseEnd   = localInputToIso(document.getElementById('m-eend').value);
     const recur = document.getElementById('m-erecur').value;
     const count = recur === 'none' ? 1 : Math.max(1, Math.min(52, Number(document.getElementById('m-ecount').value) || 1));
     const wantsZoom = document.getElementById('m-ezoom').checked;
+    const inviteRaw = document.getElementById('m-einvitees').value.trim();
+    const inviteMsg = document.getElementById('m-einvitemsg').value.trim();
     const base = {
       title: document.getElementById('m-etitle').value.trim(),
       event_type: document.getElementById('m-etype').value,
@@ -3372,7 +3429,11 @@ function openEventModal() {
         start_time: shiftIsoForRecurrence(baseStart, recur, i),
         end_time: baseEnd ? shiftIsoForRecurrence(baseEnd, recur, i) : null,
         recurrence_group_id: groupId,
-        create_zoom: wantsZoom && isFirst
+        create_zoom: wantsZoom && isFirst,
+        // Only invite on the first occurrence of a series — same reasoning as Zoom:
+        // attendees don't need N invites for a recurring weekly meeting.
+        invite_emails: isFirst ? inviteRaw : null,
+        invite_message: isFirst ? inviteMsg : null
       }) }));
     }
     const results = await Promise.all(calls);
@@ -3380,6 +3441,18 @@ function openEventModal() {
     // Surface a soft warning if Zoom creation failed (event still saved).
     const warn = results.find(r => r && r.zoom_warning);
     if (warn) alert('Note: ' + warn.zoom_warning);
+    // Surface invite send results
+    const inviteResult = results.find(r => r && r.invite_result)?.invite_result;
+    if (inviteResult) {
+      const sent = inviteResult.sent || [];
+      const failed = inviteResult.failed || [];
+      let msg = '';
+      if (sent.length) msg += `Invites sent to ${sent.length} attendee${sent.length === 1 ? '' : 's'}.`;
+      if (failed.length) {
+        msg += (msg ? '\n\n' : '') + `Failed: ${failed.map(f => f.email + ' (' + f.error + ')').join(', ')}`;
+      }
+      if (msg) alert(msg);
+    }
     navigateTo('calendar');
   });
 }
