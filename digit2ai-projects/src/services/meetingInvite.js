@@ -211,7 +211,7 @@ async function sendInvites({ event, emails, customMessage, organizerName, organi
   const attachment = {
     content: Buffer.from(ics, 'utf8').toString('base64'),
     filename: 'invite.ics',
-    type: 'text/calendar; method=REQUEST; charset=UTF-8',
+    type: 'text/calendar',
     disposition: 'attachment'
   };
 
