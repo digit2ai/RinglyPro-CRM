@@ -607,6 +607,22 @@ PriorityVote.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
 Company.hasMany(CompanyAccessToken, { foreignKey: 'company_id', as: 'access_tokens' });
 CompanyAccessToken.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
 
+// =====================================================
+// MEETING MINUTES
+// =====================================================
+const MeetingMinute = sequelize.define('MeetingMinute', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  project_id: DataTypes.INTEGER,
+  meeting_date: { type: DataTypes.DATEONLY, allowNull: false, defaultValue: DataTypes.NOW },
+  subject: { type: DataTypes.STRING(500), allowNull: false },
+  notes: DataTypes.TEXT,
+  created_by_email: DataTypes.STRING(255)
+}, { tableName: 'd2_meeting_minutes' });
+
+Project.hasMany(MeetingMinute, { foreignKey: 'project_id', as: 'meeting_minutes' });
+MeetingMinute.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
 // IntakeBatch <-> Access Tokens
 IntakeBatch.hasMany(CompanyAccessToken, { foreignKey: 'batch_id', as: 'access_tokens' });
 CompanyAccessToken.belongsTo(IntakeBatch, { foreignKey: 'batch_id', as: 'batch' });
@@ -642,5 +658,6 @@ module.exports = {
   QuestionResponse,
   ProjectComment,
   PriorityVote,
-  CompanyAccessToken
+  CompanyAccessToken,
+  MeetingMinute
 };

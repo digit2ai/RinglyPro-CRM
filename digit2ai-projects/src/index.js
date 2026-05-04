@@ -23,6 +23,7 @@ const pipelineRoutes = require('./routes/pipeline');
 const campaignRoutes = require('./routes/campaigns');
 const workflowRoutes = require('./routes/workflows');
 const intakeRoutes = require('./routes/intake');
+const meetingMinutesRoutes = require('./routes/meeting-minutes');
 
 const app = express();
 
@@ -90,6 +91,7 @@ app.use('/api/v1/staff', authenticateToken, staffRoutes);
 app.use('/api/v1/pipeline', authenticateToken, pipelineRoutes);
 app.use('/api/v1/campaigns', authenticateToken, campaignRoutes);
 app.use('/api/v1/workflows', authenticateToken, workflowRoutes);
+app.use('/api/v1/meeting-minutes', authenticateToken, meetingMinutesRoutes);
 
 // SendGrid webhook (unauthenticated — called by SendGrid)
 app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res, next) => {
@@ -417,6 +419,26 @@ app.get('*', (req, res) => {
         console.log('[D2AI-Projects] 003_intake_fields migration applied');
       } catch (mErr) {
         console.log('[D2AI-Projects] 003_intake_fields error:', mErr.message);
+      }
+    }
+
+    // Migration 004 — Meeting Minutes
+    const meetingMinutesMigrationPath = path.join(__dirname, '..', 'migrations', '004_meeting_minutes.sql');
+    if (fs.existsSync(meetingMinutesMigrationPath)) {
+      try {
+        const sql = fs.readFileSync(meetingMinutesMigrationPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 004_meeting_minutes notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 004_meeting_minutes migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 004_meeting_minutes error:', mErr.message);
       }
     }
 

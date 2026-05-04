@@ -165,7 +165,7 @@ function navigateTo(view) {
   });
   const titles = {
     overview: 'Home', inbox: 'Project Request Inbox', contacts: 'People & Pipeline', projects: 'My Projects',
-    calendar: 'Calendar', tasks: 'My To-Do List', staff: 'Staff & Roles',
+    calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
   document.getElementById('page-title').textContent = titles[view] || view;
@@ -183,6 +183,7 @@ async function renderView(view) {
       case 'projects': await renderProjects(container); break;
       case 'calendar': await renderCalendar(container); break;
       case 'tasks': await renderTasks(container); break;
+      case 'minutes': await renderMeetingMinutes(container); break;
       case 'staff': await renderStaff(container); break;
       case 'notifications': await renderNotifications(container); break;
       case 'ai': renderAIWorkspace(container); break;
@@ -3879,3 +3880,130 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('/projects/sw.js').catch(() => {});
   }
 });
+
+// =====================================================
+// MEETING MINUTES
+// =====================================================
+let _minutesProjectsCache = null;
+
+async function renderMeetingMinutes(container) {
+  // Load minutes + project list (for the dropdown) in parallel
+  const [minutesRes, projectsRes] = await Promise.all([
+    api('/meeting-minutes'),
+    _minutesProjectsCache ? Promise.resolve({ success: true, data: _minutesProjectsCache })
+                          : api('/projects')
+  ]);
+  if (projectsRes.success) _minutesProjectsCache = projectsRes.data;
+  const minutes = (minutesRes.success && minutesRes.data) || [];
+  const projects = (projectsRes.success && projectsRes.data) || [];
+
+  container.innerHTML = `
+    <div class="section-header">
+      <div></div>
+      <button class="btn btn-primary btn-sm" onclick="openMinutesModal()">+ New Meeting Minute</button>
+    </div>
+    <div id="minutes-list"></div>
+  `;
+  renderMinutesList(minutes);
+
+  // Stash projects on a global so the modal can access without re-fetch
+  window._minutesProjects = projects;
+}
+
+function renderMinutesList(minutes) {
+  const wrap = document.getElementById('minutes-list');
+  if (!wrap) return;
+  if (!minutes.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128221;</div><h3>No meeting minutes yet</h3><p>Capture notes from a Zoom call, a client conversation, or a planning session.</p><button class="get-started-btn" onclick="openMinutesModal()">+ Create Your First Meeting Minute</button></div>';
+    return;
+  }
+  let html = '<table class="data-table"><thead><tr><th style="width:110px">Date</th><th>Subject</th><th>Project</th><th style="width:140px">Notes</th><th style="width:160px">Actions</th></tr></thead><tbody>';
+  minutes.forEach(m => {
+    const proj = m.project ? `<span class="status-badge status-planning">${escapeHtml(m.project.name)}</span>` : '<span style="color:var(--text-muted)">—</span>';
+    const notesPreview = m.notes ? (m.notes.length > 40 ? m.notes.substring(0, 40) + '…' : m.notes) : '<span style="color:var(--text-muted)">empty</span>';
+    html += `<tr class="clickable" onclick="openMinutesModal(${m.id})">
+      <td>${fmtDate(m.meeting_date)}</td>
+      <td><strong>${escapeHtml(m.subject)}</strong></td>
+      <td>${proj}</td>
+      <td><span style="color:var(--text-muted);font-size:12px">${escapeHtml(notesPreview)}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openMinutesModal(${m.id})">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMinute(${m.id})">Delete</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+async function openMinutesModal(id) {
+  let row = { meeting_date: new Date().toISOString().slice(0, 10), subject: '', notes: '', project_id: null };
+  if (id) {
+    const r = await api('/meeting-minutes/' + id);
+    if (r.success) row = r.data;
+  }
+  const projects = window._minutesProjects || [];
+  const projectOptions = ['<option value="">— No project (general note) —</option>']
+    .concat(projects.map(p => `<option value="${p.id}" ${row.project_id == p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`))
+    .join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:760px;width:96%">
+      <div class="modal-header">
+        <h3>${id ? 'Edit Meeting Minute' : 'New Meeting Minute'}</h3>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" style="grid-template-columns:200px 1fr">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="mm-date" value="${row.meeting_date || ''}">
+          </div>
+          <div class="form-group">
+            <label>Subject *</label>
+            <input type="text" id="mm-subject" placeholder="e.g. Zoom call with Acme Corp" value="${escapeHtml(row.subject || '')}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Project (optional)</label>
+          <select id="mm-project">${projectOptions}</select>
+          <small style="color:var(--text-muted)">Link these minutes to an existing project, or leave blank for a general note.</small>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="mm-notes" rows="18" placeholder="Paste your Zoom transcript or meeting notes here..." style="width:100%;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical">${escapeHtml(row.notes || '')}</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMinute(${id || 'null'})">${id ? 'Save Changes' : 'Create Meeting Minute'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => { document.getElementById('mm-subject')?.focus(); }, 50);
+}
+
+async function saveMinute(id) {
+  const payload = {
+    meeting_date: document.getElementById('mm-date').value,
+    subject: document.getElementById('mm-subject').value.trim(),
+    notes: document.getElementById('mm-notes').value,
+    project_id: document.getElementById('mm-project').value || null
+  };
+  if (!payload.subject) { alert('Subject is required'); return; }
+  const url = id ? '/meeting-minutes/' + id : '/meeting-minutes';
+  const method = id ? 'PUT' : 'POST';
+  const res = await api(url, { method, body: JSON.stringify(payload) });
+  if (!res.success) { alert('Save failed: ' + (res.error || 'unknown')); return; }
+  document.querySelector('.modal-overlay')?.remove();
+  navigateTo('minutes');
+}
+
+async function deleteMinute(id) {
+  if (!confirm('Delete this meeting minute? This cannot be undone.')) return;
+  const res = await api('/meeting-minutes/' + id, { method: 'DELETE' });
+  if (!res.success) { alert('Delete failed: ' + (res.error || 'unknown')); return; }
+  navigateTo('minutes');
+}
