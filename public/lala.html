@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maria Clara Garcia — Founder & Program Director, Visionarium | Neural Intelligence for Education</title>
+    <meta name="description" content="Maria Clara Garcia (Lala), Founder & Program Director of Visionarium. Educator, leadership formation specialist, and partner in bringing Neural Intelligence to community-rooted organizations.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --accent: #3182ce;
+            --accent-light: #63b3ed;
+            --text: #2d3748;
+            --text-light: #718096;
+            --bg: #f7fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --gold: #d69e2e;
+            --gradient: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #3182ce 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 56px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+        }
+        .header-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 36px;
+            align-items: center;
+        }
+        .avatar {
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: -1px;
+        }
+        .avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        /* Education list */
+        .edu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .edu-item {
+            background: var(--bg);
+            padding: 16px 18px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+        }
+        .edu-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        .edu-item p {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        /* Competency tags */
+        .competency-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .competency-tag {
+            background: var(--bg);
+            color: var(--primary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .competency-tag:hover {
+            background: var(--accent);
+            color: var(--white);
+            border-color: var(--accent);
+        }
+        /* Quote */
+        .pull-quote {
+            border-left: 4px solid var(--accent);
+            background: var(--bg);
+            padding: 18px 22px;
+            border-radius: 0 8px 8px 0;
+            margin: 18px 0;
+            font-style: italic;
+            font-size: 16px;
+            color: var(--primary);
+            line-height: 1.6;
+        }
+        .header-text h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        .header-text .title {
+            font-size: 18px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-bottom: 18px;
+        }
+        .contact-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 22px;
+            font-size: 14px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .contact-item a {
+            color: var(--white);
+            text-decoration: none;
+        }
+        .contact-item a:hover { text-decoration: underline; }
+
+        /* Main */
+        .main {
+            margin-top: -40px;
+            padding-bottom: 60px;
+        }
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-title i {
+            color: var(--accent);
+            font-size: 20px;
+        }
+        .lead {
+            font-size: 17px;
+            line-height: 1.75;
+        }
+        .lead strong { color: var(--primary); }
+
+        /* Pitch grid */
+        .pitch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .pitch-item {
+            background: var(--bg);
+            border-left: 4px solid var(--accent);
+            padding: 18px;
+            border-radius: 8px;
+        }
+        .pitch-item .num {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .pitch-item .num i { font-size: 26px; }
+        .pitch-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 6px 0 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pitch-item p {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Solutions grid */
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .solution {
+            display: block;
+            text-decoration: none;
+            border-radius: 12px;
+            padding: 18px;
+            color: var(--white);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .solution:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+        }
+        .solution h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .solution .who {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .solution p {
+            font-size: 13px;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        /* Benefits */
+        .benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+        .benefit {
+            text-align: center;
+            padding: 18px 14px;
+        }
+        .benefit i {
+            font-size: 32px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .benefit h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .benefit p {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta {
+            background: var(--gradient);
+            color: var(--white);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .cta p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-bottom: 22px;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--white);
+            color: var(--primary);
+        }
+        .btn-primary:hover { background: #ffffffcc; transform: translateY(-2px); }
+        .btn-outline {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            text-align: center;
+            padding: 28px;
+        }
+        .footer p { opacity: 0.85; font-size: 14px; }
+        .footer a { color: var(--accent-light); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .header { padding: 40px 0 70px; }
+            .header-content { grid-template-columns: 1fr; text-align: center; }
+            .avatar { margin: 0 auto; width: 130px; height: 130px; }
+            .header-text h1 { font-size: 30px; }
+            .contact-row { justify-content: center; }
+            .card { padding: 24px; }
+            .cta { padding: 30px 22px; }
+            .cta h2 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="avatar">MC</div>
+                <div class="header-text">
+                    <h1>Maria Clara Garcia</h1>
+                    <p class="title">Founder & Program Director, Visionarium &middot; School Director and Teacher, Grades K-12</p>
+                    <div class="contact-row">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Barranquilla, Colombia &middot; New York, USA</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:lala@digit2ai.com">lala@digit2ai.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-globe"></i>
+                            <a href="https://digit2ai.com" target="_blank">digit2ai.com</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+
+            <!-- Personal Intro -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-user-tie"></i> A Quick Introduction</h2>
+                <p class="lead">
+                    My name is <strong>Maria Clara Garcia</strong>. I am the <strong>Founder & Program Director of Visionarium</strong> and a School Director and Teacher across Grades K-12. I founded <strong>Visionarium in 2015</strong>, a Leadership and Creativity incubator in New York for high school and college students from Latin America &mdash; the foundational program this initiative formalizes and scales.
+                </p>
+
+                <div class="pull-quote">
+                    "Committed to fostering students' self-respect, respect for others, and love of learning."
+                </div>
+
+                <ul class="leadership-text" style="font-size: 15px; line-height: 1.8; padding-left: 18px;">
+                    <li style="margin-bottom: 8px;">Member of the <strong>Marymount School of Barranquilla Board of Trustees</strong> (2021 &ndash; Present)</li>
+                    <li style="margin-bottom: 8px;">Over <strong>30 years of leadership in education</strong> across K-12 classroom, administration, and program direction</li>
+                    <li style="margin-bottom: 8px;">Founder and Director of <strong>COLMUN Bogota, Cali, and Eje Cafetero</strong> (2009 &ndash; Present) &mdash; the only Model United Nations conference in the world designed for participants of different mindsets and abilities</li>
+                    <li style="margin-bottom: 8px;">Leader within <strong>UNACOLOMBIA</strong>, the United Nations Association of Colombia (2008 &ndash; Present)</li>
+                    <li style="margin-bottom: 8px;">Former Principal, Public Speaking Teacher, Sports Coordinator, and MUN Director at <strong>Colegio Marymount, Barranquilla</strong></li>
+                    <li>Former teacher at <strong>Colegio Nueva Granada, Bogota</strong></li>
+                </ul>
+            </section>
+
+            <!-- Core Competencies -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-chalkboard-teacher"></i> Core Competencies</h2>
+                <div class="competency-tags">
+                    <span class="competency-tag">Curriculum Design</span>
+                    <span class="competency-tag">Differentiated Instruction</span>
+                    <span class="competency-tag">Student Motivation</span>
+                    <span class="competency-tag">Cooperative Learning</span>
+                    <span class="competency-tag">Classroom Management</span>
+                    <span class="competency-tag">Program Management</span>
+                    <span class="competency-tag">Public Speaking</span>
+                    <span class="competency-tag">Model UN Direction</span>
+                    <span class="competency-tag">Parent & Teacher Relationship</span>
+                    <span class="competency-tag">Leadership Formation</span>
+                </div>
+            </section>
+
+            <!-- Education & Credentials -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-graduation-cap"></i> Education & Credentials</h2>
+                <div class="edu-grid">
+                    <div class="edu-item">
+                        <h4>The Reading and Writing Project</h4>
+                        <p>Columbia University, New York &middot; 2012</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Master in Education</h4>
+                        <p>Universidad del Norte, Barranquilla &middot; 2007</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Specialized in Childhood Education</h4>
+                        <p>Universidad del Norte, Barranquilla &middot; 2005</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Licenciatura en Ingles</h4>
+                        <p>Universidad del Atlantico, Barranquilla &middot; 2001</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Gerencia Educacional</h4>
+                        <p>Corporacion Educativa Del Litoral, Barranquilla &middot; 1999</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Diplomado: Estrategias Educativas en Ciencias Sociales</h4>
+                        <p>Universidad Simon Bolivar &middot; 2009</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Semillero de Investigadores &mdash; "Escuela y Creatividad"</h4>
+                        <p>Universidad Simon Bolivar &middot; 2010</p>
+                    </div>
+                    <div class="edu-item">
+                        <h4>Diplomado en Gerencia Educativa</h4>
+                        <p>Instituto Superior Pedagogico "Jose De La Luz y Caballero", Holguin, Cuba</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- What Is Neural Intelligence -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-brain"></i> What Is Neural Intelligence?</h2>
+                <p class="lead">
+                    <strong>Neural Intelligence is an AI reasoning layer that sits at the center of your business operations.</strong> Instead of bolting another dashboard onto your stack, it <em>connects</em> every relevant system you already use &mdash; CRM, phones, financials, inventory, compliance, vendor data &mdash; through the <strong>Model Context Protocol (MCP)</strong>, and then reasons across all of them simultaneously to surface what matters and prescribe what to do next.
+                </p>
+                <p class="lead" style="margin-top: 14px;">
+                    Most AI tools tell you <em>what happened</em>. Neural Intelligence tells you <strong>what to do about it</strong> &mdash; with the context of every connected system, in real time, 24/7. <em>AI recommends. Humans decide.</em>
+                </p>
+
+                <div class="pitch-grid" style="margin-top: 22px;">
+                    <div class="pitch-item">
+                        <div class="num"><i class="fas fa-network-wired"></i></div>
+                        <h4>Multi-Source Reasoning</h4>
+                        <p>One AI brain analyzes your CRM, phones, ledgers, sanctions lists, ops data, and customer history &mdash; together, not in silos.</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num"><i class="fas fa-fingerprint"></i></div>
+                        <h4>Pattern Recognition</h4>
+                        <p>Detects fraud, churn risk, downtime, compliance gaps, and growth signals that rigid rule-based systems can never catch.</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num"><i class="fas fa-microscope"></i></div>
+                        <h4>Diagnostic + Prescriptive</h4>
+                        <p>Every finding ships with a fix. "Here's what is wrong, here's what to do, here's the workflow that does it."</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num"><i class="fas fa-graduation-cap"></i></div>
+                        <h4>Adaptive Learning</h4>
+                        <p>Continuously refines its judgment from your team's feedback &mdash; gets smarter every week without re-engineering.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quantified Outcomes -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-chart-line"></i> What Neural Intelligence Delivers</h2>
+                <p class="lead" style="margin-bottom: 22px;">
+                    These are not projections. These are the documented outcomes from production deployments across banking, freight, healthcare, and B2B networks.
+                </p>
+                <div class="benefits">
+                    <div class="benefit">
+                        <i class="fas fa-bolt"></i>
+                        <h4>70% Workflow Automation</h4>
+                        <p>Routine tasks &mdash; intake, screening, quoting, scheduling, reporting &mdash; handled end-to-end by reasoning agents.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-coins"></i>
+                        <h4>40-60% Cost Reduction</h4>
+                        <p>Within 18-24 months, with measurable impact in the first 90 days. Built for ROI, not for vendor lock-in.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-bullseye"></i>
+                        <h4>50-75% Fewer False Positives</h4>
+                        <p>Contextual reasoning across multiple sources eliminates the noise that buries your team in busy work.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-rocket"></i>
+                        <h4>3-4x Capacity, Same Team</h4>
+                        <p>Production case study (FreightMind Autopilot): brokers moved from 12 to 50+ loads per day, same headcount.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Solutions Catalog -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-rocket"></i> Neural Intelligence in Production Today</h2>
+                <p class="lead" style="margin-bottom: 22px;">
+                    Four flagship deployments showing what Neural Intelligence does when it is wired into real operations &mdash; banking compliance, freight brokerage, B2B chamber networks, and hospital surgical planning.
+                </p>
+                <div class="solutions-grid" style="margin-bottom: 24px;">
+
+                    <a href="https://aiagent.ringlypro.com/neural-intelligence-banking-whitepaper.html" target="_blank" class="solution" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
+                        <h4><i class="fas fa-university"></i> Neural Intelligence for Banking</h4>
+                        <p class="who">Compliance &middot; KYC &middot; AML &middot; Sanctions</p>
+                        <p>AI reasoning layer for the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, 3x alert-to-SAR conversion. MCP-connected to 8+ specialized servers.</p>
+                    </a>
+
+                    <a href="https://aiagent.ringlypro.com/cw-autopilot-pitch.html" target="_blank" class="solution" style="background: linear-gradient(135deg, #dd6b20 0%, #ed8936 100%);">
+                        <h4><i class="fas fa-truck-fast"></i> CW Autopilot (FreightMind)</h4>
+                        <p class="who">Freight Brokerage &middot; Carrier Marketplace</p>
+                        <p>Contract-to-invoice in under 1 second. 8-stage AI pipeline, Rachel AI broker negotiating live, 3-4x broker capacity, $2-3M margin recovery, 90-day payback.</p>
+                    </a>
+
+                    <a href="https://www.camaravirtual.app/cv-103/dashboard/" target="_blank" class="solution" style="background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);">
+                        <h4><i class="fas fa-handshake-angle"></i> CamaraVirtual Neural B2B</h4>
+                        <p class="who">Chambers of Commerce &middot; Member Networks</p>
+                        <p>Intelligent member matching, TrustRank scoring, Health Composite Index, Monte Carlo risk simulation. 9 modules, 24 sectors, AI-powered networking.</p>
+                    </a>
+
+                    <a href="https://www.surgicalmind.app/intuitive/" target="_blank" class="solution" style="background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);">
+                        <h4><i class="fas fa-hospital-user"></i> SurgicalMind Intuitive</h4>
+                        <p class="who">Hospitals &middot; Surgical Robotics</p>
+                        <p>Hospital surgical-system matcher for da Vinci robots. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.</p>
+                    </a>
+
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin: 28px 0 14px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Verticals Where Neural Intelligence Is Deployed</h3>
+                <div class="solutions-grid">
+
+                    <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="solution" style="background: linear-gradient(135deg, #319795 0%, #4fd1c5 100%);">
+                        <h4><i class="fas fa-store"></i> Store Health AI</h4>
+                        <p class="who">Retail &middot; Multi-Location Operations</p>
+                        <p>Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings, and prescribes the fix &mdash; not just the alert.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);">
+                        <h4><i class="fas fa-warehouse"></i> WarehouseMind AI</h4>
+                        <p class="who">3PL &middot; Manufacturing &middot; Distribution</p>
+                        <p>Neural Intelligence over OEE, labor, and inventory. 90+ MCP tools, predictive downtime diagnostics, prescriptive workflow triggers.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);">
+                        <h4><i class="fas fa-x-ray"></i> ImagingMind MSK</h4>
+                        <p class="who">Clinics &middot; Musculoskeletal Care</p>
+                        <p>AI triage reasoning across voice intake, camera-based ROM, and patient history &mdash; routes to the right specialist with WebRTC consults.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #805ad5 0%, #9f7aea 100%);">
+                        <h4><i class="fas fa-gift"></i> ImprintIQ</h4>
+                        <p class="who">Promotional Products &middot; Print Industry</p>
+                        <p>11 reasoning agents orchestrating the $26.6B promo industry &mdash; from quote intelligence to art approval to production control.</p>
+                    </a>
+
+                    <a href="https://aiagent.ringlypro.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
+                        <h4><i class="fas fa-headset"></i> RinglyPro CRM</h4>
+                        <p class="who">SMB Voice &middot; Customer Engagement Layer</p>
+                        <p>The voice + CRM channel that feeds Neural Intelligence at the edge &mdash; bilingual, 24/7, and fully MCP-connected.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #e53e3e 0%, #fc8181 100%);">
+                        <h4><i class="fas fa-language"></i> Torna Idioma</h4>
+                        <p class="who">Education &middot; Workforce Development</p>
+                        <p>AI tutor reasoning across student progress, BPO job-fit signals, and government KPI dashboards &mdash; trilingual EN/ES/FIL.</p>
+                    </a>
+
+                </div>
+            </section>
+
+            <!-- The Pitch / CTA -->
+            <section class="cta">
+                <h2>Let's Wire Neural Intelligence Into Your Business</h2>
+                <p>
+                    If you can describe a decision your team makes every week &mdash; who to call, what to charge, what to flag, what to fix &mdash; Neural Intelligence can already reason about it. The only question is which of your systems we connect first.
+                </p>
+                <div class="cta-buttons">
+                    <a href="mailto:lala@digit2ai.com" class="btn btn-primary">
+                        <i class="fas fa-envelope"></i> lala@digit2ai.com
+                    </a>
+                    <a href="mailto:mstagg@digit2ai.com" class="btn btn-outline">
+                        <i class="fas fa-handshake"></i> Partner: mstagg@digit2ai.com
+                    </a>
+                    <a href="mstagg.html" class="btn btn-outline">
+                        <i class="fas fa-user-tie"></i> Meet Manuel Stagg
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Digit2AI &middot; <a href="https://digit2ai.com" target="_blank">digit2ai.com</a> &middot; Neural Intelligence for Business</p>
+    </footer>
+</body>
+</html>
