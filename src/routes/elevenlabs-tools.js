@@ -1788,10 +1788,10 @@ async function handleBookAppointmentD2AI(params) {
     const inserted = await db.query(`
       INSERT INTO d2_calendar_events
         (workspace_id, project_id, contact_id, title, description, event_type,
-         start_time, end_time, all_day, "createdAt", "updatedAt")
+         start_time, end_time, all_day)
       VALUES
         (1, NULL, NULL, :title, :description, 'call',
-         :startTime, :endTime, false, NOW(), NOW())
+         :startTime, :endTime, false)
       RETURNING id
     `, {
       replacements: {
