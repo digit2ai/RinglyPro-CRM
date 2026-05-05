@@ -30,6 +30,44 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
+// =====================================================
+// CLIENT 15 (Digit2AI / RinglyPro owner) CARVE-OUT
+// Uses Digit2AI Project Tracker calendar (d2_calendar_events) ONLY.
+// Skips Zoho / Google / GHL / RinglyPro appointments table / SMS.
+// =====================================================
+const D2AI_CLIENT_ID = 15;
+const D2AI_BUSINESS_HOURS = { start: 9, end: 19, slotMinutes: 30 };
+
+let d2Sequelize = null;
+try {
+  d2Sequelize = require('../../digit2ai-projects/src/models').sequelize;
+} catch (e) {
+  logger.warn('[ElevenLabs Tools] Digit2AI projects models not loaded — Client 15 carve-out will fall back to main DB:', e.message);
+}
+
+function etOffsetForDate(dateStr) {
+  try {
+    const probe = new Date(`${dateStr}T12:00:00Z`);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      timeZoneName: 'shortOffset'
+    }).formatToParts(probe);
+    const tz = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT-5';
+    const m = tz.match(/GMT([+-]\d+)/);
+    if (!m) return '-05:00';
+    const hours = parseInt(m[1], 10);
+    const sign = hours < 0 ? '-' : '+';
+    return `${sign}${String(Math.abs(hours)).padStart(2, '0')}:00`;
+  } catch {
+    return '-05:00';
+  }
+}
+
+function buildEtIso(dateStr, hhmm) {
+  const time = hhmm.length === 5 ? `${hhmm}:00` : hhmm;
+  return `${dateStr}T${time}${etOffsetForDate(dateStr)}`;
+}
+
 /**
  * Main tool execution endpoint
  * ElevenLabs sends POST requests with tool_name and parameters
@@ -99,9 +137,17 @@ router.post('/', async (req, res) => {
       case 'send_sms_ringlypro':
       case 'send_sms_corvita':
       case 'send_sms_recovery':
+        if (parseInt(params.client_id, 10) === D2AI_CLIENT_ID) {
+          result = { success: true, skipped: true, reason: 'SMS disabled for Client 15 (Digit2AI)' };
+          break;
+        }
         result = await handleSendSms(params);
         break;
       case 'send_sms_ghl':
+        if (parseInt(params.client_id, 10) === D2AI_CLIENT_ID) {
+          result = { success: true, skipped: true, reason: 'SMS disabled for Client 15 (Digit2AI)' };
+          break;
+        }
         result = await handleSendSmsGhl(params);
         break;
       case 'debug_zoho_settings':
@@ -250,6 +296,11 @@ async function handleCheckAvailability(params) {
       return { success: false, error: 'Missing client_id' };
     }
 
+    // Client 15 carve-out — Digit2AI Project Tracker calendar only
+    if (parseInt(client_id, 10) === D2AI_CLIENT_ID) {
+      return await handleCheckAvailabilityD2AI({ date, days_ahead, timezone });
+    }
+
     logger.info(`[ElevenLabs Tools] Checking combined calendar availability for client ${client_id}`);
 
     // Calculate date range
@@ -352,6 +403,11 @@ async function handleBookAppointment(params) {
   try {
     if (!client_id) {
       return { success: false, error: 'Missing client_id' };
+    }
+
+    // Client 15 carve-out — write only to Digit2AI Project Tracker calendar
+    if (parseInt(client_id, 10) === D2AI_CLIENT_ID) {
+      return await handleBookAppointmentD2AI(params);
     }
 
     // Normalize parameter names (support multiple naming conventions)
@@ -1589,5 +1645,183 @@ router.post('/webhook/call-complete', async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// =====================================================
+// CLIENT 15 (Digit2AI) — Project Tracker calendar handlers
+// =====================================================
+
+async function handleCheckAvailabilityD2AI({ date, days_ahead, timezone }) {
+  try {
+    const db = d2Sequelize || sequelize;
+    const startDate = date || new Date().toISOString().split('T')[0];
+    const numDays = parseInt(days_ahead) || 7;
+
+    logger.info(`[ElevenLabs Tools] [D2AI] Checking Project Tracker availability from ${startDate} for ${numDays} days`);
+
+    const startObj = new Date(startDate + 'T00:00:00Z');
+    const endDateStr = new Date(startObj.getTime() + numDays * 86400000).toISOString().split('T')[0];
+
+    const startIso = `${startDate}T00:00:00${etOffsetForDate(startDate)}`;
+    const endIso = `${endDateStr}T23:59:59${etOffsetForDate(endDateStr)}`;
+
+    const events = await db.query(`
+      SELECT id, start_time, end_time
+      FROM d2_calendar_events
+      WHERE workspace_id = 1
+        AND start_time >= :startIso
+        AND start_time < :endIso
+    `, {
+      replacements: { startIso, endIso },
+      type: QueryTypes.SELECT
+    });
+
+    const slots = [];
+    const now = new Date();
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(startObj.getTime() + i * 86400000);
+      const dow = d.getUTCDay();
+      if (dow === 0 || dow === 6) continue;
+      const dateStr = d.toISOString().split('T')[0];
+
+      for (let h = D2AI_BUSINESS_HOURS.start; h < D2AI_BUSINESS_HOURS.end; h++) {
+        for (let m = 0; m < 60; m += D2AI_BUSINESS_HOURS.slotMinutes) {
+          const hhmm = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          const slotStart = new Date(buildEtIso(dateStr, hhmm));
+          const slotEnd = new Date(slotStart.getTime() + D2AI_BUSINESS_HOURS.slotMinutes * 60000);
+          if (slotStart < now) continue;
+
+          const busy = events.some(ev => {
+            const evStart = new Date(ev.start_time);
+            const evEnd = ev.end_time ? new Date(ev.end_time) : new Date(evStart.getTime() + 30 * 60000);
+            return slotStart < evEnd && slotEnd > evStart;
+          });
+          if (busy) continue;
+
+          const displayTime = new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', {
+            hour: 'numeric', minute: '2-digit', hour12: true
+          });
+          slots.push({
+            date: dateStr,
+            time: hhmm,
+            datetime: `${dateStr}T${hhmm}`,
+            displayDate: d.toLocaleDateString('en-US', {
+              weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC'
+            }),
+            displayTime
+          });
+        }
+      }
+    }
+
+    logger.info(`[ElevenLabs Tools] [D2AI] Found ${slots.length} available slots`);
+
+    return {
+      success: true,
+      calendar_type: 'digit2ai_projects',
+      timezone: timezone || 'America/New_York',
+      start_date: startDate,
+      end_date: endDateStr,
+      slots,
+      slot_count: slots.length
+    };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] [D2AI] check_availability error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleBookAppointmentD2AI(params) {
+  try {
+    const db = d2Sequelize || sequelize;
+
+    const name = params.customer_name || `${params.first_name || ''} ${params.last_name || ''}`.trim();
+    const phoneNum = params.customer_phone || params.phone;
+    const emailAddr = params.customer_email || params.email;
+    const aptDate = params.appointment_date || params.date;
+    let aptTime = params.appointment_time || params.time || params.start_time || params.startTime;
+    const duration = parseInt(params.duration) || 30;
+    const purpose = params.purpose || 'Phone booking via Lina (ElevenLabs)';
+
+    if (!name || !phoneNum) {
+      return { success: false, error: 'Missing required fields: customer_name and phone' };
+    }
+    if (!aptDate || !aptTime) {
+      return { success: false, error: 'Missing appointment date/time' };
+    }
+
+    if (typeof aptTime === 'string' && aptTime.includes('T')) {
+      aptTime = aptTime.substring(11, 16);
+    }
+    const finalTime = aptTime.length >= 5 ? aptTime.substring(0, 5) : aptTime;
+
+    const startTime = new Date(buildEtIso(aptDate, finalTime));
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+
+    const conflict = await db.query(`
+      SELECT id FROM d2_calendar_events
+      WHERE workspace_id = 1
+        AND start_time < :endTime
+        AND COALESCE(end_time, start_time + INTERVAL '30 minutes') > :startTime
+      LIMIT 1
+    `, {
+      replacements: {
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      },
+      type: QueryTypes.SELECT
+    });
+
+    if (conflict.length > 0) {
+      return {
+        success: false,
+        error: `Sorry, the ${finalTime} slot on ${aptDate} is no longer available. Please choose another time.`
+      };
+    }
+
+    const description = [
+      `Booked via Lina (ElevenLabs) for ${name}`,
+      `Phone: ${phoneNum}`,
+      emailAddr ? `Email: ${emailAddr}` : null,
+      purpose ? `Purpose: ${purpose}` : null
+    ].filter(Boolean).join('\n');
+
+    const inserted = await db.query(`
+      INSERT INTO d2_calendar_events
+        (workspace_id, project_id, contact_id, title, description, event_type,
+         start_time, end_time, all_day, "createdAt", "updatedAt")
+      VALUES
+        (1, NULL, NULL, :title, :description, 'call',
+         :startTime, :endTime, false, NOW(), NOW())
+      RETURNING id
+    `, {
+      replacements: {
+        title: `Call: ${name}`,
+        description,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      },
+      type: QueryTypes.INSERT
+    });
+
+    const eventId = Array.isArray(inserted?.[0]) ? inserted[0][0]?.id : inserted?.[0]?.id;
+
+    logger.info(`[ElevenLabs Tools] [D2AI] Booked event ${eventId} on ${aptDate} ${finalTime} for ${name}`);
+
+    return {
+      success: true,
+      message: `Appointment booked successfully for ${name}`,
+      appointment_id: eventId,
+      confirmation_code: `D2AI-${eventId}`,
+      appointment_date: aptDate,
+      appointment_time: finalTime,
+      customer_name: name,
+      customer_phone: phoneNum,
+      calendar_type: 'digit2ai_projects'
+    };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] [D2AI] book_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
 
 module.exports = router;
