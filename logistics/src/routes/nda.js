@@ -108,8 +108,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/v1/nda/:id — Get a single NDA
-router.get('/:id', async (req, res) => {
+// GET /api/v1/nda/:id — Get a single NDA (numeric id only — keeps /signatures from being swallowed)
+router.get('/:id(\\d+)', async (req, res) => {
   try {
     const { sequelize } = req.models;
     const [rows] = await sequelize.query(
