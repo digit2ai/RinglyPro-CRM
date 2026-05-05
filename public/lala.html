@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maria Clara Garcia — Founder & Program Director, Visionarium | Neural Intelligence for Education</title>
+    <title data-i18n="meta_title">Maria Clara Garcia — Founder & Program Director, Visionarium | Neural Intelligence for Education</title>
     <meta name="description" content="Maria Clara Garcia (Lala), Founder & Program Director of Visionarium. Educator, leadership formation specialist, and partner in bringing Neural Intelligence to community-rooted organizations.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,6 +27,39 @@
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
+        }
+
+        /* Language toggle */
+        .lang-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            background: rgba(255,255,255,0.92);
+            border-radius: 24px;
+            padding: 4px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .lang-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .lang-btn:hover { background: rgba(49,130,206,0.1); }
+        .lang-btn.active {
+            background: var(--accent);
+            color: var(--white);
         }
 
         /* Header */
@@ -73,51 +106,6 @@
             width: 100%; height: 100%;
             object-fit: cover;
         }
-        /* Education list */
-        .edu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 14px;
-        }
-        .edu-item {
-            background: var(--bg);
-            padding: 16px 18px;
-            border-radius: 10px;
-            border-left: 4px solid var(--accent);
-        }
-        .edu-item h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 4px;
-            line-height: 1.4;
-        }
-        .edu-item p {
-            font-size: 13px;
-            color: var(--text-light);
-        }
-        /* Competency tags */
-        .competency-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .competency-tag {
-            background: var(--bg);
-            color: var(--primary);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-        }
-        .competency-tag:hover {
-            background: var(--accent);
-            color: var(--white);
-            border-color: var(--accent);
-        }
-        /* Quote */
         .pull-quote {
             border-left: 4px solid var(--accent);
             background: var(--bg);
@@ -147,22 +135,12 @@
             gap: 22px;
             font-size: 14px;
         }
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .contact-item a {
-            color: var(--white);
-            text-decoration: none;
-        }
+        .contact-item { display: flex; align-items: center; gap: 8px; }
+        .contact-item a { color: var(--white); text-decoration: none; }
         .contact-item a:hover { text-decoration: underline; }
 
         /* Main */
-        .main {
-            margin-top: -40px;
-            padding-bottom: 60px;
-        }
+        .main { margin-top: -40px; padding-bottom: 60px; }
         .card {
             background: var(--white);
             border-radius: 16px;
@@ -179,14 +157,8 @@
             align-items: center;
             gap: 12px;
         }
-        .card-title i {
-            color: var(--accent);
-            font-size: 20px;
-        }
-        .lead {
-            font-size: 17px;
-            line-height: 1.75;
-        }
+        .card-title i { color: var(--accent); font-size: 20px; }
+        .lead { font-size: 17px; line-height: 1.75; }
         .lead strong { color: var(--primary); }
 
         /* Pitch grid */
@@ -217,11 +189,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .pitch-item p {
-            font-size: 13px;
-            color: var(--text-light);
-            line-height: 1.5;
-        }
+        .pitch-item p { font-size: 13px; color: var(--text-light); line-height: 1.5; }
 
         /* Solutions grid */
         .solutions-grid {
@@ -237,31 +205,16 @@
             color: var(--white);
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .solution:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-        }
+        .solution:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.18); }
         .solution h4 {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 15px; font-weight: 700; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 8px;
         }
         .solution .who {
-            font-size: 12px;
-            opacity: 0.85;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
+            font-size: 12px; opacity: 0.85; margin-bottom: 8px;
+            text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
         }
-        .solution p {
-            font-size: 13px;
-            opacity: 0.95;
-            line-height: 1.5;
-        }
+        .solution p { font-size: 13px; opacity: 0.95; line-height: 1.5; }
 
         /* Benefits */
         .benefits {
@@ -269,26 +222,10 @@
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 18px;
         }
-        .benefit {
-            text-align: center;
-            padding: 18px 14px;
-        }
-        .benefit i {
-            font-size: 32px;
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
-        .benefit h4 {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 6px;
-        }
-        .benefit p {
-            font-size: 13px;
-            color: var(--text-light);
-            line-height: 1.5;
-        }
+        .benefit { text-align: center; padding: 18px 14px; }
+        .benefit i { font-size: 32px; color: var(--accent); margin-bottom: 10px; }
+        .benefit h4 { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+        .benefit p { font-size: 13px; color: var(--text-light); line-height: 1.5; }
 
         /* CTA */
         .cta {
@@ -298,40 +235,18 @@
             padding: 40px;
             text-align: center;
         }
-        .cta h2 {
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+        .cta h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
         .cta p {
-            font-size: 16px;
-            opacity: 0.95;
-            margin-bottom: 22px;
-            max-width: 620px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 16px; opacity: 0.95; margin-bottom: 22px;
+            max-width: 620px; margin-left: auto; margin-right: auto;
         }
-        .cta-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
+        .cta-buttons { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 22px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 22px; border-radius: 8px; text-decoration: none;
+            font-weight: 600; font-size: 15px; transition: all 0.2s;
         }
-        .btn-primary {
-            background: var(--white);
-            color: var(--primary);
-        }
+        .btn-primary { background: var(--white); color: var(--primary); }
         .btn-primary:hover { background: #ffffffcc; transform: translateY(-2px); }
         .btn-outline {
             background: rgba(255,255,255,0.1);
@@ -351,7 +266,7 @@
         .footer a { color: var(--accent-light); text-decoration: none; }
 
         @media (max-width: 768px) {
-            .header { padding: 40px 0 70px; }
+            .header { padding: 60px 0 70px; }
             .header-content { grid-template-columns: 1fr; text-align: center; }
             .avatar { margin: 0 auto; width: 130px; height: 130px; }
             .header-text h1 { font-size: 30px; }
@@ -359,21 +274,29 @@
             .card { padding: 24px; }
             .cta { padding: 30px 22px; }
             .cta h2 { font-size: 22px; }
+            .lang-toggle { top: 12px; right: 12px; }
+            .lang-btn { padding: 5px 11px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
+    <!-- Language Toggle -->
+    <div class="lang-toggle" role="group" aria-label="Language selector">
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+    </div>
+
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="avatar"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df82addb7c222f714d3ff1.png" alt="Maria Clara Garcia"></div>
                 <div class="header-text">
                     <h1>Maria Clara Garcia</h1>
-                    <p class="title">Founder & Program Director, Visionarium &middot; School Director and Teacher, Grades K-12</p>
+                    <p class="title" data-i18n="header_title">Founder & Program Director, Visionarium &middot; School Director and Teacher, Grades K-12</p>
                     <div class="contact-row">
                         <div class="contact-item">
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>Barranquilla, Colombia &middot; New York, USA</span>
+                            <span data-i18n="header_location">Barranquilla, Colombia &middot; New York, USA</span>
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-envelope"></i>
@@ -394,16 +317,12 @@
 
             <!-- Personal Intro -->
             <section class="card">
-                <h2 class="card-title"><i class="fas fa-user-tie"></i> A Quick Introduction</h2>
-                <p class="lead">
-                    My name is <strong>Maria Clara Garcia</strong>. I am the <strong>Founder & Program Director of Visionarium</strong> and a School Director and Teacher across Grades K-12. I founded <strong>Visionarium in 2015</strong>, a Leadership and Creativity incubator in New York for high school and college students from Latin America &mdash; the foundational program this initiative formalizes and scales.
-                </p>
+                <h2 class="card-title"><i class="fas fa-user-tie"></i> <span data-i18n="intro_h">A Quick Introduction</span></h2>
+                <p class="lead" data-i18n="intro_p">My name is <strong>Maria Clara Garcia</strong>. I am the <strong>Founder & Program Director of Visionarium</strong> and a School Director and Teacher across Grades K-12. I founded <strong>Visionarium in 2015</strong>, a Leadership and Creativity incubator in New York for high school and college students from Latin America &mdash; the foundational program this initiative formalizes and scales.</p>
 
-                <div class="pull-quote">
-                    "Committed to fostering students' self-respect, respect for others, and love of learning."
-                </div>
+                <div class="pull-quote" data-i18n="intro_quote">"Committed to fostering students' self-respect, respect for others, and love of learning."</div>
 
-                <ul class="leadership-text" style="font-size: 15px; line-height: 1.8; padding-left: 18px;">
+                <ul style="font-size: 15px; line-height: 1.8; padding-left: 18px;" data-i18n="intro_list">
                     <li style="margin-bottom: 8px;">Member of the <strong>Marymount School of Barranquilla Board of Trustees</strong> (2021 &ndash; Present)</li>
                     <li style="margin-bottom: 8px;">Over <strong>30 years of leadership in education</strong> across K-12 classroom, administration, and program direction</li>
                     <li style="margin-bottom: 8px;">Founder and Director of <strong>COLMUN Bogota, Cali, and Eje Cafetero</strong> (2009 &ndash; Present) &mdash; the only Model United Nations conference in the world designed for participants of different mindsets and abilities</li>
@@ -415,139 +334,131 @@
 
             <!-- What Is Neural Intelligence -->
             <section class="card">
-                <h2 class="card-title"><i class="fas fa-brain"></i> What Is Neural Intelligence?</h2>
-                <p class="lead">
-                    <strong>Neural Intelligence is an AI reasoning layer that sits at the center of your business operations.</strong> Instead of bolting another dashboard onto your stack, it <em>connects</em> every relevant system you already use &mdash; CRM, phones, financials, inventory, compliance, vendor data &mdash; through the <strong>Model Context Protocol (MCP)</strong>, and then reasons across all of them simultaneously to surface what matters and prescribe what to do next.
-                </p>
-                <p class="lead" style="margin-top: 14px;">
-                    Most AI tools tell you <em>what happened</em>. Neural Intelligence tells you <strong>what to do about it</strong> &mdash; with the context of every connected system, in real time, 24/7. <em>AI recommends. Humans decide.</em>
-                </p>
+                <h2 class="card-title"><i class="fas fa-brain"></i> <span data-i18n="ni_h">What Is Neural Intelligence?</span></h2>
+                <p class="lead" data-i18n="ni_p1"><strong>Neural Intelligence is an AI reasoning layer that sits at the center of your business operations.</strong> Instead of bolting another dashboard onto your stack, it <em>connects</em> every relevant system you already use &mdash; CRM, phones, financials, inventory, compliance, vendor data &mdash; through the <strong>Model Context Protocol (MCP)</strong>, and then reasons across all of them simultaneously to surface what matters and prescribe what to do next.</p>
+                <p class="lead" style="margin-top: 14px;" data-i18n="ni_p2">Most AI tools tell you <em>what happened</em>. Neural Intelligence tells you <strong>what to do about it</strong> &mdash; with the context of every connected system, in real time, 24/7. <em>AI recommends. Humans decide.</em></p>
 
                 <div class="pitch-grid" style="margin-top: 22px;">
                     <div class="pitch-item">
                         <div class="num"><i class="fas fa-network-wired"></i></div>
-                        <h4>Multi-Source Reasoning</h4>
-                        <p>One AI brain analyzes your CRM, phones, ledgers, sanctions lists, ops data, and customer history &mdash; together, not in silos.</p>
+                        <h4 data-i18n="ni_t1_h">Multi-Source Reasoning</h4>
+                        <p data-i18n="ni_t1_p">One AI brain analyzes your CRM, phones, ledgers, sanctions lists, ops data, and customer history &mdash; together, not in silos.</p>
                     </div>
                     <div class="pitch-item">
                         <div class="num"><i class="fas fa-fingerprint"></i></div>
-                        <h4>Pattern Recognition</h4>
-                        <p>Detects fraud, churn risk, downtime, compliance gaps, and growth signals that rigid rule-based systems can never catch.</p>
+                        <h4 data-i18n="ni_t2_h">Pattern Recognition</h4>
+                        <p data-i18n="ni_t2_p">Detects fraud, churn risk, downtime, compliance gaps, and growth signals that rigid rule-based systems can never catch.</p>
                     </div>
                     <div class="pitch-item">
                         <div class="num"><i class="fas fa-microscope"></i></div>
-                        <h4>Diagnostic + Prescriptive</h4>
-                        <p>Every finding ships with a fix. "Here's what is wrong, here's what to do, here's the workflow that does it."</p>
+                        <h4 data-i18n="ni_t3_h">Diagnostic + Prescriptive</h4>
+                        <p data-i18n="ni_t3_p">Every finding ships with a fix. "Here's what is wrong, here's what to do, here's the workflow that does it."</p>
                     </div>
                     <div class="pitch-item">
                         <div class="num"><i class="fas fa-graduation-cap"></i></div>
-                        <h4>Adaptive Learning</h4>
-                        <p>Continuously refines its judgment from your team's feedback &mdash; gets smarter every week without re-engineering.</p>
+                        <h4 data-i18n="ni_t4_h">Adaptive Learning</h4>
+                        <p data-i18n="ni_t4_p">Continuously refines its judgment from your team's feedback &mdash; gets smarter every week without re-engineering.</p>
                     </div>
                 </div>
             </section>
 
             <!-- Quantified Outcomes -->
             <section class="card">
-                <h2 class="card-title"><i class="fas fa-chart-line"></i> What Neural Intelligence Delivers</h2>
-                <p class="lead" style="margin-bottom: 22px;">
-                    These are not projections. These are the documented outcomes from production deployments across banking, freight, healthcare, and B2B networks.
-                </p>
+                <h2 class="card-title"><i class="fas fa-chart-line"></i> <span data-i18n="del_h">What Neural Intelligence Delivers</span></h2>
+                <p class="lead" style="margin-bottom: 22px;" data-i18n="del_p">These are not projections. These are the documented outcomes from production deployments across banking, freight, healthcare, and B2B networks.</p>
                 <div class="benefits">
                     <div class="benefit">
                         <i class="fas fa-bolt"></i>
-                        <h4>70% Workflow Automation</h4>
-                        <p>Routine tasks &mdash; intake, screening, quoting, scheduling, reporting &mdash; handled end-to-end by reasoning agents.</p>
+                        <h4 data-i18n="del_b1_h">70% Workflow Automation</h4>
+                        <p data-i18n="del_b1_p">Routine tasks &mdash; intake, screening, quoting, scheduling, reporting &mdash; handled end-to-end by reasoning agents.</p>
                     </div>
                     <div class="benefit">
                         <i class="fas fa-coins"></i>
-                        <h4>40-60% Cost Reduction</h4>
-                        <p>Within 18-24 months, with measurable impact in the first 90 days. Built for ROI, not for vendor lock-in.</p>
+                        <h4 data-i18n="del_b2_h">40-60% Cost Reduction</h4>
+                        <p data-i18n="del_b2_p">Within 18-24 months, with measurable impact in the first 90 days. Built for ROI, not for vendor lock-in.</p>
                     </div>
                     <div class="benefit">
                         <i class="fas fa-bullseye"></i>
-                        <h4>50-75% Fewer False Positives</h4>
-                        <p>Contextual reasoning across multiple sources eliminates the noise that buries your team in busy work.</p>
+                        <h4 data-i18n="del_b3_h">50-75% Fewer False Positives</h4>
+                        <p data-i18n="del_b3_p">Contextual reasoning across multiple sources eliminates the noise that buries your team in busy work.</p>
                     </div>
                     <div class="benefit">
                         <i class="fas fa-rocket"></i>
-                        <h4>3-4x Capacity, Same Team</h4>
-                        <p>Production case study (FreightMind Autopilot): brokers moved from 12 to 50+ loads per day, same headcount.</p>
+                        <h4 data-i18n="del_b4_h">3-4x Capacity, Same Team</h4>
+                        <p data-i18n="del_b4_p">Production case study (FreightMind Autopilot): brokers moved from 12 to 50+ loads per day, same headcount.</p>
                     </div>
                 </div>
             </section>
 
             <!-- Solutions Catalog -->
             <section class="card">
-                <h2 class="card-title"><i class="fas fa-rocket"></i> Neural Intelligence in Production Today</h2>
-                <p class="lead" style="margin-bottom: 22px;">
-                    Four flagship deployments showing what Neural Intelligence does when it is wired into real operations &mdash; banking compliance, freight brokerage, B2B chamber networks, and hospital surgical planning.
-                </p>
+                <h2 class="card-title"><i class="fas fa-rocket"></i> <span data-i18n="sol_h">Neural Intelligence in Production Today</span></h2>
+                <p class="lead" style="margin-bottom: 22px;" data-i18n="sol_p">Four flagship deployments showing what Neural Intelligence does when it is wired into real operations &mdash; banking compliance, freight brokerage, B2B chamber networks, and hospital surgical planning.</p>
                 <div class="solutions-grid" style="margin-bottom: 24px;">
 
                     <a href="https://aiagent.ringlypro.com/neural-intelligence-banking-whitepaper.html" target="_blank" class="solution" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
-                        <h4><i class="fas fa-university"></i> Neural Intelligence for Banking</h4>
-                        <p class="who">Compliance &middot; KYC &middot; AML &middot; Sanctions</p>
-                        <p>AI reasoning layer for the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, 3x alert-to-SAR conversion. MCP-connected to 8+ specialized servers.</p>
+                        <h4><i class="fas fa-university"></i> <span data-i18n="sol_a_h">Neural Intelligence for Banking</span></h4>
+                        <p class="who" data-i18n="sol_a_w">Compliance &middot; KYC &middot; AML &middot; Sanctions</p>
+                        <p data-i18n="sol_a_p">AI reasoning layer for the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, 3x alert-to-SAR conversion. MCP-connected to 8+ specialized servers.</p>
                     </a>
 
                     <a href="https://aiagent.ringlypro.com/cw-autopilot-pitch.html" target="_blank" class="solution" style="background: linear-gradient(135deg, #dd6b20 0%, #ed8936 100%);">
-                        <h4><i class="fas fa-truck-fast"></i> CW Autopilot (FreightMind)</h4>
-                        <p class="who">Freight Brokerage &middot; Carrier Marketplace</p>
-                        <p>Contract-to-invoice in under 1 second. 8-stage AI pipeline, Rachel AI broker negotiating live, 3-4x broker capacity, $2-3M margin recovery, 90-day payback.</p>
+                        <h4><i class="fas fa-truck-fast"></i> <span data-i18n="sol_b_h">CW Autopilot (FreightMind)</span></h4>
+                        <p class="who" data-i18n="sol_b_w">Freight Brokerage &middot; Carrier Marketplace</p>
+                        <p data-i18n="sol_b_p">Contract-to-invoice in under 1 second. 8-stage AI pipeline, Rachel AI broker negotiating live, 3-4x broker capacity, $2-3M margin recovery, 90-day payback.</p>
                     </a>
 
                     <a href="https://www.camaravirtual.app/cv-103/dashboard/" target="_blank" class="solution" style="background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);">
-                        <h4><i class="fas fa-handshake-angle"></i> CamaraVirtual Neural B2B</h4>
-                        <p class="who">Chambers of Commerce &middot; Member Networks</p>
-                        <p>Intelligent member matching, TrustRank scoring, Health Composite Index, Monte Carlo risk simulation. 9 modules, 24 sectors, AI-powered networking.</p>
+                        <h4><i class="fas fa-handshake-angle"></i> <span data-i18n="sol_c_h">CamaraVirtual Neural B2B</span></h4>
+                        <p class="who" data-i18n="sol_c_w">Chambers of Commerce &middot; Member Networks</p>
+                        <p data-i18n="sol_c_p">Intelligent member matching, TrustRank scoring, Health Composite Index, Monte Carlo risk simulation. 9 modules, 24 sectors, AI-powered networking.</p>
                     </a>
 
                     <a href="https://www.surgicalmind.app/intuitive/" target="_blank" class="solution" style="background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);">
-                        <h4><i class="fas fa-hospital-user"></i> SurgicalMind Intuitive</h4>
-                        <p class="who">Hospitals &middot; Surgical Robotics</p>
-                        <p>Hospital surgical-system matcher for da Vinci robots. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.</p>
+                        <h4><i class="fas fa-hospital-user"></i> <span data-i18n="sol_d_h">SurgicalMind Intuitive</span></h4>
+                        <p class="who" data-i18n="sol_d_w">Hospitals &middot; Surgical Robotics</p>
+                        <p data-i18n="sol_d_p">Hospital surgical-system matcher for da Vinci robots. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.</p>
                     </a>
 
                 </div>
 
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin: 28px 0 14px; text-transform: uppercase; letter-spacing: 0.5px;">Additional Verticals Where Neural Intelligence Is Deployed</h3>
+                <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin: 28px 0 14px; text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="sol_more">Additional Verticals Where Neural Intelligence Is Deployed</h3>
                 <div class="solutions-grid">
 
                     <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="solution" style="background: linear-gradient(135deg, #319795 0%, #4fd1c5 100%);">
-                        <h4><i class="fas fa-store"></i> Store Health AI</h4>
-                        <p class="who">Retail &middot; Multi-Location Operations</p>
-                        <p>Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings, and prescribes the fix &mdash; not just the alert.</p>
+                        <h4><i class="fas fa-store"></i> <span data-i18n="sol_e_h">Store Health AI</span></h4>
+                        <p class="who" data-i18n="sol_e_w">Retail &middot; Multi-Location Operations</p>
+                        <p data-i18n="sol_e_p">Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings, and prescribes the fix &mdash; not just the alert.</p>
                     </a>
 
                     <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);">
-                        <h4><i class="fas fa-warehouse"></i> WarehouseMind AI</h4>
-                        <p class="who">3PL &middot; Manufacturing &middot; Distribution</p>
-                        <p>Neural Intelligence over OEE, labor, and inventory. 90+ MCP tools, predictive downtime diagnostics, prescriptive workflow triggers.</p>
+                        <h4><i class="fas fa-warehouse"></i> <span data-i18n="sol_f_h">WarehouseMind AI</span></h4>
+                        <p class="who" data-i18n="sol_f_w">3PL &middot; Manufacturing &middot; Distribution</p>
+                        <p data-i18n="sol_f_p">Neural Intelligence over OEE, labor, and inventory. 90+ MCP tools, predictive downtime diagnostics, prescriptive workflow triggers.</p>
                     </a>
 
                     <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);">
-                        <h4><i class="fas fa-x-ray"></i> ImagingMind MSK</h4>
-                        <p class="who">Clinics &middot; Musculoskeletal Care</p>
-                        <p>AI triage reasoning across voice intake, camera-based ROM, and patient history &mdash; routes to the right specialist with WebRTC consults.</p>
+                        <h4><i class="fas fa-x-ray"></i> <span data-i18n="sol_g_h">ImagingMind MSK</span></h4>
+                        <p class="who" data-i18n="sol_g_w">Clinics &middot; Musculoskeletal Care</p>
+                        <p data-i18n="sol_g_p">AI triage reasoning across voice intake, camera-based ROM, and patient history &mdash; routes to the right specialist with WebRTC consults.</p>
                     </a>
 
                     <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #805ad5 0%, #9f7aea 100%);">
-                        <h4><i class="fas fa-gift"></i> ImprintIQ</h4>
-                        <p class="who">Promotional Products &middot; Print Industry</p>
-                        <p>11 reasoning agents orchestrating the $26.6B promo industry &mdash; from quote intelligence to art approval to production control.</p>
+                        <h4><i class="fas fa-gift"></i> <span data-i18n="sol_h_h">ImprintIQ</span></h4>
+                        <p class="who" data-i18n="sol_h_w">Promotional Products &middot; Print Industry</p>
+                        <p data-i18n="sol_h_p">11 reasoning agents orchestrating the $26.6B promo industry &mdash; from quote intelligence to art approval to production control.</p>
                     </a>
 
                     <a href="https://aiagent.ringlypro.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
-                        <h4><i class="fas fa-headset"></i> RinglyPro CRM</h4>
-                        <p class="who">SMB Voice &middot; Customer Engagement Layer</p>
-                        <p>The voice + CRM channel that feeds Neural Intelligence at the edge &mdash; bilingual, 24/7, and fully MCP-connected.</p>
+                        <h4><i class="fas fa-headset"></i> <span data-i18n="sol_i_h">RinglyPro CRM</span></h4>
+                        <p class="who" data-i18n="sol_i_w">SMB Voice &middot; Customer Engagement Layer</p>
+                        <p data-i18n="sol_i_p">The voice + CRM channel that feeds Neural Intelligence at the edge &mdash; bilingual, 24/7, and fully MCP-connected.</p>
                     </a>
 
                     <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #e53e3e 0%, #fc8181 100%);">
-                        <h4><i class="fas fa-language"></i> Torna Idioma</h4>
-                        <p class="who">Education &middot; Workforce Development</p>
-                        <p>AI tutor reasoning across student progress, BPO job-fit signals, and government KPI dashboards &mdash; trilingual EN/ES/FIL.</p>
+                        <h4><i class="fas fa-language"></i> <span data-i18n="sol_j_h">Torna Idioma</span></h4>
+                        <p class="who" data-i18n="sol_j_w">Education &middot; Workforce Development</p>
+                        <p data-i18n="sol_j_p">AI tutor reasoning across student progress, BPO job-fit signals, and government KPI dashboards &mdash; trilingual EN/ES/FIL.</p>
                     </a>
 
                 </div>
@@ -555,19 +466,17 @@
 
             <!-- The Pitch / CTA -->
             <section class="cta">
-                <h2>Let's Wire Neural Intelligence Into Your Business</h2>
-                <p>
-                    If you can describe a decision your team makes every week &mdash; who to call, what to charge, what to flag, what to fix &mdash; Neural Intelligence can already reason about it. The only question is which of your systems we connect first.
-                </p>
+                <h2 data-i18n="cta_h">Let's Wire Neural Intelligence Into Your Business</h2>
+                <p data-i18n="cta_p">If you can describe a decision your team makes every week &mdash; who to call, what to charge, what to flag, what to fix &mdash; Neural Intelligence can already reason about it. The only question is which of your systems we connect first.</p>
                 <div class="cta-buttons">
                     <a href="mailto:Lalag16@gmail.com" class="btn btn-primary">
                         <i class="fas fa-envelope"></i> Lalag16@gmail.com
                     </a>
                     <a href="mailto:mstagg@digit2ai.com" class="btn btn-outline">
-                        <i class="fas fa-handshake"></i> Partner: mstagg@digit2ai.com
+                        <i class="fas fa-handshake"></i> <span data-i18n="cta_partner">Partner: mstagg@digit2ai.com</span>
                     </a>
                     <a href="mstagg.html" class="btn btn-outline">
-                        <i class="fas fa-user-tie"></i> Meet Manuel Stagg
+                        <i class="fas fa-user-tie"></i> <span data-i18n="cta_meet">Meet Manuel Stagg</span>
                     </a>
                 </div>
             </section>
@@ -583,7 +492,193 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2026 Digit2AI &middot; <a href="https://digit2ai.com" target="_blank">digit2ai.com</a> &middot; Neural Intelligence for Business</p>
+        <p data-i18n="footer">&copy; 2026 Digit2AI &middot; <a href="https://digit2ai.com" target="_blank">digit2ai.com</a> &middot; Neural Intelligence for Business</p>
     </footer>
+
+    <script>
+        const I18N = {
+            en: {
+                meta_title: "Maria Clara Garcia — Founder & Program Director, Visionarium | Neural Intelligence for Education",
+                header_title: "Founder & Program Director, Visionarium &middot; School Director and Teacher, Grades K-12",
+                header_location: "Barranquilla, Colombia &middot; New York, USA",
+                intro_h: "A Quick Introduction",
+                intro_p: "My name is <strong>Maria Clara Garcia</strong>. I am the <strong>Founder & Program Director of Visionarium</strong> and a School Director and Teacher across Grades K-12. I founded <strong>Visionarium in 2015</strong>, a Leadership and Creativity incubator in New York for high school and college students from Latin America &mdash; the foundational program this initiative formalizes and scales.",
+                intro_quote: "\"Committed to fostering students' self-respect, respect for others, and love of learning.\"",
+                intro_list: '<li style="margin-bottom: 8px;">Member of the <strong>Marymount School of Barranquilla Board of Trustees</strong> (2021 &ndash; Present)</li><li style="margin-bottom: 8px;">Over <strong>30 years of leadership in education</strong> across K-12 classroom, administration, and program direction</li><li style="margin-bottom: 8px;">Founder and Director of <strong>COLMUN Bogota, Cali, and Eje Cafetero</strong> (2009 &ndash; Present) &mdash; the only Model United Nations conference in the world designed for participants of different mindsets and abilities</li><li style="margin-bottom: 8px;">Leader within <strong>UNACOLOMBIA</strong>, the United Nations Association of Colombia (2008 &ndash; Present)</li><li style="margin-bottom: 8px;">Former Principal, Public Speaking Teacher, Sports Coordinator, and MUN Director at <strong>Colegio Marymount, Barranquilla</strong></li><li>Former teacher at <strong>Colegio Nueva Granada, Bogota</strong></li>',
+                ni_h: "What Is Neural Intelligence?",
+                ni_p1: "<strong>Neural Intelligence is an AI reasoning layer that sits at the center of your business operations.</strong> Instead of bolting another dashboard onto your stack, it <em>connects</em> every relevant system you already use &mdash; CRM, phones, financials, inventory, compliance, vendor data &mdash; through the <strong>Model Context Protocol (MCP)</strong>, and then reasons across all of them simultaneously to surface what matters and prescribe what to do next.",
+                ni_p2: "Most AI tools tell you <em>what happened</em>. Neural Intelligence tells you <strong>what to do about it</strong> &mdash; with the context of every connected system, in real time, 24/7. <em>AI recommends. Humans decide.</em>",
+                ni_t1_h: "Multi-Source Reasoning",
+                ni_t1_p: "One AI brain analyzes your CRM, phones, ledgers, sanctions lists, ops data, and customer history &mdash; together, not in silos.",
+                ni_t2_h: "Pattern Recognition",
+                ni_t2_p: "Detects fraud, churn risk, downtime, compliance gaps, and growth signals that rigid rule-based systems can never catch.",
+                ni_t3_h: "Diagnostic + Prescriptive",
+                ni_t3_p: "Every finding ships with a fix. \"Here's what is wrong, here's what to do, here's the workflow that does it.\"",
+                ni_t4_h: "Adaptive Learning",
+                ni_t4_p: "Continuously refines its judgment from your team's feedback &mdash; gets smarter every week without re-engineering.",
+                del_h: "What Neural Intelligence Delivers",
+                del_p: "These are not projections. These are the documented outcomes from production deployments across banking, freight, healthcare, and B2B networks.",
+                del_b1_h: "70% Workflow Automation",
+                del_b1_p: "Routine tasks &mdash; intake, screening, quoting, scheduling, reporting &mdash; handled end-to-end by reasoning agents.",
+                del_b2_h: "40-60% Cost Reduction",
+                del_b2_p: "Within 18-24 months, with measurable impact in the first 90 days. Built for ROI, not for vendor lock-in.",
+                del_b3_h: "50-75% Fewer False Positives",
+                del_b3_p: "Contextual reasoning across multiple sources eliminates the noise that buries your team in busy work.",
+                del_b4_h: "3-4x Capacity, Same Team",
+                del_b4_p: "Production case study (FreightMind Autopilot): brokers moved from 12 to 50+ loads per day, same headcount.",
+                sol_h: "Neural Intelligence in Production Today",
+                sol_p: "Four flagship deployments showing what Neural Intelligence does when it is wired into real operations &mdash; banking compliance, freight brokerage, B2B chamber networks, and hospital surgical planning.",
+                sol_a_h: "Neural Intelligence for Banking",
+                sol_a_w: "Compliance &middot; KYC &middot; AML &middot; Sanctions",
+                sol_a_p: "AI reasoning layer for the 5 pillars of compliance. 50-75% false-positive reduction, 60% faster investigations, 3x alert-to-SAR conversion. MCP-connected to 8+ specialized servers.",
+                sol_b_h: "CW Autopilot (FreightMind)",
+                sol_b_w: "Freight Brokerage &middot; Carrier Marketplace",
+                sol_b_p: "Contract-to-invoice in under 1 second. 8-stage AI pipeline, Rachel AI broker negotiating live, 3-4x broker capacity, $2-3M margin recovery, 90-day payback.",
+                sol_c_h: "CamaraVirtual Neural B2B",
+                sol_c_w: "Chambers of Commerce &middot; Member Networks",
+                sol_c_p: "Intelligent member matching, TrustRank scoring, Health Composite Index, Monte Carlo risk simulation. 9 modules, 24 sectors, AI-powered networking.",
+                sol_d_h: "SurgicalMind Intuitive",
+                sol_d_w: "Hospitals &middot; Surgical Robotics",
+                sol_d_p: "Hospital surgical-system matcher for da Vinci robots. 16 computational analysis pipelines, ROI calculations, voice-narrated proposals, dollarized clinical impact.",
+                sol_more: "Additional Verticals Where Neural Intelligence Is Deployed",
+                sol_e_h: "Store Health AI",
+                sol_e_w: "Retail &middot; Multi-Location Operations",
+                sol_e_p: "Reasoning agent monitors every location's KPIs, surfaces Red/Yellow/Green findings, and prescribes the fix &mdash; not just the alert.",
+                sol_f_h: "WarehouseMind AI",
+                sol_f_w: "3PL &middot; Manufacturing &middot; Distribution",
+                sol_f_p: "Neural Intelligence over OEE, labor, and inventory. 90+ MCP tools, predictive downtime diagnostics, prescriptive workflow triggers.",
+                sol_g_h: "ImagingMind MSK",
+                sol_g_w: "Clinics &middot; Musculoskeletal Care",
+                sol_g_p: "AI triage reasoning across voice intake, camera-based ROM, and patient history &mdash; routes to the right specialist with WebRTC consults.",
+                sol_h_h: "ImprintIQ",
+                sol_h_w: "Promotional Products &middot; Print Industry",
+                sol_h_p: "11 reasoning agents orchestrating the $26.6B promo industry &mdash; from quote intelligence to art approval to production control.",
+                sol_i_h: "RinglyPro CRM",
+                sol_i_w: "SMB Voice &middot; Customer Engagement Layer",
+                sol_i_p: "The voice + CRM channel that feeds Neural Intelligence at the edge &mdash; bilingual, 24/7, and fully MCP-connected.",
+                sol_j_h: "Torna Idioma",
+                sol_j_w: "Education &middot; Workforce Development",
+                sol_j_p: "AI tutor reasoning across student progress, BPO job-fit signals, and government KPI dashboards &mdash; trilingual EN/ES/FIL.",
+                cta_h: "Let's Wire Neural Intelligence Into Your Business",
+                cta_p: "If you can describe a decision your team makes every week &mdash; who to call, what to charge, what to flag, what to fix &mdash; Neural Intelligence can already reason about it. The only question is which of your systems we connect first.",
+                cta_partner: "Partner: mstagg@digit2ai.com",
+                cta_meet: "Meet Manuel Stagg",
+                footer: "&copy; 2026 Digit2AI &middot; <a href=\"https://digit2ai.com\" target=\"_blank\">digit2ai.com</a> &middot; Neural Intelligence for Business"
+            },
+            es: {
+                meta_title: "María Clara García — Fundadora y Directora de Programa, Visionarium | Inteligencia Neural para Educación",
+                header_title: "Fundadora y Directora de Programa, Visionarium &middot; Directora de Colegio y Maestra, Grados K-12",
+                header_location: "Barranquilla, Colombia &middot; Nueva York, EE. UU.",
+                intro_h: "Una Breve Presentación",
+                intro_p: "Mi nombre es <strong>María Clara García</strong>. Soy la <strong>Fundadora y Directora de Programa de Visionarium</strong> y Directora de Colegio y Maestra a lo largo de los Grados K-12. Fundé <strong>Visionarium en 2015</strong>, una incubadora de Liderazgo y Creatividad en Nueva York para estudiantes de bachillerato y universidad de América Latina &mdash; el programa fundacional que esta iniciativa formaliza y escala.",
+                intro_quote: "«Comprometida con fomentar el respeto propio de los estudiantes, el respeto por los demás y el amor por el aprendizaje.»",
+                intro_list: '<li style="margin-bottom: 8px;">Miembro de la <strong>Junta Directiva del Marymount School de Barranquilla</strong> (2021 &ndash; Presente)</li><li style="margin-bottom: 8px;">Más de <strong>30 años de liderazgo en educación</strong> en aula K-12, administración y dirección de programas</li><li style="margin-bottom: 8px;">Fundadora y Directora de <strong>COLMUN Bogotá, Cali y Eje Cafetero</strong> (2009 &ndash; Presente) &mdash; la única conferencia Modelo de las Naciones Unidas en el mundo diseñada para participantes de diferentes formas de pensar y capacidades</li><li style="margin-bottom: 8px;">Líder de <strong>UNACOLOMBIA</strong>, la Asociación de las Naciones Unidas de Colombia (2008 &ndash; Presente)</li><li style="margin-bottom: 8px;">Anterior Rectora, Profesora de Oratoria, Coordinadora Deportiva y Directora de MUN en el <strong>Colegio Marymount, Barranquilla</strong></li><li>Anterior maestra en el <strong>Colegio Nueva Granada, Bogotá</strong></li>',
+                ni_h: "¿Qué es la Inteligencia Neural?",
+                ni_p1: "<strong>La Inteligencia Neural es una capa de razonamiento de IA que se ubica en el centro de las operaciones de su negocio.</strong> En vez de añadir otro tablero más a su tecnología, <em>conecta</em> cada sistema relevante que ya usa &mdash; CRM, teléfonos, finanzas, inventario, cumplimiento, datos de proveedores &mdash; mediante el <strong>Model Context Protocol (MCP)</strong>, y razona sobre todos ellos simultáneamente para destacar lo que importa y prescribir qué hacer a continuación.",
+                ni_p2: "La mayoría de las herramientas de IA le dicen <em>qué pasó</em>. La Inteligencia Neural le dice <strong>qué hacer al respecto</strong> &mdash; con el contexto de cada sistema conectado, en tiempo real, 24/7. <em>La IA recomienda. Las personas deciden.</em>",
+                ni_t1_h: "Razonamiento Multi-Fuente",
+                ni_t1_p: "Un solo cerebro de IA analiza su CRM, teléfonos, libros contables, listas de sanciones, datos operativos e historial de clientes &mdash; juntos, no en silos.",
+                ni_t2_h: "Reconocimiento de Patrones",
+                ni_t2_p: "Detecta fraude, riesgo de fuga de clientes, paros, brechas de cumplimiento y señales de crecimiento que los sistemas rígidos basados en reglas nunca pueden capturar.",
+                ni_t3_h: "Diagnóstico + Prescripción",
+                ni_t3_p: "Cada hallazgo viene con una solución. «Esto es lo que está mal, esto es lo que hay que hacer, este es el flujo de trabajo que lo ejecuta.»",
+                ni_t4_h: "Aprendizaje Adaptativo",
+                ni_t4_p: "Refina continuamente su criterio con la retroalimentación de su equipo &mdash; se vuelve más inteligente cada semana sin necesidad de re-ingeniería.",
+                del_h: "Qué Entrega la Inteligencia Neural",
+                del_p: "No son proyecciones. Son resultados documentados de implementaciones reales en banca, transporte de carga, salud y redes B2B.",
+                del_b1_h: "70% de Automatización de Flujos",
+                del_b1_p: "Tareas rutinarias &mdash; admisión, screening, cotización, agendamiento, reportes &mdash; gestionadas de extremo a extremo por agentes de razonamiento.",
+                del_b2_h: "40-60% de Reducción de Costos",
+                del_b2_p: "En 18-24 meses, con impacto medible en los primeros 90 días. Construido para ROI, no para amarrarlo a un proveedor.",
+                del_b3_h: "50-75% Menos Falsos Positivos",
+                del_b3_p: "El razonamiento contextual sobre múltiples fuentes elimina el ruido que entierra a su equipo en trabajo improductivo.",
+                del_b4_h: "3-4x Capacidad, Mismo Equipo",
+                del_b4_p: "Caso real (FreightMind Autopilot): los corredores pasaron de 12 a más de 50 cargas diarias, con el mismo personal.",
+                sol_h: "Inteligencia Neural en Producción Hoy",
+                sol_p: "Cuatro implementaciones emblemáticas que muestran qué hace la Inteligencia Neural cuando se conecta a operaciones reales &mdash; cumplimiento bancario, corretaje de carga, redes B2B de cámaras y planificación quirúrgica hospitalaria.",
+                sol_a_h: "Inteligencia Neural para Banca",
+                sol_a_w: "Cumplimiento &middot; KYC &middot; AML &middot; Sanciones",
+                sol_a_p: "Capa de razonamiento de IA para los 5 pilares del cumplimiento. 50-75% de reducción de falsos positivos, investigaciones 60% más rápidas, conversión alerta-a-SAR 3x. Conectada vía MCP a más de 8 servidores especializados.",
+                sol_b_h: "CW Autopilot (FreightMind)",
+                sol_b_w: "Corretaje de Carga &middot; Marketplace de Transportistas",
+                sol_b_p: "De contrato a factura en menos de 1 segundo. Pipeline de IA de 8 etapas, Rachel AI negociando en vivo, capacidad 3-4x por corredor, recuperación de margen de $2-3M, retorno en 90 días.",
+                sol_c_h: "CamaraVirtual Neural B2B",
+                sol_c_w: "Cámaras de Comercio &middot; Redes de Miembros",
+                sol_c_p: "Emparejamiento inteligente de miembros, puntuación TrustRank, Índice Compuesto de Salud, simulación de riesgo Monte Carlo. 9 módulos, 24 sectores, networking impulsado por IA.",
+                sol_d_h: "SurgicalMind Intuitive",
+                sol_d_w: "Hospitales &middot; Robótica Quirúrgica",
+                sol_d_p: "Emparejador hospitalario de sistemas quirúrgicos para robots da Vinci. 16 pipelines de análisis computacional, cálculos de ROI, propuestas narradas por voz, impacto clínico en dólares.",
+                sol_more: "Verticales Adicionales Donde se Implementa la Inteligencia Neural",
+                sol_e_h: "Store Health AI",
+                sol_e_w: "Retail &middot; Operaciones Multi-Sede",
+                sol_e_p: "Agente de razonamiento que monitorea los KPIs de cada sede, levanta hallazgos en Rojo/Amarillo/Verde y prescribe la solución &mdash; no solo la alerta.",
+                sol_f_h: "WarehouseMind AI",
+                sol_f_w: "3PL &middot; Manufactura &middot; Distribución",
+                sol_f_p: "Inteligencia Neural sobre OEE, mano de obra e inventario. Más de 90 herramientas MCP, diagnóstico predictivo de paros, disparadores de flujo prescriptivos.",
+                sol_g_h: "ImagingMind MSK",
+                sol_g_w: "Clínicas &middot; Cuidado Musculoesquelético",
+                sol_g_p: "Razonamiento de triaje de IA sobre admisión por voz, evaluación de movilidad por cámara e historia clínica &mdash; deriva al especialista correcto con consultas WebRTC.",
+                sol_h_h: "ImprintIQ",
+                sol_h_w: "Productos Promocionales &middot; Industria de Impresión",
+                sol_h_p: "11 agentes de razonamiento orquestando la industria promocional de $26.6 mil millones &mdash; desde la inteligencia de cotizaciones hasta la aprobación de arte y el control de producción.",
+                sol_i_h: "RinglyPro CRM",
+                sol_i_w: "Voz para PyMEs &middot; Capa de Engagement con el Cliente",
+                sol_i_p: "El canal de voz + CRM que alimenta a la Inteligencia Neural en el borde &mdash; bilingüe, 24/7 y totalmente conectado vía MCP.",
+                sol_j_h: "Torna Idioma",
+                sol_j_w: "Educación &middot; Desarrollo de Talento",
+                sol_j_p: "Tutor de IA que razona sobre el progreso del estudiante, señales de aptitud para empleo BPO y tableros de KPI gubernamentales &mdash; trilingüe EN/ES/FIL.",
+                cta_h: "Conectemos la Inteligencia Neural a su Negocio",
+                cta_p: "Si puede describir una decisión que su equipo toma cada semana &mdash; a quién llamar, qué cobrar, qué señalar, qué arreglar &mdash; la Inteligencia Neural ya puede razonar sobre ella. La única pregunta es cuál de sus sistemas conectamos primero.",
+                cta_partner: "Socio: mstagg@digit2ai.com",
+                cta_meet: "Conozca a Manuel Stagg",
+                footer: "&copy; 2026 Digit2AI &middot; <a href=\"https://digit2ai.com\" target=\"_blank\">digit2ai.com</a> &middot; Inteligencia Neural para Empresas"
+            }
+        };
+
+        const US_ZONES = new Set([
+            'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
+            'America/Phoenix','America/Anchorage','America/Adak','America/Detroit',
+            'America/Indiana/Indianapolis','America/Indiana/Knox','America/Indiana/Marengo',
+            'America/Indiana/Petersburg','America/Indiana/Tell_City','America/Indiana/Vevay',
+            'America/Indiana/Vincennes','America/Indiana/Winamac','America/Kentucky/Louisville',
+            'America/Kentucky/Monticello','America/Menominee','America/Boise','America/Juneau',
+            'America/Metlakatla','America/Nome','America/Sitka','America/Yakutat',
+            'America/North_Dakota/Beulah','America/North_Dakota/Center','America/North_Dakota/New_Salem',
+            'Pacific/Honolulu'
+        ]);
+
+        function detectDefaultLang() {
+            try {
+                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+                const navLang = (navigator.language || 'en').toLowerCase();
+                if (navLang.startsWith('es')) return 'es';
+                if (tz.startsWith('America/') && !US_ZONES.has(tz)) return 'es';
+                if (tz === 'Atlantic/Bermuda' || tz.startsWith('Pacific/Easter')) return 'es';
+            } catch (e) {}
+            return 'en';
+        }
+
+        function setLang(lang) {
+            if (!I18N[lang]) lang = 'en';
+            const dict = I18N[lang];
+            document.documentElement.lang = lang;
+            try { localStorage.setItem('lalaLang', lang); } catch (e) {}
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key] !== undefined) el.innerHTML = dict[key];
+            });
+            if (dict.meta_title) document.title = dict.meta_title;
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+            });
+        }
+
+        (function init() {
+            let lang;
+            try { lang = localStorage.getItem('lalaLang'); } catch (e) {}
+            if (!lang) lang = detectDefaultLang();
+            setLang(lang);
+        })();
+    </script>
 </body>
 </html>
