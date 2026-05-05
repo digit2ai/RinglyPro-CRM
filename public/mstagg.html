@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuel Stagg — Founder & CEO, Digit2AI | Neural AI Solutions for Business</title>
+    <meta name="description" content="Manuel Stagg, Founder & CEO of Digit2AI. Production-grade Neural AI solutions that help businesses capture more leads, automate operations, and grow.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --accent: #3182ce;
+            --accent-light: #63b3ed;
+            --text: #2d3748;
+            --text-light: #718096;
+            --bg: #f7fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --gold: #d69e2e;
+            --gradient: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #3182ce 100%);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 56px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+        }
+        .header-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 36px;
+            align-items: center;
+        }
+        .avatar {
+            width: 160px; height: 160px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .header-text h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        .header-text .title {
+            font-size: 18px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-bottom: 18px;
+        }
+        .contact-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 22px;
+            font-size: 14px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .contact-item a {
+            color: var(--white);
+            text-decoration: none;
+        }
+        .contact-item a:hover { text-decoration: underline; }
+
+        /* Main */
+        .main {
+            margin-top: -40px;
+            padding-bottom: 60px;
+        }
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-title i {
+            color: var(--accent);
+            font-size: 20px;
+        }
+        .lead {
+            font-size: 17px;
+            line-height: 1.75;
+        }
+        .lead strong { color: var(--primary); }
+
+        /* Pitch grid */
+        .pitch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .pitch-item {
+            background: var(--bg);
+            border-left: 4px solid var(--accent);
+            padding: 18px;
+            border-radius: 8px;
+        }
+        .pitch-item .num {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .pitch-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 6px 0 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pitch-item p {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Solutions grid */
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .solution {
+            display: block;
+            text-decoration: none;
+            border-radius: 12px;
+            padding: 18px;
+            color: var(--white);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .solution:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+        }
+        .solution h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .solution .who {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .solution p {
+            font-size: 13px;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        /* Benefits */
+        .benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+        .benefit {
+            text-align: center;
+            padding: 18px 14px;
+        }
+        .benefit i {
+            font-size: 32px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .benefit h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .benefit p {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta {
+            background: var(--gradient);
+            color: var(--white);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .cta p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-bottom: 22px;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--white);
+            color: var(--primary);
+        }
+        .btn-primary:hover { background: #ffffffcc; transform: translateY(-2px); }
+        .btn-outline {
+            background: rgba(255,255,255,0.1);
+            color: var(--white);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+        /* Footer */
+        .footer {
+            background: var(--primary);
+            color: var(--white);
+            text-align: center;
+            padding: 28px;
+        }
+        .footer p { opacity: 0.85; font-size: 14px; }
+        .footer a { color: var(--accent-light); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .header { padding: 40px 0 70px; }
+            .header-content { grid-template-columns: 1fr; text-align: center; }
+            .avatar { margin: 0 auto; width: 130px; height: 130px; }
+            .header-text h1 { font-size: 30px; }
+            .contact-row { justify-content: center; }
+            .card { padding: 24px; }
+            .cta { padding: 30px 22px; }
+            .cta h2 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="avatar">
+                    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69df832b80b446d0fbac3ed4.jpg" alt="Manuel Stagg">
+                </div>
+                <div class="header-text">
+                    <h1>Manuel Stagg</h1>
+                    <p class="title">Founder & CEO, Digit2AI &middot; Full-Stack AI Solutions Architect</p>
+                    <div class="contact-row">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Wesley Chapel, FL</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:+16566001400">(656) 600-1400</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-globe"></i>
+                            <a href="https://digit2ai.com" target="_blank">digit2ai.com</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+
+            <!-- Personal Intro -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-user-tie"></i> A Quick Introduction</h2>
+                <p class="lead">
+                    My name is <strong>Manuel Stagg</strong>. I am the <strong>Founder and CEO of Digit2AI</strong> and a Full-Stack AI Solutions Architect with over <strong>two decades of enterprise technology experience</strong>, including more than 10 years inside <strong>Citi</strong> leading global compliance, risk, and AI integration programs.
+                </p>
+                <p class="lead" style="margin-top: 14px;">
+                    I founded Digit2AI to bring the same enterprise-grade AI that powers Wall Street to the businesses that actually drive our communities &mdash; <strong>small and mid-size companies, professional services firms, healthcare practices, logistics operators, retailers, and chambers of commerce</strong>. My job is simple: turn AI into measurable business results &mdash; more leads captured, fewer hours wasted, and a better experience for your customers.
+                </p>
+            </section>
+
+            <!-- About Digit2AI -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-brain"></i> What Digit2AI Does</h2>
+                <p class="lead">
+                    <strong>Digit2AI builds production-grade Neural AI solutions that work for your business 24/7.</strong> We design and deploy intelligent systems that answer your phones, qualify your leads, automate your operations, monitor your performance, and surface the decisions that actually move the needle &mdash; in English and Spanish, without the cost of hiring an entire IT team.
+                </p>
+
+                <div class="pitch-grid" style="margin-top: 22px;">
+                    <div class="pitch-item">
+                        <div class="num">10+</div>
+                        <h4>Live AI Ecosystems</h4>
+                        <p>Production platforms across healthcare, logistics, retail, manufacturing, education, and chambers.</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num">24/7</div>
+                        <h4>Voice AI Reception</h4>
+                        <p>Bilingual AI agents (Rachel, Ana, Lina) answer calls, book appointments, and capture every lead.</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num">85+</div>
+                        <h4>AI Tools Deployed</h4>
+                        <p>Specialized AI agents for dispatch, quoting, compliance, diagnostics, and customer engagement.</p>
+                    </div>
+                    <div class="pitch-item">
+                        <div class="num">2 Lang</div>
+                        <h4>English & Spanish</h4>
+                        <p>Native bilingual AI built for diverse markets &mdash; reach every customer in their language.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Why It Matters -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-bullseye"></i> What This Means for Your Business</h2>
+                <div class="benefits">
+                    <div class="benefit">
+                        <i class="fas fa-phone-volume"></i>
+                        <h4>Never Miss a Call</h4>
+                        <p>Our Voice AI answers 24/7, books appointments, and follows up &mdash; in English or Spanish. Most clients recover lost revenue in the first 30 days.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-clock"></i>
+                        <h4>Save 20-40 Hours a Week</h4>
+                        <p>AI handles intake, scheduling, reminders, quoting, and reporting &mdash; freeing your team for the work that needs a human.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Decisions, Not Dashboards</h4>
+                        <p>Neural Intelligence scans your operations and tells you what to fix today &mdash; not just what happened yesterday.</p>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-handshake"></i>
+                        <h4>Built for Your Industry</h4>
+                        <p>Pre-built solutions for retail, clinics, freight, warehouses, chambers, and professional services &mdash; not generic chatbots.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Solutions Catalog -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-rocket"></i> Solutions I Can Deploy for Your Business</h2>
+                <p class="lead" style="margin-bottom: 22px;">
+                    Every solution below is <strong>live, in production, and serving real customers today</strong>. We can adapt any of these to your business in weeks, not months.
+                </p>
+                <div class="solutions-grid">
+
+                    <a href="https://aiagent.ringlypro.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
+                        <h4><i class="fas fa-headset"></i> RinglyPro CRM</h4>
+                        <p class="who">For: Any business with a phone</p>
+                        <p>Bilingual Voice AI receptionist that answers, qualifies, and books &mdash; with full CRM, billing, and SMS built in.</p>
+                    </a>
+
+                    <a href="https://camaravirtual.app" target="_blank" class="solution" style="background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);">
+                        <h4><i class="fas fa-handshake"></i> CamaraVirtual.app</h4>
+                        <p class="who">For: Chambers of Commerce</p>
+                        <p>The B2B engine for chambers &mdash; intelligent member matching, TrustRank scoring, and AI-powered networking. 9 modules, 24 sectors.</p>
+                    </a>
+
+                    <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="solution" style="background: linear-gradient(135deg, #319795 0%, #4fd1c5 100%);">
+                        <h4><i class="fas fa-store"></i> Store Health AI</h4>
+                        <p class="who">For: Retail & Multi-Location</p>
+                        <p>Red/Yellow/Green health monitoring across all your locations with predictive risk alerts and AI voice guidance.</p>
+                    </a>
+
+                    <a href="https://surgicalmind.app" target="_blank" class="solution" style="background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);">
+                        <h4><i class="fas fa-hospital"></i> SurgicalMind AI</h4>
+                        <p class="who">For: Hospitals & Medtech</p>
+                        <p>Hospital surgical-system matcher with 16 analysis pipelines, ROI calculations, and voice-narrated proposals.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);">
+                        <h4><i class="fas fa-x-ray"></i> ImagingMind MSK</h4>
+                        <p class="who">For: Clinics & Specialty Care</p>
+                        <p>AI musculoskeletal triage with voice intake, camera-based range-of-motion assessment, and WebRTC video consults.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #dd6b20 0%, #ed8936 100%);">
+                        <h4><i class="fas fa-truck"></i> FreightMind AI</h4>
+                        <p class="who">For: Freight Carriers & Brokers</p>
+                        <p>AI-native operating system with 8 agents covering dispatch, rate quoting, compliance, billing, and 24/7 ops.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);">
+                        <h4><i class="fas fa-warehouse"></i> WarehouseMind AI</h4>
+                        <p class="who">For: 3PL, Manufacturing, Distribution</p>
+                        <p>Warehouse OS with OEE tracking, labor management, and Neural Intelligence diagnostics. 90+ MCP tools.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #805ad5 0%, #9f7aea 100%);">
+                        <h4><i class="fas fa-gift"></i> ImprintIQ</h4>
+                        <p class="who">For: Promotional Products & Print</p>
+                        <p>11 autonomous AI agents driving quote optimization, art approvals, and production orchestration.</p>
+                    </a>
+
+                    <a href="https://digit2ai.com" target="_blank" class="solution" style="background: linear-gradient(135deg, #e53e3e 0%, #fc8181 100%);">
+                        <h4><i class="fas fa-language"></i> Torna Idioma</h4>
+                        <p class="who">For: Education & Workforce</p>
+                        <p>Trilingual AI tutor (EN/ES/FIL) with BPO job placement and government KPI tracking.</p>
+                    </a>
+
+                </div>
+            </section>
+
+            <!-- The Pitch / CTA -->
+            <section class="cta">
+                <h2>Let's Talk About Your Business</h2>
+                <p>
+                    If you can describe a recurring task in your business &mdash; a phone you can't answer, a quote you keep redoing, a report nobody reads, a customer experience you wish you could deliver &mdash; I can probably show you the AI that already does it.
+                </p>
+                <div class="cta-buttons">
+                    <a href="tel:+16566001400" class="btn btn-primary">
+                        <i class="fas fa-phone"></i> Call (656) 600-1400
+                    </a>
+                    <a href="mailto:mstagg@digit2ai.com" class="btn btn-outline">
+                        <i class="fas fa-envelope"></i> mstagg@digit2ai.com
+                    </a>
+                    <a href="Manuel_Stagg.html" class="btn btn-outline">
+                        <i class="fas fa-file-alt"></i> Full Bio
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Digit2AI &middot; <a href="https://digit2ai.com" target="_blank">digit2ai.com</a> &middot; Neural AI Solutions for Business</p>
+    </footer>
+</body>
+</html>
