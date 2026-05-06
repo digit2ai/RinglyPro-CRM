@@ -7,14 +7,14 @@ export default function ContractBuilderPage() {
   const [form, setForm] = useState({
     client_name: '',
     client_address: '',
-    effective_date: new Date().toISOString().split('T')[0],
-    initial_term_months: 24,
+    effective_date: '2026-05-11',
+    initial_term_months: 12,
     jurisdiction: 'Florida',
     // Outcome-based pricing: license fee + usage (client pays) + % of cost reduction
-    license_fee: 14000,
+    license_fee: 140000,
     initial_deposit_pct: 10,
     ai_consumption_rate: 0.012,
-    outcome_fee_pct: 2.5,
+    outcome_fee_pct: 0,
     outcome_categories: ['labor_cost_reduction', 'throughput_improvement', 'error_reduction', 'leakage_reduction'],
     baseline_period_days: 90,
     onboarding_hours: 10,
@@ -22,6 +22,8 @@ export default function ContractBuilderPage() {
     // Executive summary inputs — configurable, default reflects build to date (start 2026-03-02)
     hours_invested: 720,
     build_start_date: '2026-03-02',
+    // Deployment model — affects on-prem responsibility language in contract
+    deployment_model: 'on_premises', // 'cloud' | 'on_premises' | 'hybrid'
   })
 
   const fmt = (n) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -66,6 +68,34 @@ export default function ContractBuilderPage() {
       </style></head><body>${el.innerHTML}</body></html>`)
     w.document.close()
     w.print()
+  }
+
+  const downloadPdf = () => {
+    const el = document.getElementById('contractPreview')
+    if (!el) { showToast('Open the Preview step first'); return }
+    if (typeof window === 'undefined' || !window.html2pdf) {
+      showToast('PDF library still loading — try again in a moment'); return
+    }
+    showToast('Generating PDF…')
+    const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
+    // Clone so the on-screen height clamp (max-h-[600px] / overflow) doesn't truncate the PDF
+    const clone = el.cloneNode(true)
+    const wrapper = document.createElement('div')
+    wrapper.style.cssText = "padding:0.75in;background:#fff;color:#32373C;font-family:'Barlow','Inter',sans-serif;font-size:11pt;line-height:1.6"
+    wrapper.appendChild(clone)
+    window.html2pdf()
+      .set({
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      })
+      .from(wrapper)
+      .save()
+      .then(() => showToast('PDF downloaded'))
+      .catch(err => { console.error(err); showToast('PDF generation failed — see console') })
   }
 
   const OUTCOME_OPTIONS = [
@@ -144,6 +174,14 @@ export default function ContractBuilderPage() {
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
             <Field label="Engineering Hours Invested To Date" type="number" value={form.hours_invested} onChange={v => update('hours_invested', parseInt(v) || 0)} />
             <Field label="Build Start Date" type="date" value={form.build_start_date} onChange={v => update('build_start_date', v)} />
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Deployment Model</label>
+              <select value={form.deployment_model} onChange={e => update('deployment_model', e.target.value)} className="input-field w-full">
+                <option value="cloud">Cloud (PINAXIS-hosted)</option>
+                <option value="on_premises">On-Premises (Client environment)</option>
+                <option value="hybrid">Hybrid (data local, analytics cloud)</option>
+              </select>
+            </div>
           </div>
 
           {/* License Fee Breakdown */}
@@ -278,19 +316,19 @@ export default function ContractBuilderPage() {
       {step === 4 && (
         <div className="card space-y-4">
           <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 4 — Export & Save</h3>
-          <p className="text-slate-400 text-sm">Print or save your contract as PDF directly from the browser.</p>
+          <p className="text-slate-400 text-sm">Download the signed-ready PDF, or open the print dialog.</p>
           <div className="grid grid-cols-2 gap-4">
+            <button onClick={downloadPdf}
+              className="p-6 bg-slate-700/30 border border-slate-600 rounded-lg text-center hover:border-emerald-500 transition-all">
+              <div className="text-3xl mb-3">⬇</div>
+              <h4 className="text-sm font-semibold text-white mb-1">Download as PDF</h4>
+              <p className="text-xs text-slate-400">Saves a Pinaxis-branded PDF copy of the Service Contract Invoice to your device</p>
+            </button>
             <button onClick={printContract}
               className="p-6 bg-slate-700/30 border border-slate-600 rounded-lg text-center hover:border-blue-500 transition-all">
-              <div className="text-3xl mb-3">📄</div>
-              <h4 className="text-sm font-semibold text-white mb-1">Print / Save as PDF</h4>
-              <p className="text-xs text-slate-400">Opens print dialog — use "Save as PDF" for a downloadable copy</p>
-            </button>
-            <button onClick={() => { goStep(3); showToast('Preview loaded — you can copy the contract text') }}
-              className="p-6 bg-slate-700/30 border border-slate-600 rounded-lg text-center hover:border-emerald-500 transition-all">
-              <div className="text-3xl mb-3">📋</div>
-              <h4 className="text-sm font-semibold text-white mb-1">Copy to Clipboard</h4>
-              <p className="text-xs text-slate-400">Go back to preview and select text to copy</p>
+              <div className="text-3xl mb-3">🖨</div>
+              <h4 className="text-sm font-semibold text-white mb-1">Print</h4>
+              <p className="text-xs text-slate-400">Opens print dialog (also offers Save-as-PDF as a destination)</p>
             </button>
           </div>
           <div className="flex justify-start pt-2">
@@ -362,21 +400,33 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
         production traffic at <strong>aiagent.ringlypro.com/pinaxis</strong>.
       </p>
       <p>
-        The delivered ecosystem comprises <strong>16 integrated user-facing modules</strong> spanning the full
+        The delivered ecosystem comprises <strong>13 integrated user-facing modules</strong> spanning the full
         warehouse-intelligence lifecycle (data intake → analysis → product matching → simulation → commercial
-        modeling → proposal generation → live observability), <strong>17 backend service domains</strong> exposed
-        as REST + MCP-tool APIs, <strong>9 dedicated analytics services</strong> (parser, metrics extractor,
-        Monte-Carlo simulator, benefit projector, product matcher, report generator, video/audio narration,
-        synthetic data, bulk ingestion), <strong>16 production database tables</strong>, and live integrations with
-        Anthropic Claude (LLM), ElevenLabs (Rachel voice agent), PostgreSQL, n8n / PLC webhook ingestion, and
-        Render auto-deployment. The platform is fronted by an authenticated React SPA, an automated narrated
-        proposal generator with Chart.js visualizations, and an OEE shop-floor dashboard.
+        modeling → proposal generation), <strong>17 backend service domains</strong> exposed as REST + MCP-tool
+        APIs, <strong>9 dedicated analytics services</strong> (parser, metrics extractor, Monte-Carlo simulator,
+        benefit projector, product matcher, report generator, video/audio narration, synthetic data, bulk
+        ingestion), <strong>16 production database tables</strong>, and live integrations with Anthropic Claude
+        (LLM), ElevenLabs (Rachel voice agent), PostgreSQL, and Render auto-deployment. The platform is fronted
+        by an authenticated React SPA and an automated narrated proposal generator with Chart.js
+        visualizations.
       </p>
+      {form.deployment_model === 'on_premises' && (
+        <p style={{ background: '#FEF3C7', border: '1px solid #FCD34D', padding: '12px 14px', borderRadius: '6px', fontSize: '10pt' }}>
+          <strong>On-Premises Deployment Notice.</strong> This Agreement contemplates an <strong>on-premises
+          installation</strong>. Client (Pinaxis) is responsible for provisioning and maintaining the runtime
+          environment and underlying infrastructure — server capacity, network, storage, OS patching, identity
+          provider, certificate management, monitoring, backup, and disaster recovery — in accordance with the
+          Strategic Integration Plan summarized in <strong>Exhibit D</strong>. Provider supplies the Platform
+          software, deployment artifacts, configuration templates, and onboarding support, but is not
+          responsible for Client-side hardware procurement, data-center operations, or third-party service
+          contracts.
+        </p>
+      )}
       <p>
         This Service Contract Invoice / Purchase Order memorializes the License terms under which {form.client_name || 'the Client'} obtains
         operational access to the platform, the AI consumption pass-through, and the outcome-based fee
         structure described below. A complete inventory of delivered modules, services, and integrations is
-        attached as <strong>Exhibit C — Platform Deliverables</strong>.
+        attached as <strong>Exhibit C — Platform Deliverables</strong>{form.deployment_model === 'on_premises' ? <>, with on-premises infrastructure scope detailed in <strong>Exhibit D — Strategic Integration Plan Summary</strong></> : null}.
       </p>
 
       {/* INVOICE LINE ITEMS */}
@@ -700,7 +750,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
         <H2>EXHIBIT C — PLATFORM DELIVERABLES &amp; ECOSYSTEM</H2>
         <p>The following modules, services, integrations, and data assets constitute the PINAXIS Warehouse Intelligence Platform delivered to Client under this Agreement. All items are presently live in production at <strong>aiagent.ringlypro.com/pinaxis</strong> and are covered by the License Fee, AI Consumption pass-through, and Outcome Fee defined in Section 3.</p>
 
-        <p style={{ marginTop: '1em' }}><strong>C1. User-Facing Modules</strong> — 16 production React pages, single sign-on protected:</p>
+        <p style={{ marginTop: '1em' }}><strong>C1. User-Facing Modules</strong> — 13 production React pages, single sign-on protected:</p>
         <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
           <thead>
             <tr style={{ background: '#F1F5F9' }}>
@@ -717,9 +767,6 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
             <tr><td style={tdStyle}><strong>Proposal</strong></td><td style={tdStyle}>One-click PDF report generation tailored to project analysis</td></tr>
             <tr><td style={tdStyle}><strong>Presentation</strong></td><td style={tdStyle}>Auto-narrated 11-slide playbook with Chart.js visualizations and Rachel AI voice (TTS via ElevenLabs)</td></tr>
             <tr><td style={tdStyle}><strong>API Integration</strong></td><td style={tdStyle}>Production API key management — generate / view / revoke per-project keys for ingest endpoints</td></tr>
-            <tr><td style={tdStyle}><strong>Observability</strong></td><td style={tdStyle}>Live equipment telemetry dashboard with severity heat-map, active faults, and rolling throughput</td></tr>
-            <tr><td style={tdStyle}><strong>OEE Dashboard</strong></td><td style={tdStyle}>Embedded shop-floor OEE monitor (Availability × Performance × Quality) with downtime ranking</td></tr>
-            <tr><td style={tdStyle}><strong>WarehouseMind AI</strong></td><td style={tdStyle}>Four sub-views — MCP Command Center, Neural Intelligence, Event Automation, Voice AI</td></tr>
             <tr><td style={tdStyle}><strong>NDA</strong></td><td style={tdStyle}>Multi-party e-signature flow with database-persisted signatures</td></tr>
             <tr><td style={tdStyle}><strong>Contract Builder</strong></td><td style={tdStyle}>This module — Service Contract Invoice / PO generator (PINAXIS-branded, P2P-ready)</td></tr>
             <tr><td style={tdStyle}><strong>On-Premises Plan</strong></td><td style={tdStyle}>Self-hosted deployment guide (LLM proxy, SSO, CORS, environment configuration)</td></tr>
@@ -772,6 +819,80 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
           Hours reflect actual engineering time spent on platform design, implementation, integration, deployment, and quality assurance through the Effective Date. Future enhancements requested by Client are outside the scope of this Agreement and will be quoted separately under a Statement of Work.
         </p>
       </div>
+
+      {/* Exhibit D — Strategic Integration Plan Summary (on-premises only) */}
+      {form.deployment_model === 'on_premises' && (
+        <div style={{ pageBreakBefore: 'always', marginTop: '3em' }}>
+          <H2>EXHIBIT D — STRATEGIC INTEGRATION PLAN SUMMARY</H2>
+          <p>This Exhibit summarizes the on-premises deployment architecture and the division of responsibility between Provider (PINAXIS Analytics) and Client ({form.client_name || 'Pinaxis'}). The full Strategic Integration Plan is published at <strong>aiagent.ringlypro.com/pinaxis/on-premises</strong> and is incorporated by reference.</p>
+
+          <p style={{ marginTop: '1em' }}><strong>D1. Deployment Profile — Full On-Premises (100% Data Sovereignty):</strong></p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+            <tbody>
+              <tr><td style={tdStyle}><strong>Data Residency</strong></td><td style={tdStyle}>100% on-premises, zero external data transfer</td></tr>
+              <tr><td style={tdStyle}><strong>External Data Transfer</strong></td><td style={tdStyle}>Zero (air-gap or filtered egress at Client option)</td></tr>
+              <tr><td style={tdStyle}><strong>Deployment Timeline</strong></td><td style={tdStyle}>6–8 weeks from infrastructure readiness</td></tr>
+              <tr><td style={tdStyle}><strong>Infrastructure Footprint</strong></td><td style={tdStyle}>Full-stack (Presentation + Application + Data + AI layer)</td></tr>
+              <tr><td style={tdStyle}><strong>Updates &amp; Patching</strong></td><td style={tdStyle}>Managed releases via Provider; deployed by Client per change-window policy</td></tr>
+            </tbody>
+          </table>
+
+          <p style={{ marginTop: '1em' }}><strong>D2. Reference Architecture — 4 Layers:</strong></p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+            <thead>
+              <tr style={{ background: '#F1F5F9' }}>
+                <th style={thStyle}>Layer</th>
+                <th style={thStyle}>Components</th>
+                <th style={thStyle}>Network</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style={tdStyle}><strong>Presentation</strong></td><td style={tdStyle}>React Dashboard (Nginx); optional local Voice AI / TTS</td><td style={tdStyle}>:443 HTTPS, :8443 (optional)</td></tr>
+              <tr><td style={tdStyle}><strong>Application</strong></td><td style={tdStyle}>Node.js API Server; Analysis Engine; Proposal Generator; MCP Gateway; OEE Real-Time Processor</td><td style={tdStyle}>:3000 / :3100 / :3200 (internal)</td></tr>
+              <tr><td style={tdStyle}><strong>Data</strong></td><td style={tdStyle}>PostgreSQL 15+; File storage (NFS / S3-compatible); optional Redis cache</td><td style={tdStyle}>:5432 / :6379 (internal)</td></tr>
+              <tr><td style={tdStyle}><strong>AI (optional)</strong></td><td style={tdStyle}>Option A: Local LLM (Ollama / vLLM) on GPU node — Option B: filtered egress proxy — Option C: no AI (manual mode)</td><td style={tdStyle}>GPU node or egress-only proxy</td></tr>
+            </tbody>
+          </table>
+
+          <p style={{ marginTop: '1em' }}><strong>D3. Integration Surface — Inbound &amp; Outbound:</strong></p>
+          <ul style={{ paddingLeft: '1.2em' }}>
+            <li><strong>WMS / ERP (SAP, Oracle, JDA, Manhattan)</strong> — Item Master, Inventory, Inbound, Outbound feeds via REST ingest endpoints (<code>/api/v1/ingest/*</code>)</li>
+            <li><strong>PLC / MES / SCADA (Siemens, Rockwell, Beckhoff)</strong> — Real-time machine status and OEE telemetry via webhook (<code>/api/oee/webhooks/machine-event</code>)</li>
+            <li><strong>BI Tools (Power BI, Tableau, Grafana)</strong> — Read-only access to Analysis Results, KPIs, and OEE metrics</li>
+          </ul>
+
+          <p style={{ marginTop: '1em' }}><strong>D4. Responsibility Matrix:</strong></p>
+          <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+            <thead>
+              <tr style={{ background: '#F1F5F9' }}>
+                <th style={thStyle}>Item</th>
+                <th style={thStyle}>Provider (PINAXIS Analytics)</th>
+                <th style={thStyle}>Client ({form.client_name || 'Pinaxis'})</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style={tdStyle}>Platform software, deployment artifacts, container images</td><td style={tdStyle}>✓ Owns</td><td style={tdStyle}>—</td></tr>
+              <tr><td style={tdStyle}>Configuration templates, runbooks, deployment guide</td><td style={tdStyle}>✓ Provides</td><td style={tdStyle}>—</td></tr>
+              <tr><td style={tdStyle}>Onboarding (10 hours) &amp; deployment support</td><td style={tdStyle}>✓ Provides</td><td style={tdStyle}>—</td></tr>
+              <tr><td style={tdStyle}>Server capacity, network, storage hardware</td><td style={tdStyle}>—</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>OS patching, container runtime, OS-level security</td><td style={tdStyle}>—</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>Identity provider (SSO / SAML / OIDC)</td><td style={tdStyle}>Integration support</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>TLS certificates, internal CA, firewall rules</td><td style={tdStyle}>—</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>Database backups, disaster recovery, retention policy</td><td style={tdStyle}>Recommended config</td><td style={tdStyle}>✓ Operates</td></tr>
+              <tr><td style={tdStyle}>Monitoring, alerting, uptime SLA</td><td style={tdStyle}>Recommended config</td><td style={tdStyle}>✓ Operates</td></tr>
+              <tr><td style={tdStyle}>Local LLM (if Option A) — GPU host, model weights, inference runtime</td><td style={tdStyle}>Compatibility list</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>WMS / ERP / PLC system contracts and connectivity</td><td style={tdStyle}>—</td><td style={tdStyle}>✓ Owns</td></tr>
+              <tr><td style={tdStyle}>Platform updates &amp; managed releases (release notes, signed artifacts)</td><td style={tdStyle}>✓ Provides</td><td style={tdStyle}>Deploys per change window</td></tr>
+            </tbody>
+          </table>
+          <p style={{ fontSize: '10pt', color: '#475569', marginTop: '0.75em' }}>
+            Provider's onboarding allocation ({form.onboarding_hours} hours) covers initial deployment guidance,
+            data-source mapping, and configuration handoff. Hours beyond the allocation, environment
+            remediation work, or extensions to the Reference Architecture are outside the License Fee and will
+            be quoted separately under a Statement of Work.
+          </p>
+        </div>
+      )}
     </>
   )
 }
