@@ -10,8 +10,9 @@ export default function ContractBuilderPage() {
     effective_date: new Date().toISOString().split('T')[0],
     initial_term_months: 24,
     jurisdiction: 'Florida',
-    // Outcome-based pricing: implementation + usage (client pays) + % of cost reduction
-    implementation_fee: 14000,
+    // Outcome-based pricing: license fee + usage (client pays) + % of cost reduction
+    license_fee: 14000,
+    initial_deposit_pct: 10,
     ai_consumption_rate: 0.012,
     outcome_fee_pct: 2.5,
     outcome_categories: ['labor_cost_reduction', 'throughput_improvement', 'error_reduction', 'leakage_reduction'],
@@ -24,13 +25,20 @@ export default function ContractBuilderPage() {
   const update = (key, val) => setForm(f => ({ ...f, [key]: val }))
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
+  // Derived pricing — initial deposit on signing, remainder amortized across term
+  const initialDeposit = form.license_fee * (form.initial_deposit_pct / 100)
+  const remainingLicense = form.license_fee - initialDeposit
+  const monthlyLicensePayment = form.initial_term_months > 0 ? remainingLicense / form.initial_term_months : 0
+  const invoiceNumber = `PINAXIS-INV-${(form.effective_date || '').replace(/-/g, '')}-${(form.client_name || 'DRAFT').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6) || 'DRAFT'}`
+  const pricing = { initialDeposit, remainingLicense, monthlyLicensePayment, invoiceNumber }
+
   const goStep = (n) => setStep(n)
 
   const printContract = () => {
     const el = document.getElementById('contractPreview')
     if (!el) return
     const w = window.open('', '_blank')
-    w.document.write(`<!DOCTYPE html><html><head><title>Enterprise Services Agreement — ${form.client_name || 'Draft'}</title>
+    w.document.write(`<!DOCTYPE html><html><head><title>Service Contract Invoice — ${form.client_name || 'Draft'}</title>
       <style>
         @page{margin:1in}body{font-family:Georgia,'Times New Roman',serif;font-size:11pt;line-height:1.6;color:#1E293B;max-width:8.5in;margin:0 auto;padding:1in}
         h1{font-size:18pt;text-align:center;margin-bottom:.5em;color:#1B2A4A}h2{font-size:13pt;color:#1B2A4A;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em}
@@ -61,8 +69,8 @@ export default function ContractBuilderPage() {
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
-      <h1 className="text-2xl font-bold text-white mb-1">Enterprise Services Agreement</h1>
-      <p className="text-slate-400 text-sm mb-8">Outcome-based contract — implementation + AI usage (paid by client) + 2.5% of documented cost reduction</p>
+      <h1 className="text-2xl font-bold text-white mb-1">Service Contract Invoice / Purchase Order</h1>
+      <p className="text-slate-400 text-sm mb-8">License fee with 10% initial deposit + AI usage (paid by client) + outcome fee on documented cost reduction</p>
 
       {/* Progress */}
       <div className="flex mb-8 gap-2">
@@ -110,10 +118,36 @@ export default function ContractBuilderPage() {
 
           {/* Base Pricing Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="One-Time Implementation Fee ($)" type="number" value={form.implementation_fee} onChange={v => update('implementation_fee', parseFloat(v) || 0)} />
+            <Field label="License Fee ($)" type="number" value={form.license_fee} onChange={v => update('license_fee', parseFloat(v) || 0)} />
+            <Field label="Initial Deposit (% of License Fee)" type="number" value={form.initial_deposit_pct} onChange={v => update('initial_deposit_pct', parseFloat(v) || 0)} step="0.5" />
             <Field label="AI Consumption Rate ($/unit) — paid by Client" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
+          </div>
+
+          {/* License Fee Breakdown */}
+          <div className="bg-slate-700/30 border border-amber-500/30 rounded-lg p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-amber-400" />
+              <h4 className="text-sm font-semibold text-white">License Fee Breakdown</h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+              <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-600">
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Initial Deposit ({form.initial_deposit_pct}%)</div>
+                <div className="text-lg font-bold text-amber-400 mt-1">{fmt(initialDeposit)}</div>
+                <div className="text-[10px] text-slate-500 mt-1">Due upon signing</div>
+              </div>
+              <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-600">
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Remaining License</div>
+                <div className="text-lg font-bold text-slate-300 mt-1">{fmt(remainingLicense)}</div>
+                <div className="text-[10px] text-slate-500 mt-1">Amortized across {form.initial_term_months} months</div>
+              </div>
+              <div className="bg-slate-800/60 rounded-lg p-3 border border-slate-600">
+                <div className="text-xs text-slate-500 uppercase tracking-wide">Monthly License Payment</div>
+                <div className="text-lg font-bold text-emerald-400 mt-1">{fmt(monthlyLicensePayment)}/mo</div>
+                <div className="text-[10px] text-slate-500 mt-1">Deducted from remaining {form.initial_term_months}-month term</div>
+              </div>
+            </div>
           </div>
 
           {/* Outcome Fee Section */}
@@ -172,8 +206,16 @@ export default function ContractBuilderPage() {
             <h4 className="text-sm font-semibold text-white mb-3">Revenue Summary</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-400">Implementation (one-time)</span>
-                <span className="font-bold text-amber-400">{fmt(form.implementation_fee)}</span>
+                <span className="text-slate-400">License Fee (total)</span>
+                <span className="font-bold text-amber-400">{fmt(form.license_fee)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">— Initial Deposit ({form.initial_deposit_pct}%) due on signing</span>
+                <span className="font-medium text-amber-400">{fmt(initialDeposit)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">— Monthly License Payment ({form.initial_term_months} mo)</span>
+                <span className="font-medium text-emerald-400">{fmt(monthlyLicensePayment)}/mo</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">AI Usage</span>
@@ -202,7 +244,7 @@ export default function ContractBuilderPage() {
         <div className="card space-y-4">
           <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
           <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: '11pt', lineHeight: 1.6, color: '#1E293B' }}>
-            <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} />
+            <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} pricing={pricing} />
           </div>
           <div className="flex justify-between pt-2">
             <button className="btn-secondary" onClick={() => goStep(2)}>← Back</button>
@@ -245,14 +287,136 @@ export default function ContractBuilderPage() {
   )
 }
 
-function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
+function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
   const selectedOutcomes = OUTCOME_OPTIONS.filter(o => form.outcome_categories.includes(o.key))
+  const { initialDeposit, remainingLicense, monthlyLicensePayment, invoiceNumber } = pricing
 
   return (
     <>
-      <h1 style={{ fontSize: '18pt', textAlign: 'center', marginBottom: '.5em', color: '#1B2A4A' }}>ENTERPRISE SERVICES AGREEMENT</h1>
+      {/* INVOICE / PURCHASE ORDER HEADER */}
+      <div style={{ borderBottom: '3px double #1B2A4A', paddingBottom: '1em', marginBottom: '1.5em' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ fontSize: '20pt', margin: 0, color: '#1B2A4A', letterSpacing: '1px' }}>SERVICE CONTRACT INVOICE</h1>
+            <p style={{ fontSize: '10pt', color: '#64748B', margin: '4px 0 0 0', letterSpacing: '2px' }}>PURCHASE ORDER &amp; PAYMENT SCHEDULE</p>
+          </div>
+          <div style={{ textAlign: 'right', fontSize: '10pt' }}>
+            <div style={{ fontSize: '14pt', fontWeight: 700, color: '#1B2A4A' }}>PINAXIS Analytics</div>
+            <div style={{ color: '#475569' }}>Warehouse Intelligence Platform</div>
+          </div>
+        </div>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5em', fontSize: '10pt' }}>
+        <tbody>
+          <tr>
+            <td style={{ width: '50%', verticalAlign: 'top', paddingRight: '1em' }}>
+              <div style={{ fontSize: '9pt', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748B', marginBottom: '4px' }}>Bill To / Purchaser</div>
+              <div style={{ fontWeight: 700, fontSize: '11pt' }}>{form.client_name || '_______________'}</div>
+              <div style={{ whiteSpace: 'pre-wrap', color: '#475569' }}>{form.client_address || ''}</div>
+            </td>
+            <td style={{ width: '50%', verticalAlign: 'top' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr><td style={metaLabel}>Invoice / PO No.</td><td style={metaValue}>{invoiceNumber}</td></tr>
+                  <tr><td style={metaLabel}>Issue Date</td><td style={metaValue}>{form.effective_date || '___'}</td></tr>
+                  <tr><td style={metaLabel}>Effective Date</td><td style={metaValue}>{form.effective_date || '___'}</td></tr>
+                  <tr><td style={metaLabel}>Term</td><td style={metaValue}>{form.initial_term_months} months</td></tr>
+                  <tr><td style={metaLabel}>Payment Terms</td><td style={metaValue}>Deposit on signing; Net 30 thereafter</td></tr>
+                  <tr><td style={metaLabel}>Currency</td><td style={metaValue}>USD</td></tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* INVOICE LINE ITEMS */}
+      <H2>LINE ITEMS</H2>
+      <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+        <thead>
+          <tr style={{ background: '#1B2A4A', color: '#fff' }}>
+            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff' }}>Description</th>
+            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Qty</th>
+            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Rate</th>
+            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={tdStyle}><strong>License Fee</strong> — Total contract value</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>1</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>{fmt(form.license_fee)}</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>{fmt(form.license_fee)}</td>
+          </tr>
+          <tr style={{ background: '#FEF3C7' }}>
+            <td style={tdStyle}><strong>Initial Deposit ({form.initial_deposit_pct}%)</strong> — Due upon signing<br /><span style={{ fontSize: '9pt', color: '#475569' }}>Credited against License Fee; deducted from remaining monthly payments</span></td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>1</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>—</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#92400E' }}>{fmt(initialDeposit)}</td>
+          </tr>
+          <tr>
+            <td style={tdStyle}><strong>Monthly License Payment</strong> — Remaining {fmt(remainingLicense)} amortized over {form.initial_term_months} months</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>{form.initial_term_months}</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>{fmt(monthlyLicensePayment)}/mo</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>{fmt(remainingLicense)}</td>
+          </tr>
+          <tr>
+            <td style={tdStyle}><strong>AI Consumption</strong> — Pass-through usage, metered monthly</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>actuals</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>${form.ai_consumption_rate.toFixed(4)}/unit</td>
+            <td style={{ ...tdStyle, textAlign: 'right', color: '#475569' }}>at actuals</td>
+          </tr>
+          <tr style={{ background: '#F0FDF4' }}>
+            <td style={tdStyle}><strong>Outcome Fee</strong> — % of Documented Savings, reconciled quarterly</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>quarterly</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>{form.outcome_fee_pct}%</td>
+            <td style={{ ...tdStyle, textAlign: 'right', color: '#065F46' }}>per Section 5</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr style={{ background: '#F1F5F9' }}>
+            <td colSpan={3} style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>Total License Value (fixed)</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>{fmt(form.license_fee)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <H2>PAYMENT SCHEDULE</H2>
+      <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1.5em 0' }}>
+        <thead>
+          <tr style={{ background: '#F1F5F9' }}>
+            <th style={thStyle}>When</th>
+            <th style={thStyle}>What</th>
+            <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={tdStyle}><strong>Upon Signing ({form.effective_date || '___'})</strong></td>
+            <td style={tdStyle}>Initial Deposit — {form.initial_deposit_pct}% of License Fee</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, color: '#92400E' }}>{fmt(initialDeposit)}</td>
+          </tr>
+          <tr>
+            <td style={tdStyle}><strong>Monthly (Months 1–{form.initial_term_months})</strong></td>
+            <td style={tdStyle}>Monthly License Payment + AI Usage actuals</td>
+            <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>{fmt(monthlyLicensePayment)}/mo + usage</td>
+          </tr>
+          <tr>
+            <td style={tdStyle}><strong>Quarterly</strong></td>
+            <td style={tdStyle}>Outcome Fee — {form.outcome_fee_pct}% of net Documented Savings vs Baseline</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>variable</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style={{ fontSize: '10pt', color: '#475569', fontStyle: 'italic', marginBottom: '2em' }}>
+        This Service Contract Invoice / Purchase Order is binding upon signature below and is governed by the Service Contract Terms &amp; Conditions that follow.
+      </p>
+
+      <h1 style={{ fontSize: '14pt', textAlign: 'center', margin: '1.5em 0 .5em 0', color: '#1B2A4A', borderTop: '1px solid #CBD5E1', paddingTop: '1em' }}>SERVICE CONTRACT — TERMS &amp; CONDITIONS</h1>
       <p style={{ textAlign: 'center', color: '#475569', fontSize: '10pt', marginBottom: '2em' }}>
-        This Enterprise Services Agreement ("Agreement") is entered into as of{' '}
+        These terms form an integral part of the Service Contract Invoice / Purchase Order above, entered into as of{' '}
         <strong>{form.effective_date || '___'}</strong> ("Effective Date") by and between:<br /><br />
         <strong>PINAXIS Analytics</strong> ("Provider")<br />
         and<br />
@@ -283,7 +447,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
       <p>Implementation: <strong>{form.impl_timeline_weeks} weeks</strong>. Onboarding: <strong>{form.onboarding_hours} hours</strong>.</p>
 
       <H2>3. FEES & PRICING STRUCTURE</H2>
-      <p>This Agreement employs an outcome-aligned pricing model. Provider's compensation is tied directly to the measurable cost reduction and value delivered to Client, with AI usage costs borne by Client as a pass-through.</p>
+      <p>This Agreement employs an outcome-aligned pricing model. Provider's compensation comprises a License Fee (paid as an Initial Deposit on signing plus monthly amortization across the Initial Term), AI usage costs borne by Client as a pass-through, and an Outcome Fee tied to documented cost reduction.</p>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1em 0' }}>
         <thead>
           <tr style={{ background: '#F1F5F9' }}>
@@ -294,9 +458,19 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
         </thead>
         <tbody>
           <tr>
-            <td style={tdStyle}>Implementation Fee</td>
-            <td style={tdStyle}><strong>{fmt(form.implementation_fee)}</strong></td>
-            <td style={tdStyle}>One-time, due upon execution</td>
+            <td style={tdStyle}>License Fee — Total</td>
+            <td style={tdStyle}><strong>{fmt(form.license_fee)}</strong></td>
+            <td style={tdStyle}>Fixed, payable per schedule below</td>
+          </tr>
+          <tr style={{ background: '#FEF3C7' }}>
+            <td style={tdStyle}>License Fee — Initial Deposit ({form.initial_deposit_pct}%)</td>
+            <td style={tdStyle}><strong>{fmt(initialDeposit)}</strong></td>
+            <td style={tdStyle}>Due upon execution — credited against License Fee and deducted from remaining monthly payments</td>
+          </tr>
+          <tr>
+            <td style={tdStyle}>License Fee — Monthly Amortization</td>
+            <td style={tdStyle}><strong>{fmt(monthlyLicensePayment)}</strong>/mo × {form.initial_term_months}</td>
+            <td style={tdStyle}>Monthly, Net 30, for the Initial Term ({fmt(remainingLicense)} total)</td>
           </tr>
           <tr>
             <td style={tdStyle}>AI Consumption — Usage Rate (per unit)</td>
@@ -410,7 +584,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS }) {
         </ol>
 
         <p style={{ marginTop: '1.5em' }}><strong>A2. Pricing Model:</strong></p>
-        <p style={{ fontSize: '10pt', color: '#475569' }}>Provider receives a one-time Implementation Fee of {fmt(form.implementation_fee)}. All AI usage is paid by Client monthly at the agreed Consumption Rate based on actual metered consumption. Provider's ongoing compensation is the Outcome Fee — {form.outcome_fee_pct}% of Documented Savings, reconciled quarterly against the pre-implementation Baseline.</p>
+        <p style={{ fontSize: '10pt', color: '#475569' }}>Provider receives a License Fee of {fmt(form.license_fee)}, payable as a {form.initial_deposit_pct}% Initial Deposit ({fmt(initialDeposit)}) due upon signing — which is credited against the License Fee and deducted from the remaining monthly payments — followed by {form.initial_term_months} monthly payments of {fmt(monthlyLicensePayment)} amortizing the {fmt(remainingLicense)} balance. All AI usage is paid by Client monthly at the agreed Consumption Rate based on actual metered consumption. Provider's ongoing compensation also includes the Outcome Fee — {form.outcome_fee_pct}% of Documented Savings, reconciled quarterly against the pre-implementation Baseline.</p>
       </div>
 
       {/* Exhibit B */}
@@ -501,3 +675,5 @@ function Field({ label, value, onChange, placeholder, type = 'text', full, step 
 const thStyle = { border: '1px solid #CBD5E1', padding: '8px 12px', textAlign: 'left', fontSize: '10pt', fontWeight: 600, background: '#F1F5F9' }
 const tdStyle = { border: '1px solid #CBD5E1', padding: '8px 12px', textAlign: 'left', fontSize: '10pt' }
 const sigLine = { borderTop: '1px solid #1E293B', marginTop: '3em', paddingTop: 4, fontSize: '10pt' }
+const metaLabel = { padding: '3px 8px 3px 0', fontSize: '9pt', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', verticalAlign: 'top' }
+const metaValue = { padding: '3px 0', fontSize: '10pt', fontWeight: 600, color: '#1B2A4A', verticalAlign: 'top' }
