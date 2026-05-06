@@ -322,19 +322,17 @@ export default function ContractBuilderPage() {
         </div>
       )}
 
-      {/* Step 3: Preview */}
-      {step === 3 && (
-        <div className="card space-y-4">
-          <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
-          <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "'Barlow', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif", fontSize: '11pt', lineHeight: 1.6, color: '#32373C' }}>
-            <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} pricing={pricing} />
-          </div>
-          <div className="flex justify-between pt-2">
-            <button className="btn-secondary" onClick={() => goStep(2)}>← Back</button>
-            <button className="btn-primary" onClick={() => goStep(4)}>Next: Export →</button>
-          </div>
+      {/* Step 3: Preview — kept mounted on Step 4 too so Print/Download can read #contractPreview */}
+      <div className="card space-y-4" style={{ display: step === 3 ? 'block' : 'none' }}>
+        <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
+        <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "'Barlow', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif", fontSize: '11pt', lineHeight: 1.6, color: '#32373C' }}>
+          <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} pricing={pricing} />
         </div>
-      )}
+        <div className="flex justify-between pt-2">
+          <button className="btn-secondary" onClick={() => goStep(2)}>← Back</button>
+          <button className="btn-primary" onClick={() => goStep(4)}>Next: Export →</button>
+        </div>
+      </div>
 
       {/* Step 4: Export */}
       {step === 4 && (
