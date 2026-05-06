@@ -39,11 +39,20 @@ export default function ContractBuilderPage() {
     if (!el) return
     const w = window.open('', '_blank')
     w.document.write(`<!DOCTYPE html><html><head><title>Service Contract Invoice — ${form.client_name || 'Draft'}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Lexend+Deca:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
-        @page{margin:1in}body{font-family:Georgia,'Times New Roman',serif;font-size:11pt;line-height:1.6;color:#1E293B;max-width:8.5in;margin:0 auto;padding:1in}
-        h1{font-size:18pt;text-align:center;margin-bottom:.5em;color:#1B2A4A}h2{font-size:13pt;color:#1B2A4A;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em}
-        ul,ol{padding-left:1.2em}li{margin-bottom:.5em}table{width:100%;border-collapse:collapse;margin:1em 0}th,td{border:1px solid #CBD5E1;padding:8px 12px;text-align:left;font-size:10pt}th{background:#F1F5F9;font-weight:600}
-        .sig-block{margin-top:3em;display:flex;justify-content:space-between}.sig-col{width:45%}.sig-line{border-top:1px solid #1E293B;margin-top:3em;padding-top:4px;font-size:10pt}
+        @page{margin:1in}
+        body{font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11pt;line-height:1.6;color:#32373C;max-width:8.5in;margin:0 auto;padding:1in;-webkit-font-smoothing:antialiased}
+        h1{font-family:'Lexend Deca','Barlow',sans-serif;font-size:18pt;text-align:center;margin-bottom:.5em;color:#262745;font-weight:700;letter-spacing:.5px}
+        h2{font-family:'Lexend Deca','Barlow',sans-serif;font-size:13pt;color:#262745;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em;font-weight:600;letter-spacing:.3px}
+        ul,ol{padding-left:1.2em}li{margin-bottom:.5em}
+        table{width:100%;border-collapse:collapse;margin:1em 0}
+        th,td{border:1px solid #CBD5E1;padding:8px 12px;text-align:left;font-size:10pt}
+        th{background:#F1F5F9;font-weight:600;font-family:'Barlow',sans-serif}
+        strong,b{font-weight:600}
+        .sig-block{margin-top:3em;display:flex;justify-content:space-between}.sig-col{width:45%}.sig-line{border-top:1px solid #262745;margin-top:3em;padding-top:4px;font-size:10pt}
       </style></head><body>${el.innerHTML}</body></html>`)
     w.document.close()
     w.print()
@@ -243,7 +252,7 @@ export default function ContractBuilderPage() {
       {step === 3 && (
         <div className="card space-y-4">
           <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
-          <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: '11pt', lineHeight: 1.6, color: '#1E293B' }}>
+          <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "'Barlow', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif", fontSize: '11pt', lineHeight: 1.6, color: '#32373C' }}>
             <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} pricing={pricing} />
           </div>
           <div className="flex justify-between pt-2">
@@ -294,15 +303,15 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
   return (
     <>
       {/* INVOICE / PURCHASE ORDER HEADER */}
-      <div style={{ borderBottom: '3px double #1B2A4A', paddingBottom: '1em', marginBottom: '1.5em' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div style={{ borderTop: '4px solid #00968A', paddingTop: '1em', marginBottom: '1.5em' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1em', borderBottom: '1px solid #E2E8F0' }}>
           <div>
-            <h1 style={{ fontSize: '20pt', margin: 0, color: '#1B2A4A', letterSpacing: '1px' }}>SERVICE CONTRACT INVOICE</h1>
-            <p style={{ fontSize: '10pt', color: '#64748B', margin: '4px 0 0 0', letterSpacing: '2px' }}>PURCHASE ORDER &amp; PAYMENT SCHEDULE</p>
+            <h1 style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '20pt', margin: 0, color: '#262745', letterSpacing: '0.5px', fontWeight: 700, textAlign: 'left' }}>Service Contract Invoice</h1>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: '10pt', color: '#00968A', margin: '4px 0 0 0', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600 }}>Purchase Order &amp; Payment Schedule</p>
           </div>
           <div style={{ textAlign: 'right', fontSize: '10pt' }}>
-            <div style={{ fontSize: '14pt', fontWeight: 700, color: '#1B2A4A' }}>PINAXIS Analytics</div>
-            <div style={{ color: '#475569' }}>Warehouse Intelligence Platform</div>
+            <div style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '16pt', fontWeight: 700, color: '#262745', letterSpacing: '0.5px' }}>PINAXIS</div>
+            <div style={{ fontFamily: "'Barlow', sans-serif", color: '#00968A', fontWeight: 600, fontSize: '9pt', letterSpacing: '1px', textTransform: 'uppercase' }}>Warehouse Intelligence</div>
           </div>
         </div>
       </div>
@@ -335,11 +344,11 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       <H2>LINE ITEMS</H2>
       <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
         <thead>
-          <tr style={{ background: '#1B2A4A', color: '#fff' }}>
-            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff' }}>Description</th>
-            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Qty</th>
-            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Rate</th>
-            <th style={{ ...thStyle, background: '#1B2A4A', color: '#fff', textAlign: 'right' }}>Amount</th>
+          <tr style={{ background: '#00968A', color: '#fff' }}>
+            <th style={{ ...thStyle, background: '#00968A', color: '#fff', borderColor: '#00968A' }}>Description</th>
+            <th style={{ ...thStyle, background: '#00968A', color: '#fff', borderColor: '#00968A', textAlign: 'right' }}>Qty</th>
+            <th style={{ ...thStyle, background: '#00968A', color: '#fff', borderColor: '#00968A', textAlign: 'right' }}>Rate</th>
+            <th style={{ ...thStyle, background: '#00968A', color: '#fff', borderColor: '#00968A', textAlign: 'right' }}>Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -414,7 +423,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
         This Service Contract Invoice / Purchase Order is binding upon signature below and is governed by the Service Contract Terms &amp; Conditions that follow.
       </p>
 
-      <h1 style={{ fontSize: '14pt', textAlign: 'center', margin: '1.5em 0 .5em 0', color: '#1B2A4A', borderTop: '1px solid #CBD5E1', paddingTop: '1em' }}>SERVICE CONTRACT — TERMS &amp; CONDITIONS</h1>
+      <h1 style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '14pt', textAlign: 'center', margin: '1.5em 0 .5em 0', color: '#262745', borderTop: '1px solid #CBD5E1', paddingTop: '1em', fontWeight: 700, letterSpacing: '0.5px' }}>Service Contract — Terms &amp; Conditions</h1>
       <p style={{ textAlign: 'center', color: '#475569', fontSize: '10pt', marginBottom: '2em' }}>
         These terms form an integral part of the Service Contract Invoice / Purchase Order above, entered into as of{' '}
         <strong>{form.effective_date || '___'}</strong> ("Effective Date") by and between:<br /><br />
@@ -651,7 +660,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
 }
 
 function H2({ children }) {
-  return <h2 style={{ fontSize: '13pt', color: '#1B2A4A', borderBottom: '1px solid #CBD5E1', paddingBottom: 4, marginTop: '1.5em', marginBottom: '.5em' }}>{children}</h2>
+  return <h2 style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '13pt', color: '#262745', borderBottom: '1px solid #CBD5E1', paddingBottom: 4, marginTop: '1.5em', marginBottom: '.5em', fontWeight: 600, letterSpacing: '0.3px' }}>{children}</h2>
 }
 
 function Field({ label, value, onChange, placeholder, type = 'text', full, step }) {
@@ -674,6 +683,6 @@ function Field({ label, value, onChange, placeholder, type = 'text', full, step 
 
 const thStyle = { border: '1px solid #CBD5E1', padding: '8px 12px', textAlign: 'left', fontSize: '10pt', fontWeight: 600, background: '#F1F5F9' }
 const tdStyle = { border: '1px solid #CBD5E1', padding: '8px 12px', textAlign: 'left', fontSize: '10pt' }
-const sigLine = { borderTop: '1px solid #1E293B', marginTop: '3em', paddingTop: 4, fontSize: '10pt' }
+const sigLine = { borderTop: '1px solid #262745', marginTop: '3em', paddingTop: 4, fontSize: '10pt' }
 const metaLabel = { padding: '3px 8px 3px 0', fontSize: '9pt', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', verticalAlign: 'top' }
-const metaValue = { padding: '3px 0', fontSize: '10pt', fontWeight: 600, color: '#1B2A4A', verticalAlign: 'top' }
+const metaValue = { padding: '3px 0', fontSize: '10pt', fontWeight: 600, color: '#262745', verticalAlign: 'top' }
