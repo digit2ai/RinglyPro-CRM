@@ -95,31 +95,48 @@ export default function ContractBuilderPage() {
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
 
-    // Render off-screen but in-DOM: html2canvas needs computed styles, which require attachment
-    const sandbox = document.createElement('div')
-    sandbox.id = 'pinaxisPdfSandbox'
-    sandbox.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;background:#fff;padding:0.75in;z-index:-1'
-    const styleEl = document.createElement('style')
-    styleEl.textContent = PRINT_STYLES
-    sandbox.appendChild(styleEl)
-    sandbox.appendChild(el.cloneNode(true))
-    document.body.appendChild(sandbox)
+    // Walk up the ancestor chain — any with display:none must be force-shown so html2canvas
+    // can compute layout (otherwise the rendered canvas is blank).
+    const restoreList = []
+    let node = el
+    while (node && node !== document.body) {
+      const cs = window.getComputedStyle(node)
+      if (cs.display === 'none') {
+        restoreList.push({ el: node, prop: 'display', orig: node.style.display })
+        node.style.display = 'block'
+      }
+      if (cs.visibility === 'hidden') {
+        restoreList.push({ el: node, prop: 'visibility', orig: node.style.visibility })
+        node.style.visibility = 'visible'
+      }
+      node = node.parentElement
+    }
 
-    const cleanup = () => { try { document.body.removeChild(sandbox) } catch (e) {} }
+    // Lift the on-screen height clamp on the preview itself
+    const origMaxHeight = el.style.maxHeight
+    const origOverflow = el.style.overflow
+    el.style.maxHeight = 'none'
+    el.style.overflow = 'visible'
+
+    const restore = () => {
+      el.style.maxHeight = origMaxHeight
+      el.style.overflow = origOverflow
+      restoreList.forEach(r => { r.el.style[r.prop] = r.orig })
+    }
 
     window.html2pdf()
       .set({
         margin: [0.5, 0.5, 0.5, 0.5],
         filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 1200 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 900 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       })
-      .from(sandbox)
+      .from(el)
       .save()
-      .then(() => { cleanup(); showToast('PDF downloaded') })
-      .catch(err => { cleanup(); console.error('[PDF]', err); showToast('PDF generation failed — see browser console') })
+      .then(() => { restore(); showToast('PDF downloaded') })
+      .catch(err => { restore(); console.error('[PDF]', err); showToast('PDF generation failed — see browser console') })
   }
 
   const OUTCOME_OPTIONS = [
