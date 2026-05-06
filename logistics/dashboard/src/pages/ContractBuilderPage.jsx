@@ -20,7 +20,7 @@ export default function ContractBuilderPage() {
     onboarding_hours: 10,
     impl_timeline_weeks: 8,
     // Executive summary inputs — configurable, default reflects build to date (start 2026-03-02)
-    hours_invested: 720,
+    lines_of_code: 21051,
     build_start_date: '2026-03-02',
     // Deployment model — affects on-prem responsibility language in contract
     deployment_model: 'on_premises', // 'cloud' | 'on_premises' | 'hybrid'
@@ -172,7 +172,7 @@ export default function ContractBuilderPage() {
             <Field label="AI Consumption Rate ($/unit) — paid by Client" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
-            <Field label="Engineering Hours Invested To Date" type="number" value={form.hours_invested} onChange={v => update('hours_invested', parseInt(v) || 0)} />
+            <Field label="Lines of Code Delivered" type="number" value={form.lines_of_code} onChange={v => update('lines_of_code', parseInt(v) || 0)} />
             <Field label="Build Start Date" type="date" value={form.build_start_date} onChange={v => update('build_start_date', v)} />
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Deployment Model</label>
@@ -393,7 +393,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       {/* EXECUTIVE SUMMARY — what's been built, hours invested, ecosystem footprint */}
       <H2>Executive Summary</H2>
       <p style={{ marginTop: '0.5em' }}>
-        As of <strong>{form.effective_date || '___'}</strong>, PINAXIS Analytics has invested <strong>{Number(form.hours_invested).toLocaleString()} engineering hours</strong> in
+        As of <strong>{form.effective_date || '___'}</strong>, PINAXIS Analytics has shipped <strong>{Number(form.lines_of_code).toLocaleString()} lines of production code</strong> for
         the design, development, and deployment of the PINAXIS Warehouse Intelligence Platform — a production-grade,
         multi-tenant analytics ecosystem custom-built for {form.client_name || 'the Client'}. Build commenced on{' '}
         <strong>{form.build_start_date || '___'}</strong>, and the platform is presently live, monitored, and accepting
@@ -811,12 +811,12 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
           <tbody>
             <tr><td style={tdStyle}><strong>Build Start</strong></td><td style={tdStyle}>{form.build_start_date || '___'}</td></tr>
             <tr><td style={tdStyle}><strong>As-Of Date</strong></td><td style={tdStyle}>{form.effective_date || '___'}</td></tr>
-            <tr><td style={tdStyle}><strong>Engineering Hours Invested</strong></td><td style={tdStyle}><strong>{Number(form.hours_invested).toLocaleString()} hours</strong></td></tr>
+            <tr><td style={tdStyle}><strong>Lines of Code Delivered</strong></td><td style={tdStyle}><strong>{Number(form.lines_of_code).toLocaleString()} LOC</strong> (production JavaScript / JSX, excluding dependencies and tooling)</td></tr>
             <tr><td style={tdStyle}><strong>Production Status</strong></td><td style={tdStyle}>Live at aiagent.ringlypro.com/pinaxis — multi-tenant, monitored, deployed via continuous delivery</td></tr>
           </tbody>
         </table>
         <p style={{ fontSize: '10pt', color: '#475569', marginTop: '0.75em' }}>
-          Hours reflect actual engineering time spent on platform design, implementation, integration, deployment, and quality assurance through the Effective Date. Future enhancements requested by Client are outside the scope of this Agreement and will be quoted separately under a Statement of Work.
+          Line count reflects actual production code shipped across the React dashboard and backend service domains through the Effective Date, excluding third-party libraries, generated files, and tooling. Future enhancements requested by Client are outside the scope of this Agreement and will be quoted separately under a Statement of Work.
         </p>
       </div>
 
