@@ -46,28 +46,44 @@ export default function ContractBuilderPage() {
 
   const goStep = (n) => setStep(n)
 
+  const PRINT_STYLES = `
+    @page{margin:1in}
+    body{font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11pt;line-height:1.6;color:#32373C;max-width:8.5in;margin:0 auto;padding:1in;-webkit-font-smoothing:antialiased;background:#fff}
+    h1{font-family:'Lexend Deca','Barlow',sans-serif;font-size:18pt;text-align:center;margin-bottom:.5em;color:#262745;font-weight:700;letter-spacing:.5px}
+    h2{font-family:'Lexend Deca','Barlow',sans-serif;font-size:13pt;color:#262745;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em;font-weight:600;letter-spacing:.3px}
+    ul,ol{padding-left:1.2em}li{margin-bottom:.5em}
+    table{width:100%;border-collapse:collapse;margin:1em 0}
+    th,td{border:1px solid #CBD5E1;padding:8px 12px;text-align:left;font-size:10pt}
+    th{background:#F1F5F9;font-weight:600;font-family:'Barlow',sans-serif}
+    strong,b{font-weight:600}
+    .sig-line{border-top:1px solid #262745;margin-top:3em;padding-top:4px;font-size:10pt}
+  `
+
   const printContract = () => {
     const el = document.getElementById('contractPreview')
-    if (!el) return
-    const w = window.open('', '_blank')
-    w.document.write(`<!DOCTYPE html><html><head><title>Service Contract Invoice — ${form.client_name || 'Draft'}</title>
+    if (!el) { showToast('Open the Preview step first'); return }
+    const title = `Service Contract Invoice — ${form.client_name || 'Draft'}`
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Lexend+Deca:wght@400;500;600;700&display=swap" rel="stylesheet">
-      <style>
-        @page{margin:1in}
-        body{font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11pt;line-height:1.6;color:#32373C;max-width:8.5in;margin:0 auto;padding:1in;-webkit-font-smoothing:antialiased}
-        h1{font-family:'Lexend Deca','Barlow',sans-serif;font-size:18pt;text-align:center;margin-bottom:.5em;color:#262745;font-weight:700;letter-spacing:.5px}
-        h2{font-family:'Lexend Deca','Barlow',sans-serif;font-size:13pt;color:#262745;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em;font-weight:600;letter-spacing:.3px}
-        ul,ol{padding-left:1.2em}li{margin-bottom:.5em}
-        table{width:100%;border-collapse:collapse;margin:1em 0}
-        th,td{border:1px solid #CBD5E1;padding:8px 12px;text-align:left;font-size:10pt}
-        th{background:#F1F5F9;font-weight:600;font-family:'Barlow',sans-serif}
-        strong,b{font-weight:600}
-        .sig-block{margin-top:3em;display:flex;justify-content:space-between}.sig-col{width:45%}.sig-line{border-top:1px solid #262745;margin-top:3em;padding-top:4px;font-size:10pt}
-      </style></head><body>${el.innerHTML}</body></html>`)
-    w.document.close()
-    w.print()
+      <style>${PRINT_STYLES}</style></head><body>${el.innerHTML}
+      <script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},400);});<\/script>
+      </body></html>`
+
+    // Use a hidden iframe — survives popup blockers and avoids about:blank issues
+    const existing = document.getElementById('pinaxisPrintFrame')
+    if (existing) existing.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = 'pinaxisPrintFrame'
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'
+    document.body.appendChild(iframe)
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open()
+    doc.write(html)
+    doc.close()
+    showToast('Opening print dialog…')
   }
 
   const downloadPdf = () => {
@@ -78,24 +94,32 @@ export default function ContractBuilderPage() {
     }
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
-    // Clone so the on-screen height clamp (max-h-[600px] / overflow) doesn't truncate the PDF
-    const clone = el.cloneNode(true)
-    const wrapper = document.createElement('div')
-    wrapper.style.cssText = "padding:0.75in;background:#fff;color:#32373C;font-family:'Barlow','Inter',sans-serif;font-size:11pt;line-height:1.6"
-    wrapper.appendChild(clone)
+
+    // Render off-screen but in-DOM: html2canvas needs computed styles, which require attachment
+    const sandbox = document.createElement('div')
+    sandbox.id = 'pinaxisPdfSandbox'
+    sandbox.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;background:#fff;padding:0.75in;z-index:-1'
+    const styleEl = document.createElement('style')
+    styleEl.textContent = PRINT_STYLES
+    sandbox.appendChild(styleEl)
+    sandbox.appendChild(el.cloneNode(true))
+    document.body.appendChild(sandbox)
+
+    const cleanup = () => { try { document.body.removeChild(sandbox) } catch (e) {} }
+
     window.html2pdf()
       .set({
         margin: [0.5, 0.5, 0.5, 0.5],
         filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 1200 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       })
-      .from(wrapper)
+      .from(sandbox)
       .save()
-      .then(() => showToast('PDF downloaded'))
-      .catch(err => { console.error(err); showToast('PDF generation failed — see console') })
+      .then(() => { cleanup(); showToast('PDF downloaded') })
+      .catch(err => { cleanup(); console.error('[PDF]', err); showToast('PDF generation failed — see browser console') })
   }
 
   const OUTCOME_OPTIONS = [
@@ -501,9 +525,9 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
             <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 700 }}>{fmt(monthlyLicensePayment)}/mo + usage</td>
           </tr>
           <tr>
-            <td style={tdStyle}><strong>Quarterly</strong></td>
-            <td style={tdStyle}>Outcome Fee — {form.outcome_fee_pct}% of net Documented Savings vs Baseline</td>
-            <td style={{ ...tdStyle, textAlign: 'right' }}>variable</td>
+            <td style={tdStyle}><strong>AI Usage (per month)</strong></td>
+            <td style={tdStyle}>Client is responsible for API Usage Cost (pass-through, metered)</td>
+            <td style={{ ...tdStyle, textAlign: 'right' }}>at actuals</td>
           </tr>
         </tbody>
       </table>
