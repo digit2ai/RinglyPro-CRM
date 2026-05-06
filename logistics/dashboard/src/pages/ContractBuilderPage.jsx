@@ -29,7 +29,14 @@ export default function ContractBuilderPage() {
   const initialDeposit = form.license_fee * (form.initial_deposit_pct / 100)
   const remainingLicense = form.license_fee - initialDeposit
   const monthlyLicensePayment = form.initial_term_months > 0 ? remainingLicense / form.initial_term_months : 0
-  const invoiceNumber = `PINAXIS-INV-${(form.effective_date || '').replace(/-/g, '')}-${(form.client_name || 'DRAFT').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6) || 'DRAFT'}`
+  // P2P-standard PO number: PNX-YYMM-NNNN (13 chars, fits SAP/Coupa/Ariba/Oracle/NetSuite PO fields)
+  const yymm = (form.effective_date || '').slice(2, 7).replace('-', '') || '0000'
+  const hash4 = (s) => {
+    let h = 0
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
+    return String(Math.abs(h) % 10000).padStart(4, '0')
+  }
+  const invoiceNumber = `PNX-${yymm}-${hash4(form.client_name || 'DRAFT')}`
   const pricing = { initialDeposit, remainingLicense, monthlyLicensePayment, invoiceNumber }
 
   const goStep = (n) => setStep(n)
