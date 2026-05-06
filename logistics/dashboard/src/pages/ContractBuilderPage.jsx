@@ -19,6 +19,9 @@ export default function ContractBuilderPage() {
     baseline_period_days: 90,
     onboarding_hours: 10,
     impl_timeline_weeks: 8,
+    // Executive summary inputs — configurable, default reflects build to date (start 2026-03-02)
+    hours_invested: 720,
+    build_start_date: '2026-03-02',
   })
 
   const fmt = (n) => Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -139,6 +142,8 @@ export default function ContractBuilderPage() {
             <Field label="AI Consumption Rate ($/unit) — paid by Client" type="number" value={form.ai_consumption_rate} onChange={v => update('ai_consumption_rate', parseFloat(v) || 0)} step="0.001" />
             <Field label="Onboarding Hours" type="number" value={form.onboarding_hours} onChange={v => update('onboarding_hours', parseInt(v) || 0)} />
             <Field label="Implementation Timeline (weeks)" type="number" value={form.impl_timeline_weeks} onChange={v => update('impl_timeline_weeks', parseInt(v) || 0)} />
+            <Field label="Engineering Hours Invested To Date" type="number" value={form.hours_invested} onChange={v => update('hours_invested', parseInt(v) || 0)} />
+            <Field label="Build Start Date" type="date" value={form.build_start_date} onChange={v => update('build_start_date', v)} />
           </div>
 
           {/* License Fee Breakdown */}
@@ -346,6 +351,33 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
           </tr>
         </tbody>
       </table>
+
+      {/* EXECUTIVE SUMMARY — what's been built, hours invested, ecosystem footprint */}
+      <H2>Executive Summary</H2>
+      <p style={{ marginTop: '0.5em' }}>
+        As of <strong>{form.effective_date || '___'}</strong>, PINAXIS Analytics has invested <strong>{Number(form.hours_invested).toLocaleString()} engineering hours</strong> in
+        the design, development, and deployment of the PINAXIS Warehouse Intelligence Platform — a production-grade,
+        multi-tenant analytics ecosystem custom-built for {form.client_name || 'the Client'}. Build commenced on{' '}
+        <strong>{form.build_start_date || '___'}</strong>, and the platform is presently live, monitored, and accepting
+        production traffic at <strong>aiagent.ringlypro.com/pinaxis</strong>.
+      </p>
+      <p>
+        The delivered ecosystem comprises <strong>16 integrated user-facing modules</strong> spanning the full
+        warehouse-intelligence lifecycle (data intake → analysis → product matching → simulation → commercial
+        modeling → proposal generation → live observability), <strong>17 backend service domains</strong> exposed
+        as REST + MCP-tool APIs, <strong>9 dedicated analytics services</strong> (parser, metrics extractor,
+        Monte-Carlo simulator, benefit projector, product matcher, report generator, video/audio narration,
+        synthetic data, bulk ingestion), <strong>16 production database tables</strong>, and live integrations with
+        Anthropic Claude (LLM), ElevenLabs (Rachel voice agent), PostgreSQL, n8n / PLC webhook ingestion, and
+        Render auto-deployment. The platform is fronted by an authenticated React SPA, an automated narrated
+        proposal generator with Chart.js visualizations, and an OEE shop-floor dashboard.
+      </p>
+      <p>
+        This Service Contract Invoice / Purchase Order memorializes the License terms under which {form.client_name || 'the Client'} obtains
+        operational access to the platform, the AI consumption pass-through, and the outcome-based fee
+        structure described below. A complete inventory of delivered modules, services, and integrations is
+        attached as <strong>Exhibit C — Platform Deliverables</strong>.
+      </p>
 
       {/* INVOICE LINE ITEMS */}
       <H2>LINE ITEMS</H2>
@@ -661,6 +693,84 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
           </tbody>
         </table>
         <p style={{ fontSize: '10pt', color: '#475569', marginTop: '1em' }}><strong>Reconciliation Process:</strong> At the end of each calendar quarter, Provider delivers an Outcome Report. Client has fifteen (15) business days to review and approve. Upon approval, the Outcome Fee ({form.outcome_fee_pct}% of net Documented Savings for the quarter) is invoiced with standard payment terms.</p>
+      </div>
+
+      {/* Exhibit C — Platform Deliverables */}
+      <div style={{ pageBreakBefore: 'always', marginTop: '3em' }}>
+        <H2>EXHIBIT C — PLATFORM DELIVERABLES &amp; ECOSYSTEM</H2>
+        <p>The following modules, services, integrations, and data assets constitute the PINAXIS Warehouse Intelligence Platform delivered to Client under this Agreement. All items are presently live in production at <strong>aiagent.ringlypro.com/pinaxis</strong> and are covered by the License Fee, AI Consumption pass-through, and Outcome Fee defined in Section 3.</p>
+
+        <p style={{ marginTop: '1em' }}><strong>C1. User-Facing Modules</strong> — 16 production React pages, single sign-on protected:</p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+          <thead>
+            <tr style={{ background: '#F1F5F9' }}>
+              <th style={thStyle}>Module</th>
+              <th style={thStyle}>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style={tdStyle}><strong>Data Intake</strong></td><td style={tdStyle}>Multi-file warehouse data upload (item master, inventory, goods-in, goods-out) with auto-detection and validation</td></tr>
+            <tr><td style={tdStyle}><strong>Analysis</strong></td><td style={tdStyle}>Overview KPIs, ABC classification, XYZ classification, fit analysis, hourly throughput, weekday/monthly trends, percentiles, growth extrapolation, system architecture readiness</td></tr>
+            <tr><td style={tdStyle}><strong>Concepts</strong></td><td style={tdStyle}>Automated product matching against the RinglyPro Logistics catalog with ranked recommendations</td></tr>
+            <tr><td style={tdStyle}><strong>Simulation</strong></td><td style={tdStyle}>Monte-Carlo scenario engine producing low / baseline / high outcomes with sensitivity analysis and bottleneck identification</td></tr>
+            <tr><td style={tdStyle}><strong>Commercial / Benefits</strong></td><td style={tdStyle}>Quantified benefit projections (labor, throughput, errors, leakage) with monthly and annual rollups</td></tr>
+            <tr><td style={tdStyle}><strong>Proposal</strong></td><td style={tdStyle}>One-click PDF report generation tailored to project analysis</td></tr>
+            <tr><td style={tdStyle}><strong>Presentation</strong></td><td style={tdStyle}>Auto-narrated 11-slide playbook with Chart.js visualizations and Rachel AI voice (TTS via ElevenLabs)</td></tr>
+            <tr><td style={tdStyle}><strong>API Integration</strong></td><td style={tdStyle}>Production API key management — generate / view / revoke per-project keys for ingest endpoints</td></tr>
+            <tr><td style={tdStyle}><strong>Observability</strong></td><td style={tdStyle}>Live equipment telemetry dashboard with severity heat-map, active faults, and rolling throughput</td></tr>
+            <tr><td style={tdStyle}><strong>OEE Dashboard</strong></td><td style={tdStyle}>Embedded shop-floor OEE monitor (Availability × Performance × Quality) with downtime ranking</td></tr>
+            <tr><td style={tdStyle}><strong>WarehouseMind AI</strong></td><td style={tdStyle}>Four sub-views — MCP Command Center, Neural Intelligence, Event Automation, Voice AI</td></tr>
+            <tr><td style={tdStyle}><strong>NDA</strong></td><td style={tdStyle}>Multi-party e-signature flow with database-persisted signatures</td></tr>
+            <tr><td style={tdStyle}><strong>Contract Builder</strong></td><td style={tdStyle}>This module — Service Contract Invoice / PO generator (PINAXIS-branded, P2P-ready)</td></tr>
+            <tr><td style={tdStyle}><strong>On-Premises Plan</strong></td><td style={tdStyle}>Self-hosted deployment guide (LLM proxy, SSO, CORS, environment configuration)</td></tr>
+            <tr><td style={tdStyle}><strong>User Guide</strong></td><td style={tdStyle}>Embedded documentation: warehouse fundamentals, label-management, CPH benchmarks, three-tier DC stack, API reference</td></tr>
+            <tr><td style={tdStyle}><strong>Login</strong></td><td style={tdStyle}>Multi-user authentication with persistent session</td></tr>
+          </tbody>
+        </table>
+
+        <p style={{ marginTop: '1em' }}><strong>C2. Backend Service Domains</strong> — 17 REST + MCP-tool API modules:</p>
+        <p style={{ fontSize: '10pt', color: '#475569', margin: '0.25em 0 0.75em 0' }}>
+          <code>projects</code> · <code>upload</code> · <code>analysis</code> · <code>products</code> · <code>simulation</code> · <code>benefits</code> · <code>reports</code> ·{' '}
+          <code>proposal</code> (with audio TTS) · <code>video</code> · <code>demo</code> (synthetic data + instant clone) · <code>ingest</code> (API-key-authenticated production ingestion) ·{' '}
+          <code>voice</code> (ElevenLabs full briefing / overview / ROI / system-architecture / operational-health) · <code>telemetry</code> (live observability + demo seed) ·{' '}
+          <code>nda</code> · <code>approvals</code> (concept / simulation / pricing / final gates) · <code>pricing-snapshot</code> · <code>health</code>.
+        </p>
+
+        <p style={{ marginTop: '1em' }}><strong>C3. Analytics &amp; Generation Services</strong> — 9 dedicated services:</p>
+        <p style={{ fontSize: '10pt', color: '#475569', margin: '0.25em 0 0.75em 0' }}>
+          File parser (CSV/XLSX) · Metrics extractor · Analytics engine (ABC / XYZ / fit / percentiles) · Monte-Carlo simulator · Benefit projector ·{' '}
+          Product matcher · PDF report generator · Video / audio narration generator · Synthetic data generator · Bulk-insert pipeline.
+        </p>
+
+        <p style={{ marginTop: '1em' }}><strong>C4. Live Integrations:</strong></p>
+        <ul style={{ paddingLeft: '1.2em' }}>
+          <li><strong>Anthropic Claude</strong> — primary LLM for analysis, narration scripts, and document generation</li>
+          <li><strong>ElevenLabs</strong> — Rachel AI voice agent for narrated proposals and live conversational briefings</li>
+          <li><strong>PostgreSQL (Render-managed)</strong> — production datastore with SSL, automated migrations, and unique-index enforcement for upsert-safe ingestion</li>
+          <li><strong>n8n / PLC webhook ingestion</strong> — real-time machine-event pipeline (POST /api/oee/webhooks/machine-event)</li>
+          <li><strong>Render auto-deploy</strong> — continuous delivery on push-to-main with ~90-second deploy SLO</li>
+          <li><strong>MCP (Model Context Protocol)</strong> — every backend domain exposed as both REST and MCP tools for AI-agent orchestration</li>
+        </ul>
+
+        <p style={{ marginTop: '1em' }}><strong>C5. Production Database Schema</strong> — 16 multi-tenant tables:</p>
+        <p style={{ fontSize: '10pt', color: '#475569', margin: '0.25em 0 0.75em 0' }}>
+          <code>logistics_projects</code> · <code>uploaded_files</code> · <code>item_master</code> · <code>inventory_data</code> · <code>goods_in_data</code> · <code>goods_out_data</code> ·{' '}
+          <code>product_recommendations</code> · <code>analysis_results</code> · <code>api_keys</code> · <code>telemetry_events</code> · <code>oee_machines</code> ·{' '}
+          <code>oee_machine_events</code> · <code>oee_production_runs</code> · <code>ndas</code> · <code>nda_signatures</code> · <code>project_approvals</code>.
+        </p>
+
+        <p style={{ marginTop: '1em' }}><strong>C6. Engineering Investment To Date:</strong></p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+          <tbody>
+            <tr><td style={tdStyle}><strong>Build Start</strong></td><td style={tdStyle}>{form.build_start_date || '___'}</td></tr>
+            <tr><td style={tdStyle}><strong>As-Of Date</strong></td><td style={tdStyle}>{form.effective_date || '___'}</td></tr>
+            <tr><td style={tdStyle}><strong>Engineering Hours Invested</strong></td><td style={tdStyle}><strong>{Number(form.hours_invested).toLocaleString()} hours</strong></td></tr>
+            <tr><td style={tdStyle}><strong>Production Status</strong></td><td style={tdStyle}>Live at aiagent.ringlypro.com/pinaxis — multi-tenant, monitored, deployed via continuous delivery</td></tr>
+          </tbody>
+        </table>
+        <p style={{ fontSize: '10pt', color: '#475569', marginTop: '0.75em' }}>
+          Hours reflect actual engineering time spent on platform design, implementation, integration, deployment, and quality assurance through the Effective Date. Future enhancements requested by Client are outside the scope of this Agreement and will be quoted separately under a Statement of Work.
+        </p>
       </div>
     </>
   )
