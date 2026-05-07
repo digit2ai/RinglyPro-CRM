@@ -47,16 +47,24 @@ export default function ContractBuilderPage() {
   const goStep = (n) => setStep(n)
 
   const PRINT_STYLES = `
-    @page{margin:1in}
-    body{font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:11pt;line-height:1.6;color:#32373C;max-width:8.5in;margin:0 auto;padding:1in;-webkit-font-smoothing:antialiased;background:#fff}
-    h1{font-family:'Lexend Deca','Barlow',sans-serif;font-size:18pt;text-align:center;margin-bottom:.5em;color:#262745;font-weight:700;letter-spacing:.5px}
-    h2{font-family:'Lexend Deca','Barlow',sans-serif;font-size:13pt;color:#262745;border-bottom:1px solid #CBD5E1;padding-bottom:4px;margin-top:1.5em;font-weight:600;letter-spacing:.3px}
-    ul,ol{padding-left:1.2em}li{margin-bottom:.5em}
-    table{width:100%;border-collapse:collapse;margin:1em 0}
-    th,td{border:1px solid #CBD5E1;padding:8px 12px;text-align:left;font-size:10pt}
-    th{background:#F1F5F9;font-weight:600;font-family:'Barlow',sans-serif}
-    strong,b{font-weight:600}
-    .sig-line{border-top:1px solid #262745;margin-top:3em;padding-top:4px;font-size:10pt}
+    @page { size: Letter; margin: 0.6in 0.55in 0.7in 0.55in; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
+    html, body { background:#fff !important; }
+    body { font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif; font-size:10.5pt; line-height:1.55; color:#32373C; margin:0; padding:0; -webkit-font-smoothing:antialiased; }
+    h1 { font-family:'Lexend Deca','Barlow',sans-serif; font-size:18pt; text-align:center; margin:.4em 0 .4em 0; color:#262745; font-weight:700; letter-spacing:.5px; page-break-after:avoid; }
+    h2 { font-family:'Lexend Deca','Barlow',sans-serif; font-size:12.5pt; color:#262745; border-bottom:1px solid #CBD5E1; padding-bottom:4px; margin-top:1.2em; margin-bottom:.4em; font-weight:600; letter-spacing:.3px; page-break-after:avoid; }
+    p { margin: 0 0 0.5em 0; }
+    ul, ol { padding-left:1.2em; margin: .4em 0; }
+    li { margin-bottom: .35em; }
+    table { width:100%; border-collapse:collapse; margin:.6em 0; page-break-inside:auto; }
+    thead { display:table-header-group; }
+    tr { page-break-inside:avoid; }
+    th, td { border:1px solid #CBD5E1; padding:6px 9px; text-align:left; vertical-align:top; font-size:9.5pt; }
+    th { background:#F1F5F9; font-weight:600; font-family:'Barlow',sans-serif; color:#262745; }
+    strong, b { font-weight:600; }
+    .sig-line { border-top:1px solid #262745; margin-top:2.5em; padding-top:3px; font-size:9.5pt; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9pt; background:#F1F5F9; padding:1px 4px; border-radius:3px; color:#262745; }
+    a { color: inherit; text-decoration: none; }
   `
 
   const printContract = () => {
@@ -95,41 +103,31 @@ export default function ContractBuilderPage() {
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
 
-    // Walk up the ancestor chain — any with display:none must be force-shown so html2canvas
-    // can compute layout (otherwise the rendered canvas is blank).
-    const restoreList = []
-    let node = el
-    while (node && node !== document.body) {
-      const cs = window.getComputedStyle(node)
-      if (cs.display === 'none') {
-        restoreList.push({ el: node, prop: 'display', orig: node.style.display })
-        node.style.display = 'block'
-      }
-      if (cs.visibility === 'hidden') {
-        restoreList.push({ el: node, prop: 'visibility', orig: node.style.visibility })
-        node.style.visibility = 'visible'
-      }
-      node = node.parentElement
-    }
-
-    // Lift the on-screen height clamp on the preview itself
+    // The Step 3 wrapper is positioned off-screen when not on Step 3, but laid out
+    // (so html2canvas can render). Lift the on-screen height clamp + ensure full
+    // content is visible during render.
     const origMaxHeight = el.style.maxHeight
     const origOverflow = el.style.overflow
+    const origOpacity = el.parentElement ? el.parentElement.style.opacity : null
     el.style.maxHeight = 'none'
     el.style.overflow = 'visible'
+    if (el.parentElement) el.parentElement.style.opacity = '1'
 
     const restore = () => {
       el.style.maxHeight = origMaxHeight
       el.style.overflow = origOverflow
-      restoreList.forEach(r => { r.el.style[r.prop] = r.orig })
+      if (el.parentElement && origOpacity !== null) el.parentElement.style.opacity = origOpacity
     }
+
+    // Force a reflow so the layout is computed before html2canvas snapshots
+    void el.offsetHeight
 
     window.html2pdf()
       .set({
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: [0.55, 0.55, 0.7, 0.55],
         filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 900 },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 900, scrollX: 0, scrollY: 0 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       })
@@ -339,8 +337,18 @@ export default function ContractBuilderPage() {
         </div>
       )}
 
-      {/* Step 3: Preview — kept mounted on Step 4 too so Print/Download can read #contractPreview */}
-      <div className="card space-y-4" style={{ display: step === 3 ? 'block' : 'none' }}>
+      {/* Step 3: Preview — kept mounted (and laid out) on every step so Print/Download
+          can always read #contractPreview. When not on Step 3 we move it off-screen
+          via position:absolute so layout is preserved (display:none would defeat
+          html2canvas, leaving downloads blank). */}
+      <div
+        className="card space-y-4"
+        style={step === 3
+          ? {}
+          : { position: 'absolute', left: '-10000px', top: '0', width: '900px', pointerEvents: 'none', opacity: 0 }
+        }
+        aria-hidden={step !== 3}
+      >
         <h3 className="text-lg font-semibold text-white border-b border-slate-700 pb-3">Step 3 — Contract Preview</h3>
         <div id="contractPreview" className="bg-white rounded-lg p-8 max-h-[600px] overflow-y-auto" style={{ fontFamily: "'Barlow', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif", fontSize: '11pt', lineHeight: 1.6, color: '#32373C' }}>
           <ContractPreview form={form} fmt={fmt} OUTCOME_OPTIONS={OUTCOME_OPTIONS} pricing={pricing} />
