@@ -103,31 +103,53 @@ export default function ContractBuilderPage() {
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
 
-    // The Step 3 wrapper is positioned off-screen when not on Step 3, but laid out
-    // (so html2canvas can render). Lift the on-screen height clamp + ensure full
-    // content is visible during render.
-    const origMaxHeight = el.style.maxHeight
-    const origOverflow = el.style.overflow
-    const origOpacity = el.parentElement ? el.parentElement.style.opacity : null
+    // Pin the source element to the exact PDF content width so html2canvas captures
+    // at a size that lines up cleanly with the Letter page area:
+    //   8.5in page - 0.5in left margin - 0.5in right margin = 7.5in = 720px @ 96dpi
+    // Also strip the dashboard-only chrome (rounded corners, internal padding,
+    // height clamp) that's only there for the on-screen card look.
+    const orig = {
+      maxHeight: el.style.maxHeight,
+      overflow: el.style.overflow,
+      width: el.style.width,
+      padding: el.style.padding,
+      borderRadius: el.style.borderRadius,
+      parentOpacity: el.parentElement ? el.parentElement.style.opacity : null,
+    }
     el.style.maxHeight = 'none'
     el.style.overflow = 'visible'
+    el.style.width = '720px'
+    el.style.padding = '0'
+    el.style.borderRadius = '0'
     if (el.parentElement) el.parentElement.style.opacity = '1'
 
     const restore = () => {
-      el.style.maxHeight = origMaxHeight
-      el.style.overflow = origOverflow
-      if (el.parentElement && origOpacity !== null) el.parentElement.style.opacity = origOpacity
+      el.style.maxHeight = orig.maxHeight
+      el.style.overflow = orig.overflow
+      el.style.width = orig.width
+      el.style.padding = orig.padding
+      el.style.borderRadius = orig.borderRadius
+      if (el.parentElement && orig.parentOpacity !== null) el.parentElement.style.opacity = orig.parentOpacity
     }
 
-    // Force a reflow so the layout is computed before html2canvas snapshots
-    void el.offsetHeight
+    void el.offsetHeight  // force reflow before capture
 
     window.html2pdf()
       .set({
-        margin: [0.55, 0.55, 0.7, 0.55],
+        margin: [0.5, 0.5, 0.65, 0.5],
         filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, letterRendering: true, backgroundColor: '#ffffff', windowWidth: 900, scrollX: 0, scrollY: 0 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          letterRendering: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 720,
+          scrollX: 0,
+          scrollY: 0,
+          logging: false
+        },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       })
