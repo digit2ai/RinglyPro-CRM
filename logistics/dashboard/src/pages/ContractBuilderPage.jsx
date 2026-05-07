@@ -103,48 +103,50 @@ export default function ContractBuilderPage() {
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
 
-    // Build a sandbox at the very top of the document, ABOVE the dashboard.
-    // Positioning at top:0 (not top:100vh) keeps html2canvas in its happiest
-    // case: source element starts at viewport (0,0). Visually hidden via
-    // clip-path so the user doesn't see it, but layout is fully computed.
+    // ---------------------------------------------------------------------------
+    // Why this approach:
+    //   html2canvas renders the source element's COMPUTED VISUAL STATE.
+    //   Anything that hides it visually (display:none / visibility:hidden /
+    //   opacity:0 / clip-path / off-viewport positioning that some Chromium
+    //   builds mishandle) yields a blank canvas. To get reliable capture, the
+    //   element MUST be truly rendered. Trade-off: user sees a ~1s flash.
+    // ---------------------------------------------------------------------------
     const sandbox = document.createElement('div')
     sandbox.id = 'pinaxisPdfSandbox'
     sandbox.style.cssText = [
       'position:fixed',
       'top:0',
       'left:0',
-      'width:780px',           // wider than 720 to give text breathing room — internal padding handles the rest
+      'width:780px',
       'background:#ffffff',
-      'z-index:2147483647',    // on top so html2canvas sees it cleanly
-      'clip-path:inset(0 100% 100% 0)',  // visually clipped to nothing, but laid out
+      'z-index:2147483647',  // on top of everything; html2canvas captures cleanly
       'color:#32373C',
       "font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif",
       'font-size:10.5pt',
       'line-height:1.55',
-      'padding:0.4in 0.5in'    // PDF-style internal padding (matches jsPDF margin perception)
+      'padding:0.4in 0.5in',  // PDF-style internal padding; jsPDF margin will be 0
+      'box-sizing:border-box',
+      'pointer-events:none'
     ].join(';')
 
     const clone = original.cloneNode(true)
-    // Strip dashboard chrome from the clone
+    // Wipe the className so dashboard Tailwind utilities (p-8, max-h, rounded,
+    // bg-white, overflow-y-auto) can't fight the print styling
     clone.removeAttribute('class')
     clone.style.cssText = "background:#ffffff;color:#32373C;width:100%;max-height:none;overflow:visible;padding:0;border-radius:0;box-shadow:none;font-family:'Barlow','Inter',sans-serif;font-size:10.5pt;line-height:1.55"
     sandbox.appendChild(clone)
     document.body.appendChild(sandbox)
 
-    // Force reflow + give layout/fonts a tick
+    // Force reflow + tiny pause so fonts/layout/borders settle
     void sandbox.offsetHeight
-    await new Promise(r => setTimeout(r, 80))
+    await new Promise(r => setTimeout(r, 120))
 
     const cleanup = () => { try { document.body.removeChild(sandbox) } catch (e) {} }
 
     try {
-      // Render the entire sandbox (including its inset PDF-style padding) and
-      // let jsPDF use ZERO additional margin — the sandbox padding IS the
-      // page margin. windowWidth is intentionally NOT set so html2canvas
-      // doesn't re-layout at a different viewport width than the source.
       await window.html2pdf()
         .set({
-          margin: 0,
+          margin: 0,  // sandbox padding IS the page margin
           filename,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
