@@ -409,8 +409,9 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
             <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: '10pt', color: '#00968A', margin: '4px 0 0 0', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: 600 }}>Purchase Order &amp; Payment Schedule</p>
           </div>
           <div style={{ textAlign: 'right', fontSize: '10pt' }}>
-            <div style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '16pt', fontWeight: 700, color: '#262745', letterSpacing: '0.5px' }}>PINAXIS</div>
-            <div style={{ fontFamily: "'Barlow', sans-serif", color: '#00968A', fontWeight: 600, fontSize: '9pt', letterSpacing: '1px', textTransform: 'uppercase' }}>Warehouse Intelligence</div>
+            <div style={{ fontFamily: "'Lexend Deca', 'Barlow', sans-serif", fontSize: '16pt', fontWeight: 700, color: '#262745', letterSpacing: '0.5px' }}>DIGIT2AI LLC</div>
+            <div style={{ fontFamily: "'Barlow', sans-serif", color: '#00968A', fontWeight: 600, fontSize: '9pt', letterSpacing: '1px', textTransform: 'uppercase' }}>Service Provider</div>
+            <div style={{ fontFamily: "'Barlow', sans-serif", color: '#475569', fontSize: '8.5pt', marginTop: '4px' }}>PINAXIS Warehouse Intelligence Platform</div>
           </div>
         </div>
       </div>
@@ -442,7 +443,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       {/* EXECUTIVE SUMMARY — what's been built, hours invested, ecosystem footprint */}
       <H2>Executive Summary</H2>
       <p style={{ marginTop: '0.5em' }}>
-        As of <strong>{form.effective_date || '___'}</strong>, PINAXIS Analytics has shipped <strong>{Number(form.lines_of_code).toLocaleString()} lines of production code</strong> for
+        As of <strong>{form.effective_date || '___'}</strong>, DIGIT2AI LLC has shipped <strong>{Number(form.lines_of_code).toLocaleString()} lines of production code</strong> for
         the design, development, and deployment of the PINAXIS Warehouse Intelligence Platform — a production-grade,
         multi-tenant analytics ecosystem custom-built for {form.client_name || 'the Client'}. Build commenced on{' '}
         <strong>{form.build_start_date || '___'}</strong>, and the platform is presently live, monitored, and accepting
@@ -594,7 +595,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       <p style={{ textAlign: 'center', color: '#475569', fontSize: '10pt', marginBottom: '2em' }}>
         These terms form an integral part of the Service Contract Invoice / Purchase Order above, entered into as of{' '}
         <strong>{form.effective_date || '___'}</strong> ("Effective Date") by and between:<br /><br />
-        <strong>PINAXIS Analytics</strong> ("Provider")<br />
+        <strong>DIGIT2AI LLC</strong> ("Provider")<br />
         and<br />
         <strong>{form.client_name || '_______________'}</strong> ("Client")<br />
         {form.client_address}
@@ -730,7 +731,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       {/* Signature blocks */}
       <div style={{ marginTop: '3em', display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ width: '45%' }}>
-          <div style={sigLine}><strong>PINAXIS Analytics</strong></div>
+          <div style={sigLine}><strong>DIGIT2AI LLC</strong></div>
           <br /><div style={sigLine}>Authorized Signature</div>
           <br /><div style={sigLine}>Name & Title</div>
           <br /><div style={sigLine}>Date</div>
@@ -902,7 +903,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
       {form.deployment_model === 'on_premises' && (
         <div style={{ pageBreakBefore: 'always', marginTop: '3em' }}>
           <H2>EXHIBIT D — STRATEGIC INTEGRATION PLAN SUMMARY</H2>
-          <p>This Exhibit summarizes the on-premises deployment architecture and the division of responsibility between Provider (PINAXIS Analytics) and Client ({form.client_name || 'Pinaxis'}). The full Strategic Integration Plan is published at <strong>aiagent.ringlypro.com/pinaxis/on-premises</strong> and is incorporated by reference.</p>
+          <p>This Exhibit summarizes the on-premises deployment architecture and the division of responsibility between Provider (DIGIT2AI LLC) and Client ({form.client_name || 'Pinaxis'}). The full Strategic Integration Plan is published at <strong>aiagent.ringlypro.com/pinaxis/on-premises</strong> and is incorporated by reference.</p>
 
           <p style={{ marginTop: '1em' }}><strong>D1. Deployment Profile — Full On-Premises (100% Data Sovereignty):</strong></p>
           <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
@@ -944,7 +945,7 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
             <thead>
               <tr style={{ background: '#F1F5F9' }}>
                 <th style={thStyle}>Item</th>
-                <th style={thStyle}>Provider (PINAXIS Analytics)</th>
+                <th style={thStyle}>Provider (DIGIT2AI LLC)</th>
                 <th style={thStyle}>Client ({form.client_name || 'Pinaxis'})</th>
               </tr>
             </thead>
