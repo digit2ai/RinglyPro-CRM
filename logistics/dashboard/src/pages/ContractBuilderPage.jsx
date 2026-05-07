@@ -557,6 +557,35 @@ function ContractPreview({ form, fmt, OUTCOME_OPTIONS, pricing }) {
         </tbody>
       </table>
 
+      <H2>Remit To / Payment Instructions</H2>
+      <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0 1em 0' }}>
+        <tbody>
+          <tr>
+            <td style={{ ...tdStyle, width: '38%', background: '#F1F5F9', fontWeight: 600 }}>Payable To</td>
+            <td style={tdStyle}><strong>DIGIT2AI LLC</strong></td>
+          </tr>
+          <tr>
+            <td style={{ ...tdStyle, background: '#F1F5F9', fontWeight: 600 }}>Account Number</td>
+            <td style={tdStyle}>898164442619</td>
+          </tr>
+          <tr>
+            <td style={{ ...tdStyle, background: '#F1F5F9', fontWeight: 600 }}>Routing — ACH / Direct Deposit / Check</td>
+            <td style={tdStyle}>063100277</td>
+          </tr>
+          <tr>
+            <td style={{ ...tdStyle, background: '#F1F5F9', fontWeight: 600 }}>Routing — Domestic Wire Transfer</td>
+            <td style={tdStyle}>026009593</td>
+          </tr>
+          <tr>
+            <td style={{ ...tdStyle, background: '#F1F5F9', fontWeight: 600 }}>Reference / Memo</td>
+            <td style={tdStyle}>{invoiceNumber} — {form.client_name || 'Client'}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: '9pt', color: '#475569', marginBottom: '1.5em' }}>
+        Use the ACH / Direct Deposit routing for monthly license payments and the Wire routing for the Initial Deposit and any one-time amounts. Always include the Reference / Memo above so payments can be matched to this Purchase Order. Payment instructions herein are confidential and intended for the named recipient only.
+      </p>
+
       <p style={{ fontSize: '10pt', color: '#475569', fontStyle: 'italic', marginBottom: '2em' }}>
         This Service Contract Invoice / Purchase Order is binding upon signature below and is governed by the Service Contract Terms &amp; Conditions that follow.
       </p>
