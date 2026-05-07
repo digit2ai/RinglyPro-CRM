@@ -95,72 +95,47 @@ export default function ContractBuilderPage() {
   }
 
   const downloadPdf = async () => {
-    const original = document.getElementById('contractPreview')
-    if (!original) { showToast('Open the Preview step first'); return }
-    if (typeof window === 'undefined' || !window.html2pdf) {
-      showToast('PDF library still loading — try again in a moment'); return
-    }
+    const el = document.getElementById('contractPreview')
+    if (!el) { showToast('Open the Preview step first'); return }
     showToast('Generating PDF…')
+
+    // Build the same self-contained HTML document that the Print path uses
+    // (which works perfectly). Send it to the server's puppeteer endpoint
+    // for reliable rasterization — bypassing client-side html2canvas entirely.
+    const title = `Service Contract Invoice — ${form.client_name || 'Draft'}`
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
-
-    // ---------------------------------------------------------------------------
-    // Why this approach:
-    //   html2canvas renders the source element's COMPUTED VISUAL STATE.
-    //   Anything that hides it visually (display:none / visibility:hidden /
-    //   opacity:0 / clip-path / off-viewport positioning that some Chromium
-    //   builds mishandle) yields a blank canvas. To get reliable capture, the
-    //   element MUST be truly rendered. Trade-off: user sees a ~1s flash.
-    // ---------------------------------------------------------------------------
-    const sandbox = document.createElement('div')
-    sandbox.id = 'pinaxisPdfSandbox'
-    sandbox.style.cssText = [
-      'position:fixed',
-      'top:0',
-      'left:0',
-      'width:780px',
-      'background:#ffffff',
-      'z-index:2147483647',  // on top of everything; html2canvas captures cleanly
-      'color:#32373C',
-      "font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif",
-      'font-size:10.5pt',
-      'line-height:1.55',
-      'padding:0.4in 0.5in',  // PDF-style internal padding; jsPDF margin will be 0
-      'box-sizing:border-box',
-      'pointer-events:none'
-    ].join(';')
-
-    const clone = original.cloneNode(true)
-    // Wipe the className so dashboard Tailwind utilities (p-8, max-h, rounded,
-    // bg-white, overflow-y-auto) can't fight the print styling
-    clone.removeAttribute('class')
-    clone.style.cssText = "background:#ffffff;color:#32373C;width:100%;max-height:none;overflow:visible;padding:0;border-radius:0;box-shadow:none;font-family:'Barlow','Inter',sans-serif;font-size:10.5pt;line-height:1.55"
-    sandbox.appendChild(clone)
-    document.body.appendChild(sandbox)
-
-    // Force reflow + tiny pause so fonts/layout/borders settle
-    void sandbox.offsetHeight
-    await new Promise(r => setTimeout(r, 120))
-
-    const cleanup = () => { try { document.body.removeChild(sandbox) } catch (e) {} }
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Lexend+Deca:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>${PRINT_STYLES}</style></head><body>${el.innerHTML}</body></html>`
 
     try {
-      await window.html2pdf()
-        .set({
-          margin: 0,  // sandbox padding IS the page margin
-          filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
-          pagebreak: { mode: ['css', 'legacy'] }
-        })
-        .from(sandbox)
-        .save()
-      cleanup()
+      const res = await fetch('/pinaxis/api/v1/contract-pdf/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html, filename })
+      })
+      if (!res.ok) {
+        const errText = await res.text().catch(() => res.statusText)
+        throw new Error(`Server returned ${res.status}: ${errText}`)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      // Defer revoke so the browser has time to use the blob URL
+      setTimeout(() => URL.revokeObjectURL(url), 4000)
       showToast('PDF downloaded')
     } catch (err) {
-      cleanup()
       console.error('[PDF]', err)
-      showToast('PDF generation failed — see browser console')
+      showToast('Download failed — using Print as a fallback')
+      // Fallback: open the print dialog (which works) — user picks "Save as PDF"
+      setTimeout(() => printContract(), 800)
     }
   }
 

@@ -157,6 +157,7 @@ try {
   const approvalsRoutes = require('./routes/approvals');
   const videoRoutes = require('./routes/video');
   const { router: proposalRoutes, proposalJobs, buildSlideHTML, buildNarrationScripts, generateTTS, AUDIO_DIR, buildChartData } = require('./routes/proposal');
+  const contractPdfRoutes = require('./routes/contract-pdf');
 
   // Health check
   app.use(`${BASE_PATH}/health`, healthRoutes);
@@ -178,6 +179,7 @@ try {
   app.use(`${BASE_PATH}/api/v1/approvals`, approvalsRoutes);
   app.use(`${BASE_PATH}/api/v1/video`, videoRoutes);
   app.use(`${BASE_PATH}/api/v1/proposal`, proposalRoutes);
+  app.use(`${BASE_PATH}/api/v1/contract-pdf`, contractPdfRoutes);
 
   // Standalone proposal page (NO LOGIN REQUIRED)
   app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
