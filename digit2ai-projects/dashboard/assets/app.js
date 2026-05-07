@@ -1541,6 +1541,7 @@ async function renderCalendar(container) {
           <button class="btn btn-sm ${calView==='day'?'btn-primary':'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border)" onclick="setCalView('day')">Day</button>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="openZoomMeeting()" title="Open Zoom (info@digit2ai.com) in a new tab" style="color:#2D8CFF;border-color:#2D8CFF">&#127909; Zoom Meeting</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')" title="Open Quick Task in a new tab" style="color:#F59E0B;border-color:#F59E0B">&#9889; Quick Task</button>
         <button class="btn btn-primary btn-sm cal-new-event-btn" onclick="openEventModal()">+ New Event</button>
       </div>
     </div>
