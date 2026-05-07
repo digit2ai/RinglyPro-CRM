@@ -95,44 +95,39 @@ export default function ContractBuilderPage() {
   }
 
   const downloadPdf = () => {
-    const el = document.getElementById('contractPreview')
-    if (!el) { showToast('Open the Preview step first'); return }
+    const original = document.getElementById('contractPreview')
+    if (!original) { showToast('Open the Preview step first'); return }
     if (typeof window === 'undefined' || !window.html2pdf) {
       showToast('PDF library still loading — try again in a moment'); return
     }
     showToast('Generating PDF…')
     const filename = `PINAXIS-Service-Contract-${(form.client_name || 'Draft').replace(/[^A-Za-z0-9]/g, '_')}-${form.effective_date || 'undated'}.pdf`
 
-    // Pin the source element to the exact PDF content width so html2canvas captures
-    // at a size that lines up cleanly with the Letter page area:
-    //   8.5in page - 0.5in left margin - 0.5in right margin = 7.5in = 720px @ 96dpi
-    // Also strip the dashboard-only chrome (rounded corners, internal padding,
-    // height clamp) that's only there for the on-screen card look.
-    const orig = {
-      maxHeight: el.style.maxHeight,
-      overflow: el.style.overflow,
-      width: el.style.width,
-      padding: el.style.padding,
-      borderRadius: el.style.borderRadius,
-      parentOpacity: el.parentElement ? el.parentElement.style.opacity : null,
-    }
-    el.style.maxHeight = 'none'
-    el.style.overflow = 'visible'
-    el.style.width = '720px'
-    el.style.padding = '0'
-    el.style.borderRadius = '0'
-    if (el.parentElement) el.parentElement.style.opacity = '1'
+    // Render into a fresh, on-screen sandbox sized to the PDF content area.
+    // Positioned at top:100vh (just below the visible viewport) so the user
+    // can't see it, but html2canvas captures the layout cleanly — far more
+    // reliable than left:-10000px which corrupts html2canvas's coordinate math
+    // and was what caused the left-side clipping in the previous attempt.
+    const sandbox = document.createElement('div')
+    sandbox.id = 'pinaxisPdfSandbox'
+    sandbox.style.cssText = "position:fixed;top:100vh;left:0;width:720px;background:#ffffff;z-index:-1;color:#32373C;font-family:'Barlow','Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:10.5pt;line-height:1.55"
 
-    const restore = () => {
-      el.style.maxHeight = orig.maxHeight
-      el.style.overflow = orig.overflow
-      el.style.width = orig.width
-      el.style.padding = orig.padding
-      el.style.borderRadius = orig.borderRadius
-      if (el.parentElement && orig.parentOpacity !== null) el.parentElement.style.opacity = orig.parentOpacity
-    }
+    const clone = original.cloneNode(true)
+    clone.id = 'contractPreviewSandbox'
+    clone.style.maxHeight = 'none'
+    clone.style.overflow = 'visible'
+    clone.style.padding = '0'
+    clone.style.borderRadius = '0'
+    clone.style.width = '720px'
+    clone.style.background = '#ffffff'
+    clone.style.boxShadow = 'none'
+    sandbox.appendChild(clone)
+    document.body.appendChild(sandbox)
 
-    void el.offsetHeight  // force reflow before capture
+    // Force reflow so dimensions are computed before html2canvas snapshots
+    void sandbox.offsetHeight
+
+    const cleanup = () => { try { document.body.removeChild(sandbox) } catch (e) {} }
 
     window.html2pdf()
       .set({
@@ -153,10 +148,10 @@ export default function ContractBuilderPage() {
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compress: true },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       })
-      .from(el)
+      .from(clone)
       .save()
-      .then(() => { restore(); showToast('PDF downloaded') })
-      .catch(err => { restore(); console.error('[PDF]', err); showToast('PDF generation failed — see browser console') })
+      .then(() => { cleanup(); showToast('PDF downloaded') })
+      .catch(err => { cleanup(); console.error('[PDF]', err); showToast('PDF generation failed — see browser console') })
   }
 
   const OUTCOME_OPTIONS = [
