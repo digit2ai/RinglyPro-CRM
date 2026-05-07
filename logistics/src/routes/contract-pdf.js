@@ -15,9 +15,22 @@
 const express = require('express');
 const router = express.Router();
 
-let puppeteer;
-try { puppeteer = require('puppeteer'); }
-catch (e) { console.warn('[contract-pdf] puppeteer not available:', e.message); }
+// Production (Render): use puppeteer-core + @sparticuz/chromium (serverless-friendly,
+// self-contained Chromium binary that runs without system-level Chrome deps).
+// Local dev fallback: full puppeteer (which bundles its own Chromium for macOS).
+let puppeteer, chromium;
+try {
+  puppeteer = require('puppeteer-core');
+  chromium = require('@sparticuz/chromium');
+  console.log('[contract-pdf] using puppeteer-core + @sparticuz/chromium');
+} catch (e) {
+  try {
+    puppeteer = require('puppeteer');
+    console.log('[contract-pdf] falling back to bundled puppeteer');
+  } catch (e2) {
+    console.warn('[contract-pdf] no puppeteer available:', e2.message);
+  }
+}
 
 router.post('/render', async (req, res) => {
   if (!puppeteer) {
@@ -35,20 +48,33 @@ router.post('/render', async (req, res) => {
 
   let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--font-render-hinting=medium'
-      ]
-    });
+    const launchOpts = chromium
+      ? {
+          headless: chromium.headless,
+          args: chromium.args.concat([
+            '--font-render-hinting=medium',
+            '--hide-scrollbars',
+            '--disable-web-security'
+          ]),
+          executablePath: await chromium.executablePath(),
+          defaultViewport: chromium.defaultViewport
+        }
+      : {
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--font-render-hinting=medium'
+          ]
+        };
+    browser = await puppeteer.launch(launchOpts);
     const page = await browser.newPage();
     await page.setViewport({ width: 1100, height: 1500, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
-    // Wait extra for Google Fonts (Barlow / Lexend Deca) to settle
-    await page.waitForTimeout(800);
+    // Wait extra for Google Fonts (Barlow / Lexend Deca) to settle.
+    // page.waitForTimeout was removed in puppeteer 22+, use raw setTimeout promise.
+    await new Promise(r => setTimeout(r, 800));
     await page.emulateMediaType('print');
 
     const pdf = await page.pdf({
