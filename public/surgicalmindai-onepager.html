@@ -7,11 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0F2B46;
-            --accent: #00A3E0;
-            --gold: #C5A55A;
             --bg: #07090f;
-            --bg2: #0a0d16;
             --panel: rgba(255,255,255,0.03);
             --line: rgba(255,255,255,0.08);
             --line2: rgba(255,255,255,0.14);
@@ -21,6 +17,7 @@
             --red: #ef4444;
             --teal: #2dd4bf;
             --purple: #7c5cff;
+            --gold: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -68,7 +65,7 @@
         .page {
             max-width: 8.5in;
             margin: 64px auto 32px;
-            padding: 0.55in 0.6in;
+            padding: 0.5in 0.55in;
             background: linear-gradient(160deg, #0a0d16 0%, #0f1320 50%, #131829 100%);
             min-height: 10.5in;
             position: relative;
@@ -78,7 +75,7 @@
             box-shadow: 0 24px 80px rgba(0,0,0,0.6);
         }
 
-        /* Animated background — same DNA as surgicalmind.app */
+        /* Animated background */
         .sm-bg {
             position: absolute;
             inset: 0;
@@ -142,7 +139,6 @@
             .sm-bg__orb { animation: none !important; }
         }
 
-        /* Content sits above background */
         .page-inner { position: relative; z-index: 2; }
 
         /* Header */
@@ -150,14 +146,10 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            padding-bottom: 14px;
+            gap: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--line2);
-            margin-bottom: 18px;
-        }
-        .brand {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            margin-bottom: 14px;
         }
         .brand-title {
             font-size: 28px;
@@ -173,29 +165,34 @@
             background-clip: text;
         }
         .brand-tag {
-            font-size: 12px;
+            font-size: 11.5px;
             color: var(--muted);
             font-weight: 500;
+            margin-top: 4px;
+            line-height: 1.45;
+            max-width: 5.4in;
         }
+        .brand-tag strong { color: var(--text); }
         .header-meta {
             text-align: right;
-            font-size: 10px;
+            font-size: 9.5px;
             color: var(--muted);
             letter-spacing: 0.6px;
             text-transform: uppercase;
             line-height: 1.6;
+            white-space: nowrap;
         }
         .header-meta strong { color: var(--text); }
 
-        /* Lead line */
-        .lead {
-            font-size: 14px;
+        /* Hook line */
+        .hook {
+            font-size: 13.5px;
             color: var(--text);
-            margin-bottom: 22px;
-            line-height: 1.6;
-            max-width: 6.5in;
+            margin-bottom: 18px;
+            line-height: 1.55;
+            max-width: 7in;
         }
-        .lead strong { color: var(--white); }
+        .hook strong { color: var(--white); }
 
         /* Section heading */
         .h-eyebrow {
@@ -204,111 +201,173 @@
             color: var(--purple);
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .h-title {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--white);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
+            letter-spacing: -0.2px;
         }
 
         /* Problem grid */
         .problems {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 22px;
+            gap: 8px;
+            margin-bottom: 18px;
         }
         .problem {
             background: var(--panel);
             border: 1px solid var(--line);
             border-left: 3px solid var(--red);
             border-radius: 6px;
-            padding: 12px 14px;
+            padding: 10px 13px;
         }
         .problem-num {
-            font-size: 10px;
+            font-size: 9.5px;
             font-weight: 700;
             color: var(--red);
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .problem-h {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
             color: var(--white);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             line-height: 1.3;
         }
         .problem-p {
-            font-size: 11.5px;
+            font-size: 11px;
             color: var(--muted);
             line-height: 1.5;
         }
 
-        /* Solution */
-        .solution-intro {
-            font-size: 13px;
+        /* Capabilities grid */
+        .caps-intro {
+            font-size: 12.5px;
             color: var(--text);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.55;
+            max-width: 7in;
         }
-        .solution-intro strong { color: var(--white); }
-        .features {
+        .caps-intro strong { color: var(--white); }
+        .caps {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px 16px;
-            margin-bottom: 18px;
+            gap: 5px 14px;
+            margin-bottom: 16px;
         }
-        .feat {
+        .cap {
             display: flex;
             gap: 9px;
             align-items: flex-start;
-            font-size: 11.5px;
+            font-size: 11px;
             color: var(--muted);
             line-height: 1.5;
-            padding: 4px 0;
+            padding: 3px 0;
         }
-        .feat-dot {
+        .cap-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--purple), var(--teal));
             flex-shrink: 0;
+            margin-top: 5.5px;
+        }
+        .cap b {
+            color: var(--white);
+            font-weight: 700;
+        }
+        .cap-chatbot { grid-column: 1 / -1; }
+        .cap-chatbot {
+            background: linear-gradient(135deg, rgba(124,92,255,0.10), rgba(45,212,191,0.05));
+            border: 1px solid rgba(124,92,255,0.4);
+            border-radius: 6px;
+            padding: 9px 13px;
+            font-size: 11.5px;
+            color: var(--text);
+        }
+        .cap-chatbot b { color: var(--white); }
+        .cap-chatbot .cap-dot {
+            background: linear-gradient(135deg, var(--gold), var(--purple));
             margin-top: 6px;
         }
-        .feat strong { color: var(--text); }
 
-        /* Bottom line */
-        .bottom-line {
-            background: linear-gradient(135deg, rgba(124,92,255,0.08), rgba(45,212,191,0.05));
-            border: 1px solid rgba(124,92,255,0.35);
+        /* Audience callouts */
+        .audience {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .aud {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 2px solid var(--teal);
+            border-radius: 6px;
+            padding: 9px 12px;
+        }
+        .aud-role {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: var(--teal);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .aud-line {
+            font-size: 11px;
+            color: var(--text);
+            line-height: 1.45;
+        }
+        .aud-line strong { color: var(--white); }
+
+        /* CTA */
+        .cta {
+            background: linear-gradient(135deg, rgba(124,92,255,0.12), rgba(45,212,191,0.06));
+            border: 1px solid rgba(124,92,255,0.45);
             border-radius: 8px;
             padding: 14px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
-        .bottom-line-text {
+        .cta-text {
             font-size: 12.5px;
             color: var(--text);
             line-height: 1.5;
         }
-        .bottom-line-text strong { color: var(--white); }
-        .bottom-line a {
-            background: linear-gradient(135deg, var(--purple), #5b3eff);
-            color: #fff;
-            padding: 9px 18px;
+        .cta-text strong { color: var(--white); }
+        .cta-text .accent { color: var(--gold); font-weight: 700; }
+        .cta-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .cta-btn {
+            padding: 9px 16px;
             border-radius: 6px;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 10.5px;
             text-decoration: none;
             white-space: nowrap;
             letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .cta-btn-primary {
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            color: #fff;
+        }
+        .cta-btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--line2);
         }
 
         /* Footer */
@@ -316,23 +375,23 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-top: 12px;
+            padding-top: 10px;
             border-top: 1px solid var(--line);
-            font-size: 10px;
+            font-size: 9.5px;
             color: var(--muted);
             letter-spacing: 0.4px;
         }
         .footer strong { color: var(--text); }
 
-        /* Print — single Letter page, no animations, no top bar */
-        @page { size: Letter; margin: 0.45in; }
+        /* Print — single Letter page */
+        @page { size: Letter; margin: 0.4in; }
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
-            html, body { background: #07090f !important; font-size: 11pt; }
+            html, body { background: #07090f !important; font-size: 10.5pt; }
             .top-bar, .btn-pdf, .sm-bg { display: none !important; }
             .page {
                 margin: 0; padding: 0;
@@ -341,31 +400,33 @@
                 box-shadow: none;
                 background: linear-gradient(160deg, #0a0d16 0%, #0f1320 50%, #131829 100%) !important;
             }
-            .page-inner {
-                padding: 0;
-            }
-            .brand-title { font-size: 26pt; }
-            .brand-tag { font-size: 9pt; }
-            .lead { font-size: 10pt; }
-            .h-title { font-size: 13pt; }
-            .h-eyebrow { font-size: 8pt; }
-            .problem-h { font-size: 10pt; }
-            .problem-p { font-size: 8.5pt; }
-            .problem-num { font-size: 7.5pt; }
-            .solution-intro { font-size: 10pt; }
-            .feat { font-size: 8.5pt; }
-            .bottom-line-text { font-size: 9.5pt; }
-            .bottom-line a { font-size: 8.5pt; padding: 7px 14px; }
-            .footer { font-size: 8pt; }
+            .page-inner { padding: 0; }
+            .brand-title { font-size: 24pt; }
+            .brand-tag { font-size: 8.5pt; }
+            .hook { font-size: 10pt; }
+            .h-title { font-size: 12pt; }
+            .h-eyebrow { font-size: 7.5pt; }
+            .problem-h { font-size: 9.5pt; }
+            .problem-p { font-size: 8pt; }
+            .problem-num { font-size: 7pt; }
+            .caps-intro { font-size: 9.5pt; }
+            .cap { font-size: 8pt; }
+            .cap-chatbot { font-size: 8.5pt; }
+            .aud-role { font-size: 7pt; }
+            .aud-line { font-size: 8pt; }
+            .cta-text { font-size: 9pt; }
+            .cta-btn { font-size: 7.5pt; padding: 6px 12px; }
+            .footer { font-size: 7.5pt; }
         }
 
         /* Mobile */
         @media (max-width: 768px) {
-            .page { margin: 56px 12px 24px; padding: 28px 22px; }
-            .header { flex-direction: column; gap: 10px; }
+            .page { margin: 56px 12px 24px; padding: 26px 20px; }
+            .header { flex-direction: column; gap: 8px; }
             .header-meta { text-align: left; }
-            .problems, .features { grid-template-columns: 1fr; }
-            .bottom-line { flex-direction: column; align-items: flex-start; }
+            .problems, .caps, .audience { grid-template-columns: 1fr; }
+            .cta { flex-direction: column; align-items: flex-start; }
+            .cta-actions { width: 100%; }
         }
     </style>
 </head>
@@ -389,73 +450,98 @@
 
         <!-- Header -->
         <div class="header">
-            <div class="brand">
+            <div>
                 <div class="brand-title">SurgicalMind<span class="grad">AI</span></div>
-                <div class="brand-tag">The All-in-One AI Sales Platform for Medical Device &amp; Capital Equipment Reps</div>
+                <div class="brand-tag">The all-in-one AI sales platform built for <strong>Capital Managers, Capital Directors, and Key Account Executives</strong> closing six- and seven-figure capital medical equipment deals.</div>
             </div>
             <div class="header-meta">
                 <div>One-Page Summary</div>
-                <div><strong>Digit2AI</strong> &middot; May 2026</div>
+                <div><strong>Digit2AI</strong></div>
+                <div>May 2026</div>
             </div>
         </div>
 
-        <!-- Lead -->
-        <p class="lead">
-            Sales teams selling capital medical equipment lose deals not because the technology is wrong, but because the <strong>business case</strong> is built by hand, the <strong>clinician data</strong> never makes it into the plan, the <strong>clinical value</strong> is never dollarized, and the <strong>plan dies</strong> the day the system is placed. SurgicalMindAI fixes all four in one app.
+        <!-- Hook -->
+        <p class="hook">
+            Most capital deals don&rsquo;t fall apart on price &mdash; they fall apart on the <strong>business case</strong>. Plans built by hand. Surgeon commitments stuck in email. Clinical value never dollarized. Plans that die the day the system is placed. SurgicalMindAI replaces all of it &mdash; with a chatbot, an analytics layer, the full sales workflow, and an autonomous Neural Intelligence agent &mdash; in <strong>one login</strong>.
         </p>
 
         <!-- Problems -->
         <div class="h-eyebrow">The Problem</div>
-        <div class="h-title">Four breakdowns every commercial team lives with today</div>
+        <div class="h-title">Four breakdowns every capital sales team lives with today</div>
 
         <div class="problems">
             <div class="problem">
                 <div class="problem-num">Problem 01</div>
                 <div class="problem-h">Inconsistent Business Plans</div>
-                <div class="problem-p">Reps build hospital business plans manually. Quality varies wildly, plans take weeks to assemble, and credibility erodes the moment a C-suite spots numbers that don&rsquo;t reconcile.</div>
+                <div class="problem-p">Quality varies wildly across reps. Plans take weeks to assemble. The moment a hospital CFO spots numbers that don&rsquo;t reconcile, credibility &mdash; and the deal &mdash; is gone.</div>
             </div>
             <div class="problem">
                 <div class="problem-num">Problem 02</div>
                 <div class="problem-h">Fragmented Clinician Data</div>
-                <div class="problem-p">Volume commitments are gathered ad-hoc &mdash; emails, spreadsheets, scattered notes. Data never flows cleanly into the plan, and manual transcription introduces errors that managers have to defend.</div>
+                <div class="problem-p">Surgeon and physician volume commitments live in emails, paper notes, and survey tools. Nothing flows cleanly into the plan. Manual transcription introduces errors managers have to defend.</div>
             </div>
             <div class="problem">
                 <div class="problem-num">Problem 03</div>
                 <div class="problem-h">Unquantified Clinical Value</div>
-                <div class="problem-p">Thousands of peer-reviewed studies prove clinical outcome improvements &mdash; lower complications, shorter LOS, fewer readmissions. Almost no rep dollarizes that value into the ROI model the CFO sees.</div>
+                <div class="problem-p">Peer-reviewed evidence proves your technology delivers superior outcomes. None of that value reaches the ROI model. The CFO sees a system price; the clinical advantage is missing from the math.</div>
             </div>
             <div class="problem">
                 <div class="problem-num">Problem 04</div>
                 <div class="problem-h">Zero Post-Placement Tracking</div>
-                <div class="problem-p">Once the system is placed, no one tracks projected vs actual. Reps can&rsquo;t prove the original business case was right, and customers stop seeing ongoing ROI &mdash; killing the next deal.</div>
+                <div class="problem-p">Once the system is placed, the plan dies. No proof the original case was right, no ongoing ROI story, and no reason for the hospital to expand the footprint or buy the next one.</div>
             </div>
         </div>
 
-        <!-- Solution -->
+        <!-- Platform -->
         <div class="h-eyebrow">The Platform</div>
-        <div class="h-title">How SurgicalMindAI solves all four &mdash; in one login</div>
+        <div class="h-title">What SurgicalMindAI does &mdash; comprehensive, end-to-end</div>
 
-        <p class="solution-intro">
-            One product. One screen. End-to-end coverage from cold contact through signed contract through plan tracking after placement &mdash; with a <strong>chatbot, an analytics layer, the full sales workflow,</strong> and a <strong>Neural Intelligence</strong> agent that auto-activates the next action when a finding crosses a threshold.
+        <p class="caps-intro">
+            One product. One screen. From first cold contact to signed contract to plan tracking long after the system is placed &mdash; everything a capital rep needs is bundled into a single workflow, with an <strong>autonomous Neural Intelligence agent</strong> watching every step and shipping the next action without being asked.
         </p>
 
-        <div class="features">
-            <div class="feat"><div class="feat-dot"></div><div><strong>AI Hospital Intake.</strong> Type a hospital name &mdash; 60+ fields auto-populated in 90s from CMS, annual reports, and web research.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>16-Module Analysis Engine.</strong> Volume projection, procedure pareto, capacity model, ROI scenarios &mdash; all visualized for the CFO.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>DRG Reimbursement Library.</strong> Built-in payer-weighted revenue calculations &mdash; no manual lookup, no guessing.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>Magic-Link Clinician Surveys.</strong> Volume commitments captured digitally and auto-imported into the plan &mdash; no transcription errors.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>Clinical Dollarization Engine.</strong> 68 peer-reviewed citations, 44 outcome metrics &mdash; savings quantified per case automatically.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>Proforma vs Actual Tracker.</strong> Monthly variance reports, executive PDFs, ongoing ROI validation post-placement.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>Voice AI Assistant.</strong> Outbound follow-up to physicians, schedulers, and decision-makers &mdash; in the rep&rsquo;s voice.</div></div>
-            <div class="feat"><div class="feat-dot"></div><div><strong>Neural Intelligence.</strong> Listens across every step in real time &mdash; auto-drafts CFO prep, outreach, variance memos.</div></div>
+        <div class="caps">
+            <div class="cap cap-chatbot">
+                <div class="cap-dot"></div>
+                <div><b>AI Chatbot</b> &mdash; ask any question of your hospital, surgeon, and account data in plain English. Ranked lists, comparisons, source citations, instant answers &mdash; the way reps actually work.</div>
+            </div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Hospital Intake Agent.</b> Type a hospital name. Walk away with a complete account profile in 90 seconds.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Embedded Analytics.</b> Charts, dashboards, KPI tiles, ranked lists &mdash; surfaced inside every workflow.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Auto-Built CFO Presentations.</b> Polished, defensible decks ready to send.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Magic-Link Surgeon Surveys.</b> Volume commitments captured digitally. No transcription. Auto-imported.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Clinical Outcome Dollarization.</b> The slide your competitors literally cannot produce.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Three-Layer ROI Model.</b> Volume revenue + clinical savings + payback &mdash; defensible to the CFO.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Voice AI Follow-Up.</b> Outbound calls to physicians and decision-makers, in your voice, on your behalf.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Proforma vs Actual Tracker.</b> Validate the plan every month after placement &mdash; and tee up the next deal.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Neural Intelligence.</b> Auto-activates the next action when a finding crosses a threshold.</div></div>
         </div>
 
-        <!-- Bottom line -->
-        <div class="bottom-line">
-            <div class="bottom-line-text">
-                <strong>The bottom line:</strong> hospital name &rarr; defensible ROI plan in minutes &rarr; tracked monthly after placement &rarr; every finding turns into the next action automatically.
+        <!-- Audience -->
+        <div class="audience">
+            <div class="aud">
+                <div class="aud-role">Capital Managers</div>
+                <div class="aud-line"><strong>Close the gap on senior reps</strong> in your first quarter. Walk into every account with a defensible plan.</div>
             </div>
-            <a href="https://www.surgicalmind.app/" target="_blank">Live Demo</a>
+            <div class="aud">
+                <div class="aud-role">Capital Directors</div>
+                <div class="aud-line"><strong>Standardize quality across the territory.</strong> Every rep producing director-grade business cases.</div>
+            </div>
+            <div class="aud">
+                <div class="aud-role">Key Account Executives</div>
+                <div class="aud-line"><strong>Build the C-suite story</strong> competitors cannot match. Track the plan long after placement.</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <div class="cta-text">
+                <span class="accent">Five minutes is enough.</span> &nbsp;Pick any hospital. Click through. Send us the one feature you wish you had today &mdash; we&rsquo;ll show you it&rsquo;s already in there.
+            </div>
+            <div class="cta-actions">
+                <a class="cta-btn cta-btn-primary" href="https://www.surgicalmind.app/" target="_blank">See It Live</a>
+                <a class="cta-btn cta-btn-secondary" href="mailto:digitalinformation2ai@gmail.com?subject=SurgicalMindAI%20-%20Walkthrough%20Request">Request Walkthrough</a>
+            </div>
         </div>
 
         <!-- Footer -->
