@@ -19,21 +19,21 @@ try {
 
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
 
-function buildContractHtml({ project, total, depositPct, depositAmount, monthly, currency, termMonths, deliveryMonths }) {
+function buildContractHtml({ project, total, depositPct, depositAmount, monthly, currency, termMonths, deliveryWeeks }) {
   const safe = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const today = new Date().toISOString().slice(0, 10);
   const fmt = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: currency || 'USD' });
   const term = Number(termMonths) || 12;
-  const delivery = Number(deliveryMonths) || null;
+  const delivery = Number(deliveryWeeks) || null;
   return `
 <h2>Master Services Engagement — ${safe(project.name)}</h2>
 <p><strong>Effective date:</strong> ${today}</p>
 <p><strong>Service provider:</strong> Digit2AI LLC ("Provider")</p>
 <p><strong>Client:</strong> ${safe(project.submitter_name || 'Authorized Signer')} on behalf of the requesting organization.</p>
-<p><strong>Engagement term:</strong> ${term} months from the effective date.${delivery ? ` <strong>Target delivery window:</strong> ${delivery} months.` : ''}</p>
+<p><strong>Engagement term:</strong> ${term} months from the effective date.${delivery ? ` <strong>Target delivery window:</strong> ${delivery} weeks.` : ''}</p>
 
 <h3>1. Scope</h3>
-<p>Provider will deliver the work described in the project plan attached to project <em>${safe(project.name)}</em>, including the AI-generated milestones, the business plan, and the business requirements captured during kickoff${delivery ? ` within the ${delivery}-month target delivery window` : ''}. Material scope changes require a written amendment.</p>
+<p>Provider will deliver the work described in the project plan attached to project <em>${safe(project.name)}</em>, including the AI-generated milestones, the business plan, and the business requirements captured during kickoff${delivery ? ` within the ${delivery}-week target delivery window` : ''}. Material scope changes require a written amendment.</p>
 
 <h3>2. Fees</h3>
 <ul>
@@ -46,7 +46,7 @@ function buildContractHtml({ project, total, depositPct, depositAmount, monthly,
 <p>Deposit is non-refundable once Provider begins discovery. Monthly fees are billed in advance for the full ${term}-month term; failure to pay for 15 days suspends the engagement until cured. Early termination by the Client does not waive remaining monthly fees through the end of the ${term}-month term.</p>
 
 <h3>4. Deliverables &amp; Milestones</h3>
-<p>The current milestone schedule is the one shown on the project page at the time of signature${delivery ? ` and targets completion within ${delivery} months` : ''}. Updates to the schedule are tracked in the project Updates feed and remain visible to the Client through the requestor magic link.</p>
+<p>The current milestone schedule is the one shown on the project page at the time of signature${delivery ? ` and targets completion within ${delivery} weeks` : ''}. Updates to the schedule are tracked in the project Updates feed and remain visible to the Client through the requestor magic link.</p>
 
 <h3>5. Confidentiality</h3>
 <p>Each party will treat the other's non-public information as confidential and use it only to perform under this engagement.</p>
@@ -214,7 +214,7 @@ async function createContractFromProject(project, opts = {}) {
   const contractHtml = buildContractHtml({
     project, total, depositPct, depositAmount, monthly, currency,
     termMonths: CONTRACT_TERM_MONTHS,
-    deliveryMonths: project.target_delivery_months || null
+    deliveryWeeks: project.target_delivery_weeks || null
   });
 
   const contract = await ProjectContract.create({

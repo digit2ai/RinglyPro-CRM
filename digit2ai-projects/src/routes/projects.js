@@ -396,7 +396,7 @@ router.post('/:id/generate-business-plan', async (req, res) => {
     const countries = project.country ? [project.country] : [];
     const budget_tier = mapBudgetTier(project.budget_range);
 
-    const targetDeliveryMonths = project.target_delivery_months ? Number(project.target_delivery_months) : null;
+    const targetDeliveryWeeks = project.target_delivery_weeks ? Number(project.target_delivery_weeks) : null;
     const targetTotalUsd = project.target_total_usd ? Number(project.target_total_usd) : null;
 
     let result;
@@ -406,7 +406,7 @@ router.post('/:id/generate-business-plan', async (req, res) => {
         sector: sectorList,
         countries,
         budget_tier,
-        target_delivery_months: targetDeliveryMonths,
+        target_delivery_weeks: targetDeliveryWeeks,
         target_total_usd: targetTotalUsd
       });
     } catch (genErr) {

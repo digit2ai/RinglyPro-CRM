@@ -143,8 +143,8 @@ const Project = sequelize.define('Project', {
   kickoff_scheduled_at: DataTypes.DATE,
   contract_status: { type: DataTypes.STRING(40), defaultValue: 'none' },
   workflow_phase: { type: DataTypes.STRING(40), defaultValue: 'pending_review' },
-  // Delivery + price targets (migration 009)
-  target_delivery_months: DataTypes.INTEGER,
+  // Delivery + price targets (migration 010 — delivery in weeks)
+  target_delivery_weeks: DataTypes.INTEGER,
   target_total_usd: DataTypes.DECIMAL(12, 2)
 }, { tableName: 'd2_projects' });
 

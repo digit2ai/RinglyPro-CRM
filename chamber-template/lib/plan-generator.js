@@ -55,7 +55,7 @@ Generate a thorough, realistic plan. team_roles_required must specify 3-7 distin
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
-function buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) {
+function buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_weeks, target_total_usd }) {
   const countryStr = Array.isArray(countries) ? countries.join(', ') : (countries || 'global');
   const tierMap = {
     small: '$50k-200k',
@@ -64,12 +64,19 @@ function buildUserMessage({ vision, sector, countries, budget_tier, target_deliv
   };
   const tier = tierMap[budget_tier] || tierMap.medium;
 
-  // Hard targets override the budget tier — when supplied, the plan must
-  // make the timeline_milestones span EXACTLY target_delivery_months and
-  // the sum of budget_breakdown[].amount_usd must equal target_total_usd.
-  const hardTargets = (target_delivery_months || target_total_usd)
+  // Hard targets override the budget tier. When supplied, the plan must
+  // make timeline_milestones fit the delivery window (expressed in weeks)
+  // and the sum of budget_breakdown[].amount_usd must equal target_total_usd.
+  // The plan schema's timeline_milestones[].month field still uses 1-indexed
+  // months — we convert weeks -> months (1 month ≈ 4.33 weeks) so Claude
+  // packs the schedule into the right number of monthly buckets.
+  const targetMonths = target_delivery_weeks
+    ? Math.max(1, Math.ceil(Number(target_delivery_weeks) / 4.33))
+    : null;
+
+  const hardTargets = (target_delivery_weeks || target_total_usd)
     ? `\n\nHARD CONSTRAINTS (must honor exactly):
-${target_delivery_months ? `- Delivery window: ${target_delivery_months} months. timeline_milestones MUST span months 1 through ${target_delivery_months} with the final milestone at month ${target_delivery_months}.` : ''}
+${target_delivery_weeks ? `- Delivery window: ${target_delivery_weeks} weeks (approximately ${targetMonths} months). timeline_milestones MUST span months 1 through ${targetMonths} with the final milestone at month ${targetMonths}. If the window is short (<= 4 weeks), use a single milestone at month 1 describing weekly sub-deliverables in its "deliverable" text.` : ''}
 ${target_total_usd ? `- Total project budget: $${Number(target_total_usd).toLocaleString('en-US')} USD. The sum of budget_breakdown[].amount_usd MUST equal this number (split into reasonable line items).` : ''}`
     : '';
 
@@ -83,7 +90,7 @@ Budget tier: ${budget_tier || 'medium'} (${tier})${hardTargets}
 Generate the structured business plan now.`;
 }
 
-async function generatePlan({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) {
+async function generatePlan({ vision, sector, countries, budget_tier, target_delivery_weeks, target_total_usd }) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.CLAUDE_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
@@ -97,7 +104,7 @@ async function generatePlan({ vision, sector, countries, budget_tier, target_del
       { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
     ],
     messages: [
-      { role: 'user', content: buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) }
+      { role: 'user', content: buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_weeks, target_total_usd }) }
     ]
   });
 

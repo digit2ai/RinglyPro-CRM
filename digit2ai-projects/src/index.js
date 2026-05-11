@@ -669,6 +669,26 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 010 — Switch delivery target from months to weeks
+    const deliveryWeeksPath = path.join(__dirname, '..', 'migrations', '010_delivery_weeks.sql');
+    if (fs.existsSync(deliveryWeeksPath)) {
+      try {
+        const sql = fs.readFileSync(deliveryWeeksPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate') && !e.message.includes('does not exist')) {
+              console.log('[D2AI-Projects] 010_delivery_weeks notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 010_delivery_weeks migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 010_delivery_weeks error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

@@ -2863,11 +2863,11 @@ async function showProjectDetail(id) {
           </div>` : ''}
           <div class="detail-section" style="border:1px solid rgba(167,139,250,0.3);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
             <h4 style="display:flex;justify-content:space-between;align-items:center;margin-top:0">Project Targets
-              <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_months || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
+              <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_weeks || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
             </h4>
-            ${(p.target_delivery_months || p.target_total_usd)
+            ${(p.target_delivery_weeks || p.target_total_usd)
               ? `<div style="font-size:13px;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px">
-                   ${p.target_delivery_months ? `<div><strong>Delivery window:</strong> ${p.target_delivery_months} months</div>` : ''}
+                   ${p.target_delivery_weeks ? `<div><strong>Delivery window:</strong> ${p.target_delivery_weeks} weeks</div>` : ''}
                    ${p.target_total_usd ? `<div><strong>Total price:</strong> ${Number(p.target_total_usd).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
                    ${p.target_total_usd ? `<div><strong>Monthly (total / 12):</strong> ${Number(p.target_total_usd / 12).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
                  </div>
@@ -2967,8 +2967,8 @@ async function editProjectTargets(projectId) {
     <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Delivery window + total price drive the AI plan (as hard constraints) and the 12-month service contract (monthly = total / 12).</p>
     <div class="form-row">
       <div class="form-group">
-        <label>Delivery Timeframe (months)</label>
-        <input type="number" id="m-pt-delivery" min="1" max="60" step="1" value="${current.target_delivery_months || ''}">
+        <label>Delivery Timeframe (weeks)</label>
+        <input type="number" id="m-pt-delivery" min="1" max="260" step="1" value="${current.target_delivery_weeks || ''}">
       </div>
       <div class="form-group">
         <label>Total Price (USD)</label>
@@ -2976,11 +2976,11 @@ async function editProjectTargets(projectId) {
       </div>
     </div>
   `, async () => {
-    const months = Number(document.getElementById('m-pt-delivery').value) || null;
+    const weeks = Number(document.getElementById('m-pt-delivery').value) || null;
     const total = Number(document.getElementById('m-pt-total').value) || null;
     await api(`/projects/${projectId}`, {
       method: 'PUT',
-      body: JSON.stringify({ target_delivery_months: months, target_total_usd: total })
+      body: JSON.stringify({ target_delivery_weeks: weeks, target_total_usd: total })
     });
     closeModal();
     showProjectDetail(projectId);
@@ -3043,9 +3043,9 @@ async function generateBusinessPlan(projectId) {
     </p>
     <div class="form-row">
       <div class="form-group">
-        <label>Delivery Timeframe (months) *</label>
-        <input type="number" id="m-bp-delivery" min="1" max="60" step="1" value="${current.target_delivery_months || 6}">
-        <small style="display:block;color:var(--text-muted);font-size:11px;margin-top:4px">How long until the project is delivered.</small>
+        <label>Delivery Timeframe (weeks) *</label>
+        <input type="number" id="m-bp-delivery" min="1" max="260" step="1" value="${current.target_delivery_weeks || 24}">
+        <small style="display:block;color:var(--text-muted);font-size:11px;margin-top:4px">How many weeks until the project is delivered.</small>
       </div>
       <div class="form-group">
         <label>Total Price (USD) *</label>
@@ -3054,19 +3054,19 @@ async function generateBusinessPlan(projectId) {
       </div>
     </div>
     <div style="padding:10px 12px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);margin-top:8px">
-      <strong>Contract terms (fixed):</strong> 12-month engagement, 10% deposit on signature, monthly recurring billing for the remaining 11 months. Generation takes ~30 seconds.
+      <strong>Contract terms (fixed):</strong> 12-month engagement, 10% deposit on signature, monthly recurring billing for the remaining 11 months. Delivery window is independent of the billing term. Generation takes ~30 seconds.
     </div>
   `, async () => {
-    const months = Number(document.getElementById('m-bp-delivery').value);
+    const weeks = Number(document.getElementById('m-bp-delivery').value);
     const total = Number(document.getElementById('m-bp-total').value);
-    if (!months || months < 1) { alert('Delivery timeframe must be at least 1 month.'); return; }
+    if (!weeks || weeks < 1) { alert('Delivery timeframe must be at least 1 week.'); return; }
     if (!total || total < 1) { alert('Total price must be greater than zero.'); return; }
 
     // Persist targets on the project first
     try {
       const save = await api(`/projects/${projectId}`, {
         method: 'PUT',
-        body: JSON.stringify({ target_delivery_months: months, target_total_usd: total })
+        body: JSON.stringify({ target_delivery_weeks: weeks, target_total_usd: total })
       });
       if (!save.success) { alert('Could not save targets: ' + (save.error || 'unknown')); return; }
     } catch (e) { alert('Could not save targets: ' + e.message); return; }
