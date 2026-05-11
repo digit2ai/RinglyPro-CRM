@@ -310,11 +310,7 @@ Digit2AI`;
   <p style="margin:0 0 14px;color:#64748b">Project: <strong style="color:#0f172a">${esc(project.name)}</strong></p>
   <hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0">
 
-  <h3 style="margin:0 0 12px;color:#0f172a">Business Plan: ${esc(planTitle)}</h3>
-  <p style="margin:0 0 14px;font-size:12px;color:#64748b">Click any section heading below to expand.</p>
-  ${planSectionsHtml}
-
-  <h3 style="margin:24px 0 8px;color:#0f172a">Service Contract Terms</h3>
+  <h3 style="margin:0 0 8px;color:#0f172a">Service Contract Terms</h3>
   <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px">
     <tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">Project total (estimate)</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:monospace;font-weight:600">$${Number(contract.total_amount_usd || 0).toLocaleString('en-US')}</td></tr>
     <tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">Deposit (${contract.deposit_percent}%) on signature</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:monospace;font-weight:600">$${Number(contract.deposit_amount_usd || 0).toLocaleString('en-US')}</td></tr>
@@ -323,7 +319,13 @@ Digit2AI`;
 
   <details style="margin-bottom:18px"><summary style="cursor:pointer;font-weight:600;color:#0f172a">Full contract text</summary><div style="margin-top:10px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">${contract.contract_html || ''}</div></details>
 
-  <p style="margin:24px 0"><a href="${signoffUrl}" style="display:inline-block;background:#38bdf8;color:#020617;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700">Review & Sign Contract</a></p>
+  <p style="margin:18px 0"><a href="${signoffUrl}" style="display:inline-block;background:#38bdf8;color:#020617;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700">Review & Sign Contract</a></p>
+
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
+
+  <h3 style="margin:0 0 12px;color:#0f172a">Business Plan: ${esc(planTitle)}</h3>
+  <p style="margin:0 0 14px;font-size:12px;color:#64748b">Click any section heading below to expand.</p>
+  ${planSectionsHtml}
 
   <p style="font-size:12px;color:#64748b;margin-top:24px">If you have questions before signing, reply directly to this email — it goes to ${esc(replyTo)}.</p>
   <p style="font-size:12px;color:#64748b;margin:6px 0 0">— ${esc(fromName)}, Digit2AI</p>
