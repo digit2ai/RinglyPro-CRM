@@ -122,6 +122,8 @@ app.get('/api/v1/public/contracts/:token', async (req, res) => {
 app.post('/api/v1/public/contracts/:token/sign', express.json(), async (req, res) => {
   try {
     const { ProjectContract, Project } = require('./models');
+    const stripeContract = require('./services/stripeContract');
+
     const row = await ProjectContract.findOne({ where: { signoff_token: req.params.token } });
     if (!row) return res.status(404).json({ success: false, error: 'Contract not found' });
     if (row.status === 'signed' || row.status === 'active') {
@@ -129,20 +131,90 @@ app.post('/api/v1/public/contracts/:token/sign', express.json(), async (req, res
     }
     const { name, email } = req.body || {};
     if (!name || !email) return res.status(400).json({ success: false, error: 'name and email required' });
+
+    // Stash signer info now — even if the Client bails on Stripe Checkout
+    // we have their attribution.
     row.signed_by_name = String(name).trim();
     row.signed_by_email = String(email).trim().toLowerCase();
+    await row.save();
+
+    const project = await Project.findByPk(row.project_id);
+    if (!project) return res.status(500).json({ success: false, error: 'Project missing on contract' });
+
+    // Phase 2: hand off to Stripe Checkout for the 10% deposit. The
+    // webhook completes the signature + creates the monthly subscription.
+    // If Stripe is not configured (e.g. local dev), fall back to the
+    // legacy direct-sign behavior from phase 1.
+    let checkout = { skipped: true };
+    try {
+      checkout = await stripeContract.createDepositCheckoutSession({
+        contract: row,
+        project,
+        signerName: row.signed_by_name,
+        signerEmail: row.signed_by_email
+      });
+    } catch (stripeErr) {
+      console.error('[D2AI-Contracts] Stripe checkout create failed:', stripeErr.message);
+      checkout = { skipped: true, reason: 'stripe_error', error: stripeErr.message };
+    }
+
+    if (checkout && checkout.url) {
+      row.stripe_deposit_session_id = checkout.id;
+      row.sent_at = row.sent_at || new Date();
+      row.status = 'sent';
+      await row.save();
+      project.contract_status = 'sent';
+      project.workflow_phase = 'awaiting_deposit';
+      await project.save();
+      return res.json({ success: true, redirect_url: checkout.url, data: row });
+    }
+
+    // Fallback (no Stripe): legacy direct-sign flow from phase 1.
     row.signed_at = new Date();
     row.status = 'signed';
     await row.save();
-    const project = await Project.findByPk(row.project_id);
-    if (project) {
-      project.contract_status = 'signed';
-      project.workflow_phase = 'awaiting_deposit';
-      await project.save();
-    }
-    res.json({ success: true, data: row });
+    project.contract_status = 'signed';
+    project.workflow_phase = 'awaiting_deposit';
+    await project.save();
+    res.json({ success: true, data: row, stripe: checkout });
   } catch (err) {
+    console.error('[D2AI-Contracts] sign error:', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Stripe webhook for contract checkout sessions. Mounted with raw body
+// so signature verification works. Idempotent: re-receiving an event
+// will short-circuit if the contract is already active.
+app.post('/api/v1/webhooks/stripe-contract', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const stripeContract = require('./services/stripeContract');
+    const stripe = stripeContract.getStripe();
+    if (!stripe) return res.status(500).send('stripe_not_configured');
+    const sig = req.headers['stripe-signature'];
+    const secret = process.env.STRIPE_CONTRACT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+    let event;
+    try {
+      event = secret ? stripe.webhooks.constructEvent(req.body, sig, secret) : JSON.parse(req.body.toString('utf8'));
+    } catch (verifyErr) {
+      console.error('[D2AI-Contracts] webhook verify failed:', verifyErr.message);
+      return res.status(400).send('bad signature');
+    }
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      if (session?.metadata?.d2ai_kind === 'project_deposit' || session?.metadata?.d2ai_contract_id) {
+        try {
+          await stripeContract.activateContractFromCompletedSession(session);
+          console.log('[D2AI-Contracts] Contract activated from checkout', session.id);
+        } catch (activateErr) {
+          console.error('[D2AI-Contracts] activation failed:', activateErr.message);
+        }
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[D2AI-Contracts] webhook handler error:', err);
+    res.status(500).send('error');
   }
 });
 
@@ -552,6 +624,28 @@ app.get('*', (req, res) => {
         console.log('[D2AI-Projects] 007_workflow_phase1 migration applied');
       } catch (mErr) {
         console.log('[D2AI-Projects] 007_workflow_phase1 error:', mErr.message);
+      }
+    }
+
+    // Migration 008 — Stripe wire-up for contracts (Phase 2). Must run
+    // after 007 because it alters the d2_project_contracts table that
+    // 007 creates.
+    const stripeContractsPath = path.join(__dirname, '..', 'migrations', '008_stripe_contracts.sql');
+    if (fs.existsSync(stripeContractsPath)) {
+      try {
+        const sql = fs.readFileSync(stripeContractsPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 008_stripe_contracts notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 008_stripe_contracts migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 008_stripe_contracts error:', mErr.message);
       }
     }
 

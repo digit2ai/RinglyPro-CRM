@@ -56,9 +56,9 @@
   <input type="email" id="email" name="email" required autocomplete="email">
   <div class="agree">
     <input type="checkbox" id="agree" required>
-    <label for="agree" style="font-weight:400;margin:0">I have read and agree to the terms above. By submitting, I authorize the 10% deposit charge once the payment-collection step is enabled.</label>
+    <label for="agree" style="font-weight:400;margin:0">I have read and agree to the terms above. By submitting, I will be taken to secure Stripe Checkout to pay the 10% deposit; the monthly fee begins automatically on successful payment.</label>
   </div>
-  <button class="primary" type="submit" id="submit-btn">Sign contract</button>
+  <button class="primary" type="submit" id="submit-btn">Sign &amp; continue to deposit checkout</button>
   <div id="msg"></div>
 </form>
 
@@ -122,6 +122,12 @@ $('sign-form').addEventListener('submit', async (e) => {
     });
     const j = await r.json();
     if (!j.success) { $('msg').className = 'msg err'; $('msg').textContent = j.error || 'Signing failed'; btn.disabled = false; return; }
+    if (j.redirect_url) {
+      $('msg').className = 'msg ok';
+      $('msg').textContent = 'Redirecting to secure checkout for the deposit...';
+      setTimeout(() => { location.href = j.redirect_url; }, 600);
+      return;
+    }
     $('msg').className = 'msg ok';
     $('msg').textContent = 'Signed! The team has been notified and will reach out to confirm deposit and kickoff next steps.';
     setTimeout(load, 800);
@@ -130,6 +136,24 @@ $('sign-form').addEventListener('submit', async (e) => {
     btn.disabled = false;
   }
 });
+
+// If the user just returned from a successful Stripe Checkout, surface
+// a confirmation banner. The webhook handles the heavy lifting; this is
+// just polish for the browser-side experience.
+const checkoutFlag = params.get('checkout');
+if (checkoutFlag === 'success') {
+  const banner = document.createElement('div');
+  banner.className = 'msg ok';
+  banner.style.marginBottom = '14px';
+  banner.textContent = 'Deposit received. Your engagement is now active and we are kicking off the build phase.';
+  document.body.insertBefore(banner, document.body.firstChild.nextSibling);
+} else if (checkoutFlag === 'canceled') {
+  const banner = document.createElement('div');
+  banner.className = 'msg err';
+  banner.style.marginBottom = '14px';
+  banner.textContent = 'Checkout was canceled. You can submit the signature form again to retry.';
+  document.body.insertBefore(banner, document.body.firstChild.nextSibling);
+}
 
 load();
 </script>

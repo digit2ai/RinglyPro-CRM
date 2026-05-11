@@ -661,7 +661,15 @@ const ProjectContract = sequelize.define('ProjectContract', {
   scope_summary: DataTypes.TEXT,
   terms_summary: DataTypes.TEXT,
   sent_at: DataTypes.DATE,
-  created_by_email: DataTypes.STRING(255)
+  created_by_email: DataTypes.STRING(255),
+  // Stripe wire-up (migration 008)
+  stripe_customer_id: DataTypes.STRING(120),
+  stripe_payment_method_id: DataTypes.STRING(120),
+  stripe_deposit_session_id: DataTypes.STRING(180),
+  stripe_deposit_payment_intent_id: DataTypes.STRING(180),
+  stripe_subscription_id: DataTypes.STRING(180),
+  stripe_price_id: DataTypes.STRING(180),
+  subscription_active_at: DataTypes.DATE
 }, { tableName: 'd2_project_contracts' });
 
 Project.hasMany(ProjectContract, { foreignKey: 'project_id', as: 'contracts' });
