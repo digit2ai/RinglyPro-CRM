@@ -420,8 +420,12 @@ router.post('/:id/generate-business-plan', async (req, res) => {
     });
     await logActivity(req.user?.email, 'generated_business_plan', 'project', project.id, project.name);
 
-    // Auto-draft the service contract alongside the business plan so the
-    // user can review + send both in one step (streamlined workflow).
+    // Auto-draft (or refresh) the service contract alongside the business plan
+    // so the user can review + send both in one step. If a draft/sent contract
+    // already exists, REFRESH its amounts from the new targets and re-render
+    // the HTML — otherwise a regen with new target_total_usd would leave the
+    // contract stuck with stale numbers. Signed/active contracts are never
+    // mutated (the engagement is already committed).
     let contract = null;
     let contractError = null;
     try {
@@ -432,7 +436,12 @@ router.post('/:id/generate-business-plan', async (req, res) => {
         order: [['created_at', 'DESC']]
       });
       if (existing) {
-        contract = existing;
+        if (typeof contractsRouter.refreshContractFromProject === 'function') {
+          contract = await contractsRouter.refreshContractFromProject(existing, project, { businessPlan: result.plan });
+          await logActivity(req.user?.email, 'updated', 'contract', contract.id, 'Refreshed amounts from regenerated plan');
+        } else {
+          contract = existing;
+        }
       } else if (typeof contractsRouter.createContractFromProject === 'function') {
         contract = await contractsRouter.createContractFromProject(project, {
           businessPlan: result.plan,

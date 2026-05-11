@@ -37,9 +37,9 @@ function buildContractHtml({ project, total, depositPct, depositAmount, monthly,
 
 <h3>2. Fees</h3>
 <ul>
-  <li><strong>Project total (good-faith estimate):</strong> ${fmt(total)}</li>
+  <li><strong>Project total:</strong> ${fmt(total)}</li>
   <li><strong>Upfront deposit (${depositPct}% of total):</strong> ${fmt(depositAmount)} — due upon signature.</li>
-  <li><strong>Monthly recurring fee:</strong> ${fmt(monthly)} — billed on the first of each month for the ${term}-month engagement term.</li>
+  <li><strong>Monthly recurring fee:</strong> ${fmt(monthly)} — billed on the first of each month for ${term} months. Monthly fee = (project total &minus; deposit) &divide; ${term}, so the deposit plus ${term} monthly payments equals the project total.</li>
 </ul>
 
 <h3>3. Payment Terms</h3>
@@ -201,13 +201,15 @@ async function createContractFromProject(project, opts = {}) {
   }
   if (!total || total < 1) total = 50000;
 
-  // Contract term is FIXED at 12 months. Monthly = total / 12.
+  // Contract term is FIXED at 12 months.
+  // Monthly fee amortizes the REMAINING balance (total - deposit) over 12 months,
+  // so deposit + (monthly * 12) === total.
   const CONTRACT_TERM_MONTHS = 12;
   const depositPct = Number(opts.deposit_percent || 10);
   const depositAmount = Math.round((total * (depositPct / 100)) * 100) / 100;
   let monthly = Number(opts.monthly_amount_usd);
   if (!monthly || isNaN(monthly)) {
-    monthly = Math.round((total / CONTRACT_TERM_MONTHS) * 100) / 100;
+    monthly = Math.round(((total - depositAmount) / CONTRACT_TERM_MONTHS) * 100) / 100;
   }
   const currency = opts.currency || 'USD';
 
@@ -275,7 +277,11 @@ router.post('/:id/send', async (req, res) => {
     }
 
     const signoffUrl = `${PUBLIC_BASE}/projects/contracts/sign.html?token=${contract.signoff_token}`;
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    // Use info@digit2ai.com as the envelope sender so the From address never
+    // matches any stakeholder's own address (Workspace / Gmail will silently
+    // drop self-sends because they fail SPF/DKIM alignment on the recipient's
+    // own domain). mstagg@digit2ai.com stays as the reply-to.
+    const fromEmail = 'info@digit2ai.com';
     const replyTo = process.env.REQUESTOR_REPLY_TO || 'mstagg@digit2ai.com';
     const fromName = process.env.REQUESTOR_FROM_NAME || 'Manuel Stagg';
 
@@ -520,5 +526,51 @@ function renderBusinessPlanSectionsHtml(plan) {
   ].join('\n');
 }
 
+// =====================================================
+// HELPER — refresh an existing draft/sent contract with
+// fresh amounts pulled from the project's targets, and
+// re-render the HTML so the signoff page + email match.
+// Skips signed/active contracts (engagement is committed).
+// =====================================================
+async function refreshContractFromProject(contract, project, opts = {}) {
+  if (!contract) return null;
+  if (contract.status !== 'draft' && contract.status !== 'sent') return contract;
+
+  const businessPlan = opts.businessPlan || project.business_plan_json || null;
+
+  let total = Number(project.target_total_usd);
+  if (!total || isNaN(total)) {
+    const budget = (businessPlan && Array.isArray(businessPlan.budget_breakdown))
+      ? businessPlan.budget_breakdown : [];
+    total = budget.reduce((s, b) => s + (Number(b.amount_usd) || 0), 0);
+  }
+  if (!total || total < 1) total = Number(contract.total_amount_usd) || 50000;
+
+  const CONTRACT_TERM_MONTHS = 12;
+  const depositPct = Number(contract.deposit_percent || 10);
+  const depositAmount = Math.round((total * (depositPct / 100)) * 100) / 100;
+  const monthly = Math.round(((total - depositAmount) / CONTRACT_TERM_MONTHS) * 100) / 100;
+
+  contract.total_amount_usd = total;
+  contract.deposit_amount_usd = depositAmount;
+  contract.monthly_amount_usd = monthly;
+  contract.scope_summary = (businessPlan && businessPlan.executive_summary) || project.description || contract.scope_summary;
+  contract.contract_html = buildContractHtml({
+    project, total, depositPct, depositAmount, monthly,
+    currency: contract.currency || 'USD',
+    termMonths: CONTRACT_TERM_MONTHS,
+    deliveryWeeks: project.target_delivery_weeks || null
+  });
+  // If the previous contract had been sent already, flip it back to draft so
+  // the user must explicitly Send the refreshed version.
+  if (contract.status === 'sent') {
+    contract.status = 'draft';
+    contract.sent_at = null;
+  }
+  await contract.save();
+  return contract;
+}
+
 router.createContractFromProject = createContractFromProject;
+router.refreshContractFromProject = refreshContractFromProject;
 module.exports = router;
