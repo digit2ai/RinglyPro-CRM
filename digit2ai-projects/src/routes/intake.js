@@ -744,6 +744,7 @@ router.get('/companies/:id/tokens', intakeAuth, requireAdmin, async (req, res) =
 // INBOX APPROVE / REJECT (admin) — wired to Claude milestone-generator
 // =====================================================
 const milestoneGenerator = require('../services/milestone-generator');
+const requestorNotification = require('../services/requestorNotification');
 
 // POST /projects/:id/approve
 // Generates milestones via Claude, inserts them, marks project approved.
@@ -831,6 +832,47 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
 
     await t.commit();
 
+    // Fire the requestor acknowledgment email (non-blocking — do not delay
+    // the API response on SendGrid latency). Looks up the share token tied
+    // to this project's intake batch so the email includes the magic link.
+    (async () => {
+      try {
+        const intakeRow = await ProjectIntake.findOne({ where: { project_id: project.id } });
+        let magicLink = null;
+        if (intakeRow) {
+          const token = await CompanyAccessToken.findOne({
+            where: { batch_id: intakeRow.batch_id },
+            order: [['created_at', 'ASC']]
+          });
+          if (token) {
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            magicLink = requestorNotification.buildMagicLink(baseUrl, token.token);
+          }
+        }
+        if (!magicLink) {
+          console.log('[D2AI-Intake] No magic link resolvable for project', project.id, '— ack email skipped');
+          return;
+        }
+        let companyName = '';
+        if (project.company_id) {
+          try {
+            const co = await Company.findByPk(project.company_id);
+            if (co) companyName = co.name || '';
+          } catch (_) {}
+        }
+        await requestorNotification.sendApprovalAcknowledgment({
+          toEmail: project.submitter_email,
+          toName: project.submitter_name,
+          company: companyName,
+          projectName: project.name,
+          description: project.description,
+          magicLink
+        });
+      } catch (notifyErr) {
+        console.error('[D2AI-Intake] Approval ack email failed:', notifyErr.message);
+      }
+    })();
+
     res.status(201).json({
       success: true,
       project_id: project.id,
@@ -865,6 +907,29 @@ router.post('/projects/:id/reject', intakeAuth, requireAdmin, async (req, res) =
       { intake_status: 'rejected' },
       { where: { project_id: project.id } }
     );
+
+    // Fire the requestor rejection notice (non-blocking).
+    (async () => {
+      try {
+        let companyName = '';
+        if (project.company_id) {
+          try {
+            const co = await Company.findByPk(project.company_id);
+            if (co) companyName = co.name || '';
+          } catch (_) {}
+        }
+        await requestorNotification.sendRejectionNotice({
+          toEmail: project.submitter_email,
+          toName: project.submitter_name,
+          company: companyName,
+          projectName: project.name,
+          reason
+        });
+      } catch (notifyErr) {
+        console.error('[D2AI-Intake] Rejection email failed:', notifyErr.message);
+      }
+    })();
+
     res.json({ success: true, project_id: project.id });
   } catch (err) {
     console.error('[D2AI-Intake] reject error:', err);
