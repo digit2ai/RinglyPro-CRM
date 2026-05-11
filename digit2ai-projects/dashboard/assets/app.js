@@ -2948,6 +2948,20 @@ async function showProjectDetail(id) {
           </div>
 
           <div class="detail-section">
+            <h4 style="display:flex;justify-content:space-between;align-items:center">Stakeholders (email recipients)
+              <button class="btn btn-ghost btn-sm" onclick="editStakeholders(${p.id})">${(Array.isArray(p.team_members) && p.team_members.length) ? 'Edit' : '+ Add'}</button>
+            </h4>
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Everyone listed here is CC'd on contract emails, UAT handoff emails, and shipped confirmations.</p>
+            ${(Array.isArray(p.team_members) && p.team_members.length)
+              ? `<div style="display:flex;flex-direction:column;gap:6px">
+                   ${p.team_members.map(m => `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px">
+                     <span style="color:var(--text-primary);font-weight:500;flex:1;word-break:break-all">${escHtml(m.email || '')}</span>
+                     ${m.role ? `<span class="tag" style="font-size:10px">${escHtml(m.role)}</span>` : ''}
+                   </div>`).join('')}
+                 </div>`
+              : '<p style="font-size:13px;color:var(--text-muted);font-style:italic">No additional stakeholders. The project submitter and Manuel always receive emails.</p>'}
+          </div>
+          <div class="detail-section">
             <h4>Linked Contacts</h4>
             ${p.contacts?.length ? p.contacts.map(c => `<div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${c.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${c.first_name} ${c.last_name || ''}</strong>${c.ProjectContact?.role ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.ProjectContact.role+'</span>' : ''}</div></div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No contacts linked</p>'}
           </div>
@@ -3137,6 +3151,107 @@ async function recomputeShortName(projectId) {
     if (!r.success) { alert('Failed: ' + (r.error || 'unknown')); return; }
     showProjectDetail(projectId);
   } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function editStakeholders(projectId) {
+  let current = [];
+  try {
+    const r = await api(`/projects/${projectId}`);
+    current = (r && r.data && Array.isArray(r.data.team_members)) ? r.data.team_members.slice() : [];
+  } catch (_) {}
+  // Always have at least one empty row to encourage adding
+  if (!current.length) current.push({ email: '', role: 'stakeholder' });
+  const renderRows = () => current.map((m, i) => `
+    <div class="form-row" data-row="${i}" style="gap:8px;align-items:center">
+      <div class="form-group" style="flex:1">
+        <input type="email" class="m-sh-email" placeholder="email@example.com" value="${escHtml(m.email || '')}" style="width:100%">
+      </div>
+      <div class="form-group" style="flex:0 0 140px">
+        <input type="text" class="m-sh-role" placeholder="role (optional)" value="${escHtml(m.role || 'stakeholder')}" style="width:100%">
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="window._sh_remove(${i})" style="color:var(--danger);flex:0 0 auto" title="Remove">&times;</button>
+    </div>`).join('');
+
+  openModal('Project Stakeholders', `
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Add the email addresses that should receive: contract send, UAT handoff, revision alerts, and shipped confirmations. The project submitter and Manuel are always included automatically.</p>
+    <div id="m-sh-rows">${renderRows()}</div>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="window._sh_add()" style="margin-top:8px">+ Add another stakeholder</button>
+  `, async () => {
+    const rows = Array.from(document.querySelectorAll('#m-sh-rows .form-row'));
+    const team_members = rows.map(row => {
+      const email = (row.querySelector('.m-sh-email').value || '').trim().toLowerCase();
+      const role = (row.querySelector('.m-sh-role').value || 'stakeholder').trim() || 'stakeholder';
+      return { email, role };
+    }).filter(m => m.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email));
+
+    // Dedupe by email
+    const seen = new Set();
+    const deduped = team_members.filter(m => seen.has(m.email) ? false : (seen.add(m.email), true));
+
+    await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ team_members: deduped }) });
+    closeModal();
+    showProjectDetail(projectId);
+  });
+
+  // Wire up dynamic add/remove on the modal
+  window._sh_add = function() {
+    current.push({ email: '', role: 'stakeholder' });
+    document.getElementById('m-sh-rows').innerHTML = renderRows();
+  };
+  window._sh_remove = function(i) {
+    current.splice(i, 1);
+    if (!current.length) current.push({ email: '', role: 'stakeholder' });
+    document.getElementById('m-sh-rows').innerHTML = renderRows();
+  };
+}
+
+async function editRevenuePricing(projectId) {
+  let plan = null;
+  try {
+    const r = await api(`/projects/${projectId}`);
+    plan = (r && r.data && r.data.business_plan_json) || null;
+  } catch (_) {}
+  if (!plan) { alert('No business plan to edit.'); return; }
+  const tiers = (plan.revenue_model && Array.isArray(plan.revenue_model.pricing_tiers))
+    ? plan.revenue_model.pricing_tiers.map(t => ({ name: t.name || '', price_usd: Number(t.price_usd || 0), period: t.period || 'monthly' }))
+    : [];
+
+  const rows = tiers.map((t, i) => `
+    <div class="form-row" data-tier="${i}" style="gap:8px;align-items:flex-end">
+      <div class="form-group" style="flex:2">
+        <label style="font-size:11px;color:var(--text-muted)">Name</label>
+        <input type="text" class="m-rt-name" value="${escHtml(t.name)}" style="width:100%">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label style="font-size:11px;color:var(--text-muted)">Price (USD)</label>
+        <input type="number" class="m-rt-price" step="0.01" min="0" value="${t.price_usd}" style="width:100%">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label style="font-size:11px;color:var(--text-muted)">Period</label>
+        <input type="text" class="m-rt-period" value="${escHtml(t.period)}" placeholder="monthly / yearly / per project" style="width:100%">
+      </div>
+    </div>`).join('');
+
+  openModal('Edit Pricing Tiers', `
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Adjust the Revenue Model pricing tiers Claude generated. Changes are saved to the business plan JSON immediately and reflected in the dashboard.</p>
+    ${tiers.length ? rows : '<p style="color:var(--text-muted);font-style:italic">This business plan has no pricing tiers to edit. Regenerate the plan first.</p>'}
+    <p style="font-size:11px;color:var(--text-muted);margin-top:12px">Tip: the Year 1 / Year 3 revenue estimates and the service contract terms are NOT updated automatically — those reflect different math. Edit them separately if needed.</p>
+  `, async () => {
+    const rowEls = Array.from(document.querySelectorAll('[data-tier]'));
+    const updatedTiers = rowEls.map(el => ({
+      name: (el.querySelector('.m-rt-name').value || '').trim(),
+      price_usd: Number(el.querySelector('.m-rt-price').value || 0),
+      period: (el.querySelector('.m-rt-period').value || 'monthly').trim()
+    })).filter(t => t.name);
+
+    const updatedPlan = JSON.parse(JSON.stringify(plan));
+    updatedPlan.revenue_model = updatedPlan.revenue_model || {};
+    updatedPlan.revenue_model.pricing_tiers = updatedTiers;
+
+    await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ business_plan_json: updatedPlan }) });
+    closeModal();
+    showBusinessPlanView(projectId, updatedPlan, new Date().toISOString(), window._currentBpContract);
+  });
 }
 
 async function editProjectTargets(projectId) {
@@ -3382,7 +3497,10 @@ function showBusinessPlanView(projectId, plan, generatedAt, contract) {
       const tiers = (r.pricing_tiers || []).map(t => `
         <div class="card" style="padding:12px"><div style="font-size:13px;color:var(--text-muted)">${escHtml(t.name || '')}</div><div style="font-size:18px;font-weight:700">${fmtUsd(t.price_usd)} <span style="font-size:11px;color:var(--text-muted)">/ ${escHtml(t.period || '')}</span></div></div>`).join('');
       return `
-        <h4>Pricing tiers</h4>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h4 style="margin:0">Pricing tiers</h4>
+          <button class="btn btn-ghost btn-sm" onclick="editRevenuePricing(${projectId})">&#9881; Edit Pricing</button>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">${tiers || '<p style="color:var(--text-muted)">-</p>'}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px">
           <div class="card" style="padding:14px"><div style="font-size:11px;color:var(--text-muted)">Year 1 estimate</div><div style="font-size:20px;font-weight:700;color:var(--success)">${fmtUsd(r.year1_revenue_estimate_usd)}</div></div>
