@@ -410,7 +410,39 @@ router.post('/:id/generate-business-plan', async (req, res) => {
     });
     await logActivity(req.user?.email, 'generated_business_plan', 'project', project.id, project.name);
 
-    res.json({ success: true, plan: result.plan, usage: result.usage, generated_at: project.business_plan_generated_at });
+    // Auto-draft the service contract alongside the business plan so the
+    // user can review + send both in one step (streamlined workflow).
+    let contract = null;
+    let contractError = null;
+    try {
+      const { ProjectContract } = require('../models');
+      const contractsRouter = require('./contracts');
+      const existing = await ProjectContract.findOne({
+        where: { project_id: project.id, workspace_id: 1, status: { [Op.in]: ['draft', 'sent'] } },
+        order: [['created_at', 'DESC']]
+      });
+      if (existing) {
+        contract = existing;
+      } else if (typeof contractsRouter.createContractFromProject === 'function') {
+        contract = await contractsRouter.createContractFromProject(project, {
+          businessPlan: result.plan,
+          created_by_email: req.user?.email || null
+        });
+        await logActivity(req.user?.email, 'created', 'contract', contract.id, 'Auto-drafted with business plan');
+      }
+    } catch (ce) {
+      contractError = ce.message;
+      console.error('[D2AI] auto-contract draft error:', ce);
+    }
+
+    res.json({
+      success: true,
+      plan: result.plan,
+      contract: contract ? contract.toJSON() : null,
+      contract_error: contractError,
+      usage: result.usage,
+      generated_at: project.business_plan_generated_at
+    });
   } catch (error) {
     console.error('[D2AI] generate-business-plan error:', error);
     res.status(500).json({ success: false, error: error.message });

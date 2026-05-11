@@ -2999,7 +2999,7 @@ async function generateBusinessPlan(projectId) {
       container.innerHTML = `<div class="detail-panel" style="max-width:600px;margin:60px auto"><h2>Generation failed</h2><p style="color:var(--danger)">${res.error || 'Unknown error'}</p><button class="btn btn-ghost" onclick="showProjectDetail(${projectId})">&#8592; Back to project</button></div>`;
       return;
     }
-    showBusinessPlanView(projectId, res.plan, res.generated_at);
+    showBusinessPlanView(projectId, res.plan, res.generated_at, res.contract);
   } catch (e) {
     container.innerHTML = `<div class="detail-panel" style="max-width:600px;margin:60px auto"><h2>Generation failed</h2><p style="color:var(--danger)">${e.message}</p><button class="btn btn-ghost" onclick="showProjectDetail(${projectId})">&#8592; Back to project</button></div>`;
   }
@@ -3015,7 +3015,16 @@ async function openBusinessPlan(projectId) {
     showProjectDetail(projectId);
     return;
   }
-  showBusinessPlanView(projectId, res.plan, res.generated_at);
+  // Pull the latest contract for this project (if any) so we can render
+  // the Review / Edit / Send card alongside the business plan.
+  let contract = null;
+  try {
+    const cRes = await api(`/contracts?project_id=${projectId}`);
+    if (cRes && cRes.success && Array.isArray(cRes.data) && cRes.data.length) {
+      contract = cRes.data[0]; // most recent (route orders by created_at DESC)
+    }
+  } catch (_) { /* contract panel is optional */ }
+  showBusinessPlanView(projectId, res.plan, res.generated_at, contract);
 }
 
 function fmtUsd(n) {
@@ -3023,9 +3032,14 @@ function fmtUsd(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 }
 
-function showBusinessPlanView(projectId, plan, generatedAt) {
+function showBusinessPlanView(projectId, plan, generatedAt, contract) {
   document.getElementById('page-title').textContent = 'Business Plan';
   const container = document.getElementById('view-container');
+  // Stash for refresh after edit/send
+  window._currentBpProjectId = projectId;
+  window._currentBpPlan = plan;
+  window._currentBpGeneratedAt = generatedAt;
+  window._currentBpContract = contract || null;
   const tabs = [
     { key: 'summary', label: 'Executive Summary' },
     { key: 'market', label: 'Problem & Market' },
@@ -3134,6 +3148,8 @@ function showBusinessPlanView(projectId, plan, generatedAt) {
   // Stash sections globally so tab switcher can read them
   window._bpSections = sections;
 
+  const contractCard = renderContractCard(projectId, contract);
+
   container.innerHTML = `
     <div class="detail-panel" style="max-width:1100px;margin:0 auto">
       <div class="detail-header" style="margin-bottom:8px">
@@ -3147,9 +3163,132 @@ function showBusinessPlanView(projectId, plan, generatedAt) {
           <button class="btn btn-ghost btn-sm" onclick="generateBusinessPlan(${projectId})" title="Regenerate (overwrites)">&#8635; Regenerate</button>
         </div>
       </div>
+      ${contractCard}
       <div style="display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;margin-bottom:18px;white-space:nowrap;position:sticky;top:0;background:var(--bg-base);z-index:5">${tabBar}</div>
       <div id="bp-content" style="padding:8px 4px 60px">${sections.summary}</div>
     </div>`;
+}
+
+// =====================================================
+// SERVICE CONTRACT CARD (rendered above business plan tabs)
+// =====================================================
+function renderContractCard(projectId, contract) {
+  if (!contract) {
+    return `<div class="card" style="padding:16px;margin:16px 0;border:1px dashed var(--border);background:rgba(248,250,252,0.02)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary)">Service Contract</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">No contract drafted yet for this project.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="autoDraftContract(${projectId})">Draft Contract</button>
+      </div>
+    </div>`;
+  }
+  const fmt = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: contract.currency || 'USD', maximumFractionDigits: 0 });
+  const statusColor = ({
+    draft: '#94a3b8',
+    sent: '#38bdf8',
+    signed: '#a78bfa',
+    active: '#22c55e',
+    canceled: '#f43f5e'
+  })[contract.status] || '#94a3b8';
+  const statusLabel = (contract.status || 'draft').toUpperCase();
+  const sentLine = contract.sent_at ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Sent ${new Date(contract.sent_at).toLocaleString()}</div>` : '';
+
+  return `<div class="card" style="padding:18px;margin:16px 0;border:1px solid rgba(167,139,250,0.35);background:linear-gradient(120deg,rgba(56,189,248,0.06),rgba(167,139,250,0.06))">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px;font-weight:700;color:var(--text-primary)">Service Contract</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${statusColor};color:#020617">${statusLabel}</span>
+        </div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:12px">
+          <div><span style="color:var(--text-muted)">Total</span><br><strong style="font-size:14px">${fmt(contract.total_amount_usd)}</strong></div>
+          <div><span style="color:var(--text-muted)">Deposit (${Number(contract.deposit_percent || 0)}%)</span><br><strong style="font-size:14px">${fmt(contract.deposit_amount_usd)}</strong></div>
+          <div><span style="color:var(--text-muted)">Monthly</span><br><strong style="font-size:14px">${fmt(contract.monthly_amount_usd)}</strong></div>
+        </div>
+        ${sentLine}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="reviewContract(${contract.id})" title="View full contract text">Review</button>
+        <button class="btn btn-ghost btn-sm" onclick="editContract(${contract.id})" title="Edit amounts & scope">Edit</button>
+        <button class="btn btn-primary btn-sm" onclick="sendContract(${contract.id}, ${projectId})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617" title="Email contract to stakeholders">Send</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function autoDraftContract(projectId) {
+  // If the user wants to manually draft (e.g., business plan didn't auto-draft for some reason)
+  if (!confirm('Draft a service contract for this project? Defaults to 10% deposit + monthly subscription derived from the business plan budget.')) return;
+  try {
+    const res = await api('/contracts', { method: 'POST', body: JSON.stringify({ project_id: projectId }) });
+    if (!res.success) { alert('Draft failed: ' + (res.error || 'unknown')); return; }
+    openBusinessPlan(projectId);
+  } catch (e) { alert('Draft failed: ' + e.message); }
+}
+
+async function reviewContract(contractId) {
+  try {
+    const res = await api(`/contracts/${contractId}`);
+    if (!res.success) { alert('Could not load contract: ' + (res.error || 'unknown')); return; }
+    const c = res.data;
+    const fmt = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: c.currency || 'USD' });
+    openModal('Service Contract', `
+      <div style="max-height:60vh;overflow-y:auto;padding:8px 12px;background:#fff;color:#222;border-radius:6px">${c.contract_html || '<em>No contract text</em>'}</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:10px"><strong>Signoff URL:</strong> <a href="${c.signoff_url}" target="_blank" style="color:var(--accent);word-break:break-all">${c.signoff_url}</a></p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:6px">Total: ${fmt(c.total_amount_usd)} | Deposit ${c.deposit_percent}%: ${fmt(c.deposit_amount_usd)} | Monthly: ${fmt(c.monthly_amount_usd)} | Status: <strong>${c.status}</strong></p>
+    `, null);
+    // Hide Save button for review-only mode and relabel Cancel -> Close
+    document.getElementById('modal-save').style.display = 'none';
+    document.getElementById('modal-cancel').textContent = 'Close';
+  } catch (e) { alert('Could not load contract: ' + e.message); }
+}
+
+async function editContract(contractId) {
+  try {
+    const res = await api(`/contracts/${contractId}`);
+    if (!res.success) { alert('Could not load contract: ' + (res.error || 'unknown')); return; }
+    const c = res.data;
+    openModal('Edit Contract', `
+      <div class="form-row">
+        <div class="form-group"><label>Total amount (USD)</label><input type="number" id="m-c-total" step="0.01" value="${Number(c.total_amount_usd || 0)}"></div>
+        <div class="form-group"><label>Deposit %</label><input type="number" id="m-c-deposit" step="0.5" value="${Number(c.deposit_percent || 10)}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Monthly recurring (USD)</label><input type="number" id="m-c-monthly" step="0.01" value="${Number(c.monthly_amount_usd || 0)}"></div>
+        <div class="form-group"><label>Currency</label><input type="text" id="m-c-currency" value="${c.currency || 'USD'}" maxlength="10"></div>
+      </div>
+      <div class="form-group"><label>Scope summary</label><textarea id="m-c-scope" rows="4">${escHtml(c.scope_summary || '')}</textarea></div>
+      <div class="form-group"><label>Terms summary (optional)</label><textarea id="m-c-terms" rows="3">${escHtml(c.terms_summary || '')}</textarea></div>
+    `, async () => {
+      const body = {
+        total_amount_usd: Number(document.getElementById('m-c-total').value),
+        deposit_percent: Number(document.getElementById('m-c-deposit').value),
+        monthly_amount_usd: Number(document.getElementById('m-c-monthly').value),
+        currency: document.getElementById('m-c-currency').value || 'USD',
+        scope_summary: document.getElementById('m-c-scope').value,
+        terms_summary: document.getElementById('m-c-terms').value
+      };
+      const save = await api(`/contracts/${contractId}`, { method: 'PUT', body: JSON.stringify(body) });
+      if (!save.success) { alert('Save failed: ' + (save.error || 'unknown')); return; }
+      closeModal();
+      openBusinessPlan(window._currentBpProjectId);
+    });
+  } catch (e) { alert('Could not load contract: ' + e.message); }
+}
+
+async function sendContract(contractId, projectId) {
+  if (!confirm('Send the contract + business plan summary to all project stakeholders (submitter + team members)?')) return;
+  try {
+    const res = await api(`/contracts/${contractId}/send`, { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) {
+      alert('Send failed: ' + (res.error || 'unknown'));
+      return;
+    }
+    alert('Sent to:\n' + (res.sent_to || []).join('\n') + '\n\nSignoff link: ' + (res.signoff_url || ''));
+    openBusinessPlan(projectId);
+  } catch (e) { alert('Send failed: ' + e.message); }
 }
 
 function switchBusinessPlanTab(key, btn) {
