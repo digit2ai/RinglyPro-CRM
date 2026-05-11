@@ -145,7 +145,19 @@ const Project = sequelize.define('Project', {
   workflow_phase: { type: DataTypes.STRING(40), defaultValue: 'pending_review' },
   // Delivery + price targets (migration 010 — delivery in weeks)
   target_delivery_weeks: DataTypes.INTEGER,
-  target_total_usd: DataTypes.DECIMAL(12, 2)
+  target_total_usd: DataTypes.DECIMAL(12, 2),
+  // Architect pipeline (migration 011)
+  short_name: DataTypes.STRING(60),
+  human_greenlight: { type: DataTypes.BOOLEAN, defaultValue: false },
+  production_url: DataTypes.TEXT,
+  architect_prompt: DataTypes.TEXT,
+  sit_report_md: DataTypes.TEXT,
+  build_status: DataTypes.STRING(40),
+  build_iterations: { type: DataTypes.INTEGER, defaultValue: 0 },
+  build_started_at: DataTypes.DATE,
+  build_completed_at: DataTypes.DATE,
+  uat_approved_at: DataTypes.DATE,
+  uat_approved_by: DataTypes.STRING(255)
 }, { tableName: 'd2_projects' });
 
 // =====================================================

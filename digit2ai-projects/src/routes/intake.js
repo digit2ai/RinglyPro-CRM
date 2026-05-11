@@ -605,8 +605,47 @@ router.post('/projects/:id/comments', intakeAuth, async (req, res) => {
       author_name: req.identity.name,
       body
     });
+
+    // If the project is in UAT (uat_ready or uat_revision), a comment from a
+    // stakeholder counts as feedback that needs rework. Fire the orchestrator
+    // hook so Manuel gets an email + the project phase flips to uat_revision.
+    try {
+      const project = r.project || await Project.findByPk(req.params.id);
+      if (project && ['uat_ready', 'uat_revision'].includes(project.workflow_phase)) {
+        const pipeline = require('../services/architectPipeline');
+        setImmediate(() => {
+          pipeline.onUatFeedback(project, {
+            commenter_email: req.identity.email,
+            commenter_name: req.identity.name,
+            comment_text: body
+          }).catch(e => console.error('[D2AI] onUatFeedback failed:', e.message));
+        });
+      }
+    } catch (e) {
+      console.error('[D2AI] uat-feedback hook error:', e.message);
+    }
+
     res.status(201).json({ success: true, data: c });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
+// UAT approval (magic-link, token-gated)
+// =====================================================
+// POST /projects/:id/uat-approve  — stakeholder clicks Approve on the magic-link page
+router.post('/projects/:id/uat-approve', intakeAuth, async (req, res) => {
+  try {
+    const r = await loadProjectAndAssertScope(req, req.params.id);
+    if (r.error) return res.status(r.error).json({ success: false, error: r.message });
+    const project = r.project || await Project.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    await pipeline.onUatApproval(project, req.identity.email);
+    res.json({ success: true, data: project });
+  } catch (err) {
+    console.error('[D2AI] uat-approve error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -689,6 +689,26 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 011 — Architect pipeline (post-payment build orchestration)
+    const architectPipelinePath = path.join(__dirname, '..', 'migrations', '011_architect_pipeline.sql');
+    if (fs.existsSync(architectPipelinePath)) {
+      try {
+        const sql = fs.readFileSync(architectPipelinePath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 011_architect_pipeline notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 011_architect_pipeline migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 011_architect_pipeline error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

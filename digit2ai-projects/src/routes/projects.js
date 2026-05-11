@@ -488,4 +488,69 @@ router.get('/:id/business-plan', async (req, res) => {
   }
 });
 
+// =====================================================
+// Architect pipeline admin endpoints (Push #1)
+// =====================================================
+
+// POST /api/v1/projects/:id/human-greenlight — sensitive-data review approval
+router.post('/:id/human-greenlight', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    await pipeline.humanGreenlight(project, req.user && req.user.email);
+    res.json({ success: true, data: project });
+  } catch (e) {
+    console.error('[D2AI] human-greenlight error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/v1/projects/:id/build-complete — admin marks the manual build done
+// Body (optional): { sit_report_md: "..." }  -- additional SIT notes Manuel wants stored
+router.post('/:id/build-complete', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    const result = await pipeline.onBuildComplete(project, {
+      sit_report_md: req.body && req.body.sit_report_md
+    });
+    res.json({ success: true, data: project, sit: result.sit });
+  } catch (e) {
+    console.error('[D2AI] build-complete error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/v1/projects/:id/cancel-stripe — manual subscription cancel
+router.post('/:id/cancel-stripe', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    const result = await pipeline.cancelStripeSubscription(project, req.body && req.body.reason);
+    res.json({ success: true, data: project, stripe: result });
+  } catch (e) {
+    console.error('[D2AI] cancel-stripe error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/v1/projects/:id/recompute-short-name — generate / refresh slug
+router.post('/:id/recompute-short-name', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    project.short_name = await pipeline.generateUniqueShortName(project);
+    const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
+    project.production_url = `${base}/${project.short_name}`;
+    await project.save();
+    res.json({ success: true, data: project });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 module.exports = router;

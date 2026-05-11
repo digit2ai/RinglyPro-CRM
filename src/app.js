@@ -1296,6 +1296,42 @@ app.get('/debug/d2ai-projects-error', (req, res) => {
 });
 
 // =====================================================
+// CLIENT-BUILDS AUTO-MOUNT
+// Each subdirectory of /client-builds/<short_name>/ that exports an
+// Express sub-app from its index.js gets auto-mounted at /<short_name>.
+// Every mount is wrapped in try/catch so a broken client build never
+// crashes the main CRM. This is the runtime side of the architect
+// pipeline — the autonomous build (or Manuel, in Push #1) drops files
+// into /client-builds/<short_name>/ and Render redeploys, then this
+// loop picks them up on next boot.
+// =====================================================
+const clientBuildsRoot = path.join(__dirname, '..', 'client-builds');
+const clientBuildMounts = [];
+if (fs.existsSync(clientBuildsRoot)) {
+  for (const entry of fs.readdirSync(clientBuildsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const shortName = entry.name;
+    if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(shortName)) {
+      console.log(`⚠️ skipping client-builds/${shortName} — invalid short_name`);
+      continue;
+    }
+    const indexPath = path.join(clientBuildsRoot, shortName, 'index.js');
+    if (!fs.existsSync(indexPath)) continue;
+    try {
+      const subApp = require(indexPath);
+      app.use('/' + shortName, subApp);
+      clientBuildMounts.push(shortName);
+      console.log(`📦 Client build mounted: /${shortName}`);
+    } catch (mountErr) {
+      console.log(`⚠️ client-builds/${shortName} failed to mount: ${mountErr.message}`);
+    }
+  }
+}
+app.get('/debug/client-builds', (req, res) => {
+  res.json({ mounted: clientBuildMounts, root: clientBuildsRoot });
+});
+
+// =====================================================
 // CW CARRIERS USA - Freight Logistics CRM
 // =====================================================
 

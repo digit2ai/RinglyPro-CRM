@@ -2861,6 +2861,7 @@ async function showProjectDetail(id) {
               ${p.contract_status && p.contract_status !== 'none' ? `<div><strong>Contract status:</strong> ${p.contract_status}</div>` : ''}
             </div>
           </div>` : ''}
+          ${renderBuildAndUatCard(p)}
           <div class="detail-section" style="border:1px solid rgba(167,139,250,0.3);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
             <h4 style="display:flex;justify-content:space-between;align-items:center;margin-top:0">Project Targets
               <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_weeks || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
@@ -2955,6 +2956,152 @@ async function showProjectDetail(id) {
       </div>
     </div>
   `;
+}
+
+// =====================================================
+// Build & UAT card (post-payment orchestrator surface)
+// Visible whenever the project has reached build_authorized or beyond.
+// =====================================================
+function renderBuildAndUatCard(p) {
+  const phase = p.workflow_phase || '';
+  const buildPhases = ['build_authorized', 'awaiting_human_greenlight', 'queued', 'manual_build', 'sit_running', 'uat_ready', 'uat_revision', 'shipped', 'build_stuck'];
+  if (!buildPhases.includes(phase)) return '';
+  const phaseColor = ({
+    build_authorized: '#0ea5e9',
+    awaiting_human_greenlight: '#f59e0b',
+    queued: '#94a3b8',
+    manual_build: '#0ea5e9',
+    sit_running: '#a78bfa',
+    uat_ready: '#10b981',
+    uat_revision: '#f59e0b',
+    shipped: '#22c55e',
+    build_stuck: '#f43f5e'
+  })[phase] || '#94a3b8';
+  const prodUrl = p.production_url || (p.short_name ? `https://aiagent.ringlypro.com/${p.short_name}` : '');
+  const actions = [];
+  if (phase === 'awaiting_human_greenlight') {
+    actions.push(`<button class="btn btn-primary btn-sm" onclick="grantHumanGreenlight(${p.id})" style="background:linear-gradient(90deg,#f59e0b,#f97316);border:none;color:#020617">&#9888; Greenlight Build</button>`);
+  }
+  if (phase === 'manual_build' || phase === 'uat_revision' || phase === 'build_authorized' || phase === 'queued') {
+    actions.push(`<button class="btn btn-primary btn-sm" onclick="markBuildComplete(${p.id})" style="background:linear-gradient(90deg,#10b981,#22c55e);border:none;color:#020617">&#10003; Build Complete (run SIT)</button>`);
+  }
+  if (p.architect_prompt) {
+    actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewArchitectPrompt(${p.id})">View Architect Prompt</button>`);
+  }
+  if (p.sit_report_md) {
+    actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewSitReport(${p.id})">View SIT Report</button>`);
+  }
+  if (phase !== 'shipped' && phase !== 'build_stuck') {
+    actions.push(`<button class="btn btn-ghost btn-sm" onclick="cancelStripeSubscription(${p.id})" title="Cancel the active Stripe subscription">Cancel Stripe</button>`);
+  }
+  if (!p.short_name) {
+    actions.push(`<button class="btn btn-ghost btn-sm" onclick="recomputeShortName(${p.id})">Generate short_name</button>`);
+  }
+  return `<div class="detail-section" style="border:1px solid ${phaseColor};border-radius:var(--radius);padding:14px;background:linear-gradient(120deg,${hexToRgba(phaseColor,0.06)},transparent)">
+    <h4 style="margin-top:0;display:flex;align-items:center;gap:8px">Build & UAT
+      <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${phaseColor};color:#020617">${escHtml(phase.toUpperCase())}</span>
+    </h4>
+    <div style="font-size:13px;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px">
+      ${p.short_name ? `<div><strong>Short name:</strong> <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">${escHtml(p.short_name)}</code></div>` : '<div style="color:var(--text-muted);font-style:italic">No short_name yet</div>'}
+      ${prodUrl ? `<div><strong>Production URL:</strong> <a href="${escHtml(prodUrl)}" target="_blank" style="color:var(--accent);word-break:break-all">${escHtml(prodUrl)}</a></div>` : ''}
+      ${p.build_iterations ? `<div><strong>Build iterations:</strong> ${p.build_iterations}</div>` : ''}
+      ${p.build_started_at ? `<div><strong>Build started:</strong> ${fmtDateTime(p.build_started_at)}</div>` : ''}
+      ${p.build_completed_at ? `<div><strong>Build completed:</strong> ${fmtDateTime(p.build_completed_at)}</div>` : ''}
+      ${p.uat_approved_at ? `<div><strong>UAT approved:</strong> ${fmtDateTime(p.uat_approved_at)}${p.uat_approved_by ? ' by ' + escHtml(p.uat_approved_by) : ''}</div>` : ''}
+    </div>
+    ${actions.length ? `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${actions.join('')}</div>` : ''}
+  </div>`;
+}
+
+function hexToRgba(hex, a) {
+  const m = String(hex).replace('#','').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return `rgba(56,189,248,${a})`;
+  return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+}
+
+async function grantHumanGreenlight(projectId) {
+  if (!confirm('Greenlight this sensitive-data project for the build pipeline? An email will be sent to Manuel and the build will start.')) return;
+  try {
+    const r = await api(`/projects/${projectId}/human-greenlight`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success) { alert('Greenlight failed: ' + (r.error || 'unknown')); return; }
+    showProjectDetail(projectId);
+  } catch (e) { alert('Greenlight failed: ' + e.message); }
+}
+
+async function markBuildComplete(projectId) {
+  openModal('Mark Build Complete', `
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">The orchestrator will hit <code>/${'<short_name>'}/health</code> to verify the production URL is up. Add any extra SIT notes you want stored on the project.</p>
+    <div class="form-group">
+      <label>Additional SIT notes (optional, markdown)</label>
+      <textarea id="m-sit-md" rows="6" placeholder="e.g. Tested checkout, login, admin dashboard. All green."></textarea>
+    </div>
+  `, async () => {
+    const sit_report_md = document.getElementById('m-sit-md').value || null;
+    const r = await api(`/projects/${projectId}/build-complete`, {
+      method: 'POST',
+      body: JSON.stringify({ sit_report_md })
+    });
+    closeModal();
+    if (!r.success) { alert('Build-complete failed: ' + (r.error || 'unknown')); return; }
+    if (r.sit && r.sit.pass) {
+      alert('SIT passed. UAT email sent to stakeholders.');
+    } else {
+      alert('SIT failed: ' + (r.sit && r.sit.summary || 'unknown') + '\n\nProject moved back to manual_build.');
+    }
+    showProjectDetail(projectId);
+  });
+}
+
+async function viewArchitectPrompt(projectId) {
+  try {
+    const r = await api(`/projects/${projectId}`);
+    if (!r.success) { alert('Could not load project'); return; }
+    const prompt = (r.data && r.data.architect_prompt) || '(no prompt stored yet)';
+    openModal('Master Architect Prompt', `
+      <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px">This is the prompt the orchestrator built from intake + plan + contract + milestones. Push #2 will pipe this to a Claude Agent SDK loop; Push #1 expects Manuel to paste it into a Claude Code session via <code>/ringlypro-architect</code>.</p>
+      <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('m-arch-prompt').textContent).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy prompt',1500)})">Copy prompt</button>
+      <pre id="m-arch-prompt" style="margin-top:8px;padding:14px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:11px;line-height:1.5;max-height:60vh;overflow:auto;white-space:pre-wrap;word-wrap:break-word">${escHtml(prompt)}</pre>
+    `, null);
+    document.getElementById('modal-save').style.display = 'none';
+    document.getElementById('modal-cancel').textContent = 'Close';
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function viewSitReport(projectId) {
+  try {
+    const r = await api(`/projects/${projectId}`);
+    if (!r.success) { alert('Could not load project'); return; }
+    const md = (r.data && r.data.sit_report_md) || '(no SIT report yet)';
+    openModal('SIT Report', `
+      <pre style="padding:14px;background:#0f172a;color:#e2e8f0;border-radius:6px;font-size:12px;line-height:1.5;max-height:60vh;overflow:auto;white-space:pre-wrap">${escHtml(md)}</pre>
+    `, null);
+    document.getElementById('modal-save').style.display = 'none';
+    document.getElementById('modal-cancel').textContent = 'Close';
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function cancelStripeSubscription(projectId) {
+  const reason = prompt('Reason for canceling the Stripe subscription? (optional)');
+  if (reason === null) return; // user hit Cancel on the prompt
+  if (!confirm('Cancel the active Stripe subscription for this project? This stops the monthly recurring billing.')) return;
+  try {
+    const r = await api(`/projects/${projectId}/cancel-stripe`, { method: 'POST', body: JSON.stringify({ reason }) });
+    if (!r.success) { alert('Cancel failed: ' + (r.error || 'unknown')); return; }
+    if (r.stripe && r.stripe.canceled) {
+      alert('Subscription canceled.');
+    } else {
+      alert('Cancel result: ' + JSON.stringify(r.stripe));
+    }
+    showProjectDetail(projectId);
+  } catch (e) { alert('Cancel failed: ' + e.message); }
+}
+
+async function recomputeShortName(projectId) {
+  try {
+    const r = await api(`/projects/${projectId}/recompute-short-name`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success) { alert('Failed: ' + (r.error || 'unknown')); return; }
+    showProjectDetail(projectId);
+  } catch (e) { alert('Failed: ' + e.message); }
 }
 
 async function editProjectTargets(projectId) {

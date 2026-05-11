@@ -206,6 +206,24 @@ async function activateContractFromCompletedSession(session) {
     await project.save();
   }
 
+  // Kick off the architect pipeline now that the engagement is paid +
+  // activated. Run async so the webhook ACK isn't blocked on prompt
+  // generation or email I/O. Errors are logged but never bubble up to
+  // Stripe (we don't want webhook retries because our internal handoff
+  // crashed).
+  if (project && project.workflow_phase === 'build_authorized') {
+    setImmediate(() => {
+      try {
+        const architectPipeline = require('./architectPipeline');
+        architectPipeline.start(project).catch(err =>
+          console.error('[D2AI-Stripe] architectPipeline.start failed:', err.message)
+        );
+      } catch (e) {
+        console.error('[D2AI-Stripe] could not load architectPipeline:', e.message);
+      }
+    });
+  }
+
   return { contract, project };
 }
 
