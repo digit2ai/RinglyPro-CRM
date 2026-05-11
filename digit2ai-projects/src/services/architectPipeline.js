@@ -416,6 +416,103 @@ async function generateUniqueShortName(project) {
   }
 }
 
+// =============================================================
+// Auto-poller — closes the loop after /ringlypro-architect pushes
+//
+// Every 60s, scan for projects in manual_build whose build_started_at
+// is within the last 30 minutes. For each, fetch <production_url>/health.
+// On 200: fire onBuildComplete (which runs SIT, sends the UAT email,
+// flips phase to uat_ready). On 30-min timeout with no 200: email Manuel
+// "deploy timeout" and flip to build_stuck.
+//
+// This is what eliminates the "click Build Complete" step. Once the
+// architect commits + pushes, the orchestrator picks it up on the next
+// poll tick (within ~60s of Render finishing the deploy).
+// =============================================================
+const POLL_INTERVAL_MS = 60 * 1000;
+const BUILD_TIMEOUT_MS = 30 * 60 * 1000;
+let pollerHandle = null;
+const pollAttempts = new Map(); // project_id -> attempt count (for backoff visibility)
+
+async function tickPoller() {
+  let candidates = [];
+  try {
+    candidates = await Project.findAll({
+      where: { workflow_phase: 'manual_build' },
+      attributes: ['id', 'name', 'production_url', 'short_name', 'build_started_at', 'build_iterations']
+    });
+  } catch (e) {
+    console.error('[architectPipeline.poller] findAll failed:', e.message);
+    return;
+  }
+  if (!candidates.length) { pollAttempts.clear(); return; }
+
+  for (const p of candidates) {
+    if (!p.production_url) continue;
+    const startedAt = p.build_started_at ? new Date(p.build_started_at).getTime() : Date.now();
+    const elapsed = Date.now() - startedAt;
+
+    // Deploy timeout — flip to build_stuck + email Manuel
+    if (elapsed > BUILD_TIMEOUT_MS) {
+      try {
+        const fresh = await Project.findByPk(p.id);
+        if (fresh && fresh.workflow_phase === 'manual_build') {
+          fresh.workflow_phase = 'build_stuck';
+          fresh.build_status = 'deploy_timeout';
+          await fresh.save();
+          await architectEmail.sendSitFailure(fresh, {
+            pass: false,
+            summary: `Deploy timeout after ${Math.round(elapsed / 60000)} min — ${fresh.production_url}/health never returned 200.`,
+            report_md: `**Poll attempts:** ${pollAttempts.get(p.id) || 0}\n**Last started:** ${fresh.build_started_at}\n**Production URL:** ${fresh.production_url}\n\nThe orchestrator stopped polling. Fix the build or push again — clicking Build Complete manually will retry SIT.`
+          }).catch(() => {});
+          pollAttempts.delete(p.id);
+          await logActivity(null, 'deploy_timeout', 'project', fresh.id, fresh.name);
+        }
+      } catch (e) {
+        console.error('[architectPipeline.poller] timeout handler failed:', e.message);
+      }
+      continue;
+    }
+
+    // Health check
+    const url = `${p.production_url}/health`;
+    let healthy = false;
+    try {
+      const res = await fetch(url, { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(8000) });
+      healthy = res.status >= 200 && res.status < 400;
+    } catch (_) {
+      healthy = false;
+    }
+
+    const prev = pollAttempts.get(p.id) || 0;
+    pollAttempts.set(p.id, prev + 1);
+
+    if (!healthy) continue;
+
+    // First 2xx — auto-fire the build-complete handler.
+    try {
+      const fresh = await Project.findByPk(p.id);
+      if (fresh && fresh.workflow_phase === 'manual_build') {
+        pollAttempts.delete(p.id);
+        await onBuildComplete(fresh, {
+          sit_report_md: `Auto-detected deploy via health poller after ${prev + 1} attempts (${Math.round(elapsed / 1000)}s since build_started_at).`
+        });
+        console.log(`[architectPipeline.poller] auto-completed build for project ${p.id}`);
+      }
+    } catch (e) {
+      console.error('[architectPipeline.poller] auto-complete failed:', e.message);
+    }
+  }
+}
+
+function startBuildPoller() {
+  if (pollerHandle) return; // idempotent
+  // Stagger the first tick a few seconds so we don't fight boot I/O
+  setTimeout(() => { tickPoller().catch(() => {}); }, 8000);
+  pollerHandle = setInterval(() => { tickPoller().catch(() => {}); }, POLL_INTERVAL_MS);
+  console.log('[architectPipeline] build poller started (tick every', POLL_INTERVAL_MS / 1000, 's)');
+}
+
 module.exports = {
   start,
   humanGreenlight,
@@ -426,5 +523,7 @@ module.exports = {
   generateUniqueShortName,
   renderArchitectPrompt,
   gatherContext,
-  runSit
+  runSit,
+  startBuildPoller,
+  tickPoller
 };

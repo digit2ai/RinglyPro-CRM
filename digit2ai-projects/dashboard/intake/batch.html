@@ -248,6 +248,8 @@ function renderCard(pi) {
       </summary>
       <div class="px-5 pb-5 border-t border-slate-800/60 pt-4 space-y-5">
 
+        ${renderUatBanner(p)}
+
         <!-- Description -->
         <div>
           <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Description</h4>
@@ -334,6 +336,40 @@ async function submitVote(projectId) {
   });
   const d = await r.json();
   if (!d.success) { alert('Vote failed: '+d.error); return; }
+  await loadBatch();
+}
+
+function renderUatBanner(p) {
+  const phase = p.workflow_phase;
+  if (phase !== 'uat_ready' && phase !== 'uat_revision') return '';
+  const prodUrl = p.production_url || '';
+  const phaseLabel = phase === 'uat_ready' ? 'Ready for UAT' : 'Revision requested';
+  const phaseColor = phase === 'uat_ready' ? 'emerald' : 'amber';
+  return `
+    <div class="border border-${phaseColor}-700/60 bg-${phaseColor}-900/20 rounded-lg p-4 space-y-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-${phaseColor}-600 text-${phaseColor}-50">${phaseLabel.toUpperCase()}</span>
+        <span class="text-sm text-slate-300">User Acceptance Testing</span>
+      </div>
+      ${prodUrl ? `
+        <p class="text-sm text-slate-300">Production URL — open in a new tab to test:</p>
+        <a href="${escapeHtml(prodUrl)}" target="_blank" rel="noopener" class="inline-block px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-violet-500 text-slate-900 font-semibold hover:opacity-90">${escapeHtml(prodUrl)} &rarr;</a>
+      ` : '<p class="text-sm text-amber-300">No production URL set yet.</p>'}
+      <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-800/60">
+        <button onclick="approveUat(${p.id})" class="btn btn-primary" style="background:linear-gradient(90deg,#10b981,#22c55e);border:none;color:#020617;font-weight:700">&#10003; Approve UAT &mdash; mark project shipped</button>
+        <span class="text-xs text-slate-500 self-center">or post a comment below to request changes</span>
+      </div>
+    </div>`;
+}
+
+async function approveUat(projectId) {
+  if (!confirm('Approve this project for production? This will mark it as shipped and stop the build loop. You will not be able to request more changes via this magic link.')) return;
+  const r = await fetch('/projects/api/v1/intake/projects/'+projectId+'/uat-approve', {
+    method:'POST', headers: authHeaders(), body: JSON.stringify({})
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Approve failed: '+d.error); return; }
+  alert('Approved. The project is now shipped. Stakeholders will receive a confirmation email.');
   await loadBatch();
 }
 

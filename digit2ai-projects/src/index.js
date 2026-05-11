@@ -712,6 +712,17 @@ app.get('*', (req, res) => {
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');
+
+    // Boot the architect-pipeline build poller (auto-detects deploy completion
+    // for projects in manual_build phase and fires onBuildComplete -> SIT -> UAT).
+    try {
+      const architectPipeline = require('./services/architectPipeline');
+      if (typeof architectPipeline.startBuildPoller === 'function') {
+        architectPipeline.startBuildPoller();
+      }
+    } catch (pollErr) {
+      console.log('[D2AI-Projects] build poller boot error:', pollErr.message);
+    }
   } catch (err) {
     console.error('[D2AI-Projects] Database setup error:', err.message);
   }
