@@ -2853,14 +2853,16 @@ async function showProjectDetail(id) {
               <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Magic link sent to the requestor after approve/reject. Use it to see what they see.</p>
             </div>`;
           })() : ''}
-          ${(p.kickoff_scheduled_at || p.workflow_phase) ? `<div class="detail-section">
-            <h4>Workflow</h4>
+          <div class="detail-section">
+            <h4 style="display:flex;justify-content:space-between;align-items:center">Workflow
+              <button class="btn btn-ghost btn-sm" onclick="overridePhase(${p.id}, '${escHtml(p.workflow_phase || 'pending_review')}')" title="Admin: override workflow_phase">Override Phase</button>
+            </h4>
             <div style="font-size:13px;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px">
               <div><strong>Phase:</strong> <span class="status-badge status-${p.workflow_phase || 'pending_review'}">${p.workflow_phase || 'pending_review'}</span></div>
               ${p.kickoff_scheduled_at ? `<div><strong>Kickoff scheduled:</strong> ${fmtDateTime(p.kickoff_scheduled_at)}</div>` : ''}
               ${p.contract_status && p.contract_status !== 'none' ? `<div><strong>Contract status:</strong> ${p.contract_status}</div>` : ''}
             </div>
-          </div>` : ''}
+          </div>
           ${renderBuildAndUatCard(p)}
           <div class="detail-section" style="border:1px solid rgba(167,139,250,0.3);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
             <h4 style="display:flex;justify-content:space-between;align-items:center;margin-top:0">Project Targets
@@ -3017,6 +3019,39 @@ function hexToRgba(hex, a) {
   const m = String(hex).replace('#','').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
   if (!m) return `rgba(56,189,248,${a})`;
   return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+}
+
+async function overridePhase(projectId, currentPhase) {
+  const phases = [
+    'pending_review', 'approved', 'rejected', 'kickoff_scheduled',
+    'contract_drafted', 'awaiting_deposit', 'deposit_paid',
+    'build_authorized', 'awaiting_human_greenlight', 'queued',
+    'manual_build', 'sit_running', 'uat_ready', 'uat_revision',
+    'shipped', 'build_stuck'
+  ];
+  const opts = phases.map(p =>
+    `<option value="${p}" ${p === currentPhase ? 'selected' : ''}>${p}${p === 'build_authorized' ? '  -- triggers architect pipeline' : ''}</option>`
+  ).join('');
+  openModal('Override workflow_phase', `
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Admin override. Setting phase to <code>build_authorized</code> fires the architect pipeline immediately (gathers context, renders the Master Architect Prompt, emails Manuel the manual-build handoff). Use this to test the pipeline end-to-end without a real Stripe payment.</p>
+    <div class="form-group">
+      <label>New phase</label>
+      <select id="m-phase-new" style="width:100%;padding:8px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius)">${opts}</select>
+    </div>
+    <div style="padding:10px 12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:11px;color:var(--text-secondary)">
+      <strong>Heads up:</strong> this writes <code>project.workflow_phase</code> directly. State transitions normally fire side effects (emails, contract drafts, Stripe). The only side effect this override triggers is the architect pipeline on <code>build_authorized</code>. Other phases just update the field.
+    </div>
+  `, async () => {
+    const newPhase = document.getElementById('m-phase-new').value;
+    if (newPhase === currentPhase) { closeModal(); return; }
+    const r = await api(`/projects/${projectId}/set-phase`, { method: 'POST', body: JSON.stringify({ phase: newPhase }) });
+    closeModal();
+    if (!r.success) { alert('Phase override failed: ' + (r.error || 'unknown')); return; }
+    if (r.pipeline_fired) {
+      alert('Phase set to build_authorized. Architect pipeline is running in the background — check your email for the manual-build handoff.');
+    }
+    showProjectDetail(projectId);
+  });
 }
 
 async function grantHumanGreenlight(projectId) {

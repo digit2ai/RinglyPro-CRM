@@ -537,6 +537,52 @@ router.post('/:id/cancel-stripe', async (req, res) => {
   }
 });
 
+// POST /api/v1/projects/:id/set-phase — admin override of workflow_phase
+// Body: { phase: 'build_authorized' }
+// Side effects: if phase is set to 'build_authorized', fires
+// architectPipeline.start so the orchestrator builds the architect
+// prompt and emails Manuel the manual-build handoff. Used for testing
+// the pipeline without paying Stripe and for unsticking projects.
+router.post('/:id/set-phase', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const allowed = [
+      'pending_review', 'approved', 'rejected', 'kickoff_scheduled',
+      'contract_drafted', 'awaiting_deposit', 'deposit_paid',
+      'build_authorized', 'awaiting_human_greenlight', 'queued',
+      'manual_build', 'sit_running', 'uat_ready', 'uat_revision',
+      'shipped', 'build_stuck'
+    ];
+    const phase = req.body && req.body.phase;
+    if (!phase || !allowed.includes(phase)) {
+      return res.status(400).json({ success: false, error: 'phase must be one of: ' + allowed.join(', ') });
+    }
+    const prevPhase = project.workflow_phase;
+    project.workflow_phase = phase;
+    await project.save();
+    await logActivity(req.user?.email, 'phase_override', 'project', project.id, project.name, { from: prevPhase, to: phase });
+
+    // Trigger the architect pipeline if the admin set the project to build_authorized.
+    let pipelineFired = false;
+    if (phase === 'build_authorized') {
+      try {
+        const pipeline = require('../services/architectPipeline');
+        setImmediate(() => {
+          pipeline.start(project).catch(e => console.error('[D2AI] pipeline.start (manual) failed:', e.message));
+        });
+        pipelineFired = true;
+      } catch (e) {
+        console.error('[D2AI] pipeline load failed:', e.message);
+      }
+    }
+    res.json({ success: true, data: project, pipeline_fired: pipelineFired });
+  } catch (e) {
+    console.error('[D2AI] set-phase error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // POST /api/v1/projects/:id/recompute-short-name — generate / refresh slug
 router.post('/:id/recompute-short-name', async (req, res) => {
   try {
