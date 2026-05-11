@@ -2862,6 +2862,18 @@ async function showProjectDetail(id) {
             </div>
           </div>` : ''}
           <div class="detail-section">
+            <h4 style="display:flex;justify-content:space-between;align-items:center">Project Targets
+              <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_months || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
+            </h4>
+            ${(p.target_delivery_months || p.target_total_usd)
+              ? `<div style="font-size:13px;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px">
+                   ${p.target_delivery_months ? `<div><strong>Delivery window:</strong> ${p.target_delivery_months} months</div>` : ''}
+                   ${p.target_total_usd ? `<div><strong>Total price:</strong> ${Number(p.target_total_usd).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
+                   ${p.target_total_usd ? `<div><strong>Monthly (total / 12):</strong> ${Number(p.target_total_usd / 12).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
+                 </div>`
+              : `<p style="font-size:13px;color:var(--text-muted);font-style:italic">Set the delivery window and total price before generating the AI business plan. The plan will honor these as hard constraints; the contract is fixed at 12 months with monthly = total / 12.</p>`}
+          </div>
+          <div class="detail-section">
             <h4 style="display:flex;justify-content:space-between;align-items:center">Business Requirements
               <button class="btn btn-ghost btn-sm" onclick="editBusinessRequirements(${p.id})">${p.business_requirements ? 'Edit' : '+ Add'}</button>
             </h4>
@@ -2941,6 +2953,36 @@ async function showProjectDetail(id) {
   `;
 }
 
+async function editProjectTargets(projectId) {
+  let current = {};
+  try {
+    const r = await api(`/projects/${projectId}`);
+    current = (r && r.data) || {};
+  } catch (_) {}
+  openModal('Project Targets', `
+    <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px">Delivery window + total price drive the AI plan (as hard constraints) and the 12-month service contract (monthly = total / 12).</p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Delivery Timeframe (months)</label>
+        <input type="number" id="m-pt-delivery" min="1" max="60" step="1" value="${current.target_delivery_months || ''}">
+      </div>
+      <div class="form-group">
+        <label>Total Price (USD)</label>
+        <input type="number" id="m-pt-total" min="1" step="100" value="${current.target_total_usd || ''}">
+      </div>
+    </div>
+  `, async () => {
+    const months = Number(document.getElementById('m-pt-delivery').value) || null;
+    const total = Number(document.getElementById('m-pt-total').value) || null;
+    await api(`/projects/${projectId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ target_delivery_months: months, target_total_usd: total })
+    });
+    closeModal();
+    showProjectDetail(projectId);
+  });
+}
+
 async function editBusinessRequirements(projectId) {
   let current = '';
   try {
@@ -2979,9 +3021,61 @@ async function deleteProject(id, name) {
 
 // =====================================================
 // AI BUSINESS PLAN GENERATION (full-view, not modal)
+// Pre-flight modal: capture delivery_months + total_price
+// so the AI plan honors them and the contract uses
+// total / 12 for the monthly recurring fee.
 // =====================================================
 async function generateBusinessPlan(projectId) {
-  if (!confirm('Generate business plan with Claude? This takes about 30 seconds and costs API tokens.')) return;
+  // Load current project values to pre-fill the pre-flight modal
+  let current = {};
+  try {
+    const r = await api(`/projects/${projectId}`);
+    current = (r && r.data) || {};
+  } catch (_) {}
+
+  openModal('Generate Business Plan & Contract', `
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px">
+      Set the delivery window and total price <strong>before</strong> generating. The AI plan will honor these as hard constraints, and the service contract will use them for the 12-month engagement (monthly fee = total / 12).
+    </p>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Delivery Timeframe (months) *</label>
+        <input type="number" id="m-bp-delivery" min="1" max="60" step="1" value="${current.target_delivery_months || 6}">
+        <small style="display:block;color:var(--text-muted);font-size:11px;margin-top:4px">How long until the project is delivered.</small>
+      </div>
+      <div class="form-group">
+        <label>Total Price (USD) *</label>
+        <input type="number" id="m-bp-total" min="1" step="100" value="${current.target_total_usd || 50000}">
+        <small style="display:block;color:var(--text-muted);font-size:11px;margin-top:4px">Full project cost. Monthly = total / 12.</small>
+      </div>
+    </div>
+    <div style="padding:10px 12px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);margin-top:8px">
+      <strong>Contract terms (fixed):</strong> 12-month engagement, 10% deposit on signature, monthly recurring billing for the remaining 11 months. Generation takes ~30 seconds.
+    </div>
+  `, async () => {
+    const months = Number(document.getElementById('m-bp-delivery').value);
+    const total = Number(document.getElementById('m-bp-total').value);
+    if (!months || months < 1) { alert('Delivery timeframe must be at least 1 month.'); return; }
+    if (!total || total < 1) { alert('Total price must be greater than zero.'); return; }
+
+    // Persist targets on the project first
+    try {
+      const save = await api(`/projects/${projectId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ target_delivery_months: months, target_total_usd: total })
+      });
+      if (!save.success) { alert('Could not save targets: ' + (save.error || 'unknown')); return; }
+    } catch (e) { alert('Could not save targets: ' + e.message); return; }
+
+    closeModal();
+    await runBusinessPlanGeneration(projectId);
+  });
+  // Relabel the save button so the intent is obvious
+  const saveBtn = document.getElementById('modal-save');
+  if (saveBtn) saveBtn.textContent = 'Save & Generate';
+}
+
+async function runBusinessPlanGeneration(projectId) {
   const container = document.getElementById('view-container');
   document.getElementById('page-title').textContent = 'Generating Business Plan...';
   container.innerHTML = `
@@ -2992,7 +3086,7 @@ async function generateBusinessPlan(projectId) {
       <p style="font-size:12px;color:var(--text-muted)">This usually takes 20-40 seconds. Do not close the tab.</p>
     </div>`;
   setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Building plan (TAM, GTM, team roles, budget...)'; }, 4000);
-  setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Saving...'; }, 18000);
+  setTimeout(() => { const s = document.getElementById('bp-status'); if (s) s.textContent = 'Drafting service contract...'; }, 18000);
   try {
     const res = await api(`/projects/${projectId}/generate-business-plan`, { method: 'POST', body: JSON.stringify({}) });
     if (!res.success) {

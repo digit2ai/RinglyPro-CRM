@@ -55,7 +55,7 @@ Generate a thorough, realistic plan. team_roles_required must specify 3-7 distin
 
 const MODEL = 'claude-sonnet-4-5-20250929';
 
-function buildUserMessage({ vision, sector, countries, budget_tier }) {
+function buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) {
   const countryStr = Array.isArray(countries) ? countries.join(', ') : (countries || 'global');
   const tierMap = {
     small: '$50k-200k',
@@ -63,17 +63,27 @@ function buildUserMessage({ vision, sector, countries, budget_tier }) {
     large: '$1M+'
   };
   const tier = tierMap[budget_tier] || tierMap.medium;
+
+  // Hard targets override the budget tier — when supplied, the plan must
+  // make the timeline_milestones span EXACTLY target_delivery_months and
+  // the sum of budget_breakdown[].amount_usd must equal target_total_usd.
+  const hardTargets = (target_delivery_months || target_total_usd)
+    ? `\n\nHARD CONSTRAINTS (must honor exactly):
+${target_delivery_months ? `- Delivery window: ${target_delivery_months} months. timeline_milestones MUST span months 1 through ${target_delivery_months} with the final milestone at month ${target_delivery_months}.` : ''}
+${target_total_usd ? `- Total project budget: $${Number(target_total_usd).toLocaleString('en-US')} USD. The sum of budget_breakdown[].amount_usd MUST equal this number (split into reasonable line items).` : ''}`
+    : '';
+
   return `User vision:
 ${vision}
 
 Sector: ${sector || 'general'}
 Countries: ${countryStr}
-Budget tier: ${budget_tier || 'medium'} (${tier})
+Budget tier: ${budget_tier || 'medium'} (${tier})${hardTargets}
 
 Generate the structured business plan now.`;
 }
 
-async function generatePlan({ vision, sector, countries, budget_tier }) {
+async function generatePlan({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.CLAUDE_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
@@ -87,7 +97,7 @@ async function generatePlan({ vision, sector, countries, budget_tier }) {
       { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
     ],
     messages: [
-      { role: 'user', content: buildUserMessage({ vision, sector, countries, budget_tier }) }
+      { role: 'user', content: buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_months, target_total_usd }) }
     ]
   });
 

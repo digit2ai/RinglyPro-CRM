@@ -649,6 +649,26 @@ app.get('*', (req, res) => {
       }
     }
 
+    // Migration 009 — Project delivery & price targets (entered before AI plan generation)
+    const projectTargetsPath = path.join(__dirname, '..', 'migrations', '009_project_targets.sql');
+    if (fs.existsSync(projectTargetsPath)) {
+      try {
+        const sql = fs.readFileSync(projectTargetsPath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 009_project_targets notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 009_project_targets migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 009_project_targets error:', mErr.message);
+      }
+    }
+
     // Sync models (safe - won't drop existing)
     await sequelize.sync({ alter: false });
     console.log('[D2AI-Projects] Models synced');

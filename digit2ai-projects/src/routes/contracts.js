@@ -19,31 +19,34 @@ try {
 
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
 
-function buildContractHtml({ project, total, depositPct, depositAmount, monthly, currency }) {
+function buildContractHtml({ project, total, depositPct, depositAmount, monthly, currency, termMonths, deliveryMonths }) {
   const safe = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const today = new Date().toISOString().slice(0, 10);
   const fmt = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: currency || 'USD' });
+  const term = Number(termMonths) || 12;
+  const delivery = Number(deliveryMonths) || null;
   return `
 <h2>Master Services Engagement — ${safe(project.name)}</h2>
 <p><strong>Effective date:</strong> ${today}</p>
 <p><strong>Service provider:</strong> Digit2AI LLC ("Provider")</p>
 <p><strong>Client:</strong> ${safe(project.submitter_name || 'Authorized Signer')} on behalf of the requesting organization.</p>
+<p><strong>Engagement term:</strong> ${term} months from the effective date.${delivery ? ` <strong>Target delivery window:</strong> ${delivery} months.` : ''}</p>
 
 <h3>1. Scope</h3>
-<p>Provider will deliver the work described in the project plan attached to project <em>${safe(project.name)}</em>, including the AI-generated milestones, the business plan, and the business requirements captured during kickoff. Material scope changes require a written amendment.</p>
+<p>Provider will deliver the work described in the project plan attached to project <em>${safe(project.name)}</em>, including the AI-generated milestones, the business plan, and the business requirements captured during kickoff${delivery ? ` within the ${delivery}-month target delivery window` : ''}. Material scope changes require a written amendment.</p>
 
 <h3>2. Fees</h3>
 <ul>
   <li><strong>Project total (good-faith estimate):</strong> ${fmt(total)}</li>
   <li><strong>Upfront deposit (${depositPct}% of total):</strong> ${fmt(depositAmount)} — due upon signature.</li>
-  <li><strong>Monthly recurring fee:</strong> ${fmt(monthly)} — billed on the first of each month until project completion or written termination.</li>
+  <li><strong>Monthly recurring fee:</strong> ${fmt(monthly)} — billed on the first of each month for the ${term}-month engagement term.</li>
 </ul>
 
 <h3>3. Payment Terms</h3>
-<p>Deposit is non-refundable once Provider begins discovery. Monthly fees are billed in advance; failure to pay for 15 days suspends the engagement until cured.</p>
+<p>Deposit is non-refundable once Provider begins discovery. Monthly fees are billed in advance for the full ${term}-month term; failure to pay for 15 days suspends the engagement until cured. Early termination by the Client does not waive remaining monthly fees through the end of the ${term}-month term.</p>
 
 <h3>4. Deliverables &amp; Milestones</h3>
-<p>The current milestone schedule is the one shown on the project page at the time of signature. Updates to the schedule are tracked in the project Updates feed and remain visible to the Client through the requestor magic link.</p>
+<p>The current milestone schedule is the one shown on the project page at the time of signature${delivery ? ` and targets completion within ${delivery} months` : ''}. Updates to the schedule are tracked in the project Updates feed and remain visible to the Client through the requestor magic link.</p>
 
 <h3>5. Confidentiality</h3>
 <p>Each party will treat the other's non-public information as confidential and use it only to perform under this engagement.</p>
@@ -52,13 +55,13 @@ function buildContractHtml({ project, total, depositPct, depositAmount, monthly,
 <p>Custom deliverables built specifically for the Client transfer to the Client upon full payment. Provider retains rights to its pre-existing tooling, frameworks, and the underlying RinglyPro / Digit2AI platform code.</p>
 
 <h3>7. Termination</h3>
-<p>Either party may terminate with 30 days' written notice. Client remains responsible for fees accrued through termination.</p>
+<p>Either party may terminate for material breach with 30 days' written notice and an opportunity to cure. Convenience termination by the Client before the end of the ${term}-month term does not waive monthly fees accrued through the original end date.</p>
 
 <h3>8. Governing Law</h3>
 <p>This engagement is governed by the laws of the State of Florida, USA.</p>
 
 <h3>9. Signature</h3>
-<p>By submitting the signoff form linked from the magic-link page, the Client agrees to these terms and authorizes the deposit charge.</p>
+<p>By submitting the signoff form linked from the magic-link page, the Client agrees to these terms and authorizes the deposit charge plus the ${term}-month recurring monthly fee.</p>
 `.trim();
 }
 
@@ -187,31 +190,31 @@ router.put('/:id', async (req, res) => {
 async function createContractFromProject(project, opts = {}) {
   const businessPlan = opts.businessPlan || project.business_plan_json || null;
 
+  // Total price: prefer user-entered target_total_usd, then opts override,
+  // then business plan budget sum, then default.
   let total = Number(opts.total_amount_usd);
+  if (!total || isNaN(total)) total = Number(project.target_total_usd);
   if (!total || isNaN(total)) {
     const budget = (businessPlan && Array.isArray(businessPlan.budget_breakdown))
       ? businessPlan.budget_breakdown : [];
     total = budget.reduce((s, b) => s + (Number(b.amount_usd) || 0), 0);
   }
-  if (!total || total < 1) total = 50000; // sensible default if plan has no budget yet
+  if (!total || total < 1) total = 50000;
 
-  const months = (() => {
-    const m = (businessPlan && Array.isArray(businessPlan.timeline_milestones))
-      ? businessPlan.timeline_milestones.map(x => Number(x.month) || 0) : [];
-    const max = m.length ? Math.max.apply(null, m) : 0;
-    return max > 0 ? max : 6;
-  })();
-
+  // Contract term is FIXED at 12 months. Monthly = total / 12.
+  const CONTRACT_TERM_MONTHS = 12;
   const depositPct = Number(opts.deposit_percent || 10);
   const depositAmount = Math.round((total * (depositPct / 100)) * 100) / 100;
   let monthly = Number(opts.monthly_amount_usd);
   if (!monthly || isNaN(monthly)) {
-    monthly = Math.round((total / months) * 100) / 100;
+    monthly = Math.round((total / CONTRACT_TERM_MONTHS) * 100) / 100;
   }
   const currency = opts.currency || 'USD';
 
   const contractHtml = buildContractHtml({
-    project, total, depositPct, depositAmount, monthly, currency
+    project, total, depositPct, depositAmount, monthly, currency,
+    termMonths: CONTRACT_TERM_MONTHS,
+    deliveryMonths: project.target_delivery_months || null
   });
 
   const contract = await ProjectContract.create({

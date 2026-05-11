@@ -396,9 +396,19 @@ router.post('/:id/generate-business-plan', async (req, res) => {
     const countries = project.country ? [project.country] : [];
     const budget_tier = mapBudgetTier(project.budget_range);
 
+    const targetDeliveryMonths = project.target_delivery_months ? Number(project.target_delivery_months) : null;
+    const targetTotalUsd = project.target_total_usd ? Number(project.target_total_usd) : null;
+
     let result;
     try {
-      result = await planGenerator.generatePlan({ vision, sector: sectorList, countries, budget_tier });
+      result = await planGenerator.generatePlan({
+        vision,
+        sector: sectorList,
+        countries,
+        budget_tier,
+        target_delivery_months: targetDeliveryMonths,
+        target_total_usd: targetTotalUsd
+      });
     } catch (genErr) {
       console.error('[D2AI] Business plan gen error:', genErr.message);
       return res.status(502).json({ success: false, error: 'Claude business plan generation failed: ' + genErr.message });
