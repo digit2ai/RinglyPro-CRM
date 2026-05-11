@@ -202,10 +202,28 @@ async function runPipeline(project) {
   project.production_url = `${PUBLIC_BASE}/${project.short_name}`;
   await project.save();
 
-  // 2. Gather context + render the Master Architect Prompt
+  // 2. Gather context + render the raw template, then pass it through the
+  // Senior Prompt Engineer synthesizer (Claude) for a tight, focused brief.
+  // Falls back to the raw template when ANTHROPIC_API_KEY is unset.
   const context = await gatherContext(project);
-  const prompt = renderArchitectPrompt(project, context);
-  project.architect_prompt = prompt;
+  const rawPrompt = renderArchitectPrompt(project, context);
+  let finalPrompt = rawPrompt;
+  try {
+    const synth = require('./architectPromptSynth');
+    const synthesized = await synth.synthesizePrompt(rawPrompt, {
+      id: project.id,
+      short_name: project.short_name,
+      name: project.name
+    });
+    if (synthesized && synthesized.length > 200) {
+      finalPrompt = synthesized;
+    } else {
+      console.log('[architectPipeline] synthesizer returned empty/short; falling back to raw template.');
+    }
+  } catch (synthErr) {
+    console.error('[architectPipeline] synth error (using raw template):', synthErr.message);
+  }
+  project.architect_prompt = finalPrompt;
   await project.save();
 
   // 3. Push #1: hand off to Manuel by email (Push #2 will swap this for the agent loop)
