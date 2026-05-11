@@ -583,6 +583,43 @@ router.post('/:id/set-phase', async (req, res) => {
   }
 });
 
+// POST /api/v1/projects/:id/regenerate-prompt — re-run the Senior Prompt
+// Engineer synthesizer against the current project context. No email is
+// sent, no phase change. Just rebuilds project.architect_prompt so you
+// can iterate on the prompt (tune business plan, tweak targets, edit
+// business requirements, etc.) and immediately see the updated brief
+// without firing the whole pipeline again.
+router.post('/:id/regenerate-prompt', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const pipeline = require('../services/architectPipeline');
+    const synth = require('../services/architectPromptSynth');
+    const context = await pipeline.gatherContext(project);
+    const rawPrompt = pipeline.renderArchitectPrompt(project, context);
+    let finalPrompt = rawPrompt;
+    let usedSynth = false;
+    try {
+      const synthesized = await synth.synthesizePrompt(rawPrompt, {
+        id: project.id, short_name: project.short_name, name: project.name
+      });
+      if (synthesized && synthesized.length > 200) {
+        finalPrompt = synthesized;
+        usedSynth = true;
+      }
+    } catch (e) {
+      console.error('[D2AI] synth failed, using raw template:', e.message);
+    }
+    project.architect_prompt = finalPrompt;
+    await project.save();
+    await logActivity(req.user?.email, 'regenerated_architect_prompt', 'project', project.id, project.name, { used_synth: usedSynth });
+    res.json({ success: true, data: project, used_synth: usedSynth, prompt_length: finalPrompt.length });
+  } catch (e) {
+    console.error('[D2AI] regenerate-prompt error:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // POST /api/v1/projects/:id/recompute-short-name — generate / refresh slug
 router.post('/:id/recompute-short-name', async (req, res) => {
   try {

@@ -3004,6 +3004,10 @@ function renderBuildAndUatCard(p) {
   if (p.architect_prompt) {
     actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewArchitectPrompt(${p.id})">View Architect Prompt</button>`);
   }
+  // Always allow re-running the synthesizer once the project has reached build_authorized.
+  // Lets you iterate on the prompt (edit targets, requirements, plan) and see the new brief
+  // without firing the whole pipeline / emailing anyone again.
+  actions.push(`<button class="btn btn-ghost btn-sm" onclick="regenerateArchitectPrompt(${p.id})" title="Re-run the Senior Prompt Engineer synthesizer">&#8635; Regenerate Prompt</button>`);
   if (p.sit_report_md) {
     actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewSitReport(${p.id})">View SIT Report</button>`);
   }
@@ -3099,6 +3103,16 @@ async function markBuildComplete(projectId) {
     }
     showProjectDetail(projectId);
   });
+}
+
+async function regenerateArchitectPrompt(projectId) {
+  if (!confirm('Re-run the Senior Prompt Engineer synthesizer for this project?\n\nThis pulls the current project context (intake Q&A, business plan, milestones, contract, stakeholders, targets, business requirements), regenerates the raw template, then passes it through the Claude synthesizer to produce a fresh focused sprint brief.\n\nNo email is sent. No phase change. ~$0.10 in Claude tokens.')) return;
+  try {
+    const r = await api(`/projects/${projectId}/regenerate-prompt`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success) { alert('Regenerate failed: ' + (r.error || 'unknown')); return; }
+    alert(`Prompt regenerated (${r.prompt_length} chars).\n\nSource: ${r.used_synth ? 'Senior Prompt Engineer synthesizer (Claude)' : 'raw template (synth unavailable)'}\n\nClick "View Architect Prompt" to see it.`);
+    showProjectDetail(projectId);
+  } catch (e) { alert('Regenerate failed: ' + e.message); }
 }
 
 async function viewArchitectPrompt(projectId) {
