@@ -12,9 +12,13 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* SendGrid not installed — sends will fail loudly */ }
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'mstagg@digit2ai.com';
-const FROM_NAME  = process.env.REQUESTOR_FROM_NAME || 'Manuel Stagg';
-const SENDER_TITLE = process.env.REQUESTOR_FROM_TITLE || 'Digit2AI';
+// Envelope From — must be a SendGrid-verified sender. info@digit2ai.com
+// is the verified shared mailbox; replies are routed back to the actual
+// signer via Reply-To so the requestor's reply reaches Manuel directly.
+const ENVELOPE_FROM = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+const FROM_NAME      = process.env.REQUESTOR_FROM_NAME  || 'Manuel Stagg';
+const SIGNATURE_EMAIL = process.env.REQUESTOR_REPLY_TO  || 'mstagg@digit2ai.com';
+const SENDER_TITLE    = process.env.REQUESTOR_FROM_TITLE || 'Digit2AI';
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -71,7 +75,7 @@ Looking forward to speaking with you.
 Best,
 ${FROM_NAME}
 ${SENDER_TITLE}
-${FROM_EMAIL}`;
+${SIGNATURE_EMAIL}`;
 
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
     <p>Hi ${esc(fn)},</p>
@@ -84,16 +88,16 @@ ${FROM_EMAIL}`;
     <p style="margin-top:22px;margin-bottom:2px">Best,<br>
     <strong>${esc(FROM_NAME)}</strong><br>
     ${esc(SENDER_TITLE)}<br>
-    <a href="mailto:${esc(FROM_EMAIL)}" style="color:#0a66c2">${esc(FROM_EMAIL)}</a></p>
+    <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
   </div>`;
 
   const msg = {
     to: toEmail,
-    from: { email: FROM_EMAIL, name: FROM_NAME },
+    from: { email: ENVELOPE_FROM, name: FROM_NAME },
     subject,
     text,
     html,
-    replyTo: FROM_EMAIL
+    replyTo: SIGNATURE_EMAIL
   };
   const cc = (ccEmails || []).filter(e => e && e !== toEmail);
   if (cc.length) msg.cc = cc;
@@ -146,7 +150,7 @@ Wishing you the best with the work ahead.
 Best,
 ${FROM_NAME}
 ${SENDER_TITLE}
-${FROM_EMAIL}`;
+${SIGNATURE_EMAIL}`;
 
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
     <p>Hi ${esc(fn)},</p>
@@ -158,17 +162,17 @@ ${FROM_EMAIL}`;
     <p style="margin-top:22px;margin-bottom:2px">Best,<br>
     <strong>${esc(FROM_NAME)}</strong><br>
     ${esc(SENDER_TITLE)}<br>
-    <a href="mailto:${esc(FROM_EMAIL)}" style="color:#0a66c2">${esc(FROM_EMAIL)}</a></p>
+    <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
   </div>`;
 
   try {
     await sgMail.send({
       to: toEmail,
-      from: { email: FROM_EMAIL, name: FROM_NAME },
+      from: { email: ENVELOPE_FROM, name: FROM_NAME },
       subject,
       text,
       html,
-      replyTo: FROM_EMAIL
+      replyTo: SIGNATURE_EMAIL
     });
     console.log(`[D2AI-Notify] Rejection notice sent to ${toEmail}`);
     return { sent: true };
