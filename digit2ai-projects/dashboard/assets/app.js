@@ -2826,7 +2826,7 @@ async function showProjectDetail(id) {
           <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>
           ${p.business_plan_generated_at
             ? `<button class="btn btn-primary btn-sm" onclick="openBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">View Business Plan</button>
-               <button class="btn btn-ghost btn-sm" onclick="generateBusinessPlan(${p.id})" title="Regenerate">&#8635;</button>`
+               <button class="btn btn-primary btn-sm" onclick="generateBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#a78bfa,#f472b6);border:none;color:#020617" title="Set new targets and regenerate the plan + contract">&#8635; Regenerate Plan</button>`
             : `<button class="btn btn-primary btn-sm" onclick="generateBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">&#10024; AI Generate Business Plan</button>`
           }
         </div>
@@ -2861,8 +2861,8 @@ async function showProjectDetail(id) {
               ${p.contract_status && p.contract_status !== 'none' ? `<div><strong>Contract status:</strong> ${p.contract_status}</div>` : ''}
             </div>
           </div>` : ''}
-          <div class="detail-section">
-            <h4 style="display:flex;justify-content:space-between;align-items:center">Project Targets
+          <div class="detail-section" style="border:1px solid rgba(167,139,250,0.3);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
+            <h4 style="display:flex;justify-content:space-between;align-items:center;margin-top:0">Project Targets
               <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_months || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
             </h4>
             ${(p.target_delivery_months || p.target_total_usd)
@@ -2870,8 +2870,12 @@ async function showProjectDetail(id) {
                    ${p.target_delivery_months ? `<div><strong>Delivery window:</strong> ${p.target_delivery_months} months</div>` : ''}
                    ${p.target_total_usd ? `<div><strong>Total price:</strong> ${Number(p.target_total_usd).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
                    ${p.target_total_usd ? `<div><strong>Monthly (total / 12):</strong> ${Number(p.target_total_usd / 12).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}</div>` : ''}
+                 </div>
+                 <div style="margin-top:12px">
+                   <button class="btn btn-primary btn-sm" onclick="generateBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617;width:100%">${p.business_plan_generated_at ? '&#8635; Regenerate Plan & Contract' : '&#10024; Generate Plan & Contract'}</button>
                  </div>`
-              : `<p style="font-size:13px;color:var(--text-muted);font-style:italic">Set the delivery window and total price before generating the AI business plan. The plan will honor these as hard constraints; the contract is fixed at 12 months with monthly = total / 12.</p>`}
+              : `<p style="font-size:13px;color:var(--text-muted);font-style:italic;margin-bottom:10px">Set the delivery window and total price before generating the AI business plan. The plan will honor these as hard constraints; the contract is fixed at 12 months with monthly = total / 12.</p>
+                 <button class="btn btn-primary btn-sm" onclick="editProjectTargets(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617;width:100%">&#43; Set Targets to Start</button>`}
           </div>
           <div class="detail-section">
             <h4 style="display:flex;justify-content:space-between;align-items:center">Business Requirements
