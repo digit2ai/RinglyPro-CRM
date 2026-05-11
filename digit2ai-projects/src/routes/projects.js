@@ -168,7 +168,22 @@ router.get('/:id', async (req, res) => {
       limit: 20
     });
 
-    res.json({ success: true, data: { ...project.toJSON(), activity } });
+    // Resolve the requestor-facing share token (the magic link emailed
+    // after approve/reject) so the UI can surface it on the detail page.
+    const { ProjectIntake } = require('../models');
+    let share_token = null;
+    let batch_id = null;
+    const intake = await ProjectIntake.findOne({ where: { project_id: project.id } });
+    if (intake) {
+      batch_id = intake.batch_id;
+      const token = await CompanyAccessToken.findOne({
+        where: { batch_id: intake.batch_id },
+        order: [['created_at', 'ASC']]
+      });
+      share_token = token ? token.token : null;
+    }
+
+    res.json({ success: true, data: { ...project.toJSON(), activity, share_token, batch_id } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

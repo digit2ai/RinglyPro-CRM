@@ -2841,6 +2841,18 @@ async function showProjectDetail(id) {
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
         <div>
+          ${p.share_token ? (() => {
+            const reqUrl = `${location.origin}/projects/intake/batch.html?token=${p.share_token}`;
+            return `<div class="detail-section">
+              <h4>Requestor Link</h4>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:var(--radius);padding:10px 12px">
+                <a href="${reqUrl}" target="_blank" rel="noopener" style="flex:1;min-width:200px;font-size:12px;color:#38bdf8;word-break:break-all;text-decoration:none">${reqUrl}</a>
+                <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${reqUrl}').then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+                <a class="btn btn-ghost btn-sm" href="${reqUrl}" target="_blank" rel="noopener">Open</a>
+              </div>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Magic link sent to the requestor after approve/reject. Use it to see what they see.</p>
+            </div>`;
+          })() : ''}
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
           ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
