@@ -55,9 +55,12 @@ async function send({ to, subject, html, text }) {
     from: { email: FROM_EMAIL, name: FROM_NAME },
     replyTo: REPLY_TO,
     subject,
-    html,
-    text: text || ''
+    html
   };
+  // Only attach text/plain if the caller actually provided one — SendGrid
+  // rejects messages where any content part is an empty string with:
+  //   "The content value must be a string at least one character in length"
+  if (text && String(text).length) msg.text = text;
   try {
     const r = Array.isArray(to) && to.length > 1
       ? await sgMail.sendMultiple(msg)
