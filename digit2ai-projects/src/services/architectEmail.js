@@ -24,7 +24,11 @@ try {
 const FROM_EMAIL = 'info@digit2ai.com';
 const FROM_NAME = 'Manuel Stagg / Digit2AI';
 const REPLY_TO = 'mstagg@digit2ai.com';
-const MANUEL_EMAIL = process.env.MANUEL_EMAIL || 'mstagg@digit2ai.com';
+// Manuel-facing emails (manual-build handoff, SIT failure, UAT revision, sensitive-data
+// review) go to BOTH addresses so Gmail picks it up instantly while Network Solutions
+// catches up at its own pace. Override with env var MANUEL_EMAIL (comma-separated).
+const MANUEL_EMAILS = (process.env.MANUEL_EMAIL || 'info@digit2ai.com,digitalinformation2ai@gmail.com')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
 
 function esc(s) {
@@ -93,7 +97,7 @@ async function sendSensitiveDataReviewRequest(project) {
     bannerBg: '#fef2f2', bannerBar: '#f43f5e', bannerFg: '#7f1d1d'
   });
   return send({
-    to: MANUEL_EMAIL,
+    to: MANUEL_EMAILS,
     subject: `[Greenlight required] ${project.name} — sensitive data`,
     html
   });
@@ -132,7 +136,7 @@ async function sendManualBuildHandoff(project, prompt) {
   });
 
   return send({
-    to: MANUEL_EMAIL,
+    to: MANUEL_EMAILS,
     subject: `[Build ready] ${project.name} — run /ringlypro-architect`,
     html
   });
@@ -153,7 +157,7 @@ ${sit.report_md ? `<details><summary style="cursor:pointer;font-weight:600">Full
     bannerBg: '#fef2f2', bannerBar: '#f43f5e', bannerFg: '#7f1d1d'
   });
   return send({
-    to: MANUEL_EMAIL,
+    to: MANUEL_EMAILS,
     subject: `[SIT failed] ${project.name}`,
     html
   });
@@ -163,8 +167,9 @@ ${sit.report_md ? `<details><summary style="cursor:pointer;font-weight:600">Full
 // 4. UAT handoff — stakeholders get the production URL + SIT report
 // -------------------------------------------------------------
 async function sendUatHandoff(project, sit) {
-  const recipients = stakeholderEmails(project);
-  recipients.push(MANUEL_EMAIL); // include Manuel
+  const set = new Set(stakeholderEmails(project));
+  MANUEL_EMAILS.forEach(e => set.add(e));
+  const recipients = Array.from(set);
   // Try to find the requestor magic-link token for the "give feedback" link
   let magicLink = '';
   try {
@@ -222,7 +227,7 @@ async function sendUatRevisionRequest(project, comment) {
     bannerBg: '#f0f9ff', bannerBar: '#38bdf8', bannerFg: '#0c4a6e'
   });
   return send({
-    to: MANUEL_EMAIL,
+    to: MANUEL_EMAILS,
     subject: `[UAT revision] ${project.name} — ${esc(commenterName)} requested changes`,
     html
   });
@@ -232,8 +237,9 @@ async function sendUatRevisionRequest(project, comment) {
 // 6. Shipped — final approval received
 // -------------------------------------------------------------
 async function sendShippedConfirmation(project) {
-  const recipients = stakeholderEmails(project);
-  recipients.push(MANUEL_EMAIL);
+  const set = new Set(stakeholderEmails(project));
+  MANUEL_EMAILS.forEach(e => set.add(e));
+  const recipients = Array.from(set);
   const html = wrap(`
 <h2 style="margin:0 0 12px;color:#0f172a">Shipped — ${esc(project.name)}</h2>
 <p>UAT was approved by <strong>${esc(project.uat_approved_by || 'a stakeholder')}</strong> on ${esc(project.uat_approved_at ? new Date(project.uat_approved_at).toLocaleString() : 'now')}. The system is live at:</p>
