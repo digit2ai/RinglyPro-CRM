@@ -24,6 +24,7 @@ const campaignRoutes = require('./routes/campaigns');
 const workflowRoutes = require('./routes/workflows');
 const intakeRoutes = require('./routes/intake');
 const meetingMinutesRoutes = require('./routes/meeting-minutes');
+const contractsRoutes = require('./routes/contracts');
 
 const app = express();
 
@@ -76,6 +77,8 @@ app.get('/api/v1/me', authenticateToken, (req, res) => {
 
 // Serve intake static pages (dark dashboard, no build step)
 app.use('/intake', express.static(path.join(dashboardPath, 'intake')));
+// Public contract signoff page (token-gated; no admin auth required)
+app.use('/contracts', express.static(path.join(dashboardPath, 'contracts')));
 
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
@@ -92,6 +95,56 @@ app.use('/api/v1/pipeline', authenticateToken, pipelineRoutes);
 app.use('/api/v1/campaigns', authenticateToken, campaignRoutes);
 app.use('/api/v1/workflows', authenticateToken, workflowRoutes);
 app.use('/api/v1/meeting-minutes', authenticateToken, meetingMinutesRoutes);
+app.use('/api/v1/contracts', authenticateToken, contractsRoutes);
+
+// Public contract signoff endpoint (token-gated, no auth header).
+// The Client opens this from their email/magic-link page; they submit
+// their name + email, we mark the contract as signed and the project
+// flips into "awaiting deposit" (phase 2 will wire Stripe here).
+app.get('/api/v1/public/contracts/:token', async (req, res) => {
+  try {
+    const { ProjectContract, Project } = require('./models');
+    const row = await ProjectContract.findOne({ where: { signoff_token: req.params.token } });
+    if (!row) return res.status(404).json({ success: false, error: 'Contract not found' });
+    const project = await Project.findByPk(row.project_id);
+    res.json({
+      success: true,
+      data: {
+        ...row.toJSON(),
+        project: project ? { id: project.id, name: project.name, description: project.description } : null
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/v1/public/contracts/:token/sign', express.json(), async (req, res) => {
+  try {
+    const { ProjectContract, Project } = require('./models');
+    const row = await ProjectContract.findOne({ where: { signoff_token: req.params.token } });
+    if (!row) return res.status(404).json({ success: false, error: 'Contract not found' });
+    if (row.status === 'signed' || row.status === 'active') {
+      return res.status(400).json({ success: false, error: 'Contract already signed' });
+    }
+    const { name, email } = req.body || {};
+    if (!name || !email) return res.status(400).json({ success: false, error: 'name and email required' });
+    row.signed_by_name = String(name).trim();
+    row.signed_by_email = String(email).trim().toLowerCase();
+    row.signed_at = new Date();
+    row.status = 'signed';
+    await row.save();
+    const project = await Project.findByPk(row.project_id);
+    if (project) {
+      project.contract_status = 'signed';
+      project.workflow_phase = 'awaiting_deposit';
+      await project.save();
+    }
+    res.json({ success: true, data: row });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // SendGrid webhook (unauthenticated — called by SendGrid)
 app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res, next) => {
@@ -479,6 +532,26 @@ app.get('*', (req, res) => {
         console.log('[D2AI-Projects] 006_invited_emails migration applied');
       } catch (mErr) {
         console.log('[D2AI-Projects] 006_invited_emails error:', mErr.message);
+      }
+    }
+
+    // Migration 007 — Workflow Phase 1 (business requirements, action items, contracts)
+    const workflowPhase1Path = path.join(__dirname, '..', 'migrations', '007_workflow_phase1.sql');
+    if (fs.existsSync(workflowPhase1Path)) {
+      try {
+        const sql = fs.readFileSync(workflowPhase1Path, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 007_workflow_phase1 notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 007_workflow_phase1 migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 007_workflow_phase1 error:', mErr.message);
       }
     }
 

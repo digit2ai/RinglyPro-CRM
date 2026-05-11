@@ -136,7 +136,13 @@ const Project = sequelize.define('Project', {
   intake_status: { type: DataTypes.STRING(30), defaultValue: 'none' },
   business_plan_json: DataTypes.JSONB,
   business_plan_generated_at: DataTypes.DATE,
-  ai_milestone_generation_at: DataTypes.DATE
+  ai_milestone_generation_at: DataTypes.DATE,
+  // Phase 1 workflow fields (migration 007)
+  business_requirements: DataTypes.TEXT,
+  kickoff_event_id: DataTypes.INTEGER,
+  kickoff_scheduled_at: DataTypes.DATE,
+  contract_status: { type: DataTypes.STRING(40), defaultValue: 'none' },
+  workflow_phase: { type: DataTypes.STRING(40), defaultValue: 'pending_review' }
 }, { tableName: 'd2_projects' });
 
 // =====================================================
@@ -622,11 +628,44 @@ const MeetingMinute = sequelize.define('MeetingMinute', {
   meeting_date: { type: DataTypes.DATEONLY, allowNull: false, defaultValue: DataTypes.NOW },
   subject: { type: DataTypes.STRING(500), allowNull: false },
   notes: DataTypes.TEXT,
-  created_by_email: DataTypes.STRING(255)
+  created_by_email: DataTypes.STRING(255),
+  // Phase 1 workflow fields (migration 007)
+  ai_summary: DataTypes.TEXT,
+  action_items_json: { type: DataTypes.JSONB, defaultValue: [] },
+  ai_processed_at: DataTypes.DATE,
+  auto_tasks_created: { type: DataTypes.INTEGER, defaultValue: 0 }
 }, { tableName: 'd2_meeting_minutes' });
 
 Project.hasMany(MeetingMinute, { foreignKey: 'project_id', as: 'meeting_minutes' });
 MeetingMinute.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
+// =====================================================
+// PROJECT CONTRACT (Phase 1 — migration 007)
+// =====================================================
+const ProjectContract = sequelize.define('ProjectContract', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  project_id: { type: DataTypes.INTEGER, allowNull: false },
+  total_amount_usd: DataTypes.DECIMAL(12, 2),
+  deposit_percent: { type: DataTypes.DECIMAL(5, 2), defaultValue: 10.00 },
+  deposit_amount_usd: DataTypes.DECIMAL(12, 2),
+  monthly_amount_usd: DataTypes.DECIMAL(12, 2),
+  currency: { type: DataTypes.STRING(10), defaultValue: 'USD' },
+  status: { type: DataTypes.STRING(40), defaultValue: 'draft' },
+  signoff_token: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, unique: true },
+  signed_by_name: DataTypes.STRING(255),
+  signed_by_email: DataTypes.STRING(255),
+  signed_at: DataTypes.DATE,
+  deposit_paid_at: DataTypes.DATE,
+  contract_html: DataTypes.TEXT,
+  scope_summary: DataTypes.TEXT,
+  terms_summary: DataTypes.TEXT,
+  sent_at: DataTypes.DATE,
+  created_by_email: DataTypes.STRING(255)
+}, { tableName: 'd2_project_contracts' });
+
+Project.hasMany(ProjectContract, { foreignKey: 'project_id', as: 'contracts' });
+ProjectContract.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
 
 // IntakeBatch <-> Access Tokens
 IntakeBatch.hasMany(CompanyAccessToken, { foreignKey: 'batch_id', as: 'access_tokens' });
@@ -664,5 +703,6 @@ module.exports = {
   ProjectComment,
   PriorityVote,
   CompanyAccessToken,
-  MeetingMinute
+  MeetingMinute,
+  ProjectContract
 };

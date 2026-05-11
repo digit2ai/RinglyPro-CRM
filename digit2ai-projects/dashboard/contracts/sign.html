@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Engagement Contract — Digit2AI</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 18px 80px; line-height: 1.55; background: #fafafa; color: #1a1a1a; }
+  header { display:flex; align-items:center; gap:12px; border-bottom:1px solid #e5e7eb; padding-bottom:12px; margin-bottom:18px; }
+  header h1 { margin:0; font-size:18px; }
+  .badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+  .badge-draft { background:#fef3c7; color:#92400e; }
+  .badge-signed { background:#d1fae5; color:#065f46; }
+  .fee-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:14px 0 22px; }
+  .fee-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:14px; text-align:center; }
+  .fee-card .label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
+  .fee-card .value { font-size:20px; font-weight:700; margin-top:4px; color:#111827; }
+  .contract-body { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:22px 26px; }
+  .contract-body h2 { font-size:18px; margin-top:0; }
+  .contract-body h3 { font-size:14px; margin-top:18px; color:#374151; }
+  form { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:18px 22px; margin-top:18px; }
+  label { display:block; font-size:12px; font-weight:600; color:#374151; margin:10px 0 4px; }
+  input[type=text], input[type=email] { width:100%; padding:10px 12px; border-radius:6px; border:1px solid #d1d5db; font-size:14px; }
+  button.primary { background:#0a66c2; color:#fff; border:none; padding:12px 18px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; margin-top:14px; }
+  button.primary:disabled { opacity:.6; cursor:not-allowed; }
+  .agree { font-size:13px; color:#374151; margin-top:12px; display:flex; gap:8px; align-items:flex-start; }
+  .msg { padding:10px 14px; border-radius:8px; margin-top:12px; font-size:13px; }
+  .msg.ok { background:#d1fae5; color:#065f46; }
+  .msg.err { background:#fee2e2; color:#991b1b; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#0a0a0a; color:#e5e7eb; }
+    .contract-body, .fee-card, form { background:#171717; border-color:#262626; }
+    input { background:#0a0a0a; color:#e5e7eb; border-color:#262626; }
+    .contract-body h3 { color:#9ca3af; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Project Engagement Contract</h1>
+  <span id="status-badge" class="badge badge-draft">Loading...</span>
+</header>
+
+<div id="project-line" style="font-size:14px;color:#6b7280;margin-bottom:14px"></div>
+
+<div class="fee-grid" id="fee-grid"></div>
+
+<div class="contract-body" id="contract-body">Loading contract...</div>
+
+<form id="sign-form" style="display:none">
+  <h3 style="margin-top:0;font-size:15px">Sign &amp; authorize</h3>
+  <label for="name">Full legal name</label>
+  <input type="text" id="name" name="name" required autocomplete="name">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required autocomplete="email">
+  <div class="agree">
+    <input type="checkbox" id="agree" required>
+    <label for="agree" style="font-weight:400;margin:0">I have read and agree to the terms above. By submitting, I authorize the 10% deposit charge once the payment-collection step is enabled.</label>
+  </div>
+  <button class="primary" type="submit" id="submit-btn">Sign contract</button>
+  <div id="msg"></div>
+</form>
+
+<script>
+const params = new URLSearchParams(location.search);
+const token = params.get('token');
+const $ = id => document.getElementById(id);
+
+async function load() {
+  if (!token) { $('contract-body').textContent = 'Missing token.'; return; }
+  try {
+    const r = await fetch('/projects/api/v1/public/contracts/' + encodeURIComponent(token));
+    const j = await r.json();
+    if (!j.success) { $('contract-body').textContent = j.error || 'Contract not found.'; return; }
+    render(j.data);
+  } catch (e) {
+    $('contract-body').textContent = 'Failed to load contract: ' + e.message;
+  }
+}
+
+function fmt(n, cur) {
+  return Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: cur || 'USD' });
+}
+
+function render(c) {
+  const badge = $('status-badge');
+  if (c.status === 'signed' || c.status === 'active') {
+    badge.className = 'badge badge-signed';
+    badge.textContent = c.status === 'active' ? 'ACTIVE' : 'SIGNED';
+  } else {
+    badge.className = 'badge badge-draft';
+    badge.textContent = (c.status || 'DRAFT').toUpperCase();
+  }
+  if (c.project) $('project-line').innerHTML = '<strong>' + escapeHtml(c.project.name) + '</strong>';
+  $('fee-grid').innerHTML = '' +
+    '<div class="fee-card"><div class="label">Project total</div><div class="value">' + fmt(c.total_amount_usd, c.currency) + '</div></div>' +
+    '<div class="fee-card"><div class="label">Deposit (' + Number(c.deposit_percent || 10) + '%)</div><div class="value">' + fmt(c.deposit_amount_usd, c.currency) + '</div></div>' +
+    '<div class="fee-card"><div class="label">Monthly</div><div class="value">' + fmt(c.monthly_amount_usd, c.currency) + '</div></div>';
+  $('contract-body').innerHTML = c.contract_html || '<em>No contract body on file.</em>';
+  if (c.status === 'draft' || c.status === 'sent') {
+    $('sign-form').style.display = 'block';
+  } else if (c.signed_by_name) {
+    const f = $('sign-form');
+    f.style.display = 'block';
+    f.innerHTML = '<p>This contract was signed by <strong>' + escapeHtml(c.signed_by_name) + '</strong> (' + escapeHtml(c.signed_by_email || '') + ') on ' + new Date(c.signed_at).toLocaleString() + '.</p>';
+  }
+}
+
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c])); }
+
+$('sign-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('submit-btn');
+  btn.disabled = true;
+  $('msg').className = ''; $('msg').textContent = '';
+  try {
+    const r = await fetch('/projects/api/v1/public/contracts/' + encodeURIComponent(token) + '/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: $('name').value.trim(), email: $('email').value.trim() })
+    });
+    const j = await r.json();
+    if (!j.success) { $('msg').className = 'msg err'; $('msg').textContent = j.error || 'Signing failed'; btn.disabled = false; return; }
+    $('msg').className = 'msg ok';
+    $('msg').textContent = 'Signed! The team has been notified and will reach out to confirm deposit and kickoff next steps.';
+    setTimeout(load, 800);
+  } catch (err) {
+    $('msg').className = 'msg err'; $('msg').textContent = err.message;
+    btn.disabled = false;
+  }
+});
+
+load();
+</script>
+</body>
+</html>

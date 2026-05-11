@@ -745,6 +745,24 @@ router.get('/companies/:id/tokens', intakeAuth, requireAdmin, async (req, res) =
 // =====================================================
 const milestoneGenerator = require('../services/milestone-generator');
 const requestorNotification = require('../services/requestorNotification');
+const zoomService = require('../services/zoom');
+const inviteService = require('../services/meetingInvite');
+const { CalendarEvent } = require('../models');
+
+// Compute the next business day at 10:00 America/New_York that is at
+// least `minDaysOut` days from today. Returns { startISO, endISO }
+// where end is 30 minutes after start.
+function nextKickoffSlot(minDaysOut = 3) {
+  const target = new Date();
+  target.setUTCHours(15, 0, 0, 0); // 10:00 ET ~ 15:00 UTC (close enough for invite seed)
+  let added = 0;
+  while (added < minDaysOut || [0, 6].includes(target.getUTCDay())) {
+    target.setUTCDate(target.getUTCDate() + 1);
+    if (![0, 6].includes(target.getUTCDay())) added++;
+  }
+  const end = new Date(target.getTime() + 30 * 60 * 1000);
+  return { startISO: target.toISOString(), endISO: end.toISOString() };
+}
 
 // POST /projects/:id/approve
 // Generates milestones via Claude, inserts them, marks project approved.
@@ -815,6 +833,7 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
     project.intake_status = 'approved';
     project.ai_milestone_generation_at = new Date();
     project.status = 'active';
+    project.workflow_phase = 'kickoff_scheduled';
     if (plan.estimated_completion_date) project.due_date = plan.estimated_completion_date;
     if (plan.kickoff_recommendation) {
       project.notes = (project.notes ? project.notes + '\n\n' : '') + 'Kickoff (AI-generated):\n' + plan.kickoff_recommendation;
@@ -868,6 +887,69 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
           description: project.description,
           magicLink
         });
+
+        // Auto-schedule the kickoff meeting: pick the next available
+        // weekday at 10:00 ET, create a Zoom meeting, save a calendar
+        // event, and email the submitter the join link + .ics. The
+        // submitter can later propose a reschedule via the magic-link
+        // page (POST /intake/events/:id/reschedule).
+        if (project.submitter_email) {
+          try {
+            const { startISO, endISO } = nextKickoffSlot(3);
+            const proposedTitle = `Kickoff — ${project.name}`;
+            let zoomData = {};
+            if (zoomService.isConfigured()) {
+              try {
+                const meeting = await zoomService.createMeeting({
+                  topic: proposedTitle,
+                  startISO,
+                  durationMinutes: 30,
+                  timezone: 'America/New_York',
+                  agenda: `Project kickoff for ${project.name}. We will walk the AI-generated plan, gather business requirements, and confirm milestones.`
+                });
+                zoomData = {
+                  zoom_meeting_id: meeting.id,
+                  zoom_join_url: meeting.join_url,
+                  zoom_start_url: meeting.start_url,
+                  zoom_password: meeting.password,
+                  location: meeting.join_url
+                };
+              } catch (zErr) {
+                console.error('[D2AI-Intake] Auto-kickoff Zoom create failed:', zErr.response?.data || zErr.message);
+              }
+            }
+            const event = await CalendarEvent.create({
+              workspace_id: 1,
+              project_id: project.id,
+              title: proposedTitle,
+              description: `Auto-scheduled kickoff. Reschedule via the requestor magic link if this time does not work.\n\nProject: ${project.name}\nRequestor: ${project.submitter_email}`,
+              start_time: startISO,
+              end_time: endISO,
+              all_day: false,
+              event_type: 'meeting',
+              user_email: 'info@digit2ai.com',
+              invited_emails: [project.submitter_email],
+              ...zoomData
+            });
+            project.kickoff_event_id = event.id;
+            project.kickoff_scheduled_at = new Date(startISO);
+            await project.save();
+            try {
+              await inviteService.sendInvites({
+                event,
+                emails: [project.submitter_email],
+                customMessage: `Hi ${project.submitter_name || 'there'},\n\nWe approved your project request and auto-scheduled a 30-minute kickoff to walk you through the AI-generated plan and capture detailed business requirements. If this time does not work, reply with a couple of alternatives and we will move it.`,
+                organizerName: requestorNotification.buildMagicLink ? 'Manuel Stagg' : null,
+                organizerEmail: 'mstagg@digit2ai.com'
+              });
+            } catch (iErr) {
+              console.error('[D2AI-Intake] Auto-kickoff invite send failed:', iErr.message);
+            }
+            console.log(`[D2AI-Intake] Auto-kickoff scheduled for project ${project.id} at ${startISO}`);
+          } catch (kickErr) {
+            console.error('[D2AI-Intake] Auto-kickoff scheduling failed:', kickErr.message);
+          }
+        }
       } catch (notifyErr) {
         console.error('[D2AI-Intake] Approval ack email failed:', notifyErr.message);
       }
@@ -899,6 +981,7 @@ router.post('/projects/:id/reject', intakeAuth, requireAdmin, async (req, res) =
     }
     const reason = (req.body && req.body.reason) ? String(req.body.reason).trim() : '';
     project.intake_status = 'rejected';
+    project.workflow_phase = 'rejected';
     if (reason) {
       project.notes = (project.notes ? project.notes + '\n\n' : '') + 'Rejection reason:\n' + reason;
     }
@@ -933,6 +1016,90 @@ router.post('/projects/:id/reject', intakeAuth, requireAdmin, async (req, res) =
     res.json({ success: true, project_id: project.id });
   } catch (err) {
     console.error('[D2AI-Intake] reject error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
+// SUBMITTER-FACING RESCHEDULE
+// =====================================================
+// POST /api/v1/intake/events/:eventId/reschedule
+// Submitters (share-token JWT) can propose a new time. We check the
+// workspace calendar for conflicts; if the slot is free we auto-accept
+// and update the event. If there is a conflict, we return the conflict
+// and let the human reviewer decide.
+
+const { Op } = require('sequelize');
+
+router.post('/events/:eventId/reschedule', intakeAuth, async (req, res) => {
+  try {
+    const eventId = parseInt(req.params.eventId, 10);
+    const { start_time, end_time, reason } = req.body || {};
+    if (!start_time || !end_time) {
+      return res.status(400).json({ success: false, error: 'start_time and end_time required' });
+    }
+    const newStart = new Date(start_time);
+    const newEnd = new Date(end_time);
+    if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime()) || newEnd <= newStart) {
+      return res.status(400).json({ success: false, error: 'Invalid start/end times' });
+    }
+    if (newStart < new Date()) {
+      return res.status(400).json({ success: false, error: 'Cannot reschedule to a past time' });
+    }
+
+    const event = await CalendarEvent.findByPk(eventId);
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
+
+    // Scope check — if caller is share-token (submitter), the event's
+    // project must belong to a project in their batch.
+    if (req.identity.source === 'share' && req.identity.role !== 'admin') {
+      if (!event.project_id) return res.status(403).json({ success: false, error: 'Event not bound to a project' });
+      const intakeRow = await ProjectIntake.findOne({ where: { project_id: event.project_id } });
+      if (!intakeRow || intakeRow.batch_id !== req.identity.batch_id) {
+        return res.status(403).json({ success: false, error: 'Out of scope' });
+      }
+    }
+
+    // Conflict detection — any other event whose [start, end) overlaps.
+    const conflicts = await CalendarEvent.findAll({
+      where: {
+        workspace_id: event.workspace_id,
+        id: { [Op.ne]: event.id },
+        start_time: { [Op.lt]: newEnd },
+        end_time: { [Op.gt]: newStart }
+      },
+      limit: 5
+    });
+
+    if (conflicts.length) {
+      return res.status(409).json({
+        success: false,
+        error: 'Time slot has a conflict',
+        conflicts: conflicts.map(c => ({
+          id: c.id, title: c.title, start_time: c.start_time, end_time: c.end_time
+        })),
+        message: 'Please propose another time, or contact us to coordinate.'
+      });
+    }
+
+    // No conflict — auto-accept.
+    const oldStart = event.start_time;
+    event.start_time = newStart;
+    event.end_time = newEnd;
+    event.description = (event.description ? event.description + '\n\n' : '') + `Rescheduled by ${req.identity.email || 'requestor'} on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.${reason ? '\nReason: ' + reason : ''}`;
+    await event.save();
+
+    if (event.project_id) {
+      const proj = await Project.findByPk(event.project_id);
+      if (proj && proj.kickoff_event_id === event.id) {
+        proj.kickoff_scheduled_at = newStart;
+        await proj.save();
+      }
+    }
+
+    res.json({ success: true, data: { id: event.id, start_time: event.start_time, end_time: event.end_time }, message: 'Reschedule accepted' });
+  } catch (err) {
+    console.error('[D2AI-Intake] reschedule error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

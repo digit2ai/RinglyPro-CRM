@@ -2853,6 +2853,22 @@ async function showProjectDetail(id) {
               <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Magic link sent to the requestor after approve/reject. Use it to see what they see.</p>
             </div>`;
           })() : ''}
+          ${(p.kickoff_scheduled_at || p.workflow_phase) ? `<div class="detail-section">
+            <h4>Workflow</h4>
+            <div style="font-size:13px;color:var(--text-secondary);display:flex;flex-direction:column;gap:4px">
+              <div><strong>Phase:</strong> <span class="status-badge status-${p.workflow_phase || 'pending_review'}">${p.workflow_phase || 'pending_review'}</span></div>
+              ${p.kickoff_scheduled_at ? `<div><strong>Kickoff scheduled:</strong> ${fmtDateTime(p.kickoff_scheduled_at)}</div>` : ''}
+              ${p.contract_status && p.contract_status !== 'none' ? `<div><strong>Contract status:</strong> ${p.contract_status}</div>` : ''}
+            </div>
+          </div>` : ''}
+          <div class="detail-section">
+            <h4 style="display:flex;justify-content:space-between;align-items:center">Business Requirements
+              <button class="btn btn-ghost btn-sm" onclick="editBusinessRequirements(${p.id})">${p.business_requirements ? 'Edit' : '+ Add'}</button>
+            </h4>
+            ${p.business_requirements
+              ? `<p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${escHtml(p.business_requirements)}</p>`
+              : `<p style="font-size:13px;color:var(--text-muted);font-style:italic">Captured after the kickoff meeting. Click Add to record stakeholder needs, success criteria, constraints, and any details gathered during requirements discovery.</p>`}
+          </div>
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
           ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
@@ -2923,6 +2939,23 @@ async function showProjectDetail(id) {
       </div>
     </div>
   `;
+}
+
+async function editBusinessRequirements(projectId) {
+  let current = '';
+  try {
+    const r = await api(`/projects/${projectId}`);
+    current = r?.data?.business_requirements || '';
+  } catch (_) {}
+  openModal('Business Requirements', `
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Capture stakeholder needs, success criteria, constraints, and assumptions gathered during the kickoff meeting. Markdown ok.</p>
+    <textarea id="m-breq" rows="14" style="width:100%;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical;padding:10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary)">${escHtml(current)}</textarea>
+  `, async () => {
+    const body = { business_requirements: document.getElementById('m-breq').value };
+    await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify(body) });
+    closeModal();
+    showProjectDetail(projectId);
+  });
 }
 
 async function archiveContact(id) { if (confirm('Archive this contact?')) { await api(`/contacts/${id}/archive`, { method: 'PUT' }); navigateTo('contacts'); } }
