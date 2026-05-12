@@ -9,19 +9,12 @@ import ReportPage from './pages/ReportPage'
 import ObservabilityPage from './pages/ObservabilityPage'
 import OEEDashboardPage from './pages/OEEDashboardPage'
 import PresentationPage from './pages/PresentationPage'
-import WarehouseMindPage from './pages/WarehouseMindPage'
-const warehouseMindSubItems = [
-  { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon, disabled: true },
-  { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
-  { path: '/warehousemind/events', label: 'Event Automation', icon: EventIcon },
-  { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon },
-  { path: '/oee-dashboard', label: 'OEE Dashboard', icon: GaugeIcon, noProject: true }
-]
+const warehouseMindSubItems = []
 
 const docsSubItems = []
 
 const steps = [
-  { path: '/warehousemind', label: 'WarehouseMind AI', icon: BrainIcon, noProject: true, collapsible: true, subItems: warehouseMindSubItems },
+  { path: '/warehousemind', label: 'WarehouseMind AI', icon: BrainIcon, noProject: true, collapsible: true, subItems: warehouseMindSubItems, disabled: true },
   { path: '/', label: 'Data Intake', icon: UploadIcon },
   { path: '/analysis', label: 'Analysis', icon: ChartIcon },
   { path: '/products', label: 'Concepts', icon: BoxIcon },
@@ -465,8 +458,8 @@ export default function App({ onLogout, userEmail }) {
       <main className="flex-1 min-w-0">
         <div className="p-4 sm:p-6 lg:p-8">
           <Routes>
-            <Route path="/warehousemind" element={<WarehouseMindPage />} />
-            <Route path="/warehousemind/:section" element={<WarehouseMindPage />} />
+            <Route path="/warehousemind" element={<Navigate to="/" replace />} />
+            <Route path="/warehousemind/:section" element={<Navigate to="/" replace />} />
             <Route path="/" element={<UploadPage />} />
             <Route path="/analysis/:projectId" element={<AnalysisPage />} />
             <Route path="/products/:projectId" element={<ProductsPage />} />
