@@ -11,7 +11,7 @@ import OEEDashboardPage from './pages/OEEDashboardPage'
 import PresentationPage from './pages/PresentationPage'
 import WarehouseMindPage from './pages/WarehouseMindPage'
 const warehouseMindSubItems = [
-  { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon },
+  { path: '/warehousemind/command-center', label: 'MCP Command Center', icon: MCPIcon, disabled: true },
   { path: '/warehousemind/neural', label: 'Neural Intelligence', icon: NeuralIcon },
   { path: '/warehousemind/events', label: 'Event Automation', icon: EventIcon },
   { path: '/warehousemind/voice', label: 'Voice AI', icon: VoiceIcon },
@@ -315,6 +315,15 @@ export default function App({ onLogout, userEmail }) {
                       {step.subItems.map((sub) => {
                         const SubIcon = sub.icon
                         const subItemActive = location.pathname.startsWith(sub.path?.split('/')[1] ? '/' + sub.path.split('/')[1] : sub.path)
+                        if (sub.disabled) {
+                          return (
+                            <span key={sub.path} title="Restricted"
+                              className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-slate-500 opacity-50 cursor-not-allowed">
+                              <SubIcon className="w-3 h-3 text-slate-600" />
+                              <span>{sub.label}</span>
+                            </span>
+                          )
+                        }
                         if (sub.external) {
                           return (
                             <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer"
@@ -397,6 +406,15 @@ export default function App({ onLogout, userEmail }) {
                       <div className="ml-6 pl-3 border-l border-slate-700/60 space-y-0.5 mt-0.5">
                         {step.subItems.map((sub) => {
                           const SubIcon = sub.icon
+                          if (sub.disabled) {
+                            return (
+                              <span key={sub.path} title="Restricted"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded text-[11px] text-slate-500 opacity-50 cursor-not-allowed">
+                                <SubIcon className="w-3 h-3 text-slate-600" />
+                                <span>{sub.label}</span>
+                              </span>
+                            )
+                          }
                           if (sub.external) {
                             return (
                               <a key={sub.path} href={sub.path} target="_blank" rel="noopener noreferrer" onClick={closeMenu}

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
 const sections = [
-  { id: 'command-center', label: 'MCP Command Center' },
   { id: 'neural', label: 'Neural Intelligence' },
   { id: 'events', label: 'Event Automation' },
   { id: 'voice', label: 'Voice AI' }
@@ -48,84 +47,7 @@ function SectionHeader({ title, subtitle }) {
 }
 
 function CommandCenterSection() {
-  return (
-    <div>
-      <SectionHeader
-        title="MCP Command Center"
-        subtitle="Central nervous system — routes every tool call, enforces tier access, logs everything."
-      />
-
-      {/* Architecture Diagram */}
-      <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-6 mb-6">
-        <h3 className="text-white font-semibold text-sm mb-4">Orchestrator Architecture</h3>
-        <div className="font-mono text-xs text-slate-400 leading-relaxed whitespace-pre">
-{`                    MCP SERVER ORCHESTRATOR
-                   /pinaxis/mcp/tools/call
-                          │
-         ┌────────────────┼────────────────┐
-         │                │                │
-    TIER CHECK       TOOL ROUTER       EVENT BUS
-    "Does this       "Which agent       "Notify other
-     tenant have      handles this       agents of
-     access?"         tool?"             this event"
-         │                │                │
-         ▼                ▼                ▼
-  ┌─────────────────────────────────────────────┐
-  │               8 AI AGENTS                    │
-  │  Tier 1: Warehouse Ops + OEE + Dock         │
-  │  Tier 2: Inventory + Labor                   │
-  │  Tier 3: Quality + Financial                 │
-  │  Tier 4: Neural Intelligence                 │
-  └─────────────────────────────────────────────┘`}
-        </div>
-      </div>
-
-      {/* MCP Endpoints */}
-      <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-6 mb-6">
-        <h3 className="text-white font-semibold text-sm mb-4">MCP Server Endpoints</h3>
-        <div className="space-y-2">
-          {[
-            { method: 'POST', path: '/pinaxis/mcp/tools/list', desc: 'List all tools (filtered by tenant tier)' },
-            { method: 'POST', path: '/pinaxis/mcp/tools/call', desc: 'Execute a tool' },
-            { method: 'POST', path: '/pinaxis/mcp/events', desc: 'Publish cross-tier events' },
-            { method: 'GET', path: '/pinaxis/mcp/status', desc: 'System status (agents, tools, tiers)' },
-            { method: 'GET', path: '/pinaxis/mcp/tiers', desc: 'Tier definitions and pricing' },
-            { method: 'POST', path: '/pinaxis/mcp/tenants', desc: 'Onboard a new tenant' },
-            { method: 'GET', path: '/pinaxis/mcp/tenants/:id', desc: 'Get tenant config & tier' }
-          ].map((ep, i) => (
-            <div key={i} className="flex items-center gap-3 text-xs">
-              <span className={`px-2 py-0.5 rounded font-mono font-bold ${ep.method === 'POST' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
-                {ep.method}
-              </span>
-              <code className="text-slate-300 font-mono">{ep.path}</code>
-              <span className="text-slate-500 ml-auto hidden sm:inline">{ep.desc}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Agent Mesh */}
-      <h3 className="text-white font-semibold text-sm mb-4">8 AI Agents &middot; 82+ MCP Tools</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AgentCard name="Warehouse Operations" tier={1} tools={12} status="building"
-          description="Continuous warehouse analytics — ABC classification, throughput trends, anomaly detection, peak analysis, volume forecasting." />
-        <AgentCard name="OEE & Machine Intelligence" tier={1} tools={10} status="active"
-          description="Real-time shop floor monitoring. OEE calculation, predictive maintenance, conveyor health, energy consumption." />
-        <AgentCard name="Dock & Receiving" tier={1} tools={9} status="planned"
-          description="Dock door scheduling, truck check-in, receiving workflows, yard visibility, carrier scorecards." />
-        <AgentCard name="Inventory & Space Optimization" tier={2} tools={12} status="planned"
-          description="Intelligent slotting, reorder points, dead stock detection, space utilization, layout simulation." />
-        <AgentCard name="Labor & Workforce" tier={2} tools={10} status="planned"
-          description="Picks/hour tracking, shift optimization, staffing forecasts, cost per pick, bottleneck detection." />
-        <AgentCard name="Quality & Compliance" tier={3} tools={10} status="planned"
-          description="Error rate tracking, regulatory compliance, damage reports, lot traceability, SLA performance." />
-        <AgentCard name="Financial & ROI" tier={3} tools={10} status="building"
-          description="Cost per order, ROI projections, revenue leakage detection, profitability analysis, contract generation." />
-        <AgentCard name="Neural Intelligence" tier={4} tools={9} status="planned"
-          description="The brain. Scheduled scans, diagnostics, prescriptions. Does NOT execute — that's Treatment (consulting upsell)." />
-      </div>
-    </div>
-  )
+  return null
 }
 
 function NeuralSection() {
@@ -395,19 +317,19 @@ function VoiceSection() {
 
 export default function WarehouseMindPage() {
   const { section } = useParams()
-  const [activeSection, setActiveSection] = useState(section || 'command-center')
+  const initial = (!section || section === 'command-center') ? 'neural' : section
+  const [activeSection, setActiveSection] = useState(initial)
 
   useEffect(() => {
-    if (section) setActiveSection(section)
+    if (section && section !== 'command-center') setActiveSection(section)
   }, [section])
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'command-center': return <CommandCenterSection />
       case 'neural': return <NeuralSection />
       case 'events': return <EventsSection />
       case 'voice': return <VoiceSection />
-      default: return <CommandCenterSection />
+      default: return <NeuralSection />
     }
   }
 
