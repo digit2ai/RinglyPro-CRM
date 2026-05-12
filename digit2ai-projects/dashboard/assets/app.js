@@ -2994,20 +2994,33 @@ function renderBuildAndUatCard(p) {
     build_stuck: '#f43f5e'
   })[phase] || '#94a3b8';
   const prodUrl = p.production_url || (p.short_name ? `https://aiagent.ringlypro.com/${p.short_name}` : '');
-  const actions = [];
+  // ====== PRIMARY "PLAY" ACTION ======
+  // The single biggest button on the card — what the user is meant to press
+  // next, given the current phase. Full-width, large padding, gradient.
+  let primaryAction = '';
   if (phase === 'awaiting_human_greenlight') {
-    actions.push(`<button class="btn btn-primary btn-sm" onclick="grantHumanGreenlight(${p.id})" style="background:linear-gradient(90deg,#f59e0b,#f97316);border:none;color:#020617">&#9888; Greenlight Build</button>`);
+    primaryAction = `<button onclick="grantHumanGreenlight(${p.id})" style="display:block;width:100%;padding:18px 24px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#f59e0b,#f97316);border:none;border-radius:10px;color:#020617;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.4);margin-bottom:10px;letter-spacing:0.5px">GREENLIGHT BUILD &mdash; START PIPELINE</button>`;
+  } else if (phase === 'manual_build' || phase === 'uat_revision') {
+    primaryAction = `<button onclick="markBuildComplete(${p.id})" style="display:block;width:100%;padding:18px 24px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#10b981,#22c55e);border:none;border-radius:10px;color:#020617;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,0.4);margin-bottom:10px;letter-spacing:0.5px">BUILD COMPLETE &mdash; RUN SIT &amp; HANDOFF UAT</button>`;
+  } else if (phase === 'build_authorized' || phase === 'queued') {
+    primaryAction = `<button onclick="regenerateArchitectPrompt(${p.id})" style="display:block;width:100%;padding:18px 24px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;border-radius:10px;color:#020617;cursor:pointer;box-shadow:0 4px 14px rgba(56,189,248,0.4);margin-bottom:10px;letter-spacing:0.5px">GENERATE ARCHITECT PROMPT</button>`;
+  } else if (phase === 'uat_ready') {
+    primaryAction = `<div style="display:block;width:100%;padding:14px 18px;font-size:14px;font-weight:600;background:linear-gradient(90deg,#10b981,#22c55e);border-radius:10px;color:#020617;margin-bottom:10px;text-align:center;letter-spacing:0.5px">UAT IN PROGRESS &mdash; STAKEHOLDERS TESTING</div>`;
+  } else if (phase === 'shipped') {
+    primaryAction = `<div style="display:block;width:100%;padding:14px 18px;font-size:14px;font-weight:600;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:10px;color:#020617;margin-bottom:10px;text-align:center;letter-spacing:0.5px">SHIPPED</div>`;
+  } else if (phase === 'build_stuck') {
+    primaryAction = `<div style="display:block;width:100%;padding:14px 18px;font-size:14px;font-weight:600;background:linear-gradient(90deg,#f43f5e,#dc2626);border-radius:10px;color:#fff;margin-bottom:10px;text-align:center;letter-spacing:0.5px">BUILD STUCK &mdash; MANUAL INTERVENTION REQUIRED</div>`;
   }
-  if (phase === 'manual_build' || phase === 'uat_revision' || phase === 'build_authorized' || phase === 'queued') {
-    actions.push(`<button class="btn btn-primary btn-sm" onclick="markBuildComplete(${p.id})" style="background:linear-gradient(90deg,#10b981,#22c55e);border:none;color:#020617">&#10003; Build Complete (run SIT)</button>`);
-  }
+
+  // ====== SECONDARY ACTIONS (small ghost buttons) ======
+  const actions = [];
   if (p.architect_prompt) {
     actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewArchitectPrompt(${p.id})">View Architect Prompt</button>`);
   }
-  // Always allow re-running the synthesizer once the project has reached build_authorized.
-  // Lets you iterate on the prompt (edit targets, requirements, plan) and see the new brief
-  // without firing the whole pipeline / emailing anyone again.
-  actions.push(`<button class="btn btn-ghost btn-sm" onclick="regenerateArchitectPrompt(${p.id})" title="Re-run the Senior Prompt Engineer synthesizer">&#8635; Regenerate Prompt</button>`);
+  // Regenerate the synthesizer at any time (except shipped/stuck) without firing the pipeline.
+  if (phase !== 'shipped' && phase !== 'build_stuck') {
+    actions.push(`<button class="btn btn-ghost btn-sm" onclick="regenerateArchitectPrompt(${p.id})" title="Re-run the Senior Prompt Engineer synthesizer (no email, no phase change)">Regenerate Prompt</button>`);
+  }
   if (p.sit_report_md) {
     actions.push(`<button class="btn btn-ghost btn-sm" onclick="viewSitReport(${p.id})">View SIT Report</button>`);
   }
@@ -3029,7 +3042,8 @@ function renderBuildAndUatCard(p) {
       ${p.build_completed_at ? `<div><strong>Build completed:</strong> ${fmtDateTime(p.build_completed_at)}</div>` : ''}
       ${p.uat_approved_at ? `<div><strong>UAT approved:</strong> ${fmtDateTime(p.uat_approved_at)}${p.uat_approved_by ? ' by ' + escHtml(p.uat_approved_by) : ''}</div>` : ''}
     </div>
-    ${actions.length ? `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${actions.join('')}</div>` : ''}
+    ${primaryAction ? `<div style="margin-top:14px">${primaryAction}</div>` : ''}
+    ${actions.length ? `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${actions.join('')}</div>` : ''}
   </div>`;
 }
 
