@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cali CityLab &mdash; Presentaci&oacute;n</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07090f;
+            --panel: rgba(255,255,255,0.04);
+            --line: rgba(255,255,255,0.10);
+            --line2: rgba(255,255,255,0.18);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --white: #fff;
+            --teal: #2dd4bf;
+            --purple: #7c5cff;
+            --gold: #f59e0b;
+            --green: #34d399;
+            --red: #ef4444;
+            --blue: #60a5fa;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.55;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Animated background */
+        .sm-bg {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .sm-bg__grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+        }
+        .sm-bg__orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            will-change: transform;
+        }
+        .sm-bg__orb--1 {
+            width: 620px; height: 620px;
+            top: -180px; left: -120px;
+            background: radial-gradient(circle, rgba(124,92,255,.45), rgba(124,92,255,0) 65%);
+            animation: drift1 24s ease-in-out infinite;
+        }
+        .sm-bg__orb--2 {
+            width: 540px; height: 540px;
+            bottom: -140px; right: -100px;
+            background: radial-gradient(circle, rgba(74,159,255,.38), rgba(74,159,255,0) 65%);
+            animation: drift2 30s ease-in-out infinite;
+        }
+        .sm-bg__orb--3 {
+            width: 400px; height: 400px;
+            top: 45%; left: 50%;
+            transform: translate(-50%,-50%);
+            background: radial-gradient(circle, rgba(93,221,250,.30), rgba(93,221,250,0) 65%);
+            animation: drift3 20s ease-in-out infinite;
+        }
+        .sm-bg__vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.7) 100%);
+        }
+        @keyframes drift1 {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(90px,60px) scale(1.1); }
+        }
+        @keyframes drift2 {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(-70px,-40px) scale(1.15); }
+        }
+        @keyframes drift3 {
+            0%, 100% { transform: translate(-50%,-50%) scale(1); }
+            50% { transform: translate(calc(-50% + 60px), calc(-50% - 40px)) scale(.9); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sm-bg__orb { animation: none !important; }
+        }
+
+        /* Top bar */
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 48px;
+            background: rgba(7,9,15,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+        }
+        .brand {
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand .grad {
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+        .counter {
+            font-weight: 600;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.4px;
+        }
+        .kbd {
+            display: inline-block;
+            padding: 1px 6px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text);
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        /* Stage */
+        .stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 70px 60px 90px;
+            z-index: 1;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1120px;
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+            padding: 20px 8px;
+            opacity: 0;
+            transform: translateY(12px);
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        .slide.active { display: block; }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Eyebrow */
+        .eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--purple);
+            letter-spacing: 0.20em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        /* Slide types */
+        .h1 {
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -1px;
+            line-height: 1.05;
+            margin-bottom: 18px;
+        }
+        .h1 .grad {
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .h2 {
+            font-size: clamp(28px, 3.4vw, 42px);
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+            margin-bottom: 18px;
+        }
+        .lead {
+            font-size: clamp(16px, 1.6vw, 20px);
+            color: var(--muted);
+            max-width: 880px;
+            line-height: 1.6;
+            margin-bottom: 26px;
+        }
+        .lead strong { color: var(--text); }
+
+        /* Cover */
+        .cover {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .cover .h1 { font-size: clamp(46px, 7vw, 92px); margin-bottom: 14px; }
+        .cover .lead { font-size: clamp(16px, 1.8vw, 22px); margin: 0 auto 32px; max-width: 760px; }
+        .cover-divider {
+            width: 72px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--purple), var(--teal));
+            margin: 0 auto 28px;
+            border-radius: 2px;
+        }
+        .cover-meta {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 0.6px;
+            line-height: 1.9;
+        }
+        .cover-meta strong { color: var(--text); }
+        .cover-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line2);
+            background: var(--panel);
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 28px;
+        }
+        .cover-tag .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 12px var(--green);
+        }
+
+        /* Pillars / 6-area grid */
+        .grid-6 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .pillar {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 3px solid var(--teal);
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+        .pillar-icon { font-size: 22px; margin-bottom: 6px; }
+        .pillar h4 {
+            font-size: 16px;
+            color: var(--white);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .pillar p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* Problem cards */
+        .problems {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .prob {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--red);
+            border-radius: 8px;
+            padding: 18px 22px;
+        }
+        .prob h4 {
+            font-size: 16px;
+            color: var(--white);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+        .prob p {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* Steps */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 14px;
+        }
+        .step {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 22px;
+            position: relative;
+        }
+        .step-num {
+            position: absolute;
+            top: -14px; left: 22px;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            color: #0a0d16;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .step h4 {
+            font-size: 17px;
+            color: var(--white);
+            margin: 14px 0 8px;
+            font-weight: 700;
+        }
+        .step p {
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* Capabilities */
+        .caps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 22px;
+            margin-top: 12px;
+        }
+        .cap {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 14px;
+            color: var(--text);
+            padding: 4px 0;
+            line-height: 1.5;
+        }
+        .cap-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            flex-shrink: 0;
+            margin-top: 8px;
+        }
+        .cap b { color: var(--white); }
+
+        /* Model card */
+        .model-card {
+            background: linear-gradient(135deg, rgba(124,92,255,0.10), rgba(45,212,191,0.06));
+            border: 1px solid rgba(124,92,255,0.40);
+            border-radius: 14px;
+            padding: 26px 30px;
+            margin-top: 14px;
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 26px;
+            align-items: start;
+        }
+        .model-side h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--purple);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .model-side ul { list-style: none; padding: 0; }
+        .model-side li {
+            font-size: 14px;
+            color: var(--text);
+            padding: 4px 0 4px 16px;
+            position: relative;
+            line-height: 1.55;
+        }
+        .model-side li::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 12px;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--teal);
+        }
+        .model-split {
+            text-align: center;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(124,92,255,0.25);
+            font-size: 17px;
+            color: var(--white);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .model-split .accent {
+            background: linear-gradient(135deg, var(--gold), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 28px;
+            font-weight: 900;
+        }
+
+        /* Roadmap */
+        .roadmap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .ms {
+            display: grid;
+            grid-template-columns: 76px 1fr;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px 18px;
+            align-items: center;
+        }
+        .ms-mes {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--purple);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            text-align: center;
+            border-right: 1px solid var(--line);
+            padding-right: 12px;
+        }
+        .ms-mes .num {
+            display: block;
+            font-size: 24px;
+            color: var(--white);
+            font-weight: 900;
+            margin-top: 2px;
+        }
+        .ms-body h5 {
+            font-size: 15px;
+            color: var(--white);
+            margin-bottom: 2px;
+            font-weight: 700;
+        }
+        .ms-body p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta-box {
+            background: linear-gradient(135deg, rgba(124,92,255,0.12), rgba(45,212,191,0.06));
+            border: 1px solid rgba(124,92,255,0.45);
+            border-radius: 14px;
+            padding: 28px;
+            margin-top: 18px;
+            text-align: center;
+        }
+        .cta-box h3 {
+            font-size: 22px;
+            color: var(--white);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+        .cta-box p {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 18px;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            letter-spacing: 0.04em;
+        }
+
+        /* Bottom controls */
+        .controls {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 64px;
+            background: rgba(7,9,15,0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--line2);
+            color: var(--text);
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover { background: rgba(124,92,255,0.15); border-color: var(--purple); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nav-btn.primary {
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            border-color: transparent;
+            color: #fff;
+        }
+        .progress {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            max-width: 480px;
+            margin: 0 20px;
+            justify-content: center;
+        }
+        .dot {
+            width: 26px;
+            height: 4px;
+            background: rgba(255,255,255,0.10);
+            border-radius: 2px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .dot.active { background: linear-gradient(90deg, var(--purple), var(--teal)); }
+        .dot.visited { background: rgba(124,92,255,0.4); }
+
+        /* ElevenLabs widget — bottom right floating */
+        elevenlabs-convai {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 200;
+        }
+
+        /* Voice agent setup notice (only shows if placeholder agent id) */
+        .agent-notice {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(15,23,42,0.96);
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            padding: 12px 16px;
+            max-width: 320px;
+            font-size: 11.5px;
+            color: var(--text);
+            line-height: 1.55;
+            z-index: 199;
+            display: none;
+        }
+        .agent-notice.show { display: block; }
+        .agent-notice strong { color: var(--gold); }
+        .agent-notice code {
+            background: rgba(0,0,0,0.4);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 10.5px;
+        }
+
+        @media (max-width: 900px) {
+            .stage { padding: 60px 20px 80px; }
+            .grid-6 { grid-template-columns: 1fr 1fr; }
+            .problems, .caps, .model-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .top-actions .hide-sm { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="sm-bg" aria-hidden="true">
+    <div class="sm-bg__grid"></div>
+    <div class="sm-bg__orb sm-bg__orb--1"></div>
+    <div class="sm-bg__orb sm-bg__orb--2"></div>
+    <div class="sm-bg__orb sm-bg__orb--3"></div>
+    <div class="sm-bg__vignette"></div>
+</div>
+
+<!-- Top bar -->
+<div class="top-bar">
+    <div class="brand">Cali City<span class="grad">Lab</span></div>
+    <div class="top-actions">
+        <span class="hide-sm"><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> para navegar</span>
+        <span class="counter" id="counter">1 / 12</span>
+    </div>
+</div>
+
+<!-- Stage -->
+<div class="stage">
+
+    <!-- Slide 1 — Portada -->
+    <section class="slide active cover" data-narration="cover">
+        <div class="cover-tag"><span class="dot"></span> Plataforma de Innovaci&oacute;n Urbana</div>
+        <h1 class="h1">Cali City<span class="grad">Lab</span></h1>
+        <p class="lead">La plataforma inteligente que conecta los retos de la ciudad con las capacidades del ecosistema &mdash; startups, universidades, ONGs y empresas &mdash; para convertir problemas en proyectos reales.</p>
+        <div class="cover-divider"></div>
+        <div class="cover-meta">
+            <div>Preparado por <strong>Digit2AI</strong> + <strong>Reddi Colombia</strong></div>
+            <div>Mayo 2026</div>
+        </div>
+    </section>
+
+    <!-- Slide 2 — El Problema -->
+    <section class="slide" data-narration="problem-intro">
+        <div class="eyebrow">El Problema</div>
+        <h2 class="h2">Las ciudades tienen problemas. <br>Las soluciones est&aacute;n dispersas.</h2>
+        <p class="lead">Cada ciudad enfrenta decenas de retos &mdash; movilidad, seguridad, salud, sostenibilidad &mdash; y al mismo tiempo existen cientos de startups, universidades, ONGs y empresas con la capacidad de resolverlos. <strong>Pero nadie se encuentra.</strong> La informaci&oacute;n est&aacute; fragmentada, los datos viven en silos, y los recursos se pierden buscando.</p>
+    </section>
+
+    <!-- Slide 3 — 6 áreas -->
+    <section class="slide" data-narration="six-areas">
+        <div class="eyebrow">Las 6 &Aacute;reas Cr&iacute;ticas</div>
+        <h2 class="h2">Donde la ciudad necesita actuar &mdash; ya.</h2>
+        <p class="lead">Cali CityLab se enfoca en los seis frentes que m&aacute;s impacto generan en la calidad de vida de los ciudadanos:</p>
+        <div class="grid-6">
+            <div class="pillar"><div class="pillar-icon">&#128663;</div><h4>Movilidad</h4><p>Tr&aacute;fico, transporte p&uacute;blico, infraestructura vial.</p></div>
+            <div class="pillar"><div class="pillar-icon">&#128737;</div><h4>Seguridad</h4><p>Prevenci&oacute;n, atenci&oacute;n ciudadana, datos en tiempo real.</p></div>
+            <div class="pillar"><div class="pillar-icon">&#127795;</div><h4>Sostenibilidad</h4><p>Energ&iacute;a, agua, residuos, calidad del aire.</p></div>
+            <div class="pillar"><div class="pillar-icon">&#128300;</div><h4>Salud</h4><p>Acceso, prevenci&oacute;n, telemedicina, salud p&uacute;blica.</p></div>
+            <div class="pillar"><div class="pillar-icon">&#128176;</div><h4>Desarrollo Econ&oacute;mico</h4><p>Empleo, MiPymes, atracci&oacute;n de inversi&oacute;n.</p></div>
+            <div class="pillar"><div class="pillar-icon">&#129309;</div><h4>Servicios Ciudadanos</h4><p>Tr&aacute;mites, atenci&oacute;n, participaci&oacute;n.</p></div>
+        </div>
+    </section>
+
+    <!-- Slide 4 — Consecuencias -->
+    <section class="slide" data-narration="consequences">
+        <div class="eyebrow">La Consecuencia</div>
+        <h2 class="h2">Cuando el ecosistema no se conecta, todos pierden.</h2>
+        <div class="problems">
+            <div class="prob"><h4>Las buenas ideas mueren en silos</h4><p>Soluciones que ya existen nunca llegan a la ciudad que las necesita.</p></div>
+            <div class="prob"><h4>Los retos crecen sin atenci&oacute;n</h4><p>Los problemas urbanos se acumulan y se vuelven m&aacute;s costosos de resolver.</p></div>
+            <div class="prob"><h4>El financiamiento no aterriza</h4><p>El dinero de fondos, gobierno y cooperaci&oacute;n no encuentra a quien lo puede ejecutar.</p></div>
+            <div class="prob"><h4>La ciudad pierde a&ntilde;os de avance</h4><p>Cada a&ntilde;o sin coordinaci&oacute;n son a&ntilde;os de progreso que se pierden.</p></div>
+        </div>
+    </section>
+
+    <!-- Slide 5 — La Solución -->
+    <section class="slide" data-narration="solution">
+        <div class="eyebrow">La Soluci&oacute;n</div>
+        <h2 class="h2">Una sola plataforma. <span style="color: var(--teal)">Un solo lugar.</span></h2>
+        <p class="lead">Cali CityLab es la plataforma donde el reto encuentra a quien lo puede resolver &mdash; con inteligencia artificial, an&aacute;lisis de datos, e integraci&oacute;n del ecosistema completo. Funciona como una <strong>capa de inteligencia digital</strong> y al mismo tiempo como <strong>infraestructura de ejecuci&oacute;n</strong>: no solo conecta, tambi&eacute;n ayuda a ejecutar y medir el impacto real.</p>
+    </section>
+
+    <!-- Slide 6 — Cómo funciona -->
+    <section class="slide" data-narration="how-it-works">
+        <div class="eyebrow">C&oacute;mo Funciona</div>
+        <h2 class="h2">Tres pasos. Resultado real.</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h4>Publicar el Reto</h4>
+                <p>Ciudades, alcald&iacute;as y empresas suben sus problemas territoriales: t&iacute;tulo, descripci&oacute;n, categor&iacute;a, prioridad.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h4>Registrar Capacidades</h4>
+                <p>Startups, universidades, ONGs y empresas registran qu&eacute; saben hacer: &aacute;rea de experiencia, casos de &eacute;xito, contacto.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h4>Conectar y Ejecutar</h4>
+                <p>La plataforma hace el matching, lanza pilotos, mide impacto, y reporta resultados &mdash; todo en un solo flujo.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7 — Capacidades de la plataforma -->
+    <section class="slide" data-narration="capabilities">
+        <div class="eyebrow">Capacidades de la Plataforma</div>
+        <h2 class="h2">Todo lo que el ecosistema necesita &mdash; integrado.</h2>
+        <div class="caps">
+            <div class="cap"><div class="cap-dot"></div><div><b>Matching con IA.</b> Conecta retos con soluciones usando NLP y grafos de conocimiento.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Directorio del Ecosistema.</b> Base unificada de startups, universidades, ONGs y empresas.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Dashboards de Impacto.</b> KPIs econ&oacute;micos, ambientales y sociales en tiempo real.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Integraciones.</b> CRMs, bases de datos universitarias, sistemas GIS, datos abiertos.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Ciclo de Pilotos.</b> Desde la idea hasta el escalamiento &mdash; en un solo timeline.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Matching de Financiamiento.</b> Conecta proyectos con fondos, inversionistas y cooperaci&oacute;n.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Notificaciones.</b> WhatsApp y correo cuando se publica un reto o avanza un piloto.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Participaci&oacute;n Ciudadana.</b> Votaci&oacute;n, co-creaci&oacute;n y transparencia p&uacute;blica.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Multi-Ciudad.</b> Cada ciudad con su propio espacio &mdash; datos privados, ecosistema compartido.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Cumplimiento Ley 1581.</b> Habeas Data, privacidad por dise&ntilde;o, auditor&iacute;a de accesos.</div></div>
+        </div>
+    </section>
+
+    <!-- Slide 8 — Para Quién -->
+    <section class="slide" data-narration="for-whom">
+        <div class="eyebrow">Para Qui&eacute;n</div>
+        <h2 class="h2">Cuatro actores. Un mismo lenguaje.</h2>
+        <div class="problems">
+            <div class="prob" style="border-left-color: var(--blue)"><h4>Ciudades y Alcald&iacute;as</h4><p>Publican retos, monitorean pilotos, miden impacto, justifican inversi&oacute;n p&uacute;blica con datos.</p></div>
+            <div class="prob" style="border-left-color: var(--teal)"><h4>Universidades</h4><p>Conectan investigaci&oacute;n aplicada con problemas reales y aseguran financiamiento.</p></div>
+            <div class="prob" style="border-left-color: var(--purple)"><h4>Startups y Empresas</h4><p>Acceden a un mercado claro de retos, prueban tecnolog&iacute;a, escalan con respaldo.</p></div>
+            <div class="prob" style="border-left-color: var(--gold)"><h4>ONGs y Cooperaci&oacute;n</h4><p>Ven d&oacute;nde aterrizar recursos, miden impacto social, y reportan a sus donantes.</p></div>
+        </div>
+    </section>
+
+    <!-- Slide 9 — Modelo de Negocio -->
+    <section class="slide" data-narration="business-model">
+        <div class="eyebrow">El Modelo de Negocio</div>
+        <h2 class="h2">Partnership Digit2AI + Reddi Colombia.</h2>
+        <div class="model-card">
+            <div class="model-grid">
+                <div class="model-side">
+                    <h4>Digit2AI</h4>
+                    <ul>
+                        <li>Construye la plataforma</li>
+                        <li>Mantiene infraestructura y datos</li>
+                        <li>Innovaci&oacute;n continua de IA</li>
+                        <li>Soporte t&eacute;cnico y seguridad</li>
+                    </ul>
+                </div>
+                <div class="model-side">
+                    <h4>Reddi Colombia</h4>
+                    <ul>
+                        <li>Consigue clientes</li>
+                        <li>Vende y hace onboarding</li>
+                        <li>Cobra y administra cuentas</li>
+                        <li>Lleva la relaci&oacute;n local</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="model-split">
+                Ingresos compartidos <span class="accent">50 / 50</span> mensualmente
+            </div>
+        </div>
+        <p class="lead" style="margin-top: 14px; font-size: 14px;">Sin costos iniciales para los clientes piloto. Sin cuotas de entrada para Reddi. Una sociedad alineada en resultados &mdash; ambos ganan cuando la plataforma crece.</p>
+    </section>
+
+    <!-- Slide 10 — Roadmap -->
+    <section class="slide" data-narration="roadmap">
+        <div class="eyebrow">Roadmap de 6 Meses</div>
+        <h2 class="h2">De MVP a producci&oacute;n &mdash; paso a paso.</h2>
+        <div class="roadmap">
+            <div class="ms"><div class="ms-mes">Mes<span class="num">1</span></div><div class="ms-body"><h5>MVP &mdash; Registro de Retos + Directorio</h5><p>Formulario p&uacute;blico, directorio de capacidades, matching manual por admin. Demo a 3-5 socios ancla.</p></div></div>
+            <div class="ms"><div class="ms-mes">Mes<span class="num">2</span></div><div class="ms-body"><h5>IA de Matching Autom&aacute;tico</h5><p>NLP y grafos para sugerir las mejores conexiones. Integraciones con datos externos.</p></div></div>
+            <div class="ms"><div class="ms-mes">Mes<span class="num">3</span></div><div class="ms-body"><h5>Ciclo de Pilotos</h5><p>Cada match se convierte en proyecto con etapas, tareas, documentos y timeline.</p></div></div>
+            <div class="ms"><div class="ms-mes">Mes<span class="num">4</span></div><div class="ms-body"><h5>Medici&oacute;n de Impacto</h5><p>Dashboards con KPIs econ&oacute;micos, ambientales y sociales por piloto y por ciudad.</p></div></div>
+            <div class="ms"><div class="ms-mes">Mes<span class="num">5</span></div><div class="ms-body"><h5>Notificaciones + Comunidad</h5><p>WhatsApp, correo, votaci&oacute;n ciudadana, co-creaci&oacute;n y participaci&oacute;n p&uacute;blica.</p></div></div>
+            <div class="ms"><div class="ms-mes">Mes<span class="num">6</span></div><div class="ms-body"><h5>Multi-Ciudad + Financiamiento</h5><p>M&uacute;ltiples ciudades aisladas, matching de fondos, auditor&iacute;a final, paso a producci&oacute;n.</p></div></div>
+        </div>
+    </section>
+
+    <!-- Slide 11 — Por Qué Ahora -->
+    <section class="slide" data-narration="why-now">
+        <div class="eyebrow">Por Qu&eacute; Ahora</div>
+        <h2 class="h2">La oportunidad es <span style="color: var(--gold)">hoy</span>.</h2>
+        <p class="lead">Cali tiene un ecosistema vibrante &mdash; universidades fuertes, startups con tracci&oacute;n, gobierno local abierto a innovaci&oacute;n, cooperaci&oacute;n internacional activa. Lo que falta no son actores. Lo que falta es <strong>la infraestructura que los conecte</strong>. Si esa capa se construye en 2026, Cali se convierte en el referente de ciudades inteligentes para Am&eacute;rica Latina &mdash; y la plataforma escala desde aqu&iacute; a Medell&iacute;n, Bogot&aacute;, Barranquilla, y m&aacute;s all&aacute;.</p>
+        <div class="caps" style="margin-top: 8px;">
+            <div class="cap"><div class="cap-dot"></div><div><b>Ecosistema listo.</b> Los actores existen, solo faltan los puentes.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Tecnolog&iacute;a madura.</b> La IA de matching y los dashboards ya son viables, accesibles, y probados.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Apetito p&uacute;blico.</b> Los gobiernos locales buscan herramientas tangibles para mostrar resultados.</div></div>
+            <div class="cap"><div class="cap-dot"></div><div><b>Modelo replicable.</b> Lo que funciona en Cali, funciona en cualquier ciudad latinoamericana.</div></div>
+        </div>
+    </section>
+
+    <!-- Slide 12 — Próximos Pasos / CTA -->
+    <section class="slide" data-narration="next-steps">
+        <div class="eyebrow">Pr&oacute;ximos Pasos</div>
+        <h2 class="h2">Kickoff en las pr&oacute;ximas 48 horas.</h2>
+        <p class="lead">Reuni&oacute;n con liderazgo de Cali CityLab y los socios ancla iniciales para alinear visi&oacute;n, gobernanza y enfoque operativo. El MVP entra en construcci&oacute;n inmediatamente despu&eacute;s &mdash; con un primer demo funcional en dos semanas.</p>
+
+        <div class="cta-box">
+            <h3>&iquest;Listos para construir?</h3>
+            <p>Conversemos sobre c&oacute;mo Cali CityLab puede ser la infraestructura de innovaci&oacute;n de su ciudad o ecosistema.</p>
+            <a class="cta-btn" href="mailto:mstagg@digit2ai.com?subject=Cali%20CityLab%20%E2%80%94%20Solicitud%20de%20Demo&body=Hola%20Stagg%2C%0A%0AMe%20gustar%C3%ADa%20conocer%20m%C3%A1s%20sobre%20Cali%20CityLab.%0A%0ANombre%3A%20%0AOrganizaci%C3%B3n%3A%20%0ARol%3A%20%0ACiudad%2FRegi%C3%B3n%3A%20%0AInter%C3%A9s%20principal%3A%20%0A%0AGracias%2C">Solicitar Demo</a>
+        </div>
+    </section>
+
+</div>
+
+<!-- Controls -->
+<div class="controls">
+    <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&larr; Anterior</button>
+    <div class="progress" id="progress"></div>
+    <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()">Siguiente &rarr;</button>
+</div>
+
+<!-- ElevenLabs Voice Agent — Lina Spanish -->
+<!--
+  STEP 1: Crear el agente en ElevenLabs:
+    https://elevenlabs.io/app/agents
+    Voice: Lina (Sunny, Kind and Friendly)
+    Language: Spanish (default)
+    LLM: Gemini 2.5 Flash
+    System Prompt: ver SISTEMA_PROMPT_LINA.md (también incluido abajo en este archivo)
+  STEP 2: Copiar el agent_id y reemplazar abajo:
+-->
+<elevenlabs-convai agent-id="REPLACE_WITH_LINA_ES_AGENT_ID"></elevenlabs-convai>
+<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+
+<!-- Setup notice (only shows while agent id is the placeholder) -->
+<div class="agent-notice" id="agentNotice">
+    <strong>Configurar Lina (Espa&ntilde;ol)</strong>
+    Reemplazar <code>REPLACE_WITH_LINA_ES_AGENT_ID</code> en el HTML con el agent ID del nuevo agente ElevenLabs configurado en espa&ntilde;ol con voz Lina.
+</div>
+
+<script>
+(function(){
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 0;
+
+    // Build progress dots
+    const progress = document.getElementById('progress');
+    for (let i = 0; i < total; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goTo(i);
+        progress.appendChild(dot);
+    }
+    const dots = document.querySelectorAll('.dot');
+
+    function render() {
+        slides.forEach((s, i) => {
+            s.classList.toggle('active', i === current);
+        });
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === current);
+            d.classList.toggle('visited', i < current);
+        });
+        document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+        document.getElementById('prevBtn').disabled = current === 0;
+        document.getElementById('nextBtn').textContent = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
+        document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
+    }
+
+    window.nextSlide = function() {
+        if (current < total - 1) current++;
+        else current = 0;
+        render();
+    };
+    window.prevSlide = function() {
+        if (current > 0) { current--; render(); }
+    };
+    window.goTo = function(i) { current = i; render(); };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+        else if (e.key === 'Home') { goTo(0); }
+        else if (e.key === 'End') { goTo(total - 1); }
+        else if (/^[1-9]$/.test(e.key)) {
+            const i = parseInt(e.key, 10) - 1;
+            if (i < total) goTo(i);
+        }
+    });
+
+    // Show setup notice if agent ID is still the placeholder
+    setTimeout(() => {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget && widget.getAttribute('agent-id') === 'REPLACE_WITH_LINA_ES_AGENT_ID') {
+            document.getElementById('agentNotice').classList.add('show');
+            widget.style.display = 'none';
+        }
+    }, 800);
+})();
+</script>
+
+</body>
+</html>
