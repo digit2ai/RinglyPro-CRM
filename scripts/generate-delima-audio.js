@@ -5,7 +5,7 @@ const path = require('path');
 const https = require('https');
 
 const API_KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Lina - Sunny, Kind and Friendly (same voice as Cali deck)
+const VOICE_ID = 'VmejBeYhbrcTPwDniox7'; // Lina - Sunny, Kind and Friendly (Spanish voice from ElevenLabs library)
 const MODEL_ID = 'eleven_multilingual_v2';
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'delima-projects-audio');
 
