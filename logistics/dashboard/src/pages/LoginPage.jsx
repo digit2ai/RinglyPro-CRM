@@ -20,6 +20,7 @@ export default function LoginPage({ onLogin }) {
         { email: 'pinaxis@ringlypro.com', password: 'Gebhardt@7' },
         { email: 'sven@gebhardt.de', password: 'Gebhardt@7' },
         { email: 's.diedrich@pinaxis.com', password: 'Gebhardt@7' },
+        { email: 'k.kale@pinaxis.com', password: 'Gebhardt@7' },
       ];
       const match = validUsers.find(u => u.email === email.toLowerCase() && u.password === password);
       if (match) {
