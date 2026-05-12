@@ -2197,6 +2197,11 @@ ${content}
   res.send(html);
 });
 
+// Presto — 5-minute executive mini-demo (EN/ES toggle in-page)
+app.get('/presto', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/presto.html'));
+});
+
 // Unsubscribe API endpoint
 app.post('/api/unsubscribe', async (req, res) => {
   try {

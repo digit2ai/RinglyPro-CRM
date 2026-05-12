@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presto — Digit2AI Neural in 5 Minutes</title>
+<meta name="description" content="A five-minute executive walkthrough of Digit2AI Neural — what we do, how it works, and why it wins.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --navy: #0b1d4a;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
+    --teal: #00A3E0;
+    --teal-light: #66c7f0;
+    --teal-neon: #3dcbca;
+    --gold: #C5A55A;
+    --gold-neon: #dfc07a;
+    --white: #ffffff;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-blk);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ===== ANIMATED BACKGROUND ===== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,163,224,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,163,224,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    width: 1100px; height: 1100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,163,224,0.10) 0%, rgba(0,163,224,0.02) 45%, transparent 75%);
+    top: 20%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 22s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(-55%, -50%) scale(1); }
+    50%      { transform: translate(-45%, -40%) scale(1.15); }
+  }
+
+  /* ===== HEADER ===== */
+  header.topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: rgba(3,8,20,0.65);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(0,163,224,0.15);
+  }
+  .brand {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .brand .dot { color: var(--gold-neon); }
+  .lang-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(11,29,74,0.6);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 999px;
+  }
+  .lang-toggle button {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .lang-toggle button.active {
+    background: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 14px rgba(0,163,224,0.5);
+  }
+  .lang-toggle button:not(.active):hover { color: var(--teal-neon); }
+
+  /* ===== MAIN CONTAINER ===== */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 32px 80px;
+  }
+
+  section {
+    padding: 80px 0;
+    border-bottom: 1px solid rgba(0,163,224,0.08);
+  }
+  section:last-child { border-bottom: none; }
+
+  /* ===== TYPOGRAPHY ===== */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: var(--teal-neon);
+  }
+  .eyebrow.gold { color: var(--gold-neon); }
+  .eyebrow.gold::before { background: var(--gold-neon); }
+
+  h1 {
+    font-size: clamp(40px, 6vw, 76px);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -2.5px;
+    margin-bottom: 24px;
+    background: linear-gradient(180deg, #ffffff 0%, #a8b8cc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2 {
+    font-size: clamp(32px, 4.5vw, 52px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 60%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.gold {
+    background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 60%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(17px, 1.4vw, 22px);
+    line-height: 1.6;
+    color: rgba(255,255,255,0.78);
+    max-width: 760px;
+    margin-bottom: 16px;
+  }
+  .sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.55);
+    max-width: 720px;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding-top: 40px;
+    padding-bottom: 100px;
+  }
+  .hero-presenter {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 36px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.08) 0%, rgba(11,29,74,0.4) 100%);
+    border: 1px solid rgba(0,163,224,0.25);
+    border-radius: 14px;
+    max-width: 560px;
+  }
+  .hero-presenter .avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-neon) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy-dark);
+    box-shadow: 0 0 24px rgba(0,163,224,0.35);
+    flex-shrink: 0;
+  }
+  .hero-presenter .who-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+  .hero-presenter .who-role {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+  }
+
+  /* ===== STAT ROW ===== */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 56px;
+  }
+  .stat {
+    padding: 22px 24px;
+    background: rgba(0,163,224,0.05);
+    border: 1px solid rgba(0,163,224,0.18);
+    border-radius: 12px;
+    border-left: 3px solid var(--teal);
+  }
+  .stat .num {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .stat .lbl {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+  }
+
+  /* ===== LEAK GRID ===== */
+  .leak-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 40px;
+  }
+  .leak {
+    padding: 26px 24px;
+    background: linear-gradient(180deg, rgba(255,60,60,0.05) 0%, rgba(255,60,60,0.01) 100%);
+    border: 1px solid rgba(255,80,80,0.18);
+    border-left: 3px solid rgba(255,90,90,0.55);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .leak .leak-num {
+    position: absolute;
+    top: 12px; right: 18px;
+    font-family: var(--mono);
+    font-size: 60px;
+    font-weight: 800;
+    color: rgba(255,80,80,0.06);
+    line-height: 1;
+  }
+  .leak .leak-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--white);
+    position: relative;
+  }
+  .leak .leak-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.6);
+    position: relative;
+  }
+
+  /* ===== LAYER STACK ===== */
+  .layers {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 40px;
+  }
+  .layer {
+    display: grid;
+    grid-template-columns: 130px 1fr 100px;
+    gap: 18px;
+    align-items: center;
+    padding: 22px 28px;
+    border-radius: 12px;
+    transition: transform 0.18s;
+  }
+  .layer:hover { transform: translateX(4px); }
+  .layer.l1 { background: rgba(0,163,224,0.07); border: 1px solid rgba(0,163,224,0.28); }
+  .layer.l2 { background: rgba(197,165,90,0.07); border: 1px solid rgba(197,165,90,0.28); }
+  .layer.l3 { background: rgba(61,203,202,0.08); border: 1px solid rgba(61,203,202,0.32); }
+  .layer .l-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .layer.l1 .l-label { color: var(--teal); }
+  .layer.l2 .l-label { color: var(--gold); }
+  .layer.l3 .l-label { color: var(--teal-neon); }
+  .layer .l-text {
+    font-size: 15px;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.5;
+  }
+  .layer .l-tag {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+    letter-spacing: 1px;
+  }
+  .layer.l1 .l-tag { color: var(--teal); }
+  .layer.l2 .l-tag { color: var(--gold); }
+  .layer.l3 .l-tag { color: var(--teal-neon); }
+
+  /* ===== AGENT GRID ===== */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 40px;
+  }
+  .agent {
+    padding: 18px 16px;
+    background: linear-gradient(180deg, rgba(0,163,224,0.07) 0%, rgba(0,163,224,0.02) 100%);
+    border: 1px solid rgba(0,163,224,0.22);
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+    transition: all 0.18s;
+  }
+  .agent:hover {
+    border-color: var(--teal-neon);
+    background: rgba(0,163,224,0.12);
+    transform: translateY(-2px);
+  }
+  .agent::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  }
+  .agent .a-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--teal-neon);
+    margin-bottom: 6px;
+  }
+  .agent .a-role {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+  }
+
+  /* ===== COMPARISON TABLE ===== */
+  .compare-wrap {
+    margin-top: 40px;
+    overflow-x: auto;
+  }
+  .compare {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+  .compare th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(0,163,224,0.3);
+    text-align: left;
+    font-weight: 600;
+  }
+  .compare th:last-child { color: var(--gold-neon); }
+  .compare td {
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 14px;
+    color: rgba(255,255,255,0.82);
+  }
+  .compare td:first-child { font-weight: 600; }
+  .compare td:last-child {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--gold-neon);
+  }
+  .compare tr:hover td { background: rgba(0,163,224,0.03); }
+
+  /* ===== PROOF / PLATFORM TAGS ===== */
+  .proof-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 40px;
+  }
+  .ptag {
+    padding: 9px 16px;
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--teal-light);
+    font-weight: 500;
+  }
+  .ptag.more {
+    background: rgba(197,165,90,0.08);
+    border-color: rgba(197,165,90,0.35);
+    color: var(--gold-neon);
+  }
+
+  /* ===== CTA ===== */
+  .cta-card {
+    margin-top: 40px;
+    padding: 40px 44px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.1) 0%, rgba(11,29,74,0.55) 100%);
+    border: 2px solid var(--teal-neon);
+    border-radius: 16px;
+    box-shadow: 0 0 50px rgba(61,203,202,0.18);
+    text-align: center;
+  }
+  .cta-card .cta-line {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 1.6vw, 24px);
+    line-height: 1.5;
+    color: rgba(255,255,255,0.92);
+    margin-bottom: 28px;
+  }
+  .cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-neon) 100%);
+    color: var(--navy-dark);
+    box-shadow: 0 0 20px rgba(0,163,224,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 30px rgba(0,163,224,0.5);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--teal-light);
+    border: 1px solid rgba(0,163,224,0.5);
+  }
+  .btn-ghost:hover {
+    background: rgba(0,163,224,0.1);
+    color: var(--white);
+    border-color: var(--teal);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 36px 32px;
+    text-align: center;
+    border-top: 1px solid rgba(0,163,224,0.1);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+  footer a {
+    color: var(--teal-neon);
+    text-decoration: none;
+    margin-left: 14px;
+  }
+  footer a:hover { text-decoration: underline; }
+
+  /* ===== ENTRANCE ANIMATIONS ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(.22,.61,.36,1), transform 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 820px) {
+    main { padding: 90px 22px 60px; }
+    section { padding: 56px 0; }
+    .stat-row { grid-template-columns: 1fr; }
+    .leak-grid { grid-template-columns: 1fr; }
+    .agent-grid { grid-template-columns: repeat(2, 1fr); }
+    .layer { grid-template-columns: 90px 1fr 70px; gap: 12px; padding: 16px 18px; }
+    .layer .l-text { font-size: 13.5px; }
+    .layer .l-tag { font-size: 11px; }
+    .cta-card { padding: 28px 22px; }
+    header.topbar { padding: 12px 18px; }
+    .brand { font-size: 11px; letter-spacing: 4px; }
+    .hero-presenter { gap: 14px; padding: 12px 14px; }
+    .hero-presenter .avatar { width: 44px; height: 44px; font-size: 15px; }
+  }
+  @media (max-width: 480px) {
+    .agent-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">DIGIT2AI <span class="dot">·</span> PRESTO</div>
+  <div class="lang-toggle" role="tablist" aria-label="Language">
+    <button id="lang-en" class="active" aria-pressed="true">EN</button>
+    <button id="lang-es" aria-pressed="false">ES</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero reveal">
+    <div class="hero-presenter">
+      <div class="avatar">MS</div>
+      <div>
+        <div class="who-name" data-en="Manuel Stagg" data-es="Manuel Stagg">Manuel Stagg</div>
+        <div class="who-role" data-en="Founder · Digit2AI Neural" data-es="Fundador · Digit2AI Neural">Founder · Digit2AI Neural</div>
+      </div>
+    </div>
+    <span class="eyebrow" data-en="A five-minute walkthrough" data-es="Un recorrido de cinco minutos">A five-minute walkthrough</span>
+    <h1 data-en="Hi. The next five minutes will pay for themselves." data-es="Hola. Los próximos cinco minutos se van a pagar solos.">Hi. The next five minutes will pay for themselves.</h1>
+    <p class="lead" data-en="Every business is bleeding money in four places at once. I built Digit2AI Neural to find those leaks and fix them automatically — without adding headcount, without ripping out your stack." data-es="Todo negocio está perdiendo dinero en cuatro lugares al mismo tiempo. Construí Digit2AI Neural para encontrar esas fugas y repararlas automáticamente, sin contratar más personal y sin reemplazar tu stack.">Every business is bleeding money in four places at once. I built Digit2AI Neural to find those leaks and fix them automatically — without adding headcount, without ripping out your stack.</p>
+    <p class="sub" data-en="Let me show you what an MCP-native AI taskforce can do for your business." data-es="Déjame mostrarte qué puede hacer una fuerza de agentes AI nativa de MCP por tu negocio.">Let me show you what an MCP-native AI taskforce can do for your business.</p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="num">30s</div>
+        <div class="lbl" data-en="First money leak surfaced on a CRM export" data-es="Primera fuga de dinero detectada en un export de CRM">First money leak surfaced on a CRM export</div>
+      </div>
+      <div class="stat">
+        <div class="num">21</div>
+        <div class="lbl" data-en="Production platforms running on the same brain" data-es="Plataformas en producción corriendo sobre el mismo cerebro">Production platforms running on the same brain</div>
+      </div>
+      <div class="stat">
+        <div class="num">24/7</div>
+        <div class="lbl" data-en="Autonomous operation with full audit trail" data-es="Operación autónoma con huella de auditoría completa">Autonomous operation with full audit trail</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROBLEM ============ -->
+  <section class="reveal">
+    <span class="eyebrow" data-en="The problem" data-es="El problema">The problem</span>
+    <h2 data-en="Money is leaking out four pipes today." data-es="El dinero se está fugando por cuatro tuberías hoy.">Money is leaking out four pipes today.</h2>
+    <p class="lead" data-en="Pick any growing business and you will find the same four leaks. They are not new — they are just impossible to plug with hiring, scripts, or yet another dashboard." data-es="Toma cualquier negocio en crecimiento y vas a encontrar las mismas cuatro fugas. No son nuevas; simplemente no se pueden tapar contratando, con guiones o con otro dashboard más.">Pick any growing business and you will find the same four leaks. They are not new — they are just impossible to plug with hiring, scripts, or yet another dashboard.</p>
+
+    <div class="leak-grid">
+      <div class="leak">
+        <div class="leak-num">01</div>
+        <div class="leak-title" data-en="Missed calls and slow follow-up" data-es="Llamadas perdidas y seguimiento lento">Missed calls and slow follow-up</div>
+        <div class="leak-desc" data-en="SMBs miss up to 40% of inbound demand. The lead who waited 5 minutes for a callback bought from someone else." data-es="Las pymes pierden hasta un 40% de la demanda entrante. El lead que esperó cinco minutos un callback ya compró en otro lado.">SMBs miss up to 40% of inbound demand. The lead who waited 5 minutes for a callback bought from someone else.</div>
+      </div>
+      <div class="leak">
+        <div class="leak-num">02</div>
+        <div class="leak-title" data-en="Stuck pipelines and stale leads" data-es="Pipelines estancados y leads viejos">Stuck pipelines and stale leads</div>
+        <div class="leak-desc" data-en="Deals rot in a CRM no one reads. Nurture sequences never run. Reps chase the loudest lead, not the best one." data-es="Los negocios se pudren en un CRM que nadie lee. Las secuencias de nurturing nunca corren. Los reps persiguen al más ruidoso, no al mejor.">Deals rot in a CRM no one reads. Nurture sequences never run. Reps chase the loudest lead, not the best one.</div>
+      </div>
+      <div class="leak">
+        <div class="leak-num">03</div>
+        <div class="leak-title" data-en="Unbilled work and silent leaks" data-es="Trabajo sin facturar y fugas silenciosas">Unbilled work and silent leaks</div>
+        <div class="leak-desc" data-en="Calls, scope changes, renewals fall between systems. The work happens. The invoice never does." data-es="Llamadas, cambios de alcance y renovaciones caen entre sistemas. El trabajo se hace. La factura nunca.">Calls, scope changes, renewals fall between systems. The work happens. The invoice never does.</div>
+      </div>
+      <div class="leak">
+        <div class="leak-num">04</div>
+        <div class="leak-title" data-en="No-shows and wasted capacity" data-es="Ausencias y capacidad desperdiciada">No-shows and wasted capacity</div>
+        <div class="leak-desc" data-en="Empty slots on the calendar are the most expensive inventory a business owns. They never come back." data-es="Los huecos vacíos en el calendario son el inventario más caro que tiene un negocio. No vuelven.">Empty slots on the calendar are the most expensive inventory a business owns. They never come back.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE SOLUTION ============ -->
+  <section class="reveal">
+    <span class="eyebrow" data-en="What we built" data-es="Lo que construimos">What we built</span>
+    <h2 class="teal" data-en="One platform. Three layers. Continuous fix loop." data-es="Una plataforma. Tres capas. Loop de reparación continua.">One platform. Three layers. Continuous fix loop.</h2>
+    <p class="lead" data-en="Neural is the brain. The agents are the hands. MCP is the nervous system that connects them — so a finding becomes an action without anybody opening a ticket." data-es="Neural es el cerebro. Los agentes son las manos. MCP es el sistema nervioso que los conecta, para que un hallazgo se convierta en acción sin que nadie abra un ticket.">Neural is the brain. The agents are the hands. MCP is the nervous system that connects them — so a finding becomes an action without anybody opening a ticket.</p>
+
+    <div class="layers">
+      <div class="layer l1">
+        <div class="l-label">Neural</div>
+        <div class="l-text" data-en="The intelligence layer. Understands context, intent, and business logic. Gets sharper with every interaction." data-es="La capa de inteligencia. Entiende contexto, intención y lógica de negocio. Se vuelve más afilada con cada interacción.">The intelligence layer. Understands context, intent, and business logic. Gets sharper with every interaction.</div>
+        <div class="l-tag" data-en="THINKS" data-es="PIENSA">THINKS</div>
+      </div>
+      <div class="layer l2">
+        <div class="l-label">Agents</div>
+        <div class="l-text" data-en="The execution layer. Eight pre-built specialists plus a custom slot. They actually take the action — write to the CRM, send the message, book the meeting." data-es="La capa de ejecución. Ocho especialistas pre-construidos más un espacio personalizado. Toman la acción de verdad: escriben en el CRM, envían el mensaje, reservan la reunión.">The execution layer. Eight pre-built specialists plus a custom slot. They actually take the action — write to the CRM, send the message, book the meeting.</div>
+        <div class="l-tag" data-en="ACTS" data-es="ACTÚA">ACTS</div>
+      </div>
+      <div class="layer l3">
+        <div class="l-label">MCP</div>
+        <div class="l-text" data-en="The protocol backbone. Routes findings to the right agent with full context, enforces guardrails, logs every decision for audit." data-es="La columna vertebral de protocolo. Enruta hallazgos al agente correcto con contexto completo, aplica las reglas y registra cada decisión para auditoría.">The protocol backbone. Routes findings to the right agent with full context, enforces guardrails, logs every decision for audit.</div>
+        <div class="l-tag" data-en="ROUTES" data-es="ENRUTA">ROUTES</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE TEAM ============ -->
+  <section class="reveal">
+    <span class="eyebrow" data-en="The taskforce" data-es="La fuerza">The taskforce</span>
+    <h2 data-en="Eight specialists you do not have to hire." data-es="Ocho especialistas que no tienes que contratar.">Eight specialists you do not have to hire.</h2>
+    <p class="lead" data-en="Each agent owns one part of the revenue cycle. They never call in sick, they never lose context, and they get better every week — across every tenant on the platform." data-es="Cada agente es dueño de una parte del ciclo de ingresos. Nunca se enferman, nunca pierden contexto y mejoran cada semana, en cada tenant de la plataforma.">Each agent owns one part of the revenue cycle. They never call in sick, they never lose context, and they get better every week — across every tenant on the platform.</p>
+
+    <div class="agent-grid">
+      <div class="agent">
+        <div class="a-name">Rachel</div>
+        <div class="a-role" data-en="Voice concierge — answers every call" data-es="Concierge de voz — contesta cada llamada">Voice concierge — answers every call</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Ana</div>
+        <div class="a-role" data-en="Bilingual lead responder — under 60s" data-es="Responder bilingüe — menos de 60s">Bilingual lead responder — under 60s</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Lina</div>
+        <div class="a-role" data-en="Pipeline nurturer — wakes stale leads" data-es="Nurturer de pipeline — despierta leads viejos">Pipeline nurturer — wakes stale leads</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Sentinel</div>
+        <div class="a-role" data-en="Pipeline health — flags stuck deals" data-es="Salud del pipeline — marca negocios estancados">Pipeline health — flags stuck deals</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Nova</div>
+        <div class="a-role" data-en="No-show reducer — confirms + rebooks" data-es="Reductora de ausencias — confirma y reagenda">No-show reducer — confirms + rebooks</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Vault</div>
+        <div class="a-role" data-en="Revenue leak hunter — finds unbilled work" data-es="Cazador de fugas — encuentra trabajo sin facturar">Revenue leak hunter — finds unbilled work</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Origin</div>
+        <div class="a-role" data-en="Source ROI auditor — ranks every channel" data-es="Auditor de ROI por fuente — clasifica cada canal">Source ROI auditor — ranks every channel</div>
+      </div>
+      <div class="agent">
+        <div class="a-name">Coach</div>
+        <div class="a-role" data-en="Conversion reviewer — scores every call" data-es="Revisor de conversiones — puntúa cada llamada">Conversion reviewer — scores every call</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHY THIS WINS ============ -->
+  <section class="reveal">
+    <span class="eyebrow" data-en="Why this wins" data-es="Por qué esto gana">Why this wins</span>
+    <h2 data-en="It is not another chatbot. It is not a DIY toolkit." data-es="No es otro chatbot. No es un toolkit hazlo tú mismo.">It is not another chatbot. It is not a DIY toolkit.</h2>
+    <p class="lead" data-en="Most AI investments either buy a single chatbot that does one trick or spend six months wiring a hyperscaler. We deliver a finished platform — protocol-native, governance built in, ROI measurable from day one." data-es="La mayoría de las inversiones en AI o compran un chatbot que hace un solo truco, o pasan seis meses cableando un hyperscaler. Nosotros entregamos una plataforma terminada: nativa de protocolo, gobierno incorporado y ROI medible desde el primer día.">Most AI investments either buy a single chatbot that does one trick or spend six months wiring a hyperscaler. We deliver a finished platform — protocol-native, governance built in, ROI measurable from day one.</p>
+
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead>
+          <tr>
+            <th data-en="Capability" data-es="Capacidad">Capability</th>
+            <th data-en="Single chatbot" data-es="Chatbot único">Single chatbot</th>
+            <th data-en="DIY hyperscaler" data-es="Hyperscaler DIY">DIY hyperscaler</th>
+            <th>Digit2AI Neural</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-en="Time to first value" data-es="Tiempo al primer valor">Time to first value</td>
+            <td data-en="Days" data-es="Días">Days</td>
+            <td data-en="Months" data-es="Meses">Months</td>
+            <td data-en="30 seconds" data-es="30 segundos">30 seconds</td>
+          </tr>
+          <tr>
+            <td data-en="Pre-built agents" data-es="Agentes pre-construidos">Pre-built agents</td>
+            <td data-en="1 generic" data-es="1 genérico">1 generic</td>
+            <td data-en="Zero — you build" data-es="Cero — tú lo construyes">Zero — you build</td>
+            <td data-en="8 specialists + custom" data-es="8 especialistas + a medida">8 specialists + custom</td>
+          </tr>
+          <tr>
+            <td data-en="Channels covered" data-es="Canales cubiertos">Channels covered</td>
+            <td data-en="Web only" data-es="Solo web">Web only</td>
+            <td data-en="Whatever you wire" data-es="Lo que tú conectes">Whatever you wire</td>
+            <td data-en="Voice · Web · SMS · WA · Email · API" data-es="Voz · Web · SMS · WA · Email · API">Voice · Web · SMS · WA · Email · API</td>
+          </tr>
+          <tr>
+            <td data-en="Pricing model" data-es="Modelo de precio">Pricing model</td>
+            <td data-en="Per seat" data-es="Por puesto">Per seat</td>
+            <td data-en="Per token + engineering" data-es="Por token + ingeniería">Per token + engineering</td>
+            <td data-en="Per resolved outcome" data-es="Por resultado resuelto">Per resolved outcome</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ PROOF ============ -->
+  <section class="reveal">
+    <span class="eyebrow gold" data-en="Proof, not pitch" data-es="Prueba, no pitch">Proof, not pitch</span>
+    <h2 class="gold" data-en="21 production platforms. One shared brain." data-es="21 plataformas en producción. Un solo cerebro compartido.">21 production platforms. One shared brain.</h2>
+    <p class="lead" data-en="Each platform you see below is live, serving real customers, generating real data. Every new tenant inherits the brain — the platform compounds with every deployment." data-es="Cada plataforma que ves abajo está en vivo, atendiendo clientes reales y generando datos reales. Cada nuevo tenant hereda el cerebro; la plataforma compone con cada despliegue.">Each platform you see below is live, serving real customers, generating real data. Every new tenant inherits the brain — the platform compounds with every deployment.</p>
+
+    <div class="proof-tags">
+      <span class="ptag">RinglyPro</span>
+      <span class="ptag">SurgicalMind</span>
+      <span class="ptag">CW Carriers</span>
+      <span class="ptag">Pinaxis</span>
+      <span class="ptag">HISPATEC</span>
+      <span class="ptag">CamaraVirtual</span>
+      <span class="ptag">Visionarium</span>
+      <span class="ptag">Torna Idioma</span>
+      <span class="ptag">TunjoRacing</span>
+      <span class="ptag">ImprintIQ</span>
+      <span class="ptag more" data-en="+ 11 more verticals" data-es="+ 11 verticales más">+ 11 more verticals</span>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <section class="reveal" style="border-bottom:none;">
+    <span class="eyebrow" data-en="Your next step" data-es="Tu siguiente paso">Your next step</span>
+    <h2 class="teal" data-en="Show me your business. I will show you the leaks." data-es="Muéstrame tu negocio. Yo te muestro las fugas.">Show me your business. I will show you the leaks.</h2>
+    <p class="lead" data-en="Two ways to start. Send me a CRM export and you will see Neural diagnose your business in 30 seconds — no commitment. Or book a discovery call and we will scope a Neural deployment inside your stack." data-es="Dos formas de empezar. Mándame un export de tu CRM y verás a Neural diagnosticar tu negocio en treinta segundos, sin compromiso. O agenda una llamada de descubrimiento y dimensionamos un despliegue de Neural dentro de tu stack.">Two ways to start. Send me a CRM export and you will see Neural diagnose your business in 30 seconds — no commitment. Or book a discovery call and we will scope a Neural deployment inside your stack.</p>
+
+    <div class="cta-card">
+      <div class="cta-line" data-en="Find every money leak. Fix it automatically. That is the entire promise — and the platform is already built." data-es="Encuentra cada fuga de dinero. Repárala automáticamente. Esa es toda la promesa, y la plataforma ya está construida.">Find every money leak. Fix it automatically. That is the entire promise — and the platform is already built.</div>
+      <div class="cta-actions">
+        <a class="btn btn-primary" href="https://aiagent.ringlypro.com/projects/intake/request.html" data-en-href="https://aiagent.ringlypro.com/projects/intake/request.html" data-es-href="https://aiagent.ringlypro.com/projects/intake/solicitud.html" data-en="Submit a project request" data-es="Enviar solicitud de proyecto">Submit a project request</a>
+        <a class="btn btn-ghost" href="mailto:mstagg@digit2ai.com?subject=Digit2AI%20Neural%20demo" data-en="Email me directly" data-es="Escríbeme directamente">Email me directly</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span data-en="Digit2AI · AI operator infrastructure for every business" data-es="Digit2AI · Infraestructura de operadores AI para todo negocio">Digit2AI · AI operator infrastructure for every business</span>
+  <a href="https://aiagent.ringlypro.com/digit2ai-es" data-en="Full Spanish site" data-es="Sitio completo">Full Spanish site</a>
+  <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" data-en="Full presentation" data-es="Presentación completa">Full presentation</a>
+</footer>
+
+<script>
+  // ============ LANGUAGE TOGGLE ============
+  const STORAGE_KEY = 'presto.lang';
+  const btnEn = document.getElementById('lang-en');
+  const btnEs = document.getElementById('lang-es');
+
+  function applyLang(lang) {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const txt = el.getAttribute('data-' + lang);
+      if (txt != null) el.textContent = txt;
+    });
+    document.querySelectorAll('[data-en-href]').forEach(el => {
+      const href = el.getAttribute('data-' + lang + '-href');
+      if (href) el.setAttribute('href', href);
+    });
+    btnEn.classList.toggle('active', lang === 'en');
+    btnEs.classList.toggle('active', lang === 'es');
+    btnEn.setAttribute('aria-pressed', lang === 'en');
+    btnEs.setAttribute('aria-pressed', lang === 'es');
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (_) {}
+    document.title = lang === 'es'
+      ? 'Presto — Digit2AI Neural en 5 minutos'
+      : 'Presto — Digit2AI Neural in 5 Minutes';
+  }
+
+  btnEn.addEventListener('click', () => applyLang('en'));
+  btnEs.addEventListener('click', () => applyLang('es'));
+
+  // Initial language: stored preference > browser language > English
+  (function initLang() {
+    let lang = 'en';
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === 'en' || stored === 'es') {
+        lang = stored;
+      } else if ((navigator.language || '').toLowerCase().startsWith('es')) {
+        lang = 'es';
+      }
+    } catch (_) {}
+    applyLang(lang);
+  })();
+
+  // ============ SCROLL REVEAL ============
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
