@@ -573,37 +573,87 @@
         .dot.active { background: linear-gradient(90deg, var(--purple), var(--teal)); }
         .dot.visited { background: rgba(124,92,255,0.4); }
 
-        /* ElevenLabs widget — bottom right floating */
-        elevenlabs-convai {
+        /* Audio narration wave (bottom-right, shows when Lina speaks) */
+        .narration-wave {
             position: fixed;
-            bottom: 80px;
-            right: 20px;
+            bottom: 80px; right: 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 24px;
+            padding: 8px 14px;
+            background: rgba(7,9,15,0.85);
+            border: 1px solid var(--line2);
+            border-radius: 999px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.25s;
             z-index: 200;
+            pointer-events: none;
+        }
+        .narration-wave.active { opacity: 1; }
+        .narration-wave .bar {
+            width: 3px;
+            background: linear-gradient(180deg, var(--purple), var(--teal));
+            border-radius: 2px;
+            animation: wave 0.9s ease-in-out infinite;
+        }
+        .narration-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .narration-wave .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+        .narration-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+        .narration-wave .bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+        .narration-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.15s; }
+        .narration-wave .bar:nth-child(6) { height: 16px; animation-delay: 0.25s; }
+        .narration-wave .bar:nth-child(7) { height: 8px; animation-delay: 0.35s; }
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.4); }
+            50% { transform: scaleY(1); }
         }
 
-        /* Voice agent setup notice (only shows if placeholder agent id) */
-        .agent-notice {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: rgba(15,23,42,0.96);
-            border: 1px solid var(--gold);
-            border-radius: 10px;
-            padding: 12px 16px;
-            max-width: 320px;
-            font-size: 11.5px;
-            color: var(--text);
-            line-height: 1.55;
-            z-index: 199;
-            display: none;
+        /* Play/Pause button in controls */
+        .play-btn {
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            border: none;
+            color: #fff;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-family: inherit;
         }
-        .agent-notice.show { display: block; }
-        .agent-notice strong { color: var(--gold); }
-        .agent-notice code {
-            background: rgba(0,0,0,0.4);
-            padding: 1px 5px;
-            border-radius: 3px;
+        .play-btn:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(124,92,255,0.5); }
+        .play-btn.playing {
+            background: linear-gradient(135deg, var(--gold), #ea580c);
+        }
+
+        /* Rec indicator (top bar) */
+        .rec-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .rec-indicator.active { opacity: 1; }
+        .rec-indicator .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
 
         @media (max-width: 900px) {
@@ -630,7 +680,8 @@
 <div class="top-bar">
     <div class="brand">Cali City<span class="grad">Lab</span></div>
     <div class="top-actions">
-        <span class="hide-sm"><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> para navegar</span>
+        <span class="rec-indicator" id="recIndicator"><span class="dot"></span> Lina narrando</span>
+        <span class="hide-sm"><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> navegar</span>
         <span class="counter" id="counter">1 / 12</span>
     </div>
 </div>
@@ -639,7 +690,7 @@
 <div class="stage">
 
     <!-- Slide 1 — Portada -->
-    <section class="slide active cover" data-narration="cover">
+    <section class="slide active cover" data-audio="assets/audio/slide-01.mp3">
         <div class="cover-tag"><span class="dot"></span> Plataforma de Innovaci&oacute;n Urbana</div>
         <h1 class="h1">Cali City<span class="grad">Lab</span></h1>
         <p class="lead">La plataforma inteligente que conecta los retos de la ciudad con las capacidades del ecosistema &mdash; startups, universidades, ONGs y empresas &mdash; para convertir problemas en proyectos reales.</p>
@@ -651,14 +702,14 @@
     </section>
 
     <!-- Slide 2 — El Problema -->
-    <section class="slide" data-narration="problem-intro">
+    <section class="slide" data-audio="assets/audio/slide-02.mp3">
         <div class="eyebrow">El Problema</div>
         <h2 class="h2">Las ciudades tienen problemas. <br>Las soluciones est&aacute;n dispersas.</h2>
         <p class="lead">Cada ciudad enfrenta decenas de retos &mdash; movilidad, seguridad, salud, sostenibilidad &mdash; y al mismo tiempo existen cientos de startups, universidades, ONGs y empresas con la capacidad de resolverlos. <strong>Pero nadie se encuentra.</strong> La informaci&oacute;n est&aacute; fragmentada, los datos viven en silos, y los recursos se pierden buscando.</p>
     </section>
 
     <!-- Slide 3 — 6 áreas -->
-    <section class="slide" data-narration="six-areas">
+    <section class="slide" data-audio="assets/audio/slide-03.mp3">
         <div class="eyebrow">Las 6 &Aacute;reas Cr&iacute;ticas</div>
         <h2 class="h2">Donde la ciudad necesita actuar &mdash; ya.</h2>
         <p class="lead">Cali CityLab se enfoca en los seis frentes que m&aacute;s impacto generan en la calidad de vida de los ciudadanos:</p>
@@ -673,7 +724,7 @@
     </section>
 
     <!-- Slide 4 — Consecuencias -->
-    <section class="slide" data-narration="consequences">
+    <section class="slide" data-audio="assets/audio/slide-04.mp3">
         <div class="eyebrow">La Consecuencia</div>
         <h2 class="h2">Cuando el ecosistema no se conecta, todos pierden.</h2>
         <div class="problems">
@@ -685,14 +736,14 @@
     </section>
 
     <!-- Slide 5 — La Solución -->
-    <section class="slide" data-narration="solution">
+    <section class="slide" data-audio="assets/audio/slide-05.mp3">
         <div class="eyebrow">La Soluci&oacute;n</div>
         <h2 class="h2">Una sola plataforma. <span style="color: var(--teal)">Un solo lugar.</span></h2>
         <p class="lead">Cali CityLab es la plataforma donde el reto encuentra a quien lo puede resolver &mdash; con inteligencia artificial, an&aacute;lisis de datos, e integraci&oacute;n del ecosistema completo. Funciona como una <strong>capa de inteligencia digital</strong> y al mismo tiempo como <strong>infraestructura de ejecuci&oacute;n</strong>: no solo conecta, tambi&eacute;n ayuda a ejecutar y medir el impacto real.</p>
     </section>
 
     <!-- Slide 6 — Cómo funciona -->
-    <section class="slide" data-narration="how-it-works">
+    <section class="slide" data-audio="assets/audio/slide-06.mp3">
         <div class="eyebrow">C&oacute;mo Funciona</div>
         <h2 class="h2">Tres pasos. Resultado real.</h2>
         <div class="steps">
@@ -715,7 +766,7 @@
     </section>
 
     <!-- Slide 7 — Capacidades de la plataforma -->
-    <section class="slide" data-narration="capabilities">
+    <section class="slide" data-audio="assets/audio/slide-07.mp3">
         <div class="eyebrow">Capacidades de la Plataforma</div>
         <h2 class="h2">Todo lo que el ecosistema necesita &mdash; integrado.</h2>
         <div class="caps">
@@ -733,7 +784,7 @@
     </section>
 
     <!-- Slide 8 — Para Quién -->
-    <section class="slide" data-narration="for-whom">
+    <section class="slide" data-audio="assets/audio/slide-08.mp3">
         <div class="eyebrow">Para Qui&eacute;n</div>
         <h2 class="h2">Cuatro actores. Un mismo lenguaje.</h2>
         <div class="problems">
@@ -745,7 +796,7 @@
     </section>
 
     <!-- Slide 9 — Modelo de Negocio -->
-    <section class="slide" data-narration="business-model">
+    <section class="slide" data-audio="assets/audio/slide-09.mp3">
         <div class="eyebrow">El Modelo de Negocio</div>
         <h2 class="h2">Partnership Digit2AI + Reddi Colombia.</h2>
         <div class="model-card">
@@ -777,7 +828,7 @@
     </section>
 
     <!-- Slide 10 — Roadmap -->
-    <section class="slide" data-narration="roadmap">
+    <section class="slide" data-audio="assets/audio/slide-10.mp3">
         <div class="eyebrow">Roadmap de 6 Meses</div>
         <h2 class="h2">De MVP a producci&oacute;n &mdash; paso a paso.</h2>
         <div class="roadmap">
@@ -791,7 +842,7 @@
     </section>
 
     <!-- Slide 11 — Por Qué Ahora -->
-    <section class="slide" data-narration="why-now">
+    <section class="slide" data-audio="assets/audio/slide-11.mp3">
         <div class="eyebrow">Por Qu&eacute; Ahora</div>
         <h2 class="h2">La oportunidad es <span style="color: var(--gold)">hoy</span>.</h2>
         <p class="lead">Cali tiene un ecosistema vibrante &mdash; universidades fuertes, startups con tracci&oacute;n, gobierno local abierto a innovaci&oacute;n, cooperaci&oacute;n internacional activa. Lo que falta no son actores. Lo que falta es <strong>la infraestructura que los conecte</strong>. Si esa capa se construye en 2026, Cali se convierte en el referente de ciudades inteligentes para Am&eacute;rica Latina &mdash; y la plataforma escala desde aqu&iacute; a Medell&iacute;n, Bogot&aacute;, Barranquilla, y m&aacute;s all&aacute;.</p>
@@ -804,7 +855,7 @@
     </section>
 
     <!-- Slide 12 — Próximos Pasos / CTA -->
-    <section class="slide" data-narration="next-steps">
+    <section class="slide" data-audio="assets/audio/slide-12.mp3" data-last-slide>
         <div class="eyebrow">Pr&oacute;ximos Pasos</div>
         <h2 class="h2">Kickoff en las pr&oacute;ximas 48 horas.</h2>
         <p class="lead">Reuni&oacute;n con liderazgo de Cali CityLab y los socios ancla iniciales para alinear visi&oacute;n, gobernanza y enfoque operativo. El MVP entra en construcci&oacute;n inmediatamente despu&eacute;s &mdash; con un primer demo funcional en dos semanas.</p>
@@ -821,27 +872,20 @@
 <!-- Controls -->
 <div class="controls">
     <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&larr; Anterior</button>
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Reproducir narración de Lina">&#9654;</button>
     <div class="progress" id="progress"></div>
     <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()">Siguiente &rarr;</button>
 </div>
 
-<!-- ElevenLabs Voice Agent — Lina Spanish -->
-<!--
-  STEP 1: Crear el agente en ElevenLabs:
-    https://elevenlabs.io/app/agents
-    Voice: Lina (Sunny, Kind and Friendly)
-    Language: Spanish (default)
-    LLM: Gemini 2.5 Flash
-    System Prompt: ver SISTEMA_PROMPT_LINA.md (también incluido abajo en este archivo)
-  STEP 2: Copiar el agent_id y reemplazar abajo:
--->
-<elevenlabs-convai agent-id="agent_5201krctf8wbeew8zqax747y1ghs"></elevenlabs-convai>
-<script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
-
-<!-- Setup notice (only shows while agent id is the placeholder) -->
-<div class="agent-notice" id="agentNotice">
-    <strong>Configurar Lina (Espa&ntilde;ol)</strong>
-    Reemplazar <code>REPLACE_WITH_LINA_ES_AGENT_ID</code> en el HTML con el agent ID del nuevo agente ElevenLabs configurado en espa&ntilde;ol con voz Lina.
+<!-- Lina narration wave (shows when audio is playing) -->
+<div class="narration-wave" id="narrationWave">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
 </div>
 
 <script>
@@ -860,33 +904,158 @@
     }
     const dots = document.querySelectorAll('.dot');
 
-    function render() {
-        slides.forEach((s, i) => {
-            s.classList.toggle('active', i === current);
+    const counter = document.getElementById('counter');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playBtn = document.getElementById('playBtn');
+    const recIndicator = document.getElementById('recIndicator');
+    const narrationWave = document.getElementById('narrationWave');
+
+    // ============ LINA VOICE (single reusable Audio element) ============
+    const linaAudio = new Audio();
+    linaAudio.volume = 1.0;
+    let autoPlaying = false;
+    let narrateOnEnd = null;
+
+    linaAudio.addEventListener('play', () => {
+        narrationWave.classList.add('active');
+        recIndicator.classList.add('active');
+    });
+    linaAudio.addEventListener('pause', () => {
+        narrationWave.classList.remove('active');
+        recIndicator.classList.remove('active');
+    });
+    linaAudio.addEventListener('ended', () => {
+        narrationWave.classList.remove('active');
+        recIndicator.classList.remove('active');
+        if (narrateOnEnd) {
+            const cb = narrateOnEnd;
+            narrateOnEnd = null;
+            cb();
+        }
+    });
+    linaAudio.addEventListener('error', () => {
+        narrationWave.classList.remove('active');
+        recIndicator.classList.remove('active');
+        if (narrateOnEnd) {
+            const cb = narrateOnEnd;
+            narrateOnEnd = null;
+            setTimeout(cb, 6000);
+        }
+    });
+
+    function cancelNarration() {
+        narrateOnEnd = null;
+        linaAudio.pause();
+        try { linaAudio.removeAttribute('src'); linaAudio.load(); } catch(_) {}
+        narrationWave.classList.remove('active');
+        recIndicator.classList.remove('active');
+    }
+
+    function narrateSlide(slideIndex, onEnd) {
+        cancelNarration();
+        const slide = slides[slideIndex];
+        const audioSrc = slide.dataset.audio || null;
+        if (!audioSrc) { if (onEnd) onEnd(); return; }
+        narrateOnEnd = () => { if (onEnd) onEnd(); };
+        linaAudio.src = audioSrc;
+        linaAudio.load();
+        linaAudio.play().catch((err) => {
+            console.error('Audio play failed:', err.message);
+            narrationWave.classList.remove('active');
+            recIndicator.classList.remove('active');
+            narrateOnEnd = null;
+            setTimeout(() => { if (onEnd) onEnd(); }, 6000);
         });
+    }
+
+    function render() {
+        slides.forEach((s, i) => s.classList.toggle('active', i === current));
         dots.forEach((d, i) => {
             d.classList.toggle('active', i === current);
             d.classList.toggle('visited', i < current);
         });
-        document.getElementById('counter').textContent = `${current + 1} / ${total}`;
-        document.getElementById('prevBtn').disabled = current === 0;
-        document.getElementById('nextBtn').textContent = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
-        document.getElementById('nextBtn').innerHTML = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
+        counter.textContent = `${current + 1} / ${total}`;
+        prevBtn.disabled = current === 0;
+        nextBtn.innerHTML = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
     }
 
-    window.nextSlide = function() {
-        if (current < total - 1) current++;
-        else current = 0;
+    function show(i) {
+        current = i;
         render();
+        if (autoPlaying) {
+            narrateSlide(current, () => {
+                if (!autoPlaying) return;
+                if (current < total - 1) {
+                    setTimeout(() => show(current + 1), 800);
+                } else {
+                    setTimeout(() => pauseAutoPlay(), 2000);
+                }
+            });
+        }
+    }
+
+    function startAutoPlay() {
+        autoPlaying = true;
+        playBtn.innerHTML = '&#10074;&#10074;';
+        playBtn.classList.add('playing');
+        playBtn.title = 'Pausar narración';
+        show(current);
+    }
+    function pauseAutoPlay() {
+        autoPlaying = false;
+        playBtn.innerHTML = '&#9654;';
+        playBtn.classList.remove('playing');
+        playBtn.title = 'Reproducir narración';
+        cancelNarration();
+    }
+    window.togglePlay = function() {
+        if (autoPlaying) pauseAutoPlay();
+        else startAutoPlay();
+    };
+
+    window.nextSlide = function() {
+        cancelNarration();
+        if (current < total - 1) { current++; }
+        else { current = 0; }
+        render();
+        if (autoPlaying) {
+            narrateSlide(current, () => {
+                if (!autoPlaying) return;
+                if (current < total - 1) setTimeout(() => show(current + 1), 800);
+                else setTimeout(() => pauseAutoPlay(), 2000);
+            });
+        }
     };
     window.prevSlide = function() {
+        cancelNarration();
         if (current > 0) { current--; render(); }
+        if (autoPlaying) {
+            narrateSlide(current, () => {
+                if (!autoPlaying) return;
+                if (current < total - 1) setTimeout(() => show(current + 1), 800);
+                else setTimeout(() => pauseAutoPlay(), 2000);
+            });
+        }
     };
-    window.goTo = function(i) { current = i; render(); };
+    window.goTo = function(i) {
+        cancelNarration();
+        current = i;
+        render();
+        if (autoPlaying) {
+            narrateSlide(current, () => {
+                if (!autoPlaying) return;
+                if (current < total - 1) setTimeout(() => show(current + 1), 800);
+                else setTimeout(() => pauseAutoPlay(), 2000);
+            });
+        }
+    };
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+        else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
         else if (e.key === 'Home') { goTo(0); }
         else if (e.key === 'End') { goTo(total - 1); }
         else if (/^[1-9]$/.test(e.key)) {
@@ -895,14 +1064,7 @@
         }
     });
 
-    // Show setup notice if agent ID is still the placeholder
-    setTimeout(() => {
-        const widget = document.querySelector('elevenlabs-convai');
-        if (widget && widget.getAttribute('agent-id') === 'REPLACE_WITH_LINA_ES_AGENT_ID') {
-            document.getElementById('agentNotice').classList.add('show');
-            widget.style.display = 'none';
-        }
-    }, 800);
+    render();
 })();
 </script>
 
