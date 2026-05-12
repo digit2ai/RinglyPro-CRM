@@ -628,6 +628,14 @@
         .play-btn:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(124,92,255,0.5); }
         .play-btn.playing {
             background: linear-gradient(135deg, var(--gold), #ea580c);
+            animation: none;
+        }
+        .play-btn.pulse {
+            animation: btnPulse 2s ease-in-out infinite;
+        }
+        @keyframes btnPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(124,92,255,0.6); }
+            50% { box-shadow: 0 0 0 10px rgba(124,92,255,0); }
         }
 
         /* Rec indicator (top bar) */
@@ -656,12 +664,199 @@
             50% { opacity: 0.4; }
         }
 
+        /* ============ RESPONSIVE — TABLET ============ */
         @media (max-width: 900px) {
-            .stage { padding: 60px 20px 80px; }
+            html, body { font-size: 14px; }
+            .stage { padding: 60px 20px 88px; }
+            .slide { max-height: calc(100vh - 156px); }
             .grid-6 { grid-template-columns: 1fr 1fr; }
             .problems, .caps, .model-grid { grid-template-columns: 1fr; }
-            .steps { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; gap: 22px; }
             .top-actions .hide-sm { display: none; }
+            .cover .h1 { font-size: clamp(38px, 9vw, 64px); }
+            .cover .lead { font-size: clamp(15px, 2.2vw, 18px); }
+            .h1 { font-size: clamp(32px, 6.5vw, 52px); }
+            .h2 { font-size: clamp(24px, 5vw, 36px); }
+            .lead { font-size: 15px; }
+        }
+
+        /* ============ RESPONSIVE — MOBILE (portrait phones) ============ */
+        @media (max-width: 640px) {
+            html, body { font-size: 13.5px; }
+
+            /* Top bar — tighter */
+            .top-bar {
+                height: 44px;
+                padding: 0 14px;
+            }
+            .brand { font-size: 13px; }
+            .top-actions { gap: 10px; font-size: 11px; }
+            .counter { font-size: 11.5px; }
+            .rec-indicator { display: none; }
+
+            /* Stage — vertical phone sizing */
+            .stage {
+                padding: 56px 16px 92px;
+                align-items: flex-start;
+                padding-top: 64px;
+            }
+            .slide {
+                max-height: calc(100vh - 160px);
+                padding: 14px 4px;
+            }
+
+            /* Cover */
+            .cover { padding: 20px 0; }
+            .cover-tag {
+                font-size: 9.5px;
+                padding: 6px 14px;
+                letter-spacing: 0.1em;
+                margin-bottom: 22px;
+            }
+            .cover .h1 { font-size: clamp(36px, 11vw, 56px); margin-bottom: 10px; }
+            .cover .lead { font-size: 14px; line-height: 1.55; margin-bottom: 22px; padding: 0 6px; }
+            .cover-divider { margin: 0 auto 22px; width: 56px; height: 2px; }
+            .cover-meta { font-size: 11.5px; }
+
+            /* Typography */
+            .h1 { font-size: clamp(28px, 8vw, 44px); }
+            .h2 { font-size: clamp(22px, 6.5vw, 32px); line-height: 1.15; margin-bottom: 14px; }
+            .eyebrow { font-size: 10px; letter-spacing: 0.16em; margin-bottom: 10px; }
+            .lead { font-size: 14px; line-height: 1.55; margin-bottom: 20px; }
+
+            /* 6 áreas — single column on mobile */
+            .grid-6 {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .pillar { padding: 14px 16px; }
+            .pillar h4 { font-size: 14.5px; margin-bottom: 4px; }
+            .pillar p { font-size: 13px; }
+
+            /* Problem cards */
+            .problems {
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .prob { padding: 14px 16px; }
+            .prob h4 { font-size: 14.5px; }
+            .prob p { font-size: 13px; }
+
+            /* Steps */
+            .steps { gap: 18px; margin-top: 18px; }
+            .step { padding: 18px 18px 16px; }
+            .step-num { width: 30px; height: 30px; font-size: 14px; top: -12px; left: 18px; }
+            .step h4 { font-size: 15px; margin: 10px 0 6px; }
+            .step p { font-size: 13px; }
+
+            /* Capabilities — single column */
+            .caps { gap: 6px 0; }
+            .cap { font-size: 13px; padding: 3px 0; }
+            .cap-dot { width: 6px; height: 6px; margin-top: 7px; }
+
+            /* Model card */
+            .model-card { padding: 18px 18px; }
+            .model-grid { gap: 16px; }
+            .model-side h4 { font-size: 12px; margin-bottom: 8px; }
+            .model-side li { font-size: 13px; padding-left: 14px; }
+            .model-side li::before { width: 5px; height: 5px; top: 10px; }
+            .model-split {
+                font-size: 14px;
+                margin-top: 14px;
+                padding-top: 14px;
+            }
+            .model-split .accent { font-size: 22px; }
+
+            /* Roadmap rows — stack label above title on phone */
+            .ms {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                padding: 12px 14px;
+            }
+            .ms-mes {
+                font-size: 10px;
+                text-align: left;
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+                padding-right: 0;
+                padding-bottom: 6px;
+                display: flex;
+                align-items: baseline;
+                gap: 8px;
+            }
+            .ms-mes .num {
+                display: inline;
+                font-size: 18px;
+                margin-top: 0;
+            }
+            .ms-body h5 { font-size: 14px; }
+            .ms-body p { font-size: 12.5px; }
+
+            /* CTA */
+            .cta-box { padding: 20px 18px; }
+            .cta-box h3 { font-size: 18px; }
+            .cta-box p { font-size: 13.5px; margin-bottom: 14px; }
+            .cta-btn { padding: 11px 24px; font-size: 13px; }
+
+            /* Controls — compact for phones */
+            .controls {
+                height: 72px;
+                padding: 0 12px;
+                gap: 6px;
+            }
+            .nav-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+                min-width: 44px;
+                white-space: nowrap;
+            }
+            .nav-btn .label { display: none; }
+            .play-btn { width: 48px; height: 48px; font-size: 17px; }
+            .progress {
+                margin: 0 8px;
+                gap: 3px;
+            }
+            .dot { width: 14px; height: 3px; }
+
+            /* Narration wave — smaller, slightly above controls */
+            .narration-wave {
+                bottom: 88px;
+                right: 14px;
+                padding: 6px 12px;
+                height: 22px;
+                gap: 2px;
+            }
+            .narration-wave .bar { width: 2.5px; }
+        }
+
+        /* ============ RESPONSIVE — SMALL PHONES (iPhone SE etc) ============ */
+        @media (max-width: 380px) {
+            .top-bar { padding: 0 10px; }
+            .brand { font-size: 12px; }
+            .counter { font-size: 11px; }
+            .stage { padding: 52px 12px 84px; }
+            .cover .h1 { font-size: 32px; }
+            .h1 { font-size: 26px; }
+            .h2 { font-size: 20px; }
+            .lead { font-size: 13.5px; }
+            .nav-btn { padding: 9px 10px; font-size: 11px; }
+            .play-btn { width: 44px; height: 44px; }
+        }
+
+        /* ============ LANDSCAPE PHONE ============ */
+        @media (max-height: 480px) and (orientation: landscape) {
+            .top-bar { height: 40px; }
+            .controls { height: 56px; }
+            .stage { padding: 48px 20px 64px; }
+            .slide { max-height: calc(100vh - 120px); padding: 8px 4px; }
+            .cover .h1 { font-size: 36px; margin-bottom: 6px; }
+            .cover .lead { font-size: 13px; margin-bottom: 12px; }
+            .cover-divider { margin-bottom: 12px; }
+            .cover-tag { margin-bottom: 12px; }
+            .h2 { font-size: 22px; margin-bottom: 8px; }
+            .lead { font-size: 13px; margin-bottom: 10px; }
+            .narration-wave { bottom: 70px; }
         }
     </style>
 </head>
@@ -871,10 +1066,10 @@
 
 <!-- Controls -->
 <div class="controls">
-    <button class="nav-btn" id="prevBtn" onclick="prevSlide()">&larr; Anterior</button>
-    <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Reproducir narración de Lina">&#9654;</button>
+    <button class="nav-btn" id="prevBtn" onclick="prevSlide()" aria-label="Slide anterior">&larr;<span class="label">&nbsp;Anterior</span></button>
+    <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Reproducir narración de Lina" aria-label="Reproducir o pausar narración">&#9654;</button>
     <div class="progress" id="progress"></div>
-    <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()">Siguiente &rarr;</button>
+    <button class="nav-btn primary" id="nextBtn" onclick="nextSlide()" aria-label="Siguiente slide"><span class="label">Siguiente&nbsp;</span>&rarr;</button>
 </div>
 
 <!-- Lina narration wave (shows when audio is playing) -->
@@ -977,7 +1172,9 @@
         });
         counter.textContent = `${current + 1} / ${total}`;
         prevBtn.disabled = current === 0;
-        nextBtn.innerHTML = current === total - 1 ? 'Reiniciar &#8634;' : 'Siguiente &rarr;';
+        nextBtn.innerHTML = current === total - 1
+            ? '<span class="label">Reiniciar&nbsp;</span>&#8634;'
+            : '<span class="label">Siguiente&nbsp;</span>&rarr;';
     }
 
     function show(i) {
@@ -999,6 +1196,7 @@
         autoPlaying = true;
         playBtn.innerHTML = '&#10074;&#10074;';
         playBtn.classList.add('playing');
+        playBtn.classList.remove('pulse');
         playBtn.title = 'Pausar narración';
         show(current);
     }
@@ -1065,6 +1263,7 @@
     });
 
     render();
+    playBtn.classList.add('pulse');
 })();
 </script>
 
