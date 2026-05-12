@@ -536,6 +536,170 @@
   }
   footer a:hover { text-decoration: underline; }
 
+  /* ===== SHAPE OF WORK — DIAGRAMS ===== */
+  .shape-section .lead { margin-bottom: 0; }
+  .shape-section .lead + .silos-diagram,
+  .shape-section .lead + .shape-pivot,
+  .shape-section .lead + .mesh-diagram { margin-top: 36px; }
+
+  .silos-header {
+    margin-bottom: 18px;
+  }
+  .silos-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,80,80,0.1);
+    border: 1px solid rgba(255,80,80,0.3);
+    color: rgba(255,140,140,0.9);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .silos-tag.teal {
+    background: rgba(0,163,224,0.1);
+    border-color: rgba(61,203,202,0.4);
+    color: var(--teal-neon);
+  }
+
+  .silos-diagram {
+    padding: 30px 26px 24px;
+    background: linear-gradient(180deg, rgba(255,80,80,0.04) 0%, rgba(255,80,80,0.01) 100%);
+    border: 1px solid rgba(255,80,80,0.18);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .silo-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .silo-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,120,120,0.78);
+    font-weight: 700;
+    width: 180px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .silo-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .silo-node {
+    padding: 9px 14px;
+    background: rgba(255,80,80,0.06);
+    border: 1px solid rgba(255,80,80,0.28);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .silo-arrow {
+    font-size: 20px;
+    color: rgba(255,80,80,0.6);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .silo-gap-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(255,80,80,0.35);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,140,140,0.85);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .silo-gap-marker .x-mark {
+    font-size: 20px;
+    color: rgba(255,90,90,0.9);
+  }
+
+  .shape-pivot {
+    margin: 52px 0 28px;
+    text-align: center;
+    position: relative;
+  }
+  .shape-pivot::before,
+  .shape-pivot::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 22%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  }
+  .shape-pivot::before { left: 10%; }
+  .shape-pivot::after  { right: 10%; }
+  .shape-pivot .pivot-line {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(22px, 2.4vw, 32px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--teal-neon);
+    padding: 0 22px;
+    background: var(--navy-blk);
+    position: relative;
+    z-index: 1;
+  }
+
+  .mesh-diagram {
+    padding: 24px 22px 26px;
+    background: linear-gradient(180deg, rgba(0,163,224,0.05) 0%, rgba(61,203,202,0.01) 100%);
+    border: 1px solid rgba(0,163,224,0.22);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .mesh-svg {
+    width: 100%;
+    max-width: 760px;
+    height: auto;
+    display: block;
+    margin: 8px auto 0;
+  }
+  .mesh-caption {
+    margin: 14px auto 0;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.62);
+    font-style: italic;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  .closer {
+    margin-top: 32px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(19px, 1.9vw, 26px);
+    font-weight: 600;
+    font-style: italic;
+    color: var(--teal-light);
+    line-height: 1.4;
+    max-width: 760px;
+  }
+
   /* ===== ENTRANCE ANIMATIONS ===== */
   .reveal {
     opacity: 0;
@@ -562,6 +726,12 @@
     .brand { font-size: 11px; letter-spacing: 4px; }
     .hero-presenter { gap: 14px; padding: 12px 14px; }
     .hero-presenter .avatar { width: 44px; height: 44px; font-size: 15px; }
+    .silo-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .silo-label { width: auto; text-align: left; }
+    .silo-flow { width: 100%; }
+    .silo-node { font-size: 11px; padding: 7px 10px; }
+    .silos-diagram { padding: 22px 16px 18px; }
+    .shape-pivot::before, .shape-pivot::after { width: 14%; }
   }
   @media (max-width: 480px) {
     .agent-grid { grid-template-columns: 1fr 1fr; }
@@ -590,9 +760,9 @@
       </div>
     </div>
     <span class="eyebrow" data-en="A five-minute walkthrough" data-es="Un recorrido de cinco minutos">A five-minute walkthrough</span>
-    <h1 data-en="Hi. The next five minutes will pay for themselves." data-es="Hola. Los próximos cinco minutos se van a pagar solos.">Hi. The next five minutes will pay for themselves.</h1>
-    <p class="lead" data-en="Every business is bleeding money in four places at once. I built Digit2AI Neural to find those leaks and fix them automatically — without adding headcount, without ripping out your stack." data-es="Todo negocio está perdiendo dinero en cuatro lugares al mismo tiempo. Construí Digit2AI Neural para encontrar esas fugas y repararlas automáticamente, sin contratar más personal y sin reemplazar tu stack.">Every business is bleeding money in four places at once. I built Digit2AI Neural to find those leaks and fix them automatically — without adding headcount, without ripping out your stack.</p>
-    <p class="sub" data-en="Let me show you what an MCP-native AI taskforce can do for your business." data-es="Déjame mostrarte qué puede hacer una fuerza de agentes AI nativa de MCP por tu negocio.">Let me show you what an MCP-native AI taskforce can do for your business.</p>
+    <h1 data-en="You do not have a tooling problem. You have a shape problem." data-es="No tienes un problema de herramientas. Tienes un problema de forma.">You do not have a tooling problem. You have a shape problem.</h1>
+    <p class="lead" data-en="For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins." data-es="Durante cuarenta años toda empresa se ha construido igual: flujos de trabajo horizontales corriendo en paralelo silencioso. Cumplimiento hace cumplimiento. Banca de inversión hace banca de inversión. Patrimonio hace patrimonio. Las líneas nunca se cruzan. Ahí empieza cada fuga de ingresos.">For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins.</p>
+    <p class="sub" data-en="Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves." data-es="Digit2AI Neural no es otra herramienta para añadir. Es una forma distinta de trabajar. Los próximos cinco minutos te van a mostrar exactamente qué significa eso, y se pagan solos.">Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves.</p>
 
     <div class="stat-row">
       <div class="stat">
@@ -610,11 +780,163 @@
     </div>
   </section>
 
+  <!-- ============ SHAPE OF WORK ============ -->
+  <section class="reveal shape-section">
+    <span class="eyebrow" data-en="The diagnosis" data-es="El diagnóstico">The diagnosis</span>
+    <h2 data-en="Look at how your business actually runs." data-es="Mira cómo funciona realmente tu negocio.">Look at how your business actually runs.</h2>
+    <p class="lead" data-en="Take any bank. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line in the bank has its own version of this pipe." data-es="Toma cualquier banco. Abrir una cuenta son cinco pasos horizontales en fila: sanciones, KYC, due diligence reforzada, apertura, monitoreo transaccional. Limpio, lineal, bien documentado. Cada línea de producto del banco tiene su propia versión de este tubo.">Take any bank. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line in the bank has its own version of this pipe.</p>
+
+    <!-- DIAGRAM 1: Horizontal silos -->
+    <div class="silos-diagram" aria-label="Horizontal workflows in silos">
+      <div class="silos-header">
+        <span class="silos-tag" data-en="Today · Horizontal workflows" data-es="Hoy · Flujos horizontales">Today · Horizontal workflows</span>
+      </div>
+      <div class="silo-row">
+        <div class="silo-label" data-en="Account Opening" data-es="Apertura de cuenta">Account Opening</div>
+        <div class="silo-flow">
+          <div class="silo-node" data-en="Sanctions" data-es="Sanciones">Sanctions</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node">KYC</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node">EDD</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Open" data-es="Apertura">Open</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Monitor" data-es="Monitoreo">Monitor</div>
+        </div>
+      </div>
+      <div class="silo-row">
+        <div class="silo-label" data-en="Investment Banking" data-es="Banca de inversión">Investment Banking</div>
+        <div class="silo-flow">
+          <div class="silo-node" data-en="Originate" data-es="Originar">Originate</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Diligence" data-es="Diligencia">Diligence</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Underwrite" data-es="Suscribir">Underwrite</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Close" data-es="Cierre">Close</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Service" data-es="Servicio">Service</div>
+        </div>
+      </div>
+      <div class="silo-row">
+        <div class="silo-label" data-en="Wealth Management" data-es="Gestión patrimonial">Wealth Management</div>
+        <div class="silo-flow">
+          <div class="silo-node" data-en="Prospect" data-es="Prospecto">Prospect</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Suitability" data-es="Idoneidad">Suitability</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Onboard" data-es="Alta">Onboard</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Allocate" data-es="Asignación">Allocate</div>
+          <span class="silo-arrow">›</span>
+          <div class="silo-node" data-en="Review" data-es="Revisión">Review</div>
+        </div>
+      </div>
+      <div class="silo-gap-marker">
+        <span class="x-mark" aria-hidden="true">⤬</span>
+        <span data-en="No cross-flow between products" data-es="Cero flujo cruzado entre productos">No cross-flow between products</span>
+      </div>
+    </div>
+
+    <p class="lead" data-en="Now ask the question nobody asks: how does step four — account opening — talk to investment banking? Or wealth management? Or the loan officer two floors up? It does not. Each product line is its own horizontal pipe. They share zero context. The same is true in every industry: sales, support, operations, finance — every department runs as its own straight line." data-es="Ahora hazte la pregunta que nadie hace: ¿cómo habla el paso cuatro, la apertura de cuenta, con banca de inversión? ¿Con gestión patrimonial? ¿Con el ejecutivo de crédito dos pisos arriba? No habla. Cada línea de producto es su propio tubo horizontal. Comparten cero contexto. Lo mismo pasa en cada industria: ventas, soporte, operaciones, finanzas — cada departamento corre como su propia línea recta.">Now ask the question nobody asks: how does step four — account opening — talk to investment banking? Or wealth management? Or the loan officer two floors up? It does not. Each product line is its own horizontal pipe. They share zero context. The same is true in every industry: sales, support, operations, finance — every department runs as its own straight line.</p>
+
+    <div class="shape-pivot">
+      <span class="pivot-line" data-en="Neural changes the shape." data-es="Neural cambia la forma.">Neural changes the shape.</span>
+    </div>
+
+    <!-- DIAGRAM 2: Neural mesh -->
+    <div class="mesh-diagram" aria-label="Neural network workflow">
+      <div class="silos-header" style="text-align:center;">
+        <span class="silos-tag teal" data-en="With Neural · MCP network" data-es="Con Neural · Red MCP">With Neural · MCP network</span>
+      </div>
+      <svg viewBox="0 0 800 460" preserveAspectRatio="xMidYMid meet" class="mesh-svg" role="img" aria-label="Six banking products connected through a central MCP Neural hub">
+        <defs>
+          <radialGradient id="mcpGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#3dcbca" stop-opacity="0.55"/>
+            <stop offset="55%" stop-color="#00A3E0" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#0b1d4a" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="meshGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3.5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- Halo behind MCP -->
+        <circle cx="400" cy="230" r="200" fill="url(#mcpGrad)"/>
+
+        <!-- Radial lines from MCP to each satellite -->
+        <g stroke="#3dcbca" stroke-width="1.6" stroke-opacity="0.62" filter="url(#meshGlow)">
+          <line x1="400" y1="230" x2="400" y2="62"/>
+          <line x1="400" y1="230" x2="547" y2="145"/>
+          <line x1="400" y1="230" x2="547" y2="315"/>
+          <line x1="400" y1="230" x2="400" y2="398"/>
+          <line x1="400" y1="230" x2="253" y2="315"/>
+          <line x1="400" y1="230" x2="253" y2="145"/>
+        </g>
+
+        <!-- Inter-satellite ring (lighter, dashed) -->
+        <g stroke="#00A3E0" stroke-width="1" stroke-opacity="0.28" stroke-dasharray="3 5" fill="none">
+          <line x1="400" y1="62" x2="547" y2="145"/>
+          <line x1="547" y1="145" x2="547" y2="315"/>
+          <line x1="547" y1="315" x2="400" y2="398"/>
+          <line x1="400" y1="398" x2="253" y2="315"/>
+          <line x1="253" y1="315" x2="253" y2="145"/>
+          <line x1="253" y1="145" x2="400" y2="62"/>
+        </g>
+
+        <!-- Satellite nodes -->
+        <g font-family="JetBrains Mono, ui-monospace, monospace" font-size="13" font-weight="600">
+          <g transform="translate(400 62)">
+            <rect x="-78" y="-22" width="156" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Compliance" data-es="Cumplimiento">Compliance</text>
+          </g>
+          <g transform="translate(547 145)">
+            <rect x="-92" y="-22" width="184" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Investment Banking" data-es="Banca de inversión">Investment Banking</text>
+          </g>
+          <g transform="translate(547 315)">
+            <rect x="-68" y="-22" width="136" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Wealth Mgmt" data-es="Patrimonio">Wealth Mgmt</text>
+          </g>
+          <g transform="translate(400 398)">
+            <rect x="-60" y="-22" width="120" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Lending" data-es="Crédito">Lending</text>
+          </g>
+          <g transform="translate(253 315)">
+            <rect x="-62" y="-22" width="124" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Treasury" data-es="Tesorería">Treasury</text>
+          </g>
+          <g transform="translate(253 145)">
+            <rect x="-58" y="-22" width="116" height="44" rx="22" fill="rgba(11,29,74,0.92)" stroke="#3dcbca" stroke-width="1.6"/>
+            <text x="0" y="5" text-anchor="middle" fill="#e6edf3" data-en="Cards" data-es="Tarjetas">Cards</text>
+          </g>
+
+          <!-- MCP center -->
+          <g transform="translate(400 230)">
+            <circle r="62" fill="#0b1d4a" stroke="#3dcbca" stroke-width="2.5" filter="url(#meshGlow)"/>
+            <text x="0" y="-6" text-anchor="middle" fill="#3dcbca" font-size="17" font-weight="800" letter-spacing="3">MCP</text>
+            <text x="0" y="16" text-anchor="middle" fill="#e6edf3" font-size="11" letter-spacing="1.5" data-en="NEURAL" data-es="NEURAL">NEURAL</text>
+          </g>
+        </g>
+      </svg>
+      <div class="mesh-caption" data-en="Every workflow becomes a node in one network. Every employee acts with the knowledge of every other." data-es="Cada flujo se vuelve un nodo en una sola red. Cada empleado actúa con el conocimiento de todos los demás.">Every workflow becomes a node in one network. Every employee acts with the knowledge of every other.</div>
+    </div>
+
+    <p class="lead" data-en="Now a sanctions hit at account opening reaches the wealth desk in the same minute. A KYC refresh lights up the loan officer's screen with a new cross-sell. A support call gets routed to the investment banker because the AI heard the customer mention liquidity. Every product leverages every other product — automatically, with full audit." data-es="Ahora un hallazgo de sanciones en apertura de cuenta llega al escritorio de patrimonio en el mismo minuto. Un refresh de KYC enciende la pantalla del ejecutivo de crédito con una venta cruzada nueva. Una llamada de soporte se enruta a banca de inversión porque la AI escuchó al cliente mencionar liquidez. Cada producto apalanca a cada otro producto, automáticamente y con auditoría completa.">Now a sanctions hit at account opening reaches the wealth desk in the same minute. A KYC refresh lights up the loan officer's screen with a new cross-sell. A support call gets routed to the investment banker because the AI heard the customer mention liquidity. Every product leverages every other product — automatically, with full audit.</p>
+
+    <p class="closer" data-en="That is not a feature. It is a different way for a company to think." data-es="Eso no es una funcionalidad. Es una forma distinta de que una empresa piense.">That is not a feature. It is a different way for a company to think.</p>
+  </section>
+
   <!-- ============ PROBLEM ============ -->
   <section class="reveal">
-    <span class="eyebrow" data-en="The problem" data-es="El problema">The problem</span>
-    <h2 data-en="Money is leaking out four pipes today." data-es="El dinero se está fugando por cuatro tuberías hoy.">Money is leaking out four pipes today.</h2>
-    <p class="lead" data-en="Pick any growing business and you will find the same four leaks. They are not new — they are just impossible to plug with hiring, scripts, or yet another dashboard." data-es="Toma cualquier negocio en crecimiento y vas a encontrar las mismas cuatro fugas. No son nuevas; simplemente no se pueden tapar contratando, con guiones o con otro dashboard más.">Pick any growing business and you will find the same four leaks. They are not new — they are just impossible to plug with hiring, scripts, or yet another dashboard.</p>
+    <span class="eyebrow" data-en="The symptoms" data-es="Los síntomas">The symptoms</span>
+    <h2 data-en="Once you see the shape, the symptoms are obvious." data-es="Una vez que ves la forma, los síntomas son obvios.">Once you see the shape, the symptoms are obvious.</h2>
+    <p class="lead" data-en="Every horizontal-shaped business bleeds money in the same four places. These are not random failures or bad hiring — they are exactly what happens when nothing flows between the lines. Most CEOs do not know they have these leaks because each one shows up in a different department's report." data-es="Toda empresa con forma horizontal pierde dinero en los mismos cuatro lugares. No son fallas aleatorias ni malas contrataciones: son exactamente lo que pasa cuando nada fluye entre las líneas. La mayoría de los CEOs no sabe que tiene estas fugas porque cada una aparece en el reporte de un departamento distinto.">Every horizontal-shaped business bleeds money in the same four places. These are not random failures or bad hiring — they are exactly what happens when nothing flows between the lines. Most CEOs do not know they have these leaks because each one shows up in a different department's report.</p>
 
     <div class="leak-grid">
       <div class="leak">
@@ -709,9 +1031,9 @@
 
   <!-- ============ WHY THIS WINS ============ -->
   <section class="reveal">
-    <span class="eyebrow" data-en="Why this wins" data-es="Por qué esto gana">Why this wins</span>
-    <h2 data-en="It is not another chatbot. It is not a DIY toolkit." data-es="No es otro chatbot. No es un toolkit hazlo tú mismo.">It is not another chatbot. It is not a DIY toolkit.</h2>
-    <p class="lead" data-en="Most AI investments either buy a single chatbot that does one trick or spend six months wiring a hyperscaler. We deliver a finished platform — protocol-native, governance built in, ROI measurable from day one." data-es="La mayoría de las inversiones en AI o compran un chatbot que hace un solo truco, o pasan seis meses cableando un hyperscaler. Nosotros entregamos una plataforma terminada: nativa de protocolo, gobierno incorporado y ROI medible desde el primer día.">Most AI investments either buy a single chatbot that does one trick or spend six months wiring a hyperscaler. We deliver a finished platform — protocol-native, governance built in, ROI measurable from day one.</p>
+    <span class="eyebrow" data-en="The math" data-es="La matemática">The math</span>
+    <h2 data-en="A shape change beats a feature war." data-es="Un cambio de forma le gana a una guerra de funcionalidades.">A shape change beats a feature war.</h2>
+    <p class="lead" data-en="Every other vendor will sell you a faster horizontal tool — a sharper chatbot, a slicker dashboard, a bigger DIY toolkit. We change the shape itself. That is why the numbers below are not in the same league." data-es="Cualquier otro proveedor te va a vender una herramienta horizontal más rápida: un chatbot más afilado, un dashboard más lustroso, un toolkit DIY más grande. Nosotros cambiamos la forma. Por eso los números de abajo no juegan en la misma liga.">Every other vendor will sell you a faster horizontal tool — a sharper chatbot, a slicker dashboard, a bigger DIY toolkit. We change the shape itself. That is why the numbers below are not in the same league.</p>
 
     <div class="compare-wrap">
       <table class="compare">
