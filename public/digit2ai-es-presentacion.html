@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2AI Neural -- La plataforma de operadores de IA nativa MCP para todo negocio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --navy: #0b1d4a;
+    --navy-light: #17296b;
+    --navy-dark: #030814;
+    --navy-blk: #010409;
+    --teal: #00A3E0;
+    --teal-light: #66c7f0;
+    --teal-neon: #3dcbca;
+    --gold: #C5A55A;
+    --gold-neon: #dfc07a;
+    --gold-dark: #a08542;
+    --white: #ffffff;
+    --gray-200: #e9ecef;
+    --gray-500: #6c757d;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy-blk);
+    color: var(--white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 7vw 80px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .45s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,163,224,0.3) transparent;
+  }
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: rgba(0,163,224,0.3); border-radius: 3px; }
+  .slide.active { display: flex; opacity: 1; }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,163,224,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,163,224,0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gridDrift 40s linear infinite;
+  }
+
+  @keyframes gridDrift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 64px 64px, 64px 64px; }
+  }
+
+  .slide::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,163,224,0.12) 0%, rgba(0,163,224,0.03) 40%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: meshDrift 18s ease-in-out infinite;
+  }
+
+  @keyframes meshDrift {
+    0%, 100% { transform: translate(-60%, -55%) scale(1); }
+    50%      { transform: translate(-40%, -45%) scale(1.2); }
+  }
+
+  .slide > * { position: relative; z-index: 1; }
+
+  .bg-navy { background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-dark) 50%, var(--navy-blk) 100%); }
+  .bg-teal { background: radial-gradient(ellipse at top, #032a38 0%, #011218 50%, var(--navy-blk) 100%); }
+  .bg-teal::after { background: radial-gradient(circle, rgba(0,163,224,0.2) 0%, rgba(0,163,224,0.05) 40%, transparent 70%); }
+  .bg-gold { background: radial-gradient(ellipse at top, #2e2210 0%, #181008 50%, var(--navy-blk) 100%); }
+  .bg-gold::after { background: radial-gradient(circle, rgba(197,165,90,0.18) 0%, rgba(197,165,90,0.04) 40%, transparent 70%); }
+  .bg-deep { background: radial-gradient(ellipse at top, #0a1535 0%, #050b1c 50%, var(--navy-blk) 100%); }
+  .bg-deep::after { background: radial-gradient(circle, rgba(61,203,202,0.16) 0%, rgba(61,203,202,0.04) 40%, transparent 70%); }
+
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    opacity: 0;
+    animation: particleFloat linear infinite;
+  }
+  .particle:nth-child(1)  { left: 5%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 12s; animation-delay: 0s; }
+  .particle:nth-child(2)  { left: 12%; bottom: -10px; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 1s; }
+  .particle:nth-child(3)  { left: 20%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 3s; }
+  .particle:nth-child(4)  { left: 28%; bottom: -10px; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 2s; }
+  .particle:nth-child(5)  { left: 35%; bottom: -10px; width: 2px; height: 2px; animation-duration: 16s; animation-delay: 4s; }
+  .particle:nth-child(6)  { left: 42%; bottom: -10px; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 0.5s; }
+  .particle:nth-child(7)  { left: 50%; bottom: -10px; width: 2px; height: 2px; animation-duration: 17s; animation-delay: 5s; }
+  .particle:nth-child(8)  { left: 58%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 1.5s; }
+  .particle:nth-child(9)  { left: 65%; bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 3.5s; }
+  .particle:nth-child(10) { left: 72%; bottom: -10px; width: 4px; height: 4px; animation-duration: 15s; animation-delay: 2.5s; }
+  .particle:nth-child(11) { left: 78%; bottom: -10px; width: 2px; height: 2px; animation-duration: 11s; animation-delay: 6s; }
+  .particle:nth-child(12) { left: 85%; bottom: -10px; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 0.8s; }
+  .particle:nth-child(13) { left: 90%; bottom: -10px; width: 2px; height: 2px; animation-duration: 13s; animation-delay: 4.5s; }
+  .particle:nth-child(14) { left: 95%; bottom: -10px; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 1.2s; }
+  .particle:nth-child(15) { left: 8%;  bottom: -10px; width: 2px; height: 2px; animation-duration: 14s; animation-delay: 7s; }
+  .particle:nth-child(16) { left: 38%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 5.5s; }
+  .particle:nth-child(17) { left: 55%; bottom: -10px; width: 2px; height: 2px; animation-duration: 15s; animation-delay: 8s; }
+  .particle:nth-child(18) { left: 68%; bottom: -10px; width: 4px; height: 4px; animation-duration: 13s; animation-delay: 3.2s; }
+
+  @keyframes particleFloat {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.5; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+  }
+
+  .progress {
+    position: fixed;
+    top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--teal-neon) 100%);
+    box-shadow: 0 0 12px var(--teal-neon);
+    transition: width .45s ease;
+    z-index: 300;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.4);
+    color: var(--teal-light);
+    backdrop-filter: blur(8px);
+  }
+  .chip::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal-neon);
+    box-shadow: 0 0 8px var(--teal-neon);
+  }
+  .chip.gold { background: rgba(197,165,90,0.08); border-color: rgba(197,165,90,0.4); color: var(--gold-neon); }
+  .chip.gold::before { background: var(--gold-neon); box-shadow: 0 0 8px var(--gold-neon); }
+
+  h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(42px, 7vw, 96px);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: -3px;
+    margin-bottom: 24px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(32px, 5vw, 72px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    max-width: 1200px;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d9e3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2.accent-teal {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-gold {
+    background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(22px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+
+  p.lead {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 2vw, 26px);
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 900px;
+    margin: 0 auto 28px;
+    color: rgba(255,255,255,0.82);
+  }
+
+  .powered-by {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    margin-top: 28px;
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .problem-card {
+    padding: 28px 24px;
+    background: linear-gradient(180deg, rgba(255,60,60,0.06) 0%, rgba(255,60,60,0.02) 100%);
+    border: 1px solid rgba(255,80,80,0.25);
+    border-left: 3px solid rgba(255,80,80,0.6);
+    border-radius: 10px;
+    text-align: left;
+    backdrop-filter: blur(12px);
+  }
+  .problem-card .pc-icon {
+    font-family: var(--mono);
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: rgba(255,100,100,0.8);
+  }
+  .problem-card .pc-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .problem-card .pc-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .solution-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    max-width: 1200px;
+    width: 100%;
+    margin-top: 32px;
+  }
+  .solution-card {
+    padding: 24px 20px;
+    background: linear-gradient(180deg, rgba(0,163,224,0.08) 0%, rgba(0,163,224,0.02) 100%);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    position: relative;
+  }
+  .solution-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--teal-neon) 50%, transparent 100%);
+  }
+  .solution-card .sc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .solution-card .sc-problem {
+    font-size: 13px;
+    color: rgba(255,100,100,0.7);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .solution-card .sc-arrow {
+    font-size: 18px;
+    color: var(--teal-neon);
+    margin-bottom: 12px;
+  }
+  .solution-card .sc-solution {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .module-card {
+    max-width: 1000px;
+    width: 100%;
+    padding: 36px 40px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.06) 0%, rgba(11,29,74,0.4) 100%);
+    border: 1px solid rgba(0,163,224,0.3);
+    border-radius: 12px;
+    text-align: left;
+    margin-top: 24px;
+    position: relative;
+  }
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  }
+
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+    max-width: 1000px;
+  }
+  .flow-step {
+    padding: 12px 20px;
+    background: rgba(0,163,224,0.1);
+    border: 1px solid rgba(0,163,224,0.35);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--teal-light);
+    font-weight: 500;
+  }
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--teal-neon);
+  }
+
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 28px;
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 120px;
+    gap: 16px;
+    align-items: center;
+    padding: 20px 24px;
+    border-radius: 10px;
+    text-align: left;
+  }
+  .layer-row.l1 {
+    background: rgba(0,163,224,0.08);
+    border: 1px solid rgba(0,163,224,0.3);
+  }
+  .layer-row.l2 {
+    background: rgba(197,165,90,0.08);
+    border: 1px solid rgba(197,165,90,0.3);
+  }
+  .layer-row.l3 {
+    background: rgba(61,203,202,0.08);
+    border: 1px solid rgba(61,203,202,0.3);
+  }
+  .layer-row .lr-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .layer-row.l1 .lr-label { color: var(--teal); }
+  .layer-row.l2 .lr-label { color: var(--gold); }
+  .layer-row.l3 .lr-label { color: var(--teal-neon); }
+  .layer-row .lr-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+  .layer-row .lr-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: right;
+  }
+  .layer-row.l1 .lr-num { color: var(--teal); }
+  .layer-row.l2 .lr-num { color: var(--gold); }
+  .layer-row.l3 .lr-num { color: var(--teal-neon); }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .mini-item {
+    padding: 14px 12px;
+    background: rgba(0,163,224,0.06);
+    border: 1px solid rgba(0,163,224,0.2);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+  }
+  .mini-group-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+
+  .drg-table {
+    max-width: 900px;
+    width: 100%;
+    margin-top: 24px;
+    border-collapse: collapse;
+  }
+  .drg-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,163,224,0.3);
+    text-align: left;
+  }
+  .drg-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 15px;
+    color: rgba(255,255,255,0.85);
+  }
+  .drg-table td:last-child {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--gold-neon);
+    text-align: right;
+  }
+
+  .cta-box {
+    max-width: 800px;
+    width: 100%;
+    padding: 36px 40px;
+    background: linear-gradient(135deg, rgba(0,163,224,0.08) 0%, rgba(11,29,74,0.5) 100%);
+    border: 2px solid var(--teal-neon);
+    border-radius: 14px;
+    margin-top: 32px;
+    box-shadow: 0 0 40px rgba(61,203,202,0.15);
+  }
+  .cta-box .cta-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(18px, 2vw, 24px);
+    line-height: 1.55;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 20px;
+  }
+  .cta-box .cta-email {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--teal-neon);
+    letter-spacing: 1px;
+    text-decoration: none;
+  }
+  .cta-box .cta-email:hover {
+    text-decoration: underline;
+  }
+
+  .slide.active h1,
+  .slide.active h2,
+  .slide.active h3,
+  .slide.active p.lead,
+  .slide.active .chip,
+  .slide.active .powered-by,
+  .slide.active .problem-grid,
+  .slide.active .solution-grid,
+  .slide.active .module-card,
+  .slide.active .flow-steps,
+  .slide.active .layer-stack,
+  .slide.active .mini-grid,
+  .slide.active .mini-group-label,
+  .slide.active .drg-table,
+  .slide.active .cta-box,
+  .slide.active .convai-prompt {
+    animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .slide.active .chip { animation-delay: .05s; }
+  .slide.active h1, .slide.active h2 { animation-delay: .15s; }
+  .slide.active p.lead, .slide.active h3 { animation-delay: .25s; }
+  .slide.active .problem-grid,
+  .slide.active .solution-grid,
+  .slide.active .module-card,
+  .slide.active .flow-steps,
+  .slide.active .layer-stack,
+  .slide.active .mini-grid,
+  .slide.active .drg-table,
+  .slide.active .cta-box { animation-delay: .35s; }
+  .slide.active .powered-by { animation-delay: .5s; }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .autoplay-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(3,8,20,0.85);
+    border: 1px solid rgba(0,163,224,0.35);
+    border-radius: 10px;
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    font-family: var(--mono);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .autoplay-controls .rec-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 52px;
+  }
+  .autoplay-controls .rec-indicator.active {
+    color: #ff4444;
+  }
+  .autoplay-controls .rec-indicator .rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .autoplay-controls .rec-indicator.active .rec-dot {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: recPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes recPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .autoplay-controls button {
+    background: rgba(0,163,224,0.1);
+    border: 1px solid rgba(0,163,224,0.4);
+    color: var(--teal-light);
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: var(--mono);
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .autoplay-controls button:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 16px rgba(0,163,224,0.5);
+  }
+
+  .autoplay-controls .slide-info {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,163,224,0.6);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+  }
+  .nav button {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: rgba(3,8,20,0.7);
+    border: 1px solid rgba(0,163,224,0.3);
+    color: var(--teal-light);
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav button:hover {
+    background: var(--teal);
+    color: var(--navy-dark);
+    border-color: var(--teal);
+  }
+
+  .preplay-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--navy) 0%, var(--navy-dark) 40%, var(--navy-blk) 100%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 28px;
+    transition: opacity 0.6s ease;
+  }
+  .preplay-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .preplay-overlay .preplay-logo {
+    font-family: var(--mono);
+    font-size: clamp(14px, 2.5vw, 22px);
+    letter-spacing: 8px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(61,203,202,0.5);
+  }
+  .preplay-overlay .preplay-title {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    text-align: center;
+    max-width: 700px;
+    background: linear-gradient(180deg, #ffffff 0%, #b8c4d1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .preplay-overlay .preplay-subtitle {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    color: rgba(255,255,255,0.45);
+    font-style: italic;
+    text-align: center;
+    max-width: 500px;
+  }
+  .preplay-overlay .preplay-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(0,163,224,0.12);
+    border: 2px solid var(--teal);
+    color: var(--teal-neon);
+    font-size: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 40px rgba(0,163,224,0.2);
+    margin-top: 12px;
+  }
+  .preplay-overlay .preplay-btn:hover {
+    background: var(--teal);
+    color: var(--navy-dark);
+    box-shadow: 0 0 60px rgba(0,163,224,0.5);
+    transform: scale(1.08);
+  }
+  .preplay-overlay .preplay-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+
+  .narration-wave {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .narration-wave.active { opacity: 1; }
+  .narration-wave .bar {
+    width: 3px;
+    background: var(--teal-neon);
+    border-radius: 2px;
+    animation: waveBar 0.8s ease-in-out infinite;
+  }
+  .narration-wave .bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .narration-wave .bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .narration-wave .bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .narration-wave .bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+  .narration-wave .bar:nth-child(5) { height: 12px; animation-delay: 0.15s; }
+  .narration-wave .bar:nth-child(6) { height: 16px; animation-delay: 0.25s; }
+  .narration-wave .bar:nth-child(7) { height: 8px; animation-delay: 0.35s; }
+
+  @keyframes waveBar {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.3); }
+  }
+
+  .convai-prompt {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .slide { padding: 50px 5vw 80px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .solution-grid { grid-template-columns: 1fr 1fr; }
+    .mini-grid { grid-template-columns: repeat(2, 1fr); }
+    .layer-row { grid-template-columns: 80px 1fr 80px; gap: 10px; padding: 14px 16px; }
+    .layer-row .lr-num { font-size: 18px; }
+    .layer-row .lr-text { font-size: 14px; }
+    h1 { font-size: clamp(32px, 8vw, 56px); letter-spacing: -1.5px; }
+    h2 { font-size: clamp(26px, 6vw, 44px); letter-spacing: -1px; }
+    p.lead { font-size: clamp(15px, 3.5vw, 20px); }
+    .chip { font-size: 10px; padding: 8px 16px; letter-spacing: 2px; margin-bottom: 20px; }
+    .autoplay-controls { padding: 8px 14px; gap: 8px; bottom: 16px; }
+    .autoplay-controls button { width: 34px; height: 34px; font-size: 14px; }
+    .autoplay-controls .slide-info { font-size: 9px; }
+    .autoplay-controls .rec-indicator { font-size: 9px; min-width: 44px; }
+    .nav { bottom: 18px; right: 16px; gap: 8px; }
+    .nav button { width: 36px; height: 36px; font-size: 15px; }
+    .flow-steps { gap: 8px; }
+    .flow-step { padding: 8px 12px; font-size: 10px; }
+    .module-card { padding: 24px 22px; }
+    .cta-box { padding: 24px 24px; }
+  }
+
+  @media (max-width: 560px) {
+    .solution-grid { grid-template-columns: 1fr; }
+    .mini-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media print {
+    .particles, .nav, .autoplay-controls, .preplay-overlay, .progress, .narration-wave { display: none !important; }
+    .slide { position: relative !important; display: flex !important; opacity: 1 !important; page-break-after: always; height: auto; min-height: 100vh; }
+    html, body { overflow: visible; height: auto; }
+    .deck { height: auto; overflow: visible; }
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles">
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+</div>
+
+<div class="preplay-overlay" id="preplayOverlay">
+  <div class="preplay-logo">Digit2AI Neural</div>
+  <div class="preplay-title">La plataforma de operadores de IA nativa MCP para todo negocio</div>
+  <div class="preplay-subtitle">Encuentra fugas de dinero. Repáralas automáticamente.</div>
+  <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentación">&#9654;</button>
+  <div class="preplay-hint">Toca para iniciar</div>
+</div>
+
+<div class="narration-wave" id="narrationWave">
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide bg-navy active" data-auto-advance="9000" data-audio="/digit2ai-es-audio/slide-01.mp3">
+  <div class="chip">Plataforma Digit2AI Neural</div>
+  <h1>Digit2AI Neural</h1>
+  <p class="lead">La plataforma de operadores de IA nativa de MCP para todo negocio</p>
+  <div class="powered-by">Encuentra fugas de dinero &middot; Repáralas automáticamente &middot; Impulsado por MCP</div>
+</div>
+
+<!-- SLIDE 2: WHAT IT ACTUALLY IS -->
+<div class="slide bg-teal" data-auto-advance="14000" data-audio="/digit2ai-es-audio/slide-02.mp3">
+  <div class="chip">Qué es realmente</div>
+  <h2 class="accent-teal">Una plataforma para construir operadores de IA para tu negocio</h2>
+  <p class="lead">No solo asistentes, sino sistemas que operan partes del negocio de forma autónoma.</p>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Capacidad 1</div>
+      <div class="sc-problem">Observa el trabajo</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Entiende los flujos</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Capacidad 2</div>
+      <div class="sc-problem">Lee la situación</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Decide en contexto</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Capacidad 3</div>
+      <div class="sc-problem">Asume la acción</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Ejecuta multi-paso</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Capacidad 4</div>
+      <div class="sc-problem">Opera sin ti</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Autonomía operativa</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: NEURAL + AGENT TWO LAYERS -->
+<div class="slide bg-navy" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-03.mp3">
+  <div class="chip">Dos capas, una plataforma</div>
+  <h2>Neural es la inteligencia. Los agentes son la ejecución.</h2>
+  <div class="layer-stack">
+    <div class="layer-row l1">
+      <div class="lr-label">Neural</div>
+      <div class="lr-text">La capa de inteligencia: entiende contexto, intención y lógica de negocio. Mejora con el tiempo.</div>
+      <div class="lr-num">PIENSA</div>
+    </div>
+    <div class="layer-row l2">
+      <div class="lr-label">Agente</div>
+      <div class="lr-text">La capa de ejecución: convierte la inteligencia en acción a través de tus herramientas, datos y flujos.</div>
+      <div class="lr-num">ACTÚA</div>
+    </div>
+    <div class="layer-row l3">
+      <div class="lr-label">MCP</div>
+      <div class="lr-text">El protocolo: enruta hallazgos, transporta contexto compartido y orquesta operaciones multi-paso.</div>
+      <div class="lr-num">ENRUTA</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.55);">Juntos: agentes que no solo responden; gestionan interacciones, califican datos, activan acciones y coordinan de extremo a extremo.</p>
+</div>
+
+<!-- SLIDE 4: OLD AUTOMATION VS NEURAL AGENTS -->
+<div class="slide bg-deep" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-04.mp3">
+  <div class="chip">Por qué importa</div>
+  <h2>Consciente del contexto, no basado en reglas</h2>
+  <p class="lead">La automatización antigua se rompe cuando la realidad se complica. Los agentes Neural no siguen reglas: operan flujos.</p>
+  <div class="solution-grid" style="grid-template-columns:repeat(2,1fr);max-width:900px;">
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(255,80,80,0.06) 0%, rgba(255,80,80,0.02) 100%);border-color:rgba(255,80,80,0.3);">
+      <div class="sc-num" style="color:#ff8888;">Automatización tradicional</div>
+      <div class="sc-solution" style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.85);line-height:1.7;text-align:left;padding:8px 4px;">
+        &middot; Basada en reglas<br>
+        &middot; Flujos estáticos<br>
+        &middot; Se rompe con la complejidad<br>
+        &middot; Traspasos manuales<br>
+        &middot; Tareas únicas
+      </div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Agentes Digit2AI Neural</div>
+      <div class="sc-solution" style="font-size:14px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.7;text-align:left;padding:8px 4px;">
+        &middot; Consciente del contexto<br>
+        &middot; Adaptativa<br>
+        &middot; Orientada a decisiones<br>
+        &middot; Coordinación multi-paso<br>
+        &middot; Responsabilidad de extremo a extremo
+      </div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.55);">Elimina cuellos de botella. Reduce la dependencia manual. Escala sin contratar más personal.</p>
+</div>
+
+<!-- SLIDE 5: THE PROBLEM -->
+<div class="slide bg-deep" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-05.mp3">
+  <div class="chip" style="background:rgba(255,80,80,0.08);border-color:rgba(255,80,80,0.4);color:#ff8888;">
+    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff6666;box-shadow:0 0 8px #ff6666;margin-right:4px;"></span>
+    El problema
+  </div>
+  <h2>Todo negocio está perdiendo dinero</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Llamadas perdidas y respuesta lenta a leads</div>
+      <div class="pc-desc">Cada llamada sin contestar y cada devolución lenta es un negocio perdido. Las pymes pierden hasta el cuarenta por ciento de la demanda entrante.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Pipelines estancados y leads viejos</div>
+      <div class="pc-desc">Los negocios se pudren en CRMs que nadie lee. Las secuencias de nurturing nunca corren. Los reps persiguen al más ruidoso, no al mejor.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Trabajo sin facturar y fugas de ingresos</div>
+      <div class="pc-desc">Llamadas, alcances y renovaciones caen entre sistemas. El trabajo se hace. La factura nunca.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Ausencias y capacidad desperdiciada</div>
+      <div class="pc-desc">Las citas perdidas y las reservas fantasma queman el recurso más caro de cualquier negocio: el tiempo en el calendario.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: THE PLATFORM -->
+<div class="slide bg-navy" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-06.mp3">
+  <div class="chip">Una plataforma</div>
+  <h2 class="accent-teal">4 fugas. 4 mecanismos. 1 plataforma nativa de MCP.</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Mecanismo 1</div>
+      <div class="sc-problem">Llamadas perdidas</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Fuerza de voice agents</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Mecanismo 2</div>
+      <div class="sc-problem">Pipelines estancados</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">10 analizadores Neural</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Mecanismo 3</div>
+      <div class="sc-problem">Fugas de ingresos</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Flujos de auto-reparación</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Mecanismo 4</div>
+      <div class="sc-problem">Ausencias</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Orquestación MCP</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: WORKFLOW -->
+<div class="slide bg-teal" data-auto-advance="11000" data-audio="/digit2ai-es-audio/slide-07.mp3">
+  <div class="chip">El flujo de trabajo</div>
+  <h2>De la señal a la solución, sin humanos en el loop</h2>
+  <p class="lead">Cinco etapas corren continuamente en tu negocio. Cada etapa la dirige un agente distinto.</p>
+  <div class="flow-steps">
+    <div class="flow-step">DETECTAR</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">DIAGNOSTICAR</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">PRESCRIBIR</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">AUTO-REPARAR</div>
+    <div class="flow-arrow">--></div>
+    <div class="flow-step">VERIFICAR</div>
+  </div>
+  <div class="module-card">
+    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);">
+      <strong style="color:var(--teal-neon);">Primer hallazgo en treinta segundos.</strong> Diez analizadores Neural inspeccionan continuamente llamadas, leads, reservas, pipeline, transcripciones y actividad del CRM. El servidor MCP enruta cada hallazgo al agente especialista correcto con contexto completo.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 8: ROUTING LAYERS -->
+<div class="slide bg-navy" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-08.mp3">
+  <div class="chip">Orquestación</div>
+  <h2>Una columna vertebral nativa de protocolo</h2>
+  <div class="layer-stack">
+    <div class="layer-row l1">
+      <div class="lr-label">Detectar</div>
+      <div class="lr-text">10 analizadores Neural escanean cada flujo continuamente</div>
+      <div class="lr-num">24/7</div>
+    </div>
+    <div class="layer-row l2">
+      <div class="lr-label">Diagnosticar</div>
+      <div class="lr-text">El servidor MCP enruta hallazgos al especialista correcto con contexto compartido</div>
+      <div class="lr-num">&lt;30s</div>
+    </div>
+    <div class="layer-row l3">
+      <div class="lr-label">Auto-reparar</div>
+      <div class="lr-text">Las soluciones pre-aprobadas corren al instante; las de alto riesgo emergen para aprobación con un clic</div>
+      <div class="lr-num">100%</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.5);">Cada acción queda registrada con los datos, la regla y el resultado.</p>
+</div>
+
+<!-- SLIDE 9: THE TASKFORCE OVERVIEW -->
+<div class="slide bg-deep" data-auto-advance="11000" data-audio="/digit2ai-es-audio/slide-09.mp3">
+  <div class="chip">La fuerza</div>
+  <h2>Ocho especialistas. Un supervisor. Todos los canales.</h2>
+  <div class="mini-group-label">Voz y respuesta a leads (3)</div>
+  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="mini-item">Rachel &mdash; Concierge de voz</div>
+    <div class="mini-item">Ana &mdash; Responder bilingüe</div>
+    <div class="mini-item">Lina &mdash; Nurturer de pipeline</div>
+  </div>
+  <div class="mini-group-label">Pipeline e ingresos (3)</div>
+  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="mini-item">Sentinel &mdash; Salud del pipeline</div>
+    <div class="mini-item">Nova &mdash; Reductora de ausencias</div>
+    <div class="mini-item">Vault &mdash; Cazador de fugas</div>
+  </div>
+  <div class="mini-group-label">Performance y personalizados (3)</div>
+  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="mini-item">Origin &mdash; Auditor de ROI por fuente</div>
+    <div class="mini-item">Coach &mdash; Revisor de conversiones</div>
+    <div class="mini-item">Agente personalizado &mdash; A medida</div>
+  </div>
+</div>
+
+<!-- SLIDE 10: SPECIALIST AGENTS DETAIL #1 -->
+<div class="slide bg-teal" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-10.mp3">
+  <div class="chip">Especialistas I</div>
+  <h2>Voz, respuesta a leads y pipeline</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Rachel</div>
+      <div class="sc-problem">Llamadas perdidas</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Concierge de voz</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Ana</div>
+      <div class="sc-problem">Respuesta lenta a leads</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Bilingüe en 60s</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Lina</div>
+      <div class="sc-problem">Leads viejos</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Nurturing personalizado</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Sentinel</div>
+      <div class="sc-problem">Negocios estancados</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Vigilancia 24/7 del pipeline</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: SPECIALIST AGENTS DETAIL #2 -->
+<div class="slide bg-navy" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-11.mp3">
+  <div class="chip">Especialistas II</div>
+  <h2>Ingresos, atribución y coaching</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Nova</div>
+      <div class="sc-problem">Ausencias</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Confirma y auto-reagenda</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Vault</div>
+      <div class="sc-problem">Trabajo sin facturar</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Cazador de fugas</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Origin</div>
+      <div class="sc-problem">Marketing desperdiciado</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Auditoría de ROI por fuente</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Coach</div>
+      <div class="sc-problem">Caída de conversión</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Revisión de performance del rep</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.45);">Más un agente personalizado construido a medida para cualquier vertical, desplegado en días, no meses.</p>
+</div>
+
+<!-- SLIDE 12: MCP ARCHITECTURE -->
+<div class="slide bg-teal" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-12.mp3">
+  <div class="chip">Arquitectura MCP</div>
+  <h2 class="accent-teal">Una sola columna vertebral nativa de protocolo</h2>
+  <div class="layer-stack">
+    <div class="layer-row l1">
+      <div class="lr-label">Experiencia</div>
+      <div class="lr-text">Voz &middot; Web &middot; SMS &middot; WhatsApp &middot; Email &middot; Móvil &middot; API</div>
+      <div class="lr-num">7+</div>
+    </div>
+    <div class="layer-row l2">
+      <div class="lr-label">Servidor MCP</div>
+      <div class="lr-text">Enruta hallazgos, transporta contexto compartido, aplica protocolos, registra cada llamada</div>
+      <div class="lr-num">NÚCLEO</div>
+    </div>
+    <div class="layer-row l3">
+      <div class="lr-label">Agentes y herramientas</div>
+      <div class="lr-text">Fuerza + router de LLM (Opus, Sonnet, Haiku, Gemini, GPT) + CRM, calendario, pagos, webhooks</div>
+      <div class="lr-num">8+</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.55);">Memoria por tenant, historial de conversación, caché del registro del cliente: aislado y auditado.</p>
+</div>
+
+<!-- SLIDE 13: PLATFORM PILLARS -->
+<div class="slide bg-gold" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-13.mp3">
+  <div class="chip gold">Pilares de la plataforma</div>
+  <h2 class="accent-gold">Construye, despliega, gobierna, observa: desde un solo lugar</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Construye</div>
+      <div class="sc-problem">Flujos + voz + KB</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">No-code y SDK</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Despliega</div>
+      <div class="sc-problem">Voz + chat + SMS + WA</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">REST + MCP + Móvil</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Gobierna</div>
+      <div class="sc-problem">RBAC + multi-tenant</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Auditoría estilo SOC2</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Observa</div>
+      <div class="sc-problem">KPIs + transcripciones</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">ROI por agente</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: COMPARISON TABLE -->
+<div class="slide bg-navy" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-14.mp3">
+  <div class="chip">La diferencia</div>
+  <h2>No es otro chatbot. No es un toolkit hazlo tú mismo.</h2>
+  <table class="drg-table">
+    <thead>
+      <tr>
+        <th>Capacidad</th>
+        <th>Chatbot único</th>
+        <th>Hyperscaler DIY</th>
+        <th>Digit2AI Neural</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Tiempo al primer valor</td><td>Días</td><td>Meses</td><td>30 segundos</td></tr>
+      <tr><td>Agentes pre-construidos</td><td>1 genérico</td><td>0 &mdash; tú lo construyes</td><td>8 especialistas + personalizado</td></tr>
+      <tr><td>Cobertura de canales</td><td>Solo web</td><td>Lo que tú conectes</td><td>Voz &middot; Web &middot; SMS &middot; WA &middot; Email &middot; API &middot; MCP</td></tr>
+      <tr><td>Precio</td><td>Por puesto</td><td>Por token + salarios</td><td>Por resultado resuelto</td></tr>
+    </tbody>
+  </table>
+  <p class="lead" style="margin-top:20px;font-size:15px;color:rgba(255,255,255,0.5);">Una plataforma terminada: protocolo agente a agente nativo, gobierno incorporado, ROI medible.</p>
+</div>
+
+<!-- SLIDE 15: USE CASES -->
+<div class="slide bg-deep" data-auto-advance="14000" data-audio="/digit2ai-es-audio/slide-15.mp3">
+  <div class="chip">Casos de uso</div>
+  <h2>Donde Neural encuentra más dinero</h2>
+  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="mini-item">Operaciones de ventas</div>
+    <div class="mini-item">Soporte al cliente</div>
+    <div class="mini-item">Servicios en terreno</div>
+    <div class="mini-item">Práctica médica</div>
+    <div class="mini-item">Bienes raíces</div>
+    <div class="mini-item">Legal y profesional</div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:16px;">Seis verticales donde llamadas, leads, reservas y trabajo sin facturar componen las mayores fugas de ingresos, y donde los agentes se pagan solos más rápido.</p>
+</div>
+
+<!-- SLIDE 16: TRUST & SECURITY -->
+<div class="slide bg-navy" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-16.mp3">
+  <div class="chip">Confianza y seguridad</div>
+  <h2>Calidad empresarial desde el día uno</h2>
+  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="mini-item">Aislamiento multi-tenant</div>
+    <div class="mini-item">Audit trail completo</div>
+    <div class="mini-item">RBAC + SSO</div>
+    <div class="mini-item">Residencia de datos</div>
+    <div class="mini-item">SLA 99.9% uptime</div>
+    <div class="mini-item">Bóveda de secretos</div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:16px;color:rgba(255,255,255,0.5);">Cada decisión del agente queda registrada. Las credenciales no viven en los prompts. Fronteras duras por cliente.</p>
+</div>
+
+<!-- SLIDE 17: LIVE PORTFOLIO -->
+<div class="slide bg-teal" data-auto-advance="13000" data-audio="/digit2ai-es-audio/slide-17.mp3">
+  <div class="chip">Prueba</div>
+  <h2 class="accent-teal">21 plataformas en producción. Un solo cerebro compartido.</h2>
+  <p class="lead">No es un pitch deck. Producción real. Cada plataforma desplegada, atendiendo clientes, generando datos.</p>
+  <div class="flow-steps">
+    <div class="flow-step">RinglyPro</div>
+    <div class="flow-step">SurgicalMind</div>
+    <div class="flow-step">CW Carriers</div>
+    <div class="flow-step">Pinaxis</div>
+    <div class="flow-step">HISPATEC</div>
+    <div class="flow-step">CamaraVirtual</div>
+    <div class="flow-step">Visionarium</div>
+    <div class="flow-step">Torna Idioma</div>
+    <div class="flow-step">+ 13 más</div>
+  </div>
+  <div class="module-card" style="margin-top:24px;">
+    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.8);">
+      <strong style="color:var(--teal-neon);">22 verticales industriales.</strong> Tres voice agents en vivo. Operaciones autónomas veinticuatro siete. Cada tenant hereda la plataforma: el cerebro compone.
+    </p>
+  </div>
+</div>
+
+<!-- SLIDE 18: BUSINESS MODEL -->
+<div class="slide bg-deep" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-18.mp3">
+  <div class="chip">Modelo de negocio</div>
+  <h2>Tres flujos de ingresos componibles</h2>
+  <div class="solution-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="solution-card">
+      <div class="sc-num">Flujo 1</div>
+      <div class="sc-problem">Recurrente</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Suscripciones SaaS</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Flujo 2</div>
+      <div class="sc-problem">Volumen</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Ingresos por uso</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Flujo 3</div>
+      <div class="sc-problem">Apalancamiento</div>
+      <div class="sc-arrow">--></div>
+      <div class="sc-solution">Licenciamiento vertical</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:16px;color:rgba(255,255,255,0.6);">Datos del cliente sin copia. Cada vertical nuevo fortalece al siguiente. El cerebro compone a través de los tenants.</p>
+</div>
+
+<!-- SLIDE 19: TRACTION -->
+<div class="slide bg-gold" data-auto-advance="12000" data-audio="/digit2ai-es-audio/slide-19.mp3">
+  <div class="chip gold">Tracción</div>
+  <h2 class="accent-gold">Una ventana única en una generación</h2>
+  <div class="layer-stack">
+    <div class="layer-row l1">
+      <div class="lr-label">TAM</div>
+      <div class="lr-text">Mercado de infraestructura de operadores e IA con agentes</div>
+      <div class="lr-num">$300B</div>
+    </div>
+    <div class="layer-row l2">
+      <div class="lr-label">Sin atender</div>
+      <div class="lr-text">Pymes que viven de llamadas y hojas de cálculo</div>
+      <div class="lr-num">85%</div>
+    </div>
+    <div class="layer-row l3">
+      <div class="lr-label">Crecimiento</div>
+      <div class="lr-text">CAGR de la categoría de IA vertical hasta 2030</div>
+      <div class="lr-num">40%+</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20: CTA / FINAL -->
+<div class="slide bg-navy" data-auto-advance="15000" data-audio="/digit2ai-es-audio/slide-20.mp3" data-last-slide>
+  <div class="chip gold">Hablemos</div>
+  <h2 class="accent-gold">Encuentra cada fuga de dinero. Repárala automáticamente.</h2>
+  <p class="lead">Sube un export de tu CRM y verás a Neural diagnosticar tu negocio en treinta segundos, o agenda una llamada de descubrimiento para desplegar la fuerza de agentes dentro de tu stack.</p>
+  <div class="cta-box">
+    <div class="cta-text">
+      Digit2AI Neural transforma cómo los negocios de todo tamaño gestionan ventas, soporte y operaciones.
+      Déjanos mostrarte lo que una fuerza nativa de MCP puede hacer por tu stack.
+    </div>
+    <a href="mailto:mstagg@digit2ai.com" class="cta-email">mstagg@digit2ai.com</a>
+  </div>
+  <div class="powered-by" style="margin-top:36px;">Digit2AI &mdash; Infraestructura de operadores de IA para todo negocio</div>
+  <div class="convai-prompt" style="margin-top:24px;">Haz clic en el micrófono para preguntarle a Lina cualquier cosa sobre Digit2AI Neural</div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav">
+  <button id="prev" aria-label="Anterior">&larr;</button>
+  <button id="next" aria-label="Siguiente">&rarr;</button>
+</div>
+
+<div class="autoplay-controls" id="autoplayControls">
+  <div class="rec-indicator" id="recIndicator">
+    <div class="rec-dot"></div>
+    <span>EN VIVO</span>
+  </div>
+  <button id="btnPlayPause" aria-label="Reproducir / Pausar" title="Reproducir / Pausar" style="display:flex;align-items:center;gap:6px"><span id="playIcon">&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span></button>
+  <button id="btnStop" aria-label="Detener" title="Detener" style="display:flex;align-items:center;gap:6px"><span>&#9632;</span><span style="font-size:10px;letter-spacing:1px">STOP</span></button>
+  <div class="slide-info" id="slideInfo">01 / 20</div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const TOTAL = slides.length;
+  const progress = document.getElementById('progress');
+  let idx = 0;
+
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStop = document.getElementById('btnStop');
+  const slideInfo = document.getElementById('slideInfo');
+  const recIndicator = document.getElementById('recIndicator');
+  const preplayOverlay = document.getElementById('preplayOverlay');
+  const preplayBtn = document.getElementById('preplayBtn');
+  const narrationWave = document.getElementById('narrationWave');
+
+  let autoAdvanceTimer = null;
+
+  // Pre-rendered Lina (ElevenLabs voice VmejBeYhbrcTPwDniox7) MP3s per slide.
+  var linaAudio = new Audio();
+  linaAudio.volume = 1.0;
+  var currentNarrationEnd = null;
+
+  linaAudio.addEventListener('play', function() { narrationWave.classList.add('active'); });
+  linaAudio.addEventListener('ended', function() {
+    narrationWave.classList.remove('active');
+    if (currentNarrationEnd) { var cb = currentNarrationEnd; currentNarrationEnd = null; cb(); }
+  });
+  linaAudio.addEventListener('error', function() {
+    narrationWave.classList.remove('active');
+    if (currentNarrationEnd) {
+      var cb = currentNarrationEnd;
+      currentNarrationEnd = null;
+      var ms = slides[idx].dataset.autoAdvance ? parseInt(slides[idx].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(cb, ms);
+    }
+  });
+
+  function cancelNarration() {
+    currentNarrationEnd = null;
+    linaAudio.pause();
+    try { linaAudio.removeAttribute('src'); linaAudio.load(); } catch(_) {}
+    narrationWave.classList.remove('active');
+  }
+
+  function narrateSlide(slideIndex, onEnd) {
+    cancelNarration();
+    cancelAutoAdvance();
+    var audioSrc = slides[slideIndex].dataset.audio || null;
+    if (!audioSrc) {
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+      return;
+    }
+    currentNarrationEnd = onEnd;
+    narrationWave.classList.add('active');
+    linaAudio.src = audioSrc;
+    linaAudio.load();
+    linaAudio.play().catch(function(err) {
+      console.error('Audio play failed:', err.message);
+      narrationWave.classList.remove('active');
+      currentNarrationEnd = null;
+      var ms = slides[slideIndex].dataset.autoAdvance ? parseInt(slides[slideIndex].dataset.autoAdvance) : 8000;
+      autoAdvanceTimer = setTimeout(function() { if (onEnd) onEnd(); }, ms);
+    });
+  }
+
+  function show(n) {
+    idx = Math.max(0, Math.min(TOTAL - 1, n));
+    slides.forEach(function(s, i) { s.classList.toggle('active', i === idx); });
+    const num = String(idx + 1).padStart(2, '0');
+    const tot = String(TOTAL).padStart(2, '0');
+    slideInfo.textContent = num + ' / ' + tot;
+    progress.style.width = ((idx + 1) / TOTAL * 100) + '%';
+  }
+
+  document.getElementById('next').addEventListener('click', function() { manualNav(idx + 1); });
+  document.getElementById('prev').addEventListener('click', function() { manualNav(idx - 1); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); manualNav(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); manualNav(idx - 1); }
+    else if (e.key === ' ') {
+      e.preventDefault();
+      if (autoPlaying) pauseAutoPlay(); else startAutoPlay();
+    }
+    else if (e.key === 'Home') manualNav(0);
+    else if (e.key === 'End') manualNav(TOTAL - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  var tStartX = 0, tStartY = 0, tStartT = 0;
+  var deck = document.getElementById('deck');
+  deck.addEventListener('touchstart', function(e) {
+    var t = e.changedTouches[0];
+    tStartX = t.clientX; tStartY = t.clientY; tStartT = Date.now();
+  }, { passive: true });
+  deck.addEventListener('touchend', function(e) {
+    var t = e.changedTouches[0];
+    var dx = t.clientX - tStartX;
+    var dy = t.clientY - tStartY;
+    var dt = Date.now() - tStartT;
+    if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) manualNav(idx + 1); else manualNav(idx - 1);
+    }
+  }, { passive: true });
+
+  show(0);
+
+  function manualNav(n) {
+    if (autoPlaying) pauseAutoPlay();
+    cancelAutoAdvance();
+    cancelNarration();
+    show(n);
+  }
+
+  function cancelAutoAdvance() {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      autoAdvanceTimer = null;
+    }
+  }
+
+  var autoPlaying = false;
+
+  function startAutoPlay() {
+    autoPlaying = true;
+    btnPlayPause.innerHTML = '<span>&#10074;&#10074;</span><span style="font-size:10px;letter-spacing:1px">PAUSA</span>';
+    recIndicator.classList.add('active');
+    autoNarrateCurrentSlide();
+  }
+
+  function pauseAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
+    recIndicator.classList.remove('active');
+    cancelAutoAdvance();
+    cancelNarration();
+  }
+
+  function stopAutoPlay() {
+    autoPlaying = false;
+    btnPlayPause.innerHTML = '<span>&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span>';
+    recIndicator.classList.remove('active');
+    cancelAutoAdvance();
+    cancelNarration();
+    show(0);
+  }
+
+  function autoNarrateCurrentSlide() {
+    if (!autoPlaying) return;
+
+    var isLast = slides[idx].hasAttribute('data-last-slide');
+
+    narrateSlide(idx, function() {
+      if (!autoPlaying) return;
+
+      if (isLast) {
+        pauseAutoPlay();
+        return;
+      }
+
+      if (idx < TOTAL - 1) {
+        show(idx + 1);
+        autoNarrateCurrentSlide();
+      } else {
+        pauseAutoPlay();
+      }
+    });
+  }
+
+  btnPlayPause.addEventListener('click', function() {
+    if (autoPlaying) pauseAutoPlay(); else startAutoPlay();
+  });
+
+  btnStop.addEventListener('click', function() {
+    stopAutoPlay();
+  });
+
+  preplayBtn.addEventListener('click', function() {
+    preplayOverlay.style.display = 'none';
+    show(0);
+    startAutoPlay();
+  });
+</script>
+
+</body>
+</html>
