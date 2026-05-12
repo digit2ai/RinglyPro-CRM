@@ -1179,7 +1179,7 @@
       var resp = await fetch('/api/tts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text, voice: 'ana', lang: 'es' })
+        body: JSON.stringify({ text: text, voice: 'lina', lang: 'es' })
       });
       if (!resp.ok) throw new Error('TTS failed: ' + resp.status);
       var blob = await resp.blob();

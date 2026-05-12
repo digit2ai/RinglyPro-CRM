@@ -10,7 +10,9 @@ if (!fs.existsSync(AUDIO_CACHE_DIR)) fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: 
 
 const VOICES = {
   rachel: '21m00Tcm4TlvDq8ikWAM',   // Rachel — English
-  bella: 'EXAVITQu4vr4xnSDxMaL'     // Bella — Spanish (Lina)
+  bella: 'EXAVITQu4vr4xnSDxMaL',    // Bella — Spanish (Lina)
+  lina: 'EXAVITQu4vr4xnSDxMaL',     // Lina — alias for the Spanish Lina/Bella voice
+  ana: 'EXAVITQu4vr4xnSDxMaL'       // Ana — alias to the Spanish voice (legacy)
 };
 
 // POST /api/tts/generate - Generate TTS audio from text
