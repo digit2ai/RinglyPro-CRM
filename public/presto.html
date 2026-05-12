@@ -700,6 +700,74 @@
     max-width: 760px;
   }
 
+  /* ===== OPERATING LOOP (5 stages) ===== */
+  .flow-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 40px;
+  }
+  .flow-stage {
+    padding: 22px 18px;
+    background: linear-gradient(180deg, rgba(0,163,224,0.07) 0%, rgba(0,163,224,0.02) 100%);
+    border: 1px solid rgba(0,163,224,0.25);
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.18s;
+  }
+  .flow-stage:hover {
+    border-color: var(--teal-neon);
+    transform: translateY(-2px);
+  }
+  .flow-stage::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  }
+  .flow-stage .fs-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--teal-neon);
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  .flow-stage .fs-verb {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .flow-stage .fs-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.66);
+    line-height: 1.55;
+  }
+  @media (max-width: 1000px) {
+    .flow-5 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .flow-5 { grid-template-columns: 1fr; }
+  }
+
+  /* ===== AGENT KPI OWNS LINE ===== */
+  .a-owns {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0,163,224,0.2);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--teal-neon);
+    text-transform: uppercase;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
   /* ===== ENTRANCE ANIMATIONS ===== */
   .reveal {
     opacity: 0;
@@ -760,7 +828,7 @@
       </div>
     </div>
     <span class="eyebrow" data-en="A five-minute walkthrough" data-es="Un recorrido de cinco minutos">A five-minute walkthrough</span>
-    <h1 data-en="You do not have a tooling problem. You have a shape problem." data-es="No tienes un problema de herramientas. Tienes un problema de forma.">You do not have a tooling problem. You have a shape problem.</h1>
+    <h1 data-en="You do not have a tooling problem. You have a shape problem." data-es="No tienes un problema de herramientas. Tienes un problema de workforces convencionales.">You do not have a tooling problem. You have a shape problem.</h1>
     <p class="lead" data-en="For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins." data-es="Durante cuarenta años toda empresa se ha construido igual: flujos de trabajo horizontales corriendo en paralelo silencioso. Cumplimiento hace cumplimiento. Banca de inversión hace banca de inversión. Patrimonio hace patrimonio. Las líneas nunca se cruzan. Ahí empieza cada fuga de ingresos.">For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins.</p>
     <p class="sub" data-en="Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves." data-es="Digit2AI Neural no es otra herramienta para añadir. Es una forma distinta de trabajar. Los próximos cinco minutos te van a mostrar exactamente qué significa eso, y se pagan solos.">Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves.</p>
 
@@ -987,44 +1055,87 @@
     </div>
   </section>
 
+  <!-- ============ HOW IT OPERATES ============ -->
+  <section class="reveal">
+    <span class="eyebrow" data-en="The operating loop" data-es="El loop operativo">The operating loop</span>
+    <h2 data-en="From signal to fix in five stages — running every minute." data-es="De la señal a la solución en cinco etapas, corriendo cada minuto.">From signal to fix in five stages — running every minute.</h2>
+    <p class="lead" data-en="The whole platform runs one loop. Every workflow Neural watches goes through these five steps. Different agents own different stages. MCP carries the context between them. The first finding lands in under thirty seconds — and it never stops." data-es="Toda la plataforma corre un solo loop. Cada flujo que Neural observa pasa por estos cinco pasos. Distintos agentes son dueños de distintas etapas. MCP transporta el contexto entre ellos. El primer hallazgo aterriza en menos de treinta segundos — y nunca se detiene.">The whole platform runs one loop. Every workflow Neural watches goes through these five steps. Different agents own different stages. MCP carries the context between them. The first finding lands in under thirty seconds — and it never stops.</p>
+
+    <div class="flow-5">
+      <div class="flow-stage">
+        <div class="fs-num">01</div>
+        <div class="fs-verb" data-en="Detect" data-es="Detectar">Detect</div>
+        <div class="fs-desc" data-en="Ten Neural analyzers scan calls, leads, pipeline, transcripts, CRM activity continuously." data-es="Diez analizadores Neural escanean llamadas, leads, pipeline, transcripciones y actividad del CRM de forma continua.">Ten Neural analyzers scan calls, leads, pipeline, transcripts, CRM activity continuously.</div>
+      </div>
+      <div class="flow-stage">
+        <div class="fs-num">02</div>
+        <div class="fs-verb" data-en="Diagnose" data-es="Diagnosticar">Diagnose</div>
+        <div class="fs-desc" data-en="MCP reads each finding, identifies the right specialist, forwards full context — data, history, urgency." data-es="MCP lee cada hallazgo, identifica al especialista correcto y le pasa contexto completo: datos, historial, urgencia.">MCP reads each finding, identifies the right specialist, forwards full context — data, history, urgency.</div>
+      </div>
+      <div class="flow-stage">
+        <div class="fs-num">03</div>
+        <div class="fs-verb" data-en="Prescribe" data-es="Prescribir">Prescribe</div>
+        <div class="fs-desc" data-en="The receiving agent proposes a workflow — a callback, a nurture, a re-pricing, a re-book — with expected outcome and risk." data-es="El agente receptor propone un flujo: un callback, un nurturing, un re-pricing, una nueva reserva — con resultado esperado y riesgo.">The receiving agent proposes a workflow — a callback, a nurture, a re-pricing, a re-book — with expected outcome and risk.</div>
+      </div>
+      <div class="flow-stage">
+        <div class="fs-num">04</div>
+        <div class="fs-verb" data-en="Auto-Fix" data-es="Auto-reparar">Auto-Fix</div>
+        <div class="fs-desc" data-en="Pre-approved fixes run immediately. Higher-risk actions surface to a human for one-click approval." data-es="Las acciones pre-aprobadas corren al instante. Las de mayor riesgo emergen para aprobación humana con un clic.">Pre-approved fixes run immediately. Higher-risk actions surface to a human for one-click approval.</div>
+      </div>
+      <div class="flow-stage">
+        <div class="fs-num">05</div>
+        <div class="fs-verb" data-en="Verify" data-es="Verificar">Verify</div>
+        <div class="fs-desc" data-en="Every action is logged with the data, the rule, the outcome. The score moves. The next finding starts the loop again." data-es="Cada acción se registra con los datos, la regla y el resultado. El score se mueve. El siguiente hallazgo reinicia el loop.">Every action is logged with the data, the rule, the outcome. The score moves. The next finding starts the loop again.</div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ THE TEAM ============ -->
   <section class="reveal">
     <span class="eyebrow" data-en="The taskforce" data-es="La fuerza">The taskforce</span>
-    <h2 data-en="Eight specialists you do not have to hire." data-es="Ocho especialistas que no tienes que contratar.">Eight specialists you do not have to hire.</h2>
-    <p class="lead" data-en="Each agent owns one part of the revenue cycle. They never call in sick, they never lose context, and they get better every week — across every tenant on the platform." data-es="Cada agente es dueño de una parte del ciclo de ingresos. Nunca se enferman, nunca pierden contexto y mejoran cada semana, en cada tenant de la plataforma.">Each agent owns one part of the revenue cycle. They never call in sick, they never lose context, and they get better every week — across every tenant on the platform.</p>
+    <h2 data-en="Eight employees who each own a KPI." data-es="Ocho empleados que son dueños de un KPI cada uno.">Eight employees who each own a KPI.</h2>
+    <p class="lead" data-en="Do not think of them as features. Think of them as accountable specialists on payroll — except they never call in sick, never lose context, and the whole team gets sharper every week. Each one owns a measurable number on your P&amp;L." data-es="No los pienses como funcionalidades. Piénsalos como especialistas responsables en planilla, solo que nunca se enferman, nunca pierden contexto y todo el equipo se afila cada semana. Cada uno es dueño de un número medible en tu P&amp;L.">Do not think of them as features. Think of them as accountable specialists on payroll — except they never call in sick, never lose context, and the whole team gets sharper every week. Each one owns a measurable number on your P&amp;L.</p>
 
     <div class="agent-grid">
       <div class="agent">
         <div class="a-name">Rachel</div>
-        <div class="a-role" data-en="Voice concierge — answers every call" data-es="Concierge de voz — contesta cada llamada">Voice concierge — answers every call</div>
+        <div class="a-role" data-en="Voice concierge" data-es="Concierge de voz">Voice concierge</div>
+        <div class="a-owns" data-en="Owns · Missed calls" data-es="Posee · Llamadas perdidas">Owns · Missed calls</div>
       </div>
       <div class="agent">
         <div class="a-name">Ana</div>
-        <div class="a-role" data-en="Bilingual lead responder — under 60s" data-es="Responder bilingüe — menos de 60s">Bilingual lead responder — under 60s</div>
+        <div class="a-role" data-en="Bilingual lead responder" data-es="Responder bilingüe">Bilingual lead responder</div>
+        <div class="a-owns" data-en="Owns · Speed-to-lead" data-es="Posee · Velocidad al lead">Owns · Speed-to-lead</div>
       </div>
       <div class="agent">
         <div class="a-name">Lina</div>
-        <div class="a-role" data-en="Pipeline nurturer — wakes stale leads" data-es="Nurturer de pipeline — despierta leads viejos">Pipeline nurturer — wakes stale leads</div>
+        <div class="a-role" data-en="Pipeline nurturer" data-es="Nurturer de pipeline">Pipeline nurturer</div>
+        <div class="a-owns" data-en="Owns · Stale leads" data-es="Posee · Leads viejos">Owns · Stale leads</div>
       </div>
       <div class="agent">
         <div class="a-name">Sentinel</div>
-        <div class="a-role" data-en="Pipeline health — flags stuck deals" data-es="Salud del pipeline — marca negocios estancados">Pipeline health — flags stuck deals</div>
+        <div class="a-role" data-en="Pipeline health monitor" data-es="Monitor de salud del pipeline">Pipeline health monitor</div>
+        <div class="a-owns" data-en="Owns · Deal velocity" data-es="Posee · Velocidad del deal">Owns · Deal velocity</div>
       </div>
       <div class="agent">
         <div class="a-name">Nova</div>
-        <div class="a-role" data-en="No-show reducer — confirms + rebooks" data-es="Reductora de ausencias — confirma y reagenda">No-show reducer — confirms + rebooks</div>
+        <div class="a-role" data-en="No-show reducer" data-es="Reductora de ausencias">No-show reducer</div>
+        <div class="a-owns" data-en="Owns · Meeting conversion" data-es="Posee · Conversión de reuniones">Owns · Meeting conversion</div>
       </div>
       <div class="agent">
         <div class="a-name">Vault</div>
-        <div class="a-role" data-en="Revenue leak hunter — finds unbilled work" data-es="Cazador de fugas — encuentra trabajo sin facturar">Revenue leak hunter — finds unbilled work</div>
+        <div class="a-role" data-en="Revenue leak hunter" data-es="Cazador de fugas de ingresos">Revenue leak hunter</div>
+        <div class="a-owns" data-en="Owns · Unbilled work &amp; renewals" data-es="Posee · Trabajo sin facturar y renovaciones">Owns · Unbilled work &amp; renewals</div>
       </div>
       <div class="agent">
         <div class="a-name">Origin</div>
-        <div class="a-role" data-en="Source ROI auditor — ranks every channel" data-es="Auditor de ROI por fuente — clasifica cada canal">Source ROI auditor — ranks every channel</div>
+        <div class="a-role" data-en="Source ROI auditor" data-es="Auditor de ROI por fuente">Source ROI auditor</div>
+        <div class="a-owns" data-en="Owns · Marketing attribution" data-es="Posee · Atribución de marketing">Owns · Marketing attribution</div>
       </div>
       <div class="agent">
         <div class="a-name">Coach</div>
-        <div class="a-role" data-en="Conversion reviewer — scores every call" data-es="Revisor de conversiones — puntúa cada llamada">Conversion reviewer — scores every call</div>
+        <div class="a-role" data-en="Conversion reviewer" data-es="Revisor de conversiones">Conversion reviewer</div>
+        <div class="a-owns" data-en="Owns · Rep performance" data-es="Posee · Performance del rep">Owns · Rep performance</div>
       </div>
     </div>
   </section>
@@ -1106,6 +1217,7 @@
       <div class="cta-line" data-en="Find every money leak. Fix it automatically. That is the entire promise — and the platform is already built." data-es="Encuentra cada fuga de dinero. Repárala automáticamente. Esa es toda la promesa, y la plataforma ya está construida.">Find every money leak. Fix it automatically. That is the entire promise — and the platform is already built.</div>
       <div class="cta-actions">
         <a class="btn btn-primary" href="https://aiagent.ringlypro.com/projects/intake/request.html" data-en-href="https://aiagent.ringlypro.com/projects/intake/request.html" data-es-href="https://aiagent.ringlypro.com/projects/intake/solicitud.html" data-en="Submit a project request" data-es="Enviar solicitud de proyecto">Submit a project request</a>
+        <a class="btn btn-ghost" href="https://aiagent.ringlypro.com/neural/dashboard.html" data-en="Try the live demo" data-es="Probar el demo en vivo">Try the live demo</a>
         <a class="btn btn-ghost" href="mailto:mstagg@digit2ai.com?subject=Digit2AI%20Neural%20demo" data-en="Email me directly" data-es="Escríbeme directamente">Email me directly</a>
       </div>
     </div>
