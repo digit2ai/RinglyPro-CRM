@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud de Proyecto Neural AI - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#05060f; color:#e6edf3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .grad-title { background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .card { background:linear-gradient(180deg,rgba(15,23,42,.85),rgba(2,6,23,.85)); }
+  label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  input, textarea, select {
+    width:100%; background:#0b1220; border:1px solid #1e293b; color:#e6edf3;
+    border-radius:8px; padding:10px 12px; font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.15);
+  }
+  select option { background:#0b1220; }
+  textarea { resize:vertical; min-height:80px; }
+  .req::after { content:' *'; color:#fb7185; }
+  .chip-group {
+    display:flex; flex-wrap:wrap; gap:8px;
+    background:#0b1220; border:1px solid #1e293b; border-radius:8px;
+    padding:10px;
+  }
+  .chip-opt {
+    padding:8px 14px; border-radius:999px; font-size:13px; font-weight:600;
+    color:#cbd5e1; background:#0f172a; border:1px solid #1e293b;
+    cursor:pointer; transition:all .15s; user-select:none;
+  }
+  .chip-opt:hover { border-color:#38bdf8; color:#e6edf3; }
+  .chip-opt.selected {
+    background:rgba(56,189,248,.15); color:#7dd3fc; border-color:#38bdf8;
+    box-shadow:0 0 0 1px rgba(56,189,248,.4);
+  }
+  .chip-opt .check { display:none; margin-right:4px; }
+  .chip-opt.selected .check { display:inline; }
+  .chip-hint { font-size:11px; color:#64748b; margin-top:6px; }
+  .btn-primary {
+    background:#38bdf8; color:#020617; border:none; border-radius:8px;
+    padding:14px 24px; font-weight:700; font-size:15px; cursor:pointer;
+    transition:all .15s; width:100%;
+  }
+  .btn-primary:hover { background:#0ea5e9; }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .field-group { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width: 640px) { .field-group { grid-template-columns:1fr; } }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- LOGO BAND -->
+<div class="border-b border-slate-800 bg-slate-950">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 flex justify-center">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png"
+         alt="Digit2AI" class="h-44 sm:h-60 md:h-72 w-auto" />
+  </div>
+</div>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+  <!-- HEADER -->
+  <div class="text-center mb-10">
+    <h1 class="text-3xl sm:text-4xl font-bold grad-title mb-3">Solicitud de Proyecto Neural AI</h1>
+    <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+      Cuéntanos sobre tu caso de uso. Revisaremos tu solicitud y te responderemos con una evaluación de viabilidad, cronograma y alcance propuesto. Todos los campos marcados con <span class="text-rose-400">*</span> son obligatorios.
+    </p>
+    <p class="mt-3 text-xs text-slate-500">
+      <a href="/projects/intake/request.html" class="text-cyan-400 hover:text-cyan-300">EN English</a>
+    </p>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="success" class="hidden card border border-emerald-700/40 rounded-2xl p-8" style="box-shadow:0 0 40px rgba(16,185,129,.18);">
+    <h2 class="text-2xl font-bold text-emerald-300 mb-3">Solicitud recibida</h2>
+    <p class="text-slate-300 mb-4">Gracias. Tu solicitud de proyecto Neural AI ya está en nuestra cola de revisión. Un miembro del equipo Digit2AI te contactará dentro de un día hábil.</p>
+    <p class="text-sm text-slate-400 mb-2">Guarda este enlace privado para volver a tu solicitud, agregar comentarios o subir más detalles:</p>
+    <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 mb-4 break-all">
+      <a id="success_url" href="#" class="text-cyan-400 hover:text-cyan-300 text-sm font-mono"></a>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('success_url').href).then(()=>{this.textContent='Copiado'})"
+              class="btn-primary" style="width:auto">Copiar enlace</button>
+      <a id="success_open" href="#" class="btn-primary" style="background:#1e293b;color:#e6edf3;width:auto;text-decoration:none;display:inline-block;text-align:center">Abrir mi solicitud</a>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <form id="intake_form" class="card border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Sobre ti</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div><label class="req">Nombre completo</label><input id="full_name" type="text" required></div>
+          <div><label class="req">Correo electrónico</label><input id="email" type="email" required></div>
+        </div>
+        <div class="field-group">
+          <div><label>Teléfono</label><input id="phone" type="tel"></div>
+          <div><label>País</label><input id="country" type="text" placeholder="ej. México, Colombia, España"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Tu organización</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div><label>Nombre de la empresa</label><input id="company_name" type="text"></div>
+          <div><label>Industria</label><input id="industry" type="text" placeholder="ej. Salud, Logística, Banca"></div>
+        </div>
+        <div><label>Sitio web</label><input id="company_website" type="url" placeholder="https://"></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Proyecto</h3>
+      <div class="space-y-4">
+        <div><label class="req">Título del proyecto / caso de uso</label><input id="project_title" type="text" required placeholder="ej. Asistente AI para triaje de reclamos entrantes"></div>
+        <div><label>Descripción corta</label><textarea id="project_description" placeholder="Un párrafo de pitch sobre lo que quieres construir"></textarea></div>
+        <div><label class="req">¿Qué problema estás tratando de resolver?</label><textarea id="problem" required placeholder="Punto de dolor, cuello de botella actual, qué no funciona"></textarea></div>
+        <div><label>Usuarios objetivo / audiencia</label><textarea id="target_users" placeholder="¿Quién interactuará con el sistema? ¿Equipo interno? ¿Clientes externos?"></textarea></div>
+        <div><label>Proceso o sistema actual</label><textarea id="current_process" placeholder="¿Cómo lo hacen hoy? ¿Manual? ¿Software existente?"></textarea></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Detalles Neural AI</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div>
+            <label>Categoría AI (selecciona todas las que apliquen)</label>
+            <div id="ai_category_chips" class="chip-group" role="group" aria-label="Categoría AI">
+              <span class="chip-opt" data-value="Voice agent (inbound / outbound)"><span class="check">&#10003;</span>Voice agent (entrante / saliente)</span>
+              <span class="chip-opt" data-value="Conversational AI / chatbot"><span class="check">&#10003;</span>AI conversacional / chatbot</span>
+              <span class="chip-opt" data-value="Document understanding (OCR, extraction)"><span class="check">&#10003;</span>Comprensión de documentos (OCR, extracción)</span>
+              <span class="chip-opt" data-value="Computer vision"><span class="check">&#10003;</span>Visión por computadora</span>
+              <span class="chip-opt" data-value="Compliance / wire-screening / fraud"><span class="check">&#10003;</span>Compliance / wire-screening / fraude</span>
+              <span class="chip-opt" data-value="Predictive analytics / forecasting"><span class="check">&#10003;</span>Análisis predictivo / pronóstico</span>
+              <span class="chip-opt" data-value="Generative AI / content generation"><span class="check">&#10003;</span>AI generativa / generación de contenido</span>
+              <span class="chip-opt" data-value="Recommendation / personalization"><span class="check">&#10003;</span>Recomendación / personalización</span>
+              <span class="chip-opt" data-value="Other / not sure"><span class="check">&#10003;</span>Otro / no estoy seguro</span>
+            </div>
+            <div class="chip-hint">Haz clic en cada una que aplique. Puedes seleccionar varias.</div>
+          </div>
+          <div>
+            <label>¿Datos sensibles o regulados?</label>
+            <select id="sensitive_data">
+              <option value="">-- elige una opción --</option>
+              <option value="No">No</option>
+              <option value="Yes - PII">Sí - PII (datos personales)</option>
+              <option value="Yes - PHI / HIPAA">Sí - PHI / HIPAA (salud)</option>
+              <option value="Yes - financial / banking">Sí - financieros / bancarios</option>
+              <option value="Yes - other regulated">Sí - otros regulados</option>
+              <option value="Not sure">No estoy seguro</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Fuentes de datos / volumen</label><textarea id="data_sources" placeholder="¿Qué datos alimentan el sistema? ¿Aproximadamente cuánto? ¿Dónde viven?"></textarea></div>
+        <div><label>Stack tecnológico actual / requerimientos de integración</label><textarea id="existing_stack" placeholder="CRMs, ERPs, telefonía, cloud providers, APIs internas..."></textarea></div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-slate-200 mb-4">Compromiso</h3>
+      <div class="space-y-4">
+        <div class="field-group">
+          <div>
+            <label>Cronograma / urgencia</label>
+            <select id="timeline">
+              <option value="">-- elige una opción --</option>
+              <option value="ASAP / urgent">Lo antes posible / urgente</option>
+              <option value="Within 1 month">Dentro de 1 mes</option>
+              <option value="1-3 months">1-3 meses</option>
+              <option value="3-6 months">3-6 meses</option>
+              <option value="6+ months / exploring">6+ meses / explorando</option>
+            </select>
+          </div>
+          <div>
+            <label>Rango de presupuesto</label>
+            <select id="budget_range">
+              <option value="">-- elige una opción --</option>
+              <option value="Under $10K">Menos de $10K USD</option>
+              <option value="$10K - $50K">$10K - $50K USD</option>
+              <option value="$50K - $250K">$50K - $250K USD</option>
+              <option value="$250K - $1M">$250K - $1M USD</option>
+              <option value="$1M+">$1M+ USD</option>
+              <option value="Not yet defined">Aún no definido</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Resultados esperados / métricas de éxito</label><textarea id="success_metrics" placeholder="¿Cómo se ve el éxito? KPIs, metas de ROI, objetivos cualitativos."></textarea></div>
+        <div class="field-group">
+          <div><label>¿Cómo te enteraste de nosotros?</label><input id="heard_from" type="text" placeholder="Referido, LinkedIn, conferencia..."></div>
+          <div><label>Mejor momento para contactarte</label><input id="best_time" type="text" placeholder="ej. Lunes a viernes, 9-5 hora local"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="pt-2">
+      <button id="submit_btn" type="submit" class="btn-primary">Enviar solicitud de proyecto</button>
+      <p id="form_err" class="text-rose-400 text-sm mt-3 hidden"></p>
+    </div>
+  </form>
+
+  <p class="text-xs text-slate-600 text-center mt-8">
+    Tu solicitud viaja cifrada y se almacena en nuestra infraestructura privada. Solo te contactaremos en relación a esta solicitud.
+  </p>
+</main>
+
+<script>
+const form = document.getElementById('intake_form');
+const errEl = document.getElementById('form_err');
+const btn = document.getElementById('submit_btn');
+
+document.querySelectorAll('#ai_category_chips .chip-opt').forEach(el => {
+  el.addEventListener('click', () => el.classList.toggle('selected'));
+});
+function getSelectedAiCategories() {
+  return Array.from(document.querySelectorAll('#ai_category_chips .chip-opt.selected'))
+    .map(el => el.dataset.value);
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const fields = [
+    'full_name','email','phone','country',
+    'company_name','company_website','industry',
+    'project_title','project_description','problem','target_users','current_process',
+    'sensitive_data','data_sources','existing_stack',
+    'timeline','budget_range','success_metrics','heard_from','best_time'
+  ];
+  const payload = {};
+  for (const f of fields) {
+    const el = document.getElementById(f);
+    if (el) payload[f] = el.value.trim();
+  }
+  payload.ai_category = getSelectedAiCategories();
+  payload.submission_locale = 'es';
+
+  try {
+    const r = await fetch('/projects/api/v1/intake/public/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'Error al enviar');
+
+    form.classList.add('hidden');
+    const succ = document.getElementById('success');
+    succ.classList.remove('hidden');
+    document.getElementById('success_url').href = d.url;
+    document.getElementById('success_url').textContent = d.url;
+    document.getElementById('success_open').href = d.url;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    errEl.textContent = err.message || 'Error al enviar la solicitud';
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Enviar solicitud de proyecto';
+  }
+});
+</script>
+</body>
+</html>
