@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Access &mdash; Digit2AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07090f;
+            --panel: rgba(255,255,255,0.04);
+            --line: rgba(255,255,255,0.10);
+            --line2: rgba(255,255,255,0.18);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --white: #fff;
+            --purple: #7c5cff;
+            --teal: #2dd4bf;
+            --red: #ef4444;
+            --green: #34d399;
+            --gold: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 15px;
+            min-height: 100vh;
+        }
+        .topbar {
+            position: sticky; top: 0; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 24px;
+            background: rgba(7,9,15,0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-weight: 700;
+            color: #fff;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+        .brand .grad {
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .who {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 36px 24px 64px;
+        }
+        /* Auth gate */
+        .gate {
+            max-width: 460px;
+            margin: 12vh auto 0;
+            padding: 36px 32px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+        .gate h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .gate p {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 22px;
+            line-height: 1.55;
+        }
+        .gate label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            letter-spacing: 0.04em;
+        }
+        .gate input[type=email] {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line2);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+        .gate input[type=email]:focus {
+            outline: none;
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(124,92,255,0.18);
+        }
+        .gate button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            border: none;
+            color: #fff;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .gate button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(124,92,255,0.4);
+        }
+        .gate button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .gate .err {
+            background: rgba(239,68,68,0.10);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #fca5a5;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        /* Project view */
+        .header {
+            margin-bottom: 28px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--line);
+        }
+        .project-name {
+            font-size: clamp(22px, 3vw, 32px);
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.4px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid var(--line2);
+            background: var(--panel);
+            color: var(--text);
+        }
+        .badge.active { color: var(--green); border-color: rgba(52,211,153,0.4); }
+        .badge.critical { color: var(--red); border-color: rgba(239,68,68,0.4); }
+        .badge.high { color: var(--gold); border-color: rgba(245,158,11,0.4); }
+        .section {
+            margin-bottom: 26px;
+        }
+        .section h3 {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--purple);
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .section .body {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 18px 22px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text);
+            white-space: pre-wrap;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+        .info-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+        .info-card .label {
+            font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .info-card .value {
+            font-size: 14px;
+            color: var(--white);
+            font-weight: 600;
+        }
+        .milestone {
+            display: grid;
+            grid-template-columns: 14px 1fr auto;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+            align-items: center;
+        }
+        .milestone:last-child { border-bottom: none; }
+        .ms-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--muted);
+        }
+        .ms-dot.completed { background: var(--green); }
+        .ms-dot.in-progress { background: var(--gold); }
+        .ms-title { color: var(--white); font-weight: 600; font-size: 14px; }
+        .ms-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .ms-due { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+        .update {
+            display: grid;
+            grid-template-columns: 14px 1fr;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--line);
+        }
+        .update:last-child { border-bottom: none; }
+        .upd-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: var(--purple);
+            margin-top: 6px;
+        }
+        .upd-author { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .upd-text { font-size: 14px; color: var(--text); white-space: pre-wrap; }
+        .comment-box {
+            margin-top: 18px;
+        }
+        .comment-box textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line2);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .comment-box textarea:focus {
+            outline: none;
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(124,92,255,0.18);
+        }
+        .comment-box .actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        .comment-box button {
+            background: linear-gradient(135deg, var(--purple), #5b3eff);
+            border: none;
+            color: #fff;
+            padding: 9px 22px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .comment-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; left: 20px;
+            max-width: 360px; margin-left: auto;
+            background: rgba(15,23,42,0.96);
+            border: 1px solid var(--line2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.25s, opacity 0.25s;
+            z-index: 100;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: rgba(52,211,153,0.5); color: var(--green); }
+        .toast.error { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+        .hidden { display: none !important; }
+        .empty {
+            color: var(--muted);
+            font-style: italic;
+            font-size: 13px;
+        }
+        @media (max-width: 600px) {
+            .topbar { padding: 12px 16px; }
+            .container { padding: 24px 16px 48px; }
+            .gate { margin-top: 8vh; padding: 26px 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand">Digit2AI <span class="grad">Projects</span></div>
+    <div class="who" id="whoami"></div>
+</div>
+
+<!-- Auth gate -->
+<div id="gate" class="gate">
+    <h1>Stakeholder Access</h1>
+    <p>You've been invited to view a project. To confirm it's you, enter the email this link was sent to.</p>
+    <label for="emailInput">Email address</label>
+    <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
+    <button id="gateBtn" onclick="identify()">Continue</button>
+    <div class="err hidden" id="gateErr"></div>
+</div>
+
+<!-- Project view -->
+<div id="view" class="container hidden">
+    <div class="header">
+        <h1 class="project-name" id="projectName">&nbsp;</h1>
+        <div class="badges" id="badges"></div>
+    </div>
+
+    <div class="info-grid" id="infoGrid"></div>
+
+    <div class="section" id="descSection">
+        <h3>Description</h3>
+        <div class="body" id="descBody"></div>
+    </div>
+
+    <div class="section" id="brSection">
+        <h3>Business Requirements</h3>
+        <div class="body" id="brBody"></div>
+    </div>
+
+    <div class="section" id="msSection">
+        <h3>Milestones</h3>
+        <div class="body" id="msBody"></div>
+    </div>
+
+    <div class="section" id="updSection">
+        <h3>Updates &amp; Comments</h3>
+        <div class="body" id="updBody"></div>
+        <div class="comment-box">
+            <label for="cmt" style="font-size:12px;color:var(--muted);letter-spacing:0.04em;display:block;margin-bottom:8px;">Add a comment</label>
+            <textarea id="cmt" placeholder="Share feedback, ask a question, flag a concern..."></textarea>
+            <div class="actions">
+                <button id="postBtn" onclick="postComment()">Post Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Next Step</h3>
+        <div class="body" id="nextBody"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+    // Extract token from /share/:token
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    // Path is /share/{token} OR /projects/share/{token} depending on mount
+    const tokenIdx = parts.indexOf('share');
+    const TOKEN = tokenIdx >= 0 && parts[tokenIdx + 1] ? parts[tokenIdx + 1] : '';
+    let EMAIL = sessionStorage.getItem('d2_share_email_' + TOKEN) || '';
+
+    const apiBase = '/projects/api/v1/projects/share';
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + (type || '');
+        clearTimeout(window._toastT);
+        window._toastT = setTimeout(() => { t.className = 'toast'; }, 3200);
+    }
+
+    async function identify() {
+        const email = document.getElementById('emailInput').value.trim();
+        const errEl = document.getElementById('gateErr');
+        errEl.classList.add('hidden');
+        if (!email) {
+            errEl.textContent = 'Please enter your email.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+        const btn = document.getElementById('gateBtn');
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/identify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                errEl.textContent = j.error || 'Could not verify access.';
+                errEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Continue';
+                return;
+            }
+            EMAIL = email;
+            sessionStorage.setItem('d2_share_email_' + TOKEN, email);
+            loadProject();
+        } catch (e) {
+            errEl.textContent = 'Network error. Please try again.';
+            errEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Continue';
+        }
+    }
+    window.identify = identify;
+
+    async function loadProject() {
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/data?email=${encodeURIComponent(EMAIL)}`);
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                // Email was wrong or session went stale — back to gate
+                sessionStorage.removeItem('d2_share_email_' + TOKEN);
+                EMAIL = '';
+                document.getElementById('gate').classList.remove('hidden');
+                document.getElementById('view').classList.add('hidden');
+                const errEl = document.getElementById('gateErr');
+                errEl.textContent = j.error || 'Session expired. Please re-enter your email.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            renderProject(j.data);
+        } catch (e) {
+            showToast('Could not load project: ' + e.message, 'error');
+        }
+    }
+
+    function renderProject(p) {
+        document.getElementById('gate').classList.add('hidden');
+        document.getElementById('view').classList.remove('hidden');
+        document.getElementById('whoami').textContent = EMAIL;
+        document.getElementById('projectName').textContent = p.name || 'Untitled';
+
+        // Badges
+        const badges = [];
+        if (p.status) badges.push(`<span class="badge ${p.status}">${p.status}</span>`);
+        if (p.priority) badges.push(`<span class="badge ${p.priority}">${p.priority}</span>`);
+        if (p.company && p.company.name) badges.push(`<span class="badge">${escHtml(p.company.name)}</span>`);
+        if (p.vertical && p.vertical.name) badges.push(`<span class="badge">${escHtml(p.vertical.name)}</span>`);
+        document.getElementById('badges').innerHTML = badges.join('');
+
+        // Info grid
+        const info = [];
+        if (p.due_date) info.push(['Due', formatDate(p.due_date)]);
+        if (p.stage) info.push(['Stage', p.stage]);
+        if (p.target_delivery_weeks) info.push(['Delivery', p.target_delivery_weeks + ' weeks']);
+        if (p.target_total_usd) info.push(['Total', '$' + Number(p.target_total_usd).toLocaleString()]);
+        document.getElementById('infoGrid').innerHTML = info.length
+            ? info.map(([l, v]) => `<div class="info-card"><div class="label">${l}</div><div class="value">${escHtml(v)}</div></div>`).join('')
+            : '';
+
+        // Description
+        if (p.description) {
+            document.getElementById('descBody').textContent = p.description;
+            document.getElementById('descSection').classList.remove('hidden');
+        } else {
+            document.getElementById('descSection').classList.add('hidden');
+        }
+
+        // Business Requirements
+        if (p.business_requirements) {
+            document.getElementById('brBody').textContent = p.business_requirements;
+            document.getElementById('brSection').classList.remove('hidden');
+        } else {
+            document.getElementById('brSection').classList.add('hidden');
+        }
+
+        // Milestones
+        const msList = Array.isArray(p.milestones) ? p.milestones : [];
+        const msBody = document.getElementById('msBody');
+        if (msList.length) {
+            msBody.innerHTML = msList.map(m => `
+                <div class="milestone">
+                    <div class="ms-dot ${m.status || ''}"></div>
+                    <div>
+                        <div class="ms-title">${escHtml(m.title || m.name || 'Untitled milestone')}</div>
+                        ${m.status ? `<div class="ms-meta">${escHtml(m.status)}</div>` : ''}
+                    </div>
+                    <div class="ms-due">${m.due_date ? formatDate(m.due_date) : ''}</div>
+                </div>
+            `).join('');
+        } else {
+            msBody.innerHTML = '<div class="empty">No milestones yet.</div>';
+        }
+
+        // Updates
+        const updList = Array.isArray(p.updates) ? p.updates : [];
+        const updBody = document.getElementById('updBody');
+        if (updList.length) {
+            updBody.innerHTML = updList.map(u => `
+                <div class="update">
+                    <div class="upd-dot"></div>
+                    <div>
+                        <div class="upd-author">${escHtml(u.author || 'Team')} &middot; ${u.created_at ? formatDate(u.created_at) : ''}</div>
+                        <div class="upd-text">${escHtml(u.text || '')}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            updBody.innerHTML = '<div class="empty">No updates yet.</div>';
+        }
+
+        // Next step
+        document.getElementById('nextBody').textContent = p.next_step || 'No next step defined yet.';
+    }
+
+    async function postComment() {
+        const ta = document.getElementById('cmt');
+        const message = ta.value.trim();
+        if (!message) return;
+        const btn = document.getElementById('postBtn');
+        btn.disabled = true;
+        btn.textContent = 'Posting...';
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/comment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: EMAIL, message })
+            });
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                showToast(j.error || 'Could not post comment.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Post Comment';
+                return;
+            }
+            ta.value = '';
+            showToast('Comment posted. Manuel will be notified.', 'success');
+            await loadProject();
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Post Comment';
+    }
+    window.postComment = postComment;
+
+    function escHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function formatDate(d) {
+        try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
+        catch (_) { return String(d); }
+    }
+
+    // Enter key submits identify
+    document.getElementById('emailInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') identify();
+    });
+
+    // Boot: if we have a stored email, try to load the project directly
+    if (!TOKEN) {
+        document.getElementById('gate').innerHTML = '<h1>Invalid link</h1><p>This URL is missing a token. Please use the link sent to you.</p>';
+    } else if (EMAIL) {
+        loadProject();
+    }
+})();
+</script>
+
+</body>
+</html>

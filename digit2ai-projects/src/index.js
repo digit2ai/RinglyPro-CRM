@@ -79,10 +79,20 @@ app.get('/api/v1/me', authenticateToken, (req, res) => {
 app.use('/intake', express.static(path.join(dashboardPath, 'intake')));
 // Public contract signoff page (token-gated; no admin auth required)
 app.use('/contracts', express.static(path.join(dashboardPath, 'contracts')));
+// Public stakeholder magic-link viewer (no auth, token + email verified server-side)
+// /share/:token serves the viewer HTML; viewer JS reads the token from location.pathname
+app.get('/share/:token', (req, res) => {
+  res.sendFile(path.join(dashboardPath, 'share', 'index.html'));
+});
+app.use('/share', express.static(path.join(dashboardPath, 'share')));
 
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
+// Stakeholder magic-link share endpoints — PUBLIC (no auth).
+// MUST be mounted BEFORE the authenticated /api/v1/projects router so
+// the more-specific /share/* path wins the prefix match.
+app.use('/api/v1/projects/share', express.json(), require('./routes/projectShare'));
 app.use('/api/v1/projects', authenticateToken, projectsRoutes);
 app.use('/api/v1/calendar', authenticateToken, calendarRoutes);
 app.use('/api/v1/tasks', authenticateToken, tasksRoutes);
@@ -706,6 +716,26 @@ app.get('*', (req, res) => {
         console.log('[D2AI-Projects] 011_architect_pipeline migration applied');
       } catch (mErr) {
         console.log('[D2AI-Projects] 011_architect_pipeline error:', mErr.message);
+      }
+    }
+
+    // Migration 012 — Stakeholder share tokens (per-project magic-link access)
+    const stakeholderSharePath = path.join(__dirname, '..', 'migrations', '012_stakeholder_share.sql');
+    if (fs.existsSync(stakeholderSharePath)) {
+      try {
+        const sql = fs.readFileSync(stakeholderSharePath, 'utf8');
+        const stripped = sql.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+        const statements = stripped.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        for (const stmt of statements) {
+          try { await sequelize.query(stmt + ';'); } catch (e) {
+            if (!e.message.includes('already exists') && !e.message.includes('duplicate')) {
+              console.log('[D2AI-Projects] 012_stakeholder_share notice:', e.message.substring(0, 200));
+            }
+          }
+        }
+        console.log('[D2AI-Projects] 012_stakeholder_share migration applied');
+      } catch (mErr) {
+        console.log('[D2AI-Projects] 012_stakeholder_share error:', mErr.message);
       }
     }
 

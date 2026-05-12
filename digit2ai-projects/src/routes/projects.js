@@ -3,9 +3,87 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
+const crypto = require('crypto');
 const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, sequelize } = require('../models');
 const { logActivity } = require('../services/activityService');
 const planGenerator = require('../../../chamber-template/lib/plan-generator');
+
+// =====================================================
+// STAKEHOLDER SHARE (magic-link, no account required)
+// =====================================================
+//
+// Three endpoints — placed BEFORE /:id so the share/* routes match.
+//
+//   POST /:id/share-token       (admin only) — mint or rotate the token, return URL
+//   POST /share/:token/identify (public)     — body: { email }; verify email is in team_members
+//   GET  /share/:token/data     (public)     — returns project data for the token, only if
+//                                              the email param is in team_members.
+//
+// Hard guarantees:
+//   - The token alone is NOT a key. Token + correct email is the key.
+//   - The data endpoint only returns the ONE project that owns the token.
+//   - Other projects, calendar, tasks, staff, etc. are not reachable through this surface.
+//   - Tokens can be rotated (regenerated) or expired by the admin at any time.
+
+function emailInTeam(project, email) {
+  if (!email || !project) return false;
+  const e = String(email).trim().toLowerCase();
+  // Project owner (Manuel) and submitter are always allowed
+  if (project.submitter_email && String(project.submitter_email).trim().toLowerCase() === e) return true;
+  const team = Array.isArray(project.team_members) ? project.team_members : [];
+  return team.some((m) => {
+    if (!m) return false;
+    if (typeof m === 'string') return m.trim().toLowerCase() === e;
+    if (typeof m === 'object' && m.email) return String(m.email).trim().toLowerCase() === e;
+    return false;
+  });
+}
+
+// POST /api/v1/projects/:id/share-token — mint or rotate the magic-link token
+router.post('/:id/share-token', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const token = crypto.randomUUID();
+    project.stakeholder_share_token = token;
+    project.stakeholder_share_created_at = new Date();
+    // Default expiry: 365 days (admin can rotate any time)
+    project.stakeholder_share_expires_at = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    await project.save();
+    await logActivity(req.user ? req.user.userId : null, 'share_token_created', 'project', project.id, project.name);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    res.json({
+      success: true,
+      token,
+      share_url: `${baseUrl}/projects/share/${token}`,
+      expires_at: project.stakeholder_share_expires_at
+    });
+  } catch (error) {
+    console.error('[D2AI] Share-token create error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// DELETE /api/v1/projects/:id/share-token — revoke
+router.delete('/:id/share-token', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    project.stakeholder_share_token = null;
+    project.stakeholder_share_created_at = null;
+    project.stakeholder_share_expires_at = null;
+    await project.save();
+    await logActivity(req.user ? req.user.userId : null, 'share_token_revoked', 'project', project.id, project.name);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[D2AI] Share-token revoke error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Note: public share endpoints (identify / data / comment) live in
+// src/routes/projectShare.js and are mounted at /api/v1/projects/share
+// WITHOUT auth, before the authenticated /api/v1/projects mount.
 
 // GET /api/v1/projects - List projects
 router.get('/', async (req, res) => {

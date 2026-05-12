@@ -107,6 +107,10 @@ const Project = sequelize.define('Project', {
   owner_user_id: DataTypes.INTEGER,
   lead_staff_id: DataTypes.INTEGER,
   team_members: { type: DataTypes.JSONB, defaultValue: [] },
+  // Stakeholder magic-link share (migration 012)
+  stakeholder_share_token: { type: DataTypes.UUID, unique: true, allowNull: true },
+  stakeholder_share_created_at: { type: DataTypes.DATE, allowNull: true },
+  stakeholder_share_expires_at: { type: DataTypes.DATE, allowNull: true },
   start_date: DataTypes.DATEONLY,
   due_date: DataTypes.DATEONLY,
   notes: DataTypes.TEXT,

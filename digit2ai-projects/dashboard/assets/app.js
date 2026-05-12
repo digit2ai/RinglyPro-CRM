@@ -2948,10 +2948,13 @@ async function showProjectDetail(id) {
           </div>
 
           <div class="detail-section">
-            <h4 style="display:flex;justify-content:space-between;align-items:center">Stakeholders (email recipients)
-              <button class="btn btn-ghost btn-sm" onclick="editStakeholders(${p.id})">${(Array.isArray(p.team_members) && p.team_members.length) ? 'Edit' : '+ Add'}</button>
+            <h4 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">Stakeholders (email recipients)
+              <span style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" onclick="generateStakeholderShareLink(${p.id})" title="Generate a magic-link the stakeholders can use to view this project — no account or password required">${p.stakeholder_share_token ? '&#128279; Share Link' : '&#43; Share Link'}</button>
+                <button class="btn btn-ghost btn-sm" onclick="editStakeholders(${p.id})">${(Array.isArray(p.team_members) && p.team_members.length) ? 'Edit' : '+ Add'}</button>
+              </span>
             </h4>
-            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Everyone listed here is CC'd on contract emails, UAT handoff emails, and shipped confirmations.</p>
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Everyone listed here is CC'd on contract emails, UAT handoff emails, and shipped confirmations. They can also access a read-only project view via the Share Link button.</p>
             ${(Array.isArray(p.team_members) && p.team_members.length)
               ? `<div style="display:flex;flex-direction:column;gap:6px">
                    ${p.team_members.map(m => `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px">
@@ -3179,6 +3182,87 @@ async function recomputeShortName(projectId) {
     if (!r.success) { alert('Failed: ' + (r.error || 'unknown')); return; }
     showProjectDetail(projectId);
   } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// Mint / rotate a per-project magic-link share token, then show the URL in a modal
+// so the admin can copy it and send to the stakeholders.
+async function generateStakeholderShareLink(projectId) {
+  let project = null;
+  try {
+    const r = await api(`/projects/${projectId}`);
+    project = r && r.data ? r.data : null;
+  } catch (_) {}
+  if (!project) { alert('Could not load project.'); return; }
+  const team = Array.isArray(project.team_members) ? project.team_members : [];
+  if (!team.length) {
+    if (!confirm('No stakeholders are listed yet. The link will only work for emails in the Stakeholders list. Continue anyway and add stakeholders after?')) return;
+  }
+
+  // Mint or rotate the token
+  let resp;
+  try {
+    resp = await api(`/projects/${projectId}/share-token`, { method: 'POST', body: JSON.stringify({}) });
+  } catch (e) {
+    alert('Could not create share link: ' + e.message);
+    return;
+  }
+  if (!resp || !resp.success) { alert('Could not create share link: ' + (resp && resp.error || 'unknown')); return; }
+
+  const url = resp.share_url;
+  const expires = resp.expires_at ? new Date(resp.expires_at).toLocaleDateString() : 'never';
+  const teamRows = team.length
+    ? team.map(m => `<li style="padding:2px 0;font-family:monospace;font-size:12px;color:var(--text-primary)">${escHtml(m.email || '')}</li>`).join('')
+    : '<li style="color:var(--text-muted);font-style:italic">(none yet — add stakeholders so the link works for them)</li>';
+
+  openModal('Stakeholder Share Link', `
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.55">
+      Send this magic link to the stakeholders below. When they open it, they will be asked to enter their email — only emails on the Stakeholders list can access the project. No account or password needed.
+    </p>
+    <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Share URL</div>
+      <code id="m-share-url" style="display:block;word-break:break-all;color:#38bdf8;font-size:12px;line-height:1.5;user-select:all">${url}</code>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="copyShareLink('${url}', this)" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">&#128203; Copy Link</button>
+      <button class="btn btn-ghost btn-sm" onclick="emailShareLink('${url}', ${projectId})">&#9993;&#65039; Email Stakeholders</button>
+      <button class="btn btn-ghost btn-sm" onclick="revokeShareLink(${projectId})" style="color:var(--danger)">&#10006; Revoke</button>
+    </div>
+    <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+      <strong style="color:var(--text-primary)">Authorized emails</strong> (the link only works for these):
+      <ul style="margin:6px 0 0 16px;padding:0">${teamRows}</ul>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:0">Link expires: ${expires}. Clicking the button again rotates the token (the old link stops working).</p>
+  `, null);
+  document.getElementById('modal-save').style.display = 'none';
+  document.getElementById('modal-cancel').textContent = 'Close';
+}
+
+function copyShareLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '&#10003; Copied';
+    setTimeout(() => { btn.innerHTML = orig; }, 1800);
+  }).catch(() => alert('Copy failed. Select and copy the link manually.'));
+}
+
+function emailShareLink(url, projectId) {
+  // Open the user's mail client with a prefilled draft
+  const subject = encodeURIComponent('Project access link');
+  const body = encodeURIComponent(
+    `Hi,\n\nYou have read-only access to a project on the Digit2AI platform. Click the link below and confirm your email to view it.\n\n${url}\n\nIf you have questions, just reply to this email.\n\nThanks,\nManuel`
+  );
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+async function revokeShareLink(projectId) {
+  if (!confirm('Revoke this share link?\n\nThe link will stop working immediately. Generating a new link later creates a different URL.')) return;
+  try {
+    const r = await api(`/projects/${projectId}/share-token`, { method: 'DELETE' });
+    if (!r.success) { alert('Revoke failed: ' + (r.error || 'unknown')); return; }
+    alert('Share link revoked.');
+    closeModal();
+    showProjectDetail(projectId);
+  } catch (e) { alert('Revoke failed: ' + e.message); }
 }
 
 async function editStakeholders(projectId) {
