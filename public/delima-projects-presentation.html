@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Digit2AI Neural -- Intake Eduardo Delima -- 4 Proyectos, Un Flujo</title>
+<title>Digit2AI Neural -- Propuesta para Eduardo Delima -- 4 Proyectos, Un Cerebro</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -19,7 +19,6 @@
     --gold-neon: #dfc07a;
     --gold-dark: #a08542;
     --white: #ffffff;
-    --gray-500: #6c757d;
     --mono: 'JetBrains Mono', ui-monospace, monospace;
   }
 
@@ -89,6 +88,8 @@
   .bg-gold::after { background: radial-gradient(circle, rgba(197,165,90,0.18) 0%, rgba(197,165,90,0.04) 40%, transparent 70%); }
   .bg-deep { background: radial-gradient(ellipse at top, #0a1535 0%, #050b1c 50%, var(--navy-blk) 100%); }
   .bg-deep::after { background: radial-gradient(circle, rgba(61,203,202,0.16) 0%, rgba(61,203,202,0.04) 40%, transparent 70%); }
+  .bg-red { background: radial-gradient(ellipse at top, #2e0a10 0%, #18050a 50%, var(--navy-blk) 100%); }
+  .bg-red::after { background: radial-gradient(circle, rgba(255,80,80,0.18) 0%, rgba(255,80,80,0.04) 40%, transparent 70%); }
 
   .particles { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
   .particle {
@@ -141,6 +142,8 @@
   }
   .chip.gold { background: rgba(197,165,90,0.08); border-color: rgba(197,165,90,0.4); color: var(--gold-neon); }
   .chip.gold::before { background: var(--gold-neon); box-shadow: 0 0 8px var(--gold-neon); }
+  .chip.red { background: rgba(255,80,80,0.08); border-color: rgba(255,80,80,0.4); color: #ff8888; }
+  .chip.red::before { background: #ff6666; box-shadow: 0 0 8px #ff6666; }
 
   h1 {
     font-family: 'Inter', sans-serif;
@@ -169,6 +172,11 @@
   }
   h2.accent-gold {
     background: linear-gradient(135deg, var(--gold-neon) 0%, var(--gold) 50%, #ffffff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.accent-red {
+    background: linear-gradient(135deg, #ffb0b0 0%, #ff6666 50%, #ffffff 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
   }
@@ -214,7 +222,7 @@
     margin-bottom: 8px; text-transform: uppercase;
   }
   .solution-card .sc-problem {
-    font-size: 13px; color: rgba(255,100,100,0.7);
+    font-size: 13px; color: rgba(255,255,255,0.6);
     margin-bottom: 12px; font-weight: 500;
   }
   .solution-card .sc-arrow {
@@ -224,47 +232,60 @@
     font-size: 15px; font-weight: 700; color: var(--white);
   }
 
-  .module-card {
-    max-width: 1000px; width: 100%;
-    padding: 36px 40px;
-    background: linear-gradient(135deg, rgba(0,163,224,0.06) 0%, rgba(11,29,74,0.4) 100%);
-    border: 1px solid rgba(0,163,224,0.3);
-    border-radius: 12px; text-align: left;
-    margin-top: 24px; position: relative;
+  .problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; max-width: 1000px; width: 100%; margin-top: 32px;
   }
-  .module-card::before {
-    content: ''; position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
+  .problem-card {
+    padding: 24px 24px;
+    background: linear-gradient(180deg, rgba(255,80,80,0.07) 0%, rgba(255,80,80,0.02) 100%);
+    border: 1px solid rgba(255,80,80,0.28);
+    border-left: 3px solid rgba(255,80,80,0.6);
+    border-radius: 10px; text-align: left;
+    backdrop-filter: blur(12px);
+  }
+  .problem-card .pc-icon {
+    font-family: var(--mono); font-size: 22px;
+    margin-bottom: 10px; color: rgba(255,120,120,0.85);
+    font-weight: 700;
+  }
+  .problem-card .pc-title {
+    font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--white);
+  }
+  .problem-card .pc-desc {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 14px; line-height: 1.5;
+    color: rgba(255,255,255,0.65);
   }
 
   .flow-steps {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 10px;
     flex-wrap: wrap; justify-content: center;
-    margin-top: 24px; max-width: 1100px;
+    margin-top: 22px; max-width: 1100px;
   }
   .flow-step {
-    padding: 12px 20px;
+    padding: 11px 18px;
     background: rgba(0,163,224,0.1);
     border: 1px solid rgba(0,163,224,0.35);
     border-radius: 8px;
-    font-family: var(--mono); font-size: 12px;
+    font-family: var(--mono); font-size: 11px;
     letter-spacing: 1px; color: var(--teal-light); font-weight: 500;
   }
-  .flow-arrow { font-size: 20px; color: var(--teal-neon); }
+  .flow-arrow { font-size: 18px; color: var(--teal-neon); }
 
   .layer-stack {
     display: flex; flex-direction: column; gap: 14px;
     max-width: 950px; width: 100%; margin-top: 28px;
   }
   .layer-row {
-    display: grid; grid-template-columns: 120px 1fr 120px;
+    display: grid; grid-template-columns: 120px 1fr 130px;
     gap: 16px; align-items: center;
-    padding: 20px 24px; border-radius: 10px; text-align: left;
+    padding: 18px 22px; border-radius: 10px; text-align: left;
   }
   .layer-row.l1 { background: rgba(0,163,224,0.08); border: 1px solid rgba(0,163,224,0.3); }
   .layer-row.l2 { background: rgba(197,165,90,0.08); border: 1px solid rgba(197,165,90,0.3); }
   .layer-row.l3 { background: rgba(61,203,202,0.08); border: 1px solid rgba(61,203,202,0.3); }
+  .layer-row.l4 { background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.25); }
   .layer-row .lr-label {
     font-family: var(--mono); font-size: 10px;
     letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
@@ -272,54 +293,19 @@
   .layer-row.l1 .lr-label { color: var(--teal); }
   .layer-row.l2 .lr-label { color: var(--gold); }
   .layer-row.l3 .lr-label { color: var(--teal-neon); }
-  .layer-row .lr-text { font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.88); line-height: 1.5; }
+  .layer-row.l4 .lr-label { color: #ff9090; }
+  .layer-row .lr-text { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.88); line-height: 1.5; }
   .layer-row .lr-num {
-    font-family: var(--mono); font-size: 18px; font-weight: 700; text-align: right;
+    font-family: var(--mono); font-size: 13px; font-weight: 700; text-align: right;
   }
   .layer-row.l1 .lr-num { color: var(--teal); }
   .layer-row.l2 .lr-num { color: var(--gold); }
   .layer-row.l3 .lr-num { color: var(--teal-neon); }
-
-  .project-card {
-    max-width: 1000px; width: 100%;
-    padding: 36px 40px;
-    background: linear-gradient(135deg, rgba(0,163,224,0.08) 0%, rgba(11,29,74,0.5) 100%);
-    border: 1px solid rgba(0,163,224,0.35);
-    border-radius: 14px; text-align: left;
-    margin-top: 28px; position: relative;
-  }
-  .project-card::before {
-    content: ''; position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--teal-neon), transparent);
-  }
-  .project-card .pc-label {
-    font-family: var(--mono); font-size: 10px;
-    letter-spacing: 3px; color: var(--teal-neon);
-    text-transform: uppercase; margin-bottom: 8px; font-weight: 600;
-  }
-  .project-card .pc-name {
-    font-size: clamp(22px, 3vw, 32px); font-weight: 800;
-    color: var(--white); margin-bottom: 14px; line-height: 1.15;
-  }
-  .project-card .pc-row {
-    display: grid; grid-template-columns: 160px 1fr;
-    gap: 12px; padding: 10px 0;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    align-items: start;
-  }
-  .project-card .pc-row:first-of-type { border-top: none; }
-  .project-card .pc-key {
-    font-family: var(--mono); font-size: 10px;
-    letter-spacing: 2px; color: rgba(255,255,255,0.45);
-    text-transform: uppercase; padding-top: 3px;
-  }
-  .project-card .pc-val { font-size: 15px; color: rgba(255,255,255,0.88); line-height: 1.5; }
-  .project-card .pc-val strong { color: var(--teal-neon); font-weight: 700; }
+  .layer-row.l4 .lr-num { color: #ff9090; }
 
   .mini-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 10px; max-width: 1000px; width: 100%; margin-top: 24px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; max-width: 1000px; width: 100%; margin-top: 22px;
   }
   .mini-item {
     padding: 14px 12px;
@@ -330,9 +316,16 @@
     letter-spacing: 0.5px; color: rgba(255,255,255,0.78);
     text-align: center;
   }
+  .mini-item strong {
+    display: block;
+    color: var(--teal-neon);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px; letter-spacing: 0; margin-bottom: 4px;
+    text-transform: none;
+  }
 
   .drg-table {
-    max-width: 1000px; width: 100%; margin-top: 24px;
+    max-width: 1100px; width: 100%; margin-top: 22px;
     border-collapse: collapse;
   }
   .drg-table th {
@@ -346,68 +339,35 @@
     padding: 14px 16px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
     font-size: 14px; color: rgba(255,255,255,0.85);
-    vertical-align: top;
+    vertical-align: top; line-height: 1.45;
   }
+  .drg-table td:first-child { font-weight: 700; color: var(--white); white-space: nowrap; }
   .drg-table td:last-child {
     font-family: 'Inter', sans-serif;
     font-weight: 600; color: var(--teal-neon);
   }
-
-  .not-list {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 14px; max-width: 900px; width: 100%; margin-top: 24px;
-  }
-  .not-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 16px 20px;
-    background: rgba(255,80,80,0.04);
-    border: 1px solid rgba(255,80,80,0.18);
-    border-radius: 8px; text-align: left;
-  }
-  .not-item .ni-icon {
-    font-family: var(--mono); font-size: 14px;
-    color: rgba(255,140,140,0.8); min-width: 24px;
-    font-weight: 700;
-  }
-  .not-item .ni-text { font-size: 14px; color: rgba(255,255,255,0.82); line-height: 1.45; }
+  .drg-table td:nth-child(2) { color: rgba(255,140,140,0.85); }
 
   .cta-box {
     max-width: 800px; width: 100%;
-    padding: 36px 40px;
-    background: linear-gradient(135deg, rgba(0,163,224,0.08) 0%, rgba(11,29,74,0.5) 100%);
-    border: 2px solid var(--teal-neon);
-    border-radius: 14px; margin-top: 32px;
-    box-shadow: 0 0 40px rgba(61,203,202,0.15);
+    padding: 32px 36px;
+    background: linear-gradient(135deg, rgba(197,165,90,0.08) 0%, rgba(11,29,74,0.5) 100%);
+    border: 2px solid var(--gold-neon);
+    border-radius: 14px; margin-top: 28px;
+    box-shadow: 0 0 40px rgba(197,165,90,0.15);
   }
   .cta-box .cta-text {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: clamp(18px, 2vw, 24px); line-height: 1.55;
-    color: rgba(255,255,255,0.9); margin-bottom: 20px;
+    color: rgba(255,255,255,0.92); margin-bottom: 16px;
+    font-style: italic;
   }
   .cta-box .cta-email {
     font-family: var(--mono); font-size: 16px;
-    color: var(--teal-neon); letter-spacing: 1px;
+    color: var(--gold-neon); letter-spacing: 1px;
     text-decoration: none;
   }
   .cta-box .cta-email:hover { text-decoration: underline; }
-
-  .stake-card {
-    max-width: 900px; width: 100%;
-    padding: 28px 32px;
-    background: rgba(197,165,90,0.06);
-    border: 1px solid rgba(197,165,90,0.3);
-    border-radius: 12px; text-align: left;
-    margin-top: 24px;
-    display: grid; grid-template-columns: 140px 1fr;
-    gap: 24px; align-items: center;
-  }
-  .stake-card .sk-role {
-    font-family: var(--mono); font-size: 10px;
-    letter-spacing: 3px; color: var(--gold-neon);
-    text-transform: uppercase; font-weight: 700;
-  }
-  .stake-card .sk-name { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
-  .stake-card .sk-detail { font-size: 14px; color: rgba(255,255,255,0.65); font-family: var(--mono); }
 
   .slide.active h1,
   .slide.active h2,
@@ -416,30 +376,24 @@
   .slide.active .chip,
   .slide.active .powered-by,
   .slide.active .solution-grid,
-  .slide.active .module-card,
+  .slide.active .problem-grid,
   .slide.active .flow-steps,
   .slide.active .layer-stack,
   .slide.active .mini-grid,
   .slide.active .drg-table,
-  .slide.active .not-list,
-  .slide.active .cta-box,
-  .slide.active .project-card,
-  .slide.active .stake-card {
+  .slide.active .cta-box {
     animation: riseIn 0.7s cubic-bezier(.22,.61,.36,1) both;
   }
   .slide.active .chip { animation-delay: .05s; }
   .slide.active h1, .slide.active h2 { animation-delay: .15s; }
   .slide.active p.lead, .slide.active h3 { animation-delay: .25s; }
   .slide.active .solution-grid,
-  .slide.active .module-card,
+  .slide.active .problem-grid,
   .slide.active .flow-steps,
   .slide.active .layer-stack,
   .slide.active .mini-grid,
   .slide.active .drg-table,
-  .slide.active .not-list,
-  .slide.active .cta-box,
-  .slide.active .project-card,
-  .slide.active .stake-card { animation-delay: .35s; }
+  .slide.active .cta-box { animation-delay: .35s; }
   .slide.active .powered-by { animation-delay: .5s; }
 
   @keyframes riseIn {
@@ -542,7 +496,7 @@
   .preplay-overlay .preplay-subtitle {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 16px; color: rgba(255,255,255,0.45);
-    font-style: italic; text-align: center; max-width: 500px;
+    font-style: italic; text-align: center; max-width: 600px;
   }
   .preplay-overlay .preplay-btn {
     width: 90px; height: 90px; border-radius: 50%;
@@ -594,20 +548,15 @@
   @media (max-width: 900px) {
     .slide { padding: 50px 5vw 80px; }
     .solution-grid { grid-template-columns: 1fr 1fr; }
+    .problem-grid { grid-template-columns: 1fr; }
     .mini-grid { grid-template-columns: 1fr 1fr; }
-    .not-list { grid-template-columns: 1fr; }
     .layer-row { grid-template-columns: 80px 1fr 80px; gap: 10px; padding: 14px 16px; }
-    .layer-row .lr-num { font-size: 14px; }
-    .layer-row .lr-text { font-size: 13px; }
+    .layer-row .lr-num { font-size: 11px; }
+    .layer-row .lr-text { font-size: 12px; }
     h1 { font-size: clamp(32px, 8vw, 56px); letter-spacing: -1.5px; }
     h2 { font-size: clamp(26px, 6vw, 44px); letter-spacing: -1px; }
     p.lead { font-size: clamp(15px, 3.5vw, 20px); }
     .chip { font-size: 10px; padding: 8px 16px; letter-spacing: 2px; margin-bottom: 20px; }
-    .project-card { padding: 24px 22px; }
-    .project-card .pc-row { grid-template-columns: 100px 1fr; gap: 8px; }
-    .project-card .pc-key { font-size: 9px; }
-    .project-card .pc-val { font-size: 13px; }
-    .stake-card { grid-template-columns: 1fr; gap: 8px; padding: 20px 22px; }
     .autoplay-controls { padding: 8px 14px; gap: 8px; bottom: 16px; }
     .autoplay-controls button { padding: 6px 12px; font-size: 14px; }
     .autoplay-controls .slide-info { font-size: 9px; }
@@ -615,8 +564,8 @@
     .nav button { width: 36px; height: 36px; font-size: 15px; }
     .flow-steps { gap: 8px; }
     .flow-step { padding: 8px 12px; font-size: 10px; }
-    .module-card { padding: 24px 22px; }
     .cta-box { padding: 24px 24px; }
+    .drg-table th, .drg-table td { padding: 10px 8px; font-size: 12px; }
   }
 
   @media (max-width: 560px) {
@@ -644,8 +593,8 @@
 
 <div class="preplay-overlay" id="preplayOverlay">
   <div class="preplay-logo">Digit2AI Neural</div>
-  <div class="preplay-title">Intake Eduardo Delima -- 4 Proyectos, Un Solo Flujo de Aprobación</div>
-  <div class="preplay-subtitle">Haz clic en Aprobar. La plataforma hace el resto.</div>
+  <div class="preplay-title">Propuesta para Eduardo Delima &mdash; 4 Proyectos, Un Cerebro</div>
+  <div class="preplay-subtitle">Cuatro problemas distintos. Cuatro industrias. Una sola plataforma de IA Neural que los resuelve todos.</div>
   <button class="preplay-btn" id="preplayBtn" aria-label="Iniciar presentación">&#9654;</button>
   <div class="preplay-hint">Pulsa Para Empezar</div>
 </div>
@@ -660,376 +609,486 @@
 <div class="deck" id="deck">
 
 <!-- SLIDE 0: TITULO -->
-<div class="slide bg-navy active" data-auto-advance="7000">
-  <div class="chip">Digit2AI Neural &middot; Flujo de Aprobación de Proyectos</div>
-  <h1>4 Proyectos. 4 Aprobaciónes.<br>Un Solo Flujo.</h1>
-  <p class="lead">Eduardo Delima envió cuatro solicitudes de proyectos de Neural AI. Cada una corre por el mismo pipeline de aprobación -- y la plataforma se encarga del resto.</p>
-  <div class="powered-by">Project Owner Eduardo Delima &middot; Stakeholder Lala Garcia &middot; Impulsado por Neural AI</div>
+<div class="slide bg-navy active" data-auto-advance="8000">
+  <div class="chip">Digit2AI Neural &middot; Propuesta para Eduardo Delima</div>
+  <h1>4 Proyectos.<br>Un Solo Cerebro.</h1>
+  <p class="lead">Cuatro problemas distintos. Cuatro industrias. Una sola plataforma de IA Neural que los resuelve todos.</p>
+  <div class="powered-by">Para Eduardo Delima &middot; Mayo 2026 &middot; Digit2AI Neural</div>
 </div>
 
-<!-- SLIDE 1: PROJECT OWNER + STAKEHOLDER -->
-<div class="slide bg-teal" data-auto-advance="10000">
-  <div class="chip">Quienes Estan En La Solicitud</div>
-  <h2 class="accent-teal">Un Dueño. Un Stakeholder. Cuatro Proyectos.</h2>
-  <div class="stake-card">
-    <div class="sk-role">Project Owner</div>
-    <div>
-      <div class="sk-name">Eduardo Delima</div>
-      <div class="sk-detail">eduardo.delima@delima.com.co &middot; +57 312 7830 181 &middot; Colombia</div>
-    </div>
-  </div>
-  <div class="stake-card" style="background:rgba(61,203,202,0.06);border-color:rgba(61,203,202,0.3);">
-    <div class="sk-role" style="color:var(--teal-neon);">Stakeholder</div>
-    <div>
-      <div class="sk-name">Lala Garcia</div>
-      <div class="sk-detail">lalag16@gmail.com &middot; acceso por magic-link en los 4 proyectos</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 2: LOS CUATRO PROYECTOS -->
-<div class="slide bg-navy" data-auto-advance="11000">
-  <div class="chip">Las Solicitudes</div>
-  <h2>Cuatro Proyectos En La Cola</h2>
-  <p class="lead">Los cuatro entraron al sistema de intake en estado pending_review. Cada uno está a un clic de la activación completa.</p>
+<!-- SLIDE 1: LOS 4 PROYECTOS -->
+<div class="slide bg-teal" data-auto-advance="11000">
+  <div class="chip">Las Cuatro Oportunidades</div>
+  <h2 class="accent-teal">De Patrocinio Deportivo a Biodiésel &mdash; Un Solo Operador de IA</h2>
   <div class="solution-grid">
     <div class="solution-card">
       <div class="sc-num">Proyecto 1</div>
       <div class="sc-problem">Industria Deportiva</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Ecosistema Deportivo Cali</div>
+      <div class="sc-solution">Deportivo Cali<br><span style="font-weight:400;font-size:12px;color:rgba(255,255,255,0.55);">Ecosistema Empresarial Deportivo</span></div>
     </div>
     <div class="solution-card">
       <div class="sc-num">Proyecto 2</div>
       <div class="sc-problem">Servicios Financieros</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Financiaplaning</div>
+      <div class="sc-solution">Financiaplaning<br><span style="font-weight:400;font-size:12px;color:rgba(255,255,255,0.55);">Planeación Financiera Integral</span></div>
     </div>
     <div class="solution-card">
       <div class="sc-num">Proyecto 3</div>
       <div class="sc-problem">Empleo / Inclusión</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Canal de Empleo</div>
+      <div class="sc-solution">Canal de Empleo<br><span style="font-weight:400;font-size:12px;color:rgba(255,255,255,0.55);">Inclusión Laboral con IA</span></div>
     </div>
     <div class="solution-card">
       <div class="sc-num">Proyecto 4</div>
       <div class="sc-problem">Industrial / Energía</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Aceites + Biodiesel</div>
+      <div class="sc-solution">Aceites + Biodiésel<br><span style="font-weight:400;font-size:12px;color:rgba(255,255,255,0.55);">Energía Alternativa + Expansión FL</span></div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 3: EL FLUJO -->
-<div class="slide bg-deep" data-auto-advance="11000">
-  <div class="chip">El Flujo De Aprobación</div>
-  <h2>De Clic a Kickoff -- Sin Humanos En El Medio</h2>
-  <p class="lead">Cinco etapas se ejecutan automáticamente en el momento que haces clic en Aprobar. Cada etapa la maneja una parte distinta de la plataforma.</p>
-  <div class="flow-steps">
-    <div class="flow-step">CLAUDE LEE</div>
-    <div class="flow-arrow">--&gt;</div>
-    <div class="flow-step">MILESTONES GUARDADOS</div>
-    <div class="flow-arrow">--&gt;</div>
-    <div class="flow-step">ESTADO CAMBIA</div>
-    <div class="flow-arrow">--&gt;</div>
-    <div class="flow-step">EMAIL ENVIADO</div>
-    <div class="flow-arrow">--&gt;</div>
-    <div class="flow-step">ZOOM AGENDADO</div>
-  </div>
-  <div class="module-card">
-    <p style="font-family:'Source Serif 4',Georgia,serif;font-size:16px;line-height:1.7;color:rgba(255,255,255,0.85);">
-      <strong style="color:var(--teal-neon);">Primera acción en menos de treinta segundos.</strong> Claude lee el intake, escribe un plan real, la base de datos cambia el estado, SendGrid le envía el correo al dueño, y se agenda automáticamente una reunión de Zoom para las 10:00 AM hora del este del próximo día hábil.
-    </p>
-  </div>
-</div>
-
-<!-- SLIDE 4: DETALLE DE LAS ETAPAS -->
-<div class="slide bg-navy" data-auto-advance="12000">
-  <div class="chip">Cinco Etapas, En Orden</div>
-  <h2>Qué Hace La Plataforma En Realidad</h2>
+<!-- SLIDE 2: QUE ES DIGIT2AI NEURAL -->
+<div class="slide bg-navy" data-auto-advance="11000">
+  <div class="chip">La Plataforma</div>
+  <h2>Inteligencia + Ejecución + Orquestación</h2>
   <div class="layer-stack">
     <div class="layer-row l1">
-      <div class="lr-label">Lee</div>
-      <div class="lr-text">Claude lee las respuestas del intake, el problema, los usuarios objetivo, las fuentes de datos, el presupuesto, el timeline y las categorías de IA</div>
-      <div class="lr-num">&lt;30s</div>
+      <div class="lr-label">Neural</div>
+      <div class="lr-text">La capa de inteligencia. Entiende contexto, intención y lógica de negocio. Aprende y mejora con el uso.</div>
+      <div class="lr-num">PIENSA</div>
     </div>
     <div class="layer-row l2">
-      <div class="lr-label">Planifica</div>
-      <div class="lr-text">Claude devuelve milestones con titulos, entregables, roles responsables, fechas y una agenda de kickoff</div>
-      <div class="lr-num">AUTO</div>
+      <div class="lr-label">Agentes</div>
+      <div class="lr-text">La capa de ejecución. Convierte inteligencia en acción a través de tus herramientas, datos y flujos.</div>
+      <div class="lr-num">EJECUTA</div>
     </div>
     <div class="layer-row l3">
-      <div class="lr-label">Guarda</div>
-      <div class="lr-text">Cada milestone se convierte en una fila en d2_project_milestones, ligada al proyecto, en orden, status pending</div>
-      <div class="lr-num">DB</div>
+      <div class="lr-label">MCP</div>
+      <div class="lr-text">El protocolo. Conecta hallazgos, contexto compartido y orquesta operaciones multi-paso entre agentes.</div>
+      <div class="lr-num">ENRUTA</div>
     </div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:16px;color:rgba(255,255,255,0.65);">No son chatbots. Son operadores que ven la situación, deciden, y ejecutan de extremo a extremo.</p>
+</div>
+
+<!-- SLIDE 3: TASKFORCE -->
+<div class="slide bg-deep" data-auto-advance="12000">
+  <div class="chip">Especialistas Pre-Construidos</div>
+  <h2 class="accent-teal">Ocho Agentes. Una Plataforma. Reusables Entre Verticales.</h2>
+  <div class="mini-grid">
+    <div class="mini-item"><strong>Rachel</strong>Voice Concierge</div>
+    <div class="mini-item"><strong>Ana</strong>Bilingüe ES/EN en 60s</div>
+    <div class="mini-item"><strong>Lina</strong>Nurturer de pipeline</div>
+    <div class="mini-item"><strong>Sentinel</strong>Salud del pipeline</div>
+    <div class="mini-item"><strong>Nova</strong>Reductor de no-shows</div>
+    <div class="mini-item"><strong>Vault</strong>Cazador de revenue leaks</div>
+    <div class="mini-item"><strong>Origin</strong>Auditor de ROI por fuente</div>
+    <div class="mini-item"><strong>Coach</strong>Revisor de conversiones</div>
+  </div>
+  <p class="lead" style="margin-top:24px;">Cada proyecto reutiliza el mismo cerebro. Ahorras 4&times; en construcción.</p>
+</div>
+
+<!-- SLIDE 4: PROYECTO 1 PROBLEMA -->
+<div class="slide bg-red" data-auto-advance="11000">
+  <div class="chip red">Problema &middot; Industria Deportiva</div>
+  <h2 class="accent-red">El Patrocinio Deportivo No Está Digitalizado</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Sponsors Gestionados Manualmente</div>
+      <div class="pc-desc">El relacionamiento con patrocinadores se mueve en agendas, correos y WhatsApp. Sin base de datos central. Sin trazabilidad.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Sin Matching B2B Entre Empresas</div>
+      <div class="pc-desc">Las empresas que orbitan el club no se conectan entre sí. Las oportunidades comerciales del ecosistema se pierden.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">ROI del Patrocinio No Se Mide</div>
+      <div class="pc-desc">No hay métricas digitales del retorno por sponsor, por canal, ni por temporada. Decisiones tomadas por intuición.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Sin Canal Internacional Para Escalar</div>
+      <div class="pc-desc">El club no tiene un canal estructurado para activar sponsors y empresas fuera de Colombia.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: PROYECTO 1 SOLUCION -->
+<div class="slide bg-teal" data-auto-advance="13000">
+  <div class="chip">Solución Neural &middot; Cámara de Comercio Deportiva Digital</div>
+  <h2 class="accent-teal">Marketplace B2B + Matching + ROI en Tiempo Real</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Agente</div>
+      <div class="sc-problem">Outreach a sponsors</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Ana &mdash; Voice Agent ES/EN</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Motor</div>
+      <div class="sc-problem">Matching sponsor-empresa</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Recommendation Engine</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Analítica</div>
+      <div class="sc-problem">ROI por canal y temporada</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Predictive Analytics</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Orquestación</div>
+      <div class="sc-problem">Activaciones y renovaciones</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">MCP Orchestration</div>
+    </div>
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">DETECTAR SPONSOR</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">DIAGNOSTICAR ENCAJE</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">PRESCRIBIR ACTIVACIÓN</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">AUTO-FIX OUTREACH</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">VERIFICAR CONVERSIÓN</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: PROYECTO 2 PROBLEMA -->
+<div class="slide bg-red" data-auto-advance="11000">
+  <div class="chip red">Problema &middot; Servicios Financieros</div>
+  <h2 class="accent-red">Planeación Financiera Fragmentada en Colombia</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Patrimonio, Seguros, Impuestos, Inversiones En Silos</div>
+      <div class="pc-desc">Cada dimensión vive en su propia plataforma. Sin vista unificada del patrimonio del cliente.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Asesoría Dispersa</div>
+      <div class="pc-desc">Contador para impuestos, broker para pólizas, asesor para inversiones, abogado para patrimonio. Sin coordinación.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Sin Motor de Simulación</div>
+      <div class="pc-desc">El cliente no puede simular escenarios de qué pasa si invierto, qué pasa si me jubilo, en una sola plataforma.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Matching Inversionista-Proyecto Manual</div>
+      <div class="pc-desc">Los inversionistas buscan proyectos por red personal. Los proyectos buscan capital por relaciones. Nadie se encuentra digitalmente.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: PROYECTO 2 SOLUCION -->
+<div class="slide bg-navy" data-auto-advance="13000">
+  <div class="chip">Solución Neural &middot; Motor de IA Financiera</div>
+  <h2>Un Solo Cerebro Para Patrimonio, Pólizas, Impuestos e Inversiones</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">Asesor Virtual</div>
+      <div class="sc-problem">Asesoría 24/7</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Conversational AI</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Simulación</div>
+      <div class="sc-problem">Escenarios financieros</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Agentes Algorítmicos</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Matching</div>
+      <div class="sc-problem">Inversionista-proyecto</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Recommendation Engine</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Compliance</div>
+      <div class="sc-problem">PII + datos bancarios</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Compliance Layer</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:15px;color:rgba(255,255,255,0.65);">Sensitive data marcado como financiero y bancario desde el día uno. Auditoría SOC2-style, residencia de datos, audit log inmutable.</p>
+</div>
+
+<!-- SLIDE 8: PROYECTO 3 PROBLEMA -->
+<div class="slide bg-red" data-auto-advance="11000">
+  <div class="chip red">Problema &middot; Inclusión Laboral</div>
+  <h2 class="accent-red">Miles de Trabajadores Invisibles Para el Canal Digital</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Hojas Minerva Físicas En Papel</div>
+      <div class="pc-desc">El perfil laboral del trabajador informal sólo existe en una hoja Minerva. Imposible de buscar, imposible de matchear.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Formularios Manuscritos Imposibles de Buscar</div>
+      <div class="pc-desc">Datos críticos en letra manuscrita: experiencia, habilidades, educación. Sin estructura, sin indexación, sin valor digital.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Matching Laboral Manual y Relacional</div>
+      <div class="pc-desc">Los empleadores contratan por recomendación. El mérito real del trabajador no se evalúa porque no es visible.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Trabajadores Informales Excluidos</div>
+      <div class="pc-desc">Sin perfil digital, no hay acceso a bolsas de empleo, plataformas, ni canales formales. La informalidad se perpetúa.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: PROYECTO 3 SOLUCION -->
+<div class="slide bg-teal" data-auto-advance="13000">
+  <div class="chip">Solución Neural &middot; Formalización Laboral Masiva</div>
+  <h2 class="accent-teal">OCR + Visión + Matching = Inclusión Basada en Mérito</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <div class="sc-num">OCR</div>
+      <div class="sc-problem">Hoja Minerva física</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Document Understanding</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Visión</div>
+      <div class="sc-problem">Letra manuscrita y firma</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Computer Vision</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Matching</div>
+      <div class="sc-problem">Empleado-empleador</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Recommendation Engine</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-num">Voz</div>
+      <div class="sc-problem">Outreach bilingüe</div>
+      <div class="sc-arrow">--&gt;</div>
+      <div class="sc-solution">Ana &mdash; Voice Agent</div>
+    </div>
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step">ESCANEAR MINERVA</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">INTERPRETAR CAMPOS</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">ESTRUCTURAR PERFIL</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">MATCH CON VACANTES</div>
+    <div class="flow-arrow">--&gt;</div>
+    <div class="flow-step">COLOCAR EN EMPLEO</div>
+  </div>
+</div>
+
+<!-- SLIDE 10: PROYECTO 4 PROBLEMA -->
+<div class="slide bg-red" data-auto-advance="11000">
+  <div class="chip red">Problema &middot; Industrial / Energía</div>
+  <h2 class="accent-red">Reciclaje de Aceite Sin Trazabilidad Ni Canal Internacional</h2>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Recolección Gestionada Tradicionalmente</div>
+      <div class="pc-desc">Talleres y flotas entregan aceite usado por canales informales. Sin registro digital del volumen ni del origen.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Sin Trazabilidad Digital End-to-End</div>
+      <div class="pc-desc">Del proveedor a la planta a la conversión a la venta industrial: la cadena no se ve. Los compradores no pueden auditar.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Expansión a Florida y Miami Sin Canal</div>
+      <div class="pc-desc">El mercado de Florida y Miami existe, pero no hay un canal digital que conecte oferta colombiana con demanda industrial estadounidense.</div>
+    </div>
+    <div class="problem-card">
+      <div class="pc-icon">[X]</div>
+      <div class="pc-title">Alianzas Motorsport Sin Matching</div>
+      <div class="pc-desc">La red motorsport consume biodiésel y aceites especializados, pero el matching con proveedores se hace por relaciones, no por datos.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: PROYECTO 4 SOLUCION -->
+<div class="slide bg-gold" data-auto-advance="13000">
+  <div class="chip gold">Solución Neural &middot; Energía Alternativa Digitalizada</div>
+  <h2 class="accent-gold">Trazabilidad + Matching Industrial + Reporte de Sostenibilidad</h2>
+  <div class="solution-grid">
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Forecast</div>
+      <div class="sc-problem">Volumen y rendimiento</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">Predictive Analytics</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Cadena</div>
+      <div class="sc-problem">Proveedores-plantas-FL</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">MCP Integration</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Mercados</div>
+      <div class="sc-problem">Motorsport + FL/Miami</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">Recommendation Engine</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Reporte</div>
+      <div class="sc-problem">CO2 y sostenibilidad</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">Generative AI</div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:24px;font-size:15px;color:rgba(255,255,255,0.65);">Reporte automático de CO2 evitado y huella de sostenibilidad &mdash; diferenciador clave en mercados regulados de Florida.</p>
+</div>
+
+<!-- SLIDE 12: VALOR COMPUESTO -->
+<div class="slide bg-deep" data-auto-advance="13000">
+  <div class="chip">El Efecto Plataforma</div>
+  <h2>4 Proyectos &times; Un Cerebro = Valor Compuesto</h2>
+  <p class="lead">Cada proyecto entrena el cerebro. El que sigue se construye más rápido y más barato.</p>
+  <div class="layer-stack">
     <div class="layer-row l1">
-      <div class="lr-label">Cambia</div>
-      <div class="lr-text">intake_status approved &middot; status active &middot; workflow_phase kickoff_scheduled &middot; due_date asignada</div>
-      <div class="lr-num">ESTADO</div>
+      <div class="lr-label">Proyecto 1</div>
+      <div class="lr-text"><strong style="color:var(--teal-neon);">Deportivo Cali</strong> entrena el matching B2B y el ROI Analytics &mdash; reusable en Financiaplaning</div>
+      <div class="lr-num">B2B + ROI</div>
     </div>
     <div class="layer-row l2">
-      <div class="lr-label">Notifica</div>
-      <div class="lr-text">SendGrid le envía a Eduardo el correo de aprobación más su magic-link privado para hacer seguimiento</div>
-      <div class="lr-num">SMTP</div>
+      <div class="lr-label">Proyecto 2</div>
+      <div class="lr-text"><strong style="color:var(--gold-neon);">Financiaplaning</strong> entrena la simulación y el matching financiero &mdash; reusable en Aceites</div>
+      <div class="lr-num">SIMULACIÓN</div>
     </div>
     <div class="layer-row l3">
-      <div class="lr-label">Agenda</div>
-      <div class="lr-text">Se crea la reunión de Zoom, se guarda el evento de calendario, se envía el .ics + link de Zoom para 10:00 AM ET</div>
-      <div class="lr-num">ZOOM</div>
+      <div class="lr-label">Proyecto 3</div>
+      <div class="lr-text"><strong style="color:var(--teal-neon);">Canal de Empleo</strong> entrena el OCR y la visión &mdash; reusable en intake de cualquier vertical</div>
+      <div class="lr-num">OCR + VISIÓN</div>
+    </div>
+    <div class="layer-row l4">
+      <div class="lr-label">Proyecto 4</div>
+      <div class="lr-text"><strong style="color:#ffb0b0;">Aceites + Biodiésel</strong> entrena el matching industrial y el reporte de sostenibilidad &mdash; reusable en cualquier marketplace</div>
+      <div class="lr-num">INDUSTRIAL</div>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 5: PROYECTO 1 -->
-<div class="slide bg-teal" data-auto-advance="11000">
-  <div class="chip">Proyecto 1 &middot; Resultado Al Aprobar</div>
-  <h2 class="accent-teal">Ecosistema Deportivo Cali</h2>
-  <div class="project-card">
-    <div class="pc-label">Ecosistema Empresarial Deportivo</div>
-    <div class="pc-name">Milestones de Marketplace B2B / Patrocinio Generados por IA + Kickoff de Zoom</div>
-    <div class="pc-row">
-      <div class="pc-key">Vertical</div>
-      <div class="pc-val">Industria deportiva &middot; Cámara de Comercio Deportiva Digital</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Al Aprobar Se Genera</div>
-      <div class="pc-val">Matching de sponsors, flujos de networking B2B, analítica de ROI, milestones de internacionalización &mdash; <strong>todo escrito por Claude en segundos</strong></div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">El Dueño Recibe</div>
-      <div class="pc-val">Email de aprobación + magic-link a eduardo.delima@delima.com.co</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Calendario</div>
-      <div class="pc-val">Kickoff de Zoom de 30 minutos auto-agendado a las 10:00 AM ET, próximo día hábil</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 6: PROYECTO 2 -->
-<div class="slide bg-navy" data-auto-advance="11000">
-  <div class="chip">Proyecto 2 &middot; Resultado Al Aprobar</div>
-  <h2>Financiaplaning</h2>
-  <div class="project-card">
-    <div class="pc-label">Planeación Financiera Integral &middot; Colombia</div>
-    <div class="pc-name">Milestones de Patrimonio / Seguros / Impuestos / Inversiones Generados por IA + Kickoff de Zoom</div>
-    <div class="pc-row">
-      <div class="pc-key">Vertical</div>
-      <div class="pc-val">Servicios financieros &middot; patrimonio, seguros, impuestos, inversiones, asesoria integral</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Al Aprobar Se Genera</div>
-      <div class="pc-val">Milestones del motor de IA financiera, agentes algorítmicos, simulación, matching inversionista-proyecto &mdash; <strong>plan escrito de forma autónoma</strong></div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">El Dueño Recibe</div>
-      <div class="pc-val">Email de aprobación + magic-link &middot; sensitive_data marcado: financiero / bancario</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Calendario</div>
-      <div class="pc-val">Kickoff de Zoom de 30 minutos auto-agendado a las 10:00 AM ET, próximo día hábil</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 7: PROYECTO 3 -->
-<div class="slide bg-deep" data-auto-advance="11000">
-  <div class="chip">Proyecto 3 &middot; Resultado Al Aprobar</div>
-  <h2 class="accent-teal">Canal de Empleo e Inclusión Laboral</h2>
-  <div class="project-card">
-    <div class="pc-label">Formalización Laboral Con IA</div>
-    <div class="pc-name">Milestones de OCR + Matching Generados por IA + Kickoff de Zoom</div>
-    <div class="pc-row">
-      <div class="pc-key">Vertical</div>
-      <div class="pc-val">Empleo + inclusión social &middot; reducción de la informalidad laboral en Colombia</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Al Aprobar Se Genera</div>
-      <div class="pc-val">Escaneo OCR de hojas Minerva, interpretacion de formularios manuscritos, digitalización de perfiles, milestones de matching laboral &mdash; <strong>estructurados por Claude</strong></div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">El Dueño Recibe</div>
-      <div class="pc-val">Email de aprobación + magic-link &middot; sensitive_data marcado: PII</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Calendario</div>
-      <div class="pc-val">Kickoff de Zoom de 30 minutos auto-agendado a las 10:00 AM ET, próximo día hábil</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 8: PROYECTO 4 -->
-<div class="slide bg-gold" data-auto-advance="11000">
-  <div class="chip gold">Proyecto 4 &middot; Resultado Al Aprobar</div>
-  <h2 class="accent-gold">Aceites Industriales y Biodiesel</h2>
-  <div class="project-card" style="background:linear-gradient(135deg, rgba(197,165,90,0.08) 0%, rgba(11,29,74,0.5) 100%); border-color:rgba(197,165,90,0.35);">
-    <div class="pc-label" style="color:var(--gold-neon);">Expansión Florida / Miami &middot; Energía Alternativa</div>
-    <div class="pc-name">Milestones Industriales / Reciclaje / Expansión a Florida Generados por IA + Kickoff de Zoom</div>
-    <div class="pc-row">
-      <div class="pc-key">Vertical</div>
-      <div class="pc-val">Aceites industriales &middot; biodiesel &middot; reciclaje de aceite usado &middot; red motorsport &middot; sostenibilidad</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Al Aprobar Se Genera</div>
-      <div class="pc-val">Milestones de cadena de reciclaje, conversión a biodiesel, expansión a Florida y Miami, alianzas motorsport, reporte de CO2 &mdash; <strong>entregados por Claude</strong></div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">El Dueño Recibe</div>
-      <div class="pc-val">Email de aprobación + magic-link &middot; sensitive_data: ninguno</div>
-    </div>
-    <div class="pc-row">
-      <div class="pc-key">Calendario</div>
-      <div class="pc-val">Kickoff de Zoom de 30 minutos auto-agendado a las 10:00 AM ET, próximo día hábil</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 9: TABLA RESUMEN -->
-<div class="slide bg-navy" data-auto-advance="12000">
-  <div class="chip">Los Cuatro En Una Tabla</div>
-  <h2>El Mismo Flujo. Cuatro Resultados.</h2>
+<!-- SLIDE 13: TABLA COMPARATIVA -->
+<div class="slide bg-navy" data-auto-advance="13000">
+  <div class="chip">Resumen</div>
+  <h2>Los 4 Proyectos En Una Tabla</h2>
   <table class="drg-table">
     <thead>
       <tr>
         <th>Proyecto</th>
-        <th>Resultado Al Hacer Clic En Aprobar</th>
+        <th>Problema Central</th>
+        <th>Solución Neural</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>Ecosistema Deportivo Cali</strong></td>
-        <td>Milestones de marketplace B2B / patrocinio generados por IA + invitacion de kickoff de Zoom a Eduardo</td>
+        <td>Deportivo Cali</td>
+        <td>Patrocinio no digitalizado</td>
+        <td>Marketplace B2B + ROI Analytics + Ana</td>
       </tr>
       <tr>
-        <td><strong>Financiaplaning</strong></td>
-        <td>Milestones de plataforma de patrimonio / seguros / impuestos / inversiones generados por IA + kickoff de Zoom</td>
+        <td>Financiaplaning</td>
+        <td>Asesoría financiera fragmentada</td>
+        <td>Motor de IA Financiera + Simulación + Matching</td>
       </tr>
       <tr>
-        <td><strong>Canal de Empleo</strong></td>
-        <td>Milestones de plataforma de OCR + matching generados por IA + kickoff de Zoom</td>
+        <td>Canal de Empleo</td>
+        <td>Hojas Minerva físicas</td>
+        <td>OCR + Visión + Matching Laboral</td>
       </tr>
       <tr>
-        <td><strong>Aceites + Biodiesel</strong></td>
-        <td>Milestones industriales / reciclaje / expansión FL generados por IA + kickoff de Zoom</td>
+        <td>Aceites + Biodiésel</td>
+        <td>Reciclaje sin trazabilidad</td>
+        <td>Predictive + MCP Industrial + Reporte CO2</td>
       </tr>
     </tbody>
   </table>
-  <p class="lead" style="margin-top:24px;font-size:15px;color:rgba(255,255,255,0.55);">Un clic en cada uno. La plataforma hace el resto.</p>
 </div>
 
-<!-- SLIDE 10: LO QUE NO SUCEDE -->
-<div class="slide bg-deep" data-auto-advance="10000">
-  <div class="chip" style="background:rgba(255,80,80,0.08);border-color:rgba(255,80,80,0.4);color:#ff8888;">
-    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff6666;box-shadow:0 0 8px #ff6666;margin-right:4px;"></span>
-    Lo Qué NO Sucede Automáticamente
+<!-- SLIDE 14: MODELO DE ENTREGA -->
+<div class="slide bg-gold" data-auto-advance="12000">
+  <div class="chip gold">Modelo de Entrega</div>
+  <h2 class="accent-gold">Construido. Desplegado. Gobernado. Observado.</h2>
+  <div class="solution-grid">
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Build</div>
+      <div class="sc-problem">Workflows + voz + KB</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">No-code + SDK</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Deploy</div>
+      <div class="sc-problem">Multi-canal</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">Voz &middot; Web &middot; SMS &middot; WhatsApp &middot; API &middot; MCP</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Govern</div>
+      <div class="sc-problem">Acceso y auditoría</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">RBAC + Multi-tenant + Audit SOC2</div>
+    </div>
+    <div class="solution-card" style="background:linear-gradient(180deg, rgba(197,165,90,0.1) 0%, rgba(197,165,90,0.02) 100%); border-color:rgba(197,165,90,0.35);">
+      <div class="sc-num" style="color:var(--gold-neon);">Observe</div>
+      <div class="sc-problem">KPIs y rendimiento</div>
+      <div class="sc-arrow" style="color:var(--gold-neon);">--&gt;</div>
+      <div class="sc-solution">KPIs + Transcripciones + ROI por agente</div>
+    </div>
   </div>
-  <h2>Aprobar No Es Todo El Flujo</h2>
-  <p class="lead">La aprobación lanza la planeación y la reunión. Todo lo de abajo es un paso aparte que se hace después.</p>
-  <div class="not-list">
-    <div class="not-item">
-      <div class="ni-icon">[X]</div>
-      <div class="ni-text">No se genera ni se envía contrato &mdash; eso viene después de fijar el alcance</div>
-    </div>
-    <div class="not-item">
-      <div class="ni-icon">[X]</div>
-      <div class="ni-text">No se escribe código ni se provisiona infraestructura &mdash; los milestones son un plan, no la ejecución</div>
-    </div>
-    <div class="not-item">
-      <div class="ni-icon">[X]</div>
-      <div class="ni-text">A Lala NO se le notifica automáticamente &mdash; tú generas y envías su magic-link de stakeholder</div>
-    </div>
-    <div class="not-item">
-      <div class="ni-icon">[X]</div>
-      <div class="ni-text">No se crea factura ni pago &mdash; la facturacion es un paso explícito aparte</div>
-    </div>
-  </div>
+  <p class="lead" style="margin-top:24px;font-size:15px;color:rgba(255,255,255,0.65);">Misma plataforma, 4 proyectos, 4 fechas de despliegue independientes.</p>
 </div>
 
-<!-- SLIDE 11: LALA COMO STAKEHOLDER -->
-<div class="slide bg-teal" data-auto-advance="10000">
-  <div class="chip">Vista De Stakeholder</div>
-  <h2 class="accent-teal">Lala Garcia Ve Todos Los Proyectos. Sin Crear Cuenta.</h2>
-  <p class="lead">Lala está cableada en team_members de los cuatro proyectos. Después de generar un share token ella entra a /projects/share/&lt;token&gt; con su email -- vista de solo lectura de milestones, status y comentarios.</p>
-  <div class="layer-stack">
-    <div class="layer-row l1">
-      <div class="lr-label">Genera</div>
-      <div class="lr-text">POST /api/v1/projects/:id/share-token &mdash; una llamada por proyecto, devuelve un magic link</div>
-      <div class="lr-num">x4</div>
-    </div>
-    <div class="layer-row l2">
-      <div class="lr-label">Envia</div>
-      <div class="lr-text">Pega los cuatro links en un solo correo a lalag16@gmail.com &mdash; ella hace clic, entra con su email y lee el plan</div>
-      <div class="lr-num">1 EMAIL</div>
-    </div>
-    <div class="layer-row l3">
-      <div class="lr-label">Participa</div>
-      <div class="lr-text">Puede leer milestones, status, plan de IA y dejar comentarios &mdash; sin password, sin cuenta, todo auditado</div>
-      <div class="lr-num">LEE + COMENTA</div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 12: PROXIMOS PASOS -->
-<div class="slide bg-navy" data-auto-advance="11000">
-  <div class="chip">Después De Aprobar</div>
-  <h2>Qué Pasa En Las Próximas 48 Horas</h2>
+<!-- SLIDE 15: PROXIMOS PASOS + CTA -->
+<div class="slide bg-navy" data-auto-advance="14000" data-last-slide>
+  <div class="chip gold">Vamos A Construir</div>
+  <h2 class="accent-gold">De Conversación a Producción en Semanas, No Meses</h2>
   <div class="solution-grid">
     <div class="solution-card">
-      <div class="sc-num">Paso 1</div>
+      <div class="sc-num">Semana 1</div>
       <div class="sc-problem">Hoy</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Revisar Plan De IA</div>
+      <div class="sc-solution">Kickoff de Zoom &middot; Requerimientos</div>
     </div>
     <div class="solution-card">
-      <div class="sc-num">Paso 2</div>
-      <div class="sc-problem">Hoy</div>
+      <div class="sc-num">Semana 2</div>
+      <div class="sc-problem">Próxima semana</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Generar Links De Lala</div>
+      <div class="sc-solution">Plan Firmado &middot; Contrato Emitido</div>
     </div>
     <div class="solution-card">
-      <div class="sc-num">Paso 3</div>
-      <div class="sc-problem">Día 1-2</div>
+      <div class="sc-num">Semana 3-6</div>
+      <div class="sc-problem">Tú eliges cuál</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Correr Kickoffs De Zoom</div>
+      <div class="sc-solution">Build del Primer Proyecto</div>
     </div>
     <div class="solution-card">
-      <div class="sc-num">Paso 4</div>
-      <div class="sc-problem">Después Del Kickoff</div>
+      <div class="sc-num">Mes 2+</div>
+      <div class="sc-problem">En paralelo</div>
       <div class="sc-arrow">--&gt;</div>
-      <div class="sc-solution">Generar Contratos</div>
+      <div class="sc-solution">Los Otros 3 Proyectos</div>
     </div>
   </div>
-  <p class="lead" style="margin-top:24px;font-size:15px;color:rgba(255,255,255,0.55);">Después de firmar los contratos, los milestones se asignan, las fechas se cierran, y arranca el build Neural.</p>
-</div>
-
-<!-- SLIDE 13: PRINCIPIOS -->
-<div class="slide bg-deep" data-auto-advance="10000">
-  <div class="chip">Por Qué Funciona</div>
-  <h2>Un Clic. Plan Real. Cero Setup Manual.</h2>
-  <div class="mini-grid" style="grid-template-columns:repeat(3,1fr);">
-    <div class="mini-item">Claude escribe el plan</div>
-    <div class="mini-item">La DB registra cada cambio de estado</div>
-    <div class="mini-item">SendGrid envía el correo</div>
-    <div class="mini-item">Zoom crea la reunión automáticamente</div>
-    <div class="mini-item">Magic-link da acceso a dueño + stakeholder</div>
-    <div class="mini-item">El audit log captura cada movimiento</div>
-  </div>
-  <p class="lead" style="margin-top:24px;font-size:16px;color:rgba(255,255,255,0.6);">Sin project manager moviendo filas en una hoja de cálculo. Sin asistente agendando reuniones. El pipeline intake-a-kickoff se corre solo.</p>
-</div>
-
-<!-- SLIDE 14: CTA -->
-<div class="slide bg-navy" data-auto-advance="12000" data-last-slide>
-  <div class="chip gold">Listo Cuando Tú Lo Estés</div>
-  <h2 class="accent-gold">Cuatro Proyectos. Un Clic Cada Uno.</h2>
-  <p class="lead">Abre el dashboard de admin, aprueba cada proyecto, y mira correr el flujo. O dale la orden y aprobamos los cuatro en un solo batch.</p>
   <div class="cta-box">
     <div class="cta-text">
-      Cuatro proyectos de Neural AI de Eduardo Delima estan en pending_review. En el momento que haces clic en Aprobar en cada uno, Claude escribe el plan, la base de datos cambia el estado, Eduardo recibe el email, y su kickoff de Zoom aterriza en el calendario.
+      "Cuatro proyectos. Un solo cerebro. Una sola plataforma. Listos para arrancar cuando tú lo estés."
     </div>
-    <a href="https://aiagent.ringlypro.com/projects/" class="cta-email">aiagent.ringlypro.com/projects/</a>
+    <a href="mailto:mstagg@digit2ai.com" class="cta-email">mstagg@digit2ai.com</a>
   </div>
-  <div class="powered-by" style="margin-top:36px;">Digit2AI Neural &middot; Flujo De Aprobación De Intake &middot; Impulsado Por MCP + Claude + Zoom + SendGrid</div>
+  <div class="powered-by" style="margin-top:24px;">Digit2AI Neural &middot; Propuesta para Eduardo Delima &middot; Mayo 2026</div>
 </div>
 
 </div><!-- /deck -->
@@ -1046,7 +1105,7 @@
   </div>
   <button id="btnPlayPause" aria-label="Play / Pausa" title="Play / Pausa" style="display:flex;align-items:center;gap:6px"><span id="playIcon">&#9654;</span><span style="font-size:10px;letter-spacing:1px">PLAY</span></button>
   <button id="btnStop" aria-label="Detener" title="Detener" style="display:flex;align-items:center;gap:6px"><span>&#9632;</span><span style="font-size:10px;letter-spacing:1px">STOP</span></button>
-  <div class="slide-info" id="slideInfo">01 / 15</div>
+  <div class="slide-info" id="slideInfo">01 / 16</div>
 </div>
 
 <script>
@@ -1066,21 +1125,22 @@
   let autoAdvanceTimer = null;
 
   const NARRATIONS = [
-    "Bienvenidos. Eduardo Delima acaba de enviar cuatro solicitudes de proyectos de Neural AI por el sistema de intake de Digit2AI. Esto es lo que pasa cuando haces clic en Aprobar en cada una. El mismo flujo, cuatro resultados, una plataforma haciendo el trabajo.",
-    "Un dueño. Un stakeholder. Cuatro proyectos. Eduardo Delima es el project owner, ubicable en eduardo punto delima arroba delima punto com punto co, en Colombia. Lala Garcia es la stakeholder. Ella recibe acceso por magic-link a los cuatro proyectos, sin necesidad de crear cuenta.",
-    "Cuatro proyectos aterrizaron en la cola de intake. Proyecto uno, el ecosistema empresarial deportivo del Deportivo Cali. Proyecto dos, Financiaplaning, una plataforma integral de planeación financiera para Colombia. Proyecto tres, el Canal de Empleo, una plataforma de formalización laboral e inclusión. Proyecto cuatro, un negocio de aceites industriales y biodiesel con expansión a Florida y Miami. Los cuatro estan en pending review, a un solo clic de la activación completa.",
-    "De clic a kickoff, sin humanos en el medio. Cinco etapas se ejecutan automáticamente en el momento que haces clic en Aprobar. Claude lee el intake. Los milestones se guardan. El estado del proyecto cambia. Al dueño le llega un correo. Y se agenda un kickoff de Zoom de manera automática. La primera acción sucede en menos de treinta segundos.",
-    "Esto es lo que pasa en detalle. Claude lee las respuestas del intake, el problema, los usuarios objetivo, las fuentes de datos, el presupuesto y las categorías de inteligencia artificial. Luego Claude devuelve un plan real con milestones, entregables, roles responsables y fechas. Cada milestone se convierte en una fila en la tabla de milestones. El estado del proyecto cambia: intake status approved, status active, workflow phase kickoff scheduled. SendGrid le envía a Eduardo el correo de aprobación con su magic link. Y la reunión de Zoom se agenda para las diez de la manana hora del este, el próximo día hábil.",
-    "Proyecto uno. Ecosistema Deportivo Cali. Haces clic en Aprobar y Claude genera los milestones del marketplace B2B de patrocinio: matching, networking, analítica de ROI, internacionalización del ecosistema empresarial del club. Eduardo recibe el correo de aprobación más su magic link, y un kickoff de Zoom de treinta minutos aterriza en el calendario automáticamente.",
-    "Proyecto dos. Financiaplaning. Haces clic en Aprobar y Claude genera los milestones de la plataforma integrada de patrimonio, seguros, impuestos e inversiones, incluyendo el motor de IA financiera, agentes algorítmicos y matching inversionista-proyecto. La data sensible se marca como financiera y bancaria. Eduardo recibe el correo y la invitacion al kickoff de Zoom.",
-    "Proyecto tres. Canal de Empleo e Inclusión Laboral. Haces clic en Aprobar y Claude genera los milestones del escaneo OCR de hojas Minerva, la interpretacion de formularios manuscritos, la digitalización de perfiles y el matching laboral. La data sensible se marca como PII. Eduardo recibe el correo y el kickoff de Zoom.",
-    "Proyecto cuatro. Aceites Industriales y Biodiesel. Haces clic en Aprobar y Claude genera los milestones de la cadena de reciclaje, la conversión a biodiesel, la expansión a Florida y Miami, las alianzas motorsport y el reporte de CO2. Sin marca de data sensible. Eduardo recibe el correo y el kickoff de Zoom.",
-    "El mismo flujo. Cuatro resultados. Deportivo Cali recibe milestones de marketplace B2B de patrocinio generados por IA más kickoff de Zoom. Financiaplaning recibe milestones de la plataforma de patrimonio, seguros, impuestos e inversiones generados por IA más kickoff de Zoom. Canal de Empleo recibe milestones de la plataforma de OCR y matching generados por IA más kickoff de Zoom. Aceites y biodiesel recibe milestones industriales, de reciclaje y expansión a Florida generados por IA más kickoff de Zoom. Un solo clic en cada uno. La plataforma hace el resto.",
-    "Lo que no sucede automáticamente. Aprobar no es todo el flujo. No se genera ni se envía contrato en el momento de aprobar. No se escribe código ni se provisiona infraestructura. A Lala no se le notifica automáticamente. No se crea factura ni pago. Cada uno de esos es un paso explícito aparte.",
-    "Lala Garcia ve todos los proyectos, sin necesidad de crear cuenta. Esta cableada en team members de los cuatro proyectos. Tú generas un share token por proyecto, pegas los cuatro links en un solo correo a su gmail, ella hace clic, entra con su correo, y obtiene la vista de solo lectura de stakeholder con milestones, status, plan de IA y comentarios.",
-    "Que pasa en las próximas cuarenta y ocho horas. Paso uno, hoy revisa el plan generado por IA y ajusta responsables o fechas si hace falta. Paso dos, hoy mismo genera los links de stakeholder de Lala y se los envias. Paso tres, en los dias uno y dos corres los kickoffs de Zoom con Eduardo para capturar los requerimientos reales de negocio. Paso cuatro, después de los kickoffs, generas los contratos. Después los milestones quedan asignados y arranca el build Neural.",
-    "Por qué funciona este flujo. Claude escribe el plan. La base de datos registra cada cambio de estado. SendGrid maneja el correo. Zoom crea la reunión. El magic link le da acceso al dueño y al stakeholder. El audit log captura cada movimiento. Sin project manager moviendo filas en una hoja de cálculo. Sin asistente agendando reuniones. El pipeline intake-a-kickoff se corre solo.",
-    "Cuatro proyectos. Un clic cada uno. Abre el dashboard de admin en aiagent punto ringlypro punto com diagonal projects, aprueba cada proyecto, y mira correr el flujo. O dale la orden y aprobamos los cuatro en un solo batch. Digit2AI Neural. El flujo de aprobación del intake. Impulsado por MCP, Claude, Zoom y SendGrid."
+    "Cuatro proyectos. Un solo cerebro. Cuatro problemas distintos. Cuatro industrias. Una sola plataforma de inteligencia artificial Neural que los resuelve todos. Esta es la propuesta de Digit2AI para Eduardo Delima.",
+    "Las cuatro oportunidades, de patrocinio deportivo a biodiésel. Proyecto uno: Deportivo Cali, ecosistema empresarial deportivo. Proyecto dos: Financiaplaning, planeación financiera integral. Proyecto tres: Canal de Empleo, inclusión laboral con inteligencia artificial. Proyecto cuatro: Aceites y biodiésel, energía alternativa con expansión a Florida. Un solo operador de inteligencia artificial los maneja todos.",
+    "Qué es Digit2AI Neural. Tres capas: Neural, la capa de inteligencia que entiende contexto, intención y lógica de negocio. Agentes, la capa de ejecución que convierte inteligencia en acción a través de tus herramientas, datos y flujos. Y MCP, el protocolo que conecta hallazgos, contexto compartido y orquesta operaciones multi-paso entre agentes. No son chatbots. Son operadores que ven la situación, deciden, y ejecutan de extremo a extremo.",
+    "Ocho agentes especialistas pre-construidos. Rachel, voice concierge. Ana, bilingüe español-inglés en sesenta segundos. Lina, nurturer de pipeline. Sentinel, salud del pipeline. Nova, reductor de no-shows. Vault, cazador de revenue leaks. Origin, auditor de retorno de inversión por fuente. Coach, revisor de conversiones. Cada proyecto reutiliza el mismo cerebro. Ahorras cuatro veces en construcción.",
+    "Proyecto uno, el problema. El patrocinio deportivo no está digitalizado. Cuatro síntomas: sponsors gestionados manualmente, sin matching B2B entre empresas del ecosistema, retorno de inversión del patrocinio que no se mide digitalmente, y sin canal internacional para escalar el club. Decisiones tomadas por intuición.",
+    "Proyecto uno, la solución Neural. Cámara de Comercio Deportiva Digital. Marketplace B2B más matching más ROI en tiempo real. Ana, voice agent en español e inglés, llama a sponsors potenciales. Recommendation Engine hace el matching sponsor-empresa por afinidad B2B. Predictive Analytics mide el retorno de inversión del patrocinio por canal y temporada. Y MCP Orchestration coordina activaciones, contratos y renovaciones. El flujo: detectar sponsor, diagnosticar encaje, prescribir activación, auto-fix outreach, verificar conversión.",
+    "Proyecto dos, el problema. Planeación financiera fragmentada en Colombia. Cuatro síntomas: patrimonio, seguros, impuestos e inversiones operando en silos. Asesoría dispersa entre contador, broker, asesor y abogado sin coordinación. Sin motor de simulación de escenarios financieros. Y matching inversionista-proyecto que se hace de forma manual y relacional.",
+    "Proyecto dos, la solución Neural. Motor de inteligencia artificial financiera. Un solo cerebro para patrimonio, pólizas, impuestos e inversiones. Conversational AI como asesor virtual integral veinticuatro siete. Agentes algorítmicos para simulación de escenarios financieros. Recommendation Engine para matching inversionista-proyecto automático. Y Compliance Layer con manejo de PII y datos bancarios bajo estándar SOC2. Sensitive data marcado como financiero y bancario desde el día uno.",
+    "Proyecto tres, el problema. Miles de trabajadores invisibles para el canal digital. Cuatro síntomas: hojas Minerva físicas circulando en papel. Formularios manuscritos imposibles de buscar. Matching laboral manual y relacional. Y trabajadores informales excluidos por completo del canal digital de empleo.",
+    "Proyecto tres, la solución Neural. Formalización laboral masiva. OCR más visión más matching igual inclusión basada en mérito. Document Understanding escanea la hoja Minerva y la convierte en perfil digital estructurado. Computer Vision interpreta letra manuscrita y firma. Recommendation Engine hace matching laboral inteligente por mérito. Y Ana, voice agent bilingüe, guía al trabajador en el llenado del perfil. El flujo: escanear Minerva, interpretar campos, estructurar perfil, match con vacantes, colocar en empleo formal.",
+    "Proyecto cuatro, el problema. Reciclaje de aceite sin trazabilidad ni canal internacional. Cuatro síntomas: recolección gestionada de forma tradicional. Sin trazabilidad digital end-to-end del proveedor a la planta a la conversión a la venta. Expansión a Florida y Miami sin canal estructurado. Y alianzas motorsport sin matching industrial de oferta y demanda.",
+    "Proyecto cuatro, la solución Neural. Energía alternativa digitalizada. Trazabilidad más matching industrial más reporte de sostenibilidad. Predictive Analytics hace forecast de volumen de recolección y rendimiento de conversión a biodiésel. MCP Integration conecta proveedores, plantas y compradores en Florida. Recommendation Engine hace matching con la red motorsport y los mercados de Florida y Miami. Y Generative AI produce reporte automático de CO2 evitado y huella de sostenibilidad. Diferenciador clave en mercados regulados.",
+    "Por qué un solo cerebro: valor compuesto. Cuatro proyectos por un cerebro igual valor compuesto. Cada proyecto entrena el cerebro y el que sigue se construye más rápido y más barato. Deportivo Cali entrena el matching B2B y el ROI Analytics, reusable en Financiaplaning. Financiaplaning entrena la simulación y el matching financiero, reusable en Aceites. Canal de Empleo entrena el OCR y la visión, reusable en intake de cualquier vertical. Aceites entrena el matching industrial y el reporte de sostenibilidad, reusable en cualquier marketplace.",
+    "Los cuatro proyectos en una tabla. Deportivo Cali: patrocinio no digitalizado, solución marketplace B2B más ROI Analytics más Ana. Financiaplaning: asesoría financiera fragmentada, solución motor de IA financiera más simulación más matching. Canal de Empleo: hojas Minerva físicas, solución OCR más visión más matching laboral. Aceites y biodiésel: reciclaje sin trazabilidad, solución Predictive Analytics más MCP Industrial más reporte de CO2.",
+    "Cómo se entrega. Construido, desplegado, gobernado, observado. Build: workflows más voz más knowledge base con editor no-code y SDK para los técnicos. Deploy: voz, web, SMS, WhatsApp, API y MCP, todo en multi-canal. Govern: control de acceso por roles, multi-tenant y audit log estilo SOC2. Observe: dashboards de KPIs, transcripciones completas y retorno de inversión por cada agente. Misma plataforma, cuatro proyectos, cuatro fechas de despliegue independientes.",
+    "Próximos pasos. De conversación a producción en semanas, no meses. Semana uno: kickoff de Zoom y captura de requerimientos. Semana dos: plan firmado y contrato emitido. Semanas tres a seis: build del primer proyecto, Eduardo elige cuál. Mes dos en adelante: los otros tres proyectos en paralelo. Cuatro proyectos. Un solo cerebro. Una sola plataforma. Listos para arrancar cuando tú lo estés. Escríbenos a mstagg arroba digit2ai punto com."
   ];
 
   var rachelAudio = new Audio();
