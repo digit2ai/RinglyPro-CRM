@@ -1292,3 +1292,49 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Rich-text Notes editor on project detail */
+[id^="project-notes-"][contenteditable="true"]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  font-style: italic;
+  pointer-events: none;
+}
+[id^="project-notes-"][contenteditable="true"]:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.15);
+}
+[id^="project-notes-"][contenteditable="true"] a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+[id^="project-notes-"][contenteditable="true"] h1,
+[id^="project-notes-"][contenteditable="true"] h2,
+[id^="project-notes-"][contenteditable="true"] h3 {
+  margin: 0.6em 0 0.3em;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+[id^="project-notes-"][contenteditable="true"] ul,
+[id^="project-notes-"][contenteditable="true"] ol {
+  margin: 0.4em 0;
+  padding-left: 1.6em;
+}
+[id^="project-notes-"][contenteditable="true"] img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+[id^="project-notes-"][contenteditable="true"] table {
+  border-collapse: collapse;
+  margin: 0.4em 0;
+}
+[id^="project-notes-"][contenteditable="true"] td,
+[id^="project-notes-"][contenteditable="true"] th {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+}
+button.notes-tool:hover {
+  background: rgba(56,189,248,0.12) !important;
+  border-color: var(--accent) !important;
+}

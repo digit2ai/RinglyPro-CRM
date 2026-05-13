@@ -2896,8 +2896,21 @@ async function showProjectDetail(id) {
                 <button id="notes-save-btn-${p.id}" class="btn btn-primary btn-sm" onclick="saveProjectNotes(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617" disabled>Save Notes</button>
               </div>
             </div>
-            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Free-form working notes for this project. Anything pasted here (meeting takeaways, AI-generated kickoff brief, scratch thoughts) is saved to the project record.</p>
-            <textarea id="project-notes-${p.id}" rows="14" placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record." data-original="${escHtml(p.notes || '')}" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;resize:vertical;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:240px" oninput="onProjectNotesChange(${p.id})">${escHtml(p.notes || '')}</textarea>
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Free-form working notes for this project. Paste with formatting (bold, lists, links, tables) — anything you copy in keeps its rich formatting.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:rgba(56,189,248,0.05);border:1px solid var(--border);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0">
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','bold')" title="Bold (Cmd/Ctrl+B)" style="font-weight:700;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">B</button>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','italic')" title="Italic (Cmd/Ctrl+I)" style="font-style:italic;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">I</button>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','underline')" title="Underline (Cmd/Ctrl+U)" style="text-decoration:underline;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">U</button>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','strikeThrough')" title="Strikethrough" style="text-decoration:line-through;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">S</button>
+              <span style="width:1px;background:var(--border);margin:0 4px"></span>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','formatBlock','H3')" title="Heading" style="font-weight:700;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">H</button>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','insertUnorderedList')" title="Bulleted list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">&bull; List</button>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','insertOrderedList')" title="Numbered list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">1. List</button>
+              <button type="button" class="notes-tool" onclick="notesLink('${p.id}')" title="Insert link" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">&#128279; Link</button>
+              <span style="width:1px;background:var(--border);margin:0 4px"></span>
+              <button type="button" class="notes-tool" onclick="notesCmd('${p.id}','removeFormat')" title="Clear formatting" style="padding:4px 8px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">Clear</button>
+            </div>
+            <div id="project-notes-${p.id}" contenteditable="true" data-original="${escHtml(renderNotesHtml(p.notes || ''))}" oninput="onProjectNotesChange(${p.id})" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:260px;max-height:600px;overflow-y:auto;outline:none" data-placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record.">${renderNotesHtml(p.notes || '')}</div>
           </div>
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
@@ -3500,28 +3513,56 @@ async function editBusinessRequirements(projectId) {
   });
 }
 
+// Render existing notes into HTML for the rich-text editor.
+// Backward-compat: plain-text (no HTML tags) -> escape + convert newlines to <br>.
+// Already-HTML notes (contain a tag) -> render as-is.
+function renderNotesHtml(s) {
+  if (!s) return '';
+  const looksLikeHtml = /<[a-z][\s\S]*>/i.test(s);
+  if (looksLikeHtml) return s;
+  return escHtml(s).replace(/\n/g, '<br>');
+}
+
 function onProjectNotesChange(projectId) {
-  const ta = document.getElementById(`project-notes-${projectId}`);
+  const ed = document.getElementById(`project-notes-${projectId}`);
   const btn = document.getElementById(`notes-save-btn-${projectId}`);
   const status = document.getElementById(`notes-status-${projectId}`);
-  if (!ta || !btn) return;
-  const dirty = ta.value !== (ta.dataset.original || '');
+  if (!ed || !btn) return;
+  const dirty = ed.innerHTML !== (ed.dataset.original || '');
   btn.disabled = !dirty;
   if (status) status.textContent = dirty ? 'Unsaved changes' : '';
 }
 
+function notesCmd(projectId, command, value) {
+  const ed = document.getElementById(`project-notes-${projectId}`);
+  if (!ed) return;
+  ed.focus();
+  document.execCommand(command, false, value || null);
+  onProjectNotesChange(projectId);
+}
+
+function notesLink(projectId) {
+  const ed = document.getElementById(`project-notes-${projectId}`);
+  if (!ed) return;
+  const url = prompt('Link URL:', 'https://');
+  if (!url) return;
+  ed.focus();
+  document.execCommand('createLink', false, url);
+  onProjectNotesChange(projectId);
+}
+
 async function saveProjectNotes(projectId) {
-  const ta = document.getElementById(`project-notes-${projectId}`);
+  const ed = document.getElementById(`project-notes-${projectId}`);
   const btn = document.getElementById(`notes-save-btn-${projectId}`);
   const status = document.getElementById(`notes-status-${projectId}`);
-  if (!ta) return;
-  const notes = ta.value;
+  if (!ed) return;
+  const notes = ed.innerHTML;
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   if (status) status.textContent = 'Saving...';
   try {
     const r = await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ notes }) });
     if (!r.success) throw new Error(r.error || 'unknown');
-    ta.dataset.original = notes;
+    ed.dataset.original = notes;
     if (status) {
       status.textContent = 'Saved';
       setTimeout(() => { if (status) status.textContent = ''; }, 2000);
