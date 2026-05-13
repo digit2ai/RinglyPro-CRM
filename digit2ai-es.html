@@ -2261,15 +2261,20 @@ html, body { max-width:100%; overflow-x:hidden; }
   if (iframed && !hasMic) {
     var s = document.createElement('style');
     s.textContent =
-      '#d2a-voice-fallback{position:fixed;top:16px;left:50%;transform:translateX(-50%);' +
-      'z-index:2147483647;display:flex;align-items:center;gap:10px;padding:12px 20px;' +
-      'border-radius:999px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;' +
+      '#d2a-voice-fallback{display:inline-flex;align-items:center;gap:10px;' +
+      'padding:12px 20px;border-radius:999px;' +
+      'background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;' +
       'font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;cursor:pointer;' +
       'border:0;box-shadow:0 10px 30px rgba(0,0,0,.35);' +
-      'transition:transform .2s ease, box-shadow .2s ease;}' +
-      '#d2a-voice-fallback:hover{transform:translateX(-50%) translateY(-2px);' +
+      'transition:transform .2s ease, box-shadow .2s ease;white-space:nowrap;}' +
+      '#d2a-voice-fallback:hover{transform:translateY(-2px);' +
       'box-shadow:0 14px 36px rgba(0,0,0,.45);}' +
-      '#d2a-voice-fallback svg{width:18px;height:18px;flex:0 0 auto;}';
+      '#d2a-voice-fallback svg{width:18px;height:18px;flex:0 0 auto;}' +
+      '#d2a-voice-fallback.d2a-floating{position:fixed;top:16px;left:50%;' +
+      'transform:translateX(-50%);z-index:2147483647;}' +
+      '#d2a-voice-fallback.d2a-floating:hover{transform:translateX(-50%) translateY(-2px);}' +
+      '@media (max-width:640px){#d2a-voice-fallback{padding:8px 14px;font-size:12px;gap:6px;}' +
+      '#d2a-voice-fallback svg{width:14px;height:14px;}}';
     document.head.appendChild(s);
     var btn = document.createElement('button');
     btn.id = 'd2a-voice-fallback';
@@ -2282,7 +2287,22 @@ html, body { max-width:100%; overflow-x:hidden; }
       window.open('https://aiagent.ringlypro.com/hablar-con-rachel.html', 'rachel_chat',
         'width=460,height=720,noopener,noreferrer');
     };
-    document.body.appendChild(btn);
+    var mount = function(){
+      var inner = document.querySelector('.dnx-hdr-inner');
+      if (inner) {
+        var cta = inner.querySelector('.dnx-hdr-cta');
+        if (cta) inner.insertBefore(btn, cta);
+        else inner.appendChild(btn);
+      } else {
+        btn.classList.add('d2a-floating');
+        document.body.appendChild(btn);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mount);
+    } else {
+      mount();
+    }
     return;
   }
   var w = document.createElement('elevenlabs-convai');
