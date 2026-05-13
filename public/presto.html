@@ -193,6 +193,27 @@
     max-width: 760px;
     margin-bottom: 16px;
   }
+  .hero-punch {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(20px, 2.1vw, 30px);
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.35;
+    letter-spacing: -0.3px;
+    color: var(--teal-light);
+    max-width: 820px;
+    margin: -8px 0 28px;
+    position: relative;
+    padding-left: 18px;
+  }
+  .hero-punch::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 6px; bottom: 6px;
+    width: 3px;
+    background: linear-gradient(180deg, var(--teal-neon) 0%, transparent 100%);
+    border-radius: 2px;
+  }
   .sub {
     font-size: 15px;
     color: rgba(255,255,255,0.55);
@@ -828,8 +849,9 @@
       </div>
     </div>
     <span class="eyebrow" data-en="A five-minute walkthrough" data-es="Un recorrido de cinco minutos">A five-minute walkthrough</span>
-    <h1 data-en="You do not have a tooling problem. You have workflows older than the internet." data-es="No tienes un problema de herramientas. Tienes workflows más viejos que el internet.">You do not have a tooling problem. You have workflows older than the internet.</h1>
-    <p class="lead" data-en="For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins." data-es="Durante cuarenta años toda empresa se ha construido igual: flujos de trabajo horizontales corriendo en paralelo silencioso. Cumplimiento hace cumplimiento. Banca de inversión hace banca de inversión. Patrimonio hace patrimonio. Las líneas nunca se cruzan. Ahí empieza cada fuga de ingresos.">For forty years every company has been built the same way: horizontal workflows running in silent parallel. Compliance does compliance. Investment banking does investment banking. Wealth does wealth. The lines never cross. That is where every revenue leak begins.</p>
+    <h1 data-en="How does the team that closes the deal talk to the team that delivers it?" data-es="¿Cómo habla el equipo que cierra la venta con el equipo que la entrega?">How does the team that closes the deal talk to the team that delivers it?</h1>
+    <p class="hero-punch" data-en="You already know the answer. That silence is costing you millions every quarter." data-es="Ya sabes la respuesta. Ese silencio te cuesta millones cada trimestre.">You already know the answer. That silence is costing you millions every quarter.</p>
+    <p class="lead" data-en="Pick any business in any industry — banking, healthcare, manufacturing, services — and you will find the same pattern. Every department runs a clean horizontal pipeline of its own. Sales closes. Operations delivers. Support reacts. Finance reconciles. The pipes never cross. That gap between the lines is where every revenue leak begins." data-es="Toma cualquier negocio en cualquier industria — banca, salud, manufactura, servicios — y vas a encontrar el mismo patrón. Cada departamento corre su propio pipeline horizontal limpio. Ventas cierra. Operaciones entrega. Soporte reacciona. Finanzas reconcilia. Los tubos nunca se cruzan. Esa brecha entre las líneas es donde empieza cada fuga de ingresos.">Pick any business in any industry — banking, healthcare, manufacturing, services — and you will find the same pattern. Every department runs a clean horizontal pipeline of its own. Sales closes. Operations delivers. Support reacts. Finance reconciles. The pipes never cross. That gap between the lines is where every revenue leak begins.</p>
     <p class="sub" data-en="Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves." data-es="Digit2AI Neural no es otra herramienta para añadir. Es una forma distinta de trabajar. Los próximos cinco minutos te van a mostrar exactamente qué significa eso, y se pagan solos.">Digit2AI Neural is not another tool you bolt on. It is a different shape of work. The next five minutes will show you exactly what that means — and pay for themselves.</p>
 
     <div class="stat-row">
@@ -852,7 +874,7 @@
   <section class="reveal shape-section">
     <span class="eyebrow" data-en="The diagnosis" data-es="El diagnóstico">The diagnosis</span>
     <h2 data-en="Look at how your business actually runs." data-es="Mira cómo funciona realmente tu negocio.">Look at how your business actually runs.</h2>
-    <p class="lead" data-en="Take any bank. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line in the bank has its own version of this pipe." data-es="Toma cualquier banco. Abrir una cuenta son cinco pasos horizontales en fila: sanciones, KYC, due diligence reforzada, apertura, monitoreo transaccional. Limpio, lineal, bien documentado. Cada línea de producto del banco tiene su propia versión de este tubo.">Take any bank. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line in the bank has its own version of this pipe.</p>
+    <p class="lead" data-en="Banking makes the pattern obvious, so let us use it as the lens. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line — investment banking, wealth, lending — has its own version of this pipe. The same is true in your industry: every department has a pipe of its own." data-es="La banca hace el patrón obvio, así que la usamos como lente. Abrir una cuenta son cinco pasos horizontales en fila — sanciones, KYC, due diligence reforzada, apertura, monitoreo transaccional. Limpio, lineal, bien documentado. Cada línea de producto — banca de inversión, patrimonio, crédito — tiene su propia versión de este tubo. Lo mismo pasa en tu industria: cada departamento tiene su propio tubo.">Banking makes the pattern obvious, so let us use it as the lens. Opening one account is five horizontal steps in a row — sanctions screening, KYC, enhanced due diligence, account opening, transaction monitoring. Clean, linear, well-documented. Every product line — investment banking, wealth, lending — has its own version of this pipe. The same is true in your industry: every department has a pipe of its own.</p>
 
     <!-- DIAGRAM 1: Horizontal silos -->
     <div class="silos-diagram" aria-label="Horizontal workflows in silos">
