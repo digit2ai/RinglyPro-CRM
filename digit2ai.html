@@ -2244,8 +2244,57 @@ html, body { max-width:100%; overflow-x:hidden; }
 </div>
 
 <!-- ELEVENLABS VOICE AGENT (branding removed) -->
-<elevenlabs-convai agent-id="agent_1001kdge3jz0ejj8a8g5d7vkqr8f"></elevenlabs-convai>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+<!-- When iframed by digit2ai.com (GHL) without allow="microphone", the
+     widget fails with "Permission denied". Detect that case and replace the
+     widget with a button that opens the standalone page in a new window,
+     where mic works because it's top-level. -->
+<script>
+(function(){
+  var iframed = false;
+  try { iframed = window.self !== window.top; } catch(e) { iframed = true; }
+  var hasMic = true;
+  try {
+    if (document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function') {
+      hasMic = document.featurePolicy.allowsFeature('microphone');
+    }
+  } catch(e) {}
+  if (iframed && !hasMic) {
+    // Render a fallback button instead of the broken widget.
+    var s = document.createElement('style');
+    s.textContent =
+      '#d2a-voice-fallback{position:fixed;bottom:20px;right:20px;z-index:2147483647;' +
+      'display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;' +
+      'background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;font-family:Inter,system-ui,sans-serif;' +
+      'font-weight:600;font-size:14px;cursor:pointer;border:0;box-shadow:0 10px 30px rgba(0,0,0,.35);' +
+      'transition:transform .2s ease, box-shadow .2s ease;}' +
+      '#d2a-voice-fallback:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.45);}' +
+      '#d2a-voice-fallback svg{width:18px;height:18px;flex:0 0 auto;}';
+    document.head.appendChild(s);
+    var btn = document.createElement('button');
+    btn.id = 'd2a-voice-fallback';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Talk to Rachel');
+    btn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' +
+      '<span>Talk to Rachel</span>';
+    btn.onclick = function(){
+      window.open('https://aiagent.ringlypro.com/digit2ai?talk=1', '_blank',
+        'width=480,height=720,noopener,noreferrer');
+    };
+    document.body.appendChild(btn);
+    return; // Skip mounting the broken widget entirely
+  }
+  // Normal path: top-level page or iframe with mic permission. Mount the
+  // ElevenLabs widget as usual.
+  var w = document.createElement('elevenlabs-convai');
+  w.setAttribute('agent-id', 'agent_1001kdge3jz0ejj8a8g5d7vkqr8f');
+  document.body.appendChild(w);
+  var sc = document.createElement('script');
+  sc.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js';
+  sc.async = true;
+  document.body.appendChild(sc);
+})();
+</script>
 <script>
 (function hideElevenLabsBranding(){
   function scrub(){
