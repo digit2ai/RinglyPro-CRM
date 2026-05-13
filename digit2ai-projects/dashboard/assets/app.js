@@ -3345,13 +3345,27 @@ function copyShareLink(url, btn) {
   }).catch(() => alert('Copy failed. Select and copy the link manually.'));
 }
 
-function emailShareLink(url, projectId) {
-  // Open the user's mail client with a prefilled draft
-  const subject = encodeURIComponent('Project access link');
+async function emailShareLink(url, projectId) {
+  // Refetch the project so we can prefill recipients + subject from the
+  // current stakeholder list and project name.
+  let project = null;
+  try {
+    const r = await api(`/projects/${projectId}`);
+    project = r && r.data ? r.data : null;
+  } catch (_) {}
+
+  const team = (project && Array.isArray(project.team_members)) ? project.team_members : [];
+  const recipients = team
+    .map(m => (m && m.email ? String(m.email).trim() : ''))
+    .filter(Boolean)
+    .join(',');
+  const projectName = (project && project.name) ? project.name : '';
+
+  const subject = encodeURIComponent(projectName ? `Project access link: ${projectName}` : 'Project access link');
   const body = encodeURIComponent(
-    `Hi,\n\nYou have read-only access to a project on the Digit2AI platform. Click the link below and confirm your email to view it.\n\n${url}\n\nIf you have questions, just reply to this email.\n\nThanks,\nManuel`
+    `Hi,\n\nYou have read-only access to ${projectName ? `"${projectName}"` : 'a project'} on the Digit2AI platform. Click the link below and confirm your email to view it.\n\n${url}\n\nIf you have questions, just reply to this email.\n\nThanks,\nManuel`
   );
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  window.location.href = `mailto:${encodeURIComponent(recipients)}?subject=${subject}&body=${body}`;
 }
 
 async function revokeShareLink(projectId) {
