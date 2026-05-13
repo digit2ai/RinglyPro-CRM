@@ -2888,6 +2888,17 @@ async function showProjectDetail(id) {
               ? `<p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${escHtml(p.business_requirements)}</p>`
               : `<p style="font-size:13px;color:var(--text-muted);font-style:italic">Captured after the kickoff meeting. Click Add to record stakeholder needs, success criteria, constraints, and any details gathered during requirements discovery.</p>`}
           </div>
+          <div class="detail-section" style="border:1px solid rgba(56,189,248,0.25);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+              <h4 style="margin:0">Notes</h4>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span id="notes-status-${p.id}" style="font-size:11px;color:var(--text-muted)"></span>
+                <button id="notes-save-btn-${p.id}" class="btn btn-primary btn-sm" onclick="saveProjectNotes(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617" disabled>Save Notes</button>
+              </div>
+            </div>
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px">Free-form working notes for this project. Anything pasted here (meeting takeaways, AI-generated kickoff brief, scratch thoughts) is saved to the project record.</p>
+            <textarea id="project-notes-${p.id}" rows="14" placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record." data-original="${escHtml(p.notes || '')}" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;resize:vertical;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:240px" oninput="onProjectNotesChange(${p.id})">${escHtml(p.notes || '')}</textarea>
+          </div>
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
           ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
@@ -2969,7 +2980,6 @@ async function showProjectDetail(id) {
             ${p.contacts?.length ? p.contacts.map(c => `<div class="timeline-item" style="cursor:pointer" onclick="showContactDetail(${c.id})"><div class="timeline-dot" style="background:var(--success)"></div><div class="timeline-content"><strong>${c.first_name} ${c.last_name || ''}</strong>${c.ProjectContact?.role ? '<br><span style="font-size:12px;color:var(--text-muted)">'+c.ProjectContact.role+'</span>' : ''}</div></div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No contacts linked</p>'}
           </div>
 
-          ${p.notes ? `<div class="detail-section"><h4>Notes</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.notes}</p></div>` : ''}
           ${p.tags?.length ? `<div class="detail-section"><h4>Tags</h4>${p.tags.map(t => `<span class="tag">${t}</span>`).join(' ')}</div>` : ''}
         </div>
       </div>
@@ -3488,6 +3498,40 @@ async function editBusinessRequirements(projectId) {
     closeModal();
     showProjectDetail(projectId);
   });
+}
+
+function onProjectNotesChange(projectId) {
+  const ta = document.getElementById(`project-notes-${projectId}`);
+  const btn = document.getElementById(`notes-save-btn-${projectId}`);
+  const status = document.getElementById(`notes-status-${projectId}`);
+  if (!ta || !btn) return;
+  const dirty = ta.value !== (ta.dataset.original || '');
+  btn.disabled = !dirty;
+  if (status) status.textContent = dirty ? 'Unsaved changes' : '';
+}
+
+async function saveProjectNotes(projectId) {
+  const ta = document.getElementById(`project-notes-${projectId}`);
+  const btn = document.getElementById(`notes-save-btn-${projectId}`);
+  const status = document.getElementById(`notes-status-${projectId}`);
+  if (!ta) return;
+  const notes = ta.value;
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  if (status) status.textContent = 'Saving...';
+  try {
+    const r = await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ notes }) });
+    if (!r.success) throw new Error(r.error || 'unknown');
+    ta.dataset.original = notes;
+    if (status) {
+      status.textContent = 'Saved';
+      setTimeout(() => { if (status) status.textContent = ''; }, 2000);
+    }
+    if (btn) { btn.textContent = 'Save Notes'; btn.disabled = true; }
+  } catch (e) {
+    if (status) status.textContent = 'Save failed';
+    if (btn) { btn.textContent = 'Save Notes'; btn.disabled = false; }
+    alert('Could not save notes: ' + e.message);
+  }
 }
 
 async function archiveContact(id) { if (confirm('Archive this contact?')) { await api(`/contacts/${id}/archive`, { method: 'PUT' }); navigateTo('contacts'); } }
