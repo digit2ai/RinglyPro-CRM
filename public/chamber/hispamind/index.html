@@ -822,5 +822,22 @@
   document.querySelectorAll('.card,.region-item,.timeline-step,.program-item').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity 0.5s ease,transform 0.5s ease';obs.observe(el);});
 })();
 </script>
+
+<!-- ===== CAMARAVIRTUAL VOICE ASSISTANT (ElevenLabs ConvAI) ===== -->
+<style>
+  elevenlabs-convai {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    right: auto;
+    z-index: 9999;
+  }
+  @media (max-width: 768px) {
+    elevenlabs-convai { bottom: 16px; left: 16px; }
+  }
+</style>
+<elevenlabs-convai agent-id="agent_9801krhnapz7ft1th5n7y58jveb3"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
 </body>
 </html>
