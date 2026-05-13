@@ -292,6 +292,40 @@
         .toast.show { transform: translateY(0); opacity: 1; }
         .toast.success { border-color: rgba(52,211,153,0.5); color: var(--green); }
         .toast.error { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+        .notes-body { white-space: normal; }
+        .notes-body p { margin: 0 0 0.6em; }
+        .notes-body p:last-child { margin-bottom: 0; }
+        .notes-body h1, .notes-body h2, .notes-body h3, .notes-body h4 {
+            color: #fff; font-weight: 700; margin: 0.8em 0 0.4em;
+        }
+        .notes-body h1 { font-size: 1.4em; }
+        .notes-body h2 { font-size: 1.25em; }
+        .notes-body h3 { font-size: 1.1em; letter-spacing: 0; text-transform: none; color: #fff; }
+        .notes-body ul, .notes-body ol { margin: 0.4em 0 0.6em; padding-left: 1.6em; }
+        .notes-body li { margin: 0.2em 0; }
+        .notes-body a { color: var(--teal); text-decoration: underline; }
+        .notes-body strong, .notes-body b { color: #fff; font-weight: 700; }
+        .notes-body em, .notes-body i { font-style: italic; }
+        .notes-body code {
+            background: rgba(255,255,255,0.08); padding: 1px 6px;
+            border-radius: 4px; font-size: 0.92em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .notes-body pre {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--line);
+            border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+            font-size: 13px; line-height: 1.45; margin: 0.5em 0;
+        }
+        .notes-body blockquote {
+            border-left: 3px solid var(--purple); padding-left: 12px;
+            margin: 0.5em 0; color: var(--muted);
+        }
+        .notes-body img { max-width: 100%; height: auto; border-radius: 6px; margin: 0.4em 0; }
+        .notes-body table { border-collapse: collapse; margin: 0.5em 0; }
+        .notes-body td, .notes-body th {
+            border: 1px solid var(--line2); padding: 6px 10px; font-size: 13px;
+        }
+        .notes-body hr { border: none; border-top: 1px solid var(--line); margin: 1em 0; }
         .hidden { display: none !important; }
         .empty {
             color: var(--muted);
@@ -339,6 +373,11 @@
     <div class="section" id="brSection">
         <h3>Business Requirements</h3>
         <div class="body" id="brBody"></div>
+    </div>
+
+    <div class="section hidden" id="notesSection">
+        <h3>Notes</h3>
+        <div class="body notes-body" id="notesBody"></div>
     </div>
 
     <div class="section" id="msSection">
@@ -484,6 +523,15 @@
             document.getElementById('brSection').classList.add('hidden');
         }
 
+        // Notes (rich text — sanitize HTML before rendering)
+        if (p.notes && String(p.notes).trim()) {
+            const html = renderNotesHtml(p.notes);
+            document.getElementById('notesBody').innerHTML = sanitizeHtml(html);
+            document.getElementById('notesSection').classList.remove('hidden');
+        } else {
+            document.getElementById('notesSection').classList.add('hidden');
+        }
+
         // Milestones
         const msList = Array.isArray(p.milestones) ? p.milestones : [];
         const msBody = document.getElementById('msBody');
@@ -556,6 +604,85 @@
 
     function escHtml(s) {
         return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Backward-compat for Notes: plain text -> escape + br; HTML stays as HTML.
+    function renderNotesHtml(s) {
+        if (!s) return '';
+        const looksLikeHtml = /<[a-z][\s\S]*>/i.test(s);
+        if (looksLikeHtml) return s;
+        return escHtml(s).replace(/\n/g, '<br>');
+    }
+
+    // Strict allowlist sanitizer for the Notes section. Strips <script>,
+    // <iframe>, event handlers, javascript: urls, and any tag not on the
+    // safe list. Operates on a detached DOM so unparsed content cannot
+    // execute. Admin authors notes, stakeholders view them — defense in
+    // depth in case admin pastes malicious markup from a 3rd-party source.
+    function sanitizeHtml(dirty) {
+        if (!dirty) return '';
+        const ALLOWED_TAGS = new Set([
+            'A','B','I','U','S','STRONG','EM','P','BR','HR','SPAN','DIV',
+            'H1','H2','H3','H4','H5','H6',
+            'UL','OL','LI',
+            'BLOCKQUOTE','PRE','CODE','KBD',
+            'TABLE','THEAD','TBODY','TFOOT','TR','TD','TH',
+            'IMG','SUB','SUP','MARK','SMALL','DEL','INS'
+        ]);
+        const ALLOWED_ATTRS = {
+            'A': ['href','title','target','rel'],
+            'IMG': ['src','alt','title','width','height'],
+            '*': ['style']  // allowed but filtered below
+        };
+        const SAFE_PROTOCOL = /^(https?:|mailto:|tel:|#|\/)/i;
+        // Block dangerous CSS: url(javascript:), expression(), behavior:, -moz-binding
+        const UNSAFE_CSS = /(javascript|expression|behavior|-moz-binding|url\s*\(\s*['"]?\s*javascript)/i;
+
+        const doc = new DOMParser().parseFromString(`<div>${dirty}</div>`, 'text/html');
+        const root = doc.body.firstChild;
+
+        const walk = (node) => {
+            const children = Array.from(node.childNodes);
+            for (const child of children) {
+                if (child.nodeType === 1) { // ELEMENT
+                    const tag = child.tagName;
+                    if (!ALLOWED_TAGS.has(tag)) {
+                        // Unwrap unknown tags: preserve text children, drop the wrapper
+                        while (child.firstChild) node.insertBefore(child.firstChild, child);
+                        node.removeChild(child);
+                        continue;
+                    }
+                    // Strip all attributes except those on the per-tag allowlist
+                    const allowed = (ALLOWED_ATTRS[tag] || []).concat(ALLOWED_ATTRS['*'] || []);
+                    for (const attr of Array.from(child.attributes)) {
+                        const name = attr.name.toLowerCase();
+                        if (name.startsWith('on') || !allowed.includes(name)) {
+                            child.removeAttribute(attr.name);
+                            continue;
+                        }
+                        if ((name === 'href' || name === 'src') && !SAFE_PROTOCOL.test(attr.value.trim())) {
+                            child.removeAttribute(attr.name);
+                            continue;
+                        }
+                        if (name === 'style' && UNSAFE_CSS.test(attr.value)) {
+                            child.removeAttribute(attr.name);
+                            continue;
+                        }
+                    }
+                    // Force external links to open safely
+                    if (tag === 'A' && child.getAttribute('href')) {
+                        child.setAttribute('target', '_blank');
+                        child.setAttribute('rel', 'noopener noreferrer');
+                    }
+                    walk(child);
+                } else if (child.nodeType === 8) { // COMMENT
+                    node.removeChild(child);
+                }
+                // TEXT nodes are kept as-is
+            }
+        };
+        walk(root);
+        return root.innerHTML;
     }
     function formatDate(d) {
         try { return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
