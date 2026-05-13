@@ -3124,12 +3124,89 @@ async function markBuildComplete(projectId) {
 
 async function regenerateArchitectPrompt(projectId) {
   if (!confirm('Re-run the Senior Prompt Engineer synthesizer for this project?\n\nThis pulls the current project context (intake Q&A, business plan, milestones, contract, stakeholders, targets, business requirements), regenerates the raw template, then passes it through the Claude synthesizer to produce a fresh focused sprint brief.\n\nNo email is sent. No phase change. ~$0.10 in Claude tokens.')) return;
+
+  const progress = showPromptGenProgress();
   try {
     const r = await api(`/projects/${projectId}/regenerate-prompt`, { method: 'POST', body: JSON.stringify({}) });
+    progress.close();
     if (!r.success) { alert('Regenerate failed: ' + (r.error || 'unknown')); return; }
     alert(`Prompt regenerated (${r.prompt_length} chars).\n\nSource: ${r.used_synth ? 'Senior Prompt Engineer synthesizer (Claude)' : 'raw template (synth unavailable)'}\n\nClick "View Architect Prompt" to see it.`);
     showProjectDetail(projectId);
-  } catch (e) { alert('Regenerate failed: ' + e.message); }
+  } catch (e) {
+    progress.close();
+    alert('Regenerate failed: ' + e.message);
+  }
+}
+
+// Progress modal shown while the Senior Prompt Engineer synthesizer runs.
+// Reuses the global modal; hides save/cancel; cycles stage labels every
+// 4s so the operator can see the pipeline is alive while Claude streams
+// (~30–60s end-to-end).
+function showPromptGenProgress() {
+  const stages = [
+    { icon: '◐', text: 'Gathering project context — intake, plan, milestones, contract, stakeholders…' },
+    { icon: '◓', text: 'Rendering raw architect template from gathered context…' },
+    { icon: '◑', text: 'Sending to Senior Prompt Engineer (Claude) for synthesis…' },
+    { icon: '◒', text: 'Claude is composing the focused sprint brief — this is the slow part…' },
+    { icon: '◐', text: 'Almost there — finalizing and saving to project record…' }
+  ];
+
+  openModal('Generating Architect Prompt', `
+    <div id="pgen-wrap" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 4px 12px;gap:18px">
+      <div class="spinner" style="width:48px;height:48px;border-width:4px"></div>
+      <div style="font-size:14px;font-weight:600;color:var(--text-primary);letter-spacing:0.3px">Senior Prompt Engineer is working…</div>
+      <div id="pgen-stage" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);border-radius:8px;min-height:48px;width:100%;max-width:520px">
+        <span id="pgen-icon" style="font-size:18px;color:#38bdf8;font-family:ui-monospace,monospace">◐</span>
+        <span id="pgen-text" style="font-size:13px;color:var(--text-secondary);text-align:left;line-height:1.5">${stages[0].text}</span>
+      </div>
+      <div id="pgen-elapsed" style="font-family:ui-monospace,monospace;font-size:11px;color:var(--text-muted);letter-spacing:1px">elapsed 00:00</div>
+      <div style="font-size:11px;color:var(--text-muted);max-width:520px;line-height:1.5;font-style:italic">Average runtime is 30–60 seconds. The modal closes automatically when the prompt is saved. Do not close this tab.</div>
+    </div>
+  `, null);
+
+  // Hide save + repurpose cancel so this is a true blocking progress dialog.
+  const saveBtn = document.getElementById('modal-save');
+  const cancelBtn = document.getElementById('modal-cancel');
+  if (saveBtn) saveBtn.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+
+  // Cycle the stage text + icon.
+  let stageIdx = 0;
+  const iconEl = document.getElementById('pgen-icon');
+  const textEl = document.getElementById('pgen-text');
+  const stageTimer = setInterval(() => {
+    stageIdx = Math.min(stageIdx + 1, stages.length - 1);
+    if (iconEl) iconEl.textContent = stages[stageIdx].icon;
+    if (textEl) textEl.textContent = stages[stageIdx].text;
+  }, 4000);
+
+  // Spin the icon on a faster timer to suggest activity.
+  const spinFrames = ['◐', '◓', '◑', '◒'];
+  let frame = 0;
+  const spinTimer = setInterval(() => {
+    frame = (frame + 1) % spinFrames.length;
+    if (iconEl) iconEl.textContent = spinFrames[frame];
+  }, 350);
+
+  // Elapsed counter (mm:ss).
+  const startedAt = Date.now();
+  const elapsedEl = document.getElementById('pgen-elapsed');
+  const elapsedTimer = setInterval(() => {
+    if (!elapsedEl) return;
+    const s = Math.floor((Date.now() - startedAt) / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    elapsedEl.textContent = `elapsed ${mm}:${ss}`;
+  }, 1000);
+
+  return {
+    close: () => {
+      clearInterval(stageTimer);
+      clearInterval(spinTimer);
+      clearInterval(elapsedTimer);
+      closeModal();
+    }
+  };
 }
 
 async function viewArchitectPrompt(projectId) {
