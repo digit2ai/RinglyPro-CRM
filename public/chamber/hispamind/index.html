@@ -823,19 +823,10 @@
 })();
 </script>
 
-<!-- ===== CAMARAVIRTUAL VOICE ASSISTANT (ElevenLabs ConvAI) ===== -->
-<style>
-  elevenlabs-convai {
-    position: fixed;
-    bottom: 24px;
-    left: 24px;
-    right: auto;
-    z-index: 9999;
-  }
-  @media (max-width: 768px) {
-    elevenlabs-convai { bottom: 16px; left: 16px; }
-  }
-</style>
+<!-- ===== CAMARAVIRTUAL VOICE ASSISTANT (ElevenLabs ConvAI) =====
+     Positioning is controlled by the agent's platform_settings.widget.placement
+     ("bottom-left"). Do NOT add host-element CSS overrides here — they break
+     the expanded panel layout. -->
 <elevenlabs-convai agent-id="agent_9801krhnapz7ft1th5n7y58jveb3"></elevenlabs-convai>
 <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 
