@@ -2906,6 +2906,7 @@ async function showProjectDetail(id) {
           ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openScheduleMeetingModal(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and opens a prefilled email." style="color:#2D8CFF;border-color:#2D8CFF">&#128197; Schedule Meeting</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           <button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>
@@ -4650,6 +4651,197 @@ function openEventModal() {
     navigateTo('calendar');
   });
 }
+
+// On-demand project meeting: prefilled with project stakeholders.
+// Creates a calendar event with a Zoom meeting, ensures a magic-link share
+// token exists, then opens a prefilled mailto: so the user can send the
+// invite manually from their own email client (no SendGrid roundtrip).
+async function openScheduleMeetingModal(projectId) {
+  // Pull project so we have the latest team_members + submitter + share token
+  let project = null;
+  try {
+    const r = await api(`/projects/${projectId}`);
+    project = r && r.data ? r.data : null;
+  } catch (_) {}
+  if (!project) { alert('Could not load project.'); return; }
+
+  // Build the candidate participant list. The submitter is always included.
+  // team_members can be strings or objects { email, role }.
+  const teamList = Array.isArray(project.team_members) ? project.team_members : [];
+  const participants = [];
+  const seen = new Set();
+  const pushEmail = (email, label, defaultChecked) => {
+    const e = String(email || '').trim().toLowerCase();
+    if (!e || seen.has(e)) return;
+    seen.add(e);
+    participants.push({ email: e, label: label || e, checked: defaultChecked });
+  };
+  if (project.submitter_email) pushEmail(project.submitter_email, `${project.submitter_name || project.submitter_email} (requestor)`, true);
+  for (const m of teamList) {
+    if (typeof m === 'string') pushEmail(m, m, true);
+    else if (m && m.email) pushEmail(m.email, m.role ? `${m.email} (${m.role})` : m.email, true);
+  }
+
+  if (!participants.length) {
+    if (!confirm('No stakeholders are listed on this project yet. Continue anyway?')) return;
+  }
+
+  // Sensible defaults: tomorrow 10:00 local time, 30-minute duration.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(10, 0, 0, 0);
+  const defaultDate = tomorrow.toISOString().slice(0, 10);
+  const defaultTime = '10:00';
+
+  const partRows = participants.map((p, i) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px;cursor:pointer">
+      <input type="checkbox" id="m-smp-${i}" data-email="${escHtml(p.email)}" ${p.checked ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer">
+      <span style="color:var(--text-primary);flex:1;word-break:break-all">${escHtml(p.label)}</span>
+    </label>
+  `).join('') || '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No participants — the email will not have any To: addresses.</p>';
+
+  openModal(`Schedule Meeting - ${project.name}`, `
+    <div class="form-group">
+      <label>Objective *</label>
+      <textarea id="m-smobjective" rows="3" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements."></textarea>
+      <small style="color:var(--text-muted)">Goes into the email body and the calendar event description.</small>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Day *</label>
+        <input type="date" id="m-smdate" value="${defaultDate}">
+      </div>
+      <div class="form-group">
+        <label>Time *</label>
+        <input type="time" id="m-smtime" value="${defaultTime}">
+      </div>
+      <div class="form-group">
+        <label>Duration (min)</label>
+        <input type="number" id="m-smduration" value="30" min="15" max="240" step="15">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Participants <span style="color:var(--text-muted);font-weight:normal">(from project stakeholders)</span></label>
+      <div id="m-smparts" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding:4px">
+        ${partRows}
+      </div>
+      <small style="color:var(--text-muted)">Uncheck anyone you don't want to invite. Add more on the project's Stakeholders panel if missing.</small>
+    </div>
+    <div class="form-group" style="background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.3);border-radius:8px;padding:10px 12px">
+      <small style="color:var(--text-muted)">On Save: a Zoom meeting is created on info@digit2ai.com, a calendar event is saved on this project, and your email client opens with a prefilled message containing the Zoom link, the project magic link, the objective, day/time, and participants.</small>
+    </div>
+  `, async () => {
+    const saveBtn = document.getElementById('modal-save');
+    const objective = document.getElementById('m-smobjective').value.trim();
+    const date = document.getElementById('m-smdate').value;
+    const time = document.getElementById('m-smtime').value;
+    const durationMin = Math.max(15, Math.min(240, Number(document.getElementById('m-smduration').value) || 30));
+    if (!objective || !date || !time) { alert('Objective, day, and time are all required.'); return; }
+    const selected = Array.from(document.querySelectorAll('#m-smparts input[type=checkbox]:checked'))
+      .map(el => el.getAttribute('data-email')).filter(Boolean);
+
+    const startLocal = new Date(`${date}T${time}`);
+    if (isNaN(startLocal.getTime())) { alert('Invalid date/time.'); return; }
+    if (startLocal < new Date()) { if (!confirm('That time is in the past. Schedule anyway?')) return; }
+    const endLocal = new Date(startLocal.getTime() + durationMin * 60000);
+    const startISO = startLocal.toISOString();
+    const endISO = endLocal.toISOString();
+
+    saveBtn.disabled = true;
+    const origText = saveBtn.textContent;
+    saveBtn.textContent = 'Creating Zoom + event...';
+
+    // Ensure the project has a magic-link share token; mint one if missing.
+    let shareToken = project.stakeholder_share_token;
+    if (!shareToken) {
+      try {
+        const tokResp = await api(`/projects/${projectId}/share-token`, { method: 'POST', body: JSON.stringify({}) });
+        if (tokResp && tokResp.success) {
+          shareToken = (tokResp.share_url || '').split('/').pop() || null;
+        }
+      } catch (_) {}
+    }
+    const magicLink = shareToken ? `${location.origin}/projects/share/${shareToken}` : null;
+
+    // Create the calendar event with Zoom enabled. invite_emails is null on
+    // purpose — we open mailto: instead so the user sends from their own
+    // address; SendGrid would send from info@digit2ai.com.
+    let zoomJoinUrl = null;
+    let zoomWarning = null;
+    let eventId = null;
+    try {
+      const evResp = await api('/calendar', { method: 'POST', body: JSON.stringify({
+        title: `Meeting - ${project.name}`,
+        event_type: 'meeting',
+        project_id: projectId,
+        start_time: startISO,
+        end_time: endISO,
+        description: `Objective:\n${objective}\n\nProject: ${project.name}\nParticipants: ${selected.join(', ')}`,
+        create_zoom: true,
+        invite_emails: null
+      }) });
+      if (evResp && evResp.success) {
+        eventId = evResp.data && evResp.data.id;
+        zoomJoinUrl = evResp.data && evResp.data.zoom_join_url;
+        zoomWarning = evResp.zoom_warning || null;
+      } else {
+        alert('Could not create calendar event: ' + (evResp && evResp.error || 'unknown'));
+        saveBtn.disabled = false;
+        saveBtn.textContent = origText;
+        return;
+      }
+    } catch (e) {
+      alert('Error creating event: ' + e.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = origText;
+      return;
+    }
+
+    // Build the prefilled email
+    const fmtWhen = startLocal.toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      + ` (${durationMin} min)`;
+    const subject = `Meeting - ${project.name} - ${startLocal.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    const bodyLines = [
+      `Hi,`,
+      ``,
+      `You're invited to a working meeting for the project "${project.name}".`,
+      ``,
+      `Objective:`,
+      objective,
+      ``,
+      `When: ${fmtWhen}`,
+      `Participants: ${selected.join(', ') || '(none)'}`,
+      ``,
+      zoomJoinUrl ? `Join Zoom: ${zoomJoinUrl}` : `Zoom: (not configured — meeting created without Zoom link)`,
+      magicLink ? `Project access (magic link): ${magicLink}` : `Project access: (no magic link configured)`,
+      ``,
+      `Reply if the time doesn't work and we'll find another slot.`,
+      ``,
+      `Thanks,`
+    ];
+    const mailto = `mailto:${encodeURIComponent(selected.join(','))}`
+      + `?subject=${encodeURIComponent(subject)}`
+      + `&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+    closeModal();
+    let toastMsg = 'Meeting created. Opening your email client...';
+    if (zoomWarning) toastMsg = `Meeting created. Zoom warning: ${zoomWarning}. Opening email...`;
+    if (typeof showToast === 'function') {
+      try { showToast(toastMsg, 'success'); } catch (_) {}
+    }
+    // Trigger the mailto via a transient anchor (more reliable than location.href in some browsers)
+    const a = document.createElement('a');
+    a.href = mailto;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Refresh the project detail so the new event shows up under Linked Events
+    showProjectDetail(projectId);
+  });
+}
+window.openScheduleMeetingModal = openScheduleMeetingModal;
 
 function openMilestoneModal(projectId) {
   openModal('Add Milestone', `
