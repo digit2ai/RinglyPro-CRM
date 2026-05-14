@@ -4368,12 +4368,17 @@ function openModal(title, bodyHtml, onSave) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('modal-overlay').classList.remove('hidden');
+  // Reset the Save button so it does NOT inherit disabled/custom-text state
+  // from a previous modal whose save handler failed or hung.
+  const saveBtn = document.getElementById('modal-save');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; saveBtn.style.display = ''; }
   modalSaveHandler = onSave;
 }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.add('hidden');
-  document.getElementById('modal-save').style.display = '';
+  const saveBtn = document.getElementById('modal-save');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; saveBtn.style.display = ''; }
   document.getElementById('modal-cancel').style.display = '';
   document.getElementById('modal-cancel').textContent = 'Cancel';
   modalSaveHandler = null;
@@ -4610,6 +4615,8 @@ function openEventModal() {
       description: document.getElementById('m-edesc').value.trim()
     };
     if (!base.title || !baseStart) { alert('Title and start time required'); return; }
+    const saveBtn = document.getElementById('modal-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = wantsZoom ? 'Creating Zoom + event...' : 'Saving...'; }
     // Stamp all occurrences of a recurrence with the same group id so the
     // backend can recognise and bulk-delete the whole series later.
     const groupId = (count > 1 && typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null;
@@ -4631,7 +4638,14 @@ function openEventModal() {
         invite_message: isFirst ? inviteMsg : null
       }) }));
     }
-    const results = await Promise.all(calls);
+    let results;
+    try {
+      results = await Promise.all(calls);
+    } catch (err) {
+      alert('Could not create event: ' + (err && err.message ? err.message : 'unknown error'));
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      return;
+    }
     closeModal();
     // Surface a soft warning if Zoom creation failed (event still saved).
     const warn = results.find(r => r && r.zoom_warning);
