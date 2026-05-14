@@ -3421,15 +3421,18 @@ async function refreshNdaList(projectId) {
       const border = signed ? 'rgba(34,197,94,0.25)' : (revoked ? 'rgba(148,163,184,0.2)' : 'rgba(245,158,11,0.25)');
       const label = signed ? 'Signed' : (revoked ? 'Revoked' : 'Pending');
       const signedAt = n.signed_at ? new Date(n.signed_at).toLocaleString() : '';
+      const langCode = (n.language === 'es') ? 'ES' : 'EN';
+      const langColor = (n.language === 'es') ? '#a78bfa' : '#38bdf8';
       const actions = signed
         ? `<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="viewNda(${n.id})" title="View signature">View</button>`
         : (revoked
           ? ''
           : `<button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="copyNdaLink('${escHtml(n.share_url || '').replace(/'/g, "\\'")}', this)" title="Copy magic link">&#128203; Copy</button>
-             <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="emailNdaLink('${escHtml(n.share_url || '').replace(/'/g, "\\'")}', '${escHtml(n.stakeholder_email || '').replace(/'/g, "\\'")}', ${projectId})" title="Email link">&#9993;&#65039; Email</button>
+             <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px" onclick="emailNdaLink('${escHtml(n.share_url || '').replace(/'/g, "\\'")}', '${escHtml(n.stakeholder_email || '').replace(/'/g, "\\'")}', ${projectId}, '${n.language || 'en'}')" title="Email link">&#9993;&#65039; Email</button>
              <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:11px;color:var(--danger)" onclick="revokeNda(${n.id}, ${projectId})" title="Revoke">&times;</button>`);
       return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;background:${bg};border:1px solid ${border};border-radius:6px;font-size:12px">
         <span style="display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;border-radius:10px;background:${color}22;color:${color}">${label}</span>
+        <span title="Language" style="display:inline-block;padding:2px 6px;font-size:10px;font-weight:700;border-radius:4px;background:${langColor}22;color:${langColor}">${langCode}</span>
         <span style="color:var(--text-primary);font-weight:500;flex:1;min-width:140px;word-break:break-all">${escHtml(n.stakeholder_email || '')}</span>
         ${signedAt ? `<span style="font-size:11px;color:var(--text-muted)" title="Signed at">${escHtml(signedAt)}</span>` : ''}
         <span style="display:flex;gap:4px">${actions}</span>
@@ -3440,51 +3443,53 @@ async function refreshNdaList(projectId) {
   }
 }
 
-async function sendNda(projectId, email, role) {
-  // One-click for stakeholders already on the list
-  if (!email) return openNewNdaModal(projectId);
-  if (!confirm(`Generate an NDA magic link for ${email}?\n\nA link will be created and shown for you to copy or email. Only this email can sign.`)) return;
-  try {
-    const r = await api(`/projects/${projectId}/nda-tokens`, {
-      method: 'POST',
-      body: JSON.stringify({ email, title: role || '' })
-    });
-    if (!r || !r.success) { alert('Failed: ' + (r && r.error || 'unknown')); return; }
-    showNdaLinkModal(r.share_url, email, projectId, r.expires_at);
-    refreshNdaList(projectId);
-  } catch (e) { alert('Failed: ' + e.message); }
+function sendNda(projectId, email, role) {
+  // Per-stakeholder one-click: open the modal pre-filled so language can be picked.
+  openNewNdaModal(projectId, { email: email || '', title: role || '' });
 }
 
-function openNewNdaModal(projectId) {
+function openNewNdaModal(projectId, prefill) {
+  const pre = prefill || {};
   openModal('Send NDA Magic Link', `
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Enter the email of the person who must sign the NDA. The link is bound to that exact email — only they can complete it.</p>
-    <div class="form-group">
-      <label>Email *</label>
-      <input type="email" id="m-nda-email" placeholder="stakeholder@example.com" style="width:100%">
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Enter the email of the person who must sign the NDA. The link is bound to that exact email &mdash; only they can complete it.</p>
+    <div class="form-row" style="gap:8px">
+      <div class="form-group" style="flex:1">
+        <label>Email *</label>
+        <input type="email" id="m-nda-email" placeholder="stakeholder@example.com" value="${escHtml(pre.email || '')}" style="width:100%">
+      </div>
+      <div class="form-group" style="flex:0 0 180px">
+        <label>NDA language *</label>
+        <select id="m-nda-language" style="width:100%">
+          <option value="en">English</option>
+          <option value="es">Espa&ntilde;ol (Spanish)</option>
+        </select>
+      </div>
     </div>
     <div class="form-row" style="gap:8px">
       <div class="form-group" style="flex:1">
         <label>Name</label>
-        <input type="text" id="m-nda-name" placeholder="Jane Doe" style="width:100%">
+        <input type="text" id="m-nda-name" placeholder="Jane Doe" value="${escHtml(pre.name || '')}" style="width:100%">
       </div>
       <div class="form-group" style="flex:1">
         <label>Company</label>
-        <input type="text" id="m-nda-company" placeholder="Acme Inc." style="width:100%">
+        <input type="text" id="m-nda-company" placeholder="Acme Inc." value="${escHtml(pre.company || '')}" style="width:100%">
       </div>
       <div class="form-group" style="flex:0 0 140px">
         <label>Title</label>
-        <input type="text" id="m-nda-title" placeholder="CTO" style="width:100%">
+        <input type="text" id="m-nda-title" placeholder="CTO" value="${escHtml(pre.title || '')}" style="width:100%">
       </div>
     </div>
     <div class="form-group">
       <label>Purpose (optional)</label>
       <textarea id="m-nda-purpose" rows="2" placeholder="Defaults to: discussing the technical details of this project" style="width:100%"></textarea>
     </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:0">Tip: pick <strong>Espa&ntilde;ol</strong> for Latin American stakeholders &mdash; the entire signing page (and the NDA itself) renders in Spanish.</p>
   `, async () => {
     const email = (document.getElementById('m-nda-email').value || '').trim();
     if (!email) { alert('Email is required.'); return; }
     const payload = {
       email,
+      language: document.getElementById('m-nda-language').value || 'en',
       name: (document.getElementById('m-nda-name').value || '').trim() || null,
       company: (document.getElementById('m-nda-company').value || '').trim() || null,
       title: (document.getElementById('m-nda-title').value || '').trim() || null,
@@ -3497,26 +3502,39 @@ function openNewNdaModal(projectId) {
       });
       if (!r || !r.success) { alert('Failed: ' + (r && r.error || 'unknown')); return; }
       closeModal();
-      showNdaLinkModal(r.share_url, email, projectId, r.expires_at);
+      showNdaLinkModal(r.share_url, email, projectId, r.expires_at, payload.language);
       refreshNdaList(projectId);
     } catch (e) { alert('Failed: ' + e.message); }
   });
+  // Detect Spanish-y domains and default the picker accordingly
+  setTimeout(() => {
+    try {
+      const langSel = document.getElementById('m-nda-language');
+      if (!langSel) return;
+      const e = (pre.email || '').toLowerCase();
+      if (/\.(co|mx|ar|cl|pe|ve|ec|uy|py|bo|cr|gt|hn|sv|ni|pa|do|cu|pr|es)$/.test(e)) {
+        langSel.value = 'es';
+      }
+    } catch (_) {}
+  }, 0);
   document.getElementById('modal-save').textContent = 'Create Link';
 }
 
-function showNdaLinkModal(url, email, projectId, expiresAt) {
+function showNdaLinkModal(url, email, projectId, expiresAt, language) {
   const expires = expiresAt ? new Date(expiresAt).toLocaleDateString() : '60 days';
+  const lang = (language === 'es') ? 'es' : 'en';
+  const langLabel = (lang === 'es') ? 'Espa&ntilde;ol' : 'English';
   openModal('NDA Magic Link Ready', `
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.55">
-      Send this link to <strong style="color:var(--text-primary)">${escHtml(email)}</strong>. When they open it, they will see the NDA between DIGIT2AI LLC and themselves, and can sign electronically. This link is bound to that exact email.
+      Send this link to <strong style="color:var(--text-primary)">${escHtml(email)}</strong>. They will see the NDA in <strong style="color:var(--text-primary)">${langLabel}</strong> between DIGIT2AI LLC and themselves, and can sign electronically. This link is bound to that exact email.
     </p>
     <div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">NDA URL</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">NDA URL &middot; ${lang.toUpperCase()}</div>
       <code style="display:block;word-break:break-all;color:#38bdf8;font-size:12px;line-height:1.5;user-select:all">${escHtml(url)}</code>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="copyNdaLink('${escHtml(url).replace(/'/g, "\\'")}', this)" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">&#128203; Copy Link</button>
-      <button class="btn btn-ghost btn-sm" onclick="emailNdaLink('${escHtml(url).replace(/'/g, "\\'")}', '${escHtml(email).replace(/'/g, "\\'")}', ${projectId})">&#9993;&#65039; Email Stakeholder</button>
+      <button class="btn btn-ghost btn-sm" onclick="emailNdaLink('${escHtml(url).replace(/'/g, "\\'")}', '${escHtml(email).replace(/'/g, "\\'")}', ${projectId}, '${lang}')">&#9993;&#65039; Email Stakeholder</button>
     </div>
     <p style="font-size:11px;color:var(--text-muted);margin-top:14px">Expires: ${expires}. Signed NDAs are stored in the project tracker database with IP, user-agent, and timestamp.</p>
   `, null);
@@ -3532,16 +3550,25 @@ function copyNdaLink(url, btn) {
   }).catch(() => alert('Copy failed. Select and copy the link manually.'));
 }
 
-async function emailNdaLink(url, email, projectId) {
+async function emailNdaLink(url, email, projectId, language) {
   let projectName = '';
   try {
     const r = await api(`/projects/${projectId}`);
     projectName = (r && r.data && r.data.name) ? r.data.name : '';
   } catch (_) {}
-  const subject = encodeURIComponent(projectName ? `NDA for ${projectName}` : 'NDA — Digit2AI');
-  const body = encodeURIComponent(
-    `Hi,\n\nBefore we discuss the technical details of ${projectName ? `"${projectName}"` : 'the proposed solution'}, please review and sign the NDA at the link below. It is between DIGIT2AI LLC and you, and the link is bound to this email address.\n\n${url}\n\nThanks,\nManuel\nDIGIT2AI LLC`
-  );
+  const lang = (language === 'es') ? 'es' : 'en';
+  let subject, body;
+  if (lang === 'es') {
+    subject = encodeURIComponent(projectName ? `NDA para ${projectName}` : 'NDA — Digit2AI');
+    body = encodeURIComponent(
+      `Hola,\n\nAntes de discutir los detalles tecnicos de ${projectName ? `"${projectName}"` : 'la solucion propuesta'}, por favor revisa y firma el NDA en el enlace de abajo. Es entre DIGIT2AI LLC y tu persona, y el enlace esta asociado a este correo.\n\n${url}\n\nGracias,\nManuel\nDIGIT2AI LLC`
+    );
+  } else {
+    subject = encodeURIComponent(projectName ? `NDA for ${projectName}` : 'NDA — Digit2AI');
+    body = encodeURIComponent(
+      `Hi,\n\nBefore we discuss the technical details of ${projectName ? `"${projectName}"` : 'the proposed solution'}, please review and sign the NDA at the link below. It is between DIGIT2AI LLC and you, and the link is bound to this email address.\n\n${url}\n\nThanks,\nManuel\nDIGIT2AI LLC`
+    );
+  }
   window.location.href = `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
 }
 
@@ -3571,6 +3598,7 @@ async function viewNda(ndaId) {
         <div>
           <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Signed at</div>
           <div style="font-size:13px;color:var(--text-primary);margin-top:4px">${escHtml(signedAt)}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Language: <span style="color:var(--text-primary)">${(d.language === 'es') ? 'Espa&ntilde;ol' : 'English'}</span></div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px">IP: ${escHtml(d.signed_ip || '-')}</div>
         </div>
       </div>

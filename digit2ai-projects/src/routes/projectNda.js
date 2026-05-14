@@ -27,7 +27,7 @@ const crypto = require('crypto');
 const { Project, ProjectNda } = require('../models');
 const { logActivity } = require('../services/activityService');
 
-const NDA_TEMPLATE = `NON-DISCLOSURE AGREEMENT
+const NDA_TEMPLATE_EN = `NON-DISCLOSURE AGREEMENT
 
 This Non-Disclosure Agreement ("Agreement") is entered into as of the Effective Date signed below between:
 
@@ -88,8 +88,76 @@ This Agreement shall be governed by and construed in accordance with the laws of
 11. ENTIRE AGREEMENT & ELECTRONIC EXECUTION
 This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior discussions relating to confidentiality. This Agreement is executed electronically. Electronic signatures captured herein are legally binding under the E-SIGN Act and UETA and constitute full acceptance of all terms above.`;
 
-function buildNdaText(projectName) {
-  return NDA_TEMPLATE.replace('{{PROJECT_NAME}}', projectName || 'the Project');
+const NDA_TEMPLATE_ES = `ACUERDO DE CONFIDENCIALIDAD
+
+Este Acuerdo de Confidencialidad ("Acuerdo") se celebra a partir de la Fecha de Vigencia firmada a continuacion entre:
+
+  Parte Reveladora:  DIGIT2AI LLC (Florida, EE.UU.)
+  Parte Receptora:   Identificada y firmada a continuacion
+
+1. PROPOSITO
+La Parte Receptora desea recibir cierta informacion confidencial de la Parte Reveladora con el proposito de discutir, evaluar y/o colaborar sobre los detalles tecnicos, arquitectura, logica de negocio, integraciones y metodologia propietaria de la solucion de software impulsada por IA referenciada como "{{PROJECT_NAME}}" (el "Proyecto"). El alcance de la divulgacion incluye, sin limitarse a, diseno del sistema, flujos de datos, seleccion de modelos, ingenieria de prompts, stack de proveedores, precios y cualquier material relacionado entregado por escrito, oralmente o de forma visual (el "Proposito").
+
+2. DEFINICION DE INFORMACION CONFIDENCIAL
+"Informacion Confidencial" significa cualquier informacion no publica revelada por la Parte Reveladora, ya sea oralmente, por escrito o en cualquier otra forma, que sea designada como confidencial o que razonablemente deba entenderse como confidencial. Esto incluye, sin limitarse a:
+  - Planes de negocio, estrategias, hojas de ruta y proyecciones
+  - Software, codigo fuente, algoritmos, modelos y especificaciones tecnicas
+  - Arquitectura del sistema, flujos de datos, integraciones e infraestructura
+  - Listas de clientes, pipelines, precios y datos financieros
+  - Secretos comerciales y procesos propietarios
+  - Cualquier informacion relacionada con el Proyecto, sistemas de matching con IA, motores de automatizacion o integraciones de la plataforma
+
+3. OBLIGACIONES DE LA PARTE RECEPTORA
+La Parte Receptora se obliga a:
+  a) Mantener toda la Informacion Confidencial bajo estricta confidencialidad;
+  b) No revelar la Informacion Confidencial a ningun tercero sin consentimiento previo por escrito;
+  c) Utilizar la Informacion Confidencial unicamente para el Proposito definido anteriormente;
+  d) Limitar el acceso a empleados o contratistas que tengan necesidad de conocer y que esten obligados por obligaciones equivalentes de confidencialidad;
+  e) Notificar de inmediato a la Parte Reveladora al descubrir cualquier uso o divulgacion no autorizada.
+
+4. PROHIBICION DE INGENIERIA INVERSA
+La Parte Receptora no podra, directa o indirectamente, ni permitira o autorizara a ningun tercero a:
+  a) Realizar ingenieria inversa, descompilar, desensamblar o intentar de cualquier forma derivar el codigo fuente, modelos, prompts, arquitectura, algoritmos, esquemas de datos, datos de entrenamiento o secretos comerciales subyacentes a cualquier software, sistema de IA, plataforma, prototipo, demo, API u otra tecnologia puesta a disposicion o descrita por la Parte Reveladora;
+  b) Recrear, replicar, clonar, bifurcar o construir un producto, servicio, agente, modelo o plataforma funcionalmente o sustancialmente similar basado en, derivado de o informado por la Informacion Confidencial, ya sea en beneficio propio o de cualquier tercero;
+  c) Utilizar cualquier Informacion Confidencial para entrenar, ajustar, evaluar, comparar o mejorar cualquier modelo de aprendizaje automatico, modelo de lenguaje grande, agente o sistema de IA, salvo autorizacion expresa por escrito de la Parte Reveladora;
+  d) Eliminar, alterar, ocultar o eludir avisos de propiedad, marcas de agua, identificadores, telemetria, claves de licencia, controles de acceso o medidas de proteccion tecnica contenidas en o aplicadas a cualquier material, demostracion o entorno proporcionado por la Parte Reveladora;
+  e) Sondear, escanear, raspar o probar la vulnerabilidad de cualquier sistema, endpoint o entorno de la Parte Reveladora, o intentar obtener acceso no autorizado a cualquier sistema, cuenta o dato.
+Esta Seccion 4 sobrevivira la terminacion o expiracion de este Acuerdo y se mantendra vinculante indefinidamente respecto de los secretos comerciales.
+
+5. EXCLUSIONES
+La Informacion Confidencial no incluye informacion que:
+  a) Sea o llegue a ser publicamente disponible sin culpa de la Parte Receptora;
+  b) Ya era conocida por la Parte Receptora antes de la divulgacion;
+  c) Sea desarrollada de forma independiente por la Parte Receptora sin uso de la Informacion Confidencial y sin violacion de la Seccion 4 anterior;
+  d) Deba ser revelada por ley u orden judicial, siempre que se entregue aviso previo por escrito.
+
+6. PLAZO
+Este Acuerdo permanecera en vigor durante dos (2) anos a partir de la Fecha de Vigencia, o hasta que la Informacion Confidencial deje de ser confidencial, lo que ocurra primero. Las obligaciones de la Seccion 4 (Prohibicion de Ingenieria Inversa) sobreviven la terminacion o expiracion.
+
+7. DEVOLUCION O DESTRUCCION DE LA INFORMACION
+Previa solicitud por escrito o terminacion de este Acuerdo, la Parte Receptora devolvera o destruira de inmediato toda la Informacion Confidencial, incluidas copias, notas o resumenes.
+
+8. SIN LICENCIA
+Nada en este Acuerdo otorga a la Parte Receptora derecho alguno sobre la Informacion Confidencial salvo lo expresamente establecido en este documento. No se otorga ninguna licencia, expresa o implicita, sobre patentes, derechos de autor, marcas registradas, secretos comerciales u otra propiedad intelectual de la Parte Reveladora.
+
+9. RECURSOS
+La Parte Receptora reconoce que cualquier incumplimiento puede causar un dano irreparable a la Parte Reveladora, para el cual los danos monetarios serian inadecuados. La Parte Reveladora tendra derecho a buscar reparacion equitativa, incluyendo medidas cautelares y ejecucion especifica, ademas de todos los demas recursos disponibles por ley.
+
+10. LEY APLICABLE
+Este Acuerdo se regira e interpretara conforme a las leyes del Estado de Florida, EE.UU., sin tener en cuenta sus disposiciones sobre conflicto de leyes.
+
+11. ACUERDO COMPLETO Y EJECUCION ELECTRONICA
+Este Acuerdo constituye el acuerdo completo entre las partes respecto a su objeto y reemplaza todas las discusiones previas relacionadas con la confidencialidad. Este Acuerdo se ejecuta electronicamente. Las firmas electronicas capturadas en este documento son legalmente vinculantes bajo la Ley E-SIGN y UETA y constituyen la plena aceptacion de todos los terminos anteriores.`;
+
+function buildNdaText(projectName, language) {
+  const tpl = (language === 'es') ? NDA_TEMPLATE_ES : NDA_TEMPLATE_EN;
+  const fallback = (language === 'es') ? 'el Proyecto' : 'the Project';
+  return tpl.replace('{{PROJECT_NAME}}', projectName || fallback);
+}
+
+function normalizeLanguage(input) {
+  const v = String(input || '').toLowerCase().trim();
+  return v === 'es' ? 'es' : 'en';
 }
 
 function normEmail(e) { return (e || '').toString().trim().toLowerCase(); }
@@ -108,10 +176,10 @@ function safeRow(row) {
 const adminRouter = express.Router();
 
 // POST /api/v1/projects/:id/nda-tokens
-// Body: { email, name?, company?, title?, purpose? }
+// Body: { email, name?, company?, title?, purpose?, language? }
 adminRouter.post('/:id/nda-tokens', async (req, res) => {
   try {
-    const { email, name, company, title, purpose } = req.body || {};
+    const { email, name, company, title, purpose, language } = req.body || {};
     if (!email) return res.status(400).json({ success: false, error: 'Stakeholder email required' });
     const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
@@ -126,6 +194,7 @@ adminRouter.post('/:id/nda-tokens', async (req, res) => {
       stakeholder_name: name || null,
       stakeholder_company: company || null,
       stakeholder_title: title || null,
+      language: normalizeLanguage(language),
       purpose: purpose || null,
       status: 'pending',
       created_by: req.user ? req.user.email : null,
@@ -233,13 +302,15 @@ publicRouter.get('/:token', async (req, res) => {
     }
     const project = await Project.findByPk(row.project_id);
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
-    const nda_text = row.nda_text || buildNdaText(project.name);
+    const lang = normalizeLanguage(row.language);
+    const nda_text = row.nda_text || buildNdaText(project.name, lang);
     res.json({
       success: true,
       data: {
         id: row.id,
         token: row.token,
         status: row.status,
+        language: lang,
         stakeholder_email: row.stakeholder_email,
         stakeholder_name: row.stakeholder_name,
         stakeholder_company: row.stakeholder_company,
@@ -302,7 +373,9 @@ publicRouter.post('/:token/sign', async (req, res) => {
     row.stakeholder_title = title;
     if (purpose) row.purpose = purpose;
     row.signature_data = signature_data;
-    row.nda_text = buildNdaText(project.name); // freeze template at sign-time
+    // Freeze the language-specific template at sign-time so future template
+    // edits cannot mutate an executed agreement.
+    row.nda_text = buildNdaText(project.name, normalizeLanguage(row.language));
     row.signed_at = new Date();
     row.signed_ip = (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim().slice(0, 64);
     row.signed_user_agent = (req.headers['user-agent'] || '').toString().slice(0, 1000);

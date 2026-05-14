@@ -173,7 +173,7 @@
 <body>
   <div class="topbar">
     <div class="brand">DIGIT2AI <span class="grad">PROJECTS</span></div>
-    <div style="font-size:12px;color:var(--muted)">Confidential NDA Signing</div>
+    <div id="topbar-tag" style="font-size:12px;color:var(--muted)">Confidential NDA Signing</div>
   </div>
 
   <div id="root" class="container">
@@ -194,11 +194,139 @@
     });
   }
 
+  // --- i18n dictionary ---------------------------------------------------
+  var STRINGS = {
+    en: {
+      pageTitle: 'Sign NDA — Digit2AI',
+      htmlLang: 'en',
+      topbarTag: 'Confidential NDA Signing',
+      loading: 'Loading NDA...',
+      errorTitle: 'NDA Unavailable',
+      errorContact: 'If you believe this is in error, please contact ',
+      alreadyTitle: 'NDA EXECUTED',
+      alreadySub: 'This NDA has already been signed on this device or another.',
+      ref: 'Reference: ',
+      signedAt: 'Signed at ',
+      copyTo: 'For a copy, contact ',
+      successSub: 'Your signature has been recorded.',
+      successProject: 'Project: ',
+      successFollowUp: 'You can now safely discuss the technical details of the solution. We will follow up shortly. Questions? ',
+      hdrTitle: 'NON-DISCLOSURE AGREEMENT',
+      hdrPill: 'E-SIGN',
+      hdrLead: 'Before discussing the technical details of the proposed solution, please review and sign the NDA below.',
+      partiesHdr: 'Parties',
+      disclosing: 'Disclosing Party',
+      receiving: 'Receiving Party',
+      signedFor: 'Signed for: ',
+      project: 'Project: ',
+      boundNote: 'This link is bound to the email above. Only this email can sign.',
+      termsHdr: 'Agreement Terms',
+      collapse: 'Collapse',
+      readFull: 'Read full agreement',
+      summaryIntro: 'Confidential exchange between ',
+      summaryAnd: ' and the Receiving Party above, covering the technical details of project ',
+      pill2Year: '· 2-year term',
+      pillFlorida: '· Florida law',
+      pillNoRE: '· No reverse engineering',
+      pillNoLicense: '· No license granted',
+      pillRemedies: '· Equitable remedies',
+      pillESign: '· E-SIGN / UETA compliant',
+      yourInfoHdr: 'Your Information',
+      emailLabel: 'Email (bound to this link)',
+      nameLabel: 'Full Name *',
+      namePh: 'Jane Doe',
+      titleLabel: 'Title *',
+      titlePh: 'CEO, CTO, Owner...',
+      companyLabel: 'Company / Organization *',
+      companyPh: 'Company name',
+      sigHdr: 'Electronic Signature',
+      sigHint: 'Draw your signature below using your mouse, trackpad, or finger.',
+      sigHere: 'Sign here',
+      clear: 'Clear',
+      signBtn: 'Sign NDA',
+      signing: 'Signing...',
+      footer: 'Electronic signatures are legally binding under the E-SIGN Act and the Uniform Electronic Transactions Act (UETA). Your IP address, browser, and timestamp are recorded with your signature.',
+      errMissingFields: 'Please fill in name, title, and company.',
+      errMissingSig: 'Please draw your signature in the box above.',
+      errGeneric: 'Could not record signature.',
+      errNetwork: 'Network error: ',
+      errTokenMissing: 'Missing NDA token in URL.',
+      errLinkNotFound: 'NDA link not found.'
+    },
+    es: {
+      pageTitle: 'Firmar NDA — Digit2AI',
+      htmlLang: 'es',
+      topbarTag: 'Firma confidencial de NDA',
+      loading: 'Cargando NDA...',
+      errorTitle: 'NDA no disponible',
+      errorContact: 'Si crees que es un error, por favor escribe a ',
+      alreadyTitle: 'NDA FIRMADO',
+      alreadySub: 'Este NDA ya fue firmado en este u otro dispositivo.',
+      ref: 'Referencia: ',
+      signedAt: 'Firmado el ',
+      copyTo: 'Para una copia, escribe a ',
+      successSub: 'Tu firma ha sido registrada.',
+      successProject: 'Proyecto: ',
+      successFollowUp: 'Ahora podemos discutir los detalles tecnicos de la solucion con seguridad. Te contactaremos en breve. ¿Preguntas? ',
+      hdrTitle: 'ACUERDO DE CONFIDENCIALIDAD',
+      hdrPill: 'FIRMA-E',
+      hdrLead: 'Antes de discutir los detalles tecnicos de la solucion propuesta, por favor revisa y firma el NDA a continuacion.',
+      partiesHdr: 'Partes',
+      disclosing: 'Parte Reveladora',
+      receiving: 'Parte Receptora',
+      signedFor: 'Firmado por: ',
+      project: 'Proyecto: ',
+      boundNote: 'Este enlace esta asociado al correo de arriba. Solo ese correo puede firmar.',
+      termsHdr: 'Terminos del Acuerdo',
+      collapse: 'Colapsar',
+      readFull: 'Leer acuerdo completo',
+      summaryIntro: 'Intercambio confidencial entre ',
+      summaryAnd: ' y la Parte Receptora arriba indicada, cubriendo los detalles tecnicos del proyecto ',
+      pill2Year: '· Vigencia 2 anos',
+      pillFlorida: '· Ley de Florida',
+      pillNoRE: '· Prohibida ingenieria inversa',
+      pillNoLicense: '· Sin licencia otorgada',
+      pillRemedies: '· Reparacion equitativa',
+      pillESign: '· Cumple E-SIGN / UETA',
+      yourInfoHdr: 'Tu Informacion',
+      emailLabel: 'Correo (asociado a este enlace)',
+      nameLabel: 'Nombre Completo *',
+      namePh: 'Juan Perez',
+      titleLabel: 'Cargo *',
+      titlePh: 'CEO, CTO, Director...',
+      companyLabel: 'Empresa / Organizacion *',
+      companyPh: 'Nombre de la empresa',
+      sigHdr: 'Firma Electronica',
+      sigHint: 'Dibuja tu firma a continuacion usando el mouse, trackpad o dedo.',
+      sigHere: 'Firma aqui',
+      clear: 'Borrar',
+      signBtn: 'Firmar NDA',
+      signing: 'Firmando...',
+      footer: 'Las firmas electronicas son legalmente vinculantes bajo la Ley E-SIGN y la Ley Uniforme de Transacciones Electronicas (UETA). Tu direccion IP, navegador y fecha/hora se registran junto con tu firma.',
+      errMissingFields: 'Por favor completa nombre, cargo y empresa.',
+      errMissingSig: 'Por favor dibuja tu firma en el recuadro de arriba.',
+      errGeneric: 'No se pudo registrar la firma.',
+      errNetwork: 'Error de red: ',
+      errTokenMissing: 'Falta el token del NDA en la URL.',
+      errLinkNotFound: 'Enlace NDA no encontrado.'
+    }
+  };
+  function lang() { return (state.info && state.info.language === 'es') ? 'es' : 'en'; }
+  function t(k) { return (STRINGS[lang()] || STRINGS.en)[k] || STRINGS.en[k] || k; }
+  function applyChrome() {
+    var L = lang();
+    document.documentElement.lang = STRINGS[L].htmlLang;
+    document.title = STRINGS[L].pageTitle;
+    var tag = document.getElementById('topbar-tag');
+    if (tag) tag.textContent = STRINGS[L].topbarTag;
+  }
+
   function render() {
+    applyChrome();
     if (state.error) return renderError(state.error);
     if (state.submitted) return renderSuccess();
     if (!state.info) {
-      root.innerHTML = '<div class="spin"></div><p style="text-align:center;color:var(--muted)">Loading NDA...</p>';
+      root.innerHTML = '<div class="spin"></div><p style="text-align:center;color:var(--muted)">' + escHtml(t('loading')) + '</p>';
       return;
     }
     if (state.info.status === 'signed') return renderAlreadySigned();
@@ -208,9 +336,9 @@
   function renderError(msg) {
     root.innerHTML =
       '<div class="center-box">' +
-      '  <h1 style="color:#ef4444;font-size:28px">NDA Unavailable</h1>' +
+      '  <h1 style="color:#ef4444;font-size:28px">' + escHtml(t('errorTitle')) + '</h1>' +
       '  <p style="color:var(--muted);margin-top:8px">' + escHtml(msg) + '</p>' +
-      '  <p style="color:var(--muted);font-size:12px;margin-top:14px">If you believe this is in error, please contact <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
+      '  <p style="color:var(--muted);font-size:12px;margin-top:14px">' + escHtml(t('errorContact')) + '<a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
       '</div>';
   }
 
@@ -222,11 +350,11 @@
       '  <div class="circle">' +
       '    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
       '  </div>' +
-      '  <h1>NDA EXECUTED</h1>' +
-      '  <p style="color:var(--muted);font-size:13px;margin-bottom:8px">This NDA has already been signed on this device or another.</p>' +
-      '  <p style="font-size:12px;color:var(--muted)">Reference: <span class="ref-id">NDA-' + String(d.id).padStart(6, '0') + '</span></p>' +
-      (signedDate ? '<p style="font-size:12px;color:var(--muted);margin-top:6px">Signed at ' + escHtml(signedDate) + '</p>' : '') +
-      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">For a copy, contact <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
+      '  <h1>' + escHtml(t('alreadyTitle')) + '</h1>' +
+      '  <p style="color:var(--muted);font-size:13px;margin-bottom:8px">' + escHtml(t('alreadySub')) + '</p>' +
+      '  <p style="font-size:12px;color:var(--muted)">' + escHtml(t('ref')) + '<span class="ref-id">NDA-' + String(d.id).padStart(6, '0') + '</span></p>' +
+      (signedDate ? '<p style="font-size:12px;color:var(--muted);margin-top:6px">' + escHtml(t('signedAt')) + escHtml(signedDate) + '</p>' : '') +
+      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">' + escHtml(t('copyTo')) + '<a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
       '</div>';
   }
 
@@ -237,11 +365,11 @@
       '  <div class="circle">' +
       '    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
       '  </div>' +
-      '  <h1>NDA EXECUTED</h1>' +
-      '  <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Your signature has been recorded.</p>' +
-      '  <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Project: <span style="color:#fff;font-weight:600">' + escHtml(d.project_name || '') + '</span></p>' +
-      '  <p style="font-size:12px;color:var(--muted)">Reference: <span class="ref-id">NDA-' + String(d.id || '').padStart(6, '0') + '</span></p>' +
-      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">You can now safely discuss technical details of the solution. We will follow up shortly. Questions? <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a></p>' +
+      '  <h1>' + escHtml(t('alreadyTitle')) + '</h1>' +
+      '  <p style="color:var(--muted);font-size:13px;margin-bottom:14px">' + escHtml(t('successSub')) + '</p>' +
+      '  <p style="font-size:12px;color:var(--muted);margin-bottom:6px">' + escHtml(t('successProject')) + '<span style="color:#fff;font-weight:600">' + escHtml(d.project_name || '') + '</span></p>' +
+      '  <p style="font-size:12px;color:var(--muted)">' + escHtml(t('ref')) + '<span class="ref-id">NDA-' + String(d.id || '').padStart(6, '0') + '</span></p>' +
+      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">' + escHtml(t('successFollowUp')) + '<a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a></p>' +
       '</div>';
   }
 
@@ -251,79 +379,79 @@
     var disc = d.disclosing || {};
     root.innerHTML =
       '<div>' +
-      '  <h1>NON-DISCLOSURE AGREEMENT <span class="pill">E-SIGN</span></h1>' +
-      '  <p class="lead">Before discussing the technical details of the proposed solution, please review and sign the NDA below.</p>' +
+      '  <h1>' + escHtml(t('hdrTitle')) + ' <span class="pill">' + escHtml(t('hdrPill')) + '</span></h1>' +
+      '  <p class="lead">' + escHtml(t('hdrLead')) + '</p>' +
       '' +
       '  <div class="card">' +
-      '    <h2>Parties</h2>' +
+      '    <h2>' + escHtml(t('partiesHdr')) + '</h2>' +
       '    <div class="grid2">' +
       '      <div>' +
-      '        <span class="label">Disclosing Party</span>' +
+      '        <span class="label">' + escHtml(t('disclosing')) + '</span>' +
       '        <div class="ro"><strong style="color:#fff">' + escHtml(disc.company) + '</strong><br>' + escHtml(disc.jurisdiction || '') + '</div>' +
-      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">Signed for: ' + escHtml(disc.signatory_name + ', ' + disc.signatory_title) + '</p>' +
+      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">' + escHtml(t('signedFor')) + escHtml(disc.signatory_name + ', ' + disc.signatory_title) + '</p>' +
       '      </div>' +
       '      <div>' +
-      '        <span class="label">Receiving Party</span>' +
-      '        <div class="ro"><strong style="color:#fff">' + escHtml(d.stakeholder_email) + '</strong><br>Project: ' + escHtml(p.name || '') + '</div>' +
-      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">This link is bound to the email above. Only this email can sign.</p>' +
+      '        <span class="label">' + escHtml(t('receiving')) + '</span>' +
+      '        <div class="ro"><strong style="color:#fff">' + escHtml(d.stakeholder_email) + '</strong><br>' + escHtml(t('project')) + escHtml(p.name || '') + '</div>' +
+      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">' + escHtml(t('boundNote')) + '</p>' +
       '      </div>' +
       '    </div>' +
       '  </div>' +
       '' +
       '  <div class="card">' +
       '    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-      '      <h2 style="margin:0">Agreement Terms</h2>' +
-      '      <button class="read-toggle" id="toggle-full">' + (state.showFull ? 'Collapse' : 'Read full agreement') + '</button>' +
+      '      <h2 style="margin:0">' + escHtml(t('termsHdr')) + '</h2>' +
+      '      <button class="read-toggle" id="toggle-full">' + escHtml(state.showFull ? t('collapse') : t('readFull')) + '</button>' +
       '    </div>' +
       (state.showFull
         ? '<div class="nda-pre full">' + escHtml(d.nda_text) + '</div>'
         : '<div style="color:var(--muted);font-size:12px;line-height:1.7">' +
-          '  Confidential exchange between <strong style="color:#fff">DIGIT2AI LLC</strong> and the Receiving Party above, covering the technical details of project <strong style="color:#fff">' + escHtml(p.name || '') + '</strong>.' +
+          '  ' + escHtml(t('summaryIntro')) + '<strong style="color:#fff">DIGIT2AI LLC</strong>' + escHtml(t('summaryAnd')) + '<strong style="color:#fff">' + escHtml(p.name || '') + '</strong>.' +
           '  <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:0 14px">' +
-          '    <span>&middot; 2-year term</span><span>&middot; Florida law</span><span>&middot; No reverse engineering</span><span>&middot; No license granted</span><span>&middot; Equitable remedies</span><span>&middot; E-SIGN / UETA compliant</span>' +
+          '    <span>' + escHtml(t('pill2Year')) + '</span><span>' + escHtml(t('pillFlorida')) + '</span><span>' + escHtml(t('pillNoRE')) + '</span><span>' + escHtml(t('pillNoLicense')) + '</span><span>' + escHtml(t('pillRemedies')) + '</span><span>' + escHtml(t('pillESign')) + '</span>' +
           '  </div>' +
           '</div>') +
       '  </div>' +
       '' +
       '  <div class="card">' +
-      '    <h2>Your Information</h2>' +
+      '    <h2>' + escHtml(t('yourInfoHdr')) + '</h2>' +
       '    <div class="grid3">' +
       '      <div>' +
-      '        <span class="label">Email (bound to this link)</span>' +
+      '        <span class="label">' + escHtml(t('emailLabel')) + '</span>' +
       '        <input class="input" id="f-email" type="email" value="' + escHtml(d.stakeholder_email) + '" readonly>' +
       '      </div>' +
       '      <div>' +
-      '        <span class="label">Full Name *</span>' +
-      '        <input class="input" id="f-name" type="text" placeholder="Jane Doe" value="' + escHtml(d.stakeholder_name || '') + '">' +
+      '        <span class="label">' + escHtml(t('nameLabel')) + '</span>' +
+      '        <input class="input" id="f-name" type="text" placeholder="' + escHtml(t('namePh')) + '" value="' + escHtml(d.stakeholder_name || '') + '">' +
       '      </div>' +
       '      <div>' +
-      '        <span class="label">Title *</span>' +
-      '        <input class="input" id="f-title" type="text" placeholder="CEO, CTO, Owner..." value="' + escHtml(d.stakeholder_title || '') + '">' +
+      '        <span class="label">' + escHtml(t('titleLabel')) + '</span>' +
+      '        <input class="input" id="f-title" type="text" placeholder="' + escHtml(t('titlePh')) + '" value="' + escHtml(d.stakeholder_title || '') + '">' +
       '      </div>' +
       '    </div>' +
       '    <div style="margin-top:10px">' +
-      '      <span class="label">Company / Organization *</span>' +
-      '      <input class="input" id="f-company" type="text" placeholder="Company name" value="' + escHtml(d.stakeholder_company || '') + '">' +
+      '      <span class="label">' + escHtml(t('companyLabel')) + '</span>' +
+      '      <input class="input" id="f-company" type="text" placeholder="' + escHtml(t('companyPh')) + '" value="' + escHtml(d.stakeholder_company || '') + '">' +
       '    </div>' +
       '  </div>' +
       '' +
       '  <div class="card">' +
-      '    <h2>Electronic Signature</h2>' +
-      '    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Draw your signature below using your mouse, trackpad, or finger.</p>' +
+      '    <h2>' + escHtml(t('sigHdr')) + '</h2>' +
+      '    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">' + escHtml(t('sigHint')) + '</p>' +
       '    <div class="sig-wrap" id="sig-wrap">' +
       '      <canvas id="sig" width="800" height="160"></canvas>' +
-      '      <div class="sig-placeholder" id="sig-placeholder">Sign here</div>' +
-      '      <div class="sig-actions"><button type="button" id="sig-clear">Clear</button></div>' +
+      '      <div class="sig-placeholder" id="sig-placeholder">' + escHtml(t('sigHere')) + '</div>' +
+      '      <div class="sig-actions"><button type="button" id="sig-clear">' + escHtml(t('clear')) + '</button></div>' +
       '    </div>' +
       '  </div>' +
       '' +
       '  <div id="alert-zone"></div>' +
       '' +
       '  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">' +
-      '    <button class="btn btn-primary" id="btn-sign">Sign NDA</button>' +
+      '    <button class="btn btn-primary" id="btn-sign">' + escHtml(t('signBtn')) + '</button>' +
       '  </div>' +
       '' +
-      '  <p class="footer-note">Electronic signatures are legally binding under the E-SIGN Act and the Uniform Electronic Transactions Act (UETA). Your IP address, browser, and timestamp are recorded with your signature.</p>' +
+      '  <p class="footer-note">' + escHtml(t('footer')) + '</p>' +
       '</div>';
 
     document.getElementById('toggle-full').onclick = function() {
@@ -392,15 +520,15 @@
     var alertZone = document.getElementById('alert-zone');
     alertZone.innerHTML = '';
     if (!name || !title || !company) {
-      alertZone.innerHTML = '<div class="alert err">Please fill in name, title, and company.</div>';
+      alertZone.innerHTML = '<div class="alert err">' + escHtml(t('errMissingFields')) + '</div>';
       return;
     }
     if (!state.sigData) {
-      alertZone.innerHTML = '<div class="alert err">Please draw your signature in the box above.</div>';
+      alertZone.innerHTML = '<div class="alert err">' + escHtml(t('errMissingSig')) + '</div>';
       return;
     }
     var btn = document.getElementById('btn-sign');
-    btn.disabled = true; btn.textContent = 'Signing...';
+    btn.disabled = true; btn.textContent = t('signing');
     fetch(API + '/' + encodeURIComponent(TOKEN) + '/sign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -412,8 +540,8 @@
     }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
       .then(function(out) {
         if (!out.ok || !out.j.success) {
-          alertZone.innerHTML = '<div class="alert err">' + escHtml(out.j.error || 'Could not record signature.') + '</div>';
-          btn.disabled = false; btn.textContent = 'Sign NDA';
+          alertZone.innerHTML = '<div class="alert err">' + escHtml(out.j.error || t('errGeneric')) + '</div>';
+          btn.disabled = false; btn.textContent = t('signBtn');
           return;
         }
         state.result = out.j.data;
@@ -421,27 +549,27 @@
         render();
       })
       .catch(function(err){
-        alertZone.innerHTML = '<div class="alert err">Network error: ' + escHtml(err.message) + '</div>';
-        btn.disabled = false; btn.textContent = 'Sign NDA';
+        alertZone.innerHTML = '<div class="alert err">' + escHtml(t('errNetwork')) + escHtml(err.message) + '</div>';
+        btn.disabled = false; btn.textContent = t('signBtn');
       });
   }
 
   function load() {
     if (!TOKEN || TOKEN === 'nda') {
-      state.error = 'Missing NDA token in URL.'; render(); return;
+      state.error = t('errTokenMissing'); render(); return;
     }
     fetch(API + '/' + encodeURIComponent(TOKEN))
       .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j, status: r.status }; }); })
       .then(function(out) {
         if (!out.ok || !out.j.success) {
-          state.error = out.j.error || 'NDA link not found.';
+          state.error = out.j.error || t('errLinkNotFound');
           render(); return;
         }
         state.info = out.j.data;
         render();
       })
       .catch(function(err) {
-        state.error = 'Network error: ' + err.message;
+        state.error = t('errNetwork') + err.message;
         render();
       });
   }

@@ -706,6 +706,7 @@ const ProjectNda = sequelize.define('ProjectNda', {
   stakeholder_name: DataTypes.STRING(255),
   stakeholder_company: DataTypes.STRING(255),
   stakeholder_title: DataTypes.STRING(255),
+  language: { type: DataTypes.STRING(8), allowNull: false, defaultValue: 'en' },
   purpose: DataTypes.TEXT,
   nda_text: DataTypes.TEXT,
   signature_data: DataTypes.TEXT,

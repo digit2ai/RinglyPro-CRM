@@ -460,6 +460,8 @@ app.get('*', (req, res) => {
            ALTER TABLE d2_project_ndas RENAME COLUMN "updatedAt" TO updated_at;
          END IF;
        END $$`,
+      // Bilingual NDA support (en / es) — added after initial deploy
+      `ALTER TABLE d2_project_ndas ADD COLUMN IF NOT EXISTS language VARCHAR(8) NOT NULL DEFAULT 'en'`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_project_ndas_token ON d2_project_ndas (token)`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_project ON d2_project_ndas (project_id)`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_email ON d2_project_ndas (stakeholder_email)`
