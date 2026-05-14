@@ -145,6 +145,7 @@ const Project = sequelize.define('Project', {
   business_requirements: DataTypes.TEXT,
   kickoff_event_id: DataTypes.INTEGER,
   kickoff_scheduled_at: DataTypes.DATE,
+  kickoff_reschedule_count: { type: DataTypes.INTEGER, defaultValue: 0 },
   contract_status: { type: DataTypes.STRING(40), defaultValue: 'none' },
   workflow_phase: { type: DataTypes.STRING(40), defaultValue: 'pending_review' },
   // Delivery + price targets (migration 010 — delivery in weeks)

@@ -585,6 +585,13 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] recurrence column notice:', e.message.substring(0, 120));
     }
 
+    // Project Owner kickoff-reschedule counter (cap = 2)
+    try {
+      await sequelize.query('ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS kickoff_reschedule_count INTEGER NOT NULL DEFAULT 0');
+    } catch (e) {
+      console.log('[D2AI-Projects] kickoff_reschedule_count notice:', e.message.substring(0, 120));
+    }
+
     // Migration 002 — Project Intake & Discussion module
     const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
     if (fs.existsSync(intakeMigrationPath)) {

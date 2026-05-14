@@ -326,6 +326,55 @@
             border: 1px solid var(--line2); padding: 6px 10px; font-size: 13px;
         }
         .notes-body hr { border: none; border-top: 1px solid var(--line); margin: 1em 0; }
+        /* Kickoff meeting card */
+        .meeting-card {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+        .meeting-when {
+            font-size: 15px; font-weight: 700; color: #fff;
+        }
+        .meeting-meta {
+            font-size: 12.5px; color: var(--muted); margin-top: 2px;
+        }
+        .meeting-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+        .btn-secondary {
+            background: rgba(124,92,255,0.14);
+            border: 1px solid rgba(124,92,255,0.45);
+            color: #d8d0ff;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-secondary:hover:not(:disabled) { background: rgba(124,92,255,0.22); }
+        .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-link {
+            background: transparent; border: none; color: var(--teal);
+            font-size: 12.5px; cursor: pointer; padding: 4px 0; font-family: inherit;
+        }
+        .slot-row {
+            display: grid; grid-template-columns: 1fr auto; gap: 10px;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .slot-row .slot-when { font-size: 13.5px; color: #fff; font-weight: 600; }
+        .slot-row .slot-tz { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+        .slot-row button { padding: 7px 14px; font-size: 12px; }
+        .slots-help { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+        .meeting-counter {
+            font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+            margin-top: 8px;
+        }
         .hidden { display: none !important; }
         .empty {
             color: var(--muted);
@@ -373,6 +422,27 @@
     <div class="section" id="brSection">
         <h3>Business Requirements</h3>
         <div class="body" id="brBody"></div>
+    </div>
+
+    <div class="section hidden" id="meetingSection">
+        <h3>Kickoff Meeting</h3>
+        <div class="meeting-card">
+            <div>
+                <div class="meeting-when" id="meetingWhen">&nbsp;</div>
+                <div class="meeting-meta" id="meetingMeta"></div>
+            </div>
+            <div class="meeting-actions">
+                <a class="btn-link hidden" id="meetingJoin" href="#" target="_blank" rel="noopener noreferrer">Join Zoom</a>
+                <button class="btn-secondary hidden" id="rescheduleBtn" onclick="openRescheduleSlots()">Reschedule</button>
+            </div>
+        </div>
+        <div class="meeting-counter" id="meetingCounter"></div>
+
+        <div class="hidden" id="slotsPanel" style="margin-top:14px;">
+            <div class="slots-help" id="slotsHelp">Pick a new time. We will move the meeting to the slot you choose and resend the calendar invite.</div>
+            <div id="slotsList"></div>
+            <button class="btn-link" onclick="closeRescheduleSlots()" style="margin-top:4px;">Cancel</button>
+        </div>
     </div>
 
     <div class="section hidden" id="notesSection">
@@ -478,8 +548,165 @@
                 return;
             }
             renderProject(j.data);
+            // Fire meeting fetch in parallel — failures are non-fatal
+            loadMeeting().catch(() => {});
         } catch (e) {
             showToast('Could not load project: ' + e.message, 'error');
+        }
+    }
+
+    let MEETING_STATE = null;
+
+    async function loadMeeting() {
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/meeting?email=${encodeURIComponent(EMAIL)}`);
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                document.getElementById('meetingSection').classList.add('hidden');
+                return;
+            }
+            MEETING_STATE = j.data;
+            renderMeeting(j.data);
+        } catch (e) {
+            // Soft fail — no meeting section
+        }
+    }
+
+    function renderMeeting(state) {
+        const sec = document.getElementById('meetingSection');
+        if (!state || !state.meeting) {
+            sec.classList.add('hidden');
+            return;
+        }
+        sec.classList.remove('hidden');
+        const m = state.meeting;
+        document.getElementById('meetingWhen').textContent = formatMeetingDateTime(m.start_time, m.end_time);
+        const meta = [];
+        if (m.title) meta.push(escHtml(m.title));
+        meta.push('America/Bogota (Cali) time');
+        document.getElementById('meetingMeta').innerHTML = meta.join(' &middot; ');
+
+        const joinEl = document.getElementById('meetingJoin');
+        if (m.zoom_join_url) {
+            joinEl.href = m.zoom_join_url;
+            joinEl.textContent = 'Join Zoom';
+            joinEl.classList.remove('hidden');
+        } else {
+            joinEl.classList.add('hidden');
+        }
+
+        const btn = document.getElementById('rescheduleBtn');
+        if (state.can_reschedule) {
+            btn.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = state.reschedule_count > 0 ? 'Reschedule (last one)' : 'Reschedule';
+        } else {
+            btn.classList.add('hidden');
+        }
+
+        const counter = document.getElementById('meetingCounter');
+        if (state.is_owner) {
+            counter.textContent = `Reschedules used: ${state.reschedule_count} of ${state.reschedule_cap}`;
+        } else {
+            counter.textContent = '';
+        }
+
+        // Slot picker may be open from before — hide and clear it on refresh.
+        document.getElementById('slotsPanel').classList.add('hidden');
+        document.getElementById('slotsList').innerHTML = '';
+    }
+
+    async function openRescheduleSlots() {
+        const btn = document.getElementById('rescheduleBtn');
+        btn.disabled = true;
+        btn.textContent = 'Loading slots...';
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/meeting/slots?email=${encodeURIComponent(EMAIL)}`);
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                showToast(j.error || 'Could not load slot options.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Reschedule';
+                return;
+            }
+            const slots = (j.data && j.data.slots) || [];
+            const list = document.getElementById('slotsList');
+            list.innerHTML = slots.map((s, i) => `
+                <div class="slot-row">
+                    <div>
+                        <div class="slot-when">${escHtml(formatMeetingDateTime(s.start_time, s.end_time))}</div>
+                        <div class="slot-tz">America/Bogota (Cali) time</div>
+                    </div>
+                    <button class="btn-secondary" data-i="${i}" data-start="${s.start_time}" data-end="${s.end_time}">Pick this slot</button>
+                </div>
+            `).join('') || '<div class="empty">No slots available right now. Please contact us directly.</div>';
+            list.querySelectorAll('button[data-start]').forEach(b => {
+                b.addEventListener('click', () => acceptSlot(b.dataset.start, b.dataset.end, b));
+            });
+            document.getElementById('slotsPanel').classList.remove('hidden');
+            btn.classList.add('hidden');
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Reschedule';
+        }
+    }
+    window.openRescheduleSlots = openRescheduleSlots;
+
+    function closeRescheduleSlots() {
+        document.getElementById('slotsPanel').classList.add('hidden');
+        document.getElementById('slotsList').innerHTML = '';
+        const btn = document.getElementById('rescheduleBtn');
+        btn.classList.remove('hidden');
+        btn.disabled = false;
+        if (MEETING_STATE) {
+            btn.textContent = MEETING_STATE.reschedule_count > 0 ? 'Reschedule (last one)' : 'Reschedule';
+        } else {
+            btn.textContent = 'Reschedule';
+        }
+    }
+    window.closeRescheduleSlots = closeRescheduleSlots;
+
+    async function acceptSlot(startISO, endISO, buttonEl) {
+        if (!confirm('Move the kickoff meeting to ' + formatMeetingDateTime(startISO, endISO) + '?')) return;
+        const all = document.querySelectorAll('#slotsList button');
+        all.forEach(b => { b.disabled = true; });
+        if (buttonEl) buttonEl.textContent = 'Updating...';
+        try {
+            const r = await fetch(`${apiBase}/${TOKEN}/meeting/reschedule`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: EMAIL, start_time: startISO, end_time: endISO })
+            });
+            const j = await r.json();
+            if (!r.ok || !j.success) {
+                showToast(j.error || 'Could not reschedule.', 'error');
+                all.forEach(b => { b.disabled = false; });
+                if (buttonEl) buttonEl.textContent = 'Pick this slot';
+                return;
+            }
+            showToast('Meeting moved. We will send an updated calendar invite shortly.', 'success');
+            await loadMeeting();
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+            all.forEach(b => { b.disabled = false; });
+            if (buttonEl) buttonEl.textContent = 'Pick this slot';
+        }
+    }
+
+    function formatMeetingDateTime(startISO, endISO) {
+        try {
+            const opts = { timeZone: 'America/Bogota', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+            const start = new Date(startISO);
+            const startStr = start.toLocaleString(undefined, opts);
+            if (endISO) {
+                const end = new Date(endISO);
+                const endStr = end.toLocaleTimeString(undefined, { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit' });
+                return `${startStr} – ${endStr}`;
+            }
+            return startStr;
+        } catch (_) {
+            return String(startISO);
         }
     }
 
