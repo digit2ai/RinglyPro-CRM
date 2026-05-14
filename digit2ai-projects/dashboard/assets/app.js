@@ -1326,7 +1326,43 @@ async function renderProjects(container) {
   const res = await api('/projects');
   if (!res.success) return;
 
+  // KPIs computed from the loaded project list.
+  // - In Progress: status === 'in_progress' OR 'active'
+  // - Planning:    status === 'planning'
+  // - Dormant:     not completed/cancelled AND updated_at older than 30 days
+  const DORMANT_DAYS = 30;
+  const dormantCutoff = Date.now() - DORMANT_DAYS * 86400000;
+  const inactiveStatuses = new Set(['completed', 'cancelled']);
+  let kpiInProgress = 0, kpiPlanning = 0, kpiDormant = 0;
+  for (const p of res.data) {
+    if (p.status === 'in_progress' || p.status === 'active') kpiInProgress++;
+    if (p.status === 'planning') kpiPlanning++;
+    if (!inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff) {
+      kpiDormant++;
+    }
+  }
+
   container.innerHTML = `
+    <div class="card-grid" style="margin-bottom:20px">
+      <div class="card card-stat card-accent-blue card-clickable" onclick="projectsKpiFilter('in_progress')" data-tooltip="Click to filter the table to In Progress projects">
+        <div class="kpi-icon">&#128640;</div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value">${kpiInProgress}</div>
+        <div class="stat-change stat-neutral">${kpiInProgress === 1 ? 'project' : 'projects'} actively moving</div>
+      </div>
+      <div class="card card-stat card-accent-purple card-clickable" onclick="projectsKpiFilter('planning')" data-tooltip="Click to filter the table to Planning projects">
+        <div class="kpi-icon">&#128221;</div>
+        <div class="stat-label">Planning</div>
+        <div class="stat-value">${kpiPlanning}</div>
+        <div class="stat-change stat-neutral">${kpiPlanning === 1 ? 'project' : 'projects'} in scoping phase</div>
+      </div>
+      <div class="card card-stat card-accent-yellow card-clickable ${kpiDormant > 0 ? 'card-needs-attention' : ''}" onclick="projectsKpiFilter('dormant')" data-tooltip="Projects with no activity in the last ${DORMANT_DAYS} days (excludes completed/cancelled)">
+        <div class="kpi-icon">${kpiDormant > 0 ? '&#128564;' : '&#9989;'}</div>
+        <div class="stat-label">Dormant</div>
+        <div class="stat-value">${kpiDormant}</div>
+        <div class="stat-change ${kpiDormant > 0 ? 'stat-down' : 'stat-up'}">No update in ${DORMANT_DAYS}+ days</div>
+      </div>
+    </div>
     <div class="section-header">
       <div class="filter-bar">
         <input type="text" placeholder="Search projects..." id="project-search" style="width:250px">
@@ -1337,6 +1373,7 @@ async function renderProjects(container) {
           <option value="in_progress">In Progress</option>
           <option value="on_hold">On Hold</option>
           <option value="completed">Completed</option>
+          <option value="dormant">Dormant (30d+ no update)</option>
         </select>
         <select id="project-priority-filter">
           <option value="">All Priority</option>
@@ -1358,9 +1395,41 @@ async function renderProjects(container) {
     </table>
   `;
 
-  // Sort by priority: critical > high > medium > low (then by due_date ascending within each tier)
+  // Cache full list + dormant cutoff on the container for client-side filtering.
+  container._projectsAll = res.data;
+  container._dormantCutoff = dormantCutoff;
+  container._inactiveStatuses = inactiveStatuses;
+
+  // Wire client-side filters (search + status + priority). Status="dormant" is
+  // synthetic — it filters by the same updated_at cutoff used for the KPI card.
+  const applyFilters = () => {
+    const q = (document.getElementById('project-search').value || '').trim().toLowerCase();
+    const st = document.getElementById('project-status-filter').value;
+    const pr = document.getElementById('project-priority-filter').value;
+    let list = container._projectsAll.slice();
+    if (q) list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q));
+    if (st === 'dormant') {
+      list = list.filter(p => !container._inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < container._dormantCutoff);
+    } else if (st) {
+      list = list.filter(p => p.status === st);
+    }
+    if (pr) list = list.filter(p => p.priority === pr);
+    renderProjectsTable(list);
+  };
+  document.getElementById('project-search').addEventListener('input', applyFilters);
+  document.getElementById('project-status-filter').addEventListener('change', applyFilters);
+  document.getElementById('project-priority-filter').addEventListener('change', applyFilters);
+  // Stash for the KPI click handler so it can re-apply.
+  window._projectsApplyFilters = applyFilters;
+
+  renderProjectsTable(res.data);
+}
+
+// Render the projects table body (sorted by priority then due date).
+// Called from renderProjects() and any client-side filter change.
+function renderProjectsTable(list) {
   const prioOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  const sorted = [...res.data].sort((a, b) => {
+  const sorted = [...list].sort((a, b) => {
     const pa = prioOrder[a.priority] ?? 9;
     const pb = prioOrder[b.priority] ?? 9;
     if (pa !== pb) return pa - pb;
@@ -1368,8 +1437,9 @@ async function renderProjects(container) {
     const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
     return da - db;
   });
-
-  document.getElementById('projects-tbody').innerHTML = sorted.length > 0
+  const tbody = document.getElementById('projects-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = sorted.length > 0
     ? sorted.map(p => {
         const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
         return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
@@ -1381,7 +1451,15 @@ async function renderProjects(container) {
           <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>
         </tr>`;
       }).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No projects yet.<br><br><button class="btn btn-primary" onclick="openProjectModal()">&#128203; Create Your First Project</button><br><span style="font-size:12px;margin-top:8px;display:block">or use the AI: "Start a new project called Website Redesign"</span></td></tr>';
+    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No matching projects.</td></tr>';
+}
+
+// Set the status filter from a KPI card click and re-run the table filter.
+function projectsKpiFilter(value) {
+  const sel = document.getElementById('project-status-filter');
+  if (!sel) return;
+  sel.value = value;
+  if (typeof window._projectsApplyFilters === 'function') window._projectsApplyFilters();
 }
 
 // Open Zoom Meetings dashboard (info@digit2ai.com session) in a new tab.
