@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign NDA &mdash; Digit2AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090f;
+    --panel: #0f1320;
+    --panel2: #131827;
+    --line: rgba(255,255,255,0.10);
+    --line2: rgba(255,255,255,0.18);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --white: #fff;
+    --accent: #38bdf8;
+    --purple: #7c5cff;
+    --teal: #2dd4bf;
+    --red: #ef4444;
+    --green: #22c55e;
+    --gold: #f59e0b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; font-size: 14px; min-height: 100vh;
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(7,9,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { font-weight: 700; color: #fff; font-size: 15px; letter-spacing: 0.3px; }
+  .brand .grad {
+    background: linear-gradient(135deg, var(--purple), var(--teal));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .container { max-width: 880px; margin: 0 auto; padding: 32px 24px 80px; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--accent); margin-bottom: 4px; }
+  .lead { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .pill {
+    display: inline-block; padding: 4px 10px; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; border-radius: 12px;
+    background: rgba(56,189,248,0.13); color: var(--accent);
+    margin-left: 10px; vertical-align: middle;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px; margin-bottom: 18px;
+  }
+  .card h2 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 10px; letter-spacing: 0.3px; }
+  .label {
+    display: block; font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 600;
+  }
+  .input {
+    width: 100%; padding: 10px 12px; background: #0b0e18;
+    border: 1px solid var(--line2); border-radius: 8px;
+    color: var(--text); font-size: 13px; outline: none;
+    font-family: inherit;
+  }
+  .input:focus { border-color: var(--accent); }
+  .ro {
+    background: #0a0c14; color: #cbd5e1; font-size: 13px;
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+  }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 640px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+  .nda-pre {
+    font-size: 12px; line-height: 1.6;
+    white-space: pre-wrap; color: #cbd5e1;
+    background: #0a0c14; border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px;
+    max-height: 320px; overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+  }
+  .nda-pre.full { max-height: none; }
+  .read-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--accent); font-size: 12px; font-weight: 600;
+  }
+  .sig-wrap {
+    position: relative; border: 2px dashed var(--line2);
+    border-radius: 10px; overflow: hidden; background: #fff;
+  }
+  .sig-wrap.signed { border-color: var(--green); border-style: solid; }
+  .sig-wrap canvas {
+    display: block; width: 100%; height: 160px; cursor: crosshair; touch-action: none;
+  }
+  .sig-placeholder {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    pointer-events: none; color: #94a3b8;
+    font-size: 13px; font-style: italic;
+  }
+  .sig-actions {
+    position: absolute; bottom: 8px; right: 8px; display: flex; gap: 8px;
+  }
+  .sig-actions button {
+    font-size: 11px; padding: 4px 10px; border-radius: 4px;
+    background: rgba(255,255,255,0.92); border: 1px solid #d1d5db;
+    color: #475569; cursor: pointer;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 8px; cursor: pointer;
+    font-weight: 600; font-size: 14px; border: 1px solid transparent;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    color: #020617; border: none;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border-color: var(--line2);
+  }
+  .alert {
+    padding: 12px 14px; border-radius: 8px; font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .alert.err {
+    background: rgba(239,68,68,0.12); color: #fca5a5;
+    border: 1px solid rgba(239,68,68,0.35);
+  }
+  .alert.ok {
+    background: rgba(34,197,94,0.12); color: #86efac;
+    border: 1px solid rgba(34,197,94,0.35);
+  }
+  .footer-note {
+    font-size: 11px; color: var(--muted); margin-top: 16px; line-height: 1.6;
+  }
+  .center-box {
+    max-width: 520px; margin: 80px auto; text-align: center; padding: 0 24px;
+  }
+  .center-box .circle {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(34,197,94,0.15);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .spin {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(56,189,248,0.25);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ref-id {
+    font-family: 'Courier New', monospace;
+    color: #fff; background: rgba(255,255,255,0.05);
+    padding: 4px 10px; border-radius: 6px;
+    display: inline-block; font-size: 13px;
+  }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; text-align: left; }
+  .summary-grid .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .summary-grid .v { font-size: 14px; color: var(--text); margin-top: 4px; }
+  .summary-grid .vsmall { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">DIGIT2AI <span class="grad">PROJECTS</span></div>
+    <div style="font-size:12px;color:var(--muted)">Confidential NDA Signing</div>
+  </div>
+
+  <div id="root" class="container">
+    <div class="spin"></div>
+    <p style="text-align:center;color:var(--muted)">Loading NDA...</p>
+  </div>
+
+<script>
+(function() {
+  var TOKEN = (location.pathname.split('/').filter(Boolean).pop() || '').trim();
+  var API = '/projects/api/v1/projects/nda';
+  var root = document.getElementById('root');
+  var state = { info: null, showFull: false, sigData: null };
+
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c];
+    });
+  }
+
+  function render() {
+    if (state.error) return renderError(state.error);
+    if (state.submitted) return renderSuccess();
+    if (!state.info) {
+      root.innerHTML = '<div class="spin"></div><p style="text-align:center;color:var(--muted)">Loading NDA...</p>';
+      return;
+    }
+    if (state.info.status === 'signed') return renderAlreadySigned();
+    renderForm();
+  }
+
+  function renderError(msg) {
+    root.innerHTML =
+      '<div class="center-box">' +
+      '  <h1 style="color:#ef4444;font-size:28px">NDA Unavailable</h1>' +
+      '  <p style="color:var(--muted);margin-top:8px">' + escHtml(msg) + '</p>' +
+      '  <p style="color:var(--muted);font-size:12px;margin-top:14px">If you believe this is in error, please contact <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
+      '</div>';
+  }
+
+  function renderAlreadySigned() {
+    var d = state.info;
+    var signedDate = d.signed_at ? new Date(d.signed_at).toLocaleString() : '';
+    root.innerHTML =
+      '<div class="center-box">' +
+      '  <div class="circle">' +
+      '    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+      '  </div>' +
+      '  <h1>NDA EXECUTED</h1>' +
+      '  <p style="color:var(--muted);font-size:13px;margin-bottom:8px">This NDA has already been signed on this device or another.</p>' +
+      '  <p style="font-size:12px;color:var(--muted)">Reference: <span class="ref-id">NDA-' + String(d.id).padStart(6, '0') + '</span></p>' +
+      (signedDate ? '<p style="font-size:12px;color:var(--muted);margin-top:6px">Signed at ' + escHtml(signedDate) + '</p>' : '') +
+      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">For a copy, contact <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a>.</p>' +
+      '</div>';
+  }
+
+  function renderSuccess() {
+    var d = state.result || {};
+    root.innerHTML =
+      '<div class="center-box">' +
+      '  <div class="circle">' +
+      '    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+      '  </div>' +
+      '  <h1>NDA EXECUTED</h1>' +
+      '  <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Your signature has been recorded.</p>' +
+      '  <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Project: <span style="color:#fff;font-weight:600">' + escHtml(d.project_name || '') + '</span></p>' +
+      '  <p style="font-size:12px;color:var(--muted)">Reference: <span class="ref-id">NDA-' + String(d.id || '').padStart(6, '0') + '</span></p>' +
+      '  <p style="font-size:11px;color:var(--muted);margin-top:18px">You can now safely discuss technical details of the solution. We will follow up shortly. Questions? <a href="mailto:mstagg@digit2ai.com" style="color:var(--accent)">mstagg@digit2ai.com</a></p>' +
+      '</div>';
+  }
+
+  function renderForm() {
+    var d = state.info;
+    var p = d.project || {};
+    var disc = d.disclosing || {};
+    root.innerHTML =
+      '<div>' +
+      '  <h1>NON-DISCLOSURE AGREEMENT <span class="pill">E-SIGN</span></h1>' +
+      '  <p class="lead">Before discussing the technical details of the proposed solution, please review and sign the NDA below.</p>' +
+      '' +
+      '  <div class="card">' +
+      '    <h2>Parties</h2>' +
+      '    <div class="grid2">' +
+      '      <div>' +
+      '        <span class="label">Disclosing Party</span>' +
+      '        <div class="ro"><strong style="color:#fff">' + escHtml(disc.company) + '</strong><br>' + escHtml(disc.jurisdiction || '') + '</div>' +
+      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">Signed for: ' + escHtml(disc.signatory_name + ', ' + disc.signatory_title) + '</p>' +
+      '      </div>' +
+      '      <div>' +
+      '        <span class="label">Receiving Party</span>' +
+      '        <div class="ro"><strong style="color:#fff">' + escHtml(d.stakeholder_email) + '</strong><br>Project: ' + escHtml(p.name || '') + '</div>' +
+      '        <p style="font-size:11px;color:var(--muted);margin-top:4px">This link is bound to the email above. Only this email can sign.</p>' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
+      '' +
+      '  <div class="card">' +
+      '    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '      <h2 style="margin:0">Agreement Terms</h2>' +
+      '      <button class="read-toggle" id="toggle-full">' + (state.showFull ? 'Collapse' : 'Read full agreement') + '</button>' +
+      '    </div>' +
+      (state.showFull
+        ? '<div class="nda-pre full">' + escHtml(d.nda_text) + '</div>'
+        : '<div style="color:var(--muted);font-size:12px;line-height:1.7">' +
+          '  Confidential exchange between <strong style="color:#fff">DIGIT2AI LLC</strong> and the Receiving Party above, covering the technical details of project <strong style="color:#fff">' + escHtml(p.name || '') + '</strong>.' +
+          '  <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:0 14px">' +
+          '    <span>&middot; 2-year term</span><span>&middot; Florida law</span><span>&middot; No license granted</span><span>&middot; Equitable remedies</span><span>&middot; E-SIGN / UETA compliant</span>' +
+          '  </div>' +
+          '</div>') +
+      '  </div>' +
+      '' +
+      '  <div class="card">' +
+      '    <h2>Your Information</h2>' +
+      '    <div class="grid3">' +
+      '      <div>' +
+      '        <span class="label">Email (bound to this link)</span>' +
+      '        <input class="input" id="f-email" type="email" value="' + escHtml(d.stakeholder_email) + '" readonly>' +
+      '      </div>' +
+      '      <div>' +
+      '        <span class="label">Full Name *</span>' +
+      '        <input class="input" id="f-name" type="text" placeholder="Jane Doe" value="' + escHtml(d.stakeholder_name || '') + '">' +
+      '      </div>' +
+      '      <div>' +
+      '        <span class="label">Title *</span>' +
+      '        <input class="input" id="f-title" type="text" placeholder="CEO, CTO, Owner..." value="' + escHtml(d.stakeholder_title || '') + '">' +
+      '      </div>' +
+      '    </div>' +
+      '    <div style="margin-top:10px">' +
+      '      <span class="label">Company / Organization *</span>' +
+      '      <input class="input" id="f-company" type="text" placeholder="Company name" value="' + escHtml(d.stakeholder_company || '') + '">' +
+      '    </div>' +
+      '  </div>' +
+      '' +
+      '  <div class="card">' +
+      '    <h2>Electronic Signature</h2>' +
+      '    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Draw your signature below using your mouse, trackpad, or finger.</p>' +
+      '    <div class="sig-wrap" id="sig-wrap">' +
+      '      <canvas id="sig" width="800" height="160"></canvas>' +
+      '      <div class="sig-placeholder" id="sig-placeholder">Sign here</div>' +
+      '      <div class="sig-actions"><button type="button" id="sig-clear">Clear</button></div>' +
+      '    </div>' +
+      '  </div>' +
+      '' +
+      '  <div id="alert-zone"></div>' +
+      '' +
+      '  <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">' +
+      '    <button class="btn btn-primary" id="btn-sign">Sign NDA</button>' +
+      '  </div>' +
+      '' +
+      '  <p class="footer-note">Electronic signatures are legally binding under the E-SIGN Act and the Uniform Electronic Transactions Act (UETA). Your IP address, browser, and timestamp are recorded with your signature.</p>' +
+      '</div>';
+
+    document.getElementById('toggle-full').onclick = function() {
+      state.showFull = !state.showFull; render();
+    };
+    initSignaturePad();
+    document.getElementById('btn-sign').onclick = onSubmit;
+  }
+
+  function initSignaturePad() {
+    var canvas = document.getElementById('sig');
+    var placeholder = document.getElementById('sig-placeholder');
+    var wrap = document.getElementById('sig-wrap');
+    var ctx = canvas.getContext('2d');
+    var drawing = false; var last = null; var signed = false;
+
+    function fitCanvas() {
+      var ratio = window.devicePixelRatio || 1;
+      var rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.scale(ratio, ratio);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+    fitCanvas();
+    window.addEventListener('resize', function(){ /* keep current strokes; do not resize */ });
+
+    function pos(e) {
+      var rect = canvas.getBoundingClientRect();
+      var src = e.touches ? e.touches[0] : e;
+      return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+    }
+    function start(e) { e.preventDefault(); drawing = true; last = pos(e); }
+    function move(e) {
+      if (!drawing) return; e.preventDefault();
+      var p = pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p;
+      if (!signed) {
+        signed = true; placeholder.style.display = 'none'; wrap.classList.add('signed');
+      }
+    }
+    function end() {
+      if (!drawing) return; drawing = false;
+      if (signed) state.sigData = canvas.toDataURL('image/png');
+    }
+    canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end); canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+    document.getElementById('sig-clear').onclick = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      signed = false; state.sigData = null;
+      placeholder.style.display = ''; wrap.classList.remove('signed');
+    };
+  }
+
+  function onSubmit() {
+    var name = (document.getElementById('f-name').value || '').trim();
+    var title = (document.getElementById('f-title').value || '').trim();
+    var company = (document.getElementById('f-company').value || '').trim();
+    var alertZone = document.getElementById('alert-zone');
+    alertZone.innerHTML = '';
+    if (!name || !title || !company) {
+      alertZone.innerHTML = '<div class="alert err">Please fill in name, title, and company.</div>';
+      return;
+    }
+    if (!state.sigData) {
+      alertZone.innerHTML = '<div class="alert err">Please draw your signature in the box above.</div>';
+      return;
+    }
+    var btn = document.getElementById('btn-sign');
+    btn.disabled = true; btn.textContent = 'Signing...';
+    fetch(API + '/' + encodeURIComponent(TOKEN) + '/sign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: state.info.stakeholder_email,
+        name: name, title: title, company: company,
+        signature_data: state.sigData
+      })
+    }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+      .then(function(out) {
+        if (!out.ok || !out.j.success) {
+          alertZone.innerHTML = '<div class="alert err">' + escHtml(out.j.error || 'Could not record signature.') + '</div>';
+          btn.disabled = false; btn.textContent = 'Sign NDA';
+          return;
+        }
+        state.result = out.j.data;
+        state.submitted = true;
+        render();
+      })
+      .catch(function(err){
+        alertZone.innerHTML = '<div class="alert err">Network error: ' + escHtml(err.message) + '</div>';
+        btn.disabled = false; btn.textContent = 'Sign NDA';
+      });
+  }
+
+  function load() {
+    if (!TOKEN || TOKEN === 'nda') {
+      state.error = 'Missing NDA token in URL.'; render(); return;
+    }
+    fetch(API + '/' + encodeURIComponent(TOKEN))
+      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j, status: r.status }; }); })
+      .then(function(out) {
+        if (!out.ok || !out.j.success) {
+          state.error = out.j.error || 'NDA link not found.';
+          render(); return;
+        }
+        state.info = out.j.data;
+        render();
+      })
+      .catch(function(err) {
+        state.error = 'Network error: ' + err.message;
+        render();
+      });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

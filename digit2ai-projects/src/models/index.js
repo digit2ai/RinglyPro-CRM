@@ -694,6 +694,32 @@ const ProjectContract = sequelize.define('ProjectContract', {
 Project.hasMany(ProjectContract, { foreignKey: 'project_id', as: 'contracts' });
 ProjectContract.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
 
+// =====================================================
+// PROJECT NDA (migration 013 — per-stakeholder magic-link NDAs)
+// =====================================================
+const ProjectNda = sequelize.define('ProjectNda', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  project_id: { type: DataTypes.INTEGER, allowNull: false },
+  token: { type: DataTypes.UUID, allowNull: false, unique: true, defaultValue: DataTypes.UUIDV4 },
+  stakeholder_email: { type: DataTypes.STRING(255), allowNull: false },
+  stakeholder_name: DataTypes.STRING(255),
+  stakeholder_company: DataTypes.STRING(255),
+  stakeholder_title: DataTypes.STRING(255),
+  purpose: DataTypes.TEXT,
+  nda_text: DataTypes.TEXT,
+  signature_data: DataTypes.TEXT,
+  signed_at: DataTypes.DATE,
+  signed_ip: DataTypes.STRING(64),
+  signed_user_agent: DataTypes.TEXT,
+  status: { type: DataTypes.STRING(30), allowNull: false, defaultValue: 'pending' },
+  created_by: DataTypes.STRING(255),
+  expires_at: DataTypes.DATE
+}, { tableName: 'd2_project_ndas' });
+
+Project.hasMany(ProjectNda, { foreignKey: 'project_id', as: 'ndas' });
+ProjectNda.belongsTo(Project, { foreignKey: 'project_id', as: 'project' });
+
 // IntakeBatch <-> Access Tokens
 IntakeBatch.hasMany(CompanyAccessToken, { foreignKey: 'batch_id', as: 'access_tokens' });
 CompanyAccessToken.belongsTo(IntakeBatch, { foreignKey: 'batch_id', as: 'batch' });
@@ -731,5 +757,6 @@ module.exports = {
   PriorityVote,
   CompanyAccessToken,
   MeetingMinute,
-  ProjectContract
+  ProjectContract,
+  ProjectNda
 };

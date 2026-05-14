@@ -86,6 +86,13 @@ app.get('/share/:token', (req, res) => {
 });
 app.use('/share', express.static(path.join(dashboardPath, 'share')));
 
+// Public NDA signing page (no auth; token alone identifies the stakeholder)
+// /nda/:token serves the form HTML; viewer JS reads the token from location.pathname
+app.get('/nda/:token', (req, res) => {
+  res.sendFile(path.join(dashboardPath, 'nda', 'index.html'));
+});
+app.use('/nda', express.static(path.join(dashboardPath, 'nda')));
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
@@ -93,6 +100,11 @@ app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
 // MUST be mounted BEFORE the authenticated /api/v1/projects router so
 // the more-specific /share/* path wins the prefix match.
 app.use('/api/v1/projects/share', express.json(), require('./routes/projectShare'));
+// NDA signing endpoints — PUBLIC (no auth, token-gated). Mount BEFORE
+// the authenticated /api/v1/projects router so the /nda/* path wins.
+const ndaRoutes = require('./routes/projectNda');
+app.use('/api/v1/projects/nda', express.json({ limit: '4mb' }), ndaRoutes.publicRouter);
+app.use('/api/v1/projects', authenticateToken, ndaRoutes.adminRouter); // admin NDA mgmt
 app.use('/api/v1/projects', authenticateToken, projectsRoutes);
 app.use('/api/v1/calendar', authenticateToken, calendarRoutes);
 app.use('/api/v1/tasks', authenticateToken, tasksRoutes);
@@ -408,7 +420,32 @@ app.get('*', (req, res) => {
       )`,
       `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS assigned_staff_id INTEGER`,
       `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS quicktask_id INTEGER`,
-      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS lead_staff_id INTEGER`
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS lead_staff_id INTEGER`,
+      // Migration 013 — project NDAs (per-stakeholder magic-link signing)
+      `CREATE TABLE IF NOT EXISTS d2_project_ndas (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        project_id INTEGER NOT NULL,
+        token UUID NOT NULL,
+        stakeholder_email VARCHAR(255) NOT NULL,
+        stakeholder_name VARCHAR(255),
+        stakeholder_company VARCHAR(255),
+        stakeholder_title VARCHAR(255),
+        purpose TEXT,
+        nda_text TEXT,
+        signature_data TEXT,
+        signed_at TIMESTAMPTZ,
+        signed_ip VARCHAR(64),
+        signed_user_agent TEXT,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        created_by VARCHAR(255),
+        expires_at TIMESTAMPTZ,
+        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_project_ndas_token ON d2_project_ndas (token)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_project ON d2_project_ndas (project_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_email ON d2_project_ndas (stakeholder_email)`
     ];
     for (const sql of staffMigrations) {
       try { await sequelize.query(sql); } catch (e) {
