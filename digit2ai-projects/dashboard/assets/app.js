@@ -1427,7 +1427,11 @@ async function renderProjects(container) {
 
 // Render the projects table body (sorted by priority then due date).
 // Called from renderProjects() and any client-side filter change.
+// Badge precedence: OVERDUE (past due_date) > DORMANT (30d+ no update) > raw status.
 function renderProjectsTable(list) {
+  const DORMANT_DAYS = 30;
+  const dormantCutoff = Date.now() - DORMANT_DAYS * 86400000;
+  const inactiveStatuses = new Set(['completed', 'cancelled']);
   const prioOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   const sorted = [...list].sort((a, b) => {
     const pa = prioOrder[a.priority] ?? 9;
@@ -1441,11 +1445,14 @@ function renderProjectsTable(list) {
   if (!tbody) return;
   tbody.innerHTML = sorted.length > 0
     ? sorted.map(p => {
-        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !inactiveStatuses.has(p.status);
+        const isDormant = !isOverdue && !inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff;
+        const badgeClass = isOverdue ? 'overdue' : (isDormant ? 'dormant' : p.status);
+        const badgeLabel = isOverdue ? 'OVERDUE' : (isDormant ? 'DORMANT' : p.status);
         return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
           <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
           <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
-          <td><span class="status-badge status-${isOverdue ? 'overdue' : p.status}">${isOverdue ? 'OVERDUE' : p.status}</span></td>
+          <td><span class="status-badge status-${badgeClass}" ${isDormant ? `title="No update in ${DORMANT_DAYS}+ days"` : ''}>${badgeLabel}</span></td>
           <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
           <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
           <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>

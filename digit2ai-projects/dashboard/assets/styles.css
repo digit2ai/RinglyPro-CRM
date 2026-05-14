@@ -353,6 +353,7 @@ body {
 .status-completed { background: rgba(59,130,246,0.15); color: var(--info); }
 .status-cancelled, .status-archived { background: rgba(100,116,139,0.15); color: var(--text-muted); }
 .status-overdue { background: rgba(239,68,68,0.15); color: var(--danger); }
+.status-dormant { background: rgba(245,158,11,0.18); color: var(--warning); border: 1px dashed rgba(245,158,11,0.55); }
 .status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
 
 .priority-badge {
