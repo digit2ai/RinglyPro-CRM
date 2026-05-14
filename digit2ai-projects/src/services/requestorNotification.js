@@ -73,11 +73,16 @@ async function sendApprovalAcknowledgment({
   if (meeting && meeting.start_time) {
     const start = new Date(meeting.start_time);
     const end = meeting.end_time ? new Date(meeting.end_time) : new Date(start.getTime() + 30 * 60000);
-    const dateOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-    const timeOpts = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+    // Render the meeting time in US Eastern (handles EST/EDT automatically)
+    // so requestors see the time in our business timezone, not the server's UTC.
+    // The attached .ics still uses UTC internally — calendar apps convert to
+    // the recipient's local timezone on open.
+    const TZ = 'America/New_York';
+    const dateOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: TZ };
+    const timeOpts = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone: TZ };
     const datePart = start.toLocaleDateString('en-US', dateOpts);
     const startTime = start.toLocaleTimeString('en-US', timeOpts);
-    const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone: TZ });
     const whenLabel = `${datePart} · ${startTime} – ${endTime}`;
     const zoomUrl = meeting.zoom_join_url || '';
     const passcode = meeting.zoom_password || '';
