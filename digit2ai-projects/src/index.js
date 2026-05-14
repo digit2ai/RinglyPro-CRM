@@ -464,7 +464,22 @@ app.get('*', (req, res) => {
       `ALTER TABLE d2_project_ndas ADD COLUMN IF NOT EXISTS language VARCHAR(8) NOT NULL DEFAULT 'en'`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_project_ndas_token ON d2_project_ndas (token)`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_project ON d2_project_ndas (project_id)`,
-      `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_email ON d2_project_ndas (stakeholder_email)`
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_email ON d2_project_ndas (stakeholder_email)`,
+      // Start NDA reference numbering at 144 (display: NDA-000144). Idempotent:
+      // only bumps the SERIAL sequence forward, never backward, so existing
+      // higher ids are preserved.
+      `DO $$
+       DECLARE
+         seq_name TEXT;
+         current_max BIGINT;
+       BEGIN
+         SELECT pg_get_serial_sequence('d2_project_ndas', 'id') INTO seq_name;
+         IF seq_name IS NULL THEN RETURN; END IF;
+         SELECT COALESCE(MAX(id), 0) FROM d2_project_ndas INTO current_max;
+         IF current_max < 143 THEN
+           PERFORM setval(seq_name, 143, true);
+         END IF;
+       END $$`
     ];
     for (const sql of staffMigrations) {
       try { await sequelize.query(sql); } catch (e) {
