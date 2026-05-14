@@ -4686,12 +4686,26 @@ async function openScheduleMeetingModal(projectId) {
     if (!confirm('No stakeholders are listed on this project yet. Continue anyway?')) return;
   }
 
-  // Sensible defaults: tomorrow 10:00 local time, 30-minute duration.
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(10, 0, 0, 0);
-  const defaultDate = tomorrow.toISOString().slice(0, 10);
-  const defaultTime = '10:00';
+  // Ask the server for the next conflict-free 30-min slot in workspace
+  // business hours (America/Bogota Mon-Fri 09:00-17:00). Falls back to
+  // tomorrow 10:00 if the endpoint errors.
+  let defaultDate, defaultTime;
+  try {
+    const avail = await api('/calendar/next-available?duration=30');
+    if (avail && avail.success && avail.data && avail.data.start_time) {
+      const start = new Date(avail.data.start_time);
+      defaultDate = start.toISOString().slice(0, 10);
+      defaultTime = start.toTimeString().slice(0, 5);
+    }
+  } catch (_) {}
+  if (!defaultDate) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+    defaultDate = tomorrow.toISOString().slice(0, 10);
+    defaultTime = '10:00';
+  }
+  const defaultObjective = 'Discuss the project updates, next steps, and any blockers.';
 
   const partRows = participants.map((p, i) => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px;cursor:pointer">
@@ -4703,8 +4717,8 @@ async function openScheduleMeetingModal(projectId) {
   openModal(`Schedule Meeting - ${project.name}`, `
     <div class="form-group">
       <label>Objective *</label>
-      <textarea id="m-smobjective" rows="3" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements."></textarea>
-      <small style="color:var(--text-muted)">Goes into the email body and the calendar event description.</small>
+      <textarea id="m-smobjective" rows="3" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements.">${escHtml(defaultObjective)}</textarea>
+      <small style="color:var(--text-muted)">Pre-filled with a standard agenda; edit if needed. Goes into the email body and the calendar event description.</small>
     </div>
     <div class="form-row">
       <div class="form-group">

@@ -425,24 +425,8 @@
     </div>
 
     <div class="section hidden" id="meetingSection">
-        <h3>Kickoff Meeting</h3>
-        <div class="meeting-card">
-            <div>
-                <div class="meeting-when" id="meetingWhen">&nbsp;</div>
-                <div class="meeting-meta" id="meetingMeta"></div>
-            </div>
-            <div class="meeting-actions">
-                <a class="btn-link hidden" id="meetingJoin" href="#" target="_blank" rel="noopener noreferrer">Join Zoom</a>
-                <button class="btn-secondary hidden" id="rescheduleBtn" onclick="openRescheduleSlots()">Reschedule</button>
-            </div>
-        </div>
-        <div class="meeting-counter" id="meetingCounter"></div>
-
-        <div class="hidden" id="slotsPanel" style="margin-top:14px;">
-            <div class="slots-help" id="slotsHelp">Pick a new time. We will move the meeting to the slot you choose and resend the calendar invite.</div>
-            <div id="slotsList"></div>
-            <button class="btn-link" onclick="closeRescheduleSlots()" style="margin-top:4px;">Cancel</button>
-        </div>
+        <h3>Upcoming Meetings</h3>
+        <div id="meetingsList"></div>
     </div>
 
     <div class="section hidden" id="notesSection">
@@ -548,132 +532,127 @@
                 return;
             }
             renderProject(j.data);
-            // Fire meeting fetch in parallel — failures are non-fatal
-            loadMeeting().catch(() => {});
+            // Fire meetings fetch in parallel — failures are non-fatal
+            loadMeetings().catch(() => {});
         } catch (e) {
             showToast('Could not load project: ' + e.message, 'error');
         }
     }
 
-    let MEETING_STATE = null;
+    let MEETINGS_STATE = { meetings: [], is_owner: false, reschedule_cap: 2 };
 
-    async function loadMeeting() {
+    async function loadMeetings() {
         try {
-            const r = await fetch(`${apiBase}/${TOKEN}/meeting?email=${encodeURIComponent(EMAIL)}`);
+            const r = await fetch(`${apiBase}/${TOKEN}/meetings?email=${encodeURIComponent(EMAIL)}`);
             const j = await r.json();
             if (!r.ok || !j.success) {
                 document.getElementById('meetingSection').classList.add('hidden');
                 return;
             }
-            MEETING_STATE = j.data;
-            renderMeeting(j.data);
+            MEETINGS_STATE = j.data || MEETINGS_STATE;
+            renderMeetings();
         } catch (e) {
             // Soft fail — no meeting section
         }
     }
 
-    function renderMeeting(state) {
+    function renderMeetings() {
         const sec = document.getElementById('meetingSection');
-        if (!state || !state.meeting) {
+        const list = MEETINGS_STATE.meetings || [];
+        if (!list.length) {
             sec.classList.add('hidden');
             return;
         }
         sec.classList.remove('hidden');
-        const m = state.meeting;
-        document.getElementById('meetingWhen').textContent = formatMeetingDateTime(m.start_time, m.end_time);
-        const meta = [];
-        if (m.title) meta.push(escHtml(m.title));
-        meta.push('America/Bogota (Cali) time');
-        document.getElementById('meetingMeta').innerHTML = meta.join(' &middot; ');
+        const cap = MEETINGS_STATE.reschedule_cap || 2;
+        document.getElementById('meetingsList').innerHTML = list.map(m => {
+            const label = m.is_kickoff ? 'Kickoff meeting' : (m.title || 'Project meeting');
+            const counterText = MEETINGS_STATE.is_owner
+                ? `Reschedules used: ${m.reschedule_count} of ${cap}`
+                : '';
+            const canReschedule = m.can_reschedule;
+            const lastChance = m.reschedule_count > 0 && canReschedule;
+            return `
+                <div class="meeting-card" style="margin-bottom:12px;flex-direction:column;align-items:stretch;gap:10px">
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+                    <div style="flex:1;min-width:200px">
+                        <div class="meeting-when">${escHtml(formatMeetingDateTime(m.start_time, m.end_time))}</div>
+                        <div class="meeting-meta">${escHtml(label)} &middot; America/Bogota (Cali) time</div>
+                    </div>
+                    <div class="meeting-actions">
+                        ${m.zoom_join_url ? `<a class="btn-link" href="${escAttr(m.zoom_join_url)}" target="_blank" rel="noopener noreferrer">Join Zoom</a>` : ''}
+                        ${canReschedule ? `<button class="btn-secondary" data-event="${m.id}" data-action="open">${lastChance ? 'Reschedule (last one)' : 'Reschedule'}</button>` : ''}
+                    </div>
+                  </div>
+                  ${counterText ? `<div class="meeting-counter">${counterText}</div>` : ''}
+                  <div class="hidden" id="slotsPanel-${m.id}">
+                    <div class="slots-help">Pick a new time. We will move the meeting to the slot you choose and resend the calendar invite.</div>
+                    <div id="slotsList-${m.id}"></div>
+                    <button class="btn-link" data-event="${m.id}" data-action="cancel" style="margin-top:4px;">Cancel</button>
+                  </div>
+                </div>
+            `;
+        }).join('');
 
-        const joinEl = document.getElementById('meetingJoin');
-        if (m.zoom_join_url) {
-            joinEl.href = m.zoom_join_url;
-            joinEl.textContent = 'Join Zoom';
-            joinEl.classList.remove('hidden');
-        } else {
-            joinEl.classList.add('hidden');
-        }
-
-        const btn = document.getElementById('rescheduleBtn');
-        if (state.can_reschedule) {
-            btn.classList.remove('hidden');
-            btn.disabled = false;
-            btn.textContent = state.reschedule_count > 0 ? 'Reschedule (last one)' : 'Reschedule';
-        } else {
-            btn.classList.add('hidden');
-        }
-
-        const counter = document.getElementById('meetingCounter');
-        if (state.is_owner) {
-            counter.textContent = `Reschedules used: ${state.reschedule_count} of ${state.reschedule_cap}`;
-        } else {
-            counter.textContent = '';
-        }
-
-        // Slot picker may be open from before — hide and clear it on refresh.
-        document.getElementById('slotsPanel').classList.add('hidden');
-        document.getElementById('slotsList').innerHTML = '';
+        // Wire buttons (avoid inline handlers so the dataset stays clean)
+        document.querySelectorAll('#meetingsList button[data-action="open"]').forEach(b => {
+            b.addEventListener('click', () => openRescheduleSlots(parseInt(b.dataset.event, 10), b));
+        });
+        document.querySelectorAll('#meetingsList button[data-action="cancel"]').forEach(b => {
+            b.addEventListener('click', () => closeRescheduleSlots(parseInt(b.dataset.event, 10)));
+        });
     }
 
-    async function openRescheduleSlots() {
-        const btn = document.getElementById('rescheduleBtn');
-        btn.disabled = true;
-        btn.textContent = 'Loading slots...';
+    async function openRescheduleSlots(eventId, btn) {
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading slots...'; }
         try {
-            const r = await fetch(`${apiBase}/${TOKEN}/meeting/slots?email=${encodeURIComponent(EMAIL)}`);
+            const r = await fetch(`${apiBase}/${TOKEN}/meetings/${eventId}/slots?email=${encodeURIComponent(EMAIL)}`);
             const j = await r.json();
             if (!r.ok || !j.success) {
                 showToast(j.error || 'Could not load slot options.', 'error');
-                btn.disabled = false;
-                btn.textContent = 'Reschedule';
+                if (btn) { btn.disabled = false; btn.textContent = 'Reschedule'; }
                 return;
             }
             const slots = (j.data && j.data.slots) || [];
-            const list = document.getElementById('slotsList');
+            const list = document.getElementById('slotsList-' + eventId);
+            if (!list) return;
             list.innerHTML = slots.map((s, i) => `
                 <div class="slot-row">
                     <div>
                         <div class="slot-when">${escHtml(formatMeetingDateTime(s.start_time, s.end_time))}</div>
                         <div class="slot-tz">America/Bogota (Cali) time</div>
                     </div>
-                    <button class="btn-secondary" data-i="${i}" data-start="${s.start_time}" data-end="${s.end_time}">Pick this slot</button>
+                    <button class="btn-secondary" data-event="${eventId}" data-i="${i}" data-start="${s.start_time}" data-end="${s.end_time}">Pick this slot</button>
                 </div>
             `).join('') || '<div class="empty">No slots available right now. Please contact us directly.</div>';
-            list.querySelectorAll('button[data-start]').forEach(b => {
-                b.addEventListener('click', () => acceptSlot(b.dataset.start, b.dataset.end, b));
+            list.querySelectorAll('button[data-start]').forEach(b2 => {
+                b2.addEventListener('click', () => acceptSlot(eventId, b2.dataset.start, b2.dataset.end, b2));
             });
-            document.getElementById('slotsPanel').classList.remove('hidden');
-            btn.classList.add('hidden');
+            const panel = document.getElementById('slotsPanel-' + eventId);
+            if (panel) panel.classList.remove('hidden');
+            if (btn) btn.style.display = 'none';
         } catch (e) {
             showToast('Network error: ' + e.message, 'error');
-            btn.disabled = false;
-            btn.textContent = 'Reschedule';
+            if (btn) { btn.disabled = false; btn.textContent = 'Reschedule'; }
         }
     }
-    window.openRescheduleSlots = openRescheduleSlots;
 
-    function closeRescheduleSlots() {
-        document.getElementById('slotsPanel').classList.add('hidden');
-        document.getElementById('slotsList').innerHTML = '';
-        const btn = document.getElementById('rescheduleBtn');
-        btn.classList.remove('hidden');
-        btn.disabled = false;
-        if (MEETING_STATE) {
-            btn.textContent = MEETING_STATE.reschedule_count > 0 ? 'Reschedule (last one)' : 'Reschedule';
-        } else {
-            btn.textContent = 'Reschedule';
-        }
+    function closeRescheduleSlots(eventId) {
+        const panel = document.getElementById('slotsPanel-' + eventId);
+        if (panel) panel.classList.add('hidden');
+        const list = document.getElementById('slotsList-' + eventId);
+        if (list) list.innerHTML = '';
+        // Just re-render to restore the Reschedule button
+        renderMeetings();
     }
-    window.closeRescheduleSlots = closeRescheduleSlots;
 
-    async function acceptSlot(startISO, endISO, buttonEl) {
-        if (!confirm('Move the kickoff meeting to ' + formatMeetingDateTime(startISO, endISO) + '?')) return;
-        const all = document.querySelectorAll('#slotsList button');
+    async function acceptSlot(eventId, startISO, endISO, buttonEl) {
+        if (!confirm('Move this meeting to ' + formatMeetingDateTime(startISO, endISO) + '?')) return;
+        const all = document.querySelectorAll('#slotsList-' + eventId + ' button');
         all.forEach(b => { b.disabled = true; });
         if (buttonEl) buttonEl.textContent = 'Updating...';
         try {
-            const r = await fetch(`${apiBase}/${TOKEN}/meeting/reschedule`, {
+            const r = await fetch(`${apiBase}/${TOKEN}/meetings/${eventId}/reschedule`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: EMAIL, start_time: startISO, end_time: endISO })
@@ -686,13 +665,15 @@
                 return;
             }
             showToast('Meeting moved. We will send an updated calendar invite shortly.', 'success');
-            await loadMeeting();
+            await loadMeetings();
         } catch (e) {
             showToast('Network error: ' + e.message, 'error');
             all.forEach(b => { b.disabled = false; });
             if (buttonEl) buttonEl.textContent = 'Pick this slot';
         }
     }
+
+    function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
 
     function formatMeetingDateTime(startISO, endISO) {
         try {

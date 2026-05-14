@@ -592,6 +592,14 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] kickoff_reschedule_count notice:', e.message.substring(0, 120));
     }
 
+    // Per-event reschedule counter (cap = 2 per meeting, used by share-page
+    // Owner-driven reschedules for on-demand project meetings)
+    try {
+      await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS reschedule_count INTEGER NOT NULL DEFAULT 0');
+    } catch (e) {
+      console.log('[D2AI-Projects] event reschedule_count notice:', e.message.substring(0, 120));
+    }
+
     // Migration 002 — Project Intake & Discussion module
     const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
     if (fs.existsSync(intakeMigrationPath)) {

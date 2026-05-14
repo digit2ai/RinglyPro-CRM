@@ -103,6 +103,90 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/v1/calendar/next-available?duration=30
+// Returns the next available 30-min (or custom) slot in workspace business
+// hours (Mon-Fri 09:00-17:00 America/Bogota = 14:00-22:00 UTC), starting
+// `min_days` business days from today. Walks forward day by day, generates
+// 30-min candidate slots, picks the first that does not overlap any
+// existing CalendarEvent. Used by the on-demand Schedule Meeting modal to
+// auto-populate Day + Time.
+router.get('/next-available', async (req, res) => {
+  try {
+    const duration = Math.max(15, Math.min(240, parseInt(req.query.duration, 10) || 30));
+    const minDays = Math.max(0, Math.min(14, parseInt(req.query.min_days, 10) || 1));
+    const lookaheadDays = 21;
+
+    // 9:00-17:00 America/Bogota in UTC (Bogota is UTC-5, no DST)
+    const BIZ_START_UTC_HOUR = 14;
+    const BIZ_END_UTC_HOUR = 22;
+    const STEP_MIN = 30;
+
+    // Pre-fetch a broad window of existing events to test overlap against.
+    const now = new Date();
+    const horizon = new Date(now.getTime() + (lookaheadDays + 2) * 86400000);
+    const events = await CalendarEvent.findAll({
+      where: {
+        workspace_id: 1,
+        start_time: { [Op.lt]: horizon },
+        end_time: { [Op.gt]: now }
+      },
+      attributes: ['start_time', 'end_time'],
+      order: [['start_time', 'ASC']]
+    });
+    const evWindows = events.map(e => [new Date(e.start_time).getTime(), new Date(e.end_time || e.start_time).getTime()]);
+    const overlaps = (startMs, endMs) => evWindows.some(([s, e]) => startMs < e && endMs > s);
+
+    // Walk weekdays from today + minDays
+    const cursor = new Date();
+    cursor.setUTCHours(BIZ_START_UTC_HOUR, 0, 0, 0);
+    let weekdaysAdvanced = 0;
+    for (let day = 0; day < lookaheadDays * 2; day++) {
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+      const dow = cursor.getUTCDay();
+      if (dow === 0 || dow === 6) continue;
+      weekdaysAdvanced++;
+      if (weekdaysAdvanced < minDays) continue;
+
+      // Try every STEP_MIN slot from BIZ_START to (BIZ_END - duration)
+      const dayStartMs = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate(), BIZ_START_UTC_HOUR, 0, 0);
+      const lastStartMs = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate(), BIZ_END_UTC_HOUR, 0, 0) - duration * 60000;
+      for (let startMs = dayStartMs; startMs <= lastStartMs; startMs += STEP_MIN * 60000) {
+        const endMs = startMs + duration * 60000;
+        if (startMs < Date.now()) continue;
+        if (!overlaps(startMs, endMs)) {
+          return res.json({
+            success: true,
+            data: {
+              start_time: new Date(startMs).toISOString(),
+              end_time: new Date(endMs).toISOString(),
+              duration_minutes: duration,
+              timezone: 'America/Bogota'
+            }
+          });
+        }
+      }
+    }
+
+    // Fallback: nothing free in lookahead window — return a default offset
+    const fallback = new Date();
+    fallback.setUTCDate(fallback.getUTCDate() + Math.max(minDays, 2));
+    fallback.setUTCHours(BIZ_START_UTC_HOUR, 0, 0, 0);
+    res.json({
+      success: true,
+      data: {
+        start_time: fallback.toISOString(),
+        end_time: new Date(fallback.getTime() + duration * 60000).toISOString(),
+        duration_minutes: duration,
+        timezone: 'America/Bogota',
+        note: `No conflict-free slot found in next ${lookaheadDays} business days; using default offset.`
+      }
+    });
+  } catch (error) {
+    console.error('[D2AI] next-available error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/calendar/upcoming - Next 7 days (merges tasks with due dates)
 router.get('/upcoming', async (req, res) => {
   try {

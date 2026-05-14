@@ -20,6 +20,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const { Project, ProjectMilestone, ProjectUpdate, Vertical, Company, CalendarEvent } = require('../models');
 const { logActivity } = require('../services/activityService');
 
@@ -158,6 +159,167 @@ router.post('/:token/comment', async (req, res) => {
     res.json({ success: true, data: update });
   } catch (error) {
     console.error('[D2AI] Share comment error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// PROJECT MEETINGS — list + Owner-only per-event reschedule
+// =====================================================
+
+// Helper: load all upcoming meetings linked to a project, mark which one
+// is the kickoff so the UI can label it.
+async function loadUpcomingMeetings(project) {
+  const events = await CalendarEvent.findAll({
+    where: {
+      workspace_id: project.workspace_id || 1,
+      project_id: project.id,
+      event_type: 'meeting',
+      end_time: { [Op.gte]: new Date() }
+    },
+    order: [['start_time', 'ASC']]
+  });
+  return events.map(e => ({
+    id: e.id,
+    title: e.title,
+    start_time: e.start_time,
+    end_time: e.end_time,
+    location: e.location || null,
+    zoom_join_url: e.zoom_join_url || null,
+    reschedule_count: Number(e.reschedule_count || 0),
+    is_kickoff: project.kickoff_event_id === e.id
+  }));
+}
+
+// GET /api/v1/projects/share/:token/meetings?email=...
+// Returns ALL upcoming meetings linked to the project + reschedule status.
+router.get('/:token/meetings', async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim();
+    if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+    const project = await loadByToken(req.params.token);
+    if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
+    if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
+    if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
+
+    const meetings = await loadUpcomingMeetings(project);
+    const isOwner = isProjectOwner(project, email);
+    res.json({
+      success: true,
+      data: {
+        meetings: meetings.map(m => ({
+          ...m,
+          can_reschedule: isOwner && m.reschedule_count < RESCHEDULE_CAP
+        })),
+        is_owner: isOwner,
+        reschedule_cap: RESCHEDULE_CAP
+      }
+    });
+  } catch (error) {
+    console.error('[D2AI] Share meetings list error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/projects/share/:token/meetings/:eventId/slots?email=...
+// Owner-only: 3 candidate weekday slots at 10am Cali for the given event.
+router.get('/:token/meetings/:eventId/slots', async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim();
+    if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+    const project = await loadByToken(req.params.token);
+    if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
+    if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
+    if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
+    if (!isProjectOwner(project, email)) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
+    }
+    const event = await CalendarEvent.findOne({
+      where: { id: parseInt(req.params.eventId, 10), project_id: project.id, workspace_id: project.workspace_id || 1 }
+    });
+    if (!event) return res.status(404).json({ success: false, error: 'Meeting not found on this project' });
+
+    const count = Number(event.reschedule_count || 0);
+    if (count >= RESCHEDULE_CAP) {
+      return res.status(403).json({ success: false, error: `Reschedule limit reached for this meeting (${RESCHEDULE_CAP}). Contact us to adjust.` });
+    }
+    const slots = generateRescheduleSlots({ minDaysOut: 2, count: 3 });
+    res.json({
+      success: true,
+      data: { slots, reschedule_count: count, reschedule_cap: RESCHEDULE_CAP }
+    });
+  } catch (error) {
+    console.error('[D2AI] Share meeting slots (per-event) error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/v1/projects/share/:token/meetings/:eventId/reschedule
+// Body: { email, start_time, end_time }
+// Owner-only. Per-event cap = RESCHEDULE_CAP. No conflict-check.
+router.post('/:token/meetings/:eventId/reschedule', async (req, res) => {
+  try {
+    const { email, start_time, end_time } = req.body || {};
+    if (!email || !start_time || !end_time) {
+      return res.status(400).json({ success: false, error: 'email, start_time, end_time required' });
+    }
+    const project = await loadByToken(req.params.token);
+    if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
+    if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
+    if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
+    if (!isProjectOwner(project, email)) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
+    }
+    const newStart = new Date(start_time);
+    const newEnd = new Date(end_time);
+    if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime()) || newEnd <= newStart) {
+      return res.status(400).json({ success: false, error: 'Invalid start/end times' });
+    }
+    if (newStart < new Date()) {
+      return res.status(400).json({ success: false, error: 'Cannot reschedule to a past time' });
+    }
+    const event = await CalendarEvent.findOne({
+      where: { id: parseInt(req.params.eventId, 10), project_id: project.id, workspace_id: project.workspace_id || 1 }
+    });
+    if (!event) return res.status(404).json({ success: false, error: 'Meeting not found on this project' });
+    const count = Number(event.reschedule_count || 0);
+    if (count >= RESCHEDULE_CAP) {
+      return res.status(403).json({ success: false, error: `Reschedule limit reached for this meeting (${RESCHEDULE_CAP}). Contact us to adjust.` });
+    }
+
+    const oldStart = event.start_time;
+    event.start_time = newStart;
+    event.end_time = newEnd;
+    event.reschedule_count = count + 1;
+    event.description = (event.description ? event.description + '\n\n' : '') +
+      `Rescheduled by Owner (${email}) on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.`;
+    await event.save();
+
+    // Keep the project's kickoff timestamp in sync if this is the kickoff
+    if (project.kickoff_event_id === event.id) {
+      project.kickoff_scheduled_at = newStart;
+      await project.save();
+    }
+
+    await logActivity(email, 'meeting_rescheduled_by_owner', 'project', project.id,
+      `${project.name} — event #${event.id} new time ${newStart.toISOString()} (count ${count + 1}/${RESCHEDULE_CAP})`);
+
+    res.json({
+      success: true,
+      data: {
+        meeting: {
+          id: event.id,
+          start_time: event.start_time,
+          end_time: event.end_time,
+          location: event.location || null,
+          zoom_join_url: event.zoom_join_url || null
+        },
+        reschedule_count: count + 1,
+        reschedule_cap: RESCHEDULE_CAP
+      }
+    });
+  } catch (error) {
+    console.error('[D2AI] Share meeting reschedule (per-event) error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
