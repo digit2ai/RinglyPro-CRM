@@ -422,6 +422,8 @@ app.get('*', (req, res) => {
       `ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS quicktask_id INTEGER`,
       `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS lead_staff_id INTEGER`,
       // Migration 013 — project NDAs (per-stakeholder magic-link signing)
+      // Sequelize is configured with underscored:true at the global define level,
+      // so timestamps must be created_at / updated_at (snake_case).
       `CREATE TABLE IF NOT EXISTS d2_project_ndas (
         id SERIAL PRIMARY KEY,
         workspace_id INTEGER NOT NULL DEFAULT 1,
@@ -440,9 +442,24 @@ app.get('*', (req, res) => {
         status VARCHAR(30) NOT NULL DEFAULT 'pending',
         created_by VARCHAR(255),
         expires_at TIMESTAMPTZ,
-        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
-        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // Heal tables created by an earlier bad CREATE that used camelCase quoted
+      // identifiers ("createdAt"/"updatedAt"). Rename in place if they exist.
+      `DO $$
+       BEGIN
+         IF EXISTS (SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'd2_project_ndas' AND column_name = 'createdAt')
+         THEN
+           ALTER TABLE d2_project_ndas RENAME COLUMN "createdAt" TO created_at;
+         END IF;
+         IF EXISTS (SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'd2_project_ndas' AND column_name = 'updatedAt')
+         THEN
+           ALTER TABLE d2_project_ndas RENAME COLUMN "updatedAt" TO updated_at;
+         END IF;
+       END $$`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_project_ndas_token ON d2_project_ndas (token)`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_project ON d2_project_ndas (project_id)`,
       `CREATE INDEX IF NOT EXISTS idx_d2_project_ndas_email ON d2_project_ndas (stakeholder_email)`
