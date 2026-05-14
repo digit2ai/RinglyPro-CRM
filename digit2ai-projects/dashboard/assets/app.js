@@ -4811,28 +4811,64 @@ async function openScheduleMeetingModal(projectId) {
       return;
     }
 
-    // Build the prefilled email
+    // Build the prefilled email — formatted as a professional agenda
     const fmtWhen = startLocal.toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       + ` (${durationMin} min)`;
     const subject = `Meeting - ${project.name} - ${startLocal.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+
+    // Project summary: prefer description; fall back to business_requirements if empty.
+    // Truncate to ~500 chars so the mailto URL stays within typical client limits.
+    const rawSummary = (project.description || project.business_requirements || '').trim();
+    const projectSummary = rawSummary.length > 500
+      ? rawSummary.slice(0, 500).replace(/\s+\S*$/, '') + '...'
+      : rawSummary;
+
     const bodyLines = [
       `Hi,`,
       ``,
-      `You're invited to a working meeting for the project "${project.name}".`,
+      `You're invited to a working meeting for "${project.name}".`,
       ``,
-      `Objective:`,
-      objective,
-      ``,
-      `When: ${fmtWhen}`,
+    ];
+
+    if (projectSummary) {
+      bodyLines.push(
+        `PROJECT SUMMARY`,
+        `---------------`,
+        projectSummary,
+        ``
+      );
+    }
+
+    bodyLines.push(
+      `MEETING DETAILS`,
+      `---------------`,
+      `When:         ${fmtWhen}`,
       `Participants: ${selected.join(', ') || '(none)'}`,
       ``,
-      zoomJoinUrl ? `Join Zoom: ${zoomJoinUrl}` : `Zoom: (not configured — meeting created without Zoom link)`,
-      magicLink ? `Project access (magic link): ${magicLink}` : `Project access: (no magic link configured)`,
+      `OBJECTIVE`,
+      `---------`,
+      objective,
       ``,
+      `AGENDA`,
+      `------`,
+      `  1. Project status & progress since last sync`,
+      `  2. Milestones completed and deliverables review`,
+      `  3. Next steps & upcoming milestones`,
+      `  4. Blockers, risks & open decisions`,
+      `  5. Action items, owners & target dates`,
+      ``,
+      `LINKS`,
+      `-----`,
+      zoomJoinUrl ? `Join Zoom:      ${zoomJoinUrl}` : `Zoom:           (not configured — meeting created without Zoom link)`,
+      ``,
+      magicLink ? `Project access: ${magicLink}` : `Project access: (no magic link configured)`,
+      magicLink ? `(View project details, milestones, and request a reschedule)` : ``,
+      ``,
+      `Please come prepared with status updates on your area of responsibility.`,
       `Reply if the time doesn't work and we'll find another slot.`,
       ``,
       `Thanks,`
-    ];
+    );
     const mailto = `mailto:${encodeURIComponent(selected.join(','))}`
       + `?subject=${encodeURIComponent(subject)}`
       + `&body=${encodeURIComponent(bodyLines.join('\n'))}`;
