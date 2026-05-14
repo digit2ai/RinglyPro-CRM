@@ -785,7 +785,6 @@ router.get('/companies/:id/tokens', intakeAuth, requireAdmin, async (req, res) =
 const milestoneGenerator = require('../services/milestone-generator');
 const requestorNotification = require('../services/requestorNotification');
 const zoomService = require('../services/zoom');
-const inviteService = require('../services/meetingInvite');
 const { CalendarEvent } = require('../models');
 
 // Compute the next business day at 10:00 America/New_York that is at
@@ -890,9 +889,13 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
 
     await t.commit();
 
-    // Fire the requestor acknowledgment email (non-blocking — do not delay
-    // the API response on SendGrid latency). Looks up the share token tied
-    // to this project's intake batch so the email includes the magic link.
+    // Fire the merged approval + kickoff email (non-blocking — do not delay
+    // the API response on SendGrid/Zoom latency). Flow:
+    //   1. Resolve the magic link from the submitter's batch token.
+    //   2. Auto-schedule the kickoff (Zoom + CalendarEvent) so the email
+    //      can include the real time + Zoom URL + .ics attachment.
+    //   3. Send ONE email containing acknowledgment, kickoff details,
+    //      magic link, and reschedule instructions.
     (async () => {
       try {
         const intakeRow = await ProjectIntake.findOne({ where: { project_id: project.id } });
@@ -918,20 +921,10 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
             if (co) companyName = co.name || '';
           } catch (_) {}
         }
-        await requestorNotification.sendApprovalAcknowledgment({
-          toEmail: project.submitter_email,
-          toName: project.submitter_name,
-          company: companyName,
-          projectName: project.name,
-          description: project.description,
-          magicLink
-        });
 
-        // Auto-schedule the kickoff meeting: pick the next available
-        // weekday at 10:00 ET, create a Zoom meeting, save a calendar
-        // event, and email the submitter the join link + .ics. The
-        // submitter can later propose a reschedule via the magic-link
-        // page (POST /intake/events/:id/reschedule).
+        // Auto-schedule the kickoff BEFORE sending the email so we can
+        // embed the time, Zoom link, and .ics in a single message.
+        let meetingForEmail = null;
         if (project.submitter_email) {
           try {
             const { startISO, endISO } = nextKickoffSlot(3);
@@ -939,7 +932,7 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
             let zoomData = {};
             if (zoomService.isConfigured()) {
               try {
-                const meeting = await zoomService.createMeeting({
+                const z = await zoomService.createMeeting({
                   topic: proposedTitle,
                   startISO,
                   durationMinutes: 30,
@@ -947,11 +940,11 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
                   agenda: `Project kickoff for ${project.name}. We will walk the AI-generated plan, gather business requirements, and confirm milestones.`
                 });
                 zoomData = {
-                  zoom_meeting_id: meeting.id,
-                  zoom_join_url: meeting.join_url,
-                  zoom_start_url: meeting.start_url,
-                  zoom_password: meeting.password,
-                  location: meeting.join_url
+                  zoom_meeting_id: z.id,
+                  zoom_join_url: z.join_url,
+                  zoom_start_url: z.start_url,
+                  zoom_password: z.password,
+                  location: z.join_url
                 };
               } catch (zErr) {
                 console.error('[D2AI-Intake] Auto-kickoff Zoom create failed:', zErr.response?.data || zErr.message);
@@ -973,22 +966,32 @@ router.post('/projects/:id/approve', intakeAuth, requireAdmin, async (req, res) 
             project.kickoff_event_id = event.id;
             project.kickoff_scheduled_at = new Date(startISO);
             await project.save();
-            try {
-              await inviteService.sendInvites({
-                event,
-                emails: [project.submitter_email],
-                customMessage: `Hi ${project.submitter_name || 'there'},\n\nWe approved your project request and auto-scheduled a 30-minute kickoff to walk you through the AI-generated plan and capture detailed business requirements. If this time does not work, reply with a couple of alternatives and we will move it.`,
-                organizerName: requestorNotification.buildMagicLink ? 'Manuel Stagg' : null,
-                organizerEmail: 'mstagg@digit2ai.com'
-              });
-            } catch (iErr) {
-              console.error('[D2AI-Intake] Auto-kickoff invite send failed:', iErr.message);
-            }
             console.log(`[D2AI-Intake] Auto-kickoff scheduled for project ${project.id} at ${startISO}`);
+            meetingForEmail = {
+              id: event.id,
+              title: event.title,
+              start_time: event.start_time,
+              end_time: event.end_time,
+              description: event.description,
+              location: event.location,
+              zoom_join_url: zoomData.zoom_join_url || null,
+              zoom_password: zoomData.zoom_password || null
+            };
           } catch (kickErr) {
             console.error('[D2AI-Intake] Auto-kickoff scheduling failed:', kickErr.message);
           }
         }
+
+        // Single merged email: acknowledgment + kickoff + .ics + magic link
+        await requestorNotification.sendApprovalAcknowledgment({
+          toEmail: project.submitter_email,
+          toName: project.submitter_name,
+          company: companyName,
+          projectName: project.name,
+          description: project.description,
+          magicLink,
+          meeting: meetingForEmail
+        });
       } catch (notifyErr) {
         console.error('[D2AI-Intake] Approval ack email failed:', notifyErr.message);
       }

@@ -12,6 +12,8 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* SendGrid not installed — sends will fail loudly */ }
 
+const { buildCcBcc } = require('./stakeholderRecipients');
+
 // Envelope From — must be a SendGrid-verified sender. info@digit2ai.com
 // is the verified shared mailbox; replies are routed back to the actual
 // signer via Reply-To so the requestor's reply reaches Manuel directly.
@@ -35,8 +37,12 @@ function buildMagicLink(baseUrl, token) {
   return `${root}/projects/intake/batch.html?token=${token}`;
 }
 
+// One merged email sent after admin approves the project request.
+// Contains: acknowledgment + auto-scheduled kickoff (date, time, Zoom link,
+// .ics attachment) + magic link + reschedule note. Replaces the previous
+// pair of emails (acknowledgment + separate calendar invite).
 async function sendApprovalAcknowledgment({
-  toEmail, toName, company, projectName, description, magicLink, ccEmails
+  toEmail, toName, company, projectName, description, magicLink, ccEmails, meeting
 }) {
   if (!sgMail || !process.env.SENDGRID_API_KEY) {
     console.log('[D2AI-Notify] SendGrid not configured — approval email skipped');
@@ -52,22 +58,87 @@ async function sendApprovalAcknowledgment({
   const proj = projectName || 'your project';
   const desc = (description || '').trim();
   const descBlock = desc
-    ? `\n\nHere is a summary of what you submitted so we are aligned:\n\n"${desc.length > 600 ? desc.slice(0, 600) + '...' : desc}"\n`
+    ? `\n\nHere is a summary of what you submitted:\n\n"${desc.length > 600 ? desc.slice(0, 600) + '...' : desc}"\n`
     : '';
   const descBlockHtml = desc
-    ? `<p style="margin:14px 0 6px;font-size:13px;color:#555">Here is a summary of what you submitted so we are aligned:</p>
+    ? `<p style="margin:14px 0 6px;font-size:13px;color:#555">Here is a summary of what you submitted:</p>
        <blockquote style="margin:0 0 16px;padding:10px 14px;border-left:3px solid #38bdf8;background:#f7fbff;color:#333;font-size:13px;white-space:pre-wrap">${esc(desc.length > 600 ? desc.slice(0, 600) + '...' : desc)}</blockquote>`
     : '';
 
-  const subject = `Re: ${proj} — request received, let us schedule a quick call`;
+  // Kickoff meeting block (text + html). If no meeting was scheduled, fall
+  // back to the original "reply with 2-3 times" copy.
+  let meetingTextBlock = '';
+  let meetingHtmlBlock = '';
+  let attachment = null;
+  if (meeting && meeting.start_time) {
+    const start = new Date(meeting.start_time);
+    const end = meeting.end_time ? new Date(meeting.end_time) : new Date(start.getTime() + 30 * 60000);
+    const dateOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+    const timeOpts = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
+    const datePart = start.toLocaleDateString('en-US', dateOpts);
+    const startTime = start.toLocaleTimeString('en-US', timeOpts);
+    const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const whenLabel = `${datePart} · ${startTime} – ${endTime}`;
+    const zoomUrl = meeting.zoom_join_url || '';
+    const passcode = meeting.zoom_password || '';
+
+    meetingTextBlock = [
+      '',
+      'KICKOFF MEETING (auto-scheduled)',
+      `When: ${whenLabel}`,
+      zoomUrl ? `Join Zoom: ${zoomUrl}` : '',
+      passcode ? `Passcode: ${passcode}` : '',
+      '',
+      'A calendar invite (.ics) is attached.',
+      'If this time does not work, open the workspace link below and click Reschedule on the meeting card to pick another slot (up to 2 reschedules).'
+    ].filter(Boolean).join('\n');
+
+    meetingHtmlBlock = `
+      <div style="margin:18px 0;padding:18px 20px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px">
+        <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#0369a1;font-weight:700;margin-bottom:8px">Kickoff Meeting (auto-scheduled)</div>
+        <div style="font-size:15px;color:#0f172a;font-weight:600;margin-bottom:4px">${esc(whenLabel)}</div>
+        ${zoomUrl ? `<div style="margin-top:14px"><a href="${esc(zoomUrl)}" style="display:inline-block;background:#2D8CFF;color:#fff;text-decoration:none;padding:10px 22px;border-radius:8px;font-weight:600;font-size:14px">Join Zoom Meeting</a></div>
+            <div style="margin-top:8px;font-size:11px;color:#64748b;word-break:break-all">Or open: <a href="${esc(zoomUrl)}" style="color:#2D8CFF">${esc(zoomUrl)}</a></div>` : ''}
+        ${passcode ? `<div style="margin-top:6px;font-size:12px;color:#64748b">Passcode: <strong>${esc(passcode)}</strong></div>` : ''}
+        <div style="margin-top:14px;font-size:12px;color:#475569">A calendar invite (.ics) is attached. If this time does not work, open the workspace link below and click <strong>Reschedule</strong> on the meeting card to pick another slot (up to 2 reschedules).</div>
+      </div>
+    `;
+
+    // Build .ics attachment by reusing meetingInvite.buildIcs
+    try {
+      const { buildIcs } = require('./meetingInvite');
+      const ics = buildIcs({
+        id: meeting.id || `auto-${Date.now()}`,
+        title: meeting.title || `Kickoff — ${proj}`,
+        start_time: start,
+        end_time: end,
+        description: meeting.description || `Project kickoff for ${proj}.`,
+        zoom_join_url: zoomUrl || null,
+        zoom_password: passcode || null,
+        location: meeting.location || zoomUrl || null
+      }, [toEmail]);
+      attachment = {
+        content: Buffer.from(ics, 'utf8').toString('base64'),
+        filename: 'invite.ics',
+        type: 'text/calendar',
+        disposition: 'attachment'
+      };
+    } catch (icsErr) {
+      console.error('[D2AI-Notify] .ics build failed (continuing without attachment):', icsErr.message);
+    }
+  } else {
+    // Fallback copy when no meeting was scheduled (e.g., kickoff failed)
+    meetingTextBlock = "\nI'd like to schedule a brief 20-30 minute call. Please reply with two or three times that suit you and I will send a calendar invite.\n";
+    meetingHtmlBlock = `<p>I'd like to schedule a brief <strong>20-30 minute call</strong>. Please reply with <strong>two or three times</strong> that suit you and I will send a calendar invite.</p>`;
+  }
+
+  const subject = `${proj} — approved, kickoff scheduled`;
 
   const text = `Hi ${fn},
 
-Thank you for submitting your project request${co ? ' on behalf of ' + co : ''}. I'd like to schedule a brief 20-30 minute call so I can ask a few clarifying questions before we lock the scope and timeline.
+We approved your project request${co ? ' on behalf of ' + co : ''}.${descBlock}${meetingTextBlock}
 
-Please reply with two or three times that suit you and I will send a calendar invite.${descBlock}
-
-In the meantime you can review and add notes to the request directly in our shared workspace:
+You can review the project and add notes any time in the shared workspace:
 ${magicLink}
 
 Looking forward to speaking with you.
@@ -79,10 +150,10 @@ ${SIGNATURE_EMAIL}`;
 
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
     <p>Hi ${esc(fn)},</p>
-    <p>Thank you for submitting your project request${co ? ' on behalf of <strong>' + esc(co) + '</strong>' : ''}. I'd like to schedule a brief <strong>20-30 minute call</strong> so I can ask a few clarifying questions before we lock the scope and timeline.</p>
-    <p>Please reply with <strong>two or three times</strong> that suit you and I will send a calendar invite.</p>
+    <p>We approved your project request${co ? ' on behalf of <strong>' + esc(co) + '</strong>' : ''}.</p>
     ${descBlockHtml}
-    <p style="margin-top:18px">In the meantime you can review and add notes to the request directly in our shared workspace:</p>
+    ${meetingHtmlBlock}
+    <p style="margin-top:18px">You can review the project and add notes any time in the shared workspace:</p>
     <p style="margin:6px 0 18px"><a href="${esc(magicLink)}" style="color:#0a66c2;word-break:break-all">${esc(magicLink)}</a></p>
     <p>Looking forward to speaking with you.</p>
     <p style="margin-top:22px;margin-bottom:2px">Best,<br>
@@ -99,12 +170,16 @@ ${SIGNATURE_EMAIL}`;
     html,
     replyTo: SIGNATURE_EMAIL
   };
-  const cc = (ccEmails || []).filter(e => e && e !== toEmail);
+  if (attachment) msg.attachments = [attachment];
+  const callerCc = (ccEmails || []).filter(e => e && e !== toEmail);
+  const auto = buildCcBcc([toEmail, ...callerCc]);
+  const cc = [...callerCc, ...(auto.cc || [])];
   if (cc.length) msg.cc = cc;
+  if (auto.bcc && auto.bcc.length) msg.bcc = auto.bcc;
 
   try {
     await sgMail.send(msg);
-    console.log(`[D2AI-Notify] Approval acknowledgment sent to ${toEmail}`);
+    console.log(`[D2AI-Notify] Approval+kickoff email sent to ${toEmail}${attachment ? ' (with .ics)' : ''}`);
     return { sent: true };
   } catch (err) {
     console.error('[D2AI-Notify] Approval send failed:', err.response?.body || err.message);
@@ -172,7 +247,8 @@ ${SIGNATURE_EMAIL}`;
       subject,
       text,
       html,
-      replyTo: SIGNATURE_EMAIL
+      replyTo: SIGNATURE_EMAIL,
+      ...buildCcBcc(toEmail)
     });
     console.log(`[D2AI-Notify] Rejection notice sent to ${toEmail}`);
     return { sent: true };
