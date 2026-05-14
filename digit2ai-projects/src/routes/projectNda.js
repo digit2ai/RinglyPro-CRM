@@ -54,29 +54,38 @@ The Receiving Party agrees to:
   d) Limit access to employees or contractors who have a need to know and are bound by equivalent confidentiality obligations;
   e) Promptly notify the Disclosing Party upon discovery of any unauthorized use or disclosure.
 
-4. EXCLUSIONS
+4. NO REVERSE ENGINEERING
+The Receiving Party shall not, directly or indirectly, and shall not permit or authorize any third party to:
+  a) Reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code, models, prompts, architecture, algorithms, data schemas, training data, or trade secrets underlying any software, AI system, platform, prototype, demo, API, or other technology made available or described by the Disclosing Party;
+  b) Recreate, replicate, clone, fork, or build a functionally or substantially similar product, service, agent, model, or platform based on, derived from, or informed by the Confidential Information, whether for the Receiving Party's own benefit or for the benefit of any third party;
+  c) Use any Confidential Information to train, fine-tune, evaluate, benchmark, or improve any machine learning model, large language model, agent, or AI system other than as expressly authorized in writing by the Disclosing Party;
+  d) Remove, alter, obscure, or circumvent any proprietary notices, watermarks, identifiers, telemetry, license keys, access controls, or technical protection measures contained in or applied to any materials, demonstrations, or environments provided by the Disclosing Party;
+  e) Probe, scan, scrape, or test the vulnerability of any system, endpoint, or environment of the Disclosing Party, or attempt to gain unauthorized access to any system, account, or data.
+This Section 4 shall survive termination or expiration of this Agreement and remains binding indefinitely with respect to trade secrets.
+
+5. EXCLUSIONS
 Confidential Information does not include information that:
   a) Is or becomes publicly available through no fault of the Receiving Party;
   b) Was already known to the Receiving Party prior to disclosure;
-  c) Is independently developed by the Receiving Party without use of Confidential Information;
+  c) Is independently developed by the Receiving Party without use of Confidential Information and without violation of Section 4 above;
   d) Is required to be disclosed by law or court order, provided prompt written notice is given.
 
-5. TERM
-This Agreement shall remain in effect for two (2) years from the Effective Date, or until the Confidential Information no longer qualifies as confidential, whichever occurs first.
+6. TERM
+This Agreement shall remain in effect for two (2) years from the Effective Date, or until the Confidential Information no longer qualifies as confidential, whichever occurs first. The obligations in Section 4 (No Reverse Engineering) survive termination or expiration.
 
-6. RETURN OR DESTRUCTION OF INFORMATION
+7. RETURN OR DESTRUCTION OF INFORMATION
 Upon written request or termination of this Agreement, the Receiving Party shall promptly return or destroy all Confidential Information, including copies, notes, or summaries.
 
-7. NO LICENSE
-Nothing in this Agreement grants the Receiving Party any rights in or to the Confidential Information except as expressly set forth herein.
+8. NO LICENSE
+Nothing in this Agreement grants the Receiving Party any rights in or to the Confidential Information except as expressly set forth herein. No license, express or implied, is granted to any patents, copyrights, trademarks, trade secrets, or other intellectual property of the Disclosing Party.
 
-8. REMEDIES
+9. REMEDIES
 The Receiving Party acknowledges that any breach may cause irreparable harm to the Disclosing Party, for which monetary damages would be inadequate. The Disclosing Party shall be entitled to seek equitable relief, including injunction and specific performance, in addition to all other remedies available at law.
 
-9. GOVERNING LAW
+10. GOVERNING LAW
 This Agreement shall be governed by and construed in accordance with the laws of the State of Florida, USA, without regard to its conflict of law provisions.
 
-10. ENTIRE AGREEMENT & ELECTRONIC EXECUTION
+11. ENTIRE AGREEMENT & ELECTRONIC EXECUTION
 This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior discussions relating to confidentiality. This Agreement is executed electronically. Electronic signatures captured herein are legally binding under the E-SIGN Act and UETA and constitute full acceptance of all terms above.`;
 
 function buildNdaText(projectName) {
