@@ -26,24 +26,74 @@ const { logActivity } = require('../services/activityService');
 
 const RESCHEDULE_CAP = 2;
 
-// Generate `count` candidate slots, one per weekday at 10:00 Cali time
-// (America/Bogota, UTC-5), starting `minDaysOut` business days from today.
-// No conflict check — pure offsets. Used when any team member clicks Reschedule.
-function generateRescheduleSlots({ minDaysOut = 2, count = 3 } = {}) {
+// Generate `count` reschedule slots that vary across business-hour bands so
+// a stakeholder with a recurring conflict at one time of day still has a
+// realistic alternative. Each slot is on a different weekday, drawn from
+// shuffled bands and conflict-checked against the workspace calendar so we
+// don't suggest a time that already has another meeting.
+//
+// Bands (Cali / America/Bogota = UTC-5):
+//   morning   ~ 9:00 - 10:30    (14:00 - 15:30 UTC)
+//   midday    ~11:30 - 13:30    (16:30 - 18:30 UTC)
+//   afternoon ~14:30 - 16:30    (19:30 - 21:30 UTC)
+async function generateRescheduleSlots({ minDaysOut = 2, count = 3, durationMin = 30, workspaceId = 1 } = {}) {
+  const lookaheadDays = 21;
+  const now = new Date();
+  const horizon = new Date(now.getTime() + (lookaheadDays + 2) * 86400000);
+
+  // Fetch every workspace event in the lookahead window for conflict checking
+  let evWindows = [];
+  try {
+    const events = await CalendarEvent.findAll({
+      where: {
+        workspace_id: workspaceId,
+        start_time: { [Op.lt]: horizon },
+        end_time: { [Op.gt]: now }
+      },
+      attributes: ['start_time', 'end_time']
+    });
+    evWindows = events.map(e => [new Date(e.start_time).getTime(), new Date(e.end_time || e.start_time).getTime()]);
+  } catch (_) { /* fall through with no conflict data */ }
+  const overlaps = (s, e) => evWindows.some(([es, ee]) => s < ee && e > es);
+
+  const bands = [
+    { startMinUtc: 14 * 60,      rangeMin: 90  },  //  9:00 - 10:30 Cali
+    { startMinUtc: 16 * 60 + 30, rangeMin: 120 },  // 11:30 - 13:30 Cali
+    { startMinUtc: 19 * 60 + 30, rangeMin: 120 }   // 14:30 - 16:30 Cali
+  ];
+  // Shuffle band order so the first slot is not always morning.
+  const order = [0, 1, 2].sort(() => Math.random() - 0.5);
+
   const slots = [];
   const cursor = new Date();
-  cursor.setUTCHours(15, 0, 0, 0); // 10:00 America/Bogota (UTC-5)
   let weekdaysAdvanced = 0;
-  while (slots.length < count && weekdaysAdvanced < 30) {
+  let dayAttempts = 0;
+  while (slots.length < count && dayAttempts < lookaheadDays * 2) {
+    dayAttempts++;
     cursor.setUTCDate(cursor.getUTCDate() + 1);
     const dow = cursor.getUTCDay();
     if (dow === 0 || dow === 6) continue;
     weekdaysAdvanced++;
     if (weekdaysAdvanced < minDaysOut) continue;
-    slots.push({
-      start_time: new Date(cursor).toISOString(),
-      end_time: new Date(cursor.getTime() + 30 * 60000).toISOString()
-    });
+
+    const band = bands[order[slots.length % order.length]];
+    // Try up to 6 random positions inside the band before moving on
+    let placed = false;
+    const dayStartMs = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate(), 0, 0, 0);
+    for (let i = 0; i < 6 && !placed; i++) {
+      const offsetSteps = Math.floor(Math.random() * (band.rangeMin / 15));
+      const totalMin = band.startMinUtc + offsetSteps * 15;
+      const slotStartMs = dayStartMs + totalMin * 60000;
+      const slotEndMs = slotStartMs + durationMin * 60000;
+      if (slotStartMs < Date.now()) continue;
+      if (!overlaps(slotStartMs, slotEndMs)) {
+        slots.push({
+          start_time: new Date(slotStartMs).toISOString(),
+          end_time: new Date(slotEndMs).toISOString()
+        });
+        placed = true;
+      }
+    }
   }
   return slots;
 }
@@ -237,7 +287,7 @@ router.get('/:token/meetings/:eventId/slots', async (req, res) => {
     if (count >= RESCHEDULE_CAP) {
       return res.status(403).json({ success: false, error: `Reschedule limit reached for this meeting (${RESCHEDULE_CAP}). Contact us to adjust.` });
     }
-    const slots = generateRescheduleSlots({ minDaysOut: 2, count: 3 });
+    const slots = await generateRescheduleSlots({ minDaysOut: 2, count: 3, workspaceId: project.workspace_id || 1 });
     res.json({
       success: true,
       data: { slots, reschedule_count: count, reschedule_cap: RESCHEDULE_CAP }
@@ -381,7 +431,7 @@ router.get('/:token/meeting/slots', async (req, res) => {
     if (count >= RESCHEDULE_CAP) {
       return res.status(403).json({ success: false, error: `Reschedule limit reached (${RESCHEDULE_CAP}). Contact us to adjust.` });
     }
-    const slots = generateRescheduleSlots({ minDaysOut: 2, count: 3 });
+    const slots = await generateRescheduleSlots({ minDaysOut: 2, count: 3, workspaceId: project.workspace_id || 1 });
     res.json({
       success: true,
       data: { slots, reschedule_count: count, reschedule_cap: RESCHEDULE_CAP }
