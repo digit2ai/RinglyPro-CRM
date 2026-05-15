@@ -1412,12 +1412,12 @@ async function renderProjects(container) {
   const dormantCutoff = Date.now() - DORMANT_DAYS * 86400000;
   const inactiveStatuses = new Set(['completed', 'cancelled']);
   const STATUS_CARDS = [
-    { key: 'planning',     label: 'Planning',    accent: 'purple', icon: '&#128221;', hint: 'In scoping phase' },
-    { key: 'active',       label: 'Active',      accent: 'green',  icon: '&#9889;',   hint: 'Greenlit, not yet started' },
-    { key: 'in_progress',  label: 'In Progress', accent: 'blue',   icon: '&#128640;', hint: 'Actively moving' },
-    { key: 'on_hold',      label: 'On Hold',     accent: 'yellow', icon: '&#9208;',   hint: 'Paused' },
-    { key: 'review',       label: 'Review',      accent: 'purple', icon: '&#128064;', hint: 'Awaiting review' },
-    { key: 'completed',    label: 'Completed',   accent: 'green',  icon: '&#127937;', hint: 'Shipped' }
+    { key: 'planning',    label: 'Planning',    accent: 'purple', hint: 'In scoping' },
+    { key: 'active',      label: 'Active',      accent: 'green',  hint: 'Greenlit' },
+    { key: 'in_progress', label: 'In Progress', accent: 'blue',   hint: 'Active work' },
+    { key: 'on_hold',     label: 'On Hold',     accent: 'yellow', hint: 'Paused' },
+    { key: 'review',      label: 'Review',      accent: 'purple', hint: 'Awaiting review' },
+    { key: 'completed',   label: 'Completed',   accent: 'green',  hint: 'Shipped' }
   ];
   const counts = Object.fromEntries(STATUS_CARDS.map(c => [c.key, 0]));
   let kpiDormant = 0;
@@ -1430,8 +1430,7 @@ async function renderProjects(container) {
   const statusCardsHtml = STATUS_CARDS.map(c => {
     const n = counts[c.key];
     return `
-      <div class="card card-stat card-accent-${c.accent} card-clickable" onclick="projectsKpiFilter('${c.key}')" data-tooltip="Click to filter the table to ${c.label} projects">
-        <div class="kpi-icon">${c.icon}</div>
+      <div class="card card-stat card-stat-compact card-accent-${c.accent} card-clickable" onclick="projectsKpiFilter('${c.key}')" data-tooltip="Click to filter the table to ${c.label} projects">
         <div class="stat-label">${c.label}</div>
         <div class="stat-value">${n}</div>
         <div class="stat-change stat-neutral">${c.hint}</div>
@@ -1440,13 +1439,12 @@ async function renderProjects(container) {
   }).join('');
 
   container.innerHTML = `
-    <div class="card-grid" style="margin-bottom:20px">
+    <div class="card-grid" style="margin-bottom:20px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
       ${statusCardsHtml}
-      <div class="card card-stat card-accent-yellow card-clickable ${kpiDormant > 0 ? 'card-needs-attention' : ''}" onclick="projectsKpiFilter('dormant')" data-tooltip="Projects with no activity in the last ${DORMANT_DAYS} days (excludes completed/cancelled)">
-        <div class="kpi-icon">${kpiDormant > 0 ? '&#128564;' : '&#9989;'}</div>
+      <div class="card card-stat card-stat-compact card-accent-yellow card-clickable ${kpiDormant > 0 ? 'card-needs-attention' : ''}" onclick="projectsKpiFilter('dormant')" data-tooltip="Projects with no activity in the last ${DORMANT_DAYS} days (excludes completed/cancelled)">
         <div class="stat-label">Dormant</div>
         <div class="stat-value">${kpiDormant}</div>
-        <div class="stat-change ${kpiDormant > 0 ? 'stat-down' : 'stat-up'}">No update in ${DORMANT_DAYS}+ days</div>
+        <div class="stat-change ${kpiDormant > 0 ? 'stat-down' : 'stat-up'}">No update ${DORMANT_DAYS}d+</div>
       </div>
     </div>
     <div class="section-header">

@@ -271,6 +271,12 @@ body {
 .stat-down { background: rgba(239,68,68,0.15); color: var(--danger); }
 .stat-neutral { background: rgba(148,163,184,0.15); color: var(--text-secondary); }
 
+/* Compact KPI variant used in the Projects header — denser grid, no icons */
+.card-stat-compact { padding: 12px 14px; gap: 4px; }
+.card-stat-compact .stat-value { font-size: 22px; }
+.card-stat-compact .stat-label { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+.card-stat-compact .stat-change { font-size: 10.5px; padding: 1px 6px; }
+
 /* Stat card accent borders */
 .card-accent-purple { border-left: 3px solid var(--accent); }
 .card-accent-green { border-left: 3px solid var(--success); }
