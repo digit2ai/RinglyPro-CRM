@@ -438,10 +438,13 @@ body {
   background: none; border: none; color: var(--text-secondary);
   font-size: 24px; cursor: pointer; padding: 0 4px;
 }
-.modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+/* min-height: 0 is required so the flex child can shrink below its content
+   size and scroll; without it, a tall form pushes the footer off-screen. */
+.modal-body { padding: 24px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 .modal-footer {
   padding: 16px 24px; display: flex; justify-content: flex-end;
   gap: 8px; border-top: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 /* =====================================================
