@@ -4809,13 +4809,15 @@ async function openScheduleMeetingModal(projectId) {
     defaultTime = '10:00';
   }
   const defaultObjective = 'Discuss the project updates, next steps, and any blockers.';
-  const defaultAgenda = [
-    'Project status & progress since last sync',
+  const defaultAgendaItems = [
+    'Project status &amp; progress since last sync',
     'Milestones completed and deliverables review',
-    'Next steps & upcoming milestones',
-    'Blockers, risks & open decisions',
-    'Action items, owners & target dates'
-  ].join('\n');
+    'Next steps &amp; upcoming milestones',
+    'Blockers, risks &amp; open decisions',
+    'Action items, owners &amp; target dates'
+  ];
+  // Rich-text default — rendered into the contenteditable as a real <ol>
+  const defaultAgendaHtml = '<ol>' + defaultAgendaItems.map(t => `<li>${t}</li>`).join('') + '</ol>';
 
   // Existing stakeholders render with a single "Invite" checkbox.
   // New emails (added via the "+ Add participant" input below) render with
@@ -4835,8 +4837,18 @@ async function openScheduleMeetingModal(projectId) {
     </div>
     <div class="form-group">
       <label>Agenda</label>
-      <textarea id="m-smagenda" rows="6" placeholder="One agenda item per line">${escHtml(defaultAgenda)}</textarea>
-      <small style="color:var(--text-muted)">One item per line. Renders as a numbered list in the email and calendar invite. Leave blank to skip the agenda block.</small>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:rgba(56,189,248,0.05);border:1px solid var(--border);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0">
+        <button type="button" onclick="agendaCmd('bold')" title="Bold" style="font-weight:700;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">B</button>
+        <button type="button" onclick="agendaCmd('italic')" title="Italic" style="font-style:italic;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">I</button>
+        <button type="button" onclick="agendaCmd('underline')" title="Underline" style="text-decoration:underline;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">U</button>
+        <span style="width:1px;background:var(--border);margin:0 4px"></span>
+        <button type="button" onclick="agendaCmd('insertOrderedList')" title="Numbered list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">1. List</button>
+        <button type="button" onclick="agendaCmd('insertUnorderedList')" title="Bulleted list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">&bull; List</button>
+        <span style="width:1px;background:var(--border);margin:0 4px"></span>
+        <button type="button" onclick="agendaCmd('removeFormat')" title="Clear formatting" style="padding:4px 8px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">Clear</button>
+      </div>
+      <div id="m-smagenda" contenteditable="true" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:140px;max-height:280px;overflow-y:auto;outline:none">${defaultAgendaHtml}</div>
+      <small style="color:var(--text-muted)">Bold, italic, lists supported. Renders in the email and calendar invite as a formatted list. Clear the box to skip the agenda block.</small>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -4877,10 +4889,19 @@ async function openScheduleMeetingModal(projectId) {
     const date = document.getElementById('m-smdate').value;
     const time = document.getElementById('m-smtime').value;
     const durationMin = Math.max(15, Math.min(240, Number(document.getElementById('m-smduration').value) || 30));
-    // Agenda is one item per line; trim and drop empties so blank lines do
-    // not create empty numbered entries in the rendered email.
-    const agendaRaw = document.getElementById('m-smagenda').value;
-    const agendaItems = agendaRaw.split('\n').map(s => s.trim()).filter(Boolean);
+    // Agenda is rich-text. Extract <li> items if present (the default
+    // structure), otherwise fall back to splitting plain text by line.
+    // Each item may contain inline HTML (<strong>, <em>, <u>) which the
+    // backend renders directly in the email.
+    const agendaEl = document.getElementById('m-smagenda');
+    const lis = agendaEl ? agendaEl.querySelectorAll('li') : [];
+    let agendaItems;
+    if (lis.length) {
+      agendaItems = Array.from(lis).map(li => li.innerHTML.trim()).filter(Boolean);
+    } else {
+      const text = agendaEl ? (agendaEl.innerText || agendaEl.textContent || '') : '';
+      agendaItems = text.split('\n').map(s => s.trim()).filter(Boolean);
+    }
     if (!objective || !date || !time) { alert('Objective, day, and time are all required.'); return; }
     const selected = Array.from(document.querySelectorAll('#m-smparts input.m-smp-invite:checked'))
       .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
@@ -5037,6 +5058,17 @@ async function openScheduleMeetingModal(projectId) {
   });
 }
 window.openScheduleMeetingModal = openScheduleMeetingModal;
+
+// Toolbar handler for the Schedule Meeting Agenda field. document.execCommand
+// is technically deprecated but still works in every shipping browser and is
+// what the project Notes editor already uses.
+function agendaCmd(command, value) {
+  const ed = document.getElementById('m-smagenda');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand(command, false, value || null);
+}
+window.agendaCmd = agendaCmd;
 
 // Helper used by the Schedule Meeting modal's "+ Add" button. Reads the
 // email input, validates + dedupes against rows already in the list, and

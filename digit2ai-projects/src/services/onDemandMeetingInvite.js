@@ -25,6 +25,52 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+// Strip all HTML tags and decode the common entities the rich-text editor
+// produces. Used for the plain-text version of agenda items.
+function stripTags(s) {
+  return String(s == null ? '' : s)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+// Allowlist sanitizer for agenda items. Keeps inline emphasis (bold,
+// italic, underline, links, line breaks) and drops everything else.
+// Agenda items come from authenticated admin users via the dashboard
+// rich-text toolbar, so we trust the source but still strip unsafe tags
+// (script, iframe, event handlers, javascript: URLs) for defense in depth.
+function sanitizeAgendaHtml(s) {
+  if (s == null) return '';
+  let out = String(s);
+  // Remove dangerous wrappers entirely (including their content)
+  out = out.replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, '');
+  // Remove any tag that is not in our small allowlist
+  out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
+    const t = tag.toLowerCase();
+    const allowed = ['b', 'strong', 'i', 'em', 'u', 'a', 'br', 'span'];
+    if (!allowed.includes(t)) return '';
+    // For <a>, keep only a safe href attribute
+    if (t === 'a') {
+      const hrefMatch = match.match(/\bhref\s*=\s*["']([^"']*)["']/i);
+      const href = hrefMatch ? hrefMatch[1] : '';
+      const safe = /^(https?:|mailto:|tel:)/i.test(href);
+      if (match.startsWith('</')) return '</a>';
+      return safe ? `<a href="${esc(href)}" target="_blank" rel="noopener">` : '';
+    }
+    // For other allowed tags, strip every attribute
+    if (match.startsWith('</')) return `</${t}>`;
+    return `<${t}>`;
+  });
+  return out;
+}
+
 function isConfigured() {
   return !!(sgMail && process.env.SENDGRID_API_KEY);
 }
@@ -139,7 +185,9 @@ async function sendOnDemandMeetingInvite({
   lines.push('');
   lines.push(L.agenda);
   lines.push('------');
-  agendaItems.forEach((it, i) => lines.push(`  ${i + 1}. ${it}`));
+  // Strip HTML for the plain-text version so rich-text bold/italic
+  // formatting does not bleed through as literal <strong>/<em> tags.
+  agendaItems.forEach((it, i) => lines.push(`  ${i + 1}. ${stripTags(it)}`));
   lines.push('');
   if (magicLink) {
     lines.push(`${L.access}: ${magicLink}`);
@@ -177,10 +225,12 @@ async function sendOnDemandMeetingInvite({
     </div>
   `;
 
+  // Allow inline rich-text formatting (bold, italic, underline, links)
+  // inside agenda items; the sanitizer drops anything else.
   const agendaHtml = `
     <p style="margin:14px 0 6px;font-size:13px;color:#555">${esc(L.agenda)}</p>
     <ol style="margin:0 0 16px 22px;padding:0;font-size:14px;color:#222;line-height:1.6">
-      ${agendaItems.map(it => `<li>${esc(it)}</li>`).join('')}
+      ${agendaItems.map(it => `<li>${sanitizeAgendaHtml(it)}</li>`).join('')}
     </ol>
   `;
 
