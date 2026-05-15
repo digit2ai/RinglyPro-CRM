@@ -250,6 +250,24 @@ const CalendarEvent = sequelize.define('CalendarEvent', {
 }, { tableName: 'd2_calendar_events' });
 
 // =====================================================
+// MEETING RSVP — one row per (event, email); token gates the public
+// click-through endpoint /api/v1/meeting-rsvp/:token/:response.
+// =====================================================
+const MeetingRsvp = sequelize.define('MeetingRsvp', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  workspace_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  event_id: { type: DataTypes.INTEGER, allowNull: false },
+  project_id: DataTypes.INTEGER,
+  email: { type: DataTypes.STRING(255), allowNull: false },
+  response: DataTypes.STRING(20),
+  token: { type: DataTypes.UUID, allowNull: false, unique: true },
+  invited_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  responded_at: DataTypes.DATE,
+  ip: DataTypes.STRING(64),
+  user_agent: DataTypes.TEXT
+}, { tableName: 'd2_meeting_rsvps' });
+
+// =====================================================
 // NOTIFICATION
 // =====================================================
 const Notification = sequelize.define('Notification', {
@@ -740,6 +758,7 @@ module.exports = {
   ProjectUpdate,
   Task,
   CalendarEvent,
+  MeetingRsvp,
   Notification,
   ActivityLog,
   NlpCommand,

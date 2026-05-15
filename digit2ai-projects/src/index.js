@@ -100,6 +100,9 @@ app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
 // MUST be mounted BEFORE the authenticated /api/v1/projects router so
 // the more-specific /share/* path wins the prefix match.
 app.use('/api/v1/projects/share', express.json(), require('./routes/projectShare'));
+// Public RSVP click-through — recipient clicks Yes/No/Maybe in the meeting
+// invite email; token in the URL is the credential, no auth needed.
+app.use('/api/v1/meeting-rsvp', require('./routes/meetingRsvp'));
 // NDA signing endpoints — PUBLIC (no auth, token-gated). Mount BEFORE
 // the authenticated /api/v1/projects router so the /nda/* path wins.
 const ndaRoutes = require('./routes/projectNda');
@@ -598,6 +601,32 @@ app.get('*', (req, res) => {
       await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS reschedule_count INTEGER NOT NULL DEFAULT 0');
     } catch (e) {
       console.log('[D2AI-Projects] event reschedule_count notice:', e.message.substring(0, 120));
+    }
+
+    // Per-recipient RSVP tracking for on-demand meeting invites. One row per
+    // (event, email); the token gates the public click-through endpoint that
+    // records the recipient's response (yes / no / maybe).
+    try {
+      await sequelize.query(`CREATE TABLE IF NOT EXISTS d2_meeting_rsvps (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        event_id INTEGER NOT NULL,
+        project_id INTEGER,
+        email VARCHAR(255) NOT NULL,
+        response VARCHAR(20),
+        token UUID NOT NULL,
+        invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        responded_at TIMESTAMPTZ,
+        ip VARCHAR(64),
+        user_agent TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`);
+      await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_token ON d2_meeting_rsvps (token)');
+      await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_event ON d2_meeting_rsvps (event_id)');
+      await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_event_email ON d2_meeting_rsvps (event_id, LOWER(email))');
+    } catch (e) {
+      console.log('[D2AI-Projects] meeting rsvps notice:', e.message.substring(0, 120));
     }
 
     // Migration 002 — Project Intake & Discussion module

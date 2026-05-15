@@ -3123,6 +3123,11 @@ async function showProjectDetail(id) {
             }).join('') : '<p style="font-size:13px;color:var(--text-muted)">No tasks for this project</p>'}
           </div>
 
+          <div class="detail-section" id="project-meetings-${p.id}">
+            <h4>Upcoming Meetings &amp; Attendance</h4>
+            <p style="font-size:13px;color:var(--text-muted)">Loading meetings...</p>
+          </div>
+
           <div class="detail-section">
             <h4>Updates</h4>
             <div style="margin-bottom:12px;display:flex;gap:8px">
@@ -3192,6 +3197,79 @@ async function showProjectDetail(id) {
   // Lazy-load NDA list into the section once the detail HTML is in the DOM.
   if (typeof refreshNdaList === 'function') {
     refreshNdaList(p.id);
+  }
+  // Lazy-load upcoming meetings + RSVP attendance into the section.
+  loadProjectMeetingsAttendance(p.id);
+}
+
+// Fetches upcoming meetings linked to the project, then fetches RSVPs
+// for each, and renders the Attendance card list into #project-meetings-:id.
+async function loadProjectMeetingsAttendance(projectId) {
+  const wrap = document.getElementById('project-meetings-' + projectId);
+  if (!wrap) return;
+  try {
+    const nowIso = new Date().toISOString();
+    const horizon = new Date(Date.now() + 90 * 86400000).toISOString();
+    const evRes = await api(`/calendar?start=${encodeURIComponent(nowIso)}&end=${encodeURIComponent(horizon)}&event_type=meeting`);
+    const meetings = (evRes.data || []).filter(e => e.project_id === projectId && e.source !== 'task');
+    if (!meetings.length) {
+      wrap.innerHTML = '<h4>Upcoming Meetings &amp; Attendance</h4><p style="font-size:13px;color:var(--text-muted)">No upcoming meetings scheduled for this project. Click <strong>Schedule Meeting</strong> at the top to send one.</p>';
+      return;
+    }
+    // Fetch RSVPs per meeting in parallel
+    const rsvpRess = await Promise.all(meetings.map(m =>
+      api(`/projects/${projectId}/meetings/${m.id}/rsvps`).catch(() => ({ success: false }))
+    ));
+    const cardsHtml = meetings.map((m, i) => {
+      const r = rsvpRess[i];
+      const counts = (r && r.success && r.data && r.data.counts) || { yes: 0, no: 0, maybe: 0, pending: 0 };
+      const rows = (r && r.success && r.data && r.data.rsvps) || [];
+      const respondedTotal = counts.yes + counts.no + counts.maybe;
+      const total = respondedTotal + counts.pending;
+      const rsvpRowsHtml = rows.length
+        ? rows.map(row => {
+            const status = row.response || 'pending';
+            const color = status === 'yes' ? 'var(--success)'
+                        : status === 'no' ? 'var(--danger)'
+                        : status === 'maybe' ? 'var(--warning)'
+                        : 'var(--text-muted)';
+            const label = status === 'yes' ? 'Confirmed' : status === 'no' ? 'Declined' : status === 'maybe' ? 'Tentative' : 'No response';
+            const when = row.responded_at ? ' &middot; ' + fmtDateTime(row.responded_at) : '';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+              <span style="flex:1;color:var(--text-primary);word-break:break-all">${escHtml(row.email)}</span>
+              <span style="font-size:11px;color:${color};font-weight:600">${label}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${when}</span>
+            </div>`;
+          }).join('')
+        : '<p style="font-size:12px;color:var(--text-muted);font-style:italic;padding:6px 0">No invites sent yet for this meeting.</p>';
+
+      const zoomLink = m.zoom_join_url
+        ? `<a href="${m.zoom_join_url}" target="_blank" rel="noopener" style="color:#2D8CFF;font-size:12px;text-decoration:none">Join Zoom</a>`
+        : '';
+
+      return `
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;background:rgba(56,189,248,0.03)">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">${escHtml(m.title || 'Meeting')}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${fmtDateTime(m.start_time)}${m.end_time ? ' – ' + new Date(m.end_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : ''}</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">${zoomLink}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,0.15);color:var(--success)">Confirmed: ${counts.yes}</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(245,158,11,0.15);color:var(--warning)">Tentative: ${counts.maybe}</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(239,68,68,0.15);color:var(--danger)">Declined: ${counts.no}</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(148,163,184,0.15);color:var(--text-secondary)">Pending: ${counts.pending}</span>
+            <span style="font-size:11px;color:var(--text-muted);align-self:center">${respondedTotal}/${total} responded</span>
+          </div>
+          <div>${rsvpRowsHtml}</div>
+        </div>
+      `;
+    }).join('');
+    wrap.innerHTML = `<h4>Upcoming Meetings &amp; Attendance</h4>${cardsHtml}`;
+  } catch (e) {
+    wrap.innerHTML = '<h4>Upcoming Meetings &amp; Attendance</h4><p style="font-size:13px;color:var(--danger)">Could not load meetings: ' + (e.message || 'unknown error') + '</p>';
   }
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'd2ai-projects-v17';
+const CACHE_NAME = 'd2ai-projects-v18';
 const STATIC_ASSETS = [
   '/projects/',
   '/projects/assets/styles.css',

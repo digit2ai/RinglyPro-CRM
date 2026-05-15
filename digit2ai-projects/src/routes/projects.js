@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const crypto = require('crypto');
-const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, CalendarEvent, sequelize } = require('../models');
+const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, CalendarEvent, MeetingRsvp, sequelize } = require('../models');
 const { logActivity } = require('../services/activityService');
 const planGenerator = require('../../../chamber-template/lib/plan-generator');
 const onDemandInvite = require('../services/onDemandMeetingInvite');
@@ -766,7 +766,8 @@ router.post('/:id/meetings/:eventId/send-invite', async (req, res) => {
       agenda: Array.isArray(agenda) ? agenda.filter(Boolean) : null,
       objective: typeof objective === 'string' ? objective : null,
       magicLink,
-      language: language === 'es' ? 'es' : 'en'
+      language: language === 'es' ? 'es' : 'en',
+      publicBase: baseUrl
     });
 
     await logActivity(null, 'meeting_invite_sent', 'project', project.id,
@@ -775,6 +776,42 @@ router.post('/:id/meetings/:eventId/send-invite', async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('[D2AI] meeting send-invite error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/projects/:id/meetings/:eventId/rsvps
+// Returns all RSVP rows for a meeting (admin-authenticated, used by the
+// project detail Attendance panel). Includes counts and per-recipient
+// status for the UI to render.
+router.get('/:id/meetings/:eventId/rsvps', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const rsvps = await MeetingRsvp.findAll({
+      where: { event_id: parseInt(req.params.eventId, 10), project_id: project.id },
+      order: [['created_at', 'ASC']]
+    });
+
+    const counts = { yes: 0, no: 0, maybe: 0, pending: 0 };
+    const rows = rsvps.map(r => {
+      const resp = r.response || null;
+      if (resp === 'yes') counts.yes++;
+      else if (resp === 'no') counts.no++;
+      else if (resp === 'maybe') counts.maybe++;
+      else counts.pending++;
+      return {
+        email: r.email,
+        response: resp,
+        responded_at: r.responded_at,
+        invited_at: r.invited_at
+      };
+    });
+
+    res.json({ success: true, data: { counts, rsvps: rows, total: rsvps.length } });
+  } catch (error) {
+    console.error('[D2AI] meeting rsvps list error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

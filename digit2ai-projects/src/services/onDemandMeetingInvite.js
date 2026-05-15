@@ -11,8 +11,10 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* SendGrid optional */ }
 
+const crypto = require('crypto');
 const { buildCcBcc } = require('./stakeholderRecipients');
 const { buildIcs } = require('./meetingInvite');
+const { MeetingRsvp } = require('../models');
 
 const ENVELOPE_FROM = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
 const FROM_NAME = process.env.REQUESTOR_FROM_NAME || 'Manuel Stagg';
@@ -82,8 +84,9 @@ function isConfigured() {
 // objective:  optional opening line shown above the project summary
 // magicLink:  full URL to the stakeholder share page
 // language:   'en' or 'es' — toggles label wording
+// publicBase: absolute base URL for the RSVP click-through links (no trailing slash)
 async function sendOnDemandMeetingInvite({
-  recipients, project, meeting, agenda, objective, magicLink, language = 'en'
+  recipients, project, meeting, agenda, objective, magicLink, language = 'en', publicBase
 }) {
   if (!isConfigured()) return { sent: false, reason: 'sendgrid_not_configured' };
   if (!recipients || !recipients.length) return { sent: false, reason: 'no_recipients' };
@@ -105,7 +108,11 @@ async function sendOnDemandMeetingInvite({
     closing: 'Por favor, ven preparado con actualizaciones de tu área. Responde si el horario no te funciona y buscaremos otra opción.',
     looking_forward: 'Esperamos hablar contigo.',
     best: 'Saludos cordiales,',
-    subject_lead: 'Invitación de reunión'
+    subject_lead: 'Invitación de reunión',
+    rsvp_label: '¿Asistirás?',
+    rsvp_yes: 'Sí, asistiré',
+    rsvp_no: 'No puedo',
+    rsvp_maybe: 'Tal vez'
   } : {
     invite_to: "You're invited to a working meeting for",
     summary: 'PROJECT SUMMARY',
@@ -121,7 +128,11 @@ async function sendOnDemandMeetingInvite({
     closing: "Please come prepared with status updates on your area of responsibility. Reply if the time doesn't work and we'll find another slot.",
     looking_forward: 'Looking forward to speaking with you.',
     best: 'Best,',
-    subject_lead: 'Meeting'
+    subject_lead: 'Meeting',
+    rsvp_label: 'Will you attend?',
+    rsvp_yes: "Yes, I'll attend",
+    rsvp_no: "No, I can't make it",
+    rsvp_maybe: 'Maybe'
   };
 
   // Format date/time in US Eastern so requestors see the meeting in our
@@ -240,21 +251,46 @@ async function sendOnDemandMeetingInvite({
        <p style="margin:0 0 16px;font-size:12px;color:#64748b">${esc(L.access_hint)}</p>`
     : '';
 
-  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
-    <p>${isEs ? 'Hola' : 'Hi'},</p>
-    <p>${esc(L.invite_to)} <strong>"${esc(projectName)}"</strong>.</p>
-    ${objectiveHtml}
-    ${summaryHtml}
-    ${meetingBlockHtml}
-    ${agendaHtml}
-    ${magicLinkHtml}
-    <p>${esc(L.closing)}</p>
-    <p>${esc(L.looking_forward)}</p>
-    <p style="margin-top:22px;margin-bottom:2px">${esc(L.best)}<br>
-    <strong>${esc(FROM_NAME)}</strong><br>
-    ${esc(SENDER_TITLE)}<br>
-    <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
-  </div>`;
+  // Per-recipient HTML — RSVP buttons use a token unique to each recipient
+  // so we can record who said yes/no/maybe (not just "someone responded").
+  function rsvpBlockHtml(token) {
+    if (!token || !publicBase) return '';
+    const base = String(publicBase).replace(/\/+$/, '');
+    const url = (r) => `${base}/projects/api/v1/meeting-rsvp/${token}/${r}`;
+    return `
+      <div style="margin:22px 0 8px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px">
+        <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:10px">${esc(L.rsvp_label)}</div>
+        <div style="display:inline-block;margin-right:6px">
+          <a href="${url('yes')}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px">${esc(L.rsvp_yes)}</a>
+        </div>
+        <div style="display:inline-block;margin-right:6px">
+          <a href="${url('maybe')}" style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px">${esc(L.rsvp_maybe)}</a>
+        </div>
+        <div style="display:inline-block">
+          <a href="${url('no')}" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;padding:8px 16px;border-radius:6px;font-weight:600;font-size:13px">${esc(L.rsvp_no)}</a>
+        </div>
+      </div>
+    `;
+  }
+
+  function buildHtmlFor(token) {
+    return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
+      <p>${isEs ? 'Hola' : 'Hi'},</p>
+      <p>${esc(L.invite_to)} <strong>"${esc(projectName)}"</strong>.</p>
+      ${objectiveHtml}
+      ${summaryHtml}
+      ${meetingBlockHtml}
+      ${agendaHtml}
+      ${rsvpBlockHtml(token)}
+      ${magicLinkHtml}
+      <p>${esc(L.closing)}</p>
+      <p>${esc(L.looking_forward)}</p>
+      <p style="margin-top:22px;margin-bottom:2px">${esc(L.best)}<br>
+      <strong>${esc(FROM_NAME)}</strong><br>
+      ${esc(SENDER_TITLE)}<br>
+      <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
+    </div>`;
+  }
 
   // Build .ics for the calendar attachment
   let attachment = null;
@@ -285,16 +321,41 @@ async function sendOnDemandMeetingInvite({
 
   // Send one message per recipient (each gets a personal "To:") to mirror
   // how inviteService.sendInvites already works for calendar invites.
+  // Each recipient also gets a unique RSVP token, used in the buttons.
   const sent = [];
   const failed = [];
   for (const to of recipients) {
+    // Upsert the RSVP row for this (event, email). Re-using the token if a
+    // row already exists means re-sending an invite reuses the previous link
+    // and preserves any response the recipient already gave.
+    let token = null;
+    try {
+      const lc = String(to).trim().toLowerCase();
+      let row = await MeetingRsvp.findOne({
+        where: { event_id: meeting.id, email: lc }
+      });
+      if (!row) {
+        row = await MeetingRsvp.create({
+          workspace_id: 1,
+          event_id: meeting.id,
+          project_id: project.id,
+          email: lc,
+          token: crypto.randomUUID(),
+          invited_at: new Date()
+        });
+      }
+      token = row.token;
+    } catch (tokErr) {
+      console.error('[onDemandMeetingInvite] RSVP token upsert failed:', to, tokErr.message);
+    }
+
     const msg = {
       to,
       from: { email: ENVELOPE_FROM, name: FROM_NAME },
       replyTo: SIGNATURE_EMAIL,
       subject,
       text,
-      html,
+      html: buildHtmlFor(token),
       ...buildCcBcc(to)
     };
     if (attachment) msg.attachments = [attachment];
