@@ -348,8 +348,10 @@ body {
   font-size: 12px; font-weight: 500;
 }
 .status-planning { background: rgba(37,99,235,0.15); color: var(--accent); }
-.status-active, .status-in_progress { background: rgba(16,185,129,0.15); color: var(--success); }
+.status-active { background: rgba(16,185,129,0.15); color: var(--success); }
+.status-in_progress { background: rgba(45,140,255,0.18); color: #60a5fa; }
 .status-on_hold { background: rgba(245,158,11,0.15); color: var(--warning); }
+.status-review { background: rgba(167,139,250,0.18); color: #a78bfa; }
 .status-completed { background: rgba(59,130,246,0.15); color: var(--info); }
 .status-cancelled, .status-archived { background: rgba(100,116,139,0.15); color: var(--text-muted); }
 .status-overdue { background: rgba(239,68,68,0.15); color: var(--danger); }

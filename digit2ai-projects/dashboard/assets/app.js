@@ -1326,36 +1326,43 @@ async function renderProjects(container) {
   const res = await api('/projects');
   if (!res.success) return;
 
-  // KPIs computed from the loaded project list.
-  // - In Progress: status === 'in_progress' OR 'active'
-  // - Planning:    status === 'planning'
-  // - Dormant:     not completed/cancelled AND updated_at older than 30 days
+  // KPIs computed from the loaded project list. One card per status value
+  // shown in the Status dropdown, plus a synthetic Dormant card (30d+ no
+  // update, excluding completed/cancelled).
   const DORMANT_DAYS = 30;
   const dormantCutoff = Date.now() - DORMANT_DAYS * 86400000;
   const inactiveStatuses = new Set(['completed', 'cancelled']);
-  let kpiInProgress = 0, kpiPlanning = 0, kpiDormant = 0;
+  const STATUS_CARDS = [
+    { key: 'planning',     label: 'Planning',    accent: 'purple', icon: '&#128221;', hint: 'In scoping phase' },
+    { key: 'active',       label: 'Active',      accent: 'green',  icon: '&#9889;',   hint: 'Greenlit, not yet started' },
+    { key: 'in_progress',  label: 'In Progress', accent: 'blue',   icon: '&#128640;', hint: 'Actively moving' },
+    { key: 'on_hold',      label: 'On Hold',     accent: 'yellow', icon: '&#9208;',   hint: 'Paused' },
+    { key: 'review',       label: 'Review',      accent: 'purple', icon: '&#128064;', hint: 'Awaiting review' },
+    { key: 'completed',    label: 'Completed',   accent: 'green',  icon: '&#127937;', hint: 'Shipped' }
+  ];
+  const counts = Object.fromEntries(STATUS_CARDS.map(c => [c.key, 0]));
+  let kpiDormant = 0;
   for (const p of res.data) {
-    if (p.status === 'in_progress' || p.status === 'active') kpiInProgress++;
-    if (p.status === 'planning') kpiPlanning++;
+    if (counts[p.status] !== undefined) counts[p.status]++;
     if (!inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff) {
       kpiDormant++;
     }
   }
+  const statusCardsHtml = STATUS_CARDS.map(c => {
+    const n = counts[c.key];
+    return `
+      <div class="card card-stat card-accent-${c.accent} card-clickable" onclick="projectsKpiFilter('${c.key}')" data-tooltip="Click to filter the table to ${c.label} projects">
+        <div class="kpi-icon">${c.icon}</div>
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value">${n}</div>
+        <div class="stat-change stat-neutral">${c.hint}</div>
+      </div>
+    `;
+  }).join('');
 
   container.innerHTML = `
     <div class="card-grid" style="margin-bottom:20px">
-      <div class="card card-stat card-accent-blue card-clickable" onclick="projectsKpiFilter('in_progress')" data-tooltip="Click to filter the table to In Progress projects">
-        <div class="kpi-icon">&#128640;</div>
-        <div class="stat-label">In Progress</div>
-        <div class="stat-value">${kpiInProgress}</div>
-        <div class="stat-change stat-neutral">${kpiInProgress === 1 ? 'project' : 'projects'} actively moving</div>
-      </div>
-      <div class="card card-stat card-accent-purple card-clickable" onclick="projectsKpiFilter('planning')" data-tooltip="Click to filter the table to Planning projects">
-        <div class="kpi-icon">&#128221;</div>
-        <div class="stat-label">Planning</div>
-        <div class="stat-value">${kpiPlanning}</div>
-        <div class="stat-change stat-neutral">${kpiPlanning === 1 ? 'project' : 'projects'} in scoping phase</div>
-      </div>
+      ${statusCardsHtml}
       <div class="card card-stat card-accent-yellow card-clickable ${kpiDormant > 0 ? 'card-needs-attention' : ''}" onclick="projectsKpiFilter('dormant')" data-tooltip="Projects with no activity in the last ${DORMANT_DAYS} days (excludes completed/cancelled)">
         <div class="kpi-icon">${kpiDormant > 0 ? '&#128564;' : '&#9989;'}</div>
         <div class="stat-label">Dormant</div>
@@ -1372,6 +1379,7 @@ async function renderProjects(container) {
           <option value="active">Active</option>
           <option value="in_progress">In Progress</option>
           <option value="on_hold">On Hold</option>
+          <option value="review">Review</option>
           <option value="completed">Completed</option>
           <option value="dormant">Dormant (30d+ no update)</option>
         </select>
