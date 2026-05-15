@@ -14,13 +14,20 @@ router.get('/', async (req, res) => {
     const weekFromNow = new Date(now.getTime() + 7 * 86400000).toISOString().split('T')[0];
     const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
 
-    const weekFromNowDate = new Date(now.getTime() + 7 * 86400000);
+    // Match the drill-down's window exactly: [startOfToday, startOfToday+7d).
+    // Count CalendarEvents AND Tasks with a due_date in the same window so
+    // the Home KPI matches the "Coming Up This Week" page total (which uses
+    // GET /calendar — a UNION of events + tasks).
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const sevenDaysOut = new Date(startOfToday.getTime() + 7 * 86400000);
     const [
       totalProjects,
       activeProjects,
       overdueProjects,
       projectsDueThisWeek,
-      upcomingEventsCount,
+      upcomingEventsRowCount,
+      upcomingTaskRowCount,
       totalContacts,
       contactsNeedFollowup,
       pendingTasks,
@@ -36,7 +43,8 @@ router.get('/', async (req, res) => {
       Project.count({ where: { workspace_id: ws, archived_at: null, status: { [Op.in]: ['active', 'in_progress'] } } }),
       Project.count({ where: { workspace_id: ws, archived_at: null, due_date: { [Op.lt]: today }, status: { [Op.notIn]: ['completed', 'cancelled'] } } }),
       Project.count({ where: { workspace_id: ws, archived_at: null, due_date: { [Op.between]: [today, weekFromNow] } } }),
-      CalendarEvent.count({ where: { workspace_id: ws, start_time: { [Op.between]: [now, weekFromNowDate] } } }),
+      CalendarEvent.count({ where: { workspace_id: ws, start_time: { [Op.between]: [startOfToday, sevenDaysOut] } } }),
+      Task.count({ where: { workspace_id: ws, due_date: { [Op.between]: [startOfToday, sevenDaysOut] } } }),
       Contact.count({ where: { workspace_id: ws, archived_at: null } }),
       Contact.count({ where: { workspace_id: ws, archived_at: null, next_followup_date: { [Op.lte]: today } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending' } }),
@@ -85,7 +93,7 @@ router.get('/', async (req, res) => {
           active_projects: activeProjects,
           overdue_projects: overdueProjects,
           projects_due_this_week: projectsDueThisWeek,
-          upcoming_events_count: upcomingEventsCount,
+          upcoming_events_count: upcomingEventsRowCount + upcomingTaskRowCount,
           total_contacts: totalContacts,
           contacts_need_followup: contactsNeedFollowup,
           pending_tasks: pendingTasks,
