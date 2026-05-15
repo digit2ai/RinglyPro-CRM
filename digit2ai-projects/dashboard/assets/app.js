@@ -227,7 +227,7 @@ async function renderOverview(container) {
     <div class="welcome-banner" id="welcome-banner">
       <div>
         <h2>Welcome to your Projects Hub!</h2>
-        <p>This is your control center. Click on any card below to see details, use the <strong>+ Create</strong> button to add new items, or click the <strong>&#10024; AI button</strong> in the bottom-right corner to ask questions in plain English.</p>
+        <p>This is your control center. Click on any card below to see details, use the <strong>+ Create</strong> button to add new items, or click the <strong>AI button</strong> in the bottom-right corner to ask questions in plain English.</p>
       </div>
       <button class="welcome-dismiss" onclick="dismissWelcome()" title="Hide this message">&times;</button>
     </div>` : '';
@@ -235,13 +235,13 @@ async function renderOverview(container) {
   // Quick actions bar
   const quickActionsHtml = `
     <div class="quick-actions">
-      <button class="quick-action-btn" onclick="openContactModal()"><span class="qa-icon">&#128100;</span><span class="qa-label">Add Person</span></button>
-      <button class="quick-action-btn" onclick="openProjectModal()"><span class="qa-icon">&#128203;</span><span class="qa-label">New Project</span></button>
-      <button class="quick-action-btn" onclick="openTaskModal()"><span class="qa-icon">&#9989;</span><span class="qa-label">Add To-Do</span></button>
-      <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-icon">&#128197;</span><span class="qa-label">Schedule Event</span></button>
-      <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-icon">&#10024;</span><span class="qa-label">Ask AI</span></button>
-      <button class="quick-action-btn" onclick="openZoomMeeting()"><span class="qa-icon">&#127909;</span><span class="qa-label">Zoom Meeting</span></button>
-      <button class="quick-action-btn" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-icon">&#9889;</span><span class="qa-label">Quick Task</span></button>
+      <button class="quick-action-btn" onclick="openContactModal()"><span class="qa-label">Add Person</span></button>
+      <button class="quick-action-btn" onclick="openProjectModal()"><span class="qa-label">New Project</span></button>
+      <button class="quick-action-btn" onclick="openTaskModal()"><span class="qa-label">Add To-Do</span></button>
+      <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-label">Schedule Event</span></button>
+      <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-label">Ask AI</span></button>
+      <button class="quick-action-btn" onclick="openZoomMeeting()"><span class="qa-label">Zoom Meeting</span></button>
+      <button class="quick-action-btn" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Quick Task</span></button>
     </div>`;
 
   container.innerHTML = `
@@ -250,41 +250,35 @@ async function renderOverview(container) {
 
     <div class="card-grid" style="margin-bottom:24px">
       <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')" data-tooltip="Click to see all active projects">
-        <div class="kpi-icon">&#128203;</div>
         <div class="stat-label">Your Active Projects</div>
         <div class="stat-value">${s.active_projects}</div>
         <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
         <div class="kpi-hint">Click to view details</div>
       </div>
-      <div class="card card-stat card-accent-red card-clickable ${s.overdue_projects > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('overdue_projects')" data-tooltip="${s.overdue_projects > 0 ? 'You have projects past their due date!' : 'Great! Nothing overdue'}">
-        <div class="kpi-icon">${s.overdue_projects > 0 ? '&#9888;' : '&#9989;'}</div>
+      <div class="card card-stat card-accent-red card-clickable ${s.overdue_projects > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('overdue_projects')" data-tooltip="${s.overdue_projects > 0 ? 'You have projects past their due date' : 'Nothing overdue'}">
         <div class="stat-label">${s.overdue_projects > 0 ? 'Overdue - Needs Attention' : 'All Projects On Track'}</div>
         <div class="stat-value">${s.overdue_projects}</div>
-        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Past due date' : 'Everything looks good!'}</div>
+        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Past due date' : 'On track'}</div>
       </div>
       <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')" data-tooltip="Meetings and events scheduled in the next 7 days">
-        <div class="kpi-icon">&#128197;</div>
         <div class="stat-label">Upcoming Events</div>
         <div class="stat-value">${s.upcoming_events_count ?? 0}</div>
         <div class="stat-change stat-neutral">${(s.upcoming_events_count ?? 0) > 0 ? 'Next 7 days' : 'Nothing scheduled'}</div>
       </div>
       <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')" data-tooltip="Your contacts and people">
-        <div class="kpi-icon">&#128101;</div>
         <div class="stat-label">Your People</div>
         <div class="stat-value">${s.total_contacts}</div>
-        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup > 0 ? s.contacts_need_followup + ' need a follow-up' : 'All caught up!'}</div>
+        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup > 0 ? s.contacts_need_followup + ' need a follow-up' : 'All caught up'}</div>
       </div>
       <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('pending_tasks')" data-tooltip="Things you still need to do">
-        <div class="kpi-icon">&#9989;</div>
         <div class="stat-label">Your To-Do Items</div>
         <div class="stat-value">${s.pending_tasks}</div>
-        <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' are overdue!' : 'On schedule'}</div>
+        <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' are overdue' : 'On schedule'}</div>
       </div>
       <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('notifications')" data-tooltip="Messages and alerts for you">
-        <div class="kpi-icon">&#128276;</div>
         <div class="stat-label">Unread Alerts</div>
         <div class="stat-value">${s.unread_notifications}</div>
-        <div class="stat-change stat-neutral">${s.unread_notifications > 0 ? 'Tap to read' : 'All caught up!'}</div>
+        <div class="stat-change stat-neutral">${s.unread_notifications > 0 ? 'Tap to read' : 'All caught up'}</div>
       </div>
     </div>
 
