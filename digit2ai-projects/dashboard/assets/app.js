@@ -375,14 +375,28 @@ async function drillDown(metric, filterValue) {
         break;
       }
       case 'due_this_week': {
-        const res = await api('/projects');
-        const now = new Date();
-        const weekEnd = new Date(now.getTime() + 7 * 86400000);
-        const filtered = (res.data || []).filter(p =>
-          p.due_date && new Date(p.due_date) >= now && new Date(p.due_date) <= weekEnd
+        // Use start-of-today (00:00) as the lower bound so projects due TODAY
+        // are included — matches the backend's date-only count. Using new Date()
+        // (current time, e.g. 3pm) excludes projects whose due_date parses to
+        // 00:00 today, which is why the KPI said 1 but the drill-down showed 0.
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(startOfToday.getTime() + 7 * 86400000);
+
+        // Show projects due this week AND upcoming calendar events this week
+        // in one consolidated view, since the user wants "what is coming up".
+        const [projRes, evRes] = await Promise.all([
+          api('/projects'),
+          api(`/calendar?start=${encodeURIComponent(startOfToday.toISOString())}&end=${encodeURIComponent(weekEnd.toISOString())}`).catch(() => ({ data: [] }))
+        ]);
+        const projects = (projRes.data || []).filter(p =>
+          p.due_date && new Date(p.due_date) >= startOfToday && new Date(p.due_date) <= weekEnd
           && !['completed','cancelled'].includes(p.status)
         );
-        renderDrillTable(container, 'Projects Due This Week', filtered, 'project');
+        const events = (evRes.data || []).filter(e =>
+          e.start_time && new Date(e.start_time) >= startOfToday && new Date(e.start_time) <= weekEnd
+        ).sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        renderComingUpThisWeek(container, projects, events);
         break;
       }
       case 'contacts': {
@@ -488,6 +502,71 @@ function renderDrillTable(container, title, items, type) {
       </div>
     </div>
     ${items.length === 0 ? '<div class="empty-state"><div class="empty-icon">&#128269;</div><h3>Nothing here</h3><p>No items match this view right now.</p><button class="btn btn-ghost" onclick="navigateTo(\'overview\')">Go Back Home</button></div>' : tableHtml}
+  `;
+}
+
+// "Due This Week" drill-down: combined view of projects due in the next 7
+// days + calendar events in the next 7 days. Two stacked sections so the
+// user can see everything coming up at a glance.
+function renderComingUpThisWeek(container, projects, events) {
+  const projWord = projects.length === 1 ? 'project' : 'projects';
+  const evWord = events.length === 1 ? 'event' : 'events';
+
+  const projTable = projects.length > 0
+    ? `<table class="data-table"><thead><tr><th>Project</th><th>Vertical</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Progress</th></tr></thead><tbody>` +
+      projects.map(p => {
+        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
+        return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
+          <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
+          <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
+          <td><span class="status-badge status-${isOverdue ? 'overdue' : p.status}">${isOverdue ? 'OVERDUE' : p.status}</span></td>
+          <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
+          <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
+          <td><div class="progress-bar" style="width:80px"><div class="progress-fill" style="width:${p.progress}%"></div></div> <span style="font-size:11px;color:var(--text-muted)">${p.progress}%</span></td>
+        </tr>`;
+      }).join('') +
+      '</tbody></table>'
+    : '<p style="color:var(--text-muted);font-size:13px;padding:14px 0">No projects due this week.</p>';
+
+  const evTable = events.length > 0
+    ? `<table class="data-table"><thead><tr><th>Title</th><th>Type</th><th>When</th><th>Project</th><th>Links</th></tr></thead><tbody>` +
+      events.map(e => {
+        const onClick = e.source === 'task' && e.task_id ? `showTaskDetail(${e.task_id})` : `showEventDetail(${e.id})`;
+        const projLink = e.project ? `<span style="cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();showProjectDetail(${e.project.id})">${e.project.name}</span>` : '-';
+        const zoomLink = e.zoom_join_url ? `<a href="${e.zoom_join_url}" target="_blank" rel="noopener" style="color:#2D8CFF" onclick="event.stopPropagation()">Join Zoom</a>` : '';
+        return `<tr class="clickable" onclick="${onClick}">
+          <td><strong>${e.title}</strong></td>
+          <td><span class="status-badge status-planning">${e.event_type || 'event'}</span></td>
+          <td>${fmtDateTime(e.start_time)}</td>
+          <td>${projLink}</td>
+          <td>${zoomLink}</td>
+        </tr>`;
+      }).join('') +
+      '</tbody></table>'
+    : '<p style="color:var(--text-muted);font-size:13px;padding:14px 0">No events scheduled this week.</p>';
+
+  const empty = projects.length === 0 && events.length === 0;
+  container.innerHTML = `
+    <div class="section-header" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
+        <h3 style="margin:0">Coming Up This Week</h3>
+        <span class="status-badge status-planning">${projects.length} ${projWord}</span>
+        <span class="status-badge status-planning">${events.length} ${evWord}</span>
+      </div>
+    </div>
+    ${empty
+      ? '<div class="empty-state"><div class="empty-icon">&#128269;</div><h3>Nothing on the calendar</h3><p>No projects are due and no events are scheduled in the next 7 days.</p><button class="btn btn-ghost" onclick="navigateTo(\'overview\')">Go Back Home</button></div>'
+      : `
+        <div style="margin-bottom:24px">
+          <h4 style="margin:0 0 10px;color:var(--text-secondary);font-size:13px;letter-spacing:0.04em;text-transform:uppercase">Projects Due (${projects.length})</h4>
+          ${projTable}
+        </div>
+        <div>
+          <h4 style="margin:0 0 10px;color:var(--text-secondary);font-size:13px;letter-spacing:0.04em;text-transform:uppercase">Upcoming Events (${events.length})</h4>
+          ${evTable}
+        </div>
+      `}
   `;
 }
 
