@@ -603,6 +603,17 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] event reschedule_count notice:', e.message.substring(0, 120));
     }
 
+    // Meeting reminder bookkeeping + invite language. reminder_sent_at is
+    // set by the hourly meetingReminder poller when the day-before email
+    // goes out; language is captured at send-invite time so the reminder
+    // can match the original language (en/es).
+    try {
+      await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ');
+      await sequelize.query("ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS language VARCHAR(8) NOT NULL DEFAULT 'en'");
+    } catch (e) {
+      console.log('[D2AI-Projects] reminder/language notice:', e.message.substring(0, 120));
+    }
+
     // Per-recipient RSVP tracking for on-demand meeting invites. One row per
     // (event, email); the token gates the public click-through endpoint that
     // records the recipient's response (yes / no / maybe).
@@ -867,6 +878,18 @@ app.get('*', (req, res) => {
       }
     } catch (pollErr) {
       console.log('[D2AI-Projects] build poller boot error:', pollErr.message);
+    }
+
+    // Boot the day-before meeting reminder poller (hourly). Picks up project
+    // meetings whose start_time is within the next 24h and reminder_sent_at
+    // is NULL; sends a styled reminder email to every non-declined RSVP.
+    try {
+      const meetingReminder = require('./services/meetingReminder');
+      if (typeof meetingReminder.startPoller === 'function') {
+        meetingReminder.startPoller();
+      }
+    } catch (reminderErr) {
+      console.log('[D2AI-Projects] meeting reminder poller boot error:', reminderErr.message);
     }
   } catch (err) {
     console.error('[D2AI-Projects] Database setup error:', err.message);

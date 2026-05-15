@@ -750,6 +750,14 @@ router.post('/:id/meetings/:eventId/send-invite', async (req, res) => {
       ? `${baseUrl}/projects/share/${project.stakeholder_share_token}`
       : null;
 
+    // Persist the chosen language on the event so the day-before reminder
+    // poller can render its email in the same language as the invite.
+    const lang = language === 'es' ? 'es' : 'en';
+    if (event.language !== lang) {
+      event.language = lang;
+      try { await event.save(); } catch (_) {}
+    }
+
     const result = await onDemandInvite.sendOnDemandMeetingInvite({
       recipients,
       project,
@@ -766,7 +774,7 @@ router.post('/:id/meetings/:eventId/send-invite', async (req, res) => {
       agenda: Array.isArray(agenda) ? agenda.filter(Boolean) : null,
       objective: typeof objective === 'string' ? objective : null,
       magicLink,
-      language: language === 'es' ? 'es' : 'en',
+      language: lang,
       publicBase: baseUrl
     });
 
