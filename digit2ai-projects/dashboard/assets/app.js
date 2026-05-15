@@ -4809,6 +4809,13 @@ async function openScheduleMeetingModal(projectId) {
     defaultTime = '10:00';
   }
   const defaultObjective = 'Discuss the project updates, next steps, and any blockers.';
+  const defaultAgenda = [
+    'Project status & progress since last sync',
+    'Milestones completed and deliverables review',
+    'Next steps & upcoming milestones',
+    'Blockers, risks & open decisions',
+    'Action items, owners & target dates'
+  ].join('\n');
 
   // Existing stakeholders render with a single "Invite" checkbox.
   // New emails (added via the "+ Add participant" input below) render with
@@ -4823,8 +4830,13 @@ async function openScheduleMeetingModal(projectId) {
   openModal(`Schedule Meeting - ${project.name}`, `
     <div class="form-group">
       <label>Objective *</label>
-      <textarea id="m-smobjective" rows="3" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements.">${escHtml(defaultObjective)}</textarea>
-      <small style="color:var(--text-muted)">Pre-filled with a standard agenda; edit if needed. Goes into the email body and the calendar event description.</small>
+      <textarea id="m-smobjective" rows="2" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements.">${escHtml(defaultObjective)}</textarea>
+      <small style="color:var(--text-muted)">Short summary of why we are meeting. Goes near the top of the email.</small>
+    </div>
+    <div class="form-group">
+      <label>Agenda</label>
+      <textarea id="m-smagenda" rows="6" placeholder="One agenda item per line">${escHtml(defaultAgenda)}</textarea>
+      <small style="color:var(--text-muted)">One item per line. Renders as a numbered list in the email and calendar invite. Leave blank to skip the agenda block.</small>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -4865,6 +4877,10 @@ async function openScheduleMeetingModal(projectId) {
     const date = document.getElementById('m-smdate').value;
     const time = document.getElementById('m-smtime').value;
     const durationMin = Math.max(15, Math.min(240, Number(document.getElementById('m-smduration').value) || 30));
+    // Agenda is one item per line; trim and drop empties so blank lines do
+    // not create empty numbered entries in the rendered email.
+    const agendaRaw = document.getElementById('m-smagenda').value;
+    const agendaItems = agendaRaw.split('\n').map(s => s.trim()).filter(Boolean);
     if (!objective || !date || !time) { alert('Objective, day, and time are all required.'); return; }
     const selected = Array.from(document.querySelectorAll('#m-smparts input.m-smp-invite:checked'))
       .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
@@ -4983,6 +4999,7 @@ async function openScheduleMeetingModal(projectId) {
         body: JSON.stringify({
           recipients: selected,
           objective: objective || '',
+          agenda: agendaItems,
           language: 'en'
         })
       });
