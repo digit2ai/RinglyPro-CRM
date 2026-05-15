@@ -4,9 +4,10 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const crypto = require('crypto');
-const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, sequelize } = require('../models');
+const { Project, Contact, Company, Vertical, ProjectContact, ProjectMilestone, ProjectUpdate, ActivityLog, StaffMember, ProjectQuestion, QuestionResponse, IntakeBatch, CompanyAccessToken, CalendarEvent, sequelize } = require('../models');
 const { logActivity } = require('../services/activityService');
 const planGenerator = require('../../../chamber-template/lib/plan-generator');
+const onDemandInvite = require('../services/onDemandMeetingInvite');
 
 // =====================================================
 // STAKEHOLDER SHARE (magic-link, no account required)
@@ -711,6 +712,70 @@ router.post('/:id/recompute-short-name', async (req, res) => {
     res.json({ success: true, data: project });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// POST /api/v1/projects/:id/meetings/:eventId/send-invite
+// Sends the styled HTML + .ics meeting invite (same look as the auto-
+// scheduled kickoff email) to a list of recipients. Used by the Project
+// Dashboard's Schedule Meeting modal — replaces the legacy mailto: flow.
+//
+// Body: {
+//   recipients: ['a@x.com', ...],   // required
+//   objective:  '...',              // optional intro line
+//   agenda:     ['item 1', ...],    // optional, falls back to default 5-item agenda
+//   language:   'en' | 'es'         // optional, default 'en'
+// }
+router.post('/:id/meetings/:eventId/send-invite', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const event = await CalendarEvent.findOne({
+      where: { id: parseInt(req.params.eventId, 10), workspace_id: 1, project_id: project.id }
+    });
+    if (!event) return res.status(404).json({ success: false, error: 'Meeting event not found on this project' });
+
+    const { recipients, objective, agenda, language } = req.body || {};
+    if (!Array.isArray(recipients) || !recipients.length) {
+      return res.status(400).json({ success: false, error: 'recipients required' });
+    }
+
+    if (!onDemandInvite.isConfigured()) {
+      return res.status(503).json({ success: false, error: 'SendGrid not configured (SENDGRID_API_KEY missing)' });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const magicLink = project.stakeholder_share_token
+      ? `${baseUrl}/projects/share/${project.stakeholder_share_token}`
+      : null;
+
+    const result = await onDemandInvite.sendOnDemandMeetingInvite({
+      recipients,
+      project,
+      meeting: {
+        id: event.id,
+        title: event.title,
+        start_time: event.start_time,
+        end_time: event.end_time,
+        zoom_join_url: event.zoom_join_url,
+        zoom_password: event.zoom_password,
+        location: event.location,
+        description: event.description
+      },
+      agenda: Array.isArray(agenda) ? agenda.filter(Boolean) : null,
+      objective: typeof objective === 'string' ? objective : null,
+      magicLink,
+      language: language === 'es' ? 'es' : 'en'
+    });
+
+    await logActivity(null, 'meeting_invite_sent', 'project', project.id,
+      `${project.name} — event #${event.id} sent to ${result.sent.length}/${recipients.length}`);
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('[D2AI] meeting send-invite error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

@@ -4909,16 +4909,13 @@ async function openScheduleMeetingModal(projectId) {
     saveBtn.textContent = 'Creating Zoom + event...';
 
     // Ensure the project has a magic-link share token; mint one if missing.
-    let shareToken = project.stakeholder_share_token;
-    if (!shareToken) {
+    // The backend reads project.stakeholder_share_token directly when
+    // composing the invite email, so we don't need the URL locally.
+    if (!project.stakeholder_share_token) {
       try {
-        const tokResp = await api(`/projects/${projectId}/share-token`, { method: 'POST', body: JSON.stringify({}) });
-        if (tokResp && tokResp.success) {
-          shareToken = (tokResp.share_url || '').split('/').pop() || null;
-        }
+        await api(`/projects/${projectId}/share-token`, { method: 'POST', body: JSON.stringify({}) });
       } catch (_) {}
     }
-    const magicLink = shareToken ? `${location.origin}/projects/share/${shareToken}` : null;
 
     // Merge any "Add as stakeholder" emails into the project's team_members.
     // Existing emails are filtered out so we don't create duplicates. The
@@ -4945,10 +4942,8 @@ async function openScheduleMeetingModal(projectId) {
       }
     }
 
-    // Create the calendar event with Zoom enabled. invite_emails is null on
-    // purpose — we open mailto: instead so the user sends from their own
-    // address; SendGrid would send from info@digit2ai.com.
-    let zoomJoinUrl = null;
+    // Create the calendar event with Zoom enabled. invite_emails is null —
+    // the styled HTML invite is sent server-side after via /meetings/:id/send-invite.
     let zoomWarning = null;
     let eventId = null;
     try {
@@ -4964,7 +4959,6 @@ async function openScheduleMeetingModal(projectId) {
       }) });
       if (evResp && evResp.success) {
         eventId = evResp.data && evResp.data.id;
-        zoomJoinUrl = evResp.data && evResp.data.zoom_join_url;
         zoomWarning = evResp.zoom_warning || null;
       } else {
         alert('Could not create calendar event: ' + (evResp && evResp.error || 'unknown'));
@@ -4979,81 +4973,48 @@ async function openScheduleMeetingModal(projectId) {
       return;
     }
 
-    // Build the prefilled email — formatted as a professional agenda
-    const fmtWhen = startLocal.toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      + ` (${durationMin} min)`;
-    const subject = `Meeting - ${project.name} - ${startLocal.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
-
-    // Project summary: prefer description; fall back to business_requirements if empty.
-    // Truncate to ~500 chars so the mailto URL stays within typical client limits.
-    const rawSummary = (project.description || project.business_requirements || '').trim();
-    const projectSummary = rawSummary.length > 500
-      ? rawSummary.slice(0, 500).replace(/\s+\S*$/, '') + '...'
-      : rawSummary;
-
-    const bodyLines = [
-      `Hi,`,
-      ``,
-      `You're invited to a working meeting for "${project.name}".`,
-      ``,
-    ];
-
-    if (projectSummary) {
-      bodyLines.push(
-        `PROJECT SUMMARY`,
-        `---------------`,
-        projectSummary,
-        ``
-      );
+    // Send the styled HTML + .ics invite via SendGrid using the same
+    // template as the kickoff email. Replaces the legacy mailto: flow.
+    saveBtn.textContent = 'Sending invites...';
+    let inviteResult = null;
+    try {
+      const sendResp = await api(`/projects/${projectId}/meetings/${eventId}/send-invite`, {
+        method: 'POST',
+        body: JSON.stringify({
+          recipients: selected,
+          objective: objective || '',
+          language: 'en'
+        })
+      });
+      if (sendResp && sendResp.success) {
+        inviteResult = sendResp.data;
+      } else if (sendResp && sendResp.error) {
+        console.warn('[Schedule Meeting] send-invite returned error:', sendResp.error);
+      }
+    } catch (sendErr) {
+      console.error('[Schedule Meeting] send-invite call failed:', sendErr.message);
     }
 
-    bodyLines.push(
-      `MEETING DETAILS`,
-      `---------------`,
-      `When:         ${fmtWhen}`,
-      `Participants: ${selected.join(', ') || '(none)'}`,
-      ``,
-      `AGENDA`,
-      `------`,
-      `  1. Project status & progress since last sync`,
-      `  2. Milestones completed and deliverables review`,
-      `  3. Next steps & upcoming milestones`,
-      `  4. Blockers, risks & open decisions`,
-      `  5. Action items, owners & target dates`,
-      ``,
-      `LINKS`,
-      `-----`,
-      zoomJoinUrl ? `Join Zoom:      ${zoomJoinUrl}` : `Zoom:           (not configured — meeting created without Zoom link)`,
-      ``,
-      magicLink ? `Project access: ${magicLink}` : `Project access: (no magic link configured)`,
-      magicLink ? `(View project details, milestones, and request a reschedule)` : ``,
-      ``,
-      `Please come prepared with status updates on your area of responsibility.`,
-      `Reply if the time doesn't work and we'll find another slot.`,
-      ``,
-      `Thanks,`
-    );
-    const mailto = `mailto:${encodeURIComponent(selected.join(','))}`
-      + `?subject=${encodeURIComponent(subject)}`
-      + `&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-
     closeModal();
-    let toastMsg = 'Meeting created. Opening your email client...';
-    if (zoomWarning) toastMsg = `Meeting created. Zoom warning: ${zoomWarning}. Opening email...`;
+    let toastMsg;
+    if (inviteResult) {
+      const sentCount = (inviteResult.sent || []).length;
+      const failedCount = (inviteResult.failed || []).length;
+      toastMsg = `Meeting scheduled. Invites sent to ${sentCount} participant${sentCount === 1 ? '' : 's'}`;
+      if (failedCount) toastMsg += ` (${failedCount} failed)`;
+      toastMsg += '.';
+    } else {
+      toastMsg = 'Meeting scheduled. Invite email could not be sent — check SendGrid config.';
+    }
+    if (zoomWarning) toastMsg += ` Zoom warning: ${zoomWarning}.`;
     if (stakeholdersAdded > 0) {
       toastMsg += ` Added ${stakeholdersAdded} new stakeholder${stakeholdersAdded === 1 ? '' : 's'} to the project.`;
     }
     if (typeof showToast === 'function') {
-      try { showToast(toastMsg, 'success'); } catch (_) {}
+      try { showToast(toastMsg, inviteResult ? 'success' : 'error'); } catch (_) {}
+    } else {
+      alert(toastMsg);
     }
-    // Trigger the mailto via a transient anchor (more reliable than location.href in some browsers)
-    const a = document.createElement('a');
-    a.href = mailto;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
     // Refresh the project detail so the new event shows up under Linked Events
     showProjectDetail(projectId);
   });
