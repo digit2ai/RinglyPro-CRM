@@ -262,11 +262,11 @@ async function renderOverview(container) {
         <div class="stat-value">${s.overdue_projects}</div>
         <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Past due date' : 'Everything looks good!'}</div>
       </div>
-      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')" data-tooltip="Projects that need to be finished this week">
+      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')" data-tooltip="Meetings and events scheduled in the next 7 days">
         <div class="kpi-icon">&#128197;</div>
-        <div class="stat-label">Due This Week</div>
-        <div class="stat-value">${s.projects_due_this_week}</div>
-        <div class="stat-change stat-neutral">${s.projects_due_this_week > 0 ? 'Coming up soon' : 'Nothing urgent'}</div>
+        <div class="stat-label">Upcoming Events</div>
+        <div class="stat-value">${s.upcoming_events_count ?? 0}</div>
+        <div class="stat-change stat-neutral">${(s.upcoming_events_count ?? 0) > 0 ? 'Next 7 days' : 'Nothing scheduled'}</div>
       </div>
       <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')" data-tooltip="Your contacts and people">
         <div class="kpi-icon">&#128101;</div>

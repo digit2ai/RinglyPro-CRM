@@ -14,11 +14,13 @@ router.get('/', async (req, res) => {
     const weekFromNow = new Date(now.getTime() + 7 * 86400000).toISOString().split('T')[0];
     const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
 
+    const weekFromNowDate = new Date(now.getTime() + 7 * 86400000);
     const [
       totalProjects,
       activeProjects,
       overdueProjects,
       projectsDueThisWeek,
+      upcomingEventsCount,
       totalContacts,
       contactsNeedFollowup,
       pendingTasks,
@@ -34,6 +36,7 @@ router.get('/', async (req, res) => {
       Project.count({ where: { workspace_id: ws, archived_at: null, status: { [Op.in]: ['active', 'in_progress'] } } }),
       Project.count({ where: { workspace_id: ws, archived_at: null, due_date: { [Op.lt]: today }, status: { [Op.notIn]: ['completed', 'cancelled'] } } }),
       Project.count({ where: { workspace_id: ws, archived_at: null, due_date: { [Op.between]: [today, weekFromNow] } } }),
+      CalendarEvent.count({ where: { workspace_id: ws, start_time: { [Op.between]: [now, weekFromNowDate] } } }),
       Contact.count({ where: { workspace_id: ws, archived_at: null } }),
       Contact.count({ where: { workspace_id: ws, archived_at: null, next_followup_date: { [Op.lte]: today } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending' } }),
@@ -82,6 +85,7 @@ router.get('/', async (req, res) => {
           active_projects: activeProjects,
           overdue_projects: overdueProjects,
           projects_due_this_week: projectsDueThisWeek,
+          upcoming_events_count: upcomingEventsCount,
           total_contacts: totalContacts,
           contacts_need_followup: contactsNeedFollowup,
           pending_tasks: pendingTasks,
