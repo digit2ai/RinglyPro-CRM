@@ -4819,9 +4819,6 @@ async function openScheduleMeetingModal(projectId) {
   // Existing stakeholders render with a single "Invite" checkbox.
   // New emails (added via the "+ Add participant" input below) render with
   // TWO checkboxes: "Invite to meeting" + "Add as stakeholder".
-  // Existing stakeholders render with a single "Invite" checkbox.
-  // New emails (added via the "+ Add participant" input below) render with
-  // TWO checkboxes: "Invite to meeting" + "Add as stakeholder".
   const partRows = participants.map(p => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px;cursor:pointer" data-existing="1">
       <input type="checkbox" class="m-smp-invite" data-email="${escHtml(p.email)}" ${p.checked ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer">
@@ -4848,6 +4845,11 @@ async function openScheduleMeetingModal(projectId) {
         <label>Duration (min)</label>
         <input type="number" id="m-smduration" value="30" min="15" max="240" step="15">
       </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:-8px;margin-bottom:8px;padding:8px 12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:12px">
+      <span style="color:var(--success);font-weight:600">Auto-selected: next available slot</span>
+      <span style="color:var(--text-muted);flex:1">No conflict with existing meetings · Mon-Fri 9am-5pm Bogota</span>
+      <button type="button" class="btn btn-ghost btn-sm" style="padding:3px 10px;font-size:11px" onclick="findNextScheduleMeetingSlot()">Next free slot</button>
     </div>
     <div class="form-group">
       <label>Participants <span style="color:var(--text-muted);font-weight:normal">(from project stakeholders)</span></label>
@@ -4885,6 +4887,31 @@ async function openScheduleMeetingModal(projectId) {
 
     saveBtn.disabled = true;
     const origText = saveBtn.textContent;
+    saveBtn.textContent = 'Checking availability...';
+
+    // Final conflict recheck — even if the user edited the auto-selected
+    // time manually or another booking landed between modal-open and Save.
+    try {
+      const winStart = new Date(startLocal.getTime() - 60 * 60000).toISOString();
+      const winEnd   = new Date(endLocal.getTime() + 60 * 60000).toISOString();
+      const conflictRes = await api(`/calendar?start=${encodeURIComponent(winStart)}&end=${encodeURIComponent(winEnd)}`);
+      const overlap = (conflictRes.data || []).find(ev => {
+        if (!ev.start_time || ev.source === 'task') return false;
+        const evStart = new Date(ev.start_time).getTime();
+        const evEnd = new Date(ev.end_time || ev.start_time).getTime();
+        return startLocal.getTime() < evEnd && endLocal.getTime() > evStart;
+      });
+      if (overlap) {
+        const proceed = confirm(
+          `Conflict: "${overlap.title}" already runs at this time (${new Date(overlap.start_time).toLocaleString()}).\n\nClick OK to book anyway, or Cancel to pick another slot.`
+        );
+        if (!proceed) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = origText;
+          return;
+        }
+      }
+    } catch (_) { /* soft fail — proceed with booking */ }
     saveBtn.textContent = 'Creating Zoom + event...';
 
     // Ensure the project has a magic-link share token; mint one if missing.
@@ -5087,6 +5114,29 @@ function addScheduleMeetingParticipant() {
   }
 }
 window.addScheduleMeetingParticipant = addScheduleMeetingParticipant;
+
+// Re-fetch the next conflict-free slot and update the Day/Time inputs.
+// Used by the "Next free slot" button next to the auto-selected status.
+async function findNextScheduleMeetingSlot() {
+  const dateEl = document.getElementById('m-smdate');
+  const timeEl = document.getElementById('m-smtime');
+  const durEl = document.getElementById('m-smduration');
+  if (!dateEl || !timeEl) return;
+  const duration = Math.max(15, Math.min(240, Number(durEl && durEl.value) || 30));
+  try {
+    const avail = await api(`/calendar/next-available?duration=${duration}`);
+    if (avail && avail.success && avail.data && avail.data.start_time) {
+      const start = new Date(avail.data.start_time);
+      dateEl.value = start.toISOString().slice(0, 10);
+      timeEl.value = start.toTimeString().slice(0, 5);
+    } else {
+      alert('Could not find a free slot. Please pick a time manually.');
+    }
+  } catch (e) {
+    alert('Could not check availability: ' + e.message);
+  }
+}
+window.findNextScheduleMeetingSlot = findNextScheduleMeetingSlot;
 
 function openMilestoneModal(projectId) {
   openModal('Add Milestone', `
