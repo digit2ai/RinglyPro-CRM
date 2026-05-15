@@ -2985,7 +2985,7 @@ async function showProjectDetail(id) {
           ${p.code ? `<p style="color:var(--text-muted);font-size:13px">${p.code}</p>` : ''}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="openScheduleMeetingModal(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and opens a prefilled email." style="color:#2D8CFF;border-color:#2D8CFF">&#128197; Schedule Meeting</button>
+          <button class="btn btn-ghost btn-sm" onclick="chooseScheduleMeetingLanguage(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and sends a styled HTML email." style="color:#2D8CFF;border-color:#2D8CFF">Schedule Meeting</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           <button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>
@@ -4759,14 +4759,155 @@ function openEventModal() {
 // Creates a calendar event with a Zoom meeting, ensures a magic-link share
 // token exists, then opens a prefilled mailto: so the user can send the
 // invite manually from their own email client (no SendGrid roundtrip).
-async function openScheduleMeetingModal(projectId) {
+// Lightweight language picker shown BEFORE the Schedule Meeting modal.
+// User clicks English or Espanol; we then open the modal with all
+// defaults + labels localized and pass the choice through to the
+// send-invite endpoint so the email is generated in the right language.
+function chooseScheduleMeetingLanguage(projectId) {
+  openModal('Schedule Meeting — choose language', `
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:18px">Pick the language for the meeting invite. The modal labels, default agenda, and the email body all switch to your selection.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="btn btn-ghost" style="padding:24px;font-size:16px;font-weight:600;flex-direction:column" onclick="closeModal();openScheduleMeetingModal(${projectId},'en')">
+        <div style="font-size:20px;margin-bottom:4px">English</div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:400">EN</div>
+      </button>
+      <button class="btn btn-ghost" style="padding:24px;font-size:16px;font-weight:600;flex-direction:column" onclick="closeModal();openScheduleMeetingModal(${projectId},'es')">
+        <div style="font-size:20px;margin-bottom:4px">Espa&ntilde;ol</div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:400">ES</div>
+      </button>
+    </div>
+  `);
+  // Hide the standard Save button — choice is made by clicking either tile.
+  setTimeout(() => {
+    const saveBtn = document.getElementById('modal-save');
+    if (saveBtn) saveBtn.style.display = 'none';
+  }, 0);
+}
+window.chooseScheduleMeetingLanguage = chooseScheduleMeetingLanguage;
+
+async function openScheduleMeetingModal(projectId, language) {
+  const LANG = language === 'es' ? 'es' : 'en';
+  const isEs = LANG === 'es';
+  const T = isEs ? {
+    title: 'Agendar reunión',
+    objective: 'Objetivo',
+    objectiveHint: 'Resumen breve del motivo de la reunión. Va cerca del inicio del correo.',
+    objectivePh: 'p. ej., Revisar el plan de negocio generado por IA y capturar los requerimientos de negocio.',
+    day: 'Día',
+    time: 'Hora',
+    duration: 'Duración (min)',
+    agenda: 'Agenda',
+    agendaHint: 'Negrita, cursiva y listas. Se muestra como lista numerada en el correo y la invitación de calendario. Deja el cuadro vacío para omitir la agenda.',
+    boldT: 'Negrita', italicT: 'Cursiva', underlineT: 'Subrayado',
+    numList: '1. Lista', bulList: '• Lista', clear: 'Limpiar',
+    participants: 'Participantes',
+    participantsHint: 'desde los stakeholders del proyecto',
+    participantsFoot: 'Desmarca a quien no quieras invitar. Los emails nuevos reciben un checkbox extra "Agregar como stakeholder" — déjalo marcado para guardarlos en la lista permanente del proyecto.',
+    addPh: 'agregar otro email (o lista separada por comas)',
+    add: '+ Agregar',
+    autoSelected: 'Auto-seleccionado: próximo horario libre',
+    noConflict: 'Sin conflicto con reuniones existentes · Lun-Vie 9am-5pm Bogotá',
+    nextFree: 'Próximo libre',
+    onSave: 'Al guardar: se crea una reunión de Zoom en info@digit2ai.com, se guarda el evento de calendario en este proyecto y se envía un correo HTML con el enlace de Zoom, el enlace mágico del proyecto, el objetivo, fecha/hora y participantes.',
+    requiredErr: 'Objetivo, día y hora son obligatorios.',
+    invalidErr: 'Fecha u hora inválida.',
+    pastConfirm: 'Esa hora ya pasó. ¿Agendar de todos modos?',
+    conflictHint: 'Conflicto: "%s" ya está agendado a esa hora (%t).\n\nClic en OK para agendar igual, o Cancelar para elegir otro horario.',
+    movedTo: 'Mover esta reunión a',
+    eventErr: 'No se pudo crear el evento: ',
+    saving: 'Verificando disponibilidad...',
+    creating: 'Creando Zoom + evento...',
+    sending: 'Enviando invitaciones...',
+    sentOk: 'Reunión agendada. Invitaciones enviadas a %n participante%s',
+    sentFail: '(%n fallaron)',
+    sendgridErr: 'Reunión agendada. No se pudo enviar el correo — revisa la configuración de SendGrid.',
+    addedStake: 'Se agregaron %n stakeholder%s nuevos al proyecto.',
+    zoomWarn: 'Aviso de Zoom: ',
+    defaultObjective: 'Discutir el estado del proyecto, próximos pasos y bloqueos.',
+    defaultAgendaItems: [
+      'Estado y avances del proyecto desde la última sincronización',
+      'Hitos completados y revisión de entregables',
+      'Próximos pasos e hitos por venir',
+      'Bloqueos, riesgos y decisiones pendientes',
+      'Acciones a tomar, responsables y fechas objetivo'
+    ],
+    cancel: 'Cancelar',
+    save: 'Guardar',
+    requestor: 'solicitante',
+    stakeholder: 'stakeholder',
+    newTag: '(nuevo)',
+    addAsStake: 'Agregar como stakeholder',
+    remove: 'Quitar',
+    noStake: 'Este proyecto aún no tiene stakeholders — usa el cuadro de abajo para agregar participantes a esta reunión.',
+    noStakeConfirm: 'Este proyecto aún no tiene stakeholders. ¿Continuar de todos modos?',
+    couldNotLoad: 'No se pudo cargar el proyecto.',
+    noNewEmails: 'No se encontraron emails nuevos válidos. Verifica el formato y que no estén ya en la lista.'
+  } : {
+    title: 'Schedule Meeting',
+    objective: 'Objective',
+    objectiveHint: 'Short summary of why we are meeting. Goes near the top of the email.',
+    objectivePh: 'e.g., Walk through the AI-generated business plan and capture detailed business requirements.',
+    day: 'Day',
+    time: 'Time',
+    duration: 'Duration (min)',
+    agenda: 'Agenda',
+    agendaHint: 'Bold, italic, lists supported. Renders in the email and calendar invite as a formatted list. Clear the box to skip the agenda block.',
+    boldT: 'Bold', italicT: 'Italic', underlineT: 'Underline',
+    numList: '1. List', bulList: '• List', clear: 'Clear',
+    participants: 'Participants',
+    participantsHint: 'from project stakeholders',
+    participantsFoot: 'Uncheck anyone you don\'t want to invite. New emails get an extra "Add as stakeholder" checkbox — leave it on to save them to the project\'s permanent stakeholders list.',
+    addPh: 'add another email (or comma-separated list)',
+    add: '+ Add',
+    autoSelected: 'Auto-selected: next available slot',
+    noConflict: 'No conflict with existing meetings · Mon-Fri 9am-5pm Bogota',
+    nextFree: 'Next free slot',
+    onSave: 'On Save: a Zoom meeting is created on info@digit2ai.com, a calendar event is saved on this project, and a styled HTML email is sent containing the Zoom link, the project magic link, the objective, day/time, and participants.',
+    requiredErr: 'Objective, day, and time are all required.',
+    invalidErr: 'Invalid date/time.',
+    pastConfirm: 'That time is in the past. Schedule anyway?',
+    conflictHint: 'Conflict: "%s" already runs at this time (%t).\n\nClick OK to book anyway, or Cancel to pick another slot.',
+    movedTo: 'Move this meeting to',
+    eventErr: 'Could not create event: ',
+    saving: 'Checking availability...',
+    creating: 'Creating Zoom + event...',
+    sending: 'Sending invites...',
+    sentOk: 'Meeting scheduled. Invites sent to %n participant%s',
+    sentFail: '(%n failed)',
+    sendgridErr: 'Meeting scheduled. Invite email could not be sent — check SendGrid config.',
+    addedStake: 'Added %n new stakeholder%s to the project.',
+    zoomWarn: 'Zoom warning: ',
+    defaultObjective: 'Discuss the project updates, next steps, and any blockers.',
+    defaultAgendaItems: [
+      'Project status &amp; progress since last sync',
+      'Milestones completed and deliverables review',
+      'Next steps &amp; upcoming milestones',
+      'Blockers, risks &amp; open decisions',
+      'Action items, owners &amp; target dates'
+    ],
+    cancel: 'Cancel',
+    save: 'Save',
+    requestor: 'requestor',
+    stakeholder: 'stakeholder',
+    newTag: '(new)',
+    addAsStake: 'Add as stakeholder',
+    remove: 'Remove',
+    noStake: 'No project stakeholders yet — use the input below to add participants for this meeting.',
+    noStakeConfirm: 'No stakeholders are listed on this project yet. Continue anyway?',
+    couldNotLoad: 'Could not load project.',
+    noNewEmails: 'No valid new emails found. Check format and that they are not already on the list.'
+  };
+  // Stash translations on window so the helpers (addScheduleMeetingParticipant,
+  // findNextScheduleMeetingSlot) can show the right strings.
+  window._scheduleMeetingT = T;
+  window._scheduleMeetingLang = LANG;
   // Pull project so we have the latest team_members + submitter + share token
   let project = null;
   try {
     const r = await api(`/projects/${projectId}`);
     project = r && r.data ? r.data : null;
   } catch (_) {}
-  if (!project) { alert('Could not load project.'); return; }
+  if (!project) { alert(T.couldNotLoad); return; }
 
   // Build the candidate participant list. The submitter is always included.
   // team_members can be strings or objects { email, role }.
@@ -4779,14 +4920,14 @@ async function openScheduleMeetingModal(projectId) {
     seen.add(e);
     participants.push({ email: e, label: label || e, checked: defaultChecked });
   };
-  if (project.submitter_email) pushEmail(project.submitter_email, `${project.submitter_name || project.submitter_email} (requestor)`, true);
+  if (project.submitter_email) pushEmail(project.submitter_email, `${project.submitter_name || project.submitter_email} (${T.requestor})`, true);
   for (const m of teamList) {
     if (typeof m === 'string') pushEmail(m, m, true);
-    else if (m && m.email) pushEmail(m.email, m.role ? `${m.email} (${m.role})` : m.email, true);
+    else if (m && m.email) pushEmail(m.email, m.role ? `${m.email} (${m.role})` : `${m.email} (${T.stakeholder})`, true);
   }
 
   if (!participants.length) {
-    if (!confirm('No stakeholders are listed on this project yet. Continue anyway?')) return;
+    if (!confirm(T.noStakeConfirm)) return;
   }
 
   // Ask the server for the next conflict-free 30-min slot in workspace
@@ -4808,14 +4949,8 @@ async function openScheduleMeetingModal(projectId) {
     defaultDate = tomorrow.toISOString().slice(0, 10);
     defaultTime = '10:00';
   }
-  const defaultObjective = 'Discuss the project updates, next steps, and any blockers.';
-  const defaultAgendaItems = [
-    'Project status &amp; progress since last sync',
-    'Milestones completed and deliverables review',
-    'Next steps &amp; upcoming milestones',
-    'Blockers, risks &amp; open decisions',
-    'Action items, owners &amp; target dates'
-  ];
+  const defaultObjective = T.defaultObjective;
+  const defaultAgendaItems = T.defaultAgendaItems;
   // Rich-text default — rendered into the contenteditable as a real <ol>
   const defaultAgendaHtml = '<ol>' + defaultAgendaItems.map(t => `<li>${t}</li>`).join('') + '</ol>';
 
@@ -4827,61 +4962,61 @@ async function openScheduleMeetingModal(projectId) {
       <input type="checkbox" class="m-smp-invite" data-email="${escHtml(p.email)}" ${p.checked ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer">
       <span style="color:var(--text-primary);flex:1;word-break:break-all">${escHtml(p.label)}</span>
     </label>
-  `).join('') || '<p id="m-smparts-empty" style="font-size:12px;color:var(--text-muted);font-style:italic">No project stakeholders yet — use the input below to add participants for this meeting.</p>';
+  `).join('') || `<p id="m-smparts-empty" style="font-size:12px;color:var(--text-muted);font-style:italic">${escHtml(T.noStake)}</p>`;
 
-  openModal(`Schedule Meeting - ${project.name}`, `
+  openModal(`${T.title} - ${project.name}`, `
     <div class="form-group">
-      <label>Objective *</label>
-      <textarea id="m-smobjective" rows="2" placeholder="e.g., Walk through the AI-generated business plan and capture detailed business requirements.">${escHtml(defaultObjective)}</textarea>
-      <small style="color:var(--text-muted)">Short summary of why we are meeting. Goes near the top of the email.</small>
+      <label>${escHtml(T.objective)} *</label>
+      <textarea id="m-smobjective" rows="2" placeholder="${escHtml(T.objectivePh)}">${escHtml(defaultObjective)}</textarea>
+      <small style="color:var(--text-muted)">${escHtml(T.objectiveHint)}</small>
     </div>
     <div class="form-group">
-      <label>Agenda</label>
+      <label>${escHtml(T.agenda)}</label>
       <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:rgba(56,189,248,0.05);border:1px solid var(--border);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0">
-        <button type="button" onclick="agendaCmd('bold')" title="Bold" style="font-weight:700;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">B</button>
-        <button type="button" onclick="agendaCmd('italic')" title="Italic" style="font-style:italic;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">I</button>
-        <button type="button" onclick="agendaCmd('underline')" title="Underline" style="text-decoration:underline;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">U</button>
+        <button type="button" onclick="agendaCmd('bold')" title="${escHtml(T.boldT)}" style="font-weight:700;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">B</button>
+        <button type="button" onclick="agendaCmd('italic')" title="${escHtml(T.italicT)}" style="font-style:italic;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">I</button>
+        <button type="button" onclick="agendaCmd('underline')" title="${escHtml(T.underlineT)}" style="text-decoration:underline;min-width:30px;padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">U</button>
         <span style="width:1px;background:var(--border);margin:0 4px"></span>
-        <button type="button" onclick="agendaCmd('insertOrderedList')" title="Numbered list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">1. List</button>
-        <button type="button" onclick="agendaCmd('insertUnorderedList')" title="Bulleted list" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">&bull; List</button>
+        <button type="button" onclick="agendaCmd('insertOrderedList')" title="${escHtml(T.numList)}" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">${escHtml(T.numList)}</button>
+        <button type="button" onclick="agendaCmd('insertUnorderedList')" title="${escHtml(T.bulList)}" style="padding:4px 8px;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">${escHtml(T.bulList)}</button>
         <span style="width:1px;background:var(--border);margin:0 4px"></span>
-        <button type="button" onclick="agendaCmd('removeFormat')" title="Clear formatting" style="padding:4px 8px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">Clear</button>
+        <button type="button" onclick="agendaCmd('removeFormat')" title="${escHtml(T.clear)}" style="padding:4px 8px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px">${escHtml(T.clear)}</button>
       </div>
       <div id="m-smagenda" contenteditable="true" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:140px;max-height:280px;overflow-y:auto;outline:none">${defaultAgendaHtml}</div>
-      <small style="color:var(--text-muted)">Bold, italic, lists supported. Renders in the email and calendar invite as a formatted list. Clear the box to skip the agenda block.</small>
+      <small style="color:var(--text-muted)">${escHtml(T.agendaHint)}</small>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Day *</label>
+        <label>${escHtml(T.day)} *</label>
         <input type="date" id="m-smdate" value="${defaultDate}">
       </div>
       <div class="form-group">
-        <label>Time *</label>
+        <label>${escHtml(T.time)} *</label>
         <input type="time" id="m-smtime" value="${defaultTime}">
       </div>
       <div class="form-group">
-        <label>Duration (min)</label>
+        <label>${escHtml(T.duration)}</label>
         <input type="number" id="m-smduration" value="30" min="15" max="240" step="15">
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:-8px;margin-bottom:8px;padding:8px 12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:6px;font-size:12px">
-      <span style="color:var(--success);font-weight:600">Auto-selected: next available slot</span>
-      <span style="color:var(--text-muted);flex:1">No conflict with existing meetings · Mon-Fri 9am-5pm Bogota</span>
-      <button type="button" class="btn btn-ghost btn-sm" style="padding:3px 10px;font-size:11px" onclick="findNextScheduleMeetingSlot()">Next free slot</button>
+      <span style="color:var(--success);font-weight:600">${escHtml(T.autoSelected)}</span>
+      <span style="color:var(--text-muted);flex:1">${escHtml(T.noConflict)}</span>
+      <button type="button" class="btn btn-ghost btn-sm" style="padding:3px 10px;font-size:11px" onclick="findNextScheduleMeetingSlot()">${escHtml(T.nextFree)}</button>
     </div>
     <div class="form-group">
-      <label>Participants <span style="color:var(--text-muted);font-weight:normal">(from project stakeholders)</span></label>
+      <label>${escHtml(T.participants)} <span style="color:var(--text-muted);font-weight:normal">(${escHtml(T.participantsHint)})</span></label>
       <div id="m-smparts" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;padding:4px">
         ${partRows}
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
-        <input type="email" id="m-smp-newemail" placeholder="add another email (or comma-separated list)" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:13px">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="addScheduleMeetingParticipant()" style="padding:7px 14px">+ Add</button>
+        <input type="email" id="m-smp-newemail" placeholder="${escHtml(T.addPh)}" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:13px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addScheduleMeetingParticipant()" style="padding:7px 14px">${escHtml(T.add)}</button>
       </div>
-      <small style="color:var(--text-muted)">Uncheck anyone you don't want to invite. New emails get an extra "Add as stakeholder" checkbox — leave it on to save them to the project's permanent stakeholders list.</small>
+      <small style="color:var(--text-muted)">${escHtml(T.participantsFoot)}</small>
     </div>
     <div class="form-group" style="background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.3);border-radius:8px;padding:10px 12px">
-      <small style="color:var(--text-muted)">On Save: a Zoom meeting is created on info@digit2ai.com, a calendar event is saved on this project, and your email client opens with a prefilled message containing the Zoom link, the project magic link, the objective, day/time, and participants.</small>
+      <small style="color:var(--text-muted)">${escHtml(T.onSave)}</small>
     </div>
   `, async () => {
     const saveBtn = document.getElementById('modal-save');
@@ -4902,7 +5037,7 @@ async function openScheduleMeetingModal(projectId) {
       const text = agendaEl ? (agendaEl.innerText || agendaEl.textContent || '') : '';
       agendaItems = text.split('\n').map(s => s.trim()).filter(Boolean);
     }
-    if (!objective || !date || !time) { alert('Objective, day, and time are all required.'); return; }
+    if (!objective || !date || !time) { alert(T.requiredErr); return; }
     const selected = Array.from(document.querySelectorAll('#m-smparts input.m-smp-invite:checked'))
       .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
     // New emails that the user also wants saved as permanent project stakeholders
@@ -4910,15 +5045,15 @@ async function openScheduleMeetingModal(projectId) {
       .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
 
     const startLocal = new Date(`${date}T${time}`);
-    if (isNaN(startLocal.getTime())) { alert('Invalid date/time.'); return; }
-    if (startLocal < new Date()) { if (!confirm('That time is in the past. Schedule anyway?')) return; }
+    if (isNaN(startLocal.getTime())) { alert(T.invalidErr); return; }
+    if (startLocal < new Date()) { if (!confirm(T.pastConfirm)) return; }
     const endLocal = new Date(startLocal.getTime() + durationMin * 60000);
     const startISO = startLocal.toISOString();
     const endISO = endLocal.toISOString();
 
     saveBtn.disabled = true;
     const origText = saveBtn.textContent;
-    saveBtn.textContent = 'Checking availability...';
+    saveBtn.textContent = T.saving;
 
     // Final conflict recheck — even if the user edited the auto-selected
     // time manually or another booking landed between modal-open and Save.
@@ -4934,7 +5069,7 @@ async function openScheduleMeetingModal(projectId) {
       });
       if (overlap) {
         const proceed = confirm(
-          `Conflict: "${overlap.title}" already runs at this time (${new Date(overlap.start_time).toLocaleString()}).\n\nClick OK to book anyway, or Cancel to pick another slot.`
+          T.conflictHint.replace('%s', overlap.title).replace('%t', new Date(overlap.start_time).toLocaleString())
         );
         if (!proceed) {
           saveBtn.disabled = false;
@@ -4943,7 +5078,7 @@ async function openScheduleMeetingModal(projectId) {
         }
       }
     } catch (_) { /* soft fail — proceed with booking */ }
-    saveBtn.textContent = 'Creating Zoom + event...';
+    saveBtn.textContent = T.creating;
 
     // Ensure the project has a magic-link share token; mint one if missing.
     // The backend reads project.stakeholder_share_token directly when
@@ -4998,13 +5133,13 @@ async function openScheduleMeetingModal(projectId) {
         eventId = evResp.data && evResp.data.id;
         zoomWarning = evResp.zoom_warning || null;
       } else {
-        alert('Could not create calendar event: ' + (evResp && evResp.error || 'unknown'));
+        alert(T.eventErr + (evResp && evResp.error || 'unknown'));
         saveBtn.disabled = false;
         saveBtn.textContent = origText;
         return;
       }
     } catch (e) {
-      alert('Error creating event: ' + e.message);
+      alert(T.eventErr + e.message);
       saveBtn.disabled = false;
       saveBtn.textContent = origText;
       return;
@@ -5012,7 +5147,7 @@ async function openScheduleMeetingModal(projectId) {
 
     // Send the styled HTML + .ics invite via SendGrid using the same
     // template as the kickoff email. Replaces the legacy mailto: flow.
-    saveBtn.textContent = 'Sending invites...';
+    saveBtn.textContent = T.sending;
     let inviteResult = null;
     try {
       const sendResp = await api(`/projects/${projectId}/meetings/${eventId}/send-invite`, {
@@ -5021,7 +5156,7 @@ async function openScheduleMeetingModal(projectId) {
           recipients: selected,
           objective: objective || '',
           agenda: agendaItems,
-          language: 'en'
+          language: LANG
         })
       });
       if (sendResp && sendResp.success) {
@@ -5038,15 +5173,15 @@ async function openScheduleMeetingModal(projectId) {
     if (inviteResult) {
       const sentCount = (inviteResult.sent || []).length;
       const failedCount = (inviteResult.failed || []).length;
-      toastMsg = `Meeting scheduled. Invites sent to ${sentCount} participant${sentCount === 1 ? '' : 's'}`;
-      if (failedCount) toastMsg += ` (${failedCount} failed)`;
+      toastMsg = T.sentOk.replace('%n', sentCount).replace('%s', sentCount === 1 ? '' : 's');
+      if (failedCount) toastMsg += ' ' + T.sentFail.replace('%n', failedCount);
       toastMsg += '.';
     } else {
-      toastMsg = 'Meeting scheduled. Invite email could not be sent — check SendGrid config.';
+      toastMsg = T.sendgridErr;
     }
-    if (zoomWarning) toastMsg += ` Zoom warning: ${zoomWarning}.`;
+    if (zoomWarning) toastMsg += ' ' + T.zoomWarn + zoomWarning + '.';
     if (stakeholdersAdded > 0) {
-      toastMsg += ` Added ${stakeholdersAdded} new stakeholder${stakeholdersAdded === 1 ? '' : 's'} to the project.`;
+      toastMsg += ' ' + T.addedStake.replace('%n', stakeholdersAdded).replace('%s', stakeholdersAdded === 1 ? '' : 's');
     }
     if (typeof showToast === 'function') {
       try { showToast(toastMsg, inviteResult ? 'success' : 'error'); } catch (_) {}
@@ -5056,6 +5191,11 @@ async function openScheduleMeetingModal(projectId) {
     // Refresh the project detail so the new event shows up under Linked Events
     showProjectDetail(projectId);
   });
+
+  // Localize the shared modal Save / Cancel buttons. openModal already
+  // reset them to enabled + default labels; override the labels here.
+  const sb = document.getElementById('modal-save'); if (sb) sb.textContent = T.save;
+  const cb = document.getElementById('modal-cancel'); if (cb) cb.textContent = T.cancel;
 }
 window.openScheduleMeetingModal = openScheduleMeetingModal;
 
@@ -5096,17 +5236,18 @@ function addScheduleMeetingParticipant() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 8px;background:rgba(167,139,250,0.07);border:1px dashed rgba(167,139,250,0.4);border-radius:6px;font-size:12px';
     row.setAttribute('data-new', '1');
+    const T = window._scheduleMeetingT || { newTag: '(new)', addAsStake: 'Add as stakeholder', remove: 'Remove', noNewEmails: 'No valid new emails found. Check format and that they are not already on the list.' };
     row.innerHTML = `
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" class="m-smp-invite" data-email="${escHtml(e)}" checked style="width:14px;height:14px;cursor:pointer">
         <span style="color:var(--text-primary);word-break:break-all">${escHtml(e)}</span>
-        <span style="color:var(--text-muted);font-size:11px">(new)</span>
+        <span style="color:var(--text-muted);font-size:11px">${escHtml(T.newTag)}</span>
       </label>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-left:auto" title="Add this email to the project's permanent Stakeholders list on Save">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-left:auto" title="${escHtml(T.addAsStake)}">
         <input type="checkbox" class="m-smp-stakeholder" data-email="${escHtml(e)}" checked style="width:14px;height:14px;cursor:pointer">
-        <span style="color:var(--text-secondary);font-size:11px">Add as stakeholder</span>
+        <span style="color:var(--text-secondary);font-size:11px">${escHtml(T.addAsStake)}</span>
       </label>
-      <button type="button" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;color:var(--danger)" onclick="this.closest('div[data-new]').remove()">Remove</button>
+      <button type="button" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;color:var(--danger)" onclick="this.closest('div[data-new]').remove()">${escHtml(T.remove)}</button>
     `;
     list.appendChild(row);
     added++;
@@ -5114,7 +5255,8 @@ function addScheduleMeetingParticipant() {
   if (empty && added > 0) empty.remove();
   input.value = '';
   if (!added) {
-    alert('No valid new emails found. Check format and that they are not already on the list.');
+    const T = window._scheduleMeetingT;
+    alert((T && T.noNewEmails) || 'No valid new emails found. Check format and that they are not already on the list.');
   }
 }
 window.addScheduleMeetingParticipant = addScheduleMeetingParticipant;
