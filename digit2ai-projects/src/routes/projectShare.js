@@ -26,15 +26,9 @@ const { logActivity } = require('../services/activityService');
 
 const RESCHEDULE_CAP = 2;
 
-// Owner = original requestor (submitter_email). Only the Owner can reschedule.
-function isProjectOwner(project, email) {
-  if (!project || !email) return false;
-  return String(project.submitter_email || '').trim().toLowerCase() === String(email).trim().toLowerCase();
-}
-
 // Generate `count` candidate slots, one per weekday at 10:00 Cali time
 // (America/Bogota, UTC-5), starting `minDaysOut` business days from today.
-// No conflict check — pure offsets. Used when the Owner clicks Reschedule.
+// No conflict check — pure offsets. Used when any team member clicks Reschedule.
 function generateRescheduleSlots({ minDaysOut = 2, count = 3 } = {}) {
   const slots = [];
   const cursor = new Date();
@@ -203,15 +197,17 @@ router.get('/:token/meetings', async (req, res) => {
     if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
 
     const meetings = await loadUpcomingMeetings(project);
-    const isOwner = isProjectOwner(project, email);
+    // Any team member can reschedule (Option 2). The is_owner field is kept
+    // for backward compat with older frontends but now reflects "in team"
+    // since reschedule rights expanded to all stakeholders.
     res.json({
       success: true,
       data: {
         meetings: meetings.map(m => ({
           ...m,
-          can_reschedule: isOwner && m.reschedule_count < RESCHEDULE_CAP
+          can_reschedule: m.reschedule_count < RESCHEDULE_CAP
         })),
-        is_owner: isOwner,
+        is_owner: true,
         reschedule_cap: RESCHEDULE_CAP
       }
     });
@@ -222,7 +218,8 @@ router.get('/:token/meetings', async (req, res) => {
 });
 
 // GET /api/v1/projects/share/:token/meetings/:eventId/slots?email=...
-// Owner-only: 3 candidate weekday slots at 10am Cali for the given event.
+// Any team member can request slots: 3 candidate weekday slots at 10am Cali
+// for the given event. Per-event reschedule cap still applies.
 router.get('/:token/meetings/:eventId/slots', async (req, res) => {
   try {
     const email = (req.query.email || '').trim();
@@ -231,9 +228,6 @@ router.get('/:token/meetings/:eventId/slots', async (req, res) => {
     if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
     if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
     if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
-    if (!isProjectOwner(project, email)) {
-      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
-    }
     const event = await CalendarEvent.findOne({
       where: { id: parseInt(req.params.eventId, 10), project_id: project.id, workspace_id: project.workspace_id || 1 }
     });
@@ -256,7 +250,7 @@ router.get('/:token/meetings/:eventId/slots', async (req, res) => {
 
 // POST /api/v1/projects/share/:token/meetings/:eventId/reschedule
 // Body: { email, start_time, end_time }
-// Owner-only. Per-event cap = RESCHEDULE_CAP. No conflict-check.
+// Any team member can reschedule. Per-event cap = RESCHEDULE_CAP. No conflict-check.
 router.post('/:token/meetings/:eventId/reschedule', async (req, res) => {
   try {
     const { email, start_time, end_time } = req.body || {};
@@ -267,9 +261,6 @@ router.post('/:token/meetings/:eventId/reschedule', async (req, res) => {
     if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
     if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
     if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
-    if (!isProjectOwner(project, email)) {
-      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
-    }
     const newStart = new Date(start_time);
     const newEnd = new Date(end_time);
     if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime()) || newEnd <= newStart) {
@@ -292,7 +283,7 @@ router.post('/:token/meetings/:eventId/reschedule', async (req, res) => {
     event.end_time = newEnd;
     event.reschedule_count = count + 1;
     event.description = (event.description ? event.description + '\n\n' : '') +
-      `Rescheduled by Owner (${email}) on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.`;
+      `Rescheduled by stakeholder (${email}) on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.`;
     await event.save();
 
     // Keep the project's kickoff timestamp in sync if this is the kickoff
@@ -301,7 +292,7 @@ router.post('/:token/meetings/:eventId/reschedule', async (req, res) => {
       await project.save();
     }
 
-    await logActivity(email, 'meeting_rescheduled_by_owner', 'project', project.id,
+    await logActivity(email, 'meeting_rescheduled_by_stakeholder', 'project', project.id,
       `${project.name} — event #${event.id} new time ${newStart.toISOString()} (count ${count + 1}/${RESCHEDULE_CAP})`);
 
     res.json({
@@ -355,14 +346,15 @@ router.get('/:token/meeting', async (req, res) => {
     }
 
     const count = Number(project.kickoff_reschedule_count || 0);
+    // Any team member can reschedule (Option 2); is_owner kept for back-compat.
     res.json({
       success: true,
       data: {
         meeting,
-        is_owner: isProjectOwner(project, email),
+        is_owner: true,
         reschedule_count: count,
         reschedule_cap: RESCHEDULE_CAP,
-        can_reschedule: isProjectOwner(project, email) && !!meeting && count < RESCHEDULE_CAP
+        can_reschedule: !!meeting && count < RESCHEDULE_CAP
       }
     });
   } catch (error) {
@@ -373,7 +365,7 @@ router.get('/:token/meeting', async (req, res) => {
 
 // GET /api/v1/projects/share/:token/meeting/slots?email=...
 // Returns 3 candidate weekday slots at 10am Cali time, no conflict-check.
-// Owner-only.
+// Any team member can request slots.
 router.get('/:token/meeting/slots', async (req, res) => {
   try {
     const email = (req.query.email || '').trim();
@@ -382,9 +374,6 @@ router.get('/:token/meeting/slots', async (req, res) => {
     if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
     if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
     if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
-    if (!isProjectOwner(project, email)) {
-      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
-    }
     if (!project.kickoff_event_id) {
       return res.status(404).json({ success: false, error: 'No kickoff meeting to reschedule' });
     }
@@ -405,7 +394,7 @@ router.get('/:token/meeting/slots', async (req, res) => {
 
 // POST /api/v1/projects/share/:token/meeting/reschedule
 // Body: { email, start_time, end_time }
-// Owner-only. Caps at RESCHEDULE_CAP. No conflict-check.
+// Any team member can reschedule. Caps at RESCHEDULE_CAP. No conflict-check.
 router.post('/:token/meeting/reschedule', async (req, res) => {
   try {
     const { email, start_time, end_time } = req.body || {};
@@ -416,9 +405,6 @@ router.post('/:token/meeting/reschedule', async (req, res) => {
     if (!project) return res.status(404).json({ success: false, error: 'Invalid or expired link' });
     if (expired(project)) return res.status(410).json({ success: false, error: 'This share link has expired' });
     if (!emailInTeam(project, email)) return res.status(403).json({ success: false, error: 'Not authorized' });
-    if (!isProjectOwner(project, email)) {
-      return res.status(403).json({ success: false, error: 'Only the project owner can reschedule' });
-    }
     const newStart = new Date(start_time);
     const newEnd = new Date(end_time);
     if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime()) || newEnd <= newStart) {
@@ -442,14 +428,14 @@ router.post('/:token/meeting/reschedule', async (req, res) => {
     event.start_time = newStart;
     event.end_time = newEnd;
     event.description = (event.description ? event.description + '\n\n' : '') +
-      `Rescheduled by Owner (${email}) on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.`;
+      `Rescheduled by stakeholder (${email}) on ${new Date().toISOString().slice(0, 10)}. Previous time: ${oldStart}.`;
     await event.save();
 
     project.kickoff_scheduled_at = newStart;
     project.kickoff_reschedule_count = count + 1;
     await project.save();
 
-    await logActivity(email, 'kickoff_rescheduled_by_owner', 'project', project.id,
+    await logActivity(email, 'kickoff_rescheduled_by_stakeholder', 'project', project.id,
       `${project.name} — new time ${newStart.toISOString()} (count ${count + 1}/${RESCHEDULE_CAP})`);
 
     res.json({

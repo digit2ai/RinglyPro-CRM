@@ -608,7 +608,7 @@
                     </div>
                   </div>
                   ${counterText ? `<div class="meeting-counter">${counterText}</div>` : ''}
-                  ${isDeepLinkTarget && !canReschedule ? '<div style="font-size:12px;color:var(--muted);padding:6px 0 0">Only the project owner can reschedule this meeting. Reply to the original email to suggest a new time.</div>' : ''}
+                  ${isDeepLinkTarget && !canReschedule ? '<div style="font-size:12px;color:var(--muted);padding:6px 0 0">This meeting has reached the reschedule limit. Reply to the original email to suggest a new time.</div>' : ''}
                   <div class="hidden" id="slotsPanel-${m.id}">
                     <div class="slots-help">Pick a new time. We will move the meeting to the slot you choose and resend the calendar invite.</div>
                     <div id="slotsList-${m.id}"></div>
