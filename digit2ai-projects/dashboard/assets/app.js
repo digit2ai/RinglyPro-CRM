@@ -3024,6 +3024,16 @@ async function showProjectDetail(id) {
               <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Magic link sent to the requestor after approve/reject. Use it to see what they see.</p>
             </div>`;
           })() : ''}
+          ${(p.submitter_name || p.submitter_email || p.submitter_phone) ? `
+          <div class="detail-section" style="border:1px solid rgba(56,189,248,0.25);background:linear-gradient(120deg,rgba(56,189,248,0.06),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px 16px">
+            <h4 style="margin-top:0;margin-bottom:10px">Project Requestor</h4>
+            <div style="font-size:14px;color:var(--text-secondary);display:grid;grid-template-columns:auto 1fr;column-gap:14px;row-gap:6px;align-items:center">
+              ${p.submitter_name ? `<div style="color:var(--text-muted);font-size:12px;letter-spacing:0.04em;text-transform:uppercase">Name</div><div style="color:var(--text-primary);font-weight:600">${escHtml(p.submitter_name)}</div>` : ''}
+              ${p.submitter_email ? `<div style="color:var(--text-muted);font-size:12px;letter-spacing:0.04em;text-transform:uppercase">Email</div><div><a href="mailto:${escHtml(p.submitter_email)}" style="color:var(--accent);text-decoration:none">${escHtml(p.submitter_email)}</a></div>` : ''}
+              ${p.submitter_phone ? `<div style="color:var(--text-muted);font-size:12px;letter-spacing:0.04em;text-transform:uppercase">Phone</div><div><a href="tel:${escHtml(p.submitter_phone)}" style="color:var(--accent);text-decoration:none">${escHtml(p.submitter_phone)}</a></div>` : ''}
+              ${p.country ? `<div style="color:var(--text-muted);font-size:12px;letter-spacing:0.04em;text-transform:uppercase">Country</div><div style="color:var(--text-primary)">${escHtml(p.country)}</div>` : ''}
+            </div>
+          </div>` : ''}
           <div class="detail-section">
             <h4 style="display:flex;justify-content:space-between;align-items:center">Workflow
               <button class="btn btn-ghost btn-sm" onclick="overridePhase(${p.id}, '${escHtml(p.workflow_phase || 'pending_review')}')" title="Admin: override workflow_phase">Override Phase</button>
