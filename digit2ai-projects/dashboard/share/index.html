@@ -468,6 +468,22 @@
     const TOKEN = tokenIdx >= 0 && parts[tokenIdx + 1] ? parts[tokenIdx + 1] : '';
     let EMAIL = sessionStorage.getItem('d2_share_email_' + TOKEN) || '';
 
+    // Deep-link query params from the RSVP confirmation page:
+    //   ?email=...        pre-fills the gate (or skips it on next reload)
+    //   ?meeting=<id>     scrolls to that meeting card after load
+    //   ?action=reschedule  if combined with meeting, auto-opens the slot picker
+    const _qs = new URLSearchParams(window.location.search || '');
+    const _qsEmail = (_qs.get('email') || '').trim();
+    const _qsMeetingId = parseInt(_qs.get('meeting') || '', 10) || null;
+    const _qsAction = _qs.get('action') || '';
+    if (_qsEmail && !EMAIL) {
+        // Treat the email from the link as trusted-enough to pre-fill the gate.
+        // The server still re-validates it against the project's team_members,
+        // so a forged ?email= will fail identify and bounce back to the gate.
+        const inp = document.getElementById('emailInput');
+        if (inp) inp.value = _qsEmail;
+    }
+
     const apiBase = '/projects/api/v1/projects/share';
 
     function showToast(msg, type) {
@@ -572,8 +588,15 @@
                 : '';
             const canReschedule = m.can_reschedule;
             const lastChance = m.reschedule_count > 0 && canReschedule;
+            // Highlight the deep-linked meeting card so the recipient can see
+            // which one matched. Even non-owners get the highlight; only
+            // owners see the Reschedule button next to it.
+            const isDeepLinkTarget = _qsMeetingId && m.id === _qsMeetingId;
+            const cardStyle = isDeepLinkTarget
+                ? 'margin-bottom:12px;flex-direction:column;align-items:stretch;gap:10px;outline:2px solid rgba(124,92,255,0.55);outline-offset:2px;border-radius:10px'
+                : 'margin-bottom:12px;flex-direction:column;align-items:stretch;gap:10px';
             return `
-                <div class="meeting-card" style="margin-bottom:12px;flex-direction:column;align-items:stretch;gap:10px">
+                <div class="meeting-card" id="meetingCard-${m.id}" style="${cardStyle}">
                   <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px">
                     <div style="flex:1;min-width:200px">
                         <div class="meeting-when">${escHtml(formatMeetingDateTime(m.start_time, m.end_time))}</div>
@@ -585,6 +608,7 @@
                     </div>
                   </div>
                   ${counterText ? `<div class="meeting-counter">${counterText}</div>` : ''}
+                  ${isDeepLinkTarget && !canReschedule ? '<div style="font-size:12px;color:var(--muted);padding:6px 0 0">Only the project owner can reschedule this meeting. Reply to the original email to suggest a new time.</div>' : ''}
                   <div class="hidden" id="slotsPanel-${m.id}">
                     <div class="slots-help">Pick a new time. We will move the meeting to the slot you choose and resend the calendar invite.</div>
                     <div id="slotsList-${m.id}"></div>
@@ -601,6 +625,24 @@
         document.querySelectorAll('#meetingsList button[data-action="cancel"]').forEach(b => {
             b.addEventListener('click', () => closeRescheduleSlots(parseInt(b.dataset.event, 10)));
         });
+
+        // Deep-link behavior: scroll to the targeted meeting card and, if the
+        // recipient is the owner AND action=reschedule was requested, open
+        // the slot picker automatically. Only runs once per page load.
+        if (_qsMeetingId && !window._scheduledMeetingDeeplinkHandled) {
+            window._scheduledMeetingDeeplinkHandled = true;
+            const card = document.getElementById('meetingCard-' + _qsMeetingId);
+            if (card) {
+                setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+                const target = (MEETINGS_STATE.meetings || []).find(mm => mm.id === _qsMeetingId);
+                if (_qsAction === 'reschedule' && target && target.can_reschedule) {
+                    setTimeout(() => {
+                        const btn = card.querySelector('button[data-action="open"]');
+                        if (btn) btn.click();
+                    }, 250);
+                }
+            }
+        }
     }
 
     async function openRescheduleSlots(eventId, btn) {
@@ -902,11 +944,17 @@
         if (e.key === 'Enter') identify();
     });
 
-    // Boot: if we have a stored email, try to load the project directly
+    // Boot: if we have a stored email, try to load the project directly.
+    // If we have a deep-link ?email=... param and no stored email, also
+    // auto-identify so the recipient lands directly on the project view.
     if (!TOKEN) {
         document.getElementById('gate').innerHTML = '<h1>Invalid link</h1><p>This URL is missing a token. Please use the link sent to you.</p>';
     } else if (EMAIL) {
         loadProject();
+    } else if (_qsEmail) {
+        // Trigger identify() with the pre-filled email. The server re-checks
+        // membership; if forged, the gate stays up with an error.
+        identify();
     }
 })();
 </script>

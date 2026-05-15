@@ -21,11 +21,19 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-function renderConfirmPage({ response, meetingTitle, meetingWhen, projectName }) {
+function renderConfirmPage({ response, meetingTitle, meetingWhen, projectName, rescheduleUrl, viewProjectUrl }) {
   const color = response === 'yes' ? '#10b981' : response === 'maybe' ? '#f59e0b' : '#ef4444';
   const label = response === 'yes' ? 'Confirmed — see you there.'
               : response === 'maybe' ? 'Tentative — we will count you as a maybe.'
               : 'Declined — we will let the team know.';
+  // No / Maybe get a CTA to open the share page on the reschedule flow.
+  // Yes gets a softer "View project" link in case they want to add notes.
+  const ctaBtn = (response === 'no' || response === 'maybe') && rescheduleUrl
+    ? `<a href="${esc(rescheduleUrl)}" style="display:inline-block;margin-top:18px;background:#2D8CFF;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:14px">Propose a new time</a>
+       <div style="margin-top:8px;font-size:11px;color:#64748b">Opens the project workspace where the requestor can pick a different slot.</div>`
+    : (viewProjectUrl
+        ? `<a href="${esc(viewProjectUrl)}" style="display:inline-block;margin-top:18px;color:#38bdf8;font-size:13px;text-decoration:none">View project workspace &rarr;</a>`
+        : '');
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>RSVP recorded</title>
 <style>
@@ -47,6 +55,7 @@ function renderConfirmPage({ response, meetingTitle, meetingWhen, projectName })
     ${meetingWhen ? `<div><strong>When:</strong> ${esc(meetingWhen)}</div>` : ''}
     ${projectName ? `<div><strong>Project:</strong> ${esc(projectName)}</div>` : ''}
   </div>
+  ${ctaBtn}
   <div class="foot">You can change your answer any time by clicking another button in the original email.</div>
 </div></div></body></html>`;
 }
@@ -69,6 +78,7 @@ router.get('/:token/:response', async (req, res) => {
 
     // Pull event + project labels for the confirmation page
     let meetingTitle = null, meetingWhen = null, projectName = null;
+    let rescheduleUrl = null, viewProjectUrl = null;
     try {
       const ev = await CalendarEvent.findByPk(row.event_id, { attributes: ['title', 'start_time', 'end_time'] });
       if (ev) {
@@ -82,12 +92,23 @@ router.get('/:token/:response', async (req, res) => {
         }
       }
       if (row.project_id) {
-        const proj = await Project.findByPk(row.project_id, { attributes: ['name'] });
-        if (proj) projectName = proj.name;
+        const proj = await Project.findByPk(row.project_id, { attributes: ['name', 'stakeholder_share_token'] });
+        if (proj) {
+          projectName = proj.name;
+          if (proj.stakeholder_share_token) {
+            const base = `${req.protocol}://${req.get('host')}`;
+            // email pre-fills the share-page gate; meeting param scrolls
+            // to (and auto-opens reschedule on) the matching meeting card.
+            const qs = `?email=${encodeURIComponent(row.email)}&meeting=${row.event_id}`;
+            const baseShare = `${base}/projects/share/${proj.stakeholder_share_token}`;
+            rescheduleUrl = `${baseShare}${qs}&action=reschedule`;
+            viewProjectUrl = `${baseShare}${qs}`;
+          }
+        }
       }
     } catch (_) {}
 
-    res.type('html').send(renderConfirmPage({ response: resp, meetingTitle, meetingWhen, projectName }));
+    res.type('html').send(renderConfirmPage({ response: resp, meetingTitle, meetingWhen, projectName, rescheduleUrl, viewProjectUrl }));
   } catch (err) {
     console.error('[meetingRsvp] error:', err);
     res.status(500).send('Server error recording your response.');
