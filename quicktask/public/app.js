@@ -152,6 +152,16 @@ function renderTasks() {
     html += renderCompletedSection(completed);
   }
 
+  // Upcoming Events: any task (pending OR completed) with a future event_date,
+  // sorted by event_date ascending. Renders under Completadas.
+  const nowMs = Date.now();
+  const upcoming = tasks
+    .filter(t => t.event_date && new Date(t.event_date).getTime() >= nowMs)
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+  if (upcoming.length > 0) {
+    html += renderUpcomingEventsSection(upcoming);
+  }
+
   taskList.innerHTML = html;
   attachEventListeners();
 }
@@ -180,6 +190,20 @@ function renderCompletedSection(items) {
       </div>
       <div class="section-items collapsed" id="group-completed">
         ${items.map(t => renderTaskItem(t, true)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderUpcomingEventsSection(items) {
+  return `
+    <div class="section">
+      <div class="section-header collapsible collapsed" onclick="toggleGroup('group-upcoming', this)">
+        <span class="section-chevron">&#9656;</span>
+        Upcoming Events <span class="count">${items.length}</span>
+      </div>
+      <div class="section-items collapsed" id="group-upcoming">
+        ${items.map(t => renderTaskItem(t, t.status === 'completed')).join('')}
       </div>
     </div>
   `;
