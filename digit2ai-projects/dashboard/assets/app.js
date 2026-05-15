@@ -4816,12 +4816,18 @@ async function openScheduleMeetingModal(projectId) {
   }
   const defaultObjective = 'Discuss the project updates, next steps, and any blockers.';
 
-  const partRows = participants.map((p, i) => `
-    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px;cursor:pointer">
-      <input type="checkbox" id="m-smp-${i}" data-email="${escHtml(p.email)}" ${p.checked ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer">
+  // Existing stakeholders render with a single "Invite" checkbox.
+  // New emails (added via the "+ Add participant" input below) render with
+  // TWO checkboxes: "Invite to meeting" + "Add as stakeholder".
+  // Existing stakeholders render with a single "Invite" checkbox.
+  // New emails (added via the "+ Add participant" input below) render with
+  // TWO checkboxes: "Invite to meeting" + "Add as stakeholder".
+  const partRows = participants.map(p => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:6px;font-size:12px;cursor:pointer" data-existing="1">
+      <input type="checkbox" class="m-smp-invite" data-email="${escHtml(p.email)}" ${p.checked ? 'checked' : ''} style="width:14px;height:14px;cursor:pointer">
       <span style="color:var(--text-primary);flex:1;word-break:break-all">${escHtml(p.label)}</span>
     </label>
-  `).join('') || '<p style="font-size:12px;color:var(--text-muted);font-style:italic">No participants — the email will not have any To: addresses.</p>';
+  `).join('') || '<p id="m-smparts-empty" style="font-size:12px;color:var(--text-muted);font-style:italic">No project stakeholders yet — use the input below to add participants for this meeting.</p>';
 
   openModal(`Schedule Meeting - ${project.name}`, `
     <div class="form-group">
@@ -4845,10 +4851,14 @@ async function openScheduleMeetingModal(projectId) {
     </div>
     <div class="form-group">
       <label>Participants <span style="color:var(--text-muted);font-weight:normal">(from project stakeholders)</span></label>
-      <div id="m-smparts" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding:4px">
+      <div id="m-smparts" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;padding:4px">
         ${partRows}
       </div>
-      <small style="color:var(--text-muted)">Uncheck anyone you don't want to invite. Add more on the project's Stakeholders panel if missing.</small>
+      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+        <input type="email" id="m-smp-newemail" placeholder="add another email (or comma-separated list)" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:13px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addScheduleMeetingParticipant()" style="padding:7px 14px">+ Add</button>
+      </div>
+      <small style="color:var(--text-muted)">Uncheck anyone you don't want to invite. New emails get an extra "Add as stakeholder" checkbox — leave it on to save them to the project's permanent stakeholders list.</small>
     </div>
     <div class="form-group" style="background:rgba(45,140,255,.08);border:1px solid rgba(45,140,255,.3);border-radius:8px;padding:10px 12px">
       <small style="color:var(--text-muted)">On Save: a Zoom meeting is created on info@digit2ai.com, a calendar event is saved on this project, and your email client opens with a prefilled message containing the Zoom link, the project magic link, the objective, day/time, and participants.</small>
@@ -4860,8 +4870,11 @@ async function openScheduleMeetingModal(projectId) {
     const time = document.getElementById('m-smtime').value;
     const durationMin = Math.max(15, Math.min(240, Number(document.getElementById('m-smduration').value) || 30));
     if (!objective || !date || !time) { alert('Objective, day, and time are all required.'); return; }
-    const selected = Array.from(document.querySelectorAll('#m-smparts input[type=checkbox]:checked'))
-      .map(el => el.getAttribute('data-email')).filter(Boolean);
+    const selected = Array.from(document.querySelectorAll('#m-smparts input.m-smp-invite:checked'))
+      .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
+    // New emails that the user also wants saved as permanent project stakeholders
+    const newStakeholderEmails = Array.from(document.querySelectorAll('#m-smparts input.m-smp-stakeholder:checked'))
+      .map(el => (el.getAttribute('data-email') || '').toLowerCase()).filter(Boolean);
 
     const startLocal = new Date(`${date}T${time}`);
     if (isNaN(startLocal.getTime())) { alert('Invalid date/time.'); return; }
@@ -4885,6 +4898,31 @@ async function openScheduleMeetingModal(projectId) {
       } catch (_) {}
     }
     const magicLink = shareToken ? `${location.origin}/projects/share/${shareToken}` : null;
+
+    // Merge any "Add as stakeholder" emails into the project's team_members.
+    // Existing emails are filtered out so we don't create duplicates. The
+    // updated array is PUT back via /projects/:id — same endpoint used by
+    // the Edit Stakeholders modal.
+    let stakeholdersAdded = 0;
+    if (newStakeholderEmails.length) {
+      const currentTeam = Array.isArray(project.team_members) ? project.team_members.slice() : [];
+      const existingEmails = new Set(currentTeam.map(m => {
+        if (typeof m === 'string') return m.trim().toLowerCase();
+        if (m && m.email) return String(m.email).trim().toLowerCase();
+        return '';
+      }).filter(Boolean));
+      const submitterLc = String(project.submitter_email || '').trim().toLowerCase();
+      const toAdd = newStakeholderEmails.filter(e => e && !existingEmails.has(e) && e !== submitterLc);
+      if (toAdd.length) {
+        const updatedTeam = currentTeam.concat(toAdd.map(email => ({ email, role: 'stakeholder' })));
+        try {
+          await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ team_members: updatedTeam }) });
+          stakeholdersAdded = toAdd.length;
+        } catch (sErr) {
+          console.warn('[Schedule Meeting] Could not save new stakeholders:', sErr.message);
+        }
+      }
+    }
 
     // Create the calendar event with Zoom enabled. invite_emails is null on
     // purpose — we open mailto: instead so the user sends from their own
@@ -4981,6 +5019,9 @@ async function openScheduleMeetingModal(projectId) {
     closeModal();
     let toastMsg = 'Meeting created. Opening your email client...';
     if (zoomWarning) toastMsg = `Meeting created. Zoom warning: ${zoomWarning}. Opening email...`;
+    if (stakeholdersAdded > 0) {
+      toastMsg += ` Added ${stakeholdersAdded} new stakeholder${stakeholdersAdded === 1 ? '' : 's'} to the project.`;
+    }
     if (typeof showToast === 'function') {
       try { showToast(toastMsg, 'success'); } catch (_) {}
     }
@@ -4997,6 +5038,55 @@ async function openScheduleMeetingModal(projectId) {
   });
 }
 window.openScheduleMeetingModal = openScheduleMeetingModal;
+
+// Helper used by the Schedule Meeting modal's "+ Add" button. Reads the
+// email input, validates + dedupes against rows already in the list, and
+// appends one new row per email with TWO checkboxes: Invite + Stakeholder.
+function addScheduleMeetingParticipant() {
+  const input = document.getElementById('m-smp-newemail');
+  if (!input) return;
+  const raw = (input.value || '').trim();
+  if (!raw) return;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emails = raw.split(/[,;\s]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+  const list = document.getElementById('m-smparts');
+  if (!list) return;
+  const existing = new Set(
+    Array.from(list.querySelectorAll('input.m-smp-invite[data-email]'))
+      .map(el => (el.getAttribute('data-email') || '').toLowerCase())
+  );
+  // Clear empty-state placeholder once we add anything
+  const empty = document.getElementById('m-smparts-empty');
+  let added = 0;
+  for (const e of emails) {
+    if (!EMAIL_RE.test(e)) continue;
+    if (existing.has(e)) continue;
+    existing.add(e);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:6px 8px;background:rgba(167,139,250,0.07);border:1px dashed rgba(167,139,250,0.4);border-radius:6px;font-size:12px';
+    row.setAttribute('data-new', '1');
+    row.innerHTML = `
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" class="m-smp-invite" data-email="${escHtml(e)}" checked style="width:14px;height:14px;cursor:pointer">
+        <span style="color:var(--text-primary);word-break:break-all">${escHtml(e)}</span>
+        <span style="color:var(--text-muted);font-size:11px">(new)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-left:auto" title="Add this email to the project's permanent Stakeholders list on Save">
+        <input type="checkbox" class="m-smp-stakeholder" data-email="${escHtml(e)}" checked style="width:14px;height:14px;cursor:pointer">
+        <span style="color:var(--text-secondary);font-size:11px">Add as stakeholder</span>
+      </label>
+      <button type="button" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;color:var(--danger)" onclick="this.closest('div[data-new]').remove()">Remove</button>
+    `;
+    list.appendChild(row);
+    added++;
+  }
+  if (empty && added > 0) empty.remove();
+  input.value = '';
+  if (!added) {
+    alert('No valid new emails found. Check format and that they are not already on the list.');
+  }
+}
+window.addScheduleMeetingParticipant = addScheduleMeetingParticipant;
 
 function openMilestoneModal(projectId) {
   openModal('Add Milestone', `
