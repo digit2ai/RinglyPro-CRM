@@ -266,7 +266,8 @@ const MeetingRsvp = sequelize.define('MeetingRsvp', {
   invited_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   responded_at: DataTypes.DATE,
   ip: DataTypes.STRING(64),
-  user_agent: DataTypes.TEXT
+  user_agent: DataTypes.TEXT,
+  rsvp_reminder_sent_at: DataTypes.DATE
 }, { tableName: 'd2_meeting_rsvps' });
 
 // =====================================================

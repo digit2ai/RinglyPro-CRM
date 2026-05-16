@@ -636,6 +636,9 @@ app.get('*', (req, res) => {
       await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_token ON d2_meeting_rsvps (token)');
       await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_event ON d2_meeting_rsvps (event_id)');
       await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_meeting_rsvps_event_email ON d2_meeting_rsvps (event_id, LOWER(email))');
+      // Tracks the "are you coming?" nudge fired when the meeting is <48h
+      // away and the recipient still has no response. One nudge per row.
+      await sequelize.query('ALTER TABLE d2_meeting_rsvps ADD COLUMN IF NOT EXISTS rsvp_reminder_sent_at TIMESTAMPTZ');
     } catch (e) {
       console.log('[D2AI-Projects] meeting rsvps notice:', e.message.substring(0, 120));
     }
@@ -890,6 +893,18 @@ app.get('*', (req, res) => {
       }
     } catch (reminderErr) {
       console.log('[D2AI-Projects] meeting reminder poller boot error:', reminderErr.message);
+    }
+
+    // Boot the "Are you coming?" RSVP nudge poller (hourly). For meetings
+    // <48h away with at least one invited recipient who never clicked
+    // Yes/No/Maybe, sends a soft nudge with the same RSVP buttons.
+    try {
+      const rsvpReminder = require('./services/rsvpReminder');
+      if (typeof rsvpReminder.startPoller === 'function') {
+        rsvpReminder.startPoller();
+      }
+    } catch (nudgeErr) {
+      console.log('[D2AI-Projects] rsvp reminder poller boot error:', nudgeErr.message);
     }
   } catch (err) {
     console.error('[D2AI-Projects] Database setup error:', err.message);
