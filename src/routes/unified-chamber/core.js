@@ -1171,4 +1171,99 @@ router.post('/match', authMiddleware, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// =====================================================================
+// SAVED SEARCHES -- persist a member's AI Matching queries so they can
+// re-run them later without retyping. Schema is created by the DDL in
+// the deploy migration; see CLAUDE.md for table definition.
+// =====================================================================
+
+// List the current member's saved searches, newest first.
+router.get('/searches', authMiddleware, async (req, res) => {
+  try {
+    const rows = await sequelize.query(
+      `SELECT id, label, query_text, sector, region_id, country, result_count,
+              last_run_at, created_at
+       FROM member_searches
+       WHERE chamber_id = :c AND member_id = :m
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      { replacements: { c: req.chamber_id, m: req.member.id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Save a new search. Body: { label?, query_text?, sector?, region_id?, country?, result_count? }
+router.post('/searches', authMiddleware, async (req, res) => {
+  try {
+    const { label, query_text, sector, region_id, country, result_count } = req.body || {};
+    if (!query_text && !sector && !region_id && !country) {
+      return res.status(400).json({ success: false, error: 'At least one filter or query_text required' });
+    }
+    const autoLabel = label && String(label).trim()
+      ? String(label).trim().slice(0, 255)
+      : (query_text ? String(query_text).slice(0, 80) : `${sector || 'All'} - ${country || 'Any'}`);
+    const [row] = await sequelize.query(
+      `INSERT INTO member_searches
+       (chamber_id, member_id, label, query_text, sector, region_id, country, result_count, last_run_at, created_at, updated_at)
+       VALUES (:c, :m, :label, :qt, :sec, :rid, :ctry, :rc, NOW(), NOW(), NOW())
+       RETURNING id, label, query_text, sector, region_id, country, result_count, last_run_at, created_at`,
+      {
+        replacements: {
+          c: req.chamber_id, m: req.member.id,
+          label: autoLabel,
+          qt: query_text || null,
+          sec: sector || null,
+          rid: region_id ? parseInt(region_id) : null,
+          ctry: country || null,
+          rc: Number.isInteger(result_count) ? result_count : 0
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+    return res.status(201).json({ success: true, data: row });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Touch a saved search's last_run_at (when the member re-runs it).
+router.post('/searches/:id/touch', authMiddleware, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid id' });
+    await sequelize.query(
+      `UPDATE member_searches
+       SET last_run_at = NOW(), result_count = COALESCE(:rc, result_count), updated_at = NOW()
+       WHERE chamber_id = :c AND member_id = :m AND id = :id`,
+      {
+        replacements: {
+          c: req.chamber_id, m: req.member.id, id,
+          rc: Number.isInteger(req.body && req.body.result_count) ? req.body.result_count : null
+        }
+      }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete a saved search.
+router.delete('/searches/:id', authMiddleware, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: 'Invalid id' });
+    await sequelize.query(
+      `DELETE FROM member_searches WHERE chamber_id = :c AND member_id = :m AND id = :id`,
+      { replacements: { c: req.chamber_id, m: req.member.id, id } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

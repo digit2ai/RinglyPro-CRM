@@ -445,6 +445,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         Match con IA
       </div>
+      <div class="sidebar-nav-item" data-page="searches">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        Mis Busquedas
+      </div>
       <div class="sidebar-nav-item" data-page="projects">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
         Proyectos
@@ -776,14 +780,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     });
     var titles = {
       dashboard:'Panel', profile:'Mi Perfil', directory:'Directorio',
-      matching:'Match con IA', projects:'Proyectos', invitations:'Invitaciones',
+      matching:'Match con IA', searches:'Mis Busquedas', projects:'Proyectos', invitations:'Invitaciones',
       exchange:'Intercambio', metrics:'Metricas', payments:'Pagos', admin:'Administracion'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Cargando...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
-      matching:renderMatching, projects:renderProjects, invitations:renderInvitations,
+      matching:renderMatching, searches:renderSearches, projects:renderProjects, invitations:renderInvitations,
       exchange:renderExchange, metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
@@ -1273,6 +1277,81 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   // ================================================================
+  // PAGE: Mis Busquedas -- saved AI Matching queries
+  // ================================================================
+  async function renderSearches() {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="panel"><h2>Mis Busquedas Guardadas</h2>'
+      + '<p class="text-muted mb-16">Vuelve a ejecutar una busqueda guardada o elimina las que ya no necesites. Las nuevas se guardan desde la pagina de Match con IA.</p>'
+      + '<div id="searchesList"><div class="loading">Cargando...</div></div>'
+      + '</div>';
+    try {
+      var res = await apiFetch('/searches');
+      var box = document.getElementById('searchesList');
+      if (!res.success) { box.innerHTML = '<div class="error-msg">'+(res.error||'Error al cargar')+'</div>'; return; }
+      var rows = res.data || [];
+      if (rows.length === 0) {
+        box.innerHTML = '<div class="text-muted" style="padding:24px 0">No tienes busquedas guardadas. '
+          + '<a href="#" id="goToMatching" style="color:var(--primary);font-weight:600">Ejecuta una busqueda</a> '
+          + 'y haz clic en "Guardar busqueda" para agregarla aqui.</div>';
+        var go = document.getElementById('goToMatching');
+        if (go) go.addEventListener('click', function(e) { e.preventDefault(); navigate('matching'); });
+        return;
+      }
+      var h = '<div class="result-cards">';
+      rows.forEach(function(s) {
+        var when = s.last_run_at ? new Date(s.last_run_at).toLocaleDateString() : '';
+        h += '<div class="result-card" data-sid="'+s.id+'">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+        h += '<div style="flex:1;min-width:0">';
+        h += '<div class="rc-name" style="word-break:break-word">'+esc(s.label || s.query_text || 'Busqueda sin nombre')+'</div>';
+        if (s.query_text && s.query_text !== s.label) {
+          h += '<div class="rc-company" style="font-style:italic;word-break:break-word">"'+esc(s.query_text)+'"</div>';
+        }
+        h += '<div class="rc-meta mt-12">';
+        if (s.sector) h += '<span>'+esc(s.sector)+'</span>';
+        if (s.country) h += '<span>'+esc(s.country)+'</span>';
+        if (s.region_id) h += '<span>Region '+s.region_id+'</span>';
+        if (typeof s.result_count === 'number') h += '<span>'+s.result_count+' coincidencias</span>';
+        if (when) h += '<span>Ultima: '+esc(when)+'</span>';
+        h += '</div></div></div>';
+        h += '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">';
+        h += '<button class="btn btn-primary btn-sm rerunBtn" data-sid="'+s.id+'" style="padding:4px 10px;font-size:12px">Ejecutar de nuevo</button>';
+        h += '<button class="btn btn-outline btn-sm deleteBtn" data-sid="'+s.id+'" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)">Eliminar</button>';
+        h += '</div></div>';
+      });
+      h += '</div>';
+      box.innerHTML = h;
+
+      var byId = {};
+      rows.forEach(function(s) { byId[s.id] = s; });
+
+      box.querySelectorAll('.rerunBtn').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          var s = byId[this.dataset.sid];
+          if (!s) return;
+          try { await apiFetch('/searches/' + s.id + '/touch', { method:'POST', body:JSON.stringify({}) }); } catch(_) {}
+          window._presetSearch = { query_text: s.query_text, sector: s.sector, region_id: s.region_id, country: s.country };
+          navigate('matching');
+        });
+      });
+      box.querySelectorAll('.deleteBtn').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          if (!confirm('Eliminar esta busqueda guardada?')) return;
+          var sid = this.dataset.sid;
+          try {
+            var r = await apiFetch('/searches/' + sid, { method:'DELETE' });
+            if (r.success) renderSearches();
+            else alert(r.error || 'Error al eliminar');
+          } catch(e) { alert('Error: ' + e.message); }
+        });
+      });
+    } catch(e) {
+      document.getElementById('searchesList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  // ================================================================
   // PAGE: AI Matching
   // ================================================================
   async function renderMatching() {
@@ -1284,10 +1363,55 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Sector</label><select id="matchSector">'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Region</label><select id="matchRegion">'+regionOptions()+'</select></div>';
     html += '<div class="form-group"><label>Pais</label><input id="matchCountry" placeholder="e.g. United States"></div>';
-    html += '<div class="form-group"><button class="btn btn-primary mt-16" id="matchBtn" style="margin-top:20px">Buscar</button></div>';
+    html += '<div class="form-group" style="display:flex;gap:8px;align-items:flex-end">';
+    html += '<button class="btn btn-primary" id="matchBtn" style="margin-top:20px">Buscar</button>';
+    html += '<button class="btn btn-outline" id="saveSearchBtn" style="margin-top:20px" title="Guardar esta busqueda">Guardar busqueda</button>';
+    html += '</div>';
     html += '</div></div>';
     html += '<div id="matchResults"></div>';
     el.innerHTML = html;
+
+    if (window._presetSearch) {
+      var ps = window._presetSearch;
+      window._presetSearch = null;
+      if (ps.query_text) document.getElementById('matchQuery').value = ps.query_text;
+      if (ps.sector) document.getElementById('matchSector').value = ps.sector;
+      if (ps.region_id) document.getElementById('matchRegion').value = ps.region_id;
+      if (ps.country) document.getElementById('matchCountry').value = ps.country;
+      setTimeout(function() { var b = document.getElementById('matchBtn'); if (b) b.click(); }, 50);
+    }
+
+    document.getElementById('saveSearchBtn').addEventListener('click', async function() {
+      var body = {
+        query_text: document.getElementById('matchQuery').value.trim() || null,
+        sector: document.getElementById('matchSector').value || null,
+        region_id: document.getElementById('matchRegion').value || null,
+        country: document.getElementById('matchCountry').value.trim() || null,
+        result_count: window._lastMatchCount || 0
+      };
+      if (!body.query_text && !body.sector && !body.region_id && !body.country) {
+        alert('Escribe una descripcion o elige al menos un filtro antes de guardar.');
+        return;
+      }
+      var label = prompt('Nombre para esta busqueda (opcional):', body.query_text ? body.query_text.slice(0, 60) : '');
+      if (label === null) return;
+      if (label && label.trim()) body.label = label.trim();
+      var btn = this;
+      btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Guardando...';
+      try {
+        var res = await apiFetch('/searches', { method:'POST', body:JSON.stringify(body) });
+        btn.disabled = false; btn.textContent = orig;
+        if (res.success) {
+          btn.textContent = 'Guardado!'; btn.classList.add('btn-success');
+          setTimeout(function() { btn.textContent = orig; btn.classList.remove('btn-success'); }, 1500);
+        } else {
+          alert(res.error || 'No se pudo guardar');
+        }
+      } catch(e) {
+        btn.disabled = false; btn.textContent = orig;
+        alert('Error al guardar: ' + e.message);
+      }
+    });
 
     document.getElementById('matchBtn').addEventListener('click', async function() {
       var out = document.getElementById('matchResults');
@@ -1303,6 +1427,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         var res = await apiFetch('/match', { method:'POST', body:JSON.stringify(body) });
         if (!res.success) { out.innerHTML = '<div class="error-msg">'+(res.error||'Error de busqueda')+'</div>'; return; }
         var results = res.data.results || [];
+        window._lastMatchCount = results.length;
         if (results.length === 0) { out.innerHTML = '<div class="panel"><p class="text-muted">No matches found.</p></div>'; return; }
         var h = '<div class="panel"><h2>Results ('+results.length+' of '+res.data.total_candidates+' candidates)</h2>';
         h += '<p class="text-sm text-muted" style="margin:0 0 12px 0">Click any candidate card to see full profile details.</p>';
