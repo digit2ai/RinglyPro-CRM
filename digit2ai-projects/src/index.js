@@ -606,10 +606,12 @@ app.get('*', (req, res) => {
     // Meeting reminder bookkeeping + invite language. reminder_sent_at is
     // set by the hourly meetingReminder poller when the day-before email
     // goes out; language is captured at send-invite time so the reminder
-    // can match the original language (en/es).
+    // can match the original language (en/es). minutes_prompt_sent_at is
+    // set by the hourly meetingMinutesPrompt poller after a meeting ends.
     try {
       await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ');
       await sequelize.query("ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS language VARCHAR(8) NOT NULL DEFAULT 'en'");
+      await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS minutes_prompt_sent_at TIMESTAMPTZ');
     } catch (e) {
       console.log('[D2AI-Projects] reminder/language notice:', e.message.substring(0, 120));
     }
@@ -905,6 +907,29 @@ app.get('*', (req, res) => {
       }
     } catch (nudgeErr) {
       console.log('[D2AI-Projects] rsvp reminder poller boot error:', nudgeErr.message);
+    }
+
+    // Boot the intake-inbox digest poller (6h check, at most one email
+    // per 23h while there are pending_review project requests).
+    try {
+      const inboxDigest = require('./services/inboxDigest');
+      if (typeof inboxDigest.startPoller === 'function') {
+        inboxDigest.startPoller();
+      }
+    } catch (digestErr) {
+      console.log('[D2AI-Projects] inbox digest poller boot error:', digestErr.message);
+    }
+
+    // Boot the post-meeting minutes-prompt poller (hourly). For project
+    // meetings that ended in the last 6h with no minutes prompt yet,
+    // emails Manuel a one-click reminder to add the minutes.
+    try {
+      const minutesPrompt = require('./services/meetingMinutesPrompt');
+      if (typeof minutesPrompt.startPoller === 'function') {
+        minutesPrompt.startPoller();
+      }
+    } catch (mErr) {
+      console.log('[D2AI-Projects] minutes prompt poller boot error:', mErr.message);
     }
   } catch (err) {
     console.error('[D2AI-Projects] Database setup error:', err.message);

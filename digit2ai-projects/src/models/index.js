@@ -248,7 +248,8 @@ const CalendarEvent = sequelize.define('CalendarEvent', {
   invited_emails: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
   reschedule_count: { type: DataTypes.INTEGER, defaultValue: 0 },
   reminder_sent_at: DataTypes.DATE,
-  language: { type: DataTypes.STRING(8), defaultValue: 'en' }
+  language: { type: DataTypes.STRING(8), defaultValue: 'en' },
+  minutes_prompt_sent_at: DataTypes.DATE
 }, { tableName: 'd2_calendar_events' });
 
 // =====================================================
