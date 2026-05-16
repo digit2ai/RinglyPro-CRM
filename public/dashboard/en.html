@@ -1709,31 +1709,76 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         document.getElementById('invList').innerHTML = '<div class="panel"><p class="text-muted">No invitations yet. Members will see project role invitations here.</p></div>';
         return;
       }
-      var h = '<div class="result-cards">';
-      inv.forEach(function(i) {
-        var statusColor = { pending:'var(--primary)', accepted:'#28a745', declined:'#999', withdrawn:'#999' }[i.status] || '#999';
-        h += '<div class="panel" style="margin-bottom:12px">';
-        h += '<div class="flex-between" style="margin-bottom:8px">';
-        h += '<div><div style="font-weight:700">'+esc(i.project_title||'Project #'+i.project_id)+'</div>';
-        h += '<div class="text-sm text-muted">Role: <strong>'+esc(i.role_title||'--')+'</strong>';
-        if (i.match_score) h += ' &middot; Match score: '+Math.round(parseFloat(i.match_score)*100)+'%';
-        h += '</div></div>';
-        h += '<div><span style="background:'+statusColor+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase">'+esc(i.status)+'</span></div>';
-        h += '</div>';
-        if (i.invited_by_name) h += '<div class="text-sm text-muted">Invited by: '+esc(i.invited_by_name)+'</div>';
-        if (i.message) h += '<div class="text-sm" style="margin-top:6px;font-style:italic">"'+esc(i.message)+'"</div>';
 
-        if (i.status === 'pending') {
-          h += '<div style="margin-top:10px;display:flex;gap:8px">';
-          h += '<button class="btn btn-primary btn-sm" data-action="accept" data-pid="'+i.project_id+'" data-iid="'+i.id+'">Accept</button>';
-          h += '<button class="btn btn-outline btn-sm" data-action="decline" data-pid="'+i.project_id+'" data-iid="'+i.id+'">Decline</button>';
-          h += '<button class="btn btn-outline btn-sm" data-action="view" data-pid="'+i.project_id+'">View Plan</button>';
-          h += '</div>';
+      // Cluster invitations by project. The proposer may have invited this
+      // member to several roles on the same project (especially via the
+      // "Invite Specific Member" flow), which would otherwise spam the
+      // invitee with N nearly-identical cards. One project = one card,
+      // with all offered roles listed inline. Accepting any one role
+      // auto-supersedes the others (backend handles cleanup).
+      var byProject = {};
+      var projectOrder = [];
+      inv.forEach(function(i) {
+        var key = String(i.project_id);
+        if (!byProject[key]) {
+          byProject[key] = {
+            project_id: i.project_id,
+            project_title: i.project_title,
+            invited_by_name: i.invited_by_name,
+            message: i.message,
+            roles: []
+          };
+          projectOrder.push(key);
         }
-        h += '<div class="invMsg-'+i.id+'" style="margin-top:8px"></div>';
+        byProject[key].roles.push(i);
+      });
+
+      var h = '';
+      projectOrder.forEach(function(key) {
+        var grp = byProject[key];
+        // A group's status: 'pending' if any role is pending; else the most
+        // recent terminal status. Use the first pending if found, else first row.
+        var firstPending = grp.roles.find(function(r) { return r.status === 'pending'; });
+        var statusForBadge = firstPending ? 'pending' : grp.roles[0].status;
+        var statusColor = { pending:'var(--primary)', accepted:'#28a745', declined:'#999', withdrawn:'#999' }[statusForBadge] || '#999';
+        var multi = grp.roles.length > 1;
+
+        h += '<div class="panel" style="margin-bottom:12px">';
+        h += '<div class="flex-between" style="margin-bottom:8px;align-items:flex-start;gap:12px">';
+        h += '<div style="flex:1;min-width:0"><div style="font-weight:700">'+esc(grp.project_title||'Project #'+grp.project_id)+'</div>';
+        if (multi) {
+          h += '<div class="text-sm text-muted" style="margin-top:4px">You were invited for <strong>'+grp.roles.length+' different roles</strong> on this project. Accept any one (the others will close automatically).</div>';
+        }
+        h += '</div>';
+        h += '<div><span style="background:'+statusColor+';color:white;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;white-space:nowrap">'+esc(statusForBadge)+'</span></div>';
+        h += '</div>';
+        if (grp.invited_by_name) h += '<div class="text-sm text-muted">Invited by: '+esc(grp.invited_by_name)+'</div>';
+        if (grp.message) h += '<div class="text-sm" style="margin-top:6px;font-style:italic">"'+esc(grp.message)+'"</div>';
+
+        // One row per role offered.
+        h += '<div style="margin-top:12px;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">';
+        grp.roles.forEach(function(r, idx) {
+          var rowBg = idx % 2 === 0 ? 'var(--white)' : 'var(--gray-50)';
+          var rowStatusColor = { pending:'var(--primary)', accepted:'#28a745', declined:'#999', withdrawn:'#999' }[r.status] || '#999';
+          h += '<div style="padding:10px 12px;display:flex;align-items:center;gap:10px;background:'+rowBg+';border-top:'+(idx===0?'0':'1px solid var(--gray-200)')+'">';
+          h += '<div style="flex:1;min-width:0">';
+          h += '<div style="font-weight:600">'+esc(r.role_title||'--')+'</div>';
+          if (r.match_score) h += '<div class="text-muted text-sm">Match score: '+Math.round(parseFloat(r.match_score)*100)+'%</div>';
+          h += '</div>';
+          if (r.status === 'pending') {
+            h += '<button class="btn btn-primary btn-sm" data-action="accept" data-pid="'+r.project_id+'" data-iid="'+r.id+'" style="padding:4px 10px;font-size:12px">Accept this role</button>';
+            h += '<button class="btn btn-outline btn-sm" data-action="decline" data-pid="'+r.project_id+'" data-iid="'+r.id+'" style="padding:4px 10px;font-size:12px">Decline</button>';
+          } else {
+            h += '<span style="background:'+rowStatusColor+';color:white;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase">'+esc(r.status)+'</span>';
+          }
+          h += '</div>';
+        });
+        h += '</div>';
+
+        h += '<div style="margin-top:10px"><button class="btn btn-outline btn-sm" data-action="view" data-pid="'+grp.project_id+'">View Plan</button></div>';
+        h += '<div class="invMsg-proj-'+grp.project_id+'" style="margin-top:8px"></div>';
         h += '</div>';
       });
-      h += '</div>';
       document.getElementById('invList').innerHTML = h;
 
       document.querySelectorAll('button[data-action]').forEach(function(btn) {
@@ -1742,7 +1787,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           var pid = this.dataset.pid;
           var iid = this.dataset.iid;
           if (act === 'view') { showProjectDetail(pid); return; }
-          var msg = document.querySelector('.invMsg-'+iid);
+          var msg = document.querySelector('.invMsg-proj-' + pid);
+          if (!msg) return;
           msg.innerHTML = '<div class="text-muted text-sm">Sending '+act+'...</div>';
           try {
             var r = await apiFetch('/projects/'+pid+'/invitations/'+iid+'/respond', {
