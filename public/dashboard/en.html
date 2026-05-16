@@ -3127,12 +3127,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } catch(e) { /* ignore */ }
       }
 
-      // Team
+      // Team -- includes a "Message" button for each member except yourself
       html += '<h3>Team ('+(p.team?p.team.length:0)+' members)</h3>';
       if (p.team && p.team.length > 0) {
-        html += '<div style="margin-bottom:12px">';
+        html += '<div style="margin-bottom:12px" id="projTeamList">';
         p.team.forEach(function(t) {
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:13px"><strong>'+esc(t.first_name)+' '+esc(t.last_name)+'</strong><span class="text-muted">'+esc(t.role||'collaborator')+'</span><span class="text-muted">'+esc(t.sector||'')+'</span></div>';
+          var isMe = currentMember && currentMember.id === t.member_id;
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:13px">';
+          html += '<strong>'+esc(t.first_name)+' '+esc(t.last_name)+'</strong>';
+          html += '<span class="text-muted">'+esc(t.role||'collaborator')+'</span>';
+          html += '<span class="text-muted">'+esc(t.sector||'')+'</span>';
+          if (!isMe && t.member_id) {
+            html += '<button class="btn btn-outline btn-sm teamMsgBtn" data-mid="'+t.member_id+'" '
+              + 'data-mname="'+esc(t.first_name+' '+t.last_name)+'" '
+              + 'style="margin-left:auto;padding:2px 8px;font-size:11px">Message</button>';
+          }
+          html += '</div>';
         });
         html += '</div>';
       } else {
@@ -3177,8 +3187,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // === Action buttons ===
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
 
-      // Stage 0 -- Edit/Publish draft (proposer-only)
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'draft' && p.plan_json) {
+      // Stage 0 -- Edit/Publish draft (proposer only -- modifying the project)
+      if (vr.is_proposer && p.plan_status === 'draft' && p.plan_json) {
         html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Edit Plan</button>';
         html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan (starts 30-day countdown)</button>';
       }
@@ -3187,25 +3197,34 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (p.plan_status === 'recruiting' && !p.recruitment_closed_at && !vr.is_proposer && !vr.is_participant) {
         html += '<button class="btn btn-outline btn-sm" id="joinBtn">Join Team</button>';
       }
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
+      // Project-management actions are proposer-ONLY. Platform superadmins are
+      // intentionally NOT given the override here so that ownership is clear
+      // and a member cannot mutate a project they did not create.
+      if (vr.is_proposer && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-run AI Matches</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
         html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Close Bidding Now</button>';
       }
 
       // Reopen for recruitment_failed projects (proposer only)
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruitment_failed') {
+      if (vr.is_proposer && p.plan_status === 'recruitment_failed') {
         html += '<button class="btn btn-primary btn-sm" id="reopenBtn" style="background:#28a745;color:white">Re-Open Bidding (+14 days)</button>';
       }
 
-      // Stage 2 -- sign-off (Final Meeting auto-booked, no manual button needed)
+      // Stage 2 -- sign-off. Every team member needs to sign their own
+      // commitment, so this button is for the proposer AND participants.
+      // It is NOT a project mutation -- it represents individual consent.
       if (['pending_signoff','fully_staffed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant)) {
         html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
         html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Sign-off Status</button>';
       }
-      // Amend plan (PR-B) -- proposer/superadmin only, between team-lock and full sign-off
-      if ((vr.is_proposer || vr.is_superadmin) && ['fully_staffed','pending_signoff'].includes(p.plan_status)) {
+      // Amend Plan: proposer-only (modifies project; invalidates all signatures).
+      if (vr.is_proposer && ['fully_staffed','pending_signoff'].includes(p.plan_status)) {
         html += '<button class="btn btn-outline btn-sm" id="amendPlanBtn" style="border-color:#7b1fa2;color:#7b1fa2">Amend Plan (re-sign)</button>';
+      }
+      // Plan Versions is read-only history -- visible to proposer + any participant
+      // so collaborators can see what changed without being able to amend.
+      if ((vr.is_proposer || vr.is_participant) && ['fully_staffed','pending_signoff','executing','signed_off','completed'].includes(p.plan_status)) {
         html += '<button class="btn btn-outline btn-sm" id="planVersionsBtn">Plan Versions</button>';
       }
 
@@ -3217,6 +3236,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<div id="projActionMsg" style="margin-top:10px"></div>';
 
       openModal(html);
+
+      // Wire "Message" buttons next to each team member (DM stakeholder).
+      document.querySelectorAll('.teamMsgBtn').forEach(function(b) {
+        b.addEventListener('click', function() { messageMember(this.dataset.mid, this.dataset.mname); });
+      });
 
       var advBtn = document.getElementById('advanceBtn');
       if (advBtn) advBtn.addEventListener('click', async function() {

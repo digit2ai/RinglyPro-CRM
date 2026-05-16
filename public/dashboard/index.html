@@ -3124,16 +3124,26 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } catch(e) { /* ignore */ }
       }
 
-      // Team
-      html += '<h3>Team ('+(p.team?p.team.length:0)+' members)</h3>';
+      // Equipo -- incluye un boton "Mensaje" para cada miembro excepto tu mismo
+      html += '<h3>Equipo ('+(p.team?p.team.length:0)+' miembros)</h3>';
       if (p.team && p.team.length > 0) {
-        html += '<div style="margin-bottom:12px">';
+        html += '<div style="margin-bottom:12px" id="projTeamList">';
         p.team.forEach(function(t) {
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:13px"><strong>'+esc(t.first_name)+' '+esc(t.last_name)+'</strong><span class="text-muted">'+esc(t.role||'collaborator')+'</span><span class="text-muted">'+esc(t.sector||'')+'</span></div>';
+          var isMe = currentMember && currentMember.id === t.member_id;
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:13px">';
+          html += '<strong>'+esc(t.first_name)+' '+esc(t.last_name)+'</strong>';
+          html += '<span class="text-muted">'+esc(t.role||'collaborator')+'</span>';
+          html += '<span class="text-muted">'+esc(t.sector||'')+'</span>';
+          if (!isMe && t.member_id) {
+            html += '<button class="btn btn-outline btn-sm teamMsgBtn" data-mid="'+t.member_id+'" '
+              + 'data-mname="'+esc(t.first_name+' '+t.last_name)+'" '
+              + 'style="margin-left:auto;padding:2px 8px;font-size:11px">Mensaje</button>';
+          }
+          html += '</div>';
         });
         html += '</div>';
       } else {
-        html += '<p class="text-muted text-sm mb-12">No team members yet.</p>';
+        html += '<p class="text-muted text-sm mb-12">Aun no hay miembros en el equipo.</p>';
       }
 
       var vr = p.viewer_role || {};
@@ -3174,36 +3184,45 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // === Action buttons ===
       html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">';
 
-      // Stage 0 -- Edit/Publish draft (proposer-only)
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'draft' && p.plan_json) {
+      // Stage 0 -- Editar/Publicar borrador (solo el propietario del proyecto)
+      if (vr.is_proposer && p.plan_status === 'draft' && p.plan_json) {
         html += '<button class="btn btn-primary btn-sm" id="editPlanBtn" style="background:var(--accent);color:var(--navy)">Editar Plan</button>';
-        html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publish Plan (starts 30-day countdown)</button>';
+        html += '<button class="btn btn-primary btn-sm" id="publishDraftBtn" style="background:#28a745">Publicar Plan (inicia cuenta regresiva de 30 dias)</button>';
       }
 
-      // Stage 1 -- recruiting
+      // Stage 1 -- reclutamiento
       if (p.plan_status === 'recruiting' && !p.recruitment_closed_at && !vr.is_proposer && !vr.is_participant) {
         html += '<button class="btn btn-outline btn-sm" id="joinBtn">Unirse al Equipo</button>';
       }
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
-        html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-run AI Matches</button>';
-        html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
+      // Acciones de gestion del proyecto: SOLO el propietario. Los superadmin
+      // de plataforma NO tienen sobrecarga aqui para mantener clara la
+      // titularidad y evitar que un miembro modifique un proyecto ajeno.
+      if (vr.is_proposer && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
+        html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-ejecutar Match con IA</button>';
+        html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">Ver Invitaciones</button>';
         html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Cerrar Cotizacion Ahora</button>';
       }
 
-      // Reopen for recruitment_failed projects (proposer only)
-      if ((vr.is_proposer || vr.is_superadmin) && p.plan_status === 'recruitment_failed') {
-        html += '<button class="btn btn-primary btn-sm" id="reopenBtn" style="background:#28a745;color:white">Re-Open Bidding (+14 days)</button>';
+      // Reabrir para recruitment_failed (solo propietario)
+      if (vr.is_proposer && p.plan_status === 'recruitment_failed') {
+        html += '<button class="btn btn-primary btn-sm" id="reopenBtn" style="background:#28a745;color:white">Reabrir Cotizacion (+14 dias)</button>';
       }
 
-      // Stage 2 -- sign-off (Final Meeting auto-booked, no manual button needed)
+      // Stage 2 -- firma. Cada miembro firma su propio compromiso; este boton
+      // es para el propietario Y los participantes. NO es una modificacion del
+      // proyecto, es un consentimiento individual.
       if (['pending_signoff','fully_staffed'].includes(p.plan_status) && (vr.is_proposer || vr.is_participant)) {
-        html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Sign Off Plan</button>';
-        html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Sign-off Status</button>';
+        html += '<button class="btn btn-primary btn-sm" id="signoffBtn" style="background:#28a745">Firmar Plan</button>';
+        html += '<button class="btn btn-outline btn-sm" id="signoffStatusBtn">Estado de Firmas</button>';
       }
-      // Amend plan (PR-B) -- proposer/superadmin only, between team-lock and full sign-off
-      if ((vr.is_proposer || vr.is_superadmin) && ['fully_staffed','pending_signoff'].includes(p.plan_status)) {
-        html += '<button class="btn btn-outline btn-sm" id="amendPlanBtn" style="border-color:#7b1fa2;color:#7b1fa2">Amend Plan (re-sign)</button>';
-        html += '<button class="btn btn-outline btn-sm" id="planVersionsBtn">Plan Versions</button>';
+      // Enmendar Plan: solo el propietario (modifica el proyecto e invalida firmas).
+      if (vr.is_proposer && ['fully_staffed','pending_signoff'].includes(p.plan_status)) {
+        html += '<button class="btn btn-outline btn-sm" id="amendPlanBtn" style="border-color:#7b1fa2;color:#7b1fa2">Enmendar Plan (re-firma)</button>';
+      }
+      // Versiones del Plan: historial de solo lectura, visible al propietario
+      // y a los participantes para que vean cambios sin poder enmendar.
+      if ((vr.is_proposer || vr.is_participant) && ['fully_staffed','pending_signoff','executing','signed_off','completed'].includes(p.plan_status)) {
+        html += '<button class="btn btn-outline btn-sm" id="planVersionsBtn">Versiones del Plan</button>';
       }
 
       // Stage 3 -- workspace (auto-init on signoff, button is just shortcut)
@@ -3214,6 +3233,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<div id="projActionMsg" style="margin-top:10px"></div>';
 
       openModal(html);
+
+      // Wire "Mensaje" buttons junto a cada miembro del equipo.
+      document.querySelectorAll('.teamMsgBtn').forEach(function(b) {
+        b.addEventListener('click', function() { messageMember(this.dataset.mid, this.dataset.mname); });
+      });
 
       var advBtn = document.getElementById('advanceBtn');
       if (advBtn) advBtn.addEventListener('click', async function() {

@@ -595,9 +595,10 @@ router.post('/:id/close-recruitment', authMiddleware, async (req, res) => {
     );
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
 
-    const sa = await isSuperadmin(req.member.id, req.chamber_id);
-    if (project.proposer_member_id !== req.member.id && !sa) {
-      return res.status(403).json({ success: false, error: 'Only proposer or superadmin can close recruitment' });
+    // Project-modification action: proposer ONLY. Superadmin override removed
+    // intentionally -- ownership must stay with whoever proposed the project.
+    if (project.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can close recruitment' });
     }
     if (!['recruiting', 'fully_staffed'].includes(project.plan_status)) {
       return res.status(400).json({ success: false, error: `Cannot close from status: ${project.plan_status}` });
@@ -631,9 +632,9 @@ router.post('/:id/reopen-recruitment', authMiddleware, async (req, res) => {
     );
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
 
-    const sa = await isSuperadmin(req.member.id, req.chamber_id);
-    if (project.proposer_member_id !== req.member.id && !sa) {
-      return res.status(403).json({ success: false, error: 'Only proposer or superadmin can reopen recruitment' });
+    // Project-modification action: proposer ONLY.
+    if (project.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can reopen recruitment' });
     }
     if (!['recruitment_failed', 'fully_staffed', 'pending_signoff'].includes(project.plan_status)) {
       return res.status(400).json({ success: false, error: `Cannot reopen from status: ${project.plan_status}` });
@@ -936,9 +937,9 @@ router.post('/:id/book-final-meeting', authMiddleware, async (req, res) => {
     );
     if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
 
-    const sa = await isSuperadmin(req.member.id, req.chamber_id);
-    if (proj.proposer_member_id !== req.member.id && !sa) {
-      return res.status(403).json({ success: false, error: 'Only proposer or superadmin can book' });
+    // Project-modification action: proposer ONLY (creates a meeting + invites).
+    if (proj.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can book the final meeting' });
     }
     if (proj.plan_status !== 'fully_staffed' && proj.plan_status !== 'pending_signoff') {
       return res.status(400).json({ success: false, error: `Cannot book in status: ${proj.plan_status}` });
@@ -1227,9 +1228,9 @@ router.post('/:id/amend-plan', authMiddleware, async (req, res) => {
     );
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
 
-    const sa = await isSuperadmin(req.member.id, req.chamber_id);
-    if (project.proposer_member_id !== req.member.id && !sa) {
-      return res.status(403).json({ success: false, error: 'Only proposer or superadmin can amend' });
+    // Project-modification action: proposer ONLY (invalidates all signatures).
+    if (project.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can amend the plan' });
     }
     if (!['fully_staffed', 'pending_signoff'].includes(project.plan_status)) {
       return res.status(400).json({ success: false, error: `Cannot amend in status: ${project.plan_status}` });
