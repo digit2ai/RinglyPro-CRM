@@ -684,40 +684,74 @@ router.post('/:id/invite-matches', authMiddleware, async (req, res) => {
     );
 
     const N = parseInt(req.body.top_n || 3);
-    const byRole = []; let invitationsCreated = 0;
+
+    // ALREADY-INVITED guard: don't re-invite anyone who already has an invitation
+    // on this project from a prior run of invite-matches.
+    const priorInvites = await sequelize.query(
+      `SELECT member_id, role_index, status FROM project_invitations
+       WHERE chamber_id = :c AND project_id = :p`,
+      { replacements: { c: req.chamber_id, p: req.params.id }, type: QueryTypes.SELECT }
+    );
+    const alreadyInvitedMemberIds = new Set(priorInvites.map(p => p.member_id));
+    const priorByRole = new Map(); // role_index -> [{member_id, status}, ...]
+    for (const p of priorInvites) {
+      if (!priorByRole.has(p.role_index)) priorByRole.set(p.role_index, []);
+      priorByRole.get(p.role_index).push(p);
+    }
+
+    // Build every (member, role) pair with score, then greedily assign each
+    // member to their single best-matching open role. This enforces the rule
+    // "one invitation per member per project" -- avoids the bug where a small
+    // chamber's only candidate gets invited for every role at once.
+    const allPairs = [];
     for (let i = 0; i < plan.team_roles_required.length; i++) {
       const role = plan.team_roles_required[i];
-      const ranked = members
-        .map(m => ({ member: m, score: scoreMember(m, role) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, N);
-      const invited = [];
-      for (const r of ranked) {
-        const [existing] = await sequelize.query(
-          `SELECT id, status FROM project_invitations
-           WHERE chamber_id = :c AND project_id = :p AND member_id = :m AND role_index = :i`,
-          { replacements: { c: req.chamber_id, p: req.params.id, m: r.member.id, i }, type: QueryTypes.SELECT }
-        );
-        if (existing) {
-          invited.push({ member_id: r.member.id, name: `${r.member.first_name} ${r.member.last_name}`, score: r.score, status: existing.status, existing: true });
-          continue;
-        }
-        await sequelize.query(
-          `INSERT INTO project_invitations
-           (chamber_id, project_id, member_id, role_index, role_title, status, match_score, invited_by_member_id, invited_at)
-           VALUES (:c, :p, :m, :i, :rt, 'pending', :s, :inv, NOW())`,
-          {
-            replacements: {
-              c: req.chamber_id, p: req.params.id, m: r.member.id, i,
-              rt: role.role_title || `Role ${i + 1}`, s: r.score.toFixed(3), inv: req.member.id
-            }
-          }
-        );
-        invitationsCreated++;
-        invited.push({ member_id: r.member.id, name: `${r.member.first_name} ${r.member.last_name}`, score: r.score, status: 'pending' });
+      for (const m of members) {
+        allPairs.push({ member: m, roleIndex: i, role, score: scoreMember(m, role) });
       }
-      byRole.push({ role_index: i, role_title: role.role_title, must_have: !!role.must_have, invitees: invited });
     }
+    allPairs.sort((a, b) => b.score - a.score);
+
+    const roleSlotCount = new Map(); // role_index -> filled count (including priors)
+    for (const [ri, list] of priorByRole.entries()) roleSlotCount.set(ri, list.length);
+    const assignedMemberIds = new Set(alreadyInvitedMemberIds);
+    const newAssignments = []; // [{member, roleIndex, role, score}, ...]
+    for (const pair of allPairs) {
+      if (assignedMemberIds.has(pair.member.id)) continue;
+      const filled = roleSlotCount.get(pair.roleIndex) || 0;
+      if (filled >= N) continue;
+      assignedMemberIds.add(pair.member.id);
+      roleSlotCount.set(pair.roleIndex, filled + 1);
+      newAssignments.push(pair);
+    }
+
+    let invitationsCreated = 0;
+    for (const a of newAssignments) {
+      await sequelize.query(
+        `INSERT INTO project_invitations
+         (chamber_id, project_id, member_id, role_index, role_title, status, match_score, invited_by_member_id, invited_at)
+         VALUES (:c, :p, :m, :i, :rt, 'pending', :s, :inv, NOW())`,
+        {
+          replacements: {
+            c: req.chamber_id, p: req.params.id, m: a.member.id, i: a.roleIndex,
+            rt: a.role.role_title || `Role ${a.roleIndex + 1}`, s: a.score.toFixed(3), inv: req.member.id
+          }
+        }
+      );
+      invitationsCreated++;
+    }
+
+    // Build response grouped by role for the UI.
+    const byRole = plan.team_roles_required.map((role, i) => {
+      const newForRole = newAssignments
+        .filter(a => a.roleIndex === i)
+        .map(a => ({
+          member_id: a.member.id,
+          name: `${a.member.first_name} ${a.member.last_name}`,
+          score: a.score, status: 'pending'
+        }));
+      return { role_index: i, role_title: role.role_title, must_have: !!role.must_have, invitees: newForRole };
+    });
 
     if (project.plan_status === 'published') {
       await sequelize.query(

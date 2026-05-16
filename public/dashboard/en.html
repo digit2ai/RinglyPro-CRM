@@ -1968,29 +1968,77 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         budget_tier: fd.get('budget_tier'),
         countries: fd.get('countries') ? fd.get('countries').split(',').map(function(c){return c.trim();}).filter(Boolean) : []
       };
-      var msg = document.getElementById('newProjMsg');
-      var btn = document.getElementById('generateBtn');
-      btn.disabled = true;
-      btn.textContent = 'Claude is drafting your plan...';
-      msg.innerHTML = '<div class="text-muted text-sm" style="padding:12px 0;">Generating structured business plan with Claude (15-30 seconds)...</div>';
+      var stopDrafting = showDraftingOverlay('Drafting your plan');
 
       try {
         var res = await apiFetch('/projects/draft', { method:'POST', body:JSON.stringify(body) });
+        stopDrafting(res.success);
         if (res.success) {
           // Refresh project list in background so the draft shows up if user closes editor
           loadProjects();
           showPlanEditor(res.data.project_id, res.data.plan_json);
         } else {
-          msg.innerHTML = '<div class="error-msg">'+(res.error||'Error generating plan')+'</div>';
-          btn.disabled = false;
-          btn.textContent = 'Generate Business Plan with AI';
+          openModal('<div class="error-msg">'+(res.error||'Error generating plan')+'</div>'
+            + '<div style="margin-top:12px"><button class="btn btn-outline" id="draftBackBtn">Back</button></div>');
+          var bk = document.getElementById('draftBackBtn');
+          if (bk) bk.addEventListener('click', showNewProjectForm);
         }
       } catch(e) {
-        msg.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
-        btn.disabled = false;
-        btn.textContent = 'Generate Business Plan with AI';
+        stopDrafting(false);
+        openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>'
+          + '<div style="margin-top:12px"><button class="btn btn-outline" id="draftBackBtn">Back</button></div>');
+        var bk2 = document.getElementById('draftBackBtn');
+        if (bk2) bk2.addEventListener('click', showNewProjectForm);
       }
     });
+  }
+
+  // Full-modal progress overlay shown while the AI drafts the business plan.
+  // Returns a stop() function: call stop(true) on success or stop(false) on error.
+  // While active, blocks the form so the user can't double-submit; the X still
+  // closes the modal (the API call continues in the background).
+  function showDraftingOverlay(title) {
+    var statuses = [
+      'Analyzing your vision...',
+      'Researching the market...',
+      'Structuring milestones...',
+      'Identifying roles needed...',
+      'Finalizing the plan...'
+    ];
+    var html = ''
+      + '<div style="text-align:center;padding:24px 8px">'
+      +   '<h2 style="margin:0 0 8px 0">'+esc(title)+'</h2>'
+      +   '<p class="text-muted" style="margin:0 0 24px 0">This usually takes 15-30 seconds. Please do not close this window.</p>'
+      +   '<div style="background:var(--gray-200);border-radius:8px;height:12px;overflow:hidden;margin:0 0 12px 0">'
+      +     '<div id="draftBar" style="background:var(--primary);height:100%;width:0%;transition:width 0.6s ease-out;border-radius:8px"></div>'
+      +   '</div>'
+      +   '<p class="text-sm text-muted" id="draftStatus" style="margin:0">'+statuses[0]+'</p>'
+      + '</div>';
+    openModal(html);
+
+    var progress = 0;
+    var stepIndex = 0;
+    var iv = setInterval(function() {
+      // Step toward 92% asymptotically so we leave room for the API completion.
+      progress = Math.min(92, progress + 4 + Math.random() * 3);
+      var bar = document.getElementById('draftBar');
+      if (bar) bar.style.width = progress + '%';
+      // Rotate status copy as we cross thresholds.
+      var nextStep = Math.min(statuses.length - 1, Math.floor(progress / 20));
+      if (nextStep !== stepIndex) {
+        stepIndex = nextStep;
+        var st = document.getElementById('draftStatus');
+        if (st) st.textContent = statuses[stepIndex];
+      }
+    }, 1100);
+
+    return function stop(success) {
+      clearInterval(iv);
+      var bar = document.getElementById('draftBar');
+      if (bar) bar.style.width = success ? '100%' : (progress + '%');
+      var st = document.getElementById('draftStatus');
+      if (st) st.textContent = success ? 'Done!' : '';
+    };
   }
 
   function showPlanEditor(projectId, planJson) {
