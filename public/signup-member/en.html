@@ -48,7 +48,7 @@
        alt="VirtualChamber">
   <h1 id="chamberName">Member Signup</h1>
   <p class="tagline" id="chamberTagline">Create your account to access the directory and AI matching.</p>
-  <div style="background:rgba(252,209,22,0.1); border:1px solid rgba(252,209,22,0.35); border-radius:10px; padding:12px 14px; margin-bottom:18px; text-align:center; font-size:13px; color:#FCD116;">
+  <div id="feeBanner" style="background:rgba(252,209,22,0.1); border:1px solid rgba(252,209,22,0.35); border-radius:10px; padding:12px 14px; margin-bottom:18px; text-align:center; font-size:13px; color:#FCD116;">
     <strong>$25 USD</strong> initial setup + <strong>$10 USD/month</strong> membership.<br>
     Secure checkout powered by Stripe.
   </div>
@@ -177,6 +177,9 @@
   document.getElementById('loginLink').href = '/' + slug + '/login';
   document.getElementById('backLink').href = '/' + slug;
 
+  var paymentWaived = false;
+  var chamberShortName = '';
+
   fetch(API + '/public/info')
     .then(r => r.json())
     .then(j => {
@@ -184,6 +187,20 @@
       document.title = 'Signup - ' + j.data.name;
       document.getElementById('chamberName').textContent = 'Join ' + j.data.name;
       if (j.data.logo_url) document.getElementById('brandLogo').src = j.data.logo_url;
+      chamberShortName = j.data.name || '';
+      paymentWaived = !!j.data.payment_waived;
+      if (paymentWaived) {
+        var banner = document.getElementById('feeBanner');
+        if (banner) {
+          banner.style.background = 'rgba(34,197,94,0.10)';
+          banner.style.border = '1px solid rgba(34,197,94,0.45)';
+          banner.style.color = '#7CE5A2';
+          banner.innerHTML = '<strong>Waived for ' + chamberShortName + ' Chamber.</strong><br>'
+            + 'Free signup during the promotional period -- no setup fee, no monthly charge.';
+        }
+        var btn = document.getElementById('submitBtn');
+        if (btn) btn.textContent = 'Create my free account';
+      }
     })
     .catch(() => {});
 
@@ -251,17 +268,25 @@
         body: JSON.stringify(body)
       });
       var data = await res.json();
+      if (data.success && data.data && data.data.payment_waived && data.data.token) {
+        showMsg('Account created. Redirecting to your dashboard...', 'ok');
+        try {
+          localStorage.setItem('cv_' + slug + '_token', data.data.token);
+        } catch(_) {}
+        window.location.href = data.data.redirect_url || ('/' + slug + '/dashboard/?welcome=1');
+        return;
+      }
       if (data.success && data.data && data.data.checkout_url) {
         showMsg('Redirecting to Stripe for secure payment...', 'ok');
         try { sessionStorage.setItem('pending_signup_slug', slug); } catch(_) {}
         window.location.href = data.data.checkout_url;
         return;
       }
-      showMsg(data.error || 'Could not start checkout');
-      btn.disabled = false; btn.textContent = 'Continue to secure checkout';
+      showMsg(data.error || 'Could not complete signup');
+      btn.disabled = false; btn.textContent = paymentWaived ? 'Create my free account' : 'Continue to secure checkout';
     } catch(err) {
       showMsg('Connection error. Please try again.');
-      btn.disabled = false; btn.textContent = 'Continue to secure checkout';
+      btn.disabled = false; btn.textContent = paymentWaived ? 'Create my free account' : 'Continue to secure checkout';
     }
   });
 })();

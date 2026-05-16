@@ -53,7 +53,8 @@ router.get('/public/info', async (req, res) => {
         primary_language: chamber.primary_language, country: chamber.country,
         logo_url: chamber.logo_url, contact_email: chamber.contact_email,
         contact_phone: chamber.contact_phone, member_count: parseInt(memberCount),
-        recent_projects: projects, open_rfqs: rfqs, top_sectors: sectors
+        recent_projects: projects, open_rfqs: rfqs, top_sectors: sectors,
+        payment_waived: signupFeesWaived(chamber.slug)
       }
     });
   } catch (err) {
