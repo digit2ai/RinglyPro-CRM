@@ -6,6 +6,22 @@
 const express = require('express');
 const { sequelize, QueryTypes, bcrypt, signToken, authMiddleware, requireAdmin } = require('./lib/shared');
 
+// Canonical lists -- mirror the dropdowns in public/dashboard/{en,index}.html
+// and public/signup-member/{en,index}.html. Server validates against these so
+// no free-form values can sneak in via a forged request and break matching.
+const CHAMBER_COUNTRIES = new Set([
+  'Argentina','Austria','Belgium','Belize','Bolivia','Brazil','Bulgaria','Canada',
+  'Chile','Colombia','Costa Rica','Croatia','Cuba','Cyprus','Czech Republic',
+  'Denmark','Dominican Republic','Ecuador','El Salvador','Estonia','Finland',
+  'France','Germany','Greece','Guatemala','Guyana','Haiti','Honduras','Hungary',
+  'Iceland','Ireland','Italy','Jamaica','Latvia','Lithuania','Luxembourg','Malta',
+  'Mexico','Netherlands','Nicaragua','Norway','Panama','Paraguay','Peru',
+  'Philippines','Poland','Portugal','Puerto Rico','Romania','Slovakia','Slovenia',
+  'Spain','Suriname','Sweden','Switzerland','Trinidad and Tobago','Turkey',
+  'Ukraine','United Kingdom','United States','Uruguay','Venezuela'
+]);
+const CHAMBER_LANGUAGES = new Set(['English', 'Spanish']);
+
 // Chambers in this comma-separated env list skip the $25 setup fee and the
 // $10/mo subscription at signup. Members are activated immediately and a
 // $0 "waived" transaction is recorded for audit. Remove the slug from the
@@ -237,6 +253,17 @@ router.post('/auth/signup-member', async (req, res) => {
     } else if (typeof languages === 'string' && languages.trim()) {
       langArray = languages.split(',').map(l => l.trim()).filter(Boolean);
     }
+    // Enforce canonical English/Spanish only.
+    if (langArray) langArray = langArray.filter(l => CHAMBER_LANGUAGES.has(l));
+    // Country must be in the canonical list (blank is allowed for the form).
+    let normalizedCountry = country;
+    if (typeof country === 'string') {
+      const t = country.trim();
+      normalizedCountry = t === '' ? null : t;
+      if (normalizedCountry && !CHAMBER_COUNTRIES.has(normalizedCountry)) {
+        return res.status(400).json({ success: false, error: 'Invalid country -- pick one from the dropdown list' });
+      }
+    }
     const yrs = years_experience !== undefined && years_experience !== null && String(years_experience).trim() !== ''
       ? parseInt(years_experience) : null;
     function urlOk(u) {
@@ -261,7 +288,7 @@ router.post('/auth/signup-member', async (req, res) => {
 
     const baseReplacements = {
       c: req.chamber_id, fn: first_name, ln: last_name,
-      country: country || null, sector: sector || null, company: company_name || null,
+      country: normalizedCountry || null, sector: sector || null, company: company_name || null,
       sub: sub_specialty || null, bio: bio || null, yrs,
       langs: langArray && langArray.length > 0 ? '{' + langArray.map(l => '"' + l.replace(/"/g, '\\"') + '"').join(',') + '}' : null,
       linkedin, website, phone: phone || null
@@ -643,6 +670,17 @@ router.put('/members/:id', authMiddleware, async (req, res) => {
         const t = val.trim();
         return /^https?:\/\//i.test(t) ? t : 'https://' + t;
       }
+      // Country: strict whitelist. Reject anything not in CHAMBER_COUNTRIES
+      // by returning undefined (caller will throw 400 below).
+      if (key === 'country' && typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed === '') return null;
+        if (!CHAMBER_COUNTRIES.has(trimmed)) {
+          // Sentinel to flag invalid country -- caught below.
+          return '__INVALID_COUNTRY__';
+        }
+        return trimmed;
+      }
       if (ARRAY_FIELDS.has(key)) {
         // Accept either a JS array or a comma-separated string and emit a
         // postgres array literal -- bound with explicit ::text[] cast.
@@ -651,6 +689,10 @@ router.put('/members/:id', authMiddleware, async (req, res) => {
         else if (typeof val === 'string') arr = val.split(',');
         else return null;
         arr = arr.map(s => String(s).trim()).filter(Boolean);
+        // Languages: filter to canonical English/Spanish only.
+        if (key === 'languages') {
+          arr = arr.filter(s => CHAMBER_LANGUAGES.has(s));
+        }
         if (arr.length === 0) return '{}';
         return '{' + arr.map(s => '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"').join(',') + '}';
       }
@@ -662,6 +704,9 @@ router.put('/members/:id', authMiddleware, async (req, res) => {
       if (!(k in req.body)) continue;
       const v = normalize(k, req.body[k]);
       if (v === undefined) continue;
+      if (v === '__INVALID_COUNTRY__') {
+        return res.status(400).json({ success: false, error: 'Invalid country -- pick one from the dropdown list' });
+      }
       if (ARRAY_FIELDS.has(k)) {
         sets.push(`${k} = :${k}::text[]`);
       } else {

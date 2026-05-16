@@ -5,6 +5,27 @@ const crypto = require('crypto');
 const { runCascade, maybeAutoClose } = require('../lib/p2b-cascade');
 const { autoInitWorkspaceFromPlan } = require('../lib/workspace-init');
 
+// Country synonyms used by region matching. Keep in sync with
+// src/routes/unified-chamber/lib/scoring.js.
+const COUNTRY_SYNONYMS = {
+  'united states': 'united states', 'usa': 'united states', 'us': 'united states',
+  'u.s.': 'united states', 'u.s.a.': 'united states', 'america': 'united states',
+  'united states of america': 'united states',
+  'united kingdom': 'united kingdom', 'uk': 'united kingdom', 'u.k.': 'united kingdom',
+  'great britain': 'united kingdom', 'britain': 'united kingdom', 'england': 'united kingdom',
+  'spain': 'spain', 'espana': 'spain', 'españa': 'spain',
+  'mexico': 'mexico', 'méxico': 'mexico',
+  'brazil': 'brazil', 'brasil': 'brazil',
+  'dominican republic': 'dominican republic', 'república dominicana': 'dominican republic',
+  'philippines': 'philippines', 'filipinas': 'philippines', 'ph': 'philippines',
+  'czech republic': 'czech republic', 'czechia': 'czech republic',
+  'germany': 'germany', 'deutschland': 'germany'
+};
+function canonCountry(s) {
+  const k = String(s || '').toLowerCase().trim();
+  return COUNTRY_SYNONYMS[k] || k;
+}
+
 module.exports = function createProjectRoutes(config) {
   const express = require('express');
   const router = express.Router();
@@ -638,12 +659,20 @@ module.exports = function createProjectRoutes(config) {
       denom += 0.4;
     }
 
-    // Region match by country / region_id (0-1)
+    // Region match by country / region_id (0-1) -- canonicalise both sides
+    // through COUNTRY_SYNONYMS so "USA"/"U.S."/"America" all match "United States".
     if (role.preferred_regions && role.preferred_regions.length > 0) {
       const regionList = role.preferred_regions.map(r => String(r).toLowerCase().trim());
-      const mc = String(member.country || '').toLowerCase();
+      const mc = canonCountry(member.country);
+      const rawMc = String(member.country || '').toLowerCase();
       const regionId = member.region_id;
-      const match = regionList.some(r => mc.includes(r) || r.includes(mc) || `region${regionId}` === r);
+      const match = regionList.some(r => {
+        const cr = canonCountry(r);
+        if (cr && mc && cr === mc) return true;
+        if (rawMc && r && (rawMc.includes(r) || r.includes(rawMc))) return true;
+        if (`region${regionId}` === r) return true;
+        return false;
+      });
       score += match ? 0.2 : 0;
       denom += 0.2;
     }

@@ -876,6 +876,46 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     return h;
   }
 
+  // Canonical country list: all American (N+C+S+Caribbean) + European countries.
+  // Member country is a strict dropdown -- no free-form -- so matching against
+  // role.preferred_regions and trust verification stays consistent. Philippines
+  // included because PACC chambers (cv-2, cv-3) explicitly serve that community.
+  var CHAMBER_COUNTRIES = [
+    'Argentina','Austria','Belgium','Belize','Bolivia','Brazil','Bulgaria','Canada',
+    'Chile','Colombia','Costa Rica','Croatia','Cuba','Cyprus','Czech Republic',
+    'Denmark','Dominican Republic','Ecuador','El Salvador','Estonia','Finland',
+    'France','Germany','Greece','Guatemala','Guyana','Haiti','Honduras','Hungary',
+    'Iceland','Ireland','Italy','Jamaica','Latvia','Lithuania','Luxembourg','Malta',
+    'Mexico','Netherlands','Nicaragua','Norway','Panama','Paraguay','Peru',
+    'Philippines','Poland','Portugal','Puerto Rico','Romania','Slovakia','Slovenia',
+    'Spain','Suriname','Sweden','Switzerland','Trinidad and Tobago','Turkey',
+    'Ukraine','United Kingdom','United States','Uruguay','Venezuela'
+  ];
+
+  function countryOptions(selected, placeholder) {
+    var h = '<option value="">'+(placeholder||'-- Select a country --')+'</option>';
+    CHAMBER_COUNTRIES.forEach(function(c) {
+      h += '<option value="'+esc(c)+'"'+(selected===c?' selected':'')+'>'+esc(c)+'</option>';
+    });
+    return h;
+  }
+
+  // Languages are restricted to English / Spanish. Multi-select via checkboxes.
+  var CHAMBER_LANGUAGES = ['English', 'Spanish'];
+
+  function languageCheckboxes(selected) {
+    var sel = Array.isArray(selected) ? selected.map(function(l) { return String(l); }) : [];
+    var h = '<div style="display:flex;gap:18px;padding:8px 0;flex-wrap:wrap">';
+    CHAMBER_LANGUAGES.forEach(function(l) {
+      var checked = sel.indexOf(l) !== -1 ? 'checked' : '';
+      h += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;margin:0">';
+      h += '<input type="checkbox" name="languages" value="'+esc(l)+'" '+checked+' style="width:auto"> '+esc(l);
+      h += '</label>';
+    });
+    h += '</div>';
+    return h;
+  }
+
   // ================================================================
   // PAGE: Dashboard
   // ================================================================
@@ -955,11 +995,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<form id="profileForm" class="form-grid">';
       html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name)+'"></div>';
       html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name)+'"></div>';
-      html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+      html += '<div class="form-group"><label>Country</label><select name="country">'+countryOptions(m.country)+'</select></div>';
       html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select your sector --')+'</select></div>';
       html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
       html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
-      html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+      html += '<div class="form-group"><label>Languages</label>'+languageCheckboxes(langs)+'</div>';
       html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
       html += '<div class="form-group"><label>Company Registration / License / Tax ID <span style="color:var(--gray-500);font-weight:400">(strong trust signal)</span></label><input name="company_registration_id" value="'+esc(m.company_registration_id||'')+'" placeholder="e.g. EIN, CNPJ, SIRET, Companies House #"></div>';
       html += '<div class="form-group"><label>Registration Country</label><input name="company_registration_country" value="'+esc(m.company_registration_country||'')+'" placeholder="e.g. United States, Brazil, Spain"></div>';
@@ -981,9 +1021,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         ev.preventDefault();
         var fd = new FormData(this);
         var body = {};
-        fd.forEach(function(v,k){ body[k] = v; });
+        fd.forEach(function(v,k){
+          if (k === 'languages') return; // handled via getAll below
+          body[k] = v;
+        });
+        body.languages = fd.getAll('languages').filter(Boolean);
         body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
-        body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
         // empty sector saves as null (clears the field) instead of being silently dropped
         var msgEl = document.getElementById('profileMsg');
         msgEl.innerHTML = '<div class="text-muted text-sm">Saving...</div>';
@@ -1263,11 +1306,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<form id="memEditForm" class="form-grid">';
     html += '<div class="form-group"><label>First Name</label><input name="first_name" value="'+esc(m.first_name||'')+'"></div>';
     html += '<div class="form-group"><label>Last Name</label><input name="last_name" value="'+esc(m.last_name||'')+'"></div>';
-    html += '<div class="form-group"><label>Country</label><input name="country" value="'+esc(m.country||'')+'"></div>';
+    html += '<div class="form-group"><label>Country</label><select name="country">'+countryOptions(m.country)+'</select></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions(m.sector,'-- Select sector --')+'</select></div>';
     html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" value="'+esc(m.sub_specialty||'')+'"></div>';
     html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
-    html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
+    html += '<div class="form-group"><label>Languages</label>'+languageCheckboxes(langs)+'</div>';
     html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
     html += '<div class="form-group"><label>Company Registration / License / Tax ID</label><input name="company_registration_id" value="'+esc(m.company_registration_id||'')+'" placeholder="EIN, CNPJ, SIRET, etc."></div>';
     html += '<div class="form-group"><label>Registration Country</label><input name="company_registration_country" value="'+esc(m.company_registration_country||'')+'"></div>';
@@ -1315,9 +1358,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     document.getElementById('memEditForm').addEventListener('submit', async function(ev) {
       ev.preventDefault();
       var fd = new FormData(this); var body = {};
-      fd.forEach(function(v,k){ body[k] = v; });
+      fd.forEach(function(v,k){
+        // languages comes through as multiple checkboxes with the same name;
+        // forEach would overwrite to the last one. Use getAll() below instead.
+        if (k === 'languages') return;
+        body[k] = v;
+      });
+      body.languages = fd.getAll('languages').filter(Boolean);
       body.years_experience = body.years_experience ? parseInt(body.years_experience) : null;
-      body.languages = body.languages ? body.languages.split(',').map(function(l){return l.trim();}).filter(Boolean) : [];
 
       // Pull admin-only fields out (sent to a different endpoint)
       var adminFields = null;
