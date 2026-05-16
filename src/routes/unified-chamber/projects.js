@@ -920,6 +920,17 @@ router.post('/:id/invitations/:inv_id/respond', authMiddleware, async (req, res)
         );
       }
 
+      // Supersede any OTHER pending invitations from this same project to
+      // this same member. Once they're on the team, the other role-specific
+      // invites are moot and confused the proposer's "View Invitations"
+      // panel by appearing stuck on PENDING.
+      await sequelize.query(
+        `DELETE FROM project_invitations
+         WHERE chamber_id = :c AND project_id = :p AND member_id = :m
+           AND status = 'pending' AND id != :inv`,
+        { replacements: { c: req.chamber_id, p: req.params.id, m: req.member.id, inv: req.params.inv_id } }
+      );
+
       const [proj] = await sequelize.query(
         `SELECT plan_json FROM projects WHERE chamber_id = :c AND id = :id`,
         { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
