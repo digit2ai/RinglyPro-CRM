@@ -55,6 +55,9 @@ function buildNudge({ project, event, rsvp }) {
     rsvp_yes: 'Sí, asistiré',
     rsvp_maybe: 'Tal vez',
     rsvp_no: 'No puedo',
+    reschedule_label: '¿No te funciona el horario?',
+    reschedule_cta: 'Proponer otro horario',
+    reschedule_hint: 'Abre el espacio de trabajo del proyecto para elegir uno de los próximos espacios disponibles.',
     foot: 'Si el horario no te funciona, también puedes responder a este correo y buscaremos otra opción.',
     best: 'Saludos cordiales,'
   } : {
@@ -71,6 +74,9 @@ function buildNudge({ project, event, rsvp }) {
     rsvp_yes: "Yes, I'll attend",
     rsvp_maybe: 'Maybe',
     rsvp_no: "No, I can't make it",
+    reschedule_label: "Time doesn't work?",
+    reschedule_cta: 'Propose a new time',
+    reschedule_hint: 'Opens the project workspace where you can pick one of the next available slots.',
     foot: "If the time doesn't work for you, reply to this email and we'll find another slot.",
     best: 'Best,'
   };
@@ -90,6 +96,13 @@ function buildNudge({ project, event, rsvp }) {
   const projectName = project.name || '';
 
   const rsvpUrl = (r) => `${PUBLIC_BASE}/projects/api/v1/meeting-rsvp/${rsvp.token}/${r}`;
+
+  // Reschedule deep-link — opens the share page with email pre-filled, the
+  // matching meeting highlighted, and the slot picker auto-opened (since
+  // Option 2 lets any stakeholder reschedule, not just the project owner).
+  const rescheduleUrl = project.stakeholder_share_token
+    ? `${PUBLIC_BASE}/projects/share/${project.stakeholder_share_token}?email=${encodeURIComponent(rsvp.email)}&meeting=${event.id}&action=reschedule`
+    : null;
 
   const meetingBlockHtml = `
     <div style="margin:18px 0;padding:18px 20px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px">
@@ -116,12 +129,21 @@ function buildNudge({ project, event, rsvp }) {
     </div>
   `;
 
+  const rescheduleBlockHtml = rescheduleUrl ? `
+    <div style="margin:14px 0 8px;padding:14px 16px;background:rgba(45,140,255,0.06);border:1px solid rgba(45,140,255,0.3);border-radius:10px">
+      <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px">${esc(L.reschedule_label)}</div>
+      <a href="${esc(rescheduleUrl)}" style="display:inline-block;background:#2D8CFF;color:#fff;text-decoration:none;padding:9px 18px;border-radius:6px;font-weight:600;font-size:13px">${esc(L.reschedule_cta)}</a>
+      <div style="margin-top:8px;font-size:11px;color:#64748b">${esc(L.reschedule_hint)}</div>
+    </div>
+  ` : '';
+
   const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;max-width:620px">
     <p>${esc(L.hi)},</p>
     <p>${esc(L.intro1)} <strong>"${esc(projectName)}"</strong>.</p>
     <p>${esc(L.intro2)}</p>
     ${meetingBlockHtml}
     ${rsvpBlockHtml}
+    ${rescheduleBlockHtml}
     <p style="font-size:13px;color:#475569;margin-top:18px">${esc(L.foot)}</p>
     <p style="margin-top:22px;margin-bottom:2px">${esc(L.best)}<br>
     <strong>${esc(FROM_NAME)}</strong><br>
@@ -144,6 +166,8 @@ function buildNudge({ project, event, rsvp }) {
     `${L.rsvp_yes}: ${rsvpUrl('yes')}`,
     `${L.rsvp_maybe}: ${rsvpUrl('maybe')}`,
     `${L.rsvp_no}: ${rsvpUrl('no')}`,
+    rescheduleUrl ? '' : null,
+    rescheduleUrl ? `${L.reschedule_label} ${L.reschedule_cta}: ${rescheduleUrl}` : null,
     '',
     L.foot,
     '',
