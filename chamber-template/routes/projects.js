@@ -644,8 +644,8 @@ module.exports = function createProjectRoutes(config) {
       const mc = String(member.country || '').toLowerCase();
       const regionId = member.region_id;
       const match = regionList.some(r => mc.includes(r) || r.includes(mc) || `region${regionId}` === r);
-      score += match ? 0.3 : 0;
-      denom += 0.3;
+      score += match ? 0.2 : 0;
+      denom += 0.2;
     }
 
     // Skills overlap with required_skills against bio + sub_specialty (0-1)
@@ -659,8 +659,8 @@ module.exports = function createProjectRoutes(config) {
         haystack.includes(String(s).toLowerCase().substring(0, 8))
       ).length;
       const ratio = hits / role.required_skills.length;
-      score += ratio * 0.2;
-      denom += 0.2;
+      score += ratio * 0.3;
+      denom += 0.3;
     }
 
     // Trust score baseline (0-1)

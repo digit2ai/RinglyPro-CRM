@@ -18,8 +18,8 @@ function scoreMember(member, role) {
     const mc = String(member.country || '').toLowerCase();
     const regionId = member.region_id;
     const match = regionList.some(r => mc.includes(r) || r.includes(mc) || `region${regionId}` === r);
-    score += match ? 0.3 : 0;
-    denom += 0.3;
+    score += match ? 0.2 : 0;
+    denom += 0.2;
   }
 
   if (role.required_skills && role.required_skills.length > 0) {
@@ -32,8 +32,8 @@ function scoreMember(member, role) {
       haystack.includes(String(s).toLowerCase().substring(0, 8))
     ).length;
     const ratio = hits / role.required_skills.length;
-    score += ratio * 0.2;
-    denom += 0.2;
+    score += ratio * 0.3;
+    denom += 0.3;
   }
 
   score += parseFloat(member.trust_score || 0.7) * 0.1;
