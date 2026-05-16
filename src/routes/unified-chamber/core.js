@@ -1266,4 +1266,204 @@ router.delete('/searches/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// =====================================================================
+// DIRECT MESSAGES (member-to-member) -- inbox + threads
+// =====================================================================
+// Schema: chamber_conversations (canonical pair with member_a_id < member_b_id),
+// chamber_messages (each message has sender + recipient + body + read_at).
+// All queries are scoped by chamber_id so members in different chambers can't
+// see each other's threads even when sharing a member_id space.
+
+function pairKey(a, b) {
+  const ai = parseInt(a), bi = parseInt(b);
+  return ai < bi ? [ai, bi] : [bi, ai];
+}
+
+// Look up or create the conversation row between the current member and `other`.
+async function findOrCreateConversation(chamberId, meId, otherId) {
+  const [a, b] = pairKey(meId, otherId);
+  const [existing] = await sequelize.query(
+    `SELECT id FROM chamber_conversations
+     WHERE chamber_id = :c AND member_a_id = :a AND member_b_id = :b`,
+    { replacements: { c: chamberId, a, b }, type: QueryTypes.SELECT }
+  );
+  if (existing) return existing.id;
+  const [row] = await sequelize.query(
+    `INSERT INTO chamber_conversations (chamber_id, member_a_id, member_b_id, last_message_at, created_at, updated_at)
+     VALUES (:c, :a, :b, NOW(), NOW(), NOW())
+     RETURNING id`,
+    { replacements: { c: chamberId, a, b }, type: QueryTypes.SELECT }
+  );
+  return row.id;
+}
+
+// Cheap unread-count endpoint for the sidebar badge. Called frequently so it
+// must be cheap; the partial index on (chamber_id, recipient_id, read_at)
+// keeps this O(unread).
+router.get('/inbox/unread-count', authMiddleware, async (req, res) => {
+  try {
+    const [row] = await sequelize.query(
+      `SELECT COUNT(*) AS c FROM chamber_messages
+       WHERE chamber_id = :c AND recipient_id = :m AND read_at IS NULL`,
+      { replacements: { c: req.chamber_id, m: req.member.id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { unread: parseInt(row.c) || 0 } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// List the current member's conversations, newest activity first.
+router.get('/inbox', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const rows = await sequelize.query(
+      `SELECT c.id, c.last_message_at, c.last_message_preview, c.last_sender_id,
+              CASE WHEN c.member_a_id = :me THEN c.member_b_id ELSE c.member_a_id END AS other_id,
+              o.first_name AS other_first_name, o.last_name AS other_last_name,
+              o.company_name AS other_company, o.email AS other_email, o.sector AS other_sector,
+              (SELECT COUNT(*) FROM chamber_messages m
+                WHERE m.conversation_id = c.id AND m.recipient_id = :me AND m.read_at IS NULL) AS unread_count
+       FROM chamber_conversations c
+       JOIN members o ON o.id = CASE WHEN c.member_a_id = :me THEN c.member_b_id ELSE c.member_a_id END
+       WHERE c.chamber_id = :ch AND (c.member_a_id = :me OR c.member_b_id = :me)
+       ORDER BY c.last_message_at DESC
+       LIMIT 100`,
+      { replacements: { ch: req.chamber_id, me }, type: QueryTypes.SELECT }
+    );
+    return res.json({
+      success: true,
+      data: rows.map(r => ({
+        conversation_id: r.id,
+        last_message_at: r.last_message_at,
+        last_message_preview: r.last_message_preview,
+        last_sender_id: r.last_sender_id,
+        unread_count: parseInt(r.unread_count) || 0,
+        other_member: {
+          id: r.other_id, first_name: r.other_first_name, last_name: r.other_last_name,
+          company_name: r.other_company, email: r.other_email, sector: r.other_sector
+        }
+      }))
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get the message thread between current member and :other_id.
+// Marks all messages from :other_id as read in the same call.
+router.get('/conversations/:other_id/messages', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const other = parseInt(req.params.other_id);
+    if (!other) return res.status(400).json({ success: false, error: 'Invalid other_id' });
+    if (other === me) return res.status(400).json({ success: false, error: 'Cannot message yourself' });
+
+    // Verify the other member belongs to this chamber.
+    const [otherMember] = await sequelize.query(
+      `SELECT id, first_name, last_name, company_name, email, sector
+       FROM members WHERE chamber_id = :c AND id = :id AND status = 'active'`,
+      { replacements: { c: req.chamber_id, id: other }, type: QueryTypes.SELECT }
+    );
+    if (!otherMember) return res.status(404).json({ success: false, error: 'Member not found in this chamber' });
+
+    const [a, b] = pairKey(me, other);
+    const [conv] = await sequelize.query(
+      `SELECT id FROM chamber_conversations
+       WHERE chamber_id = :c AND member_a_id = :a AND member_b_id = :b`,
+      { replacements: { c: req.chamber_id, a, b }, type: QueryTypes.SELECT }
+    );
+
+    if (!conv) {
+      return res.json({ success: true, data: { messages: [], other_member: otherMember } });
+    }
+
+    const messages = await sequelize.query(
+      `SELECT id, sender_id, recipient_id, body, read_at, created_at
+       FROM chamber_messages
+       WHERE conversation_id = :cid
+       ORDER BY created_at ASC
+       LIMIT 500`,
+      { replacements: { cid: conv.id }, type: QueryTypes.SELECT }
+    );
+
+    // Mark unread inbound messages as read.
+    await sequelize.query(
+      `UPDATE chamber_messages SET read_at = NOW()
+       WHERE conversation_id = :cid AND recipient_id = :me AND read_at IS NULL`,
+      { replacements: { cid: conv.id, me } }
+    );
+
+    return res.json({ success: true, data: { messages, other_member: otherMember, conversation_id: conv.id } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Send a message. Body: { recipient_id, body }
+router.post('/messages', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const recipient = parseInt(req.body && req.body.recipient_id);
+    const body = (req.body && req.body.body || '').toString().trim();
+    if (!recipient) return res.status(400).json({ success: false, error: 'recipient_id required' });
+    if (recipient === me) return res.status(400).json({ success: false, error: 'Cannot message yourself' });
+    if (!body) return res.status(400).json({ success: false, error: 'Message body required' });
+    if (body.length > 5000) return res.status(400).json({ success: false, error: 'Message too long (5000 chars max)' });
+
+    // Verify recipient is active in this chamber.
+    const [recip] = await sequelize.query(
+      `SELECT id FROM members WHERE chamber_id = :c AND id = :id AND status = 'active'`,
+      { replacements: { c: req.chamber_id, id: recipient }, type: QueryTypes.SELECT }
+    );
+    if (!recip) return res.status(404).json({ success: false, error: 'Recipient not found in this chamber' });
+
+    const convId = await findOrCreateConversation(req.chamber_id, me, recipient);
+
+    const [msg] = await sequelize.query(
+      `INSERT INTO chamber_messages (chamber_id, conversation_id, sender_id, recipient_id, body, created_at)
+       VALUES (:c, :cid, :s, :r, :b, NOW())
+       RETURNING id, sender_id, recipient_id, body, read_at, created_at`,
+      { replacements: { c: req.chamber_id, cid: convId, s: me, r: recipient, b: body }, type: QueryTypes.SELECT }
+    );
+
+    // Update the conversation's denormalised "last message" fields for cheap inbox queries.
+    const preview = body.length > 200 ? body.slice(0, 197) + '...' : body;
+    await sequelize.query(
+      `UPDATE chamber_conversations
+       SET last_message_at = NOW(), last_message_preview = :p, last_sender_id = :s, updated_at = NOW()
+       WHERE id = :cid`,
+      { replacements: { cid: convId, p: preview, s: me } }
+    );
+
+    return res.status(201).json({ success: true, data: { message: msg, conversation_id: convId } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Explicit mark-all-read for a conversation (also done implicitly by GET thread).
+router.post('/conversations/:other_id/read', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const other = parseInt(req.params.other_id);
+    if (!other) return res.status(400).json({ success: false, error: 'Invalid other_id' });
+    const [a, b] = pairKey(me, other);
+    const [conv] = await sequelize.query(
+      `SELECT id FROM chamber_conversations
+       WHERE chamber_id = :c AND member_a_id = :a AND member_b_id = :b`,
+      { replacements: { c: req.chamber_id, a, b }, type: QueryTypes.SELECT }
+    );
+    if (!conv) return res.json({ success: true, data: { updated: 0 } });
+    await sequelize.query(
+      `UPDATE chamber_messages SET read_at = NOW()
+       WHERE conversation_id = :cid AND recipient_id = :me AND read_at IS NULL`,
+      { replacements: { cid: conv.id, me } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

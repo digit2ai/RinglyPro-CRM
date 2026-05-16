@@ -453,6 +453,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
         Projects
       </div>
+      <div class="sidebar-nav-item" data-page="inbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Inbox <span id="inboxBadge" style="margin-left:auto;background:var(--red);color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">0</span>
+      </div>
       <div class="sidebar-nav-item" data-page="invitations">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Invitations <span id="invBadge" style="margin-left:auto;background:var(--red);color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">0</span>
@@ -744,7 +748,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     applyChamberBranding();
     navigate('dashboard');
     loadInvBadge();
+    loadInboxBadge();
     setInterval(loadInvBadge, 60000); // refresh badge every minute
+    setInterval(loadInboxBadge, 60000); // refresh unread DMs every minute
   }
 
   // -- Navigation --
@@ -765,14 +771,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var titles = {
       dashboard:'Dashboard', profile:'My Profile', directory:'Directory',
       matching:'AI Matching', searches:'My Searches', projects:'Projects', invitations:'Invitations',
-      exchange:'Exchange', metrics:'Metrics', payments:'Payments', admin:'Administration'
+      inbox:'Inbox', exchange:'Exchange', metrics:'Metrics', payments:'Payments', admin:'Administration'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Loading...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
       matching:renderMatching, searches:renderSearches, projects:renderProjects, invitations:renderInvitations,
-      exchange:renderExchange, metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
+      inbox:renderInbox, exchange:renderExchange, metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
   }
@@ -1078,12 +1084,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (members.length === 0) { out.innerHTML = '<p class="text-muted">No members found.</p>'; return; }
         var h = '<div class="result-cards">';
         members.forEach(function(m) {
-          h += '<div class="result-card" data-member-id="'+m.id+'">';
+          h += '<div class="result-card" data-member-id="'+m.id+'" style="cursor:pointer">';
           h += '<div class="rc-name">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
           h += '<div class="rc-company">'+esc(m.company_name||'--')+' <span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type)+'</span></div>';
           h += '<div class="rc-meta"><span>'+esc(m.sector||'--')+'</span><span>'+esc(m.country||'--')+'</span>';
           if (m.years_experience) h += '<span>'+m.years_experience+' yrs exp.</span>';
-          h += '</div></div>';
+          h += '</div>';
+          var canMsg = !currentMember || currentMember.id !== m.id;
+          if (canMsg) {
+            h += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm dirMsgBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Message</button></div>';
+          }
+          h += '</div>';
         });
         h += '</div>';
         if (res.data.pagination) h += '<p class="text-muted text-sm mt-12">'+res.data.pagination.total+' members found (page '+res.data.pagination.page+' of '+res.data.pagination.total_pages+')</p>';
@@ -1091,6 +1102,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
         out.querySelectorAll('.result-card').forEach(function(card) {
           card.addEventListener('click', function() { showMemberModal(this.dataset.memberId); });
+        });
+        out.querySelectorAll('.dirMsgBtn').forEach(function(b) {
+          b.addEventListener('click', function(ev) { ev.stopPropagation(); messageMember(this.dataset.mid, this.dataset.mname); });
         });
       } catch(e) {
         out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
@@ -1129,12 +1143,21 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // Admin/superadmin: edit any member; self: edit your own
       var isAdmin = currentMember && ['superadmin','admin_global','admin_regional','admin'].includes(currentMember.access_level);
       var isSelf = currentMember && currentMember.id === m.id;
+      var actions = [];
       if (isAdmin || isSelf) {
-        html += '<div style="margin-top:16px;display:flex;gap:8px"><button class="btn btn-primary btn-sm" id="dirEditBtn" data-mid="'+m.id+'">'+(isSelf?'Edit My Profile':'Edit (Admin)')+'</button></div>';
+        actions.push('<button class="btn btn-primary btn-sm" id="dirEditBtn" data-mid="'+m.id+'">'+(isSelf?'Edit My Profile':'Edit (Admin)')+'</button>');
+      }
+      if (!isSelf) {
+        actions.push('<button class="btn btn-outline btn-sm" id="dirMsgModalBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'">Send Message</button>');
+      }
+      if (actions.length) {
+        html += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">' + actions.join('') + '</div>';
       }
       openModal(html);
       var ebtn = document.getElementById('dirEditBtn');
       if (ebtn) ebtn.addEventListener('click', function() { showMemberEditor(m); });
+      var mbtn = document.getElementById('dirMsgModalBtn');
+      if (mbtn) mbtn.addEventListener('click', function() { messageMember(this.dataset.mid, this.dataset.mname); });
     } catch(e) {
       openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
     }
@@ -1437,6 +1460,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<span>Gini: '+(r.gini_correction||1).toFixed(3)+'</span></div>';
           h += '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">';
           h += '<button class="btn btn-primary btn-sm matchViewBtn" data-mid="'+r.member_id+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">View Profile</button>';
+          h += '<button class="btn btn-outline btn-sm matchMsgBtn" data-mid="'+r.member_id+'" data-mname="'+esc(r.first_name+' '+r.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Message</button>';
           if (r.email) h += '<a class="btn btn-outline btn-sm" href="mailto:'+esc(r.email)+'" onclick="event.stopPropagation()" style="padding:4px 10px;font-size:12px;text-decoration:none">Email</a>';
           h += '</div>';
           h += '</div>';
@@ -1449,6 +1473,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         out.querySelectorAll('.matchViewBtn').forEach(function(b) {
           b.addEventListener('click', function(ev) { ev.stopPropagation(); showMemberModal(this.dataset.mid); });
+        });
+        out.querySelectorAll('.matchMsgBtn').forEach(function(b) {
+          b.addEventListener('click', function(ev) { ev.stopPropagation(); messageMember(this.dataset.mid, this.dataset.mname); });
         });
       } catch(e) {
         out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
@@ -1751,6 +1778,166 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         }
       }
     } catch(e) { /* swallow */ }
+  }
+
+  // ================================================================
+  // DIRECT MESSAGES (Inbox + threads)
+  // ================================================================
+
+  async function loadInboxBadge() {
+    try {
+      var res = await apiFetch('/inbox/unread-count');
+      var n = res && res.success ? (res.data.unread || 0) : 0;
+      var badge = document.getElementById('inboxBadge');
+      if (!badge) return;
+      if (n > 0) { badge.textContent = n > 99 ? '99+' : n; badge.style.display = 'inline-block'; }
+      else { badge.style.display = 'none'; }
+    } catch(e) { /* swallow */ }
+  }
+
+  // Jump straight into a conversation thread with a specific member.
+  // Called from "Message" buttons on match cards, directory cards, profile modal.
+  function messageMember(otherId, otherName) {
+    window._openThreadWith = { id: parseInt(otherId), name: otherName || '' };
+    closeModal();
+    navigate('inbox');
+  }
+
+  async function renderInbox() {
+    var pending = window._openThreadWith;
+    window._openThreadWith = null;
+    if (pending && pending.id) {
+      return renderInboxThread(pending.id, pending.name);
+    }
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="panel"><h2>Inbox</h2>'
+      + '<p class="text-muted mb-16">Your direct messages with other chamber members. Click any conversation to read or reply.</p>'
+      + '<div id="inboxList"><div class="loading">Loading...</div></div>'
+      + '</div>';
+    try {
+      var res = await apiFetch('/inbox');
+      var box = document.getElementById('inboxList');
+      if (!res.success) { box.innerHTML = '<div class="error-msg">'+(res.error||'Load failed')+'</div>'; return; }
+      var rows = res.data || [];
+      if (rows.length === 0) {
+        box.innerHTML = '<div class="text-muted" style="padding:24px 0">No conversations yet. Find someone in the '
+          + '<a href="#" id="goDir" style="color:var(--primary);font-weight:600">Directory</a> or '
+          + '<a href="#" id="goMatch" style="color:var(--primary);font-weight:600">AI Matching</a> '
+          + 'and click "Message" to start a conversation.</div>';
+        var d = document.getElementById('goDir'); if (d) d.addEventListener('click', function(e){e.preventDefault();navigate('directory');});
+        var m = document.getElementById('goMatch'); if (m) m.addEventListener('click', function(e){e.preventDefault();navigate('matching');});
+        return;
+      }
+      var h = '';
+      rows.forEach(function(c) {
+        var o = c.other_member;
+        var when = c.last_message_at ? new Date(c.last_message_at).toLocaleString() : '';
+        var unread = c.unread_count > 0;
+        h += '<div class="result-card convCard" data-oid="'+o.id+'" data-oname="'+esc(o.first_name+' '+o.last_name)+'" '
+          + 'style="cursor:pointer;'+(unread?'border-left:3px solid var(--primary);':'')+'">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+        h += '<div style="flex:1;min-width:0">';
+        h += '<div class="rc-name">'+esc(o.first_name)+' '+esc(o.last_name);
+        if (unread) h += ' <span style="background:var(--primary);color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px">'+c.unread_count+' new</span>';
+        h += '</div>';
+        if (o.company_name) h += '<div class="rc-company">'+esc(o.company_name)+'</div>';
+        if (c.last_message_preview) {
+          var fromMe = c.last_sender_id && currentMember && c.last_sender_id === currentMember.id;
+          h += '<div style="margin-top:6px;font-size:13px;color:var(--gray-600);'+(unread?'font-weight:600;color:var(--gray-800);':'')+'">';
+          if (fromMe) h += '<span style="color:var(--gray-500)">You: </span>';
+          h += esc(c.last_message_preview);
+          h += '</div>';
+        }
+        h += '</div>';
+        if (when) h += '<div style="font-size:11px;color:var(--gray-500);white-space:nowrap">'+esc(when)+'</div>';
+        h += '</div></div>';
+      });
+      box.innerHTML = h;
+      box.querySelectorAll('.convCard').forEach(function(card) {
+        card.addEventListener('click', function() {
+          renderInboxThread(this.dataset.oid, this.dataset.oname);
+        });
+      });
+    } catch(e) {
+      document.getElementById('inboxList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function renderInboxThread(otherId, otherNameHint) {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="panel">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'
+      + '<button class="btn btn-outline btn-sm" id="threadBack">&larr; Inbox</button>'
+      + '<h2 id="threadTitle" style="margin:0">'+esc(otherNameHint || 'Conversation')+'</h2>'
+      + '</div>'
+      + '<div id="threadMessages" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--gray-50);border-radius:8px;margin-bottom:12px"><div class="loading">Loading...</div></div>'
+      + '<form id="threadForm" style="display:flex;gap:8px;align-items:flex-end">'
+      + '<textarea id="threadBody" rows="2" placeholder="Type a message... (max 5000 chars)" required maxlength="5000" style="flex:1;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;resize:vertical"></textarea>'
+      + '<button type="submit" class="btn btn-primary" id="threadSend">Send</button>'
+      + '</form>'
+      + '</div>';
+
+    document.getElementById('threadBack').addEventListener('click', function() { renderInbox(); });
+
+    async function loadThread() {
+      var msgsBox = document.getElementById('threadMessages');
+      try {
+        var res = await apiFetch('/conversations/' + otherId + '/messages');
+        if (!res.success) { msgsBox.innerHTML = '<div class="error-msg">'+(res.error||'Load failed')+'</div>'; return; }
+        var data = res.data || {};
+        var msgs = data.messages || [];
+        var other = data.other_member;
+        if (other) {
+          document.getElementById('threadTitle').textContent = (other.first_name || '') + ' ' + (other.last_name || '');
+        }
+        if (msgs.length === 0) {
+          msgsBox.innerHTML = '<div class="text-muted" style="padding:20px;text-align:center">No messages yet. Send the first one below.</div>';
+          return;
+        }
+        var me = currentMember && currentMember.id;
+        var h = '';
+        msgs.forEach(function(m) {
+          var mine = m.sender_id === me;
+          var when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+          h += '<div style="display:flex;justify-content:'+(mine?'flex-end':'flex-start')+';margin-bottom:10px">';
+          h += '<div style="max-width:75%;padding:8px 12px;border-radius:12px;'
+            + (mine
+                ? 'background:var(--primary);color:white;border-top-right-radius:2px'
+                : 'background:white;color:var(--gray-800);border:1px solid var(--gray-200);border-top-left-radius:2px')
+            + '">';
+          h += '<div style="white-space:pre-wrap;word-break:break-word">'+esc(m.body)+'</div>';
+          h += '<div style="font-size:10px;margin-top:4px;opacity:0.75">'+esc(when)+'</div>';
+          h += '</div></div>';
+        });
+        msgsBox.innerHTML = h;
+        msgsBox.scrollTop = msgsBox.scrollHeight;
+        // Just opened the thread -> all inbound messages were marked read by the API.
+        loadInboxBadge();
+      } catch(e) {
+        msgsBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+
+    document.getElementById('threadForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var bodyEl = document.getElementById('threadBody');
+      var body = bodyEl.value.trim();
+      if (!body) return;
+      var sendBtn = document.getElementById('threadSend');
+      sendBtn.disabled = true; var orig = sendBtn.textContent; sendBtn.textContent = 'Sending...';
+      try {
+        var res = await apiFetch('/messages', { method:'POST', body:JSON.stringify({ recipient_id: parseInt(otherId), body: body }) });
+        sendBtn.disabled = false; sendBtn.textContent = orig;
+        if (!res.success) { alert(res.error || 'Send failed'); return; }
+        bodyEl.value = '';
+        loadThread();
+      } catch(err) {
+        sendBtn.disabled = false; sendBtn.textContent = orig;
+        alert('Send failed: ' + err.message);
+      }
+    });
+
+    loadThread();
   }
 
   function showNewProjectForm() {
