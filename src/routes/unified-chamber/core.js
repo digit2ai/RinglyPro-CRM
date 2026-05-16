@@ -6,6 +6,16 @@
 const express = require('express');
 const { sequelize, QueryTypes, bcrypt, signToken, authMiddleware, requireAdmin } = require('./lib/shared');
 
+// Chambers in this comma-separated env list skip the $25 setup fee and the
+// $10/mo subscription at signup. Members are activated immediately and a
+// $0 "waived" transaction is recorded for audit. Remove the slug from the
+// env var to restore paid signup with no other code changes.
+const WAIVED_FEE_SLUGS = (process.env.WAIVE_SIGNUP_FEES_SLUGS || 'cv-2')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+function signupFeesWaived(chamberSlug) {
+  return WAIVED_FEE_SLUGS.includes(String(chamberSlug || '').toLowerCase());
+}
+
 const router = express.Router();
 
 // =====================================================================
@@ -69,6 +79,28 @@ router.post('/auth/login', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Account ' + member.status });
     }
     if (member.status === 'pending_payment') {
+      // Waived chamber: auto-activate stragglers who registered before the
+      // fee waiver was turned on, so they can log in without paying.
+      if (signupFeesWaived(req.chamber.slug)) {
+        await sequelize.query(
+          `UPDATE members SET status = 'active', updated_at = NOW()
+           WHERE chamber_id = :c AND id = :id`,
+          { replacements: { c: req.chamber_id, id: member.id } }
+        );
+        await sequelize.query(
+          `INSERT INTO transactions
+           (chamber_id, type, from_member_id, amount, currency, status, description, created_at)
+           VALUES (:c, 'membership_signup', :m, 0, 'USD', 'waived', :desc, NOW())`,
+          {
+            replacements: {
+              c: req.chamber_id, m: member.id,
+              desc: `Setup fee + monthly subscription waived for chamber ${req.chamber.slug} (promotional period, auto-activated at login)`
+            }
+          }
+        );
+        member.status = 'active';
+        // Fall through to normal password verification below.
+      } else {
       // Mint a fresh Stripe Checkout so the login screen can offer a
       // clickable resume link. Existing Checkout sessions on the row may
       // already be expired (24h limit), so always create a new one.
@@ -142,6 +174,7 @@ router.post('/auth/login', async (req, res) => {
         code: 'PAYMENT_REQUIRED',
         checkout_url: checkoutUrl
       });
+      } // end else (non-waived chamber)
     }
     const ok = await bcrypt.compare(password, member.password_hash);
     if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
@@ -233,6 +266,11 @@ router.post('/auth/signup-member', async (req, res) => {
       linkedin, website, phone: phone || null
     };
 
+    // For chambers in the waiver list, skip Stripe entirely and activate
+    // immediately. Otherwise insert as pending_payment and proceed to checkout.
+    const feesWaived = signupFeesWaived(req.chamber.slug);
+    const initialStatus = feesWaived ? 'active' : 'pending_payment';
+
     let memberRow;
     if (existing) {
       const hash = await bcrypt.hash(password, 10);
@@ -243,11 +281,12 @@ router.post('/auth/signup-member', async (req, res) => {
              sub_specialty = :sub, bio = :bio, years_experience = :yrs,
              languages = COALESCE(:langs::text[], languages),
              linkedin_url = :linkedin, website_url = :website, phone = :phone,
+             status = CASE WHEN :waived THEN 'active' ELSE status END,
              updated_at = NOW()
          WHERE chamber_id = :c AND id = :id
-         RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
+         RETURNING id, email, first_name, last_name, membership_type, governance_role, access_level, status`,
         {
-          replacements: { ...baseReplacements, id: existing.id, hash },
+          replacements: { ...baseReplacements, id: existing.id, hash, waived: feesWaived },
           type: QueryTypes.SELECT
         }
       );
@@ -266,14 +305,53 @@ router.post('/auth/signup-member', async (req, res) => {
           :country, :sector, :company, :sub, :bio, :yrs,
           COALESCE(:langs::text[], '{}'::text[]), :linkedin, :website, :phone,
           'individual', 'member', 'member', 'email',
-          'pending_payment', 0.7, NOW(), NOW())
-         RETURNING id, email, first_name, last_name, membership_type, access_level, status`,
+          :status, 0.7, NOW(), NOW())
+         RETURNING id, email, first_name, last_name, membership_type, governance_role, access_level, status`,
         {
-          replacements: { ...baseReplacements, email: lowerEmail, hash },
+          replacements: { ...baseReplacements, email: lowerEmail, hash, status: initialStatus },
           type: QueryTypes.SELECT
         }
       );
       memberRow = row;
+    }
+
+    // Waived chambers: record $0 audit row, mint token, skip Stripe.
+    if (feesWaived) {
+      await sequelize.query(
+        `INSERT INTO transactions
+         (chamber_id, type, from_member_id, amount, currency, status, description, created_at)
+         VALUES (:c, 'membership_signup', :m, 0, 'USD', 'waived', :desc, NOW())`,
+        {
+          replacements: {
+            c: req.chamber_id, m: memberRow.id,
+            desc: `Setup fee + monthly subscription waived for chamber ${req.chamber.slug} (promotional period)`
+          }
+        }
+      );
+      const token = signToken({
+        member_id: memberRow.id, chamber_id: req.chamber_id, chamber_slug: req.chamber.slug,
+        email: memberRow.email,
+        access_level: memberRow.access_level || 'member',
+        governance_role: memberRow.governance_role || 'member'
+      });
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      return res.status(201).json({
+        success: true,
+        data: {
+          member_id: memberRow.id,
+          email: memberRow.email,
+          status: 'active',
+          payment_waived: true,
+          token,
+          member: {
+            id: memberRow.id, email: memberRow.email,
+            first_name: memberRow.first_name, last_name: memberRow.last_name,
+            membership_type: memberRow.membership_type, status: 'active'
+          },
+          redirect_url: `${baseUrl}/${req.chamber.slug}/dashboard/?welcome=1`,
+          chamber: { slug: req.chamber.slug, name: req.chamber.name }
+        }
+      });
     }
 
     // Create Stripe Checkout session
