@@ -961,6 +961,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
       html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
       html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+      html += '<div class="form-group"><label>Company Registration / License / Tax ID <span style="color:var(--gray-500);font-weight:400">(strong trust signal)</span></label><input name="company_registration_id" value="'+esc(m.company_registration_id||'')+'" placeholder="e.g. EIN, CNPJ, SIRET, Companies House #"></div>';
+      html += '<div class="form-group"><label>Registration Country</label><input name="company_registration_country" value="'+esc(m.company_registration_country||'')+'" placeholder="e.g. United States, Brazil, Spain"></div>';
       html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
       html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
       html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';
@@ -1008,42 +1010,119 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     }
   }
 
+  // Render the trust score panel: shows the score + per-component bars +
+  // a "Verify Now" button (visible if you can verify -- own profile or admin).
+  // Components have the new shape from trust-verifier.js (score, weight,
+  // contribution, detail). Falls back gracefully if no verification has
+  // been run yet.
   async function loadTrustScore(memberId, containerId) {
     var container = document.getElementById(containerId);
     if (!container) return;
+    var canVerify = currentMember && (currentMember.id == memberId ||
+      ['superadmin','admin_global','admin_regional'].indexOf(currentMember.access_level) !== -1);
     try {
       var res = await apiFetch('/metrics/trust/'+memberId);
       if (!res.success) {
-        // Fallback: show the stored value from currentMember if endpoint failed
-        var stored = currentMember && currentMember.trust_score;
-        if (stored != null) {
-          container.innerHTML = '<h2>Trust Score: <span style="color:var(--primary)">'+parseFloat(stored).toFixed(3)+'</span></h2><div class="text-sm text-muted">Stored value (component breakdown unavailable)</div>';
-        } else {
-          container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Not available</div>';
-        }
+        container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Not available</div>';
         return;
       }
-      var d = res.data;
-      var html = '<h2>Trust Score: <span style="color:var(--primary)">'+((d.trust_score != null ? d.trust_score : d.trust_base_calculated) || 0).toFixed(3)+'</span></h2>';
-      html += '<div class="trust-components mt-12">';
-      if (d.components) {
-        var comps = d.components;
-        var items = [
-          {label:'Verification', val:comps.verification?comps.verification.value:0, w:comps.verification?comps.verification.weight:0},
-          {label:'References', val:comps.references?comps.references.value:0, w:comps.references?comps.references.weight:0},
-          {label:'Projects', val:comps.projects?comps.projects.value:0, w:comps.projects?comps.projects.weight:0},
-          {label:'Tenure', val:comps.tenure?comps.tenure.value:0, w:comps.tenure?comps.tenure.weight:0},
-          {label:'Membership', val:comps.membership?comps.membership.value:0, w:comps.membership?comps.membership.weight:0}
-        ];
-        items.forEach(function(it) {
-          var pctV = Math.round(it.val * 100);
-          html += '<div class="trust-row"><div class="tr-label">'+it.label+' ('+Math.round(it.w*100)+'%)</div><div class="tr-bar"><div class="tr-fill" style="width:'+pctV+'%"></div></div><div class="tr-val">'+pctV+'%</div></div>';
-        });
-      }
-      html += '</div>';
-      container.innerHTML = html;
+      renderTrustPanel(container, res.data, memberId, canVerify);
     } catch(e) {
       container.innerHTML = '<h2>Trust Score</h2><div class="error-msg">Error loading data</div>';
+    }
+  }
+
+  function renderTrustPanel(container, d, memberId, canVerify) {
+    var score = d.trust_score != null ? parseFloat(d.trust_score) : 0;
+    var comps = d.components || {};
+    var hasReal = comps && Object.keys(comps).length > 0;
+    var verifiedAt = d.verified_at ? new Date(d.verified_at).toLocaleString() : null;
+
+    var html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+    html += '<div><h2 style="margin:0">Trust Score: <span style="color:var(--primary)">'+score.toFixed(3)+'</span></h2>';
+    if (verifiedAt) html += '<div class="text-muted text-sm" style="margin-top:4px">Last verified: '+esc(verifiedAt)+'</div>';
+    else html += '<div class="text-muted text-sm" style="margin-top:4px">Not yet verified -- this is the default starting value.</div>';
+    html += '</div>';
+    if (canVerify) {
+      html += '<button class="btn btn-primary btn-sm" id="verifyTrustBtn" data-mid="'+memberId+'" style="background:#1976d2">Verify Now (AI)</button>';
+    }
+    html += '</div>';
+
+    if (!hasReal) {
+      html += '<div class="text-muted text-sm" style="margin-top:14px;padding:14px;background:var(--gray-50);border-radius:8px">No component breakdown yet. Click <strong>Verify Now</strong> to compute a real trust score from your website, LinkedIn, company web presence, profile completeness, tenure, and platform activity.</div>';
+    } else {
+      var labels = {
+        verification: 'Verification',
+        web_presence: 'Web Presence',
+        social_proof: 'Social Proof',
+        profile_completeness: 'Profile Completeness',
+        tenure: 'Tenure',
+        activity: 'Activity'
+      };
+      var order = ['verification','web_presence','social_proof','profile_completeness','tenure','activity'];
+      html += '<div class="trust-components mt-12" style="margin-top:14px">';
+      order.forEach(function(k) {
+        if (!comps[k]) return;
+        var c = comps[k];
+        var pctV = Math.round((c.score || 0) * 100);
+        var w = Math.round((c.weight || 0) * 100);
+        html += '<div class="trust-row" title="'+esc(JSON.stringify(c.detail || {}))+'">';
+        html += '<div class="tr-label">'+labels[k]+' ('+w+'% weight)</div>';
+        html += '<div class="tr-bar"><div class="tr-fill" style="width:'+pctV+'%"></div></div>';
+        html += '<div class="tr-val">'+pctV+'%</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      // Evidence + AI reason summary
+      if (d.evidence) {
+        var ev = d.evidence;
+        var lines = [];
+        if (typeof ev.website_status !== 'undefined' && ev.website_status !== null) {
+          lines.push('Website probe: HTTP ' + ev.website_status + (ev.website_final_url ? ' (' + esc(ev.website_final_url) + ')' : ''));
+        }
+        if (typeof ev.company_search_count !== 'undefined') {
+          lines.push('Company web search: ' + ev.company_search_count + ' results');
+        }
+        if (ev.ai && ev.ai.used) {
+          var adj = ev.ai.adjustment > 0 ? '+' + (ev.ai.adjustment * 100).toFixed(0) + ' pts' : (ev.ai.adjustment * 100).toFixed(0) + ' pts';
+          lines.push('AI synthesis: ' + adj + (ev.ai.reason ? ' -- "' + esc(ev.ai.reason) + '"' : ''));
+        }
+        if (lines.length) {
+          html += '<div class="text-sm text-muted" style="margin-top:12px;padding:10px;background:var(--gray-50);border-radius:6px"><strong>Evidence:</strong><ul style="margin:6px 0 0 18px;padding:0">';
+          lines.forEach(function(l) { html += '<li>'+l+'</li>'; });
+          html += '</ul></div>';
+        }
+      }
+    }
+
+    container.innerHTML = html;
+
+    var btn = document.getElementById('verifyTrustBtn');
+    if (btn) {
+      btn.addEventListener('click', async function() {
+        this.disabled = true; var orig = this.textContent;
+        this.textContent = 'Verifying... (10-20s)';
+        try {
+          var r = await apiFetch('/members/' + memberId + '/verify-trust', {
+            method: 'POST', body: JSON.stringify({})
+          });
+          this.disabled = false; this.textContent = orig;
+          if (!r.success) {
+            container.insertAdjacentHTML('beforeend', '<div class="error-msg" style="margin-top:10px">' + esc(r.error || 'Verification failed') + '</div>');
+            return;
+          }
+          // Re-render with the fresh result.
+          renderTrustPanel(container, {
+            trust_score: r.data.trust_score,
+            components: r.data.components,
+            evidence: { ...r.data.evidence, ai: r.data.ai },
+            verified_at: r.data.verified_at
+          }, memberId, canVerify);
+        } catch(e) {
+          this.disabled = false; this.textContent = orig;
+          container.insertAdjacentHTML('beforeend', '<div class="error-msg" style="margin-top:10px">' + esc(e.message) + '</div>');
+        }
+      });
     }
   }
 
@@ -1190,6 +1269,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" value="'+(m.years_experience||'')+'"></div>';
     html += '<div class="form-group"><label>Languages (comma-separated)</label><input name="languages" value="'+esc(langs.join(', '))+'"></div>';
     html += '<div class="form-group"><label>Company</label><input name="company_name" value="'+esc(m.company_name||'')+'"></div>';
+    html += '<div class="form-group"><label>Company Registration / License / Tax ID</label><input name="company_registration_id" value="'+esc(m.company_registration_id||'')+'" placeholder="EIN, CNPJ, SIRET, etc."></div>';
+    html += '<div class="form-group"><label>Registration Country</label><input name="company_registration_country" value="'+esc(m.company_registration_country||'')+'"></div>';
     html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="3">'+esc(m.bio||'')+'</textarea></div>';
     html += '<div class="form-group"><label>Phone</label><input name="phone" value="'+esc(m.phone||'')+'"></div>';
     html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url" value="'+esc(m.linkedin_url||'')+'"></div>';

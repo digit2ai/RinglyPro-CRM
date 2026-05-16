@@ -532,6 +532,7 @@ router.get('/auth/me', authMiddleware, async (req, res) => {
     const [member] = await sequelize.query(
       `SELECT m.id, m.chamber_id, m.email, m.first_name, m.last_name, m.country, m.region_id,
               m.sector, m.sub_specialty, m.years_experience, m.languages, m.company_name,
+              m.company_registration_id, m.company_registration_country,
               m.membership_type, m.governance_role, m.access_level, m.bio, m.phone,
               m.linkedin_url, m.website_url, m.trust_score, m.verified, m.verification_level,
               m.status, m.created_at,
@@ -569,7 +570,9 @@ router.get('/members', authMiddleware, async (req, res) => {
     const where = 'WHERE ' + conditions.join(' AND ');
     const members = await sequelize.query(
       `SELECT m.id, m.email, m.first_name, m.last_name, m.country, m.region_id, m.sector, m.sub_specialty,
-              m.years_experience, m.languages, m.company_name, m.membership_type, m.governance_role,
+              m.years_experience, m.languages, m.company_name,
+              m.company_registration_id, m.company_registration_country,
+              m.membership_type, m.governance_role,
               m.access_level, m.bio, m.linkedin_url, m.website_url, m.trust_score, m.verified,
               m.verification_level, m.created_at, r.name AS region_name
        FROM members m LEFT JOIN regions r ON r.id = m.region_id ${where}
@@ -616,7 +619,8 @@ router.put('/members/:id', authMiddleware, async (req, res) => {
 
     const allowed = ['first_name', 'last_name', 'country', 'region_id', 'sector', 'sub_specialty',
                      'years_experience', 'languages', 'company_name', 'bio', 'phone',
-                     'linkedin_url', 'website_url'];
+                     'linkedin_url', 'website_url',
+                     'company_registration_id', 'company_registration_country'];
     if (isAdmin) allowed.push('membership_type', 'governance_role', 'verified', 'verification_level');
 
     // Type-aware coercion. Empty strings become NULL so blanks clear the
@@ -842,10 +846,14 @@ router.get('/metrics/network-value', authMiddleware, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// GET /metrics/trust/:id -- read the cached components/evidence + the score.
+// Returns the result of the most recent verifier run; does NOT recompute.
+// Use POST /members/:id/verify-trust to trigger a fresh computation.
 router.get('/metrics/trust/:id', authMiddleware, async (req, res) => {
   try {
     const [m] = await sequelize.query(
-      `SELECT id, first_name, last_name, trust_score, verified, verification_level, membership_type, created_at
+      `SELECT id, first_name, last_name, trust_score, verified, verification_level,
+              membership_type, created_at, trust_components, trust_evidence, trust_verified_at
        FROM members WHERE chamber_id = :c AND id = :id`,
       { replacements: { c: req.chamber_id, id: parseInt(req.params.id) }, type: QueryTypes.SELECT }
     );
@@ -856,10 +864,95 @@ router.get('/metrics/trust/:id', authMiddleware, async (req, res) => {
         member_id: m.id,
         name: `${m.first_name} ${m.last_name}`,
         trust_score: parseFloat(m.trust_score),
-        components: {}
+        components: m.trust_components || {},
+        evidence: m.trust_evidence || {},
+        verified_at: m.trust_verified_at
       }
     });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+// POST /members/:id/verify-trust -- recompute the trust score from real
+// business signals (website probe, company search, AI synthesis). Callable
+// by the member themselves (id matches token) or by a chamber superadmin.
+// Persists the result to members.trust_score + trust_components + trust_evidence.
+router.post('/members/:id/verify-trust', authMiddleware, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.id);
+    if (!targetId) return res.status(400).json({ success: false, error: 'Invalid member id' });
+
+    const isSelf = targetId === req.member.id;
+    const isAdmin = ['superadmin', 'admin_global', 'admin_regional'].includes(req.member.access_level);
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'You can only verify your own trust score' });
+    }
+
+    const [m] = await sequelize.query(
+      `SELECT id, email, first_name, last_name, company_name, website_url, linkedin_url,
+              sector, sub_specialty, bio, phone, languages, years_experience,
+              verified, verification_level, created_at,
+              company_registration_id, company_registration_country
+       FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: targetId }, type: QueryTypes.SELECT }
+    );
+    if (!m) return res.status(404).json({ success: false, error: 'Member not found' });
+
+    // Pull activity counts (projects + DMs sent + groups joined + searches saved).
+    const [counts] = await sequelize.query(
+      `SELECT
+         (SELECT COUNT(*) FROM project_members WHERE chamber_id = :c AND member_id = :m) AS projects,
+         (SELECT COUNT(*) FROM chamber_messages WHERE chamber_id = :c AND sender_id = :m) AS dms,
+         (SELECT COUNT(*) FROM chamber_group_members WHERE member_id = :m) AS groups,
+         (SELECT COUNT(*) FROM member_searches WHERE chamber_id = :c AND member_id = :m) AS searches`,
+      { replacements: { c: req.chamber_id, m: targetId }, type: QueryTypes.SELECT }
+    );
+    const activity = {
+      projects: parseInt(counts.projects) || 0,
+      dms: parseInt(counts.dms) || 0,
+      groups: parseInt(counts.groups) || 0,
+      searches: parseInt(counts.searches) || 0
+    };
+
+    const verifier = require('./lib/trust-verifier');
+    // Default to AI on; allow caller to skip via ?ai=0 for fast/cheap re-runs.
+    const useAi = !(req.query.ai === '0' || req.body && req.body.useAi === false);
+    const result = await verifier.verifyMember(m, activity, { useAi });
+
+    // Persist to DB.
+    await sequelize.query(
+      `UPDATE members
+       SET trust_score = :s,
+           trust_components = :comp::jsonb,
+           trust_evidence = :ev::jsonb,
+           trust_verified_at = NOW(),
+           updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      {
+        replacements: {
+          c: req.chamber_id, id: targetId,
+          s: result.score,
+          comp: JSON.stringify(result.components),
+          ev: JSON.stringify({ ...result.evidence, ai: result.ai })
+        }
+      }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        member_id: targetId,
+        trust_score: result.score,
+        base_score: result.base_score,
+        components: result.components,
+        evidence: result.evidence,
+        ai: result.ai,
+        verified_at: result.verified_at
+      }
+    });
+  } catch (err) {
+    console.error('[verify-trust]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // =====================================================================
