@@ -3414,6 +3414,71 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Renderiza la lista de invitaciones en projActionMsg. Filas pendientes
+  // tienen boton "Cancelar"; aceptadas/rechazadas son solo lectura.
+  async function loadInvitationsList(projectId) {
+    var msg = document.getElementById('projActionMsg');
+    if (!msg) return;
+    msg.innerHTML = '<div class="text-muted text-sm">Cargando invitaciones...</div>';
+    try {
+      var r = await apiFetch('/projects/' + projectId + '/invitations');
+      if (!r.success) { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; return; }
+      var data = r.data || [];
+      if (data.length === 0) {
+        msg.innerHTML = '<div class="text-muted">Aun no hay invitaciones. Usa "Re-ejecutar Match con IA" o "Invitar Miembro Especifico".</div>';
+        return;
+      }
+      var byRole = {};
+      data.forEach(function(inv) {
+        var key = inv.role_index;
+        if (!byRole[key]) byRole[key] = { role_title: inv.role_title, invs: [] };
+        byRole[key].invs.push(inv);
+      });
+      var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px;max-height:380px;overflow-y:auto">';
+      Object.keys(byRole).forEach(function(k) {
+        var grp = byRole[k];
+        h += '<div style="margin-bottom:10px"><strong>'+esc(grp.role_title||'Rol '+k)+'</strong></div>';
+        grp.invs.forEach(function(inv) {
+          var col = { pending:'var(--primary)', accepted:'#28a745', declined:'#999' }[inv.status] || '#999';
+          h += '<div class="text-sm" style="margin-left:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--gray-100)">';
+          h += '<span style="flex:1;min-width:0">&middot; '+esc(inv.first_name)+' '+esc(inv.last_name)+' &mdash; '+esc(inv.sector||'--')+' / '+esc(inv.country||'--')+(inv.match_score?' &mdash; '+Math.round(parseFloat(inv.match_score)*100)+'%':'')+'</span>';
+          h += '<span style="background:'+col+';color:white;padding:1px 8px;border-radius:10px;font-size:10px;text-transform:uppercase;white-space:nowrap">'+esc(inv.status)+'</span>';
+          if (inv.status === 'pending') {
+            h += '<button class="btn btn-outline btn-sm cancelInvBtn" data-iid="'+inv.id+'" '
+              + 'data-iname="'+esc(inv.first_name+' '+inv.last_name)+'" '
+              + 'style="padding:2px 8px;font-size:11px;color:var(--red);border-color:var(--red)">Cancelar</button>';
+          }
+          h += '</div>';
+        });
+      });
+      h += '</div>';
+      msg.innerHTML = h;
+
+      msg.querySelectorAll('.cancelInvBtn').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          var iid = this.dataset.iid;
+          var iname = this.dataset.iname || 'este miembro';
+          if (!confirm('Cancelar la invitacion a ' + iname + '?')) return;
+          this.disabled = true; var orig = this.textContent; this.textContent = 'Cancelando...';
+          try {
+            var dr = await apiFetch('/projects/' + projectId + '/invitations/' + iid, { method: 'DELETE' });
+            if (dr.success) {
+              loadInvitationsList(projectId);
+            } else {
+              this.disabled = false; this.textContent = orig;
+              alert(dr.error || 'No se pudo cancelar');
+            }
+          } catch(e) {
+            this.disabled = false; this.textContent = orig;
+            alert('Error: ' + e.message);
+          }
+        });
+      });
+    } catch(e) {
+      msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+    }
+  }
+
   // Modal solo-propietario: busca en el directorio e invita a un miembro
   // especifico a un rol elegido. Complementa "Re-ejecutar Match con IA"
   // con una via manual para que el propietario elija a dedo.
@@ -4103,39 +4168,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
 
       var viewInvBtn = document.getElementById('viewInvitationsBtn');
-      if (viewInvBtn) viewInvBtn.addEventListener('click', async function() {
-        var msg = document.getElementById('projActionMsg');
-        msg.innerHTML = '<div class="text-muted text-sm">Loading invitations...</div>';
-        try {
-          var r = await apiFetch('/projects/'+id+'/invitations');
-          if (r.success) {
-            var data = r.data || [];
-            if (data.length === 0) {
-              msg.innerHTML = '<div class="text-muted">No invitations yet. Click "Invite AI Matches" to send some.</div>';
-              return;
-            }
-            // Group by role
-            var byRole = {};
-            data.forEach(function(inv) {
-              var key = inv.role_index;
-              if (!byRole[key]) byRole[key] = { role_title: inv.role_title, invs: [] };
-              byRole[key].invs.push(inv);
-            });
-            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px;max-height:340px;overflow-y:auto">';
-            Object.keys(byRole).forEach(function(k) {
-              var grp = byRole[k];
-              h += '<div style="margin-bottom:10px"><strong>'+esc(grp.role_title||'Role '+k)+'</strong></div>';
-              grp.invs.forEach(function(inv) {
-                var col = { pending:'var(--primary)', accepted:'#28a745', declined:'#999' }[inv.status] || '#999';
-                h += '<div class="text-sm" style="margin-left:12px;display:flex;justify-content:space-between;padding:4px 0">'+
-                  '<span>&middot; '+esc(inv.first_name)+' '+esc(inv.last_name)+' &mdash; '+esc(inv.sector||'--')+' / '+esc(inv.country||'--')+(inv.match_score?' &mdash; '+Math.round(parseFloat(inv.match_score)*100)+'%':'')+'</span>'+
-                  '<span style="background:'+col+';color:white;padding:1px 8px;border-radius:10px;font-size:10px;text-transform:uppercase">'+esc(inv.status)+'</span></div>';
-              });
-            });
-            h += '</div>';
-            msg.innerHTML = h;
-          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
-        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      if (viewInvBtn) viewInvBtn.addEventListener('click', function() {
+        loadInvitationsList(id);
       });
 
     } catch(e) {

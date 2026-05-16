@@ -1031,6 +1031,47 @@ router.get('/:id/invitations', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
+// DELETE /:id/invitations/:inv_id -- proposer cancels a pending invitation
+// =====================================================================
+router.delete('/:id/invitations/:inv_id', authMiddleware, async (req, res) => {
+  try {
+    const [proj] = await sequelize.query(
+      `SELECT proposer_member_id FROM projects WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+    // Proposer-only: removing invites is a project-modification action.
+    if (proj.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can cancel invitations' });
+    }
+
+    const [inv] = await sequelize.query(
+      `SELECT id, status FROM project_invitations
+       WHERE chamber_id = :c AND project_id = :p AND id = :inv`,
+      { replacements: { c: req.chamber_id, p: req.params.id, inv: req.params.inv_id }, type: QueryTypes.SELECT }
+    );
+    if (!inv) return res.status(404).json({ success: false, error: 'Invitation not found' });
+    // Only PENDING invites can be cancelled. Accepted ones would orphan a
+    // team member without removing them from project_members -- a different
+    // flow ("remove team member") should handle that. Declined ones are
+    // already terminal.
+    if (inv.status !== 'pending') {
+      return res.status(400).json({ success: false, error: `Cannot cancel a ${inv.status} invitation` });
+    }
+
+    await sequelize.query(
+      `DELETE FROM project_invitations
+       WHERE chamber_id = :c AND project_id = :p AND id = :inv`,
+      { replacements: { c: req.chamber_id, p: req.params.id, inv: req.params.inv_id } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[unified delete invitation]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
 // POST /:id/book-final-meeting
 // =====================================================================
 router.post('/:id/book-final-meeting', authMiddleware, async (req, res) => {
