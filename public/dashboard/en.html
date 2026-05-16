@@ -465,10 +465,6 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
         Exchange
       </div>
-      <div class="sidebar-nav-item" data-page="metrics">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-        Metrics
-      </div>
       <div class="sidebar-nav-item" data-page="payments">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Payments
@@ -771,14 +767,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var titles = {
       dashboard:'Dashboard', profile:'My Profile', directory:'Directory',
       matching:'AI Matching', searches:'My Searches', projects:'Projects', invitations:'Invitations',
-      inbox:'Inbox', exchange:'Exchange', metrics:'Metrics', payments:'Payments', admin:'Administration'
+      inbox:'Inbox', exchange:'Exchange', payments:'Payments', admin:'Administration'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Loading...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
       matching:renderMatching, searches:renderSearches, projects:renderProjects, invitations:renderInvitations,
-      inbox:renderInbox, exchange:renderExchange, metrics:renderMetrics, payments:renderPayments, admin:renderAdmin
+      inbox:renderInbox, exchange:renderExchange, payments:renderPayments, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
   }
