@@ -3020,6 +3020,99 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Sign-off Status modal -- shows each team member's signature state.
+  // Pending members get a "Message" button so the proposer can nudge them
+  // directly via DM. The proposer also sees the "Schedule Final Meeting"
+  // button inline here when no meeting has been booked yet, so the natural
+  // workflow is: review pending signers -> reach out to them -> book the
+  // meeting once ready.
+  async function showSignoffStatusModal(projectId, projectMeta, existingMeeting) {
+    var isProposer = projectMeta && projectMeta.viewer_role && projectMeta.viewer_role.is_proposer;
+    openModal('<div class="loading">Loading sign-off status...</div>');
+    try {
+      var r = await apiFetch('/projects/'+projectId+'/signoff-status');
+      if (!r.success) {
+        openModal('<div class="error-msg">'+(r.error||'Could not load sign-off status')+'</div>');
+        return;
+      }
+      var d = r.data;
+      var pct = d.total_participants > 0 ? Math.round((d.signed_count/d.total_participants)*100) : 0;
+      var pendingCount = d.total_participants - d.signed_count;
+
+      var h = '<h2 style="margin:0 0 8px 0">Sign-off Status</h2>';
+      h += '<p class="text-muted text-sm mb-12">'+d.signed_count+' of '+d.total_participants+' signed ('+pct+'%). '
+        + (pendingCount > 0
+            ? 'Click "Message" next to any pending member to send them a direct nudge.'
+            : 'Everyone has signed.')
+        + '</p>';
+      h += '<div style="height:10px;background:var(--gray-200);border-radius:5px;overflow:hidden;margin-bottom:18px"><div style="height:100%;width:'+pct+'%;background:#28a745;transition:width 0.3s"></div></div>';
+
+      h += '<div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-bottom:16px">';
+      d.participants.forEach(function(pp, idx) {
+        var isSelf = currentMember && currentMember.id === pp.member_id;
+        var rowBg = idx % 2 === 0 ? 'var(--white)' : 'var(--gray-50)';
+        h += '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;background:'+rowBg+';border-top:'+(idx===0?'0':'1px solid var(--gray-200)')+'">';
+        if (pp.signed) {
+          h += '<span style="color:#28a745;font-weight:700;font-size:18px">&#10003;</span>';
+          h += '<div style="flex:1"><div style="font-weight:600">'+esc(pp.name)+'</div>';
+          h += '<div class="text-muted text-sm">Signed on '+new Date(pp.signed_at).toLocaleString()+'</div></div>';
+          h += '<span class="badge badge-green" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">SIGNED</span>';
+        } else {
+          h += '<span style="color:#999;font-size:18px">&#9711;</span>';
+          h += '<div style="flex:1"><div style="font-weight:600">'+esc(pp.name)+'</div>';
+          h += '<div class="text-muted text-sm">Awaiting signature</div></div>';
+          h += '<span style="background:#fff3cd;color:#856404;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:6px">PENDING</span>';
+          if (isProposer && !isSelf && pp.member_id) {
+            h += '<button class="btn btn-outline btn-sm signoffMsgBtn" data-mid="'+pp.member_id+'" '
+              + 'data-mname="'+esc(pp.name)+'" '
+              + 'style="padding:3px 10px;font-size:11px">Message</button>';
+          }
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+
+      // Proposer-only: Schedule Final Meeting CTA inline. The button shows up
+      // here so the owner naturally reviews the signer list -> contacts any
+      // pending members -> books the meeting when ready.
+      if (isProposer && !existingMeeting && projectMeta && ['fully_staffed','pending_signoff'].includes(projectMeta.plan_status)) {
+        h += '<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:14px;margin-top:10px">';
+        h += '<div style="font-weight:700;color:#4a148c;margin-bottom:6px">Ready to schedule the Final Meeting?</div>';
+        h += '<div class="text-sm text-muted" style="margin-bottom:10px">When you are done coordinating with your team, schedule the meeting. We will send each stakeholder an in-platform DM with the meeting details + your note.</div>';
+        h += '<button class="btn btn-primary" id="inlineScheduleMeetingBtn" style="background:#7b1fa2;color:white">Schedule Final Meeting</button>';
+        h += '</div>';
+      } else if (isProposer && existingMeeting) {
+        h += '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px;margin-top:10px;font-size:13px">';
+        h += '<strong>Final Meeting:</strong> '+esc(new Date(existingMeeting.scheduled_at).toLocaleString())+' &middot; <a href="'+esc(existingMeeting.video_link)+'" target="_blank" style="color:#1b5e20">Video link</a>';
+        h += '</div>';
+      }
+
+      h += '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" id="closeSignoffStatusBtn">Close</button></div>';
+      openModal(h);
+
+      document.getElementById('closeSignoffStatusBtn').addEventListener('click', function() {
+        showProjectDetail(projectId);
+      });
+
+      // Wire per-pending-member "Message" buttons -> opens the DM thread.
+      document.querySelectorAll('.signoffMsgBtn').forEach(function(b) {
+        b.addEventListener('click', function() {
+          messageMember(this.dataset.mid, this.dataset.mname);
+        });
+      });
+
+      // Inline "Schedule Final Meeting" -> opens the existing scheduling modal.
+      var inlineSched = document.getElementById('inlineScheduleMeetingBtn');
+      if (inlineSched) {
+        inlineSched.addEventListener('click', function() {
+          showScheduleMeetingModal(projectId, projectMeta);
+        });
+      }
+    } catch(e) {
+      openModal('<div class="error-msg">'+esc(e.message)+'</div>');
+    }
+  }
+
   // Proposer-only modal: pick date/time/duration + optional note, then send
   // the invite as in-platform DMs to every stakeholder.
   function showScheduleMeetingModal(projectId, projectMeta) {
@@ -3505,28 +3598,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
 
       var signStatBtn = document.getElementById('signoffStatusBtn');
-      if (signStatBtn) signStatBtn.addEventListener('click', async function() {
-        var msg = document.getElementById('projActionMsg');
-        msg.innerHTML = '<div class="text-muted text-sm">Loading sign-off status...</div>';
-        try {
-          var r = await apiFetch('/projects/'+id+'/signoff-status');
-          if (r.success) {
-            var d = r.data;
-            var pct = d.total_participants > 0 ? Math.round((d.signed_count/d.total_participants)*100) : 0;
-            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
-            h += '<div style="font-weight:700;margin-bottom:8px">'+d.signed_count+' of '+d.total_participants+' signed ('+pct+'%)</div>';
-            h += '<div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+pct+'%;background:#28a745"></div></div>';
-            d.participants.forEach(function(pp) {
-              var icon = pp.signed ? '<span style="color:#28a745;font-weight:700">&#10003;</span>' : '<span style="color:#999">&#9711;</span>';
-              h += '<div style="padding:4px 0;display:flex;justify-content:space-between"><span>'+icon+' '+esc(pp.name)+'</span>';
-              if (pp.signed) h += '<span class="text-muted text-sm">'+new Date(pp.signed_at).toLocaleDateString()+'</span>';
-              else h += '<span class="text-muted text-sm">Pending</span>';
-              h += '</div>';
-            });
-            h += '</div>';
-            msg.innerHTML = h;
-          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
-        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      if (signStatBtn) signStatBtn.addEventListener('click', function() {
+        showSignoffStatusModal(id, p, existingMeeting);
       });
 
       var viewInvBtn = document.getElementById('viewInvitationsBtn');

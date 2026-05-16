@@ -3017,6 +3017,94 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Modal de Estado de Firmas -- muestra el estado de cada miembro del equipo.
+  // Los pendientes tienen un boton "Mensaje" para que el propietario los
+  // pueda contactar por DM. El propietario tambien ve el boton "Programar
+  // Reunion Final" aqui mismo cuando aun no hay reunion agendada, asi el
+  // flujo natural es: revisar pendientes -> contactarlos -> programar la
+  // reunion cuando este listo.
+  async function showSignoffStatusModal(projectId, projectMeta, existingMeeting) {
+    var isProposer = projectMeta && projectMeta.viewer_role && projectMeta.viewer_role.is_proposer;
+    openModal('<div class="loading">Cargando estado de firmas...</div>');
+    try {
+      var r = await apiFetch('/projects/'+projectId+'/signoff-status');
+      if (!r.success) {
+        openModal('<div class="error-msg">'+(r.error||'No se pudo cargar el estado')+'</div>');
+        return;
+      }
+      var d = r.data;
+      var pct = d.total_participants > 0 ? Math.round((d.signed_count/d.total_participants)*100) : 0;
+      var pendingCount = d.total_participants - d.signed_count;
+
+      var h = '<h2 style="margin:0 0 8px 0">Estado de Firmas</h2>';
+      h += '<p class="text-muted text-sm mb-12">'+d.signed_count+' de '+d.total_participants+' firmaron ('+pct+'%). '
+        + (pendingCount > 0
+            ? 'Haz clic en "Mensaje" junto a cualquier miembro pendiente para enviarle un recordatorio directo.'
+            : 'Todos firmaron.')
+        + '</p>';
+      h += '<div style="height:10px;background:var(--gray-200);border-radius:5px;overflow:hidden;margin-bottom:18px"><div style="height:100%;width:'+pct+'%;background:#28a745;transition:width 0.3s"></div></div>';
+
+      h += '<div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-bottom:16px">';
+      d.participants.forEach(function(pp, idx) {
+        var isSelf = currentMember && currentMember.id === pp.member_id;
+        var rowBg = idx % 2 === 0 ? 'var(--white)' : 'var(--gray-50)';
+        h += '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;background:'+rowBg+';border-top:'+(idx===0?'0':'1px solid var(--gray-200)')+'">';
+        if (pp.signed) {
+          h += '<span style="color:#28a745;font-weight:700;font-size:18px">&#10003;</span>';
+          h += '<div style="flex:1"><div style="font-weight:600">'+esc(pp.name)+'</div>';
+          h += '<div class="text-muted text-sm">Firmado el '+new Date(pp.signed_at).toLocaleString()+'</div></div>';
+          h += '<span class="badge badge-green" style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">FIRMADO</span>';
+        } else {
+          h += '<span style="color:#999;font-size:18px">&#9711;</span>';
+          h += '<div style="flex:1"><div style="font-weight:600">'+esc(pp.name)+'</div>';
+          h += '<div class="text-muted text-sm">Esperando firma</div></div>';
+          h += '<span style="background:#fff3cd;color:#856404;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-right:6px">PENDIENTE</span>';
+          if (isProposer && !isSelf && pp.member_id) {
+            h += '<button class="btn btn-outline btn-sm signoffMsgBtn" data-mid="'+pp.member_id+'" '
+              + 'data-mname="'+esc(pp.name)+'" '
+              + 'style="padding:3px 10px;font-size:11px">Mensaje</button>';
+          }
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+
+      if (isProposer && !existingMeeting && projectMeta && ['fully_staffed','pending_signoff'].includes(projectMeta.plan_status)) {
+        h += '<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:14px;margin-top:10px">';
+        h += '<div style="font-weight:700;color:#4a148c;margin-bottom:6px">Listo para programar la Reunion Final?</div>';
+        h += '<div class="text-sm text-muted" style="margin-bottom:10px">Cuando termines de coordinar con tu equipo, agenda la reunion. Enviaremos a cada miembro un DM interno con los detalles + tu nota.</div>';
+        h += '<button class="btn btn-primary" id="inlineScheduleMeetingBtn" style="background:#7b1fa2;color:white">Programar Reunion Final</button>';
+        h += '</div>';
+      } else if (isProposer && existingMeeting) {
+        h += '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px;margin-top:10px;font-size:13px">';
+        h += '<strong>Reunion Final:</strong> '+esc(new Date(existingMeeting.scheduled_at).toLocaleString())+' &middot; <a href="'+esc(existingMeeting.video_link)+'" target="_blank" style="color:#1b5e20">Enlace de video</a>';
+        h += '</div>';
+      }
+
+      h += '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" id="closeSignoffStatusBtn">Cerrar</button></div>';
+      openModal(h);
+
+      document.getElementById('closeSignoffStatusBtn').addEventListener('click', function() {
+        showProjectDetail(projectId);
+      });
+
+      document.querySelectorAll('.signoffMsgBtn').forEach(function(b) {
+        b.addEventListener('click', function() {
+          messageMember(this.dataset.mid, this.dataset.mname);
+        });
+      });
+
+      var inlineSched = document.getElementById('inlineScheduleMeetingBtn');
+      if (inlineSched) {
+        inlineSched.addEventListener('click', function() {
+          showScheduleMeetingModal(projectId, projectMeta);
+        });
+      }
+    } catch(e) {
+      openModal('<div class="error-msg">'+esc(e.message)+'</div>');
+    }
+  }
+
   // Modal del propietario: elige fecha/hora/duracion + nota opcional y envia
   // la invitacion como mensaje interno (DM) a cada miembro del equipo.
   function showScheduleMeetingModal(projectId, projectMeta) {
@@ -3499,28 +3587,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
 
       var signStatBtn = document.getElementById('signoffStatusBtn');
-      if (signStatBtn) signStatBtn.addEventListener('click', async function() {
-        var msg = document.getElementById('projActionMsg');
-        msg.innerHTML = '<div class="text-muted text-sm">Loading sign-off status...</div>';
-        try {
-          var r = await apiFetch('/projects/'+id+'/signoff-status');
-          if (r.success) {
-            var d = r.data;
-            var pct = d.total_participants > 0 ? Math.round((d.signed_count/d.total_participants)*100) : 0;
-            var h = '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
-            h += '<div style="font-weight:700;margin-bottom:8px">'+d.signed_count+' of '+d.total_participants+' signed ('+pct+'%)</div>';
-            h += '<div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+pct+'%;background:#28a745"></div></div>';
-            d.participants.forEach(function(pp) {
-              var icon = pp.signed ? '<span style="color:#28a745;font-weight:700">&#10003;</span>' : '<span style="color:#999">&#9711;</span>';
-              h += '<div style="padding:4px 0;display:flex;justify-content:space-between"><span>'+icon+' '+esc(pp.name)+'</span>';
-              if (pp.signed) h += '<span class="text-muted text-sm">'+new Date(pp.signed_at).toLocaleDateString()+'</span>';
-              else h += '<span class="text-muted text-sm">Pending</span>';
-              h += '</div>';
-            });
-            h += '</div>';
-            msg.innerHTML = h;
-          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
-        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      if (signStatBtn) signStatBtn.addEventListener('click', function() {
+        showSignoffStatusModal(id, p, existingMeeting);
       });
 
       var viewInvBtn = document.getElementById('viewInvitationsBtn');
