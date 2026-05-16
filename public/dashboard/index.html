@@ -3017,6 +3017,80 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Modal del propietario: elige fecha/hora/duracion + nota opcional y envia
+  // la invitacion como mensaje interno (DM) a cada miembro del equipo.
+  function showScheduleMeetingModal(projectId, projectMeta) {
+    var planTitle = (projectMeta && projectMeta.plan_json && projectMeta.plan_json.title)
+      || (projectMeta && projectMeta.title) || 'Reunion Final';
+    var d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    d.setHours(10, 0, 0, 0);
+    var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+    var defaultLocal = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+      + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+    var h = '<h2 style="margin:0 0 8px 0;color:#4a148c">Programar Reunion Final</h2>';
+    h += '<p class="text-muted text-sm mb-12">Elige fecha y hora. Crearemos el enlace de video y enviaremos a cada miembro del equipo un mensaje interno con los detalles + tu nota. No se envian correos.</p>';
+    h += '<form id="scheduleMeetingForm">';
+    h += '<div class="form-grid">';
+    h += '<div class="form-group"><label>Fecha y hora</label><input type="datetime-local" id="meetingWhen" required value="'+esc(defaultLocal)+'"></div>';
+    h += '<div class="form-group"><label>Duracion (minutos)</label><select id="meetingDuration">';
+    [30, 45, 60, 90, 120].forEach(function(opt) {
+      h += '<option value="'+opt+'"'+(opt===60?' selected':'')+'>'+opt+' min</option>';
+    });
+    h += '</select></div>';
+    h += '<div class="form-group full"><label>Nota para el equipo (opcional, incluida en el DM)</label>'
+      +  '<textarea id="meetingMessage" rows="4" maxlength="2000" placeholder="ej. Por favor revisen el presupuesto antes de la reunion para que podamos firmar rapido."></textarea></div>';
+    h += '</div>';
+    h += '<div id="scheduleMsg" style="margin:10px 0"></div>';
+    h += '<div style="display:flex;gap:8px;justify-content:flex-end">'
+      +  '<button type="button" class="btn btn-outline" id="cancelScheduleBtn">Cancelar</button>'
+      +  '<button type="submit" class="btn btn-primary" id="confirmScheduleBtn" style="background:#7b1fa2">Enviar invitacion</button>'
+      +  '</div>';
+    h += '</form>';
+    openModal(h);
+
+    document.getElementById('cancelScheduleBtn').addEventListener('click', function() {
+      showProjectDetail(projectId);
+    });
+
+    document.getElementById('scheduleMeetingForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var whenInput = document.getElementById('meetingWhen').value;
+      var duration = parseInt(document.getElementById('meetingDuration').value) || 60;
+      var message = document.getElementById('meetingMessage').value.trim();
+      if (!whenInput) {
+        document.getElementById('scheduleMsg').innerHTML = '<div class="error-msg">Elige fecha y hora.</div>';
+        return;
+      }
+      var iso = new Date(whenInput).toISOString();
+      var btn = document.getElementById('confirmScheduleBtn');
+      btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Enviando...';
+      var msg = document.getElementById('scheduleMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Creando la reunion y enviando DMs al equipo...</div>';
+      try {
+        var r = await apiFetch('/projects/'+projectId+'/book-final-meeting', {
+          method: 'POST',
+          body: JSON.stringify({ proposed_datetime: iso, duration_minutes: duration, message: message })
+        });
+        btn.disabled = false; btn.textContent = orig;
+        if (!r.success) { msg.innerHTML = '<div class="error-msg">'+(r.error||'No se pudo programar')+'</div>'; return; }
+        var d = r.data;
+        var when = new Date(d.meeting.scheduled_at).toLocaleString();
+        var summary = '<div class="success-msg">Reunion programada para '+esc(when)+'</div>';
+        summary += '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
+        summary += '<div><strong>Video:</strong> <a href="'+esc(d.meeting.video_link)+'" target="_blank">'+esc(d.meeting.video_link)+'</a></div>';
+        summary += '<div style="margin-top:6px"><strong>DMs enviados:</strong> '+(d.dms_sent||0)+' de '+(d.attendee_count-1)+' miembros (tu estas excluido).</div>';
+        summary += '<div style="margin-top:6px"><strong>Equipo:</strong> '+d.attendees.map(function(a){return esc(a.name);}).join(', ')+'</div>';
+        summary += '</div>';
+        msg.innerHTML = summary;
+        setTimeout(function(){ showProjectDetail(projectId); }, 2500);
+      } catch(e) {
+        btn.disabled = false; btn.textContent = orig;
+        msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    });
+  }
+
   function showSignoffModal(projectId, planJson, projectMeta) {
     var planTitle = (planJson && planJson.title) || (projectMeta && projectMeta.title) || 'Business Plan';
     var h = '<h2 style="margin-bottom:12px">Sign Off on Business Plan</h2>';
@@ -3106,19 +3180,20 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += renderFullPlan(p.plan_json, p.fill_status);
       }
 
-      // === Final Meeting card (Stage 2) ===
+      // === Reunion Final (Stage 2) ===
+      var existingMeeting = null;
       if (['pending_signoff','fully_staffed','signed_off','executing','completed'].includes(p.plan_status)) {
         try {
           var mtgRes = await apiFetch('/projects/'+id+'/meetings');
           if (mtgRes.success && mtgRes.data && mtgRes.data.length > 0) {
-            var m = mtgRes.data[0];
-            var when = new Date(m.scheduled_at).toLocaleString();
+            existingMeeting = mtgRes.data[0];
+            var when = new Date(existingMeeting.scheduled_at).toLocaleString();
             html += '<div style="border:2px solid #7b1fa2;border-radius:8px;padding:14px;margin:18px 0;background:#f3e5f5">';
-            html += '<div style="font-weight:700;color:#4a148c;margin-bottom:6px">&#128197; Final Meeting Scheduled</div>';
-            html += '<div class="text-sm"><strong>When:</strong> '+esc(when)+' ('+m.duration_minutes+' min)</div>';
-            html += '<div class="text-sm" style="margin-top:4px"><strong>Status:</strong> '+esc(m.status)+'</div>';
-            html += '<div class="text-sm" style="margin-top:4px"><strong>Video:</strong> <a href="'+esc(m.video_link)+'" target="_blank" style="color:#4a148c;text-decoration:underline">'+esc(m.video_link)+'</a></div>';
-            html += '<div style="margin-top:8px"><a href="'+API+'/projects/'+id+'/meetings/'+m.id+'/ics" target="_blank" class="btn btn-outline btn-sm">Download .ics</a></div>';
+            html += '<div style="font-weight:700;color:#4a148c;margin-bottom:6px">&#128197; Reunion Final Programada</div>';
+            html += '<div class="text-sm"><strong>Cuando:</strong> '+esc(when)+' ('+existingMeeting.duration_minutes+' min)</div>';
+            html += '<div class="text-sm" style="margin-top:4px"><strong>Estado:</strong> '+esc(existingMeeting.status)+'</div>';
+            html += '<div class="text-sm" style="margin-top:4px"><strong>Video:</strong> <a href="'+esc(existingMeeting.video_link)+'" target="_blank" style="color:#4a148c;text-decoration:underline">'+esc(existingMeeting.video_link)+'</a></div>';
+            html += '<div style="margin-top:8px"><a href="'+API+'/projects/'+id+'/meetings/'+existingMeeting.id+'/ics" target="_blank" class="btn btn-outline btn-sm">Descargar .ics</a></div>';
             html += '</div>';
           }
         } catch(e) { /* ignore */ }
@@ -3206,6 +3281,13 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // Reabrir para recruitment_failed (solo propietario)
       if (vr.is_proposer && p.plan_status === 'recruitment_failed') {
         html += '<button class="btn btn-primary btn-sm" id="reopenBtn" style="background:#28a745;color:white">Reabrir Cotizacion (+14 dias)</button>';
+      }
+
+      // Programar Reunion Final (solo el propietario; solo si no esta agendada).
+      // La cascada ya no agenda automaticamente -- el propietario elige fecha,
+      // hora y una nota opcional que llega como DM interno al equipo.
+      if (vr.is_proposer && ['fully_staffed','pending_signoff'].includes(p.plan_status) && !existingMeeting) {
+        html += '<button class="btn btn-primary btn-sm" id="scheduleMeetingBtn" style="background:#7b1fa2;color:white">Programar Reunion Final</button>';
       }
 
       // Stage 2 -- firma. Cada miembro firma su propio compromiso; este boton
@@ -3357,26 +3439,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
       });
 
-      // Stage 2 handlers
-      var bookBtn = document.getElementById('bookMeetingBtn');
-      if (bookBtn) bookBtn.addEventListener('click', async function() {
-        var msg = document.getElementById('projActionMsg');
-        msg.innerHTML = '<div class="text-muted text-sm">Booking Final Meeting (default: 7 days from now, 14:00 UTC)...</div>';
-        try {
-          var r = await apiFetch('/projects/'+id+'/book-final-meeting', { method:'POST', body:JSON.stringify({}) });
-          if (r.success) {
-            var d = r.data;
-            var when = new Date(d.meeting.scheduled_at).toLocaleString();
-            var h = '<div class="success-msg">Final Meeting scheduled for '+esc(when)+'</div>';
-            h += '<div style="background:var(--gray-50);padding:12px;border-radius:6px;font-size:12px;margin-top:8px">';
-            h += '<div><strong>Video link:</strong> <a href="'+esc(d.meeting.video_link)+'" target="_blank">'+esc(d.meeting.video_link)+'</a></div>';
-            h += '<div style="margin-top:6px"><strong>Attendees ('+d.attendee_count+'):</strong> '+d.attendees.map(function(a){return esc(a.name);}).join(', ')+'</div>';
-            h += '<div style="margin-top:8px"><a href="'+API+'/projects/'+id+'/meetings/'+d.meeting.id+'/ics" class="btn btn-outline btn-sm" target="_blank">Download .ics calendar invite</a></div>';
-            h += '</div>';
-            msg.innerHTML = h;
-            setTimeout(function(){ showProjectDetail(id); }, 2500);
-          } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
-        } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      // Stage 2 handlers -- el propietario abre un formulario para agendar
+      var scheduleBtn = document.getElementById('scheduleMeetingBtn');
+      if (scheduleBtn) scheduleBtn.addEventListener('click', function() {
+        showScheduleMeetingModal(id, p);
       });
 
       var signBtn = document.getElementById('signoffBtn');

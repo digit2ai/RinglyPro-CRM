@@ -961,11 +961,22 @@ router.post('/:id/book-final-meeting', authMiddleware, async (req, res) => {
     }
     const attendeeIds = allAttendees.map(a => a.member_id);
 
+    // proposed_datetime + duration come from the proposer's form. If absent,
+    // default to "tomorrow at 14:00 UTC" (sane fallback rather than 7 days
+    // out -- the old auto-book delay no longer makes sense now that the
+    // owner is picking the time themselves).
     const proposed = req.body.proposed_datetime
       ? new Date(req.body.proposed_datetime)
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
     if (!req.body.proposed_datetime) proposed.setUTCHours(14, 0, 0, 0);
+    if (isNaN(proposed.getTime())) {
+      return res.status(400).json({ success: false, error: 'Invalid proposed_datetime' });
+    }
+    if (proposed.getTime() < Date.now() - 60000) {
+      return res.status(400).json({ success: false, error: 'Meeting must be in the future' });
+    }
     const duration = parseInt(req.body.duration_minutes) || 60;
+    const ownerNote = (req.body.message || '').toString().trim().slice(0, 2000);
 
     const uid = ical.generateUID(req.params.id, 'final_review');
     const videoLink = ical.generateJitsiLink(req.params.id);
@@ -999,10 +1010,70 @@ router.post('/:id/book-final-meeting', authMiddleware, async (req, res) => {
       { replacements: { c: req.chamber_id, id: req.params.id } }
     );
 
+    // Send an internal DM to each stakeholder (except the proposer themselves).
+    // This replaces the old "email an iCal" flow -- stakeholders see the
+    // invite in their in-platform Inbox with the meeting details + the
+    // proposer's optional note. Each DM creates/updates the chamber_conversation
+    // pair so threading works for follow-up replies.
+    const meetingWhen = proposed.toLocaleString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+    });
+    let dmBody = `Final Review meeting scheduled for "${planTitle}"\n\n`;
+    dmBody += `When: ${meetingWhen} (${duration} min)\n`;
+    dmBody += `Video: ${videoLink}\n`;
+    if (ownerNote) dmBody += `\n${ownerNote}\n`;
+    dmBody += `\nThis meeting was scheduled by the project owner. Please confirm your availability or reply with conflicts.`;
+
+    const proposerId = proj.proposer_member_id;
+    let dmsSent = 0;
+    for (const a of allAttendees) {
+      if (a.member_id === proposerId) continue; // don't message yourself
+      try {
+        const [aSorted, bSorted] = proposerId < a.member_id
+          ? [proposerId, a.member_id]
+          : [a.member_id, proposerId];
+        const [existingConv] = await sequelize.query(
+          `SELECT id FROM chamber_conversations
+           WHERE chamber_id = :c AND member_a_id = :a AND member_b_id = :b`,
+          { replacements: { c: req.chamber_id, a: aSorted, b: bSorted }, type: QueryTypes.SELECT }
+        );
+        let convId;
+        if (existingConv) {
+          convId = existingConv.id;
+        } else {
+          const [newConv] = await sequelize.query(
+            `INSERT INTO chamber_conversations
+             (chamber_id, member_a_id, member_b_id, last_message_at, created_at, updated_at)
+             VALUES (:c, :a, :b, NOW(), NOW(), NOW()) RETURNING id`,
+            { replacements: { c: req.chamber_id, a: aSorted, b: bSorted }, type: QueryTypes.SELECT }
+          );
+          convId = newConv.id;
+        }
+        await sequelize.query(
+          `INSERT INTO chamber_messages
+           (chamber_id, conversation_id, sender_id, recipient_id, body, created_at)
+           VALUES (:c, :cid, :s, :r, :b, NOW())`,
+          { replacements: { c: req.chamber_id, cid: convId, s: proposerId, r: a.member_id, b: dmBody } }
+        );
+        const preview = dmBody.length > 200 ? dmBody.slice(0, 197) + '...' : dmBody;
+        await sequelize.query(
+          `UPDATE chamber_conversations
+           SET last_message_at = NOW(), last_message_preview = :p, last_sender_id = :s, updated_at = NOW()
+           WHERE id = :cid`,
+          { replacements: { cid: convId, p: preview, s: proposerId } }
+        );
+        dmsSent++;
+      } catch (dmErr) {
+        console.error('[book-meeting DM]', a.member_id, dmErr.message);
+      }
+    }
+
     return res.status(201).json({
       success: true,
       data: {
         meeting, ics: icsBody, attendee_count: allAttendees.length,
+        dms_sent: dmsSent,
         attendees: allAttendees.map(a => ({ email: a.email, name: `${a.first_name} ${a.last_name}` }))
       }
     });

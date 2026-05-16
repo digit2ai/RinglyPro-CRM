@@ -1,10 +1,11 @@
 /**
  * Unified-schema port of chamber-template/lib/p2b-cascade.js.
- * Runs Monte Carlo + auto-books Final Meeting + transitions plan_status to pending_signoff.
+ * Runs Monte Carlo + transitions plan_status to fully_staffed. The Final
+ * Meeting is no longer auto-booked here -- the project owner schedules it
+ * manually from the dashboard (POST /:id/book-final-meeting).
  */
 const { QueryTypes } = require('sequelize');
 const { monteCarloProject } = require('../../../../chamber-template/chamber-math');
-const ical = require('../../../../chamber-template/lib/ical');
 
 const SECTOR_DIFFICULTY = {
   ciberseguridad: 1.3, finanzas: 1.25, salud: 1.25, tecnologia: 1.2,
@@ -119,6 +120,10 @@ async function runCascade(sequelize, chamberId, projectId) {
     computed_at: new Date().toISOString()
   };
 
+  // Promote to fully_staffed. The Final Meeting is NO LONGER auto-booked --
+  // the project owner schedules it manually from the dashboard (POST
+  // /:id/book-final-meeting). Status stays at fully_staffed until that call
+  // succeeds, at which point the route promotes it to pending_signoff.
   await sequelize.query(
     `UPDATE projects
      SET plan_status = 'fully_staffed', monte_carlo_result = :mc, monte_carlo_at = NOW(), updated_at = NOW()
@@ -126,43 +131,16 @@ async function runCascade(sequelize, chamberId, projectId) {
     { replacements: { c: chamberId, id: projectId, mc: JSON.stringify(enrichedResult) } }
   );
 
-  // Auto-book Final Meeting
   const participants = await sequelize.query(
-    `SELECT DISTINCT m.id, m.first_name, m.last_name, m.email
+    `SELECT COUNT(DISTINCT m.id) AS c
      FROM members m
      WHERE m.chamber_id = :c
        AND (m.id = :proposer
             OR m.id IN (SELECT member_id FROM project_members WHERE chamber_id = :c AND project_id = :p))`,
     { replacements: { c: chamberId, proposer: proj.proposer_member_id, p: projectId }, type: QueryTypes.SELECT }
   );
-  const attendeeIds = participants.map(p => p.id);
 
-  const scheduledAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  scheduledAt.setUTCHours(14, 0, 0, 0);
-  const uid = ical.generateUID(projectId, 'final_review');
-  const videoLink = ical.generateJitsiLink(projectId);
-
-  const [meeting] = await sequelize.query(
-    `INSERT INTO project_meetings
-     (chamber_id, project_id, meeting_type, scheduled_at, duration_minutes, video_link, ical_event_uid, attendees, status, created_at, updated_at)
-     VALUES (:c, :p, 'final_review', :sa, 60, :vl, :uid, :att::int[], 'scheduled', NOW(), NOW())
-     RETURNING *`,
-    {
-      replacements: {
-        c: chamberId, p: projectId, sa: scheduledAt, vl: videoLink, uid,
-        att: '{' + attendeeIds.join(',') + '}'
-      },
-      type: QueryTypes.SELECT
-    }
-  );
-
-  await sequelize.query(
-    `UPDATE projects SET plan_status = 'pending_signoff', updated_at = NOW()
-     WHERE chamber_id = :c AND id = :id`,
-    { replacements: { c: chamberId, id: projectId } }
-  );
-
-  return { status: 'pending_signoff', monte_carlo: enrichedResult, meeting, attendee_count: participants.length };
+  return { status: 'fully_staffed', monte_carlo: enrichedResult, meeting: null, attendee_count: parseInt(participants[0].c) || 0 };
 }
 
 async function maybeAutoClose(sequelize, chamberId, project) {
