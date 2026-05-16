@@ -769,6 +769,110 @@ router.post('/:id/invite-matches', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
+// POST /:id/invite-member -- proposer manually invites a specific member
+// Body: { member_id, role_index }
+// =====================================================================
+router.post('/:id/invite-member', authMiddleware, async (req, res) => {
+  try {
+    const memberId = parseInt(req.body && req.body.member_id);
+    const roleIndex = parseInt(req.body && req.body.role_index);
+    if (!memberId) return res.status(400).json({ success: false, error: 'member_id required' });
+    if (!(roleIndex >= 0)) return res.status(400).json({ success: false, error: 'role_index required' });
+
+    const [project] = await sequelize.query(
+      `SELECT id, proposer_member_id, plan_json, plan_status FROM projects WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    // Proposer-only: manual invitation is a project-modification action.
+    if (project.proposer_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the project owner can invite members' });
+    }
+    if (project.plan_status !== 'published' && project.plan_status !== 'recruiting') {
+      return res.status(400).json({ success: false, error: 'Plan must be published or recruiting to invite' });
+    }
+    const plan = project.plan_json;
+    if (!plan || !Array.isArray(plan.team_roles_required) || plan.team_roles_required.length === 0) {
+      return res.status(400).json({ success: false, error: 'Plan has no team_roles_required' });
+    }
+    if (roleIndex >= plan.team_roles_required.length) {
+      return res.status(400).json({ success: false, error: `role_index ${roleIndex} out of range (plan has ${plan.team_roles_required.length} roles)` });
+    }
+    if (memberId === project.proposer_member_id) {
+      return res.status(400).json({ success: false, error: 'Cannot invite yourself' });
+    }
+
+    // Recipient must be an active member of the same chamber.
+    const [recipient] = await sequelize.query(
+      `SELECT id, first_name, last_name, email FROM members
+       WHERE chamber_id = :c AND id = :id AND status = 'active'`,
+      { replacements: { c: req.chamber_id, id: memberId }, type: QueryTypes.SELECT }
+    );
+    if (!recipient) return res.status(404).json({ success: false, error: 'Member not found or not active in this chamber' });
+
+    // Don't double-invite to the same role on the same project.
+    const [dupe] = await sequelize.query(
+      `SELECT id, status FROM project_invitations
+       WHERE chamber_id = :c AND project_id = :p AND member_id = :m AND role_index = :i`,
+      { replacements: { c: req.chamber_id, p: req.params.id, m: memberId, i: roleIndex }, type: QueryTypes.SELECT }
+    );
+    if (dupe) {
+      return res.status(409).json({ success: false, error: `Member already has a ${dupe.status} invitation for this role` });
+    }
+
+    // Don't invite a member who is already on the team (in any role).
+    const [onTeam] = await sequelize.query(
+      `SELECT 1 AS x FROM project_members WHERE chamber_id = :c AND project_id = :p AND member_id = :m`,
+      { replacements: { c: req.chamber_id, p: req.params.id, m: memberId }, type: QueryTypes.SELECT }
+    );
+    if (onTeam) {
+      return res.status(409).json({ success: false, error: 'Member is already on this project team' });
+    }
+
+    const role = plan.team_roles_required[roleIndex];
+    // match_score is left NULL to distinguish manual invites from AI-matched ones.
+    const [row] = await sequelize.query(
+      `INSERT INTO project_invitations
+       (chamber_id, project_id, member_id, role_index, role_title, status, match_score, invited_by_member_id, invited_at)
+       VALUES (:c, :p, :m, :i, :rt, 'pending', NULL, :inv, NOW())
+       RETURNING id, status, role_title, invited_at`,
+      {
+        replacements: {
+          c: req.chamber_id, p: req.params.id, m: memberId, i: roleIndex,
+          rt: role.role_title || `Role ${roleIndex + 1}`, inv: req.member.id
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Promote status to 'recruiting' on first invite if still 'published'.
+    if (project.plan_status === 'published') {
+      await sequelize.query(
+        `UPDATE projects SET plan_status = 'recruiting', updated_at = NOW()
+         WHERE chamber_id = :c AND id = :id`,
+        { replacements: { c: req.chamber_id, id: req.params.id } }
+      );
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        invitation: row,
+        recipient: {
+          id: recipient.id,
+          name: `${recipient.first_name} ${recipient.last_name}`,
+          email: recipient.email
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[unified invite-member]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
 // POST /:id/invitations/:inv_id/respond (accept/decline + auto-cascade if all roles filled)
 // =====================================================================
 router.post('/:id/invitations/:inv_id/respond', authMiddleware, async (req, res) => {

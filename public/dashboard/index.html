@@ -1809,6 +1809,67 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     navigate('inbox');
   }
 
+  // DM "cualquiera-a-cualquiera": busca en el directorio e inicia un hilo
+  // nuevo con cualquier miembro activo.
+  function showNewMessagePicker() {
+    var h = '<h2 style="margin:0 0 8px 0">Nuevo Mensaje</h2>';
+    h += '<p class="text-muted text-sm mb-12">Busca cualquier miembro por nombre, empresa o email.</p>';
+    h += '<input id="newMsgSearch" placeholder="Empieza a escribir..." autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--gray-300);border-radius:6px">';
+    h += '<div id="newMsgResults" style="border:1px solid var(--gray-200);border-radius:6px;max-height:340px;overflow-y:auto;margin-top:10px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div></div>';
+    h += '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" id="newMsgCancelBtn">Cancelar</button></div>';
+    openModal(h);
+    document.getElementById('newMsgCancelBtn').addEventListener('click', function() { closeModal(); navigate('inbox'); });
+
+    var searchEl = document.getElementById('newMsgSearch');
+    var resultsEl = document.getElementById('newMsgResults');
+    var debounceTimer = null;
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Buscando...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Error al buscar')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Sin coincidencias.</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div class="newMsgRow" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" '
+            + 'style="padding:10px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          var meta = [];
+          if (m.company_name) meta.push(esc(m.company_name));
+          if (m.sector) meta.push(esc(m.sector));
+          html += '<div class="text-muted text-sm">'+meta.join(' &middot; ')+'</div>';
+          html += '</div>';
+          html += '<span class="btn btn-primary btn-sm" style="padding:4px 12px;font-size:12px">Mensaje</span>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.newMsgRow').forEach(function(row) {
+          row.addEventListener('click', function() {
+            messageMember(this.dataset.mid, this.dataset.mname);
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    searchEl.focus();
+  }
+
   async function renderInbox() {
     var pending = window._openThreadWith;
     window._openThreadWith = null;
@@ -1816,10 +1877,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       return renderInboxThread(pending.id, pending.name);
     }
     var el = document.getElementById('pageContent');
-    el.innerHTML = '<div class="panel"><h2>Bandeja</h2>'
-      + '<p class="text-muted mb-16">Tus mensajes directos con otros miembros. Haz clic en una conversacion para leer o responder.</p>'
+    el.innerHTML = '<div class="panel">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +   '<h2 style="margin:0">Bandeja</h2>'
+      +   '<button class="btn btn-primary btn-sm" id="newMessageBtn">+ Nuevo Mensaje</button>'
+      + '</div>'
+      + '<p class="text-muted mb-16">Tus mensajes directos con otros miembros. Haz clic en una conversacion para leer o responder, o inicia una nueva con cualquier miembro.</p>'
       + '<div id="inboxList"><div class="loading">Cargando...</div></div>'
       + '</div>';
+    document.getElementById('newMessageBtn').addEventListener('click', function() {
+      showNewMessagePicker();
+    });
     try {
       var res = await apiFetch('/inbox');
       var box = document.getElementById('inboxList');
@@ -3017,6 +3085,114 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Modal solo-propietario: busca en el directorio e invita a un miembro
+  // especifico a un rol elegido. Complementa "Re-ejecutar Match con IA"
+  // con una via manual para que el propietario elija a dedo.
+  async function showInviteMemberModal(projectId, projectMeta) {
+    var roles = (projectMeta && projectMeta.plan_json && Array.isArray(projectMeta.plan_json.team_roles_required))
+      ? projectMeta.plan_json.team_roles_required
+      : [];
+    if (roles.length === 0) {
+      openModal('<div class="error-msg">El plan no tiene roles definidos. Edita el plan primero.</div>');
+      return;
+    }
+    var roleOpts = roles.map(function(r, i) {
+      return '<option value="'+i+'">'+esc(r.role_title || ('Rol ' + (i+1)))
+        + (r.must_have ? ' (obligatorio)' : '')
+        + '</option>';
+    }).join('');
+
+    var h = '<h2 style="margin:0 0 8px 0;color:#1976d2">Invitar Miembro Especifico</h2>';
+    h += '<p class="text-muted text-sm mb-12">Busca en el directorio y elige un miembro para invitarlo a un rol especifico. Recibira una invitacion normal (Aceptar / Rechazar) igual que las auto-generadas.</p>';
+    h += '<div class="form-grid">';
+    h += '<div class="form-group full"><label>Rol al que invitar</label><select id="invRole">'+roleOpts+'</select></div>';
+    h += '<div class="form-group full"><label>Buscar miembro (nombre, email o empresa)</label>'
+      +  '<input id="invSearch" placeholder="Empieza a escribir..." autocomplete="off"></div>';
+    h += '</div>';
+    h += '<div id="invResults" style="border:1px solid var(--gray-200);border-radius:6px;max-height:280px;overflow-y:auto;margin-top:8px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div></div>';
+    h += '<div id="invMsg" style="margin:10px 0"></div>';
+    h += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'
+      +  '<button type="button" class="btn btn-outline" id="invCancelBtn">Cancelar</button>'
+      +  '</div>';
+    openModal(h);
+
+    document.getElementById('invCancelBtn').addEventListener('click', function() {
+      showProjectDetail(projectId);
+    });
+
+    var searchEl = document.getElementById('invSearch');
+    var resultsEl = document.getElementById('invResults');
+    var debounceTimer = null;
+
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Buscando...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Error al buscar')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Sin coincidencias.</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div style="padding:10px 12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          var meta = [];
+          if (m.company_name) meta.push(esc(m.company_name));
+          if (m.sector) meta.push(esc(m.sector));
+          if (m.country) meta.push(esc(m.country));
+          html += '<div class="text-muted text-sm">'+meta.join(' &middot; ')+'</div>';
+          html += '</div>';
+          html += '<button class="btn btn-primary btn-sm invSendBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 12px;font-size:12px;background:#1976d2">Invitar</button>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.invSendBtn').forEach(function(b) {
+          b.addEventListener('click', async function() {
+            var mid = parseInt(this.dataset.mid);
+            var mname = this.dataset.mname;
+            var roleIndex = parseInt(document.getElementById('invRole').value);
+            var msgBox = document.getElementById('invMsg');
+            this.disabled = true; var orig = this.textContent; this.textContent = 'Enviando...';
+            try {
+              var rr = await apiFetch('/projects/'+projectId+'/invite-member', {
+                method: 'POST',
+                body: JSON.stringify({ member_id: mid, role_index: roleIndex })
+              });
+              if (rr.success) {
+                msgBox.innerHTML = '<div class="success-msg">Invitacion enviada a '+esc(mname)+'.</div>';
+                this.textContent = 'Enviado';
+                this.style.background = '#28a745';
+              } else {
+                msgBox.innerHTML = '<div class="error-msg">'+(rr.error||'No se pudo invitar')+'</div>';
+                this.disabled = false; this.textContent = orig;
+              }
+            } catch(e) {
+              msgBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+              this.disabled = false; this.textContent = orig;
+            }
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    searchEl.focus();
+  }
+
   // Modal de Estado de Firmas -- muestra el estado de cada miembro del equipo.
   // Los pendientes tienen un boton "Mensaje" para que el propietario los
   // pueda contactar por DM. El propietario tambien ve el boton "Programar
@@ -3362,6 +3538,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // titularidad y evitar que un miembro modifique un proyecto ajeno.
       if (vr.is_proposer && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-ejecutar Match con IA</button>';
+        html += '<button class="btn btn-primary btn-sm" id="inviteMemberBtn" style="background:#1976d2;color:white">Invitar Miembro Especifico</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">Ver Invitaciones</button>';
         html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Cerrar Cotizacion Ahora</button>';
       }
@@ -3502,6 +3679,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             }
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var inviteMemBtn = document.getElementById('inviteMemberBtn');
+      if (inviteMemBtn) inviteMemBtn.addEventListener('click', function() {
+        showInviteMemberModal(id, p);
       });
 
       var inviteBtn = document.getElementById('inviteMatchesBtn');

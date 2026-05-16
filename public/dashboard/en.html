@@ -1803,6 +1803,67 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     navigate('inbox');
   }
 
+  // Anyone-to-anyone DM picker: search the chamber directory and start a
+  // new thread with any active member.
+  function showNewMessagePicker() {
+    var h = '<h2 style="margin:0 0 8px 0">New Message</h2>';
+    h += '<p class="text-muted text-sm mb-12">Search any chamber member by name, company, or email.</p>';
+    h += '<input id="newMsgSearch" placeholder="Start typing..." autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--gray-300);border-radius:6px">';
+    h += '<div id="newMsgResults" style="border:1px solid var(--gray-200);border-radius:6px;max-height:340px;overflow-y:auto;margin-top:10px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Type at least 2 characters to search.</div></div>';
+    h += '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" id="newMsgCancelBtn">Cancel</button></div>';
+    openModal(h);
+    document.getElementById('newMsgCancelBtn').addEventListener('click', function() { closeModal(); navigate('inbox'); });
+
+    var searchEl = document.getElementById('newMsgSearch');
+    var resultsEl = document.getElementById('newMsgResults');
+    var debounceTimer = null;
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Type at least 2 characters to search.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Searching...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Search failed')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">No matches.</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div class="newMsgRow" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" '
+            + 'style="padding:10px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          var meta = [];
+          if (m.company_name) meta.push(esc(m.company_name));
+          if (m.sector) meta.push(esc(m.sector));
+          html += '<div class="text-muted text-sm">'+meta.join(' &middot; ')+'</div>';
+          html += '</div>';
+          html += '<span class="btn btn-primary btn-sm" style="padding:4px 12px;font-size:12px">Message</span>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.newMsgRow').forEach(function(row) {
+          row.addEventListener('click', function() {
+            messageMember(this.dataset.mid, this.dataset.mname);
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    searchEl.focus();
+  }
+
   async function renderInbox() {
     var pending = window._openThreadWith;
     window._openThreadWith = null;
@@ -1810,10 +1871,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       return renderInboxThread(pending.id, pending.name);
     }
     var el = document.getElementById('pageContent');
-    el.innerHTML = '<div class="panel"><h2>Inbox</h2>'
-      + '<p class="text-muted mb-16">Your direct messages with other chamber members. Click any conversation to read or reply.</p>'
+    el.innerHTML = '<div class="panel">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +   '<h2 style="margin:0">Inbox</h2>'
+      +   '<button class="btn btn-primary btn-sm" id="newMessageBtn">+ New Message</button>'
+      + '</div>'
+      + '<p class="text-muted mb-16">Your direct messages with other chamber members. Click any conversation to read or reply, or start a new one with anyone in the chamber.</p>'
       + '<div id="inboxList"><div class="loading">Loading...</div></div>'
       + '</div>';
+    document.getElementById('newMessageBtn').addEventListener('click', function() {
+      showNewMessagePicker();
+    });
     try {
       var res = await apiFetch('/inbox');
       var box = document.getElementById('inboxList');
@@ -3020,6 +3088,115 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     el.innerHTML = '<div class="panel" style="max-height:600px;overflow-y:auto">'+renderFullPlan(p.plan_json, p.fill_status)+'</div>';
   }
 
+  // Proposer-only modal: search the chamber directory and invite a specific
+  // member into a chosen role. Complements "Re-run AI Matches" (auto) with
+  // a manual path so the owner can hand-pick candidates.
+  async function showInviteMemberModal(projectId, projectMeta) {
+    var roles = (projectMeta && projectMeta.plan_json && Array.isArray(projectMeta.plan_json.team_roles_required))
+      ? projectMeta.plan_json.team_roles_required
+      : [];
+    if (roles.length === 0) {
+      openModal('<div class="error-msg">Plan has no roles defined. Edit the plan first.</div>');
+      return;
+    }
+    var roleOpts = roles.map(function(r, i) {
+      return '<option value="'+i+'">'+esc(r.role_title || ('Role ' + (i+1)))
+        + (r.must_have ? ' (must-have)' : '')
+        + '</option>';
+    }).join('');
+
+    var h = '<h2 style="margin:0 0 8px 0;color:#1976d2">Invite a Specific Member</h2>';
+    h += '<p class="text-muted text-sm mb-12">Search the chamber directory and pick one member to invite to a specific role. The member receives a regular project invitation (Accept / Decline) just like AI-matched invites.</p>';
+    h += '<div class="form-grid">';
+    h += '<div class="form-group full"><label>Role to invite for</label><select id="invRole">'+roleOpts+'</select></div>';
+    h += '<div class="form-group full"><label>Search member (name, email, or company)</label>'
+      +  '<input id="invSearch" placeholder="Start typing..." autocomplete="off"></div>';
+    h += '</div>';
+    h += '<div id="invResults" style="border:1px solid var(--gray-200);border-radius:6px;max-height:280px;overflow-y:auto;margin-top:8px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Type at least 2 characters to search.</div></div>';
+    h += '<div id="invMsg" style="margin:10px 0"></div>';
+    h += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'
+      +  '<button type="button" class="btn btn-outline" id="invCancelBtn">Cancel</button>'
+      +  '</div>';
+    openModal(h);
+
+    document.getElementById('invCancelBtn').addEventListener('click', function() {
+      showProjectDetail(projectId);
+    });
+
+    var searchEl = document.getElementById('invSearch');
+    var resultsEl = document.getElementById('invResults');
+    var debounceTimer = null;
+
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Type at least 2 characters to search.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Searching...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Search failed')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        // Filter out yourself (the proposer)
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">No matches.</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div style="padding:10px 12px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          var meta = [];
+          if (m.company_name) meta.push(esc(m.company_name));
+          if (m.sector) meta.push(esc(m.sector));
+          if (m.country) meta.push(esc(m.country));
+          html += '<div class="text-muted text-sm">'+meta.join(' &middot; ')+'</div>';
+          html += '</div>';
+          html += '<button class="btn btn-primary btn-sm invSendBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 12px;font-size:12px;background:#1976d2">Invite</button>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.invSendBtn').forEach(function(b) {
+          b.addEventListener('click', async function() {
+            var mid = parseInt(this.dataset.mid);
+            var mname = this.dataset.mname;
+            var roleIndex = parseInt(document.getElementById('invRole').value);
+            var msgBox = document.getElementById('invMsg');
+            this.disabled = true; var orig = this.textContent; this.textContent = 'Sending...';
+            try {
+              var rr = await apiFetch('/projects/'+projectId+'/invite-member', {
+                method: 'POST',
+                body: JSON.stringify({ member_id: mid, role_index: roleIndex })
+              });
+              if (rr.success) {
+                msgBox.innerHTML = '<div class="success-msg">Invitation sent to '+esc(mname)+'.</div>';
+                this.textContent = 'Sent';
+                this.style.background = '#28a745';
+              } else {
+                msgBox.innerHTML = '<div class="error-msg">'+(rr.error||'Could not invite')+'</div>';
+                this.disabled = false; this.textContent = orig;
+              }
+            } catch(e) {
+              msgBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+              this.disabled = false; this.textContent = orig;
+            }
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    searchEl.focus();
+  }
+
   // Sign-off Status modal -- shows each team member's signature state.
   // Pending members get a "Message" button so the proposer can nudge them
   // directly via DM. The proposer also sees the "Schedule Final Meeting"
@@ -3373,6 +3550,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       // and a member cannot mutate a project they did not create.
       if (vr.is_proposer && p.plan_status === 'recruiting' && !p.recruitment_closed_at) {
         html += '<button class="btn btn-primary btn-sm" id="inviteMatchesBtn" style="background:var(--accent);color:var(--navy)">Re-run AI Matches</button>';
+        html += '<button class="btn btn-primary btn-sm" id="inviteMemberBtn" style="background:#1976d2;color:white">Invite Specific Member</button>';
         html += '<button class="btn btn-outline btn-sm" id="viewInvitationsBtn">View Invitations</button>';
         html += '<button class="btn btn-danger btn-sm" id="closeRecruitmentBtn" style="background:var(--red);color:white">Close Bidding Now</button>';
       }
@@ -3513,6 +3691,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             }
           } else { msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>'; }
         } catch(e) { msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+      });
+
+      var inviteMemBtn = document.getElementById('inviteMemberBtn');
+      if (inviteMemBtn) inviteMemBtn.addEventListener('click', function() {
+        showInviteMemberModal(id, p);
       });
 
       var inviteBtn = document.getElementById('inviteMatchesBtn');
