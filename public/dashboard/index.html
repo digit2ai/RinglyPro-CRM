@@ -1871,55 +1871,84 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   }
 
   async function renderInbox() {
-    var pending = window._openThreadWith;
+    var pendingDm = window._openThreadWith;
+    var pendingGrp = window._openGroupThread;
     window._openThreadWith = null;
-    if (pending && pending.id) {
-      return renderInboxThread(pending.id, pending.name);
+    window._openGroupThread = null;
+    if (pendingGrp && pendingGrp.id) {
+      return renderGroupThread(pendingGrp.id, pendingGrp.name);
+    }
+    if (pendingDm && pendingDm.id) {
+      return renderInboxThread(pendingDm.id, pendingDm.name);
     }
     var el = document.getElementById('pageContent');
     el.innerHTML = '<div class="panel">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">'
       +   '<h2 style="margin:0">Bandeja</h2>'
-      +   '<button class="btn btn-primary btn-sm" id="newMessageBtn">+ Nuevo Mensaje</button>'
+      +   '<div style="display:flex;gap:6px">'
+      +     '<button class="btn btn-primary btn-sm" id="newMessageBtn">+ Nuevo Mensaje</button>'
+      +     '<button class="btn btn-outline btn-sm" id="newGroupBtn" style="border-color:#1976d2;color:#1976d2">+ Nuevo Grupo</button>'
+      +   '</div>'
       + '</div>'
-      + '<p class="text-muted mb-16">Tus mensajes directos con otros miembros. Haz clic en una conversacion para leer o responder, o inicia una nueva con cualquier miembro.</p>'
+      + '<p class="text-muted mb-16">Mensajes directos y chats grupales con miembros de la camara. Haz clic en una conversacion o inicia una nueva.</p>'
       + '<div id="inboxList"><div class="loading">Cargando...</div></div>'
       + '</div>';
-    document.getElementById('newMessageBtn').addEventListener('click', function() {
-      showNewMessagePicker();
-    });
+    document.getElementById('newMessageBtn').addEventListener('click', function() { showNewMessagePicker(); });
+    document.getElementById('newGroupBtn').addEventListener('click', function() { showCreateGroupModal(); });
     try {
-      var res = await apiFetch('/inbox');
       var box = document.getElementById('inboxList');
-      if (!res.success) { box.innerHTML = '<div class="error-msg">'+(res.error||'Error al cargar')+'</div>'; return; }
-      var rows = res.data || [];
-      if (rows.length === 0) {
-        box.innerHTML = '<div class="text-muted" style="padding:24px 0">Aun no tienes conversaciones. Busca a alguien en el '
-          + '<a href="#" id="goDir" style="color:var(--primary);font-weight:600">Directorio</a> o en '
-          + '<a href="#" id="goMatch" style="color:var(--primary);font-weight:600">Match con IA</a> '
-          + 'y haz clic en "Mensaje" para iniciar.</div>';
-        var d = document.getElementById('goDir'); if (d) d.addEventListener('click', function(e){e.preventDefault();navigate('directory');});
-        var m = document.getElementById('goMatch'); if (m) m.addEventListener('click', function(e){e.preventDefault();navigate('matching');});
+      var pair = await Promise.all([apiFetch('/inbox'), apiFetch('/groups')]);
+      var dmRes = pair[0], grpRes = pair[1];
+      var dms = (dmRes && dmRes.success && dmRes.data) || [];
+      var groups = (grpRes && grpRes.success && grpRes.data) || [];
+      var feed = [];
+      dms.forEach(function(c) {
+        feed.push({ kind: 'dm', last_message_at: c.last_message_at, last_message_preview: c.last_message_preview, last_sender_id: c.last_sender_id, unread_count: c.unread_count || 0, dm: c });
+      });
+      groups.forEach(function(g) {
+        feed.push({ kind: 'group', last_message_at: g.last_message_at, last_message_preview: g.last_message_preview, last_sender_id: g.last_sender_id, unread_count: g.unread_count || 0, group: g });
+      });
+      feed.sort(function(a, b) {
+        var ta = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+        var tb = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+        return tb - ta;
+      });
+      if (feed.length === 0) {
+        box.innerHTML = '<div class="text-muted" style="padding:24px 0">Aun no tienes conversaciones. Haz clic en <strong>+ Nuevo Mensaje</strong> para enviar DM a cualquier miembro, o en <strong>+ Nuevo Grupo</strong> para iniciar un chat grupal.</div>';
         return;
       }
       var h = '';
-      rows.forEach(function(c) {
-        var o = c.other_member;
-        var when = c.last_message_at ? new Date(c.last_message_at).toLocaleString() : '';
-        var unread = c.unread_count > 0;
-        h += '<div class="result-card convCard" data-oid="'+o.id+'" data-oname="'+esc(o.first_name+' '+o.last_name)+'" '
-          + 'style="cursor:pointer;'+(unread?'border-left:3px solid var(--primary);':'')+'">';
-        h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
-        h += '<div style="flex:1;min-width:0">';
-        h += '<div class="rc-name">'+esc(o.first_name)+' '+esc(o.last_name);
-        if (unread) h += ' <span style="background:var(--primary);color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px">'+c.unread_count+' nuevo</span>';
-        h += '</div>';
-        if (o.company_name) h += '<div class="rc-company">'+esc(o.company_name)+'</div>';
-        if (c.last_message_preview) {
-          var fromMe = c.last_sender_id && currentMember && c.last_sender_id === currentMember.id;
+      feed.forEach(function(item) {
+        var when = item.last_message_at ? new Date(item.last_message_at).toLocaleString() : '';
+        var unread = item.unread_count > 0;
+        if (item.kind === 'dm') {
+          var c = item.dm, o = c.other_member;
+          h += '<div class="result-card convCard" data-oid="'+o.id+'" data-oname="'+esc(o.first_name+' '+o.last_name)+'" '
+            + 'style="cursor:pointer;'+(unread?'border-left:3px solid var(--primary);':'')+'">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+          h += '<div style="flex:1;min-width:0">';
+          h += '<div class="rc-name">'+esc(o.first_name)+' '+esc(o.last_name);
+          if (unread) h += ' <span style="background:var(--primary);color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px">'+c.unread_count+' nuevo</span>';
+          h += '</div>';
+          if (o.company_name) h += '<div class="rc-company">'+esc(o.company_name)+'</div>';
+        } else {
+          var g = item.group;
+          h += '<div class="result-card groupCard" data-gid="'+g.group_id+'" data-gname="'+esc(g.name)+'" '
+            + 'style="cursor:pointer;'+(unread?'border-left:3px solid #1976d2;':'')+'">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+          h += '<div style="flex:1;min-width:0">';
+          h += '<div class="rc-name">'
+            + '<span style="background:#1976d2;color:white;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-right:6px;text-transform:uppercase">Grupo</span>'
+            + esc(g.name);
+          if (unread) h += ' <span style="background:#1976d2;color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px">'+g.unread_count+' nuevo</span>';
+          h += '</div>';
+          h += '<div class="rc-company">'+g.member_count+' miembro'+(g.member_count===1?'':'s')+'</div>';
+        }
+        if (item.last_message_preview) {
+          var fromMe = item.last_sender_id && currentMember && item.last_sender_id === currentMember.id;
           h += '<div style="margin-top:6px;font-size:13px;color:var(--gray-600);'+(unread?'font-weight:600;color:var(--gray-800);':'')+'">';
           if (fromMe) h += '<span style="color:var(--gray-500)">Tu: </span>';
-          h += esc(c.last_message_preview);
+          h += esc(item.last_message_preview);
           h += '</div>';
         }
         h += '</div>';
@@ -1928,13 +1957,313 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       });
       box.innerHTML = h;
       box.querySelectorAll('.convCard').forEach(function(card) {
-        card.addEventListener('click', function() {
-          renderInboxThread(this.dataset.oid, this.dataset.oname);
-        });
+        card.addEventListener('click', function() { renderInboxThread(this.dataset.oid, this.dataset.oname); });
+      });
+      box.querySelectorAll('.groupCard').forEach(function(card) {
+        card.addEventListener('click', function() { renderGroupThread(this.dataset.gid, this.dataset.gname); });
       });
     } catch(e) {
       document.getElementById('inboxList').innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
     }
+  }
+
+  // Hilo grupal -- similar al DM pero multi-emisor; cada burbuja muestra
+  // quien la envio. Lista de miembros + "Agregar" + "Salir" en el header.
+  async function renderGroupThread(groupId, groupNameHint) {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="panel">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">'
+      + '<button class="btn btn-outline btn-sm" id="threadBack">&larr; Bandeja</button>'
+      + '<h2 id="threadTitle" style="margin:0;flex:1">'+esc(groupNameHint || 'Grupo')+'</h2>'
+      + '<button class="btn btn-outline btn-sm" id="addGroupMembersBtn" style="padding:4px 10px;font-size:12px">+ Agregar</button>'
+      + '<button class="btn btn-outline btn-sm" id="leaveGroupBtn" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)">Salir</button>'
+      + '</div>'
+      + '<div id="groupMembersStrip" class="text-muted text-sm" style="margin-bottom:10px"></div>'
+      + '<div id="threadMessages" style="max-height:55vh;overflow-y:auto;padding:8px;background:var(--gray-50);border-radius:8px;margin-bottom:12px"><div class="loading">Cargando...</div></div>'
+      + '<form id="threadForm" style="display:flex;gap:8px;align-items:flex-end">'
+      + '<textarea id="threadBody" rows="2" placeholder="Escribe al grupo... (max 5000 caracteres)" required maxlength="5000" style="flex:1;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;resize:vertical"></textarea>'
+      + '<button type="submit" class="btn btn-primary" id="threadSend">Enviar</button>'
+      + '</form>'
+      + '</div>';
+    document.getElementById('threadBack').addEventListener('click', function() { renderInbox(); });
+    document.getElementById('addGroupMembersBtn').addEventListener('click', function() { showAddGroupMembersModal(groupId, currentGroupMemberIds || []); });
+    document.getElementById('leaveGroupBtn').addEventListener('click', async function() {
+      if (!confirm('Salir del grupo? Dejaras de recibir mensajes.')) return;
+      try {
+        var r = await apiFetch('/groups/' + groupId + '/members/me', { method: 'DELETE' });
+        if (r.success) { navigate('inbox'); } else { alert(r.error || 'No se pudo salir'); }
+      } catch(e) { alert('Error: ' + e.message); }
+    });
+
+    var currentGroupMemberIds = [];
+
+    async function loadThread() {
+      var msgsBox = document.getElementById('threadMessages');
+      try {
+        var res = await apiFetch('/groups/' + groupId + '/messages');
+        if (!res.success) { msgsBox.innerHTML = '<div class="error-msg">'+(res.error||'Error al cargar')+'</div>'; return; }
+        var data = res.data || {};
+        if (data.group && data.group.name) document.getElementById('threadTitle').textContent = data.group.name;
+        currentGroupMemberIds = (data.members || []).map(function(m) { return m.member_id; });
+        var memberStrip = (data.members || []).map(function(m) { return esc((m.first_name || '') + ' ' + (m.last_name || '')); }).join(', ');
+        document.getElementById('groupMembersStrip').textContent = (data.members || []).length + ' miembro'
+          + ((data.members||[]).length === 1 ? '' : 's') + ': ' + memberStrip;
+
+        var msgs = data.messages || [];
+        if (msgs.length === 0) {
+          msgsBox.innerHTML = '<div class="text-muted" style="padding:20px;text-align:center">Aun no hay mensajes. Envia el primero abajo.</div>';
+          return;
+        }
+        var me = currentMember && currentMember.id;
+        var h = '';
+        msgs.forEach(function(m) {
+          var mine = m.sender_id === me;
+          var when = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+          var senderName = (m.sender_first_name || '') + ' ' + (m.sender_last_name || '');
+          h += '<div style="display:flex;justify-content:'+(mine?'flex-end':'flex-start')+';margin-bottom:10px">';
+          h += '<div style="max-width:75%;padding:8px 12px;border-radius:12px;'
+            + (mine
+                ? 'background:var(--primary);color:white;border-top-right-radius:2px'
+                : 'background:white;color:var(--gray-800);border:1px solid var(--gray-200);border-top-left-radius:2px')
+            + '">';
+          if (!mine) h += '<div style="font-size:11px;font-weight:700;color:#1976d2;margin-bottom:2px">'+esc(senderName.trim() || 'Desconocido')+'</div>';
+          h += '<div style="white-space:pre-wrap;word-break:break-word">'+esc(m.body)+'</div>';
+          h += '<div style="font-size:10px;margin-top:4px;opacity:0.75">'+esc(when)+'</div>';
+          h += '</div></div>';
+        });
+        msgsBox.innerHTML = h;
+        msgsBox.scrollTop = msgsBox.scrollHeight;
+        loadInboxBadge();
+      } catch(e) {
+        msgsBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+
+    document.getElementById('threadForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var bodyEl = document.getElementById('threadBody');
+      var body = bodyEl.value.trim();
+      if (!body) return;
+      var sendBtn = document.getElementById('threadSend');
+      sendBtn.disabled = true; var orig = sendBtn.textContent; sendBtn.textContent = 'Enviando...';
+      try {
+        var res = await apiFetch('/groups/' + groupId + '/messages', { method:'POST', body:JSON.stringify({ body: body }) });
+        sendBtn.disabled = false; sendBtn.textContent = orig;
+        if (!res.success) { alert(res.error || 'Error al enviar'); return; }
+        bodyEl.value = '';
+        loadThread();
+      } catch(err) {
+        sendBtn.disabled = false; sendBtn.textContent = orig;
+        alert('Error al enviar: ' + err.message);
+      }
+    });
+
+    loadThread();
+  }
+
+  // Crear un grupo nuevo: nombre + selector multi-miembro.
+  function showCreateGroupModal() {
+    var picked = [];
+    var h = '<h2 style="margin:0 0 8px 0;color:#1976d2">Crear Grupo</h2>';
+    h += '<p class="text-muted text-sm mb-12">Elige un nombre y los miembros del grupo. Tu seras agregado automaticamente.</p>';
+    h += '<div class="form-grid">';
+    h += '<div class="form-group full"><label>Nombre del grupo</label><input id="grpName" maxlength="120" placeholder="ej. Comite PACC, Equipo Core HomeBridge" required></div>';
+    h += '<div class="form-group full"><label>Agregar miembros (busca por nombre, empresa o email)</label>'
+      +  '<input id="grpSearch" placeholder="Empieza a escribir..." autocomplete="off"></div>';
+    h += '</div>';
+    h += '<div id="grpResults" style="border:1px solid var(--gray-200);border-radius:6px;max-height:200px;overflow-y:auto;margin-top:4px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div></div>';
+    h += '<div style="margin-top:12px"><strong>Seleccionados (<span id="grpCount">0</span>):</strong> <span id="grpChips" style="display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:4px"></span></div>';
+    h += '<div id="grpMsg" style="margin:10px 0"></div>';
+    h += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'
+      +  '<button type="button" class="btn btn-outline" id="grpCancelBtn">Cancelar</button>'
+      +  '<button type="button" class="btn btn-primary" id="grpCreateBtn" style="background:#1976d2">Crear grupo</button>'
+      +  '</div>';
+    openModal(h);
+    document.getElementById('grpCancelBtn').addEventListener('click', function() { closeModal(); navigate('inbox'); });
+
+    function refreshChips() {
+      document.getElementById('grpCount').textContent = picked.length;
+      var chipsEl = document.getElementById('grpChips');
+      chipsEl.innerHTML = picked.map(function(p) {
+        return '<span class="grpChip" data-mid="'+p.id+'" style="background:#e3f2fd;color:#0d47a1;padding:3px 10px;border-radius:14px;font-size:12px;cursor:pointer">'+esc(p.name)+' &times;</span>';
+      }).join('');
+      chipsEl.querySelectorAll('.grpChip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var mid = parseInt(this.dataset.mid);
+          picked = picked.filter(function(p) { return p.id !== mid; });
+          refreshChips();
+        });
+      });
+    }
+
+    var searchEl = document.getElementById('grpSearch');
+    var resultsEl = document.getElementById('grpResults');
+    var debounceTimer = null;
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Buscando...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Error al buscar')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        var pickedSet = new Set(picked.map(function(p){return p.id;}));
+        members = members.filter(function(m){ return !pickedSet.has(m.id); });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Sin mas coincidencias.</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div class="grpAddRow" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" '
+            + 'style="padding:8px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          if (m.company_name || m.sector) html += '<div class="text-muted text-sm">'+esc([m.company_name, m.sector].filter(Boolean).join(' &middot; '))+'</div>';
+          html += '</div>';
+          html += '<span class="btn btn-outline btn-sm" style="padding:3px 10px;font-size:11px">Agregar</span>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.grpAddRow').forEach(function(row) {
+          row.addEventListener('click', function() {
+            picked.push({ id: parseInt(this.dataset.mid), name: this.dataset.mname });
+            refreshChips();
+            runSearch();
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    document.getElementById('grpName').focus();
+
+    document.getElementById('grpCreateBtn').addEventListener('click', async function() {
+      var name = document.getElementById('grpName').value.trim();
+      var msgBox = document.getElementById('grpMsg');
+      if (!name) { msgBox.innerHTML = '<div class="error-msg">Nombre requerido.</div>'; return; }
+      if (picked.length === 0) { msgBox.innerHTML = '<div class="error-msg">Elige al menos un miembro.</div>'; return; }
+      var btn = this; btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Creando...';
+      try {
+        var r = await apiFetch('/groups', { method: 'POST', body: JSON.stringify({ name: name, member_ids: picked.map(function(p){return p.id;}) }) });
+        btn.disabled = false; btn.textContent = orig;
+        if (!r.success) { msgBox.innerHTML = '<div class="error-msg">'+(r.error||'No se pudo crear')+'</div>'; return; }
+        window._openGroupThread = { id: r.data.group_id, name: r.data.name };
+        closeModal();
+        navigate('inbox');
+      } catch(e) {
+        btn.disabled = false; btn.textContent = orig;
+        msgBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    });
+  }
+
+  function showAddGroupMembersModal(groupId, alreadyInIds) {
+    var existing = new Set(alreadyInIds || []);
+    var picked = [];
+    var h = '<h2 style="margin:0 0 8px 0;color:#1976d2">Agregar Miembros</h2>';
+    h += '<p class="text-muted text-sm mb-12">Busca miembros para agregar al grupo.</p>';
+    h += '<input id="grp2Search" placeholder="Empieza a escribir..." autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--gray-300);border-radius:6px">';
+    h += '<div id="grp2Results" style="border:1px solid var(--gray-200);border-radius:6px;max-height:240px;overflow-y:auto;margin-top:8px"><div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div></div>';
+    h += '<div style="margin-top:12px"><strong>Seleccionados (<span id="grp2Count">0</span>):</strong> <span id="grp2Chips" style="display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:4px"></span></div>';
+    h += '<div id="grp2Msg" style="margin:10px 0"></div>';
+    h += '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'
+      +  '<button type="button" class="btn btn-outline" id="grp2CancelBtn">Cancelar</button>'
+      +  '<button type="button" class="btn btn-primary" id="grp2AddBtn" style="background:#1976d2">Agregar al grupo</button>'
+      +  '</div>';
+    openModal(h);
+    document.getElementById('grp2CancelBtn').addEventListener('click', function() { closeModal(); window._openGroupThread = { id: groupId }; navigate('inbox'); });
+
+    function refreshChips() {
+      document.getElementById('grp2Count').textContent = picked.length;
+      var chipsEl = document.getElementById('grp2Chips');
+      chipsEl.innerHTML = picked.map(function(p) {
+        return '<span class="grp2Chip" data-mid="'+p.id+'" style="background:#e3f2fd;color:#0d47a1;padding:3px 10px;border-radius:14px;font-size:12px;cursor:pointer">'+esc(p.name)+' &times;</span>';
+      }).join('');
+      chipsEl.querySelectorAll('.grp2Chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          var mid = parseInt(this.dataset.mid);
+          picked = picked.filter(function(p) { return p.id !== mid; });
+          refreshChips();
+        });
+      });
+    }
+
+    var searchEl = document.getElementById('grp2Search');
+    var resultsEl = document.getElementById('grp2Results');
+    var debounceTimer = null;
+    async function runSearch() {
+      var q = searchEl.value.trim();
+      if (q.length < 2) {
+        resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Escribe al menos 2 caracteres.</div>';
+        return;
+      }
+      resultsEl.innerHTML = '<div class="loading" style="padding:14px">Buscando...</div>';
+      try {
+        var r = await apiFetch('/members?limit=30&search=' + encodeURIComponent(q));
+        if (!r.success) { resultsEl.innerHTML = '<div class="error-msg">'+(r.error||'Error al buscar')+'</div>'; return; }
+        var members = (r.data && r.data.members) || [];
+        if (currentMember) members = members.filter(function(m) { return m.id !== currentMember.id; });
+        members = members.filter(function(m){ return !existing.has(m.id); });
+        var pickedSet = new Set(picked.map(function(p){return p.id;}));
+        members = members.filter(function(m){ return !pickedSet.has(m.id); });
+        if (members.length === 0) {
+          resultsEl.innerHTML = '<div class="text-muted text-sm" style="padding:14px;text-align:center">Sin mas coincidencias (ya en el grupo o seleccionados).</div>';
+          return;
+        }
+        var html = '';
+        members.forEach(function(m) {
+          html += '<div class="grp2AddRow" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" '
+            + 'style="padding:8px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;display:flex;align-items:center;gap:10px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-weight:600">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
+          if (m.company_name || m.sector) html += '<div class="text-muted text-sm">'+esc([m.company_name, m.sector].filter(Boolean).join(' &middot; '))+'</div>';
+          html += '</div>';
+          html += '<span class="btn btn-outline btn-sm" style="padding:3px 10px;font-size:11px">Agregar</span>';
+          html += '</div>';
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.querySelectorAll('.grp2AddRow').forEach(function(row) {
+          row.addEventListener('click', function() {
+            picked.push({ id: parseInt(this.dataset.mid), name: this.dataset.mname });
+            refreshChips();
+            runSearch();
+          });
+        });
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    }
+    searchEl.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 250);
+    });
+    searchEl.focus();
+
+    document.getElementById('grp2AddBtn').addEventListener('click', async function() {
+      var msgBox = document.getElementById('grp2Msg');
+      if (picked.length === 0) { msgBox.innerHTML = '<div class="error-msg">Elige al menos un miembro.</div>'; return; }
+      var btn = this; btn.disabled = true; var orig = btn.textContent; btn.textContent = 'Agregando...';
+      try {
+        var r = await apiFetch('/groups/' + groupId + '/members', { method: 'POST', body: JSON.stringify({ member_ids: picked.map(function(p){return p.id;}) }) });
+        btn.disabled = false; btn.textContent = orig;
+        if (!r.success) { msgBox.innerHTML = '<div class="error-msg">'+(r.error||'No se pudo agregar')+'</div>'; return; }
+        window._openGroupThread = { id: groupId };
+        closeModal();
+        navigate('inbox');
+      } catch(e) {
+        btn.disabled = false; btn.textContent = orig;
+        msgBox.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    });
   }
 
   async function renderInboxThread(otherId, otherNameHint) {

@@ -1298,16 +1298,33 @@ async function findOrCreateConversation(chamberId, meId, otherId) {
 }
 
 // Cheap unread-count endpoint for the sidebar badge. Called frequently so it
-// must be cheap; the partial index on (chamber_id, recipient_id, read_at)
-// keeps this O(unread).
+// must be cheap; sums unread direct messages + unread group messages.
 router.get('/inbox/unread-count', authMiddleware, async (req, res) => {
   try {
-    const [row] = await sequelize.query(
+    const me = req.member.id;
+    const [dmRow] = await sequelize.query(
       `SELECT COUNT(*) AS c FROM chamber_messages
        WHERE chamber_id = :c AND recipient_id = :m AND read_at IS NULL`,
-      { replacements: { c: req.chamber_id, m: req.member.id }, type: QueryTypes.SELECT }
+      { replacements: { c: req.chamber_id, m: me }, type: QueryTypes.SELECT }
     );
-    return res.json({ success: true, data: { unread: parseInt(row.c) || 0 } });
+    const [grpRow] = await sequelize.query(
+      `SELECT COUNT(*) AS c
+       FROM chamber_group_messages gm
+       JOIN chamber_group_members gmem ON gmem.group_id = gm.group_id AND gmem.member_id = :me
+       WHERE gm.chamber_id = :c
+         AND gm.created_at > gmem.last_read_at
+         AND gm.sender_id != :me`,
+      { replacements: { c: req.chamber_id, me }, type: QueryTypes.SELECT }
+    );
+    const total = (parseInt(dmRow.c) || 0) + (parseInt(grpRow.c) || 0);
+    return res.json({
+      success: true,
+      data: {
+        unread: total,
+        unread_dms: parseInt(dmRow.c) || 0,
+        unread_groups: parseInt(grpRow.c) || 0
+      }
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -1459,6 +1476,252 @@ router.post('/conversations/:other_id/read', authMiddleware, async (req, res) =>
       `UPDATE chamber_messages SET read_at = NOW()
        WHERE conversation_id = :cid AND recipient_id = :me AND read_at IS NULL`,
       { replacements: { cid: conv.id, me } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// GROUP CHATS (chamber-scoped, WhatsApp-style)
+// Schema: chamber_groups + chamber_group_members (join, with last_read_at)
+//        + chamber_group_messages (single sender, broadcast to all members)
+// =====================================================================
+
+// List the current member's groups, newest activity first, with per-group
+// unread count (messages newer than my last_read_at that I did not send).
+router.get('/groups', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const rows = await sequelize.query(
+      `SELECT g.id, g.name, g.last_message_at, g.last_message_preview, g.last_sender_id,
+              g.created_by_member_id, gm.last_read_at,
+              (SELECT COUNT(*) FROM chamber_group_members WHERE group_id = g.id) AS member_count,
+              (SELECT COUNT(*) FROM chamber_group_messages mm
+                WHERE mm.group_id = g.id
+                  AND mm.created_at > gm.last_read_at
+                  AND mm.sender_id != :me) AS unread_count
+       FROM chamber_groups g
+       JOIN chamber_group_members gm ON gm.group_id = g.id AND gm.member_id = :me
+       WHERE g.chamber_id = :c
+       ORDER BY g.last_message_at DESC
+       LIMIT 100`,
+      { replacements: { c: req.chamber_id, me }, type: QueryTypes.SELECT }
+    );
+    return res.json({
+      success: true,
+      data: rows.map(r => ({
+        group_id: r.id,
+        name: r.name,
+        last_message_at: r.last_message_at,
+        last_message_preview: r.last_message_preview,
+        last_sender_id: r.last_sender_id,
+        created_by_member_id: r.created_by_member_id,
+        member_count: parseInt(r.member_count) || 0,
+        unread_count: parseInt(r.unread_count) || 0
+      }))
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create a group. Body: { name, member_ids: [int...] }
+// The creator is auto-added as a member.
+router.post('/groups', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const name = ((req.body && req.body.name) || '').toString().trim().slice(0, 120);
+    const requested = Array.isArray(req.body && req.body.member_ids) ? req.body.member_ids : [];
+    if (!name) return res.status(400).json({ success: false, error: 'Group name required' });
+    const memberIds = [...new Set(requested.map(v => parseInt(v)).filter(v => v && v !== me))];
+    if (memberIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'Pick at least one other member' });
+    }
+    if (memberIds.length > 100) {
+      return res.status(400).json({ success: false, error: 'Groups are capped at 100 members' });
+    }
+
+    // Validate every requested member belongs to this chamber + is active.
+    const validRows = await sequelize.query(
+      `SELECT id FROM members WHERE chamber_id = :c AND status = 'active' AND id IN (:ids)`,
+      { replacements: { c: req.chamber_id, ids: memberIds }, type: QueryTypes.SELECT }
+    );
+    const validIds = new Set(validRows.map(r => r.id));
+    const invalid = memberIds.filter(id => !validIds.has(id));
+    if (invalid.length > 0) {
+      return res.status(400).json({ success: false, error: `Invalid member ids: ${invalid.join(', ')}` });
+    }
+
+    const [grp] = await sequelize.query(
+      `INSERT INTO chamber_groups (chamber_id, name, created_by_member_id, last_message_at, created_at, updated_at)
+       VALUES (:c, :n, :me, NOW(), NOW(), NOW())
+       RETURNING id, name, created_at`,
+      { replacements: { c: req.chamber_id, n: name, me }, type: QueryTypes.SELECT }
+    );
+
+    const allIds = [me, ...memberIds];
+    const values = allIds.map(id => `(${grp.id}, ${id}, NOW(), NOW())`).join(', ');
+    await sequelize.query(
+      `INSERT INTO chamber_group_members (group_id, member_id, joined_at, last_read_at) VALUES ${values}`
+    );
+
+    return res.status(201).json({
+      success: true,
+      data: { group_id: grp.id, name: grp.name, member_count: allIds.length, created_at: grp.created_at }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get a group's thread + member list. Marks the thread read for the caller.
+router.get('/groups/:id/messages', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const groupId = parseInt(req.params.id);
+    if (!groupId) return res.status(400).json({ success: false, error: 'Invalid group id' });
+
+    // Caller must be a member of this group + group must belong to this chamber.
+    const [grp] = await sequelize.query(
+      `SELECT g.id, g.name, g.created_by_member_id, g.created_at
+       FROM chamber_groups g
+       WHERE g.chamber_id = :c AND g.id = :id
+         AND EXISTS (SELECT 1 FROM chamber_group_members WHERE group_id = g.id AND member_id = :me)`,
+      { replacements: { c: req.chamber_id, id: groupId, me }, type: QueryTypes.SELECT }
+    );
+    if (!grp) return res.status(404).json({ success: false, error: 'Group not found or you are not a member' });
+
+    const members = await sequelize.query(
+      `SELECT gm.member_id, gm.joined_at, m.first_name, m.last_name, m.email
+       FROM chamber_group_members gm
+       JOIN members m ON m.id = gm.member_id
+       WHERE gm.group_id = :gid
+       ORDER BY gm.joined_at ASC`,
+      { replacements: { gid: groupId }, type: QueryTypes.SELECT }
+    );
+
+    const messages = await sequelize.query(
+      `SELECT m.id, m.sender_id, m.body, m.created_at,
+              s.first_name AS sender_first_name, s.last_name AS sender_last_name
+       FROM chamber_group_messages m
+       LEFT JOIN members s ON s.id = m.sender_id
+       WHERE m.group_id = :gid
+       ORDER BY m.created_at ASC
+       LIMIT 500`,
+      { replacements: { gid: groupId }, type: QueryTypes.SELECT }
+    );
+
+    await sequelize.query(
+      `UPDATE chamber_group_members SET last_read_at = NOW()
+       WHERE group_id = :gid AND member_id = :me`,
+      { replacements: { gid: groupId, me } }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        group: grp,
+        members,
+        messages
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Send a message to a group. Body: { body }
+router.post('/groups/:id/messages', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const groupId = parseInt(req.params.id);
+    const body = ((req.body && req.body.body) || '').toString().trim();
+    if (!groupId) return res.status(400).json({ success: false, error: 'Invalid group id' });
+    if (!body) return res.status(400).json({ success: false, error: 'Message body required' });
+    if (body.length > 5000) return res.status(400).json({ success: false, error: 'Message too long (5000 chars max)' });
+
+    const [member] = await sequelize.query(
+      `SELECT g.id FROM chamber_groups g
+       JOIN chamber_group_members gm ON gm.group_id = g.id AND gm.member_id = :me
+       WHERE g.chamber_id = :c AND g.id = :gid`,
+      { replacements: { c: req.chamber_id, gid: groupId, me }, type: QueryTypes.SELECT }
+    );
+    if (!member) return res.status(403).json({ success: false, error: 'You are not a member of this group' });
+
+    const [msg] = await sequelize.query(
+      `INSERT INTO chamber_group_messages (chamber_id, group_id, sender_id, body, created_at)
+       VALUES (:c, :gid, :me, :b, NOW())
+       RETURNING id, sender_id, body, created_at`,
+      { replacements: { c: req.chamber_id, gid: groupId, me, b: body }, type: QueryTypes.SELECT }
+    );
+
+    const preview = body.length > 200 ? body.slice(0, 197) + '...' : body;
+    await sequelize.query(
+      `UPDATE chamber_groups
+       SET last_message_at = NOW(), last_message_preview = :p, last_sender_id = :me, updated_at = NOW()
+       WHERE id = :gid`,
+      { replacements: { gid: groupId, p: preview, me } }
+    );
+
+    // Sender's own read pointer advances so they don't see their own message as unread.
+    await sequelize.query(
+      `UPDATE chamber_group_members SET last_read_at = NOW() WHERE group_id = :gid AND member_id = :me`,
+      { replacements: { gid: groupId, me } }
+    );
+
+    return res.status(201).json({ success: true, data: { message: msg } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Add members to an existing group (any member of the group can add others).
+router.post('/groups/:id/members', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const groupId = parseInt(req.params.id);
+    const requested = Array.isArray(req.body && req.body.member_ids) ? req.body.member_ids : [];
+    if (!groupId) return res.status(400).json({ success: false, error: 'Invalid group id' });
+    const ids = [...new Set(requested.map(v => parseInt(v)).filter(v => v && v !== me))];
+    if (ids.length === 0) return res.status(400).json({ success: false, error: 'No members to add' });
+
+    const [grp] = await sequelize.query(
+      `SELECT g.id FROM chamber_groups g
+       JOIN chamber_group_members gm ON gm.group_id = g.id AND gm.member_id = :me
+       WHERE g.chamber_id = :c AND g.id = :gid`,
+      { replacements: { c: req.chamber_id, gid: groupId, me }, type: QueryTypes.SELECT }
+    );
+    if (!grp) return res.status(403).json({ success: false, error: 'You are not a member of this group' });
+
+    const valid = await sequelize.query(
+      `SELECT id FROM members WHERE chamber_id = :c AND status = 'active' AND id IN (:ids)`,
+      { replacements: { c: req.chamber_id, ids }, type: QueryTypes.SELECT }
+    );
+    const validIds = valid.map(r => r.id);
+    if (validIds.length === 0) return res.status(400).json({ success: false, error: 'None of the ids are active members of this chamber' });
+
+    const values = validIds.map(id => `(${groupId}, ${id}, NOW(), NOW())`).join(', ');
+    await sequelize.query(
+      `INSERT INTO chamber_group_members (group_id, member_id, joined_at, last_read_at) VALUES ${values}
+       ON CONFLICT (group_id, member_id) DO NOTHING`
+    );
+    return res.json({ success: true, data: { added: validIds.length } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Leave a group (remove self).
+router.delete('/groups/:id/members/me', authMiddleware, async (req, res) => {
+  try {
+    const me = req.member.id;
+    const groupId = parseInt(req.params.id);
+    if (!groupId) return res.status(400).json({ success: false, error: 'Invalid group id' });
+    await sequelize.query(
+      `DELETE FROM chamber_group_members WHERE group_id = :gid AND member_id = :me`,
+      { replacements: { gid: groupId, me } }
     );
     return res.json({ success: true });
   } catch (err) {
