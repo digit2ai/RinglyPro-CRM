@@ -4194,10 +4194,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-weight:700;color:'+probColor+'">Monte Carlo Risk Assessment <span class="text-muted text-sm">(auto-computed at team-lock)</span></div>';
         html += '<div style="font-size:24px;font-weight:900;color:'+probColor+'">'+prob+'%</div></div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">';
-        if (mc.budget) html += '<div><strong>Budget:</strong> $'+Number(mc.budget.p10||0).toLocaleString()+' / $'+Number(mc.budget.p50||0).toLocaleString()+' / $'+Number(mc.budget.p90||0).toLocaleString()+'<br><span class="text-muted">P10/P50/P90</span></div>';
-        if (mc.timeline_months) html += '<div><strong>Timeline:</strong> '+(mc.timeline_months.p10||0)+'/'+(mc.timeline_months.p50||0)+'/'+(mc.timeline_months.p90||0)+' months<br><span class="text-muted">P10/P50/P90</span></div>';
-        if (mc.team_size) html += '<div><strong>Team:</strong> '+mc.team_size+' members<br><span class="text-muted">avg trust '+(mc.avg_trust||0).toFixed(2)+'</span></div>';
-        html += '</div></div>';
+        if (mc.budget) html += '<div><strong>Presupuesto:</strong> $'+Number(mc.budget.p10||0).toLocaleString()+' / $'+Number(mc.budget.p50||0).toLocaleString()+' / $'+Number(mc.budget.p90||0).toLocaleString()+'<br><span class="text-muted">P10/P50/P90</span></div>';
+        if (mc.timeline_months) html += '<div><strong>Plazo:</strong> '+(mc.timeline_months.p10||0)+'/'+(mc.timeline_months.p50||0)+'/'+(mc.timeline_months.p90||0)+' meses<br><span class="text-muted">P10/P50/P90</span></div>';
+        if (mc.team_size) html += '<div><strong>Equipo:</strong> '+mc.team_size+' miembros<br><span class="text-muted">confianza prom. '+(mc.avg_trust||0).toFixed(2)+'</span></div>';
+        html += '</div>';
+        html += '<details style="margin-top:12px;border-top:1px solid var(--gray-200);padding-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px;color:'+probColor+'">Como se calcula?</summary>';
+        html += '<div style="margin-top:10px;font-size:13px;line-height:1.6">';
+        html += 'Ejecutamos una <strong>simulacion Monte Carlo de 10,000 iteraciones</strong> del proyecto terminando. Cada iteracion saca valores aleatorios de costo y plazo de una distribucion triangular entre min / estimado / max, y la viabilidad final combina cuatro senales:';
+        html += '<ol style="margin:10px 0 0 18px;padding:0">';
+        html += '<li><strong>Probabilidad de presupuesto (30 pts)</strong> &mdash; porcentaje de las 10,000 corridas simuladas que terminan dentro del presupuesto disponible</li>';
+        html += '<li><strong>Probabilidad de plazo (25 pts)</strong> &mdash; porcentaje de corridas que terminan antes del deadline</li>';
+        html += '<li><strong>Puntaje del equipo (25 pts)</strong> &mdash; confianza promedio de los miembros confirmados</li>';
+        html += '<li><strong>Alineacion estrategica (20 pts)</strong> &mdash; que tan bien los sectores / habilidades del equipo coinciden con el plan</li>';
+        html += '</ol>';
+        html += '<div class="text-muted text-sm" style="margin-top:8px"><strong>P10 / P50 / P90</strong> son que tan barato / tipico / caro salieron las 10k corridas. <strong>Color:</strong> verde &ge; 70%, naranja 45-69%, rojo &lt; 45%. Se recalcula cuando cambia la composicion del equipo.</div>';
+        html += '</div></details>';
+        html += '</div>';
       }
 
       // === Action buttons ===

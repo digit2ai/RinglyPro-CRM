@@ -4256,7 +4256,20 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (mc.budget) html += '<div><strong>Budget:</strong> $'+Number(mc.budget.p10||0).toLocaleString()+' / $'+Number(mc.budget.p50||0).toLocaleString()+' / $'+Number(mc.budget.p90||0).toLocaleString()+'<br><span class="text-muted">P10/P50/P90</span></div>';
         if (mc.timeline_months) html += '<div><strong>Timeline:</strong> '+(mc.timeline_months.p10||0)+'/'+(mc.timeline_months.p50||0)+'/'+(mc.timeline_months.p90||0)+' months<br><span class="text-muted">P10/P50/P90</span></div>';
         if (mc.team_size) html += '<div><strong>Team:</strong> '+mc.team_size+' members<br><span class="text-muted">avg trust '+(mc.avg_trust||0).toFixed(2)+'</span></div>';
-        html += '</div></div>';
+        html += '</div>';
+        // Plain-language methodology, collapsed by default.
+        html += '<details style="margin-top:12px;border-top:1px solid var(--gray-200);padding-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px;color:'+probColor+'">How is this calculated?</summary>';
+        html += '<div style="margin-top:10px;font-size:13px;line-height:1.6">';
+        html += 'We run a <strong>10,000-iteration Monte Carlo simulation</strong> of the project finishing. Each iteration draws random cost &amp; timeline values from a triangular distribution between min / estimate / max, then the final viability score combines four signals:';
+        html += '<ol style="margin:10px 0 0 18px;padding:0">';
+        html += '<li><strong>Budget probability (30 pts)</strong> &mdash; share of the 10,000 simulated runs that finish at or below the available budget</li>';
+        html += '<li><strong>Timeline probability (25 pts)</strong> &mdash; share of runs that finish by the deadline</li>';
+        html += '<li><strong>Team score (25 pts)</strong> &mdash; average trust score of the confirmed team members</li>';
+        html += '<li><strong>Strategic alignment (20 pts)</strong> &mdash; how well the team\'s sectors / skills match the project plan</li>';
+        html += '</ol>';
+        html += '<div class="text-muted text-sm" style="margin-top:8px"><strong>P10 / P50 / P90</strong> are how cheap / typical / expensive the 10k runs came out. <strong>Color:</strong> green &ge; 70%, orange 45-69%, red &lt; 45%. Recomputes whenever the team composition changes.</div>';
+        html += '</div></details>';
+        html += '</div>';
       }
 
       // === Action buttons ===
