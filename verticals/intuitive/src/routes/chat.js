@@ -76,10 +76,17 @@ DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
       → use query_surgeons (project-bound rep curated data)
   - "Top robotic candidates" / "best opportunities in <market>"
       → use search_surgeons_by_territory, sort by target_score, surface Tier A
+  - "Tell me about Dr. X" / "Is <surgeon> a KOL?" / "publications of <name>" /
+    "trials run by <surgeon or NPI>" / "academic profile of <name>"
+      → use enrich_surgeon. Returns publications (5yr), active trials, KOL score + badge.
+      ALWAYS check identity_ambiguous flag — if true, surface the caveat in the answer
+      so the rep knows the result may include other people with the same name.
 
 NEVER fabricate surgeon names or numbers. If a search returns 0 results, say so.
 The targeting tools return target_score (0-100) and tier (A/B/C/D). Tier A = "Convert Now"
-based on Medicare robotic volume + Intuitive payment history + recency. Always show these.`;
+based on Medicare robotic volume + Intuitive payment history + recency. Always show these.
+The enrich_surgeon tool returns kol_score + kol_badge — surface these when the user asks
+about thought leaders, researchers, or academic standing.`;
 
 // ─── Tool definitions (cached) ────────────────────────────────
 const TOOLS = [
@@ -171,6 +178,19 @@ const TOOLS = [
     },
   },
   {
+    name: 'enrich_surgeon',
+    description: 'Deep-dive on a single surgeon: PubMed publications in last 5 years + ClinicalTrials.gov active PI status (industry-sponsored flag, Intuitive-sponsored flag) + computed KOL score (0-100) and badge (Key Opinion Leader / Research-Active / Publishing). Use for "tell me about Dr. X", "is <surgeon> a KOL?", "publications of <name>", "trials run by NPI 1234567890". Provide full_name (preferred) or npi. Identity-resolution dampens counts on ambiguous names so the LLM does not over-trust common-name results.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        full_name: { type: 'string', description: 'Surgeon full name (e.g. "John Smith MD"). Required if NPI is not provided.' },
+        npi: { type: 'string', description: '10-digit NPI. If provided alone, will be resolved to a name via Care Compare affiliation lookup.' },
+        specialty: { type: 'string', description: 'Optional specialty hint (urology/gynecology/general/thoracic/colorectal/head_neck) — boosts identity-resolution confidence.' },
+        state: { type: 'string', description: 'Optional 2-letter state — boosts identity-resolution confidence.' },
+      },
+    },
+  },
+  {
     name: 'query_business_plans',
     description: 'Query Business Plans for the rep. Filter by project, status, year-1 revenue.',
     input_schema: {
@@ -257,6 +277,8 @@ const TOOL_TIMEOUTS = {
   search_surgeons_by_territory: 60000,
   // Care Compare DB join is fast but defensive
   search_surgeons_by_hospital: 15000,
+  // PubMed + ClinicalTrials.gov in parallel — usually <3s, allow headroom for cold cache
+  enrich_surgeon: 20000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -426,6 +448,84 @@ async function tool_search_surgeons_by_hospital(input, ctx) {
   }
 }
 
+async function tool_enrich_surgeon(input, ctx) {
+  let { npi, full_name, specialty, state } = input;
+  npi = npi ? String(npi).replace(/\D/g, '') : null;
+
+  // Resolve name from NPI via Care Compare affiliation if only NPI given
+  if (npi && !full_name && ctx.models?.IntuitiveProviderAffiliation) {
+    try {
+      const row = await ctx.models.IntuitiveProviderAffiliation.findOne({ where: { npi } });
+      if (row) {
+        full_name = row.full_name;
+        if (!specialty) specialty = row.primary_specialty;
+        if (!state) state = row.practice_state;
+      }
+    } catch (e) { /* ignore */ }
+  }
+  if (!full_name) {
+    return {
+      error: 'Could not resolve surgeon name. Provide full_name (e.g. "John Smith MD") or a known NPI when Care Compare data is loaded.',
+    };
+  }
+
+  const pubmed = require('../services/data-sources/pubmed');
+  const clinicalTrials = require('../services/data-sources/clinical-trials');
+  const identityRes = require('../services/identity-resolution');
+  const { kolScore, kolBadge } = surgeonTargetingService;
+
+  // Run PubMed + ClinicalTrials.gov in parallel
+  const [pub, trials] = await Promise.all([
+    pubmed.fetchPublicationCount(full_name, { models: ctx.models }),
+    clinicalTrials.fetchActiveTrials(full_name, { models: ctx.models }),
+  ]);
+
+  // Identity-resolution gate — dampen on ambiguous names
+  const idGate = identityRes.gateExternalCount(
+    { full_name, specialty_key: specialty || null, license_state: state || null },
+    null
+  );
+  const dampen = idGate.trust ? 1 : Math.max(0.1, idGate.confidence);
+
+  const publications_5yr = Math.round((pub.count || 0) * dampen);
+  const active_trials = Math.round((trials.active_count || 0) * dampen);
+
+  const ks = kolScore({
+    publications_5yr,
+    active_trials,
+    intuitive_trials: trials.intuitive_sponsored || 0,
+  });
+  const kb = kolBadge(ks);
+
+  return {
+    npi: npi || null,
+    full_name,
+    publications_5yr,
+    publications_5yr_raw: pub.count || 0,
+    recent_pmids: (pub.recent_pmids || []).slice(0, 5),
+    pubmed_url: pub.source_url,
+    active_trials,
+    active_trials_raw: trials.active_count || 0,
+    industry_trials: trials.industry_sponsored || 0,
+    intuitive_trials: trials.intuitive_sponsored || 0,
+    trials: (trials.trials || []).slice(0, 10).map(t => ({
+      nct_id: t.nct_id, title: t.title, status: t.status, phase: t.phase, sponsor: t.sponsor,
+    })),
+    clinicaltrials_url: trials.source_url,
+    kol_score: ks,
+    kol_badge: kb ? kb.label : null,
+    identity_confidence: idGate.confidence,
+    identity_ambiguous: !idGate.trust,
+    caveat: !idGate.trust
+      ? `This name appears too common for high-confidence identity match (confidence ${(idGate.confidence * 100).toFixed(0)}%). PubMed / ClinicalTrials.gov counts have been dampened. Treat as a directional signal, not an exact figure.`
+      : null,
+    citations: [
+      { source_name: 'PubMed (NCBI E-utilities)', source_url: pub.source_url || 'https://pubmed.ncbi.nlm.nih.gov' },
+      { source_name: 'ClinicalTrials.gov', source_url: trials.source_url || 'https://clinicaltrials.gov' },
+    ],
+  };
+}
+
 async function tool_query_intuitive_payments(input, ctx) {
   const { Op } = require('sequelize');
   const where = {};
@@ -583,6 +683,7 @@ const TOOL_IMPL = {
   query_surgeons: tool_query_surgeons,
   search_surgeons_by_territory: tool_search_surgeons_by_territory,
   search_surgeons_by_hospital: tool_search_surgeons_by_hospital,
+  enrich_surgeon: tool_enrich_surgeon,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,
