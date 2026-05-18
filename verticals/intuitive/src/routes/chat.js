@@ -21,6 +21,8 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 
+const surgeonTargetingService = require('../services/surgeon-targeting-service');
+
 const SONNET_MODEL = 'claude-sonnet-4-20250514';
 let _anthropic = null;
 function getAnthropic() {
@@ -63,7 +65,21 @@ RESPONSE with a JSON action block the UI will render as a Confirm button:
 
 Do NOT call the destructive tool until the user confirms.
 
-Read-only queries (query_*, get_*, compare_*) execute immediately without confirmation.`;
+Read-only queries (query_*, get_*, compare_*, search_*) execute immediately without confirmation.
+
+DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
+  - "Find surgeons in <city/state>" / "top surgeons in <territory>" / "who's in <region>?"
+      → use search_surgeons_by_territory (LIVE CMS NPPES + MPUP + Open Payments)
+  - "Surgeons at <hospital>" / "who works at <hospital name>?" / "rank <hospital> docs"
+      → use search_surgeons_by_hospital (Care Compare-backed, sub-second)
+  - "Surgeons at <existing project hospital>" where we already have a project
+      → use query_surgeons (project-bound rep curated data)
+  - "Top robotic candidates" / "best opportunities in <market>"
+      → use search_surgeons_by_territory, sort by target_score, surface Tier A
+
+NEVER fabricate surgeon names or numbers. If a search returns 0 results, say so.
+The targeting tools return target_score (0-100) and tier (A/B/C/D). Tier A = "Convert Now"
+based on Medicare robotic volume + Intuitive payment history + recency. Always show these.`;
 
 // ─── Tool definitions (cached) ────────────────────────────────
 const TOOLS = [
@@ -124,6 +140,33 @@ const TOOLS = [
         fiscal_year: { type: 'integer' },
         min_services: { type: 'integer' },
         limit: { type: 'integer' },
+      },
+    },
+  },
+  {
+    name: 'search_surgeons_by_territory',
+    description: 'AcuityMD-style territory intelligence. Returns LIVE CMS-ranked surgeons in a state/ZIP area, with target_score (0-100) and tier (A/B/C/D) computed from Medicare robotic case volume (MPUP) + Intuitive Surgical $ exposure (Open Payments) + recency. This is the right tool for any "find/rank/top surgeons in <city or state>" question. Use specialty="urology|gynecology|general|thoracic|colorectal|head_neck|all". Pass enrich_kol=true to also fetch PubMed publications + ClinicalTrials.gov active PI status (adds ~15s).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        state: { type: 'string', description: '2-letter US state code (FL, CA, TX, NY)' },
+        zips: { type: 'array', items: { type: 'string' }, description: 'Optional 5-digit ZIPs to narrow the territory' },
+        specialty: { type: 'string', enum: ['all', 'urology', 'gynecology', 'general', 'thoracic', 'colorectal', 'head_neck'], description: 'Surgical specialty filter' },
+        limit: { type: 'integer', description: 'How many to return. Default 25, max 200.' },
+        enrich_kol: { type: 'boolean', description: 'If true, enrich top 25 with PubMed + ClinicalTrials.gov. Slower (~15s). Use when user asks about "KOL", "thought leaders", "researchers", or "publications".' },
+      },
+      required: ['state'],
+    },
+  },
+  {
+    name: 'search_surgeons_by_hospital',
+    description: 'Rank every surgeon at a specific hospital. Uses CMS Care Compare hospital affiliation data. Faster than territory search (sub-second). The right tool for "surgeons at <hospital>", "who works at <hospital>", "rank <hospital> docs". Provide hospital_name (fuzzy match) OR hospital_ccn (CMS 6-digit ID).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        hospital_name: { type: 'string', description: 'Hospital name (case-insensitive fuzzy match). E.g. "Baptist Health", "Mount Sinai".' },
+        hospital_ccn: { type: 'string', description: 'CMS Hospital CCN (6 digits), preferred when known.' },
+        specialty: { type: 'string', description: 'Optional substring filter on primary specialty.' },
       },
     },
   },
@@ -209,6 +252,12 @@ const TOOLS = [
 
 // ─── Tool implementations ─────────────────────────────────────
 const TOOL_TIMEOUT_MS = 10000;
+const TOOL_TIMEOUTS = {
+  // Live CMS territory search hits NPPES (up to 8 ZIPs) + DB joins — 30s ceiling
+  search_surgeons_by_territory: 60000,
+  // Care Compare DB join is fast but defensive
+  search_surgeons_by_hospital: 15000,
+};
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
   return Promise.race([
@@ -294,6 +343,87 @@ async function tool_query_surgeons(input, ctx) {
       { source_name: 'CMS Medicare Physician Provider Utilization', source_url: 'https://data.cms.gov/' },
     ],
   };
+}
+
+async function tool_search_surgeons_by_territory(input, ctx) {
+  const result = await surgeonTargetingService.searchByTerritory({
+    state: input.state,
+    zips: input.zips,
+    specialty: input.specialty || 'all',
+    limit: Math.min(Number(input.limit) || 25, 200),
+    enrich: !!input.enrich_kol,
+    enrich_top: 25,
+  }, { models: ctx.models });
+
+  // Compact response — the chatbot doesn't need every internal field; keep what matters for ranking + sourcing
+  return {
+    surgeons: (result.targets || []).map(t => ({
+      npi: t.npi,
+      name: t.full_name,
+      credential: t.credential,
+      specialty: t.specialty,
+      hospital: t.hospital_name,
+      group: t.group_legal_name,
+      robotic_cases_last_yr: t.robotic_cases_last_yr,
+      intuitive_dollars_2yr: t.intuitive_dollars_2yr,
+      last_intuitive_payment: t.last_intuitive_payment,
+      target_score: t.target_score,
+      tier: t.tier,
+      publications_5yr: t.publications_5yr ?? null,
+      active_trials: t.active_trials ?? null,
+      kol_badge: t.kol_badge ?? null,
+      identity_ambiguous: t.identity_ambiguous ?? false,
+    })),
+    summary: result.summary,
+    territory: result.territory,
+    total: result.total,
+    elapsed_ms: result.elapsed_ms,
+    enrichment_ms: result.enrichment_ms,
+    deep_link: `/intuitive/surgeon-targeting?state=${result.territory.state}&specialty=${result.territory.specialty}`,
+    citations: result.data_sources.map(s => ({ source_name: s.name, source_url: s.url })),
+  };
+}
+
+async function tool_search_surgeons_by_hospital(input, ctx) {
+  try {
+    const result = await surgeonTargetingService.searchByHospital({
+      hospital_ccn: input.hospital_ccn,
+      hospital_name: input.hospital_name,
+      specialty: input.specialty || 'all',
+    }, { models: ctx.models });
+
+    return {
+      surgeons: (result.targets || []).slice(0, 50).map(t => ({
+        npi: t.npi,
+        name: t.full_name,
+        credential: t.credential,
+        specialty: t.specialty,
+        group: t.group_legal_name,
+        medical_school: t.medical_school,
+        graduation_year: t.graduation_year,
+        robotic_cases_last_yr: t.robotic_cases_last_yr,
+        intuitive_dollars_2yr: t.intuitive_dollars_2yr,
+        last_intuitive_payment: t.last_intuitive_payment,
+        target_score: t.target_score,
+        tier: t.tier,
+      })),
+      hospital: result.hospital,
+      total: result.total,
+      elapsed_ms: result.elapsed_ms,
+      summary: result.summary,
+      deep_link: result.hospital?.ccn
+        ? `/intuitive/surgeon-targeting?hospital_ccn=${result.hospital.ccn}`
+        : '/intuitive/surgeon-targeting',
+      citations: result.data_sources.map(s => ({ source_name: s.name, source_url: s.url })),
+    };
+  } catch (e) {
+    // Care Compare data not ingested yet — give the LLM something useful to relay
+    return {
+      surgeons: [],
+      error: e.message,
+      hint: 'Care Compare ingest has not been run on this environment. Suggest the user run scripts/ingest-care-compare.js, OR use search_surgeons_by_territory with the hospital\'s state as a fallback.',
+    };
+  }
 }
 
 async function tool_query_intuitive_payments(input, ctx) {
@@ -451,6 +581,8 @@ async function tool_send_surgeon_survey(input, ctx) {
 const TOOL_IMPL = {
   query_hospitals: tool_query_hospitals,
   query_surgeons: tool_query_surgeons,
+  search_surgeons_by_territory: tool_search_surgeons_by_territory,
+  search_surgeons_by_hospital: tool_search_surgeons_by_hospital,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,
@@ -596,7 +728,8 @@ router.post('/', requireAuth, async (req, res) => {
           continue;
         }
         try {
-          const result = await withTimeout(impl(block.input, { models, userId }));
+          const timeoutMs = TOOL_TIMEOUTS[block.name] || TOOL_TIMEOUT_MS;
+          const result = await withTimeout(impl(block.input, { models, userId }), timeoutMs);
           send({ type: 'tool_result', tool: block.name, output: result });
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
         } catch (e) {
