@@ -4714,13 +4714,21 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   function showNewRFQForm() {
     var html = '<h2 style="margin-bottom:16px">Crear Cotizacion</h2><div id="rfqMsg"></div>';
     html += '<form id="rfqForm" class="form-grid">';
-    html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
-    html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
+    html += '<div class="form-group full"><label>Titulo</label><input name="title" required></div>';
+    html += '<div class="form-group full"><label>Descripcion</label><textarea name="description" rows="3" required></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Rango de Presupuesto</label><input name="budget_range" placeholder="$10K - $50K"></div>';
-    html += '<div class="form-group"><label>Deadline</label><input name="deadline" type="date"></div>';
-    html += '<div class="form-group"><label>Target Countries (comma)</label><input name="countries_target" placeholder="US, PH"></div>';
-    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish RFQ</button></div>';
+    html += '<div class="form-group"><label>Fecha Limite</label><input name="deadline" type="date"></div>';
+    html += '<div class="form-group"><label>Idiomas Objetivo</label>'+languageCheckboxes([])+'</div>';
+    html += '<div class="form-group full"><label>Paises Objetivo</label>';
+    html += '<div style="border:1px solid var(--gray-300);border-radius:6px;max-height:160px;overflow-y:auto;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px">';
+    CHAMBER_COUNTRIES.forEach(function(c) {
+      html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;margin:0;font-size:13px">';
+      html += '<input type="checkbox" name="countries_target" value="'+esc(c)+'" style="width:auto"> '+esc(c);
+      html += '</label>';
+    });
+    html += '</div></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publicar Cotizacion</button></div>';
     html += '</form>';
     openModal(html);
 
@@ -4728,11 +4736,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       ev.preventDefault();
       var fd = new FormData(this);
       var body = {};
-      fd.forEach(function(v,k){ body[k] = v; });
-      body.countries_target = body.countries_target ? body.countries_target.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      fd.forEach(function(v,k){
+        if (k === 'countries_target' || k === 'languages') return;
+        body[k] = v;
+      });
+      body.countries_target = fd.getAll('countries_target').filter(Boolean);
+      body.target_languages = fd.getAll('languages').filter(Boolean);
       body.deadline = body.deadline || null;
       var msg = document.getElementById('rfqMsg');
-      msg.innerHTML = '<div class="text-muted text-sm">Publishing...</div>';
+      msg.innerHTML = '<div class="text-muted text-sm">Publicando...</div>';
       try {
         var res = await apiFetch('/exchange/rfqs', { method:'POST', body:JSON.stringify(body) });
         if (res.success) { closeModal(); loadRFQs(); } else { msg.innerHTML = '<div class="error-msg">'+(res.error||'Error')+'</div>'; }

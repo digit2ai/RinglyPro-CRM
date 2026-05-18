@@ -4780,7 +4780,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Budget Range</label><input name="budget_range" placeholder="$10K - $50K"></div>';
     html += '<div class="form-group"><label>Deadline</label><input name="deadline" type="date"></div>';
-    html += '<div class="form-group"><label>Target Countries (comma)</label><input name="countries_target" placeholder="US, PH"></div>';
+    html += '<div class="form-group"><label>Target Languages</label>'+languageCheckboxes([])+'</div>';
+    // Target Countries: multi-select using the same CHAMBER_COUNTRIES list as
+    // member profiles. Rendered as a vertical checklist inside a scrollable
+    // box so it stays compact even with 62 countries.
+    html += '<div class="form-group full"><label>Target Countries</label>';
+    html += '<div style="border:1px solid var(--gray-300);border-radius:6px;max-height:160px;overflow-y:auto;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px">';
+    CHAMBER_COUNTRIES.forEach(function(c) {
+      html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;margin:0;font-size:13px">';
+      html += '<input type="checkbox" name="countries_target" value="'+esc(c)+'" style="width:auto"> '+esc(c);
+      html += '</label>';
+    });
+    html += '</div></div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish RFQ</button></div>';
     html += '</form>';
     openModal(html);
@@ -4789,8 +4800,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       ev.preventDefault();
       var fd = new FormData(this);
       var body = {};
-      fd.forEach(function(v,k){ body[k] = v; });
-      body.countries_target = body.countries_target ? body.countries_target.split(',').map(function(c){return c.trim();}).filter(Boolean) : [];
+      fd.forEach(function(v,k){
+        if (k === 'countries_target' || k === 'languages') return; // arrays read separately
+        body[k] = v;
+      });
+      body.countries_target = fd.getAll('countries_target').filter(Boolean);
+      body.target_languages = fd.getAll('languages').filter(Boolean);
       body.deadline = body.deadline || null;
       var msg = document.getElementById('rfqMsg');
       msg.innerHTML = '<div class="text-muted text-sm">Publishing...</div>';

@@ -774,6 +774,77 @@ router.get('/exchange/rfqs', authMiddleware, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// POST /exchange/rfqs -- create a new RFQ. Validates country + language
+// inputs against the same canonical lists used everywhere else so the new
+// row can match cleanly via AI scoring later.
+router.post('/exchange/rfqs', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, sector, budget_range, deadline, countries_target,
+            target_languages, company_id } = req.body || {};
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ success: false, error: 'title is required' });
+    }
+    if (!description || !String(description).trim()) {
+      return res.status(400).json({ success: false, error: 'description is required' });
+    }
+    if (!sector) {
+      return res.status(400).json({ success: false, error: 'sector is required' });
+    }
+
+    // Country whitelist: each entry must be in CHAMBER_COUNTRIES.
+    let countriesArr = Array.isArray(countries_target) ? countries_target : [];
+    countriesArr = countriesArr.map(c => String(c).trim()).filter(Boolean);
+    const invalidCountries = countriesArr.filter(c => !CHAMBER_COUNTRIES.has(c));
+    if (invalidCountries.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid country: ' + invalidCountries.join(', ') + '. Pick from the dropdown.'
+      });
+    }
+
+    // Language whitelist: English / Spanish only.
+    let langsArr = Array.isArray(target_languages) ? target_languages : [];
+    langsArr = langsArr.map(l => String(l).trim()).filter(l => CHAMBER_LANGUAGES.has(l));
+
+    const ctLiteral = countriesArr.length === 0
+      ? '{}'
+      : '{' + countriesArr.map(c => '"' + c.replace(/"/g, '\\"') + '"').join(',') + '}';
+    const langLiteral = langsArr.length === 0
+      ? '{}'
+      : '{' + langsArr.map(l => '"' + l.replace(/"/g, '\\"') + '"').join(',') + '}';
+
+    const [row] = await sequelize.query(
+      `INSERT INTO rfqs
+        (chamber_id, title, description, sector, budget_range, deadline,
+         countries_target, target_languages, company_id, requester_member_id,
+         status, created_at, updated_at)
+       VALUES
+        (:c, :title, :description, :sector, :budget_range, :deadline,
+         :ct::text[], :lang::text[], :company_id, :req, 'open', NOW(), NOW())
+       RETURNING *`,
+      {
+        replacements: {
+          c: req.chamber_id,
+          title: String(title).trim(),
+          description: String(description).trim(),
+          sector,
+          budget_range: budget_range ? String(budget_range).trim() : null,
+          deadline: deadline || null,
+          ct: ctLiteral,
+          lang: langLiteral,
+          company_id: company_id ? parseInt(company_id) : null,
+          req: req.member.id
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+    return res.status(201).json({ success: true, data: row });
+  } catch (err) {
+    console.error('[POST /exchange/rfqs]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/exchange/opportunities', authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
