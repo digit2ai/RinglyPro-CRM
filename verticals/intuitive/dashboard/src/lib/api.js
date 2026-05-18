@@ -109,4 +109,8 @@ export const api = {
   takeSnapshot: (planId, data) => request(`/tracking/${planId}/snapshot`, { method: 'POST', body: JSON.stringify(data || {}) }),
   getSnapshots: (planId) => request(`/tracking/${planId}/snapshots`),
   getExecutiveSummary: (planId) => request(`/tracking/${planId}/executive-summary`),
+
+  // Surgeon Targeting (AcuityMD-style territory intelligence)
+  searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
+  getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
 };
