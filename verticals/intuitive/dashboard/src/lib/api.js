@@ -114,4 +114,6 @@ export const api = {
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
   enrichSurgeon: (params) => request('/surgeon-targeting/enrich', { method: 'POST', body: JSON.stringify(params) }),
+  searchHospitalsForTargeting: (q) => request(`/surgeon-targeting/hospitals/search?q=${encodeURIComponent(q)}`),
+  surgeonsByHospital: (params) => request('/surgeon-targeting/by-hospital', { method: 'POST', body: JSON.stringify(params) }),
 };

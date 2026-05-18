@@ -19,6 +19,7 @@ const mpup = require('../services/data-sources/cms-physician-volume');
 const openPayments = require('../services/data-sources/cms-open-payments');
 const pubmed = require('../services/data-sources/pubmed');
 const clinicalTrials = require('../services/data-sources/clinical-trials');
+const identityResolution = require('../services/identity-resolution');
 
 // Specialty key → NPI taxonomy label (matches npi-registry.js SURGERY_TAXONOMIES)
 const SPECIALTY_FILTERS = {
@@ -79,6 +80,25 @@ function tier(score) {
 }
 
 // ---------------------------------------------------------------------------
+// Affiliation lookup — bulk fetch Care Compare data for a list of NPIs
+// ---------------------------------------------------------------------------
+async function fetchAffiliationsByNpi(models, npis) {
+  if (!models || !models.IntuitiveProviderAffiliation || !npis.length) return {};
+  try {
+    const rows = await models.IntuitiveProviderAffiliation.findAll({
+      where: { npi: npis },
+      raw: true,
+    });
+    const byNpi = {};
+    for (const r of rows) byNpi[r.npi] = r;
+    return byNpi;
+  } catch (e) {
+    console.error('[SurgeonTargeting] affiliation lookup error:', e.message);
+    return {};
+  }
+}
+
+// ---------------------------------------------------------------------------
 // POST /search — territory query
 // Body: { state, zips: ['33133', ...], specialty: 'urology'|'all', limit }
 // ---------------------------------------------------------------------------
@@ -119,11 +139,12 @@ router.post('/search', async (req, res) => {
       });
     }
 
-    // 2) Bulk-enrich with MPUP procedure volumes + Open Payments
+    // 2) Bulk-enrich with MPUP procedure volumes + Open Payments + Care Compare affiliations
     const npis = roster.map(s => s.npi);
-    const [mpupResult, opResult] = await Promise.all([
+    const [mpupResult, opResult, affiliations] = await Promise.all([
       mpup.fetchFor(npis, { models: req.models }),
       openPayments.fetchFor(npis, { models: req.models }),
+      fetchAffiliationsByNpi(req.models, npis),
     ]);
 
     const volumeByNpi = {};
@@ -139,6 +160,7 @@ router.post('/search', async (req, res) => {
     const targets = roster.map(s => {
       const vol = volumeByNpi[s.npi] || {};
       const pay = paymentsByNpi[s.npi] || {};
+      const aff = affiliations[s.npi] || {};
       const score = targetScore({
         robotic_cases: vol.total_robotic_cases_last_yr || 0,
         intuitive_dollars_2yr: pay.total_payments_2yr || 0,
@@ -152,6 +174,16 @@ router.post('/search', async (req, res) => {
         specialty: s.specialty_label,
         specialty_key: s.specialty_key,
         practice_address: s.practice_address,
+        // Care Compare affiliations (Wave 1)
+        hospital_name: aff.hospital_name || null,
+        hospital_ccn: aff.hospital_ccn || null,
+        all_hospital_affiliations: aff.all_hospital_affiliations || [],
+        group_legal_name: aff.group_legal_name || null,
+        group_member_count: aff.group_member_count || null,
+        primary_specialty_cms: aff.primary_specialty || null,
+        medical_school: aff.medical_school || null,
+        graduation_year: aff.graduation_year || null,
+        affiliation_confirmed: !!aff.npi,
         // Volume signals (from CMS MPUP — Medicare only, latest year)
         robotic_cases_last_yr: vol.total_robotic_cases_last_yr || 0,
         procedure_breakdown: vol.procedure_breakdown || {},
@@ -172,6 +204,7 @@ router.post('/search', async (req, res) => {
 
     // 4) Optional KOL enrichment — top N only (slow, external API calls)
     let enrichmentTime = 0;
+    let ambiguousNames = 0;
     if (enrich) {
       const eStart = Date.now();
       const topN = targets.slice(0, Math.min(Number(enrich_top) || 25, 50));
@@ -183,10 +216,34 @@ router.post('/search', async (req, res) => {
         for (const t of topN) {
           const p = pubMap[t.npi] || { count: 0 };
           const c = trialMap[t.npi] || { active_count: 0 };
-          t.publications_5yr = p.count || 0;
+
+          // Identity-resolution gate: discount external counts for ambiguous names
+          // (e.g. "Smith J" — name is too common to trust raw PubMed/CT.gov counts)
+          const idGate = identityResolution.gateExternalCount({
+            full_name: t.full_name,
+            specialty_key: t.specialty_key,
+            license_state: (t.practice_address || '').match(/, ([A-Z]{2}) \d/)?.[1] || null,
+          }, null);
+          if (!idGate.trust) {
+            ambiguousNames++;
+            // Mark as low-confidence — keep counts but flag the UI
+            t.identity_confidence = idGate.confidence;
+            t.identity_ambiguous = true;
+          } else {
+            t.identity_confidence = idGate.confidence;
+            t.identity_ambiguous = false;
+          }
+
+          // For ambiguous names, dampen the counts by the confidence factor
+          // (rough heuristic: a name with 0.4 confidence might be ~3 different real people,
+          //  so divide the raw count by an expected-collision factor)
+          const dampen = t.identity_ambiguous ? Math.max(0.1, idGate.confidence) : 1;
+          t.publications_5yr = Math.round((p.count || 0) * dampen);
+          t.publications_5yr_raw = p.count || 0;
           t.recent_pmids = (p.recent_pmids || []).slice(0, 3);
           t.pubmed_url = p.source_url || null;
-          t.active_trials = c.active_count || 0;
+          t.active_trials = Math.round((c.active_count || 0) * dampen);
+          t.active_trials_raw = c.active_count || 0;
           t.industry_trials = c.industry_sponsored || 0;
           t.intuitive_trials = c.intuitive_sponsored || 0;
           t.trial_titles = (c.trials || []).slice(0, 3).map(tr => tr.title);
@@ -221,11 +278,16 @@ router.post('/search', async (req, res) => {
       { name: 'NPI Registry (NPPES)', url: 'https://npiregistry.cms.hhs.gov' },
       { name: 'CMS MPUP (Medicare Physician Volume)', url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
       { name: 'CMS Open Payments (Sunshine Act)', url: 'https://openpaymentsdata.cms.gov' },
+      { name: 'CMS Care Compare (Doctors and Clinicians)', url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
     ];
     if (enrich) {
       sources.push({ name: 'PubMed (NCBI E-utilities)', url: 'https://pubmed.ncbi.nlm.nih.gov' });
       sources.push({ name: 'ClinicalTrials.gov', url: 'https://clinicaltrials.gov' });
     }
+
+    const affiliationCoverage = targets.length > 0
+      ? Math.round(100 * targets.filter(t => t.affiliation_confirmed).length / targets.length)
+      : 0;
 
     res.json({
       targets: targets.slice(0, Math.min(Number(limit) || 100, 500)),
@@ -245,6 +307,9 @@ router.post('/search', async (req, res) => {
         kol_count: enrich ? targets.filter(t => (t.kol_score || 0) >= 40).length : 0,
         total_publications_5yr: enrich ? targets.reduce((s, t) => s + (t.publications_5yr || 0), 0) : 0,
         total_active_trials: enrich ? targets.reduce((s, t) => s + (t.active_trials || 0), 0) : 0,
+        ambiguous_names: ambiguousNames,
+        affiliation_coverage_pct: affiliationCoverage,
+        unique_hospitals: new Set(targets.filter(t => t.hospital_name).map(t => t.hospital_name)).size,
       },
     });
   } catch (e) {
@@ -291,6 +356,136 @@ router.get('/profile/:npi', async (req, res) => {
     });
   } catch (e) {
     console.error('[SurgeonTargeting] /profile error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /hospitals/search?q=... — autocomplete for hospital-name lookup
+// ---------------------------------------------------------------------------
+router.get('/hospitals/search', async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (q.length < 2) return res.json({ hospitals: [] });
+  if (!req.models || !req.models.IntuitiveProviderAffiliation) {
+    return res.json({ hospitals: [], error: 'affiliations not ingested yet' });
+  }
+  try {
+    const { Op, fn, col } = require('sequelize');
+    const rows = await req.models.IntuitiveProviderAffiliation.findAll({
+      where: {
+        hospital_name: { [Op.iLike]: `%${q}%` },
+      },
+      attributes: [
+        'hospital_ccn',
+        'hospital_name',
+        'hospital_state',
+        [fn('COUNT', col('npi')), 'surgeon_count'],
+      ],
+      group: ['hospital_ccn', 'hospital_name', 'hospital_state'],
+      order: [[fn('COUNT', col('npi')), 'DESC']],
+      limit: 20,
+      raw: true,
+    });
+    res.json({ hospitals: rows });
+  } catch (e) {
+    console.error('[SurgeonTargeting] /hospitals/search error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /by-hospital — every surgeon at a given hospital, ranked
+// Body: { hospital_ccn?, hospital_name?, specialty? }
+// One of hospital_ccn or hospital_name is required.
+// ---------------------------------------------------------------------------
+router.post('/by-hospital', async (req, res) => {
+  const t0 = Date.now();
+  const { hospital_ccn, hospital_name, specialty = 'all' } = req.body || {};
+  if (!hospital_ccn && !hospital_name) {
+    return res.status(400).json({ error: 'hospital_ccn or hospital_name required' });
+  }
+  if (!req.models || !req.models.IntuitiveProviderAffiliation) {
+    return res.status(503).json({ error: 'Care Compare data not ingested yet. Run scripts/ingest-care-compare.js' });
+  }
+
+  try {
+    const { Op } = require('sequelize');
+    const where = hospital_ccn
+      ? { hospital_ccn }
+      : { hospital_name: { [Op.iLike]: hospital_name } };
+
+    const affRows = await req.models.IntuitiveProviderAffiliation.findAll({ where, raw: true });
+    if (affRows.length === 0) {
+      return res.json({ targets: [], total: 0, elapsed_ms: Date.now() - t0, message: 'No surgeons found at this hospital.' });
+    }
+
+    const npis = affRows.map(a => a.npi);
+    const [mpupResult, opResult] = await Promise.all([
+      mpup.fetchFor(npis, { models: req.models }),
+      openPayments.fetchFor(npis, { models: req.models }),
+    ]);
+    const volByNpi = {};
+    for (const v of ((mpupResult.data && mpupResult.data.surgeon_volumes) || [])) volByNpi[v.npi] = v;
+    const payByNpi = {};
+    for (const p of ((opResult.data && opResult.data.surgeon_payments) || [])) payByNpi[p.npi] = p;
+
+    // Specialty filter via Care Compare primary_specialty text
+    const specFilter = (specialty || 'all').toLowerCase();
+    const filtered = specFilter === 'all'
+      ? affRows
+      : affRows.filter(a => (a.primary_specialty || '').toLowerCase().includes(specFilter));
+
+    const targets = filtered.map(a => {
+      const vol = volByNpi[a.npi] || {};
+      const pay = payByNpi[a.npi] || {};
+      const score = targetScore({
+        robotic_cases: vol.total_robotic_cases_last_yr || 0,
+        intuitive_dollars_2yr: pay.total_payments_2yr || 0,
+        last_payment_date: pay.last_payment_date,
+      });
+      const t = tier(score);
+      return {
+        npi: a.npi,
+        full_name: a.full_name,
+        credential: a.credential,
+        specialty: a.primary_specialty,
+        hospital_name: a.hospital_name,
+        hospital_ccn: a.hospital_ccn,
+        group_legal_name: a.group_legal_name,
+        medical_school: a.medical_school,
+        graduation_year: a.graduation_year,
+        robotic_cases_last_yr: vol.total_robotic_cases_last_yr || 0,
+        volume_year: vol.fiscal_year || null,
+        intuitive_dollars_2yr: pay.total_payments_2yr || 0,
+        last_intuitive_payment: pay.last_payment_date || null,
+        champion_score: pay.champion_score || 0,
+        target_score: score,
+        tier: t.label,
+        tier_color: t.color,
+      };
+    });
+
+    targets.sort((a, b) => b.target_score - a.target_score);
+
+    res.json({
+      targets,
+      total: targets.length,
+      hospital: { ccn: affRows[0].hospital_ccn, name: affRows[0].hospital_name, state: affRows[0].hospital_state },
+      elapsed_ms: Date.now() - t0,
+      data_sources: [
+        { name: 'CMS Care Compare', url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+        { name: 'CMS MPUP', url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
+        { name: 'CMS Open Payments', url: 'https://openpaymentsdata.cms.gov' },
+      ],
+      summary: {
+        tier_a: targets.filter(t => t.target_score >= 75).length,
+        tier_b: targets.filter(t => t.target_score >= 50 && t.target_score < 75).length,
+        total_robotic_cases: targets.reduce((s, t) => s + (t.robotic_cases_last_yr || 0), 0),
+        total_intuitive_dollars_2yr: targets.reduce((s, t) => s + (t.intuitive_dollars_2yr || 0), 0),
+      },
+    });
+  } catch (e) {
+    console.error('[SurgeonTargeting] /by-hospital error:', e);
     res.status(500).json({ error: e.message });
   }
 });

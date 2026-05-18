@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { api } from '../lib/api'
 
 // AcuityMD-style territory intelligence — public CMS data only
@@ -59,10 +59,18 @@ function ScoreBar({ score }) {
 }
 
 export default function SurgeonTargetingPage() {
+  const [mode, setMode] = useState('territory') // 'territory' | 'hospital'
   const [state, setState] = useState('FL')
   const [zips, setZips] = useState('')
   const [specialty, setSpecialty] = useState('all')
   const [enrichKol, setEnrichKol] = useState(false)
+  // Hospital-mode state
+  const [hospitalQuery, setHospitalQuery] = useState('')
+  const [hospitalSuggestions, setHospitalSuggestions] = useState([])
+  const [selectedHospital, setSelectedHospital] = useState(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const suggestionRef = useRef(null)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
@@ -70,21 +78,59 @@ export default function SurgeonTargetingPage() {
   const [tierFilter, setTierFilter] = useState('all')
   const [search, setSearch] = useState('')
 
+  // Hospital autocomplete — fires when user types in hospital mode
+  useEffect(() => {
+    if (mode !== 'hospital' || hospitalQuery.length < 2) {
+      setHospitalSuggestions([])
+      return
+    }
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.searchHospitalsForTargeting(hospitalQuery)
+        setHospitalSuggestions(r.hospitals || [])
+        setShowSuggestions(true)
+      } catch (e) {
+        setHospitalSuggestions([])
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [hospitalQuery, mode])
+
+  useEffect(() => {
+    function close(e) { if (suggestionRef.current && !suggestionRef.current.contains(e.target)) setShowSuggestions(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
   async function runSearch() {
     setLoading(true)
     setError(null)
     try {
-      const params = {
-        state,
-        zips: zips.split(/[\s,]+/).map(z => z.trim()).filter(Boolean),
-        specialty,
-        limit: 200,
-        enrich: enrichKol,
-        enrich_top: 25,
+      let r
+      if (mode === 'hospital') {
+        if (!selectedHospital) {
+          setError('Pick a hospital from the suggestions first.')
+          setLoading(false)
+          return
+        }
+        r = await api.surgeonsByHospital({
+          hospital_ccn: selectedHospital.hospital_ccn,
+          hospital_name: selectedHospital.hospital_name,
+          specialty,
+        })
+      } else {
+        const params = {
+          state,
+          zips: zips.split(/[\s,]+/).map(z => z.trim()).filter(Boolean),
+          specialty,
+          limit: 200,
+          enrich: enrichKol,
+          enrich_top: 25,
+        }
+        r = await api.searchSurgeonTargets(params)
+        if (r.enriched_count > 0) setSortBy('composite_score')
       }
-      const r = await api.searchSurgeonTargets(params)
       setResult(r)
-      if (r.enriched_count > 0) setSortBy('composite_score')
     } catch (e) {
       setError(e.message)
       setResult(null)
@@ -114,16 +160,19 @@ export default function SurgeonTargetingPage() {
   function exportCSV() {
     if (!filtered.length) return
     const headers = ['Rank', 'NPI', 'Name', 'Credential', 'Specialty', 'Target Score', 'Tier',
+      'Hospital', 'Hospital CCN', 'Group Practice', 'Medical School', 'Grad Year',
       'Robotic Cases (CMS MPUP)', 'Volume Year', 'Intuitive $ 2yr', 'Last Payment', 'Champion Score',
       'Publications 5yr', 'Active Trials', 'Intuitive Trials', 'KOL Score', 'KOL Badge', 'Composite Score',
-      'Practice Address']
+      'Identity Confidence', 'Practice Address']
     const rows = filtered.map((r, i) => [
       i + 1, r.npi, r.full_name, r.credential, r.specialty, r.target_score, r.tier,
+      r.hospital_name || '', r.hospital_ccn || '', r.group_legal_name || '',
+      r.medical_school || '', r.graduation_year || '',
       r.robotic_cases_last_yr, r.volume_year || '', r.intuitive_dollars_2yr,
       r.last_intuitive_payment || '', r.champion_score,
       r.publications_5yr ?? '', r.active_trials ?? '', r.intuitive_trials ?? '',
       r.kol_score ?? '', r.kol_badge || '', r.composite_score ?? r.target_score,
-      r.practice_address,
+      r.identity_confidence ?? '', r.practice_address,
     ])
     const csv = [headers, ...rows].map(row =>
       row.map(c => `"${String(c == null ? '' : c).replace(/"/g, '""')}"`).join(',')
@@ -142,61 +191,128 @@ export default function SurgeonTargetingPage() {
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-black text-white">Surgeon Targeting</h1>
         <p className="text-slate-400 text-sm mt-1">
-          Territory intelligence powered by public sources — NPPES roster + Medicare procedure volumes + Open Payments,
-          plus optional KOL enrichment (PubMed publications + ClinicalTrials.gov active PI status).
+          Territory intelligence on public CMS data — NPPES, MPUP, Open Payments, Care Compare affiliations.
+          Search by territory (state + ZIPs) or directly by hospital. Optional KOL enrichment adds PubMed + ClinicalTrials.gov signals.
         </p>
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <button
+          onClick={() => { setMode('territory'); setResult(null) }}
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${mode === 'territory' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+        >By Territory</button>
+        <button
+          onClick={() => { setMode('hospital'); setResult(null) }}
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${mode === 'hospital' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+        >By Hospital</button>
+        <span className="text-xs text-slate-500 ml-2">
+          {mode === 'territory' ? 'NPPES roster → MPUP + Open Payments + Care Compare affiliation' : 'Care Compare → MPUP + Open Payments (sub-second indexed join)'}
+        </span>
       </div>
 
       {/* Search controls */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 md:p-5 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-          <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">State</label>
-            <select
-              value={state} onChange={e => setState(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
-            >
-              {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+        {mode === 'territory' ? (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">State</label>
+              <select
+                value={state} onChange={e => setState(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
+              >
+                {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">
+                ZIP codes <span className="text-slate-500 normal-case">(comma-separated, leave blank for state-wide)</span>
+              </label>
+              <input
+                type="text" value={zips} onChange={e => setZips(e.target.value)}
+                placeholder="33133, 33134, 33135"
+                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="md:col-span-3">
+              <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Specialty</label>
+              <select
+                value={specialty} onChange={e => setSpecialty(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
+              >
+                {SPECIALTY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="md:col-span-3">
+              <button
+                onClick={runSearch} disabled={loading}
+                className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 rounded-lg transition"
+              >
+                {loading ? (enrichKol ? 'Searching CMS + KOL…' : 'Searching CMS…') : 'Find Surgeons'}
+              </button>
+            </div>
           </div>
-          <div className="md:col-span-4">
-            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">
-              ZIP codes <span className="text-slate-500 normal-case">(comma-separated, leave blank for state-wide)</span>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-7 relative" ref={suggestionRef}>
+              <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Hospital</label>
+              <input
+                type="text" value={hospitalQuery}
+                onChange={e => { setHospitalQuery(e.target.value); setSelectedHospital(null) }}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Start typing a hospital — e.g. Baptist, Mount Sinai, Cleveland Clinic"
+                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
+              />
+              {showSuggestions && hospitalSuggestions.length > 0 && (
+                <div className="absolute z-10 left-0 right-0 mt-1 bg-slate-900 border border-slate-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                  {hospitalSuggestions.map(h => (
+                    <button
+                      key={h.hospital_ccn || h.hospital_name}
+                      onClick={() => {
+                        setSelectedHospital(h)
+                        setHospitalQuery(h.hospital_name)
+                        setShowSuggestions(false)
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-slate-800 text-sm text-white border-b border-slate-700/50"
+                    >
+                      <div className="font-semibold">{h.hospital_name}</div>
+                      <div className="text-xs text-slate-400">{h.hospital_state} · CCN {h.hospital_ccn} · {h.surgeon_count} surgeons</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Specialty</label>
+              <select
+                value={specialty} onChange={e => setSpecialty(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
+              >
+                {SPECIALTY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="md:col-span-3">
+              <button
+                onClick={runSearch} disabled={loading || !selectedHospital}
+                className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 rounded-lg transition"
+              >
+                {loading ? 'Searching…' : 'Rank Surgeons'}
+              </button>
+            </div>
+          </div>
+        )}
+        {mode === 'territory' && (
+          <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between gap-3 flex-wrap">
+            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox" checked={enrichKol} onChange={e => setEnrichKol(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-500 focus:ring-purple-500"
+              />
+              <span className="font-semibold">KOL enrichment</span>
+              <span className="text-slate-500">— PubMed publications (5yr) + ClinicalTrials.gov active PI status for top 25. Adds ~15s.</span>
             </label>
-            <input
-              type="text" value={zips} onChange={e => setZips(e.target.value)}
-              placeholder="33133, 33134, 33135"
-              className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
-            />
           </div>
-          <div className="md:col-span-3">
-            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Specialty</label>
-            <select
-              value={specialty} onChange={e => setSpecialty(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
-            >
-              {SPECIALTY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
-          </div>
-          <div className="md:col-span-3">
-            <button
-              onClick={runSearch} disabled={loading}
-              className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 rounded-lg transition"
-            >
-              {loading ? (enrichKol ? 'Searching CMS + KOL…' : 'Searching CMS…') : 'Find Surgeons'}
-            </button>
-          </div>
-        </div>
-        <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between gap-3 flex-wrap">
-          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-            <input
-              type="checkbox" checked={enrichKol} onChange={e => setEnrichKol(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-500 focus:ring-purple-500"
-            />
-            <span className="font-semibold">KOL enrichment</span>
-            <span className="text-slate-500">— PubMed publications (5yr) + ClinicalTrials.gov active PI status for top 25. Adds ~15s.</span>
-          </label>
-        </div>
+        )}
         {error && (
           <div className="mt-3 text-sm text-red-400 bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
             {error}
@@ -208,7 +324,7 @@ export default function SurgeonTargetingPage() {
       {result && (
         <>
           {/* Summary KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
             <KpiCard label="Surgeons Found" value={fmtNum(result.total)} sublabel={result.elapsed_ms + 'ms'} />
             <KpiCard label="Tier A — Convert Now" value={result.summary?.tier_a || 0} color="text-emerald-400" />
             <KpiCard label="Tier B — Develop" value={result.summary?.tier_b || 0} color="text-sky-400" />
@@ -218,6 +334,12 @@ export default function SurgeonTargetingPage() {
               value={fmtUSD(Math.round((result.summary?.total_intuitive_dollars_2yr || 0) / 1000)) + 'K'}
               sublabel="Open Payments, 2yr"
               color="text-purple-400"
+            />
+            <KpiCard
+              label="Affiliation Coverage"
+              value={(result.summary?.affiliation_coverage_pct ?? 0) + '%'}
+              sublabel={`${result.summary?.unique_hospitals || 0} unique hospitals`}
+              color="text-teal-300"
             />
           </div>
 
@@ -280,6 +402,7 @@ export default function SurgeonTargetingPage() {
                 <tr className="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
                   <th className="px-3 py-3 w-12">#</th>
                   <th className="px-3 py-3">Surgeon</th>
+                  <th className="px-3 py-3">Hospital</th>
                   <th className="px-3 py-3">Specialty</th>
                   <th className="px-3 py-3 text-right">Robotic Cases</th>
                   <th className="px-3 py-3 text-right">Intuitive $ (2yr)</th>
@@ -297,7 +420,20 @@ export default function SurgeonTargetingPage() {
                     <td className="px-3 py-3 text-slate-500 font-mono">{i + 1}</td>
                     <td className="px-3 py-3">
                       <div className="font-semibold text-white">{r.full_name} {r.credential && <span className="text-slate-500 font-normal">, {r.credential}</span>}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">NPI {r.npi} · {r.practice_address}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">NPI {r.npi}{r.medical_school ? ` · ${r.medical_school}${r.graduation_year ? ` '${String(r.graduation_year).slice(-2)}` : ''}` : ''}</div>
+                    </td>
+                    <td className="px-3 py-3">
+                      {r.hospital_name ? (
+                        <div>
+                          <div className="text-slate-200 text-xs font-semibold leading-tight">{r.hospital_name}</div>
+                          {r.all_hospital_affiliations?.length > 1 && (
+                            <div className="text-[10px] text-teal-400 mt-0.5">+{r.all_hospital_affiliations.length - 1} more</div>
+                          )}
+                          {r.group_legal_name && (
+                            <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[200px]" title={r.group_legal_name}>{r.group_legal_name}</div>
+                          )}
+                        </div>
+                      ) : <span className="text-slate-600 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-3 text-slate-300">{r.specialty}</td>
                     <td className="px-3 py-3 text-right">
@@ -342,7 +478,7 @@ export default function SurgeonTargetingPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={result.enriched_count > 0 ? 11 : 8} className="px-3 py-10 text-center text-slate-500">No surgeons match current filters.</td></tr>
+                  <tr><td colSpan={result.enriched_count > 0 ? 12 : 9} className="px-3 py-10 text-center text-slate-500">No surgeons match current filters.</td></tr>
                 )}
               </tbody>
             </table>
