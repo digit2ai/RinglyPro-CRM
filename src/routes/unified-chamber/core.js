@@ -774,6 +774,88 @@ router.get('/exchange/rfqs', authMiddleware, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// GET /exchange/rfqs/:id -- single RFQ + its responses joined with member/company
+router.get('/exchange/rfqs/:id', authMiddleware, async (req, res) => {
+  try {
+    const [rfq] = await sequelize.query(
+      `SELECT r.*, m.first_name || ' ' || m.last_name AS requester_name,
+              m.email AS requester_email, co.name AS company_name
+       FROM rfqs r
+       LEFT JOIN members m ON m.id = r.requester_member_id
+       LEFT JOIN companies co ON co.id = r.company_id
+       WHERE r.chamber_id = :c AND r.id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!rfq) return res.status(404).json({ success: false, error: 'RFQ not found' });
+    const responses = await sequelize.query(
+      `SELECT rr.*, m.first_name || ' ' || m.last_name AS responder_name,
+              co.name AS responder_company
+       FROM rfq_responses rr
+       LEFT JOIN members m ON m.id = rr.responder_member_id
+       LEFT JOIN companies co ON co.id = rr.company_id
+       WHERE rr.chamber_id = :c AND rr.rfq_id = :id
+       ORDER BY rr.created_at DESC`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    return res.json({ success: true, data: { ...rfq, responses } });
+  } catch (err) {
+    console.error('[GET /exchange/rfqs/:id]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /exchange/rfqs/:id/respond -- submit a proposal against an open RFQ.
+// Anyone in the chamber can respond except the requester (can't bid on your own).
+router.post('/exchange/rfqs/:id/respond', authMiddleware, async (req, res) => {
+  try {
+    const { proposal_text, price_quote, delivery_timeline, currency, company_id } = req.body || {};
+    if (!proposal_text || !String(proposal_text).trim()) {
+      return res.status(400).json({ success: false, error: 'proposal_text is required' });
+    }
+    const [rfq] = await sequelize.query(
+      `SELECT id, status, requester_member_id FROM rfqs WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!rfq) return res.status(404).json({ success: false, error: 'RFQ not found' });
+    if (rfq.status !== 'open') {
+      return res.status(400).json({ success: false, error: `RFQ is ${rfq.status} -- no longer accepting proposals` });
+    }
+    if (rfq.requester_member_id === req.member.id) {
+      return res.status(400).json({ success: false, error: 'You cannot respond to your own RFQ' });
+    }
+    // Prevent duplicate proposals from the same member.
+    const [existing] = await sequelize.query(
+      `SELECT id FROM rfq_responses WHERE chamber_id = :c AND rfq_id = :id AND responder_member_id = :m`,
+      { replacements: { c: req.chamber_id, id: req.params.id, m: req.member.id }, type: QueryTypes.SELECT }
+    );
+    if (existing) {
+      return res.status(409).json({ success: false, error: 'You already submitted a proposal for this RFQ' });
+    }
+    const [row] = await sequelize.query(
+      `INSERT INTO rfq_responses
+       (chamber_id, rfq_id, responder_member_id, company_id, proposal_text,
+        price_quote, currency, delivery_timeline, status, created_at, updated_at)
+       VALUES (:c, :id, :m, :company_id, :p, :pq, :cur, :dt, 'submitted', NOW(), NOW())
+       RETURNING *`,
+      {
+        replacements: {
+          c: req.chamber_id, id: req.params.id, m: req.member.id,
+          company_id: company_id ? parseInt(company_id) : null,
+          p: String(proposal_text).trim(),
+          pq: price_quote ? parseFloat(price_quote) : null,
+          cur: currency || 'USD',
+          dt: delivery_timeline ? String(delivery_timeline).trim() : null
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+    return res.status(201).json({ success: true, data: row });
+  } catch (err) {
+    console.error('[POST /exchange/rfqs/:id/respond]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /exchange/rfqs -- create a new RFQ. Validates country + language
 // inputs against the same canonical lists used everywhere else so the new
 // row can match cleanly via AI scoring later.
