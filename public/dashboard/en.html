@@ -4223,6 +4223,24 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } else {
           html += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" id="viewIrsBreakdownBtn" data-pid="'+p.id+'" style="padding:3px 10px;font-size:11px">View breakdown</button></div>';
         }
+        // Plain-language methodology shown inline -- the numbered list builds
+        // trust by exposing exactly what the AI checks, with the weight of
+        // each dimension in parentheses (sums to 100 pts).
+        html += '<details style="margin-top:12px;border-top:1px solid var(--gray-200);padding-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px;color:'+irsCol+'">How is this score calculated?</summary>';
+        html += '<div style="margin-top:10px;font-size:13px;line-height:1.6">';
+        html += 'Every project is graded across <strong>8 dimensions</strong>, each weighted toward a 100-point total. An AI critic then reviews the evidence and adjusts &plusmn;10 points based on overall cohesion.';
+        html += '<ol style="margin:10px 0 0 18px;padding:0">';
+        html += '<li><strong>Financial Viability (20 pts)</strong> &mdash; revenue projections, pricing tiers, budget realism</li>';
+        html += '<li><strong>Team &amp; Experience (15 pts)</strong> &mdash; trust score of the team + how many required roles are filled</li>';
+        html += '<li><strong>Market &amp; Traction (15 pts)</strong> &mdash; TAM / SAM / SOM consistency + target customer segments</li>';
+        html += '<li><strong>Business Model (10 pts)</strong> &mdash; clarity of value proposition + differentiation + tech approach</li>';
+        html += '<li><strong>Regulatory &amp; Legal Risk (10 pts)</strong> &mdash; risks identified <em>and</em> mitigations described</li>';
+        html += '<li><strong>ESG / Social Impact (10 pts)</strong> &mdash; sustainability signals + underserved-community focus</li>';
+        html += '<li><strong>Scalability (10 pts)</strong> &mdash; multi-region GTM + tech-enabled growth</li>';
+        html += '<li><strong>Banking Readiness (10 pts)</strong> &mdash; team trust + budget transparency + revenue declared</li>';
+        html += '</ol>';
+        html += '<div class="text-muted text-sm" style="margin-top:8px">Click <strong>View breakdown</strong> above to see the exact signals + score per dimension for this project.</div>';
+        html += '</div></details>';
         html += '</div>';
       }
 

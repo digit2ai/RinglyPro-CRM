@@ -4164,6 +4164,24 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         } else {
           html += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" id="viewIrsBreakdownBtn" data-pid="'+p.id+'" style="padding:3px 10px;font-size:11px">Ver desglose</button></div>';
         }
+        // Metodologia en lenguaje sencillo -- la lista numerada construye
+        // confianza al mostrar exactamente que evalua la IA, con el peso de
+        // cada dimension entre parentesis (suma 100 puntos).
+        html += '<details style="margin-top:12px;border-top:1px solid var(--gray-200);padding-top:10px"><summary style="cursor:pointer;font-weight:600;font-size:13px;color:'+irsCol+'">Como se calcula este puntaje?</summary>';
+        html += '<div style="margin-top:10px;font-size:13px;line-height:1.6">';
+        html += 'Cada proyecto se evalua en <strong>8 dimensiones</strong>, cada una ponderada hasta un total de 100 puntos. Luego una IA critica revisa la evidencia y ajusta &plusmn;10 puntos segun la coherencia general.';
+        html += '<ol style="margin:10px 0 0 18px;padding:0">';
+        html += '<li><strong>Viabilidad Financiera (20 pts)</strong> &mdash; proyecciones de ingresos, niveles de precios, realismo del presupuesto</li>';
+        html += '<li><strong>Equipo y Experiencia (15 pts)</strong> &mdash; puntaje de confianza del equipo + roles requeridos cubiertos</li>';
+        html += '<li><strong>Mercado y Traccion (15 pts)</strong> &mdash; consistencia TAM / SAM / SOM + segmentos objetivo</li>';
+        html += '<li><strong>Modelo de Negocio (10 pts)</strong> &mdash; claridad de la propuesta + diferenciacion + enfoque tecnologico</li>';
+        html += '<li><strong>Riesgo Regulatorio y Legal (10 pts)</strong> &mdash; riesgos identificados <em>y</em> mitigaciones descritas</li>';
+        html += '<li><strong>ESG / Impacto Social (10 pts)</strong> &mdash; senales de sostenibilidad + enfoque a comunidades desatendidas</li>';
+        html += '<li><strong>Escalabilidad (10 pts)</strong> &mdash; GTM multi-region + crecimiento habilitado por tecnologia</li>';
+        html += '<li><strong>Preparacion Bancaria (10 pts)</strong> &mdash; confianza del equipo + transparencia presupuestal + ingresos declarados</li>';
+        html += '</ol>';
+        html += '<div class="text-muted text-sm" style="margin-top:8px">Haz clic en <strong>Ver desglose</strong> arriba para ver las senales exactas + puntaje por dimension de este proyecto.</div>';
+        html += '</div></details>';
         html += '</div>';
       }
 
