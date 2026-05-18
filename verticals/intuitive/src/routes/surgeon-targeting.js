@@ -17,6 +17,8 @@ const router = require('express').Router();
 const npiRegistry = require('../services/data-sources/npi-registry');
 const mpup = require('../services/data-sources/cms-physician-volume');
 const openPayments = require('../services/data-sources/cms-open-payments');
+const pubmed = require('../services/data-sources/pubmed');
+const clinicalTrials = require('../services/data-sources/clinical-trials');
 
 // Specialty key → NPI taxonomy label (matches npi-registry.js SURGERY_TAXONOMIES)
 const SPECIALTY_FILTERS = {
@@ -46,6 +48,29 @@ function targetScore({ robotic_cases, intuitive_dollars_2yr, last_payment_date }
   return Math.min(100, volPts + dollarPts + recencyPts);
 }
 
+// KOL score = publications (50pts) + active trials (35pts) + Intuitive-sponsored trial (15pts)
+function kolScore({ publications_5yr, active_trials, intuitive_trials }) {
+  const pubs = Number(publications_5yr) || 0;
+  const trials = Number(active_trials) || 0;
+  const intvTrials = Number(intuitive_trials) || 0;
+
+  // 50 pts for publications — saturates at 25 pubs in 5yr (5 pubs/yr = strong academic)
+  const pubPts = Math.min(50, Math.round((pubs / 25) * 50));
+  // 35 pts for active trials — 2+ active trials maxes
+  const trialPts = Math.min(35, trials * 18);
+  // 15 pts bonus for Intuitive-sponsored involvement (rare; very high signal)
+  const intvPts = intvTrials > 0 ? 15 : 0;
+
+  return Math.min(100, pubPts + trialPts + intvPts);
+}
+
+function kolBadge(score) {
+  if (score >= 70) return { label: 'Key Opinion Leader', color: '#a855f7' };
+  if (score >= 40) return { label: 'Research-Active', color: '#8b5cf6' };
+  if (score >= 15) return { label: 'Publishing', color: '#6366f1' };
+  return null;
+}
+
 function tier(score) {
   if (score >= 75) return { label: 'A — Convert Now', color: '#10b981' };
   if (score >= 50) return { label: 'B — Develop', color: '#0ea5e9' };
@@ -59,7 +84,7 @@ function tier(score) {
 // ---------------------------------------------------------------------------
 router.post('/search', async (req, res) => {
   const t0 = Date.now();
-  const { state, zips, specialty = 'all', limit = 100 } = req.body || {};
+  const { state, zips, specialty = 'all', limit = 100, enrich = false, enrich_top = 25 } = req.body || {};
 
   if (!state || typeof state !== 'string' || state.length !== 2) {
     return res.status(400).json({ error: 'state (2-letter code) is required' });
@@ -145,16 +170,71 @@ router.post('/search', async (req, res) => {
 
     targets.sort((a, b) => b.target_score - a.target_score);
 
+    // 4) Optional KOL enrichment — top N only (slow, external API calls)
+    let enrichmentTime = 0;
+    if (enrich) {
+      const eStart = Date.now();
+      const topN = targets.slice(0, Math.min(Number(enrich_top) || 25, 50));
+      try {
+        const [pubMap, trialMap] = await Promise.all([
+          pubmed.fetchBulk(topN.map(t => ({ npi: t.npi, full_name: t.full_name })), { models: req.models }),
+          clinicalTrials.fetchBulk(topN.map(t => ({ npi: t.npi, full_name: t.full_name })), { models: req.models }),
+        ]);
+        for (const t of topN) {
+          const p = pubMap[t.npi] || { count: 0 };
+          const c = trialMap[t.npi] || { active_count: 0 };
+          t.publications_5yr = p.count || 0;
+          t.recent_pmids = (p.recent_pmids || []).slice(0, 3);
+          t.pubmed_url = p.source_url || null;
+          t.active_trials = c.active_count || 0;
+          t.industry_trials = c.industry_sponsored || 0;
+          t.intuitive_trials = c.intuitive_sponsored || 0;
+          t.trial_titles = (c.trials || []).slice(0, 3).map(tr => tr.title);
+          t.clinicaltrials_url = c.source_url || null;
+          const ks = kolScore({
+            publications_5yr: t.publications_5yr,
+            active_trials: t.active_trials,
+            intuitive_trials: t.intuitive_trials,
+          });
+          t.kol_score = ks;
+          const kb = kolBadge(ks);
+          t.kol_badge = kb ? kb.label : null;
+          t.kol_badge_color = kb ? kb.color : null;
+          // Composite score = 70% target_score + 30% kol_score (KOL is a multiplier on a hot target)
+          t.composite_score = Math.round(t.target_score * 0.7 + t.kol_score * 0.3);
+        }
+        // Non-enriched surgeons get null KOL fields
+        for (const t of targets.slice(topN.length)) {
+          t.publications_5yr = null;
+          t.active_trials = null;
+          t.kol_score = null;
+          t.kol_badge = null;
+          t.composite_score = t.target_score;
+        }
+      } catch (e) {
+        console.error('[SurgeonTargeting] enrichment error:', e.message);
+      }
+      enrichmentTime = Date.now() - eStart;
+    }
+
+    const sources = [
+      { name: 'NPI Registry (NPPES)', url: 'https://npiregistry.cms.hhs.gov' },
+      { name: 'CMS MPUP (Medicare Physician Volume)', url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
+      { name: 'CMS Open Payments (Sunshine Act)', url: 'https://openpaymentsdata.cms.gov' },
+    ];
+    if (enrich) {
+      sources.push({ name: 'PubMed (NCBI E-utilities)', url: 'https://pubmed.ncbi.nlm.nih.gov' });
+      sources.push({ name: 'ClinicalTrials.gov', url: 'https://clinicaltrials.gov' });
+    }
+
     res.json({
       targets: targets.slice(0, Math.min(Number(limit) || 100, 500)),
       total: targets.length,
       territory: { state: state.toUpperCase(), zips: zipList, specialty: specKey },
       elapsed_ms: Date.now() - t0,
-      data_sources: [
-        { name: 'NPI Registry (NPPES)', url: 'https://npiregistry.cms.hhs.gov' },
-        { name: 'CMS MPUP (Medicare Physician Volume)', url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
-        { name: 'CMS Open Payments (Sunshine Act)', url: 'https://openpaymentsdata.cms.gov' },
-      ],
+      enrichment_ms: enrichmentTime || undefined,
+      enriched_count: enrich ? Math.min(Number(enrich_top) || 25, targets.length) : 0,
+      data_sources: sources,
       summary: {
         tier_a: targets.filter(t => t.target_score >= 75).length,
         tier_b: targets.filter(t => t.target_score >= 50 && t.target_score < 75).length,
@@ -162,6 +242,9 @@ router.post('/search', async (req, res) => {
         tier_d: targets.filter(t => t.target_score < 25).length,
         total_intuitive_dollars_2yr: targets.reduce((s, t) => s + (t.intuitive_dollars_2yr || 0), 0),
         total_robotic_cases: targets.reduce((s, t) => s + (t.robotic_cases_last_yr || 0), 0),
+        kol_count: enrich ? targets.filter(t => (t.kol_score || 0) >= 40).length : 0,
+        total_publications_5yr: enrich ? targets.reduce((s, t) => s + (t.publications_5yr || 0), 0) : 0,
+        total_active_trials: enrich ? targets.reduce((s, t) => s + (t.active_trials || 0), 0) : 0,
       },
     });
   } catch (e) {
@@ -208,6 +291,48 @@ router.get('/profile/:npi', async (req, res) => {
     });
   } catch (e) {
     console.error('[SurgeonTargeting] /profile error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /enrich — enrich a single surgeon by name (PubMed + ClinicalTrials)
+// Body: { full_name, npi (optional) }
+// ---------------------------------------------------------------------------
+router.post('/enrich', async (req, res) => {
+  const { full_name, npi } = req.body || {};
+  if (!full_name) return res.status(400).json({ error: 'full_name required' });
+
+  try {
+    const [pub, trials] = await Promise.all([
+      pubmed.fetchPublicationCount(full_name, { models: req.models }),
+      clinicalTrials.fetchActiveTrials(full_name, { models: req.models }),
+    ]);
+
+    const ks = kolScore({
+      publications_5yr: pub.count || 0,
+      active_trials: trials.active_count || 0,
+      intuitive_trials: trials.intuitive_sponsored || 0,
+    });
+    const kb = kolBadge(ks);
+
+    res.json({
+      npi: npi || null,
+      full_name,
+      publications_5yr: pub.count || 0,
+      recent_pmids: (pub.recent_pmids || []).slice(0, 5),
+      pubmed_url: pub.source_url,
+      active_trials: trials.active_count || 0,
+      industry_trials: trials.industry_sponsored || 0,
+      intuitive_trials: trials.intuitive_sponsored || 0,
+      trials: (trials.trials || []).slice(0, 10),
+      clinicaltrials_url: trials.source_url,
+      kol_score: ks,
+      kol_badge: kb ? kb.label : null,
+      kol_badge_color: kb ? kb.color : null,
+    });
+  } catch (e) {
+    console.error('[SurgeonTargeting] /enrich error:', e);
     res.status(500).json({ error: e.message });
   }
 });

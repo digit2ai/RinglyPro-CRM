@@ -113,4 +113,5 @@ export const api = {
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
+  enrichSurgeon: (params) => request('/surgeon-targeting/enrich', { method: 'POST', body: JSON.stringify(params) }),
 };

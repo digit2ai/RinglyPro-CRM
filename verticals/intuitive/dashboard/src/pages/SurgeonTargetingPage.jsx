@@ -62,6 +62,7 @@ export default function SurgeonTargetingPage() {
   const [state, setState] = useState('FL')
   const [zips, setZips] = useState('')
   const [specialty, setSpecialty] = useState('all')
+  const [enrichKol, setEnrichKol] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
@@ -78,9 +79,12 @@ export default function SurgeonTargetingPage() {
         zips: zips.split(/[\s,]+/).map(z => z.trim()).filter(Boolean),
         specialty,
         limit: 200,
+        enrich: enrichKol,
+        enrich_top: 25,
       }
       const r = await api.searchSurgeonTargets(params)
       setResult(r)
+      if (r.enriched_count > 0) setSortBy('composite_score')
     } catch (e) {
       setError(e.message)
       setResult(null)
@@ -110,11 +114,16 @@ export default function SurgeonTargetingPage() {
   function exportCSV() {
     if (!filtered.length) return
     const headers = ['Rank', 'NPI', 'Name', 'Credential', 'Specialty', 'Target Score', 'Tier',
-      'Robotic Cases (CMS MPUP)', 'Volume Year', 'Intuitive $ 2yr', 'Last Payment', 'Champion Score', 'Practice Address']
+      'Robotic Cases (CMS MPUP)', 'Volume Year', 'Intuitive $ 2yr', 'Last Payment', 'Champion Score',
+      'Publications 5yr', 'Active Trials', 'Intuitive Trials', 'KOL Score', 'KOL Badge', 'Composite Score',
+      'Practice Address']
     const rows = filtered.map((r, i) => [
       i + 1, r.npi, r.full_name, r.credential, r.specialty, r.target_score, r.tier,
       r.robotic_cases_last_yr, r.volume_year || '', r.intuitive_dollars_2yr,
-      r.last_intuitive_payment || '', r.champion_score, r.practice_address,
+      r.last_intuitive_payment || '', r.champion_score,
+      r.publications_5yr ?? '', r.active_trials ?? '', r.intuitive_trials ?? '',
+      r.kol_score ?? '', r.kol_badge || '', r.composite_score ?? r.target_score,
+      r.practice_address,
     ])
     const csv = [headers, ...rows].map(row =>
       row.map(c => `"${String(c == null ? '' : c).replace(/"/g, '""')}"`).join(',')
@@ -133,8 +142,8 @@ export default function SurgeonTargetingPage() {
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-black text-white">Surgeon Targeting</h1>
         <p className="text-slate-400 text-sm mt-1">
-          Territory intelligence powered by public CMS data — NPPES roster + Medicare procedure volumes + Open Payments.
-          The same data layer AcuityMD sells, surfaced as a ranked target list.
+          Territory intelligence powered by public sources — NPPES roster + Medicare procedure volumes + Open Payments,
+          plus optional KOL enrichment (PubMed publications + ClinicalTrials.gov active PI status).
         </p>
       </div>
 
@@ -174,9 +183,19 @@ export default function SurgeonTargetingPage() {
               onClick={runSearch} disabled={loading}
               className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 rounded-lg transition"
             >
-              {loading ? 'Searching CMS…' : 'Find Surgeons'}
+              {loading ? (enrichKol ? 'Searching CMS + KOL…' : 'Searching CMS…') : 'Find Surgeons'}
             </button>
           </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between gap-3 flex-wrap">
+          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+            <input
+              type="checkbox" checked={enrichKol} onChange={e => setEnrichKol(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-500 focus:ring-purple-500"
+            />
+            <span className="font-semibold">KOL enrichment</span>
+            <span className="text-slate-500">— PubMed publications (5yr) + ClinicalTrials.gov active PI status for top 25. Adds ~15s.</span>
+          </label>
         </div>
         {error && (
           <div className="mt-3 text-sm text-red-400 bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">
@@ -202,6 +221,16 @@ export default function SurgeonTargetingPage() {
             />
           </div>
 
+          {/* KOL KPIs — only when enrichment ran */}
+          {result.enriched_count > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <KpiCard label="KOLs Identified" value={result.summary?.kol_count || 0} sublabel={`top ${result.enriched_count} enriched`} color="text-purple-300" />
+              <KpiCard label="Publications (5yr)" value={fmtNum(result.summary?.total_publications_5yr)} sublabel="PubMed indexed" color="text-indigo-300" />
+              <KpiCard label="Active Trials" value={fmtNum(result.summary?.total_active_trials)} sublabel="ClinicalTrials.gov PIs" color="text-fuchsia-300" />
+              <KpiCard label="Enrichment Time" value={(result.enrichment_ms / 1000).toFixed(1) + 's'} sublabel="cached for 7 days" />
+            </div>
+          )}
+
           {/* Filter bar */}
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-xs">
@@ -221,10 +250,14 @@ export default function SurgeonTargetingPage() {
                 value={sortBy} onChange={e => setSortBy(e.target.value)}
                 className="bg-slate-900 border border-slate-600 text-white rounded-md px-2 py-1"
               >
+                {result.enriched_count > 0 && <option value="composite_score">Composite (Target+KOL)</option>}
                 <option value="target_score">Target Score</option>
                 <option value="robotic_cases_last_yr">Robotic Volume</option>
                 <option value="intuitive_dollars_2yr">Intuitive $ Exposure</option>
                 <option value="champion_score">Champion Score</option>
+                {result.enriched_count > 0 && <option value="kol_score">KOL Score</option>}
+                {result.enriched_count > 0 && <option value="publications_5yr">Publications</option>}
+                {result.enriched_count > 0 && <option value="active_trials">Active Trials</option>}
               </select>
             </div>
             <input
@@ -251,7 +284,10 @@ export default function SurgeonTargetingPage() {
                   <th className="px-3 py-3 text-right">Robotic Cases</th>
                   <th className="px-3 py-3 text-right">Intuitive $ (2yr)</th>
                   <th className="px-3 py-3">Last Pmt</th>
-                  <th className="px-3 py-3">Target Score</th>
+                  {result.enriched_count > 0 && <th className="px-3 py-3 text-right">Pubs (5yr)</th>}
+                  {result.enriched_count > 0 && <th className="px-3 py-3 text-right">Trials</th>}
+                  <th className="px-3 py-3">Target</th>
+                  {result.enriched_count > 0 && <th className="px-3 py-3">KOL</th>}
                   <th className="px-3 py-3">Tier</th>
                 </tr>
               </thead>
@@ -275,12 +311,38 @@ export default function SurgeonTargetingPage() {
                       )}
                     </td>
                     <td className="px-3 py-3 text-slate-400 text-xs">{ago(r.last_intuitive_payment)}</td>
+                    {result.enriched_count > 0 && (
+                      <td className="px-3 py-3 text-right">
+                        {r.publications_5yr != null ? (
+                          <a href={r.pubmed_url} target="_blank" rel="noreferrer" className="font-bold text-indigo-300 hover:text-indigo-200">{fmtNum(r.publications_5yr)}</a>
+                        ) : <span className="text-slate-600 text-xs">—</span>}
+                      </td>
+                    )}
+                    {result.enriched_count > 0 && (
+                      <td className="px-3 py-3 text-right">
+                        {r.active_trials != null ? (
+                          <a href={r.clinicaltrials_url} target="_blank" rel="noreferrer" className="font-bold text-fuchsia-300 hover:text-fuchsia-200">
+                            {fmtNum(r.active_trials)}
+                            {r.intuitive_trials > 0 && <span className="ml-1 text-[10px] text-emerald-400" title="Intuitive-sponsored trial">★</span>}
+                          </a>
+                        ) : <span className="text-slate-600 text-xs">—</span>}
+                      </td>
+                    )}
                     <td className="px-3 py-3"><ScoreBar score={r.target_score} /></td>
+                    {result.enriched_count > 0 && (
+                      <td className="px-3 py-3">
+                        {r.kol_badge ? (
+                          <TierBadge tier={r.kol_badge} color={r.kol_badge_color} />
+                        ) : r.kol_score != null ? (
+                          <span className="text-xs text-slate-500">{r.kol_score}</span>
+                        ) : <span className="text-slate-700 text-xs">—</span>}
+                      </td>
+                    )}
                     <td className="px-3 py-3"><TierBadge tier={r.tier} color={r.tier_color} /></td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan="8" className="px-3 py-10 text-center text-slate-500">No surgeons match current filters.</td></tr>
+                  <tr><td colSpan={result.enriched_count > 0 ? 11 : 8} className="px-3 py-10 text-center text-slate-500">No surgeons match current filters.</td></tr>
                 )}
               </tbody>
             </table>
@@ -300,7 +362,8 @@ export default function SurgeonTargetingPage() {
         <div className="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-10 text-center text-slate-400">
           <div className="text-sm">Enter a territory above and click <span className="text-sky-400 font-semibold">Find Surgeons</span> to rank prospects.</div>
           <div className="text-xs mt-2 text-slate-500">
-            Target score = Medicare procedure volume (50pts) + Intuitive $ exposure (35pts) + recency (15pts).
+            Target score = Medicare volume (50pts) + Intuitive $ exposure (35pts) + recency (15pts).
+            <br />KOL score (if enrichment on) = publications 5yr (50pts) + active trials (35pts) + Intuitive-sponsored trial (15pts).
           </div>
         </div>
       )}
