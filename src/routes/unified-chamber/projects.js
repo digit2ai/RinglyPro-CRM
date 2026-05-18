@@ -68,6 +68,7 @@ router.get('/', authMiddleware, async (req, res) => {
               p.status, p.plan_status, p.visibility, p.proposer_member_id,
               p.recruitment_deadline, p.recruitment_closed_at, p.recruitment_closed_by,
               p.monte_carlo_result,
+              p.irs_score, p.irs_grade, p.irs_computed_at,
               p.created_at, p.updated_at,
               CASE
                 WHEN p.visibility = 'participants_only' AND p.proposer_member_id != :current_member_id
@@ -533,6 +534,27 @@ router.post('/:id/publish', authMiddleware, async (req, res) => {
        WHERE chamber_id = :c AND id = :id RETURNING *`,
       { replacements: { c: req.chamber_id, id: req.params.id, dl: deadline }, type: QueryTypes.SELECT }
     );
+
+    // Auto-compute IRS on publish. Deterministic-only (no AI on hot path);
+    // the proposer can click "Recompute (AI)" later for the cohesion lift.
+    try {
+      const irsScorer = require('./lib/project-irs-scorer');
+      const irsResult = await irsScorer.scoreProject(updated, [], { useAi: false });
+      await sequelize.query(
+        `UPDATE projects SET irs_score = :s, irs_components = :comp::jsonb,
+                             irs_evidence = :ev::jsonb, irs_grade = :g, irs_computed_at = NOW()
+         WHERE chamber_id = :c AND id = :id`,
+        {
+          replacements: {
+            c: req.chamber_id, id: req.params.id,
+            s: irsResult.score,
+            comp: JSON.stringify(irsResult.components),
+            ev: JSON.stringify({ ai: irsResult.ai, base_score: irsResult.base_score, auto: 'publish' }),
+            g: irsResult.grade
+          }
+        }
+      );
+    } catch (e) { console.error('[publish auto-IRS]', e.message); }
 
     let invitationsCreated = 0;
     try {
@@ -1543,6 +1565,83 @@ router.get('/:id/plan-versions/:vid', authMiddleware, async (req, res) => {
     if (!v) return res.status(404).json({ success: false, error: 'Version not found' });
     return res.json({ success: true, data: v });
   } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// POST /:id/compute-irs -- run the IRS scorer + persist to projects.irs_*
+// Anyone who can view the project can recompute; the AI synthesis pass
+// will be skipped for non-proposers to keep token cost contained.
+// =====================================================================
+router.post('/:id/compute-irs', authMiddleware, async (req, res) => {
+  try {
+    const [proj] = await sequelize.query(
+      `SELECT * FROM projects WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!proj) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (!proj.plan_json) {
+      return res.status(400).json({ success: false, error: 'Project has no plan to score' });
+    }
+
+    // Build the team payload the scorer expects: trust scores + proposer flag.
+    const teamRows = await sequelize.query(
+      `SELECT pm.member_id, m.trust_score,
+              (m.id = :proposer) AS is_proposer
+       FROM project_members pm JOIN members m ON m.id = pm.member_id
+       WHERE pm.chamber_id = :c AND pm.project_id = :p
+       UNION
+       SELECT m.id AS member_id, m.trust_score, true AS is_proposer
+       FROM members m WHERE m.chamber_id = :c AND m.id = :proposer`,
+      {
+        replacements: { c: req.chamber_id, p: req.params.id, proposer: proj.proposer_member_id },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Allow self-recompute by proposer + admins to use AI; everyone else gets
+    // the deterministic-only pass (still 0..100, just no LLM cohesion bump).
+    const isProposer = proj.proposer_member_id === req.member.id;
+    const isAdmin = ['superadmin','admin_global','admin_regional'].includes(req.member.access_level);
+    const allowAi = isProposer || isAdmin;
+    const explicitAi = req.body && req.body.useAi;
+    const useAi = explicitAi === false ? false : allowAi;
+
+    const scorer = require('./lib/project-irs-scorer');
+    const result = await scorer.scoreProject(proj, teamRows, { useAi });
+
+    await sequelize.query(
+      `UPDATE projects
+       SET irs_score = :s, irs_components = :comp::jsonb, irs_evidence = :ev::jsonb,
+           irs_grade = :g, irs_computed_at = NOW(), updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      {
+        replacements: {
+          c: req.chamber_id, id: req.params.id,
+          s: result.score,
+          comp: JSON.stringify(result.components),
+          ev: JSON.stringify({ ai: result.ai, base_score: result.base_score }),
+          g: result.grade
+        }
+      }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        project_id: parseInt(req.params.id),
+        score: result.score,
+        score_100: result.score_100,
+        base_score: result.base_score,
+        grade: result.grade,
+        components: result.components,
+        ai: result.ai,
+        computed_at: result.computed_at
+      }
+    });
+  } catch (err) {
+    console.error('[compute-irs]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });

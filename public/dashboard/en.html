@@ -1635,7 +1635,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     };
     el.innerHTML =
       '<div class="flex-between mb-16">' +
-        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + tabBtn('open_rfq','Matching RFQs & Roles') + '</div>' +
+        '<div>' + tabBtn('all','All') + tabBtn('mine','My Projects') + tabBtn('invited','Invited / Joined') + tabBtn('open_rfq','Matching RFQs & Roles') + tabBtn('investment_grade','Investment Grade') + '</div>' +
         '<button class="btn btn-primary" id="newProjectBtn">+ New Project</button>' +
       '</div>' +
       '<div id="projectList"><div class="loading">Loading...</div></div>';
@@ -1658,6 +1658,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       var res = await apiFetch('/projects?' + qs);
       if (!res.success) { out.innerHTML = '<div class="error-msg">Error loading projects</div>'; return; }
       var projects = res.data.projects || [];
+
+      // Investment Grade filter: client-side, requires irs_score >= 0.75
+      if (tab === 'investment_grade') {
+        projects = projects.filter(function(p) { return p.irs_score != null && parseFloat(p.irs_score) >= 0.75; });
+        projects.sort(function(a, b) { return parseFloat(b.irs_score || 0) - parseFloat(a.irs_score || 0); });
+      }
 
       // For Matching tab, also pull Exchange RFQs matching the viewer's sector
       var matchingRFQs = [];
@@ -1715,7 +1721,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (p.is_mine) roleBadge = '<span style="background:#1a3d8f;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Proposer</span>';
         else if (p.is_participant) roleBadge = '<span style="background:#28a745;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Member</span>';
         else if (p.has_invite) roleBadge = '<span style="background:#e65100;color:white;padding:2px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:700;margin-right:6px">Invited</span>';
-        h += '<div class="rc-company">'+roleBadge+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
+        // IRS badge: shown only when score is computed. Colour by grade tier.
+        var irsBadge = '';
+        if (p.irs_score != null) {
+          var n100 = Math.round(parseFloat(p.irs_score) * 100);
+          var bg = '#999';
+          if (n100 >= 85) bg = '#1b5e20';        // Investment Grade -- deep green
+          else if (n100 >= 75) bg = '#28a745';   // Strong Candidate -- green
+          else if (n100 >= 50) bg = '#e65100';   // Promising -- orange
+          else if (n100 >= 30) bg = '#c62828';   // Early Stage -- red
+          irsBadge = '<span title="Investment Readiness Score: '+esc(p.irs_grade||'')+'" style="background:'+bg+';color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;margin-right:6px">IRS '+n100+'</span>';
+        }
+        h += '<div class="rc-company">'+irsBadge+roleBadge+planStatus+esc(p.proposer_name||'--')+' | '+esc(p.sector||'--')+'</div>';
         if (p.is_stub) {
           h += '<div class="text-sm text-muted" style="font-style:italic">In private execution -- participants only</div>';
         } else {
@@ -3793,6 +3810,86 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // button inline here when no meeting has been booked yet, so the natural
   // workflow is: review pending signers -> reach out to them -> book the
   // meeting once ready.
+  // IRS breakdown modal -- shows the 8 components with their weights, scores,
+  // and contribution to the final IRS. Reads cached irs_components from the
+  // project payload (no extra network call required).
+  async function showIrsBreakdown(projectId) {
+    openModal('<div class="loading">Loading IRS breakdown...</div>');
+    try {
+      var res = await apiFetch('/projects/'+projectId);
+      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Load failed')+'</div>'); return; }
+      var p = res.data;
+      var comps = p.irs_components || {};
+      var n100 = p.irs_score != null ? Math.round(parseFloat(p.irs_score) * 100) : 0;
+      var col = n100 >= 85 ? '#1b5e20' : n100 >= 75 ? '#28a745' : n100 >= 50 ? '#e65100' : '#c62828';
+      var labels = {
+        financial_viability: 'Financial Viability',
+        team_experience: 'Team & Experience',
+        market_traction: 'Market & Traction',
+        business_model: 'Business Model',
+        regulatory_legal: 'Regulatory & Legal',
+        esg_impact: 'ESG / Impact',
+        scalability: 'Scalability',
+        banking_match: 'Banking Match'
+      };
+      var order = ['financial_viability','team_experience','market_traction','business_model','regulatory_legal','esg_impact','scalability','banking_match'];
+
+      var h = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px;flex-wrap:wrap">';
+      h += '<div><h2 style="margin:0">Investment Readiness Score</h2>';
+      if (p.irs_grade) h += '<div style="font-size:13px;text-transform:uppercase;color:'+col+';font-weight:700;letter-spacing:0.5px;margin-top:2px">'+esc(p.irs_grade)+'</div>';
+      h += '</div>';
+      h += '<div style="font-size:42px;font-weight:900;color:'+col+';line-height:1">'+n100+'<span style="font-size:18px;opacity:0.6">/100</span></div>';
+      h += '</div>';
+
+      h += '<p class="text-muted text-sm mb-12">Each dimension is scored 0-100 and weighted. The bars below show the score (filled) and how much it contributes to the final IRS.</p>';
+
+      h += '<div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">';
+      order.forEach(function(k, idx) {
+        var c = comps[k];
+        if (!c) return;
+        var pct = Math.round((c.score || 0) * 100);
+        var w = Math.round((c.weight || 0) * 100);
+        var contrib = Math.round((c.contribution || 0) * 100);
+        var rowBg = idx % 2 === 0 ? 'var(--white)' : 'var(--gray-50)';
+        h += '<div style="padding:10px 14px;background:'+rowBg+';border-top:'+(idx===0?'0':'1px solid var(--gray-200)')+'">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:6px">';
+        h += '<div><strong>'+labels[k]+'</strong> <span class="text-muted">('+w+'% weight)</span></div>';
+        h += '<div><strong>'+pct+'</strong> <span class="text-muted">→ +'+contrib+' to IRS</span></div>';
+        h += '</div>';
+        h += '<div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+'"></div></div>';
+        // Detail strip (small text)
+        if (c.detail && Object.keys(c.detail).length > 0) {
+          h += '<div class="text-muted text-sm" style="margin-top:6px;font-family:monospace;font-size:11px;word-break:break-word">' + esc(JSON.stringify(c.detail).replace(/[{}"]/g, '').replace(/,/g, ', ')) + '</div>';
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+
+      // Evidence + AI rationale
+      var ev = p.irs_evidence;
+      if (ev) {
+        h += '<div style="margin-top:14px;padding:10px 12px;background:var(--gray-50);border-radius:6px;font-size:13px">';
+        if (typeof ev.base_score !== 'undefined') h += '<div><strong>Base score:</strong> ' + Math.round(ev.base_score * 100) + '/100 (before AI adjustment)</div>';
+        if (ev.ai && ev.ai.used) {
+          var adj = (ev.ai.adjustment > 0 ? '+' : '') + Math.round(ev.ai.adjustment * 100) + ' pts';
+          h += '<div style="margin-top:4px"><strong>AI adjustment:</strong> ' + adj;
+          if (ev.ai.reason) h += ' &mdash; <em>"' + esc(ev.ai.reason) + '"</em>';
+          h += '</div>';
+        } else {
+          h += '<div style="margin-top:4px" class="text-muted"><em>AI synthesis not yet run. Click "Recompute (AI)" on the project page for a cohesion review.</em></div>';
+        }
+        h += '</div>';
+      }
+
+      h += '<div style="display:flex;justify-content:flex-end;margin-top:14px;gap:8px">';
+      h += '<button class="btn btn-outline" id="irsBackBtn">Back to project</button></div>';
+      openModal(h);
+      document.getElementById('irsBackBtn').addEventListener('click', function() { showProjectDetail(projectId); });
+    } catch(e) {
+      openModal('<div class="error-msg">'+esc(e.message)+'</div>');
+    }
+  }
+
   async function showSignoffStatusModal(projectId, projectMeta, existingMeeting) {
     var isProposer = projectMeta && projectMeta.viewer_role && projectMeta.viewer_role.is_proposer;
     openModal('<div class="loading">Loading sign-off status...</div>');
@@ -4107,6 +4204,28 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         html += '</div>';
       }
 
+      // === IRS card (auto-computed on publish; recomputable on demand) ===
+      if (p.irs_score != null) {
+        var irsN = Math.round(parseFloat(p.irs_score) * 100);
+        var irsCol = irsN >= 85 ? '#1b5e20' : irsN >= 75 ? '#28a745' : irsN >= 50 ? '#e65100' : '#c62828';
+        var irsWhen = p.irs_computed_at ? new Date(p.irs_computed_at).toLocaleString() : '';
+        html += '<div style="border:2px solid '+irsCol+';border-radius:8px;padding:12px;margin-bottom:14px;background:#f8f9fa">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;flex-wrap:wrap">';
+        html += '<div><div style="font-weight:700;color:'+irsCol+'">Investment Readiness Score <span class="text-muted text-sm">(IRS)</span></div>';
+        if (irsWhen) html += '<div class="text-muted text-sm">Computed '+esc(irsWhen)+'</div>';
+        html += '</div>';
+        html += '<div style="text-align:right"><div style="font-size:28px;font-weight:900;color:'+irsCol+';line-height:1">'+irsN+'<span style="font-size:14px;opacity:0.6">/100</span></div>';
+        if (p.irs_grade) html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:'+irsCol+';font-weight:700;margin-top:2px">'+esc(p.irs_grade)+'</div>';
+        html += '</div></div>';
+        if (vr.is_proposer || vr.is_superadmin) {
+          html += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" id="recomputeIrsBtn" data-pid="'+p.id+'" style="padding:3px 10px;font-size:11px">Recompute (AI)</button>';
+          html += ' <button class="btn btn-outline btn-sm" id="viewIrsBreakdownBtn" data-pid="'+p.id+'" style="padding:3px 10px;font-size:11px">View breakdown</button></div>';
+        } else {
+          html += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" id="viewIrsBreakdownBtn" data-pid="'+p.id+'" style="padding:3px 10px;font-size:11px">View breakdown</button></div>';
+        }
+        html += '</div>';
+      }
+
       // === Monte Carlo card (auto-computed at team-lock) ===
       if (p.monte_carlo_result) {
         var mc = p.monte_carlo_result;
@@ -4187,6 +4306,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       document.querySelectorAll('.teamMsgBtn').forEach(function(b) {
         b.addEventListener('click', function() { messageMember(this.dataset.mid, this.dataset.mname); });
       });
+
+      // IRS card actions
+      var recomputeBtn = document.getElementById('recomputeIrsBtn');
+      if (recomputeBtn) recomputeBtn.addEventListener('click', async function() {
+        var pid = this.dataset.pid;
+        this.disabled = true; var orig = this.textContent;
+        this.textContent = 'Recomputing... (10-20s)';
+        try {
+          var r = await apiFetch('/projects/'+pid+'/compute-irs', { method:'POST', body: JSON.stringify({ useAi: true }) });
+          this.disabled = false; this.textContent = orig;
+          if (r.success) showProjectDetail(pid);
+          else alert(r.error || 'Recompute failed');
+        } catch(e) { this.disabled = false; this.textContent = orig; alert(e.message); }
+      });
+      var viewIrsBtn = document.getElementById('viewIrsBreakdownBtn');
+      if (viewIrsBtn) viewIrsBtn.addEventListener('click', function() { showIrsBreakdown(this.dataset.pid); });
 
       var advBtn = document.getElementById('advanceBtn');
       if (advBtn) advBtn.addEventListener('click', async function() {
