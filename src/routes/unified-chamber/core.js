@@ -760,6 +760,10 @@ router.get('/exchange/companies', authMiddleware, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// GET /exchange/rfqs -- visibility rule:
+//   - 'open' RFQs are visible to every chamber member
+//   - 'closed' RFQs are visible only to the requester OR to members whose
+//     response was accepted (i.e. they "won" a piece of the work)
 router.get('/exchange/rfqs', authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
@@ -767,14 +771,29 @@ router.get('/exchange/rfqs', authMiddleware, async (req, res) => {
       `SELECT r.*, m.first_name || ' ' || m.last_name AS requester_name, co.name AS company_name
        FROM rfqs r LEFT JOIN members m ON m.id = r.requester_member_id
        LEFT JOIN companies co ON co.id = r.company_id
-       WHERE r.chamber_id = :c ORDER BY r.created_at DESC LIMIT :limit`,
-      { replacements: { c: req.chamber_id, limit }, type: QueryTypes.SELECT }
+       WHERE r.chamber_id = :c
+         AND (
+           r.status != 'closed'
+           OR r.requester_member_id = :me
+           OR EXISTS (
+             SELECT 1 FROM rfq_responses rr
+             WHERE rr.chamber_id = :c AND rr.rfq_id = r.id
+               AND rr.responder_member_id = :me AND rr.status = 'accepted'
+           )
+         )
+       ORDER BY r.created_at DESC LIMIT :limit`,
+      { replacements: { c: req.chamber_id, me: req.member.id, limit }, type: QueryTypes.SELECT }
     );
     return res.json({ success: true, data: { rfqs, pagination: { total: rfqs.length } } });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-// GET /exchange/rfqs/:id -- single RFQ + its responses joined with member/company
+// GET /exchange/rfqs/:id -- single RFQ + responses joined with member/company.
+// Visibility:
+//   - 'open' RFQ: anyone in the chamber can see it + all responses
+//   - 'closed' RFQ: only the requester + accepted responders can see it
+// Non-owner responders only see their OWN response in the list (so bidders
+// don't see competitor quotes); the owner sees everything.
 router.get('/exchange/rfqs/:id', authMiddleware, async (req, res) => {
   try {
     const [rfq] = await sequelize.query(
@@ -787,6 +806,22 @@ router.get('/exchange/rfqs/:id', authMiddleware, async (req, res) => {
       { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
     );
     if (!rfq) return res.status(404).json({ success: false, error: 'RFQ not found' });
+
+    const isOwner = rfq.requester_member_id === req.member.id;
+
+    if (rfq.status === 'closed' && !isOwner) {
+      // Closed RFQs are only visible to accepted bidders
+      const [myAccepted] = await sequelize.query(
+        `SELECT id FROM rfq_responses
+         WHERE chamber_id = :c AND rfq_id = :id AND responder_member_id = :me AND status = 'accepted'`,
+        { replacements: { c: req.chamber_id, id: req.params.id, me: req.member.id }, type: QueryTypes.SELECT }
+      );
+      if (!myAccepted) {
+        return res.status(404).json({ success: false, error: 'RFQ not found' });
+      }
+    }
+
+    // Responses scope: owner sees all; bidders see only their own.
     const responses = await sequelize.query(
       `SELECT rr.*, m.first_name || ' ' || m.last_name AS responder_name,
               co.name AS responder_company
@@ -794,10 +829,17 @@ router.get('/exchange/rfqs/:id', authMiddleware, async (req, res) => {
        LEFT JOIN members m ON m.id = rr.responder_member_id
        LEFT JOIN companies co ON co.id = rr.company_id
        WHERE rr.chamber_id = :c AND rr.rfq_id = :id
+         AND (:isOwner OR rr.responder_member_id = :me)
        ORDER BY rr.created_at DESC`,
-      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+      {
+        replacements: { c: req.chamber_id, id: req.params.id, me: req.member.id, isOwner },
+        type: QueryTypes.SELECT
+      }
     );
-    return res.json({ success: true, data: { ...rfq, responses } });
+    return res.json({
+      success: true,
+      data: { ...rfq, responses, viewer_is_owner: isOwner }
+    });
   } catch (err) {
     console.error('[GET /exchange/rfqs/:id]', err);
     return res.status(500).json({ success: false, error: err.message });
@@ -852,6 +894,69 @@ router.post('/exchange/rfqs/:id/respond', authMiddleware, async (req, res) => {
     return res.status(201).json({ success: true, data: row });
   } catch (err) {
     console.error('[POST /exchange/rfqs/:id/respond]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /exchange/rfqs/:id/responses/:rid/accept -- proposer accepts ONE
+// proposal. Can be called multiple times on different responses (no
+// single-winner constraint). Idempotent: re-accepting an already-accepted
+// proposal is a no-op.
+router.post('/exchange/rfqs/:id/responses/:rid/accept', authMiddleware, async (req, res) => {
+  try {
+    const [rfq] = await sequelize.query(
+      `SELECT id, status, requester_member_id FROM rfqs WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!rfq) return res.status(404).json({ success: false, error: 'RFQ not found' });
+    if (rfq.requester_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the RFQ owner can accept proposals' });
+    }
+    if (rfq.status === 'closed') {
+      return res.status(400).json({ success: false, error: 'RFQ is closed -- cannot accept new proposals' });
+    }
+    const [resp] = await sequelize.query(
+      `SELECT id, status FROM rfq_responses WHERE chamber_id = :c AND rfq_id = :id AND id = :rid`,
+      { replacements: { c: req.chamber_id, id: req.params.id, rid: req.params.rid }, type: QueryTypes.SELECT }
+    );
+    if (!resp) return res.status(404).json({ success: false, error: 'Proposal not found' });
+    if (resp.status === 'accepted') {
+      return res.json({ success: true, data: { already_accepted: true } });
+    }
+    await sequelize.query(
+      `UPDATE rfq_responses SET status = 'accepted', updated_at = NOW()
+       WHERE chamber_id = :c AND id = :rid`,
+      { replacements: { c: req.chamber_id, rid: req.params.rid } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[POST /exchange/rfqs/:id/responses/:rid/accept]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /exchange/rfqs/:id/close -- proposer closes the RFQ. After close,
+// visibility narrows to the owner + responders whose proposals are accepted.
+// Idempotent: closing an already-closed RFQ is a no-op.
+router.post('/exchange/rfqs/:id/close', authMiddleware, async (req, res) => {
+  try {
+    const [rfq] = await sequelize.query(
+      `SELECT id, status, requester_member_id FROM rfqs WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!rfq) return res.status(404).json({ success: false, error: 'RFQ not found' });
+    if (rfq.requester_member_id !== req.member.id) {
+      return res.status(403).json({ success: false, error: 'Only the RFQ owner can close it' });
+    }
+    if (rfq.status === 'closed') return res.json({ success: true, data: { already_closed: true } });
+    await sequelize.query(
+      `UPDATE rfqs SET status = 'closed', updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[POST /exchange/rfqs/:id/close]', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -4820,41 +4820,80 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     openModal('<div class="loading">Loading RFQ...</div>');
     try {
       var res = await apiFetch('/exchange/rfqs/'+id);
-      if (!res.success) { openModal('<div class="error-msg">Error loading RFQ</div>'); return; }
+      if (!res.success) { openModal('<div class="error-msg">'+(res.error||'Error loading RFQ')+'</div>'); return; }
       var r = res.data;
-      var html = '<h2 style="margin-bottom:8px">'+esc(r.title)+'</h2>';
-      html += '<div style="margin-bottom:12px">'+statusBadge(r.status)+' <span class="text-muted text-sm">by '+esc(r.requester_name||'--')+'</span></div>';
-      html += '<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px">'+esc(r.description||'')+'</p>';
+      var isOwner = !!r.viewer_is_owner;
+      var isOpen = r.status === 'open';
+
+      var html = '<div class="flex-between" style="margin-bottom:8px;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+      html += '<h2 style="margin:0">'+esc(r.title)+'</h2>';
+      var statusCol = isOpen ? '#28a745' : '#999';
+      html += '<span style="background:'+statusCol+';color:white;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase">'+esc(r.status)+'</span>';
+      html += '</div>';
+      html += '<div class="text-muted text-sm" style="margin-bottom:12px">by '+esc(r.requester_name||'--')+'</div>';
+      html += '<p style="font-size:13px;color:var(--gray-700);margin-bottom:12px;white-space:pre-wrap">'+esc(r.description||'')+'</p>';
       html += '<div class="rc-meta mb-16"><span>Sector: '+esc(r.sector||'--')+'</span>';
       if (r.budget_range) html += '<span>Budget: '+esc(r.budget_range)+'</span>';
       if (r.deadline) html += '<span>Deadline: '+formatDate(r.deadline)+'</span>';
+      if (Array.isArray(r.countries_target) && r.countries_target.length > 0)
+        html += '<span>Countries: '+r.countries_target.map(esc).join(', ')+'</span>';
+      if (Array.isArray(r.target_languages) && r.target_languages.length > 0)
+        html += '<span>Languages: '+r.target_languages.map(esc).join(', ')+'</span>';
       html += '</div>';
+
+      // Owner-only action bar
+      if (isOwner && isOpen) {
+        html += '<div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:6px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">';
+        html += '<div class="text-sm">You can <strong>accept multiple proposals</strong> below. When done, close the RFQ to stop new bids.</div>';
+        html += '<button class="btn btn-danger btn-sm" id="closeRfqBtn" data-rid="'+r.id+'" style="background:var(--red);color:white">Close RFQ</button>';
+        html += '</div>';
+      } else if (!isOpen) {
+        html += '<div style="background:var(--gray-100);color:var(--gray-700);border-radius:6px;padding:10px;text-align:center;margin-bottom:14px;font-size:13px">This RFQ is closed. ' + (isOwner ? 'Only you and accepted bidders can see it now.' : 'You can see this because your proposal was accepted.') + '</div>';
+      }
 
       // Responses
       var responses = r.responses || [];
-      html += '<h3>Responses ('+responses.length+')</h3>';
+      var responsesLabel = isOwner ? 'All proposals' : 'Your proposal';
+      html += '<h3>'+responsesLabel+' ('+responses.length+')</h3>';
       if (responses.length > 0) {
         responses.forEach(function(rr) {
-          html += '<div style="border:1px solid var(--gray-200);border-radius:6px;padding:12px;margin-bottom:8px">';
-          html += '<div class="flex-between"><strong style="font-size:13px">'+esc(rr.responder_name||'--')+'</strong>'+statusBadge(rr.status)+'</div>';
+          var respCol = rr.status === 'accepted' ? '#28a745' : rr.status === 'declined' ? '#999' : 'var(--primary)';
+          var borderCol = rr.status === 'accepted' ? '#28a745' : 'var(--gray-200)';
+          html += '<div style="border:1px solid '+borderCol+';border-left:'+(rr.status==='accepted'?'4px':'1px')+' solid '+borderCol+';border-radius:6px;padding:12px;margin-bottom:8px">';
+          html += '<div class="flex-between" style="align-items:flex-start;gap:8px;flex-wrap:wrap">';
+          html += '<div><strong style="font-size:13px">'+esc(rr.responder_name||'--')+'</strong>';
           if (rr.responder_company) html += '<div class="text-sm text-muted">'+esc(rr.responder_company)+'</div>';
-          html += '<p style="font-size:12px;margin-top:6px">'+esc(rr.proposal_text||'')+'</p>';
+          html += '</div>';
+          html += '<span style="background:'+respCol+';color:white;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap">'+esc(rr.status)+'</span>';
+          html += '</div>';
+          html += '<p style="font-size:13px;margin-top:8px;white-space:pre-wrap">'+esc(rr.proposal_text||'')+'</p>';
           if (rr.price_quote) html += '<div class="text-sm" style="margin-top:4px"><strong>Quote:</strong> $'+Number(rr.price_quote).toLocaleString()+' '+esc(rr.currency||'USD')+'</div>';
+          if (rr.delivery_timeline) html += '<div class="text-sm"><strong>Delivery:</strong> '+esc(rr.delivery_timeline)+'</div>';
+          // Owner-only Accept button on pending proposals
+          if (isOwner && isOpen && rr.status === 'submitted') {
+            html += '<div style="margin-top:10px"><button class="btn btn-primary btn-sm acceptRespBtn" data-rid="'+r.id+'" data-respid="'+rr.id+'" style="background:#28a745;padding:4px 12px;font-size:12px">Accept this proposal</button></div>';
+          }
           html += '</div>';
         });
       } else {
-        html += '<p class="text-muted text-sm mb-12">No responses yet.</p>';
+        html += '<p class="text-muted text-sm mb-12">No proposals yet.</p>';
       }
 
-      // Respond form
-      if (r.status === 'open') {
-        html += '<h3 style="margin-top:16px">Submit Proposal</h3><div id="rfqResMsg"></div>';
-        html += '<form id="rfqResForm" class="form-grid">';
-        html += '<div class="form-group full"><label>Proposal</label><textarea name="proposal_text" rows="3" required></textarea></div>';
-        html += '<div class="form-group"><label>Quote (USD)</label><input name="price_quote" type="number" step="0.01"></div>';
-        html += '<div class="form-group"><label>Delivery Timeline</label><input name="delivery_timeline" placeholder="30 days"></div>';
-        html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary btn-sm">Submit Proposal</button></div>';
-        html += '</form>';
+      // Respond form -- only for non-owner members on open RFQs
+      if (isOpen && !isOwner) {
+        // Hide if the user already submitted a proposal
+        var alreadyResponded = responses.length > 0;
+        if (!alreadyResponded) {
+          html += '<h3 style="margin-top:16px">Submit Proposal</h3><div id="rfqResMsg"></div>';
+          html += '<form id="rfqResForm" class="form-grid">';
+          html += '<div class="form-group full"><label>Proposal</label><textarea name="proposal_text" rows="3" required></textarea></div>';
+          html += '<div class="form-group"><label>Quote (USD)</label><input name="price_quote" type="number" step="0.01"></div>';
+          html += '<div class="form-group"><label>Delivery Timeline</label><input name="delivery_timeline" placeholder="30 days"></div>';
+          html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary btn-sm">Submit Proposal</button></div>';
+          html += '</form>';
+        } else {
+          html += '<div class="text-muted text-sm" style="margin-top:14px;padding:10px;background:var(--gray-50);border-radius:6px">You already submitted a proposal for this RFQ. The owner will review it.</div>';
+        }
       }
 
       openModal(html);
@@ -4871,10 +4910,35 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           msg.innerHTML = '<div class="text-muted text-sm">Submitting...</div>';
           try {
             var rr = await apiFetch('/exchange/rfqs/'+id+'/respond', { method:'POST', body:JSON.stringify(body) });
-            if (rr.success) { msg.innerHTML = '<div class="success-msg">Proposal submitted successfully.</div>'; } else { msg.innerHTML = '<div class="error-msg">'+(rr.error||'Error')+'</div>'; }
+            if (rr.success) {
+              msg.innerHTML = '<div class="success-msg">Proposal submitted successfully.</div>';
+              setTimeout(function(){ showRFQDetail(id); }, 800);
+            } else { msg.innerHTML = '<div class="error-msg">'+(rr.error||'Error')+'</div>'; }
           } catch(e2) { msg.innerHTML = '<div class="error-msg">'+esc(e2.message)+'</div>'; }
         });
       }
+
+      document.querySelectorAll('.acceptRespBtn').forEach(function(b) {
+        b.addEventListener('click', async function() {
+          this.disabled = true; var orig = this.textContent; this.textContent = 'Accepting...';
+          try {
+            var ar = await apiFetch('/exchange/rfqs/'+this.dataset.rid+'/responses/'+this.dataset.respid+'/accept', { method: 'POST', body: JSON.stringify({}) });
+            if (ar.success) { showRFQDetail(id); }
+            else { this.disabled = false; this.textContent = orig; alert(ar.error || 'Accept failed'); }
+          } catch(e2) { this.disabled = false; this.textContent = orig; alert(e2.message); }
+        });
+      });
+
+      var closeBtn = document.getElementById('closeRfqBtn');
+      if (closeBtn) closeBtn.addEventListener('click', async function() {
+        if (!confirm('Close this RFQ? Bidders who were not accepted will lose access. Accepted bidders + you keep access.')) return;
+        this.disabled = true; var orig = this.textContent; this.textContent = 'Closing...';
+        try {
+          var cr = await apiFetch('/exchange/rfqs/'+id+'/close', { method:'POST', body:JSON.stringify({}) });
+          if (cr.success) { showRFQDetail(id); }
+          else { this.disabled = false; this.textContent = orig; alert(cr.error || 'Close failed'); }
+        } catch(e2) { this.disabled = false; this.textContent = orig; alert(e2.message); }
+      });
     } catch(e) {
       openModal('<div class="error-msg">Error: '+esc(e.message)+'</div>');
     }
