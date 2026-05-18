@@ -3,17 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import ChatRenderer from '../components/ChatRenderer'
 
 const SAMPLES = [
+  'Brief me on Mount Sinai NY for my 3pm meeting',
   'Top 10 robotic candidates in Florida',
-  'Which surgeons at Tampa General received the most Intuitive payments in 2024?',
-  'Compare Tampa General to Mayo Jacksonville',
-  'Show me my projects in Planning stage',
-  'List Florida hospitals with no robotic program but >15,000 surgical cases',
-  'Top 5 surgeon champions across all my projects',
+  'Tell me about Dr. David Samadi',
+  'Draft an outreach email to Dr. Samadi referencing his robotic work',
+  'Rank surgeons at AdventHealth Tampa',
+  'Top 5 urology KOLs in Florida',
 ]
 
 const TOOL_LABELS = {
   query_hospitals: 'Searching hospitals',
   query_surgeons: 'Searching surgeons',
+  search_surgeons_by_territory: 'Ranking territory surgeons (live CMS)',
+  search_surgeons_by_hospital: 'Ranking hospital surgeons (Care Compare)',
+  enrich_surgeon: 'Enriching surgeon (PubMed + ClinicalTrials.gov)',
+  generate_briefing: 'Compiling pre-meeting briefing',
+  draft_outreach: 'Gathering personalization material',
   query_intuitive_payments: 'Querying Open Payments',
   query_procedure_volumes: 'Querying procedure volumes',
   query_business_plans: 'Querying business plans',
@@ -23,6 +28,29 @@ const TOOL_LABELS = {
   generate_report_link: 'Generating report link',
   start_business_plan: 'Starting business plan',
   send_surgeon_survey: 'Preparing survey',
+}
+
+// ─── Voice helpers (Web Speech API — browser-native, zero API cost) ────────
+const SpeechRecognitionImpl =
+  typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+const speechSupported = !!SpeechRecognitionImpl;
+const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+function stripMarkdownForSpeech(text) {
+  if (!text) return '';
+  return text
+    .replace(/```[\s\S]*?```/g, '. code block omitted. ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^#+\s+/gm, '')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/\|/g, ' ')
+    .replace(/-{3,}/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 async function streamChat({ question, conversationId, projectId, confirmedAction, onEvent, onError }) {
@@ -55,11 +83,78 @@ export default function AskPage() {
   const [busy, setBusy] = useState(false)
   const [conversationId, setConversationId] = useState(null)
   const [history, setHistory] = useState([])
+  const [voiceMode, setVoiceMode] = useState(false) // when on: TTS reads responses aloud
+  const [listening, setListening] = useState(false)
+  const [interimTranscript, setInterimTranscript] = useState('')
   const scrollRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const ttsSpokenLenRef = useRef(0)
   const navigate = useNavigate()
 
   useEffect(() => { loadHistory() }, [])
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight }, [messages, busy])
+
+  // Stop TTS on unmount or when leaving voice mode
+  useEffect(() => {
+    if (!voiceMode && ttsSupported) {
+      window.speechSynthesis.cancel()
+    }
+    return () => { if (ttsSupported) window.speechSynthesis.cancel() }
+  }, [voiceMode])
+
+  // ─── Speech-to-text (mic) ────────────────────────────────────
+  function startListening() {
+    if (!speechSupported || listening || busy) return
+    if (ttsSupported) window.speechSynthesis.cancel() // stop reading while user speaks
+    const r = new SpeechRecognitionImpl()
+    r.continuous = false
+    r.interimResults = true
+    r.lang = 'en-US'
+    r.onresult = (e) => {
+      let final = ''
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += t
+        else interim += t
+      }
+      if (final) {
+        setInput(prev => (prev + ' ' + final).trim())
+        setInterimTranscript('')
+      } else {
+        setInterimTranscript(interim)
+      }
+    }
+    r.onerror = () => { setListening(false); setInterimTranscript('') }
+    r.onend = () => { setListening(false); setInterimTranscript('') }
+    r.start()
+    recognitionRef.current = r
+    setListening(true)
+  }
+
+  function stopListening() {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch (_) {}
+    }
+    setListening(false)
+    setInterimTranscript('')
+  }
+
+  // ─── Text-to-speech (chunked, follows streaming text) ────────
+  function speakChunk(text) {
+    if (!ttsSupported || !voiceMode || !text) return
+    const cleaned = stripMarkdownForSpeech(text)
+    if (!cleaned) return
+    const u = new SpeechSynthesisUtterance(cleaned)
+    u.rate = 1.05
+    u.pitch = 1.0
+    u.volume = 1.0
+    // Pick a clean voice if available
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find(v => /Samantha|Karen|Google US English|Microsoft Aria/i.test(v.name))
+    if (preferred) u.voice = preferred
+    window.speechSynthesis.speak(u)
+  }
 
   async function loadHistory() {
     try {
@@ -101,6 +196,8 @@ export default function AskPage() {
     let assistantText = ''
     let toolCalls = []
     setMessages(m => [...m, { role: 'assistant', content: '', toolCalls: [] }])
+    ttsSpokenLenRef.current = 0 // reset speech cursor for this turn
+    if (ttsSupported) window.speechSynthesis.cancel()
 
     try {
       await streamChat({
@@ -111,6 +208,18 @@ export default function AskPage() {
           if (evt.type === 'text') {
             assistantText += evt.content
             setMessages(m => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], content: assistantText, toolCalls }; return c })
+
+            // Voice mode: flush spoken text at sentence boundaries so it sounds natural
+            if (voiceMode) {
+              const sentenceEnd = assistantText.lastIndexOf('.', assistantText.length)
+              const newlineEnd = assistantText.lastIndexOf('\n', assistantText.length)
+              const flushPos = Math.max(sentenceEnd, newlineEnd)
+              if (flushPos > ttsSpokenLenRef.current + 40) {
+                const chunk = assistantText.slice(ttsSpokenLenRef.current, flushPos + 1)
+                speakChunk(chunk)
+                ttsSpokenLenRef.current = flushPos + 1
+              }
+            }
           } else if (evt.type === 'tool_call') {
             toolCalls = [...toolCalls, { name: evt.tool, status: 'running' }]
             setMessages(m => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], toolCalls }; return c })
@@ -119,6 +228,11 @@ export default function AskPage() {
             setMessages(m => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], toolCalls }; return c })
           } else if (evt.type === 'done') {
             if (evt.conversation_id) { setConversationId(evt.conversation_id); loadHistory() }
+            // Voice mode: flush any remaining unsung text at end of turn
+            if (voiceMode && assistantText.length > ttsSpokenLenRef.current) {
+              speakChunk(assistantText.slice(ttsSpokenLenRef.current))
+              ttsSpokenLenRef.current = assistantText.length
+            }
           } else if (evt.type === 'error') {
             assistantText += `\n\n_Error: ${evt.message}_`
             setMessages(m => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], content: assistantText }; return c })
@@ -155,9 +269,41 @@ export default function AskPage() {
 
       {/* Main panel */}
       <main className="flex-1 flex flex-col">
-        <div className="border-b border-slate-800 px-6 py-4">
-          <h1 className="text-xl font-bold text-white">Ask SurgicalMind</h1>
-          <p className="text-xs text-slate-400 mt-1">Natural-language queries grounded in CMS, NPI Registry, IRS, state filings, and your project pipeline.</p>
+        <div className="border-b border-slate-800 px-6 py-4 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Ask SurgicalMind</h1>
+            <p className="text-xs text-slate-400 mt-1">Natural-language queries grounded in CMS, NPI Registry, IRS, state filings, and your project pipeline.</p>
+          </div>
+          {(speechSupported || ttsSupported) && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setVoiceMode(v => !v)}
+                title={voiceMode ? 'Voice mode on — responses read aloud' : 'Enable voice mode'}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  voiceMode
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  {voiceMode ? (
+                    <>
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <line x1="22" y1="9" x2="16" y2="15" />
+                      <line x1="16" y1="9" x2="22" y2="15" />
+                    </>
+                  )}
+                </svg>
+                {voiceMode ? 'Voice on' : 'Voice off'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6">
@@ -210,18 +356,46 @@ export default function AskPage() {
         </div>
 
         <form
-          onSubmit={(e) => { e.preventDefault(); if (busy || !input.trim()) return; const q = input; setInput(''); send(q); }}
+          onSubmit={(e) => { e.preventDefault(); if (busy || !input.trim()) return; const q = input; setInput(''); stopListening(); send(q); }}
           className="border-t border-slate-800 px-6 py-4 bg-slate-950"
         >
-          <div className="max-w-3xl mx-auto flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              disabled={busy}
-              placeholder={busy ? 'Thinking...' : 'Ask anything about hospitals, surgeons, payments, your pipeline...'}
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
+          <div className="max-w-3xl mx-auto flex gap-3 items-stretch">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={listening && interimTranscript ? (input + ' ' + interimTranscript).trim() : input}
+                onChange={e => setInput(e.target.value)}
+                disabled={busy}
+                placeholder={busy ? 'Thinking...' : listening ? 'Listening...' : 'Ask anything about hospitals, surgeons, payments, your pipeline...'}
+                className={`w-full bg-slate-900 border rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 ${listening ? 'border-emerald-500 ring-1 ring-emerald-500/40' : 'border-slate-700'}`}
+              />
+              {listening && (
+                <div className="absolute -top-6 left-1 flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                  Listening...
+                </div>
+              )}
+            </div>
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={() => listening ? stopListening() : startListening()}
+                disabled={busy}
+                title={listening ? 'Stop listening' : 'Speak your question'}
+                className={`px-4 rounded-xl flex items-center justify-center transition-all ${
+                  listening
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                }`}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+            )}
             <button type="submit" disabled={busy || !input.trim()} className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-bold py-3 px-6 rounded-xl">Ask</button>
           </div>
         </form>

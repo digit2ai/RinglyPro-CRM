@@ -46,6 +46,14 @@ Every answer must:
   4. Highlight champions — surgeons with high Intuitive payments and high robotic case volumes
      are leverage points
 
+LINK RENDERING RULES (CRITICAL — never violate):
+  - When citing a PMID, render as: [PMID 12345678](https://pubmed.ncbi.nlm.nih.gov/12345678/)
+    NEVER paste the raw search URL with %20 / %5B encoding into the visible text.
+  - When citing a clinical trial, render as: [NCT01234567](https://clinicaltrials.gov/study/NCT01234567)
+  - When citing a source, render as: [Source name](url) — always use the markdown link form,
+    NEVER a bare URL. The UI does not auto-linkify bare URLs.
+  - The tool responses include {pmid, url} pairs and {nct_id, url} pairs — use those exactly.
+
 Examples of well-formed answers:
   Q: "Top 10 robotic candidates in Florida"
   A: A markdown table with hospital, beds, current robotic %, projected gap. Each row
@@ -81,6 +89,40 @@ DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
       → use enrich_surgeon. Returns publications (5yr), active trials, KOL score + badge.
       ALWAYS check identity_ambiguous flag — if true, surface the caveat in the answer
       so the rep knows the result may include other people with the same name.
+  - "Draft an email to Dr. X" / "Outreach to NPI Y" / "Compose a note to <surgeon>" /
+    "Write a meeting request for <surgeon>"
+      → use draft_outreach. The tool returns personalization material + drafting instructions.
+      You write the actual email body. RULES:
+        - Use ONLY personalization_hooks from the response. Do not invent papers / trials / titles.
+        - Pick ONE subject line from suggested_subject_lines.
+        - Email body ≤ 120 words.
+        - Render the answer as:
+          **Subject:** <chosen subject>
+          ---
+          Hi Dr. <last name>,
+          <body, 80-120 words, referencing 1-2 hooks naturally>
+          <CTA per cta_guidance>
+          Best,
+          <rep.name>
+          <rep.title>
+          ---
+          ### Personalization hooks used
+          - <hook 1>
+          - <hook 2>
+        - If identity_low_confidence is true, skip the research/trials hooks entirely
+          and lead with hospital affiliation only. Warn the rep at the bottom.
+  - "Brief me on <hospital>" / "Prep for my meeting at <hospital>" / "Rundown on <hospital>" /
+    "What should I know before I see <hospital>?" / "Intel on <hospital>"
+      → use generate_briefing. The flagship demo tool. Returns a complete intel sheet:
+      hospital profile, top 5 surgeons (with KOL enrichment), Intuitive $ exposure aggregate,
+      pre-built talking points, suggested actions. Render the answer in this structure:
+        ## Pre-Meeting Briefing — <hospital name>
+        ### At a glance
+        (4-5 KPI bullets: tier_a_count, total Intuitive $, total robotic cases, project status)
+        ### Top 5 surgeons (markdown table: name, specialty, target score, tier, KOL badge)
+        ### Talking points (numbered list, lift directly from talking_points[])
+        ### Recommended next actions (link to suggested_actions[] deep links)
+        ### Sources (markdown links from citations)
 
 NEVER fabricate surgeon names or numbers. If a search returns 0 results, say so.
 The targeting tools return target_score (0-100) and tier (A/B/C/D). Tier A = "Convert Now"
@@ -174,6 +216,33 @@ const TOOLS = [
         hospital_name: { type: 'string', description: 'Hospital name (case-insensitive fuzzy match). E.g. "Baptist Health", "Mount Sinai".' },
         hospital_ccn: { type: 'string', description: 'CMS Hospital CCN (6 digits), preferred when known.' },
         specialty: { type: 'string', description: 'Optional substring filter on primary specialty.' },
+      },
+    },
+  },
+  {
+    name: 'draft_outreach',
+    description: 'Gather personalization material for an outbound email to a specific surgeon. Returns the surgeon\'s real publications, active clinical trials, recent Intuitive payment history, primary specialty, hospital affiliation, and a short list of suggested talking points. The assistant then writes the email using ONLY the material in this response (no fabrication). Use for "draft an email to <surgeon>", "outreach to NPI X", "compose a note to Dr. Y referencing their robotic work". message_type controls tone: intro / follow_up / meeting_request / event_invite / product_update.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        surgeon_npi: { type: 'string', description: '10-digit NPI (preferred when known).' },
+        surgeon_name: { type: 'string', description: 'Full surgeon name (required if NPI not provided).' },
+        message_type: { type: 'string', enum: ['intro', 'follow_up', 'meeting_request', 'event_invite', 'product_update'], description: 'Email tone / purpose. Default: intro.' },
+        rep_name: { type: 'string', description: 'Rep\'s own name (will be used as the signature).' },
+        rep_title: { type: 'string', description: 'Rep\'s title, e.g. "Intuitive Area Sales Manager".' },
+        custom_context: { type: 'string', description: 'Optional rep-specific context (e.g. "saw your AUA talk last month").' },
+      },
+    },
+  },
+  {
+    name: 'generate_briefing',
+    description: 'BRIEFING MODE — generate a complete pre-meeting intel sheet for a hospital. Returns: hospital identity + CMS profile, top 5 surgeons with target_score and KOL enrichment (publications, active trials), aggregate Intuitive relationship strength ($ paid, surgeons engaged), pre-built talking points, and suggested next actions. Use for "brief me on <hospital>", "prep for my meeting at <hospital>", "what do I need to know about <hospital>", "rundown on <hospital>". This is the highest-value tool — chain it whenever the rep mentions an upcoming meeting or asks for hospital intel.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        hospital_name: { type: 'string', description: 'Hospital name (fuzzy match). E.g. "Mount Sinai", "Baptist Health".' },
+        hospital_ccn: { type: 'string', description: 'CMS 6-digit hospital CCN (preferred when known).' },
+        state: { type: 'string', description: 'Optional 2-letter state code to disambiguate common hospital names.' },
       },
     },
   },
@@ -279,6 +348,10 @@ const TOOL_TIMEOUTS = {
   search_surgeons_by_hospital: 15000,
   // PubMed + ClinicalTrials.gov in parallel — usually <3s, allow headroom for cold cache
   enrich_surgeon: 20000,
+  // Briefing chains hospital lookup + surgeon ranking + KOL enrichment on top 5
+  generate_briefing: 45000,
+  // Outreach drafting hits multiple data sources for personalization material
+  draft_outreach: 25000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -448,6 +521,138 @@ async function tool_search_surgeons_by_hospital(input, ctx) {
   }
 }
 
+async function tool_draft_outreach(input, ctx) {
+  let { surgeon_npi, surgeon_name, message_type, rep_name, rep_title, custom_context } = input;
+  surgeon_npi = surgeon_npi ? String(surgeon_npi).replace(/\D/g, '') : null;
+  message_type = message_type || 'intro';
+
+  // Resolve identity — use Care Compare as the canonical name + hospital source
+  let affiliation = null;
+  if (surgeon_npi && ctx.models?.IntuitiveProviderAffiliation) {
+    try {
+      affiliation = await ctx.models.IntuitiveProviderAffiliation.findOne({ where: { npi: surgeon_npi }, raw: true });
+      if (affiliation && !surgeon_name) surgeon_name = affiliation.full_name;
+    } catch (e) { /* ignore */ }
+  }
+  if (!surgeon_name) {
+    return { error: 'Could not resolve surgeon. Provide surgeon_npi (with Care Compare ingested) or surgeon_name.' };
+  }
+
+  // Pull all the personalization material in parallel
+  const pubmed = require('../services/data-sources/pubmed');
+  const clinicalTrials = require('../services/data-sources/clinical-trials');
+  const mpup = require('../services/data-sources/cms-physician-volume');
+  const openPayments = require('../services/data-sources/cms-open-payments');
+  const identityRes = require('../services/identity-resolution');
+
+  const [pub, trials, volRes, payRes] = await Promise.all([
+    pubmed.fetchPublicationCount(surgeon_name, { models: ctx.models }),
+    clinicalTrials.fetchActiveTrials(surgeon_name, { models: ctx.models }),
+    surgeon_npi ? mpup.fetchFor([surgeon_npi], { models: ctx.models }) : { data: { surgeon_volumes: [] } },
+    surgeon_npi ? openPayments.fetchFor([surgeon_npi], { models: ctx.models }) : { data: { surgeon_payments: [] } },
+  ]);
+
+  const vol = (volRes?.data?.surgeon_volumes || [])[0] || {};
+  const pay = (payRes?.data?.surgeon_payments || [])[0] || {};
+
+  const idGate = identityRes.gateExternalCount({
+    full_name: surgeon_name,
+    specialty_key: affiliation?.primary_specialty || null,
+    license_state: affiliation?.practice_state || null,
+  });
+  const dampen = idGate.confidence;
+  const pubsAdj = Math.round((pub.count || 0) * dampen);
+  const trialsAdj = Math.round((trials.active_count || 0) * dampen);
+
+  // Build talking points the LLM should weave into the email
+  const personalization_hooks = [];
+  if (pubsAdj > 0 && idGate.trust) {
+    personalization_hooks.push(`${pubsAdj} published paper${pubsAdj === 1 ? '' : 's'} in the last 5 years (PubMed). Most recent: ${(pub.recent_pmids || [])[0] ? `PMID ${pub.recent_pmids[0]}` : 'see profile'}.`);
+  }
+  if (trialsAdj > 0 && idGate.trust) {
+    personalization_hooks.push(`${trialsAdj} active clinical trial${trialsAdj === 1 ? '' : 's'} as PI${trials.intuitive_sponsored > 0 ? ' (including Intuitive-sponsored research)' : ''}.`);
+  }
+  if (vol.total_robotic_cases_last_yr > 0) {
+    personalization_hooks.push(`${vol.total_robotic_cases_last_yr} robotic Medicare cases last fiscal year (MPUP).`);
+  }
+  if (pay.total_payments_2yr > 0) {
+    personalization_hooks.push(`Existing Intuitive relationship — $${Math.round(pay.total_payments_2yr / 1000)}K paid over 2 years (Open Payments)${pay.last_payment_date ? `, most recently ${pay.last_payment_date}` : ''}.`);
+  }
+  if (affiliation?.hospital_name) {
+    personalization_hooks.push(`Primary affiliation: ${affiliation.hospital_name}${affiliation.hospital_state ? ` (${affiliation.hospital_state})` : ''}.`);
+  }
+  if (affiliation?.medical_school) {
+    personalization_hooks.push(`Trained at ${affiliation.medical_school}${affiliation.graduation_year ? ` ('${String(affiliation.graduation_year).slice(-2)})` : ''}.`);
+  }
+
+  // CTA suggestions based on message_type
+  const cta_suggestions = {
+    intro: 'Open with respect for their work, offer a brief intro call (~20 min), no hard pitch.',
+    follow_up: 'Reference a prior touchpoint, summarize value, propose a concrete next step.',
+    meeting_request: 'Propose 2 specific times next week, mention what you\'ll bring (case data, peer references).',
+    event_invite: 'Frame as an invitation, name the event, peer attendees, the speaker, location, RSVP deadline.',
+    product_update: 'Lead with the clinical/financial outcome they care about, then the product capability.',
+  };
+
+  return {
+    surgeon: {
+      npi: surgeon_npi,
+      name: surgeon_name,
+      credential: affiliation?.credential || null,
+      specialty: affiliation?.primary_specialty || null,
+      hospital: affiliation?.hospital_name || null,
+      group_practice: affiliation?.group_legal_name || null,
+    },
+    message_type,
+    rep: {
+      name: rep_name || '[Rep name]',
+      title: rep_title || 'Intuitive Surgical',
+    },
+    custom_context: custom_context || null,
+    personalization_hooks,
+    suggested_subject_lines: [
+      // 3 options for the LLM to pick from
+      message_type === 'meeting_request' ? `Quick meeting on ${affiliation?.primary_specialty || 'your robotic'} cases` : null,
+      message_type === 'event_invite' ? `${affiliation?.primary_specialty || 'Robotic surgery'} forum — invite` : null,
+      pay.total_payments_2yr > 0 ? `Following up on our recent work together` : `Brief intro — Intuitive Surgical`,
+      personalization_hooks.length > 0 ? `Your ${affiliation?.primary_specialty || 'robotic'} program — a quick note` : `Connecting on robotic surgery`,
+    ].filter(Boolean),
+    cta_guidance: cta_suggestions[message_type] || cta_suggestions.intro,
+    drafting_instructions: [
+      'Use ONLY the personalization_hooks provided — never fabricate publications, trials, or relationships.',
+      'Reference 1-2 specific hooks; do not list all of them (sounds like a dossier, not a note).',
+      'Keep the email under 120 words. Subject line under 60 characters.',
+      'Sign with rep.name and rep.title.',
+      'Do not mention surgeon\'s salary, demographics, or anything not in the hooks.',
+      'If identity_low_confidence is true, do NOT reference research/trial counts — focus on hospital affiliation only.',
+    ],
+    identity_low_confidence: !idGate.trust,
+    identity_confidence: idGate.confidence,
+    citations: [
+      { source_name: 'CMS Care Compare', source_url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+      { source_name: 'CMS Open Payments', source_url: 'https://openpaymentsdata.cms.gov' },
+      { source_name: 'CMS MPUP', source_url: 'https://data.cms.gov/' },
+      { source_name: 'PubMed', source_url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(surgeon_name + '[Author]')}` },
+      { source_name: 'ClinicalTrials.gov', source_url: `https://clinicaltrials.gov/search?term=${encodeURIComponent(surgeon_name)}` },
+    ],
+  };
+}
+
+async function tool_generate_briefing(input, ctx) {
+  try {
+    return await surgeonTargetingService.generateBriefing({
+      hospital_name: input.hospital_name,
+      hospital_ccn: input.hospital_ccn,
+      state: input.state,
+    }, { models: ctx.models });
+  } catch (e) {
+    return {
+      error: e.message,
+      hint: 'Briefing requires Care Compare data. If not yet ingested, fall back to search_surgeons_by_territory + query_hospitals.',
+    };
+  }
+}
+
 async function tool_enrich_surgeon(input, ctx) {
   let { npi, full_name, specialty, state } = input;
   npi = npi ? String(npi).replace(/\D/g, '') : null;
@@ -497,21 +702,32 @@ async function tool_enrich_surgeon(input, ctx) {
   });
   const kb = kolBadge(ks);
 
+  // Build per-PMID direct links so the LLM renders clean markdown, not a giant URL-encoded search URL
+  const recent_pmids = (pub.recent_pmids || []).slice(0, 5).map(pmid => ({
+    pmid,
+    url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+  }));
+
   return {
     npi: npi || null,
     full_name,
     publications_5yr,
     publications_5yr_raw: pub.count || 0,
-    recent_pmids: (pub.recent_pmids || []).slice(0, 5),
-    pubmed_url: pub.source_url,
+    recent_pmids,
+    pubmed_profile_url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(full_name + '[Author]')}`,
     active_trials,
     active_trials_raw: trials.active_count || 0,
     industry_trials: trials.industry_sponsored || 0,
     intuitive_trials: trials.intuitive_sponsored || 0,
     trials: (trials.trials || []).slice(0, 10).map(t => ({
-      nct_id: t.nct_id, title: t.title, status: t.status, phase: t.phase, sponsor: t.sponsor,
+      nct_id: t.nct_id,
+      title: t.title,
+      status: t.status,
+      phase: t.phase,
+      sponsor: t.sponsor,
+      url: t.nct_id ? `https://clinicaltrials.gov/study/${t.nct_id}` : null,
     })),
-    clinicaltrials_url: trials.source_url,
+    clinicaltrials_profile_url: `https://clinicaltrials.gov/search?term=${encodeURIComponent(full_name)}`,
     kol_score: ks,
     kol_badge: kb ? kb.label : null,
     identity_confidence: idGate.confidence,
@@ -520,8 +736,8 @@ async function tool_enrich_surgeon(input, ctx) {
       ? `This name appears too common for high-confidence identity match (confidence ${(idGate.confidence * 100).toFixed(0)}%). PubMed / ClinicalTrials.gov counts have been dampened. Treat as a directional signal, not an exact figure.`
       : null,
     citations: [
-      { source_name: 'PubMed (NCBI E-utilities)', source_url: pub.source_url || 'https://pubmed.ncbi.nlm.nih.gov' },
-      { source_name: 'ClinicalTrials.gov', source_url: trials.source_url || 'https://clinicaltrials.gov' },
+      { source_name: 'PubMed', source_url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(full_name + '[Author]')}` },
+      { source_name: 'ClinicalTrials.gov', source_url: `https://clinicaltrials.gov/search?term=${encodeURIComponent(full_name)}` },
     ],
   };
 }
@@ -684,6 +900,8 @@ const TOOL_IMPL = {
   search_surgeons_by_territory: tool_search_surgeons_by_territory,
   search_surgeons_by_hospital: tool_search_surgeons_by_hospital,
   enrich_surgeon: tool_enrich_surgeon,
+  generate_briefing: tool_generate_briefing,
+  draft_outreach: tool_draft_outreach,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,

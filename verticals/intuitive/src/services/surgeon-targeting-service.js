@@ -342,9 +342,222 @@ async function searchByHospital({ hospital_ccn, hospital_name, specialty = 'all'
   };
 }
 
+// ---------------------------------------------------------------------------
+// generateBriefing — multi-source pre-meeting intel sheet for a hospital
+// The demo-killer feature. Chains: hospital lookup → surgeons → KOL enrich
+//   → financials → talking points.
+// ---------------------------------------------------------------------------
+async function generateBriefing({ hospital_name, hospital_ccn, state }, ctx) {
+  const t0 = Date.now();
+  const models = ctx.models;
+  if (!hospital_name && !hospital_ccn) {
+    throw new Error('hospital_name or hospital_ccn required');
+  }
+
+  const { Op } = require('sequelize');
+
+  // 1) Resolve the hospital. Prefer Care Compare; fall back to existing project record.
+  let hospital = null;
+  let project = null;
+
+  if (models?.IntuitiveProviderAffiliation) {
+    const where = hospital_ccn
+      ? { hospital_ccn: String(hospital_ccn) }
+      : { hospital_name: { [Op.iLike]: `%${hospital_name}%` } };
+    const sample = await models.IntuitiveProviderAffiliation.findOne({ where, raw: true });
+    if (sample) {
+      hospital = {
+        ccn: sample.hospital_ccn,
+        name: sample.hospital_name,
+        state: sample.hospital_state,
+        source: 'CMS Care Compare',
+      };
+    }
+  }
+
+  if (models?.IntuitiveProject) {
+    const projWhere = hospital_name
+      ? { hospital_name: { [Op.iLike]: `%${hospital_name}%` } }
+      : null;
+    if (projWhere) {
+      project = await models.IntuitiveProject.findOne({ where: projWhere, raw: true });
+      if (project && !hospital) {
+        hospital = {
+          ccn: null,
+          name: project.hospital_name,
+          state: project.state,
+          source: 'SurgicalMind project',
+        };
+      }
+    }
+  }
+
+  if (!hospital) {
+    return {
+      error: 'Hospital not found in Care Compare or project pipeline.',
+      hint: 'Try the full legal name (e.g. "Baptist Hospital of Miami" not just "Baptist"), or specify a state.',
+    };
+  }
+
+  // 2) All surgeons at the hospital, ranked
+  let surgeons = [];
+  let surgeonSummary = null;
+  try {
+    if (hospital.ccn) {
+      const byHosp = await searchByHospital({ hospital_ccn: hospital.ccn }, { models });
+      surgeons = byHosp.targets || [];
+      surgeonSummary = byHosp.summary;
+    } else if (hospital.state) {
+      // Fall back to state-level territory search if no CCN
+      const byTerr = await searchByTerritory({ state: hospital.state, limit: 50 }, { models });
+      surgeons = byTerr.targets || [];
+      surgeonSummary = byTerr.summary;
+    }
+  } catch (e) {
+    console.error('[briefing] surgeon lookup error:', e.message);
+  }
+
+  // 3) Top 5 surgeons get KOL enrichment
+  const top5 = surgeons.slice(0, 5);
+  const enrichedTop5 = [];
+  if (top5.length > 0) {
+    const pubmed = require('./data-sources/pubmed');
+    const clinicalTrials = require('./data-sources/clinical-trials');
+    const identityRes = require('./identity-resolution');
+
+    try {
+      const [pubMap, trialMap] = await Promise.all([
+        pubmed.fetchBulk(top5.map(s => ({ npi: s.npi, full_name: s.full_name })), { models }),
+        clinicalTrials.fetchBulk(top5.map(s => ({ npi: s.npi, full_name: s.full_name })), { models }),
+      ]);
+      for (const s of top5) {
+        const pub = pubMap[s.npi] || { count: 0 };
+        const trials = trialMap[s.npi] || { active_count: 0 };
+        const idGate = identityRes.gateExternalCount({
+          full_name: s.full_name,
+          specialty_key: s.specialty_key,
+          license_state: hospital.state,
+        });
+        const dampen = idGate.confidence;
+        const pubsAdj = Math.round((pub.count || 0) * dampen);
+        const trialsAdj = Math.round((trials.active_count || 0) * dampen);
+        const ks = kolScore({
+          publications_5yr: pubsAdj,
+          active_trials: trialsAdj,
+          intuitive_trials: trials.intuitive_sponsored || 0,
+        });
+        const kb = kolBadge(ks);
+        enrichedTop5.push({
+          ...s,
+          publications_5yr: pubsAdj,
+          active_trials: trialsAdj,
+          intuitive_trials: trials.intuitive_sponsored || 0,
+          kol_score: ks,
+          kol_badge: kb ? kb.label : null,
+          identity_confidence: idGate.confidence,
+          recent_pmid_links: (pub.recent_pmids || []).slice(0, 2).map(p => `https://pubmed.ncbi.nlm.nih.gov/${p}/`),
+        });
+      }
+    } catch (e) {
+      console.error('[briefing] KOL enrichment error:', e.message);
+    }
+  }
+
+  // 4) Aggregate Intuitive relationship strength across this hospital's surgeons
+  const totalIntuitive = surgeons.reduce((s, x) => s + (x.intuitive_dollars_2yr || 0), 0);
+  const totalRoboticCases = surgeons.reduce((s, x) => s + (x.robotic_cases_last_yr || 0), 0);
+  const championCount = surgeons.filter(s => s.target_score >= 75).length;
+  const developCount = surgeons.filter(s => s.target_score >= 50 && s.target_score < 75).length;
+  const surgeonsWithRecentPay = surgeons.filter(s => {
+    if (!s.last_intuitive_payment) return false;
+    return (Date.now() - new Date(s.last_intuitive_payment).getTime()) < 365 * 86400000;
+  }).length;
+
+  // 5) Build talking points the LLM can lean on
+  const talkingPoints = [];
+  if (totalIntuitive > 50000) {
+    talkingPoints.push(`Strong existing Intuitive relationship — $${Math.round(totalIntuitive / 1000)}K paid to ${surgeons.filter(s => s.intuitive_dollars_2yr > 0).length} surgeons across the hospital in the last 2 years (CMS Open Payments).`);
+  } else if (totalIntuitive > 5000) {
+    talkingPoints.push(`Moderate Intuitive footprint — $${Math.round(totalIntuitive / 1000)}K paid to staff. Room to deepen.`);
+  } else {
+    talkingPoints.push(`Limited prior Intuitive engagement at this hospital — opportunity to seed.`);
+  }
+  if (championCount > 0) {
+    talkingPoints.push(`${championCount} Tier-A target${championCount === 1 ? '' : 's'} identified — convert priority.`);
+  }
+  if (developCount > 0) {
+    talkingPoints.push(`${developCount} Tier-B surgeon${developCount === 1 ? '' : 's'} — develop track (training, peer-to-peer connections).`);
+  }
+  const kols = enrichedTop5.filter(s => s.kol_score >= 40);
+  if (kols.length > 0) {
+    talkingPoints.push(`${kols.length} research-active surgeon${kols.length === 1 ? '' : 's'} in the top 5 (publications + clinical-trial PI roles).`);
+  }
+  if (totalRoboticCases > 1000) {
+    talkingPoints.push(`High robotic case volume — ${totalRoboticCases.toLocaleString()} Medicare robotic cases last year across the hospital's surgeons (CMS MPUP).`);
+  }
+
+  // 6) Existing project context (if we have it)
+  let projectContext = null;
+  if (project) {
+    projectContext = {
+      project_id: project.id,
+      project_code: project.project_code,
+      status: project.status,
+      hospital_type: project.hospital_type,
+      bed_count: project.bed_count,
+      current_system: project.current_system,
+      current_system_count: project.current_system_count,
+      annual_surgical_volume: project.annual_surgical_volume,
+      deep_link: `/intuitive/report/${project.id}`,
+    };
+    if (project.current_system && project.current_system !== 'none') {
+      talkingPoints.unshift(`Already operating ${project.current_system_count || 1}× ${project.current_system} — upgrade conversation, not greenfield.`);
+    } else {
+      talkingPoints.unshift(`No current da Vinci system on record — greenfield opportunity.`);
+    }
+  } else {
+    talkingPoints.unshift(`No active SurgicalMind project for this hospital — consider creating one to seed the workflow.`);
+  }
+
+  return {
+    hospital,
+    project: projectContext,
+    surgeon_summary: {
+      total_surgeons: surgeons.length,
+      tier_a_count: championCount,
+      tier_b_count: developCount,
+      total_intuitive_dollars_2yr: totalIntuitive,
+      total_robotic_cases: totalRoboticCases,
+      surgeons_paid_last_year: surgeonsWithRecentPay,
+    },
+    top_5: enrichedTop5,
+    talking_points: talkingPoints,
+    suggested_actions: [
+      project
+        ? { action: 'open_report', label: `Open ${project.hospital_name} report`, deep_link: `/intuitive/report/${project.id}` }
+        : { action: 'create_project', label: 'Create SurgicalMind project for this hospital', deep_link: '/intuitive/intake' },
+      enrichedTop5.length > 0
+        ? { action: 'send_survey', label: `Send surgeon survey to top ${enrichedTop5.length}`, tool: 'send_surgeon_survey' }
+        : null,
+      enrichedTop5.length > 0
+        ? { action: 'draft_outreach', label: `Draft outreach to ${enrichedTop5[0].full_name}`, tool: 'draft_outreach' }
+        : null,
+    ].filter(Boolean),
+    citations: [
+      { source_name: 'CMS Care Compare', source_url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+      { source_name: 'CMS MPUP', source_url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
+      { source_name: 'CMS Open Payments', source_url: 'https://openpaymentsdata.cms.gov' },
+      { source_name: 'PubMed', source_url: 'https://pubmed.ncbi.nlm.nih.gov' },
+      { source_name: 'ClinicalTrials.gov', source_url: 'https://clinicaltrials.gov' },
+    ],
+    elapsed_ms: Date.now() - t0,
+  };
+}
+
 module.exports = {
   searchByTerritory,
   searchByHospital,
+  generateBriefing,
   targetScore,
   kolScore,
   tier,

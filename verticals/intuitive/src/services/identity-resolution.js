@@ -208,28 +208,53 @@ function resolveBest(externalCandidate, npiRoster, threshold = 0.6) {
   return best;
 }
 
+// Top-300 most common US surnames (Census 2020 + surgery-frequent immigrant names).
+// Used as a fast heuristic for "is this name distinctive enough to trust name-keyed sources?"
+const COMMON_LAST_NAMES = new Set([
+  // Top US Census surnames
+  'smith','johnson','williams','brown','jones','garcia','miller','davis','rodriguez','martinez',
+  'hernandez','lopez','gonzalez','wilson','anderson','thomas','taylor','moore','jackson','martin',
+  'lee','perez','thompson','white','harris','sanchez','clark','ramirez','lewis','robinson',
+  'walker','young','allen','king','wright','scott','torres','nguyen','hill','flores',
+  'green','adams','nelson','baker','hall','rivera','campbell','mitchell','carter','roberts',
+  'gomez','phillips','evans','turner','diaz','parker','cruz','edwards','collins','reyes',
+  'stewart','morris','morales','murphy','cook','rogers','gutierrez','ortiz','morgan','cooper',
+  'peterson','bailey','reed','kelly','howard','ramos','kim','cox','ward','richardson',
+  'watson','brooks','chavez','wood','james','bennett','gray','mendoza','ruiz','hughes',
+  'price','alvarez','castillo','sanders','patel','myers','long','ross','foster','jimenez',
+  // Common Asian surnames in US medical workforce
+  'chen','wang','liu','zhang','wong','huang','singh','shah','khan','ahmed','sharma','das','gupta',
+]);
+
 /**
- * Decide whether to TRUST an external source's count for a given NPI record.
+ * Decide whether to trust an external source's count for a given record.
  *
- * The external source has already been matched by name. This is a final
- * "is this confidence high enough to count it?" gate.
+ * Returns:
+ *   - { trust: true, confidence: 0.95 }   — distinctive name, trust raw counts
+ *   - { trust: true, confidence: 0.7  }   — common surname, dampen mildly
+ *   - { trust: false, confidence: 0.5 }   — common surname AND no disambiguating context
  *
- * Typical use in a connector:
- *   const r = await pubmed.fetchPublicationCount(npi.full_name);
- *   const id = identityResolution.gateExternalCount({ name: npi.full_name, specialty: npi.specialty_key, state: npi.license_state }, r);
- *   if (!id.trust) { count = 0; } // disambiguation rejected the result
+ * Callers should multiply external counts by `confidence` so common-name results
+ * are dampened proportionally rather than zeroed.
  */
 function gateExternalCount(npiRecord, externalResult) {
-  // Self-match (npi vs npi own name) — should always be 1.0
-  const self = score(
-    { name: npiRecord.full_name, specialty: npiRecord.specialty_key, state: npiRecord.license_state },
-    npiRecord
-  );
-  // If even our own record can't score well, the name itself is too ambiguous to trust external counts
-  if (self.confidence < 0.85) {
-    return { trust: false, reason: 'name_too_ambiguous', confidence: self.confidence };
+  const t = tokenize(npiRecord.full_name || '');
+  if (!t.last) return { trust: false, reason: 'no_name', confidence: 0 };
+  if (t.tokens.length < 2) return { trust: false, reason: 'single_token', confidence: 0.3 };
+
+  const isCommon = COMMON_LAST_NAMES.has(t.last);
+  const hasContext = !!(npiRecord.specialty_key || npiRecord.license_state);
+
+  if (!isCommon) {
+    // Distinctive last name — trust the result fully
+    return { trust: true, confidence: 0.95, reason: 'distinctive_name' };
   }
-  return { trust: true, confidence: self.confidence };
+  if (isCommon && hasContext) {
+    // Common surname but we have specialty/state to help — moderate trust
+    return { trust: true, confidence: 0.75, reason: 'common_name_with_context' };
+  }
+  // Common surname, no context — flag as ambiguous, dampen heavily
+  return { trust: false, confidence: 0.5, reason: 'common_name_no_context' };
 }
 
 module.exports = {
