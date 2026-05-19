@@ -1094,12 +1094,23 @@ router.post('/', requireAuth, async (req, res) => {
   let cachedTokens = 0;
 
   try {
-    // Load conversation history if exists
+    // Load conversation history if exists.
+    // Heal legacy messages where assistant content contained tool_use blocks that were never
+    // followed by tool_result — Anthropic API rejects that, so flatten to text-only.
     let history = [];
     if (conversation_id) {
       try {
         const conv = await models.IntuitiveChatConversation.findOne({ where: { conversation_id } });
-        if (conv?.messages) history = conv.messages.slice(-30);
+        if (conv?.messages) {
+          history = conv.messages.slice(-30).map(m => {
+            let content = m.content;
+            if (Array.isArray(content)) {
+              content = content.filter(b => b && b.type === 'text').map(b => b.text || '').join('\n\n').trim();
+            }
+            if (typeof content !== 'string') content = '';
+            return { role: m.role, content };
+          }).filter(m => m.content && m.role);
+        }
       } catch (e) {}
     }
 
@@ -1128,7 +1139,8 @@ router.post('/', requireAuth, async (req, res) => {
     let assistantTurnContent = [];
 
     // Agentic loop: call model → execute tools → call again until stop_reason !== 'tool_use'
-    for (let turn = 0; turn < 6; turn++) { // max 6 tool roundtrips
+    const MAX_TURNS = 10;
+    for (let turn = 0; turn < MAX_TURNS; turn++) { // max 6 tool roundtrips
       const response = await anthropic.messages.create({
         model: SONNET_MODEL,
         max_tokens: 4096,
@@ -1199,12 +1211,48 @@ router.post('/', requireAuth, async (req, res) => {
       messages.push({ role: 'user', content: toolResults });
     }
 
+    // If the loop exhausted with stop_reason still 'tool_use', force a final
+    // synthesis call without tools so the user gets a coherent answer instead
+    // of silence — AND so we never persist an unfulfilled tool_use block.
+    if (stopReason === 'tool_use') {
+      try {
+        const synth = await anthropic.messages.create({
+          model: SONNET_MODEL,
+          max_tokens: 2048,
+          system: [{ type: 'text', text: SYSTEM_PROMPT + '\n\nIMPORTANT: You have reached the tool-call limit for this turn. Synthesize an answer from the tool results already returned. Do NOT request more tools. If the question cannot be fully answered with what you have, say so explicitly and suggest a more scoped follow-up.' }],
+          messages,
+          // NOTE: no `tools` param — forces text-only output, prevents another tool_use block
+        });
+        const synthText = (synth.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        if (synthText) {
+          send({ type: 'text', content: synthText });
+          assistantTurnContent = [{ type: 'text', text: synthText }];
+        } else {
+          assistantTurnContent = [{ type: 'text', text: 'I ran out of tool-call budget for this question. Try splitting it into smaller follow-ups.' }];
+        }
+        const synthUsage = synth.usage || {};
+        totalTokens += (synthUsage.input_tokens || 0) + (synthUsage.output_tokens || 0);
+        cachedTokens += (synthUsage.cache_read_input_tokens || 0);
+      } catch (synthErr) {
+        console.error('[chat] synthesis fallback error:', synthErr.message);
+        assistantTurnContent = [{ type: 'text', text: 'I hit the tool-call limit for this question. Try splitting it into smaller follow-ups, or narrow the scope (e.g. one procedure at a time).' }];
+        send({ type: 'text', content: assistantTurnContent[0].text });
+      }
+    }
+
+    // Sanitize the assistant content to text-only for persistence.
+    // Saved tool_use blocks without paired tool_results poison the next turn
+    // (Anthropic API rejects them with 400 invalid_request_error).
+    const assistantTextForSave = Array.isArray(assistantTurnContent)
+      ? assistantTurnContent.filter(b => b && b.type === 'text').map(b => b.text || '').join('\n\n').trim()
+      : String(assistantTurnContent || '');
+
     // Persist conversation
     try {
       const finalMessages = [
         ...history,
         { role: 'user', content: question, ts: new Date() },
-        { role: 'assistant', content: assistantTurnContent, ts: new Date() },
+        { role: 'assistant', content: assistantTextForSave, ts: new Date() },
       ];
       const existing = await models.IntuitiveChatConversation.findOne({ where: { conversation_id: convId } });
       if (existing) {
