@@ -235,12 +235,8 @@ async function renderOverview(container) {
   // Quick actions bar
   const quickActionsHtml = `
     <div class="quick-actions">
-      <button class="quick-action-btn" onclick="openContactModal()"><span class="qa-label">Add Person</span></button>
-      <button class="quick-action-btn" onclick="openProjectModal()"><span class="qa-label">New Project</span></button>
-      <button class="quick-action-btn" onclick="openTaskModal()"><span class="qa-label">Add To-Do</span></button>
       <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-label">Schedule Event</span></button>
       <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-label">Ask AI</span></button>
-      <button class="quick-action-btn" onclick="openZoomMeeting()"><span class="qa-label">Zoom Meeting</span></button>
       <button class="quick-action-btn" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Quick Task</span></button>
     </div>`;
 
