@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     total_or_count: { type: DataTypes.INTEGER },
     total_admissions: { type: DataTypes.INTEGER },
     fiscal_year: { type: DataTypes.INTEGER },
+    fiscal_period: { type: DataTypes.STRING(8) }, // e.g. '2025-Q1' — informational, set via --quarter flag
     ingested_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   }, {
     tableName: 'intuitive_florida_ahca_hospitals',
