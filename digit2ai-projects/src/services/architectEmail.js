@@ -21,6 +21,8 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* SendGrid optional */ }
 
+const { buildCcBcc } = require('./stakeholderRecipients');
+
 const FROM_EMAIL = 'info@digit2ai.com';
 const FROM_NAME = 'Manuel Stagg / Digit2AI';
 const REPLY_TO = 'mstagg@digit2ai.com';
@@ -45,7 +47,7 @@ function stakeholderEmails(project) {
   return Array.from(set);
 }
 
-async function send({ to, subject, html, text }) {
+async function send({ to, subject, html, text, stakeholderFacing }) {
   if (!sgMail || !process.env.SENDGRID_API_KEY) {
     console.log('[architectEmail] SendGrid not configured; would have sent:', subject, '->', to);
     return { sent: false, reason: 'sendgrid_not_configured' };
@@ -61,6 +63,7 @@ async function send({ to, subject, html, text }) {
   // rejects messages where any content part is an empty string with:
   //   "The content value must be a string at least one character in length"
   if (text && String(text).length) msg.text = text;
+  if (stakeholderFacing) Object.assign(msg, buildCcBcc(to));
   try {
     const r = Array.isArray(to) && to.length > 1
       ? await sgMail.sendMultiple(msg)
@@ -210,7 +213,8 @@ ${magicLink ? `<p style="margin:12px 0"><a href="${esc(magicLink)}" style="color
   return send({
     to: recipients,
     subject: `[UAT ready] ${project.name}`,
-    html
+    html,
+    stakeholderFacing: true
   });
 }
 
@@ -255,7 +259,8 @@ async function sendShippedConfirmation(project) {
   return send({
     to: recipients,
     subject: `[Shipped] ${project.name}`,
-    html
+    html,
+    stakeholderFacing: true
   });
 }
 

@@ -17,6 +17,8 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* SendGrid not installed — /send will return a soft warning */ }
 
+const { buildCcBcc } = require('../services/stakeholderRecipients');
+
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
 
 function buildContractHtml({ project, total, depositPct, depositAmount, monthly, currency, termMonths, deliveryWeeks }) {
@@ -340,13 +342,15 @@ Digit2AI`;
   <p style="font-size:12px;color:#64748b;margin:6px 0 0">— ${esc(fromName)}, Digit2AI</p>
 </div>`;
 
+    const toList = Array.from(stakeholders);
     const msg = {
-      to: Array.from(stakeholders),
+      to: toList,
       from: { email: fromEmail, name: `${fromName} / Digit2AI` },
       replyTo,
       subject,
       text,
-      html
+      html,
+      ...buildCcBcc(toList)
     };
 
     await sgMail.sendMultiple ? await sgMail.sendMultiple(msg) : await sgMail.send(msg);

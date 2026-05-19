@@ -10,6 +10,8 @@ try {
   if (process.env.SENDGRID_API_KEY) sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } catch (e) { /* @sendgrid/mail not installed — sends will fail loudly */ }
 
+const { buildCcBcc } = require('./stakeholderRecipients');
+
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
 const FROM_NAME  = 'Digit2AI';
 
@@ -225,7 +227,8 @@ async function sendInvites({ event, emails, customMessage, organizerName, organi
       subject,
       text,
       html,
-      attachments: [attachment]
+      attachments: [attachment],
+      ...buildCcBcc(to)
     };
     try {
       await sgMail.send(msg);
