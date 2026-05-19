@@ -4,28 +4,708 @@
     "last_updated": "2026-05-01"
   },
   "codes": {
-    "55866": { "description": "Laparoscopic radical prostatectomy (commonly performed robotically)", "family": "urology", "typical_platform": "DV5/Xi" },
-    "55867": { "description": "Robotic-assisted radical prostatectomy", "family": "urology", "typical_platform": "DV5/Xi" },
-    "58571": { "description": "Laparoscopic total hysterectomy <=250g (often robotic)", "family": "gynecology", "typical_platform": "Xi/DV5" },
-    "58572": { "description": "Laparoscopic total hysterectomy >250g (often robotic)", "family": "gynecology", "typical_platform": "Xi/DV5" },
-    "58573": { "description": "Laparoscopic total hysterectomy with bilateral salpingo-oophorectomy", "family": "gynecology", "typical_platform": "Xi/DV5" },
-    "58550": { "description": "Laparoscopic supracervical hysterectomy", "family": "gynecology", "typical_platform": "Xi" },
-    "44204": { "description": "Laparoscopic partial colectomy with anastomosis", "family": "colorectal", "typical_platform": "Xi/DV5" },
-    "44205": { "description": "Laparoscopic colectomy with end colostomy", "family": "colorectal", "typical_platform": "Xi/DV5" },
-    "44207": { "description": "Laparoscopic colectomy with rectal anastomosis", "family": "colorectal", "typical_platform": "Xi/DV5" },
-    "44210": { "description": "Laparoscopic total abdominal colectomy", "family": "colorectal", "typical_platform": "Xi/DV5" },
-    "44213": { "description": "Laparoscopic colon mobilization", "family": "colorectal", "typical_platform": "Xi" },
-    "47562": { "description": "Laparoscopic cholecystectomy (robotic increasingly common)", "family": "general", "typical_platform": "Xi/SP" },
-    "47563": { "description": "Laparoscopic cholecystectomy with cholangiography", "family": "general", "typical_platform": "Xi/SP" },
-    "49565": { "description": "Repair of recurrent incisional/ventral hernia", "family": "general", "typical_platform": "Xi" },
-    "49652": { "description": "Laparoscopic ventral/incisional hernia repair", "family": "general", "typical_platform": "Xi" },
-    "49654": { "description": "Laparoscopic recurrent ventral hernia repair", "family": "general", "typical_platform": "Xi" },
-    "32651": { "description": "Thoracoscopic partial pulmonary decortication", "family": "thoracic", "typical_platform": "Xi/DV5" },
-    "32663": { "description": "Thoracoscopic lobectomy", "family": "thoracic", "typical_platform": "Xi/DV5" },
-    "32666": { "description": "Thoracoscopic wedge resection", "family": "thoracic", "typical_platform": "Xi/DV5" },
-    "60252": { "description": "Total thyroidectomy with limited neck dissection", "family": "head_neck", "typical_platform": "SP" },
-    "42890": { "description": "Limited pharyngectomy (transoral robotic)", "family": "head_neck", "typical_platform": "SP" },
-    "31530": { "description": "Laryngoscopy with foreign body removal (transoral robotic)", "family": "head_neck", "typical_platform": "SP" }
+    "31530": {
+      "description": "Laryngoscopy with foreign body removal (transoral robotic)",
+      "family": "head_neck",
+      "typical_platform": "SP"
+    },
+    "32480": {
+      "family": "lobectomy",
+      "description": "Lobectomy, single lobe",
+      "robotic_intent": false
+    },
+    "32482": {
+      "family": "lobectomy",
+      "description": "Lobectomy, two lobes",
+      "robotic_intent": false
+    },
+    "32484": {
+      "family": "lobectomy",
+      "description": "Segmentectomy",
+      "robotic_intent": false
+    },
+    "32486": {
+      "family": "lobectomy",
+      "description": "Sleeve lobectomy",
+      "robotic_intent": false
+    },
+    "32488": {
+      "family": "lobectomy",
+      "description": "Completion pneumonectomy",
+      "robotic_intent": false
+    },
+    "32651": {
+      "description": "Thoracoscopic partial pulmonary decortication",
+      "family": "thoracic",
+      "typical_platform": "Xi/DV5"
+    },
+    "32663": {
+      "description": "Thoracoscopic lobectomy",
+      "family": "thoracic",
+      "typical_platform": "Xi/DV5"
+    },
+    "32666": {
+      "description": "Thoracoscopic wedge resection",
+      "family": "thoracic",
+      "typical_platform": "Xi/DV5"
+    },
+    "32669": {
+      "family": "lobectomy",
+      "description": "Thoracoscopy, surgical; removal of single lung segment",
+      "robotic_intent": false
+    },
+    "32671": {
+      "family": "lobectomy",
+      "description": "Thoracoscopy, surgical; w/ lobectomy + mediastinal lymphadenectomy",
+      "robotic_intent": false
+    },
+    "41135": {
+      "family": "tors",
+      "description": "Glossectomy, partial, w/ unilateral radical neck dissection",
+      "robotic_intent": false
+    },
+    "41140": {
+      "family": "tors",
+      "description": "Glossectomy, complete or total",
+      "robotic_intent": false
+    },
+    "41150": {
+      "family": "tors",
+      "description": "Glossectomy + resection of floor of mouth + mandibulectomy",
+      "robotic_intent": false
+    },
+    "42415": {
+      "family": "tors",
+      "description": "Excision of parotid tumor, lateral lobe, w/ dissection + nerve preservation",
+      "robotic_intent": false
+    },
+    "42420": {
+      "family": "tors",
+      "description": "Excision of parotid tumor, total, w/ dissection + nerve preservation",
+      "robotic_intent": false
+    },
+    "42426": {
+      "family": "tors",
+      "description": "Excision of parotid tumor, total, w/ unilateral radical neck dissection",
+      "robotic_intent": false
+    },
+    "42870": {
+      "family": "tors",
+      "description": "Excision/destruction lingual tonsil, any approach",
+      "robotic_intent": false
+    },
+    "42890": {
+      "description": "Limited pharyngectomy (transoral robotic)",
+      "family": "head_neck",
+      "typical_platform": "SP"
+    },
+    "42971": {
+      "family": "tors",
+      "description": "Pharyngeal resection (incl. tonsillectomy) for tumor",
+      "robotic_intent": false
+    },
+    "43107": {
+      "family": "esophagectomy",
+      "description": "Total/near total esophagectomy, w/o thoracotomy, cervical anastomosis",
+      "robotic_intent": false
+    },
+    "43108": {
+      "family": "esophagectomy",
+      "description": "Total/near total esophagectomy, w/o thoracotomy, cervical anastomosis + reconstruction",
+      "robotic_intent": false
+    },
+    "43112": {
+      "family": "esophagectomy",
+      "description": "Total/near total esophagectomy, w/ thoracotomy, cervical anastomosis",
+      "robotic_intent": false
+    },
+    "43113": {
+      "family": "esophagectomy",
+      "description": "Total/near total esophagectomy, w/ thoracotomy, cervical anastomosis + reconstruction",
+      "robotic_intent": false
+    },
+    "43117": {
+      "family": "esophagectomy",
+      "description": "Partial esophagectomy, distal, two-stage",
+      "robotic_intent": false
+    },
+    "43121": {
+      "family": "esophagectomy",
+      "description": "Partial esophagectomy, distal, w/ thoracotomy + anastomosis",
+      "robotic_intent": false
+    },
+    "43122": {
+      "family": "esophagectomy",
+      "description": "Partial esophagectomy, thoracoabdominal, w/ esophagogastrostomy",
+      "robotic_intent": false
+    },
+    "43124": {
+      "family": "esophagectomy",
+      "description": "Total/partial esophagectomy, w/o reconstruction (Eloesser)",
+      "robotic_intent": false
+    },
+    "43644": {
+      "family": "gastric_bypass",
+      "description": "Laparoscopy, surgical, gastric restrictive + Roux-en-Y gastroenterostomy",
+      "robotic_intent": false
+    },
+    "43645": {
+      "family": "gastric_bypass",
+      "description": "Laparoscopy, gastric restrictive + Roux-en-Y + small intestine reconstruction",
+      "robotic_intent": false
+    },
+    "43775": {
+      "family": "bariatric_sleeve",
+      "description": "Laparoscopy, surgical, gastric restrictive; longitudinal gastrectomy (sleeve)",
+      "robotic_intent": false
+    },
+    "43846": {
+      "family": "gastric_bypass",
+      "description": "Gastric restrictive + Roux-en-Y, <=150cm small bowel limb (open)",
+      "robotic_intent": false
+    },
+    "43847": {
+      "family": "gastric_bypass",
+      "description": "Gastric restrictive + small intestine reconstruction (open)",
+      "robotic_intent": false
+    },
+    "44140": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, with anastomosis",
+      "robotic_intent": false
+    },
+    "44141": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, with skin level cecostomy or colostomy",
+      "robotic_intent": false
+    },
+    "44143": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, with end colostomy + closure of distal segment",
+      "robotic_intent": false
+    },
+    "44144": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, w/ resection of colon + ileostomy + Hartmann pouch",
+      "robotic_intent": false
+    },
+    "44145": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, with coloproctostomy (low pelvic anastomosis)",
+      "robotic_intent": false
+    },
+    "44146": {
+      "family": "colectomy",
+      "description": "Colectomy, partial, with coloproctostomy + colostomy",
+      "robotic_intent": false
+    },
+    "44150": {
+      "family": "colectomy",
+      "description": "Colectomy, total, w/ ileostomy",
+      "robotic_intent": false
+    },
+    "44151": {
+      "family": "colectomy",
+      "description": "Colectomy, total, w/ continent ileostomy",
+      "robotic_intent": false
+    },
+    "44204": {
+      "description": "Laparoscopic partial colectomy with anastomosis",
+      "family": "colorectal",
+      "typical_platform": "Xi/DV5"
+    },
+    "44205": {
+      "description": "Laparoscopic colectomy with end colostomy",
+      "family": "colorectal",
+      "typical_platform": "Xi/DV5"
+    },
+    "44206": {
+      "family": "colectomy",
+      "description": "Laparoscopy, surgical; colectomy, partial, w/ end colostomy + closure",
+      "robotic_intent": false
+    },
+    "44207": {
+      "description": "Laparoscopic colectomy with rectal anastomosis",
+      "family": "colorectal",
+      "typical_platform": "Xi/DV5"
+    },
+    "44208": {
+      "family": "colectomy",
+      "description": "Laparoscopy, surgical; colectomy, partial, coloproctostomy + colostomy",
+      "robotic_intent": false
+    },
+    "44210": {
+      "description": "Laparoscopic total abdominal colectomy",
+      "family": "colorectal",
+      "typical_platform": "Xi/DV5"
+    },
+    "44211": {
+      "family": "colectomy",
+      "description": "Laparoscopy, surgical; colectomy, total, w/ proctectomy + ileoanal",
+      "robotic_intent": false
+    },
+    "44212": {
+      "family": "colectomy",
+      "description": "Laparoscopy, surgical; colectomy, total, w/ ileostomy",
+      "robotic_intent": false
+    },
+    "44213": {
+      "description": "Laparoscopic colon mobilization",
+      "family": "colorectal",
+      "typical_platform": "Xi"
+    },
+    "45110": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, complete, combined abdominoperineal, w/ colostomy",
+      "robotic_intent": false
+    },
+    "45111": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, partial, transabdominal approach",
+      "robotic_intent": false
+    },
+    "45112": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, complete, w/ combined abdominoperineal pull-through",
+      "robotic_intent": false
+    },
+    "45113": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, partial, with rectal mucosectomy",
+      "robotic_intent": false
+    },
+    "45114": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, partial, with anastomosis, abdominal + transsacral",
+      "robotic_intent": false
+    },
+    "45116": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, partial, w/ anastomosis, transsacral approach only",
+      "robotic_intent": false
+    },
+    "45119": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, combined abdominoperineal pull-through",
+      "robotic_intent": false
+    },
+    "45120": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, complete (for congenital megacolon)",
+      "robotic_intent": false
+    },
+    "45123": {
+      "family": "rectal_resection",
+      "description": "Proctectomy, partial, without anastomosis, perineal approach",
+      "robotic_intent": false
+    },
+    "45160": {
+      "family": "rectal_resection",
+      "description": "Excision of rectal tumor",
+      "robotic_intent": false
+    },
+    "45395": {
+      "family": "rectal_resection",
+      "description": "Laparoscopy, surgical; proctectomy, complete, combined abdominoperineal",
+      "robotic_intent": false
+    },
+    "45397": {
+      "family": "rectal_resection",
+      "description": "Laparoscopy, surgical; proctectomy, partial, with anastomosis",
+      "robotic_intent": false
+    },
+    "47562": {
+      "description": "Laparoscopic cholecystectomy (robotic increasingly common)",
+      "family": "general",
+      "typical_platform": "Xi/SP"
+    },
+    "47563": {
+      "description": "Laparoscopic cholecystectomy with cholangiography",
+      "family": "general",
+      "typical_platform": "Xi/SP"
+    },
+    "47564": {
+      "family": "cholecystectomy",
+      "description": "Laparoscopy, surgical; cholecystectomy w/ exploration of common duct",
+      "robotic_intent": false
+    },
+    "47600": {
+      "family": "cholecystectomy",
+      "description": "Cholecystectomy (open)",
+      "robotic_intent": false
+    },
+    "47605": {
+      "family": "cholecystectomy",
+      "description": "Cholecystectomy w/ cholangiography (open)",
+      "robotic_intent": false
+    },
+    "47610": {
+      "family": "cholecystectomy",
+      "description": "Cholecystectomy w/ exploration of common duct (open)",
+      "robotic_intent": false
+    },
+    "49505": {
+      "family": "inguinal_hernia",
+      "description": "Repair initial inguinal hernia, age 5+, reducible",
+      "robotic_intent": false
+    },
+    "49507": {
+      "family": "inguinal_hernia",
+      "description": "Repair initial inguinal hernia, age 5+, incarcerated/strangulated",
+      "robotic_intent": false
+    },
+    "49520": {
+      "family": "inguinal_hernia",
+      "description": "Repair recurrent inguinal hernia, reducible",
+      "robotic_intent": false
+    },
+    "49521": {
+      "family": "inguinal_hernia",
+      "description": "Repair recurrent inguinal hernia, incarcerated/strangulated",
+      "robotic_intent": false
+    },
+    "49525": {
+      "family": "inguinal_hernia",
+      "description": "Repair inguinal hernia, sliding, any age",
+      "robotic_intent": false
+    },
+    "49560": {
+      "family": "ventral_hernia",
+      "description": "Repair initial incisional/ventral hernia, reducible",
+      "robotic_intent": false
+    },
+    "49561": {
+      "family": "ventral_hernia",
+      "description": "Repair initial incisional/ventral hernia, incarcerated/strangulated",
+      "robotic_intent": false
+    },
+    "49565": {
+      "description": "Repair of recurrent incisional/ventral hernia",
+      "family": "general",
+      "typical_platform": "Xi"
+    },
+    "49566": {
+      "family": "ventral_hernia",
+      "description": "Repair recurrent incisional/ventral hernia, incarcerated",
+      "robotic_intent": false
+    },
+    "49591": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia(s) repair, <3cm",
+      "robotic_intent": false
+    },
+    "49592": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia, <3cm, incarcerated",
+      "robotic_intent": false
+    },
+    "49593": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia, 3-10cm",
+      "robotic_intent": false
+    },
+    "49594": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia, 3-10cm, incarcerated",
+      "robotic_intent": false
+    },
+    "49595": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia, >10cm",
+      "robotic_intent": false
+    },
+    "49596": {
+      "family": "ventral_hernia",
+      "description": "Anterior abdominal hernia, >10cm, incarcerated",
+      "robotic_intent": false
+    },
+    "49650": {
+      "family": "inguinal_hernia",
+      "description": "Laparoscopy, surgical; repair initial inguinal hernia",
+      "robotic_intent": false
+    },
+    "49651": {
+      "family": "inguinal_hernia",
+      "description": "Laparoscopy, surgical; repair recurrent inguinal hernia",
+      "robotic_intent": false
+    },
+    "49652": {
+      "description": "Laparoscopic ventral/incisional hernia repair",
+      "family": "general",
+      "typical_platform": "Xi"
+    },
+    "49653": {
+      "family": "ventral_hernia",
+      "description": "Laparoscopy, ventral hernia, incarcerated/strangulated",
+      "robotic_intent": false
+    },
+    "49654": {
+      "description": "Laparoscopic recurrent ventral hernia repair",
+      "family": "general",
+      "typical_platform": "Xi"
+    },
+    "49655": {
+      "family": "ventral_hernia",
+      "description": "Laparoscopy, incarcerated incisional hernia",
+      "robotic_intent": false
+    },
+    "49656": {
+      "family": "ventral_hernia",
+      "description": "Laparoscopy, recurrent incisional hernia",
+      "robotic_intent": false
+    },
+    "49657": {
+      "family": "ventral_hernia",
+      "description": "Laparoscopy, recurrent incarcerated incisional hernia",
+      "robotic_intent": false
+    },
+    "50220": {
+      "family": "radical_nephrectomy",
+      "description": "Nephrectomy, including partial ureterectomy",
+      "robotic_intent": false
+    },
+    "50225": {
+      "family": "radical_nephrectomy",
+      "description": "Nephrectomy w/ partial ureterectomy, any open approach",
+      "robotic_intent": false
+    },
+    "50230": {
+      "family": "radical_nephrectomy",
+      "description": "Nephrectomy, with total ureterectomy + bladder cuff",
+      "robotic_intent": false
+    },
+    "50240": {
+      "family": "partial_nephrectomy",
+      "description": "Nephrectomy, partial (open)",
+      "robotic_intent": false
+    },
+    "50543": {
+      "family": "partial_nephrectomy",
+      "description": "Laparoscopy, surgical; partial nephrectomy",
+      "robotic_intent": false
+    },
+    "50545": {
+      "family": "radical_nephrectomy",
+      "description": "Laparoscopy, surgical; radical nephrectomy",
+      "robotic_intent": false
+    },
+    "50546": {
+      "family": "radical_nephrectomy",
+      "description": "Laparoscopy, surgical; nephrectomy + total ureterectomy",
+      "robotic_intent": false
+    },
+    "51570": {
+      "family": "cystectomy",
+      "description": "Cystectomy, complete",
+      "robotic_intent": false
+    },
+    "51575": {
+      "family": "cystectomy",
+      "description": "Cystectomy, complete w/ pelvic lymphadenectomy",
+      "robotic_intent": false
+    },
+    "51580": {
+      "family": "cystectomy",
+      "description": "Cystectomy, complete w/ ureterosigmoidostomy",
+      "robotic_intent": false
+    },
+    "51590": {
+      "family": "cystectomy",
+      "description": "Cystectomy, complete w/ ureteroileal/colic conduit",
+      "robotic_intent": false
+    },
+    "51595": {
+      "family": "cystectomy",
+      "description": "Cystectomy w/ continent diversion (pouch)",
+      "robotic_intent": false
+    },
+    "51596": {
+      "family": "cystectomy",
+      "description": "Cystectomy, complete w/ continent diversion + pelvic lymphadenectomy",
+      "robotic_intent": false
+    },
+    "55840": {
+      "family": "prostatectomy",
+      "description": "Prostatectomy, retropubic radical, with or without nerve sparing",
+      "robotic_intent": false
+    },
+    "55842": {
+      "family": "prostatectomy",
+      "description": "Prostatectomy, retropubic radical, with bilateral lymphadenectomy",
+      "robotic_intent": false
+    },
+    "55845": {
+      "family": "prostatectomy",
+      "description": "Prostatectomy, retropubic radical, w/ bilateral pelvic lymphadenectomy",
+      "robotic_intent": false
+    },
+    "55866": {
+      "description": "Laparoscopic radical prostatectomy (commonly performed robotically)",
+      "family": "urology",
+      "typical_platform": "DV5/Xi"
+    },
+    "55867": {
+      "description": "Robotic-assisted radical prostatectomy",
+      "family": "urology",
+      "typical_platform": "DV5/Xi"
+    },
+    "58140": {
+      "family": "myomectomy",
+      "description": "Myomectomy, abdominal, 1-4 myomas",
+      "robotic_intent": false
+    },
+    "58145": {
+      "family": "myomectomy",
+      "description": "Myomectomy, vaginal, <250g",
+      "robotic_intent": false
+    },
+    "58146": {
+      "family": "myomectomy",
+      "description": "Myomectomy, abdominal, 5+ myomas",
+      "robotic_intent": false
+    },
+    "58150": {
+      "family": "hysterectomy_benign",
+      "description": "Total abdominal hysterectomy (corpus + cervix)",
+      "robotic_intent": false
+    },
+    "58180": {
+      "family": "hysterectomy_benign",
+      "description": "Supracervical abdominal hysterectomy",
+      "robotic_intent": false
+    },
+    "58210": {
+      "family": "hysterectomy_oncology",
+      "description": "Radical abdominal hysterectomy + pelvic lymphadenectomy",
+      "robotic_intent": false
+    },
+    "58260": {
+      "family": "hysterectomy_benign",
+      "description": "Vaginal hysterectomy, <250g",
+      "robotic_intent": false
+    },
+    "58262": {
+      "family": "hysterectomy_benign",
+      "description": "Vaginal hysterectomy w/ removal of tube(s) and/or ovary(s)",
+      "robotic_intent": false
+    },
+    "58541": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, surgical, supracervical hysterectomy, <250g",
+      "robotic_intent": false
+    },
+    "58542": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, surgical, supracervical hysterectomy <250g + tubes/ovaries",
+      "robotic_intent": false
+    },
+    "58543": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, surgical, supracervical hysterectomy >250g",
+      "robotic_intent": false
+    },
+    "58544": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, surgical, supracervical hysterectomy >250g + tubes/ovaries",
+      "robotic_intent": false
+    },
+    "58545": {
+      "family": "myomectomy",
+      "description": "Laparoscopy, surgical, myomectomy, 1-4 myomas",
+      "robotic_intent": false
+    },
+    "58546": {
+      "family": "myomectomy",
+      "description": "Laparoscopy, surgical, myomectomy, 5+ myomas",
+      "robotic_intent": false
+    },
+    "58550": {
+      "description": "Laparoscopic supracervical hysterectomy",
+      "family": "gynecology",
+      "typical_platform": "Xi"
+    },
+    "58552": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, vaginal hysterectomy + tubes/ovaries <250g",
+      "robotic_intent": false
+    },
+    "58553": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, vaginal hysterectomy >250g",
+      "robotic_intent": false
+    },
+    "58554": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, vaginal hysterectomy >250g + tubes/ovaries",
+      "robotic_intent": false
+    },
+    "58570": {
+      "family": "hysterectomy_benign",
+      "description": "Laparoscopy, surgical, w/ total hysterectomy <250g",
+      "robotic_intent": false
+    },
+    "58571": {
+      "description": "Laparoscopic total hysterectomy <=250g (often robotic)",
+      "family": "gynecology",
+      "typical_platform": "Xi/DV5"
+    },
+    "58572": {
+      "description": "Laparoscopic total hysterectomy >250g (often robotic)",
+      "family": "gynecology",
+      "typical_platform": "Xi/DV5"
+    },
+    "58573": {
+      "description": "Laparoscopic total hysterectomy with bilateral salpingo-oophorectomy",
+      "family": "gynecology",
+      "typical_platform": "Xi/DV5"
+    },
+    "58575": {
+      "family": "hysterectomy_oncology",
+      "description": "Laparoscopy, surgical, total hysterectomy for resection of malignancy",
+      "robotic_intent": false
+    },
+    "58951": {
+      "family": "hysterectomy_oncology",
+      "description": "Resection (initial) of ovarian/tubal/peritoneal malignancy w/ omentectomy",
+      "robotic_intent": false
+    },
+    "58953": {
+      "family": "hysterectomy_oncology",
+      "description": "Bilateral salpingo-oophorectomy + omentectomy + radical dissection for debulking",
+      "robotic_intent": false
+    },
+    "58954": {
+      "family": "hysterectomy_oncology",
+      "description": "Bilateral salpingo-oophorectomy + omentectomy + debulking + pelvic lymphadenectomy",
+      "robotic_intent": false
+    },
+    "58956": {
+      "family": "hysterectomy_oncology",
+      "description": "Bilateral salpingo-oophorectomy + omentectomy + total hysterectomy",
+      "robotic_intent": false
+    },
+    "60252": {
+      "description": "Total thyroidectomy with limited neck dissection",
+      "family": "head_neck",
+      "typical_platform": "SP"
+    },
+    "60520": {
+      "family": "thymectomy",
+      "description": "Thymectomy, partial or total, transcervical approach",
+      "robotic_intent": false
+    },
+    "60521": {
+      "family": "thymectomy",
+      "description": "Thymectomy, sternal split or transthoracic, without radical mediastinal dissection",
+      "robotic_intent": false
+    },
+    "60522": {
+      "family": "thymectomy",
+      "description": "Thymectomy, sternal split or transthoracic, with radical mediastinal dissection",
+      "robotic_intent": false
+    }
   },
-  "modifier": "S2900"
+  "modifier": "S2900",
+  "_expanded_at": "2026-05-19T21:26:37.750Z",
+  "_note": "Expanded to cover full hcpcs-families.json (133 codes) for compare_hospital_procedure_volumes coverage. Original 22 robotic-only codes retain robotic_intent semantics."
 }

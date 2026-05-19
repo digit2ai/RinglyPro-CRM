@@ -599,50 +599,60 @@ async function compareHospitalProcedureVolumes({
   const t0 = Date.now();
   const models = ctx.models;
   if (!models) throw new Error('models required');
-  if (!models.IntuitiveProviderAffiliation) {
-    throw new Error('Care Compare data not ingested. Run scripts/ingest-care-compare.js first.');
+  if (!models.IntuitiveHospital) {
+    throw new Error('Hospital master table missing. Run scripts/ingest-hospital-general-info.js first.');
+  }
+  if (!models.IntuitiveSurgeonHospitalAffiliation) {
+    throw new Error('Surgeon-hospital affiliations missing. Run scripts/ingest-facility-affiliation.js first.');
   }
   if (!models.IntuitivePhysicianProcedureVolume) {
     throw new Error('MPUP physician volume table missing');
   }
 
-  // 1) Resolve hospitals — prefer CCNs, fall back to fuzzy hospital_names
-  const { Op, fn, col, literal } = require('sequelize');
+  // 1) Resolve hospitals via IntuitiveHospital master table (5,400 real US hospitals)
+  const { Op, fn, col } = require('sequelize');
   const hospitalRowsBySource = new Map(); // ccn → { ccn, name, state }
 
   if (Array.isArray(hospital_ccns) && hospital_ccns.length) {
-    const rows = await models.IntuitiveProviderAffiliation.findAll({
-      where: { hospital_ccn: hospital_ccns.map(String) },
-      attributes: [
-        'hospital_ccn',
-        [fn('MAX', col('hospital_name')), 'hospital_name'],
-        [fn('MAX', col('hospital_state')), 'hospital_state'],
-      ],
-      group: ['hospital_ccn'],
+    const rows = await models.IntuitiveHospital.findAll({
+      where: { ccn: hospital_ccns.map(String) },
+      attributes: ['ccn', 'facility_name', 'state', 'city', 'hospital_type'],
       raw: true,
     });
     for (const r of rows) {
-      hospitalRowsBySource.set(r.hospital_ccn, {
-        ccn: r.hospital_ccn,
-        name: r.hospital_name,
-        state: r.hospital_state,
+      hospitalRowsBySource.set(r.ccn, {
+        ccn: r.ccn, name: r.facility_name, state: r.state, city: r.city, type: r.hospital_type,
       });
     }
   }
   if (Array.isArray(hospital_names) && hospital_names.length) {
+    // Use literal to ORDER BY length-closeness — shorter facility_name closer to the query length wins.
+    // This prevents fuzzy matches like "DOCTORS CENTER HOSPITAL ORLANDO HEALTH DORADO" (PR)
+    // from outranking "ORLANDO HEALTH" (FL) for a query of "Orlando Health".
+    // Also boost 50-state hospitals over US territories (PR/GU/VI/MP/AS) when no explicit state hint.
+    const TERRITORIES = ['PR', 'GU', 'VI', 'MP', 'AS'];
     for (const name of hospital_names) {
       if (!name || typeof name !== 'string') continue;
-      const r = await models.IntuitiveProviderAffiliation.findOne({
-        where: { hospital_name: { [Op.iLike]: `%${name}%` } },
+      const candidates = await models.IntuitiveHospital.findAll({
+        where: { facility_name: { [Op.iLike]: `%${name}%` } },
+        attributes: ['ccn', 'facility_name', 'state', 'city', 'hospital_type'],
         raw: true,
-        order: [['hospital_name', 'ASC']],
+        limit: 20,
       });
-      if (r && r.hospital_ccn && !hospitalRowsBySource.has(r.hospital_ccn)) {
-        hospitalRowsBySource.set(r.hospital_ccn, {
-          ccn: r.hospital_ccn,
-          name: r.hospital_name,
-          state: r.hospital_state,
-          matched_query: name,
+      if (candidates.length === 0) continue;
+      // Score each candidate: shorter name closer to query = higher score; territory = penalty
+      const scored = candidates.map(c => {
+        const lenDiff = Math.abs((c.facility_name || '').length - name.length);
+        const startsWithBonus = (c.facility_name || '').toUpperCase().startsWith(name.toUpperCase()) ? 100 : 0;
+        const territoryPenalty = TERRITORIES.includes(c.state) ? 1000 : 0;
+        const score = lenDiff + territoryPenalty - startsWithBonus;
+        return { ...c, _score: score };
+      }).sort((a, b) => a._score - b._score);
+      const matched = scored[0];
+      if (matched && !hospitalRowsBySource.has(matched.ccn)) {
+        hospitalRowsBySource.set(matched.ccn, {
+          ccn: matched.ccn, name: matched.facility_name, state: matched.state,
+          city: matched.city, type: matched.hospital_type, matched_query: name,
         });
       }
     }
@@ -651,7 +661,7 @@ async function compareHospitalProcedureVolumes({
     return {
       hospitals: [], families: [], matrix: {},
       elapsed_ms: Date.now() - t0,
-      error: 'No hospitals resolved. Provide hospital_ccns or hospital_names that exist in Care Compare.',
+      error: 'No hospitals resolved. Provide hospital_ccns or hospital_names that exist in CMS Hospital General Information.',
     };
   }
   const hospitals = Array.from(hospitalRowsBySource.values());
@@ -699,22 +709,31 @@ async function compareHospitalProcedureVolumes({
     };
   }
 
-  // 3) Pull all affiliated NPIs for the resolved hospitals (one query)
+  // 3) Pull all affiliated surgeon NPIs for the resolved hospitals
+  // Uses the IntuitiveSurgeonHospitalAffiliation table (many-to-many surgeon ↔ hospital)
+  // sourced from CMS "Facility Affiliation Data" — true hospital affiliations, not group practices.
   const ccnList = hospitals.map(h => h.ccn);
-  const npiRows = await models.IntuitiveProviderAffiliation.findAll({
-    where: { hospital_ccn: ccnList },
-    attributes: ['npi', 'hospital_ccn', 'full_name', 'primary_specialty'],
+  const affRows = await models.IntuitiveSurgeonHospitalAffiliation.findAll({
+    where: {
+      facility_ccn: ccnList,
+      facility_type: 'Hospital', // exclude long-term care, rehab, etc.
+    },
+    attributes: ['npi', 'facility_ccn', 'surgeon_last_name', 'surgeon_first_name'],
     raw: true,
   });
 
-  const npisByCcn = {}; // ccn → Set(npi)
+  const npisByCcn = {};
   const surgeonNameByNpi = {};
-  for (const row of npiRows) {
-    if (!npisByCcn[row.hospital_ccn]) npisByCcn[row.hospital_ccn] = new Set();
-    npisByCcn[row.hospital_ccn].add(row.npi);
-    if (row.full_name) surgeonNameByNpi[row.npi] = row.full_name;
+  for (const row of affRows) {
+    if (!npisByCcn[row.facility_ccn]) npisByCcn[row.facility_ccn] = new Set();
+    npisByCcn[row.facility_ccn].add(row.npi);
+    const first = row.surgeon_first_name || '';
+    const last = row.surgeon_last_name || '';
+    if (last && !surgeonNameByNpi[row.npi]) {
+      surgeonNameByNpi[row.npi] = `${first} ${last}`.trim();
+    }
   }
-  const allNpis = Array.from(new Set(npiRows.map(r => r.npi)));
+  const allNpis = Array.from(new Set(affRows.map(r => r.npi)));
   if (allNpis.length === 0) {
     return {
       hospitals, families: [], matrix: {},
@@ -758,9 +777,9 @@ async function compareHospitalProcedureVolumes({
   }
   // Build reverse index: npi → set of CCNs they belong to
   const ccnsByNpi = {};
-  for (const r of npiRows) {
+  for (const r of affRows) {
     if (!ccnsByNpi[r.npi]) ccnsByNpi[r.npi] = new Set();
-    ccnsByNpi[r.npi].add(r.hospital_ccn);
+    ccnsByNpi[r.npi].add(r.facility_ccn);
   }
 
   for (const v of volRows) {
