@@ -72,7 +72,7 @@ async function showApp() {
       refreshInboxBadge();
     }, 60000);
   }
-  navigateTo('calendar');
+  navigateTo('overview');
 }
 
 // =====================================================
@@ -248,6 +248,12 @@ async function renderOverview(container) {
     ${welcomeHtml}
     ${quickActionsHtml}
 
+    <div class="card card-accent-blue" style="margin-bottom:24px">
+      <div class="section-header"><h3>Coming Up Next</h3></div>
+      <p class="section-hint">Your upcoming meetings and events</p>
+      <div id="upcoming-list"></div>
+    </div>
+
     <div class="card-grid" style="margin-bottom:24px">
       <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')" data-tooltip="Click to see all active projects">
         <div class="stat-label">Your Active Projects</div>
@@ -295,17 +301,10 @@ async function renderOverview(container) {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="card">
-        <div class="section-header"><h3>Stalled Projects</h3></div>
-        <p class="section-hint">Projects with no updates in the last 2 weeks</p>
-        <div id="stalled-list"></div>
-      </div>
-      <div class="card">
-        <div class="section-header"><h3>Coming Up Next</h3></div>
-        <p class="section-hint">Your upcoming meetings and events</p>
-        <div id="upcoming-list"></div>
-      </div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-header"><h3>Stalled Projects</h3></div>
+      <p class="section-hint">Projects with no updates in the last 2 weeks</p>
+      <div id="stalled-list"></div>
     </div>
 
     <div class="card">
