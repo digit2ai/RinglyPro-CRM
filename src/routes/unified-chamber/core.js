@@ -1443,6 +1443,126 @@ router.get('/admin/members', authMiddleware, requireAdmin, async (req, res) => {
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
+// POST /admin/members -- admin/superadmin creates a new member directly.
+// Generates a random 12-char temporary password, returns it ONCE in the
+// response. The member is created with status='active' so they can log in
+// immediately (the admin shares the temp pw out of band).
+router.post('/admin/members', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const {
+      email, first_name, last_name, country, region_id, sector, sub_specialty,
+      company_name, company_registration_id, company_registration_country,
+      bio, phone, linkedin_url, website_url, years_experience, languages,
+      membership_type, governance_role, access_level
+    } = req.body || {};
+    if (!email || !first_name || !last_name) {
+      return res.status(400).json({ success: false, error: 'email, first_name, last_name are required' });
+    }
+    const lowerEmail = String(email).toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lowerEmail)) {
+      return res.status(400).json({ success: false, error: 'Invalid email' });
+    }
+    // Reject duplicate email within the same chamber.
+    const [dupe] = await sequelize.query(
+      `SELECT id FROM members WHERE chamber_id = :c AND email = :email`,
+      { replacements: { c: req.chamber_id, email: lowerEmail }, type: QueryTypes.SELECT }
+    );
+    if (dupe) {
+      return res.status(409).json({ success: false, error: 'Email already registered in this chamber' });
+    }
+    // Country whitelist if provided
+    if (country && !CHAMBER_COUNTRIES.has(country)) {
+      return res.status(400).json({ success: false, error: 'Invalid country -- pick from the dropdown' });
+    }
+    // Languages filter
+    let langsArr = Array.isArray(languages) ? languages : [];
+    langsArr = langsArr.map(l => String(l).trim()).filter(l => CHAMBER_LANGUAGES.has(l));
+
+    // Generate a 12-char URL-safe random temporary password.
+    const tempPw = require('crypto').randomBytes(9).toString('base64')
+      .replace(/\+/g, 'A').replace(/\//g, 'B').replace(/=/g, '');
+    const hash = await bcrypt.hash(tempPw, 10);
+
+    const langLiteral = langsArr.length === 0
+      ? '{}'
+      : '{' + langsArr.map(l => '"' + l.replace(/"/g, '\\"') + '"').join(',') + '}';
+    const yrs = years_experience && String(years_experience).trim() !== ''
+      ? parseInt(years_experience) : null;
+
+    const [row] = await sequelize.query(
+      `INSERT INTO members
+        (chamber_id, email, password_hash, first_name, last_name, country, region_id,
+         sector, sub_specialty, company_name, company_registration_id, company_registration_country,
+         bio, phone, linkedin_url, website_url, years_experience, languages,
+         membership_type, governance_role, access_level, verification_level,
+         status, trust_score, created_at, updated_at)
+       VALUES
+        (:c, :email, :hash, :fn, :ln, :country, :region_id,
+         :sector, :sub, :company, :crid, :crc,
+         :bio, :phone, :linkedin, :website, :yrs, :langs::text[],
+         :mt, :gr, :al, 'email',
+         'active', 0.5, NOW(), NOW())
+       RETURNING id, email, first_name, last_name, governance_role, access_level, membership_type`,
+      {
+        replacements: {
+          c: req.chamber_id, email: lowerEmail, hash,
+          fn: first_name, ln: last_name,
+          country: country || null,
+          region_id: region_id ? parseInt(region_id) : null,
+          sector: sector || null, sub: sub_specialty || null,
+          company: company_name || null,
+          crid: company_registration_id || null,
+          crc: company_registration_country || null,
+          bio: bio || null, phone: phone || null,
+          linkedin: linkedin_url || null, website: website_url || null,
+          yrs, langs: langLiteral,
+          mt: membership_type || 'individual',
+          gr: governance_role || 'member',
+          al: access_level || 'member'
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+    return res.status(201).json({
+      success: true,
+      data: { ...row, temporary_password: tempPw }
+    });
+  } catch (err) {
+    console.error('[POST /admin/members]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /admin/members/:id -- soft-delete (status='deleted'). The row stays
+// for audit + foreign-key integrity. Deleted members can't log in, won't
+// appear in search/match results, and their content stays attributed.
+router.delete('/admin/members/:id', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.id);
+    if (!targetId) return res.status(400).json({ success: false, error: 'Invalid member id' });
+    if (targetId === req.member.id) {
+      return res.status(400).json({ success: false, error: 'You cannot delete yourself' });
+    }
+    const [m] = await sequelize.query(
+      `SELECT id, status FROM members WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: targetId }, type: QueryTypes.SELECT }
+    );
+    if (!m) return res.status(404).json({ success: false, error: 'Member not found' });
+    if (m.status === 'deleted') {
+      return res.json({ success: true, data: { already_deleted: true } });
+    }
+    await sequelize.query(
+      `UPDATE members SET status = 'deleted', updated_at = NOW()
+       WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: targetId } }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[DELETE /admin/members/:id]', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/admin/roles', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const board = await sequelize.query(

@@ -1182,16 +1182,101 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // ================================================================
   // PAGE: Directory
   // ================================================================
+  // Modal solo-admin: agrega un miembro nuevo al directorio. POST a
+  // /admin/members genera una contrasena temporal aleatoria y la devuelve
+  // UNA vez para que el admin la comparta fuera del sistema.
+  function showAddMemberModal() {
+    var html = '<h2 style="margin:0 0 8px 0">Agregar Miembro al Directorio</h2>';
+    html += '<p class="text-muted text-sm mb-12">Se generara una contrasena temporal aleatoria que se mostrara una sola vez al guardar. Compartela con el nuevo miembro -- el puede cambiarla despues del primer login.</p>';
+    html += '<form id="addMemForm" class="form-grid"><div id="addMemMsg"></div>';
+    html += '<div class="form-group"><label>Nombre *</label><input name="first_name" required></div>';
+    html += '<div class="form-group"><label>Apellido *</label><input name="last_name" required></div>';
+    html += '<div class="form-group full"><label>Email *</label><input name="email" type="email" required></div>';
+    html += '<div class="form-group"><label>Pais</label><select name="country">'+countryOptions('')+'</select></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions('', '-- Selecciona sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Empresa</label><input name="company_name"></div>';
+    html += '<div class="form-group"><label>Sub-especialidad</label><input name="sub_specialty" placeholder="ej. SaaS B2B, AI"></div>';
+    html += '<div class="form-group"><label>Anos de Experiencia</label><input name="years_experience" type="number" min="0" max="80"></div>';
+    html += '<div class="form-group"><label>Telefono</label><input name="phone"></div>';
+    html += '<div class="form-group"><label>Idiomas</label>'+languageCheckboxes([])+'</div>';
+    html += '<div class="form-group"><label>URL LinkedIn</label><input name="linkedin_url"></div>';
+    html += '<div class="form-group"><label>URL Sitio Web</label><input name="website_url"></div>';
+    html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="2"></textarea></div>';
+    html += '<div class="form-group full" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-200)"><strong style="font-size:13px;color:var(--primary)">Roles y Acceso</strong></div>';
+    html += '<div class="form-group"><label>Membresia</label><select name="membership_type">';
+    ['individual','entrepreneur','business','corporate','founder'].forEach(function(t) {
+      html += '<option value="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="form-group"><label>Rol de Gobernanza</label><select name="governance_role">';
+    ['member','board_member','treasurer','secretary','vice_president','president'].forEach(function(r) {
+      html += '<option value="'+r+'">'+r.replace(/_/g,' ')+'</option>';
+    });
+    html += '</select></div>';
+    if (currentMember && currentMember.access_level === 'superadmin') {
+      html += '<div class="form-group"><label>Nivel de Acceso</label><select name="access_level">';
+      ['member','admin_regional','admin_global','superadmin'].forEach(function(al) {
+        html += '<option value="'+al+'">'+al.replace(/_/g,' ')+'</option>';
+      });
+      html += '</select></div>';
+    }
+    html += '<div class="form-group full" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">';
+    html += '<button type="button" class="btn btn-outline" id="addMemCancel">Cancelar</button>';
+    html += '<button type="submit" class="btn btn-primary" style="background:#28a745">Crear Miembro</button>';
+    html += '</div></form>';
+    openModal(html);
+
+    document.getElementById('addMemCancel').addEventListener('click', closeModal);
+    document.getElementById('addMemForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this); var body = {};
+      fd.forEach(function(v, k) {
+        if (k === 'languages') return;
+        if (v !== '') body[k] = v;
+      });
+      body.languages = fd.getAll('languages').filter(Boolean);
+      if (body.years_experience) body.years_experience = parseInt(body.years_experience);
+      var msg = document.getElementById('addMemMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Creando...</div>';
+      try {
+        var r = await apiFetch('/admin/members', 'POST', body);
+        if (r.success) {
+          var info = 'Miembro creado: ' + r.data.email;
+          if (r.data.temporary_password) {
+            info += '\n\nContrasena temporal: ' + r.data.temporary_password + '\n\n(Guardala -- solo se muestra una vez)';
+          }
+          alert(info);
+          closeModal();
+          if (currentPage === 'directory') navigate('directory');
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+        }
+      } catch(e) {
+        msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    });
+  }
+
   async function renderDirectory() {
     var el = document.getElementById('pageContent');
-    var html = '<div class="search-bar">';
+    var isAdmin = currentMember && ['superadmin','admin_global','admin_regional'].indexOf(currentMember.access_level) !== -1;
+    var html = '<div class="flex-between mb-12" style="flex-wrap:wrap;gap:8px">';
+    html += '<div class="search-bar" style="flex:1;min-width:260px;display:flex;gap:8px;flex-wrap:wrap">';
     html += '<input type="text" id="dirSearch" placeholder="Buscar por nombre o empresa...">';
     html += '<select id="dirRegion">'+regionOptions()+'</select>';
     html += '<select id="dirSector">'+sectorOptions()+'</select>';
     html += '<button class="btn btn-primary" id="dirBtn">Buscar</button>';
     html += '</div>';
+    if (isAdmin) {
+      html += '<button class="btn btn-primary" id="dirAddMemberBtn" style="background:#28a745;color:white">+ Agregar Miembro</button>';
+    }
+    html += '</div>';
     html += '<div id="dirResults"><div class="loading">Cargando...</div></div>';
     el.innerHTML = html;
+
+    if (isAdmin) {
+      document.getElementById('dirAddMemberBtn').addEventListener('click', showAddMemberModal);
+    }
 
     async function searchDir() {
       var params = new URLSearchParams();
@@ -1207,25 +1292,35 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       out.innerHTML = '<div class="loading">Cargando...</div>';
       try {
         var res = await apiFetch('/members?' + params.toString());
-        if (!res.success) { out.innerHTML = '<div class="error-msg">Error searching</div>'; return; }
+        if (!res.success) { out.innerHTML = '<div class="error-msg">Error al buscar</div>'; return; }
         var members = res.data.members || [];
-        if (members.length === 0) { out.innerHTML = '<p class="text-muted">No members found.</p>'; return; }
+        if (members.length === 0) { out.innerHTML = '<p class="text-muted">No se encontraron miembros.</p>'; return; }
         var h = '<div class="result-cards">';
         members.forEach(function(m) {
           h += '<div class="result-card" data-member-id="'+m.id+'" style="cursor:pointer">';
           h += '<div class="rc-name">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
           h += '<div class="rc-company">'+esc(m.company_name||'--')+' <span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type)+'</span></div>';
           h += '<div class="rc-meta"><span>'+esc(m.sector||'--')+'</span><span>'+esc(m.country||'--')+'</span>';
-          if (m.years_experience) h += '<span>'+m.years_experience+' yrs exp.</span>';
+          if (m.years_experience) h += '<span>'+m.years_experience+' anos exp.</span>';
           h += '</div>';
           var canMsg = !currentMember || currentMember.id !== m.id;
+          var actions = [];
           if (canMsg) {
-            h += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm dirMsgBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Mensaje</button></div>';
+            actions.push('<button class="btn btn-outline btn-sm dirMsgBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Mensaje</button>');
+          }
+          if (isAdmin) {
+            actions.push('<button class="btn btn-outline btn-sm dirEditBtn" data-mid="'+m.id+'" style="padding:4px 10px;font-size:12px;border-color:var(--primary);color:var(--primary)" onclick="event.stopPropagation()">Editar</button>');
+            if (currentMember && currentMember.id !== m.id) {
+              actions.push('<button class="btn btn-outline btn-sm dirDelBtn" data-mid="'+m.id+'" data-memail="'+esc(m.email)+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)" onclick="event.stopPropagation()">Eliminar</button>');
+            }
+          }
+          if (actions.length) {
+            h += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' + actions.join('') + '</div>';
           }
           h += '</div>';
         });
         h += '</div>';
-        if (res.data.pagination) h += '<p class="text-muted text-sm mt-12">'+res.data.pagination.total+' members found (page '+res.data.pagination.page+' of '+res.data.pagination.total_pages+')</p>';
+        if (res.data.pagination) h += '<p class="text-muted text-sm mt-12">'+res.data.pagination.total+' miembros (pagina '+res.data.pagination.page+' de '+res.data.pagination.total_pages+')</p>';
         out.innerHTML = h;
 
         out.querySelectorAll('.result-card').forEach(function(card) {
@@ -1233,6 +1328,29 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         out.querySelectorAll('.dirMsgBtn').forEach(function(b) {
           b.addEventListener('click', function(ev) { ev.stopPropagation(); messageMember(this.dataset.mid, this.dataset.mname); });
+        });
+        out.querySelectorAll('.dirEditBtn').forEach(function(b) {
+          b.addEventListener('click', async function(ev) {
+            ev.stopPropagation();
+            var mid = this.dataset.mid;
+            var r = await apiFetch('/members/' + mid);
+            if (r.success) showMemberEditor(r.data);
+            else alert(r.error || 'No se pudo cargar el miembro');
+          });
+        });
+        out.querySelectorAll('.dirDelBtn').forEach(function(b) {
+          b.addEventListener('click', async function(ev) {
+            ev.stopPropagation();
+            var mid = this.dataset.mid;
+            var mname = this.dataset.mname;
+            var memail = this.dataset.memail;
+            if (!confirm('Eliminar miembro "' + mname + '" (' + memail + ')?\n\nEliminacion suave -- el miembro no podra iniciar sesion. Su contenido permanece atribuido.')) return;
+            try {
+              var dr = await apiFetch('/admin/members/' + mid, 'DELETE');
+              if (dr.success) { searchDir(); }
+              else alert(dr.error || 'Error al eliminar');
+            } catch(e2) { alert(e2.message); }
+          });
         });
       } catch(e) {
         out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';

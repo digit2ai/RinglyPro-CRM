@@ -1172,16 +1172,102 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // ================================================================
   // PAGE: Directory
   // ================================================================
+  // Admin-only modal: add a new member directly to the chamber directory.
+  // POST hits /admin/members which generates a random temp password and
+  // returns it ONCE in the response so the admin can share it out of band.
+  function showAddMemberModal() {
+    var html = '<h2 style="margin:0 0 8px 0">Add Member to Directory</h2>';
+    html += '<p class="text-muted text-sm mb-12">A random temporary password will be generated and shown once on success. Share it with the new member out of band -- they can change it after first login.</p>';
+    html += '<form id="addMemForm" class="form-grid"><div id="addMemMsg"></div>';
+    html += '<div class="form-group"><label>First Name *</label><input name="first_name" required></div>';
+    html += '<div class="form-group"><label>Last Name *</label><input name="last_name" required></div>';
+    html += '<div class="form-group full"><label>Email *</label><input name="email" type="email" required></div>';
+    html += '<div class="form-group"><label>Country</label><select name="country">'+countryOptions('')+'</select></div>';
+    html += '<div class="form-group"><label>Sector</label><select name="sector">'+sectorOptions('', '-- Select sector --')+'</select></div>';
+    html += '<div class="form-group"><label>Company</label><input name="company_name"></div>';
+    html += '<div class="form-group"><label>Sub-specialty</label><input name="sub_specialty" placeholder="e.g. B2B SaaS, AI Platforms"></div>';
+    html += '<div class="form-group"><label>Years of Experience</label><input name="years_experience" type="number" min="0" max="80"></div>';
+    html += '<div class="form-group"><label>Phone</label><input name="phone"></div>';
+    html += '<div class="form-group"><label>Languages</label>'+languageCheckboxes([])+'</div>';
+    html += '<div class="form-group"><label>LinkedIn URL</label><input name="linkedin_url"></div>';
+    html += '<div class="form-group"><label>Website URL</label><input name="website_url"></div>';
+    html += '<div class="form-group full"><label>Bio</label><textarea name="bio" rows="2"></textarea></div>';
+    html += '<div class="form-group full" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-200)"><strong style="font-size:13px;color:var(--primary)">Roles &amp; Access</strong></div>';
+    html += '<div class="form-group"><label>Membership Tier</label><select name="membership_type">';
+    ['individual','entrepreneur','business','corporate','founder'].forEach(function(t) {
+      html += '<option value="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="form-group"><label>Governance Role</label><select name="governance_role">';
+    ['member','board_member','treasurer','secretary','vice_president','president'].forEach(function(r) {
+      html += '<option value="'+r+'">'+r.replace(/_/g,' ')+'</option>';
+    });
+    html += '</select></div>';
+    if (currentMember && currentMember.access_level === 'superadmin') {
+      html += '<div class="form-group"><label>Access Level</label><select name="access_level">';
+      ['member','admin_regional','admin_global','superadmin'].forEach(function(al) {
+        html += '<option value="'+al+'">'+al.replace(/_/g,' ')+'</option>';
+      });
+      html += '</select></div>';
+    }
+    html += '<div class="form-group full" style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">';
+    html += '<button type="button" class="btn btn-outline" id="addMemCancel">Cancel</button>';
+    html += '<button type="submit" class="btn btn-primary" style="background:#28a745">Create Member</button>';
+    html += '</div></form>';
+    openModal(html);
+
+    document.getElementById('addMemCancel').addEventListener('click', closeModal);
+    document.getElementById('addMemForm').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      var fd = new FormData(this); var body = {};
+      fd.forEach(function(v, k) {
+        if (k === 'languages') return;
+        if (v !== '') body[k] = v;
+      });
+      body.languages = fd.getAll('languages').filter(Boolean);
+      if (body.years_experience) body.years_experience = parseInt(body.years_experience);
+      var msg = document.getElementById('addMemMsg');
+      msg.innerHTML = '<div class="text-muted text-sm">Creating...</div>';
+      try {
+        var r = await apiFetch('/admin/members', 'POST', body);
+        if (r.success) {
+          var info = 'Member created: ' + r.data.email;
+          if (r.data.temporary_password) {
+            info += '\n\nTemporary password: ' + r.data.temporary_password + '\n\n(Save this -- shown only once)';
+          }
+          alert(info);
+          closeModal();
+          // Refresh the directory if we're on it
+          if (currentPage === 'directory') navigate('directory');
+        } else {
+          msg.innerHTML = '<div class="error-msg">'+(r.error||'Error')+'</div>';
+        }
+      } catch(e) {
+        msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
+      }
+    });
+  }
+
   async function renderDirectory() {
     var el = document.getElementById('pageContent');
-    var html = '<div class="search-bar">';
+    var isAdmin = currentMember && ['superadmin','admin_global','admin_regional'].indexOf(currentMember.access_level) !== -1;
+    var html = '<div class="flex-between mb-12" style="flex-wrap:wrap;gap:8px">';
+    html += '<div class="search-bar" style="flex:1;min-width:260px;display:flex;gap:8px;flex-wrap:wrap">';
     html += '<input type="text" id="dirSearch" placeholder="Search by name or company...">';
     html += '<select id="dirRegion">'+regionOptions()+'</select>';
     html += '<select id="dirSector">'+sectorOptions()+'</select>';
     html += '<button class="btn btn-primary" id="dirBtn">Search</button>';
     html += '</div>';
+    if (isAdmin) {
+      html += '<button class="btn btn-primary" id="dirAddMemberBtn" style="background:#28a745;color:white">+ Add Member</button>';
+    }
+    html += '</div>';
     html += '<div id="dirResults"><div class="loading">Loading...</div></div>';
     el.innerHTML = html;
+
+    if (isAdmin) {
+      document.getElementById('dirAddMemberBtn').addEventListener('click', showAddMemberModal);
+    }
 
     async function searchDir() {
       var params = new URLSearchParams();
@@ -1209,8 +1295,21 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           if (m.years_experience) h += '<span>'+m.years_experience+' yrs exp.</span>';
           h += '</div>';
           var canMsg = !currentMember || currentMember.id !== m.id;
+          var actions = [];
           if (canMsg) {
-            h += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm dirMsgBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Message</button></div>';
+            actions.push('<button class="btn btn-outline btn-sm dirMsgBtn" data-mid="'+m.id+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation()">Message</button>');
+          }
+          // Admin-only: inline Edit + Delete buttons. Edit reuses the same
+          // member-modal -> Edit Profile flow; Delete is soft-delete via
+          // /admin/members/:id (status='deleted'), member can't log in after.
+          if (isAdmin) {
+            actions.push('<button class="btn btn-outline btn-sm dirEditBtn" data-mid="'+m.id+'" style="padding:4px 10px;font-size:12px;border-color:var(--primary);color:var(--primary)" onclick="event.stopPropagation()">Edit</button>');
+            if (currentMember && currentMember.id !== m.id) {
+              actions.push('<button class="btn btn-outline btn-sm dirDelBtn" data-mid="'+m.id+'" data-memail="'+esc(m.email)+'" data-mname="'+esc(m.first_name+' '+m.last_name)+'" style="padding:4px 10px;font-size:12px;color:var(--red);border-color:var(--red)" onclick="event.stopPropagation()">Delete</button>');
+            }
+          }
+          if (actions.length) {
+            h += '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">' + actions.join('') + '</div>';
           }
           h += '</div>';
         });
@@ -1223,6 +1322,29 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         });
         out.querySelectorAll('.dirMsgBtn').forEach(function(b) {
           b.addEventListener('click', function(ev) { ev.stopPropagation(); messageMember(this.dataset.mid, this.dataset.mname); });
+        });
+        out.querySelectorAll('.dirEditBtn').forEach(function(b) {
+          b.addEventListener('click', async function(ev) {
+            ev.stopPropagation();
+            var mid = this.dataset.mid;
+            var r = await apiFetch('/members/' + mid);
+            if (r.success) showMemberEditor(r.data);
+            else alert(r.error || 'Could not load member');
+          });
+        });
+        out.querySelectorAll('.dirDelBtn').forEach(function(b) {
+          b.addEventListener('click', async function(ev) {
+            ev.stopPropagation();
+            var mid = this.dataset.mid;
+            var mname = this.dataset.mname;
+            var memail = this.dataset.memail;
+            if (!confirm('Delete member "' + mname + '" (' + memail + ')?\n\nSoft delete -- the member will not be able to log in. Their content stays attributed.')) return;
+            try {
+              var dr = await apiFetch('/admin/members/' + mid, 'DELETE');
+              if (dr.success) { searchDir(); }
+              else alert(dr.error || 'Delete failed');
+            } catch(e2) { alert(e2.message); }
+          });
         });
       } catch(e) {
         out.innerHTML = '<div class="error-msg">Error: '+esc(e.message)+'</div>';
