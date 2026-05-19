@@ -304,6 +304,23 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
   const [drgProcedures, setDrgProcedures] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [seeding, setSeeding] = useState(false)
+  const [seedResult, setSeedResult] = useState(null)
+
+  async function handleAutoSeed() {
+    if (seeding) return
+    setSeeding(true); setError(null); setSeedResult(null)
+    try {
+      const r = await api.autoSeedCommitments(planId)
+      const data = r?.data || r
+      setSeedResult(data)
+      onRefresh()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   useEffect(() => {
     api.listDRGProcedures().then(res => setDrgProcedures(res.procedures || res.data || [])).catch(() => {})
@@ -395,7 +412,17 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
         title="Surgeon Commitments"
         subtitle="Track individual surgeon case volume and revenue commitments"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Btn
+              variant="secondary"
+              size="sm"
+              onClick={handleAutoSeed}
+              disabled={seeding}
+              title="Auto-seed draft surgeon commitments from analysis + Care Compare + MPUP. Skips surgeons already on the plan."
+              className="bg-emerald-700 hover:bg-emerald-600 border-emerald-600 text-white"
+            >
+              {seeding ? 'Seeding...' : '⚡ Auto-Seed from Analysis'}
+            </Btn>
             <Btn variant="secondary" size="sm" onClick={() => { /* navigate to surveys */ }}>Import from Survey</Btn>
             <Btn size="sm" onClick={() => { resetForm(); setShowForm(true) }}>+ Add Surgeon</Btn>
           </div>
@@ -403,6 +430,22 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
       />
 
       {error && <div className="mb-4 p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">{error}</div>}
+
+      {seedResult && (
+        <div className={`mb-4 p-3 border rounded-lg text-sm ${seedResult.success ? 'bg-emerald-900/40 border-emerald-700 text-emerald-200' : 'bg-amber-900/40 border-amber-700 text-amber-200'}`}>
+          {seedResult.success ? (
+            <div>
+              <div className="font-semibold">Auto-seeded {seedResult.seeded} surgeon{seedResult.seeded === 1 ? '' : 's'} (skipped {seedResult.skipped}).</div>
+              <div className="text-xs mt-1 opacity-80">Source: <span className="font-mono">{seedResult.roster_source}</span> · Total incremental cases/yr: {fmt(seedResult.totals?.total_incremental_cases_annual || 0)} · Revenue impact: {fmtDollar(seedResult.totals?.total_revenue_impact || 0)}</div>
+              <div className="text-xs mt-1 opacity-70">Refine conversion % per surgeon below, or send a Surgeon Survey to overwrite with first-party numbers.</div>
+            </div>
+          ) : (
+            <div>
+              <div className="font-semibold">{seedResult.message || 'Auto-seed could not run.'}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Inline Add/Edit Form */}
       {showForm && (
@@ -511,7 +554,17 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
                     <td className="py-3 pr-3 text-right text-slate-300">{fmt(annualCases)}</td>
                     <td className="py-3 pr-3 text-right text-green-400 font-semibold">{fmtDollar(revenue)}</td>
                     <td className="py-3 pr-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700 text-slate-300">{s.source || 'manual'}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                        s.source === 'survey' ? 'bg-emerald-900/40 text-emerald-300 border border-emerald-700/40' :
+                        s.source === 'auto_seed' ? 'bg-amber-900/40 text-amber-300 border border-amber-700/40' :
+                        s.source === 'voice_call' ? 'bg-sky-900/40 text-sky-300 border border-sky-700/40' :
+                        'bg-slate-700 text-slate-300'
+                      }`} title={
+                        s.source === 'auto_seed' ? 'Auto-seeded from analysis. Refine or replace via survey.' :
+                        s.source === 'survey' ? 'First-party — surgeon completed the survey.' :
+                        s.source === 'voice_call' ? 'Captured via ElevenLabs voice agent.' :
+                        'Manually entered by rep.'
+                      }>{s.source === 'auto_seed' ? '⚡ auto-seed' : (s.source || 'manual')}</span>
                     </td>
                     <td className="py-3 pr-3">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${

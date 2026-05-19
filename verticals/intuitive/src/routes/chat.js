@@ -111,6 +111,26 @@ DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
           - <hook 2>
         - If identity_low_confidence is true, skip the research/trials hooks entirely
           and lead with hospital affiliation only. Warn the rep at the bottom.
+  - "Build a business plan for project X" / "Generate proforma for project 96" /
+    "Give me an ROI for <hospital>" / "Create a draft plan with auto-seeded surgeons"
+      → use generate_business_plan. Creates a draft plan + auto-seeds surgeon commitments
+      from analysis + CMS data + computes ROI. Render the response as:
+        ## Business Plan Generated — <hospital name>
+        ### Plan setup
+        - System: <system_type> × <quantity> at $<system_price>
+        - Service cost: $<annual_service_cost>/yr
+        ### Auto-seeded commitments
+        - <seeded count> surgeons seeded from <roster_source>
+        - Total incremental cases/yr: <totals.totalCases>
+        - Revenue impact: $<totals.totalRevenue>
+        ### ROI
+        - Total combined ROI: $<totals.totalROI>/yr
+        - Payback: <payback> months
+        - 5-year net benefit: $<fiveYearNet>
+        ### Next step
+        [Open plan in workflow](<deep_link>) — refine commitments, send a surgeon survey
+        to overwrite auto-seeded rows with first-party data.
+        ### Sources (markdown links)
   - "Brief me on <hospital>" / "Prep for my meeting at <hospital>" / "Rundown on <hospital>" /
     "What should I know before I see <hospital>?" / "Intel on <hospital>"
       → use generate_briefing. The flagship demo tool. Returns a complete intel sheet:
@@ -217,6 +237,19 @@ const TOOLS = [
         hospital_ccn: { type: 'string', description: 'CMS Hospital CCN (6 digits), preferred when known.' },
         specialty: { type: 'string', description: 'Optional substring filter on primary specialty.' },
       },
+    },
+  },
+  {
+    name: 'generate_business_plan',
+    description: 'BUSINESS PLAN AUTOMATION — for a project that already has analysis complete, this creates a draft business plan AND auto-seeds surgeon commitments from analysis + Care Compare + MPUP, then runs the calculation. Returns total_combined_roi, payback_months, five_year_net_benefit, and a deep link. Use for "build a business plan for project X", "generate proforma for project 96", "give me an ROI for <hospital>". State-changing (creates a plan row) but does not send anything externally — auto-execute without confirmation.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'integer', description: 'SurgicalMind project ID (e.g. 96). Required.' },
+        plan_name: { type: 'string', description: 'Optional plan name. Default: "Auto-generated Plan <date>".' },
+        prepared_by: { type: 'string', description: 'Optional rep name for the prepared_by field.' },
+      },
+      required: ['project_id'],
     },
   },
   {
@@ -352,6 +385,8 @@ const TOOL_TIMEOUTS = {
   generate_briefing: 45000,
   // Outreach drafting hits multiple data sources for personalization material
   draft_outreach: 25000,
+  // Business plan generation: create plan + auto-seed (NPPES + MPUP + OpenPayments) + recalc
+  generate_business_plan: 60000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -519,6 +554,110 @@ async function tool_search_surgeons_by_hospital(input, ctx) {
       hint: 'Care Compare ingest has not been run on this environment. Suggest the user run scripts/ingest-care-compare.js, OR use search_surgeons_by_territory with the hospital\'s state as a fallback.',
     };
   }
+}
+
+async function tool_generate_business_plan(input, ctx) {
+  const autoSeed = require('../services/auto-seed-commitments');
+  const { project_id, plan_name, prepared_by } = input;
+  if (!project_id) return { error: 'project_id required' };
+
+  const { IntuitiveBusinessPlan, IntuitiveProject, IntuitiveSystemRecommendation,
+    IntuitiveAnalysisResult, IntuitiveSurgeonCommitment, IntuitiveClinicalOutcome } = ctx.models;
+
+  const project = await IntuitiveProject.findByPk(project_id);
+  if (!project) return { error: `Project ${project_id} not found` };
+
+  // Pick system from primary recommendation, or fall back to analysis cache
+  let systemType = null, systemPrice = null, systemQuantity = 1, annualServiceCost = null;
+  try {
+    const primary = await IntuitiveSystemRecommendation.findOne({
+      where: { project_id, is_primary: true }, order: [['fit_score', 'DESC']],
+    });
+    if (primary) {
+      systemType = primary.system_model;
+      systemPrice = primary.estimated_price;
+      systemQuantity = primary.quantity || 1;
+      annualServiceCost = primary.estimated_annual_cost;
+    }
+  } catch (e) { /* ignore */ }
+  if (!systemType) {
+    try {
+      const row = await IntuitiveAnalysisResult.findOne({ where: { project_id, analysis_type: 'model_matching' } });
+      if (row) {
+        const data = typeof row.result_data === 'string' ? JSON.parse(row.result_data) : row.result_data;
+        systemType = data?.primary_recommendation || data?.recommended_model || 'Xi';
+      }
+    } catch (e) { /* default below */ }
+  }
+  systemType = systemType || 'Xi';
+  const DEFAULTS = { dV5: { price: 2500000, service: 0 }, Xi: { price: 1800000, service: 175000 }, X: { price: 1000000, service: 125000 }, SP: { price: 1700000, service: 150000 } };
+  if (!systemPrice && DEFAULTS[systemType]) systemPrice = DEFAULTS[systemType].price;
+  if (annualServiceCost == null && DEFAULTS[systemType]) annualServiceCost = DEFAULTS[systemType].service;
+
+  const plan = await IntuitiveBusinessPlan.create({
+    project_id,
+    plan_name: plan_name || `Auto-generated Plan ${new Date().toISOString().slice(0, 10)}`,
+    system_type: systemType,
+    system_price: systemPrice,
+    system_quantity: systemQuantity,
+    annual_service_cost: annualServiceCost,
+    acquisition_model: 'purchase',
+    prepared_by: prepared_by || null,
+    status: 'draft',
+    notes: 'Generated by SurgicalMind Ask via generate_business_plan tool.',
+  });
+
+  const seedResult = await autoSeed.autoSeedForPlan(plan.id, { models: ctx.models });
+
+  // Recalc plan totals
+  let totals = null;
+  try {
+    const commitments = await IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+    const outcomes = await IntuitiveClinicalOutcome.findAll({ where: { business_plan_id: plan.id } });
+    const totalCases = commitments.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+    const totalRevenue = commitments.reduce((s, c) => s + parseFloat(c.total_revenue_impact || 0), 0);
+    const totalClinical = outcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0);
+    const totalROI = totalRevenue + totalClinical;
+    const systemCost = (parseFloat(plan.system_price) || 0) * (plan.system_quantity || 1);
+    const annualNet = totalROI - (parseFloat(plan.annual_service_cost) || 0);
+    const payback = systemCost > 0 && annualNet > 0 ? Math.ceil((systemCost / annualNet) * 12) : null;
+    const fiveYearNet = (annualNet * 5) - (plan.acquisition_model === 'purchase' ? systemCost : 0);
+    await plan.update({
+      total_incremental_cases_annual: totalCases,
+      total_incremental_revenue: totalRevenue,
+      total_clinical_outcome_savings: totalClinical,
+      total_combined_roi: totalROI,
+      payback_months: payback,
+      five_year_net_benefit: fiveYearNet,
+    });
+    totals = { totalCases, totalRevenue, totalClinical, totalROI, payback, fiveYearNet, systemCost };
+  } catch (e) { console.error('generate_business_plan recalc error:', e.message); }
+
+  return {
+    success: true,
+    plan: {
+      id: plan.id,
+      project_id,
+      hospital_name: project.hospital_name,
+      plan_name: plan.plan_name,
+      system_type: systemType,
+      system_price: systemPrice,
+      system_quantity: systemQuantity,
+    },
+    seed_result: {
+      seeded: seedResult.seeded,
+      skipped: seedResult.skipped,
+      roster_source: seedResult.roster_source,
+    },
+    totals,
+    deep_link: `/intuitive/business-plan/${project_id}`,
+    citations: [
+      { source_name: 'CMS Care Compare', source_url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+      { source_name: 'CMS MPUP', source_url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
+      { source_name: 'CMS Open Payments', source_url: 'https://openpaymentsdata.cms.gov' },
+      { source_name: 'SurgicalMind analysis cache', source_url: `/intuitive/analysis/${project_id}` },
+    ],
+  };
 }
 
 async function tool_draft_outreach(input, ctx) {
@@ -902,6 +1041,7 @@ const TOOL_IMPL = {
   enrich_surgeon: tool_enrich_surgeon,
   generate_briefing: tool_generate_briefing,
   draft_outreach: tool_draft_outreach,
+  generate_business_plan: tool_generate_business_plan,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,

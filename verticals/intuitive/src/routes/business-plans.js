@@ -1,5 +1,6 @@
 'use strict';
 const router = require('express').Router();
+const autoSeed = require('../services/auto-seed-commitments');
 
 // POST /api/v1/business-plans - Create a business plan
 router.post('/', async (req, res) => {
@@ -156,6 +157,168 @@ router.post('/:planId/calculate', async (req, res) => {
       }
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/business-plans/:planId/auto-seed
+// Auto-seed surgeon commitments from analysis cache + Care Compare + MPUP
+// Idempotent: skips surgeons already on the plan (manual + survey wins over auto-seed)
+router.post('/:planId/auto-seed', async (req, res) => {
+  try {
+    const result = await autoSeed.autoSeedForPlan(req.params.planId, { models: req.models });
+
+    // After seeding, recalc plan totals so the UI immediately reflects the new commitments
+    if (result.success && result.seeded > 0) {
+      try {
+        const { IntuitiveBusinessPlan, IntuitiveSurgeonCommitment, IntuitiveClinicalOutcome } = req.models;
+        const plan = await IntuitiveBusinessPlan.findByPk(req.params.planId);
+        if (plan) {
+          const commitments = await IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+          const clinicalOutcomes = await IntuitiveClinicalOutcome.findAll({ where: { business_plan_id: plan.id } });
+          const totalCases = commitments.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+          const totalRevenue = commitments.reduce((s, c) => s + parseFloat(c.total_revenue_impact || 0), 0);
+          const totalClinicalSavings = clinicalOutcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0);
+          const totalROI = totalRevenue + totalClinicalSavings;
+          const systemCost = (parseFloat(plan.system_price) || 0) * (plan.system_quantity || 1);
+          const annualNet = totalROI - (parseFloat(plan.annual_service_cost) || 0);
+          const payback = systemCost > 0 && annualNet > 0 ? Math.ceil((systemCost / annualNet) * 12) : null;
+          const fiveYearNet = (annualNet * 5) - (plan.acquisition_model === 'purchase' ? systemCost : 0);
+          await plan.update({
+            total_incremental_cases_annual: totalCases,
+            total_incremental_revenue: totalRevenue,
+            total_clinical_outcome_savings: totalClinicalSavings,
+            total_combined_roi: totalROI,
+            payback_months: payback,
+            five_year_net_benefit: fiveYearNet,
+          });
+          result.plan_totals = {
+            total_incremental_cases_annual: totalCases,
+            total_incremental_revenue: totalRevenue,
+            total_clinical_outcome_savings: totalClinicalSavings,
+            total_combined_roi: totalROI,
+            payback_months: payback,
+            five_year_net_benefit: fiveYearNet,
+          };
+        }
+      } catch (calcErr) {
+        console.error('[auto-seed] post-seed recalc error:', calcErr.message);
+      }
+    }
+
+    res.json({ success: result.success, data: result });
+  } catch (err) {
+    console.error('Auto-seed error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/business-plans/generate-from-analysis
+// One-shot: create plan + auto-seed commitments + calculate.
+// Body: { project_id, plan_name?, prepared_by? }
+router.post('/generate-from-analysis', async (req, res) => {
+  try {
+    const { IntuitiveBusinessPlan, IntuitiveProject, IntuitiveAnalysisResult, IntuitiveSystemRecommendation } = req.models;
+    const { project_id, plan_name, prepared_by } = req.body;
+    if (!project_id) return res.status(400).json({ error: 'project_id is required' });
+
+    const project = await IntuitiveProject.findByPk(project_id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Pull system pick from primary system_recommendation (or model_matching analysis result)
+    let systemType = null;
+    let systemPrice = null;
+    let systemQuantity = 1;
+    let annualServiceCost = null;
+    let acquisitionModel = 'purchase';
+
+    try {
+      const primaryRec = await IntuitiveSystemRecommendation.findOne({
+        where: { project_id, is_primary: true },
+        order: [['fit_score', 'DESC']],
+      });
+      if (primaryRec) {
+        systemType = primaryRec.system_model;
+        systemPrice = primaryRec.estimated_price;
+        systemQuantity = primaryRec.quantity || 1;
+        annualServiceCost = primaryRec.estimated_annual_cost;
+        acquisitionModel = primaryRec.acquisition_model || 'purchase';
+      }
+    } catch (e) { /* fall through */ }
+
+    // Fallback to model_matching cached analysis
+    if (!systemType) {
+      try {
+        const row = await IntuitiveAnalysisResult.findOne({ where: { project_id, analysis_type: 'model_matching' } });
+        if (row) {
+          const data = typeof row.result_data === 'string' ? JSON.parse(row.result_data) : row.result_data;
+          systemType = data?.primary_recommendation || data?.recommended_model || 'Xi';
+        }
+      } catch (e) { /* default below */ }
+    }
+
+    if (!systemType) systemType = 'Xi';
+
+    // Specialty/category default service costs if recommendation didn't provide
+    const DEFAULTS = {
+      dV5: { price: 2500000, service: 0 }, // service included for dV5
+      Xi:  { price: 1800000, service: 175000 },
+      X:   { price: 1000000, service: 125000 },
+      SP:  { price: 1700000, service: 150000 },
+    };
+    if (!systemPrice && DEFAULTS[systemType]) systemPrice = DEFAULTS[systemType].price;
+    if (annualServiceCost == null && DEFAULTS[systemType]) annualServiceCost = DEFAULTS[systemType].service;
+
+    const plan = await IntuitiveBusinessPlan.create({
+      project_id,
+      plan_name: plan_name || `Auto-generated Plan ${new Date().toISOString().slice(0, 10)}`,
+      system_type: systemType,
+      system_price: systemPrice,
+      system_quantity: systemQuantity,
+      annual_service_cost: annualServiceCost,
+      acquisition_model: acquisitionModel,
+      prepared_by: prepared_by || null,
+      status: 'draft',
+      notes: 'Generated from analysis cache. Auto-seeded surgeon commitments — refine before sharing externally.',
+    });
+
+    // Now auto-seed surgeon commitments
+    const seedResult = await autoSeed.autoSeedForPlan(plan.id, { models: req.models });
+
+    // Recalc totals on the new plan
+    try {
+      const { IntuitiveSurgeonCommitment, IntuitiveClinicalOutcome } = req.models;
+      const commitments = await IntuitiveSurgeonCommitment.findAll({ where: { business_plan_id: plan.id } });
+      const clinicalOutcomes = await IntuitiveClinicalOutcome.findAll({ where: { business_plan_id: plan.id } });
+      const totalCases = commitments.reduce((s, c) => s + (c.total_incremental_annual || 0), 0);
+      const totalRevenue = commitments.reduce((s, c) => s + parseFloat(c.total_revenue_impact || 0), 0);
+      const totalClinicalSavings = clinicalOutcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0);
+      const totalROI = totalRevenue + totalClinicalSavings;
+      const systemCost = (parseFloat(plan.system_price) || 0) * (plan.system_quantity || 1);
+      const annualNet = totalROI - (parseFloat(plan.annual_service_cost) || 0);
+      const payback = systemCost > 0 && annualNet > 0 ? Math.ceil((systemCost / annualNet) * 12) : null;
+      const fiveYearNet = (annualNet * 5) - (plan.acquisition_model === 'purchase' ? systemCost : 0);
+      await plan.update({
+        total_incremental_cases_annual: totalCases,
+        total_incremental_revenue: totalRevenue,
+        total_clinical_outcome_savings: totalClinicalSavings,
+        total_combined_roi: totalROI,
+        payback_months: payback,
+        five_year_net_benefit: fiveYearNet,
+      });
+    } catch (e) { console.error('generate-from-analysis: recalc error:', e.message); }
+
+    const refreshedPlan = await IntuitiveBusinessPlan.findByPk(plan.id);
+    res.json({
+      success: true,
+      data: {
+        plan: refreshedPlan,
+        seed_result: seedResult,
+        deep_link: `/intuitive/business-plan/${project_id}`,
+      },
+    });
+  } catch (err) {
+    console.error('generate-from-analysis error:', err);
     res.status(500).json({ error: err.message });
   }
 });

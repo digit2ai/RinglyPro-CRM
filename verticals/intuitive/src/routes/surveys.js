@@ -230,7 +230,22 @@ router.post('/:id/import-to-plan', async (req, res) => {
     let drgLib;
     try { drgLib = require('../services/drg-reimbursement'); } catch (e) { drgLib = null; }
 
+    // Pull existing commitments on this plan so survey rows can overwrite matching auto_seed rows
+    const { Op } = require('sequelize');
+    const existing = await IntuitiveSurgeonCommitment.findAll({
+      where: { business_plan_id: businessPlanId },
+    });
+    const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+    const existingByName = {};
+    const existingByEmail = {};
+    for (const c of existing) {
+      if (c.surgeon_name) existingByName[norm(c.surgeon_name)] = c;
+      if (c.surgeon_email) existingByEmail[c.surgeon_email.toLowerCase()] = c;
+    }
+
     const imported = [];
+    let overwritten = 0;
+    let created = 0;
     for (const resp of responses) {
       // Build procedure entries from the breakdown
       const procs = (resp.procedure_breakdown || []).map(pb => {
@@ -256,7 +271,18 @@ router.post('/:id/import-to-plan', async (req, res) => {
       }
       const totalRevenue = procs.reduce((s, p) => s + (p.incremental_cases_annual || 0) * (p.reimbursement_rate || 0), 0);
 
-      const commitment = await IntuitiveSurgeonCommitment.create({
+      // Find a matching existing row to overwrite (email match wins; then normalized-name match)
+      let match = null;
+      if (resp.surgeon_email && existingByEmail[resp.surgeon_email.toLowerCase()]) {
+        match = existingByEmail[resp.surgeon_email.toLowerCase()];
+      } else if (resp.surgeon_name && existingByName[norm(resp.surgeon_name)]) {
+        match = existingByName[norm(resp.surgeon_name)];
+      }
+
+      // Never overwrite a manually-edited or already-survey-imported row
+      if (match && match.source !== 'auto_seed') match = null;
+
+      const payload = {
         business_plan_id: businessPlanId,
         project_id: plan.project_id,
         surgeon_name: resp.surgeon_name,
@@ -268,12 +294,22 @@ router.post('/:id/import-to-plan', async (req, res) => {
         source: 'survey',
         survey_response_id: resp.id,
         status: resp.willing_to_commit ? 'confirmed' : 'draft',
-        confirmed_at: resp.willing_to_commit ? new Date() : null
-      });
+        confirmed_at: resp.willing_to_commit ? new Date() : null,
+      };
+
+      let commitment;
+      if (match) {
+        await match.update(payload);
+        commitment = match;
+        overwritten++;
+      } else {
+        commitment = await IntuitiveSurgeonCommitment.create(payload);
+        created++;
+      }
       imported.push(commitment);
     }
 
-    res.json({ success: true, data: imported, count: imported.length });
+    res.json({ success: true, data: imported, count: imported.length, created, overwritten });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

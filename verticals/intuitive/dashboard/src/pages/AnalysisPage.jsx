@@ -86,6 +86,48 @@ export function VolumeBucketStrip({ buckets, compact = false }) {
   )
 }
 
+function GenerateBusinessPlanButton({ projectId }) {
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+
+  async function run() {
+    if (busy) return
+    setBusy(true); setErr(null)
+    try {
+      const r = await api.generatePlanFromAnalysis({ project_id: Number(projectId) })
+      if (r?.success) {
+        navigate(`/business-plan/${projectId}`)
+      } else {
+        setErr(r?.error || 'Generation failed')
+      }
+    } catch (e) {
+      setErr(e.message || String(e))
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="flex flex-col items-end">
+      <button
+        onClick={run}
+        disabled={busy}
+        className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-wait text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all flex items-center gap-2"
+        title="One-shot: create plan + auto-seed surgeon commitments from analysis + Care Compare + MPUP. Refine after."
+      >
+        {busy ? (
+          <>
+            <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Generating plan...
+          </>
+        ) : (
+          <>Generate Business Plan from Analysis</>
+        )}
+      </button>
+      {err && <div className="text-[11px] text-red-400 mt-1 max-w-xs">{err}</div>}
+    </div>
+  )
+}
+
 function SectionCard({ title, subtitle, children }) {
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
@@ -187,14 +229,17 @@ export default function AnalysisPage({ projectId: propId }) {
       )}
 
       {/* ─── Header ─── */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">{project?.hospital_name || 'Hospital'} -- Full Analysis</h1>
           <p className="text-slate-400 text-sm">Project {project?.project_code} -- {Object.keys(results).length} analysis modules</p>
         </div>
-        <button onClick={() => navigate(`/recommendations/${id}`)} className="bg-intuitive-600 hover:bg-intuitive-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all">
-          View System Recommendation &rarr;
-        </button>
+        <div className="flex items-center gap-2">
+          <GenerateBusinessPlanButton projectId={id} />
+          <button onClick={() => navigate(`/recommendations/${id}`)} className="bg-intuitive-600 hover:bg-intuitive-700 text-white font-semibold py-2.5 px-5 rounded-lg text-sm transition-all">
+            View System Recommendation &rarr;
+          </button>
+        </div>
       </div>
 
       {/* ─── Three-bucket CFO volume language (Greg fix) ─── */}

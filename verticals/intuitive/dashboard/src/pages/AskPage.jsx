@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import ChatRenderer from '../components/ChatRenderer'
 
 const SAMPLES = [
+  'Build a business plan for project 96',
   'Brief me on Mount Sinai NY for my 3pm meeting',
   'Top 10 robotic candidates in Florida',
   'Tell me about Dr. David Samadi',
   'Draft an outreach email to Dr. Samadi referencing his robotic work',
   'Rank surgeons at AdventHealth Tampa',
-  'Top 5 urology KOLs in Florida',
 ]
 
 const TOOL_LABELS = {
@@ -18,6 +18,7 @@ const TOOL_LABELS = {
   search_surgeons_by_hospital: 'Ranking hospital surgeons (Care Compare)',
   enrich_surgeon: 'Enriching surgeon (PubMed + ClinicalTrials.gov)',
   generate_briefing: 'Compiling pre-meeting briefing',
+  generate_business_plan: 'Building business plan + auto-seeding surgeons',
   draft_outreach: 'Gathering personalization material',
   query_intuitive_payments: 'Querying Open Payments',
   query_procedure_volumes: 'Querying procedure volumes',

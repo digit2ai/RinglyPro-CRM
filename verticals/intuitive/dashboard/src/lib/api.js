@@ -51,6 +51,8 @@ export const api = {
   updateBusinessPlan: (id, data) => request(`/business-plans/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteBusinessPlan: (id) => request(`/business-plans/${id}`, { method: 'DELETE' }),
   calculatePlan: (planId) => request(`/business-plans/${planId}/calculate`, { method: 'POST' }),
+  autoSeedCommitments: (planId) => request(`/business-plans/${planId}/auto-seed`, { method: 'POST' }),
+  generatePlanFromAnalysis: (data) => request('/business-plans/generate-from-analysis', { method: 'POST', body: JSON.stringify(data) }),
 
   // Surgeon Commitments
   addSurgeon: (planId, data) => request(`/business-plans/${planId}/surgeons`, { method: 'POST', body: JSON.stringify(data) }),
