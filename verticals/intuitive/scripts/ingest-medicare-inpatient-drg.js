@@ -22,6 +22,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 const { Sequelize } = require('sequelize');
 
 const args = process.argv.slice(2).reduce((acc, a) => {
@@ -30,7 +32,33 @@ const args = process.argv.slice(2).reduce((acc, a) => {
   return acc;
 }, {});
 const FILE = args.file;
+const URL = args.url;
 const YEAR = Number(args.year) || null;
+
+function downloadToTmp(url) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https:') ? https : http;
+    const tmp = path.join('/tmp', `mup-inp-${Date.now()}.csv`);
+    const out = fs.createWriteStream(tmp);
+    lib.get(url, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        return downloadToTmp(res.headers.location).then(resolve, reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`HTTP ${res.statusCode} downloading ${url}`));
+      }
+      let bytes = 0;
+      res.on('data', (chunk) => {
+        bytes += chunk.length;
+        if (bytes % (25 * 1024 * 1024) < chunk.length) {
+          console.log(`[ingest-medicare-inpatient-drg] downloaded ${(bytes / (1024 * 1024)).toFixed(0)} MB...`);
+        }
+      });
+      res.pipe(out);
+      out.on('finish', () => { out.close(); resolve(tmp); });
+    }).on('error', reject);
+  });
+}
 
 const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
   dialect: 'postgres',
@@ -61,16 +89,24 @@ async function main() {
   await sequelize.authenticate();
   await models.IntuitiveHospitalDrgVolume.sync();
 
-  if (!FILE) {
-    console.warn('[ingest-medicare-inpatient-drg] No --file specified.');
-    console.warn('  Download the latest "Medicare Inpatient Hospitals by Provider and Service"');
-    console.warn('  CSV from https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals');
-    console.warn('  Then run: node ingest-medicare-inpatient-drg.js --file=/path/to/MUP_INP*.csv --year=2024');
+  let filePath = FILE;
+  if (!filePath && URL) {
+    console.log(`[ingest-medicare-inpatient-drg] downloading ${URL}`);
+    filePath = await downloadToTmp(URL);
+    console.log(`[ingest-medicare-inpatient-drg] downloaded to ${filePath}`);
+  }
+
+  if (!filePath) {
+    console.warn('[ingest-medicare-inpatient-drg] No --file or --url specified.');
+    console.warn('  Dataset page: https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals');
+    console.warn('  Then run one of:');
+    console.warn('    node ingest-medicare-inpatient-drg.js --file=/path/to/MUP_INP*.csv --year=2023');
+    console.warn('    node ingest-medicare-inpatient-drg.js --url=https://data.cms.gov/.../MUP_INP*.csv --year=2023');
     await sequelize.close();
     return;
   }
-  if (!fs.existsSync(FILE)) {
-    console.error(`[ingest-medicare-inpatient-drg] file not found: ${FILE}`);
+  if (!fs.existsSync(filePath)) {
+    console.error(`[ingest-medicare-inpatient-drg] file not found: ${filePath}`);
     await sequelize.close();
     process.exit(1);
   }
@@ -96,6 +132,9 @@ async function main() {
     }
     batch = [];
   }
+
+  // After ingest, clean up downloaded tmp file
+  const cleanupTmp = URL && filePath && filePath.startsWith('/tmp/');
 
   await new Promise((resolve, reject) => {
     const parser = parse({ columns: true, skip_empty_lines: true, relax_column_count: true, relax_quotes: true });
@@ -140,8 +179,12 @@ async function main() {
       await flushBatch();
       resolve();
     });
-    fs.createReadStream(FILE).pipe(parser);
+    fs.createReadStream(filePath).pipe(parser);
   });
+
+  if (cleanupTmp) {
+    try { fs.unlinkSync(filePath); console.log(`[ingest-medicare-inpatient-drg] removed temp ${filePath}`); } catch (e) { /* ignore */ }
+  }
 
   const [rows] = await sequelize.query('SELECT COUNT(*) AS c FROM intuitive_hospital_drg_volume');
   console.log(`[ingest-medicare-inpatient-drg] done. ${scanned} scanned, ${upserted} upserted, ${errored} errored. Table now has ${rows[0].c} rows.`);

@@ -17,6 +17,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 const { Sequelize } = require('sequelize');
 
 const args = process.argv.slice(2).reduce((acc, a) => {
@@ -25,7 +27,33 @@ const args = process.argv.slice(2).reduce((acc, a) => {
   return acc;
 }, {});
 const FILE = args.file;
+const URL = args.url;
 const YEAR = Number(args.year) || new Date().getFullYear() - 2;
+
+function downloadToTmp(url) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https:') ? https : http;
+    const tmp = path.join('/tmp', `mup-phy-${Date.now()}.csv`);
+    const out = fs.createWriteStream(tmp);
+    lib.get(url, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        return downloadToTmp(res.headers.location).then(resolve, reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`HTTP ${res.statusCode} downloading ${url}`));
+      }
+      let bytes = 0;
+      res.on('data', (chunk) => {
+        bytes += chunk.length;
+        if (bytes % (100 * 1024 * 1024) < chunk.length) {
+          console.log(`[ingest-physician-volume] downloaded ${(bytes / (1024 * 1024)).toFixed(0)} MB...`);
+        }
+      });
+      res.pipe(out);
+      out.on('finish', () => { out.close(); resolve(tmp); });
+    }).on('error', reject);
+  });
+}
 
 const sequelize = new Sequelize(process.env.CRM_DATABASE_URL || process.env.DATABASE_URL, {
   dialect: 'postgres',
@@ -41,10 +69,19 @@ async function main() {
   await sequelize.authenticate();
   await models.IntuitivePhysicianProcedureVolume.sync();
 
-  if (!FILE) {
-    console.warn('[ingest-physician-volume] No --file specified. Download the latest MPUP physician+HCPCS CSV from');
-    console.warn('              https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners');
-    console.warn('              then run: node ingest-physician-volume.js --file=/path/to/MUP_PHY_RYY_PYY_NPI_HCPCS.csv');
+  let filePath = FILE;
+  if (!filePath && URL) {
+    console.log(`[ingest-physician-volume] downloading ${URL} (~2.5GB, this takes a while)`);
+    filePath = await downloadToTmp(URL);
+    console.log(`[ingest-physician-volume] downloaded to ${filePath}`);
+  }
+
+  if (!filePath) {
+    console.warn('[ingest-physician-volume] No --file or --url specified.');
+    console.warn('  Dataset page: https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners');
+    console.warn('  Then run one of:');
+    console.warn('    node ingest-physician-volume.js --file=/path/to/MUP_PHY*.csv --year=2023');
+    console.warn('    node ingest-physician-volume.js --url=https://data.cms.gov/.../MUP_PHY*.csv --year=2023');
     await sequelize.close();
     return;
   }
@@ -88,8 +125,13 @@ async function main() {
     });
     parser.on('error', reject);
     parser.on('end', resolve);
-    fs.createReadStream(FILE).pipe(parser);
+    fs.createReadStream(filePath).pipe(parser);
   });
+
+  // Clean up downloaded temp file
+  if (URL && filePath && filePath.startsWith('/tmp/')) {
+    try { fs.unlinkSync(filePath); console.log(`[ingest-physician-volume] removed temp ${filePath}`); } catch (e) { /* ignore */ }
+  }
 
   const [rows] = await sequelize.query('SELECT COUNT(*) AS c FROM intuitive_physician_procedure_volume');
   console.log(`[ingest-physician-volume] done. ${scanned} scanned, ${matched} matched, table now has ${rows[0].c} rows`);
