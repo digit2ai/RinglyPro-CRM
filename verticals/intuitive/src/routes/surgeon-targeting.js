@@ -20,6 +20,7 @@ const openPayments = require('../services/data-sources/cms-open-payments');
 const pubmed = require('../services/data-sources/pubmed');
 const clinicalTrials = require('../services/data-sources/clinical-trials');
 const identityResolution = require('../services/identity-resolution');
+const surgeonTargetingService = require('../services/surgeon-targeting-service');
 
 // Specialty key → NPI taxonomy label (matches npi-registry.js SURGERY_TAXONOMIES)
 const SPECIALTY_FILTERS = {
@@ -528,6 +529,25 @@ router.post('/enrich', async (req, res) => {
     });
   } catch (e) {
     console.error('[SurgeonTargeting] /enrich error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /compare-procedure-volumes — cross-tab Medicare volumes across hospitals
+// ---------------------------------------------------------------------------
+router.post('/compare-procedure-volumes', async (req, res) => {
+  try {
+    const result = await surgeonTargetingService.compareHospitalProcedureVolumes({
+      hospital_ccns: req.body.hospital_ccns,
+      hospital_names: req.body.hospital_names,
+      hcpcs_codes: req.body.hcpcs_codes,
+      procedure_families: req.body.procedure_families,
+      fiscal_year: req.body.fiscal_year,
+    }, { models: req.models });
+    res.json({ success: !result.error, data: result });
+  } catch (e) {
+    console.error('[surgeon-targeting] /compare-procedure-volumes error:', e);
     res.status(500).json({ error: e.message });
   }
 });

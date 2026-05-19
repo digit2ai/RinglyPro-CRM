@@ -111,6 +111,20 @@ DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
           - <hook 2>
         - If identity_low_confidence is true, skip the research/trials hooks entirely
           and lead with hospital affiliation only. Warn the rep at the bottom.
+  - "Compare X vs Y vs Z for [list of procedures]" / "Hospital A market share vs competitors
+    for prostatectomy/hysterectomy/hernia" / "Volume cross-tab for these hospitals" /
+    "Who does the most [procedure] in [region]?" (when ≥2 hospitals named)
+      → ALWAYS use compare_hospital_procedure_volumes — ONE call, not N×M. Pass
+      procedure_families[] when possible (e.g. ["prostatectomy","hysterectomy_benign",
+      "ventral_hernia"]) — the library expands each family to its CPT codes automatically.
+      DO NOT loop query_procedure_volumes for each (hospital,procedure) pair — that
+      exhausts the tool budget. Render the result as a markdown table:
+        | Hospital | Family A | Family B | Family C | Total |
+        |----------|----------|----------|----------|-------|
+        | ORMC     | 142 (38%) | 88 (29%) | ... | 412 |
+        | Advent   | 130 (35%) | 102 (33%) | ... | 389 |
+      Cell format: "volume (share%)". Include the fiscal_year_used and cite both
+      CMS Care Compare + CMS MPUP.
   - "Build a business plan for project X" / "Generate proforma for project 96" /
     "Give me an ROI for <hospital>" / "Create a draft plan with auto-seeded surgeons"
       → use generate_business_plan. Creates a draft plan + auto-seeds surgeon commitments
@@ -280,6 +294,20 @@ const TOOLS = [
     },
   },
   {
+    name: 'compare_hospital_procedure_volumes',
+    description: 'Cross-tabulate Medicare procedure volumes across multiple hospitals in ONE call. Use for any "compare X hospital vs Y hospital for these procedures" or "ORMC market share vs Orlando competitors for prostatectomy/hysterectomy/hernia" question. Accepts hospital_ccns[] OR hospital_names[] (fuzzy ILIKE match), and hcpcs_codes[] OR procedure_families[] (slugs from the library: prostatectomy, partial_nephrectomy, radical_nephrectomy, cystectomy, hysterectomy_benign, hysterectomy_oncology, myomectomy, cholecystectomy, ventral_hernia, inguinal_hernia, colectomy, rectal_resection, lobectomy, thymectomy, esophagectomy, bariatric_sleeve, gastric_bypass, tors). Returns a hospital×family cross-tab matrix with volume, surgeon_count, share_pct (per-family Medicare share among the queried hospitals), and top 3 surgeons per cell. CRITICAL: prefer this over calling query_procedure_volumes multiple times — it does N×M lookups in 1 round-trip and conserves your tool budget.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        hospital_ccns: { type: 'array', items: { type: 'string' }, description: 'CMS hospital CCNs (preferred when known).' },
+        hospital_names: { type: 'array', items: { type: 'string' }, description: 'Hospital names for fuzzy ILIKE match (use when CCNs unknown).' },
+        hcpcs_codes: { type: 'array', items: { type: 'string' }, description: 'Explicit CPT/HCPCS codes (e.g. ["55866","58571"]).' },
+        procedure_families: { type: 'array', items: { type: 'string' }, description: 'Family slugs from the hcpcs-families library.' },
+        fiscal_year: { type: 'integer', description: 'Optional: specific year (defaults to latest MPUP year available).' },
+      },
+    },
+  },
+  {
     name: 'enrich_surgeon',
     description: 'Deep-dive on a single surgeon: PubMed publications in last 5 years + ClinicalTrials.gov active PI status (industry-sponsored flag, Intuitive-sponsored flag) + computed KOL score (0-100) and badge (Key Opinion Leader / Research-Active / Publishing). Use for "tell me about Dr. X", "is <surgeon> a KOL?", "publications of <name>", "trials run by NPI 1234567890". Provide full_name (preferred) or npi. Identity-resolution dampens counts on ambiguous names so the LLM does not over-trust common-name results.',
     input_schema: {
@@ -387,6 +415,8 @@ const TOOL_TIMEOUTS = {
   draft_outreach: 25000,
   // Business plan generation: create plan + auto-seed (NPPES + MPUP + OpenPayments) + recalc
   generate_business_plan: 60000,
+  // Cross-tab procedure volumes across N hospitals — pure DB joins
+  compare_hospital_procedure_volumes: 25000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -792,6 +822,23 @@ async function tool_generate_briefing(input, ctx) {
   }
 }
 
+async function tool_compare_hospital_procedure_volumes(input, ctx) {
+  try {
+    return await surgeonTargetingService.compareHospitalProcedureVolumes({
+      hospital_ccns: input.hospital_ccns,
+      hospital_names: input.hospital_names,
+      hcpcs_codes: input.hcpcs_codes,
+      procedure_families: input.procedure_families,
+      fiscal_year: input.fiscal_year,
+    }, { models: ctx.models });
+  } catch (e) {
+    return {
+      error: e.message,
+      hint: 'Most common cause: Care Compare not yet ingested (run scripts/ingest-care-compare.js) OR MPUP physician volume not loaded for these surgeons (run scripts/ingest-physician-volume.js).',
+    };
+  }
+}
+
 async function tool_enrich_surgeon(input, ctx) {
   let { npi, full_name, specialty, state } = input;
   npi = npi ? String(npi).replace(/\D/g, '') : null;
@@ -1042,6 +1089,7 @@ const TOOL_IMPL = {
   generate_briefing: tool_generate_briefing,
   draft_outreach: tool_draft_outreach,
   generate_business_plan: tool_generate_business_plan,
+  compare_hospital_procedure_volumes: tool_compare_hospital_procedure_volumes,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,

@@ -1,0 +1,252 @@
+{
+  "_meta": {
+    "description": "Surgical procedure family → HCPCS/CPT code map used by compareHospitalProcedureVolumes and related tools. Codes are real CMS CPT codes. Robotic-assisted procedures bill under the same base codes as the laparoscopic equivalents (no unique robotic CPT) — so this map covers open + laparoscopic codes, and aggregating across them gives total Medicare procedure volume regardless of approach.",
+    "source": "CMS HCPCS Level I (CPT) — public",
+    "last_reviewed": "2026-05",
+    "robotic_modifier": "S2900"
+  },
+  "families": {
+    "prostatectomy": {
+      "label": "Prostatectomy (radical)",
+      "specialty": "urology",
+      "codes": [
+        { "code": "55840", "desc": "Prostatectomy, retropubic radical, with or without nerve sparing" },
+        { "code": "55842", "desc": "Prostatectomy, retropubic radical, with bilateral lymphadenectomy" },
+        { "code": "55845", "desc": "Prostatectomy, retropubic radical, w/ bilateral pelvic lymphadenectomy" },
+        { "code": "55866", "desc": "Laparoscopy, surgical prostatectomy, retropubic radical (robotic-assisted)" }
+      ]
+    },
+    "partial_nephrectomy": {
+      "label": "Partial Nephrectomy",
+      "specialty": "urology",
+      "codes": [
+        { "code": "50240", "desc": "Nephrectomy, partial (open)" },
+        { "code": "50543", "desc": "Laparoscopy, surgical; partial nephrectomy" }
+      ]
+    },
+    "radical_nephrectomy": {
+      "label": "Radical Nephrectomy",
+      "specialty": "urology",
+      "codes": [
+        { "code": "50220", "desc": "Nephrectomy, including partial ureterectomy" },
+        { "code": "50225", "desc": "Nephrectomy w/ partial ureterectomy, any open approach" },
+        { "code": "50230", "desc": "Nephrectomy, with total ureterectomy + bladder cuff" },
+        { "code": "50545", "desc": "Laparoscopy, surgical; radical nephrectomy" },
+        { "code": "50546", "desc": "Laparoscopy, surgical; nephrectomy + total ureterectomy" }
+      ]
+    },
+    "cystectomy": {
+      "label": "Cystectomy",
+      "specialty": "urology",
+      "codes": [
+        { "code": "51570", "desc": "Cystectomy, complete" },
+        { "code": "51575", "desc": "Cystectomy, complete w/ pelvic lymphadenectomy" },
+        { "code": "51580", "desc": "Cystectomy, complete w/ ureterosigmoidostomy" },
+        { "code": "51590", "desc": "Cystectomy, complete w/ ureteroileal/colic conduit" },
+        { "code": "51595", "desc": "Cystectomy w/ continent diversion (pouch)" },
+        { "code": "51596", "desc": "Cystectomy, complete w/ continent diversion + pelvic lymphadenectomy" }
+      ]
+    },
+    "hysterectomy_benign": {
+      "label": "Hysterectomy (benign)",
+      "specialty": "gynecology",
+      "codes": [
+        { "code": "58150", "desc": "Total abdominal hysterectomy (corpus + cervix)" },
+        { "code": "58180", "desc": "Supracervical abdominal hysterectomy" },
+        { "code": "58260", "desc": "Vaginal hysterectomy, <250g" },
+        { "code": "58262", "desc": "Vaginal hysterectomy w/ removal of tube(s) and/or ovary(s)" },
+        { "code": "58541", "desc": "Laparoscopy, surgical, supracervical hysterectomy, <250g" },
+        { "code": "58542", "desc": "Laparoscopy, surgical, supracervical hysterectomy <250g + tubes/ovaries" },
+        { "code": "58543", "desc": "Laparoscopy, surgical, supracervical hysterectomy >250g" },
+        { "code": "58544", "desc": "Laparoscopy, surgical, supracervical hysterectomy >250g + tubes/ovaries" },
+        { "code": "58550", "desc": "Laparoscopy, surgical, w/ vaginal hysterectomy <250g" },
+        { "code": "58552", "desc": "Laparoscopy, vaginal hysterectomy + tubes/ovaries <250g" },
+        { "code": "58553", "desc": "Laparoscopy, vaginal hysterectomy >250g" },
+        { "code": "58554", "desc": "Laparoscopy, vaginal hysterectomy >250g + tubes/ovaries" },
+        { "code": "58570", "desc": "Laparoscopy, surgical, w/ total hysterectomy <250g" },
+        { "code": "58571", "desc": "Laparoscopy total hysterectomy <250g w/ tubes/ovaries" },
+        { "code": "58572", "desc": "Laparoscopy total hysterectomy >250g" },
+        { "code": "58573", "desc": "Laparoscopy total hysterectomy >250g + tubes/ovaries" }
+      ]
+    },
+    "hysterectomy_oncology": {
+      "label": "Hysterectomy (gyn-oncology)",
+      "specialty": "gynecology",
+      "codes": [
+        { "code": "58210", "desc": "Radical abdominal hysterectomy + pelvic lymphadenectomy" },
+        { "code": "58575", "desc": "Laparoscopy, surgical, total hysterectomy for resection of malignancy" },
+        { "code": "58951", "desc": "Resection (initial) of ovarian/tubal/peritoneal malignancy w/ omentectomy" },
+        { "code": "58953", "desc": "Bilateral salpingo-oophorectomy + omentectomy + radical dissection for debulking" },
+        { "code": "58954", "desc": "Bilateral salpingo-oophorectomy + omentectomy + debulking + pelvic lymphadenectomy" },
+        { "code": "58956", "desc": "Bilateral salpingo-oophorectomy + omentectomy + total hysterectomy" }
+      ]
+    },
+    "myomectomy": {
+      "label": "Myomectomy",
+      "specialty": "gynecology",
+      "codes": [
+        { "code": "58140", "desc": "Myomectomy, abdominal, 1-4 myomas" },
+        { "code": "58145", "desc": "Myomectomy, vaginal, <250g" },
+        { "code": "58146", "desc": "Myomectomy, abdominal, 5+ myomas" },
+        { "code": "58545", "desc": "Laparoscopy, surgical, myomectomy, 1-4 myomas" },
+        { "code": "58546", "desc": "Laparoscopy, surgical, myomectomy, 5+ myomas" }
+      ]
+    },
+    "cholecystectomy": {
+      "label": "Cholecystectomy",
+      "specialty": "general",
+      "codes": [
+        { "code": "47562", "desc": "Laparoscopy, surgical; cholecystectomy" },
+        { "code": "47563", "desc": "Laparoscopy, surgical; cholecystectomy w/ cholangiography" },
+        { "code": "47564", "desc": "Laparoscopy, surgical; cholecystectomy w/ exploration of common duct" },
+        { "code": "47600", "desc": "Cholecystectomy (open)" },
+        { "code": "47605", "desc": "Cholecystectomy w/ cholangiography (open)" },
+        { "code": "47610", "desc": "Cholecystectomy w/ exploration of common duct (open)" }
+      ]
+    },
+    "ventral_hernia": {
+      "label": "Ventral / Incisional Hernia Repair",
+      "specialty": "general",
+      "codes": [
+        { "code": "49560", "desc": "Repair initial incisional/ventral hernia, reducible" },
+        { "code": "49561", "desc": "Repair initial incisional/ventral hernia, incarcerated/strangulated" },
+        { "code": "49565", "desc": "Repair recurrent incisional/ventral hernia, reducible" },
+        { "code": "49566", "desc": "Repair recurrent incisional/ventral hernia, incarcerated" },
+        { "code": "49591", "desc": "Anterior abdominal hernia(s) repair, <3cm" },
+        { "code": "49592", "desc": "Anterior abdominal hernia, <3cm, incarcerated" },
+        { "code": "49593", "desc": "Anterior abdominal hernia, 3-10cm" },
+        { "code": "49594", "desc": "Anterior abdominal hernia, 3-10cm, incarcerated" },
+        { "code": "49595", "desc": "Anterior abdominal hernia, >10cm" },
+        { "code": "49596", "desc": "Anterior abdominal hernia, >10cm, incarcerated" },
+        { "code": "49652", "desc": "Laparoscopy, surgical, repair, ventral/umbilical/spigelian/epigastric hernia" },
+        { "code": "49653", "desc": "Laparoscopy, ventral hernia, incarcerated/strangulated" },
+        { "code": "49654", "desc": "Laparoscopy, incisional hernia" },
+        { "code": "49655", "desc": "Laparoscopy, incarcerated incisional hernia" },
+        { "code": "49656", "desc": "Laparoscopy, recurrent incisional hernia" },
+        { "code": "49657", "desc": "Laparoscopy, recurrent incarcerated incisional hernia" }
+      ]
+    },
+    "inguinal_hernia": {
+      "label": "Inguinal Hernia Repair",
+      "specialty": "general",
+      "codes": [
+        { "code": "49505", "desc": "Repair initial inguinal hernia, age 5+, reducible" },
+        { "code": "49507", "desc": "Repair initial inguinal hernia, age 5+, incarcerated/strangulated" },
+        { "code": "49520", "desc": "Repair recurrent inguinal hernia, reducible" },
+        { "code": "49521", "desc": "Repair recurrent inguinal hernia, incarcerated/strangulated" },
+        { "code": "49525", "desc": "Repair inguinal hernia, sliding, any age" },
+        { "code": "49650", "desc": "Laparoscopy, surgical; repair initial inguinal hernia" },
+        { "code": "49651", "desc": "Laparoscopy, surgical; repair recurrent inguinal hernia" }
+      ]
+    },
+    "colectomy": {
+      "label": "Colectomy",
+      "specialty": "colorectal",
+      "codes": [
+        { "code": "44140", "desc": "Colectomy, partial, with anastomosis" },
+        { "code": "44141", "desc": "Colectomy, partial, with skin level cecostomy or colostomy" },
+        { "code": "44143", "desc": "Colectomy, partial, with end colostomy + closure of distal segment" },
+        { "code": "44144", "desc": "Colectomy, partial, w/ resection of colon + ileostomy + Hartmann pouch" },
+        { "code": "44145", "desc": "Colectomy, partial, with coloproctostomy (low pelvic anastomosis)" },
+        { "code": "44146", "desc": "Colectomy, partial, with coloproctostomy + colostomy" },
+        { "code": "44150", "desc": "Colectomy, total, w/ ileostomy" },
+        { "code": "44151", "desc": "Colectomy, total, w/ continent ileostomy" },
+        { "code": "44204", "desc": "Laparoscopy, surgical; colectomy, partial, with anastomosis" },
+        { "code": "44205", "desc": "Laparoscopy, surgical; colectomy, partial, ileocolic" },
+        { "code": "44206", "desc": "Laparoscopy, surgical; colectomy, partial, w/ end colostomy + closure" },
+        { "code": "44207", "desc": "Laparoscopy, surgical; colectomy, partial, w/ coloproctostomy" },
+        { "code": "44208", "desc": "Laparoscopy, surgical; colectomy, partial, coloproctostomy + colostomy" },
+        { "code": "44210", "desc": "Laparoscopy, surgical; colectomy, total" },
+        { "code": "44211", "desc": "Laparoscopy, surgical; colectomy, total, w/ proctectomy + ileoanal" },
+        { "code": "44212", "desc": "Laparoscopy, surgical; colectomy, total, w/ ileostomy" }
+      ]
+    },
+    "rectal_resection": {
+      "label": "Rectal Resection / Proctectomy",
+      "specialty": "colorectal",
+      "codes": [
+        { "code": "45110", "desc": "Proctectomy, complete, combined abdominoperineal, w/ colostomy" },
+        { "code": "45111", "desc": "Proctectomy, partial, transabdominal approach" },
+        { "code": "45112", "desc": "Proctectomy, complete, w/ combined abdominoperineal pull-through" },
+        { "code": "45113", "desc": "Proctectomy, partial, with rectal mucosectomy" },
+        { "code": "45114", "desc": "Proctectomy, partial, with anastomosis, abdominal + transsacral" },
+        { "code": "45116", "desc": "Proctectomy, partial, w/ anastomosis, transsacral approach only" },
+        { "code": "45119", "desc": "Proctectomy, combined abdominoperineal pull-through" },
+        { "code": "45120", "desc": "Proctectomy, complete (for congenital megacolon)" },
+        { "code": "45123", "desc": "Proctectomy, partial, without anastomosis, perineal approach" },
+        { "code": "45395", "desc": "Laparoscopy, surgical; proctectomy, complete, combined abdominoperineal" },
+        { "code": "45397", "desc": "Laparoscopy, surgical; proctectomy, partial, with anastomosis" },
+        { "code": "45160", "desc": "Excision of rectal tumor" }
+      ]
+    },
+    "lobectomy": {
+      "label": "Pulmonary Lobectomy",
+      "specialty": "thoracic",
+      "codes": [
+        { "code": "32480", "desc": "Lobectomy, single lobe" },
+        { "code": "32482", "desc": "Lobectomy, two lobes" },
+        { "code": "32484", "desc": "Segmentectomy" },
+        { "code": "32486", "desc": "Sleeve lobectomy" },
+        { "code": "32488", "desc": "Completion pneumonectomy" },
+        { "code": "32663", "desc": "Thoracoscopy, surgical; w/ lobectomy" },
+        { "code": "32669", "desc": "Thoracoscopy, surgical; removal of single lung segment" },
+        { "code": "32671", "desc": "Thoracoscopy, surgical; w/ lobectomy + mediastinal lymphadenectomy" }
+      ]
+    },
+    "thymectomy": {
+      "label": "Thymectomy",
+      "specialty": "thoracic",
+      "codes": [
+        { "code": "60520", "desc": "Thymectomy, partial or total, transcervical approach" },
+        { "code": "60521", "desc": "Thymectomy, sternal split or transthoracic, without radical mediastinal dissection" },
+        { "code": "60522", "desc": "Thymectomy, sternal split or transthoracic, with radical mediastinal dissection" }
+      ]
+    },
+    "esophagectomy": {
+      "label": "Esophagectomy",
+      "specialty": "thoracic",
+      "codes": [
+        { "code": "43107", "desc": "Total/near total esophagectomy, w/o thoracotomy, cervical anastomosis" },
+        { "code": "43108", "desc": "Total/near total esophagectomy, w/o thoracotomy, cervical anastomosis + reconstruction" },
+        { "code": "43112", "desc": "Total/near total esophagectomy, w/ thoracotomy, cervical anastomosis" },
+        { "code": "43113", "desc": "Total/near total esophagectomy, w/ thoracotomy, cervical anastomosis + reconstruction" },
+        { "code": "43117", "desc": "Partial esophagectomy, distal, two-stage" },
+        { "code": "43121", "desc": "Partial esophagectomy, distal, w/ thoracotomy + anastomosis" },
+        { "code": "43122", "desc": "Partial esophagectomy, thoracoabdominal, w/ esophagogastrostomy" },
+        { "code": "43124", "desc": "Total/partial esophagectomy, w/o reconstruction (Eloesser)" }
+      ]
+    },
+    "bariatric_sleeve": {
+      "label": "Bariatric Sleeve Gastrectomy",
+      "specialty": "general",
+      "codes": [
+        { "code": "43775", "desc": "Laparoscopy, surgical, gastric restrictive; longitudinal gastrectomy (sleeve)" }
+      ]
+    },
+    "gastric_bypass": {
+      "label": "Gastric Bypass (Roux-en-Y)",
+      "specialty": "general",
+      "codes": [
+        { "code": "43644", "desc": "Laparoscopy, surgical, gastric restrictive + Roux-en-Y gastroenterostomy" },
+        { "code": "43645", "desc": "Laparoscopy, gastric restrictive + Roux-en-Y + small intestine reconstruction" },
+        { "code": "43846", "desc": "Gastric restrictive + Roux-en-Y, <=150cm small bowel limb (open)" },
+        { "code": "43847", "desc": "Gastric restrictive + small intestine reconstruction (open)" }
+      ]
+    },
+    "tors": {
+      "label": "Transoral Robotic Surgery (TORS)",
+      "specialty": "head_neck",
+      "_note": "TORS does not have a dedicated CPT — these are the base oncologic resection codes for oropharynx/larynx/base of tongue that are typically performed via TORS when da Vinci is used.",
+      "codes": [
+        { "code": "41135", "desc": "Glossectomy, partial, w/ unilateral radical neck dissection" },
+        { "code": "41140", "desc": "Glossectomy, complete or total" },
+        { "code": "41150", "desc": "Glossectomy + resection of floor of mouth + mandibulectomy" },
+        { "code": "42415", "desc": "Excision of parotid tumor, lateral lobe, w/ dissection + nerve preservation" },
+        { "code": "42420", "desc": "Excision of parotid tumor, total, w/ dissection + nerve preservation" },
+        { "code": "42426", "desc": "Excision of parotid tumor, total, w/ unilateral radical neck dissection" },
+        { "code": "42870", "desc": "Excision/destruction lingual tonsil, any approach" },
+        { "code": "42971", "desc": "Pharyngeal resection (incl. tonsillectomy) for tumor" }
+      ]
+    }
+  }
+}

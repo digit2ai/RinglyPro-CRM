@@ -118,4 +118,5 @@ export const api = {
   enrichSurgeon: (params) => request('/surgeon-targeting/enrich', { method: 'POST', body: JSON.stringify(params) }),
   searchHospitalsForTargeting: (q) => request(`/surgeon-targeting/hospitals/search?q=${encodeURIComponent(q)}`),
   surgeonsByHospital: (params) => request('/surgeon-targeting/by-hospital', { method: 'POST', body: JSON.stringify(params) }),
+  compareHospitalProcedureVolumes: (params) => request('/surgeon-targeting/compare-procedure-volumes', { method: 'POST', body: JSON.stringify(params) }),
 };

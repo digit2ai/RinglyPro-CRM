@@ -554,10 +554,292 @@ async function generateBriefing({ hospital_name, hospital_ccn, state }, ctx) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// compareHospitalProcedureVolumes — cross-tab Medicare procedure volumes
+// across multiple hospitals in ONE round-trip. Replaces N×M tool calls.
+// ---------------------------------------------------------------------------
+let _hcpcsFamilies = null;
+function loadHcpcsFamilies() {
+  if (_hcpcsFamilies) return _hcpcsFamilies;
+  try {
+    _hcpcsFamilies = require('../data/hcpcs-families.json');
+  } catch (e) {
+    _hcpcsFamilies = { families: {} };
+  }
+  return _hcpcsFamilies;
+}
+
+function expandFamilies(familySlugs) {
+  const lib = loadHcpcsFamilies();
+  const codeMap = {}; // code → [familySlug]
+  const familyMap = {}; // slug → { label, codes:[code], specialty }
+  for (const slug of familySlugs || []) {
+    const fam = lib.families[slug];
+    if (!fam) continue;
+    familyMap[slug] = {
+      label: fam.label,
+      specialty: fam.specialty,
+      codes: (fam.codes || []).map(c => c.code),
+    };
+    for (const c of (fam.codes || [])) {
+      codeMap[c.code] = codeMap[c.code] || [];
+      codeMap[c.code].push(slug);
+    }
+  }
+  return { codeMap, familyMap };
+}
+
+async function compareHospitalProcedureVolumes({
+  hospital_ccns,
+  hospital_names,
+  hcpcs_codes,
+  procedure_families,
+  fiscal_year,
+}, ctx) {
+  const t0 = Date.now();
+  const models = ctx.models;
+  if (!models) throw new Error('models required');
+  if (!models.IntuitiveProviderAffiliation) {
+    throw new Error('Care Compare data not ingested. Run scripts/ingest-care-compare.js first.');
+  }
+  if (!models.IntuitivePhysicianProcedureVolume) {
+    throw new Error('MPUP physician volume table missing');
+  }
+
+  // 1) Resolve hospitals — prefer CCNs, fall back to fuzzy hospital_names
+  const { Op, fn, col, literal } = require('sequelize');
+  const hospitalRowsBySource = new Map(); // ccn → { ccn, name, state }
+
+  if (Array.isArray(hospital_ccns) && hospital_ccns.length) {
+    const rows = await models.IntuitiveProviderAffiliation.findAll({
+      where: { hospital_ccn: hospital_ccns.map(String) },
+      attributes: [
+        'hospital_ccn',
+        [fn('MAX', col('hospital_name')), 'hospital_name'],
+        [fn('MAX', col('hospital_state')), 'hospital_state'],
+      ],
+      group: ['hospital_ccn'],
+      raw: true,
+    });
+    for (const r of rows) {
+      hospitalRowsBySource.set(r.hospital_ccn, {
+        ccn: r.hospital_ccn,
+        name: r.hospital_name,
+        state: r.hospital_state,
+      });
+    }
+  }
+  if (Array.isArray(hospital_names) && hospital_names.length) {
+    for (const name of hospital_names) {
+      if (!name || typeof name !== 'string') continue;
+      const r = await models.IntuitiveProviderAffiliation.findOne({
+        where: { hospital_name: { [Op.iLike]: `%${name}%` } },
+        raw: true,
+        order: [['hospital_name', 'ASC']],
+      });
+      if (r && r.hospital_ccn && !hospitalRowsBySource.has(r.hospital_ccn)) {
+        hospitalRowsBySource.set(r.hospital_ccn, {
+          ccn: r.hospital_ccn,
+          name: r.hospital_name,
+          state: r.hospital_state,
+          matched_query: name,
+        });
+      }
+    }
+  }
+  if (hospitalRowsBySource.size === 0) {
+    return {
+      hospitals: [], families: [], matrix: {},
+      elapsed_ms: Date.now() - t0,
+      error: 'No hospitals resolved. Provide hospital_ccns or hospital_names that exist in Care Compare.',
+    };
+  }
+  const hospitals = Array.from(hospitalRowsBySource.values());
+
+  // 2) Build target HCPCS list (union of explicit codes + expanded families)
+  const { codeMap, familyMap } = expandFamilies(procedure_families || []);
+  const explicitCodes = new Set();
+  for (const c of (hcpcs_codes || [])) explicitCodes.add(String(c));
+
+  // Auto-tag explicit codes against family library so they show up in the matrix
+  const lib = loadHcpcsFamilies();
+  for (const explicit of explicitCodes) {
+    if (codeMap[explicit]) continue;
+    let matched = false;
+    for (const [slug, fam] of Object.entries(lib.families || {})) {
+      for (const c of (fam.codes || [])) {
+        if (c.code === explicit) {
+          codeMap[explicit] = codeMap[explicit] || [];
+          codeMap[explicit].push(slug);
+          if (!familyMap[slug]) {
+            familyMap[slug] = {
+              label: fam.label, specialty: fam.specialty,
+              codes: (fam.codes || []).map(x => x.code),
+            };
+          }
+          matched = true;
+          break;
+        }
+      }
+      if (matched) break;
+    }
+    // If not matched to any family, file under "_other"
+    if (!matched) {
+      codeMap[explicit] = ['_other'];
+      familyMap._other = familyMap._other || { label: 'Other (explicit codes)', specialty: 'other', codes: [] };
+      familyMap._other.codes.push(explicit);
+    }
+  }
+  const allCodes = Array.from(new Set([...Object.keys(codeMap), ...explicitCodes]));
+  if (allCodes.length === 0) {
+    return {
+      hospitals, families: [], matrix: {},
+      elapsed_ms: Date.now() - t0,
+      error: 'No procedure_families or hcpcs_codes provided.',
+    };
+  }
+
+  // 3) Pull all affiliated NPIs for the resolved hospitals (one query)
+  const ccnList = hospitals.map(h => h.ccn);
+  const npiRows = await models.IntuitiveProviderAffiliation.findAll({
+    where: { hospital_ccn: ccnList },
+    attributes: ['npi', 'hospital_ccn', 'full_name', 'primary_specialty'],
+    raw: true,
+  });
+
+  const npisByCcn = {}; // ccn → Set(npi)
+  const surgeonNameByNpi = {};
+  for (const row of npiRows) {
+    if (!npisByCcn[row.hospital_ccn]) npisByCcn[row.hospital_ccn] = new Set();
+    npisByCcn[row.hospital_ccn].add(row.npi);
+    if (row.full_name) surgeonNameByNpi[row.npi] = row.full_name;
+  }
+  const allNpis = Array.from(new Set(npiRows.map(r => r.npi)));
+  if (allNpis.length === 0) {
+    return {
+      hospitals, families: [], matrix: {},
+      elapsed_ms: Date.now() - t0,
+      error: 'No surgeons affiliated with the resolved hospitals.',
+    };
+  }
+
+  // 4) Resolve fiscal year — use latest available in MPUP for this slice
+  let yearUsed = Number(fiscal_year) || null;
+  if (!yearUsed) {
+    const yearRow = await models.IntuitivePhysicianProcedureVolume.findOne({
+      where: { npi: allNpis },
+      attributes: [[fn('MAX', col('fiscal_year')), 'max_year']],
+      raw: true,
+    });
+    yearUsed = (yearRow && yearRow.max_year) ? Number(yearRow.max_year) : null;
+  }
+  if (!yearUsed) {
+    return {
+      hospitals, families: [], matrix: {},
+      elapsed_ms: Date.now() - t0,
+      error: 'MPUP physician volume table has no rows for these surgeons. Run ingest-physician-volume.js with the latest MUP_PHY CSV.',
+    };
+  }
+
+  // 5) ONE bulk volume query
+  const volRows = await models.IntuitivePhysicianProcedureVolume.findAll({
+    where: { npi: allNpis, hcpcs_code: allCodes, fiscal_year: yearUsed },
+    attributes: ['npi', 'hcpcs_code', 'total_services'],
+    raw: true,
+  });
+
+  // 6) Aggregate into hospital × family matrix
+  const matrix = {}; // ccn → family → { volume, surgeon_count, surgeon_volumes: Map<npi,vol> }
+  for (const h of hospitals) {
+    matrix[h.ccn] = {};
+    for (const fam of Object.keys(familyMap)) {
+      matrix[h.ccn][fam] = { volume: 0, surgeon_count: 0, surgeon_volumes: new Map() };
+    }
+  }
+  // Build reverse index: npi → set of CCNs they belong to
+  const ccnsByNpi = {};
+  for (const r of npiRows) {
+    if (!ccnsByNpi[r.npi]) ccnsByNpi[r.npi] = new Set();
+    ccnsByNpi[r.npi].add(r.hospital_ccn);
+  }
+
+  for (const v of volRows) {
+    const services = Number(v.total_services) || 0;
+    if (services <= 0) continue;
+    const families = codeMap[v.hcpcs_code] || [];
+    const ccns = ccnsByNpi[v.npi];
+    if (!ccns || !families.length) continue;
+    for (const ccn of ccns) {
+      for (const fam of families) {
+        if (!matrix[ccn] || !matrix[ccn][fam]) continue;
+        matrix[ccn][fam].volume += services;
+        const prior = matrix[ccn][fam].surgeon_volumes.get(v.npi) || 0;
+        matrix[ccn][fam].surgeon_volumes.set(v.npi, prior + services);
+      }
+    }
+  }
+
+  // 7) Compute per-hospital totals + per-family totals + share %, finalize matrix shape
+  const familyTotals = {};
+  for (const ccn of Object.keys(matrix)) {
+    for (const fam of Object.keys(matrix[ccn])) {
+      familyTotals[fam] = (familyTotals[fam] || 0) + matrix[ccn][fam].volume;
+    }
+  }
+  const finalMatrix = {};
+  for (const ccn of Object.keys(matrix)) {
+    finalMatrix[ccn] = {};
+    for (const fam of Object.keys(matrix[ccn])) {
+      const cell = matrix[ccn][fam];
+      const surgeonList = Array.from(cell.surgeon_volumes.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([npi, vol]) => ({ npi, name: surgeonNameByNpi[npi] || null, volume: vol }));
+      const total = familyTotals[fam] || 0;
+      finalMatrix[ccn][fam] = {
+        volume: cell.volume,
+        surgeon_count: cell.surgeon_volumes.size,
+        share_pct: total > 0 ? Math.round((cell.volume / total) * 1000) / 10 : 0,
+        top_surgeons: surgeonList,
+      };
+    }
+  }
+
+  // 8) Per-hospital totals across all families
+  for (const h of hospitals) {
+    h.total_volume = Object.values(finalMatrix[h.ccn] || {})
+      .reduce((s, c) => s + (c.volume || 0), 0);
+  }
+  hospitals.sort((a, b) => b.total_volume - a.total_volume);
+
+  const families = Object.entries(familyMap).map(([slug, fam]) => ({
+    slug,
+    label: fam.label,
+    specialty: fam.specialty,
+    hcpcs_codes: fam.codes,
+    total_volume: familyTotals[slug] || 0,
+  })).sort((a, b) => b.total_volume - a.total_volume);
+
+  return {
+    hospitals,
+    families,
+    matrix: finalMatrix,
+    fiscal_year_used: yearUsed,
+    surgeons_considered: allNpis.length,
+    elapsed_ms: Date.now() - t0,
+    citations: [
+      { source_name: 'CMS Care Compare (surgeon-hospital affiliations)', source_url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+      { source_name: 'CMS MPUP (Medicare physician procedure volume)', source_url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
+    ],
+  };
+}
+
 module.exports = {
   searchByTerritory,
   searchByHospital,
   generateBriefing,
+  compareHospitalProcedureVolumes,
+  loadHcpcsFamilies,
   targetScore,
   kolScore,
   tier,
