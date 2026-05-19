@@ -300,7 +300,7 @@ function ROISummary({ plan }) {
 function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ surgeon_name: '', email: '', phone: '', specialty: '', procedures: [{ procedure_type: '', incremental_cases_month: 1, drg_reimbursement: 0 }] })
+  const [form, setForm] = useState({ surgeon_name: '', surgeon_email: '', surgeon_phone: '', surgeon_specialty: '', procedures: [{ procedure_type: '', incremental_cases_monthly: 1, reimbursement_rate: 0 }] })
   const [drgProcedures, setDrgProcedures] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -337,7 +337,7 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
   }
 
   function addProcedureRow() {
-    setForm(f => ({ ...f, procedures: [...f.procedures, { procedure_type: '', incremental_cases_month: 1, drg_reimbursement: 0 }] }))
+    setForm(f => ({ ...f, procedures: [...f.procedures, { procedure_type: '', incremental_cases_monthly: 1, reimbursement_rate: 0 }] }))
   }
 
   function removeProcedureRow(idx) {
@@ -350,24 +350,35 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
     try {
       const res = await api.lookupDRG(procType)
       const rate = res.reimbursement_rate || res.data?.reimbursement_rate || res.average_reimbursement || 0
-      setProcedure(idx, 'drg_reimbursement', rate)
+      setProcedure(idx, 'reimbursement_rate', rate)
     } catch { /* ignore */ }
   }
 
   function resetForm() {
-    setForm({ surgeon_name: '', email: '', phone: '', specialty: '', procedures: [{ procedure_type: '', incremental_cases_month: 1, drg_reimbursement: 0 }] })
+    setForm({ surgeon_name: '', surgeon_email: '', surgeon_phone: '', surgeon_specialty: '', procedures: [{ procedure_type: '', incremental_cases_monthly: 1, reimbursement_rate: 0 }] })
     setEditingId(null)
     setShowForm(false)
     setError(null)
   }
 
   function startEdit(surgeon) {
+    // Map saved row → form. Backend uses `surgeon_email`, `surgeon_phone`,
+    // `surgeon_specialty`, `incremental_cases_monthly`, `reimbursement_rate`.
+    // Older rows may have `email`, `specialty`, `incremental_cases_month`,
+    // `drg_reimbursement` — accept either.
+    const procs = (surgeon.procedures && surgeon.procedures.length)
+      ? surgeon.procedures.map(p => ({
+          ...p,
+          incremental_cases_monthly: p.incremental_cases_monthly ?? p.incremental_cases_month ?? 0,
+          reimbursement_rate: p.reimbursement_rate ?? p.drg_reimbursement ?? 0,
+        }))
+      : [{ procedure_type: '', incremental_cases_monthly: 1, reimbursement_rate: 0 }]
     setForm({
       surgeon_name: surgeon.surgeon_name || '',
-      email: surgeon.email || '',
-      phone: surgeon.phone || '',
-      specialty: surgeon.specialty || '',
-      procedures: surgeon.procedures?.length ? surgeon.procedures : [{ procedure_type: '', incremental_cases_month: 1, drg_reimbursement: 0 }],
+      surgeon_email: surgeon.surgeon_email || surgeon.email || '',
+      surgeon_phone: surgeon.surgeon_phone || surgeon.phone || '',
+      surgeon_specialty: surgeon.surgeon_specialty || surgeon.specialty || '',
+      procedures: procs,
     })
     setEditingId(surgeon.id)
     setShowForm(true)
@@ -453,9 +464,9 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
           <h4 className="text-sm font-bold text-white mb-3">{editingId ? 'Edit Surgeon' : 'Add Surgeon'}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <InputField label="Surgeon Name" value={form.surgeon_name} onChange={v => set('surgeon_name', v)} placeholder="Dr. Jane Smith" />
-            <InputField label="Email" value={form.email} onChange={v => set('email', v)} placeholder="jsmith@hospital.org" />
-            <InputField label="Phone" value={form.phone} onChange={v => set('phone', v)} placeholder="(555) 123-4567" />
-            <InputField label="Specialty" value={form.specialty} onChange={v => set('specialty', v)} placeholder="e.g. Urology" />
+            <InputField label="Email" value={form.surgeon_email} onChange={v => set('surgeon_email', v)} placeholder="jsmith@hospital.org" />
+            <InputField label="Phone" value={form.surgeon_phone} onChange={v => set('surgeon_phone', v)} placeholder="(555) 123-4567" />
+            <InputField label="Specialty" value={form.surgeon_specialty} onChange={v => set('surgeon_specialty', v)} placeholder="e.g. Urology" />
           </div>
 
           <div className="mb-3">
@@ -486,16 +497,16 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
                   <InputField
                     label={idx === 0 ? 'Cases/Mo' : undefined}
                     type="number"
-                    value={proc.incremental_cases_month}
-                    onChange={v => setProcedure(idx, 'incremental_cases_month', v)}
+                    value={proc.incremental_cases_monthly ?? proc.incremental_cases_month ?? 0}
+                    onChange={v => setProcedure(idx, 'incremental_cases_monthly', Number(v) || 0)}
                   />
                 </div>
                 <div className="col-span-3">
                   <InputField
                     label={idx === 0 ? 'DRG Reimb. Rate' : undefined}
                     type="number"
-                    value={proc.drg_reimbursement}
-                    onChange={v => setProcedure(idx, 'drg_reimbursement', v)}
+                    value={proc.reimbursement_rate ?? proc.drg_reimbursement ?? 0}
+                    onChange={v => setProcedure(idx, 'reimbursement_rate', Number(v) || 0)}
                     prefix="$"
                   />
                 </div>
@@ -542,14 +553,26 @@ function SurgeonCommitmentsSection({ planId, surgeons, onRefresh }) {
             <tbody>
               {surgeons.map(s => {
                 const procs = s.procedures || []
-                const monthlyCases = procs.reduce((sum, p) => sum + (p.incremental_cases_month || 0), 0)
-                const annualCases = monthlyCases * 12
-                const revenue = procs.reduce((sum, p) => sum + ((p.incremental_cases_month || 0) * 12 * (p.drg_reimbursement || 0)), 0)
+                // Prefer SAVED row totals (always correct because the backend computed them).
+                // Fall back to recomputing from procedures if rows pre-date the schema —
+                // checking BOTH field-name variants for backwards compat.
+                const annualCases = s.total_incremental_annual != null
+                  ? Number(s.total_incremental_annual)
+                  : procs.reduce((sum, p) => sum + Number(p.incremental_cases_annual || (p.incremental_cases_monthly || p.incremental_cases_month || 0) * 12), 0)
+                const monthlyCases = Math.round(annualCases / 12)
+                const revenue = s.total_revenue_impact != null
+                  ? Number(s.total_revenue_impact)
+                  : procs.reduce((sum, p) => {
+                      const annual = Number(p.incremental_cases_annual || (p.incremental_cases_monthly || p.incremental_cases_month || 0) * 12)
+                      const rate = Number(p.reimbursement_rate || p.drg_reimbursement || 0)
+                      return sum + annual * rate
+                    }, 0)
+                const specialty = s.surgeon_specialty || s.specialty || '--'
                 return (
                   <tr key={s.id} className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
                     <td className="py-3 pr-3 text-white font-medium">{s.surgeon_name}</td>
-                    <td className="py-3 pr-3 text-slate-400">{s.specialty || '--'}</td>
-                    <td className="py-3 pr-3 text-slate-400">{procs.map(p => p.procedure_type).filter(Boolean).join(', ') || '--'}</td>
+                    <td className="py-3 pr-3 text-slate-400">{specialty}</td>
+                    <td className="py-3 pr-3 text-slate-400">{procs.map(p => p.procedure_type || p.procedure_name).filter(Boolean).join(', ') || '--'}</td>
                     <td className="py-3 pr-3 text-right text-slate-300">{fmt(monthlyCases)}</td>
                     <td className="py-3 pr-3 text-right text-slate-300">{fmt(annualCases)}</td>
                     <td className="py-3 pr-3 text-right text-green-400 font-semibold">{fmtDollar(revenue)}</td>
@@ -948,7 +971,28 @@ export default function BusinessPlanPage({ projectId: propId }) {
         const active = list.find(p => p.status !== 'archived') || list[0]
         setPlan(active)
         const sRes = await api.listSurgeons(active.id)
-        setSurgeons(sRes.surgeons || sRes.data || [])
+        const loadedSurgeons = sRes.surgeons || sRes.data || []
+        setSurgeons(loadedSurgeons)
+
+        // Safety net: if the plan has commitments but no computed ROI on the plan
+        // (e.g. auto-seed ran before today's recalc fix), trigger one-time recalc.
+        const hasCommitments = loadedSurgeons.length > 0
+        const totalsMissing = active.total_combined_roi == null || Number(active.total_combined_roi) === 0
+        if (hasCommitments && totalsMissing) {
+          try {
+            const calc = await api.calculatePlan(active.id)
+            const updated = calc.data || calc
+            // Merge computed totals back onto the plan in state
+            setPlan(prev => prev ? { ...prev,
+              total_incremental_cases_annual: updated.total_incremental_cases_annual ?? prev.total_incremental_cases_annual,
+              total_incremental_revenue: updated.total_incremental_revenue ?? prev.total_incremental_revenue,
+              total_clinical_outcome_savings: updated.total_clinical_outcome_savings ?? prev.total_clinical_outcome_savings,
+              total_combined_roi: updated.total_combined_roi ?? prev.total_combined_roi,
+              payback_months: updated.payback_months ?? prev.payback_months,
+              five_year_net_benefit: updated.five_year_net_benefit ?? prev.five_year_net_benefit,
+            } : prev)
+          } catch (e) { /* non-fatal */ }
+        }
       }
     } catch (err) {
       setError(err.message)
