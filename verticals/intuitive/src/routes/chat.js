@@ -111,6 +111,13 @@ DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
           - <hook 2>
         - If identity_low_confidence is true, skip the research/trials hooks entirely
           and lead with hospital affiliation only. Warn the rep at the bottom.
+  - "How many [procedure-type] discharges does [hospital] do as Medicare?" /
+    "Institutional volume at <hospital>" / "DRG breakdown for hospital X" /
+    "Top surgical DRGs at this hospital"
+      → use query_hospital_drg_volumes (hospital_ccn required). This reads CMS's
+      direct hospital-level MS-DRG counts — more accurate than summing surgeon MPUP.
+      Pass surgical_only=true to filter to surgical DRGs. Render as a markdown
+      table with DRG code, description, discharges, avg Medicare payment.
   - "Compare X vs Y vs Z for [list of procedures]" / "Hospital A market share vs competitors
     for prostatectomy/hysterectomy/hernia" / "Volume cross-tab for these hospitals" /
     "Who does the most [procedure] in [region]?" (when ≥2 hospitals named)
@@ -294,6 +301,20 @@ const TOOLS = [
     },
   },
   {
+    name: 'query_hospital_drg_volumes',
+    description: 'Hospital-level Medicare DRG discharge counts — direct from CMS, no surgeon aggregation needed. More accurate than summing surgeon MPUP volume when the question is about institutional volume ("how many <procedure-type> discharges does <hospital> have?"). Filter by hospital_ccn (required) + drg_codes[] or surgical_only=true to filter to surgical MS-DRGs. Returns DRG-level discharge counts + Medicare payment averages, fiscal year, and a summary block.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        hospital_ccn: { type: 'string', description: '6-digit CMS hospital CCN.' },
+        drg_codes: { type: 'array', items: { type: 'string' }, description: 'Specific MS-DRG codes (e.g. ["470","743"]).' },
+        surgical_only: { type: 'boolean', description: 'If true, filter to surgical MS-DRGs only.' },
+        fiscal_year: { type: 'integer', description: 'Optional: defaults to latest year available.' },
+      },
+      required: ['hospital_ccn'],
+    },
+  },
+  {
     name: 'compare_hospital_procedure_volumes',
     description: 'Cross-tabulate Medicare procedure volumes across multiple hospitals in ONE call. Use for any "compare X hospital vs Y hospital for these procedures" or "ORMC market share vs Orlando competitors for prostatectomy/hysterectomy/hernia" question. Accepts hospital_ccns[] OR hospital_names[] (fuzzy ILIKE match), and hcpcs_codes[] OR procedure_families[] (slugs from the library: prostatectomy, partial_nephrectomy, radical_nephrectomy, cystectomy, hysterectomy_benign, hysterectomy_oncology, myomectomy, cholecystectomy, ventral_hernia, inguinal_hernia, colectomy, rectal_resection, lobectomy, thymectomy, esophagectomy, bariatric_sleeve, gastric_bypass, tors). Returns a hospital×family cross-tab matrix with volume, surgeon_count, share_pct (per-family Medicare share among the queried hospitals), and top 3 surgeons per cell. CRITICAL: prefer this over calling query_procedure_volumes multiple times — it does N×M lookups in 1 round-trip and conserves your tool budget.',
     input_schema: {
@@ -417,6 +438,8 @@ const TOOL_TIMEOUTS = {
   generate_business_plan: 60000,
   // Cross-tab procedure volumes across N hospitals — pure DB joins
   compare_hospital_procedure_volumes: 25000,
+  // Hospital × MS-DRG indexed query
+  query_hospital_drg_volumes: 10000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -822,6 +845,23 @@ async function tool_generate_briefing(input, ctx) {
   }
 }
 
+async function tool_query_hospital_drg_volumes(input, ctx) {
+  try {
+    return await surgeonTargetingService.hospitalDrgVolume({
+      hospital_ccn: input.hospital_ccn,
+      drg_codes: input.drg_codes,
+      mdc: input.mdc,
+      surgical_only: !!input.surgical_only,
+      fiscal_year: input.fiscal_year,
+    }, { models: ctx.models });
+  } catch (e) {
+    return {
+      error: e.message,
+      hint: 'Most common cause: intuitive_hospital_drg_volume table not yet populated. Run scripts/ingest-medicare-inpatient-drg.js on the latest CMS Medicare Inpatient Hospitals CSV.',
+    };
+  }
+}
+
 async function tool_compare_hospital_procedure_volumes(input, ctx) {
   try {
     return await surgeonTargetingService.compareHospitalProcedureVolumes({
@@ -1090,6 +1130,7 @@ const TOOL_IMPL = {
   draft_outreach: tool_draft_outreach,
   generate_business_plan: tool_generate_business_plan,
   compare_hospital_procedure_volumes: tool_compare_hospital_procedure_volumes,
+  query_hospital_drg_volumes: tool_query_hospital_drg_volumes,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,

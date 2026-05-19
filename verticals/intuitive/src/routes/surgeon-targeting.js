@@ -552,4 +552,23 @@ router.post('/compare-procedure-volumes', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// POST /hospital-drg-volumes — direct hospital-level Medicare DRG counts
+// ---------------------------------------------------------------------------
+router.post('/hospital-drg-volumes', async (req, res) => {
+  try {
+    const result = await surgeonTargetingService.hospitalDrgVolume({
+      hospital_ccn: req.body.hospital_ccn,
+      drg_codes: req.body.drg_codes,
+      mdc: req.body.mdc,
+      surgical_only: !!req.body.surgical_only,
+      fiscal_year: req.body.fiscal_year,
+    }, { models: req.models });
+    res.json({ success: !result.error, data: result });
+  } catch (e) {
+    console.error('[surgeon-targeting] /hospital-drg-volumes error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

@@ -834,11 +834,94 @@ async function compareHospitalProcedureVolumes({
   };
 }
 
+// ---------------------------------------------------------------------------
+// hospitalDrgVolume — direct hospital-level Medicare DRG discharges
+// More accurate than summing surgeons' MPUP when the question is institutional.
+// Requires intuitive_hospital_drg_volume table populated via
+// scripts/ingest-medicare-inpatient-drg.js.
+// ---------------------------------------------------------------------------
+const SURGICAL_DRG_DESC_RE = /\b(SURG|SURGERY|SURGICAL|PROCEDURE|RESECTION|EXCISION|REPAIR|REMOVAL|TRANSPLANT|BYPASS|GRAFT|REPLACEMENT|FUSION|AMPUTATION|MASTECTOMY|HYSTERECTOMY|PROSTATECTOMY|NEPHRECTOMY|COLECTOMY|LOBECTOMY|CHOLECYSTECTOMY|HERNIA)\b/i;
+
+async function hospitalDrgVolume({ hospital_ccn, drg_codes, mdc, surgical_only, fiscal_year }, ctx) {
+  const t0 = Date.now();
+  const models = ctx.models;
+  if (!hospital_ccn) throw new Error('hospital_ccn required');
+  if (!models?.IntuitiveHospitalDrgVolume) {
+    throw new Error('Hospital DRG volume table missing. Run scripts/ingest-medicare-inpatient-drg.js first.');
+  }
+
+  const { Op, fn, col } = require('sequelize');
+  const where = { hospital_ccn: String(hospital_ccn) };
+
+  // Resolve fiscal year — latest available if not specified
+  let yearUsed = Number(fiscal_year) || null;
+  if (!yearUsed) {
+    const row = await models.IntuitiveHospitalDrgVolume.findOne({
+      where: { hospital_ccn: String(hospital_ccn) },
+      attributes: [[fn('MAX', col('fiscal_year')), 'max_year']],
+      raw: true,
+    });
+    yearUsed = (row && row.max_year) ? Number(row.max_year) : null;
+  }
+  if (!yearUsed) {
+    return {
+      hospital_ccn, drgs: [], total_discharges: 0,
+      error: 'No DRG data found for this CCN. Either the CCN is wrong or the bulk ingest has not been run.',
+      elapsed_ms: Date.now() - t0,
+    };
+  }
+  where.fiscal_year = yearUsed;
+
+  if (Array.isArray(drg_codes) && drg_codes.length) {
+    where.drg_cd = drg_codes.map(String);
+  }
+
+  let rows = await models.IntuitiveHospitalDrgVolume.findAll({
+    where,
+    order: [['total_discharges', 'DESC']],
+    raw: true,
+    limit: 200,
+  });
+
+  if (surgical_only) {
+    rows = rows.filter(r => SURGICAL_DRG_DESC_RE.test(r.drg_desc || ''));
+  }
+
+  const totalDischarges = rows.reduce((s, r) => s + (Number(r.total_discharges) || 0), 0);
+  const totalMcrPayment = rows.reduce((s, r) =>
+    s + (Number(r.avg_medicare_payment) || 0) * (Number(r.total_discharges) || 0), 0);
+
+  return {
+    hospital_ccn,
+    fiscal_year_used: yearUsed,
+    surgical_only: !!surgical_only,
+    drg_codes_filter: drg_codes || null,
+    drgs: rows.map(r => ({
+      drg_cd: r.drg_cd,
+      drg_desc: r.drg_desc,
+      total_discharges: r.total_discharges,
+      avg_medicare_payment: r.avg_medicare_payment,
+      avg_total_payment: r.avg_total_payment,
+      avg_covered_charges: r.avg_covered_charges,
+    })),
+    summary: {
+      drg_count: rows.length,
+      total_discharges: totalDischarges,
+      estimated_medicare_payments: Math.round(totalMcrPayment),
+    },
+    elapsed_ms: Date.now() - t0,
+    citations: [
+      { source_name: 'CMS Medicare Inpatient Hospitals by Provider and Service', source_url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals' },
+    ],
+  };
+}
+
 module.exports = {
   searchByTerritory,
   searchByHospital,
   generateBriefing,
   compareHospitalProcedureVolumes,
+  hospitalDrgVolume,
   loadHcpcsFamilies,
   targetScore,
   kolScore,

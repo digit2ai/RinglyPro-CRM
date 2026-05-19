@@ -20,6 +20,7 @@ const TOOL_LABELS = {
   generate_briefing: 'Compiling pre-meeting briefing',
   generate_business_plan: 'Building business plan + auto-seeding surgeons',
   compare_hospital_procedure_volumes: 'Cross-tabulating hospital procedure volumes',
+  query_hospital_drg_volumes: 'Querying hospital MS-DRG discharges',
   draft_outreach: 'Gathering personalization material',
   query_intuitive_payments: 'Querying Open Payments',
   query_procedure_volumes: 'Querying procedure volumes',

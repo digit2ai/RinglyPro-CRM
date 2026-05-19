@@ -117,6 +117,7 @@ Six public-source connectors back the Hospital Intake bulletproof citation chain
 | CMS HCRIS | quarterly (Mar/Jun/Sep/Dec, 1st Sunday) | `verticals/intuitive/scripts/ingest-hcris.js` | https://www.cms.gov/Research-Statistics-Data-and-Systems/Files-for-Order/CostReports |
 | CMS Open Payments | annually (July 15, 1st Sunday after) | `verticals/intuitive/scripts/ingest-open-payments.js` | https://www.cms.gov/openpayments/data/dataset-downloads |
 | CMS MPUP (Physician Volume) | annually (April 15, 1st Sunday after) | `verticals/intuitive/scripts/ingest-physician-volume.js` | https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners |
+| CMS Medicare Inpatient Hospitals (hospital × MS-DRG) | annually (Sep, after MS-DRG year close) | `verticals/intuitive/scripts/ingest-medicare-inpatient-drg.js` | https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals |
 | Florida AHCA | quarterly | `verticals/intuitive/scripts/ingest-florida-ahca.js` | https://ahca.myflorida.com |
 | NPI Registry (NPPES) | live API per Hospital Intake call (24h cache) | (no script — connector caches inline) | https://npiregistry.cms.hhs.gov |
 | ProPublica Form 990 | live API per Hospital Intake call (24h cache) | (no script — connector caches inline) | https://projects.propublica.org/nonprofits |
