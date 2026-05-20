@@ -235,8 +235,8 @@ async function renderOverview(container) {
   // Quick actions bar
   const quickActionsHtml = `
     <div class="quick-actions">
-      <button class="quick-action-btn" onclick="openEventModal()"><span class="qa-label">Schedule Event</span></button>
-      <button class="quick-action-btn" onclick="document.getElementById('nlp-panel').classList.remove('hidden')"><span class="qa-label">Ask AI</span></button>
+      <button class="quick-action-btn" onclick="openCalendarWeek()"><span class="qa-label">Calendar</span></button>
+      <button class="quick-action-btn" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span></button>
       <button class="quick-action-btn" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Quick Task</span></button>
     </div>`;
 
@@ -1719,6 +1719,15 @@ function setCalView(v) {
   renderCalendar(document.getElementById('view-container'));
 }
 
+// Home page shortcut — open the Calendar view forced into Week mode,
+// regardless of whatever view the user last left it on.
+function openCalendarWeek() {
+  calView = 'week';
+  localStorage.setItem('cal_view', 'week');
+  navigateTo('calendar');
+}
+window.openCalendarWeek = openCalendarWeek;
+
 function calToday() {
   const now = new Date();
   calYear = now.getFullYear(); calMonth = now.getMonth();
@@ -2621,6 +2630,24 @@ function toggleTaskGroup(groupId) {
   if (chev) chev.innerHTML = isHidden ? '&#9660;' : '&#9654;';
   if (header) header.classList.toggle('collapsed', !isHidden);
 }
+
+// Home page shortcut — open the To-Do List view (filtered to outstanding
+// "Still To Do" tasks, which is already the default) and auto-expand the
+// Unassigned group so the user sees what needs attention immediately.
+function openOutstandingTasks() {
+  navigateTo('tasks');
+  const tryExpand = (attempts = 0) => {
+    const body = document.getElementById('tg-unassigned');
+    if (body) {
+      if (body.style.display === 'none') toggleTaskGroup('tg-unassigned');
+      body.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (attempts < 25) setTimeout(() => tryExpand(attempts + 1), 100);
+  };
+  setTimeout(tryExpand, 150);
+}
+window.openOutstandingTasks = openOutstandingTasks;
 
 // Open a plain-text print view for a single assignee group and trigger the
 // browser print dialog so the user can pick "Save as PDF" as destination.
