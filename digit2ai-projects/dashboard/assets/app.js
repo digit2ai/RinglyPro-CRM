@@ -2441,12 +2441,14 @@ function renderTasksList(tasks) {
   sortedNames.forEach(name => {
     const items = groups[name];
     const groupId = 'tg-' + name.replace(/\s+/g, '-').toLowerCase();
+    const safeName = name.replace(/'/g, "\\'");
     html += `
       <div class="task-group">
         <div class="task-group-header collapsed" onclick="toggleTaskGroup('${groupId}')">
           <span class="task-group-chevron" id="chev-${groupId}">&#9654;</span>
           <span class="task-group-name">&#128100; ${name}</span>
           <span class="task-group-badge">${items.length}</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="event.stopPropagation();printTaskGroup('${safeName}')" title="Print this list as PDF">Print PDF</button>
         </div>
         <div class="task-group-body" id="${groupId}" style="display:none">
           <table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
@@ -2479,6 +2481,100 @@ function toggleTaskGroup(groupId) {
   if (chev) chev.innerHTML = isHidden ? '&#9660;' : '&#9654;';
   if (header) header.classList.toggle('collapsed', !isHidden);
 }
+
+// Open a plain-text print view for a single assignee group and trigger the
+// browser print dialog so the user can pick "Save as PDF" as destination.
+// Mirrors whatever the current task filters were (status + type).
+function printTaskGroup(assigneeName) {
+  const statusEl = document.getElementById('task-status-filter');
+  const typeEl = document.getElementById('task-type-filter');
+  const statusVal = statusEl ? statusEl.value : '';
+  const typeVal = typeEl ? typeEl.value : '';
+
+  let tasks = (_allTasksCache || []).filter(t => {
+    const grp = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : 'Unassigned';
+    return grp === assigneeName;
+  });
+  if (statusVal) tasks = tasks.filter(t => t.status === statusVal);
+  if (typeVal) tasks = tasks.filter(t => t.task_type === typeVal);
+
+  // Sort by due date (no date last), then priority weight
+  const prioWeight = { urgent: 0, high: 1, medium: 2, low: 3 };
+  tasks.sort((a, b) => {
+    const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+    const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    if (ad !== bd) return ad - bd;
+    return (prioWeight[a.priority] ?? 9) - (prioWeight[b.priority] ?? 9);
+  });
+
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const now = new Date();
+  const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const headerLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+  const title = `To-Do List — ${assigneeName} (${headerLabel})`;
+
+  const rows = tasks.map((t, i) => {
+    const overdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+    const due = t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    const proj = t.project?.name || '';
+    const desc = t.description ? t.description.replace(/\s+/g, ' ').trim() : '';
+    return `<div class="row">
+  <div class="num">${i + 1}.</div>
+  <div class="body">
+    <div class="line1"><span class="ttl">${esc(t.title)}</span> <span class="meta">[${esc(t.task_type || 'task')} · ${esc(t.priority || 'medium')}]</span></div>
+    <div class="line2">Due: <strong${overdue ? ' class="overdue"' : ''}>${esc(due)}${overdue ? ' (OVERDUE)' : ''}</strong>${proj ? '  ·  Project: ' + esc(proj) : ''}  ·  Status: ${esc(t.status)}</div>
+    ${desc ? `<div class="line3">${esc(desc)}</div>` : ''}
+  </div>
+</div>`;
+  }).join('');
+
+  const body = tasks.length === 0
+    ? '<p class="empty">No tasks in this list.</p>'
+    : rows;
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+  @page { margin: 0.6in; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; color: #000; font-size: 12pt; line-height: 1.4; margin: 0; padding: 0.2in; }
+  h1 { font-size: 18pt; margin: 0 0 4px 0; }
+  .gen { font-size: 10pt; color: #444; margin: 0 0 18px 0; }
+  hr { border: none; border-top: 1px solid #999; margin: 12px 0 18px 0; }
+  .row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px dotted #bbb; page-break-inside: avoid; }
+  .num { min-width: 26px; font-weight: 600; }
+  .body { flex: 1; }
+  .ttl { font-weight: 700; }
+  .meta { color: #555; font-size: 11pt; }
+  .line2 { font-size: 10.5pt; margin-top: 3px; color: #333; }
+  .line3 { font-size: 10.5pt; margin-top: 4px; color: #222; padding-left: 8px; border-left: 2px solid #ccc; }
+  .overdue { color: #b91c1c; }
+  .empty { color: #555; font-style: italic; }
+  .footer { margin-top: 24px; font-size: 9pt; color: #777; text-align: right; }
+  @media print { .noprint { display: none; } }
+  .noprint { margin: 12px 0; }
+  .noprint button { font: inherit; padding: 6px 14px; cursor: pointer; }
+</style>
+</head><body>
+  <div class="noprint"><button onclick="window.print()">Print / Save as PDF</button> <button onclick="window.close()">Close</button></div>
+  <h1>${esc(title)}</h1>
+  <div class="gen">Generated: ${esc(generated)}  ·  ${tasks.length} item${tasks.length === 1 ? '' : 's'}</div>
+  <hr>
+  ${body}
+  <div class="footer">Digit2AI Projects · ${esc(generated)}</div>
+  <script>setTimeout(function(){ try { window.print(); } catch(e){} }, 300);<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=820,height=900');
+  if (!w) {
+    alert('Pop-up blocked. Allow pop-ups for this site to print the list.');
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+window.printTaskGroup = printTaskGroup;
 
 async function completeTask(id) {
   await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
