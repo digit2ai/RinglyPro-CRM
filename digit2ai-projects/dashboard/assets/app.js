@@ -2448,7 +2448,8 @@ function renderTasksList(tasks) {
           <span class="task-group-chevron" id="chev-${groupId}">&#9654;</span>
           <span class="task-group-name">&#128100; ${name}</span>
           <span class="task-group-badge">${items.length}</span>
-          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="event.stopPropagation();printTaskGroup('${safeName}')" title="Print this list as PDF">Print PDF</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="event.stopPropagation();copyTaskGroupText('${safeName}')" title="Copy this list as plain text (paste into email or SMS)">Copy Text</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="event.stopPropagation();printTaskGroup('${safeName}')" title="Print this list as PDF">Print PDF</button>
         </div>
         <div class="task-group-body" id="${groupId}" style="display:none">
           <table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
@@ -2575,6 +2576,111 @@ function printTaskGroup(assigneeName) {
   w.document.close();
 }
 window.printTaskGroup = printTaskGroup;
+
+// Build the same filtered + sorted list as printTaskGroup, but emit plain
+// text and copy it to the clipboard so the user can paste into email/SMS.
+function copyTaskGroupText(assigneeName) {
+  const statusEl = document.getElementById('task-status-filter');
+  const typeEl = document.getElementById('task-type-filter');
+  const statusVal = statusEl ? statusEl.value : '';
+  const typeVal = typeEl ? typeEl.value : '';
+
+  let tasks = (_allTasksCache || []).filter(t => {
+    const grp = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : 'Unassigned';
+    return grp === assigneeName;
+  });
+  if (statusVal) tasks = tasks.filter(t => t.status === statusVal);
+  if (typeVal) tasks = tasks.filter(t => t.task_type === typeVal);
+
+  const prioWeight = { urgent: 0, high: 1, medium: 2, low: 3 };
+  tasks.sort((a, b) => {
+    const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+    const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    if (ad !== bd) return ad - bd;
+    return (prioWeight[a.priority] ?? 9) - (prioWeight[b.priority] ?? 9);
+  });
+
+  const now = new Date();
+  const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+  const headerLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+
+  const lines = [];
+  lines.push(`To-Do List — ${assigneeName} (${headerLabel})`);
+  lines.push(`Generated: ${generated}  ·  ${tasks.length} item${tasks.length === 1 ? '' : 's'}`);
+  lines.push('');
+  if (tasks.length === 0) {
+    lines.push('(No tasks in this list.)');
+  } else {
+    tasks.forEach((t, i) => {
+      const overdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+      const due = t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'no due date';
+      const parts = [];
+      parts.push(`Due: ${due}${overdue ? ' (OVERDUE)' : ''}`);
+      parts.push(`Priority: ${t.priority || 'medium'}`);
+      parts.push(`Type: ${t.task_type || 'task'}`);
+      if (t.project?.name) parts.push(`Project: ${t.project.name}`);
+      parts.push(`Status: ${t.status}`);
+      lines.push(`${i + 1}. ${t.title}`);
+      lines.push(`   ${parts.join(' · ')}`);
+      if (t.description) {
+        const clean = t.description.replace(/\s+/g, ' ').trim();
+        lines.push(`   ${clean}`);
+      }
+      lines.push('');
+    });
+  }
+  const text = lines.join('\n').replace(/\n+$/, '') + '\n';
+
+  const finish = (ok) => {
+    if (ok) {
+      showCopyToast(`Copied ${tasks.length} item${tasks.length === 1 ? '' : 's'} — paste into email or SMS`);
+    } else {
+      // Last-resort fallback: show a textarea the user can manually copy from
+      const win = window.open('', '_blank', 'width=720,height=600');
+      if (win) {
+        const escTxt = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        win.document.open();
+        win.document.write(`<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;padding:18px"><p>Copy the text below (Cmd/Ctrl+A then Cmd/Ctrl+C):</p><textarea style="width:100%;height:80vh;font-family:Menlo,Consolas,monospace;font-size:12pt;padding:10px">${escTxt}</textarea></body></html>`);
+        win.document.close();
+      } else {
+        alert('Could not copy to clipboard automatically. Allow pop-ups to see the text in a new window.');
+      }
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => finish(false));
+  } else {
+    // Older browsers: textarea + execCommand
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    finish(ok);
+  }
+}
+window.copyTaskGroupText = copyTaskGroupText;
+
+// Lightweight ephemeral toast for copy confirmation (no toast lib needed).
+function showCopyToast(msg) {
+  let toast = document.getElementById('copy-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'copy-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:99999;opacity:0;transition:opacity 0.18s ease';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(window._copyToastTimer);
+  window._copyToastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2600);
+}
 
 async function completeTask(id) {
   await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
