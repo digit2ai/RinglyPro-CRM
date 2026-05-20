@@ -1686,6 +1686,9 @@ async function renderCalendar(container) {
   if (!calYear) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
 
   const headerHTML = `
+    <div style="margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
+    </div>
     <div class="section-header cal-section-header">
       <div class="cal-nav-row">
         <button class="btn btn-ghost btn-sm cal-nav-btn" onclick="calNav(-1)" aria-label="Previous">&#9664;</button>
@@ -2585,6 +2588,9 @@ async function renderTasks(container) {
   _allTasksCache = res.data;
 
   container.innerHTML = `
+    <div style="margin-bottom:12px">
+      <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
+    </div>
     <div class="section-header">
       <div class="filter-bar">
         <select id="task-status-filter" onchange="filterTasks()">
