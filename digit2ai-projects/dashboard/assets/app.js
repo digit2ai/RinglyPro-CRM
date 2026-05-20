@@ -2306,15 +2306,77 @@ function openInviteMoreModal(eventId) {
 }
 
 // Quick reschedule — just change start/end + optionally notify attendees.
-// Lighter weight than the full Edit modal so the user does not have to scroll
-// past every other field to move a meeting.
+// When the event is linked to a project, also pulls project stakeholders
+// (submitter_email + team_members) and merges them with event.invited_emails
+// so people who care about the project are not silently skipped.
 async function openRescheduleModal(id) {
   const res = await api(`/calendar/${id}`);
   if (!res.success) { alert('Could not load event'); return; }
   const e = res.data;
-  const hasAttendees = Array.isArray(e.invited_emails) && e.invited_emails.length > 0;
-  const attendeeCount = hasAttendees ? e.invited_emails.length : 0;
+
+  // Build merged recipient list with provenance labels.
+  const norm = (s) => String(s || '').trim().toLowerCase();
+  const recipients = new Map(); // email -> Set of source labels
+  const addRecipient = (email, source) => {
+    const ne = norm(email);
+    if (!ne || !ne.includes('@')) return;
+    if (!recipients.has(ne)) recipients.set(ne, new Set());
+    recipients.get(ne).add(source);
+  };
+
+  if (Array.isArray(e.invited_emails)) {
+    e.invited_emails.forEach(em => addRecipient(em, 'Event attendee'));
+  }
+
+  // If the event is linked to a project, pull stakeholders too.
+  let projectName = null;
+  if (e.project_id || (e.project && e.project.id)) {
+    const projectId = e.project_id || e.project.id;
+    try {
+      const pres = await api(`/projects/${projectId}`);
+      if (pres.success && pres.data) {
+        const p = pres.data;
+        projectName = p.name;
+        if (p.submitter_email) addRecipient(p.submitter_email, 'Project requestor');
+        if (Array.isArray(p.team_members)) {
+          p.team_members.forEach(m => {
+            if (m && m.email) addRecipient(m.email, 'Project stakeholder');
+          });
+        }
+      }
+    } catch (err) { /* non-fatal — still let them reschedule */ }
+  }
+
+  const recipientList = Array.from(recipients.entries()).map(([email, sources]) => ({
+    email,
+    labels: Array.from(sources)
+  }));
+  const hasRecipients = recipientList.length > 0;
   const safeTitle = (e.title || '').replace(/'/g, "&#39;").replace(/</g, '&lt;');
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const recipientsHtml = hasRecipients ? `
+    <div class="form-group">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <input type="checkbox" id="m-rs-notify" checked style="width:auto;margin:0">
+        <label for="m-rs-notify" style="margin:0;cursor:pointer;font-weight:600">
+          Notify ${recipientList.length} ${recipientList.length === 1 ? 'person' : 'people'} about the new time (sends a fresh .ics)
+        </label>
+      </div>
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 12px;max-height:180px;overflow-y:auto">
+        ${recipientList.map(r => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:13px">
+            <span style="color:var(--text-primary)">${esc(r.email)}</span>
+            <span style="display:flex;gap:4px;flex-wrap:wrap">
+              ${r.labels.map(l => `<span style="background:${l === 'Event attendee' ? '#dbeafe' : '#e0e7ff'};color:${l === 'Event attendee' ? '#1e40af' : '#3730a3'};padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap">${esc(l)}</span>`).join('')}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+      ${projectName ? `<small style="color:var(--text-muted);display:block;margin-top:6px">Project stakeholders pulled from <strong>${esc(projectName)}</strong>. They will be added to this event's attendee list after sending.</small>` : ''}
+    </div>
+  ` : '<p style="font-size:13px;color:var(--text-muted);margin:0 0 8px 0">No recipients — this event has no attendees and is not linked to a project.</p>';
 
   openModal('Reschedule Meeting', `
     <p style="margin:0 0 12px 0;font-size:13px;color:var(--text-muted)">
@@ -2333,14 +2395,7 @@ async function openRescheduleModal(id) {
       <label>Reason / note (optional)</label>
       <textarea id="m-rs-reason" rows="2" placeholder="e.g. conflict with another meeting"></textarea>
     </div>
-    ${hasAttendees ? `
-      <div class="form-group" style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="m-rs-notify" checked style="width:auto;margin:0">
-        <label for="m-rs-notify" style="margin:0;cursor:pointer">
-          Email the ${attendeeCount} attendee${attendeeCount === 1 ? '' : 's'} with the new time (sends a fresh .ics)
-        </label>
-      </div>
-    ` : '<p style="font-size:12px;color:var(--text-muted);margin:0">No attendees on this event — nothing to notify.</p>'}
+    ${recipientsHtml}
   `, async () => {
     const startVal = document.getElementById('m-rs-start').value;
     const endVal = document.getElementById('m-rs-end').value;
@@ -2365,11 +2420,12 @@ async function openRescheduleModal(id) {
 
     let notifyResult = null;
     const notifyEl = document.getElementById('m-rs-notify');
-    if (notifyEl && notifyEl.checked && hasAttendees) {
+    if (notifyEl && notifyEl.checked && hasRecipients) {
+      const emailsList = recipientList.map(r => r.email).join(',');
       const customMsg = `This meeting has been rescheduled.\n\nNew time: ${fmtDateTime(startIso)}${endIso ? ' – ' + fmtDateTime(endIso) : ''}.${reason ? '\n\nReason: ' + reason : ''}\n\nA fresh calendar invite (.ics) is attached. If this time does not work, please reply with two or three alternatives.`;
       const inv = await api(`/calendar/${id}/invite`, {
         method: 'POST',
-        body: JSON.stringify({ emails: e.invited_emails.join(','), message: customMsg })
+        body: JSON.stringify({ emails: emailsList, message: customMsg })
       });
       notifyResult = inv.invite_result || null;
     }
@@ -2377,7 +2433,7 @@ async function openRescheduleModal(id) {
     closeModal();
     let msg = 'Meeting rescheduled.';
     if (notifyResult) {
-      if (notifyResult.sent && notifyResult.sent.length) msg += ` Notified ${notifyResult.sent.length} attendee${notifyResult.sent.length === 1 ? '' : 's'}.`;
+      if (notifyResult.sent && notifyResult.sent.length) msg += ` Notified ${notifyResult.sent.length} ${notifyResult.sent.length === 1 ? 'person' : 'people'}.`;
       if (notifyResult.failed && notifyResult.failed.length) msg += ` Failed: ${notifyResult.failed.map(f => f.email).join(', ')}.`;
     }
     if (typeof showCopyToast === 'function') showCopyToast(msg);
