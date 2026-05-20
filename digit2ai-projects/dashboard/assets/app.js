@@ -2208,6 +2208,7 @@ async function showEventDetail(id) {
           <h2>${e.title}</h2>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="openRescheduleModal(${e.id})">Reschedule</button>
           <button class="btn btn-ghost btn-sm" onclick="openEventEditModal(${e.id})">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteEvent(${e.id}, ${e.recurrence_group_id ? 'true' : 'false'})">Delete</button>
         </div>
@@ -2303,6 +2304,88 @@ function openInviteMoreModal(eventId) {
     showEventDetail(eventId);
   });
 }
+
+// Quick reschedule — just change start/end + optionally notify attendees.
+// Lighter weight than the full Edit modal so the user does not have to scroll
+// past every other field to move a meeting.
+async function openRescheduleModal(id) {
+  const res = await api(`/calendar/${id}`);
+  if (!res.success) { alert('Could not load event'); return; }
+  const e = res.data;
+  const hasAttendees = Array.isArray(e.invited_emails) && e.invited_emails.length > 0;
+  const attendeeCount = hasAttendees ? e.invited_emails.length : 0;
+  const safeTitle = (e.title || '').replace(/'/g, "&#39;").replace(/</g, '&lt;');
+
+  openModal('Reschedule Meeting', `
+    <p style="margin:0 0 12px 0;font-size:13px;color:var(--text-muted)">
+      <strong>${safeTitle}</strong><br>
+      Current time: ${fmtDateTime(e.start_time)}${e.end_time ? ' &mdash; ' + fmtDateTime(e.end_time) : ''}
+    </p>
+    <div class="form-group">
+      <label>New Start *</label>
+      <input type="datetime-local" id="m-rs-start" value="${isoToLocalInput(e.start_time)}">
+    </div>
+    <div class="form-group">
+      <label>New End</label>
+      <input type="datetime-local" id="m-rs-end" value="${isoToLocalInput(e.end_time)}">
+    </div>
+    <div class="form-group">
+      <label>Reason / note (optional)</label>
+      <textarea id="m-rs-reason" rows="2" placeholder="e.g. conflict with another meeting"></textarea>
+    </div>
+    ${hasAttendees ? `
+      <div class="form-group" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="m-rs-notify" checked style="width:auto;margin:0">
+        <label for="m-rs-notify" style="margin:0;cursor:pointer">
+          Email the ${attendeeCount} attendee${attendeeCount === 1 ? '' : 's'} with the new time (sends a fresh .ics)
+        </label>
+      </div>
+    ` : '<p style="font-size:12px;color:var(--text-muted);margin:0">No attendees on this event — nothing to notify.</p>'}
+  `, async () => {
+    const startVal = document.getElementById('m-rs-start').value;
+    const endVal = document.getElementById('m-rs-end').value;
+    const reason = document.getElementById('m-rs-reason').value.trim();
+    if (!startVal) { alert('New Start is required'); return; }
+    const startIso = localInputToIso(startVal);
+    const endIso = endVal ? localInputToIso(endVal) : null;
+    if (endIso && new Date(endIso) <= new Date(startIso)) {
+      alert('End time must be after Start time'); return;
+    }
+
+    const oldDescription = e.description || '';
+    const stamp = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const noteLine = `Rescheduled on ${stamp}. Previous time: ${fmtDateTime(e.start_time)}.${reason ? ' Reason: ' + reason : ''}`;
+    const newDescription = oldDescription ? `${oldDescription}\n\n${noteLine}` : noteLine;
+
+    const updateBody = { start_time: startIso, description: newDescription };
+    if (endIso) updateBody.end_time = endIso;
+
+    const upd = await api(`/calendar/${id}`, { method: 'PUT', body: JSON.stringify(updateBody) });
+    if (!upd.success) { alert('Reschedule failed: ' + (upd.error || 'unknown')); return; }
+
+    let notifyResult = null;
+    const notifyEl = document.getElementById('m-rs-notify');
+    if (notifyEl && notifyEl.checked && hasAttendees) {
+      const customMsg = `This meeting has been rescheduled.\n\nNew time: ${fmtDateTime(startIso)}${endIso ? ' – ' + fmtDateTime(endIso) : ''}.${reason ? '\n\nReason: ' + reason : ''}\n\nA fresh calendar invite (.ics) is attached. If this time does not work, please reply with two or three alternatives.`;
+      const inv = await api(`/calendar/${id}/invite`, {
+        method: 'POST',
+        body: JSON.stringify({ emails: e.invited_emails.join(','), message: customMsg })
+      });
+      notifyResult = inv.invite_result || null;
+    }
+
+    closeModal();
+    let msg = 'Meeting rescheduled.';
+    if (notifyResult) {
+      if (notifyResult.sent && notifyResult.sent.length) msg += ` Notified ${notifyResult.sent.length} attendee${notifyResult.sent.length === 1 ? '' : 's'}.`;
+      if (notifyResult.failed && notifyResult.failed.length) msg += ` Failed: ${notifyResult.failed.map(f => f.email).join(', ')}.`;
+    }
+    if (typeof showCopyToast === 'function') showCopyToast(msg);
+    else alert(msg);
+    showEventDetail(id);
+  });
+}
+window.openRescheduleModal = openRescheduleModal;
 
 async function openEventEditModal(id) {
   const res = await api(`/calendar/${id}`);
