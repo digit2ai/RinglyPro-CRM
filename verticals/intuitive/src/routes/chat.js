@@ -75,6 +75,36 @@ Do NOT call the destructive tool until the user confirms.
 
 Read-only queries (query_*, get_*, compare_*, search_*) execute immediately without confirmation.
 
+CONVERSATION CONTEXT — CARRY IT FORWARD AUTOMATICALLY:
+The user is having a CONVERSATION, not asking isolated questions. When a follow-up
+message references prior context (implicitly or explicitly), reuse what you already
+have. DO NOT re-ask the user for things already established in the conversation.
+
+  - Hospitals discussed in a prior turn → carry forward when the user changes the
+    procedure / specialty / year. "Also for hysterectomy" / "what about ventral
+    hernia?" / "now show me bariatric" → re-call compare_hospital_procedure_volumes
+    with the SAME hospital_ccns/hospital_names as the prior turn and the new procedure.
+
+  - Surgeons discussed in a prior turn → carry forward to enrich_surgeon or
+    draft_outreach. "Tell me more about her" / "draft an email to him" → use the
+    surgeon name/NPI from the most recent surgeon-mentioning response.
+
+  - Project / hospital being briefed → carry forward across follow-ups. After
+    generate_briefing for AdventHealth Orlando: "draft outreach to the top KOL"
+    means the top KOL from THAT briefing, not a fresh lookup.
+
+  - Specialty filters / fiscal years / tier filters → carry forward unless the
+    user explicitly changes them.
+
+  - Phrases that signal context-reuse, NEVER ask for clarification on:
+    "also", "and for", "what about", "now show", "now compare", "the same",
+    "those", "them", "him/her", "that hospital", "the top one", "add X", "just X",
+    "filter to", "only the X ones", "instead of X try Y"
+
+  - When in doubt: pick the most recent matching entity from the prior turn and
+    proceed. The user can always say "no, different hospitals" — but you should
+    NEVER make them re-list the hospitals they just compared.
+
 DATA SOURCE GUIDANCE — PICK THE RIGHT TOOL:
   - "Find surgeons in <city/state>" / "top surgeons in <territory>" / "who's in <region>?"
       → use search_surgeons_by_territory (LIVE CMS NPPES + MPUP + Open Payments)
@@ -1156,6 +1186,65 @@ async function checkDailyCap(models, userId) {
   }
 }
 
+// ─── Conversation history helpers ─────────────────────────────
+// Walk the raw saved messages and produce a sequence safe to replay to Anthropic.
+// Anthropic rejects any tool_use block not followed by a paired tool_result block.
+// If a pair is broken, we downgrade THAT assistant message to text-only and drop
+// any orphan tool_result so the rest of the history remains usable.
+function sanitizeForReplay(rawMessages) {
+  if (!Array.isArray(rawMessages)) return [];
+  const out = [];
+  for (let i = 0; i < rawMessages.length; i++) {
+    const m = rawMessages[i];
+    if (!m || !m.role) continue;
+
+    // Assistant message with structured content
+    if (m.role === 'assistant' && Array.isArray(m.content)) {
+      const hasToolUse = m.content.some(b => b && b.type === 'tool_use');
+      if (hasToolUse) {
+        const next = rawMessages[i + 1];
+        const nextIsToolResult =
+          next && next.role === 'user' && Array.isArray(next.content) &&
+          next.content.some(b => b && b.type === 'tool_result');
+        if (!nextIsToolResult) {
+          // Broken pair — flatten just this assistant turn to text
+          const text = m.content.filter(b => b && b.type === 'text')
+            .map(b => b.text || '').join('\n\n').trim();
+          if (text) out.push({ role: 'assistant', content: text });
+          continue;
+        }
+      }
+      // Properly paired (or text-only) structured content — keep as-is
+      out.push({ role: 'assistant', content: m.content });
+      continue;
+    }
+
+    // User message with structured content (tool_results)
+    if (m.role === 'user' && Array.isArray(m.content)) {
+      const allToolResults = m.content.length > 0 && m.content.every(b => b && b.type === 'tool_result');
+      if (allToolResults) {
+        // Verify prior is assistant with tool_use
+        const prev = out[out.length - 1];
+        const prevHasToolUse = prev && prev.role === 'assistant' && Array.isArray(prev.content) &&
+          prev.content.some(b => b && b.type === 'tool_use');
+        if (!prevHasToolUse) {
+          // Orphan tool_results — drop
+          continue;
+        }
+      }
+      out.push({ role: 'user', content: m.content });
+      continue;
+    }
+
+    // Plain text content (string) — pass through
+    const text = typeof m.content === 'string' ? m.content :
+      Array.isArray(m.content) ? m.content.filter(b => b && b.type === 'text')
+        .map(b => b.text || '').join('\n\n').trim() : '';
+    if (text) out.push({ role: m.role, content: text });
+  }
+  return out;
+}
+
 // ─── Main streaming endpoint ──────────────────────────────────
 router.post('/', requireAuth, async (req, res) => {
   const userId = req.user.id || req.user.user_id;
@@ -1183,22 +1272,19 @@ router.post('/', requireAuth, async (req, res) => {
   let cachedTokens = 0;
 
   try {
-    // Load conversation history if exists.
-    // Heal legacy messages where assistant content contained tool_use blocks that were never
-    // followed by tool_result — Anthropic API rejects that, so flatten to text-only.
+    // Load conversation history.
+    // Preserves STRUCTURED content blocks (tool_use + tool_result pairs) so the model can
+    // see actual prior tool data on follow-ups — not just a flattened text summary.
+    // sanitizeForReplay() downgrades any broken pair to text-only so Anthropic's API
+    // never rejects with "tool_use ids were found without tool_result blocks".
     let history = [];
+    let historyRaw = [];
     if (conversation_id) {
       try {
         const conv = await models.IntuitiveChatConversation.findOne({ where: { conversation_id } });
         if (conv?.messages) {
-          history = conv.messages.slice(-30).map(m => {
-            let content = m.content;
-            if (Array.isArray(content)) {
-              content = content.filter(b => b && b.type === 'text').map(b => b.text || '').join('\n\n').trim();
-            }
-            if (typeof content !== 'string') content = '';
-            return { role: m.role, content };
-          }).filter(m => m.content && m.role);
+          historyRaw = conv.messages.slice(-30);
+          history = sanitizeForReplay(historyRaw);
         }
       } catch (e) {}
     }
@@ -1219,9 +1305,9 @@ router.post('/', requireAuth, async (req, res) => {
       return res.end();
     }
 
-    // Build messages: history + new user question
+    // Build messages: history (structured where safe) + new user question
     const userMessage = { role: 'user', content: question };
-    const messages = [...history.map(m => ({ role: m.role, content: m.content })), userMessage];
+    const messages = [...history, userMessage];
 
     const anthropic = getAnthropic();
     let stopReason = null;
@@ -1329,20 +1415,27 @@ router.post('/', requireAuth, async (req, res) => {
       }
     }
 
-    // Sanitize the assistant content to text-only for persistence.
-    // Saved tool_use blocks without paired tool_results poison the next turn
-    // (Anthropic API rejects them with 400 invalid_request_error).
-    const assistantTextForSave = Array.isArray(assistantTurnContent)
-      ? assistantTurnContent.filter(b => b && b.type === 'text').map(b => b.text || '').join('\n\n').trim()
-      : String(assistantTurnContent || '');
-
-    // Persist conversation
+    // Persist conversation as STRUCTURED turn additions.
+    // `messages` already contains [history..., userMessage, (assistant_tool_use + user_tool_results)*]
+    // We append the final assistant turn (which the loop exited without pushing).
+    // This preserves tool_use / tool_result PAIRS so follow-up questions can reference
+    // the actual data Claude saw — not just a flattened text summary of the response.
+    //
+    // The synthesis fallback above guarantees `assistantTurnContent` is text-only when
+    // the agentic loop exhausted on stop_reason='tool_use', so we never persist an
+    // unpaired tool_use block. sanitizeForReplay() also defends on load.
     try {
-      const finalMessages = [
-        ...history,
-        { role: 'user', content: question, ts: new Date() },
-        { role: 'assistant', content: assistantTextForSave, ts: new Date() },
-      ];
+      // This turn's additions = everything in `messages` beyond what was originally loaded,
+      // plus the final assistant response.
+      const turnAdditions = messages.slice(history.length).concat([
+        { role: 'assistant', content: assistantTurnContent, ts: new Date() },
+      ]);
+      // Mark the user message with a timestamp for later display ordering
+      if (turnAdditions[0] && turnAdditions[0].role === 'user' && !turnAdditions[0].ts) {
+        turnAdditions[0] = { ...turnAdditions[0], ts: new Date() };
+      }
+      const finalMessages = [...historyRaw, ...turnAdditions];
+
       const existing = await models.IntuitiveChatConversation.findOne({ where: { conversation_id: convId } });
       if (existing) {
         await existing.update({ messages: finalMessages, project_id: project_id || existing.project_id });
