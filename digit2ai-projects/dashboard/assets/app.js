@@ -2637,17 +2637,6 @@ async function renderTasks(container) {
     </div>
     <div class="section-header">
       <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-        <select id="task-status-filter" onchange="filterTasks()">
-          <option value="">Show All</option>
-          <option value="pending" selected>Still To Do</option>
-          <option value="completed">Already Done</option>
-        </select>
-        <select id="task-type-filter" onchange="filterTasks()">
-          <option value="">All Types</option>
-          <option value="task">Tasks</option>
-          <option value="reminder">Reminders</option>
-          <option value="followup">Follow-ups</option>
-        </select>
         <select id="task-project-filter" onchange="filterTasks()">
           <option value="">All Projects</option>
           ${noProjectCount > 0 ? `<option value="__none__">(No project · ${noProjectCount})</option>` : ''}
@@ -3118,11 +3107,12 @@ window.openOutstandingTasks = openOutstandingTasks;
 
 // Open a plain-text print view for a single assignee group and trigger the
 // browser print dialog so the user can pick "Save as PDF" as destination.
-// Mirrors whatever the current task filters were (status + type).
+// Mirrors whatever the current task filters were (defaults to pending only
+// when no status filter is rendered, matching the on-screen list).
 function printTaskGroup(assigneeName) {
   const statusEl = document.getElementById('task-status-filter');
   const typeEl = document.getElementById('task-type-filter');
-  const statusVal = statusEl ? statusEl.value : '';
+  const statusVal = statusEl ? statusEl.value : 'pending';
   const typeVal = typeEl ? typeEl.value : '';
 
   let tasks = (_allTasksCache || []).filter(t => {
@@ -3221,7 +3211,7 @@ window.printTaskGroup = printTaskGroup;
 function copyTaskGroupText(assigneeName) {
   const statusEl = document.getElementById('task-status-filter');
   const typeEl = document.getElementById('task-type-filter');
-  const statusVal = statusEl ? statusEl.value : '';
+  const statusVal = statusEl ? statusEl.value : 'pending';
   const typeVal = typeEl ? typeEl.value : '';
 
   let tasks = (_allTasksCache || []).filter(t => {
