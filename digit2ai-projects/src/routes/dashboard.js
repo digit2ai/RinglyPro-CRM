@@ -51,7 +51,11 @@ router.get('/', async (req, res) => {
       Contact.count({ where: { workspace_id: ws, archived_at: null } }),
       Contact.count({ where: { workspace_id: ws, archived_at: null, next_followup_date: { [Op.lte]: today } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending' } }),
-      Task.count({ where: { workspace_id: ws, status: 'pending', due_date: { [Op.lt]: now } } }),
+      // Strictly overdue = due_date is on a day BEFORE today. Comparing to
+      // NOW() instead of CURRENT_DATE incorrectly flagged tasks due today
+      // at an earlier time as overdue, causing a mismatch with the To-Do
+      // list's "Overdue" filter (which compares date-only).
+      Task.count({ where: { workspace_id: ws, status: 'pending', due_date: { [Op.lt]: today } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending', due_date: today } }),
       Task.count({
         where: {
