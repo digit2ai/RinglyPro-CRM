@@ -2699,6 +2699,262 @@ function extractSuggestedOwner(description) {
 }
 window.extractSuggestedOwner = extractSuggestedOwner;
 
+// =====================================================
+// WHATSAPP — send a task to project stakeholders
+// =====================================================
+// wa.me requires digits only (with country code, no +/spaces/dashes)
+function normalizeWaPhone(raw) {
+  return String(raw || '').replace(/[^\d]/g, '');
+}
+
+function buildTaskWhatsAppMessage(task, project, lang) {
+  const title = task.title || '';
+  const desc = (task.description || '').replace(/(?:^|\s)\s*(?:Suggested owner|Owner)\s*:\s*[^\n.]+\.?/i, '').trim();
+  const suggested = extractSuggestedOwner(task.description);
+  const dueRaw = task.due_date ? new Date(task.due_date) : null;
+  const localeFmt = lang === 'es' ? 'es-ES' : 'en-US';
+  const dueStr = dueRaw ? dueRaw.toLocaleDateString(localeFmt, { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+  const priorityMap = lang === 'es'
+    ? { urgent: 'urgente', high: 'alta', medium: 'media', low: 'baja' }
+    : { urgent: 'urgent', high: 'high', medium: 'medium', low: 'low' };
+  const prio = priorityMap[task.priority] || task.priority || '';
+
+  if (lang === 'es') {
+    const lines = [];
+    lines.push(`*Tarea del proyecto: ${project ? project.name : ''}*`);
+    lines.push('');
+    lines.push(`📌 ${title}`);
+    if (dueStr) lines.push(`📅 Fecha límite: *${dueStr}*`);
+    if (prio) lines.push(`⚡ Prioridad: ${prio}`);
+    if (suggested) lines.push(`👤 Sugerido para: ${suggested}`);
+    if (desc) { lines.push(''); lines.push(desc); }
+    lines.push('');
+    lines.push('— Manuel Stagg / Digit2AI');
+    return lines.join('\n');
+  }
+  // English default
+  const lines = [];
+  lines.push(`*Task from project: ${project ? project.name : ''}*`);
+  lines.push('');
+  lines.push(`📌 ${title}`);
+  if (dueStr) lines.push(`📅 Due: *${dueStr}*`);
+  if (prio) lines.push(`⚡ Priority: ${prio}`);
+  if (suggested) lines.push(`👤 Suggested owner: ${suggested}`);
+  if (desc) { lines.push(''); lines.push(desc); }
+  lines.push('');
+  lines.push('— Manuel Stagg / Digit2AI');
+  return lines.join('\n');
+}
+
+async function openTaskWhatsAppModal(taskId, projectId) {
+  // Load fresh task + project so we get current stakeholders + descriptions
+  const [taskRes, projRes] = await Promise.all([
+    api(`/tasks/${taskId}`),
+    api(`/projects/${projectId}`)
+  ]);
+  if (!taskRes.success || !taskRes.data) { alert('Could not load task'); return; }
+  if (!projRes.success || !projRes.data) { alert('Could not load project'); return; }
+  const task = taskRes.data;
+  const project = projRes.data;
+
+  // Build recipient list: submitter (with submitter_phone) + team_members[*]
+  const norm = (s) => String(s || '').trim().toLowerCase();
+  const seen = new Map(); // email -> { email, name, phone, role }
+  if (project.submitter_email) {
+    seen.set(norm(project.submitter_email), {
+      email: norm(project.submitter_email),
+      name: project.submitter_name || '',
+      phone: project.submitter_phone || '',
+      role: 'requestor'
+    });
+  }
+  if (Array.isArray(project.team_members)) {
+    project.team_members.forEach(m => {
+      if (!m || !m.email) return;
+      const e = norm(m.email);
+      if (seen.has(e)) {
+        // Merge phone in if team_member has one
+        if (m.phone && !seen.get(e).phone) seen.get(e).phone = m.phone;
+      } else {
+        seen.set(e, {
+          email: e,
+          name: m.name || '',
+          phone: m.phone || '',
+          role: m.role || 'stakeholder'
+        });
+      }
+    });
+  }
+  const recipients = Array.from(seen.values());
+
+  let lang = 'es'; // default Spanish (most active projects are CO/MX)
+  let messageDraft = buildTaskWhatsAppMessage(task, project, lang);
+
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+  const rowsHtml = recipients.length
+    ? recipients.map((r, i) => `
+      <div style="display:grid;grid-template-columns:24px 1fr 200px;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <input type="checkbox" class="m-wa-recip" data-idx="${i}" ${r.phone ? 'checked' : ''} style="width:auto;margin:0">
+        <div style="min-width:0">
+          <div style="color:var(--text-primary)${r.name ? ';font-weight:600' : ''}">${esc(r.name || r.email)}</div>
+          <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis">${esc(r.email)} · <span style="background:#e0e7ff;color:#3730a3;padding:1px 6px;border-radius:8px;font-size:10px">${esc(r.role)}</span></div>
+        </div>
+        <input type="tel" class="m-wa-phone" data-idx="${i}" value="${esc(r.phone)}" placeholder="+57 312 783 0181" style="font-size:12px;padding:6px 8px">
+      </div>
+    `).join('')
+    : '<p style="font-size:13px;color:var(--text-muted);margin:8px 0">No stakeholders on this project. Add some on the project detail page first.</p>';
+
+  openModal('Send Task via WhatsApp', `
+    <p style="margin:0 0 8px 0;font-size:13px;color:var(--text-muted)">
+      <strong>Task:</strong> ${esc(task.title)}<br>
+      <strong>Project:</strong> ${esc(project.name)}
+    </p>
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="margin:0;font-weight:600">Recipients</label>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.m-wa-recip').forEach(c => c.checked = true)">All</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('.m-wa-recip').forEach(c => c.checked = false)">None</button>
+        </div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:4px 12px;max-height:240px;overflow-y:auto">
+        <div style="display:grid;grid-template-columns:24px 1fr 200px;gap:8px;font-size:10px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;padding:6px 0 4px 0;border-bottom:1px solid var(--border)">
+          <div></div><div>Stakeholder</div><div>WhatsApp phone (incl. country code)</div>
+        </div>
+        ${rowsHtml}
+      </div>
+      <small style="color:var(--text-muted);display:block;margin-top:6px">
+        Enter phones for recipients without one. Include country code (e.g. +57 for Colombia, +1 for US).
+      </small>
+    </div>
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <label style="margin:0;font-weight:600">Message</label>
+        <div style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <button type="button" id="m-wa-lang-es" class="btn btn-sm btn-primary" style="border-radius:0;border:none;padding:4px 12px" onclick="switchWaLang('es', ${task.id}, ${project.id})">ES</button>
+          <button type="button" id="m-wa-lang-en" class="btn btn-sm btn-ghost" style="border-radius:0;border:none;border-left:1px solid var(--border);padding:4px 12px" onclick="switchWaLang('en', ${task.id}, ${project.id})">EN</button>
+        </div>
+      </div>
+      <textarea id="m-wa-msg" rows="10" style="width:100%;font-size:13px;font-family:inherit;line-height:1.5">${esc(messageDraft)}</textarea>
+      <small style="color:var(--text-muted);display:block;margin-top:6px">WhatsApp supports *bold*, _italic_, ~strikethrough~, and \`monospace\`.</small>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px">
+      <input type="checkbox" id="m-wa-save-phones" checked style="width:auto;margin:0">
+      <label for="m-wa-save-phones" style="margin:0;cursor:pointer;font-size:13px">
+        <strong>Save phone numbers back to project stakeholders</strong>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">So you do not have to retype them next time.</div>
+      </label>
+    </div>
+  `, async () => {
+    const messageText = document.getElementById('m-wa-msg').value || '';
+    if (!messageText.trim()) { alert('Message is empty'); return; }
+    // Collect the checked rows with their (possibly edited) phones
+    const checks = Array.from(document.querySelectorAll('.m-wa-recip'));
+    const phones = Array.from(document.querySelectorAll('.m-wa-phone'));
+    const targets = [];
+    const updatedRecipients = recipients.map(r => ({ ...r })); // clone
+    checks.forEach(c => {
+      const idx = parseInt(c.dataset.idx, 10);
+      const phoneInput = phones.find(p => parseInt(p.dataset.idx, 10) === idx);
+      const rawPhone = phoneInput ? phoneInput.value.trim() : '';
+      if (rawPhone) updatedRecipients[idx].phone = rawPhone;
+      if (!c.checked) return;
+      const digits = normalizeWaPhone(rawPhone);
+      if (!digits || digits.length < 7) {
+        return; // silently skip invalid; reported below
+      }
+      targets.push({ name: updatedRecipients[idx].name || updatedRecipients[idx].email, phone: digits });
+    });
+
+    if (!targets.length) {
+      alert('No recipients selected with a valid phone number.\n\nTick at least one box and make sure the phone field includes a country code (digits only or with +).');
+      return;
+    }
+
+    // Open one WhatsApp tab per recipient (encoded message + phone)
+    const encoded = encodeURIComponent(messageText);
+    let opened = 0;
+    targets.forEach((t, i) => {
+      const url = `https://wa.me/${t.phone}?text=${encoded}`;
+      // Stagger window.open by a hair so popup blockers do not nuke all-but-one
+      setTimeout(() => {
+        const w = window.open(url, '_blank', 'noopener');
+        if (w) opened++;
+      }, i * 80);
+    });
+
+    // Persist updated phones back to team_members if checkbox is on
+    const savePhones = document.getElementById('m-wa-save-phones')?.checked;
+    if (savePhones) {
+      const existingTeam = Array.isArray(project.team_members) ? project.team_members : [];
+      // Build a new team_members array, merging in any phones the user typed
+      const teamByEmail = new Map();
+      existingTeam.forEach(m => {
+        if (m && m.email) teamByEmail.set(String(m.email).trim().toLowerCase(), { ...m });
+      });
+      updatedRecipients.forEach(r => {
+        if (r.role === 'requestor') return; // submitter_phone lives on project, not team_members
+        const key = r.email;
+        if (!r.phone) return;
+        if (teamByEmail.has(key)) {
+          const existing = teamByEmail.get(key);
+          if (existing.phone !== r.phone) {
+            existing.phone = r.phone;
+            teamByEmail.set(key, existing);
+          }
+        } else {
+          teamByEmail.set(key, { email: key, role: r.role || 'stakeholder', phone: r.phone });
+        }
+      });
+      const newTeam = Array.from(teamByEmail.values());
+      // Also update submitter_phone if the requestor row's phone changed
+      const requestorRow = updatedRecipients.find(r => r.role === 'requestor');
+      const projectPatch = { team_members: newTeam };
+      if (requestorRow && requestorRow.phone && requestorRow.phone !== (project.submitter_phone || '')) {
+        projectPatch.submitter_phone = requestorRow.phone;
+      }
+      try {
+        await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify(projectPatch) });
+      } catch (err) {
+        console.warn('Could not save stakeholder phones:', err.message);
+      }
+    }
+
+    closeModal();
+    const msg = `Opened ${targets.length} WhatsApp tab${targets.length === 1 ? '' : 's'}. Click Send in each WhatsApp window to deliver.`;
+    if (typeof showCopyToast === 'function') showCopyToast(msg);
+    else alert(msg);
+  });
+}
+window.openTaskWhatsAppModal = openTaskWhatsAppModal;
+
+function switchWaLang(lang, taskId, projectId) {
+  // Re-fetch + rebuild draft so toggling EN/ES is correct even after edits
+  api(`/tasks/${taskId}`).then(taskRes => {
+    api(`/projects/${projectId}`).then(projRes => {
+      if (!taskRes.success || !projRes.success) return;
+      const newDraft = buildTaskWhatsAppMessage(taskRes.data, projRes.data, lang);
+      const ta = document.getElementById('m-wa-msg');
+      if (ta) ta.value = newDraft;
+      const esBtn = document.getElementById('m-wa-lang-es');
+      const enBtn = document.getElementById('m-wa-lang-en');
+      if (esBtn && enBtn) {
+        if (lang === 'es') {
+          esBtn.classList.remove('btn-ghost'); esBtn.classList.add('btn-primary');
+          enBtn.classList.remove('btn-primary'); enBtn.classList.add('btn-ghost');
+        } else {
+          enBtn.classList.remove('btn-ghost'); enBtn.classList.add('btn-primary');
+          esBtn.classList.remove('btn-primary'); esBtn.classList.add('btn-ghost');
+        }
+      }
+    });
+  });
+}
+window.switchWaLang = switchWaLang;
+
 function toggleTaskGroup(groupId) {
   const body = document.getElementById(groupId);
   const chev = document.getElementById('chev-' + groupId);
@@ -3594,12 +3850,15 @@ async function showProjectDetail(id) {
               } else {
                 ownerHtml = `<br><span style="font-size:12px;color:var(--text-muted);font-style:italic">&#128100; Unassigned</span>`;
               }
-              return `<div class="timeline-item" style="cursor:pointer;border-left:3px solid ${t.status === 'completed' ? 'var(--success)' : tOverdue ? 'var(--danger)' : 'var(--accent)'}" onclick="showTaskDetail(${t.id})">
-                <div class="timeline-content">
-                  <strong>${t.title}</strong> <span class="status-badge status-${t.status === 'completed' ? 'completed' : tOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'done' : tOverdue ? 'overdue' : t.status}</span>
-                  <span class="priority-badge priority-${t.priority}" style="margin-left:4px">${t.priority}</span>
-                  ${ownerHtml}
-                  ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
+              return `<div class="timeline-item" style="border-left:3px solid ${t.status === 'completed' ? 'var(--success)' : tOverdue ? 'var(--danger)' : 'var(--accent)'}">
+                <div class="timeline-content" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                  <div style="flex:1;min-width:200px;cursor:pointer" onclick="showTaskDetail(${t.id})">
+                    <strong>${t.title}</strong> <span class="status-badge status-${t.status === 'completed' ? 'completed' : tOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'done' : tOverdue ? 'overdue' : t.status}</span>
+                    <span class="priority-badge priority-${t.priority}" style="margin-left:4px">${t.priority}</span>
+                    ${ownerHtml}
+                    ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
+                  </div>
+                  <button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366;flex-shrink:0" onclick="openTaskWhatsAppModal(${t.id},${p.id})" title="Send via WhatsApp">&#128241; WhatsApp</button>
                 </div>
               </div>`;
             }).join('') : '<p style="font-size:13px;color:var(--text-muted)">No tasks for this project</p>'}
