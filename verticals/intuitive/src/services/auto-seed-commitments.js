@@ -106,10 +106,50 @@ function buildProcedureBreakdown(specialty, totalIncrementalAnnual, financialOve
 }
 
 // ---------------------------------------------------------------------------
-// Resolve the surgeon roster for a project — Care Compare → project intake → NPPES territory
+// Resolve the surgeon roster for a project. Priority:
+//   1. Hospital General Info + Facility Affiliations (NEW: real surgeon→hospital, 2.2M rows)
+//   2. Project intake's confirmed_surgeons (Hospital Intake AI Research output)
+//   3. Legacy Care Compare DAC (group practice approximation — mostly empty in prod)
+//   4. State-wide NPPES territory fallback (broadest, least targeted)
 // ---------------------------------------------------------------------------
 async function resolveSurgeonRoster(project, models) {
-  // 1. Project-curated list (Hospital Intake stored this)
+  const targetingService = require('./surgeon-targeting-service');
+
+  // 1. NEW PRIMARY: Hospital master + Facility Affiliations
+  if (models?.IntuitiveHospital && models?.IntuitiveSurgeonHospitalAffiliation && project.hospital_name) {
+    try {
+      const hospitalRow = await targetingService.resolveHospitalByName(models, project.hospital_name);
+      if (hospitalRow && hospitalRow.ccn) {
+        const links = await models.IntuitiveSurgeonHospitalAffiliation.findAll({
+          where: { facility_ccn: hospitalRow.ccn, facility_type: 'Hospital' },
+          attributes: ['npi', 'surgeon_first_name', 'surgeon_last_name'],
+          raw: true,
+          limit: 50, // keep auto-seed bounded — top-50 NPIs at the hospital
+        });
+        if (links.length > 0) {
+          const npis = links.map(l => l.npi);
+          const mpup = require('./data-sources/cms-physician-volume');
+          const volRes = await mpup.fetchFor(npis, { models });
+          const byNpi = {};
+          for (const v of ((volRes.data && volRes.data.surgeon_volumes) || [])) byNpi[v.npi] = v;
+          // Rank by MPUP robotic volume so we seed the top surgeons first, cap at 15
+          const enriched = links.map(l => ({
+            npi: l.npi,
+            full_name: `${(l.surgeon_first_name || '').trim()} ${(l.surgeon_last_name || '').trim()}`.trim() || `NPI ${l.npi}`,
+            specialty: null, // inferred from procedures during seeding
+            hospital_name: hospitalRow.facility_name,
+            robotic_cases_last_yr: (byNpi[l.npi] || {}).total_robotic_cases_last_yr || 0,
+          }));
+          enriched.sort((a, b) => b.robotic_cases_last_yr - a.robotic_cases_last_yr);
+          return { source: 'facility_affiliations', surgeons: enriched.slice(0, 15) };
+        }
+      }
+    } catch (e) {
+      console.error('[auto-seed] facility-affiliations lookup error:', e.message);
+    }
+  }
+
+  // 2. Project-curated list (Hospital Intake AI Research output)
   const extended = project.extended_data || {};
   if (Array.isArray(extended.confirmed_surgeons) && extended.confirmed_surgeons.length > 0) {
     return {
@@ -124,24 +164,22 @@ async function resolveSurgeonRoster(project, models) {
     };
   }
 
-  // 2. Care Compare affiliations by hospital name
+  // 3. Legacy Care Compare DAC (group practice — mostly empty in prod, kept for compatibility)
   if (models?.IntuitiveProviderAffiliation && project.hospital_name) {
     try {
       const { Op } = require('sequelize');
       const aff = await models.IntuitiveProviderAffiliation.findAll({
         where: { hospital_name: { [Op.iLike]: `%${project.hospital_name}%` } },
-        raw: true,
-        limit: 25,
+        raw: true, limit: 25,
       });
       if (aff.length > 0) {
-        // Bulk-enrich with MPUP volume
         const npis = aff.map(a => a.npi);
         const mpup = require('./data-sources/cms-physician-volume');
         const volRes = await mpup.fetchFor(npis, { models });
         const byNpi = {};
         for (const v of ((volRes.data && volRes.data.surgeon_volumes) || [])) byNpi[v.npi] = v;
         return {
-          source: 'care_compare',
+          source: 'care_compare_legacy',
           surgeons: aff.map(a => ({
             npi: a.npi,
             full_name: a.full_name,
@@ -156,10 +194,10 @@ async function resolveSurgeonRoster(project, models) {
     }
   }
 
-  // 3. State-level territory fallback (heaviest)
+  // 4. State-level territory fallback
   if (project.state) {
     try {
-      const territory = await surgeonTargetingService.searchByTerritory(
+      const territory = await targetingService.searchByTerritory(
         { state: project.state, specialty: 'all', limit: 15 },
         { models }
       );

@@ -1120,6 +1120,7 @@ module.exports = {
   generateBriefing,
   compareHospitalProcedureVolumes,
   hospitalDrgVolume,
+  resolveHospitalByName,
   loadHcpcsFamilies,
   targetScore,
   kolScore,

@@ -661,22 +661,27 @@ function ClinicalDollarizationSection({ planId, plan }) {
       const res = await api.getResults(projectId)
       const analysisResults = res.results || res
       const volProj = analysisResults?.volume_projection
-      if (!volProj?.bySpecialty) {
+      // Analysis cache uses snake_case `by_specialty` — earlier code looked for camelCase and silently failed
+      const bySpec = volProj?.by_specialty || volProj?.bySpecialty
+      if (!bySpec) {
         setLoadingAnalysis(false)
         return false
       }
 
-      const totalVol = volProj.total_surgical || 0
       setCaseData(prev => prev.map(row => {
-        // Find matching specialty in analysis data
         const specKey = Object.keys(SPEC_MAP).find(k => SPEC_MAP[k] === row.specialty)
-        const specData = specKey ? volProj.bySpecialty[specKey] : null
-        if (!specData || !specData.total_volume) return row
+        const specData = specKey ? bySpec[specKey] : null
+        if (!specData) return row
 
-        const total = specData.total_volume
-        const pctOpen = total > 0 ? Math.round((specData.current_open / total) * 100) : 0
-        const pctLap = total > 0 ? Math.round((specData.current_lap / total) * 100) : 0
-        const pctRobotic = total > 0 ? Math.round((specData.current_robotic / total) * 100) : 0
+        // Analysis stores per-approach counts (current_open, current_lap, current_robotic) AND total_volume
+        const total = Number(specData.total_volume) || Number(specData.total_cases) || 0
+        if (!total) return row
+        const open = Number(specData.current_open || specData.open || 0)
+        const lap = Number(specData.current_lap || specData.laparoscopic || 0)
+        const rob = Number(specData.current_robotic || specData.robotic || 0)
+        const pctOpen = total > 0 ? Math.round((open / total) * 100) : 0
+        const pctLap = total > 0 ? Math.round((lap / total) * 100) : 0
+        const pctRobotic = total > 0 ? Math.round((rob / total) * 100) : 0
 
         return {
           ...row,
@@ -696,30 +701,54 @@ function ClinicalDollarizationSection({ planId, plan }) {
     }
   }, [plan?.project_id])
 
-  // Load existing outcomes on mount, then auto-populate from analysis if empty
+  // Load existing outcomes on mount; if none, auto-load from analysis AND auto-calculate
+  // so the rep doesn't have to click "Calculate" to see anything during a demo.
   useEffect(() => {
     if (!planId) return
-    api.getClinicalOutcomes(planId)
-      .then(res => {
-        const data = res.outcomes || res.data
+    let cancelled = false
+    ;(async () => {
+      let hasExisting = false
+      try {
+        const res = await api.getClinicalOutcomes(planId)
+        const data = res.outcomes || res.data || res
+        if (cancelled) return
         if (data?.results) setResults(data.results)
         if (data?.citations) setCitations(data.citations)
         if (data?.hospital_case_data && data.hospital_case_data.length > 0) {
-          // Existing dollarization data -- use it
+          hasExisting = true
           setCaseData(prev => {
             const map = {}
             ;(data.hospital_case_data || []).forEach(d => { map[d.specialty] = d })
             return prev.map(s => map[s.specialty] ? { ...s, ...map[s.specialty] } : s)
           })
-        } else {
-          // No existing data -- auto-load from analysis
-          loadFromAnalysis()
         }
+      } catch (e) { /* no outcomes saved yet — proceed to auto-load */ }
+
+      if (hasExisting || cancelled) return
+
+      const loaded = await loadFromAnalysis()
+      if (cancelled || !loaded) return
+
+      // Auto-fire Calculate so the demo doesn't depend on the rep clicking a button
+      setCaseData(curr => {
+        const nonEmpty = curr.filter(c => c.annual_cases > 0)
+        if (nonEmpty.length === 0) return curr
+        ;(async () => {
+          try {
+            const dollarRes = await api.dollarize(nonEmpty)
+            const dollarData = dollarRes.data || dollarRes
+            if (cancelled) return
+            setResults(dollarData.results || dollarData.specialties || dollarData)
+            setCitations(dollarData.citations || [])
+            try { await api.saveClinicalOutcomes(planId, nonEmpty, dollarData, {}) } catch (_) {}
+          } catch (e) {
+            console.error('Auto-dollarize failed:', e)
+          }
+        })()
+        return curr
       })
-      .catch(() => {
-        // No outcomes saved yet -- auto-load from analysis
-        loadFromAnalysis()
-      })
+    })()
+    return () => { cancelled = true }
   }, [planId, loadFromAnalysis])
 
   function updateCase(idx, key, value) {

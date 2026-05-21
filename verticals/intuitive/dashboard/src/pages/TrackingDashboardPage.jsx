@@ -310,9 +310,44 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
 
   // ─── Derived Data ─────────────────────────────────────────
 
-  const surgeons = comparison?.surgeons || []
-  const periods = comparison?.periods || []
-  const summary = comparison?.summary || {}
+  // BASELINE MODE: when no actuals/comparison exist yet, synthesize a baseline view
+  // from the business plan + surgeon commitments. The rep still sees their forecast
+  // numbers — they're not staring at zeros before go-live.
+  const hasComparison = !!(comparison && (
+    (comparison.summary && (comparison.summary.total_actual_cases > 0 || comparison.summary.cumulative_actual > 0))
+    || (comparison.periods && comparison.periods.length > 0)
+    || (comparison.surgeons && comparison.surgeons.length > 0)
+  ))
+
+  // Pull surgeon commitments from the plan-include payload (api.getBusinessPlan returns these)
+  const planCommitments = plan?.surgeonCommitments || plan?.surgeon_commitments || []
+
+  // Build baseline-only summary if no actuals
+  const baselineSummary = plan ? {
+    total_projected_cases: Number(plan.total_incremental_cases_annual) || 0,
+    total_actual_cases: 0,
+    total_projected_revenue: Number(plan.total_incremental_revenue) || 0,
+    total_actual_revenue: 0,
+    projected_annual_roi: Number(plan.total_combined_roi) || 0,
+    roi_tracking_pct: '0',
+    payback_months: plan.payback_months,
+    five_year_net_benefit: Number(plan.five_year_net_benefit) || 0,
+  } : {}
+
+  const baselineSurgeons = planCommitments.map(c => ({
+    surgeon_name: c.surgeon_name,
+    name: c.surgeon_name,
+    specialty: c.surgeon_specialty || c.specialty,
+    projected_annual_cases: c.total_incremental_annual,
+    projected_revenue: c.total_revenue_impact,
+    actual_cases: 0,
+    actual_revenue: 0,
+    variance_pct: null,
+  }))
+
+  const surgeons = hasComparison ? (comparison?.surgeons || []) : baselineSurgeons
+  const periods = hasComparison ? (comparison?.periods || []) : []
+  const summary = hasComparison ? (comparison?.summary || {}) : baselineSummary
 
   // Build committed surgeon names for dropdown
   const committedSurgeons = surgeons.map(s => s.surgeon_name || s.name).filter(Boolean)
@@ -324,12 +359,12 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     actual: p.actual_cumulative ?? p.actual ?? 0
   }))
 
-  // Summary card values
+  // Summary card values (work for both baseline + actuals modes)
   const cumulativeActual = summary.total_actual_cases ?? summary.cumulative_actual ?? 0
   const cumulativeProjected = summary.total_projected_cases ?? summary.cumulative_projected ?? 0
-  const overallVariance = cumulativeProjected > 0
+  const overallVariance = cumulativeProjected > 0 && cumulativeActual > 0
     ? (((cumulativeActual - cumulativeProjected) / cumulativeProjected) * 100).toFixed(1)
-    : 0
+    : (hasComparison ? 0 : '—')
   const projectedROI = summary.projected_annual_roi ?? summary.projected_roi ?? '---'
   const roiTrackingPct = summary.roi_tracking_pct ?? summary.roi_realized_pct ?? '---'
 
@@ -363,6 +398,26 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
         <div className="bg-red-900/30 border border-red-800 rounded-lg p-3 flex items-center justify-between">
           <span className="text-red-300 text-sm">{error}</span>
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200 text-sm font-bold ml-4">Dismiss</button>
+        </div>
+      )}
+
+      {/* ── Baseline Mode Banner ─────────────────────────────── */}
+      {!hasComparison && plan && (
+        <div className="bg-sky-900/30 border border-sky-700/60 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <div className="text-sky-200 font-semibold text-sm">Baseline Mode — pre-installation view</div>
+              <div className="text-sky-300/80 text-xs mt-1">
+                Showing projected case volumes, revenue, and ROI from the locked business plan baseline.
+                Variance / actuals will populate once the system is installed and monthly actuals stream in.
+                Use <strong>Import Actuals</strong> below to enter your first reporting period, or sync from
+                robot telemetry via the Robot Data Sync section.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
