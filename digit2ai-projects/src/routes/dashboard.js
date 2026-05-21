@@ -32,6 +32,7 @@ router.get('/', async (req, res) => {
       contactsNeedFollowup,
       pendingTasks,
       overdueTasks,
+      tasksDueToday,
       upcomingEvents,
       recentActivity,
       projectsByStatus,
@@ -49,6 +50,7 @@ router.get('/', async (req, res) => {
       Contact.count({ where: { workspace_id: ws, archived_at: null, next_followup_date: { [Op.lte]: today } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending' } }),
       Task.count({ where: { workspace_id: ws, status: 'pending', due_date: { [Op.lt]: now } } }),
+      Task.count({ where: { workspace_id: ws, status: 'pending', due_date: today } }),
       CalendarEvent.findAll({ where: { workspace_id: ws, start_time: { [Op.gte]: now } }, order: [['start_time', 'ASC']], limit: 5 }),
       ActivityLog.findAll({ where: { workspace_id: ws }, order: [['created_at', 'DESC']], limit: 10 }),
       Project.findAll({
@@ -98,6 +100,7 @@ router.get('/', async (req, res) => {
           contacts_need_followup: contactsNeedFollowup,
           pending_tasks: pendingTasks,
           overdue_tasks: overdueTasks,
+          tasks_due_today: tasksDueToday,
           unread_notifications: unreadNotifications
         },
         projects_by_status: projectsByStatus,
