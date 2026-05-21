@@ -2631,32 +2631,13 @@ async function renderTasks(container) {
     .join('');
   const noProjectCount = (_allTasksCache || []).filter(t => !t.project_id).length;
 
-  // Build the suggested-owner dropdown options. Suggested values often
-  // contain combos like "Manuel and Eduardo" or "Manny Stagg and Champion".
-  // We split on connectors so each individual name appears once in the
-  // dropdown, ranked by how many tasks mention them. Selecting a name then
-  // filters via substring match against the original suggested string.
-  const ownerCounts = new Map(); // lowercase name -> { display, count }
-  let noOwnerCount = 0;
-  (_allTasksCache || []).forEach(t => {
-    const raw = extractSuggestedOwner(t.description);
-    if (!raw) { if (!t.assignee) noOwnerCount++; return; }
-    const parts = raw
-      .replace(/\(.*?\)/g, '')
-      .split(/\s+(?:and|or|with|y|o|,|&|\/)\s+|,/i)
-      .map(s => s.trim())
-      .filter(s => s.length >= 2);
-    parts.forEach(p => {
-      const k = p.toLowerCase();
-      const existing = ownerCounts.get(k);
-      if (existing) existing.count += 1;
-      else ownerCounts.set(k, { display: p, count: 1 });
-    });
-  });
-  const ownerOptions = Array.from(ownerCounts.values())
-    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display))
-    .map(o => `<option value="${escapeHtml(o.display.toLowerCase())}">${escapeHtml(o.display)} (${o.count})</option>`)
-    .join('');
+  // Initial owner-options build — defaults to all tasks. The dropdown is
+  // rebuilt by onTaskProjectChange() whenever the Project filter changes,
+  // so the owner list cascades: pick a project → only owners appearing in
+  // that project's tasks show.
+  const initialOwnerData = computeOwnerOptions(_allTasksCache || []);
+  const ownerOptions = initialOwnerData.html;
+  const noOwnerCount = initialOwnerData.noOwnerCount;
 
   container.innerHTML = `
     <div style="margin-bottom:12px">
@@ -2664,7 +2645,7 @@ async function renderTasks(container) {
     </div>
     <div class="section-header">
       <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-        <select id="task-project-filter" onchange="filterTasks()">
+        <select id="task-project-filter" onchange="onTaskProjectChange()">
           <option value="">All Projects</option>
           ${noProjectCount > 0 ? `<option value="__none__">(No project · ${noProjectCount})</option>` : ''}
           ${projectOptions}
@@ -2690,6 +2671,66 @@ async function renderTasks(container) {
 
   filterTasks();
 }
+
+// Given a task subset, build the <option> HTML for the Suggested Owner
+// dropdown. Splits combo names ("Manuel and Eduardo") into individual
+// names so picking "Manuel" via substring match later catches all
+// variants. Returns { html, noOwnerCount } so the caller can render
+// the "(No suggested · N)" option too.
+function computeOwnerOptions(tasks) {
+  const ownerCounts = new Map();
+  let noOwnerCount = 0;
+  (tasks || []).forEach(t => {
+    const raw = extractSuggestedOwner(t.description);
+    if (!raw) { if (!t.assignee) noOwnerCount++; return; }
+    const parts = raw
+      .replace(/\(.*?\)/g, '')
+      .split(/\s+(?:and|or|with|y|o|,|&|\/)\s+|,/i)
+      .map(s => s.trim())
+      .filter(s => s.length >= 2);
+    parts.forEach(p => {
+      const k = p.toLowerCase();
+      const existing = ownerCounts.get(k);
+      if (existing) existing.count += 1;
+      else ownerCounts.set(k, { display: p, count: 1 });
+    });
+  });
+  const html = Array.from(ownerCounts.values())
+    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display))
+    .map(o => `<option value="${escapeHtml(o.display.toLowerCase())}">${escapeHtml(o.display)} (${o.count})</option>`)
+    .join('');
+  return { html, noOwnerCount };
+}
+
+// When the Project filter changes, rebuild the Suggested Owner dropdown
+// so it only lists owners that appear in the tasks of the selected
+// project. Preserves the user's current owner selection if it still
+// exists in the new options, otherwise resets to "All Suggested Owners".
+function onTaskProjectChange() {
+  const projectEl = document.getElementById('task-project-filter');
+  const ownerEl = document.getElementById('task-owner-filter');
+  if (!projectEl || !ownerEl) { filterTasks(); return; }
+  const projectVal = projectEl.value;
+  // Compute the task subset that matches just the project filter
+  let scoped = _allTasksCache || [];
+  if (projectVal === '__none__') {
+    scoped = scoped.filter(t => !t.project_id);
+  } else if (projectVal) {
+    const pid = parseInt(projectVal, 10);
+    scoped = scoped.filter(t => t.project_id === pid);
+  }
+  const previousOwner = ownerEl.value;
+  const { html, noOwnerCount } = computeOwnerOptions(scoped);
+  ownerEl.innerHTML = `
+    <option value="">All Suggested Owners</option>
+    ${noOwnerCount > 0 ? `<option value="__none__">(No suggested · ${noOwnerCount})</option>` : ''}
+    ${html}`;
+  // Restore the previous selection if still valid; otherwise default to "all"
+  const stillValid = Array.from(ownerEl.options).some(o => o.value === previousOwner);
+  ownerEl.value = stillValid ? previousOwner : '';
+  filterTasks();
+}
+window.onTaskProjectChange = onTaskProjectChange;
 
 // Single source of truth: reads every active filter from the DOM and
 // returns the resulting task subset. Used by filterTasks (renders the
