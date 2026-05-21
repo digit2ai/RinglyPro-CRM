@@ -186,7 +186,8 @@ const ProjectMilestone = sequelize.define('ProjectMilestone', {
   due_date: DataTypes.DATEONLY,
   status: { type: DataTypes.STRING(50), defaultValue: 'pending' },
   sort_order: { type: DataTypes.INTEGER, defaultValue: 0 },
-  completed_at: DataTypes.DATE
+  completed_at: DataTypes.DATE,
+  owner: DataTypes.STRING(255)
 }, { tableName: 'd2_project_milestones' });
 
 // =====================================================

@@ -3523,13 +3523,31 @@ async function showProjectDetail(id) {
               <h4 style="margin:0">Milestones</h4>
               <button class="btn btn-ghost btn-sm" onclick="openMilestoneModal(${p.id})">+ Add</button>
             </div>
-            ${p.milestones?.length ? p.milestones.map(m => `<div class="timeline-item" style="border-left:3px solid ${m.status === 'completed' ? 'var(--success)' : m.due_date && new Date(m.due_date) < new Date() ? 'var(--danger)' : 'var(--accent)'}">
+            ${p.milestones?.length ? p.milestones.map(m => {
+              // Legacy fallback: AI-generated milestones embedded the owner inside the description
+              // as a trailing "Owner: <role>" line. Surface that if no first-class owner is set yet.
+              let displayOwner = m.owner || '';
+              if (!displayOwner && m.description) {
+                const mm = m.description.match(/(?:^|\n)\s*Owner:\s*(.+?)(?:\n|$)/i);
+                if (mm) displayOwner = mm[1].trim();
+              }
+              return `<div class="timeline-item" style="border-left:3px solid ${m.status === 'completed' ? 'var(--success)' : m.due_date && new Date(m.due_date) < new Date() ? 'var(--danger)' : 'var(--accent)'}">
               <div class="timeline-content">
-                <strong>${m.title}</strong> <span class="status-badge status-${m.status}">${m.status}</span>
-                ${m.due_date ? `<br><span class="timeline-time">Due: ${fmtDate(m.due_date)}</span>` : ''}
-                ${m.status !== 'completed' ? `<br><button class="btn btn-success btn-sm" style="margin-top:4px" onclick="completeMilestone(${p.id},${m.id})">Complete</button>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                  <div style="flex:1;min-width:200px">
+                    <strong>${escapeHtml(m.title)}</strong> <span class="status-badge status-${m.status}">${m.status}</span>
+                    ${m.due_date ? `<br><span class="timeline-time">Due: ${fmtDate(m.due_date)}</span>` : ''}
+                    ${displayOwner ? `<br><span style="font-size:12px;color:var(--text-secondary)"><span style="color:var(--text-muted)">Owner:</span> <strong>${escapeHtml(displayOwner)}</strong></span>` : ''}
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    ${m.status !== 'completed' ? `<button class="btn btn-success btn-sm" onclick="completeMilestone(${p.id},${m.id})">Complete</button>` : ''}
+                    <button class="btn btn-ghost btn-sm" onclick="openMilestoneEditModal(${p.id},${m.id})">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMilestone(${p.id},${m.id},${JSON.stringify(m.title)})">Delete</button>
+                  </div>
+                </div>
               </div>
-            </div>`).join('') : '<p style="font-size:13px;color:var(--text-muted)">No milestones</p>'}
+            </div>`;
+            }).join('') : '<p style="font-size:13px;color:var(--text-muted)">No milestones</p>'}
           </div>
 
           <div class="detail-section">
@@ -5789,23 +5807,78 @@ async function findNextScheduleMeetingSlot() {
 }
 window.findNextScheduleMeetingSlot = findNextScheduleMeetingSlot;
 
-function openMilestoneModal(projectId) {
-  openModal('Add Milestone', `
-    <div class="form-group"><label>Title *</label><input type="text" id="m-mtitle"></div>
-    <div class="form-group"><label>Due Date</label><input type="date" id="m-mdue"></div>
-    <div class="form-group"><label>Description</label><textarea id="m-mdesc"></textarea></div>
+function openMilestoneModal(projectId, existing) {
+  const m = existing || { title: '', due_date: '', description: '', owner: '', status: 'pending' };
+  // If editing and owner is empty but description has a trailing "Owner: X", pre-extract it
+  let ownerHint = m.owner || '';
+  let descriptionHint = m.description || '';
+  if (!ownerHint && descriptionHint) {
+    const mm = descriptionHint.match(/(?:^|\n)\s*Owner:\s*(.+?)(?:\n|$)/i);
+    if (mm) {
+      ownerHint = mm[1].trim();
+      descriptionHint = descriptionHint.replace(/(?:^|\n)\s*Owner:\s*.+?(?:\n|$)/i, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+  }
+  const escAttr = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const isEdit = !!existing;
+  openModal(isEdit ? 'Edit Milestone' : 'Add Milestone', `
+    <div class="form-group"><label>Title *</label><input type="text" id="m-mtitle" value="${escAttr(m.title)}"></div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group"><label>Due Date</label><input type="date" id="m-mdue" value="${m.due_date ? String(m.due_date).slice(0,10) : ''}"></div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="m-mstatus">
+          <option value="pending" ${m.status === 'pending' ? 'selected' : ''}>pending</option>
+          <option value="in_progress" ${m.status === 'in_progress' ? 'selected' : ''}>in_progress</option>
+          <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>completed</option>
+          <option value="blocked" ${m.status === 'blocked' ? 'selected' : ''}>blocked</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Owner / Suggested Owner</label>
+      <input type="text" id="m-mowner" placeholder="e.g. AI Engineer Lead, Manuel Stagg, juan.bueno@planea.co" value="${escAttr(ownerHint)}">
+      <small style="color:var(--text-muted)">Who is responsible for delivering this milestone? A role, a name, or an email — all work.</small>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="m-mdesc" rows="4">${escAttr(descriptionHint)}</textarea></div>
   `, async () => {
     const data = {
       title: document.getElementById('m-mtitle').value.trim(),
       due_date: document.getElementById('m-mdue').value || null,
+      status: document.getElementById('m-mstatus').value,
+      owner: document.getElementById('m-mowner').value.trim() || null,
       description: document.getElementById('m-mdesc').value.trim()
     };
     if (!data.title) { alert('Title required'); return; }
-    await api(`/projects/${projectId}/milestones`, { method: 'POST', body: JSON.stringify(data) });
+    const url = isEdit
+      ? `/projects/${projectId}/milestones/${m.id}`
+      : `/projects/${projectId}/milestones`;
+    const method = isEdit ? 'PUT' : 'POST';
+    const res = await api(url, { method, body: JSON.stringify(data) });
+    if (!res.success) { alert((isEdit ? 'Update' : 'Add') + ' failed: ' + (res.error || 'unknown')); return; }
     closeModal();
     showProjectDetail(projectId);
   });
 }
+
+async function openMilestoneEditModal(projectId, milestoneId) {
+  // We don't have a single-milestone GET endpoint, so re-fetch the project and pluck the row.
+  const res = await api(`/projects/${projectId}`);
+  if (!res.success) { alert('Could not load project'); return; }
+  const m = (res.data.milestones || []).find(x => x.id === milestoneId);
+  if (!m) { alert('Milestone not found'); return; }
+  openMilestoneModal(projectId, m);
+}
+window.openMilestoneEditModal = openMilestoneEditModal;
+
+async function deleteMilestone(projectId, milestoneId, title) {
+  const label = title || 'this milestone';
+  if (!confirm(`Delete milestone "${label}"?\n\nThis cannot be undone.`)) return;
+  const res = await api(`/projects/${projectId}/milestones/${milestoneId}`, { method: 'DELETE' });
+  if (!res.success) { alert('Delete failed: ' + (res.error || 'unknown')); return; }
+  showProjectDetail(projectId);
+}
+window.deleteMilestone = deleteMilestone;
 
 // Quick Add menu
 function showQuickAdd() {

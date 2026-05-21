@@ -408,6 +408,20 @@ router.put('/:projectId/milestones/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/v1/projects/:projectId/milestones/:id - Remove milestone
+router.delete('/:projectId/milestones/:id', async (req, res) => {
+  try {
+    const milestone = await ProjectMilestone.findOne({ where: { id: req.params.id, project_id: req.params.projectId } });
+    if (!milestone) return res.status(404).json({ success: false, error: 'Milestone not found' });
+    const title = milestone.title;
+    await milestone.destroy();
+    await logActivity(req.user?.email, 'deleted_milestone', 'project', parseInt(req.params.projectId), title);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // POST /api/v1/projects/:id/updates - Add project update
 router.post('/:id/updates', async (req, res) => {
   try {

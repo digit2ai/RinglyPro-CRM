@@ -653,6 +653,14 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] meeting minutes send-log notice:', e.message.substring(0, 120));
     }
 
+    // Project milestone owner column (the AI-generated milestones embedded
+    // owner_role inside description; this promotes it to a first-class field).
+    try {
+      await sequelize.query('ALTER TABLE d2_project_milestones ADD COLUMN IF NOT EXISTS owner VARCHAR(255)');
+    } catch (e) {
+      console.log('[D2AI-Projects] project milestones owner notice:', e.message.substring(0, 120));
+    }
+
     // Migration 002 — Project Intake & Discussion module
     const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
     if (fs.existsSync(intakeMigrationPath)) {
