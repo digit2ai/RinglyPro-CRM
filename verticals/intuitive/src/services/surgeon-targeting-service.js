@@ -60,6 +60,146 @@ function kolBadge(score) {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// resolveHospitalByName — multi-strategy fuzzy lookup against IntuitiveHospital
+//
+// Real-world queries don't always match CMS official names:
+//   "Mayo Clinic Florida" (user) vs. "MAYO CLINIC" (CMS) in Jacksonville, FL
+//   "Orlando Regional Medical Center" (user) vs. "ORLANDO HEALTH" in Orlando, FL
+//   "AdventHealth Orlando" (user) vs. "ADVENTHEALTH ORLANDO" (CMS)  — direct hit
+//
+// Strategy (in order):
+//   1. Literal ILIKE — exact substring on facility_name
+//   2. Strip state words ("florida", "ny", "tx" etc.) — retry literal
+//   3. Token AND match — every non-trivial token from query must appear in facility_name
+//   4. Match against (facility_name OR city OR state) — for queries like "Mayo Florida"
+//
+// Returns the best-scored candidate. Scoring prefers shorter name (closer length to query),
+// startsWith match, and 50-state hospitals over US territories.
+// ---------------------------------------------------------------------------
+const STATE_WORDS = new Set([
+  'florida','fl','california','ca','texas','tx','new york','ny','illinois','il',
+  'pennsylvania','pa','ohio','oh','georgia','ga','north carolina','nc','michigan','mi',
+  'new jersey','nj','virginia','va','washington','wa','arizona','az','massachusetts','ma',
+  'tennessee','tn','indiana','in','missouri','mo','maryland','md','wisconsin','wi',
+  'colorado','co','minnesota','mn','south carolina','sc','alabama','al','louisiana','la',
+  'kentucky','ky','oregon','or','oklahoma','ok','connecticut','ct','utah','ut','iowa','ia',
+  'nevada','nv','arkansas','ar','mississippi','ms','kansas','ks','new mexico','nm',
+  'nebraska','ne','west virginia','wv','idaho','id','hawaii','hi','new hampshire','nh',
+  'maine','me','montana','mt','rhode island','ri','delaware','de','south dakota','sd',
+  'north dakota','nd','alaska','ak','vermont','vt','wyoming','wy','dc','district of columbia',
+]);
+const TERRITORIES = new Set(['PR', 'GU', 'VI', 'MP', 'AS']);
+
+function scoreHospitalCandidate(candidate, query) {
+  const name = (candidate.facility_name || '').toUpperCase();
+  const q = (query || '').toUpperCase();
+  const lenDiff = Math.abs(name.length - q.length);
+  const startsWithBonus = name.startsWith(q) ? 100 : 0;
+  const territoryPenalty = TERRITORIES.has(candidate.state) ? 1000 : 0;
+  return lenDiff + territoryPenalty - startsWithBonus;
+}
+
+// Branded-name aliases for hospitals whose marketing name differs from their CMS official name.
+// Expanded over time as the demo encounters new edge cases. CCN keys are the CMS Facility ID.
+const HOSPITAL_ALIASES = {
+  'ormc':                                  '100006', // Orlando Regional Medical Center → ORLANDO HEALTH
+  'orlando regional medical center':       '100006',
+  'orlando regional':                      '100006',
+  'mayo clinic jacksonville':              '100151',
+  'mayo jacksonville':                     '100151',
+  'mayo clinic florida':                   '100151',
+  'tampa general':                         '100128',
+  'tgh':                                   '100128',
+  'memorial regional':                     '100143', // Memorial Regional Hollywood FL
+  'cleveland clinic florida':              '100087',
+  // Moffitt CCN omitted — verify before adding (different facilities under similar names)
+};
+
+async function resolveHospitalByName(models, hospitalName) {
+  if (!hospitalName) return null;
+  const { Op } = require('sequelize');
+  const original = hospitalName.trim();
+
+  // 0) Alias shortcut — branded names that don't match CMS legal names
+  const aliasKey = original.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+  if (HOSPITAL_ALIASES[aliasKey]) {
+    const row = await models.IntuitiveHospital.findOne({
+      where: { ccn: HOSPITAL_ALIASES[aliasKey] }, raw: true,
+    });
+    if (row) return row;
+  }
+
+  // Build progressive query variants, longest match first
+  const variants = [original];
+  // Strip state words
+  const stripped = original.split(/\s+/)
+    .filter(w => !STATE_WORDS.has(w.toLowerCase().replace(/[,.]/g, '')))
+    .join(' ').trim();
+  if (stripped && stripped !== original) variants.push(stripped);
+
+  // Try each variant as a single ILIKE substring
+  for (const v of variants) {
+    if (!v) continue;
+    const candidates = await models.IntuitiveHospital.findAll({
+      where: { facility_name: { [Op.iLike]: `%${v}%` } },
+      raw: true, limit: 25,
+    });
+    if (candidates.length) {
+      // Prefer the candidate that EXACTLY equals the variant (ignoring case)
+      const exact = candidates.find(c => (c.facility_name || '').toUpperCase() === v.toUpperCase());
+      if (exact) return exact;
+      // Otherwise score
+      const scored = candidates.map(c => ({ ...c, _score: scoreHospitalCandidate(c, v) }))
+        .sort((a, b) => a._score - b._score);
+      return scored[0];
+    }
+  }
+
+  // Token AND match: every non-trivial query token must appear in facility_name
+  const tokens = stripped.split(/\s+/).filter(t => t.length > 2);
+  if (tokens.length >= 2) {
+    const andWhere = {
+      [Op.and]: tokens.map(t => ({ facility_name: { [Op.iLike]: `%${t}%` } })),
+    };
+    const candidates = await models.IntuitiveHospital.findAll({ where: andWhere, raw: true, limit: 25 });
+    if (candidates.length) {
+      const scored = candidates.map(c => ({ ...c, _score: scoreHospitalCandidate(c, stripped) }))
+        .sort((a, b) => a._score - b._score);
+      return scored[0];
+    }
+  }
+
+  // Final fallback: match query tokens against facility_name + city — e.g. "Mayo Florida" picks
+  // hospitals whose name contains "Mayo" AND city/state matches "Florida"/"FL"
+  if (tokens.length >= 2) {
+    // Detect state hint (one of the stripped state words from original query)
+    const stateHint = original.split(/\s+/)
+      .map(w => w.toLowerCase().replace(/[,.]/g, ''))
+      .find(w => STATE_WORDS.has(w));
+    const nameTokens = tokens.filter(t => !STATE_WORDS.has(t.toLowerCase()));
+    if (nameTokens.length && stateHint) {
+      // Convert state name → 2-letter code (best-effort)
+      const stateMap = { florida:'FL', california:'CA', texas:'TX', 'new york':'NY', illinois:'IL', georgia:'GA', ohio:'OH', arizona:'AZ', minnesota:'MN' };
+      const stateCode = stateMap[stateHint] || (stateHint.length === 2 ? stateHint.toUpperCase() : null);
+      if (stateCode) {
+        const where = {
+          state: stateCode,
+          [Op.and]: nameTokens.map(t => ({ facility_name: { [Op.iLike]: `%${t}%` } })),
+        };
+        const candidates = await models.IntuitiveHospital.findAll({ where, raw: true, limit: 25 });
+        if (candidates.length) {
+          const scored = candidates.map(c => ({ ...c, _score: scoreHospitalCandidate(c, nameTokens.join(' ')) }))
+            .sort((a, b) => a._score - b._score);
+          return scored[0];
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 async function fetchAffiliationsByNpi(models, npis) {
   if (!models || !models.IntuitiveProviderAffiliation || !npis.length) return {};
   try {
@@ -262,54 +402,103 @@ async function searchByHospital({ hospital_ccn, hospital_name, specialty = 'all'
   if (!hospital_ccn && !hospital_name) {
     throw new Error('hospital_ccn or hospital_name required');
   }
-  if (!models || !models.IntuitiveProviderAffiliation) {
-    throw new Error('Care Compare data not ingested yet. Run scripts/ingest-care-compare.js');
-  }
+  // Prefer the NEW tables (IntuitiveHospital + IntuitiveSurgeonHospitalAffiliation)
+  // which are populated in prod. Fall back to the old IntuitiveProviderAffiliation
+  // (Care Compare DAC group-practice approximation) if the new tables are empty.
+  const useNewSchema = models && models.IntuitiveHospital && models.IntuitiveSurgeonHospitalAffiliation;
 
   const { Op } = require('sequelize');
-  const where = hospital_ccn
-    ? { hospital_ccn: String(hospital_ccn) }
-    : { hospital_name: { [Op.iLike]: `%${hospital_name}%` } };
+  let resolvedHospital = null;
+  let npis = [];
 
-  const affRows = await models.IntuitiveProviderAffiliation.findAll({ where, raw: true });
-  if (affRows.length === 0) {
-    return { targets: [], total: 0, elapsed_ms: Date.now() - t0, message: 'No surgeons found at this hospital.' };
+  if (useNewSchema) {
+    // Resolve hospital via the master table — multi-strategy fuzzy match
+    let hospitalRow = null;
+    if (hospital_ccn) {
+      hospitalRow = await models.IntuitiveHospital.findOne({ where: { ccn: String(hospital_ccn) }, raw: true });
+    } else if (hospital_name) {
+      hospitalRow = await resolveHospitalByName(models, hospital_name);
+    }
+    if (hospitalRow) {
+      resolvedHospital = {
+        ccn: hospitalRow.ccn,
+        name: hospitalRow.facility_name,
+        state: hospitalRow.state,
+        city: hospitalRow.city,
+      };
+      const links = await models.IntuitiveSurgeonHospitalAffiliation.findAll({
+        where: { facility_ccn: hospitalRow.ccn, facility_type: 'Hospital' },
+        attributes: ['npi', 'surgeon_first_name', 'surgeon_last_name'],
+        raw: true,
+      });
+      var nameByNpi = {};
+      for (const l of links) {
+        if (l.npi) {
+          npis.push(l.npi);
+          const fn = (l.surgeon_first_name || '').trim();
+          const ln = (l.surgeon_last_name || '').trim();
+          if (ln && !nameByNpi[l.npi]) nameByNpi[l.npi] = `${fn} ${ln}`.trim();
+        }
+      }
+    }
   }
 
-  const npis = affRows.map(a => a.npi);
+  // Fallback: legacy Care Compare DAC table (group practice approximation)
+  let legacyRows = [];
+  if (!resolvedHospital && models && models.IntuitiveProviderAffiliation) {
+    const where = hospital_ccn
+      ? { hospital_ccn: String(hospital_ccn) }
+      : { hospital_name: { [Op.iLike]: `%${hospital_name}%` } };
+    legacyRows = await models.IntuitiveProviderAffiliation.findAll({ where, raw: true });
+    if (legacyRows.length > 0) {
+      resolvedHospital = {
+        ccn: legacyRows[0].hospital_ccn,
+        name: legacyRows[0].hospital_name,
+        state: legacyRows[0].hospital_state,
+      };
+      npis = legacyRows.map(a => a.npi);
+    }
+  }
+
+  if (!resolvedHospital || npis.length === 0) {
+    return {
+      targets: [], total: 0, elapsed_ms: Date.now() - t0,
+      message: 'No surgeons found at this hospital.',
+      hint: useNewSchema ? 'Try a more specific or shorter hospital name (e.g. "Mayo Clinic Florida" or "AdventHealth Orlando").' : 'Ingest CMS Care Compare data first.',
+    };
+  }
+
+  // Pull MPUP volume + Open Payments for the resolved NPIs
+  const uniqueNpis = Array.from(new Set(npis));
   const [mpupResult, opResult] = await Promise.all([
-    mpup.fetchFor(npis, { models }),
-    openPayments.fetchFor(npis, { models }),
+    mpup.fetchFor(uniqueNpis, { models }),
+    openPayments.fetchFor(uniqueNpis, { models }),
   ]);
   const volByNpi = {};
   for (const v of ((mpupResult.data && mpupResult.data.surgeon_volumes) || [])) volByNpi[v.npi] = v;
   const payByNpi = {};
   for (const p of ((opResult.data && opResult.data.surgeon_payments) || [])) payByNpi[p.npi] = p;
 
-  const specFilter = (specialty || 'all').toLowerCase();
-  const filtered = specFilter === 'all'
-    ? affRows
-    : affRows.filter(a => (a.primary_specialty || '').toLowerCase().includes(specFilter));
-
-  const targets = filtered.map(a => {
-    const vol = volByNpi[a.npi] || {};
-    const pay = payByNpi[a.npi] || {};
+  const targets = uniqueNpis.map(npi => {
+    const vol = volByNpi[npi] || {};
+    const pay = payByNpi[npi] || {};
     const score = targetScore({
       robotic_cases: vol.total_robotic_cases_last_yr || 0,
       intuitive_dollars_2yr: pay.total_payments_2yr || 0,
       last_payment_date: pay.last_payment_date,
     });
     const t = tier(score);
+    const legacyRow = legacyRows.find(r => r.npi === npi);
     return {
-      npi: a.npi,
-      full_name: a.full_name,
-      credential: a.credential,
-      specialty: a.primary_specialty,
-      hospital_name: a.hospital_name,
-      hospital_ccn: a.hospital_ccn,
-      group_legal_name: a.group_legal_name,
-      medical_school: a.medical_school,
-      graduation_year: a.graduation_year,
+      npi,
+      full_name: (typeof nameByNpi !== 'undefined' ? nameByNpi[npi] : null) || legacyRow?.full_name || null,
+      credential: legacyRow?.credential || null,
+      specialty: legacyRow?.primary_specialty || null,
+      hospital_name: resolvedHospital.name,
+      hospital_ccn: resolvedHospital.ccn,
+      group_legal_name: legacyRow?.group_legal_name || null,
+      medical_school: legacyRow?.medical_school || null,
+      graduation_year: legacyRow?.graduation_year || null,
       robotic_cases_last_yr: vol.total_robotic_cases_last_yr || 0,
       volume_year: vol.fiscal_year || null,
       intuitive_dollars_2yr: pay.total_payments_2yr || 0,
@@ -321,23 +510,30 @@ async function searchByHospital({ hospital_ccn, hospital_name, specialty = 'all'
     };
   });
 
-  targets.sort((a, b) => b.target_score - a.target_score);
+  // Specialty filter (best-effort — only works on rows with specialty data)
+  const specFilter = (specialty || 'all').toLowerCase();
+  const filteredTargets = specFilter === 'all'
+    ? targets
+    : targets.filter(t => (t.specialty || '').toLowerCase().includes(specFilter));
+
+  filteredTargets.sort((a, b) => b.target_score - a.target_score);
 
   return {
-    targets,
-    total: targets.length,
-    hospital: { ccn: affRows[0].hospital_ccn, name: affRows[0].hospital_name, state: affRows[0].hospital_state },
+    targets: filteredTargets,
+    total: filteredTargets.length,
+    hospital: resolvedHospital,
     elapsed_ms: Date.now() - t0,
     data_sources: [
-      { name: 'CMS Care Compare', url: 'https://data.cms.gov/provider-data/dataset/mj5m-pzi6' },
+      { name: 'CMS Hospital General Information', url: 'https://data.cms.gov/provider-data/dataset/xubh-q36u' },
+      { name: 'CMS Facility Affiliation Data', url: 'https://data.cms.gov/provider-data/dataset/27ea-46a8' },
       { name: 'CMS MPUP', url: 'https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners' },
       { name: 'CMS Open Payments', url: 'https://openpaymentsdata.cms.gov' },
     ],
     summary: {
-      tier_a: targets.filter(t => t.target_score >= 75).length,
-      tier_b: targets.filter(t => t.target_score >= 50 && t.target_score < 75).length,
-      total_robotic_cases: targets.reduce((s, t) => s + (t.robotic_cases_last_yr || 0), 0),
-      total_intuitive_dollars_2yr: targets.reduce((s, t) => s + (t.intuitive_dollars_2yr || 0), 0),
+      tier_a: filteredTargets.filter(t => t.target_score >= 75).length,
+      tier_b: filteredTargets.filter(t => t.target_score >= 50 && t.target_score < 75).length,
+      total_robotic_cases: filteredTargets.reduce((s, t) => s + (t.robotic_cases_last_yr || 0), 0),
+      total_intuitive_dollars_2yr: filteredTargets.reduce((s, t) => s + (t.intuitive_dollars_2yr || 0), 0),
     },
   };
 }
@@ -626,29 +822,12 @@ async function compareHospitalProcedureVolumes({
     }
   }
   if (Array.isArray(hospital_names) && hospital_names.length) {
-    // Use literal to ORDER BY length-closeness — shorter facility_name closer to the query length wins.
-    // This prevents fuzzy matches like "DOCTORS CENTER HOSPITAL ORLANDO HEALTH DORADO" (PR)
-    // from outranking "ORLANDO HEALTH" (FL) for a query of "Orlando Health".
-    // Also boost 50-state hospitals over US territories (PR/GU/VI/MP/AS) when no explicit state hint.
-    const TERRITORIES = ['PR', 'GU', 'VI', 'MP', 'AS'];
+    // Multi-strategy fuzzy resolver — handles real-world queries like
+    // "Mayo Clinic Florida" → "MAYO CLINIC" (Jacksonville, FL) and
+    // "Orlando Regional Medical Center" → "ORLANDO HEALTH" (Orlando, FL).
     for (const name of hospital_names) {
       if (!name || typeof name !== 'string') continue;
-      const candidates = await models.IntuitiveHospital.findAll({
-        where: { facility_name: { [Op.iLike]: `%${name}%` } },
-        attributes: ['ccn', 'facility_name', 'state', 'city', 'hospital_type'],
-        raw: true,
-        limit: 20,
-      });
-      if (candidates.length === 0) continue;
-      // Score each candidate: shorter name closer to query = higher score; territory = penalty
-      const scored = candidates.map(c => {
-        const lenDiff = Math.abs((c.facility_name || '').length - name.length);
-        const startsWithBonus = (c.facility_name || '').toUpperCase().startsWith(name.toUpperCase()) ? 100 : 0;
-        const territoryPenalty = TERRITORIES.includes(c.state) ? 1000 : 0;
-        const score = lenDiff + territoryPenalty - startsWithBonus;
-        return { ...c, _score: score };
-      }).sort((a, b) => a._score - b._score);
-      const matched = scored[0];
+      const matched = await resolveHospitalByName(models, name);
       if (matched && !hospitalRowsBySource.has(matched.ccn)) {
         hospitalRowsBySource.set(matched.ccn, {
           ccn: matched.ccn, name: matched.facility_name, state: matched.state,
