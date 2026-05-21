@@ -2618,12 +2618,25 @@ async function renderTasks(container) {
   if (!res.success) return;
   _allTasksCache = res.data;
 
+  // Build the project dropdown options from projects that actually have tasks
+  // (so the filter list stays relevant — no empty options for projects with
+  // zero tasks). Sorted alphabetically.
+  const projectMap = new Map(); // id -> name
+  (_allTasksCache || []).forEach(t => {
+    if (t.project && t.project.id) projectMap.set(t.project.id, t.project.name || ('Project #' + t.project.id));
+  });
+  const projectOptions = Array.from(projectMap.entries())
+    .sort((a, b) => String(a[1]).localeCompare(String(b[1])))
+    .map(([id, name]) => `<option value="${id}">${escapeHtml(name)}</option>`)
+    .join('');
+  const noProjectCount = (_allTasksCache || []).filter(t => !t.project_id).length;
+
   container.innerHTML = `
     <div style="margin-bottom:12px">
       <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
     </div>
     <div class="section-header">
-      <div class="filter-bar">
+      <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
         <select id="task-status-filter" onchange="filterTasks()">
           <option value="">Show All</option>
           <option value="pending" selected>Still To Do</option>
@@ -2634,6 +2647,19 @@ async function renderTasks(container) {
           <option value="task">Tasks</option>
           <option value="reminder">Reminders</option>
           <option value="followup">Follow-ups</option>
+        </select>
+        <select id="task-project-filter" onchange="filterTasks()">
+          <option value="">All Projects</option>
+          ${noProjectCount > 0 ? `<option value="__none__">(No project · ${noProjectCount})</option>` : ''}
+          ${projectOptions}
+        </select>
+        <select id="task-due-filter" onchange="filterTasks()">
+          <option value="">All Due Dates</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Due Today</option>
+          <option value="this_week">Next 7 Days</option>
+          <option value="this_month">Next 30 Days</option>
+          <option value="none">No Due Date</option>
         </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add To-Do</button>
@@ -2647,11 +2673,39 @@ async function renderTasks(container) {
 function filterTasks() {
   const statusEl = document.getElementById('task-status-filter');
   const typeEl = document.getElementById('task-type-filter');
+  const projectEl = document.getElementById('task-project-filter');
+  const dueEl = document.getElementById('task-due-filter');
   const statusVal = statusEl ? statusEl.value : 'pending';
   const typeVal = typeEl ? typeEl.value : '';
+  const projectVal = projectEl ? projectEl.value : '';
+  const dueVal = dueEl ? dueEl.value : '';
   let filtered = _allTasksCache;
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
   if (typeVal) filtered = filtered.filter(t => t.task_type === typeVal);
+  if (projectVal === '__none__') {
+    filtered = filtered.filter(t => !t.project_id);
+  } else if (projectVal) {
+    const pid = parseInt(projectVal, 10);
+    filtered = filtered.filter(t => t.project_id === pid);
+  }
+  if (dueVal) {
+    const now = new Date();
+    const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(startOfToday); endOfToday.setDate(endOfToday.getDate() + 1);
+    const in7 = new Date(startOfToday); in7.setDate(in7.getDate() + 7);
+    const in30 = new Date(startOfToday); in30.setDate(in30.getDate() + 30);
+    filtered = filtered.filter(t => {
+      const d = t.due_date ? new Date(t.due_date) : null;
+      switch (dueVal) {
+        case 'overdue':    return d && d < startOfToday && t.status === 'pending';
+        case 'today':      return d && d >= startOfToday && d < endOfToday;
+        case 'this_week':  return d && d >= startOfToday && d < in7;
+        case 'this_month': return d && d >= startOfToday && d < in30;
+        case 'none':       return !d;
+        default:           return true;
+      }
+    });
+  }
   renderTasksList(filtered);
 }
 
