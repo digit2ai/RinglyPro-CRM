@@ -25,6 +25,7 @@ const workflowRoutes = require('./routes/workflows');
 const intakeRoutes = require('./routes/intake');
 const meetingMinutesRoutes = require('./routes/meeting-minutes');
 const contractsRoutes = require('./routes/contracts');
+const findingsRoutes = require('./routes/findings');
 
 const app = express();
 
@@ -95,6 +96,7 @@ app.use('/nda', express.static(path.join(dashboardPath, 'nda')));
 
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
+app.use('/api/v1/findings', authenticateToken, findingsRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
 // Stakeholder magic-link share endpoints — PUBLIC (no auth).
 // MUST be mounted BEFORE the authenticated /api/v1/projects router so
@@ -659,6 +661,24 @@ app.get('*', (req, res) => {
       await sequelize.query('ALTER TABLE d2_project_milestones ADD COLUMN IF NOT EXISTS owner VARCHAR(255)');
     } catch (e) {
       console.log('[D2AI-Projects] project milestones owner notice:', e.message.substring(0, 120));
+    }
+
+    // Neural Findings dismissals — stores per-finding "snooze for N days"
+    try {
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS d2_finding_dismissals (
+          id SERIAL PRIMARY KEY,
+          workspace_id INTEGER NOT NULL DEFAULT 1,
+          finding_key VARCHAR(120) NOT NULL,
+          dismissed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          dismissed_by VARCHAR(255),
+          expires_at TIMESTAMPTZ NOT NULL,
+          UNIQUE (workspace_id, finding_key)
+        )
+      `);
+      await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_finding_dismissals_expires ON d2_finding_dismissals (expires_at)');
+    } catch (e) {
+      console.log('[D2AI-Projects] finding dismissals notice:', e.message.substring(0, 120));
     }
 
     // Migration 002 — Project Intake & Discussion module

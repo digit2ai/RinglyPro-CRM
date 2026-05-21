@@ -272,60 +272,103 @@ async function renderOverview(container) {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="card">
-        <div class="section-header"><h3>Projects by Status</h3></div>
-        <p class="section-hint">Click any bar to see projects in that status</p>
-        <div class="bar-chart" id="status-chart"></div>
+    <div id="neural-findings-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <h2 style="margin:0;background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:1.4rem">Neural Findings</h2>
+          <span id="findings-count-badge" style="display:none;background:#1e293b;color:#94a3b8;padding:3px 10px;border-radius:12px;font-size:13px;font-weight:600">0</span>
+        </div>
       </div>
-      <div class="card">
-        <div class="section-header"><h3>Projects by Category</h3></div>
-        <p class="section-hint">See how your projects are distributed</p>
-        <div class="bar-chart" id="vertical-chart"></div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:24px">
-      <div class="section-header"><h3>Stalled Projects</h3></div>
-      <p class="section-hint">Projects with no updates in the last 2 weeks</p>
-      <div id="stalled-list"></div>
-    </div>
-
-    <div class="card">
-      <div class="section-header"><h3>What's Been Happening</h3></div>
-      <p class="section-hint">A log of recent actions taken in the system</p>
-      <div class="timeline" id="activity-timeline"></div>
+      <div id="findings-list"><div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">Loading findings...</div></div>
     </div>
   `;
 
-  // Status chart - clickable bars
-  const statusColors = { planning: '#2563eb', active: '#10b981', in_progress: '#3b82f6', on_hold: '#f59e0b', completed: '#64748b', cancelled: '#475569' };
-  const maxStatus = Math.max(...d.projects_by_status.map(s => parseInt(s.count)), 1);
-  document.getElementById('status-chart').innerHTML = d.projects_by_status.map(s =>
-    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_status','${s.status}')"><div class="bar-label">${s.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxStatus)*100}%;background:${statusColors[s.status]||'#2563eb'}">${s.count}</div></div></div>`
-  ).join('') || '<p style="color:var(--text-muted);font-size:13px">No projects yet. <a href="#" onclick="event.preventDefault();openProjectModal()" style="color:var(--accent)">Create your first one!</a></p>';
-
-  // Vertical chart - clickable bars
-  const maxV = Math.max(...d.vertical_distribution.map(v => parseInt(v.project_count)), 1);
-  document.getElementById('vertical-chart').innerHTML = d.vertical_distribution.map(v =>
-    `<div class="bar-row card-clickable" onclick="drillDown('projects_by_vertical','${v.name}')"><div class="bar-label">${v.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(v.project_count/maxV)*100}%;background:${v.color}">${v.project_count}</div></div></div>`
-  ).join('');
-
-  // Stalled
-  document.getElementById('stalled-list').innerHTML = d.stalled_projects.length > 0
-    ? d.stalled_projects.map(p => `<div class="timeline-item" style="cursor:pointer" onclick="showProjectDetail(${p.id})"><div class="timeline-dot" style="background:var(--warning)"></div><div class="timeline-content"><strong>${p.name}</strong><br><span class="timeline-time">Last update: ${fmtDate(p.updated_at)}</span></div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">&#9989; Great! All projects are progressing well.</p>';
-
-  // Upcoming events - clickable
+  // Upcoming events - clickable (still wired since Coming Up Next is above the stat cards)
   document.getElementById('upcoming-list').innerHTML = d.upcoming_events.length > 0
     ? d.upcoming_events.map(e => `<div class="timeline-item" style="cursor:pointer" onclick="showEventDetail(${e.id})"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span>${e.event_type ? ' <span class="status-badge status-planning">'+e.event_type+'</span>' : ''}</div></div>`).join('')
     : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No events scheduled. <a href="#" onclick="event.preventDefault();openEventModal()" style="color:var(--accent)">Schedule one now</a></p>';
 
-  // Activity
-  document.getElementById('activity-timeline').innerHTML = d.recent_activity.length > 0
-    ? d.recent_activity.map(a => `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content">${a.user_email || 'System'} <strong>${a.action}</strong> ${a.entity_type} "${a.entity_name || ''}"<br><span class="timeline-time">${fmtDateTime(a.created_at)}</span></div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px">No activity yet. Start by adding a project or contact!</p>';
+  // Neural Findings — fetched async so the rest of the page renders first
+  loadNeuralFindings();
 }
+
+// =====================================================
+// NEURAL FINDINGS PANEL
+// =====================================================
+async function loadNeuralFindings() {
+  const list = document.getElementById('findings-list');
+  const badge = document.getElementById('findings-count-badge');
+  if (!list) return;
+  try {
+    const res = await api('/findings');
+    if (!res.success) { list.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:12px">Could not load findings: ${res.error || 'unknown error'}</p>`; return; }
+    const findings = (res.data && res.data.findings) || [];
+    if (badge) {
+      badge.textContent = findings.length;
+      badge.style.display = 'inline-block';
+      if (findings.length === 0) {
+        badge.style.background = 'rgba(16,185,129,0.15)';
+        badge.style.color = '#10b981';
+      }
+    }
+    if (!findings.length) {
+      list.innerHTML = `
+        <div class="card" style="text-align:center;padding:32px 16px;border:1px solid rgba(16,185,129,0.3)">
+          <div style="font-size:36px;margin-bottom:6px">&#10003;</div>
+          <div style="font-size:16px;font-weight:600;color:#10b981;margin-bottom:4px">All clear</div>
+          <div style="font-size:13px;color:var(--text-muted)">No active findings. The system has not detected gaps or risks in your project tracker right now.</div>
+        </div>`;
+      return;
+    }
+    list.innerHTML = findings.map(renderFindingCard).join('');
+  } catch (err) {
+    list.innerHTML = `<p style="color:var(--danger);font-size:13px;padding:12px">Failed to load findings: ${err.message}</p>`;
+  }
+}
+
+function renderFindingCard(f) {
+  const palette = {
+    critical: { bar: '#ef4444', badgeBg: 'rgba(239,68,68,0.15)', badgeFg: '#ef4444', label: 'CRITICAL' },
+    warning:  { bar: '#f59e0b', badgeBg: 'rgba(245,158,11,0.15)', badgeFg: '#f59e0b', label: 'WARNING'  },
+    info:     { bar: '#3b82f6', badgeBg: 'rgba(59,130,246,0.15)', badgeFg: '#3b82f6', label: 'INFO'     }
+  };
+  const p = palette[f.severity] || palette.info;
+  const keyEsc = String(f.key).replace(/'/g, "\\'");
+  const fixView = f.fix_view ? String(f.fix_view).replace(/'/g, "\\'") : '';
+  return `
+    <div class="card" style="margin-bottom:14px;border-top:3px solid ${p.bar};padding:18px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+        <h3 style="margin:0;font-size:16px;color:var(--text-primary)">${escapeHtml(f.title)}</h3>
+        <span style="background:${p.badgeBg};color:${p.badgeFg};padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.05em;white-space:nowrap">${p.label}</span>
+      </div>
+      <p style="margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--text-secondary)">${escapeHtml(f.description)}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        ${f.impact_label ? `<span style="background:rgba(139,92,246,0.12);color:#a78bfa;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px">&#128176; ${escapeHtml(f.impact_label)}</span>` : ''}
+        ${f.source_label ? `<span style="background:rgba(34,211,238,0.10);color:#22d3ee;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600">${escapeHtml(f.source_label)}</span>` : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="findingFix('${keyEsc}','${fixView}')" style="background:linear-gradient(135deg,#7c5cff,#22d3ee);border:none">Fix This</button>
+        <button class="btn btn-ghost btn-sm" onclick="findingDismiss('${keyEsc}')">Dismiss</button>
+      </div>
+    </div>`;
+}
+
+async function findingFix(_key, view) {
+  if (view) navigateTo(view);
+}
+window.findingFix = findingFix;
+
+async function findingDismiss(key) {
+  try {
+    const res = await api('/findings/dismiss', { method: 'POST', body: JSON.stringify({ key, days: 7 }) });
+    if (!res.success) { alert('Dismiss failed: ' + (res.error || 'unknown')); return; }
+    if (typeof showCopyToast === 'function') showCopyToast('Dismissed — will reappear in 7 days if still applicable');
+    loadNeuralFindings();
+  } catch (err) {
+    alert('Dismiss failed: ' + err.message);
+  }
+}
+window.findingDismiss = findingDismiss;
 
 // =====================================================
 // DRILL-DOWN: Click a KPI card to see the underlying data
