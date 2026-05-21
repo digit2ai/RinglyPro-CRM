@@ -108,14 +108,18 @@ export default function SurgeonTargetingPage() {
     try {
       let r
       if (mode === 'hospital') {
-        if (!selectedHospital) {
-          setError('Pick a hospital from the suggestions first.')
+        // Accept either a picked suggestion OR raw typed text.
+        // The /by-hospital endpoint takes hospital_name (fuzzy) when no CCN is known.
+        const ccn = selectedHospital?.hospital_ccn || null
+        const name = selectedHospital?.hospital_name || hospitalQuery.trim()
+        if (!ccn && !name) {
+          setError('Type or pick a hospital first.')
           setLoading(false)
           return
         }
         r = await api.surgeonsByHospital({
-          hospital_ccn: selectedHospital.hospital_ccn,
-          hospital_name: selectedHospital.hospital_name,
+          hospital_ccn: ccn,
+          hospital_name: name,
           specialty,
         })
       } else {
@@ -293,7 +297,7 @@ export default function SurgeonTargetingPage() {
             </div>
             <div className="md:col-span-3">
               <button
-                onClick={runSearch} disabled={loading || !selectedHospital}
+                onClick={runSearch} disabled={loading || (!selectedHospital && !hospitalQuery.trim())}
                 className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 rounded-lg transition"
               >
                 {loading ? 'Searching…' : 'Rank Surgeons'}

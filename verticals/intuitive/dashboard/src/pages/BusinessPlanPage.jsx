@@ -283,14 +283,22 @@ function PlanHeader({ plan, onUpdate, onRecalculate, recalculating }) {
 // ─── ROI Summary Cards ────────────────────────────────────────
 
 function ROISummary({ plan }) {
-  const totals = plan.calculated_totals || plan.totals || {}
+  // Read directly from the model fields populated by /calculate.
+  // (Earlier code referenced plan.calculated_totals / plan.totals which never exist.)
+  const cases = Number(plan.total_incremental_cases_annual) || 0
+  const revenue = Number(plan.total_incremental_revenue) || 0
+  const clinical = Number(plan.total_clinical_outcome_savings) || 0
+  const combined = Number(plan.total_combined_roi) || 0
+  const payback = plan.payback_months
+  const fiveYear = Number(plan.five_year_net_benefit) || 0
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-      <MetricCard label="Incremental Cases/Year" value={fmt(totals.total_annual_cases || 0)} />
-      <MetricCard label="Incremental Revenue" value={fmtDollar(totals.total_revenue || 0)} accent />
-      <MetricCard label="Clinical Outcome Savings" value={fmtDollar(totals.total_clinical_savings || 0)} accent />
-      <MetricCard label="Combined ROI" value={totals.combined_roi_pct != null ? `${Number(totals.combined_roi_pct).toFixed(1)}%` : '--'} />
-      <MetricCard label="Payback Period" value={fmtMonths(totals.payback_months)} />
+    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <MetricCard label="Incremental Cases/Year" value={fmt(cases)} />
+      <MetricCard label="Incremental Revenue" value={fmtDollar(revenue)} accent />
+      <MetricCard label="Clinical Outcome Savings" value={fmtDollar(clinical)} accent />
+      <MetricCard label="Combined ROI" value={combined > 0 ? fmtDollar(combined) : '--'} accent />
+      <MetricCard label="Payback Period" value={fmtMonths(payback)} />
+      <MetricCard label="5-Year Net Benefit" value={fiveYear !== 0 ? fmtDollar(fiveYear) : '--'} accent />
     </div>
   )
 }

@@ -144,17 +144,46 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     surgeon_actuals: [{ surgeon_name: '', actual_cases: '' }]
   })
 
+  // The URL param could be either a plan_id OR a project_id (the project-workflow
+  // nav passes the active project's id). Resolve to the actual plan_id.
+  const [resolvedPlanId, setResolvedPlanId] = useState(null)
+
   // ─── Data Loading ─────────────────────────────────────────
 
   const loadData = useCallback(async () => {
     if (!planId) return
     try {
-      const [planRes, compRes] = await Promise.all([
-        api.getBusinessPlan(planId),
-        api.getComparison(planId)
-      ])
-      setPlan(planRes.plan || planRes)
-      setComparison(compRes.comparison || compRes)
+      // 1. Try as plan_id directly
+      let plan = null
+      try {
+        const r = await api.getBusinessPlan(planId)
+        plan = r?.plan || r?.data || r
+        if (!plan?.id) plan = null
+      } catch (e) { /* fall through to project-id resolution */ }
+
+      // 2. If not found as a plan, treat the param as a project_id and pull the active plan
+      if (!plan) {
+        try {
+          const r = await api.listBusinessPlans(planId)
+          const list = r?.business_plans || r?.data || []
+          plan = list.find(p => p.status !== 'archived') || list[0] || null
+        } catch (e) { /* will fall through to error display */ }
+      }
+
+      if (!plan?.id) {
+        throw new Error('Business plan not found. Try /tracking/<plan_id> or run "Generate Business Plan from Analysis" first.')
+      }
+
+      setPlan(plan)
+      setResolvedPlanId(plan.id)
+      // Now fetch comparison data for the resolved plan id
+      try {
+        const compRes = await api.getComparison(plan.id)
+        setComparison(compRes?.comparison || compRes?.data || compRes || null)
+      } catch (e) {
+        // Plans with no actuals yet legitimately have no comparison — don't fail the whole page
+        setComparison(null)
+      }
     } catch (err) {
       console.error('Failed to load tracking data:', err)
       setError(err.message)
@@ -170,7 +199,7 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
   const handleTakeSnapshot = async () => {
     setSnapshotLoading(true)
     try {
-      await api.takeSnapshot(planId)
+      await api.takeSnapshot(resolvedPlanId || planId)
       await loadData()
     } catch (err) {
       console.error('Snapshot failed:', err)
@@ -187,7 +216,7 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     }
     setExecLoading(true)
     try {
-      const res = await api.getExecutiveSummary(planId)
+      const res = await api.getExecutiveSummary(resolvedPlanId || planId)
       setExecutiveSummary(res.summary || res)
       setShowExecSummary(true)
     } catch (err) {
@@ -212,7 +241,7 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
           .filter(s => s.surgeon_name && s.actual_cases !== '')
           .map(s => ({ surgeon_name: s.surgeon_name, actual_cases: parseInt(s.actual_cases, 10) }))
       }
-      await api.importActuals(planId, payload)
+      await api.importActuals(resolvedPlanId || planId, payload)
       setImportSuccess(true)
       setImportForm({
         period_start: '',
@@ -238,7 +267,7 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     setRobotSyncLoading(true)
     setRobotSyncResult(null)
     try {
-      const res = await api.syncRobotToPlan(planId, {
+      const res = await api.syncRobotToPlan(resolvedPlanId || planId, {
         period_start: robotForm.period_start,
         period_end: robotForm.period_end,
         period_label: robotForm.period_label || undefined,
