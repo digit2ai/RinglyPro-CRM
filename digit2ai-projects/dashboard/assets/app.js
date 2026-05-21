@@ -2667,8 +2667,12 @@ function renderTasksList(tasks) {
           <table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
           items.map(t => {
             const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
+            const suggested = !t.assignee ? extractSuggestedOwner(t.description) : '';
+            const suggestedChip = suggested
+              ? `<br><span style="display:inline-block;margin-top:3px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px"><span style="font-style:italic">Suggested:</span> <strong>${escapeHtml(suggested)}</strong></span>`
+              : '';
             return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
-              <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}</td>
+              <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}${suggestedChip}</td>
               <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
               <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
               <td>${t.project?.name || '-'}</td>
@@ -2683,6 +2687,17 @@ function renderTasksList(tasks) {
 
   container.innerHTML = html;
 }
+
+// Pulls a "Suggested owner: X" or "Owner: X" line out of a task or milestone
+// description text. AI-generated rows from the plan generator + action-item
+// extractor stash the owner role/name there rather than in a first-class field.
+// Returns the trimmed value, or '' if not found.
+function extractSuggestedOwner(description) {
+  if (!description) return '';
+  const m = String(description).match(/(?:^|\n)\s*(?:Suggested owner|Owner)\s*:\s*(.+?)(?:\n|$)/i);
+  return m ? m[1].trim() : '';
+}
+window.extractSuggestedOwner = extractSuggestedOwner;
 
 function toggleTaskGroup(groupId) {
   const body = document.getElementById(groupId);
@@ -2749,12 +2764,18 @@ function printTaskGroup(assigneeName) {
     const overdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
     const due = t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
     const proj = t.project?.name || '';
-    const desc = t.description ? t.description.replace(/\s+/g, ' ').trim() : '';
+    const descRaw = t.description ? t.description.replace(/\s+/g, ' ').trim() : '';
+    const suggested = !t.assignee ? extractSuggestedOwner(t.description) : '';
+    const ownerStr = t.assignee
+      ? ((t.assignee.first_name + ' ' + (t.assignee.last_name || '')).trim())
+      : (suggested ? 'Suggested: ' + suggested : '');
+    // Strip the "Suggested owner:" line from the description preview to avoid duplication
+    const desc = descRaw.replace(/(?:^|\s)\s*(?:Suggested owner|Owner)\s*:\s*[^\n.]+\.?/i, '').trim();
     return `<div class="row">
   <div class="num">${i + 1}.</div>
   <div class="body">
     <div class="line1"><span class="ttl">${esc(t.title)}</span> <span class="meta">[${esc(t.task_type || 'task')} · ${esc(t.priority || 'medium')}]</span></div>
-    <div class="line2">Due: <strong${overdue ? ' class="overdue"' : ''}>${esc(due)}${overdue ? ' (OVERDUE)' : ''}</strong>${proj ? '  ·  Project: ' + esc(proj) : ''}  ·  Status: ${esc(t.status)}</div>
+    <div class="line2">Due: <strong${overdue ? ' class="overdue"' : ''}>${esc(due)}${overdue ? ' (OVERDUE)' : ''}</strong>${ownerStr ? '  ·  Owner: ' + esc(ownerStr) : ''}${proj ? '  ·  Project: ' + esc(proj) : ''}  ·  Status: ${esc(t.status)}</div>
     ${desc ? `<div class="line3">${esc(desc)}</div>` : ''}
   </div>
 </div>`;
@@ -2844,7 +2865,12 @@ function copyTaskGroupText(assigneeName) {
     tasks.forEach((t, i) => {
       const overdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
       const due = t.due_date ? new Date(t.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'no due date';
+      const suggested = !t.assignee ? extractSuggestedOwner(t.description) : '';
+      const ownerStr = t.assignee
+        ? ((t.assignee.first_name + ' ' + (t.assignee.last_name || '')).trim())
+        : (suggested ? 'Suggested: ' + suggested : 'Unassigned');
       const parts = [];
+      parts.push(`Owner: ${ownerStr}`);
       parts.push(`Due: ${due}${overdue ? ' (OVERDUE)' : ''}`);
       parts.push(`Priority: ${t.priority || 'medium'}`);
       parts.push(`Type: ${t.task_type || 'task'}`);
@@ -2853,7 +2879,8 @@ function copyTaskGroupText(assigneeName) {
       lines.push(`${i + 1}. ${t.title}`);
       lines.push(`   ${parts.join(' · ')}`);
       if (t.description) {
-        const clean = t.description.replace(/\s+/g, ' ').trim();
+        // Strip the "Suggested owner:" line so it does not duplicate the Owner: in parts
+        const clean = t.description.replace(/(?:^|\s)\s*(?:Suggested owner|Owner)\s*:\s*[^\n.]+\.?/i, '').replace(/\s+/g, ' ').trim();
         lines.push(`   ${clean}`);
       }
       lines.push('');
@@ -3557,11 +3584,21 @@ async function showProjectDetail(id) {
             </div>
             ${projectTasks.length ? projectTasks.map(t => {
               const tOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
+              const suggested = extractSuggestedOwner(t.description);
+              let ownerHtml = '';
+              if (t.assignee) {
+                const name = (t.assignee.first_name + ' ' + (t.assignee.last_name || '')).trim();
+                ownerHtml = `<br><span style="font-size:12px;color:var(--text-secondary)">&#128100; <strong>${escapeHtml(name)}</strong></span>`;
+              } else if (suggested) {
+                ownerHtml = `<br><span style="font-size:12px;color:var(--text-secondary)">&#128100; <span style="color:var(--text-muted);font-style:italic">Suggested:</span> <strong>${escapeHtml(suggested)}</strong></span>`;
+              } else {
+                ownerHtml = `<br><span style="font-size:12px;color:var(--text-muted);font-style:italic">&#128100; Unassigned</span>`;
+              }
               return `<div class="timeline-item" style="cursor:pointer;border-left:3px solid ${t.status === 'completed' ? 'var(--success)' : tOverdue ? 'var(--danger)' : 'var(--accent)'}" onclick="showTaskDetail(${t.id})">
                 <div class="timeline-content">
                   <strong>${t.title}</strong> <span class="status-badge status-${t.status === 'completed' ? 'completed' : tOverdue ? 'overdue' : 'pending'}">${t.status === 'completed' ? 'done' : tOverdue ? 'overdue' : t.status}</span>
                   <span class="priority-badge priority-${t.priority}" style="margin-left:4px">${t.priority}</span>
-                  ${t.assignee ? '<br><span style="font-size:12px;color:var(--text-secondary)">&#128100; '+t.assignee.first_name+' '+(t.assignee.last_name||'')+'</span>' : ''}
+                  ${ownerHtml}
                   ${t.due_date ? '<br><span class="timeline-time">Due: '+fmtDate(t.due_date)+'</span>' : ''}
                 </div>
               </div>`;
