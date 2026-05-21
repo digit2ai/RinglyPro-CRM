@@ -238,11 +238,12 @@ async function renderOverview(container) {
     const label = n > 99 ? '99+' : String(n);
     return `<span style="position:absolute;top:-6px;right:-6px;background:${color};color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;min-width:20px;text-align:center;line-height:1.2;box-shadow:0 2px 6px ${color}66">${label}</span>`;
   };
+  const calendarBadge    = mkBadge(s.meetings_today ?? 0, '#2563eb');
   const outstandingBadge = mkBadge(s.pending_tasks ?? 0, '#ef4444');
   const remindersBadge   = mkBadge(s.pending_reminders ?? 0, '#f59e0b');
   const quickActionsHtml = `
     <div class="quick-actions">
-      <button class="quick-action-btn" onclick="openCalendarWeek()"><span class="qa-label">Calendar</span></button>
+      <button class="quick-action-btn" style="position:relative" onclick="openCalendarWeek()"><span class="qa-label">Calendar</span>${calendarBadge}</button>
       <button class="quick-action-btn" style="position:relative" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span>${outstandingBadge}</button>
       <button class="quick-action-btn" style="position:relative" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Reminder</span>${remindersBadge}</button>
     </div>`;
