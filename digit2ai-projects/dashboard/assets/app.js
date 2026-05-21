@@ -2659,7 +2659,11 @@ async function renderTasks(container) {
   filterTasks();
 }
 
-function filterTasks() {
+// Single source of truth: reads every active filter from the DOM and
+// returns the resulting task subset. Used by filterTasks (renders the
+// list), printTaskGroup (PDF), and copyTaskGroupText (clipboard) so all
+// three views stay in sync.
+function applyActiveTaskFilters(allTasks) {
   const statusEl = document.getElementById('task-status-filter');
   const typeEl = document.getElementById('task-type-filter');
   const projectEl = document.getElementById('task-project-filter');
@@ -2668,7 +2672,7 @@ function filterTasks() {
   const typeVal = typeEl ? typeEl.value : '';
   const projectVal = projectEl ? projectEl.value : '';
   const dueVal = dueEl ? dueEl.value : '';
-  let filtered = _allTasksCache;
+  let filtered = allTasks || [];
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
   if (typeVal) filtered = filtered.filter(t => t.task_type === typeVal);
   if (projectVal === '__none__') {
@@ -2695,7 +2699,11 @@ function filterTasks() {
       }
     });
   }
-  renderTasksList(filtered);
+  return filtered;
+}
+
+function filterTasks() {
+  renderTasksList(applyActiveTaskFilters(_allTasksCache));
 }
 
 function renderTasksList(tasks) {
@@ -3107,20 +3115,18 @@ window.openOutstandingTasks = openOutstandingTasks;
 
 // Open a plain-text print view for a single assignee group and trigger the
 // browser print dialog so the user can pick "Save as PDF" as destination.
-// Mirrors whatever the current task filters were (defaults to pending only
-// when no status filter is rendered, matching the on-screen list).
+// Mirrors every active filter (Project + Due Date + any others) via
+// applyActiveTaskFilters, so what you print matches what you see.
 function printTaskGroup(assigneeName) {
   const statusEl = document.getElementById('task-status-filter');
-  const typeEl = document.getElementById('task-type-filter');
+  const dueEl = document.getElementById('task-due-filter');
   const statusVal = statusEl ? statusEl.value : 'pending';
-  const typeVal = typeEl ? typeEl.value : '';
+  const dueVal = dueEl ? dueEl.value : '';
 
-  let tasks = (_allTasksCache || []).filter(t => {
+  let tasks = applyActiveTaskFilters(_allTasksCache).filter(t => {
     const grp = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : 'Unassigned';
     return grp === assigneeName;
   });
-  if (statusVal) tasks = tasks.filter(t => t.status === statusVal);
-  if (typeVal) tasks = tasks.filter(t => t.task_type === typeVal);
 
   // Sort by due date (no date last), then priority weight
   const prioWeight = { urgent: 0, high: 1, medium: 2, low: 3 };
@@ -3135,7 +3141,9 @@ function printTaskGroup(assigneeName) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const now = new Date();
   const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
-  const headerLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+  const dueLabel = { overdue: 'Overdue', today: 'Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
+  const statusLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+  const headerLabel = dueLabel ? `${statusLabel} · ${dueLabel}` : statusLabel;
   const title = `To-Do List — ${assigneeName} (${headerLabel})`;
 
   const rows = tasks.map((t, i) => {
@@ -3210,16 +3218,14 @@ window.printTaskGroup = printTaskGroup;
 // text and copy it to the clipboard so the user can paste into email/SMS.
 function copyTaskGroupText(assigneeName) {
   const statusEl = document.getElementById('task-status-filter');
-  const typeEl = document.getElementById('task-type-filter');
+  const dueEl = document.getElementById('task-due-filter');
   const statusVal = statusEl ? statusEl.value : 'pending';
-  const typeVal = typeEl ? typeEl.value : '';
+  const dueVal = dueEl ? dueEl.value : '';
 
-  let tasks = (_allTasksCache || []).filter(t => {
+  let tasks = applyActiveTaskFilters(_allTasksCache).filter(t => {
     const grp = t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name || ''}`.trim() : 'Unassigned';
     return grp === assigneeName;
   });
-  if (statusVal) tasks = tasks.filter(t => t.status === statusVal);
-  if (typeVal) tasks = tasks.filter(t => t.task_type === typeVal);
 
   const prioWeight = { urgent: 0, high: 1, medium: 2, low: 3 };
   tasks.sort((a, b) => {
@@ -3231,7 +3237,9 @@ function copyTaskGroupText(assigneeName) {
 
   const now = new Date();
   const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
-  const headerLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+  const dueLabel = { overdue: 'Overdue', today: 'Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
+  const statusLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
+  const headerLabel = dueLabel ? `${statusLabel} · ${dueLabel}` : statusLabel;
 
   const lines = [];
   lines.push(`To-Do List — ${assigneeName} (${headerLabel})`);
