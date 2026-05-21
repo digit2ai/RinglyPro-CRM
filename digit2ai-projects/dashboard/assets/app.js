@@ -1435,7 +1435,7 @@ function renderTriageScoreBanner(structured) {
         <div style="font-size:18px;font-weight:700;color:${tl.fg}">${tl.label} — ${escHtml(recReadable)}</div>
       </div>
       ${fit !== null ? `
-        <div style="text-align:center;padding:8px 16px;background:#fff;border:2px solid ${fitColor};border-radius:10px;min-width:90px">
+        <div style="text-align:center;padding:8px 16px;background:var(--bg-card);border:2px solid ${fitColor};border-radius:10px;min-width:90px">
           <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);font-weight:600">Fit Score</div>
           <div style="font-size:28px;font-weight:800;color:${fitColor};line-height:1.1">${fit}<span style="font-size:14px;color:var(--text-muted);font-weight:600">/10</span></div>
         </div>` : ''}
@@ -1499,7 +1499,7 @@ function renderProjectTriagePanel(p) {
         <button class="btn btn-ghost btn-sm" onclick="runProjectTriage(${p.id})">Re-run</button>
       </div>
       ${renderTriageScoreBanner(structured)}
-      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:right">${p.triage_model ? 'Model: ' + escHtml(p.triage_model) : ''}${stamp}</div>
     </div>`;
 }
@@ -3724,28 +3724,30 @@ function renderAgentPanel(t) {
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
         ${t.agent_model ? 'Model: ' + escapeHtml(t.agent_model) + ' · ' : ''}${t.agent_cost_usd ? 'Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
       </div>
-      <div class="agent-output-body" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:#1e293b">${bodyHtml}</div>
+      <div class="agent-output-body" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:var(--text-primary)">${bodyHtml}</div>
     </div>`;
 }
 
 // Minimal markdown-to-HTML — handles headings, bold, italics, links, lists,
-// code blocks, paragraphs. Good enough for agent output; not a full parser.
+// code blocks, paragraphs. Theme-aware: uses CSS variables so headings stay
+// readable on both dark and light themes (the original hardcoded #0f172a
+// was invisible on the dark theme — dark text on dark background).
 function simpleMarkdownToHtml(md) {
   if (!md) return '';
   let s = String(md);
   // Escape HTML first
   s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   // Code fences
-  s = s.replace(/```([\s\S]*?)```/g, (_, code) => `<pre style="background:#f1f5f9;padding:10px;border-radius:4px;overflow-x:auto;font-size:12px"><code>${code}</code></pre>`);
-  // Headings
-  s = s.replace(/^### (.+)$/gm, '<h3 style="margin:14px 0 6px;font-size:15px">$1</h3>');
-  s = s.replace(/^## (.+)$/gm, '<h2 style="margin:18px 0 8px;font-size:17px;color:#0f172a">$1</h2>');
-  s = s.replace(/^# (.+)$/gm, '<h1 style="margin:0 0 12px;font-size:20px;color:#0f172a">$1</h1>');
+  s = s.replace(/```([\s\S]*?)```/g, (_, code) => `<pre style="background:var(--bg-tertiary,#f1f5f9);color:var(--text-primary);padding:10px;border-radius:4px;overflow-x:auto;font-size:12px"><code>${code}</code></pre>`);
+  // Headings — use --text-primary so they read on dark + light themes
+  s = s.replace(/^### (.+)$/gm, '<h3 style="margin:14px 0 6px;font-size:15px;color:var(--text-primary)">$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2 style="margin:18px 0 8px;font-size:17px;color:var(--text-primary)">$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h1 style="margin:0 0 12px;font-size:20px;color:var(--text-primary)">$1</h1>');
   // Bold + italic
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[\s(])\*([^*]+?)\*([\s.,;)]|$)/g, '$1<em>$2</em>$3');
   // Links [text](url)
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#0ea5e9">$1</a>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#38bdf8">$1</a>');
   // Lists
   s = s.replace(/^(?:- |\* )(.+)$/gm, '<li>$1</li>');
   s = s.replace(/(<li>.*<\/li>)(\n(?!<li>))/g, '<ul style="margin:6px 0 6px 20px;padding:0">$1</ul>$2');
