@@ -1401,6 +1401,47 @@ async function approveInboxItem(projectId) {
 // =====================================================
 // INBOX TRIAGE PANEL (Task Agent Loop v1)
 // =====================================================
+
+// Traffic-light + score banner. Renders the persistent indicator used in
+// both the Inbox card and the Project detail page so the AI verdict is
+// always one glance away — never just a fading toast.
+//   accept                  -> GREEN  🟢
+//   accept_with_conditions  -> AMBER  🟡
+//   reject                  -> RED    🔴
+//   (anything else)         -> GREY indicator
+function triageLightFromRec(rec) {
+  const r = String(rec || '').toLowerCase();
+  if (r === 'accept' || r === 'go')      return { light: '🟢', label: 'GO',     fg: '#10b981', bg: 'rgba(16,185,129,0.10)', border: '#10b981' };
+  if (r === 'accept_with_conditions')    return { light: '🟡', label: 'CAUTION',fg: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: '#f59e0b' };
+  if (r === 'reject' || r === 'no_go')   return { light: '🔴', label: 'STOP',   fg: '#ef4444', bg: 'rgba(239,68,68,0.10)', border: '#ef4444' };
+  return { light: '⚪', label: 'REVIEW', fg: '#64748b', bg: 'rgba(100,116,139,0.10)', border: '#64748b' };
+}
+
+// Build a chunky banner with the traffic light, fit score, and
+// recommendation text. Always rendered at the top of any place that
+// displays the triage brief.
+function renderTriageScoreBanner(structured) {
+  if (!structured) return '';
+  const fit = typeof structured.fit_score !== 'undefined' ? Number(structured.fit_score) : null;
+  const recRaw = structured.go_no_go_recommendation || 'review';
+  const recReadable = String(recRaw).replace(/_/g, ' ');
+  const tl = triageLightFromRec(recRaw);
+  const fitColor = fit === null ? tl.fg : (fit >= 7 ? '#10b981' : fit >= 4 ? '#f59e0b' : '#ef4444');
+  return `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;margin-bottom:14px;background:${tl.bg};border:2px solid ${tl.border};border-radius:10px;flex-wrap:wrap">
+      <span style="font-size:32px;line-height:1">${tl.light}</span>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${tl.fg};font-weight:700;margin-bottom:2px">AI Recommendation</div>
+        <div style="font-size:18px;font-weight:700;color:${tl.fg}">${tl.label} — ${escHtml(recReadable)}</div>
+      </div>
+      ${fit !== null ? `
+        <div style="text-align:center;padding:8px 16px;background:#fff;border:2px solid ${fitColor};border-radius:10px;min-width:90px">
+          <div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);font-weight:600">Fit Score</div>
+          <div style="font-size:28px;font-weight:800;color:${fitColor};line-height:1.1">${fit}<span style="font-size:14px;color:var(--text-muted);font-weight:600">/10</span></div>
+        </div>` : ''}
+    </div>`;
+}
+
 function renderInboxTriagePanel(p) {
   if (!p) return '';
   const brief = p.triage_brief;
@@ -1414,27 +1455,71 @@ function renderInboxTriagePanel(p) {
       </div>`;
   }
   const fit = structured && typeof structured.fit_score !== 'undefined' ? Number(structured.fit_score) : null;
-  const rec = (structured && structured.go_no_go_recommendation) ? structured.go_no_go_recommendation.replace(/_/g, ' ') : 'review';
-  const summary = `🤖 AI Triage Brief${fit !== null ? ' (fit: ' + fit + '/10, recommendation: ' + rec + ')' : ''}`;
-  const openAttr = (fit !== null && fit >= 7) ? 'open' : '';
+  const recRaw = (structured && structured.go_no_go_recommendation) || 'review';
+  const tl = triageLightFromRec(recRaw);
+  const summary = `${tl.light} AI Triage — ${tl.label}${fit !== null ? ' · Fit ' + fit + '/10' : ''}`;
+  // Auto-open whenever the verdict is anything other than a clean GO 7+ —
+  // critical/cautionary cases deserve attention without an extra click.
+  const openAttr = (fit !== null && fit >= 7 && recRaw === 'accept') ? '' : 'open';
   return `
     <details ${openAttr} style="margin-bottom:14px;padding:0;background:rgba(124,92,255,0.04);border:1px solid rgba(124,92,255,0.25);border-radius:6px">
       <summary style="cursor:pointer;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;list-style:none">
-        <strong style="background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent">${escHtml(summary)}</strong>
+        <strong style="color:${tl.fg}">${escHtml(summary)}</strong>
         <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();event.preventDefault();runInboxTriage(${p.id})" style="font-size:11px">Re-run</button>
       </summary>
-      <div style="padding:12px 14px;border-top:1px solid rgba(124,92,255,0.2);font-size:13px;line-height:1.55;color:var(--text-secondary)">${simpleMarkdownToHtml(brief)}</div>
+      <div style="padding:12px 14px;border-top:1px solid rgba(124,92,255,0.2);font-size:13px;line-height:1.55;color:var(--text-secondary)">
+        ${renderTriageScoreBanner(structured)}
+        ${simpleMarkdownToHtml(brief)}
+      </div>
     </details>`;
 }
 
+// Project-detail variant — same brief and banner, but always expanded by
+// default since the user clicked into a specific project, and styled as a
+// standalone detail-section block.
+function renderProjectTriagePanel(p) {
+  if (!p) return '';
+  const brief = p.triage_brief;
+  const structured = p.triage_structured || null;
+  if (!brief) {
+    return `
+      <div class="detail-section">
+        <h4>🤖 AI Triage</h4>
+        <div style="padding:12px 14px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.25);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text-muted)">No AI triage analysis on file for this project.</span>
+          <button class="btn btn-primary btn-sm" onclick="runProjectTriage(${p.id})">Run Triage Now</button>
+        </div>
+      </div>`;
+  }
+  const stamp = p.triage_at ? ` · Generated ${fmtDateTime(p.triage_at)}` : '';
+  return `
+    <div class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <h4 style="margin:0">🤖 AI Triage</h4>
+        <button class="btn btn-ghost btn-sm" onclick="runProjectTriage(${p.id})">Re-run</button>
+      </div>
+      ${renderTriageScoreBanner(structured)}
+      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:right">${p.triage_model ? 'Model: ' + escHtml(p.triage_model) : ''}${stamp}</div>
+    </div>`;
+}
+window.renderProjectTriagePanel = renderProjectTriagePanel;
+
 async function runInboxTriage(projectId) {
-  if (typeof showCopyToast === 'function') showCopyToast('Triage agent running…');
+  if (typeof showCopyToast === 'function') showCopyToast('Triage agent running… (15-25s)');
   const r = await api('/agents/triage/' + projectId, { method: 'POST', body: JSON.stringify({}) });
   if (!r.success) { alert('Triage failed: ' + (r.error || 'unknown')); return; }
-  if (typeof showCopyToast === 'function') showCopyToast(`Triage done — fit ${r.fit_score}/10, recommendation: ${r.recommendation}`);
   navigateTo('inbox');
 }
 window.runInboxTriage = runInboxTriage;
+
+async function runProjectTriage(projectId) {
+  if (typeof showCopyToast === 'function') showCopyToast('Triage agent running… (15-25s)');
+  const r = await api('/agents/triage/' + projectId, { method: 'POST', body: JSON.stringify({}) });
+  if (!r.success) { alert('Triage failed: ' + (r.error || 'unknown')); return; }
+  showProjectDetail(projectId);
+}
+window.runProjectTriage = runProjectTriage;
 
 async function rejectInboxItem(projectId) {
   const reason = prompt('Reason for rejection (optional):', '');
@@ -4247,6 +4332,7 @@ async function showProjectDetail(id) {
             </div>
             <div id="project-notes-${p.id}" contenteditable="true" data-original="${escHtml(renderNotesHtml(p.notes || ''))}" oninput="onProjectNotesChange(${p.id})" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:260px;max-height:600px;overflow-y:auto;outline:none" data-placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record.">${renderNotesHtml(p.notes || '')}</div>
           </div>
+          ${renderProjectTriagePanel(p)}
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
           ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
