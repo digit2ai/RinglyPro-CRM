@@ -257,7 +257,7 @@ async function renderOverview(container) {
         <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
         <div class="kpi-hint">Click to view details</div>
       </div>
-      <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('pending_tasks')" data-tooltip="To-do items due today (pending tasks with today's due date)">
+      <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="navigateTo('tasks')" data-tooltip="Open My To-Do List">
         <div class="stat-label">To-Do Items Due Today</div>
         <div class="stat-value">${s.tasks_due_today ?? 0}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' overdue from prior days' : ((s.tasks_due_today ?? 0) > 0 ? 'Due today' : 'Nothing due today')}</div>
