@@ -2734,6 +2734,18 @@ function renderTasksList(tasks) {
     return a.localeCompare(b);
   });
 
+  // Sort each group by due date ascending (no due date last). Within the
+  // same due date, fall back to priority weight so urgent floats above low.
+  const prioWeight = { urgent: 0, high: 1, medium: 2, low: 3 };
+  Object.values(groups).forEach(items => {
+    items.sort((a, b) => {
+      const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+      if (ad !== bd) return ad - bd;
+      return (prioWeight[a.priority] ?? 9) - (prioWeight[b.priority] ?? 9);
+    });
+  });
+
   let html = '';
   sortedNames.forEach(name => {
     const items = groups[name];
@@ -2749,20 +2761,22 @@ function renderTasksList(tasks) {
           <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="event.stopPropagation();printTaskGroup('${safeName}')" title="Print this list as PDF">Print PDF</button>
         </div>
         <div class="task-group-body" id="${groupId}" style="display:none">
-          <table class="data-table"><thead><tr><th>Task</th><th>Type</th><th>Priority</th><th>Project</th><th>Due</th><th>Actions</th></tr></thead><tbody>` +
+          <table class="data-table"><thead><tr><th>Task</th><th>Project</th><th>Due</th><th style="width:280px">Actions</th></tr></thead><tbody>` +
           items.map(t => {
             const isOverdue = t.due_date && new Date(t.due_date) < now && t.status === 'pending';
             const suggested = !t.assignee ? extractSuggestedOwner(t.description) : '';
             const suggestedChip = suggested
               ? `<br><span style="display:inline-block;margin-top:3px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px"><span style="font-style:italic">Suggested:</span> <strong>${escapeHtml(suggested)}</strong></span>`
               : '';
+            const projectId = t.project_id || (t.project && t.project.id) || null;
+            const sendBtns = `
+              <button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="event.stopPropagation();openTaskWhatsAppModal(${t.id},${projectId || 'null'})" title="Send via WhatsApp">&#128241;</button>
+              <button class="btn btn-sm" style="background:#3b82f6;color:#fff;border-color:#3b82f6" onclick="event.stopPropagation();openTaskSms(${t.id})" title="Send via Messages (SMS)">&#128172;</button>`;
             return `<tr class="clickable" onclick="showTaskDetail(${t.id})">
               <td><strong>${t.title}</strong>${t.description ? '<br><span style="font-size:12px;color:var(--text-muted)">'+t.description.substring(0,60)+'</span>' : ''}${suggestedChip}</td>
-              <td><span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span></td>
-              <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
               <td>${t.project?.name || '-'}</td>
               <td><span style="color:${isOverdue ? 'var(--danger)' : 'var(--text-secondary)'}">${t.due_date ? fmtDate(t.due_date) : '-'}${isOverdue ? ' (overdue)' : ''}</span></td>
-              <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'}</td>
+              <td style="white-space:nowrap">${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">completed</span>'} ${sendBtns}</td>
             </tr>`;
           }).join('') +
           `</tbody></table>
@@ -2832,15 +2846,19 @@ function buildTaskWhatsAppMessage(task, project, lang) {
 }
 
 async function openTaskWhatsAppModal(taskId, projectId) {
-  // Load fresh task + project so we get current stakeholders + descriptions
-  const [taskRes, projRes] = await Promise.all([
-    api(`/tasks/${taskId}`),
-    api(`/projects/${projectId}`)
-  ]);
+  // Load fresh task always; load project only when one is linked. Without a
+  // project the recipient list starts empty and the user types a phone manually.
+  const taskRes = await api(`/tasks/${taskId}`);
   if (!taskRes.success || !taskRes.data) { alert('Could not load task'); return; }
-  if (!projRes.success || !projRes.data) { alert('Could not load project'); return; }
   const task = taskRes.data;
-  const project = projRes.data;
+  let project = null;
+  if (projectId) {
+    const projRes = await api(`/projects/${projectId}`);
+    if (projRes.success && projRes.data) project = projRes.data;
+  }
+  if (!project) {
+    project = { id: null, name: task.project?.name || '(no linked project)', submitter_email: null, submitter_phone: null, team_members: [] };
+  }
 
   // Build recipient list: submitter (with submitter_phone) + team_members[*]
   const norm = (s) => String(s || '').trim().toLowerCase();
@@ -3015,6 +3033,29 @@ async function openTaskWhatsAppModal(taskId, projectId) {
   });
 }
 window.openTaskWhatsAppModal = openTaskWhatsAppModal;
+
+// Open the native SMS/Messages app (mobile) with a pre-filled task body.
+// No recipient picker — user chooses the contact inside their Messages app
+// after the compose sheet opens.
+function openTaskSms(taskId) {
+  const task = (_allTasksCache || []).find(t => t.id === taskId);
+  if (!task) { alert('Task not loaded'); return; }
+  const descRaw = task.description || '';
+  const desc = descRaw.replace(/(?:^|\s)\s*(?:Suggested owner|Owner)\s*:\s*[^\n.]+\.?/i, '').replace(/\s+/g, ' ').trim();
+  const due = task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+  const lines = [];
+  lines.push(task.title || 'Task');
+  if (due) lines.push(`Due: ${due}`);
+  if (task.project && task.project.name) lines.push(`Project: ${task.project.name}`);
+  if (desc) { lines.push(''); lines.push(desc); }
+  lines.push('');
+  lines.push('— Manuel Stagg / Digit2AI');
+  const body = encodeURIComponent(lines.join('\n'));
+  // sms:?body= works on iOS (>= 8) and modern Android. Some Android variants
+  // prefer "sms:&body=" — we use the question-mark form which is the spec.
+  window.location.href = `sms:?body=${body}`;
+}
+window.openTaskSms = openTaskSms;
 
 function switchWaLang(lang, taskId, projectId) {
   // Re-fetch + rebuild draft so toggling EN/ES is correct even after edits
