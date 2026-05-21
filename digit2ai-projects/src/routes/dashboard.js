@@ -33,6 +33,7 @@ router.get('/', async (req, res) => {
       pendingTasks,
       overdueTasks,
       tasksDueToday,
+      pendingReminders,
       upcomingEvents,
       recentActivity,
       projectsByStatus,
@@ -51,6 +52,7 @@ router.get('/', async (req, res) => {
       Task.count({ where: { workspace_id: ws, status: 'pending' } }),
       Task.count({ where: { workspace_id: ws, status: 'pending', due_date: { [Op.lt]: now } } }),
       Task.count({ where: { workspace_id: ws, status: 'pending', due_date: today } }),
+      Task.count({ where: { workspace_id: ws, status: 'pending', task_type: 'reminder' } }),
       CalendarEvent.findAll({ where: { workspace_id: ws, start_time: { [Op.gte]: now } }, order: [['start_time', 'ASC']], limit: 5 }),
       ActivityLog.findAll({ where: { workspace_id: ws }, order: [['created_at', 'DESC']], limit: 10 }),
       Project.findAll({
@@ -101,6 +103,7 @@ router.get('/', async (req, res) => {
           pending_tasks: pendingTasks,
           overdue_tasks: overdueTasks,
           tasks_due_today: tasksDueToday,
+          pending_reminders: pendingReminders,
           unread_notifications: unreadNotifications
         },
         projects_by_status: projectsByStatus,
