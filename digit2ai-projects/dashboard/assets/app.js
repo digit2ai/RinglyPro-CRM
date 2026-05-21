@@ -2631,6 +2631,33 @@ async function renderTasks(container) {
     .join('');
   const noProjectCount = (_allTasksCache || []).filter(t => !t.project_id).length;
 
+  // Build the suggested-owner dropdown options. Suggested values often
+  // contain combos like "Manuel and Eduardo" or "Manny Stagg and Champion".
+  // We split on connectors so each individual name appears once in the
+  // dropdown, ranked by how many tasks mention them. Selecting a name then
+  // filters via substring match against the original suggested string.
+  const ownerCounts = new Map(); // lowercase name -> { display, count }
+  let noOwnerCount = 0;
+  (_allTasksCache || []).forEach(t => {
+    const raw = extractSuggestedOwner(t.description);
+    if (!raw) { if (!t.assignee) noOwnerCount++; return; }
+    const parts = raw
+      .replace(/\(.*?\)/g, '')
+      .split(/\s+(?:and|or|with|y|o|,|&|\/)\s+|,/i)
+      .map(s => s.trim())
+      .filter(s => s.length >= 2);
+    parts.forEach(p => {
+      const k = p.toLowerCase();
+      const existing = ownerCounts.get(k);
+      if (existing) existing.count += 1;
+      else ownerCounts.set(k, { display: p, count: 1 });
+    });
+  });
+  const ownerOptions = Array.from(ownerCounts.values())
+    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display))
+    .map(o => `<option value="${escapeHtml(o.display.toLowerCase())}">${escapeHtml(o.display)} (${o.count})</option>`)
+    .join('');
+
   container.innerHTML = `
     <div style="margin-bottom:12px">
       <button class="btn btn-ghost btn-sm" onclick="navigateTo('overview')">&#8592; Back to Home</button>
@@ -2650,6 +2677,11 @@ async function renderTasks(container) {
           <option value="this_month">Next 30 Days</option>
           <option value="none">No Due Date</option>
         </select>
+        <select id="task-owner-filter" onchange="filterTasks()">
+          <option value="">All Suggested Owners</option>
+          ${noOwnerCount > 0 ? `<option value="__none__">(No suggested · ${noOwnerCount})</option>` : ''}
+          ${ownerOptions}
+        </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Add To-Do</button>
     </div>
@@ -2668,10 +2700,12 @@ function applyActiveTaskFilters(allTasks) {
   const typeEl = document.getElementById('task-type-filter');
   const projectEl = document.getElementById('task-project-filter');
   const dueEl = document.getElementById('task-due-filter');
+  const ownerEl = document.getElementById('task-owner-filter');
   const statusVal = statusEl ? statusEl.value : 'pending';
   const typeVal = typeEl ? typeEl.value : '';
   const projectVal = projectEl ? projectEl.value : '';
   const dueVal = dueEl ? dueEl.value : '';
+  const ownerVal = ownerEl ? ownerEl.value : '';
   let filtered = allTasks || [];
   if (statusVal) filtered = filtered.filter(t => t.status === statusVal);
   if (typeVal) filtered = filtered.filter(t => t.task_type === typeVal);
@@ -2680,6 +2714,17 @@ function applyActiveTaskFilters(allTasks) {
   } else if (projectVal) {
     const pid = parseInt(projectVal, 10);
     filtered = filtered.filter(t => t.project_id === pid);
+  }
+  if (ownerVal === '__none__') {
+    filtered = filtered.filter(t => !t.assignee && !extractSuggestedOwner(t.description));
+  } else if (ownerVal) {
+    // Substring match (case-insensitive) so picking "Manuel" catches
+    // "Manuel", "Manuel and Eduardo", "Manuel (advisor)", etc.
+    const needle = ownerVal.toLowerCase();
+    filtered = filtered.filter(t => {
+      const raw = extractSuggestedOwner(t.description);
+      return raw && raw.toLowerCase().includes(needle);
+    });
   }
   if (dueVal) {
     const now = new Date();
