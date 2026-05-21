@@ -35,9 +35,53 @@ function getAnthropic() {
 
 // ─── System prompt (cached) ───────────────────────────────────
 const SYSTEM_PROMPT = `You are the SurgicalMind sales assistant for Intuitive Surgical commercial reps.
-You answer questions about hospitals, surgeons, robotic surgery programs, and pipeline using
-ONLY the tools provided. NEVER fabricate hospital, surgeon, or payment data — if a tool can't
-answer, say so explicitly.
+You answer ANY question the rep asks — hospitals, surgeons, payments, project pipeline,
+international markets, industry trends, regulatory background, definitions, history. You are
+not limited to the local SurgicalMind database. Be helpful by default.
+
+ANSWERING STRATEGY — pick the right source per question:
+
+A) USE THE TOOLS for US hospital / surgeon / payment / pipeline data.
+   The tools query authoritative CMS sources and the SurgicalMind project database. For these
+   topics, NEVER fabricate numbers — call the tool and quote what it returns.
+     - "Top surgeons in <US city/state>" → search_surgeons_by_territory
+     - "Compare <US hospital> vs <US hospital> for <procedures>" → compare_hospital_procedure_volumes
+     - "Surgeons at <US hospital>" → search_surgeons_by_hospital
+     - "Tell me about Dr. <name>" / "KOL profile" → enrich_surgeon
+     - "Brief me on <US hospital>" → generate_briefing
+     - "Build a business plan" / "Generate proforma" → generate_business_plan
+     - "How many <DRG/procedure> discharges at <US hospital>?" → query_hospital_drg_volumes
+     - "My projects" / "Project N details" → query_*, get_project_details
+
+B) USE THE web_search TOOL for current-web facts that aren't in your training data:
+   recent M&A, latest da Vinci pricing, healthcare policy changes, news from the last 6 months,
+   anything where freshness matters. Cite the source URLs in your answer verbatim.
+
+C) USE YOUR GENERAL KNOWLEDGE for everything else — international hospitals, industry
+   context, definitions, history, conceptual questions. Examples that ARE in scope:
+     - "Top 5 hospitals in Manila / Mexico City / Dubai" → answer from general knowledge
+     - "What's the difference between dV5 and Xi?" → answer from general knowledge
+     - "How does Medicare DRG reimbursement work?" → explain
+     - "What's the history of robotic surgery?" → explain
+     - "Major medtech competitors to Intuitive" → name them
+   Be honest about cutoff: your training has a knowledge cutoff date, so add
+   "verify with current sources before quoting in a formal proposal" when relevant.
+
+D) LABEL EVERY ANSWER with the source you used:
+   - Tool data: cite the tool/source name + URL (already returned by the tool's citations)
+   - Web search: cite the URLs from the search results verbatim
+   - General knowledge: say "Based on general knowledge as of my last training — verify
+     current state before quoting in a deal."
+   - DO NOT silently mix sources. If part of an answer is from a tool and part from general
+     knowledge, label which parts came from which.
+
+E) NEVER FABRICATE specific quantitative claims about US healthcare data:
+   - Specific CMS Open Payments figures → use query_intuitive_payments
+   - Specific Medicare procedure volumes → use query_procedure_volumes or compare_*
+   - Specific surgeon NPIs → use search_surgeons_by_territory
+   - Specific hospital CCNs → use search_surgeons_by_hospital
+   If you don't know and the tool can't tell you, say so explicitly and recommend a
+   follow-up query.
 
 Every answer must:
   1. Cite the source(s) — show source_name and a clickable source_url for every numeric claim
@@ -345,6 +389,18 @@ const TOOLS = [
     },
   },
   {
+    name: 'web_search',
+    description: 'Search the public web for current information when local CMS / project tools can\'t answer. Use for: international hospitals (Manila, Mexico City, etc.), recent industry news, medtech M&A, latest da Vinci pricing, healthcare policy changes, anything outside US CMS scope. Returns ranked snippets with URLs. ALWAYS call this when the user asks about a non-US hospital or a topic outside the SurgicalMind project pipeline + CMS sources. Cite the source URLs verbatim in your answer.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Natural-language search query. Be specific. Include city/country/year when relevant.' },
+        count: { type: 'integer', description: 'How many results to return (1-10). Default 5.' },
+      },
+      required: ['query'],
+    },
+  },
+  {
     name: 'compare_hospital_procedure_volumes',
     description: 'Cross-tabulate Medicare procedure volumes across multiple hospitals in ONE call. Use for any "compare X hospital vs Y hospital for these procedures" or "ORMC market share vs Orlando competitors for prostatectomy/hysterectomy/hernia" question. Accepts hospital_ccns[] OR hospital_names[] (fuzzy ILIKE match), and hcpcs_codes[] OR procedure_families[] (slugs from the library: prostatectomy, partial_nephrectomy, radical_nephrectomy, cystectomy, hysterectomy_benign, hysterectomy_oncology, myomectomy, cholecystectomy, ventral_hernia, inguinal_hernia, colectomy, rectal_resection, lobectomy, thymectomy, esophagectomy, bariatric_sleeve, gastric_bypass, tors). Returns a hospital×family cross-tab matrix with volume, surgeon_count, share_pct (per-family Medicare share among the queried hospitals), and top 3 surgeons per cell. CRITICAL: prefer this over calling query_procedure_volumes multiple times — it does N×M lookups in 1 round-trip and conserves your tool budget.',
     input_schema: {
@@ -470,6 +526,8 @@ const TOOL_TIMEOUTS = {
   compare_hospital_procedure_volumes: 25000,
   // Hospital × MS-DRG indexed query
   query_hospital_drg_volumes: 10000,
+  // Web search (Brave or DuckDuckGo HTML)
+  web_search: 12000,
 };
 
 async function withTimeout(promise, ms = TOOL_TIMEOUT_MS) {
@@ -892,6 +950,21 @@ async function tool_query_hospital_drg_volumes(input, ctx) {
   }
 }
 
+async function tool_web_search(input, ctx) {
+  const { search } = require('../services/web-search');
+  try {
+    const results = await search(input.query || '', { count: Math.min(Math.max(Number(input.count) || 5, 1), 10) });
+    return {
+      query: input.query,
+      count: results.length,
+      results: results.map(r => ({ title: r.title, snippet: r.snippet, url: r.url, source: r.source })),
+      citations: [{ source_name: 'Web search (' + (results[0]?.source || 'duckduckgo') + ')', source_url: 'https://duckduckgo.com' }],
+    };
+  } catch (e) {
+    return { error: e.message, query: input.query, results: [] };
+  }
+}
+
 async function tool_compare_hospital_procedure_volumes(input, ctx) {
   try {
     return await surgeonTargetingService.compareHospitalProcedureVolumes({
@@ -1161,6 +1234,7 @@ const TOOL_IMPL = {
   generate_business_plan: tool_generate_business_plan,
   compare_hospital_procedure_volumes: tool_compare_hospital_procedure_volumes,
   query_hospital_drg_volumes: tool_query_hospital_drg_volumes,
+  web_search: tool_web_search,
   query_intuitive_payments: tool_query_intuitive_payments,
   query_procedure_volumes: tool_query_procedure_volumes,
   query_business_plans: tool_query_business_plans,

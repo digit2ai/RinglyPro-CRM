@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import ChatRenderer from '../components/ChatRenderer'
 
 const SAMPLES = [
-  'Compare ORMC, AdventHealth Orlando, and Florida Hospital for prostatectomy, hysterectomy, and ventral hernia',
-  'Build a business plan for project 96',
+  'Compare AdventHealth Orlando, Orlando Health, and Tampa General for prostatectomy and hysterectomy_benign',
   'Brief me on Mount Sinai NY for my 3pm meeting',
-  'Top 10 robotic candidates in Florida',
+  'Top 5 hospitals in Manila Philippines',
   'Tell me about Dr. David Samadi',
-  'Draft an outreach email to Dr. Samadi referencing his robotic work',
+  'Build a business plan for project 100',
+  'Latest news on Intuitive Surgical da Vinci 5 adoption',
 ]
 
 const TOOL_LABELS = {
@@ -21,6 +21,7 @@ const TOOL_LABELS = {
   generate_business_plan: 'Building business plan + auto-seeding surgeons',
   compare_hospital_procedure_volumes: 'Cross-tabulating hospital procedure volumes',
   query_hospital_drg_volumes: 'Querying hospital MS-DRG discharges',
+  web_search: 'Searching the web',
   draft_outreach: 'Gathering personalization material',
   query_intuitive_payments: 'Querying Open Payments',
   query_procedure_volumes: 'Querying procedure volumes',
