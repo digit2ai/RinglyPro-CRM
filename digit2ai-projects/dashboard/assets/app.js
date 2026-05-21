@@ -233,10 +233,15 @@ async function renderOverview(container) {
     </div>` : '';
 
   // Quick actions bar
+  const pendingCount = s.pending_tasks ?? 0;
+  const pendingBadgeLabel = pendingCount > 99 ? '99+' : String(pendingCount);
+  const outstandingBadge = pendingCount > 0
+    ? `<span style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;min-width:20px;text-align:center;line-height:1.2;box-shadow:0 2px 6px rgba(239,68,68,0.4)">${pendingBadgeLabel}</span>`
+    : '';
   const quickActionsHtml = `
     <div class="quick-actions">
       <button class="quick-action-btn" onclick="openCalendarWeek()"><span class="qa-label">Calendar</span></button>
-      <button class="quick-action-btn" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span></button>
+      <button class="quick-action-btn" style="position:relative" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span>${outstandingBadge}</button>
       <button class="quick-action-btn" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Quick Task</span></button>
     </div>`;
 
