@@ -257,30 +257,10 @@ async function renderOverview(container) {
         <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
         <div class="kpi-hint">Click to view details</div>
       </div>
-      <div class="card card-stat card-accent-red card-clickable ${s.overdue_projects > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('overdue_projects')" data-tooltip="${s.overdue_projects > 0 ? 'You have projects past their due date' : 'Nothing overdue'}">
-        <div class="stat-label">${s.overdue_projects > 0 ? 'Overdue - Needs Attention' : 'All Projects On Track'}</div>
-        <div class="stat-value">${s.overdue_projects}</div>
-        <div class="stat-change ${s.overdue_projects > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_projects > 0 ? 'Past due date' : 'On track'}</div>
-      </div>
-      <div class="card card-stat card-accent-yellow card-clickable" onclick="drillDown('due_this_week')" data-tooltip="Meetings and events scheduled in the next 7 days">
-        <div class="stat-label">Upcoming Events</div>
-        <div class="stat-value">${s.upcoming_events_count ?? 0}</div>
-        <div class="stat-change stat-neutral">${(s.upcoming_events_count ?? 0) > 0 ? 'Next 7 days' : 'Nothing scheduled'}</div>
-      </div>
-      <div class="card card-stat card-accent-green card-clickable" onclick="drillDown('contacts')" data-tooltip="Your contacts and people">
-        <div class="stat-label">Your People</div>
-        <div class="stat-value">${s.total_contacts}</div>
-        <div class="stat-change ${s.contacts_need_followup > 0 ? 'stat-down' : 'stat-up'}">${s.contacts_need_followup > 0 ? s.contacts_need_followup + ' need a follow-up' : 'All caught up'}</div>
-      </div>
       <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="drillDown('pending_tasks')" data-tooltip="Things you still need to do">
         <div class="stat-label">Your To-Do Items</div>
         <div class="stat-value">${s.pending_tasks}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' are overdue' : 'On schedule'}</div>
-      </div>
-      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('notifications')" data-tooltip="Messages and alerts for you">
-        <div class="stat-label">Unread Alerts</div>
-        <div class="stat-value">${s.unread_notifications}</div>
-        <div class="stat-change stat-neutral">${s.unread_notifications > 0 ? 'Tap to read' : 'All caught up'}</div>
       </div>
     </div>
 
