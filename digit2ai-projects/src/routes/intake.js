@@ -189,6 +189,18 @@ router.post('/public/request', async (req, res) => {
       token: accessToken.token,
       url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`
     });
+
+    // Schedule the Inbox Triage Agent for the freshly-submitted intake.
+    // 3s delay so any post-commit triggers settle before we hit Claude + web.
+    setTimeout(() => {
+      try {
+        const inboxTriageAgent = require('../services/agents/inboxTriageAgent');
+        inboxTriageAgent.runById(project.id).then(r => {
+          if (r && r.ok) console.log(`[D2AI-Intake] triage agent done for project ${project.id} (fit=${r.structured?.fit_score})`);
+          else console.warn(`[D2AI-Intake] triage agent failed for project ${project.id}:`, r?.error);
+        }).catch(e => console.warn('[D2AI-Intake] triage agent crashed:', e.message));
+      } catch (e) { console.warn('[D2AI-Intake] triage agent dispatch failed:', e.message); }
+    }, 3000);
   } catch (err) {
     try { await t.rollback(); } catch (_) {}
     console.error('[D2AI-Intake] public request error:', err);

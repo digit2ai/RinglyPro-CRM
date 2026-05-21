@@ -1355,6 +1355,7 @@ function renderInboxCard(p) {
         </div>
       </summary>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        ${renderInboxTriagePanel(p)}
         ${p.description ? `<div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:10px"><strong style="color:var(--text-primary)">Description:</strong> ${escHtml(p.description)}</div>` : ''}
         ${qaList}
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
@@ -1396,6 +1397,44 @@ async function approveInboxItem(projectId) {
     if (rBtn) rBtn.disabled = false;
   }
 }
+
+// =====================================================
+// INBOX TRIAGE PANEL (Task Agent Loop v1)
+// =====================================================
+function renderInboxTriagePanel(p) {
+  if (!p) return '';
+  const brief = p.triage_brief;
+  const structured = p.triage_structured || null;
+  // No triage yet — show a "Run Triage Now" link
+  if (!brief) {
+    return `
+      <div style="margin-bottom:12px;padding:10px 12px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.25);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-muted)">🤖 AI Triage pending — no analysis yet for this intake.</span>
+        <button class="btn btn-primary btn-sm" onclick="runInboxTriage(${p.id})">Run Triage Now</button>
+      </div>`;
+  }
+  const fit = structured && typeof structured.fit_score !== 'undefined' ? Number(structured.fit_score) : null;
+  const rec = (structured && structured.go_no_go_recommendation) ? structured.go_no_go_recommendation.replace(/_/g, ' ') : 'review';
+  const summary = `🤖 AI Triage Brief${fit !== null ? ' (fit: ' + fit + '/10, recommendation: ' + rec + ')' : ''}`;
+  const openAttr = (fit !== null && fit >= 7) ? 'open' : '';
+  return `
+    <details ${openAttr} style="margin-bottom:14px;padding:0;background:rgba(124,92,255,0.04);border:1px solid rgba(124,92,255,0.25);border-radius:6px">
+      <summary style="cursor:pointer;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;list-style:none">
+        <strong style="background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent">${escHtml(summary)}</strong>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();event.preventDefault();runInboxTriage(${p.id})" style="font-size:11px">Re-run</button>
+      </summary>
+      <div style="padding:12px 14px;border-top:1px solid rgba(124,92,255,0.2);font-size:13px;line-height:1.55;color:var(--text-secondary)">${simpleMarkdownToHtml(brief)}</div>
+    </details>`;
+}
+
+async function runInboxTriage(projectId) {
+  if (typeof showCopyToast === 'function') showCopyToast('Triage agent running…');
+  const r = await api('/agents/triage/' + projectId, { method: 'POST', body: JSON.stringify({}) });
+  if (!r.success) { alert('Triage failed: ' + (r.error || 'unknown')); return; }
+  if (typeof showCopyToast === 'function') showCopyToast(`Triage done — fit ${r.fit_score}/10, recommendation: ${r.recommendation}`);
+  navigateTo('inbox');
+}
+window.runInboxTriage = runInboxTriage;
 
 async function rejectInboxItem(projectId) {
   const reason = prompt('Reason for rejection (optional):', '');
@@ -3456,6 +3495,8 @@ async function showTaskDetail(id) {
         <span class="status-badge status-${t.task_type === 'reminder' ? 'on_hold' : 'planning'}">${t.task_type}</span>
       </div>
 
+      ${renderAgentPanel(t)}
+
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:24px">
         <div>
           ${t.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${t.description}</p></div>` : '<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-muted);font-style:italic">No description</p></div>'}
@@ -3485,6 +3526,199 @@ async function showTaskDetail(id) {
     </div>
   `;
 }
+
+// =====================================================
+// TASK AGENT PANEL (Task Agent Loop v1)
+// =====================================================
+function renderAgentPanel(t) {
+  const status = t.agent_status;
+  const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage' };
+  const agentLabel = agentLabels[t.agent_type] || (t.agent_type || 'agent');
+
+  // No status yet — offer manual run dropdown
+  if (!status) {
+    return `
+      <div class="card" style="margin-top:18px;padding:14px 16px;background:linear-gradient(135deg,rgba(124,92,255,0.06),rgba(34,211,238,0.06));border:1px solid rgba(124,92,255,0.25)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <strong style="background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent">🤖 AI Agent</strong>
+            <span style="color:var(--text-muted);font-size:12px;margin-left:8px">No agent run yet on this task</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="manual-agent-type" style="padding:5px 10px;font-size:12px">
+              <option value="">Auto-classify</option>
+              <option value="research">Research Brief</option>
+              <option value="draft">Outreach Drafter</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="runAgentManual(${t.id})">Run Agent</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Skipped (classifier decided this task doesn't need an agent)
+  if (status === 'skipped') {
+    return `
+      <div class="card" style="margin-top:18px;padding:12px 16px;background:#f8fafc;border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:var(--text-muted);font-size:13px">🤖 No agent assigned — task does not match any agent's triggers.</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="manual-agent-type" style="padding:5px 10px;font-size:12px">
+              <option value="research">Research Brief</option>
+              <option value="draft">Outreach Drafter</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="runAgentManual(${t.id})">Force Run</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Pending — queued for the worker
+  if (status === 'pending') {
+    return `
+      <div class="card" style="margin-top:18px;padding:14px 16px;border:1px solid #f59e0b;background:rgba(245,158,11,0.05)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:#92400e"><strong>🤖 ${agentLabel}</strong> — queued. Will run within 2 minutes.</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Run Now</button>
+            <button class="btn btn-ghost btn-sm" onclick="reclassifyAgent(${t.id})">Re-classify</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (status === 'processing') {
+    return `
+      <div class="card" style="margin-top:18px;padding:14px 16px;border:1px solid #38bdf8;background:rgba(56,189,248,0.05)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="spinner" style="width:18px;height:18px"></div>
+          <span style="color:#0369a1"><strong>🤖 ${agentLabel}</strong> — running...</span>
+        </div>
+      </div>`;
+  }
+
+  if (status === 'failed') {
+    const err = escapeHtml((t.agent_error || 'unknown error').slice(0, 400));
+    return `
+      <div class="card" style="margin-top:18px;padding:14px 16px;border:1px solid #ef4444;background:rgba(239,68,68,0.05)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div>
+            <strong style="color:#ef4444">🤖 ${agentLabel} — failed</strong>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${err}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Retry</button>
+        </div>
+      </div>`;
+  }
+
+  if (status === 'rejected') {
+    return `
+      <div class="card" style="margin-top:18px;padding:14px 16px;border:1px solid var(--border);background:#f8fafc">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:var(--text-muted)">🤖 ${agentLabel} — rejected. ${escapeHtml((t.agent_error || '').slice(0, 200))}</span>
+          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run</button>
+        </div>
+      </div>`;
+  }
+
+  // ready_for_review OR approved — render the markdown output
+  const bodyHtml = simpleMarkdownToHtml(t.agent_output || '(no output)');
+  const isApproved = status === 'approved';
+  const headerColor = isApproved ? '#10b981' : '#a78bfa';
+  const headerBg = isApproved ? 'rgba(16,185,129,0.06)' : 'rgba(124,92,255,0.06)';
+  return `
+    <div class="card" style="margin-top:18px;padding:16px 18px;border:1px solid ${headerColor};background:${headerBg}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <strong style="color:${headerColor}">🤖 ${agentLabel} — ${isApproved ? 'approved' : 'ready for review'}</strong>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!isApproved ? `<button class="btn btn-primary btn-sm" onclick="approveAgentOutput(${t.id})">Approve &amp; Append to Task</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="editAgentOutput(${t.id})">Edit &amp; Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run Agent</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+        ${t.agent_model ? 'Model: ' + escapeHtml(t.agent_model) + ' · ' : ''}${t.agent_cost_usd ? 'Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
+      </div>
+      <div class="agent-output-body" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:#1e293b">${bodyHtml}</div>
+    </div>`;
+}
+
+// Minimal markdown-to-HTML — handles headings, bold, italics, links, lists,
+// code blocks, paragraphs. Good enough for agent output; not a full parser.
+function simpleMarkdownToHtml(md) {
+  if (!md) return '';
+  let s = String(md);
+  // Escape HTML first
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Code fences
+  s = s.replace(/```([\s\S]*?)```/g, (_, code) => `<pre style="background:#f1f5f9;padding:10px;border-radius:4px;overflow-x:auto;font-size:12px"><code>${code}</code></pre>`);
+  // Headings
+  s = s.replace(/^### (.+)$/gm, '<h3 style="margin:14px 0 6px;font-size:15px">$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2 style="margin:18px 0 8px;font-size:17px;color:#0f172a">$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h1 style="margin:0 0 12px;font-size:20px;color:#0f172a">$1</h1>');
+  // Bold + italic
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[\s(])\*([^*]+?)\*([\s.,;)]|$)/g, '$1<em>$2</em>$3');
+  // Links [text](url)
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#0ea5e9">$1</a>');
+  // Lists
+  s = s.replace(/^(?:- |\* )(.+)$/gm, '<li>$1</li>');
+  s = s.replace(/(<li>.*<\/li>)(\n(?!<li>))/g, '<ul style="margin:6px 0 6px 20px;padding:0">$1</ul>$2');
+  // Numbered lists (1. )
+  s = s.replace(/^(\d+)\. (.+)$/gm, '<li data-num="$1">$2</li>');
+  // Paragraphs (blank-line separated)
+  s = s.split(/\n{2,}/).map(block => {
+    if (/^<(h1|h2|h3|ul|pre|li)/.test(block.trim())) return block;
+    return '<p style="margin:8px 0">' + block.replace(/\n/g, '<br>') + '</p>';
+  }).join('\n');
+  return s;
+}
+
+async function runAgentManual(taskId) {
+  const sel = document.getElementById('manual-agent-type');
+  const explicit = sel ? sel.value : '';
+  const body = explicit ? { agent_type: explicit } : {};
+  if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
+  const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify(body) });
+  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); return; }
+  showTaskDetail(taskId);
+}
+window.runAgentManual = runAgentManual;
+
+async function runAgentNow(taskId) {
+  if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
+  const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({}) });
+  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); return; }
+  showTaskDetail(taskId);
+}
+window.runAgentNow = runAgentNow;
+
+async function reclassifyAgent(taskId) {
+  await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({}) });
+  showTaskDetail(taskId);
+}
+window.reclassifyAgent = reclassifyAgent;
+
+async function approveAgentOutput(taskId) {
+  const merge = confirm('Append the agent output to this task\'s description?\n\nClick OK to merge, Cancel to approve without changing the task description.');
+  const r = await api('/agents/approve/' + taskId, { method: 'POST', body: JSON.stringify({ merge_into_description: merge }) });
+  if (!r.success) { alert('Approve failed: ' + (r.error || 'unknown')); return; }
+  if (typeof showCopyToast === 'function') showCopyToast('Agent output approved' + (merge ? ' and appended to task' : ''));
+  showTaskDetail(taskId);
+}
+window.approveAgentOutput = approveAgentOutput;
+
+async function editAgentOutput(taskId) {
+  const res = await api('/tasks/' + taskId);
+  if (!res.success) return;
+  const current = res.data.agent_output || '';
+  const updated = prompt('Edit agent output (markdown):', current);
+  if (updated === null || updated === current) return;
+  const upd = await api('/tasks/' + taskId, { method: 'PUT', body: JSON.stringify({ agent_output: updated }) });
+  if (!upd.success) { alert('Save failed: ' + (upd.error || 'unknown')); return; }
+  showTaskDetail(taskId);
+}
+window.editAgentOutput = editAgentOutput;
 
 async function openTaskEditModal(id) {
   const res = await api(`/tasks/${id}`);

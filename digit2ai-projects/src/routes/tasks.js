@@ -142,6 +142,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Task Agent Loop — classify newly-created or freshly-edited tasks so the
+// worker tick can pick them up. Non-blocking; never let agent failures
+// break the task create/update path.
+function safeClassify(taskId) {
+  setImmediate(async () => {
+    try {
+      const { classifyAndQueue } = require('../services/agents/classifier');
+      await classifyAndQueue(taskId);
+    } catch (e) {
+      console.warn('[tasks] safeClassify failed for #' + taskId + ':', e.message);
+    }
+  });
+}
+
 // POST /api/v1/tasks - Create task
 router.post('/', async (req, res) => {
   try {
@@ -151,6 +165,8 @@ router.post('/', async (req, res) => {
     res.status(201).json({ success: true, data: task });
     // Async sync to QuickTask (non-blocking)
     syncToQuickTask(task).catch(() => {});
+    // Classify for the agent loop (non-blocking) — only if not already classified
+    if (!task.agent_status) safeClassify(task.id);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -166,6 +182,8 @@ router.put('/:id', async (req, res) => {
       req.body.completed_at = new Date();
     }
     const oldStatus = task.status;
+    const titleChanged = req.body.title !== undefined && req.body.title !== task.title;
+    const descChanged  = req.body.description !== undefined && req.body.description !== task.description;
     await task.update(req.body);
     await logActivity(req.user?.email, 'updated', 'task', task.id, task.title);
     res.json({ success: true, data: task });
@@ -173,6 +191,9 @@ router.put('/:id', async (req, res) => {
     if (req.body.status && req.body.status !== oldStatus) {
       syncStatusToQuickTask(task.id, req.body.status).catch(() => {});
     }
+    // Agent loop — re-classify only when title/description actually changed
+    // AND nothing has been classified yet (so we do not nuke a ready_for_review row).
+    if ((titleChanged || descChanged) && !task.agent_status) safeClassify(task.id);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

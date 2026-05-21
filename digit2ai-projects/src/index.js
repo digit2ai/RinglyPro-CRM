@@ -26,6 +26,7 @@ const intakeRoutes = require('./routes/intake');
 const meetingMinutesRoutes = require('./routes/meeting-minutes');
 const contractsRoutes = require('./routes/contracts');
 const findingsRoutes = require('./routes/findings');
+const agentsRoutes = require('./routes/agents');
 
 const app = express();
 
@@ -97,6 +98,7 @@ app.use('/nda', express.static(path.join(dashboardPath, 'nda')));
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/findings', authenticateToken, findingsRoutes);
+app.use('/api/v1/agents', authenticateToken, agentsRoutes);
 app.use('/api/v1/contacts', authenticateToken, contactsRoutes);
 // Stakeholder magic-link share endpoints — PUBLIC (no auth).
 // MUST be mounted BEFORE the authenticated /api/v1/projects router so
@@ -679,6 +681,30 @@ app.get('*', (req, res) => {
       await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_finding_dismissals_expires ON d2_finding_dismissals (expires_at)');
     } catch (e) {
       console.log('[D2AI-Projects] finding dismissals notice:', e.message.substring(0, 120));
+    }
+
+    // Task Agent Loop v1 — per-task agent classification, status, output
+    try {
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_type VARCHAR(40)');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_status VARCHAR(20)');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_output TEXT');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_structured JSONB');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_processed_at TIMESTAMPTZ');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_error TEXT');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_model VARCHAR(60)');
+      await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_cost_usd NUMERIC(8,4)');
+      await sequelize.query("CREATE INDEX IF NOT EXISTS idx_d2_tasks_agent_status ON d2_tasks (agent_status) WHERE agent_status IS NOT NULL");
+    } catch (e) {
+      console.log('[D2AI-Projects] tasks agent columns notice:', e.message.substring(0, 120));
+    }
+    // Inbox Triage Agent output on projects
+    try {
+      await sequelize.query('ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS triage_brief TEXT');
+      await sequelize.query('ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS triage_structured JSONB');
+      await sequelize.query('ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS triage_at TIMESTAMPTZ');
+      await sequelize.query('ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS triage_model VARCHAR(60)');
+    } catch (e) {
+      console.log('[D2AI-Projects] projects triage columns notice:', e.message.substring(0, 120));
     }
 
     // Migration 002 — Project Intake & Discussion module

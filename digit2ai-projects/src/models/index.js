@@ -111,6 +111,11 @@ const Project = sequelize.define('Project', {
   stakeholder_share_token: { type: DataTypes.UUID, unique: true, allowNull: true },
   stakeholder_share_created_at: { type: DataTypes.DATE, allowNull: true },
   stakeholder_share_expires_at: { type: DataTypes.DATE, allowNull: true },
+  // Inbox Triage Agent output
+  triage_brief: DataTypes.TEXT,
+  triage_structured: DataTypes.JSONB,
+  triage_at: DataTypes.DATE,
+  triage_model: DataTypes.STRING(60),
   start_date: DataTypes.DATEONLY,
   due_date: DataTypes.DATEONLY,
   notes: DataTypes.TEXT,
@@ -220,7 +225,16 @@ const Task = sequelize.define('Task', {
   reminder_date: DataTypes.DATE,
   reminder_sent: { type: DataTypes.BOOLEAN, defaultValue: false },
   completed_at: DataTypes.DATE,
-  quicktask_id: DataTypes.INTEGER
+  quicktask_id: DataTypes.INTEGER,
+  // Task Agent Loop v1 — set by the classifier + agents
+  agent_type: DataTypes.STRING(40),
+  agent_status: DataTypes.STRING(20),
+  agent_output: DataTypes.TEXT,
+  agent_structured: DataTypes.JSONB,
+  agent_processed_at: DataTypes.DATE,
+  agent_error: DataTypes.TEXT,
+  agent_model: DataTypes.STRING(60),
+  agent_cost_usd: DataTypes.DECIMAL(8, 4)
 }, { tableName: 'd2_tasks' });
 
 // =====================================================
