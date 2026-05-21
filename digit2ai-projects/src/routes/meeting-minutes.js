@@ -4,6 +4,31 @@ const express = require('express');
 const router = express.Router();
 const { MeetingMinute, Project, Task } = require('../models');
 const { extractActionItems } = require('../services/actionItemExtractor');
+const { sendMinutesToStakeholders } = require('../services/meetingMinutesEmail');
+
+// Non-blocking auto-send: fires after AI processing finishes so the
+// recipient gets the summary + action items, not raw notes only.
+// Only sends if the minute has notes, has a linked project, and was
+// never sent before (sent_at IS NULL). Manual /send re-sends regardless.
+function autoSendIfFirstTime(meetingMinuteId, delayMs = 4000) {
+  setTimeout(async () => {
+    try {
+      const row = await MeetingMinute.findByPk(meetingMinuteId);
+      if (!row) return;
+      if (row.sent_at) return;                       // already sent — skip
+      if (!row.notes || !row.notes.trim()) return;   // nothing to send
+      if (!row.project_id) return;                   // no stakeholders without project
+      const result = await sendMinutesToStakeholders(meetingMinuteId);
+      if (result.sent && result.sent.length) {
+        console.log(`[D2AI-MeetingMinutes] auto-sent minute #${meetingMinuteId} to ${result.sent.length} stakeholder(s)`);
+      } else if (result.skipped_reason) {
+        console.log(`[D2AI-MeetingMinutes] auto-send skipped for #${meetingMinuteId}: ${result.skipped_reason}`);
+      }
+    } catch (err) {
+      console.error('[D2AI-MeetingMinutes] autoSend error:', err.message);
+    }
+  }, delayMs);
+}
 
 // Fire Claude to extract action items + summary and auto-create Tasks
 // under the linked project. Non-blocking: callers continue while this
@@ -108,6 +133,8 @@ router.post('/', async (req, res) => {
       created_by_email: req.user?.email || null
     });
     if (row.notes && row.notes.trim()) processMeetingAsync(row.id);
+    const autoSend = req.body && req.body.auto_send !== false; // default true
+    if (autoSend) autoSendIfFirstTime(row.id);
     res.json({ success: true, data: row });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -127,8 +154,37 @@ router.put('/:id', async (req, res) => {
     if (project_id !== undefined) row.project_id = project_id ? parseInt(project_id, 10) : null;
     await row.save();
     if (notesChanged && row.notes && row.notes.trim()) processMeetingAsync(row.id);
+    // Auto-send only if (a) caller opted in, (b) notes changed, (c) never sent before
+    const autoSend = req.body && req.body.auto_send !== false; // default true
+    if (autoSend && notesChanged) autoSendIfFirstTime(row.id);
     res.json({ success: true, data: row });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/v1/meeting-minutes/:id/send — manually send minutes to stakeholders
+// Body: { only_to?: string[] } — optional override of recipient list.
+// Always sends regardless of sent_at. Updates sent_at and merges sent_to.
+router.post('/:id/send', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const onlyTo = Array.isArray(req.body?.only_to) ? req.body.only_to : null;
+    const result = await sendMinutesToStakeholders(id, onlyTo ? { onlyTo } : {});
+    if (result.skipped_reason && !result.sent.length) {
+      const msg = {
+        sendgrid_not_configured: 'SendGrid is not configured on the server',
+        minute_not_found:        'Meeting minute not found',
+        no_notes:                'Cannot send — notes are empty',
+        no_project:              'Cannot send — minute is not linked to a project',
+        project_not_found:       'Linked project no longer exists',
+        no_stakeholders:         'No stakeholders on the linked project (add team_members or submitter_email)'
+      }[result.skipped_reason] || ('Skipped: ' + result.skipped_reason);
+      return res.status(400).json({ success: false, error: msg, skipped_reason: result.skipped_reason });
+    }
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('[D2AI-MeetingMinutes] manual send error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

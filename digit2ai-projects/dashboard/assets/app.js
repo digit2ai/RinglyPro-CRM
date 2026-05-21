@@ -6352,16 +6352,26 @@ function renderMinutesList(minutes) {
     wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128221;</div><h3>No meeting minutes yet</h3><p>Capture notes from a Zoom call, a client conversation, or a planning session.</p><button class="get-started-btn" onclick="openMinutesModal()">+ Create Your First Meeting Minute</button></div>';
     return;
   }
-  let html = '<table class="data-table"><thead><tr><th style="width:110px">Date</th><th>Subject</th><th>Project</th><th style="width:140px">Notes</th><th style="width:160px">Actions</th></tr></thead><tbody>';
+  let html = '<table class="data-table"><thead><tr><th style="width:110px">Date</th><th>Subject</th><th>Project</th><th style="width:140px">Notes</th><th style="width:130px">Sent</th><th style="width:230px">Actions</th></tr></thead><tbody>';
   minutes.forEach(m => {
     const proj = m.project ? `<span class="status-badge status-planning">${escapeHtml(m.project.name)}</span>` : '<span style="color:var(--text-muted)">—</span>';
     const notesPreview = m.notes ? (m.notes.length > 40 ? m.notes.substring(0, 40) + '…' : m.notes) : '<span style="color:var(--text-muted)">empty</span>';
+    const sentTo = Array.isArray(m.sent_to) ? m.sent_to : [];
+    const sentCell = m.sent_at
+      ? `<span title="Sent ${fmtDateTime(m.sent_at)} to: ${sentTo.map(escapeHtml).join(', ')}" style="background:rgba(16,185,129,.15);color:#10b981;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600">&#10003; Sent (${sentTo.length})</span>`
+      : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">not sent</span>';
+    const sendDisabled = !m.project_id || !m.notes || !String(m.notes).trim();
+    const sendBtn = sendDisabled
+      ? `<button class="btn btn-sm btn-ghost" disabled title="${!m.project_id ? 'Link to a project first' : 'Add notes first'}" style="opacity:.4;cursor:not-allowed">Send</button>`
+      : `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();sendMinuteToStakeholders(${m.id})" id="send-mm-${m.id}">${m.sent_at ? 'Resend' : 'Send'}</button>`;
     html += `<tr class="clickable" onclick="openMinutesModal(${m.id})">
       <td>${fmtDate(m.meeting_date)}</td>
       <td><strong>${escapeHtml(m.subject)}</strong></td>
       <td>${proj}</td>
       <td><span style="color:var(--text-muted);font-size:12px">${escapeHtml(notesPreview)}</span></td>
+      <td>${sentCell}</td>
       <td>
+        ${sendBtn}
         <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openMinutesModal(${m.id})">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMinute(${m.id})">Delete</button>
       </td>
@@ -6370,6 +6380,36 @@ function renderMinutesList(minutes) {
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
+
+async function sendMinuteToStakeholders(id) {
+  const btn = document.getElementById('send-mm-' + id);
+  if (!btn) return;
+  if (!confirm('Send these meeting minutes to all stakeholders on the linked project? They will receive an email with the summary, action items, and full notes.')) return;
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    const res = await api('/meeting-minutes/' + id + '/send', { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) {
+      alert('Could not send: ' + (res.error || 'unknown error'));
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+      return;
+    }
+    const sentCount = (res.sent || []).length;
+    const failedCount = (res.failed || []).length;
+    let msg = `Sent to ${sentCount} stakeholder${sentCount === 1 ? '' : 's'}.`;
+    if (failedCount) msg += ` ${failedCount} failed: ${res.failed.map(f => f.email).join(', ')}`;
+    if (typeof showCopyToast === 'function') showCopyToast(msg);
+    else alert(msg);
+    navigateTo('minutes');
+  } catch (err) {
+    alert('Send failed: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+window.sendMinuteToStakeholders = sendMinuteToStakeholders;
 
 async function openMinutesModal(id) {
   let row = { meeting_date: new Date().toISOString().slice(0, 10), subject: '', notes: '', project_id: null };
@@ -6410,6 +6450,17 @@ async function openMinutesModal(id) {
           <label>Notes</label>
           <textarea id="mm-notes" rows="18" placeholder="Paste your Zoom transcript or meeting notes here..." style="width:100%;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical">${escapeHtml(row.notes || '')}</textarea>
         </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
+          <input type="checkbox" id="mm-auto-send" ${row.sent_at ? '' : 'checked'} style="width:auto;margin:0">
+          <label for="mm-auto-send" style="margin:0;cursor:pointer;font-size:13px">
+            <strong>Auto-send to project stakeholders on save</strong>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+              ${row.sent_at
+                ? 'Already sent ' + fmtDateTime(row.sent_at) + ' — leave unchecked to avoid duplicate. Use the Resend button on the list to send again with current content.'
+                : 'Only fires the first time notes are saved with a linked project. After that use the Send button on the list.'}
+            </div>
+          </label>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
@@ -6421,11 +6472,13 @@ async function openMinutesModal(id) {
 }
 
 async function saveMinute(id) {
+  const autoSendEl = document.getElementById('mm-auto-send');
   const payload = {
     meeting_date: document.getElementById('mm-date').value,
     subject: document.getElementById('mm-subject').value.trim(),
     notes: document.getElementById('mm-notes').value,
-    project_id: document.getElementById('mm-project').value || null
+    project_id: document.getElementById('mm-project').value || null,
+    auto_send: autoSendEl ? autoSendEl.checked : true
   };
   if (!payload.subject) { alert('Subject is required'); return; }
   const url = id ? '/meeting-minutes/' + id : '/meeting-minutes';
@@ -6433,6 +6486,9 @@ async function saveMinute(id) {
   const res = await api(url, { method, body: JSON.stringify(payload) });
   if (!res.success) { alert('Save failed: ' + (res.error || 'unknown')); return; }
   document.querySelector('.modal-overlay')?.remove();
+  if (payload.auto_send && payload.project_id && payload.notes && payload.notes.trim() && typeof showCopyToast === 'function') {
+    showCopyToast('Saved. Auto-sending to stakeholders in the background…');
+  }
   navigateTo('minutes');
 }
 

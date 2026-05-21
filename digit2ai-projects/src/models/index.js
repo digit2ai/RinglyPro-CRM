@@ -676,7 +676,10 @@ const MeetingMinute = sequelize.define('MeetingMinute', {
   ai_summary: DataTypes.TEXT,
   action_items_json: { type: DataTypes.JSONB, defaultValue: [] },
   ai_processed_at: DataTypes.DATE,
-  auto_tasks_created: { type: DataTypes.INTEGER, defaultValue: 0 }
+  auto_tasks_created: { type: DataTypes.INTEGER, defaultValue: 0 },
+  // Phase 2 — stakeholder email distribution
+  sent_at: DataTypes.DATE,
+  sent_to: { type: DataTypes.JSONB, defaultValue: [] }
 }, { tableName: 'd2_meeting_minutes' });
 
 Project.hasMany(MeetingMinute, { foreignKey: 'project_id', as: 'meeting_minutes' });

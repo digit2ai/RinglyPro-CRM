@@ -645,6 +645,14 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] meeting rsvps notice:', e.message.substring(0, 120));
     }
 
+    // Meeting-minutes stakeholder distribution (sent_at + sent_to log)
+    try {
+      await sequelize.query('ALTER TABLE d2_meeting_minutes ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ');
+      await sequelize.query("ALTER TABLE d2_meeting_minutes ADD COLUMN IF NOT EXISTS sent_to JSONB NOT NULL DEFAULT '[]'::jsonb");
+    } catch (e) {
+      console.log('[D2AI-Projects] meeting minutes send-log notice:', e.message.substring(0, 120));
+    }
+
     // Migration 002 — Project Intake & Discussion module
     const intakeMigrationPath = path.join(__dirname, '..', 'migrations', '002_intake.sql');
     if (fs.existsSync(intakeMigrationPath)) {
