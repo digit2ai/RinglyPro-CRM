@@ -211,6 +211,99 @@ router.post('/public/request', async (req, res) => {
 // =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
+// GET /share/:token/discussion — no auth. Returns a single project (and its
+// triage Q&A) for project-scoped open-access share tokens. Mirrors the shape
+// of GET /batches/:id so batch.html can render with the same code paths.
+router.get('/share/:token/discussion', async (req, res) => {
+  try {
+    const tokenStr = String(req.params.token || '').trim();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(tokenStr)) return res.status(404).json({ success: false, error: 'Invalid token' });
+    const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
+    if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
+    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+      return res.status(403).json({ success: false, error: 'Link expired' });
+    }
+    if (!accessToken.project_id) {
+      return res.status(400).json({ success: false, error: 'Token is not project-scoped — use /batches flow' });
+    }
+    const project = await Project.findOne({
+      where: { id: accessToken.project_id, workspace_id: 1 },
+      include: [
+        { model: ProjectQuestion, as: 'questions', include: [{ model: QuestionResponse, as: 'responses' }] },
+        { model: ProjectComment, as: 'comments' }
+      ]
+    });
+    if (!project) return res.status(404).json({ success: false, error: 'project_not_found' });
+
+    accessToken.last_used_at = new Date();
+    await accessToken.save();
+
+    // Wrap in a synthetic "batch + intakes" shape so the existing batch.html
+    // render code can iterate over data.projects[].project without changes.
+    res.json({
+      success: true,
+      data: {
+        batch: { id: null, title: project.name, status: project.intake_status || 'pending_review', company: null, meeting_date: null },
+        projects: [{
+          intake_status: project.intake_status || 'pending_review',
+          feasibility: null,
+          risk_level: null,
+          risk_notes: null,
+          contacts_notes: null,
+          priority_avg: null,
+          project: project.toJSON()
+        }]
+      }
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] share/discussion error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /share/:token/triage-answer — no auth. Open-access submission of an
+// answer to a specific AI Triage stakeholder question. Records the answer
+// as a comment with triage_question_index set. Caller may supply an
+// optional name + email for attribution; otherwise stored as Anonymous.
+router.post('/share/:token/triage-answer', async (req, res) => {
+  try {
+    const tokenStr = String(req.params.token || '').trim();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(tokenStr)) return res.status(404).json({ success: false, error: 'Invalid token' });
+    const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
+    if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
+    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+      return res.status(403).json({ success: false, error: 'Link expired' });
+    }
+    if (!accessToken.project_id) {
+      return res.status(400).json({ success: false, error: 'Token is not project-scoped' });
+    }
+    const { question_index, question_text, answer_text, language, author_name, author_email } = req.body || {};
+    if (typeof question_index !== 'number' || Number.isNaN(question_index)) {
+      return res.status(400).json({ success: false, error: 'question_index (number) required' });
+    }
+    if (!answer_text || !String(answer_text).trim()) {
+      return res.status(400).json({ success: false, error: 'answer_text required' });
+    }
+    const comment = await ProjectComment.create({
+      project_id: accessToken.project_id,
+      author_email: author_email ? String(author_email).slice(0, 255) : (accessToken.grantee_email || null),
+      author_name: author_name ? String(author_name).slice(0, 255) : (accessToken.grantee_name || 'Anonymous'),
+      body: String(answer_text).trim(),
+      triage_question_index: Math.max(0, Math.min(50, Math.round(question_index))),
+      triage_question_text: question_text ? String(question_text).slice(0, 1000) : null,
+      triage_language: language === 'es' ? 'es' : (language === 'en' ? 'en' : null)
+    });
+    accessToken.last_used_at = new Date();
+    await accessToken.save();
+    res.status(201).json({ success: true, data: comment });
+  } catch (err) {
+    console.error('[D2AI-Intake] share/triage-answer error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /share/:token/info — lightweight, no auth. Lets the magic-link page
 // decide its UX before rendering. Returns the token kind so project-scoped
 // tokens (open-access shares) can skip the identify gate, and batch-scoped

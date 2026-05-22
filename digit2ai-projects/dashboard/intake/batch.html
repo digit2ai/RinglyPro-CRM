@@ -101,6 +101,10 @@ const SHARE_TOKEN = params.get('token') || '';
 let SESSION = null;
 let BATCH = null;
 let PROJECTS = [];
+// When set, the page is in open-access (project-scoped) mode: no identify
+// gate, no JWT, and writes go through /share/:token/* no-auth endpoints
+// instead of the batch-scoped /projects/:id/* endpoints.
+let OPEN_ACCESS = false;
 const OPEN_PROJECTS = new Set();   // project IDs whose card is expanded
 const DRAFTS = new Map();           // element_id -> text (preserved across re-renders)
 
@@ -145,14 +149,8 @@ function authHeaders() {
 
 async function loadBatch() {
   if (!SESSION) return;
-  if (!SESSION.batch_id) {
-    // Safety net: an old cached session from a project-scoped token (no
-    // batch_id) would otherwise call /batches/null and Postgres would throw
-    // 'invalid input syntax for type integer: "null"'. Bounce to the
-    // open-access summary instead.
-    location.replace('/projects/summary/' + SHARE_TOKEN);
-    return;
-  }
+  if (OPEN_ACCESS) { await loadOpenAccessProject(); return; }
+  if (!SESSION.batch_id) return; // safety net for stale sessions
   captureUiState();
   document.getElementById('who').textContent = SESSION.name + ' (' + SESSION.email + ')';
   const r = await fetch('/projects/api/v1/intake/batches/' + SESSION.batch_id, { headers: authHeaders() });
@@ -246,13 +244,15 @@ function renderCard(pi) {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap mb-1">
             <h3 class="text-base sm:text-lg font-semibold text-slate-100 truncate">${escapeHtml(p.name)}</h3>
-            <span class="chip ${chipClass(intake.feasibility)}">FEAS: ${intake.feasibility || '?'}</span>
-            <span class="chip ${chipClass(intake.risk_level)}">RISK: ${intake.risk_level || '?'}</span>
-            <span class="chip unknown">${intake.intake_status}</span>
+            ${OPEN_ACCESS ? '' : `
+              <span class="chip ${chipClass(intake.feasibility)}">FEAS: ${intake.feasibility || '?'}</span>
+              <span class="chip ${chipClass(intake.risk_level)}">RISK: ${intake.risk_level || '?'}</span>
+              <span class="chip unknown">${intake.intake_status}</span>
+            `}
           </div>
-          <p class="text-xs text-slate-500">Priority avg: <span class="text-cyan-400 font-mono">${avg}</span> from ${voteCount} vote${voteCount===1?'':'s'}</p>
+          ${OPEN_ACCESS ? '' : `<p class="text-xs text-slate-500">Priority avg: <span class="text-cyan-400 font-mono">${avg}</span> from ${voteCount} vote${voteCount===1?'':'s'}</p>`}
         </div>
-        <div class="text-slate-600 text-xs">click to expand</div>
+        <div class="text-slate-600 text-xs">${OPEN_ACCESS ? '' : 'click to expand'}</div>
       </summary>
       <div class="px-5 pb-5 border-t border-slate-800/60 pt-4 space-y-5">
 
@@ -264,6 +264,7 @@ function renderCard(pi) {
           <p class="text-sm text-slate-300 whitespace-pre-line">${escapeHtml(p.description || '')}</p>
         </div>
 
+        ${OPEN_ACCESS ? '' : `
         <!-- Risk + Contacts grid -->
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
@@ -276,7 +277,7 @@ function renderCard(pi) {
           </div>
         </div>
 
-        <!-- Questions -->
+        <!-- Questions (legacy intake Q&A — only relevant for batch flow) -->
         <div>
           <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Questions</h4>
           <div class="space-y-3">
@@ -294,10 +295,12 @@ function renderCard(pi) {
           <textarea id="vote_reason_${p.id}" placeholder="Why this score? (optional)" class="mt-2" rows="2">${escapeHtml(myVote ? (myVote.rationale||'') : '')}</textarea>
           <button onclick="submitVote(${p.id})" class="btn btn-primary mt-2">${myVote ? 'Update vote' : 'Submit vote'}</button>
         </div>
+        `}
 
         <!-- AI Triage Questions (threaded Q&A — populated when Manuel runs the AI Triage Agent) -->
         ${renderTriageQA(p)}
 
+        ${OPEN_ACCESS ? '' : `
         <!-- Comments -->
         <div>
           <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Discussion (${((p.comments||[]).filter(c => !c.triage_question_index && c.triage_question_index !== 0)).length})</h4>
@@ -307,6 +310,7 @@ function renderCard(pi) {
           <textarea id="cmt_${p.id}" rows="2" placeholder="Add a comment..."></textarea>
           <button onclick="submitComment(${p.id})" class="btn btn-ghost mt-2">Post comment</button>
         </div>
+        `}
 
       </div>
     </details>
@@ -455,10 +459,34 @@ async function submitTriageAnswer(projectId, questionIndex, questionText, langua
   const ta = document.getElementById('trq_' + projectId + '_' + questionIndex);
   const answer_text = (ta && ta.value || '').trim();
   if (!answer_text) return;
-  const r = await fetch('/projects/api/v1/intake/projects/' + projectId + '/triage-answer', {
+  // Open-access (project-scoped) mode: optional self-identify on first post.
+  // We cache the name in localStorage so it's only asked once per device.
+  let author_name = null;
+  let author_email = null;
+  if (OPEN_ACCESS) {
+    author_name = localStorage.getItem(storeKey('author_name')) || '';
+    if (!author_name) {
+      author_name = (prompt('Your name (optional, shown on this reply):', '') || '').trim();
+      if (author_name) localStorage.setItem(storeKey('author_name'), author_name);
+    }
+    author_email = localStorage.getItem(storeKey('author_email')) || null;
+  }
+  const url = OPEN_ACCESS
+    ? '/projects/api/v1/intake/share/' + SHARE_TOKEN + '/triage-answer'
+    : '/projects/api/v1/intake/projects/' + projectId + '/triage-answer';
+  const headers = OPEN_ACCESS
+    ? { 'Content-Type': 'application/json' }
+    : authHeaders();
+  const r = await fetch(url, {
     method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ question_index: questionIndex, question_text: questionText, answer_text, language })
+    headers,
+    body: JSON.stringify({
+      question_index: questionIndex,
+      question_text: questionText,
+      answer_text,
+      language,
+      ...(OPEN_ACCESS ? { author_name: author_name || 'Anonymous', author_email } : {})
+    })
   });
   const d = await r.json();
   if (!d.success) { alert('Answer failed: ' + (d.error || 'unknown')); return; }
@@ -495,15 +523,20 @@ async function init() {
     document.body.innerHTML = '<div class="p-12 text-center"><h1 class="text-2xl text-rose-400">Missing share token</h1><p class="text-slate-400 mt-2">This URL is incomplete. Use the link sent to you by Manuel.</p></div>';
     return;
   }
-  // Detect token kind before showing any UI. Project-scoped tokens are
-  // open-access and should never see the identify gate — redirect to the
-  // open-access summary page instead.
+  // Detect token kind. Project-scoped tokens are open-access — skip the
+  // identify gate entirely and load the single project + triage Q&A directly.
   try {
     const infoRes = await fetch('/projects/api/v1/intake/share/' + SHARE_TOKEN + '/info');
     if (infoRes.ok) {
       const info = await infoRes.json();
       if (info && info.success && info.kind === 'project') {
-        location.replace('/projects/summary/' + SHARE_TOKEN);
+        OPEN_ACCESS = true;
+        // Synthetic anonymous session so existing render code that reads
+        // SESSION.email for "Did I vote?" checks doesn't crash.
+        SESSION = { name: 'Guest', email: '', batch_id: null, jwt: null };
+        hideGate();
+        await loadOpenAccessProject();
+        pollLoop();
         return;
       }
     }
@@ -521,6 +554,24 @@ async function init() {
   }
   showGate();
   pollLoop();
+}
+
+async function loadOpenAccessProject() {
+  captureUiState();
+  const whoEl = document.getElementById('who');
+  if (whoEl) whoEl.textContent = '';
+  const switchEl = document.querySelector('a[onclick="logout()"]');
+  if (switchEl) switchEl.style.display = 'none';
+  const r = await fetch('/projects/api/v1/intake/share/' + SHARE_TOKEN + '/discussion');
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.success) { alert('Failed to load: ' + (d.error || r.status)); return; }
+  BATCH = d.data.batch;
+  PROJECTS = d.data.projects;
+  const titleEl = document.getElementById('batch_title');
+  if (titleEl) titleEl.textContent = BATCH.title || PROJECTS[0]?.project?.name || '';
+  const metaEl = document.getElementById('batch_meta');
+  if (metaEl) metaEl.textContent = '';
+  render();
 }
 
 function pollLoop() {
