@@ -526,7 +526,13 @@ const ProjectComment = sequelize.define('ProjectComment', {
   parent_comment_id: DataTypes.INTEGER,
   author_email: DataTypes.STRING(255),
   author_name: DataTypes.STRING(255),
-  body: { type: DataTypes.TEXT, allowNull: false }
+  body: { type: DataTypes.TEXT, allowNull: false },
+  // Triage Q&A linkage: when this comment is a reply to a specific AI Triage
+  // question via the magic-link page, these columns identify which question.
+  // NULL on regular free-form discussion comments.
+  triage_question_index: DataTypes.INTEGER,
+  triage_question_text: DataTypes.TEXT,
+  triage_language: DataTypes.STRING(8)
 }, { tableName: 'd2_project_comments' });
 
 // =====================================================

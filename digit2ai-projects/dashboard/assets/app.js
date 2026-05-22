@@ -1359,6 +1359,19 @@ function renderInboxCard(p) {
         ${p.description ? `<div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:10px"><strong style="color:var(--text-primary)">Description:</strong> ${escHtml(p.description)}</div>` : ''}
         ${qaList}
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          ${(() => {
+            const hasTriage = !!(p.triage_structured && (Array.isArray(p.triage_structured.stakeholder_questions_es) || Array.isArray(p.triage_structured.stakeholder_questions_en)));
+            const disabled = hasTriage ? '' : 'disabled';
+            const tip = hasTriage ? '' : 'title="Run AI Triage first to populate stakeholder questions"';
+            const opacity = hasTriage ? '' : 'style="opacity:.45;cursor:not-allowed"';
+            return `
+              <button class="btn btn-sm" ${disabled} ${tip} ${opacity}
+                onclick="openQualifyMeetingModal(${p.id})"
+                style="background:#10b981;color:#fff;border-color:#10b981">&#128197; Qualify Meeting</button>
+              <button class="btn btn-sm" ${disabled} ${tip} ${opacity}
+                onclick="openQualifyPdfModal(${p.id})"
+                style="background:#3b82f6;color:#fff;border-color:#3b82f6">&#128194; Send Qualify PDF</button>`;
+          })()}
           <button class="btn btn-success btn-sm" onclick="approveInboxItem(${p.id})" id="approve-btn-${p.id}">&#10003; Approve &amp; generate plan</button>
           <button class="btn btn-danger btn-sm" onclick="rejectInboxItem(${p.id})" id="reject-btn-${p.id}">&times; Reject</button>
           ${hasMeetingDraft ? `<button class="btn btn-ghost btn-sm" onclick="openMeetingChooser(${p.id})">&#128231; Meeting Request</button>` : ''}
@@ -1520,6 +1533,165 @@ async function runProjectTriage(projectId) {
   showProjectDetail(projectId);
 }
 window.runProjectTriage = runProjectTriage;
+
+// =====================================================
+// INBOX QUALIFY ACTIONS — Qualify Meeting + Send Qualify PDF
+// =====================================================
+const SPANISH_COUNTRIES_FE = new Set(['colombia','mexico','méxico','argentina','chile','peru','perú','spain','españa','venezuela','ecuador','bolivia','paraguay','uruguay','dominican republic','guatemala','honduras','nicaragua','costa rica','panama','panamá','cuba','puerto rico','el salvador']);
+function detectLangFromCountry(country) {
+  return SPANISH_COUNTRIES_FE.has(String(country || '').toLowerCase()) ? 'es' : 'en';
+}
+
+// Next weekday at 10am ET (basic helper — uses local timezone of the user's
+// browser; the existing openEventModal stores as UTC ISO via localInputToIso)
+function nextWeekday10am() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  return d;
+}
+
+// Action 1 — Qualify Meeting: opens the existing Event modal pre-filled with
+// the requestor + AI Triage questions as the agenda.
+async function openQualifyMeetingModal(projectId) {
+  const inboxRes = await api('/projects/inbox');
+  const p = inboxRes.success ? (inboxRes.data || []).find(x => x.id === projectId) : null;
+  if (!p) { alert('Could not load project'); return; }
+  const s = p.triage_structured;
+  if (!s) { alert('Run AI Triage first to populate stakeholder questions.'); return; }
+  const lang = detectLangFromCountry(p.country);
+  const qs = (lang === 'es' && Array.isArray(s.stakeholder_questions_es) && s.stakeholder_questions_es.length)
+    ? s.stakeholder_questions_es
+    : (Array.isArray(s.stakeholder_questions_en) ? s.stakeholder_questions_en : []);
+
+  const start = nextWeekday10am();
+  const end = new Date(start.getTime() + 45 * 60000);
+  const isoStart = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}T${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
+  const isoEnd   = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}T${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
+
+  const intro = lang === 'es'
+    ? `Reunión de calificación del proyecto "${p.name}". Por favor venga preparado para discutir las siguientes preguntas.\n\nResumen del proyecto:\n${(p.description || '').slice(0, 600)}\n\n--- Preguntas para el stakeholder ---`
+    : `Qualification meeting for project "${p.name}". Please come prepared to discuss the following questions.\n\nProject summary:\n${(p.description || '').slice(0, 600)}\n\n--- Stakeholder questions ---`;
+  const description = intro + '\n' + qs.map((q, i) => `${i+1}. ${q}`).join('\n');
+
+  // Open existing event modal then pre-fill its fields
+  openEventModal();
+  setTimeout(() => {
+    const titleEl = document.getElementById('m-etitle');
+    const startEl = document.getElementById('m-estart');
+    const endEl = document.getElementById('m-eend');
+    const descEl = document.getElementById('m-edesc');
+    const inviteEl = document.getElementById('m-einvite');
+    const zoomEl = document.getElementById('m-ezoom');
+    if (titleEl) titleEl.value = (lang === 'es' ? 'Reunión de calificación — ' : 'Qualification Meeting — ') + (p.name || '');
+    if (startEl) startEl.value = isoStart;
+    if (endEl) endEl.value = isoEnd;
+    if (descEl) descEl.value = description;
+    if (inviteEl && p.submitter_email) inviteEl.value = p.submitter_email;
+    if (zoomEl) zoomEl.checked = true;
+  }, 80);
+}
+window.openQualifyMeetingModal = openQualifyMeetingModal;
+
+// Action 2 — Send Qualify PDF: small modal with phone + language + 3 send buttons
+async function openQualifyPdfModal(projectId) {
+  const inboxRes = await api('/projects/inbox');
+  const p = inboxRes.success ? (inboxRes.data || []).find(x => x.id === projectId) : null;
+  if (!p) { alert('Could not load project'); return; }
+  if (!p.share_token) { alert('No share token on this project — open discussion at least once to mint it.'); return; }
+  const initialLang = detectLangFromCountry(p.country);
+  const pdfBase = `${location.origin}/projects/api/v1/intake/projects/${p.id}/triage-pdf?token=${encodeURIComponent(p.share_token)}`;
+  const recName = p.submitter_name || p.submitter_email || 'requestor';
+  const phoneInit = p.submitter_phone || '';
+  const escA = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  openModal('Send Qualify PDF', `
+    <p style="margin:0 0 12px;font-size:13px;color:var(--text-muted)">
+      <strong>${escHtml(p.name)}</strong><br>
+      Sending to: <strong>${escHtml(recName)}</strong>${p.submitter_email ? ' &lt;' + escHtml(p.submitter_email) + '&gt;' : ''}
+    </p>
+    <div class="form-group">
+      <label>Language</label>
+      <div style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        <button type="button" id="m-qpdf-lang-es" class="btn btn-sm ${initialLang === 'es' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:0;border:none;padding:6px 14px" onclick="setQualifyPdfLang('es')">ES</button>
+        <button type="button" id="m-qpdf-lang-en" class="btn btn-sm ${initialLang === 'en' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border);padding:6px 14px" onclick="setQualifyPdfLang('en')">EN</button>
+      </div>
+      <input type="hidden" id="m-qpdf-lang" value="${initialLang}">
+    </div>
+    <div class="form-group">
+      <label>WhatsApp / SMS phone</label>
+      <input type="tel" id="m-qpdf-phone" value="${escA(phoneInit)}" placeholder="+57 312 783 0181">
+      <small style="color:var(--text-muted)">Include country code. Spaces and dashes are fine.</small>
+    </div>
+    <div class="form-group">
+      <label>PDF link</label>
+      <input type="text" id="m-qpdf-url" value="${escA(pdfBase + '&lang=' + initialLang)}" readonly style="font-size:11px">
+      <small style="color:var(--text-muted)">Token-gated link. Anyone with the URL can open the PDF.</small>
+    </div>
+    <div class="form-group" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
+      <button type="button" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="sendQualifyPdfVia('whatsapp', ${p.id})">📱 WhatsApp</button>
+      <button type="button" class="btn btn-sm" style="background:#3b82f6;color:#fff;border-color:#3b82f6" onclick="sendQualifyPdfVia('sms', ${p.id})">💬 SMS / Messages</button>
+      <button type="button" class="btn btn-sm" style="background:#ea4335;color:#fff;border-color:#ea4335" onclick="sendQualifyPdfVia('gmail', ${p.id})">✉ Gmail</button>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="window.open(document.getElementById('m-qpdf-url').value, '_blank', 'noopener')">Preview PDF</button>
+    </div>
+  `, () => {}); // submit handler unused — buttons trigger sends directly
+}
+window.openQualifyPdfModal = openQualifyPdfModal;
+
+function setQualifyPdfLang(lang) {
+  const langInput = document.getElementById('m-qpdf-lang');
+  const urlInput = document.getElementById('m-qpdf-url');
+  if (!langInput || !urlInput) return;
+  langInput.value = lang;
+  // Swap lang= in the URL
+  urlInput.value = urlInput.value.replace(/&lang=(es|en)/, '&lang=' + lang);
+  const esBtn = document.getElementById('m-qpdf-lang-es');
+  const enBtn = document.getElementById('m-qpdf-lang-en');
+  if (esBtn && enBtn) {
+    esBtn.classList.toggle('btn-primary', lang === 'es');
+    esBtn.classList.toggle('btn-ghost', lang !== 'es');
+    enBtn.classList.toggle('btn-primary', lang === 'en');
+    enBtn.classList.toggle('btn-ghost', lang !== 'en');
+  }
+}
+window.setQualifyPdfLang = setQualifyPdfLang;
+
+function sendQualifyPdfVia(channel, projectId) {
+  const phoneRaw = (document.getElementById('m-qpdf-phone') || {}).value || '';
+  const url = (document.getElementById('m-qpdf-url') || {}).value || '';
+  const lang = (document.getElementById('m-qpdf-lang') || {}).value || 'en';
+  const msg = lang === 'es'
+    ? `Hola, le comparto el resumen de calificación del proyecto con las preguntas para discutir. ¿Podría revisarlo y responder las preguntas? ${url}\n\n— Manuel Stagg / Digit2AI`
+    : `Hi, sharing the qualification brief with the stakeholder questions. Could you review and reply to the questions? ${url}\n\n— Manuel Stagg / Digit2AI`;
+  const subjectEn = `Project qualification brief — questions to review`;
+  const subjectEs = `Resumen de calificación del proyecto — preguntas a revisar`;
+  if (channel === 'gmail') {
+    // Lookup submitter email
+    api('/projects/inbox').then(r => {
+      const p = r.success ? (r.data || []).find(x => x.id === projectId) : null;
+      const to = (p && p.submitter_email) || '';
+      const subject = lang === 'es' ? subjectEs : subjectEn;
+      const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
+      window.open(gmailUrl, '_blank', 'noopener');
+      closeModal();
+    });
+    return;
+  }
+  const digits = String(phoneRaw).replace(/[^\d]/g, '');
+  if (channel === 'whatsapp') {
+    if (!digits || digits.length < 7) { alert('Add a phone number with country code (e.g. +57 ...) before sending via WhatsApp.'); return; }
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    closeModal();
+    return;
+  }
+  if (channel === 'sms') {
+    window.location.href = `sms:${digits ? digits : ''}?body=${encodeURIComponent(msg)}`;
+    closeModal();
+    return;
+  }
+}
+window.sendQualifyPdfVia = sendQualifyPdfVia;
 
 async function rejectInboxItem(projectId) {
   const reason = prompt('Reason for rejection (optional):', '');

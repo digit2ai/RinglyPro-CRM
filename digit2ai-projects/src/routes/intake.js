@@ -1158,4 +1158,106 @@ router.post('/events/:eventId/reschedule', intakeAuth, async (req, res) => {
   }
 });
 
+// =====================================================
+// INBOX QUALIFY ACTIONS — Triage PDF + Threaded Q&A
+// =====================================================
+// Surface the AI Triage Agent's stakeholder questions in three ways
+// before the user approves/rejects an intake:
+//   - GET  /projects/:id/triage-pdf?token=X&lang=es|en  (public, raw token)
+//   - POST /projects/:id/triage-answer                  (intakeAuth)
+//   - GET  /projects/:id/triage-answers                 (intakeAuth)
+
+// GET /api/v1/intake/projects/:id/triage-pdf
+// Public, token-gated. Anyone with the share-token (UUID in
+// d2_company_access_tokens) for the project's company can fetch the PDF.
+// Threat model is the same as the magic link — share carefully.
+router.get('/projects/:id/triage-pdf', async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    const tokenStr = String(req.query.token || '').trim();
+    const lang = (req.query.lang === 'es') ? 'es' : 'en';
+    if (!tokenStr) return res.status(400).json({ success: false, error: 'token required' });
+
+    const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
+    if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
+    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+      return res.status(403).json({ success: false, error: 'Token expired' });
+    }
+    const project = await Project.findByPk(projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (project.company_id && project.company_id !== accessToken.company_id) {
+      return res.status(403).json({ success: false, error: 'Token does not match project' });
+    }
+    if (!project.triage_brief && !project.triage_structured) {
+      return res.status(409).json({ success: false, error: 'No AI triage yet for this project — run triage first.' });
+    }
+
+    accessToken.last_used_at = new Date();
+    await accessToken.save();
+
+    const { streamTriagePdf } = require('../services/triagePdf');
+    await streamTriagePdf({ project, lang, res });
+  } catch (err) {
+    console.error('[D2AI-Intake] triage-pdf error:', err);
+    if (!res.headersSent) res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/v1/intake/projects/:id/triage-answer
+// Stakeholder submits a reply to a specific AI Triage question.
+// Stores in d2_project_comments with triage_question_index/text set.
+router.post('/projects/:id/triage-answer', intakeAuth, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    const { question_index, question_text, answer_text, language } = req.body || {};
+    if (typeof question_index !== 'number' || Number.isNaN(question_index)) {
+      return res.status(400).json({ success: false, error: 'question_index (number) required' });
+    }
+    if (!answer_text || !String(answer_text).trim()) {
+      return res.status(400).json({ success: false, error: 'answer_text required' });
+    }
+    const project = await Project.findByPk(projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    // Scope check: share-token user must be in the same company as the project
+    if (req.identity.source === 'share' && project.company_id && project.company_id !== req.identity.company_id) {
+      return res.status(403).json({ success: false, error: 'Out of scope' });
+    }
+    const comment = await ProjectComment.create({
+      project_id: projectId,
+      author_email: req.identity.email || null,
+      author_name: req.identity.name || null,
+      body: String(answer_text).trim(),
+      triage_question_index: Math.max(0, Math.min(50, Math.round(question_index))),
+      triage_question_text: question_text ? String(question_text).slice(0, 1000) : null,
+      triage_language: (language === 'es' || language === 'en') ? language : null
+    });
+    res.status(201).json({ success: true, data: comment });
+  } catch (err) {
+    console.error('[D2AI-Intake] triage-answer error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/v1/intake/projects/:id/triage-answers
+// Returns all triage Q&A replies for a project, sorted by question index then date.
+router.get('/projects/:id/triage-answers', intakeAuth, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    const project = await Project.findByPk(projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (req.identity.source === 'share' && project.company_id && project.company_id !== req.identity.company_id) {
+      return res.status(403).json({ success: false, error: 'Out of scope' });
+    }
+    const { Op } = require('sequelize');
+    const rows = await ProjectComment.findAll({
+      where: { project_id: projectId, triage_question_index: { [Op.ne]: null } },
+      order: [['triage_question_index', 'ASC'], ['created_at', 'ASC']]
+    });
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[D2AI-Intake] triage-answers error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

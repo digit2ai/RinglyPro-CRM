@@ -665,6 +665,19 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] project milestones owner notice:', e.message.substring(0, 120));
     }
 
+    // Triage Q&A replies — when a stakeholder answers an AI Triage question
+    // via the magic-link page, the reply lands in d2_project_comments with
+    // these two columns set, so admin views can group "comments that answer
+    // triage question N" separately from free-form discussion comments.
+    try {
+      await sequelize.query('ALTER TABLE d2_project_comments ADD COLUMN IF NOT EXISTS triage_question_index INTEGER');
+      await sequelize.query('ALTER TABLE d2_project_comments ADD COLUMN IF NOT EXISTS triage_question_text TEXT');
+      await sequelize.query('ALTER TABLE d2_project_comments ADD COLUMN IF NOT EXISTS triage_language VARCHAR(8)');
+      await sequelize.query('CREATE INDEX IF NOT EXISTS idx_d2_project_comments_triage ON d2_project_comments (project_id, triage_question_index) WHERE triage_question_index IS NOT NULL');
+    } catch (e) {
+      console.log('[D2AI-Projects] project comments triage notice:', e.message.substring(0, 120));
+    }
+
     // Neural Findings dismissals — stores per-finding "snooze for N days"
     try {
       await sequelize.query(`

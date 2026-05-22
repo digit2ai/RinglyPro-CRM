@@ -287,11 +287,14 @@ function renderCard(pi) {
           <button onclick="submitVote(${p.id})" class="btn btn-primary mt-2">${myVote ? 'Update vote' : 'Submit vote'}</button>
         </div>
 
+        <!-- AI Triage Questions (threaded Q&A — populated when Manuel runs the AI Triage Agent) -->
+        ${renderTriageQA(p)}
+
         <!-- Comments -->
         <div>
-          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Discussion (${(p.comments||[]).length})</h4>
+          <h4 class="text-xs uppercase tracking-wider text-slate-500 mb-2">Discussion (${((p.comments||[]).filter(c => !c.triage_question_index && c.triage_question_index !== 0)).length})</h4>
           <div id="comments_${p.id}" class="space-y-2 mb-3">
-            ${(p.comments||[]).map(c => renderComment(c)).join('')}
+            ${((p.comments||[]).filter(c => !c.triage_question_index && c.triage_question_index !== 0)).map(c => renderComment(c)).join('')}
           </div>
           <textarea id="cmt_${p.id}" rows="2" placeholder="Add a comment..."></textarea>
           <button onclick="submitComment(${p.id})" class="btn btn-ghost mt-2">Post comment</button>
@@ -370,6 +373,88 @@ async function approveUat(projectId) {
   const d = await r.json();
   if (!d.success) { alert('Approve failed: '+d.error); return; }
   alert('Approved. The project is now shipped. Stakeholders will receive a confirmation email.');
+  await loadBatch();
+}
+
+// =====================================================
+// AI TRIAGE Q&A — threaded panel on the magic link page
+// =====================================================
+// When Manuel runs the AI Triage Agent on the intake, it produces a list of
+// stakeholder questions. This panel surfaces them to the requestor so they
+// can answer asynchronously here (or in the meeting Manuel scheduled, or on
+// the PDF — any of the three works). Each question is its own card with a
+// textarea. Existing answers (from d2_project_comments with
+// triage_question_index set) appear inline as comments above the textarea.
+
+const SPANISH_COUNTRIES_BATCH = new Set(['colombia','mexico','méxico','argentina','chile','peru','perú','spain','españa','venezuela','ecuador','bolivia','paraguay','uruguay','dominican republic','guatemala','honduras','nicaragua','costa rica','panama','panamá','cuba','puerto rico','el salvador']);
+
+function pickTriageLang(p) {
+  return SPANISH_COUNTRIES_BATCH.has(String(p.country || '').toLowerCase()) ? 'es' : 'en';
+}
+
+function renderTriageQA(p) {
+  const s = p.triage_structured || null;
+  if (!s) return ''; // no triage yet → nothing to show
+  const lang = pickTriageLang(p);
+  const qs = (lang === 'es' && Array.isArray(s.stakeholder_questions_es) && s.stakeholder_questions_es.length)
+    ? s.stakeholder_questions_es
+    : (Array.isArray(s.stakeholder_questions_en) ? s.stakeholder_questions_en : []);
+  if (!qs.length) return '';
+  // Pull existing triage answers from p.comments (server-side endpoint
+  // returns ALL comments; we filter to the triage ones here)
+  const triageReplies = (p.comments || []).filter(c => c.triage_question_index !== null && typeof c.triage_question_index !== 'undefined');
+  const byIdx = {};
+  triageReplies.forEach(c => {
+    const i = Number(c.triage_question_index);
+    if (!byIdx[i]) byIdx[i] = [];
+    byIdx[i].push(c);
+  });
+  const answered = Object.keys(byIdx).length;
+  const total = qs.length;
+  const heading = lang === 'es' ? 'Preguntas para usted (de la inteligencia neural)' : 'Stakeholder Questions (from neural intelligence)';
+  const subline = lang === 'es' ? `${answered} de ${total} respondidas` : `${answered} of ${total} answered`;
+  const placeholder = lang === 'es' ? 'Su respuesta…' : 'Your answer…';
+  const submitLbl = lang === 'es' ? 'Enviar respuesta' : 'Submit answer';
+  return `
+    <div class="border border-purple-700/40 rounded-lg p-4 bg-gradient-to-br from-purple-950/30 to-cyan-950/20">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h4 class="text-xs uppercase tracking-wider text-purple-300">🤖 ${heading}</h4>
+        <span class="text-xs text-slate-400">${subline}</span>
+      </div>
+      <div class="space-y-3">
+        ${qs.map((q, i) => {
+          const replies = byIdx[i] || [];
+          return `
+            <div class="border border-slate-800 rounded-lg p-3 bg-slate-950/40">
+              <p class="text-sm font-medium text-cyan-300 mb-2">${i + 1}. ${escapeHtml(q)}</p>
+              ${replies.length ? `<div class="space-y-1.5 mb-2">
+                ${replies.map(r => `
+                  <div class="text-xs bg-slate-900/60 border border-slate-800 rounded p-2">
+                    <div class="text-slate-500 mb-1">${escapeHtml(r.author_name || r.author_email)} - ${new Date(r.created_at).toLocaleString()}</div>
+                    <div class="text-slate-200 whitespace-pre-line">${escapeHtml(r.body)}</div>
+                  </div>`).join('')}
+              </div>` : ''}
+              <textarea id="trq_${p.id}_${i}" rows="2" placeholder="${placeholder}"></textarea>
+              <button onclick="submitTriageAnswer(${p.id}, ${i}, ${JSON.stringify(q).replace(/"/g, '&quot;')}, '${lang}')" class="btn btn-ghost mt-2">${submitLbl}</button>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function submitTriageAnswer(projectId, questionIndex, questionText, language) {
+  const ta = document.getElementById('trq_' + projectId + '_' + questionIndex);
+  const answer_text = (ta && ta.value || '').trim();
+  if (!answer_text) return;
+  const r = await fetch('/projects/api/v1/intake/projects/' + projectId + '/triage-answer', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ question_index: questionIndex, question_text: questionText, answer_text, language })
+  });
+  const d = await r.json();
+  if (!d.success) { alert('Answer failed: ' + (d.error || 'unknown')); return; }
+  if (ta) ta.value = '';
   await loadBatch();
 }
 
