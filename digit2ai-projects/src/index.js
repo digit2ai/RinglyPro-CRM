@@ -500,6 +500,17 @@ app.get('*', (req, res) => {
     }
     console.log('[D2AI-Projects] Staff tables ready');
 
+    // Share-token migrations: allow project-scoped tokens for manually-created projects
+    const shareTokenMigrations = [
+      `ALTER TABLE d2_company_access_tokens ADD COLUMN IF NOT EXISTS project_id INTEGER`,
+      `ALTER TABLE d2_company_access_tokens ALTER COLUMN company_id DROP NOT NULL`
+    ];
+    for (const sql of shareTokenMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!/already exists|does not exist/i.test(e.message)) console.log('[D2AI-Projects] Share-token migration notice:', e.message.substring(0, 120));
+      }
+    }
+
     // Pipeline & Workflow migrations
     const pipelineMigrations = [
       `ALTER TABLE d2_contacts ADD COLUMN IF NOT EXISTS pipeline_stage VARCHAR(50) DEFAULT 'prospect'`,

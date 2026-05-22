@@ -552,8 +552,13 @@ const PriorityVote = sequelize.define('PriorityVote', {
 // =====================================================
 const CompanyAccessToken = sequelize.define('CompanyAccessToken', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  company_id: { type: DataTypes.INTEGER, allowNull: false },
+  // Nullable because project-scoped share tokens (manually-created projects) may
+  // have no parent company. Either company_id+batch_id (intake batch) or
+  // project_id (single-project share) must be set; one of these locates the
+  // viewable rows in public-summary.
+  company_id: { type: DataTypes.INTEGER, allowNull: true },
   batch_id: DataTypes.INTEGER,
+  project_id: DataTypes.INTEGER,
   token: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, unique: true },
   grantee_email: DataTypes.STRING(255),
   grantee_name: DataTypes.STRING(255),

@@ -791,6 +791,40 @@ router.get('/companies/:id/tokens', intakeAuth, requireAdmin, async (req, res) =
   }
 });
 
+// Project-scoped share token. Used by the dashboard "Share Project" modal so
+// every project (including manually-created ones without a company / intake
+// batch) can produce an open-access magic link without depending on a
+// company-wide token. Idempotent: returns the existing live token if one
+// exists, otherwise mints a new one.
+router.post('/projects/:id/share-token', intakeAuth, requireAdmin, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    const project = await Project.findOne({ where: { id: projectId, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'project_not_found' });
+
+    const existing = await CompanyAccessToken.findOne({
+      where: { project_id: projectId },
+      order: [['created_at', 'DESC']]
+    });
+    if (existing && (!existing.expires_at || new Date(existing.expires_at) > new Date())) {
+      return res.json({ success: true, data: existing });
+    }
+
+    const t = await CompanyAccessToken.create({
+      project_id: projectId,
+      company_id: project.company_id || null,
+      grantee_email: req.body?.grantee_email || null,
+      grantee_name: req.body?.grantee_name || null,
+      role: 'reviewer',
+      expires_at: null
+    });
+    res.status(201).json({ success: true, data: t });
+  } catch (err) {
+    console.error('[D2AI-Intake] project share-token mint failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // INBOX APPROVE / REJECT (admin) — wired to Claude milestone-generator
 // =====================================================
@@ -1178,16 +1212,23 @@ router.get('/public-summary/:token', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Link expired' });
     }
 
-    // Pull every project in the same batch (usually 1) — the token is
-    // batch-scoped, not project-scoped, so we surface all projects the
-    // recipient should be able to view.
-    const intakes = await ProjectIntake.findAll({
-      where: { batch_id: accessToken.batch_id },
-      include: [{ model: Project, as: 'project' }],
-      order: [['id', 'ASC']]
-    });
-    const projects = intakes.map(i => {
-      const p = i.project ? i.project.toJSON() : null;
+    // Two token modes:
+    //   - project-scoped (project_id set) → return just that one project
+    //   - batch-scoped (batch_id set)     → return every project in the batch
+    let projectRows = [];
+    if (accessToken.project_id) {
+      const p = await Project.findOne({ where: { id: accessToken.project_id, workspace_id: 1 } });
+      if (p) projectRows = [p];
+    } else if (accessToken.batch_id) {
+      const intakes = await ProjectIntake.findAll({
+        where: { batch_id: accessToken.batch_id },
+        include: [{ model: Project, as: 'project' }],
+        order: [['id', 'ASC']]
+      });
+      projectRows = intakes.map(i => i.project).filter(Boolean);
+    }
+    const projects = projectRows.map(row => {
+      const p = row.toJSON();
       if (!p) return null;
       // Strip internal admin fields; expose only what a viewer should see.
       return {
@@ -1255,7 +1296,12 @@ router.get('/projects/:id/triage-pdf', async (req, res) => {
     }
     const project = await Project.findByPk(projectId);
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
-    if (project.company_id && project.company_id !== accessToken.company_id) {
+    // Authorize: token must either be project-scoped to this project, or
+    // company-scoped to the project's company. Otherwise it's a different
+    // owner's token being used against this project.
+    const isProjectScoped = accessToken.project_id === project.id;
+    const isCompanyScoped = !!project.company_id && project.company_id === accessToken.company_id;
+    if (!isProjectScoped && !isCompanyScoped) {
       return res.status(403).json({ success: false, error: 'Token does not match project' });
     }
     if (!project.triage_brief && !project.triage_structured) {

@@ -1758,14 +1758,15 @@ async function openShareProjectModal(projectId) {
   const projRes = await api('/projects/' + projectId);
   if (!projRes.success) { alert('Could not load project'); return; }
   const p = projRes.data;
-  // Get a valid company access token via an admin helper. The simplest
-  // path: call /intake/companies/:id/tokens which returns all tokens.
+  // Find or mint a token that can open the public-summary page. Resolution order:
+  //   1. Existing company-scoped token (intake-submitted projects with a company)
+  //   2. Mint a fresh project-scoped token (works for any project, including
+  //      manually-created ones without a company / intake batch)
   let tokenStr = null;
   if (p.company_id) {
     try {
       const tokRes = await api('/intake/companies/' + p.company_id + '/tokens');
       if (tokRes && tokRes.success && Array.isArray(tokRes.data) && tokRes.data.length) {
-        // Prefer the most-recently-created non-expired token
         const now = new Date();
         const live = tokRes.data
           .filter(t => !t.expires_at || new Date(t.expires_at) > now)
@@ -1775,7 +1776,17 @@ async function openShareProjectModal(projectId) {
     } catch (_) {}
   }
   if (!tokenStr) {
-    alert('No share token available for this project\'s company. Mint one via the Inbox card "Open discussion" link first.');
+    try {
+      const mintRes = await api('/intake/projects/' + p.id + '/share-token', { method: 'POST', body: JSON.stringify({}) });
+      if (mintRes && mintRes.success && mintRes.data && mintRes.data.token) {
+        tokenStr = mintRes.data.token;
+      }
+    } catch (e) {
+      console.error('Share-token mint failed:', e);
+    }
+  }
+  if (!tokenStr) {
+    alert('Could not create a share link for this project. Check the server logs.');
     return;
   }
 
