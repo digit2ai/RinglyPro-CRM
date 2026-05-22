@@ -1729,6 +1729,175 @@ function sendQualifyPdfVia(channel, projectId) {
 }
 window.sendQualifyPdfVia = sendQualifyPdfVia;
 
+// =====================================================
+// PROJECT DETAIL — Share Project (open-access public summary link)
+// =====================================================
+// Unlike the Inbox Qualify modal, this one is for ANY project at any
+// status. The link it sends is the public summary URL — no email gate.
+// Anyone you forward it to can open and read the project + AI Triage
+// brief. The interactive discussion (existing magic link) is offered
+// from inside the public summary page as a secondary CTA.
+async function openShareProjectModal(projectId) {
+  // Pull the project + its share token. Project detail endpoint returns
+  // p with the stakeholder_share_token, but the public summary endpoint
+  // uses the company access token. We need the company access token —
+  // look it up via the existing inbox endpoint if the project is still
+  // pending_review, otherwise mint/fetch via the access tokens table.
+  const projRes = await api('/projects/' + projectId);
+  if (!projRes.success) { alert('Could not load project'); return; }
+  const p = projRes.data;
+  // Get a valid company access token via an admin helper. The simplest
+  // path: call /intake/companies/:id/tokens which returns all tokens.
+  let tokenStr = null;
+  if (p.company_id) {
+    try {
+      const tokRes = await api('/intake/companies/' + p.company_id + '/tokens');
+      if (tokRes && tokRes.success && Array.isArray(tokRes.data) && tokRes.data.length) {
+        // Prefer the most-recently-created non-expired token
+        const now = new Date();
+        const live = tokRes.data
+          .filter(t => !t.expires_at || new Date(t.expires_at) > now)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        if (live.length) tokenStr = live[0].token;
+      }
+    } catch (_) {}
+  }
+  if (!tokenStr) {
+    alert('No share token available for this project\'s company. Mint one via the Inbox card "Open discussion" link first.');
+    return;
+  }
+
+  const initialLang = detectLangFromCountry(p.country);
+  const summaryUrl = `${location.origin}/projects/summary/${tokenStr}`;
+  const magicUrl   = `${location.origin}/projects/intake/batch.html?token=${tokenStr}`;
+  const recipient  = p.submitter_name || p.submitter_email || 'recipient';
+  const phoneInit  = p.submitter_phone || '';
+  const escA = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  openModal('Share Project — open access', `
+    <p style="margin:0 0 12px;font-size:13px;color:var(--text-muted)">
+      <strong>${escHtml(p.name)}</strong><br>
+      The public link below has <strong>no email gate</strong> — anyone you forward it to can open it. The interactive discussion (where they can post comments and answer questions) lives behind a separate magic link offered inside the page.
+    </p>
+    <input type="hidden" id="m-share-summary" value="${escA(summaryUrl)}">
+    <input type="hidden" id="m-share-magic" value="${escA(magicUrl)}">
+    <div class="form-group">
+      <label>Language</label>
+      <div style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        <button type="button" id="m-share-lang-es" class="btn btn-sm ${initialLang === 'es' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:0;border:none;padding:6px 14px" onclick="setShareLang('es')">ES</button>
+        <button type="button" id="m-share-lang-en" class="btn btn-sm ${initialLang === 'en' ? 'btn-primary' : 'btn-ghost'}" style="border-radius:0;border:none;border-left:1px solid var(--border);padding:6px 14px" onclick="setShareLang('en')">EN</button>
+      </div>
+      <input type="hidden" id="m-share-lang" value="${initialLang}">
+    </div>
+    <div class="form-group">
+      <label>Recipient (default: ${escHtml(recipient)})</label>
+      <input type="email" id="m-share-email" value="${escA(p.submitter_email || '')}" placeholder="someone@example.com">
+    </div>
+    <div class="form-group">
+      <label>WhatsApp / SMS phone</label>
+      <input type="tel" id="m-share-phone" value="${escA(phoneInit)}" placeholder="+57 312 783 0181">
+      <small style="color:var(--text-muted)">Include country code. Spaces and dashes are fine.</small>
+    </div>
+    <div class="form-group">
+      <label>Open-access summary link</label>
+      <input type="text" value="${escA(summaryUrl)}" readonly style="font-size:11px">
+      <small style="color:var(--text-muted)">No login required. Forward freely.</small>
+    </div>
+    <div class="form-group" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
+      <button type="button" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="sendShareProjectVia('whatsapp')">📱 WhatsApp</button>
+      <button type="button" class="btn btn-sm" style="background:#3b82f6;color:#fff;border-color:#3b82f6" onclick="sendShareProjectVia('sms')">💬 SMS / Messages</button>
+      <button type="button" class="btn btn-sm" style="background:#0066CC;color:#fff;border-color:#0066CC" onclick="sendShareProjectVia('mail')">✉ Mail</button>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="window.open(document.getElementById('m-share-summary').value, '_blank', 'noopener')">Preview Page</button>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="navigator.clipboard.writeText(document.getElementById('m-share-summary').value).then(()=>showCopyToast && showCopyToast('Link copied'))">Copy Link</button>
+    </div>
+  `, () => {});
+
+  // Stash the project name + description for the message builder
+  window._shareProjectCtx = {
+    id: p.id,
+    name: p.name,
+    description: p.description || '',
+    submitter_name: p.submitter_name || ''
+  };
+}
+window.openShareProjectModal = openShareProjectModal;
+
+function setShareLang(lang) {
+  const langInput = document.getElementById('m-share-lang');
+  if (langInput) langInput.value = lang;
+  const esBtn = document.getElementById('m-share-lang-es');
+  const enBtn = document.getElementById('m-share-lang-en');
+  if (esBtn && enBtn) {
+    esBtn.classList.toggle('btn-primary', lang === 'es');
+    esBtn.classList.toggle('btn-ghost', lang !== 'es');
+    enBtn.classList.toggle('btn-primary', lang === 'en');
+    enBtn.classList.toggle('btn-ghost', lang !== 'en');
+  }
+}
+window.setShareLang = setShareLang;
+
+function sendShareProjectVia(channel) {
+  const phoneRaw = (document.getElementById('m-share-phone') || {}).value || '';
+  const emailTo  = (document.getElementById('m-share-email') || {}).value || '';
+  const summary  = (document.getElementById('m-share-summary') || {}).value || '';
+  const magic    = (document.getElementById('m-share-magic')   || {}).value || '';
+  const lang     = (document.getElementById('m-share-lang')    || {}).value || 'en';
+  const ctx = window._shareProjectCtx || {};
+  const pname = ctx.name || '';
+  const pdesc = (ctx.description || '').slice(0, 500);
+
+  // Message body — project summary + both links (public summary + magic link)
+  const msg = lang === 'es'
+    ? [
+        `Hola, le comparto el proyecto "${pname}":`,
+        '',
+        pdesc,
+        '',
+        '🔗 Ver resumen completo y brief de Inteligencia Neural (acceso abierto, sin login):',
+        summary,
+        '',
+        '💬 Discutir el proyecto en línea (requiere identificarse con correo):',
+        magic,
+        '',
+        '— Manuel Stagg / Digit2AI'
+      ].join('\n')
+    : [
+        `Hi, sharing the project "${pname}":`,
+        '',
+        pdesc,
+        '',
+        '🔗 Full summary + Neural Intelligence brief (open access, no login required):',
+        summary,
+        '',
+        '💬 Discuss the project online (requires email identification):',
+        magic,
+        '',
+        '— Manuel Stagg / Digit2AI'
+      ].join('\n');
+
+  const subject = lang === 'es' ? `Proyecto Digit2AI — ${pname}` : `Digit2AI Project — ${pname}`;
+
+  if (channel === 'mail') {
+    const mailto = 'mailto:' + encodeURIComponent(emailTo) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
+    window.location.href = mailto;
+    closeModal();
+    return;
+  }
+  const digits = String(phoneRaw).replace(/[^\d]/g, '');
+  if (channel === 'whatsapp') {
+    if (!digits || digits.length < 7) { alert('Add a phone number with country code before sending via WhatsApp.'); return; }
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    closeModal();
+    return;
+  }
+  if (channel === 'sms') {
+    window.location.href = `sms:${digits ? digits : ''}?body=${encodeURIComponent(msg)}`;
+    closeModal();
+    return;
+  }
+}
+window.sendShareProjectVia = sendShareProjectVia;
+
 async function rejectInboxItem(projectId) {
   const reason = prompt('Reason for rejection (optional):', '');
   if (reason === null) return; // cancelled
@@ -4441,6 +4610,7 @@ async function showProjectDetail(id) {
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="chooseScheduleMeetingLanguage(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and sends a styled HTML email." style="color:#2D8CFF;border-color:#2D8CFF">Schedule Meeting</button>
+          <button class="btn btn-sm" onclick="openShareProjectModal(${p.id})" title="Send the project summary + open-access magic link via WhatsApp, SMS, or Mail. Anyone you forward the link to can view it (no login required)." style="background:#10b981;color:#fff;border-color:#10b981">&#128229; Share Project</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           <button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>

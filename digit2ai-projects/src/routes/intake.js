@@ -1159,6 +1159,72 @@ router.post('/events/:eventId/reschedule', intakeAuth, async (req, res) => {
 });
 
 // =====================================================
+// PUBLIC SUMMARY (open access — anyone with the link)
+// =====================================================
+// Read-only project + triage brief endpoint that does NOT require the
+// recipient to identify (no email gate). The token alone is the credential;
+// anyone Manuel forwards the URL to can open and read. For interactive
+// discussion (posting comments, answering questions), they fall through
+// to the existing magic link which keeps its identify gate.
+router.get('/public-summary/:token', async (req, res) => {
+  try {
+    const tokenStr = String(req.params.token || '').trim();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(tokenStr)) return res.status(404).json({ success: false, error: 'Invalid token' });
+
+    const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
+    if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
+    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+      return res.status(403).json({ success: false, error: 'Link expired' });
+    }
+
+    // Pull every project in the same batch (usually 1) — the token is
+    // batch-scoped, not project-scoped, so we surface all projects the
+    // recipient should be able to view.
+    const intakes = await ProjectIntake.findAll({
+      where: { batch_id: accessToken.batch_id },
+      include: [{ model: Project, as: 'project' }],
+      order: [['id', 'ASC']]
+    });
+    const projects = intakes.map(i => {
+      const p = i.project ? i.project.toJSON() : null;
+      if (!p) return null;
+      // Strip internal admin fields; expose only what a viewer should see.
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        country: p.country,
+        submitter_name: p.submitter_name,
+        ai_category: p.ai_category,
+        timeline: p.timeline,
+        budget_range: p.budget_range,
+        intake_status: p.intake_status,
+        triage_brief: p.triage_brief,
+        triage_structured: p.triage_structured,
+        triage_at: p.triage_at,
+        created_at: p.created_at
+      };
+    }).filter(Boolean);
+
+    accessToken.last_used_at = new Date();
+    await accessToken.save();
+
+    res.json({
+      success: true,
+      data: {
+        company_id: accessToken.company_id,
+        batch_id: accessToken.batch_id,
+        projects
+      }
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] public-summary error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // INBOX QUALIFY ACTIONS — Triage PDF + Threaded Q&A
 // =====================================================
 // Surface the AI Triage Agent's stakeholder questions in three ways

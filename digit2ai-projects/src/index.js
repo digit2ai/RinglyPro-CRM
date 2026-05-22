@@ -79,6 +79,11 @@ app.get('/api/v1/me', authenticateToken, (req, res) => {
 
 // Serve intake static pages (dark dashboard, no build step)
 app.use('/intake', express.static(path.join(dashboardPath, 'intake')));
+// Public summary viewer — no identification required; token alone gates view.
+// /summary/:token serves the summary HTML; viewer JS reads token from the path.
+app.get('/summary/:token', (_req, res) => {
+  res.sendFile(path.join(dashboardPath, 'intake', 'summary.html'));
+});
 // Public contract signoff page (token-gated; no admin auth required)
 app.use('/contracts', express.static(path.join(dashboardPath, 'contracts')));
 // Public stakeholder magic-link viewer (no auth, token + email verified server-side)

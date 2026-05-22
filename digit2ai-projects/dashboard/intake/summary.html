@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Summary · Digit2AI</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --border: #1e293b;
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #7c5cff;
+      --accent2: #22d3ee;
+      --go: #10b981;
+      --warn: #f59e0b;
+      --stop: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    .accent-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    header.brand {
+      padding: 24px 24px 16px;
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .wordmark { font-weight: 800; font-size: 22px; color: var(--accent); letter-spacing: -0.5px; }
+    .wordmark span { color: var(--accent2); }
+    .wordmark-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    main { max-width: 880px; margin: 0 auto; padding: 16px 24px 80px; }
+    h1 { font-size: 28px; margin: 0 0 6px; }
+    .meta { color: var(--muted); font-size: 13px; margin: 0 0 28px; display: flex; flex-wrap: wrap; gap: 14px; }
+    .meta span:before { content: '·'; margin-right: 6px; opacity: 0.5; }
+    .meta span:first-child:before { content: ''; margin: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 18px;
+    }
+    .card h2 {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 14px;
+      font-weight: 700;
+    }
+    .card .body { font-size: 14.5px; color: var(--ink); white-space: pre-wrap; }
+    .traffic {
+      display: flex; align-items: center; gap: 16px; padding: 18px 22px;
+      border-radius: 12px; border-width: 2px; border-style: solid;
+      margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .traffic .light { font-size: 36px; line-height: 1; }
+    .traffic .label-row { flex: 1; min-width: 220px; }
+    .traffic .label-row .top { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+    .traffic .label-row .verdict { font-size: 20px; font-weight: 800; }
+    .traffic .score {
+      text-align: center; padding: 8px 18px; background: rgba(0,0,0,0.25);
+      border-width: 2px; border-style: solid; border-radius: 10px; min-width: 100px;
+    }
+    .traffic .score .lbl { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .traffic .score .val { font-size: 30px; font-weight: 800; line-height: 1.1; }
+    .traffic .score .val small { font-size: 14px; color: var(--muted); font-weight: 600; }
+    .triage-section h3 { font-size: 14px; margin: 18px 0 8px; color: var(--ink); }
+    .triage-section ul { margin: 6px 0 12px 22px; padding: 0; }
+    .triage-section li { margin-bottom: 4px; }
+    .flag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; margin-right: 6px; }
+    .flag-high { background: rgba(239,68,68,0.15); color: var(--stop); }
+    .flag-medium { background: rgba(245,158,11,0.15); color: var(--warn); }
+    .flag-low { background: rgba(100,116,139,0.15); color: var(--muted); }
+    .cta {
+      display: inline-block;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0b1220;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .cta:hover { opacity: 0.92; }
+    .footer {
+      max-width: 880px;
+      margin: 40px auto 0;
+      padding: 18px 24px 0;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .footer a { color: var(--accent2); text-decoration: none; }
+    .lang-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .lang-toggle button {
+      background: transparent; color: var(--muted); border: none; padding: 4px 12px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+    }
+    .lang-toggle button.active { background: var(--accent); color: white; }
+    .empty, .err { padding: 40px; text-align: center; color: var(--muted); }
+    .err { color: var(--stop); }
+    @media (max-width: 560px) {
+      h1 { font-size: 22px; }
+      header.brand { padding: 18px 16px 12px; }
+      main { padding: 8px 16px 60px; }
+      .card { padding: 16px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="accent-bar"></div>
+  <header class="brand">
+    <div>
+      <div class="wordmark">Digit<span>2AI</span></div>
+      <div class="wordmark-sub">Neural Intelligence</div>
+    </div>
+    <div class="lang-toggle" id="lang-toggle">
+      <button id="lang-es" onclick="setLang('es')">ES</button>
+      <button id="lang-en" class="active" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <main id="main"><div class="empty" id="loading">Loading…</div></main>
+
+  <div class="footer">
+    <div>Generated by Digit2AI Neural Intelligence · <a href="mailto:mstagg@digit2ai.com">mstagg@digit2ai.com</a></div>
+  </div>
+
+<script>
+  // Parse token from URL: /projects/summary/{token} OR ?token=...
+  function getToken() {
+    const m = location.pathname.match(/\/summary\/([0-9a-f-]{36})/i);
+    if (m) return m[1];
+    const params = new URLSearchParams(location.search);
+    return params.get('token') || '';
+  }
+  let LANG = (navigator.language || 'en').slice(0, 2).toLowerCase() === 'es' ? 'es' : 'en';
+  let DATA = null;
+
+  const I18N = {
+    es: {
+      noResults: 'No hay proyectos asociados a este enlace.',
+      invalid: 'Enlace inválido o expirado.',
+      submittedBy: 'Enviado por',
+      submitted: 'Enviado',
+      country: 'País',
+      timeline: 'Plazo',
+      budget: 'Presupuesto',
+      categories: 'Categorías IA',
+      description: 'Descripción del Proyecto',
+      triageBrief: 'Resumen de Inteligencia Neural',
+      fit: 'Calificación',
+      verdict: { accept: 'ACEPTAR', accept_with_conditions: 'PRECAUCIÓN', reject: 'RECHAZAR', review: 'REVISAR' },
+      wedge: 'Cuña sugerida para v1',
+      flags: 'Banderas regulatorias',
+      synergies: 'Sinergias de portafolio',
+      monetization: 'Opciones de monetización',
+      competitors: 'Competidores a observar',
+      questions: 'Preguntas para discutir',
+      cta: 'Abrir discusión interactiva',
+      ctaSub: 'Para responder las preguntas en línea, necesitará identificarse con su correo.'
+    },
+    en: {
+      noResults: 'No projects associated with this link.',
+      invalid: 'Invalid or expired link.',
+      submittedBy: 'Submitted by',
+      submitted: 'Submitted',
+      country: 'Country',
+      timeline: 'Timeline',
+      budget: 'Budget',
+      categories: 'AI Categories',
+      description: 'Project Description',
+      triageBrief: 'Neural Intelligence Brief',
+      fit: 'Fit',
+      verdict: { accept: 'ACCEPT', accept_with_conditions: 'CAUTION', reject: 'REJECT', review: 'REVIEW' },
+      wedge: 'Suggested v1 Wedge',
+      flags: 'Regulatory Flags',
+      synergies: 'Portfolio Synergies',
+      monetization: 'Monetization Options',
+      competitors: 'Competitors to Watch',
+      questions: 'Questions to Discuss',
+      cta: 'Open Interactive Discussion',
+      ctaSub: 'To answer the questions online, you will need to identify with your email.'
+    }
+  };
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    return dt.toLocaleDateString(LANG === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  function trafficColor(rec) {
+    if (rec === 'accept') return { fg: '#10b981', bg: 'rgba(16,185,129,0.10)', border: '#10b981', light: '🟢' };
+    if (rec === 'accept_with_conditions') return { fg: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: '#f59e0b', light: '🟡' };
+    if (rec === 'reject') return { fg: '#ef4444', bg: 'rgba(239,68,68,0.10)', border: '#ef4444', light: '🔴' };
+    return { fg: '#94a3b8', bg: 'rgba(100,116,139,0.10)', border: '#94a3b8', light: '⚪' };
+  }
+
+  async function load() {
+    const token = getToken();
+    if (!token) {
+      document.getElementById('main').innerHTML = '<div class="err">' + I18N[LANG].invalid + '</div>';
+      return;
+    }
+    try {
+      const r = await fetch('/projects/api/v1/intake/public-summary/' + encodeURIComponent(token));
+      if (!r.ok) {
+        document.getElementById('main').innerHTML = '<div class="err">' + I18N[LANG].invalid + '</div>';
+        return;
+      }
+      const d = await r.json();
+      if (!d.success) {
+        document.getElementById('main').innerHTML = '<div class="err">' + I18N[LANG].invalid + '</div>';
+        return;
+      }
+      DATA = d.data;
+      render();
+    } catch (e) {
+      document.getElementById('main').innerHTML = '<div class="err">' + I18N[LANG].invalid + '</div>';
+    }
+  }
+
+  function setLang(lang) {
+    LANG = lang;
+    document.getElementById('lang-es').classList.toggle('active', lang === 'es');
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    if (DATA) render();
+  }
+
+  function render() {
+    const main = document.getElementById('main');
+    const lbl = I18N[LANG];
+    if (!DATA || !DATA.projects || !DATA.projects.length) {
+      main.innerHTML = '<div class="empty">' + lbl.noResults + '</div>';
+      return;
+    }
+    main.innerHTML = DATA.projects.map(renderProject).join('');
+  }
+
+  function renderProject(p) {
+    const lbl = I18N[LANG];
+    const s = p.triage_structured || null;
+    const recRaw = s && s.go_no_go_recommendation ? s.go_no_go_recommendation : null;
+    const tc = recRaw ? trafficColor(recRaw) : null;
+    const verdictTxt = recRaw && lbl.verdict[recRaw] ? lbl.verdict[recRaw] : '';
+    const fit = s && typeof s.fit_score !== 'undefined' ? Number(s.fit_score) : null;
+    const cats = Array.isArray(p.ai_category) ? p.ai_category.join(' · ') : '';
+
+    // Magic-link to discussion (the existing identify-gated batch.html)
+    const magicLink = '/projects/intake/batch.html?token=' + encodeURIComponent(getToken());
+
+    const meta = [];
+    if (p.submitter_name) meta.push('<span>' + lbl.submittedBy + ': ' + escapeHtml(p.submitter_name) + '</span>');
+    if (p.country)        meta.push('<span>' + lbl.country + ': ' + escapeHtml(p.country) + '</span>');
+    if (p.created_at)     meta.push('<span>' + lbl.submitted + ': ' + escapeHtml(fmtDate(p.created_at)) + '</span>');
+    if (p.timeline)       meta.push('<span>' + lbl.timeline + ': ' + escapeHtml(p.timeline) + '</span>');
+    if (p.budget_range)   meta.push('<span>' + lbl.budget + ': ' + escapeHtml(p.budget_range) + '</span>');
+
+    let triageHtml = '';
+    if (s) {
+      const questions = (LANG === 'es' ? s.stakeholder_questions_es : s.stakeholder_questions_en) || s.stakeholder_questions_en || s.stakeholder_questions_es || [];
+      const flagSeverity = (sev) => sev === 'high' ? 'flag-high' : sev === 'low' ? 'flag-low' : 'flag-medium';
+      triageHtml = `
+        ${tc ? `
+          <div class="traffic" style="background:${tc.bg};border-color:${tc.border}">
+            <div class="light">${tc.light}</div>
+            <div class="label-row">
+              <div class="top" style="color:${tc.fg}">${lbl.triageBrief}</div>
+              <div class="verdict" style="color:${tc.fg}">${verdictTxt}</div>
+            </div>
+            ${fit !== null ? `
+              <div class="score" style="border-color:${tc.fg}">
+                <div class="lbl">${lbl.fit}</div>
+                <div class="val" style="color:${tc.fg}">${fit}<small>/10</small></div>
+              </div>` : ''}
+          </div>` : ''}
+        <div class="card triage-section">
+          <h2>${escapeHtml(lbl.triageBrief)}</h2>
+          ${s.fit_reasoning ? `<p style="margin:0 0 10px;color:var(--ink)">${escapeHtml(s.fit_reasoning)}</p>` : ''}
+          ${s.wedge_recommendation ? `<h3>${lbl.wedge}</h3><p style="margin:0 0 12px;color:var(--muted)">${escapeHtml(s.wedge_recommendation)}</p>` : ''}
+          ${Array.isArray(s.regulatory_flags) && s.regulatory_flags.length ? `
+            <h3>${lbl.flags}</h3>
+            <ul>${s.regulatory_flags.map(f => `<li><span class="flag ${flagSeverity(String(f.severity || 'medium').toLowerCase())}">${escapeHtml(String(f.severity || 'medium').toUpperCase())}</span> <strong>${escapeHtml(f.risk || '')}</strong>${f.what_to_check ? ' — ' + escapeHtml(f.what_to_check) : ''}</li>`).join('')}</ul>` : ''}
+          ${Array.isArray(s.portfolio_synergies) && s.portfolio_synergies.length ? `
+            <h3>${lbl.synergies}</h3>
+            <ul>${s.portfolio_synergies.map(x => `<li><strong>${escapeHtml(x.product || '')}</strong>${x.angle ? ' — ' + escapeHtml(x.angle) : ''}</li>`).join('')}</ul>` : ''}
+          ${Array.isArray(s.monetization_options) && s.monetization_options.length ? `
+            <h3>${lbl.monetization}</h3>
+            <ul>${s.monetization_options.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>` : ''}
+          ${Array.isArray(s.competitors_to_watch) && s.competitors_to_watch.length ? `
+            <h3>${lbl.competitors}</h3>
+            <ul>${s.competitors_to_watch.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>` : ''}
+          ${questions.length ? `
+            <h3>${lbl.questions}</h3>
+            <ol>${questions.map(q => `<li style="margin-bottom:8px">${escapeHtml(q)}</li>`).join('')}</ol>` : ''}
+        </div>`;
+    }
+
+    return `
+      <h1>${escapeHtml(p.name || '')}</h1>
+      <div class="meta">${meta.join('')}</div>
+      ${cats ? `<div class="card"><h2>${lbl.categories}</h2><div class="body">${escapeHtml(cats)}</div></div>` : ''}
+      ${p.description ? `<div class="card"><h2>${lbl.description}</h2><div class="body">${escapeHtml(p.description)}</div></div>` : ''}
+      ${triageHtml}
+      <div style="margin:24px 0 8px">
+        <a class="cta" href="${magicLink}">${lbl.cta} →</a>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">${lbl.ctaSub}</p>
+      </div>
+    `;
+  }
+
+  // Auto-detect Spanish stakeholders by country on load
+  setTimeout(() => {
+    // Try to detect from first project's country once data loads
+  }, 0);
+
+  load();
+</script>
+</body>
+</html>
