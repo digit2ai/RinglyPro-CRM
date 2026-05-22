@@ -1923,7 +1923,9 @@ async function rejectInboxItem(projectId) {
 // PROJECTS
 // =====================================================
 async function renderProjects(container) {
-  const res = await api('/projects');
+  // include_archived=1 so the user can switch to the Archived view from the
+  // status filter without refetching. Default UI still hides archived rows.
+  const res = await api('/projects?include_archived=1&limit=500');
   if (!res.success) return;
 
   // KPIs computed from the loaded project list. One card per status value
@@ -1980,6 +1982,7 @@ async function renderProjects(container) {
           <option value="review">Review</option>
           <option value="completed">Completed</option>
           <option value="dormant">Dormant (30d+ no update)</option>
+          <option value="archived">Archived</option>
         </select>
         <select id="project-priority-filter">
           <option value="">All Priority</option>
@@ -2013,8 +2016,16 @@ async function renderProjects(container) {
     const st = document.getElementById('project-status-filter').value;
     const pr = document.getElementById('project-priority-filter').value;
     let list = container._projectsAll.slice();
+    // Archived rows are loaded for the "Archived" view but hidden everywhere
+    // else — they would otherwise pollute "All Status" with completed-and-
+    // archived projects the user is no longer working on.
+    if (st !== 'archived') {
+      list = list.filter(p => !p.archived_at);
+    }
     if (q) list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q));
-    if (st === 'dormant') {
+    if (st === 'archived') {
+      list = list.filter(p => !!p.archived_at);
+    } else if (st === 'dormant') {
       list = list.filter(p => !container._inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < container._dormantCutoff);
     } else if (st) {
       list = list.filter(p => p.status === st);
@@ -4612,7 +4623,9 @@ async function showProjectDetail(id) {
           <button class="btn btn-ghost btn-sm" onclick="chooseScheduleMeetingLanguage(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and sends a styled HTML email." style="color:#2D8CFF;border-color:#2D8CFF">Schedule Meeting</button>
           <button class="btn btn-sm" onclick="openShareProjectModal(${p.id})" title="Send the project summary + open-access magic link via WhatsApp, SMS, or Mail. Anyone you forward the link to can view it (no login required)." style="background:#10b981;color:#fff;border-color:#10b981">&#128229; Share Project</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
-          <button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>
+          ${p.archived_at
+            ? `<button class="btn btn-sm" onclick="unarchiveProject(${p.id})" title="Restore this project to active status" style="background:#10b981;color:#fff;border-color:#10b981">&#8634; Unarchive</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="archiveProject(${p.id})">Archive</button>`}
           <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id}, ${JSON.stringify(p.name).replace(/"/g,'&quot;')})">Delete</button>
           ${p.business_plan_generated_at
             ? `<button class="btn btn-primary btn-sm" onclick="openBusinessPlan(${p.id})" style="background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;color:#020617">View Business Plan</button>
@@ -5739,6 +5752,14 @@ async function saveProjectNotes(projectId) {
 async function archiveContact(id) { if (confirm('Archive this contact?')) { await api(`/contacts/${id}/archive`, { method: 'PUT' }); navigateTo('contacts'); } }
 async function deleteContact(id) { if (confirm('Permanently delete this contact? This cannot be undone.')) { await api(`/contacts/${id}`, { method: 'DELETE' }); navigateTo('contacts'); } }
 async function archiveProject(id) { if (confirm('Archive this project?')) { await api(`/projects/${id}/archive`, { method: 'PUT' }); navigateTo('projects'); } }
+async function unarchiveProject(id) {
+  if (!confirm('Restore this project from the archive?\n\nIt will return to the "Active" status.')) return;
+  const r = await api(`/projects/${id}/unarchive`, { method: 'PUT', body: JSON.stringify({ status: 'active' }) });
+  if (!r.success) { alert('Unarchive failed: ' + (r.error || 'unknown')); return; }
+  if (typeof showCopyToast === 'function') showCopyToast('Project restored');
+  showProjectDetail(id);
+}
+window.unarchiveProject = unarchiveProject;
 
 async function deleteProject(id, name) {
   const label = name || 'this project';

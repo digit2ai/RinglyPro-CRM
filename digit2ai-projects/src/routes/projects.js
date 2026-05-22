@@ -87,10 +87,17 @@ router.delete('/:id/share-token', async (req, res) => {
 // WITHOUT auth, before the authenticated /api/v1/projects mount.
 
 // GET /api/v1/projects - List projects
+// Query params:
+//   ?include_archived=1   include archived rows (archived_at IS NOT NULL).
+//                         Default: exclude. The Projects page sets this so
+//                         the user can switch to the Archived view client-side.
 router.get('/', async (req, res) => {
   try {
-    const { status, priority, vertical_id, search, page = 1, limit = 50 } = req.query;
-    const where = { workspace_id: 1, archived_at: null };
+    const { status, priority, vertical_id, search, page = 1, limit = 50, include_archived } = req.query;
+    const where = { workspace_id: 1 };
+    if (!include_archived || include_archived === '0' || include_archived === 'false') {
+      where.archived_at = null;
+    }
 
     if (status) where.status = status;
     if (priority) where.priority = priority;
@@ -351,6 +358,23 @@ router.put('/:id/archive', async (req, res) => {
     await project.update({ archived_at: new Date(), status: 'archived' });
     await logActivity(req.user?.email, 'archived', 'project', project.id, project.name);
     res.json({ success: true, message: 'Project archived' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT /api/v1/projects/:id/unarchive - Restore an archived project
+// Body: { status?: string } — defaults to 'active'. Caller can override
+// (e.g. restore as 'planning' or 'on_hold' depending on what they want).
+router.put('/:id/unarchive', async (req, res) => {
+  try {
+    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    if (!project.archived_at) return res.status(400).json({ success: false, error: 'Project is not archived' });
+    const restoreStatus = (req.body && req.body.status) || 'active';
+    await project.update({ archived_at: null, status: restoreStatus });
+    await logActivity(req.user?.email, 'unarchived', 'project', project.id, project.name);
+    res.json({ success: true, message: 'Project restored', data: project });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
