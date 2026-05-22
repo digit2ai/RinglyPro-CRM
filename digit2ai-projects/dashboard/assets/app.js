@@ -4002,6 +4002,17 @@ function showCopyToast(msg) {
 
 async function completeTask(id) {
   await api(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'completed' }) });
+  // If we're on the To-Do List page, refresh data and re-apply the current
+  // filter selections instead of re-rendering the whole view (which would
+  // reset the Project / Due / Owner dropdowns the user had picked).
+  if (document.getElementById('task-project-filter')) {
+    const res = await api('/tasks');
+    if (res && res.success) {
+      _allTasksCache = res.data;
+      filterTasks();
+      return;
+    }
+  }
   renderView('tasks');
 }
 
