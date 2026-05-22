@@ -22,17 +22,24 @@ const COLOR_STOP    = '#ef4444';
 const LOGO_URL = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png';
 
 // Cache the logo across requests so we don't refetch on every PDF.
+// Cap at 200KB — bigger and we skip the embed and use a text header
+// instead, otherwise every PDF balloons to 2+ MB which is awful for
+// WhatsApp recipients on metered data.
+const LOGO_MAX_BYTES = 200 * 1024;
 let _logoBuf = null;
+let _logoChecked = false;
 async function getLogoBuffer() {
-  if (_logoBuf) return _logoBuf;
+  if (_logoChecked) return _logoBuf;
+  _logoChecked = true;
   try {
-    const r = await fetchWithTimeout(LOGO_URL, { timeoutMs: 5000 });
-    if (!r.ok) return null;
-    // fetchWithTimeout returns text — for binary we need a different approach
-    // Switch to raw fetch with arrayBuffer for the logo
     const resp = await fetch(LOGO_URL);
     if (!resp.ok) return null;
     const ab = await resp.arrayBuffer();
+    if (ab.byteLength > LOGO_MAX_BYTES) {
+      console.warn(`[triagePdf] logo too large (${ab.byteLength} bytes) — using text header instead`);
+      _logoBuf = null;
+      return null;
+    }
     _logoBuf = Buffer.from(ab);
     return _logoBuf;
   } catch (_) { return null; }
@@ -171,16 +178,26 @@ async function streamTriagePdf({ project, lang, res }) {
   res.setHeader('Content-Disposition', `inline; filename="qualification-brief-${safeName}.pdf"`);
   doc.pipe(res);
 
-  // Logo (best-effort — pdf still renders if logo fetch fails)
+  // Logo (best-effort — pdf still renders if logo fetch fails or is too big)
   const logo = await getLogoBuffer();
   if (logo) {
     try {
       doc.image(logo, doc.page.margins.left, 30, { width: 140 });
-    } catch (_) {}
+      doc.moveDown(2.2);
+    } catch (_) {
+      // Logo render failed — fall through to text header
+      doc.font('Helvetica-Bold').fontSize(18).fillColor(COLOR_ACCENT).text('Digit2AI', doc.page.margins.left, 32);
+      doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('Neural Intelligence', doc.page.margins.left, 54);
+      doc.moveDown(1.5);
+    }
+  } else {
+    // No logo — render the wordmark as styled text so the header still looks branded
+    doc.font('Helvetica-Bold').fontSize(18).fillColor(COLOR_ACCENT).text('Digit2AI', doc.page.margins.left, 32);
+    doc.font('Helvetica').fontSize(9).fillColor(COLOR_MUTED).text('Neural Intelligence', doc.page.margins.left, 54);
+    doc.moveDown(1.5);
   }
 
   // Title block
-  doc.moveDown(2.2);
   doc.font('Helvetica-Bold').fontSize(22).fillColor(COLOR_INK).text(lbl.title);
   doc.font('Helvetica').fontSize(10).fillColor(COLOR_MUTED).text(`${lbl.generated}: ${fmtDate(new Date(), language)}`);
   doc.moveDown(0.4);

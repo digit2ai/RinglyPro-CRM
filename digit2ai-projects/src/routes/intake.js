@@ -1177,6 +1177,10 @@ router.get('/projects/:id/triage-pdf', async (req, res) => {
     const tokenStr = String(req.query.token || '').trim();
     const lang = (req.query.lang === 'es') ? 'es' : 'en';
     if (!tokenStr) return res.status(400).json({ success: false, error: 'token required' });
+    // Token is stored as UUID — anything else is guaranteed-invalid, return
+    // 404 without hitting the DB (postgres would throw on a non-UUID cast).
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(tokenStr)) return res.status(404).json({ success: false, error: 'Invalid token' });
 
     const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
     if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
