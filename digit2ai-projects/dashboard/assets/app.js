@@ -1527,9 +1527,21 @@ async function runInboxTriage(projectId) {
 window.runInboxTriage = runInboxTriage;
 
 async function runProjectTriage(projectId) {
-  if (typeof showCopyToast === 'function') showCopyToast('Triage agent running… (15-25s)');
-  const r = await api('/agents/triage/' + projectId, { method: 'POST', body: JSON.stringify({}) });
-  if (!r.success) { alert('Triage failed: ' + (r.error || 'unknown')); return; }
+  if (typeof showCopyToast === 'function') showCopyToast('AI Triage running… (15-25s) — fit score, regulatory flags, stakeholder questions');
+  try {
+    const r = await api('/agents/triage/' + projectId, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success) {
+      const msg = r.error === 'no_api_key'
+        ? 'AI Triage unavailable: ANTHROPIC_API_KEY is not configured on the server.'
+        : 'AI Triage failed: ' + (r.error || 'unknown');
+      alert(msg);
+      return;
+    }
+    if (typeof showCopyToast === 'function') showCopyToast('AI Triage complete · Fit ' + (r.fit_score || '?') + '/10 · ' + (r.recommendation || '').replace(/_/g, ' '));
+  } catch (e) {
+    alert('AI Triage error: ' + (e.message || e));
+    return;
+  }
   showProjectDetail(projectId);
 }
 window.runProjectTriage = runProjectTriage;
@@ -4621,6 +4633,7 @@ async function showProjectDetail(id) {
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="chooseScheduleMeetingLanguage(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and sends a styled HTML email." style="color:#2D8CFF;border-color:#2D8CFF">Schedule Meeting</button>
+          <button class="btn btn-sm" onclick="runProjectTriage(${p.id})" title="${p.triage_brief ? 'Re-run AI Triage to refresh the fit score, stakeholder questions, and recommendation.' : 'Run AI Triage on this project: fit score, regulatory flags, portfolio synergies, bilingual stakeholder questions, and go/no-go recommendation. Takes 15-25s.'}" style="background:linear-gradient(90deg,#7c5cff,#a78bfa);border:none;color:#fff">&#129302; ${p.triage_brief ? 'Re-run AI Triage' : 'Run AI Triage'}</button>
           <button class="btn btn-sm" onclick="openShareProjectModal(${p.id})" title="Send the project summary + open-access magic link via WhatsApp, SMS, or Mail. Anyone you forward the link to can view it (no login required)." style="background:#10b981;color:#fff;border-color:#10b981">&#128229; Share Project</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           ${p.archived_at
