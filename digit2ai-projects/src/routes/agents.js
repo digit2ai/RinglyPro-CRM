@@ -168,4 +168,35 @@ router.post('/triage/:projectId', async (req, res) => {
   }
 });
 
+// PUT /api/v1/agents/triage/:projectId — admin edit of the triage brief.
+// Updates triage_brief (markdown) and optionally fit_score / recommendation
+// in triage_structured so the banner stays in sync with edited content.
+router.put('/triage/:projectId', async (req, res) => {
+  try {
+    const id = parseInt(req.params.projectId, 10);
+    const project = await Project.findOne({ where: { id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'project_not_found' });
+    const { triage_brief, fit_score, go_no_go_recommendation } = req.body || {};
+    if (typeof triage_brief !== 'string') {
+      return res.status(400).json({ success: false, error: 'triage_brief (string) required' });
+    }
+    const updates = { triage_brief, triage_at: new Date() };
+    if (typeof fit_score === 'number' || typeof go_no_go_recommendation === 'string') {
+      const struct = { ...(project.triage_structured || {}) };
+      if (typeof fit_score === 'number') struct.fit_score = Math.max(1, Math.min(10, Math.round(fit_score)));
+      if (typeof go_no_go_recommendation === 'string') {
+        const allowed = new Set(['accept', 'accept_with_conditions', 'reject', 'review']);
+        if (allowed.has(go_no_go_recommendation)) struct.go_no_go_recommendation = go_no_go_recommendation;
+      }
+      updates.triage_structured = struct;
+    }
+    updates.triage_model = (project.triage_model || 'manual') + (project.triage_model && !/edited/.test(project.triage_model) ? ' (edited)' : '');
+    await project.update(updates);
+    res.json({ success: true, data: { id: project.id, triage_brief: project.triage_brief, triage_structured: project.triage_structured, triage_at: project.triage_at, triage_model: project.triage_model } });
+  } catch (err) {
+    console.error('[D2AI-Agents] triage PUT error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

@@ -1509,7 +1509,10 @@ function renderProjectTriagePanel(p) {
     <div class="detail-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
         <h4 style="margin:0">🤖 AI Triage</h4>
-        <button class="btn btn-ghost btn-sm" onclick="runProjectTriage(${p.id})">Re-run</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openTriageEditModal(${p.id})" title="Edit the Neural Intelligence Brief — fit score, recommendation, and markdown body">&#9998; Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="runProjectTriage(${p.id})">Re-run</button>
+        </div>
       </div>
       ${renderTriageScoreBanner(structured)}
       <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
@@ -1517,6 +1520,62 @@ function renderProjectTriagePanel(p) {
     </div>`;
 }
 window.renderProjectTriagePanel = renderProjectTriagePanel;
+
+async function openTriageEditModal(projectId) {
+  const projRes = await api('/projects/' + projectId);
+  if (!projRes.success) { alert('Could not load project'); return; }
+  const p = projRes.data;
+  const brief = p.triage_brief || '';
+  const struct = p.triage_structured || {};
+  const currentFit = typeof struct.fit_score === 'number' ? struct.fit_score : '';
+  const currentRec = struct.go_no_go_recommendation || 'review';
+  const recOpts = ['accept', 'accept_with_conditions', 'reject', 'review']
+    .map(v => `<option value="${v}"${v === currentRec ? ' selected' : ''}>${v.replace(/_/g, ' ')}</option>`)
+    .join('');
+  const escA = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  openModal('Edit Neural Intelligence Brief', `
+    <p style="margin:0 0 12px;font-size:12px;color:var(--text-muted)">
+      Edit the markdown brief and (optionally) the fit score + verdict. Saving stamps the model as <em>edited</em> and updates the generated-at timestamp.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-group" style="margin:0">
+        <label>Fit score (1-10)</label>
+        <input type="number" id="m-triage-fit" min="1" max="10" step="1" value="${currentFit}" />
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Verdict</label>
+        <select id="m-triage-rec">${recOpts}</select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Brief (markdown)</label>
+      <textarea id="m-triage-brief" rows="22" style="font-family:'SF Mono','Monaco','Menlo',monospace;font-size:12px;line-height:1.5;width:100%">${escA(brief)}</textarea>
+      <small style="color:var(--text-muted)">Headings start with <code>##</code>. Bullets use <code>-</code>. Bold uses <code>**text**</code>. The triage banner colors are driven by the verdict above, not the markdown.</small>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveTriageEdit(${p.id})">Save</button>
+    </div>
+  `, () => {});
+}
+window.openTriageEditModal = openTriageEditModal;
+
+async function saveTriageEdit(projectId) {
+  const briefEl = document.getElementById('m-triage-brief');
+  const fitEl = document.getElementById('m-triage-fit');
+  const recEl = document.getElementById('m-triage-rec');
+  if (!briefEl) return;
+  const body = { triage_brief: briefEl.value };
+  const fitNum = Number(fitEl?.value);
+  if (Number.isFinite(fitNum) && fitNum >= 1 && fitNum <= 10) body.fit_score = fitNum;
+  if (recEl && recEl.value) body.go_no_go_recommendation = recEl.value;
+  const r = await api('/agents/triage/' + projectId, { method: 'PUT', body: JSON.stringify(body) });
+  if (!r.success) { alert('Save failed: ' + (r.error || 'unknown')); return; }
+  if (typeof showCopyToast === 'function') showCopyToast('Neural Intelligence Brief updated');
+  closeModal();
+  showProjectDetail(projectId);
+}
+window.saveTriageEdit = saveTriageEdit;
 
 async function runInboxTriage(projectId) {
   if (typeof showCopyToast === 'function') showCopyToast('Triage agent running… (15-25s)');
