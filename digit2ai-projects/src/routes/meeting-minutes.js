@@ -33,6 +33,15 @@ function autoSendIfFirstTime(meetingMinuteId, delayMs = 4000) {
 // Fire Claude to extract action items + summary and auto-create Tasks
 // under the linked project. Non-blocking: callers continue while this
 // runs in the background. Updates the MeetingMinute row in place.
+//
+// Option A — Agent Routing:
+//   Each extracted item is pre-classified with agent_type ('research' |
+//   'draft' | 'none') by the extractor itself. Tasks born from a meeting
+//   thus skip the regex-classifier (they bypass the POST /tasks route)
+//   and instead receive their routing here. After all rows are created
+//   we throttle-dispatch the ones routed to an agent (concurrency 3,
+//   1s between batches) so a noisy meeting cannot fan out 12 parallel
+//   Claude calls and rate-limit itself.
 function processMeetingAsync(meetingMinuteId) {
   setImmediate(async () => {
     try {
@@ -53,12 +62,17 @@ function processMeetingAsync(meetingMinuteId) {
         projectDescription
       });
       let createdCount = 0;
+      const tasksToDispatch = []; // [{ id, agent_type }]
       if (projectId && Array.isArray(result.action_items) && result.action_items.length) {
         for (const item of result.action_items) {
           try {
             const due = new Date();
             due.setDate(due.getDate() + (item.due_in_days || 7));
-            await Task.create({
+            // Map extractor's agent_type to the Task columns.
+            // 'none' means no agent -> leave columns NULL so the row looks
+            // exactly like a manually-created human task.
+            const wantsAgent = item.agent_type === 'research' || item.agent_type === 'draft';
+            const created = await Task.create({
               workspace_id: row.workspace_id || 1,
               project_id: projectId,
               title: item.title,
@@ -66,9 +80,12 @@ function processMeetingAsync(meetingMinuteId) {
               priority: item.priority || 'medium',
               status: 'pending',
               task_type: 'task',
-              due_date: due.toISOString().slice(0, 10)
+              due_date: due.toISOString().slice(0, 10),
+              agent_type: wantsAgent ? item.agent_type : null,
+              agent_status: wantsAgent ? 'pending' : null
             });
             createdCount++;
+            if (wantsAgent) tasksToDispatch.push({ id: created.id, agent_type: item.agent_type });
           } catch (taskErr) {
             console.error('[D2AI-MeetingMinutes] Task create failed:', taskErr.message);
           }
@@ -79,7 +96,38 @@ function processMeetingAsync(meetingMinuteId) {
       row.ai_processed_at = new Date();
       row.auto_tasks_created = createdCount;
       await row.save();
-      console.log(`[D2AI-MeetingMinutes] Processed minute #${row.id}: ${result.action_items.length} items extracted, ${createdCount} tasks created`);
+      const routedCounts = tasksToDispatch.reduce((acc, t) => { acc[t.agent_type] = (acc[t.agent_type] || 0) + 1; return acc; }, {});
+      console.log(`[D2AI-MeetingMinutes] Processed minute #${row.id}: ${result.action_items.length} items, ${createdCount} tasks, ${tasksToDispatch.length} routed (${JSON.stringify(routedCounts)})`);
+
+      // Throttled inline dispatch — concurrency 3, 1s between batches.
+      // Each dispatcher call is itself a Claude API call (typically 15-25s);
+      // we want the user to see agent_output start appearing within ~30s
+      // without saturating the Anthropic rate limit on a noisy meeting.
+      if (tasksToDispatch.length) {
+        try {
+          const dispatcher = require('../services/agents/dispatcher');
+          const CONCURRENCY = 3;
+          const BATCH_DELAY_MS = 1000;
+          for (let i = 0; i < tasksToDispatch.length; i += CONCURRENCY) {
+            const batch = tasksToDispatch.slice(i, i + CONCURRENCY);
+            await Promise.all(batch.map(async t => {
+              try {
+                const r = await dispatcher.processTaskById(t.id);
+                if (r.ok) console.log(`[D2AI-MeetingMinutes] auto-dispatch task #${t.id} (${t.agent_type}) -> ready_for_review`);
+                else console.warn(`[D2AI-MeetingMinutes] auto-dispatch task #${t.id} (${t.agent_type}) failed:`, r.error);
+              } catch (dErr) {
+                console.error(`[D2AI-MeetingMinutes] auto-dispatch task #${t.id} threw:`, dErr.message);
+              }
+            }));
+            if (i + CONCURRENCY < tasksToDispatch.length) {
+              await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
+            }
+          }
+          console.log(`[D2AI-MeetingMinutes] auto-dispatch complete for minute #${row.id}: ${tasksToDispatch.length} tasks processed`);
+        } catch (dispErr) {
+          console.error('[D2AI-MeetingMinutes] auto-dispatch loop failed:', dispErr.message);
+        }
+      }
     } catch (err) {
       console.error('[D2AI-MeetingMinutes] processMeetingAsync error:', err.message);
     }
