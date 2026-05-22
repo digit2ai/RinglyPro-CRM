@@ -1425,7 +1425,7 @@ async function approveInboxItem(projectId) {
 function triageLightFromRec(rec) {
   const r = String(rec || '').toLowerCase();
   if (r === 'accept' || r === 'go')      return { light: '🟢', label: 'GO',     fg: '#10b981', bg: 'rgba(16,185,129,0.10)', border: '#10b981' };
-  if (r === 'accept_with_conditions')    return { light: '🟡', label: 'CAUTION',fg: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: '#f59e0b' };
+  if (r === 'accept_with_conditions')    return { light: '🟡', label: 'Proof of Concept (PoC)',fg: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: '#f59e0b' };
   if (r === 'reject' || r === 'no_go')   return { light: '🔴', label: 'STOP',   fg: '#ef4444', bg: 'rgba(239,68,68,0.10)', border: '#ef4444' };
   return { light: '⚪', label: 'REVIEW', fg: '#64748b', bg: 'rgba(100,116,139,0.10)', border: '#64748b' };
 }
