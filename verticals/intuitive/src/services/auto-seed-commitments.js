@@ -81,7 +81,10 @@ function proceduresForSpecialty(specialty) {
   return DEFAULT_PROCS;
 }
 
-// Build the procedures[] array for one surgeon row given their incremental case bucket
+// Build the procedures[] array for one surgeon row given their incremental case bucket.
+// Each procedure row carries patient_source (existing | incremental) and a realistic
+// pct_converted_from_open. Default to 'existing' with 20% conversion — NEVER 100%
+// (the broken math from the Vanderbilt deck that the meeting flagged).
 function buildProcedureBreakdown(specialty, totalIncrementalAnnual, financialOverrides = {}) {
   const ladder = proceduresForSpecialty(specialty);
   const procs = [];
@@ -94,15 +97,30 @@ function buildProcedureBreakdown(specialty, totalIncrementalAnnual, financialOve
       procedure_type: p.name,
       procedure_name: p.name,
       drg_code: p.drg,
+      // CFO-grade incremental split (Deck 3 Slide 12 pattern)
+      patient_source: 'existing',
+      pct_converted_from_open: 20, // realistic default; rep can revise during review
       incremental_cases_monthly: monthly,
       incremental_cases_annual: annual,
       current_monthly_volume: 0, // rep fills in when refining
       competitive_leakage_cases: 0,
       reimbursement_rate: rate,
-      notes: 'Auto-seeded from analysis. Refine with surgeon survey data.',
+      notes: 'Auto-seeded. Existing patient source @ 20% conversion default. Refine with surgeon commitment data.',
     });
   }
   return procs;
+}
+
+// Determine commitment_category from MPUP robotic volume + training data
+//   - trained + high robotic volume     → open_to_mis
+//   - trained + low robotic volume      → pull_forward (proficient, blocked by access)
+//   - untrained                         → training_pipeline
+function inferCommitmentCategory(roboticCasesLastYr, hasTraining) {
+  const v = Number(roboticCasesLastYr) || 0;
+  if (!hasTraining) return 'training_pipeline';
+  if (v > 50) return 'open_to_mis';
+  if (v > 20) return 'pull_forward';
+  return 'open_to_mis'; // default
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +312,12 @@ async function autoSeedForPlan(planId, ctx) {
     const totalAnnual = procedures.reduce((sum, p) => sum + (p.incremental_cases_annual || 0), 0);
     const totalRevenue = procedures.reduce((sum, p) => sum + ((p.incremental_cases_annual || 0) * (p.reimbursement_rate || 0)), 0);
 
+    // Categorize for the 3-tab CFO view: high-volume trained → open_to_mis,
+    // medium-volume trained → pull_forward, no-data → training_pipeline
+    const hasTraining = cls.tier !== 'unknown'; // unknown = no MPUP data = likely untrained
+    const commitmentCategory = inferCommitmentCategory(s.robotic_cases_last_yr, hasTraining);
+    const trainingNeeds = !hasTraining ? 'TR200 — initial credentialing' : null;
+
     try {
       const row = await models.IntuitiveSurgeonCommitment.create({
         business_plan_id: planId,
@@ -306,6 +330,10 @@ async function autoSeedForPlan(planId, ctx) {
         procedures,
         total_incremental_annual: totalAnnual,
         total_revenue_impact: totalRevenue,
+        commitment_category: commitmentCategory,
+        trained: hasTraining,
+        training_needs: trainingNeeds,
+        proctoring_needed: !hasTraining,
         source: 'auto_seed',
         status: 'draft',
       });

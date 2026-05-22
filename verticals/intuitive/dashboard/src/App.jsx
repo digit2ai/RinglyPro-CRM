@@ -30,6 +30,8 @@ import TrackingDashboardPage from './pages/TrackingDashboardPage'
 import ReportPage from './pages/ReportPage'
 import AskPage from './pages/AskPage'
 import SurgeonTargetingPage from './pages/SurgeonTargetingPage'
+import ExecutiveBriefPage from './pages/ExecutiveBriefPage'
+import SurgeonCommitmentsPage from './pages/SurgeonCommitmentsPage'
 import ChatWidget from './components/ChatWidget'
 import { api } from './lib/api'
 
@@ -155,8 +157,10 @@ const NAV_STEPS = [
   { to: '/recommendations', label: 'System Match', num: 4, icon: 'M', section: 'project' },
   { to: '/presentation', label: 'Presentation', num: 5, icon: 'P', section: 'project' },
   { to: '/business-plan', label: 'Business Plan', num: 6, icon: 'B', section: 'project' },
-  { to: '/tracking', label: 'Plan Tracking', num: 7, icon: 'T', section: 'project' },
-  { to: '/report', label: 'Report', num: 8, icon: 'R', section: 'project' },
+  { to: '/commitments', label: 'Surgeon Commitments', num: 6, icon: 'C', section: 'project' },
+  { to: '/executive', label: 'Executive Brief', num: 7, icon: 'E', section: 'project' },
+  { to: '/tracking', label: 'Plan Tracking', num: 8, icon: 'T', section: 'project' },
+  { to: '/report', label: 'Report', num: 9, icon: 'R', section: 'project' },
 ]
 
 // Process documentation -- shown when user clicks the (i) icon next to a step
@@ -377,7 +381,7 @@ export default function App() {
   // Sync currentProject from URL whenever the user navigates to a project-specific page
   useEffect(() => {
     if (!user) return
-    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report)\/(\d+)/)
+    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report|commitments|executive)\/(\d+)/)
     if (!m) return
     const pid = parseInt(m[1])
     if (!pid || pid === currentProject) return
@@ -638,6 +642,10 @@ export default function App() {
           <Route path="/presentation/:projectId" element={<PresentationPage />} />
           <Route path="/business-plan" element={<BusinessPlanPage projectId={currentProject} />} />
           <Route path="/business-plan/:projectId" element={<BusinessPlanPage />} />
+          <Route path="/commitments" element={<SurgeonCommitmentsPage projectId={currentProject} />} />
+          <Route path="/commitments/:projectId" element={<SurgeonCommitmentsPage />} />
+          <Route path="/executive" element={<ExecutiveBriefPage projectId={currentProject} />} />
+          <Route path="/executive/:projectId" element={<ExecutiveBriefPage />} />
           <Route path="/surveys" element={<SurveyManagerPage projectId={currentProject} />} />
           <Route path="/surveys/:projectId" element={<SurveyManagerPage />} />
           <Route path="/tracking" element={<TrackingDashboardPage />} />

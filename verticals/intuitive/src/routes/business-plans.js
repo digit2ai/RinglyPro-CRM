@@ -346,19 +346,41 @@ router.post('/:planId/surgeons', async (req, res) => {
     if (!plan) return res.status(404).json({ error: 'Business plan not found' });
 
     const { surgeon_name, surgeon_email, surgeon_phone, surgeon_specialty,
-            hospital_affiliation, procedures, source } = req.body;
+            hospital_affiliation, procedures, source,
+            commitment_category, trained, training_needs, proctoring_needed,
+            current_weekly_volume, target_weekly_volume, backlog_weeks,
+            free_text_intel } = req.body;
 
     if (!surgeon_name) return res.status(400).json({ error: 'surgeon_name is required' });
 
     // Calculate totals from procedures
+    // Existing/Incremental split (Deck 3 Slide 12): procedures with patient_source='existing'
+    // multiply incremental_cases by pct_converted_from_open (default 20% — NOT 100%).
+    // Procedures with patient_source='incremental' use the volume directly (net-new cases).
     const procs = procedures || [];
     let totalAnnual = 0;
     let totalRevenue = 0;
     for (const p of procs) {
-      const annual = (p.incremental_cases_monthly || 0) * 12;
+      // Default patient_source to 'existing' for back-compat
+      if (!p.patient_source) p.patient_source = 'existing';
+      // Realistic default conversion: 20% (Deck 3 said NEVER 100%)
+      if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
+        p.pct_converted_from_open = 20;
+      }
+
+      const monthly = parseFloat(p.incremental_cases_monthly || 0);
+      let annual;
+      if (p.patient_source === 'existing') {
+        // Apply conversion percentage to the monthly volume
+        const pct = parseFloat(p.pct_converted_from_open || 20) / 100;
+        annual = Math.round(monthly * 12 * pct);
+      } else {
+        // Incremental (net-new) — use volume directly
+        annual = Math.round(monthly * 12);
+      }
       p.incremental_cases_annual = annual;
       totalAnnual += annual;
-      totalRevenue += annual * (p.reimbursement_rate || 0);
+      totalRevenue += annual * (parseFloat(p.reimbursement_rate) || 0);
     }
 
     const commitment = await IntuitiveSurgeonCommitment.create({
@@ -369,6 +391,14 @@ router.post('/:planId/surgeons', async (req, res) => {
       procedures: procs,
       total_incremental_annual: totalAnnual,
       total_revenue_impact: totalRevenue,
+      commitment_category: commitment_category || 'open_to_mis',
+      trained: trained !== undefined ? trained : true,
+      training_needs: training_needs || null,
+      proctoring_needed: proctoring_needed || false,
+      current_weekly_volume: current_weekly_volume || null,
+      target_weekly_volume: target_weekly_volume || null,
+      backlog_weeks: backlog_weeks || null,
+      free_text_intel: free_text_intel || null,
       source: source || 'manual'
     });
 
@@ -403,20 +433,35 @@ router.patch('/:planId/surgeons/:id', async (req, res) => {
 
     const updates = {};
     const fields = ['surgeon_name', 'surgeon_email', 'surgeon_phone', 'surgeon_specialty',
-                    'hospital_affiliation', 'procedures', 'source', 'status'];
+                    'hospital_affiliation', 'procedures', 'source', 'status',
+                    'commitment_category', 'trained', 'training_needs', 'proctoring_needed',
+                    'current_weekly_volume', 'target_weekly_volume', 'backlog_weeks',
+                    'free_text_intel'];
     for (const f of fields) {
       if (req.body[f] !== undefined) updates[f] = req.body[f];
     }
 
-    // Recalculate if procedures changed
+    // Recalculate if procedures changed — Existing/Incremental split (Deck 3 Slide 12 pattern)
     if (updates.procedures) {
       let totalAnnual = 0;
       let totalRevenue = 0;
       for (const p of updates.procedures) {
-        const annual = (p.incremental_cases_monthly || 0) * 12;
+        if (!p.patient_source) p.patient_source = 'existing';
+        if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
+          p.pct_converted_from_open = 20;
+        }
+
+        const monthly = parseFloat(p.incremental_cases_monthly || 0);
+        let annual;
+        if (p.patient_source === 'existing') {
+          const pct = parseFloat(p.pct_converted_from_open || 20) / 100;
+          annual = Math.round(monthly * 12 * pct);
+        } else {
+          annual = Math.round(monthly * 12);
+        }
         p.incremental_cases_annual = annual;
         totalAnnual += annual;
-        totalRevenue += annual * (p.reimbursement_rate || 0);
+        totalRevenue += annual * (parseFloat(p.reimbursement_rate) || 0);
       }
       updates.total_incremental_annual = totalAnnual;
       updates.total_revenue_impact = totalRevenue;

@@ -112,6 +112,11 @@ export const api = {
   getSnapshots: (planId) => request(`/tracking/${planId}/snapshots`),
   getExecutiveSummary: (planId) => request(`/tracking/${planId}/executive-summary`),
 
+  // Executive Brief (MyIntuitive+ branded format — Eddie Serene-ready deliverable)
+  getExecutiveBrief: (projectId) => request(`/executive-brief/${projectId}`),
+  getDiagnostic: (projectId) => request(`/executive-brief/${projectId}/diagnostic`),
+  getPeerHospitals: (projectId) => request(`/executive-brief/${projectId}/peers`),
+
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),

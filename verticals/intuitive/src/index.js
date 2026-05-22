@@ -136,6 +136,7 @@ if (intelligenceRoutes) app.use(`${BASE_PATH}/api/v1/intelligence`, requireAuth,
 if (chatRoutes) app.use(`${BASE_PATH}/api/v1/chat`, requireAuth, chatRoutes);
 if (surgeonTargetingRoutes) app.use(`${BASE_PATH}/api/v1/surgeon-targeting`, requireAuth, surgeonTargetingRoutes);
 try { app.use(`${BASE_PATH}/api/v1/dashboard`, requireAuth, require('./routes/dashboard')); } catch (e) { console.error('Dashboard route load error:', e.message); }
+try { app.use(`${BASE_PATH}/api/v1/executive-brief`, requireAuth, require('./routes/executive-brief')); } catch (e) { console.error('Executive Brief route load error:', e.message); }
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)
