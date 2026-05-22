@@ -67,10 +67,13 @@ router.get('/', async (req, res) => {
           ]
         }
       }),
+      // Calendar badge: meetings still upcoming today (from now → end-of-day).
+      // Past meetings shouldn't surface here — the home-page chip is meant to
+      // tell the user what they still have to attend.
       CalendarEvent.count({
         where: {
           workspace_id: ws,
-          start_time: { [Op.between]: [startOfToday, new Date(startOfToday.getTime() + 86400000)] }
+          start_time: { [Op.between]: [now, new Date(startOfToday.getTime() + 86400000)] }
         }
       }),
       CalendarEvent.findAll({ where: { workspace_id: ws, start_time: { [Op.gte]: now } }, order: [['start_time', 'ASC']], limit: 5 }),
