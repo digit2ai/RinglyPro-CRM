@@ -1863,24 +1863,22 @@ function sendShareProjectVia(channel) {
   const phoneRaw = (document.getElementById('m-share-phone') || {}).value || '';
   const emailTo  = (document.getElementById('m-share-email') || {}).value || '';
   const summary  = (document.getElementById('m-share-summary') || {}).value || '';
-  const magic    = (document.getElementById('m-share-magic')   || {}).value || '';
   const lang     = (document.getElementById('m-share-lang')    || {}).value || 'en';
   const ctx = window._shareProjectCtx || {};
   const pname = ctx.name || '';
   const pdesc = (ctx.description || '').slice(0, 500);
 
-  // Message body — project summary + both links (public summary + magic link)
+  // Message body — single open-access link. The batch.html magic link now
+  // auto-redirects project-scoped tokens to the summary page anyway, so
+  // sending two URLs would just confuse the recipient.
   const msg = lang === 'es'
     ? [
         `Hola, le comparto el proyecto "${pname}":`,
         '',
         pdesc,
         '',
-        '🔗 Ver resumen completo y brief de Inteligencia Neural (acceso abierto, sin login):',
+        '🔗 Ver el proyecto completo + brief de Inteligencia Neural (acceso abierto, sin login):',
         summary,
-        '',
-        '💬 Discutir el proyecto en línea (requiere identificarse con correo):',
-        magic,
         '',
         '— Manuel Stagg / Digit2AI'
       ].join('\n')
@@ -1889,11 +1887,8 @@ function sendShareProjectVia(channel) {
         '',
         pdesc,
         '',
-        '🔗 Full summary + Neural Intelligence brief (open access, no login required):',
+        '🔗 Open the full project + Neural Intelligence brief (no login required):',
         summary,
-        '',
-        '💬 Discuss the project online (requires email identification):',
-        magic,
         '',
         '— Manuel Stagg / Digit2AI'
       ].join('\n');

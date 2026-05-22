@@ -211,6 +211,34 @@ router.post('/public/request', async (req, res) => {
 // =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
+// GET /share/:token/info — lightweight, no auth. Lets the magic-link page
+// decide its UX before rendering. Returns the token kind so project-scoped
+// tokens (open-access shares) can skip the identify gate, and batch-scoped
+// tokens (intake batches) keep the existing email gate.
+router.get('/share/:token/info', async (req, res) => {
+  try {
+    const tokenStr = String(req.params.token || '').trim();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(tokenStr)) return res.status(404).json({ success: false, error: 'Invalid token' });
+    const accessToken = await CompanyAccessToken.findOne({ where: { token: tokenStr } });
+    if (!accessToken) return res.status(404).json({ success: false, error: 'Invalid token' });
+    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+      return res.status(403).json({ success: false, error: 'Link expired' });
+    }
+    res.json({
+      success: true,
+      kind: accessToken.project_id ? 'project' : (accessToken.batch_id ? 'batch' : 'unknown'),
+      project_id: accessToken.project_id || null,
+      batch_id: accessToken.batch_id || null,
+      company_id: accessToken.company_id || null,
+      requires_identify: !accessToken.project_id
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] share/info error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /share/:token/identify { email, name }
 //   -> returns { jwt, company_id, batch_id, role, expires_at }
 router.post('/share/:token/identify', async (req, res) => {
