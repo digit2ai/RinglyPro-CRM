@@ -1594,7 +1594,9 @@ async function openQualifyMeetingModal(projectId) {
 }
 window.openQualifyMeetingModal = openQualifyMeetingModal;
 
-// Action 2 — Send Qualify PDF: small modal with phone + language + 3 send buttons
+// Action 2 — Send Qualify PDF: small modal with phone + language + 3 send buttons.
+// Every channel includes BOTH the PDF link AND the magic link (open discussion)
+// so the recipient can pick: read the PDF offline, or answer questions in-app.
 async function openQualifyPdfModal(projectId) {
   const inboxRes = await api('/projects/inbox');
   const p = inboxRes.success ? (inboxRes.data || []).find(x => x.id === projectId) : null;
@@ -1602,6 +1604,7 @@ async function openQualifyPdfModal(projectId) {
   if (!p.share_token) { alert('No share token on this project — open discussion at least once to mint it.'); return; }
   const initialLang = detectLangFromCountry(p.country);
   const pdfBase = `${location.origin}/projects/api/v1/intake/projects/${p.id}/triage-pdf?token=${encodeURIComponent(p.share_token)}`;
+  const magicLink = `${location.origin}/projects/intake/batch.html?token=${encodeURIComponent(p.share_token)}`;
   const recName = p.submitter_name || p.submitter_email || 'requestor';
   const phoneInit = p.submitter_phone || '';
   const escA = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -1611,6 +1614,7 @@ async function openQualifyPdfModal(projectId) {
       <strong>${escHtml(p.name)}</strong><br>
       Sending to: <strong>${escHtml(recName)}</strong>${p.submitter_email ? ' &lt;' + escHtml(p.submitter_email) + '&gt;' : ''}
     </p>
+    <input type="hidden" id="m-qpdf-magic" value="${escA(magicLink)}">
     <div class="form-group">
       <label>Language</label>
       <div style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
@@ -1625,14 +1629,18 @@ async function openQualifyPdfModal(projectId) {
       <small style="color:var(--text-muted)">Include country code. Spaces and dashes are fine.</small>
     </div>
     <div class="form-group">
-      <label>PDF link</label>
+      <label>PDF link (read-only handout)</label>
       <input type="text" id="m-qpdf-url" value="${escA(pdfBase + '&lang=' + initialLang)}" readonly style="font-size:11px">
-      <small style="color:var(--text-muted)">Token-gated link. Anyone with the URL can open the PDF.</small>
+    </div>
+    <div class="form-group">
+      <label>Discussion link (where they answer the questions live)</label>
+      <input type="text" value="${escA(magicLink)}" readonly style="font-size:11px">
+      <small style="color:var(--text-muted)">Both links are token-gated. Every send below includes BOTH the PDF and the discussion link so the recipient can pick: read the PDF offline, or answer questions in the app.</small>
     </div>
     <div class="form-group" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
       <button type="button" class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="sendQualifyPdfVia('whatsapp', ${p.id})">📱 WhatsApp</button>
       <button type="button" class="btn btn-sm" style="background:#3b82f6;color:#fff;border-color:#3b82f6" onclick="sendQualifyPdfVia('sms', ${p.id})">💬 SMS / Messages</button>
-      <button type="button" class="btn btn-sm" style="background:#ea4335;color:#fff;border-color:#ea4335" onclick="sendQualifyPdfVia('gmail', ${p.id})">✉ Gmail</button>
+      <button type="button" class="btn btn-sm" style="background:#0066CC;color:#fff;border-color:#0066CC" onclick="sendQualifyPdfVia('mail', ${p.id})">✉ Mail</button>
       <button type="button" class="btn btn-sm btn-ghost" onclick="window.open(document.getElementById('m-qpdf-url').value, '_blank', 'noopener')">Preview PDF</button>
     </div>
   `, () => {}); // submit handler unused — buttons trigger sends directly
@@ -1659,21 +1667,49 @@ window.setQualifyPdfLang = setQualifyPdfLang;
 
 function sendQualifyPdfVia(channel, projectId) {
   const phoneRaw = (document.getElementById('m-qpdf-phone') || {}).value || '';
-  const url = (document.getElementById('m-qpdf-url') || {}).value || '';
-  const lang = (document.getElementById('m-qpdf-lang') || {}).value || 'en';
+  const pdfUrl   = (document.getElementById('m-qpdf-url')   || {}).value || '';
+  const magicUrl = (document.getElementById('m-qpdf-magic') || {}).value || '';
+  const lang     = (document.getElementById('m-qpdf-lang')  || {}).value || 'en';
+
+  // Every channel ships both links so the recipient picks how to engage:
+  //   PDF link  -> read offline, fill in by hand, print
+  //   Magic link -> open the discussion in-app, type answers in the threaded Q&A
   const msg = lang === 'es'
-    ? `Hola, le comparto el resumen de calificación del proyecto con las preguntas para discutir. ¿Podría revisarlo y responder las preguntas? ${url}\n\n— Manuel Stagg / Digit2AI`
-    : `Hi, sharing the qualification brief with the stakeholder questions. Could you review and reply to the questions? ${url}\n\n— Manuel Stagg / Digit2AI`;
-  const subjectEn = `Project qualification brief — questions to review`;
-  const subjectEs = `Resumen de calificación del proyecto — preguntas a revisar`;
-  if (channel === 'gmail') {
-    // Lookup submitter email
+    ? [
+        'Hola, le comparto el resumen de calificación del proyecto con las preguntas para discutir.',
+        '',
+        '📄 Resumen en PDF (para revisar o imprimir):',
+        pdfUrl,
+        '',
+        '💬 Responder las preguntas en línea (acceso directo a la discusión):',
+        magicUrl,
+        '',
+        '— Manuel Stagg / Digit2AI'
+      ].join('\n')
+    : [
+        'Hi, sharing the qualification brief with the stakeholder questions.',
+        '',
+        '📄 PDF brief (review or print):',
+        pdfUrl,
+        '',
+        '💬 Answer the questions online (direct discussion link):',
+        magicUrl,
+        '',
+        '— Manuel Stagg / Digit2AI'
+      ].join('\n');
+
+  const subjectEn = 'Project qualification brief — questions to review';
+  const subjectEs = 'Resumen de calificación del proyecto — preguntas a revisar';
+
+  if (channel === 'mail') {
+    // Use mailto: so the OS opens the default mail client (Apple Mail on macOS/iOS,
+    // Outlook on Windows if set as default, etc.). No more Gmail-web bias.
     api('/projects/inbox').then(r => {
       const p = r.success ? (r.data || []).find(x => x.id === projectId) : null;
       const to = (p && p.submitter_email) || '';
       const subject = lang === 'es' ? subjectEs : subjectEn;
-      const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
-      window.open(gmailUrl, '_blank', 'noopener');
+      const mailto = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
+      window.location.href = mailto;
       closeModal();
     });
     return;
