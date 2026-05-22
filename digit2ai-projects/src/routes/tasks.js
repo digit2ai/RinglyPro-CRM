@@ -142,19 +142,30 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Task Agent Loop — classify newly-created or freshly-edited tasks so the
-// worker tick can pick them up. Non-blocking; never let agent failures
-// break the task create/update path.
-function safeClassify(taskId) {
+// Task Agent Loop — classify newly-created or freshly-edited tasks AND
+// immediately dispatch the agent inline (no cron required). Non-blocking;
+// never let agent failures break the task create/update path. Total time
+// per task is typically 20-40s of background work after the response goes
+// back to the client.
+function safeClassifyAndDispatch(taskId) {
   setImmediate(async () => {
     try {
       const { classifyAndQueue } = require('../services/agents/classifier');
-      await classifyAndQueue(taskId);
+      const chosen = await classifyAndQueue(taskId);
+      if (!chosen) return; // 'skipped' or no key — nothing to dispatch
+      // Fire the dispatcher right away so the brief is ready in ~30s.
+      const dispatcher = require('../services/agents/dispatcher');
+      const r = await dispatcher.processTaskById(taskId);
+      if (r.ok) console.log(`[tasks] agent ${chosen} done for #${taskId}`);
+      else console.warn(`[tasks] agent ${chosen} failed for #${taskId}:`, r.error);
     } catch (e) {
-      console.warn('[tasks] safeClassify failed for #' + taskId + ':', e.message);
+      console.warn('[tasks] safeClassifyAndDispatch failed for #' + taskId + ':', e.message);
     }
   });
 }
+// Backwards-compat alias — anyone still calling safeClassify gets the
+// new dispatch-inline behavior too.
+const safeClassify = safeClassifyAndDispatch;
 
 // POST /api/v1/tasks - Create task
 router.post('/', async (req, res) => {
