@@ -129,6 +129,9 @@ export const api = {
   // Market Profile enrichment (Deck 1 p13 + Deck 2 p11/p12 additions)
   getMarketProfileEnrichment: (projectId) => request(`/market-profile/${projectId}/enrichment`),
 
+  // Clinical Outcomes enrichment (Deck 1 p10 + HCAHPS + PSI additions)
+  getClinicalOutcomesEnrichment: (projectId) => request(`/clinical-outcomes/${projectId}/enrichment`),
+
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
