@@ -144,6 +144,7 @@ try { app.use(`${BASE_PATH}/api/v1/market-profile`, requireAuth, require('./rout
 try { app.use(`${BASE_PATH}/api/v1/clinical-outcomes`, requireAuth, require('./routes/clinical-outcomes')); } catch (e) { console.error('Clinical Outcomes route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/clinical-overlay`, requireAuth, require('./routes/clinical-overlay')); } catch (e) { console.error('Clinical Overlay route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/surgeon-commitments`, requireAuth, require('./routes/surgeon-commitments')); } catch (e) { console.error('Surgeon Commitments route load error:', e.message); }
+try { app.use(`${BASE_PATH}/api/v1/business-plan-enrichment`, requireAuth, require('./routes/business-plan-enrichment')); } catch (e) { console.error('Business Plan enrichment route load error:', e.message); }
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

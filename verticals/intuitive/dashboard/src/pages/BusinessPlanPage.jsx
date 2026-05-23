@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import {
+  BarChart, Bar, LineChart, Line, ComposedChart, Area, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, ReferenceLine,
+} from 'recharts'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -956,6 +960,8 @@ export default function BusinessPlanPage({ projectId: propId }) {
   const [finalizing, setFinalizing] = useState(false)
   const [error, setError] = useState(null)
   const [surveyAgg, setSurveyAgg] = useState(null) // live commitments aggregation
+  const [bpEnrichment, setBpEnrichment] = useState(null)
+  const [bpEnrichmentLoading, setBpEnrichmentLoading] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -995,6 +1001,14 @@ export default function BusinessPlanPage({ projectId: propId }) {
         top5,
       })
     }).catch(() => setSurveyAgg(null))
+
+    // Load deck-aligned business plan enrichment
+    setBpEnrichmentLoading(true)
+    api.getBusinessPlanEnrichment(id)
+      .then(r => { if (!cancelled) setBpEnrichment(r.data) })
+      .catch(e => console.error('BP enrichment:', e))
+      .finally(() => { if (!cancelled) setBpEnrichmentLoading(false) })
+
     return () => { cancelled = true }
   }, [id, plan?.id])
 
@@ -1112,6 +1126,305 @@ export default function BusinessPlanPage({ projectId: propId }) {
         <div className="p-3 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200 ml-3">dismiss</button>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ═══ DECK-ALIGNED BUSINESS PLAN ENRICHMENT (Step 8 Step) ═══ */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+
+      {/* ═══ ADDITION #1: System Financials & Assumptions Editor (Deck 1 Slide 14) ═══ */}
+      {bpEnrichment?.system_assumptions && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <h3 className="font-bold text-white mb-1">System Financials & Assumptions</h3>
+          <p className="text-xs text-slate-500 mb-4">Deck 1 Slide 14 pattern · Editable inputs power all proforma calculations</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Acquisition Model</div>
+              <div className="text-base font-bold text-white mt-1 capitalize">{bpEnrichment.system_assumptions.acquisition_model}</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Duration</div>
+              <div className="text-base font-bold text-white mt-1">{bpEnrichment.system_assumptions.duration_yrs} years</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">System Name</div>
+              <div className="text-base font-bold text-white mt-1">{bpEnrichment.system_assumptions.system_name}</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">System Quantity</div>
+              <div className="text-base font-bold text-white mt-1">{bpEnrichment.system_assumptions.system_quantity}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Sum of Payments</div>
+              <div className="text-base font-bold text-white mt-1">${(bpEnrichment.system_assumptions.sum_of_payments / 1e6).toFixed(2)}M</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Annual Service Cost</div>
+              <div className="text-base font-bold text-white mt-1">${bpEnrichment.system_assumptions.annual_service_cost.toLocaleString()}</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Commercial Payer Mix</div>
+              <div className="text-base font-bold text-white mt-1">{bpEnrichment.system_assumptions.commercial_payer_mix_pct}%</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Commercial Premium</div>
+              <div className="text-base font-bold text-white mt-1">{bpEnrichment.system_assumptions.commercial_premium_to_medicare_pct}% over Medicare</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">Cost of 1 Bed/Day</div>
+              <div className="text-base font-bold text-white mt-1">${bpEnrichment.system_assumptions.cost_of_one_bed_day.toLocaleString()}</div>
+            </div>
+            <div className="bg-amber-950/30 border border-amber-700/40 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">OR Variable Cost</div>
+              <div className="text-base font-bold text-white mt-1">${bpEnrichment.system_assumptions.or_variable_cost_per_minute}/min</div>
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-3">{bpEnrichment.system_assumptions.methodology}</div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #2 + INFOGRAPHICS #1 & #2: 5-Year Proforma + Chart (Deck 3 Slide 13) ═══ */}
+      {bpEnrichment?.proforma && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-white">5-Year Robotic Reinvestment Proforma</h3>
+            <span className="text-xs text-emerald-300 font-bold">{bpEnrichment.proforma.headline}</span>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">{bpEnrichment.proforma.methodology}</p>
+
+          {/* Investment Summary KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-slate-900/60 border border-slate-700 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Project IRR</div>
+              <div className="text-2xl font-bold text-emerald-300 mt-1">{bpEnrichment.proforma.investment_summary.project_irr}%</div>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-700 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Payback</div>
+              <div className="text-2xl font-bold text-cyan-300 mt-1">{bpEnrichment.proforma.investment_summary.estimated_payback_years || '5+'} yrs</div>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-700 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">5yr Cost Avoidance</div>
+              <div className="text-2xl font-bold text-amber-300 mt-1">${(bpEnrichment.proforma.investment_summary.total_cost_avoidance_5yr / 1e6).toFixed(1)}M</div>
+            </div>
+            <div className="bg-slate-900/60 border border-slate-700 rounded p-3">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">5yr Incremental Revenue</div>
+              <div className="text-2xl font-bold text-violet-300 mt-1">${(bpEnrichment.proforma.investment_summary.incremental_revenue_5yr / 1e6).toFixed(1)}M</div>
+            </div>
+          </div>
+
+          {/* Charts: Annual P&L + Cumulative Cash Flow side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            {/* INFOGRAPHIC #1: Annual P&L stacked bar */}
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Annual P&L Breakdown</div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bpEnrichment.proforma.yearly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="year" stroke="#64748b" style={{ fontSize: 10 }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: 10 }} tickFormatter={(v) => '$' + (v / 1e6).toFixed(1) + 'M'} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} formatter={(v) => '$' + Number(v).toLocaleString()} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="revenue" stackId="ret" fill="#8b5cf6" name="Incremental Revenue" />
+                    <Bar dataKey="cost_avoidance" stackId="ret" fill="#10b981" name="Cost Avoidance" />
+                    <Bar dataKey="capital_expense" stackId="exp" fill="#ef4444" name="Capital Expense" />
+                    <Bar dataKey="operating_expense" stackId="exp" fill="#f59e0b" name="Operating Expense" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            {/* INFOGRAPHIC #2: Cumulative cash flow line */}
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Cumulative Cash Flow</div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={bpEnrichment.proforma.yearly}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="year" stroke="#64748b" style={{ fontSize: 10 }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: 10 }} tickFormatter={(v) => '$' + (v / 1e6).toFixed(1) + 'M'} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} formatter={(v) => '$' + Number(v).toLocaleString()} />
+                    <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" label={{ value: 'Breakeven', fill: '#ef4444', fontSize: 10 }} />
+                    <Area type="monotone" dataKey="cumulative_net" stroke="#10b981" fill="#10b981" fillOpacity={0.3} strokeWidth={3} name="Cumulative Net" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Proforma detail table */}
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Year</th>
+                <th className="text-right pb-2">Capital Expense</th>
+                <th className="text-right pb-2">Operating Expense</th>
+                <th className="text-right pb-2">Revenue</th>
+                <th className="text-right pb-2">Cost Avoidance</th>
+                <th className="text-right pb-2">Net Return</th>
+                <th className="text-right pb-2">Cumulative Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bpEnrichment.proforma.yearly.map((y, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-1.5 text-white font-semibold">{y.year}</td>
+                  <td className="py-1.5 text-right text-red-300">{y.capital_expense ? '$' + (y.capital_expense / 1e6).toFixed(2) + 'M' : '—'}</td>
+                  <td className="py-1.5 text-right text-amber-300">{y.operating_expense ? '$' + (y.operating_expense / 1000).toFixed(0) + 'K' : '—'}</td>
+                  <td className="py-1.5 text-right text-violet-300">{y.revenue ? '$' + (y.revenue / 1e6).toFixed(2) + 'M' : '—'}</td>
+                  <td className="py-1.5 text-right text-emerald-300">{y.cost_avoidance ? '$' + (y.cost_avoidance / 1e6).toFixed(2) + 'M' : '—'}</td>
+                  <td className={`py-1.5 text-right font-bold ${y.net_return >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>${(y.net_return / 1e6).toFixed(2)}M</td>
+                  <td className={`py-1.5 text-right font-bold ${y.cumulative_net >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>${(y.cumulative_net / 1e6).toFixed(2)}M</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #3: Two-Phase Capital Placement Plan (Deck 3 Slide 14) ═══ */}
+      {bpEnrichment?.two_phase_placement && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <h3 className="font-bold text-white mb-1">Recommendation: Place {bpEnrichment.two_phase_placement.total_systems} {bpEnrichment.two_phase_placement.primary_system}{bpEnrichment.two_phase_placement.total_systems > 1 ? 's' : ''} in Two Phases</h3>
+          <p className="text-xs text-slate-500 mb-4">Deck 3 Slide 14 pattern</p>
+
+          <div className="space-y-4">
+            <div className="bg-emerald-950/30 border-l-4 border-emerald-500 rounded p-4">
+              <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold mb-1">Phase 1</div>
+              <h4 className="text-base font-bold text-white mb-2">{bpEnrichment.two_phase_placement.phase_1.title}</h4>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-slate-900/60 rounded p-2">
+                  <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">New Trainings</div>
+                  <div className="text-xl font-bold text-cyan-300">{bpEnrichment.two_phase_placement.phase_1.new_trainings_required}</div>
+                </div>
+                <div className="bg-slate-900/60 rounded p-2">
+                  <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Bed Days Saved</div>
+                  <div className="text-xl font-bold text-emerald-300">{bpEnrichment.two_phase_placement.phase_1.bed_days_saved.toLocaleString()}+</div>
+                </div>
+                <div className="bg-slate-900/60 rounded p-2">
+                  <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Specialties</div>
+                  <div className="text-xl font-bold text-violet-300">{bpEnrichment.two_phase_placement.phase_1.specialties_covered.length}</div>
+                </div>
+              </div>
+              <table className="w-full text-xs">
+                <thead className="text-[9px] uppercase tracking-widest text-slate-500">
+                  <tr><th className="text-left pb-1">Specialty</th><th className="text-right pb-1">Annual Cases</th><th className="text-right pb-1">Surgeons</th><th className="text-left pb-1">Room</th></tr>
+                </thead>
+                <tbody>
+                  {bpEnrichment.two_phase_placement.phase_1.details.map((d, i) => (
+                    <tr key={i} className="border-t border-slate-700">
+                      <td className="py-1.5 text-white">{d.specialty}</td>
+                      <td className="py-1.5 text-right text-cyan-300">{d.annual_cases.toLocaleString()}</td>
+                      <td className="py-1.5 text-right text-slate-300">{d.surgeons_committed}</td>
+                      <td className="py-1.5 text-slate-400">{d.room_designation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {bpEnrichment.two_phase_placement.phase_2 && (
+              <div className="bg-violet-950/30 border-l-4 border-violet-500 rounded p-4">
+                <div className="text-[10px] uppercase tracking-widest text-violet-400 font-bold mb-1">Phase 2</div>
+                <h4 className="text-base font-bold text-white mb-2">{bpEnrichment.two_phase_placement.phase_2.title}</h4>
+                <ul className="text-sm text-slate-300 space-y-1">
+                  {bpEnrichment.two_phase_placement.phase_2.details.map((d, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-violet-400">›</span>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #4 + INFOGRAPHIC #4: OR-Level Room Recommendations + Visual Map (Deck 1 Slide 16) ═══ */}
+      {bpEnrichment?.or_room_recommendations && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <h3 className="font-bold text-white mb-1">OR-Level Room Recommendations</h3>
+          <p className="text-xs text-slate-500 mb-4">Deck 1 Slide 16 pattern · {bpEnrichment.or_room_recommendations.footnote}</p>
+
+          {/* Visual OR map */}
+          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Recommended Placement</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {bpEnrichment.or_room_recommendations.primary_assignments.map((r, i) => (
+              <div key={i} className="bg-gradient-to-br from-blue-900/50 to-slate-900 border-2 border-blue-600 rounded-lg p-4">
+                <div className="text-[10px] uppercase tracking-widest text-blue-300 font-bold">{r.system_type}</div>
+                <div className="text-xl font-bold text-white mt-1">{r.or_room}</div>
+                <div className="text-sm text-cyan-300 font-semibold mt-2">{r.specialty}</div>
+                <div className="text-[11px] text-slate-400 mt-1">{r.annual_cases.toLocaleString()} cases/yr · {r.surgeons_assigned} surgeons</div>
+                <div className="text-[10px] text-slate-500 mt-2 italic">{r.rationale}</div>
+              </div>
+            ))}
+          </div>
+
+          {bpEnrichment.or_room_recommendations.other_rooms_compatible.length > 0 && (
+            <div className="bg-slate-900/40 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Other Compatible Rooms (Backup Placement)</div>
+              <div className="flex flex-wrap gap-2">
+                {bpEnrichment.or_room_recommendations.other_rooms_compatible.map((r, i) => (
+                  <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-xs text-slate-300">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ INFOGRAPHIC #3: Acquisition Model NPV Comparison (Deck 1 Slide 36) ═══ */}
+      {bpEnrichment?.acquisition_comparison && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <h3 className="font-bold text-white mb-1">Acquisition Model NPV Comparison</h3>
+          <p className="text-xs text-slate-500 mb-4">Deck 1 Slide 36 pattern · Purchase vs Lease vs AMP @ Target/90%/CAP · Hurdle rate {bpEnrichment.acquisition_comparison.hurdle_rate_pct}% · {bpEnrichment.acquisition_comparison.horizon_years}-yr horizon</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="h-64 -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={bpEnrichment.acquisition_comparison.models}
+                  layout="vertical"
+                  margin={{ left: 130, right: 40 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} tickFormatter={(v) => '$' + (v / 1e6).toFixed(1) + 'M'} />
+                  <YAxis dataKey="name" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={125} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} formatter={(v) => '$' + Number(v).toLocaleString()} />
+                  <Bar dataKey="npv" name="NPV">
+                    {bpEnrichment.acquisition_comparison.models.map((m, i) => (
+                      <Cell key={i} fill={['#10b981', '#06b6d4', '#22c55e', '#f59e0b', '#64748b'][i]} />
+                    ))}
+                    <LabelList dataKey="npv" position="right" formatter={(v) => '$' + (v / 1e6).toFixed(1) + 'M'} style={{ fill: '#fff', fontSize: 10, fontWeight: 'bold' }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <table className="w-full text-xs">
+              <thead className="text-[9px] uppercase tracking-widest text-slate-500">
+                <tr><th className="text-left pb-1">Acquisition Model</th><th className="text-right pb-1">NPV</th><th className="text-right pb-1">vs Lease</th><th className="text-right pb-1">vs Buy</th></tr>
+              </thead>
+              <tbody>
+                {bpEnrichment.acquisition_comparison.models.map((m, i) => (
+                  <tr key={i} className="border-t border-slate-700">
+                    <td className="py-1.5 text-white font-semibold">{m.name}</td>
+                    <td className="py-1.5 text-right text-emerald-300 font-bold">${(m.npv / 1e6).toFixed(2)}M</td>
+                    <td className={`py-1.5 text-right ${m.vs_lease >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{m.vs_lease >= 0 ? '+' : '−'}${Math.abs(m.vs_lease / 1000).toFixed(0)}K</td>
+                    <td className={`py-1.5 text-right ${m.vs_buy >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{m.vs_buy >= 0 ? '+' : '−'}${Math.abs(m.vs_buy / 1000).toFixed(0)}K</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-3">{bpEnrichment.acquisition_comparison.methodology}</div>
+        </div>
+      )}
+
+      {bpEnrichmentLoading && !bpEnrichment && (
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 text-center">
+          <div className="text-sm text-slate-400">Loading deck-aligned business plan visualizations (System Assumptions · 5-Year Proforma · Two-Phase Placement · OR Rooms · NPV Comparison)...</div>
         </div>
       )}
 
