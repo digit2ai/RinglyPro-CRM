@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -115,6 +115,7 @@ function trackingIcon(variance) {
 export default function TrackingDashboardPage({ planId: propPlanId }) {
   const { planId: paramPlanId } = useParams()
   const planId = paramPlanId || propPlanId
+  const navigate = useNavigate()
 
   const [plan, setPlan] = useState(null)
   const [comparison, setComparison] = useState(null)
@@ -402,8 +403,31 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     )
   }
 
+  // Resolve project_id from plan to enable Prev navigation
+  const projectIdForNav = plan?.project_id || planId
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+      {/* ── Step 9 of 9 Header + Prev nav ──────────────────────── */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">Step 9 of 9 · Hospital Workflow · Final Step</div>
+          <h1 className="text-2xl font-bold text-white">Performance Tracking</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Post-go-live tracking: plan vs actual comparison + variance alerts + surgeon performance
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <button onClick={() => navigate(`/business-plan/${projectIdForNav}`)} className="text-sm text-slate-400 hover:text-slate-200">← Business Plan</button>
+          <button onClick={() => navigate(`/executive/${projectIdForNav}`)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm px-4 py-2 rounded">
+            Executive Brief
+          </button>
+          <button onClick={() => navigate('/')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded">
+            ✓ Workflow Complete · Back to Dashboard
+          </button>
+        </div>
+      </div>
 
       {/* ── Error Banner ──────────────────────────────────────── */}
       {error && (

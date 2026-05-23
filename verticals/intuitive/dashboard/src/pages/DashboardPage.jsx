@@ -349,10 +349,10 @@ export default function DashboardPage() {
 
                   return (
                     <tr key={h.id} className="hover:bg-slate-800/80 transition-colors">
-                      {/* Hospital Name */}
+                      {/* Hospital Name → Step 1 Hospital Profile (start of 9-step workflow) */}
                       <td className="px-3 py-3">
                         <button
-                          onClick={() => navigate(`/analysis/${h.id}`)}
+                          onClick={() => navigate(`/hospital-profile/${h.id}`)}
                           className="font-semibold text-white hover:text-intuitive-400 transition-colors text-left"
                         >
                           {h.hospital_name}
@@ -426,17 +426,17 @@ export default function DashboardPage() {
                         {h.last_updated ? ago(h.last_updated) : '--'}
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions — jump to specific steps in the 9-step workflow */}
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1">
-                          <ActionButton title="View Analysis" onClick={() => navigate(`/analysis/${h.id}`)}>
+                          <ActionButton title="Hospital Profile (Step 1)" onClick={() => navigate(`/hospital-profile/${h.id}`)}>
                             <EyeIcon />
                           </ActionButton>
-                          <ActionButton title="Business Plan" onClick={() => navigate(`/business-plan/${h.id}`)}>
+                          <ActionButton title="Business Plan (Step 8)" onClick={() => navigate(`/business-plan/${h.id}`)}>
                             <DocumentIcon />
                           </ActionButton>
                           {plan?.id && (
-                            <ActionButton title="Tracking" onClick={() => navigate(`/tracking/${plan.id}`)}>
+                            <ActionButton title="Performance Tracking (Step 9)" onClick={() => navigate(`/tracking/${plan.id}`)}>
                               <ChartIcon />
                             </ActionButton>
                           )}
