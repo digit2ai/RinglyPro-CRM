@@ -31,6 +31,7 @@ import ReportPage from './pages/ReportPage'
 import AskPage from './pages/AskPage'
 import SurgeonTargetingPage from './pages/SurgeonTargetingPage'
 import ExecutiveBriefPage from './pages/ExecutiveBriefPage'
+import ExecutivePresentationPage from './pages/ExecutivePresentationPage'
 import SurgeonCommitmentsPage from './pages/SurgeonCommitmentsPage'
 import HospitalProfilePage from './pages/HospitalProfilePage'
 import SurgeonProfilePage from './pages/SurgeonProfilePage'
@@ -171,7 +172,7 @@ const NAV_STEPS = [
   { to: '/commitments', label: 'Surgeon Commitments', num: 7, icon: '7', section: 'project' },
   { to: '/business-plan', label: 'Business Plan', num: 8, icon: '8', section: 'project' },
   { to: '/tracking', label: 'Performance Tracking', num: 9, icon: '9', section: 'project' },
-  // Executive Brief is accessible from any step via a button — not a sidebar item
+  { to: '/executive', label: 'Executive Brief', num: 10, icon: '10', section: 'project' },
 ]
 
 // Process documentation -- shown when user clicks the (i) icon next to a step
@@ -392,7 +393,7 @@ export default function App() {
   // Sync currentProject from URL whenever the user navigates to a project-specific page
   useEffect(() => {
     if (!user) return
-    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report|commitments|executive|hospital-profile|surgeon-profile|robotics-program|market-profile|clinical-outcomes|clinical-overlay|tracking)\/(\d+)/)
+    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report|commitments|executive|executive-presentation|hospital-profile|surgeon-profile|robotics-program|market-profile|clinical-outcomes|clinical-overlay|tracking)\/(\d+)/)
     if (!m) return
     const pid = parseInt(m[1])
     if (!pid || pid === currentProject) return
@@ -657,6 +658,8 @@ export default function App() {
           <Route path="/commitments/:projectId" element={<SurgeonCommitmentsPage />} />
           <Route path="/executive" element={<ExecutiveBriefPage projectId={currentProject} />} />
           <Route path="/executive/:projectId" element={<ExecutiveBriefPage />} />
+          <Route path="/executive-presentation" element={<ExecutivePresentationPage projectId={currentProject} />} />
+          <Route path="/executive-presentation/:projectId" element={<ExecutivePresentationPage />} />
           {/* 9-step Hospital Workflow */}
           <Route path="/hospital-profile" element={<HospitalProfilePage projectId={currentProject} />} />
           <Route path="/hospital-profile/:projectId" element={<HospitalProfilePage />} />

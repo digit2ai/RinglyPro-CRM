@@ -428,10 +428,21 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
       {/* Action bar (hidden in print) */}
       <div className="bg-slate-800 px-6 py-3 flex items-center justify-between print:hidden">
         <div className="text-white">
-          <div className="text-xs uppercase tracking-widest text-slate-400">MyIntuitive+ Format</div>
+          <div className="text-xs uppercase tracking-widest text-slate-400">Step 10 of 10 · MyIntuitive+ Format</div>
           <div className="text-sm font-semibold">Executive Brief · Strategic Alignment Opportunity</div>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => navigate(`/executive-presentation/${id}`)}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-sm font-bold px-5 py-2 rounded transition-colors flex items-center gap-2 shadow-lg"
+            title="Launch slide+voice presentation with Rachel narrating each slide"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Generate Executive Presentation
+          </button>
           <button
             onClick={() => window.print()}
             className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded transition-colors"
@@ -439,10 +450,10 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
             Export PDF
           </button>
           <button
-            onClick={() => navigate(`/business-plan/${id}`)}
+            onClick={() => navigate(`/tracking/${id}`)}
             className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold px-4 py-2 rounded transition-colors"
           >
-            Back to Business Plan
+            ← Performance Tracking
           </button>
         </div>
       </div>
