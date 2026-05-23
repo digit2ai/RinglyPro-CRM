@@ -32,6 +32,12 @@ import AskPage from './pages/AskPage'
 import SurgeonTargetingPage from './pages/SurgeonTargetingPage'
 import ExecutiveBriefPage from './pages/ExecutiveBriefPage'
 import SurgeonCommitmentsPage from './pages/SurgeonCommitmentsPage'
+import HospitalProfilePage from './pages/HospitalProfilePage'
+import SurgeonProfilePage from './pages/SurgeonProfilePage'
+import RoboticsProgramPage from './pages/RoboticsProgramPage'
+import MarketProfilePage from './pages/MarketProfilePage'
+import ClinicalOutcomesPage from './pages/ClinicalOutcomesPage'
+import ClinicalOverlayPage from './pages/ClinicalOverlayPage'
 import ChatWidget from './components/ChatWidget'
 import { api } from './lib/api'
 
@@ -147,20 +153,25 @@ SPEAKING GUIDELINES:
 `
 }
 
+// 9-step Hospital Workflow (locked from client meeting Section 4)
 const NAV_STEPS = [
+  // ─── System-wide ───
   { to: '/', label: 'Dashboard', num: 0, icon: 'D', section: 'main' },
   { to: '/ask', label: 'Ask', num: 0, icon: '?', section: 'main' },
   { to: '/surgeon-targeting', label: 'Surgeon Targeting', num: 0, icon: 'T', section: 'main' },
-  { to: '/intake', label: 'Hospital Intake', num: 1, icon: 'H', section: 'main' },
-  { to: '/surveys', label: 'Surgeon Surveys', num: 2, icon: 'S', section: 'project' },
-  { to: '/analysis', label: 'Analysis', num: 3, icon: 'A', section: 'project' },
-  { to: '/recommendations', label: 'System Match', num: 4, icon: 'M', section: 'project' },
-  { to: '/presentation', label: 'Presentation', num: 5, icon: 'P', section: 'project' },
-  { to: '/business-plan', label: 'Business Plan', num: 6, icon: 'B', section: 'project' },
-  { to: '/commitments', label: 'Surgeon Commitments', num: 6, icon: 'C', section: 'project' },
-  { to: '/executive', label: 'Executive Brief', num: 7, icon: 'E', section: 'project' },
-  { to: '/tracking', label: 'Plan Tracking', num: 8, icon: 'T', section: 'project' },
-  { to: '/report', label: 'Report', num: 9, icon: 'R', section: 'project' },
+  { to: '/intake', label: 'Hospital Intake', num: 0, icon: 'H', section: 'main' },
+
+  // ─── Hospital Workflow (the 9-step flow) ───
+  { to: '/hospital-profile', label: 'Hospital Profile', num: 1, icon: '1', section: 'project' },
+  { to: '/surgeon-profile', label: 'Surgeon Profile', num: 2, icon: '2', section: 'project' },
+  { to: '/robotics-program', label: 'Robotics Program', num: 3, icon: '3', section: 'project' },
+  { to: '/market-profile', label: 'Market Profile', num: 4, icon: '4', section: 'project' },
+  { to: '/clinical-outcomes', label: 'Clinical Outcomes', num: 5, icon: '5', section: 'project' },
+  { to: '/clinical-overlay', label: 'Clinical Benefit Overlay', num: 6, icon: '6', section: 'project' },
+  { to: '/commitments', label: 'Surgeon Commitments', num: 7, icon: '7', section: 'project' },
+  { to: '/business-plan', label: 'Business Plan', num: 8, icon: '8', section: 'project' },
+  { to: '/tracking', label: 'Performance Tracking', num: 9, icon: '9', section: 'project' },
+  // Executive Brief is accessible from any step via a button — not a sidebar item
 ]
 
 // Process documentation -- shown when user clicks the (i) icon next to a step
@@ -381,7 +392,7 @@ export default function App() {
   // Sync currentProject from URL whenever the user navigates to a project-specific page
   useEffect(() => {
     if (!user) return
-    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report|commitments|executive)\/(\d+)/)
+    const m = location.pathname.match(/\/(?:analysis|recommendations|presentation|business-plan|surveys|report|commitments|executive|hospital-profile|surgeon-profile|robotics-program|market-profile|clinical-outcomes|clinical-overlay|tracking)\/(\d+)/)
     if (!m) return
     const pid = parseInt(m[1])
     if (!pid || pid === currentProject) return
@@ -646,6 +657,19 @@ export default function App() {
           <Route path="/commitments/:projectId" element={<SurgeonCommitmentsPage />} />
           <Route path="/executive" element={<ExecutiveBriefPage projectId={currentProject} />} />
           <Route path="/executive/:projectId" element={<ExecutiveBriefPage />} />
+          {/* 9-step Hospital Workflow */}
+          <Route path="/hospital-profile" element={<HospitalProfilePage projectId={currentProject} />} />
+          <Route path="/hospital-profile/:projectId" element={<HospitalProfilePage />} />
+          <Route path="/surgeon-profile" element={<SurgeonProfilePage projectId={currentProject} />} />
+          <Route path="/surgeon-profile/:projectId" element={<SurgeonProfilePage />} />
+          <Route path="/robotics-program" element={<RoboticsProgramPage projectId={currentProject} />} />
+          <Route path="/robotics-program/:projectId" element={<RoboticsProgramPage />} />
+          <Route path="/market-profile" element={<MarketProfilePage projectId={currentProject} />} />
+          <Route path="/market-profile/:projectId" element={<MarketProfilePage />} />
+          <Route path="/clinical-outcomes" element={<ClinicalOutcomesPage projectId={currentProject} />} />
+          <Route path="/clinical-outcomes/:projectId" element={<ClinicalOutcomesPage />} />
+          <Route path="/clinical-overlay" element={<ClinicalOverlayPage projectId={currentProject} />} />
+          <Route path="/clinical-overlay/:projectId" element={<ClinicalOverlayPage />} />
           <Route path="/surveys" element={<SurveyManagerPage projectId={currentProject} />} />
           <Route path="/surveys/:projectId" element={<SurveyManagerPage />} />
           <Route path="/tracking" element={<TrackingDashboardPage />} />
