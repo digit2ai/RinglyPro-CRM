@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts'
 
 // Step 3 — Robotics Program Profile: current systems, utilization, specialty mix
-// Mirrors Deck 1 Slide 6 (System Utilization by Quarter)
+// Mirrors Deck 1 Slide 6 (System Utilization by Quarter) + Slide 8/9 + Deck 2 p15
 
 const fmt = (n) => n != null ? Number(n).toLocaleString() : '--'
+
+// Intuitive specialty + modality color palette (locked from deck analysis)
+const COLOR_DV = '#1e40af'        // dark blue — Da Vinci
+const COLOR_LAP = '#93c5fd'       // light blue — Laparoscopic
+const COLOR_OPEN = '#1f2937'      // black/dark gray — Open
+const COLOR_BENCHMARK = '#94a3b8' // gray — Peer benchmark
+const COLOR_IN_HOURS = '#22c55e'  // green — in-hours
+const COLOR_AFTER_HOURS = '#ef4444' // red — after-hours
+
+const GEN_COLORS = { S: '#3b82f6', Si: '#f59e0b', Xi: '#22c55e', dV5: '#2563eb' }
 
 export default function RoboticsProgramPage({ projectId: propId }) {
   const { projectId: paramId } = useParams()
@@ -14,12 +29,20 @@ export default function RoboticsProgramPage({ projectId: propId }) {
   const [project, setProject] = useState(null)
   const [analysis, setAnalysis] = useState({})
   const [loading, setLoading] = useState(true)
+  const [enrichment, setEnrichment] = useState(null)
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false)
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
     Promise.all([api.getProject(id), api.getResults(id).catch(() => ({ results: {} }))])
       .then(([projRes, aRes]) => { setProject(projRes.project); setAnalysis(aRes.results || {}) })
       .catch(console.error).finally(() => setLoading(false))
+
+    setEnrichmentLoading(true)
+    api.getRoboticsProgramEnrichment(id)
+      .then(r => setEnrichment(r.data))
+      .catch(e => console.error('robotics enrichment:', e))
+      .finally(() => setEnrichmentLoading(false))
   }, [id])
 
   if (!id) return <div className="p-10 text-slate-400">No hospital selected.</div>
@@ -82,6 +105,257 @@ export default function RoboticsProgramPage({ projectId: propId }) {
           </div>
         </div>
       </div>
+
+      {/* ─── CHART #1: System Utilization by Quarter (Deck 1 p6 / Deck 3 p3) ─── */}
+      {enrichment?.system_utilization && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-white">System Utilization by Quarter</h3>
+            <span className="text-xs text-red-300 font-semibold">*{enrichment.system_utilization.academic_avg_per_qtr}/qtr Academic Avg</span>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">
+            Current avg: <strong className="text-white">{enrichment.system_utilization.current_avg_per_system_qtr} cases/qtr/system</strong>
+            {' '}
+            <span className={enrichment.system_utilization.delta_vs_academic >= 0 ? 'text-emerald-300' : 'text-amber-300'}>
+              ({enrichment.system_utilization.delta_vs_academic >= 0 ? '+' : ''}{enrichment.system_utilization.delta_vs_academic} vs academic avg)
+            </span>
+          </p>
+
+          {/* Per-system table */}
+          <table className="w-full text-xs mb-5">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Model</th>
+                <th className="text-left pb-2">System</th>
+                {enrichment.system_utilization.quarters.map(q => (
+                  <th key={q} className="text-right pb-2">{q.replace(' 20', ' ')}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {enrichment.system_utilization.systems.map((s, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-2 text-slate-400">{s.model_label}</td>
+                  <td className="py-2 text-white font-semibold">{s.system_name}</td>
+                  {enrichment.system_utilization.quarters.map(q => {
+                    const val = s[q] || 0
+                    const aboveAvg = val > enrichment.system_utilization.academic_avg_per_qtr
+                    return (
+                      <td key={q} className={`py-2 text-right ${aboveAvg ? 'text-emerald-300 font-semibold' : 'text-slate-300'}`}>
+                        {val}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Procedure Volume stacked bar chart (in-hours green + after-hours red) */}
+          <div className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Procedure Volume (Total Across All Systems)</div>
+          <div className="h-64 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={enrichment.system_utilization.procedure_volume_by_qtr}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="quarter" stroke="#64748b" style={{ fontSize: 11 }} />
+                <YAxis stroke="#64748b" style={{ fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="in_hours" stackId="a" fill={COLOR_IN_HOURS} name="In-Hours (7AM-6PM)" />
+                <Bar dataKey="after_hours" stackId="a" fill={COLOR_AFTER_HOURS} name="After-Hours (6PM-7AM)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[10px] text-slate-500 italic mt-2">
+            After-hours volume signals OR saturation — strongest capacity-expansion argument.
+            Current after-hours rate: <strong className="text-amber-300">{enrichment.system_utilization.after_hours_pct}%</strong>
+          </p>
+        </div>
+      )}
+
+      {/* ─── CHART #2: Modality Mix by Year + Peer Comparison (Deck 1 p8) ─── */}
+      {enrichment?.modality_by_year && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Modality Mix vs National Academic Peers</h3>
+          <p className="text-xs text-slate-500 mb-4">{enrichment.modality_by_year.headline}</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 5-year line chart */}
+            <div className="lg:col-span-2">
+              <div className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Modality Trend (5 yr)</div>
+              <div className="h-64 -ml-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={enrichment.modality_by_year.trend_by_year}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="year" stroke="#64748b" style={{ fontSize: 11 }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: 11 }} unit="%" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                      labelStyle={{ color: '#e2e8f0' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Line type="monotone" dataKey="davinci_pct" stroke={COLOR_DV} strokeWidth={2.5} name="Da Vinci" dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="lap_pct" stroke={COLOR_LAP} strokeWidth={2.5} name="Lap" dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="open_pct" stroke="#cbd5e1" strokeWidth={2.5} name="Open" dot={{ r: 4 }} strokeDasharray="3 3" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Peer comparison pies */}
+            <div>
+              <div className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Current vs Peer ({enrichment.modality_by_year.peer_benchmark.n.toLocaleString()} hospitals)</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-center">
+                  <div className="text-[10px] text-slate-400 mb-1">{project?.hospital_name?.split(/[\s,]/)[0] || 'Hospital'}</div>
+                  <div className="h-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Da Vinci', value: enrichment.modality_by_year.current.davinci_pct },
+                            { name: 'Lap', value: enrichment.modality_by_year.current.lap_pct },
+                            { name: 'Open', value: enrichment.modality_by_year.current.open_pct },
+                          ]}
+                          dataKey="value" cx="50%" cy="50%" outerRadius={50} label={(e) => `${e.value}%`} labelLine={false} style={{ fontSize: 10, fill: '#fff' }}
+                        >
+                          <Cell fill={COLOR_DV} /><Cell fill={COLOR_LAP} /><Cell fill={COLOR_OPEN} />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] text-slate-400 mb-1">Academic Peers</div>
+                  <div className="h-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Da Vinci', value: enrichment.modality_by_year.peer_benchmark.davinci_pct },
+                            { name: 'Lap', value: enrichment.modality_by_year.peer_benchmark.lap_pct },
+                            { name: 'Open', value: enrichment.modality_by_year.peer_benchmark.open_pct },
+                          ]}
+                          dataKey="value" cx="50%" cy="50%" outerRadius={50} label={(e) => `${e.value}%`} labelLine={false} style={{ fontSize: 10, fill: '#fff' }}
+                        >
+                          <Cell fill={COLOR_DV} /><Cell fill={COLOR_LAP} /><Cell fill={COLOR_OPEN} />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+              <div className={`text-center mt-2 text-2xl font-bold ${enrichment.modality_by_year.delta_vs_peer_davinci > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                {Math.abs(enrichment.modality_by_year.delta_vs_peer_davinci)}% Delta
+              </div>
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-3">{enrichment.modality_by_year.methodology}</div>
+        </div>
+      )}
+
+      {/* ─── CHART #3: Modality Breakdown by Procedure (Deck 1 p9) ─── */}
+      {enrichment?.modality_by_procedure && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Modality Breakdown by Procedure</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Red-highlighted rows = high open volume (robotic conversion opportunity).
+            Total opportunity: <strong className="text-red-300">{fmt(enrichment.modality_by_procedure.total_opportunity_open_cases)} open cases</strong> across opportunity procedures.
+          </p>
+          <div style={{ height: Math.max(400, enrichment.modality_by_procedure.procedures.length * 32) }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={enrichment.modality_by_procedure.procedures.map(p => ({
+                  procedure: p.name,
+                  Da_Vinci: p.davinci_volume,
+                  Lap: p.lap_volume,
+                  Open: p.open_volume,
+                  Avg_Benchmark_Open: p.benchmark_open_volume,
+                  opportunity: p.opportunity,
+                }))}
+                layout="vertical"
+                margin={{ left: 80, right: 30 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" stroke="#64748b" style={{ fontSize: 11 }} />
+                <YAxis dataKey="procedure" type="category" stroke="#64748b" style={{ fontSize: 11 }} width={120} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Da_Vinci" stackId="a" fill={COLOR_DV} name="Da Vinci" />
+                <Bar dataKey="Lap" stackId="a" fill={COLOR_LAP} name="Lap" />
+                <Bar dataKey="Open" stackId="a" fill={COLOR_OPEN} name="Open" />
+                <Bar dataKey="Avg_Benchmark_Open" fill={COLOR_BENCHMARK} name="Avg Benchmark Open" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-3">{enrichment.modality_by_procedure.methodology}</div>
+        </div>
+      )}
+
+      {/* ─── CHART #4: Tech Generation Mix Over Time (Deck 2 p15) ─── */}
+      {enrichment?.tech_generation_mix && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Tech Generation Mix Over Time</h3>
+          <p className="text-xs text-slate-500 mb-4">{enrichment.tech_generation_mix.headline}</p>
+
+          <div className="h-72 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={enrichment.tech_generation_mix.timeline}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="year" stroke="#64748b" style={{ fontSize: 11 }} />
+                <YAxis stroke="#64748b" style={{ fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="S" stackId="a" fill={GEN_COLORS.S} name="da Vinci S" />
+                <Bar dataKey="Si" stackId="a" fill={GEN_COLORS.Si} name="da Vinci Si" />
+                <Bar dataKey="Xi" stackId="a" fill={GEN_COLORS.Xi} name="da Vinci Xi" />
+                <Bar dataKey="dV5" stackId="a" fill={GEN_COLORS.dV5} name="da Vinci 5" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Current breakdown + recommended */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Current Si</div>
+              <div className="text-2xl font-bold text-amber-300 mt-1">{enrichment.tech_generation_mix.current_fleet_breakdown.Si}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Current Xi</div>
+              <div className="text-2xl font-bold text-emerald-300 mt-1">{enrichment.tech_generation_mix.current_fleet_breakdown.Xi}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Current dV5</div>
+              <div className="text-2xl font-bold text-blue-300 mt-1">{enrichment.tech_generation_mix.current_fleet_breakdown.dV5}</div>
+            </div>
+            <div className="bg-blue-950/40 rounded p-3 border border-blue-700/60">
+              <div className="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Recommended dV5</div>
+              <div className="text-2xl font-bold text-blue-300 mt-1">+{enrichment.tech_generation_mix.recommended_additions}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Fleet Growth (10yr)</div>
+              <div className="text-2xl font-bold text-violet-300 mt-1">+{enrichment.tech_generation_mix.fleet_growth_pct_over_decade}%</div>
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-3">{enrichment.tech_generation_mix.methodology}</div>
+        </div>
+      )}
+
+      {/* Enrichment loading state */}
+      {enrichmentLoading && !enrichment && (
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 mb-6 text-center">
+          <div className="text-sm text-slate-400">Loading deck-aligned charts (Utilization · Modality Trends · Procedure Breakdown · Tech Generations)...</div>
+        </div>
+      )}
 
       {/* Specialty mix */}
       {specialties.length > 0 && (

@@ -139,6 +139,7 @@ try { app.use(`${BASE_PATH}/api/v1/dashboard`, requireAuth, require('./routes/da
 try { app.use(`${BASE_PATH}/api/v1/executive-brief`, requireAuth, require('./routes/executive-brief')); } catch (e) { console.error('Executive Brief route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/hospital-profile`, requireAuth, require('./routes/hospital-profile')); } catch (e) { console.error('Hospital Profile route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/surgeon-profile`, requireAuth, require('./routes/surgeon-profile')); } catch (e) { console.error('Surgeon Profile route load error:', e.message); }
+try { app.use(`${BASE_PATH}/api/v1/robotics-program`, requireAuth, require('./routes/robotics-program')); } catch (e) { console.error('Robotics Program route load error:', e.message); }
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)
