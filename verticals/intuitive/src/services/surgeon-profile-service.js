@@ -1,0 +1,282 @@
+'use strict';
+
+/**
+ * Surgeon Profile Enrichment Service
+ *
+ * Produces the 4 deck-aligned additions for Step 2 Surgeon Profile:
+ *   1. Training Pipeline panel  (Deck p11 — trained / training needs / proctoring)
+ *   2. CSR Intel Panel          (Deck p12, p18 — free-text surgeon access notes)
+ *   3. KOL Signal Strip         (top surgeons by composite signal)
+ *   4. Industry Payment Leaders (top surgeons by CMS Open Payments from Intuitive)
+ */
+
+const pubmed = require('./data-sources/pubmed');
+
+// ─── 1. TRAINING PIPELINE (Deck p11 format) ────────────────────────────
+
+function buildTrainingPipeline(surgeons = []) {
+  const trained = [];
+  const untrained = [];
+  const needsProctoring = [];
+  const pullForward = [];
+
+  for (const s of surgeons) {
+    const row = {
+      surgeon_name: s.surgeon_name,
+      specialty: s.surgeon_specialty,
+      training_needs: s.training_needs,
+      cases_annual: s.total_incremental_annual || 0,
+      commitment_category: s.commitment_category || 'open_to_mis',
+      current_weekly_volume: s.current_weekly_volume,
+      target_weekly_volume: s.target_weekly_volume,
+      backlog_weeks: s.backlog_weeks,
+    };
+    if (s.trained === false || s.commitment_category === 'training_pipeline') {
+      untrained.push(row);
+    } else if (s.commitment_category === 'pull_forward') {
+      pullForward.push(row);
+    } else {
+      trained.push(row);
+    }
+    if (s.proctoring_needed) needsProctoring.push(row);
+  }
+
+  return {
+    headline: `${trained.length} trained · ${untrained.length} in pipeline · ${pullForward.length} pull-forward · ${needsProctoring.length} need proctoring`,
+    trained,
+    untrained,
+    pull_forward: pullForward,
+    needs_proctoring: needsProctoring,
+    total_committed_cases: surgeons.reduce((s, sg) => s + (sg.total_incremental_annual || 0), 0),
+  };
+}
+
+// ─── 2. CSR INTEL PANEL (Deck p12, p18 format) ─────────────────────────
+
+function buildCsrIntel(surgeons = []) {
+  const items = surgeons
+    .filter(s => s.free_text_intel && s.free_text_intel.trim().length > 0)
+    .map(s => ({
+      surgeon_name: s.surgeon_name,
+      specialty: s.surgeon_specialty,
+      commitment_category: s.commitment_category,
+      intel: s.free_text_intel,
+      current_weekly: s.current_weekly_volume,
+      target_weekly: s.target_weekly_volume,
+      backlog_weeks: s.backlog_weeks,
+    }))
+    .sort((a, b) => {
+      // Sort by urgency: high backlog first, then high target/current ratio
+      const aUrgency = (a.backlog_weeks || 0) + ((a.target_weekly || 0) - (a.current_weekly || 0));
+      const bUrgency = (b.backlog_weeks || 0) + ((b.target_weekly || 0) - (b.current_weekly || 0));
+      return bUrgency - aUrgency;
+    });
+
+  return {
+    headline: items.length > 0
+      ? `${items.length} surgeons with CSR-captured access notes`
+      : 'No CSR access intel captured yet. Use the Surgeon Commitments page to add per-surgeon notes.',
+    items,
+  };
+}
+
+// ─── 3. KOL SIGNAL STRIP (composite ranking) ───────────────────────────
+
+async function buildKolSignals(surgeons = [], opts = {}) {
+  if (!surgeons.length) return { headline: 'No surgeon roster yet', top_kols: [] };
+
+  // Composite score: robotic volume + commitment cases + publications proxy
+  const scored = [];
+  for (const s of surgeons.slice(0, 15)) {
+    let publicationCount = 0;
+    try {
+      // Only fetch publications for the top-15 surgeons to keep latency bounded
+      const pub = await pubmed.fetchPublicationCount(s.surgeon_name || s.full_name, {
+        years: 5, models: opts.models,
+      });
+      publicationCount = pub?.count || 0;
+    } catch (e) { /* skip */ }
+
+    const roboticVol = parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0);
+    const commitmentCases = parseInt(s.total_incremental_annual || 0);
+    const score = (roboticVol * 0.6) + (commitmentCases * 0.3) + (publicationCount * 4);
+    scored.push({
+      surgeon_name: s.surgeon_name || s.full_name,
+      specialty: s.surgeon_specialty || s.specialty,
+      npi: s.npi,
+      robotic_vol: roboticVol,
+      commitment_cases: commitmentCases,
+      publications_5yr: publicationCount,
+      composite_score: Math.round(score),
+    });
+  }
+  scored.sort((a, b) => b.composite_score - a.composite_score);
+
+  return {
+    headline: `Top ${Math.min(5, scored.length)} KOLs by composite signal · robotic volume × 0.6 + commitments × 0.3 + publications × 4`,
+    top_kols: scored.slice(0, 5),
+    methodology: 'Composite KOL score weights MPUP robotic volume, captured commitment cases, and 5-yr PubMed publication count. Tunable.',
+  };
+}
+
+// ─── 4. INDUSTRY PAYMENT LEADERS (CMS Open Payments from Intuitive) ────
+
+async function buildPaymentLeaders(surgeons = [], models) {
+  if (!surgeons.length || !models?.IntuitiveOpenPaymentsIntuitive) {
+    return { headline: 'No payment data available', top_payments: [] };
+  }
+
+  const npis = surgeons.map(s => s.npi).filter(Boolean);
+  if (!npis.length) return { headline: 'No NPIs on surgeon roster', top_payments: [] };
+
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = [currentYear - 1, currentYear - 2]; // last 2 fiscal years
+
+  let rows = [];
+  try {
+    rows = await models.IntuitiveOpenPaymentsIntuitive.findAll({
+      where: {
+        npi: npis,
+        fiscal_year: fiscalYears,
+      },
+      raw: true,
+    });
+  } catch (e) {
+    console.error('[surgeon-profile] OpenPayments query error:', e.message);
+    return { headline: 'Payment data lookup failed', top_payments: [] };
+  }
+
+  // Aggregate by NPI
+  const byNpi = {};
+  for (const r of rows) {
+    if (!byNpi[r.npi]) byNpi[r.npi] = { total: 0, payment_count: 0, latest_year: 0 };
+    byNpi[r.npi].total += parseFloat(r.total_amount || 0);
+    byNpi[r.npi].payment_count += parseInt(r.payment_count || 0);
+    if (r.fiscal_year > byNpi[r.npi].latest_year) byNpi[r.npi].latest_year = r.fiscal_year;
+  }
+
+  const surgeonByNpi = {};
+  for (const s of surgeons) if (s.npi) surgeonByNpi[s.npi] = s;
+
+  const leaders = Object.entries(byNpi)
+    .map(([npi, data]) => {
+      const s = surgeonByNpi[npi];
+      return {
+        npi,
+        surgeon_name: s?.surgeon_name || s?.full_name || `NPI ${npi}`,
+        specialty: s?.surgeon_specialty || s?.specialty,
+        total_amount: Math.round(data.total),
+        payment_count: data.payment_count,
+        latest_year: data.latest_year,
+      };
+    })
+    .sort((a, b) => b.total_amount - a.total_amount)
+    .slice(0, 5);
+
+  const grandTotal = leaders.reduce((s, l) => s + l.total_amount, 0);
+  return {
+    headline: leaders.length > 0
+      ? `Top ${leaders.length} surgeons received $${grandTotal.toLocaleString()} from Intuitive (last 2 fiscal years)`
+      : 'No CMS Open Payments data for surgeons on this roster',
+    top_payments: leaders,
+    fiscal_years: fiscalYears,
+    methodology: 'CMS Open Payments general payments where covered company = Intuitive Surgical, last 2 fiscal years.',
+  };
+}
+
+// ─── COMPOSITE BUILDER ────────────────────────────────────────────────
+
+async function buildSurgeonProfileEnrichment({ projectId, models }) {
+  const {
+    IntuitiveProject,
+    IntuitiveBusinessPlan,
+    IntuitiveSurgeonCommitment,
+    IntuitiveSurgeonHospitalAffiliation,
+    IntuitiveHospital,
+  } = models;
+
+  if (!IntuitiveProject) throw new Error('IntuitiveProject model not available');
+  const project = await IntuitiveProject.findByPk(projectId);
+  if (!project) throw new Error(`Project ${projectId} not found`);
+
+  // Pull surgeon commitments (Step 7 data)
+  let surgeons = [];
+  try {
+    const plan = await IntuitiveBusinessPlan.findOne({ where: { project_id: projectId }, order: [['created_at', 'DESC']] });
+    if (plan) {
+      surgeons = await IntuitiveSurgeonCommitment.findAll({
+        where: { business_plan_id: plan.id },
+        raw: true,
+      });
+    }
+  } catch (e) { console.error('[surgeon-profile] commitment load error:', e.message); }
+
+  // Fold in roster data from facility affiliations + MPUP for NPIs we don't have via commitments
+  // (so KOL/Payment signals work even before Step 7 is populated)
+  let rosterSurgeons = [];
+  try {
+    if (IntuitiveSurgeonHospitalAffiliation && IntuitiveHospital && project.hospital_name) {
+      const targetingService = require('./surgeon-targeting-service');
+      const hospitalRow = await targetingService.resolveHospitalByName(models, project.hospital_name);
+      if (hospitalRow?.ccn) {
+        const links = await IntuitiveSurgeonHospitalAffiliation.findAll({
+          where: { facility_ccn: hospitalRow.ccn, facility_type: 'Hospital' },
+          raw: true, limit: 50,
+        });
+        if (links.length) {
+          const npis = links.map(l => l.npi);
+          const mpup = require('./data-sources/cms-physician-volume');
+          const volRes = await mpup.fetchFor(npis, { models });
+          const byNpi = {};
+          for (const v of ((volRes.data && volRes.data.surgeon_volumes) || [])) byNpi[v.npi] = v;
+          rosterSurgeons = links.map(l => ({
+            surgeon_name: `${(l.surgeon_first_name || '').trim()} ${(l.surgeon_last_name || '').trim()}`.trim(),
+            full_name: `${(l.surgeon_first_name || '').trim()} ${(l.surgeon_last_name || '').trim()}`.trim(),
+            npi: l.npi,
+            surgeon_specialty: (byNpi[l.npi] || {}).specialty || null,
+            robotic_cases_last_yr: (byNpi[l.npi] || {}).total_robotic_cases_last_yr || 0,
+          }));
+          rosterSurgeons.sort((a, b) => b.robotic_cases_last_yr - a.robotic_cases_last_yr);
+        }
+      }
+    }
+  } catch (e) { console.error('[surgeon-profile] roster fetch error:', e.message); }
+
+  // Merge commitments + roster (commitments win for surgeons present in both)
+  const mergedByKey = {};
+  for (const r of rosterSurgeons) {
+    const key = (r.npi || r.surgeon_name || '').toLowerCase();
+    if (key) mergedByKey[key] = r;
+  }
+  for (const c of surgeons) {
+    const key = (c.npi || c.surgeon_name || '').toLowerCase();
+    if (key) {
+      mergedByKey[key] = { ...(mergedByKey[key] || {}), ...c };
+    }
+  }
+  const allSurgeons = Object.values(mergedByKey);
+
+  // Build the 4 enrichment blocks
+  const trainingPipeline = buildTrainingPipeline(surgeons); // commitments only for trained/untrained categorization
+  const csrIntel = buildCsrIntel(surgeons);
+  const kolSignals = await buildKolSignals(allSurgeons, { models });
+  const paymentLeaders = await buildPaymentLeaders(allSurgeons, models);
+
+  return {
+    project_id: projectId,
+    hospital_name: project.hospital_name,
+    training_pipeline: trainingPipeline,
+    csr_intel: csrIntel,
+    kol_signals: kolSignals,
+    payment_leaders: paymentLeaders,
+    generated_at: new Date().toISOString(),
+  };
+}
+
+module.exports = {
+  buildSurgeonProfileEnrichment,
+  buildTrainingPipeline,
+  buildCsrIntel,
+  buildKolSignals,
+  buildPaymentLeaders,
+};
