@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, Cell, ReferenceLine, LabelList,
+} from 'recharts'
 
 // Step 1 — Hospital Profile: beds, financials, academic status, total cases
 // Mirrors Deck 1 Slide 1 (Academic Hospital Strategic Pillars) + Slide 5 (Da Vinci Impact)
+//
+// Color palette (locked from deck analysis)
+const COLOR_BLUE = '#1e40af'
+const COLOR_EMERALD = '#10b981'
+const COLOR_AMBER = '#f59e0b'
+const COLOR_VIOLET = '#8b5cf6'
+const COLOR_RED = '#ef4444'
+const COLOR_SLATE = '#94a3b8'
 
 const fmt = (n) => n != null ? Number(n).toLocaleString() : '--'
 const fmtMoney = (n) => n != null ? '$' + Number(n).toLocaleString() : '--'
@@ -104,7 +116,42 @@ export default function HospitalProfilePage({ projectId: propId }) {
         </div>
       </div>
 
-      {/* ─── ADDITION #1: Strategic Impact Summary (Deck p3) ─── */}
+      {/* ═══ INFOGRAPHIC #1: Strategic Impact Bar Chart ═══ */}
+      {enrichment?.strategic_impact && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Projected Strategic Impact — Visual</h3>
+          <p className="text-xs text-slate-500 mb-4">Horizontal bar view of the 8 impact metrics (normalized scale).</p>
+          <div className="h-80 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={enrichment.strategic_impact.metrics
+                  .filter(m => m.raw_value > 0)
+                  .map(m => ({
+                    label: m.label,
+                    value: m.raw_value,
+                    display: m.value,
+                  }))}
+                layout="vertical"
+                margin={{ left: 180, right: 50 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
+                <YAxis dataKey="label" type="category" stroke="#64748b" style={{ fontSize: 11 }} width={170} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                  formatter={(v, n, p) => [p.payload.display, 'Value']}
+                />
+                <Bar dataKey="value" fill={COLOR_EMERALD}>
+                  <LabelList dataKey="display" position="right" style={{ fill: '#10b981', fontSize: 11, fontWeight: 'bold' }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ADDITION #1 (text version): Strategic Impact Summary (Deck p3) ─── */}
       {enrichment?.strategic_impact && (
         <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-slate-700 rounded-lg p-5 mb-6">
           <div className="mb-3">
@@ -123,7 +170,39 @@ export default function HospitalProfilePage({ projectId: propId }) {
         </div>
       )}
 
-      {/* ─── ADDITION #2: Capital Snapshot (Deck p2) ─── */}
+      {/* ═══ INFOGRAPHIC #2: Capital Plan Timeline Bar Chart ═══ */}
+      {enrichment?.capital_snapshot && (() => {
+        const cs = enrichment.capital_snapshot
+        const timeline = [
+          { period: 'Current', Xi: cs.current.systems, dV5: 0 },
+          ...(cs.planned_phase_1 ? [{ period: `Phase 1 (${cs.planned_phase_1.year})`, Xi: cs.current.systems, dV5: cs.planned_phase_1.systems }] : []),
+          ...(cs.planned_phase_2 ? [{ period: `Phase 2 (${cs.planned_phase_2.year})`, Xi: Math.max(0, cs.current.systems - cs.planned_phase_2.systems), dV5: (cs.planned_phase_1?.systems || 0) + cs.planned_phase_2.systems + Math.min(cs.planned_phase_2.systems, cs.current.systems) }] : []),
+        ]
+        return (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+            <h3 className="font-bold text-white mb-1">Capital Plan Timeline</h3>
+            <p className="text-xs text-slate-500 mb-4">Fleet composition over Phase 1 + Phase 2 placements.</p>
+            <div className="h-64 -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={timeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="period" stroke="#64748b" style={{ fontSize: 11 }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                    labelStyle={{ color: '#e2e8f0' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="Xi" stackId="a" fill="#22c55e" name="da Vinci Xi" />
+                  <Bar dataKey="dV5" stackId="a" fill={COLOR_BLUE} name="da Vinci 5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ─── ADDITION #2 (text version): Capital Snapshot (Deck p2) ─── */}
       {enrichment?.capital_snapshot && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <h3 className="font-bold text-white mb-1">Capital Snapshot</h3>
@@ -155,7 +234,50 @@ export default function HospitalProfilePage({ projectId: propId }) {
         </div>
       )}
 
-      {/* ─── ADDITION #3: AMP Peer Benchmark (Deck p34) ─── */}
+      {/* ═══ INFOGRAPHIC #3: AMP Peer Benchmark Horizontal Bar ═══ */}
+      {enrichment?.peer_benchmark && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">AMP Peer Benchmark — Visual</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Ranked peer comparison · Rank <strong className="text-white">#{enrichment.peer_benchmark.rank} of {enrichment.peer_benchmark.total_ranked}</strong>
+          </p>
+          <div className="h-72 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={enrichment.peer_benchmark.peers_ranked.map(p => ({
+                  name: p.name,
+                  systems: p.systems,
+                  teaching_consoles: p.teaching_consoles,
+                  is_target: !!p.is_target,
+                }))}
+                layout="vertical"
+                margin={{ left: 140, right: 30 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
+                <YAxis dataKey="name" type="category" stroke="#64748b" style={{ fontSize: 11 }} width={130} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <ReferenceLine x={enrichment.peer_benchmark.peer_avg_systems} stroke={COLOR_AMBER} strokeDasharray="4 4" label={{ value: `Peer avg ${enrichment.peer_benchmark.peer_avg_systems}`, fill: '#f59e0b', fontSize: 10, position: 'top' }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="systems" name="Systems Installed">
+                  {enrichment.peer_benchmark.peers_ranked.map((p, i) => (
+                    <Cell key={i} fill={p.is_target ? COLOR_RED : COLOR_BLUE} />
+                  ))}
+                  <LabelList dataKey="systems" position="right" style={{ fill: '#fff', fontSize: 11 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-[10px] text-slate-500 italic mt-2">
+            Red bar = your hospital · Amber dashed line = AMP peer average · Higher rank = more capital placement.
+          </div>
+        </div>
+      )}
+
+      {/* ─── ADDITION #3 (text version): AMP Peer Benchmark (Deck p34) ─── */}
       {enrichment?.peer_benchmark && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -204,7 +326,33 @@ export default function HospitalProfilePage({ projectId: propId }) {
         </div>
       )}
 
-      {/* ─── ADDITION #4: Research Profile (Deck p20-23, condensed) ─── */}
+      {/* ═══ INFOGRAPHIC #4: Publications by Year Line Chart (Deck 1 p22) ═══ */}
+      {enrichment?.research_profile?.by_year?.length > 0 && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Publications by Year (5-yr trend)</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Total publications affiliated with {enrichment.research_profile.hospital_name} on PubMed
+          </p>
+          <div className="h-72 -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={enrichment.research_profile.by_year}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="year" stroke="#64748b" style={{ fontSize: 11 }} />
+                <YAxis stroke="#64748b" style={{ fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <Line type="monotone" dataKey="count" stroke={COLOR_VIOLET} strokeWidth={3} dot={{ r: 6, fill: COLOR_VIOLET }} name="Publications">
+                  <LabelList dataKey="count" position="top" style={{ fill: '#8b5cf6', fontSize: 11, fontWeight: 'bold' }} />
+                </Line>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ADDITION #4 (text version): Research Profile (Deck p20-23, condensed) ─── */}
       {enrichment?.research_profile && enrichment.research_profile.total_all_publications > 0 && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <h3 className="font-bold text-white mb-1">Research Profile</h3>

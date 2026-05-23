@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import {
+  BarChart, Bar, PieChart, Pie, ScatterChart, Scatter, FunnelChart, Funnel,
+  XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  Cell, LabelList, Label,
+} from 'recharts'
 
 // Step 2 — Surgeon Profile: credentialed surgeons, volume per surgeon, open/lap/robotic split
 
@@ -112,6 +117,181 @@ export default function SurgeonProfilePage({ projectId: propId }) {
           <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Specialties</div>
           <div className="text-2xl font-bold text-white mt-1">{Object.keys(bySpecialty).length}</div>
         </div>
+      </div>
+
+      {/* ═══ INFOGRAPHICS: 4-chart grid ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+        {/* ── Chart 1: Specialty Distribution Donut ── */}
+        {Object.keys(bySpecialty).length > 0 && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 className="font-bold text-white mb-1">Specialty Distribution</h3>
+            <p className="text-xs text-slate-500 mb-4">{surgeons.length} surgeons across {Object.keys(bySpecialty).length} specialties</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={Object.entries(bySpecialty).map(([sp, list]) => ({ name: sp, value: list.length, color: colorFor(sp) }))}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={90}
+                    label={(e) => `${e.name}: ${e.value}`}
+                    labelLine={true}
+                    style={{ fontSize: 10, fill: '#cbd5e1' }}
+                  >
+                    {Object.entries(bySpecialty).map(([sp], i) => (
+                      <Cell key={i} fill={colorFor(sp)} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                    labelStyle={{ color: '#e2e8f0' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── Chart 2: Training Funnel ── */}
+        {enrichment?.training_pipeline && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 className="font-bold text-white mb-1">Training & Commitment Funnel</h3>
+            <p className="text-xs text-slate-500 mb-4">Roster → Trained → Committed → Pull-Forward → Proctored</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { stage: 'Total Roster', value: surgeons.length, color: '#475569' },
+                    { stage: 'Trained on dV', value: enrichment.training_pipeline.trained.length + enrichment.training_pipeline.pull_forward.length, color: '#22c55e' },
+                    { stage: 'Open-to-MIS Committed', value: enrichment.training_pipeline.trained.length, color: '#10b981' },
+                    { stage: 'Pull-Forward (Access)', value: enrichment.training_pipeline.pull_forward.length, color: '#06b6d4' },
+                    { stage: 'Pipeline (TR200)', value: enrichment.training_pipeline.untrained.length, color: '#f59e0b' },
+                    { stage: 'Needs Proctoring', value: enrichment.training_pipeline.needs_proctoring.length, color: '#3b82f6' },
+                  ].filter(d => d.value > 0)}
+                  layout="vertical"
+                  margin={{ left: 110, right: 30 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} allowDecimals={false} />
+                  <YAxis dataKey="stage" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={100} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                    labelStyle={{ color: '#e2e8f0' }}
+                  />
+                  <Bar dataKey="value">
+                    {[
+                      { stage: 'Total Roster', color: '#475569' },
+                      { stage: 'Trained on dV', color: '#22c55e' },
+                      { stage: 'Open-to-MIS Committed', color: '#10b981' },
+                      { stage: 'Pull-Forward (Access)', color: '#06b6d4' },
+                      { stage: 'Pipeline (TR200)', color: '#f59e0b' },
+                      { stage: 'Needs Proctoring', color: '#3b82f6' },
+                    ].map((d, i) => <Cell key={i} fill={d.color} />)}
+                    <LabelList dataKey="value" position="right" style={{ fill: '#fff', fontSize: 11, fontWeight: 'bold' }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── Chart 3: KOL Scatter Quadrant (volume vs publications) ── */}
+        {enrichment?.kol_signals?.top_kols?.length > 0 && (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 className="font-bold text-white mb-1">KOL Quadrant (Volume × Publications)</h3>
+            <p className="text-xs text-slate-500 mb-4">Top-right = high-volume KOLs · dot size = commitment cases</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 10, right: 30, bottom: 30, left: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis
+                    type="number"
+                    dataKey="robotic_vol"
+                    name="Robotic Volume"
+                    stroke="#64748b"
+                    style={{ fontSize: 10 }}
+                    label={{ value: 'Robotic Volume (cases/yr)', fill: '#64748b', fontSize: 10, position: 'insideBottom', offset: -10 }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="publications_5yr"
+                    name="Publications"
+                    stroke="#64748b"
+                    style={{ fontSize: 10 }}
+                    label={{ value: 'Publications (5yr)', fill: '#64748b', fontSize: 10, angle: -90, position: 'insideLeft' }}
+                  />
+                  <ZAxis type="number" dataKey="commitment_cases" range={[60, 600]} name="Commitment" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                    labelStyle={{ color: '#e2e8f0' }}
+                    cursor={{ strokeDasharray: '3 3' }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.[0]) return null
+                      const d = payload[0].payload
+                      return (
+                        <div style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6, padding: 8 }}>
+                          <div className="text-white font-bold">{d.surgeon_name}</div>
+                          <div className="text-xs text-slate-400">{d.specialty}</div>
+                          <div className="text-xs text-cyan-300">Robotic: {d.robotic_vol}</div>
+                          <div className="text-xs text-violet-300">Publications: {d.publications_5yr}</div>
+                          <div className="text-xs text-emerald-300">Commitment: {d.commitment_cases}</div>
+                          <div className="text-xs text-amber-300">Score: {d.composite_score}</div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Scatter data={enrichment.kol_signals.top_kols} fill="#8b5cf6">
+                    {enrichment.kol_signals.top_kols.map((k, i) => (
+                      <Cell key={i} fill={colorFor(k.specialty)} />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── Chart 4: Top Surgeon Modality Mix (Open / Lap / Robotic) ── */}
+        {surgeons.length > 0 && (() => {
+          const top10 = [...surgeons]
+            .map(s => ({
+              name: (s.full_name || s.surgeon_name || '').slice(0, 22),
+              robotic: parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0),
+              lap: parseInt(s.lap_cases || 0),
+              open: parseInt(s.open_cases || 0),
+              total: parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0) + parseInt(s.lap_cases || 0) + parseInt(s.open_cases || 0),
+            }))
+            .filter(s => s.total > 0)
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 10)
+          if (!top10.length) return null
+          return (
+            <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+              <h3 className="font-bold text-white mb-1">Top 10 Surgeons — Modality Mix</h3>
+              <p className="text-xs text-slate-500 mb-4">Open / Lap / Robotic case split per surgeon (MPUP-sourced)</p>
+              <div className="h-64 -ml-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={top10} layout="vertical" margin={{ left: 100, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
+                    <YAxis dataKey="name" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={95} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                      labelStyle={{ color: '#e2e8f0' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="robotic" stackId="a" fill="#1e40af" name="Robotic" />
+                    <Bar dataKey="lap" stackId="a" fill="#93c5fd" name="Lap" />
+                    <Bar dataKey="open" stackId="a" fill="#1f2937" name="Open" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* ─── ADDITION #1: Training Pipeline (Deck p11) ─── */}

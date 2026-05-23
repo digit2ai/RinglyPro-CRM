@@ -208,6 +208,42 @@ function buildPeerBenchmark(project, analysis = {}) {
 
 // ─── 4. RESEARCH PROFILE (Deck p20-23 format, condensed) ──────────────
 
+// Fetch publications by year for the last 5 years (for the trend line chart)
+async function fetchPublicationsByYear(hospitalName, opts = {}) {
+  if (!hospitalName) return [];
+  const cleanName = hospitalName.replace(/[",]/g, '').trim();
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let y = currentYear - 4; y <= currentYear; y++) years.push(y);
+
+  const cacheKey = `hospital_research_by_year|${cleanName}|${currentYear}`;
+  const cached = await cache.get(opts.models, 'pubmed', cacheKey);
+  if (cached) return cached;
+
+  const results = [];
+  for (const year of years) {
+    const term = `("${cleanName}"[Affiliation]) AND ("${year}/01/01"[PDAT] : "${year}/12/31"[PDAT])`;
+    const params = new URLSearchParams({ db: 'pubmed', term, retmode: 'json', retmax: '0' });
+    if (NCBI_API_KEY) params.set('api_key', NCBI_API_KEY);
+    try {
+      const r = await cache.fetchWithRetry(`${EUTILS}/esearch.fcgi?${params.toString()}`, {}, 6000, 1);
+      if (r.ok) {
+        const j = await r.json();
+        results.push({ year, count: Number((j.esearchresult || {}).count) || 0 });
+      } else {
+        results.push({ year, count: 0 });
+      }
+    } catch (e) {
+      results.push({ year, count: 0 });
+    }
+    // Small delay to respect NCBI rate limit (3 req/sec without key)
+    if (!NCBI_API_KEY) await new Promise(r => setTimeout(r, 350));
+  }
+
+  await cache.set(opts.models, 'pubmed', cacheKey, results, 7 * 24 * 60 * 60 * 1000);
+  return results;
+}
+
 async function fetchHospitalResearchProfile(hospitalName, opts = {}) {
   if (!hospitalName) return { total_publications: 0, skipped: true };
 
@@ -341,6 +377,8 @@ async function buildHospitalProfileEnrichment({ projectId, models }) {
   let researchProfile = { total_publications: 0, skipped: true };
   try {
     researchProfile = await fetchHospitalResearchProfile(project.hospital_name, { models });
+    // Also fetch by-year breakdown for trend chart
+    researchProfile.by_year = await fetchPublicationsByYear(project.hospital_name, { models });
   } catch (e) {
     console.error('[hospital-profile] research fetch failed:', e.message);
   }
@@ -362,5 +400,6 @@ module.exports = {
   buildCapitalSnapshot,
   buildPeerBenchmark,
   fetchHospitalResearchProfile,
+  fetchPublicationsByYear,
   AMP_PEER_BENCHMARK,
 };
