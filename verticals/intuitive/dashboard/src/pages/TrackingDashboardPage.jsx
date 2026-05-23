@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer
+  Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList, Cell,
 } from 'recharts'
 
 // ─── Shared UI Helpers ────────────────────────────────────────
@@ -134,6 +134,8 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
     period_label: '',
     robot_serial: ''
   })
+  const [ptEnrichment, setPtEnrichment] = useState(null)
+  const [ptEnrichmentLoading, setPtEnrichmentLoading] = useState(false)
 
   // Import form state
   const [importForm, setImportForm] = useState({
@@ -184,6 +186,16 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
         // Plans with no actuals yet legitimately have no comparison — don't fail the whole page
         setComparison(null)
       }
+      // Load deck-aligned performance tracking enrichment using project_id
+      try {
+        const projId = plan.project_id
+        if (projId) {
+          setPtEnrichmentLoading(true)
+          const r = await api.getPerformanceTrackingEnrichment(projId)
+          setPtEnrichment(r.data)
+        }
+      } catch (e) { console.error('PT enrichment:', e) }
+      finally { setPtEnrichmentLoading(false) }
     } catch (err) {
       console.error('Failed to load tracking data:', err)
       setError(err.message)
@@ -418,6 +430,232 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ═══ DECK-ALIGNED PERFORMANCE TRACKING ENRICHMENT (Step 9) ═══ */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+
+      {/* ═══ ADDITION #4: Alert / Variance Watch List (top of page = highest priority) ═══ */}
+      {ptEnrichment?.watch_list && ptEnrichment.watch_list.alerts.length > 0 && (
+        <div className="bg-gradient-to-r from-red-950/40 to-amber-950/30 border-2 border-red-700/50 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-bold text-white">⚠ Variance Watch List</h3>
+              <p className="text-xs text-slate-400">{ptEnrichment.watch_list.headline}</p>
+            </div>
+            <div className="flex gap-3 text-xs">
+              <span className="text-red-300 font-bold">{ptEnrichment.watch_list.critical_count} critical</span>
+              <span className="text-amber-300 font-bold">{ptEnrichment.watch_list.warning_count} warnings</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {ptEnrichment.watch_list.alerts.slice(0, 8).map((a, i) => (
+              <div key={i} className={`flex gap-3 p-3 rounded border-l-4 ${a.severity === 'critical' ? 'bg-red-950/40 border-red-500' : 'bg-amber-950/30 border-amber-500'}`}>
+                <span className={`text-lg ${a.severity === 'critical' ? 'text-red-400' : 'text-amber-400'}`}>{a.severity === 'critical' ? '⚠' : '⚡'}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-white">
+                    {a.target}
+                    {a.variance_pct != null && <span className={`ml-2 text-xs font-bold ${a.variance_pct < 0 ? 'text-red-300' : 'text-amber-300'}`}>{a.variance_pct >= 0 ? '+' : ''}{a.variance_pct}%</span>}
+                    {a.specialty && <span className="ml-2 text-xs text-slate-400">{a.specialty}</span>}
+                  </div>
+                  <div className="text-xs text-slate-300 mt-1">{a.recommendation}</div>
+                </div>
+              </div>
+            ))}
+            {ptEnrichment.watch_list.alerts.length > 8 && (
+              <div className="text-xs text-slate-500 italic text-center">+ {ptEnrichment.watch_list.alerts.length - 8} more alerts</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #1: Plan vs Actual Variance Table ═══ */}
+      {ptEnrichment?.plan_vs_actual && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-white">Plan vs Actual Variance</h3>
+            <div className="flex gap-3 text-xs">
+              <span className="text-emerald-300 font-bold">↑ {ptEnrichment.plan_vs_actual.on_track_count} on-track</span>
+              <span className="text-amber-300 font-bold">→ {ptEnrichment.plan_vs_actual.at_risk_count} at-risk</span>
+              <span className="text-red-300 font-bold">↓ {ptEnrichment.plan_vs_actual.off_track_count} off-track</span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">{ptEnrichment.plan_vs_actual.headline}</p>
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Metric</th>
+                <th className="text-right pb-2">Plan (to-date)</th>
+                <th className="text-right pb-2">Actual (to-date)</th>
+                <th className="text-right pb-2">Variance</th>
+                <th className="text-right pb-2">% Var</th>
+                <th className="text-center pb-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ptEnrichment.plan_vs_actual.metrics.map((m, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-2 text-white">{m.metric}</td>
+                  <td className="py-2 text-right text-slate-400">{m.unit === '$' ? '$' + (m.plan / 1000).toFixed(0) + 'K' : m.plan.toLocaleString()}</td>
+                  <td className="py-2 text-right text-cyan-300 font-semibold">{m.unit === '$' ? '$' + (m.actual / 1000).toFixed(0) + 'K' : m.actual.toLocaleString()}</td>
+                  <td className={`py-2 text-right font-bold ${m.variance >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {m.variance >= 0 ? '+' : ''}{m.unit === '$' ? '$' + (m.variance / 1000).toFixed(0) + 'K' : m.variance.toLocaleString()}
+                  </td>
+                  <td className={`py-2 text-right font-bold ${m.variance_pct >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {m.variance_pct >= 0 ? '+' : ''}{m.variance_pct}%
+                  </td>
+                  <td className="py-2 text-center">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      m.status === 'green' ? 'bg-emerald-900/50 text-emerald-300'
+                      : m.status === 'yellow' ? 'bg-amber-900/50 text-amber-300'
+                      : m.status === 'red_under' || m.status === 'red_over' ? 'bg-red-900/50 text-red-300'
+                      : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {m.status === 'green' ? 'ON TRACK' : m.status === 'yellow' ? 'AT RISK' : m.status === 'red_under' ? 'OFF TRACK ↓' : m.status === 'red_over' ? 'OFF TRACK ↑' : 'BASELINE'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ═══ INFOGRAPHIC #1: Plan vs Actual Burn-Down Line + INFOGRAPHIC #3: YoY Growth Bars (2-col) ═══ */}
+      {ptEnrichment?.utilization && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Plan vs Actual quarterly burn-down */}
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 className="font-bold text-white mb-1">Plan vs Actual — Quarterly Burn-Down</h3>
+            <p className="text-xs text-slate-500 mb-4">Cumulative trajectory vs plan baseline</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ptEnrichment.utilization.quarters}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="quarter" stroke="#64748b" style={{ fontSize: 10 }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="plan_cases" fill="#64748b" name="Plan Cases" />
+                  <Bar dataKey="actual_cases" fill="#06b6d4" name="Actual Cases" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* INFOGRAPHIC #4: Per-System Utilization Tracker (Deck 1 p6) */}
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 className="font-bold text-white mb-1">Per-System Utilization vs Academic Avg</h3>
+            <p className="text-xs text-slate-500 mb-4">Academic average: {ptEnrichment.utilization.academic_avg_per_qtr} cases/qtr/system</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ptEnrichment.utilization.per_system}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="system_id" stroke="#64748b" style={{ fontSize: 10 }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <ReferenceLine y={ptEnrichment.utilization.academic_avg_per_qtr} stroke="#ef4444" strokeDasharray="4 4" label={{ value: `Academic avg ${ptEnrichment.utilization.academic_avg_per_qtr}`, fill: '#ef4444', fontSize: 9, position: 'top' }} />
+                  <Bar dataKey="plan_per_qtr" fill="#64748b" name="Plan/Qtr" />
+                  <Bar dataKey="actual_per_qtr" fill="#10b981" name="Actual/Qtr" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #3 + INFOGRAPHIC #2: Surgeon Performance Tracking + Variance Heat Map ═══ */}
+      {ptEnrichment?.surgeon_performance?.surgeons?.length > 0 && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-bold text-white">Surgeon Performance Tracking</h3>
+            <div className="flex gap-3 text-xs">
+              <span className="text-emerald-300 font-bold">↑ {ptEnrichment.surgeon_performance.on_track}</span>
+              <span className="text-amber-300 font-bold">→ {ptEnrichment.surgeon_performance.at_risk}</span>
+              <span className="text-red-300 font-bold">↓ {ptEnrichment.surgeon_performance.off_track}</span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">{ptEnrichment.surgeon_performance.headline}</p>
+
+          {/* Variance heat map bar */}
+          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Variance by Surgeon (Plan-to-Date vs Actual)</div>
+          <div className="h-64 -ml-2 mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={ptEnrichment.surgeon_performance.surgeons.slice(0, 12)}
+                layout="vertical"
+                margin={{ left: 130, right: 50 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
+                <YAxis dataKey="surgeon_name" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={125} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }} labelStyle={{ color: '#e2e8f0' }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="plan_to_date" fill="#64748b" name="Plan-to-Date">
+                  <LabelList dataKey="plan_to_date" position="right" style={{ fill: '#94a3b8', fontSize: 9 }} />
+                </Bar>
+                <Bar dataKey="actual_to_date" name="Actual-to-Date">
+                  {ptEnrichment.surgeon_performance.surgeons.slice(0, 12).map((s, i) => {
+                    const color = s.status === 'green' ? '#10b981' : s.status === 'yellow' ? '#f59e0b' : s.status === 'red_under' ? '#ef4444' : s.status === 'red_over' ? '#3b82f6' : '#06b6d4'
+                    return <Cell key={i} fill={color} />
+                  })}
+                  <LabelList dataKey="actual_to_date" position="right" style={{ fill: '#06b6d4', fontSize: 9, fontWeight: 'bold' }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <table className="w-full text-xs">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Surgeon</th>
+                <th className="text-left pb-2">Specialty</th>
+                <th className="text-right pb-2">Committed (Annual)</th>
+                <th className="text-right pb-2">Plan-to-Date</th>
+                <th className="text-right pb-2">Actual-to-Date</th>
+                <th className="text-right pb-2">Variance</th>
+                <th className="text-right pb-2">% Var</th>
+                <th className="text-center pb-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ptEnrichment.surgeon_performance.surgeons.map((s, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-1.5 text-white font-semibold">{s.surgeon_name}</td>
+                  <td className="py-1.5 text-slate-400">{s.specialty || '—'}</td>
+                  <td className="py-1.5 text-right text-slate-300">{s.committed_annual}</td>
+                  <td className="py-1.5 text-right text-slate-400">{s.plan_to_date}</td>
+                  <td className="py-1.5 text-right text-cyan-300 font-semibold">{s.actual_to_date}</td>
+                  <td className={`py-1.5 text-right font-bold ${s.variance >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {s.variance >= 0 ? '+' : ''}{s.variance}
+                  </td>
+                  <td className={`py-1.5 text-right font-bold ${s.variance_pct >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+                    {s.variance_pct >= 0 ? '+' : ''}{s.variance_pct}%
+                  </td>
+                  <td className="py-1.5 text-center">
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                      s.status === 'green' ? 'bg-emerald-900/50 text-emerald-300'
+                      : s.status === 'yellow' ? 'bg-amber-900/50 text-amber-300'
+                      : s.status === 'red_under' ? 'bg-red-900/50 text-red-300'
+                      : s.status === 'red_over' ? 'bg-blue-900/50 text-blue-300'
+                      : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {s.status === 'green' ? '↑ OK' : s.status === 'yellow' ? '→ RISK' : s.status === 'red_under' ? '↓ UNDER' : s.status === 'red_over' ? '↑ OVER' : 'BASELINE'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {ptEnrichmentLoading && !ptEnrichment && (
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 text-center">
+          <div className="text-sm text-slate-400">Loading deck-aligned performance tracking (Plan vs Actual · Utilization · Surgeon Performance · Watch List)...</div>
         </div>
       )}
 

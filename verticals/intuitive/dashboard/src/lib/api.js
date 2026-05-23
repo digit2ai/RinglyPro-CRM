@@ -141,6 +141,9 @@ export const api = {
   // Business Plan enrichment (Deck 1 p14/p15/p16 + Deck 3 p13/p14/p15 — proforma + capital plan)
   getBusinessPlanEnrichment: (projectId) => request(`/business-plan-enrichment/${projectId}/enrichment`),
 
+  // Performance Tracking enrichment (Deck 2 p2/p5/p6 + Deck 1 p6 — actuals tracking + variance)
+  getPerformanceTrackingEnrichment: (projectId) => request(`/performance-tracking/${projectId}/enrichment`),
+
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
