@@ -142,6 +142,7 @@ try { app.use(`${BASE_PATH}/api/v1/surgeon-profile`, requireAuth, require('./rou
 try { app.use(`${BASE_PATH}/api/v1/robotics-program`, requireAuth, require('./routes/robotics-program')); } catch (e) { console.error('Robotics Program route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/market-profile`, requireAuth, require('./routes/market-profile')); } catch (e) { console.error('Market Profile route load error:', e.message); }
 try { app.use(`${BASE_PATH}/api/v1/clinical-outcomes`, requireAuth, require('./routes/clinical-outcomes')); } catch (e) { console.error('Clinical Outcomes route load error:', e.message); }
+try { app.use(`${BASE_PATH}/api/v1/clinical-overlay`, requireAuth, require('./routes/clinical-overlay')); } catch (e) { console.error('Clinical Overlay route load error:', e.message); }
 
 // ============================================================================
 // STANDALONE PROPOSAL PAGE (NO LOGIN REQUIRED — must be before SPA catch-all)

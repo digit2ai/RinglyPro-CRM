@@ -132,6 +132,9 @@ export const api = {
   // Clinical Outcomes enrichment (Deck 1 p10 + HCAHPS + PSI additions)
   getClinicalOutcomesEnrichment: (projectId) => request(`/clinical-outcomes/${projectId}/enrichment`),
 
+  // Clinical Benefit Overlay enrichment (Deck 1 p15 + Deck 3 p7/p8 additions — THE MOAT)
+  getClinicalOverlayEnrichment: (projectId, conversionPct = 50) => request(`/clinical-overlay/${projectId}/enrichment?conversion_pct=${conversionPct}`),
+
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
