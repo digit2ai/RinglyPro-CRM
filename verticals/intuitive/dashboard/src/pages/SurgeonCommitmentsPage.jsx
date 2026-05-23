@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import {
+  BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, Cell, LabelList,
+} from 'recharts'
+
+const COLOR_OPEN_TO_MIS = '#dc2626'
+const COLOR_PULL_FORWARD = '#0891b2'
+const COLOR_TRAINING = '#7c3aed'
+const COLOR_EMERALD = '#10b981'
+const COLOR_CYAN = '#06b6d4'
+const COLOR_AMBER = '#f59e0b'
+
+const categoryColor = (cat) => {
+  if (cat === 'pull_forward') return COLOR_PULL_FORWARD
+  if (cat === 'training_pipeline') return COLOR_TRAINING
+  return COLOR_OPEN_TO_MIS
+}
+const categoryLabel = (cat) => {
+  if (cat === 'pull_forward') return 'Pull-Forward'
+  if (cat === 'training_pipeline') return 'Training Pipeline'
+  return 'Open-to-MIS'
+}
 
 // ─── 3-Tab Surgeon Commitment Editor (Deck 3 Slides 9/10/11 pattern) ───
 //
@@ -455,6 +477,8 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
   const [activeTab, setActiveTab] = useState('open_to_mis')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [enrichment, setEnrichment] = useState(null)
+  const [enrichmentLoading, setEnrichmentLoading] = useState(false)
 
   async function load() {
     if (!id) { setLoading(false); return }
@@ -478,7 +502,17 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
     }
   }
 
-  useEffect(() => { load() }, [id])
+  async function loadEnrichment() {
+    if (!id) return
+    setEnrichmentLoading(true)
+    try {
+      const r = await api.getSurgeonCommitmentsEnrichment(id)
+      setEnrichment(r.data)
+    } catch (e) { console.error('commitments enrichment:', e) }
+    finally { setEnrichmentLoading(false) }
+  }
+
+  useEffect(() => { load(); loadEnrichment() }, [id])
 
   if (!id) return <div className="p-10 text-slate-400">No project selected.</div>
   if (loading) return <div className="p-10 text-slate-400">Loading commitments...</div>
@@ -525,6 +559,245 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
           <div className="text-xs text-slate-400">Total Revenue Impact</div>
         </div>
       </div>
+
+      {/* ═══ ADDITION #4: Aggregated Commitment Summary ═══ */}
+      {enrichment?.summary && (
+        <div className="bg-gradient-to-br from-emerald-900/30 via-cyan-900/20 to-slate-900/40 border-2 border-emerald-700/40 rounded-xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-white">Executive Summary</h3>
+            <span className="text-xs text-emerald-300 font-bold">Combined Impact: ${(enrichment.summary.total_combined_impact / 1e6).toFixed(1)}M</span>
+          </div>
+          <p className="text-xs text-slate-300 mb-4">{enrichment.summary.headline}</p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Surgeons</div>
+              <div className="text-2xl font-bold text-white mt-1">{enrichment.summary.total_surgeons}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Cases/Yr</div>
+              <div className="text-2xl font-bold text-cyan-300 mt-1">{enrichment.summary.total_incremental_cases.toLocaleString()}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Revenue</div>
+              <div className="text-2xl font-bold text-amber-300 mt-1">${(enrichment.summary.total_revenue_impact / 1e6).toFixed(1)}M</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Bed Days Saved</div>
+              <div className="text-2xl font-bold text-emerald-300 mt-1">{enrichment.summary.total_bed_days_saved.toLocaleString()}</div>
+            </div>
+            <div className="bg-slate-900/60 rounded p-3 border border-slate-700 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Cost Avoidance</div>
+              <div className="text-2xl font-bold text-violet-300 mt-1">${(enrichment.summary.total_bed_day_value / 1e6).toFixed(1)}M</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ INFOGRAPHIC #4: Commitment Composition Donut + Bed Days top contributors ═══ */}
+      {enrichment?.summary && enrichment?.per_surgeon_bed_days && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          {/* Composition donut */}
+          {enrichment.summary.composition.length > 0 && (
+            <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+              <h3 className="font-bold text-white mb-1">Commitment Composition</h3>
+              <p className="text-xs text-slate-500 mb-4">Surgeon distribution across the 3 categories</p>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={enrichment.summary.composition}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      label={(e) => `${e.value} (${e.cases} cases)`}
+                      labelLine={true}
+                      style={{ fontSize: 10, fill: '#cbd5e1' }}
+                    >
+                      {enrichment.summary.composition.map((c, i) => (
+                        <Cell key={i} fill={c.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                      labelStyle={{ color: '#e2e8f0' }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Per-Surgeon Bed Days bars */}
+          {enrichment.per_surgeon_bed_days.length > 0 && (
+            <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+              <h3 className="font-bold text-white mb-1">Per-Surgeon Bed Days Saved</h3>
+              <p className="text-xs text-slate-500 mb-4">Top contributors · cases × LOS delta per procedure</p>
+              <div className="h-64 -ml-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={enrichment.per_surgeon_bed_days.slice(0, 10)}
+                    layout="vertical"
+                    margin={{ left: 110, right: 40 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
+                    <YAxis dataKey="surgeon_name" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={105} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                      labelStyle={{ color: '#e2e8f0' }}
+                    />
+                    <Bar dataKey="bed_days_saved" name="Bed Days Saved">
+                      {enrichment.per_surgeon_bed_days.slice(0, 10).map((s, i) => (
+                        <Cell key={i} fill={categoryColor(s.commitment_category)} />
+                      ))}
+                      <LabelList dataKey="bed_days_saved" position="right" style={{ fill: '#10b981', fontSize: 10, fontWeight: 'bold' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ ADDITION #3 + INFOGRAPHIC #3: Pull-Forward Capacity Visualization (Deck 3 Slide 10) ═══ */}
+      {enrichment?.pull_forward_capacity?.length > 0 && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Pull-Forward Capacity — Current vs Target Weekly Volume</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Surgeons blocked by access. Sorted by urgency (backlog weeks + capacity gap).
+            Total additional annual cases if access granted: <strong className="text-cyan-300">{enrichment.pull_forward_capacity.reduce((s, p) => s + p.additional_annual_cases, 0).toLocaleString()}</strong>
+          </p>
+          <div style={{ height: Math.max(280, enrichment.pull_forward_capacity.length * 38) }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={enrichment.pull_forward_capacity}
+                layout="vertical"
+                margin={{ left: 130, right: 40 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} unit=" cases/wk" />
+                <YAxis dataKey="surgeon_name" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={125} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="current_weekly" fill="#64748b" name="Current Cases/Wk">
+                  <LabelList dataKey="current_weekly" position="right" style={{ fill: '#94a3b8', fontSize: 10 }} />
+                </Bar>
+                <Bar dataKey="target_weekly" fill={COLOR_CYAN} name="Target Cases/Wk (with access)">
+                  <LabelList dataKey="target_weekly" position="right" style={{ fill: '#06b6d4', fontSize: 10, fontWeight: 'bold' }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-3 text-xs text-slate-400">
+            {enrichment.pull_forward_capacity.filter(p => p.backlog_weeks > 0).length} surgeons have patient backlog &gt; 0 weeks — the strongest urgency signal.
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #1 + INFOGRAPHIC #1: Master Surgeon Table (Deck 1 Slide 11) ═══ */}
+      {enrichment?.master_table?.length > 0 && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Master Surgeon Table — All Categories</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Deck 1 Slide 11 format · All {enrichment.master_table.length} surgeons consolidated · Sorted by incremental cases/yr
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+                <tr>
+                  <th className="text-left pb-2">Surgeon Name</th>
+                  <th className="text-left pb-2">Specialty</th>
+                  <th className="text-center pb-2">Trained</th>
+                  <th className="text-left pb-2">Training Needs</th>
+                  <th className="text-center pb-2">Proctoring</th>
+                  <th className="text-right pb-2">Incremental Cases/Yr</th>
+                  <th className="text-left pb-2">Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrichment.master_table.map((s, i) => (
+                  <tr key={i} className="border-t border-slate-700">
+                    <td className="py-2 text-white font-semibold">{s.surgeon_name}</td>
+                    <td className="py-2 text-slate-300">{s.specialty}</td>
+                    <td className="py-2 text-center">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${s.trained ? 'bg-emerald-900/50 text-emerald-300' : 'bg-amber-900/50 text-amber-300'}`}>
+                        {s.trained ? 'Trained' : 'Untrained'}
+                      </span>
+                    </td>
+                    <td className="py-2 text-slate-400 text-xs">{s.training_needs || '—'}</td>
+                    <td className="py-2 text-center">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${s.proctoring ? 'bg-blue-900/50 text-blue-300' : 'bg-slate-700 text-slate-500'}`}>
+                        {s.proctoring ? 'Yes' : 'No'}
+                      </span>
+                    </td>
+                    <td className="py-2 text-right text-emerald-300 font-bold">{s.incremental_cases_yr.toLocaleString()}</td>
+                    <td className="py-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: categoryColor(s.commitment_category) + '40', color: categoryColor(s.commitment_category) }}>
+                        {categoryLabel(s.commitment_category)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                <tr className="border-t-2 border-slate-500 font-bold">
+                  <td className="py-2 text-white">Total</td>
+                  <td colSpan="4"></td>
+                  <td className="py-2 text-right text-emerald-300">{enrichment.master_table.reduce((s, r) => s + r.incremental_cases_yr, 0).toLocaleString()}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ADDITION #2 + INFOGRAPHIC #2: Per-Surgeon Bed Days Detail (Deck 3 Slide 9) ═══ */}
+      {enrichment?.per_surgeon_bed_days?.length > 0 && (
+        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
+          <h3 className="font-bold text-white mb-1">Per-Surgeon Bed Days Detail</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Deck 3 Slide 9 format · {enrichment.per_surgeon_bed_days.reduce((s, p) => s + p.bed_days_saved, 0).toLocaleString()} total bed days saved across {enrichment.per_surgeon_bed_days.length} converting surgeons
+          </p>
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Surgeon</th>
+                <th className="text-left pb-2">Specialty</th>
+                <th className="text-right pb-2">Total Cases</th>
+                <th className="text-right pb-2">Bed Days Saved</th>
+                <th className="text-right pb-2">$ Value</th>
+                <th className="text-left pb-2">Procedure Breakdown</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enrichment.per_surgeon_bed_days.map((s, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-2 text-white font-semibold">{s.surgeon_name}</td>
+                  <td className="py-2 text-slate-400">{s.specialty || '—'}</td>
+                  <td className="py-2 text-right text-cyan-300">{s.total_cases}</td>
+                  <td className="py-2 text-right text-emerald-300 font-bold">{s.bed_days_saved.toLocaleString()}</td>
+                  <td className="py-2 text-right text-amber-300">${(s.dollar_value / 1000).toFixed(0)}K</td>
+                  <td className="py-2 text-[11px] text-slate-400">
+                    {s.procedure_breakdown.map(p => `${p.procedure} (${p.cases}×${p.los_delta_days}d=${p.bed_days_saved})`).join(' · ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {enrichmentLoading && !enrichment && (
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 mb-6 text-center">
+          <div className="text-sm text-slate-400">Loading deck-aligned visualizations (Master Table · Bed Days · Pull-Forward · Composition)...</div>
+        </div>
+      )}
 
       {/* Tab bar */}
       <div className="border-b border-slate-700 mb-6">
