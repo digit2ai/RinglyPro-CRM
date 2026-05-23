@@ -117,6 +117,9 @@ export const api = {
   getDiagnostic: (projectId) => request(`/executive-brief/${projectId}/diagnostic`),
   getPeerHospitals: (projectId) => request(`/executive-brief/${projectId}/peers`),
 
+  // Hospital Profile enrichment (Deck p2/p3/p20-23/p34 additions)
+  getHospitalProfileEnrichment: (projectId) => request(`/hospital-profile/${projectId}/enrichment`),
+
   // Surgeon Targeting (AcuityMD-style territory intelligence)
   searchSurgeonTargets: (params) => request('/surgeon-targeting/search', { method: 'POST', body: JSON.stringify(params) }),
   getSurgeonProfile: (npi) => request(`/surgeon-targeting/profile/${npi}`),
