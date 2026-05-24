@@ -354,16 +354,19 @@ router.post('/:planId/surgeons', async (req, res) => {
     if (!surgeon_name) return res.status(400).json({ error: 'surgeon_name is required' });
 
     // Calculate totals from procedures
-    // Existing/Incremental split (Deck 3 Slide 12): procedures with patient_source='existing'
-    // multiply incremental_cases by pct_converted_from_open (default 20% — NOT 100%).
-    // Procedures with patient_source='incremental' use the volume directly (net-new cases).
+    // Two paths (CFO-grade math per client meeting):
+    //  A) patient_source='existing' — OPEN volume only × pct_converted_from_open
+    //     (laparoscopic is NEVER counted). Default 15%. This is the conversion model.
+    //  B) patient_source='incremental' — NET-NEW cases the hospital doesn't have today
+    //     (e.g., Dr. Jones commits 100 more cases/yr because of capacity/recruitment).
+    //     Volume taken at face value, no multiplier.
     const procs = procedures || [];
     let totalAnnual = 0;
     let totalRevenue = 0;
     for (const p of procs) {
       // Default patient_source to 'existing' for back-compat
       if (!p.patient_source) p.patient_source = 'existing';
-      // Realistic default conversion: 20% (Deck 3 said NEVER 100%)
+      // Realistic default: 15% of OPEN-only volume (client meeting correction)
       if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
         p.pct_converted_from_open = 15;
       }
@@ -449,15 +452,17 @@ router.patch('/:planId/surgeons/:id', async (req, res) => {
       for (const p of updates.procedures) {
         if (!p.patient_source) p.patient_source = 'existing';
         if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
-          p.pct_converted_from_open = 20;
+          p.pct_converted_from_open = 15;
         }
 
         const monthly = parseFloat(p.incremental_cases_monthly || 0);
         let annual;
         if (p.patient_source === 'existing') {
-          const pct = parseFloat(p.pct_converted_from_open || 20) / 100;
+          // OPEN volume only × pct (laparoscopic NEVER counted), default 15%
+          const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
           annual = Math.round(monthly * 12 * pct);
         } else {
+          // Net-new cases: explicit surgeon commitment (Dr. Jones commits 100 more/yr)
           annual = Math.round(monthly * 12);
         }
         p.incremental_cases_annual = annual;

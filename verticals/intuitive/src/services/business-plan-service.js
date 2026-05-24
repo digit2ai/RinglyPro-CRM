@@ -78,20 +78,51 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = []) {
   const annualServiceCost = parseFloat(plan?.annual_service_cost) || 0;
   const acquisitionModel = plan?.acquisition_model || 'purchase';
 
-  // Total annual revenue + cost avoidance
-  const totalIncrementalRevenue = parseFloat(plan?.total_incremental_revenue || 0);
+  // Split revenue between conversion (existing/open) and net-new (incremental commitments).
+  // Conversion revenue ramps slowly (training/credentialing); explicit surgeon commitments
+  // ramp faster but still respect trained vs untrained status.
+  let revenueFromConversion = 0;   // patient_source='existing' (15% of OPEN model)
+  let revenueFromNetNewTrained = 0;   // patient_source='incremental' AND trained=true
+  let revenueFromNetNewUntrained = 0; // patient_source='incremental' AND trained=false
+  for (const s of (surgeons || [])) {
+    const procs = Array.isArray(s.procedures) ? s.procedures : [];
+    const trained = s.trained !== false; // default true unless explicitly false
+    for (const p of procs) {
+      const monthly = parseFloat(p.incremental_cases_monthly || 0);
+      const rate = parseFloat(p.reimbursement_rate || 0);
+      if (p.patient_source === 'incremental') {
+        const rev = monthly * 12 * rate;
+        if (trained) revenueFromNetNewTrained += rev;
+        else revenueFromNetNewUntrained += rev;
+      } else {
+        const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
+        revenueFromConversion += monthly * 12 * pct * rate;
+      }
+    }
+  }
+  // Fallback: if surgeons array is empty, use the plan's stored total under the conversion ramp
+  const totalSurgeonRevenue = revenueFromConversion + revenueFromNetNewTrained + revenueFromNetNewUntrained;
+  const totalIncrementalRevenue = totalSurgeonRevenue > 0
+    ? totalSurgeonRevenue
+    : parseFloat(plan?.total_incremental_revenue || 0);
+  if (totalSurgeonRevenue === 0) revenueFromConversion = totalIncrementalRevenue;
+
   const totalClinicalSavings = parseFloat(plan?.total_clinical_outcome_savings || 0);
   const totalAnnualReturn = totalIncrementalRevenue + totalClinicalSavings;
 
   // Capital expenditure
   const capitalExpenditure = acquisitionModel === 'purchase'
     ? systemPrice * systemQuantity
-    : 0; // lease/AMP spread the cost as annual expense
+    : 0;
   const annualLeaseOrAmpExpense = acquisitionModel === 'purchase'
     ? 0
     : (systemPrice * systemQuantity) / 5;
 
-  // 5-year proforma with adoption ramp
+  // 5-year proforma with category-aware adoption ramp
+  // Conversion (training-gated):  Y1 50% · Y2 75% · Y3+ 100%
+  // Net-new trained (commitment): Y1 80% · Y2 100% · Y3+ 100%  (small Y1 ramp for OR scheduling lag)
+  // Net-new untrained:            Y1 25% · Y2 75% · Y3+ 100%  (TR200 training year)
+  // Clinical cost avoidance follows conversion ramp (it's tied to OPEN-to-dV conversions)
   const yearlyData = [];
   let cumulativeNet = -capitalExpenditure;
   yearlyData.push({
@@ -104,10 +135,16 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = []) {
     cumulative_net: cumulativeNet,
   });
 
+  const conversionRamp = { 1: 0.5, 2: 0.75, 3: 1.0, 4: 1.0, 5: 1.0 };
+  const trainedRamp    = { 1: 0.8, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.0 };
+  const untrainedRamp  = { 1: 0.25, 2: 0.75, 3: 1.0, 4: 1.0, 5: 1.0 };
+
   for (let y = 1; y <= 5; y++) {
-    const ramp = y === 1 ? 0.5 : y === 2 ? 0.75 : 1.0;
-    const yearRevenue = totalIncrementalRevenue * ramp;
-    const yearCostAvoidance = totalClinicalSavings * ramp;
+    const yearRevenue =
+      revenueFromConversion * conversionRamp[y] +
+      revenueFromNetNewTrained * trainedRamp[y] +
+      revenueFromNetNewUntrained * untrainedRamp[y];
+    const yearCostAvoidance = totalClinicalSavings * conversionRamp[y];
     const yearReturn = yearRevenue + yearCostAvoidance;
     const yearExpense = annualServiceCost + annualLeaseOrAmpExpense;
     const yearNet = yearReturn - yearExpense;
@@ -160,7 +197,7 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = []) {
     headline: paybackYears
       ? `Project IRR ${projectIRR}% · Payback ${Math.round(paybackYears * 10) / 10} yrs · 5-yr net \$${Math.round(totalNet / 1e6 * 10) / 10}M`
       : `Project IRR ${projectIRR}% · 5-yr net \$${Math.round(totalNet / 1e6 * 10) / 10}M`,
-    methodology: 'Y1 50% / Y2 75% / Y3+ 100% adoption ramp. Capital expensed Y0 for purchase, amortized over 5 yrs for lease/AMP. Returns = incremental revenue + clinical cost avoidance.',
+    methodology: 'Category-aware ramp: conversion revenue (existing/OPEN-only @ 15%) Y1 50%/Y2 75%/Y3+ 100%; net-new commitments from TRAINED surgeons Y1 80%/Y2+ 100%; net-new from UNTRAINED Y1 25%/Y2 75%/Y3+ 100%. Clinical cost avoidance follows the conversion ramp. Capital expensed Y0 for purchase, amortized over 5 yrs for lease/AMP.',
   };
 }
 
