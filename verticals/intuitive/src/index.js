@@ -168,7 +168,28 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     }
 
     const hospitalName = project.hospital_name || 'Your Hospital';
-    const slides = _buildSlideHTML(analysis, hospitalName);
+
+    // ─── NEW: Use 10-step workflow slide deck instead of old 13-slide layout ───
+    // Pass ?legacy=1 to force the old deck for back-compat.
+    const useLegacy = req.query.legacy === '1';
+    let slides, scripts;
+    if (!useLegacy) {
+      try {
+        const wfBuilder = require('./services/workflow-presentation-builder');
+        const enrichments = await wfBuilder.fetchAllEnrichments(projectId, models);
+        slides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
+        scripts = wfBuilder.buildWorkflowNarration(project, enrichments, hospitalName);
+        console.log('[Intuitive Proposal] Using NEW 10-step workflow deck for project ' + projectId);
+      } catch (e) {
+        console.error('[Intuitive Proposal] Workflow builder failed, falling back to legacy:', e.message);
+        slides = _buildSlideHTML(analysis, hospitalName);
+        scripts = _buildNarrationScripts(analysis, hospitalName);
+      }
+    } else {
+      slides = _buildSlideHTML(analysis, hospitalName);
+      scripts = _buildNarrationScripts(analysis, hospitalName);
+    }
+
     const slidesJSON = JSON.stringify(slides);
     const mountPath = req.baseUrl || BASE_PATH || '';
     const audioBase = `${mountPath}/api/v1/proposal/${projectId}/audio`;
@@ -176,21 +197,32 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const chartDataJSON = JSON.stringify(chartData);
 
     // Auto-generate audio if not cached (background, non-blocking)
+    // Force regeneration if using new workflow deck and old audio exists
     const audioDir = path.join(_AUDIO_DIR, String(projectId));
     const slide0Audio = path.join(audioDir, 'slide_0.mp3');
-    if (!fs.existsSync(slide0Audio)) {
-      const genScripts = _buildNarrationScripts(analysis, hospitalName);
+    const audioCountFile = path.join(audioDir, '.deck_version');
+    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v1';
+    const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
+    const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
+
+    if (needsRegen) {
       setImmediate(async () => {
         try {
           if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
-          for (let i = 0; i < genScripts.length; i++) {
+          // Clear old audio if deck version changed
+          if (cachedDeckVersion && cachedDeckVersion !== currentDeckVersion) {
+            const files = fs.readdirSync(audioDir).filter(f => f.startsWith('slide_'));
+            for (const f of files) try { fs.unlinkSync(path.join(audioDir, f)); } catch (e) {}
+          }
+          for (let i = 0; i < scripts.length; i++) {
             const ap = path.join(audioDir, 'slide_' + i + '.mp3');
             if (!fs.existsSync(ap)) {
-              console.log('[Intuitive Proposal] Auto-generating audio slide ' + (i + 1) + '/' + genScripts.length + ' for project ' + projectId);
-              await _generateTTS(genScripts[i], ap);
+              console.log('[Intuitive Proposal] Auto-generating audio slide ' + (i + 1) + '/' + scripts.length + ' for project ' + projectId);
+              await _generateTTS(scripts[i], ap);
             }
           }
-          console.log('[Intuitive Proposal] Audio ready for project ' + projectId);
+          fs.writeFileSync(audioCountFile, currentDeckVersion);
+          console.log('[Intuitive Proposal] Audio ready for project ' + projectId + ' (deck: ' + currentDeckVersion + ')');
         } catch (e) { console.error('[Intuitive Proposal] Audio gen error:', e.message); }
       });
     }

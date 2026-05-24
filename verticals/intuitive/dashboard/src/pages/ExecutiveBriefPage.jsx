@@ -87,6 +87,24 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
   const [d, setD] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/intuitive/proposal/${id}`
+
+  function copyMagicLink() {
+    navigator.clipboard.writeText(magicLinkUrl).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 3000)
+    }).catch(() => {
+      // Fallback for browsers without clipboard API
+      const ta = document.createElement('textarea')
+      ta.value = magicLinkUrl
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy'); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 3000) } catch (e) {}
+      document.body.removeChild(ta)
+    })
+  }
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
@@ -139,30 +157,71 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
   return (
     <div className="bg-slate-100 min-h-screen pb-12">
       {/* ─── Action bar (hidden in print) ─── */}
-      <div className="bg-slate-800 px-6 py-3 flex items-center justify-between sticky top-0 z-10 print:hidden">
+      <div className="bg-slate-800 px-6 py-3 flex items-center justify-between sticky top-0 z-10 print:hidden flex-wrap gap-2">
         <div className="text-white">
           <div className="text-xs uppercase tracking-widest text-slate-400">Step 10 of 10 · MyIntuitive+ Format · Comprehensive Brief</div>
           <div className="text-sm font-semibold">{project.hospital_name} · Strategic Alignment Opportunity</div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Magic Link share button — public proposal URL, no login */}
           <button
-            onClick={() => navigate(`/executive-presentation/${id}`)}
+            onClick={copyMagicLink}
+            className={`text-sm font-bold px-4 py-2 rounded flex items-center gap-2 shadow transition-colors ${linkCopied ? 'bg-emerald-600 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+            title="Copy public shareable link (no login required) — sends CFOs to the slide+voice presentation"
+          >
+            {linkCopied ? (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                Magic Link Copied!
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                Share Magic Link
+              </>
+            )}
+          </button>
+
+          {/* Generate Executive Presentation — opens the public proposal in a new tab */}
+          <a
+            href={`/intuitive/proposal/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-sm font-bold px-5 py-2 rounded flex items-center gap-2 shadow-lg"
+            title="Launch the slide+voice presentation (with Rachel narration)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Generate Executive Presentation
-          </button>
-          <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded">
+            Executive Presentation
+          </a>
+
+          {/* PDF export — opens print-optimized proposal in new tab (much better than browser print of React page) */}
+          <a
+            href={`/intuitive/proposal/${id}#print`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded"
+            title="Open print-friendly version (better PDF quality than React page)"
+          >
             Export PDF
-          </button>
+          </a>
+
           <button onClick={() => navigate(`/tracking/${id}`)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm px-4 py-2 rounded">
             ← Performance Tracking
           </button>
         </div>
       </div>
+
+      {/* Magic link confirmation toast (also visible) */}
+      {linkCopied && (
+        <div className="fixed top-20 right-6 bg-emerald-600 text-white px-5 py-3 rounded shadow-xl z-50 max-w-md print:hidden">
+          <div className="font-bold text-sm mb-1">✓ Magic link copied to clipboard</div>
+          <div className="text-xs opacity-90 break-all">{magicLinkUrl}</div>
+          <div className="text-[10px] opacity-75 mt-1">Send this to your CFO · no login required · plays Rachel narration</div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-6 pt-6">
 
