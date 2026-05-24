@@ -85,6 +85,23 @@ export default function SurgeonProfilePage({ projectId: propId }) {
   const totalRoboticVol = surgeons.reduce((t, s) => t + parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0), 0)
   const trainedCount = surgeons.filter(s => (s.robotic_cases_last_yr || 0) > 0).length
 
+  // The live surgeonsByHospital API needs the NPPES affiliation roster, which
+  // isn't ingested in this DB, so it returns []. Fall back to the enrichment
+  // (commitment-based) so the headline KPIs match the funnel/pipeline below.
+  const tp = enrichment?.training_pipeline || {}
+  const rosterFromEnrich = (tp.trained?.length || 0) + (tp.untrained?.length || 0) + (tp.pull_forward?.length || 0)
+  const surgeonsAtHospital = surgeons.length || rosterFromEnrich
+  const trainedDisplay = surgeons.length ? trainedCount : (tp.trained?.length || 0)
+  const trainedPct = surgeonsAtHospital > 0 ? Math.round(trainedDisplay / surgeonsAtHospital * 100) : 0
+  const roboticVolDisplay = totalRoboticVol || parseInt(project?.current_robotic_cases || 0)
+  const enrichSpecialties = new Set([
+    ...[...(tp.trained || []), ...(tp.untrained || []), ...(tp.pull_forward || [])]
+        .map(s => (s.specialty || s.surgeon_specialty || '').split(/[/,]/)[0].trim()).filter(Boolean),
+    ...((enrichment?.kol_signals?.top_kols) || [])
+        .map(k => k.specialty).filter(s => s && s !== 'Research KOL'),
+  ])
+  const specialtyCountDisplay = Object.keys(bySpecialty).length || enrichSpecialties.size
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -101,21 +118,21 @@ export default function SurgeonProfilePage({ projectId: propId }) {
       {/* Aggregate KPIs */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4">
-          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Surgeons at Hospital</div>
-          <div className="text-2xl font-bold text-white mt-1">{surgeons.length}</div>
+          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Surgeons Tracked</div>
+          <div className="text-2xl font-bold text-white mt-1">{surgeonsAtHospital}</div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4">
           <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Trained on Robotics</div>
-          <div className="text-2xl font-bold text-emerald-300 mt-1">{trainedCount}</div>
-          <div className="text-[10px] text-slate-500 mt-0.5">{surgeons.length > 0 ? Math.round(trainedCount / surgeons.length * 100) : 0}% of roster</div>
+          <div className="text-2xl font-bold text-emerald-300 mt-1">{trainedDisplay}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">{trainedPct}% of roster</div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4">
-          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Total Robotic Vol (last yr)</div>
-          <div className="text-2xl font-bold text-cyan-300 mt-1">{fmt(totalRoboticVol)}</div>
+          <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Hospital Robotic Vol (last yr)</div>
+          <div className="text-2xl font-bold text-cyan-300 mt-1">{fmt(roboticVolDisplay)}</div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-4">
           <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Specialties</div>
-          <div className="text-2xl font-bold text-white mt-1">{Object.keys(bySpecialty).length}</div>
+          <div className="text-2xl font-bold text-white mt-1">{specialtyCountDisplay}</div>
         </div>
       </div>
 
