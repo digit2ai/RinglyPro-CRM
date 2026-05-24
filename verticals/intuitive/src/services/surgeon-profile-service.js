@@ -85,10 +85,22 @@ function buildCsrIntel(surgeons = []) {
 async function buildKolSignals(surgeons = [], opts = {}) {
   if (!surgeons.length) return { headline: 'No surgeon roster yet', top_kols: [] };
 
-  // Score the WHOLE roster (not just the first 15) so surgeons with real clinical
-  // volume/commitments are never excluded from the ranking by array position.
+  // CRITICAL: on prod the surgeon list = committed surgeons + a large NPPES
+  // affiliation roster. A blind slice() would score only the first N roster
+  // surgeons (publication-only academics) and push the committed clinical
+  // surgeons — the ones with specialty + robotic/commitment volume — out of the
+  // scoring window entirely. So we ALWAYS score clinical surgeons first, then
+  // fill the remaining budget with research-only candidates.
+  const isClinical = (s) =>
+    parseInt(s.total_incremental_annual || 0) > 0 ||
+    parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0) > 0 ||
+    !!(s.surgeon_specialty || s.specialty);
+  const clinicalFirst = surgeons.filter(isClinical);
+  const researchOnly = surgeons.filter(s => !isClinical(s));
+  const toScore = [...clinicalFirst, ...researchOnly].slice(0, 24);
+
   const scored = [];
-  for (const s of surgeons.slice(0, 25)) {
+  for (const s of toScore) {
     let publicationCount = 0;
     try {
       const pub = await pubmed.fetchPublicationCount(s.surgeon_name || s.full_name, {
