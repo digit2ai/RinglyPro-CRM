@@ -98,23 +98,29 @@ export default function HospitalProfilePage({ projectId: propId }) {
         <KpiTile label="Total Beds" value={fmt(beds)} sub={isAcademic ? 'Academic Medical Center' : 'Community Hospital'} />
         <KpiTile label="Annual Surgical Volume" value={fmt(project.annual_surgical_volume)} sub="all cases" />
         <KpiTile label="Total OR Count" value={fmt(project.total_or_count)} sub={`${fmt(project.robot_ready_ors)} robot-ready`} />
-        <KpiTile label="Operating Margin" value={project.operating_margin_pct != null ? `${parseFloat(project.operating_margin_pct).toFixed(1)}%` : '--'} sub="(HCRIS)" />
+        <KpiTile label="Operating Margin" value={project.extended_data?.financials?.operating_margin_pct != null ? `${parseFloat(project.extended_data.financials.operating_margin_pct).toFixed(1)}%` : '--'} sub="Mayo system '23" />
       </div>
 
       {/* Financial profile */}
+      {(() => {
+        const fin = project.extended_data?.financials || {}
+        return (
       <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
-        <h3 className="font-bold text-white mb-3">Financial Profile</h3>
+        <h3 className="font-bold text-white mb-1">Financial Profile</h3>
+        <p className="text-[11px] text-slate-500 mb-3">Payer mix &amp; ownership from CMS. Revenue/asset figures are estimates from Mayo Clinic 2023 system filings (~12% Florida campus share); facility HCRIS cost-report ingest pending.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div><span className="text-slate-500">Total Revenue</span><div className="text-white font-semibold">{fmtMoneyShort(project.total_revenue)}</div></div>
-          <div><span className="text-slate-500">Net Patient Revenue</span><div className="text-white font-semibold">{fmtMoneyShort(project.net_patient_revenue)}</div></div>
-          <div><span className="text-slate-500">Operating Income</span><div className="text-white font-semibold">{fmtMoneyShort(project.operating_income)}</div></div>
-          <div><span className="text-slate-500">Total Assets</span><div className="text-white font-semibold">{fmtMoneyShort(project.total_assets)}</div></div>
-          <div><span className="text-slate-500">Medicare Mix</span><div className="text-white font-semibold">{project.medicare_pct ? `${project.medicare_pct}%` : '--'}</div></div>
-          <div><span className="text-slate-500">Medicaid Mix</span><div className="text-white font-semibold">{project.medicaid_pct ? `${project.medicaid_pct}%` : '--'}</div></div>
-          <div><span className="text-slate-500">Commercial Mix</span><div className="text-white font-semibold">{project.commercial_pct ? `${project.commercial_pct}%` : '--'}</div></div>
-          <div><span className="text-slate-500">Ownership</span><div className="text-white font-semibold">{project.hospital_ownership || '--'}</div></div>
+          <div><span className="text-slate-500">Total Revenue {fin.estimated ? <span className="text-[9px] text-amber-400">est</span> : null}</span><div className="text-white font-semibold">{fmtMoneyShort(fin.total_revenue)}</div></div>
+          <div><span className="text-slate-500">Net Patient Revenue {fin.estimated ? <span className="text-[9px] text-amber-400">est</span> : null}</span><div className="text-white font-semibold">{fmtMoneyShort(fin.net_patient_revenue)}</div></div>
+          <div><span className="text-slate-500">Operating Income {fin.estimated ? <span className="text-[9px] text-amber-400">est</span> : null}</span><div className="text-white font-semibold">{fmtMoneyShort(fin.operating_income)}</div></div>
+          <div><span className="text-slate-500">Total Assets {fin.estimated ? <span className="text-[9px] text-amber-400">est</span> : null}</span><div className="text-white font-semibold">{fmtMoneyShort(fin.total_assets)}</div></div>
+          <div><span className="text-slate-500">Medicare Mix</span><div className="text-white font-semibold">{project.payer_medicare_pct ? `${project.payer_medicare_pct}%` : '--'}</div></div>
+          <div><span className="text-slate-500">Medicaid Mix</span><div className="text-white font-semibold">{project.payer_medicaid_pct ? `${project.payer_medicaid_pct}%` : '--'}</div></div>
+          <div><span className="text-slate-500">Commercial Mix</span><div className="text-white font-semibold">{project.payer_commercial_pct ? `${project.payer_commercial_pct}%` : '--'}</div></div>
+          <div><span className="text-slate-500">Ownership</span><div className="text-white font-semibold">{fin.ownership || '--'}</div></div>
         </div>
       </div>
+        )
+      })()}
 
       {/* ═══ INFOGRAPHIC #1: Strategic Impact Bar Chart ═══ */}
       {enrichment?.strategic_impact && (
