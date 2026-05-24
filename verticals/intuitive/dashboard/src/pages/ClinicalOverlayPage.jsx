@@ -38,7 +38,7 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
   const [error, setError] = useState(null)
   const [enrichment, setEnrichment] = useState(null)
   const [enrichmentLoading, setEnrichmentLoading] = useState(false)
-  const [conversionPct, setConversionPct] = useState(50)
+  const [conversionPct, setConversionPct] = useState(15)
 
   useEffect(() => {
     if (!id) { setLoading(false); return }
@@ -72,7 +72,7 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
     }).catch(console.error).finally(() => setLoading(false))
 
     setEnrichmentLoading(true)
-    api.getClinicalOverlayEnrichment(id, 50)
+    api.getClinicalOverlayEnrichment(id, 15)
       .then(r => setEnrichment(r.data))
       .catch(e => console.error('clinical overlay enrichment:', e))
       .finally(() => setEnrichmentLoading(false))
@@ -240,11 +240,11 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
       {enrichment?.bed_days_savings && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-white">Bed Days Savings by Procedure</h3>
+            <h3 className="font-bold text-white">Bed Days Savings by Procedure <span className="text-[10px] text-amber-300 font-normal ml-2">(OPEN volume only · laparoscopic excluded)</span></h3>
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400">Conversion %:</span>
+              <span className="text-slate-400">% of OPEN converted:</span>
               <input
-                type="range" min="10" max="100" step="5" value={conversionPct}
+                type="range" min="5" max="50" step="5" value={conversionPct}
                 onChange={e => setConversionPct(parseInt(e.target.value))}
                 onMouseUp={() => reloadEnrichment(conversionPct)}
                 onTouchEnd={() => reloadEnrichment(conversionPct)}

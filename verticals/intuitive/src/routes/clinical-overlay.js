@@ -4,15 +4,16 @@ const router = require('express').Router();
 const service = require('../services/clinical-overlay-service');
 
 /**
- * GET /api/v1/clinical-overlay/:projectId/enrichment?conversion_pct=50
+ * GET /api/v1/clinical-overlay/:projectId/enrichment?conversion_pct=15
  * Returns 4 deck-aligned blocks for Step 6 Clinical Benefit Overlay (THE MOAT).
+ * Default conversion = 15% of OPEN volume only (laparoscopic NEVER counted).
  */
 router.get('/:projectId/enrichment', async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     if (!projectId) return res.status(400).json({ error: 'Invalid projectId' });
 
-    const conversionPct = parseInt(req.query.conversion_pct || 50);
+    const conversionPct = parseInt(req.query.conversion_pct || 15);
 
     const data = await service.buildClinicalOverlayEnrichment({
       projectId,

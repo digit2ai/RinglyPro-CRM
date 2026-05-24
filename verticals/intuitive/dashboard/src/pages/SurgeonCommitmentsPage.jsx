@@ -96,7 +96,7 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
       procedure_name: p.name,
       drg_code: p.drg,
       patient_source: category === 'open_to_mis' ? 'existing' : 'incremental',
-      pct_converted_from_open: category === 'open_to_mis' ? 20 : null,
+      pct_converted_from_open: category === 'open_to_mis' ? 15 : null,
       incremental_cases_monthly: 0,
       reimbursement_rate: p.rate,
     })),
@@ -115,7 +115,7 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
       procedure_name: p.name,
       drg_code: p.drg,
       patient_source: category === 'open_to_mis' ? 'existing' : 'incremental',
-      pct_converted_from_open: category === 'open_to_mis' ? 20 : null,
+      pct_converted_from_open: category === 'open_to_mis' ? 15 : null,
       incremental_cases_monthly: 0,
       reimbursement_rate: p.rate,
     }))
@@ -123,10 +123,11 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
   }
 
   // Live total preview (mirrors backend math)
+  // For 'existing' = OPEN volume only × 15% conversion default (laparoscopic NEVER counted)
   const previewCases = s.procedures.reduce((tot, p) => {
     const monthly = parseFloat(p.incremental_cases_monthly || 0)
     if (p.patient_source === 'existing') {
-      const pct = parseFloat(p.pct_converted_from_open || 20) / 100
+      const pct = parseFloat(p.pct_converted_from_open || 15) / 100
       return tot + Math.round(monthly * 12 * pct)
     }
     return tot + Math.round(monthly * 12)
@@ -135,7 +136,7 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
     const monthly = parseFloat(p.incremental_cases_monthly || 0)
     const rate = parseFloat(p.reimbursement_rate || 0)
     if (p.patient_source === 'existing') {
-      const pct = parseFloat(p.pct_converted_from_open || 20) / 100
+      const pct = parseFloat(p.pct_converted_from_open || 15) / 100
       return tot + Math.round(monthly * 12 * pct * rate)
     }
     return tot + Math.round(monthly * 12 * rate)
@@ -253,12 +254,15 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
       {/* Procedures editor */}
       <div className="mb-4">
         <label className="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Procedures</label>
+        <div className="text-[11px] text-amber-300 mb-2">
+          Note: "Existing" patient source converts <strong>OPEN volume only</strong> at the % set below. Laparoscopic cases are NEVER counted. Default 15%.
+        </div>
         <table className="w-full text-sm border border-slate-700">
           <thead className="bg-slate-900 text-[10px] uppercase tracking-widest text-slate-500">
             <tr>
               <th className="text-left p-2">Procedure</th>
               <th className="text-left p-2">Patient Source</th>
-              <th className="text-right p-2">% from Open</th>
+              <th className="text-right p-2" title="Percent of OPEN volume only — laparoscopic excluded">% of OPEN</th>
               <th className="text-right p-2">Cases/Mo</th>
               <th className="text-right p-2">$/Case</th>
               <th className="text-right p-2">Annual</th>
@@ -267,7 +271,7 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
           <tbody>
             {s.procedures.map((p, i) => {
               const monthly = parseFloat(p.incremental_cases_monthly || 0)
-              const pct = parseFloat(p.pct_converted_from_open || 20) / 100
+              const pct = parseFloat(p.pct_converted_from_open || 15) / 100
               const annual = p.patient_source === 'existing'
                 ? Math.round(monthly * 12 * pct)
                 : Math.round(monthly * 12)
@@ -288,8 +292,9 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
                     {p.patient_source === 'existing' ? (
                       <input
                         type="number"
-                        value={p.pct_converted_from_open ?? 20}
+                        value={p.pct_converted_from_open ?? 15}
                         onChange={e => setProcedure(i, 'pct_converted_from_open', parseFloat(e.target.value) || 0)}
+                        title="% of OPEN volume only. Laparoscopic cases are NEVER counted."
                         className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
                       />
                     ) : <span className="text-slate-500 text-xs">—</span>}
@@ -519,7 +524,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
   if (error) return <div className="p-10 text-red-400">{error}</div>
 
   const TABS = [
-    { key: 'open_to_mis', label: 'Open-to-MIS Conversion', description: 'Surgeons converting their EXISTING open volume to robotic. Bed-day savings driver. (Deck 3 Slide 9)', color: 'border-red-500' },
+    { key: 'open_to_mis', label: 'Open-to-MIS Conversion', description: 'Surgeons converting their EXISTING OPEN volume (not laparoscopic) to robotic at 15% default. Bed-day savings driver. (Deck 3 Slide 9)', color: 'border-red-500' },
     { key: 'pull_forward', label: 'Pull-Forward / Capacity', description: 'Proficient surgeons blocked by access. "Currently 2/wk, can do 4/wk if granted access." Incremental volume driver. (Deck 3 Slide 10)', color: 'border-cyan-500' },
     { key: 'training_pipeline', label: 'Training Pipeline', description: 'Untrained surgeons needing TR200. Future incremental volume after credentialing. (Deck 3 Slide 11)', color: 'border-violet-500' },
   ]

@@ -48,7 +48,7 @@ async function fetchAllEnrichments(projectId, models) {
     roboticsProgramService.buildRoboticsProgramEnrichment({ projectId, models }).catch(() => null),
     marketProfileService.buildMarketProfileEnrichment({ projectId, models }).catch(() => null),
     clinicalOutcomesService.buildClinicalOutcomesEnrichment({ projectId, models }).catch(() => null),
-    clinicalOverlayService.buildClinicalOverlayEnrichment({ projectId, models, conversionPct: 50 }).catch(() => null),
+    clinicalOverlayService.buildClinicalOverlayEnrichment({ projectId, models, conversionPct: 15 }).catch(() => null),
     surgeonCommitmentsService.buildSurgeonCommitmentsEnrichment({ projectId, models }).catch(() => null),
     businessPlanService.buildBusinessPlanEnrichment({ projectId, models }).catch(() => null),
     performanceTrackingService.buildPerformanceTrackingEnrichment({ projectId, models }).catch(() => null),
@@ -378,10 +378,10 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
   scripts.push(`${co?.outcomes_benchmark?.headline || 'Examining clinical outcomes against national benchmarks shows meaningful improvement targets.'} ${co?.los_variability?.opportunity_procedures?.length ? `The biggest length-of-stay opportunities are in ${co.los_variability.opportunity_procedures.slice(0, 3).join(', ')}.` : ''}`);
 
   // Slide 7 — Clinical Benefit Overlay
-  scripts.push(`This slide is the moat. The annual cost avoidance opportunity is ${cb?.bed_days_savings ? fmtMoneyShort(cb.bed_days_savings.total_dollar_savings) : 'substantial'} — dollarized from peer-reviewed clinical literature applied to ${hospitalName}'s actual case mix. ${cb?.investment_payback ? `Project IRR is ${cb.investment_payback.project_irr_pct} percent with payback in ${cb.investment_payback.estimated_payback_years || '5 plus'} years.` : ''} ${cb?.cost_of_waiting ? `Every month of delay costs ${fmtMoneyShort(cb.cost_of_waiting.monthly_cost_of_waiting)}.` : ''} AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. SurgicalMind AI can.`);
+  scripts.push(`This slide is the moat. We model a conservative fifteen percent conversion of OPEN surgical volume only — laparoscopic cases are never counted. The annual cost avoidance opportunity is ${cb?.bed_days_savings ? fmtMoneyShort(cb.bed_days_savings.total_dollar_savings) : 'substantial'} — dollarized from peer-reviewed clinical literature applied to ${hospitalName}'s actual open case mix. ${cb?.investment_payback ? `Project IRR is ${cb.investment_payback.project_irr_pct} percent with payback in ${cb.investment_payback.estimated_payback_years || '5 plus'} years.` : ''} ${cb?.cost_of_waiting ? `Every month of delay costs ${fmtMoneyShort(cb.cost_of_waiting.monthly_cost_of_waiting)}.` : ''} AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. SurgicalMind AI can.`);
 
   // Slide 8 — Surgeon Commitments
-  scripts.push(`${sc?.summary?.headline || 'We have captured surgeon-level volume commitments across three categories: open-to-MIS conversion, pull-forward capacity, and the training pipeline.'} This is what makes our business case defensible to your CFO — actual surgeon commitments, not theoretical conversions.`);
+  scripts.push(`${sc?.summary?.headline || 'We have captured surgeon-level volume commitments across three categories: open-to-MIS conversion, pull-forward capacity, and the training pipeline.'} Open-to-MIS conversion is calculated on OPEN volume only — never laparoscopic — at a conservative fifteen percent default. This is what makes our business case defensible to your CFO: actual surgeon commitments, not theoretical conversions.`);
 
   // Slide 9 — Business Plan
   scripts.push(`The 5-year business plan delivers ${bp?.proforma?.headline || 'strong financial returns'}. ${bp?.two_phase_placement?.phase_1?.title || 'Phase 1 places the recommended systems at the main facility.'} ${bp?.two_phase_placement?.phase_2 ? bp.two_phase_placement.phase_2.title : ''}`);

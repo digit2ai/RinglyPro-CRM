@@ -365,14 +365,15 @@ router.post('/:planId/surgeons', async (req, res) => {
       if (!p.patient_source) p.patient_source = 'existing';
       // Realistic default conversion: 20% (Deck 3 said NEVER 100%)
       if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
-        p.pct_converted_from_open = 20;
+        p.pct_converted_from_open = 15;
       }
 
       const monthly = parseFloat(p.incremental_cases_monthly || 0);
       let annual;
       if (p.patient_source === 'existing') {
-        // Apply conversion percentage to the monthly volume
-        const pct = parseFloat(p.pct_converted_from_open || 20) / 100;
+        // Apply conversion percentage to OPEN volume only (never laparoscopic)
+        // Default 15% per client meeting — open conversions are the only realistic source
+        const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
         annual = Math.round(monthly * 12 * pct);
       } else {
         // Incremental (net-new) — use volume directly

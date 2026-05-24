@@ -213,7 +213,7 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const audioDir = path.join(_AUDIO_DIR, String(projectId));
     const slide0Audio = path.join(audioDir, 'slide_0.mp3');
     const audioCountFile = path.join(audioDir, '.deck_version');
-    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v3-charts';
+    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v4-15pct-open';
     const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
     const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
 

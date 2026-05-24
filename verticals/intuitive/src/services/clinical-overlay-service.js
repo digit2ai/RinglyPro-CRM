@@ -29,7 +29,7 @@ const LOS_BY_PROCEDURE = [
 
 // ─── 1. BED DAYS SAVINGS DUAL-TABLE (Deck 3 p7) ───────────────────────
 
-function buildBedDaysSavingsTable(project, conversionPct = 50, bedDayCost = null) {
+function buildBedDaysSavingsTable(project, conversionPct = 15, bedDayCost = null) {
   const localBedDayCost = bedDayCost || peerService.bedDayCost(project.state);
   const annualVol = parseInt(project.annual_surgical_volume || 4000);
 
@@ -79,8 +79,8 @@ function buildBedDaysSavingsTable(project, conversionPct = 50, bedDayCost = null
     conversion_pct_assumed: conversionPct,
     top_3_procedures: top3.map(p => p.procedure),
     top_3_bed_days: top3BedDays,
-    headline: `If ${conversionPct}% of open surgeries converted to da Vinci = ${totalBedDaysSaved.toLocaleString()} bed days saved`,
-    methodology: `Per-procedure: # Open Cases × ${conversionPct}% conversion × (Open LOS − dV LOS) = Bed Days Saved. Dollarized at $${localBedDayCost.toLocaleString()}/bed-day (state-local from kff.org).`,
+    headline: `If ${conversionPct}% of OPEN surgeries (laparoscopic excluded) convert to da Vinci = ${totalBedDaysSaved.toLocaleString()} bed days saved`,
+    methodology: `Per-procedure: # OPEN Cases × ${conversionPct}% conversion × (Open LOS − dV LOS) = Bed Days Saved. Laparoscopic cases are NEVER counted. Dollarized at $${localBedDayCost.toLocaleString()}/bed-day (state-local from kff.org).`,
   };
 }
 
@@ -245,7 +245,7 @@ function buildOutcomesDriverTable(project, bedDaysTable, totalCases = 0) {
 
 // ─── COMPOSITE BUILDER ────────────────────────────────────────────────
 
-async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct = 50 }) {
+async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct = 15 }) {
   const { IntuitiveProject, IntuitiveBusinessPlan, IntuitiveAnalysisResult } = models;
   if (!IntuitiveProject) throw new Error('IntuitiveProject model not available');
 

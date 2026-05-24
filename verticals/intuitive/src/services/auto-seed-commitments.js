@@ -98,14 +98,15 @@ function buildProcedureBreakdown(specialty, totalIncrementalAnnual, financialOve
       procedure_name: p.name,
       drg_code: p.drg,
       // CFO-grade incremental split (Deck 3 Slide 12 pattern)
+      // CLIENT RULE: incremental ONLY from OPEN volume (never laparoscopic), at 15% default
       patient_source: 'existing',
-      pct_converted_from_open: 20, // realistic default; rep can revise during review
+      pct_converted_from_open: 15, // client meeting: 15% of open volume only
       incremental_cases_monthly: monthly,
       incremental_cases_annual: annual,
       current_monthly_volume: 0, // rep fills in when refining
       competitive_leakage_cases: 0,
       reimbursement_rate: rate,
-      notes: 'Auto-seeded. Existing patient source @ 20% conversion default. Refine with surgeon commitment data.',
+      notes: 'Auto-seeded. 15% of OPEN volume only (laparoscopic NOT counted). Refine with surgeon commitment data.',
     });
   }
   return procs;
