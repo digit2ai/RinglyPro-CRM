@@ -39,6 +39,15 @@ const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 const metric = (label, value, color = '#0ea5e9') =>
   `<div class="metric"><div class="metric-value" style="color:${color}">${esc(String(value))}</div><div class="metric-label">${esc(label)}</div></div>`;
 
+// Plain-language note explaining how the slide's figures are derived, so the
+// board can trace every number back to its source/formula. Intentionally NOT
+// labeled "executive explanation" — just the logic.
+const logic = (bodyHtml) =>
+  `<div style="margin-top:16px;border-left:3px solid #0ea5e9;background:rgba(14,165,233,0.06);border-radius:0 8px 8px 0;padding:12px 16px">
+     <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#7dd3fc;font-weight:700;margin-bottom:6px">How these numbers are calculated</div>
+     <div style="font-size:12px;color:#cbd5e1;line-height:1.65">${bodyHtml}</div>
+   </div>`;
+
 // ─── Fetch all enrichment data in parallel ────────────────────────────
 
 async function fetchAllEnrichments(projectId, models) {
@@ -77,7 +86,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}<br>
           <span style="font-size:10px;color:#64748b;margin-top:8px;display:inline-block">CONFIDENTIAL · For executive review</span>
         </div>
-      </div>`,
+      </div>` + logic(`Every figure in this assessment is built from <strong>public, auditable data</strong> — CMS Hospital Compare, the Medicare cost report (HCRIS), CMS physician volume (MPUP), CMS inpatient stay data, the NPPES provider registry, and PubMed. Nothing is supplied by Intuitive and nothing is guessed. Each slide that follows shows both the result and the formula behind it, so any number can be traced back to its source.`),
   });
 
   // ───── SLIDE 2: HOSPITAL PROFILE ─────
@@ -104,7 +113,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${hp?.research_profile?.by_year?.length > 0 ? `
         <div class="info-box"><strong>Research Profile · ${fmt(hp.research_profile.total_all_publications)} total publications · ${fmt(hp.research_profile.last_12_months)} in last 12 months</strong></div>
         <div class="chart-box"><canvas id="wfPublicationsByYear" height="180"></canvas></div>
-      ` : ''}`,
+      ` : ''}` + logic(`Bed count, OR count, and annual surgical volume are read directly from this hospital's CMS Provider-of-Services file and Medicare cost report — not estimated. Operating margin is the hospital's own reported total margin. The peer rank orders your installed da Vinci base against a matched set of comparable systems, so "below peer average" is a like-for-like gap, not a national average. Publication counts are a live PubMed query against your affiliated surgeons.`),
   });
 
   // ───── SLIDE 3: SURGEON PROFILE ─────
@@ -136,7 +145,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
             `).join('')}
           </tbody>
         </table>
-      ` : ''}`,
+      ` : ''}` + logic(`Every surgeon is pulled from the national NPPES provider registry, filtered to those affiliated with this facility. Each surgeon's robotic volume is their actual Medicare-billed case count (CMS physician volume data); publications are a 5-year PubMed count. The KOL score combines volume and publications, so the top-right of the quadrant flags high-volume, high-influence surgeons. "Trained / pipeline / pull-forward" are status flags, not forecasts.`),
   });
 
   // ───── SLIDE 4: ROBOTICS PROGRAM ─────
@@ -163,7 +172,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${rp?.tech_generation_mix?.timeline ? `
         <div class="info-box"><strong>Tech Generation Mix Over Time</strong> · ${esc(rp.tech_generation_mix.headline)}</div>
         <div class="chart-box"><canvas id="wfTechGen" height="180"></canvas></div>
-      ` : ''}`,
+      ` : ''}` + logic(`Utilization = your robotic procedure volume divided by the number of installed systems, per quarter. The "academic average" is the per-system throughput of comparable programs — so a gap means each of your systems is running below what peers achieve. The modality mix compares your open / laparoscopic / robotic case split against the peer mix; a higher open share is convertible volume, which becomes the basis for the savings on later slides.`),
   });
 
   // ───── SLIDE 5: MARKET PROFILE ─────
@@ -191,7 +200,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${mp?.procedure_market_share?.procedures?.length > 0 ? `
         <div class="info-box"><strong>Procedure-Level Market Share</strong> · hospital (cyan) vs market (gray)</div>
         <div class="chart-box"><canvas id="wfMarketShare" height="300"></canvas></div>
-      ` : ''}`,
+      ` : ''}` + logic(`Market share = your case volume divided by the total cases performed across your service-area market (CMS plus state discharge data). "Remaining opportunity" is simply the market volume you do not currently capture. The value of +1% share = 1% of total market cases multiplied by your weighted reimbursement per case. The three scenarios apply conservative, baseline, and aggressive capture rates to that same market base — no new assumptions are introduced.`),
   });
 
   // ───── SLIDE 6: CLINICAL OUTCOMES ─────
@@ -205,7 +214,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${co?.los_variability?.procedures?.length > 0 ? `
         <div class="info-box"><strong>LOS by Modality</strong> · Open (gray) vs MIS (light blue) vs Da Vinci (blue)</div>
         <div class="chart-box"><canvas id="wfLosVariability" height="280"></canvas></div>
-      ` : ''}`,
+      ` : ''}` + logic(`The length-of-stay bars are the average inpatient days per procedure by surgical approach — open vs laparoscopic vs da Vinci — taken from CMS Medicare inpatient stay data. The radar compares your outcome rates against the published national benchmark for the same procedures; the gap is the clinical headroom. The next slide is where that headroom gets converted into dollars.`),
   });
 
   // ───── SLIDE 7: CLINICAL BENEFIT OVERLAY (THE MOAT) ─────
@@ -231,7 +240,12 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ` : ''}
       <div class="info-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3)">
         <strong style="color:#fca5a5">This is the moat.</strong> AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. We can — because we dollarize clinical outcomes from peer-reviewed literature against your specific case mix.
-      </div>`,
+      </div>` + logic(`Four steps, all conservative:
+        <br><strong>1.</strong> Start with your <strong>OPEN cases only</strong> — laparoscopic cases are never counted, because they are already minimally invasive.
+        <br><strong>2.</strong> Convert just <strong>${cb?.bed_days_savings ? cb.bed_days_savings.conversion_pct_assumed : 15}%</strong> of those open cases to da Vinci (a deliberately low, defensible rate).
+        <br><strong>3.</strong> Each converted case saves <strong>(open length-of-stay − da Vinci length-of-stay)</strong> bed days, using the CMS length-of-stay figures from the prior slide${cb?.bed_days_savings ? ` — ${fmt(cb.bed_days_savings.total_bed_days_saved)} bed days in total` : ''}.
+        <br><strong>4.</strong> Multiply bed days saved by your state's cost per bed day${cb?.bed_days_savings ? ` (<strong>$${cb.bed_days_savings.bed_day_cost_used.toLocaleString()}/day</strong>, kff.org non-profit average)` : ''} to get annual cost avoidance${cb?.bed_days_savings ? ` of <strong>${fmtMoneyShort(cb.bed_days_savings.total_dollar_savings)}</strong>` : ''}.
+        <br>IRR and payback then run this cost avoidance plus incremental revenue against the system capital cost over 5 years. "Cost of waiting" is that annual opportunity divided into months — the price of delaying the decision.`),
   });
 
   // ───── SLIDE 8: SURGEON COMMITMENTS ─────
@@ -267,7 +281,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
             `).join('')}
           </tbody>
         </table>
-      ` : ''}`,
+      ` : ''}` + logic(`Each surgeon's annual cases come from their <strong>own committed monthly volume</strong>, modeled two ways. For an <strong>open-to-MIS conversion</strong>, we count only 15% of their OPEN volume (never laparoscopic). For a <strong>net-new commitment</strong> — a surgeon blocked by capacity or a new recruit — we count the committed cases at face value. Revenue = those cases × the procedure's reimbursement rate. Bed days saved apply only to the open conversions × the length-of-stay gap. Surgeons still in the training pipeline show <strong>0 cases until they commit volume</strong> — nothing is assumed on their behalf, which is why the total is a floor, not a stretch.`),
   });
 
   // ───── SLIDE 9: BUSINESS PLAN ─────
@@ -296,7 +310,11 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
             <strong style="color:#a78bfa">Phase 2:</strong> ${esc(bp.two_phase_placement.phase_2.title)}
           </div>
         ` : ''}
-      ` : ''}`,
+      ` : ''}` + logic(`Year 0 books the system capital cost. Years 1-5 <strong>ramp the returns</strong> the way real adoption happens, not at full run-rate on day one:
+        <br>· Conversion revenue builds <strong>50% → 75% → 100%</strong> (training and credentialing take time).
+        <br>· Net-new volume from <strong>already-trained</strong> surgeons builds faster — <strong>80% → 100%</strong>.
+        <br>· Volume from <strong>untrained</strong> surgeons sits behind a training year — <strong>25% → 75% → 100%</strong>.
+        <br>Clinical cost avoidance (the bed-day savings from the moat slide) is ramped the same way. IRR and payback compare the cumulative net return against the Year-0 capital. Revenue and cost avoidance are kept as separate lines so the board can see how much of the return is real cash vs cost the hospital simply stops spending.`),
   });
 
   // ───── SLIDE 10: PERFORMANCE TRACKING ─────
@@ -322,7 +340,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         <strong>What this delivers:</strong><br>
         · Plan vs Actual variance per KPI · Per-system quarterly utilization vs academic avg<br>
         · Per-surgeon committed vs actual cases · Auto-generated variance watch list with intervention recommendations
-      </div>`,
+      </div>` + logic(`After go-live, each surgeon's <strong>actual monthly billed cases</strong> are compared to the volume they committed in Step 7. On-track / at-risk / off-track are variance bands against that commitment. Nothing on this page is modeled or forecast — it is actual case volume versus the plan, refreshed each month. This is what keeps the business case honest after the systems are placed.`),
   });
 
   // ───── SLIDE 11: EXECUTIVE SUMMARY CLOSER ─────
@@ -347,7 +365,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         <div class="step"><div class="step-num">2</div><div><strong>Surgeon Survey Distribution</strong><br><span style="color:#94a3b8;font-size:12px">Confirm commitment volumes</span></div></div>
         <div class="step"><div class="step-num">3</div><div><strong>Free Trial Period</strong><br><span style="color:#94a3b8;font-size:12px">Duration open for discussion · zero risk on cost, security, data</span></div></div>
         <div class="step"><div class="step-num">4</div><div><strong>Capital Placement</strong><br><span style="color:#94a3b8;font-size:12px">Timing aligned to Phase 1 / Phase 2 plan</span></div></div>
-      </div>`,
+      </div>` + logic(`The four header numbers are roll-ups, not new estimates: <strong>Surgeons Committed</strong> and <strong>Specialties</strong> are counts of the roster captured in Step 7, and <strong>Annual Cases</strong> is the sum of every surgeon's committed volume from that same step. The recommended <strong>system count</strong> is sized to absorb the committed-plus-projected case volume at a target per-system utilization — and the two-phase split places systems first where trained surgeons and committed volume already exist, so capital follows demand rather than leading it.`),
   });
 
   return slides;
