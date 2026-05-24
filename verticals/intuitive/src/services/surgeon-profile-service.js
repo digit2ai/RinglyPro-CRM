@@ -135,10 +135,19 @@ async function buildKolSignals(surgeons = [], opts = {}) {
       composite_score: Math.round(score),
     });
   }
-  scored.sort((a, b) => b.composite_score - a.composite_score);
+  // Two-tier ranking: clinical operators (known specialty) rank above
+  // publication-only academics; within each tier, by composite score. On a
+  // da Vinci KOL slide the surgeons who actually operate are the relevant
+  // leaders, so this guarantees they fill the top before any Research KOL.
+  scored.sort((a, b) => {
+    const aClin = a.specialty ? 1 : 0;
+    const bClin = b.specialty ? 1 : 0;
+    if (aClin !== bClin) return bClin - aClin;
+    return b.composite_score - a.composite_score;
+  });
 
   return {
-    headline: `Top ${Math.min(5, scored.length)} KOLs by composite signal · committed cases × 3 + robotic volume × 2 + publications × 1`,
+    headline: `Top ${Math.min(5, scored.length)} KOLs · clinical operators first (specialty + committed/robotic volume), then research leaders by publications`,
     top_kols: scored.slice(0, 5),
     methodology: 'Composite KOL score weights captured commitment cases and MPUP robotic volume above 5-yr PubMed publication count, so committed robotic operators rank ahead of publication-only academics. Tunable.',
   };
