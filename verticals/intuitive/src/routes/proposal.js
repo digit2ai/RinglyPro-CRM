@@ -17,14 +17,20 @@ const AUDIO_DIR = path.join(__dirname, '../../proposal-audio');
 /**
  * Generate TTS audio via ElevenLabs
  */
-function generateTTS(text, outputPath) {
+function generateTTS(text, outputPath, speed) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('ELEVENLABS_API_KEY not set');
+
+  // ElevenLabs speed range is 0.7 (slowest) to 1.2. Default 0.82; callers can
+  // pass a slower value for number-dense slides so Rachel doesn't sound rushed.
+  let spd = (typeof speed === 'number' && speed > 0) ? speed : 0.82;
+  if (spd < 0.7) spd = 0.7;
+  if (spd > 1.2) spd = 1.2;
 
   const body = JSON.stringify({
     text,
     model_id: 'eleven_multilingual_v2',
-    voice_settings: { stability: 0.78, similarity_boost: 0.75, style: 0.08, use_speaker_boost: true, speed: 0.82 }
+    voice_settings: { stability: 0.78, similarity_boost: 0.75, style: 0.08, use_speaker_boost: true, speed: spd }
   });
 
   return new Promise((resolve, reject) => {

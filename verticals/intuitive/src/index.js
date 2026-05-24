@@ -213,7 +213,7 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const audioDir = path.join(_AUDIO_DIR, String(projectId));
     const slide0Audio = path.join(audioDir, 'slide_0.mp3');
     const audioCountFile = path.join(audioDir, '.deck_version');
-    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v7-narration-logic';
+    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v8-open15-speed';
     const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
     const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
 
@@ -226,11 +226,16 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
             const files = fs.readdirSync(audioDir).filter(f => f.startsWith('slide_'));
             for (const f of files) try { fs.unlinkSync(path.join(audioDir, f)); } catch (e) {}
           }
+          // Per-slide speech speed. Number-dense slides (Step 4 Market = idx 4,
+          // Step 7 Surgeon Commitments = idx 7, Step 8 Business Plan = idx 8) are
+          // slowed so Rachel doesn't sound rushed. Default 0.82 elsewhere.
+          const SLOW_SLIDES = useLegacy ? {} : { 4: 0.72, 7: 0.72, 8: 0.72 };
           for (let i = 0; i < scripts.length; i++) {
             const ap = path.join(audioDir, 'slide_' + i + '.mp3');
             if (!fs.existsSync(ap)) {
-              console.log('[Intuitive Proposal] Auto-generating audio slide ' + (i + 1) + '/' + scripts.length + ' for project ' + projectId);
-              await _generateTTS(scripts[i], ap);
+              const slideSpeed = SLOW_SLIDES[i] || 0.82;
+              console.log('[Intuitive Proposal] Auto-generating audio slide ' + (i + 1) + '/' + scripts.length + ' (speed ' + slideSpeed + ') for project ' + projectId);
+              await _generateTTS(scripts[i], ap, slideSpeed);
             }
           }
           fs.writeFileSync(audioCountFile, currentDeckVersion);
