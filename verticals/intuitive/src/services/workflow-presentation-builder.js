@@ -91,17 +91,19 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         ${metric('Operating Margin', project.operating_margin_pct ? project.operating_margin_pct + '%' : '--')}
       </div>
       ${hp?.strategic_impact ? `
-        <div class="info-box">
-          <strong>${esc(hp.strategic_impact.headline)}</strong>
+        <div class="info-box"><strong>${esc(hp.strategic_impact.headline)}</strong></div>
+        <div class="chart-box"><canvas id="wfStrategicImpact" height="200"></canvas></div>
+      ` : ''}
+      ${hp?.peer_benchmark ? `
+        <div class="info-box" style="background:rgba(239,68,68,0.06);border-color:rgba(239,68,68,0.2)">
+          <strong>AMP Peer Benchmark · Rank #${hp.peer_benchmark.rank} of ${hp.peer_benchmark.total_ranked}</strong>
+          ${hp.peer_benchmark.gap_to_peer_avg > 0 ? ` · <span style="color:#fca5a5">${hp.peer_benchmark.gap_to_peer_avg} systems below peer avg</span>` : ''}
         </div>
-        <table class="data-table">
-          <thead><tr><th>Metric</th><th style="text-align:right">Projected Impact</th></tr></thead>
-          <tbody>
-            ${hp.strategic_impact.metrics.slice(0, 6).map(m => `
-              <tr><td>${esc(m.label)}</td><td style="text-align:right;color:#10b981;font-weight:600">${esc(m.value)}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="chart-box"><canvas id="wfPeerBenchmark" height="220"></canvas></div>
+      ` : ''}
+      ${hp?.research_profile?.by_year?.length > 0 ? `
+        <div class="info-box"><strong>Research Profile · ${fmt(hp.research_profile.total_all_publications)} total publications · ${fmt(hp.research_profile.last_12_months)} in last 12 months</strong></div>
+        <div class="chart-box"><canvas id="wfPublicationsByYear" height="180"></canvas></div>
       ` : ''}`,
   });
 
@@ -118,6 +120,8 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         </div>
       ` : '<div class="info-box">Surgeon roster will populate once Hospital Intake runs NPPES + facility affiliation lookup.</div>'}
       ${sp?.kol_signals?.top_kols?.length > 0 ? `
+        <div class="info-box"><strong>Top KOLs — Volume × Publications Quadrant</strong> · top-right = high-value KOLs</div>
+        <div class="chart-box"><canvas id="wfKolQuadrant" height="240"></canvas></div>
         <table class="data-table">
           <thead><tr><th>Top KOLs</th><th>Specialty</th><th style="text-align:right">Robotic Vol</th><th style="text-align:right">Publications</th><th style="text-align:right">Score</th></tr></thead>
           <tbody>
@@ -145,16 +149,20 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         ${rp?.system_utilization ? metric('Current Avg/Qtr', fmt(rp.system_utilization.current_avg_per_system_qtr), '#10b981') : ''}
         ${rp?.system_utilization ? metric('Academic Avg', fmt(rp.system_utilization.academic_avg_per_qtr)) : ''}
       </div>
+      ${rp?.system_utilization?.procedure_volume_by_qtr?.length > 0 ? `
+        <div class="info-box"><strong>Procedure Volume by Quarter</strong> · In-Hours (green) vs After-Hours (red)</div>
+        <div class="chart-box"><canvas id="wfProcedureVolume" height="180"></canvas></div>
+      ` : ''}
       ${rp?.modality_by_year ? `
         <div class="info-box">
-          <strong>${esc(rp.modality_by_year.headline)}</strong>
-          <br><br>
-          <table style="width:100%;font-size:13px">
-            <tr><td><strong>${esc(hospitalName.split(' ')[0])} (current)</strong></td><td>Da Vinci: <strong>${rp.modality_by_year.current.davinci_pct}%</strong> · Lap: ${rp.modality_by_year.current.lap_pct}% · Open: ${rp.modality_by_year.current.open_pct}%</td></tr>
-            <tr><td><strong>National Academic Peers</strong></td><td>Da Vinci: <strong>${rp.modality_by_year.peer_benchmark.davinci_pct}%</strong> · Lap: ${rp.modality_by_year.peer_benchmark.lap_pct}% · Open: ${rp.modality_by_year.peer_benchmark.open_pct}%</td></tr>
-          </table>
-          <div style="text-align:center;font-size:36px;font-weight:bold;color:${rp.modality_by_year.delta_vs_peer_davinci > 0 ? '#ef4444' : '#10b981'};margin-top:14px">${Math.abs(rp.modality_by_year.delta_vs_peer_davinci)}% Delta</div>
+          <strong>Modality Mix vs National Academic Peers</strong> ·
+          <span style="color:${rp.modality_by_year.delta_vs_peer_davinci > 0 ? '#fca5a5' : '#86efac'}">${Math.abs(rp.modality_by_year.delta_vs_peer_davinci)}% Delta</span>
         </div>
+        <div class="chart-box"><canvas id="wfModalityTrend" height="180"></canvas></div>
+      ` : ''}
+      ${rp?.tech_generation_mix?.timeline ? `
+        <div class="info-box"><strong>Tech Generation Mix Over Time</strong> · ${esc(rp.tech_generation_mix.headline)}</div>
+        <div class="chart-box"><canvas id="wfTechGen" height="180"></canvas></div>
       ` : ''}`,
   });
 
@@ -179,6 +187,10 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
             `).join('')}
           </tbody>
         </table>
+      ` : ''}
+      ${mp?.procedure_market_share?.procedures?.length > 0 ? `
+        <div class="info-box"><strong>Procedure-Level Market Share</strong> · hospital (cyan) vs market (gray)</div>
+        <div class="chart-box"><canvas id="wfMarketShare" height="300"></canvas></div>
       ` : ''}`,
   });
 
@@ -188,23 +200,12 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
     html: `
       ${co?.outcomes_benchmark ? `
         <div class="info-box"><strong>${esc(co.outcomes_benchmark.headline)}</strong></div>
+        <div class="chart-box"><canvas id="wfOutcomesRadar" height="280"></canvas></div>
       ` : ''}
-      ${co?.los_variability?.opportunity_procedures?.length > 0 ? `
-        <table class="data-table">
-          <thead><tr><th>Procedure (Opportunity)</th><th style="text-align:right">Open LOS</th><th style="text-align:right">MIS LOS</th><th style="text-align:right">dV LOS</th><th style="text-align:right">Days Saved/Case</th></tr></thead>
-          <tbody>
-            ${co.los_variability.procedures.filter(p => p.opportunity).map(p => `
-              <tr style="background:rgba(239,68,68,0.05)">
-                <td><strong>${esc(p.procedure)}</strong></td>
-                <td style="text-align:right">${p.open_los_days}</td>
-                <td style="text-align:right">${p.mis_los_days}</td>
-                <td style="text-align:right;color:#06b6d4">${p.davinci_los_days}</td>
-                <td style="text-align:right;color:#10b981;font-weight:700">${p.open_to_davinci_delta} days</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      ` : '<div class="info-box">LOS variability data will populate once CMS Hospital Compare data is fetched in Step 5.</div>'}`,
+      ${co?.los_variability?.procedures?.length > 0 ? `
+        <div class="info-box"><strong>LOS by Modality</strong> · Open (gray) vs MIS (light blue) vs Da Vinci (blue)</div>
+        <div class="chart-box"><canvas id="wfLosVariability" height="280"></canvas></div>
+      ` : ''}`,
   });
 
   // ───── SLIDE 7: CLINICAL BENEFIT OVERLAY (THE MOAT) ─────
@@ -225,6 +226,8 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           ${metric('Annual Net Benefit', fmtMoneyShort(cb.investment_payback.annual_net_benefit), '#8b5cf6')}
           ${cb?.cost_of_waiting ? metric('Cost of Waiting/mo', `(${fmtMoneyShort(cb.cost_of_waiting.monthly_cost_of_waiting)})`, '#ef4444') : ''}
         </div>
+        <div class="info-box"><strong>Cumulative Return vs Investment Breakeven</strong></div>
+        <div class="chart-box"><canvas id="wfCumulativeReturn" height="220"></canvas></div>
       ` : ''}
       <div class="info-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3)">
         <strong style="color:#fca5a5">This is the moat.</strong> AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. We can — because we dollarize clinical outcomes from peer-reviewed literature against your specific case mix.
@@ -244,6 +247,12 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           ${metric('Bed Days Saved', fmt(sc.summary.total_bed_days_saved), '#10b981')}
         </div>
       ` : '<div class="info-box">Surgeon commitments will populate once Step 7 is completed.</div>'}
+      ${sc?.summary?.composition?.length > 0 ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="chart-box"><canvas id="wfCommitmentComposition" height="200"></canvas></div>
+          <div class="chart-box"><canvas id="wfSurgeonBedDays" height="200"></canvas></div>
+        </div>
+      ` : ''}
       ${sc?.master_table?.length > 0 ? `
         <table class="data-table">
           <thead><tr><th>Top Surgeons</th><th>Specialty</th><th>Trained</th><th style="text-align:right">Cases/Yr</th></tr></thead>
@@ -272,6 +281,10 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           ${metric('5yr Cost Avoidance', fmtMoneyShort(bp.proforma.investment_summary.total_cost_avoidance_5yr), '#f59e0b')}
           ${metric('5yr Inc. Revenue', fmtMoneyShort(bp.proforma.investment_summary.incremental_revenue_5yr), '#8b5cf6')}
         </div>
+      ` : ''}
+      ${bp?.proforma?.yearly ? `
+        <div class="info-box"><strong>Annual P&L Breakdown</strong> · Y0 capex → Y1-5 ramped returns</div>
+        <div class="chart-box"><canvas id="wfAnnualPnl" height="220"></canvas></div>
       ` : ''}
       ${bp?.two_phase_placement ? `
         <div class="info-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3)">
@@ -382,8 +395,109 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
   return scripts;
 }
 
+// ─── Workflow Chart Data Builder (Chart.js configs per slide) ─────────
+
+function buildWorkflowChartData(enrichments) {
+  const { hp, sp, rp, mp, co, cb, sc, bp, pt, eb } = enrichments;
+  const data = {};
+
+  // Slide 2: Hospital Profile — Strategic Impact bars + Peer Benchmark bars + Pubs line
+  if (hp?.strategic_impact?.metrics) {
+    data.wfStrategicImpact = hp.strategic_impact.metrics
+      .filter(m => m.raw_value > 0)
+      .map(m => ({ label: m.label, value: m.raw_value, display: m.value }));
+  }
+  if (hp?.peer_benchmark?.peers_ranked) {
+    data.wfPeerBenchmark = hp.peer_benchmark.peers_ranked.map(p => ({
+      label: p.name, value: p.systems, is_target: p.is_target,
+    }));
+    data.wfPeerBenchmarkAvg = hp.peer_benchmark.peer_avg_systems;
+  }
+  if (hp?.research_profile?.by_year) {
+    data.wfPublicationsByYear = hp.research_profile.by_year.map(y => ({ label: y.year, value: y.count }));
+  }
+
+  // Slide 3: Surgeon Profile — KOL Quadrant scatter
+  if (sp?.kol_signals?.top_kols) {
+    data.wfKolQuadrant = sp.kol_signals.top_kols.map(k => ({
+      x: k.robotic_vol, y: k.publications_5yr, r: Math.max(5, Math.min(20, k.commitment_cases / 5)),
+      label: k.surgeon_name, specialty: k.specialty || '',
+    }));
+  }
+
+  // Slide 4: Robotics Program — Procedure volume + Modality trend + Tech gen
+  if (rp?.system_utilization?.procedure_volume_by_qtr) {
+    data.wfProcedureVolume = rp.system_utilization.procedure_volume_by_qtr.map(q => ({
+      label: q.quarter, in_hours: q.in_hours, after_hours: q.after_hours,
+    }));
+  }
+  if (rp?.modality_by_year?.trend_by_year) {
+    data.wfModalityTrend = rp.modality_by_year.trend_by_year.map(t => ({
+      label: t.year, davinci: t.davinci_pct, lap: t.lap_pct, open: t.open_pct,
+    }));
+  }
+  if (rp?.tech_generation_mix?.timeline) {
+    data.wfTechGen = rp.tech_generation_mix.timeline.map(t => ({
+      label: t.year, S: t.S || 0, Si: t.Si || 0, Xi: t.Xi || 0, dV5: t.dV5 || 0,
+    }));
+  }
+
+  // Slide 5: Market Profile — Procedure-level market share bars
+  if (mp?.procedure_market_share?.procedures) {
+    data.wfMarketShare = mp.procedure_market_share.procedures.map(p => ({
+      label: p.procedure, hospital: p.hospital_volume, market: p.market_volume, share: p.market_share_pct,
+    }));
+  }
+
+  // Slide 6: Clinical Outcomes — Outcomes Radar + LOS bars
+  if (co?.outcomes_benchmark?.radar_data) {
+    data.wfOutcomesRadar = co.outcomes_benchmark.radar_data.map(r => ({
+      label: r.metric, hospital: r.hospital, national: r.national, top_decile: r.top_decile,
+    }));
+  }
+  if (co?.los_variability?.procedures) {
+    data.wfLosVariability = co.los_variability.procedures.map(p => ({
+      label: p.procedure, open: p.open_los_days, mis: p.mis_los_days, davinci: p.davinci_los_days,
+      opportunity: p.opportunity,
+    }));
+  }
+
+  // Slide 7: Clinical Overlay — Cumulative Return line
+  if (cb?.investment_payback?.cumulative_return_5yr) {
+    data.wfCumulativeReturn = cb.investment_payback.cumulative_return_5yr.map(c => ({
+      label: c.year, cumulative: c.cumulative_return, breakeven: c.breakeven,
+    }));
+  }
+
+  // Slide 8: Surgeon Commitments — Composition donut + Per-Surgeon bed days
+  if (sc?.summary?.composition) {
+    data.wfCommitmentComposition = sc.summary.composition.map(c => ({
+      label: c.name, value: c.value, color: c.color,
+    }));
+  }
+  if (sc?.per_surgeon_bed_days?.length) {
+    data.wfSurgeonBedDays = sc.per_surgeon_bed_days.slice(0, 8).map(s => ({
+      label: s.surgeon_name, value: s.bed_days_saved,
+    }));
+  }
+
+  // Slide 9: Business Plan — Annual P&L stacked bar
+  if (bp?.proforma?.yearly) {
+    data.wfAnnualPnl = bp.proforma.yearly.map(y => ({
+      label: y.year,
+      revenue: y.revenue || 0,
+      cost_avoidance: y.cost_avoidance || 0,
+      capital_expense: -(y.capital_expense || 0),
+      operating_expense: -(y.operating_expense || 0),
+    }));
+  }
+
+  return data;
+}
+
 module.exports = {
   fetchAllEnrichments,
   buildWorkflowSlides,
   buildWorkflowNarration,
+  buildWorkflowChartData,
 };

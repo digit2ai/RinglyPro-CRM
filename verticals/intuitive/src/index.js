@@ -193,7 +193,19 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const slidesJSON = JSON.stringify(slides);
     const mountPath = req.baseUrl || BASE_PATH || '';
     const audioBase = `${mountPath}/api/v1/proposal/${projectId}/audio`;
-    const chartData = _buildChartData(analysis);
+    let chartData = _buildChartData(analysis);
+
+    // Merge in workflow chart data when using the new deck
+    if (!useLegacy) {
+      try {
+        const wfBuilder = require('./services/workflow-presentation-builder');
+        const enrichments = await wfBuilder.fetchAllEnrichments(projectId, models);
+        const wfChartData = wfBuilder.buildWorkflowChartData(enrichments);
+        chartData = { ...chartData, ...wfChartData };
+      } catch (e) {
+        console.error('[Intuitive Proposal] workflow chart data error:', e.message);
+      }
+    }
     const chartDataJSON = JSON.stringify(chartData);
 
     // Auto-generate audio if not cached (background, non-blocking)
@@ -201,7 +213,7 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const audioDir = path.join(_AUDIO_DIR, String(projectId));
     const slide0Audio = path.join(audioDir, 'slide_0.mp3');
     const audioCountFile = path.join(audioDir, '.deck_version');
-    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v2';
+    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v3-charts';
     const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
     const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
 
@@ -405,6 +417,74 @@ function renderCharts(){
   // Growth Extrapolation (multi-line)
   if(title.includes('Growth')&&chartData.growth&&chartData.growth.length){
     mk('chartGrowth',{type:'line',data:{labels:chartData.growth.map(d=>d.label),datasets:[{label:'Conservative (10%)',data:chartData.growth.map(d=>d.conservative),borderColor:'#94a3b8',borderDash:[5,5],tension:0.3,pointRadius:3},{label:'Baseline (15%)',data:chartData.growth.map(d=>d.baseline),borderColor:dv5,tension:0.3,pointRadius:4,borderWidth:3},{label:'Aggressive (20%)',data:chartData.growth.map(d=>d.aggressive),borderColor:xi,borderDash:[3,3],tension:0.3,pointRadius:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:true,color:'#e2e8f0',font:{size:9},anchor:'end',align:'top',formatter:v=>fmtN(v)}}}})
+  }
+
+  // ─── WORKFLOW DECK CHART MATCHERS (Step 1 → Step 10) ───────────────
+
+  // Step 1: Hospital Profile — Strategic Impact bars + Peer Benchmark + Publications line
+  if(title.includes('Hospital Profile')){
+    if(chartData.wfStrategicImpact&&chartData.wfStrategicImpact.length){
+      mk('wfStrategicImpact',{type:'bar',data:{labels:chartData.wfStrategicImpact.map(d=>d.label),datasets:[{label:'Impact',data:chartData.wfStrategicImpact.map(d=>d.value),backgroundColor:xi,borderRadius:3}]},options:{...hOpts,plugins:{...hOpts.plugins,datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'right',offset:4,formatter:(v,ctx)=>chartData.wfStrategicImpact[ctx.dataIndex].display||v}}}})
+    }
+    if(chartData.wfPeerBenchmark&&chartData.wfPeerBenchmark.length){
+      mk('wfPeerBenchmark',{type:'bar',data:{labels:chartData.wfPeerBenchmark.map(d=>d.label),datasets:[{label:'Systems',data:chartData.wfPeerBenchmark.map(d=>d.value),backgroundColor:chartData.wfPeerBenchmark.map(d=>d.is_target?red:dv5),borderRadius:3}]},options:hOpts})
+    }
+    if(chartData.wfPublicationsByYear&&chartData.wfPublicationsByYear.length){
+      mk('wfPublicationsByYear',{type:'line',data:{labels:chartData.wfPublicationsByYear.map(d=>d.label),datasets:[{label:'Publications',data:chartData.wfPublicationsByYear.map(d=>d.value),borderColor:sp,backgroundColor:'rgba(139,92,246,0.1)',fill:true,tension:0.3,pointRadius:5,borderWidth:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:true,color:sp,font:{size:10,weight:'bold'},anchor:'end',align:'top'}}}})
+    }
+  }
+
+  // Step 2: Surgeon Profile — KOL Quadrant scatter
+  if(title.includes('Surgeon Profile')&&chartData.wfKolQuadrant&&chartData.wfKolQuadrant.length){
+    mk('wfKolQuadrant',{type:'bubble',data:{datasets:[{label:'KOLs',data:chartData.wfKolQuadrant.map(d=>({x:d.x,y:d.y,r:d.r})),backgroundColor:sp,borderColor:sp}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'center',align:'top',offset:8,formatter:(v,ctx)=>chartData.wfKolQuadrant[ctx.dataIndex].label.split(' ').slice(-1)[0]},tooltip:{callbacks:{label:(ctx)=>{const d=chartData.wfKolQuadrant[ctx.dataIndex];return d.label+' ('+d.specialty+') · '+d.x+' cases · '+d.y+' pubs'}}}},scales:{x:{title:{display:true,text:'Robotic Volume (cases/yr)',color:'#94a3b8'},ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},y:{title:{display:true,text:'Publications (5yr)',color:'#94a3b8'},ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}}}}})
+  }
+
+  // Step 3: Robotics Program — Procedure Volume + Modality Trend + Tech Gen
+  if(title.includes('Robotics Program')){
+    if(chartData.wfProcedureVolume&&chartData.wfProcedureVolume.length){
+      mk('wfProcedureVolume',{type:'bar',data:{labels:chartData.wfProcedureVolume.map(d=>d.label),datasets:[{label:'In-Hours',data:chartData.wfProcedureVolume.map(d=>d.in_hours),backgroundColor:'#22c55e',borderRadius:2},{label:'After-Hours',data:chartData.wfProcedureVolume.map(d=>d.after_hours),backgroundColor:'#ef4444',borderRadius:2}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,x:{...opts.scales.x,stacked:true},y:{...opts.scales.y,stacked:true}}}})
+    }
+    if(chartData.wfModalityTrend&&chartData.wfModalityTrend.length){
+      mk('wfModalityTrend',{type:'line',data:{labels:chartData.wfModalityTrend.map(d=>d.label),datasets:[{label:'Da Vinci',data:chartData.wfModalityTrend.map(d=>d.davinci),borderColor:'#1e40af',tension:0.3,borderWidth:3,pointRadius:4},{label:'Lap',data:chartData.wfModalityTrend.map(d=>d.lap),borderColor:'#93c5fd',tension:0.3,borderWidth:2,pointRadius:3},{label:'Open',data:chartData.wfModalityTrend.map(d=>d.open),borderColor:'#cbd5e1',borderDash:[3,3],tension:0.3,borderWidth:2,pointRadius:3}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>v+'%'}}}}})
+    }
+    if(chartData.wfTechGen&&chartData.wfTechGen.length){
+      mk('wfTechGen',{type:'bar',data:{labels:chartData.wfTechGen.map(d=>d.label),datasets:[{label:'S',data:chartData.wfTechGen.map(d=>d.S),backgroundColor:'#3b82f6'},{label:'Si',data:chartData.wfTechGen.map(d=>d.Si),backgroundColor:'#f59e0b'},{label:'Xi',data:chartData.wfTechGen.map(d=>d.Xi),backgroundColor:'#22c55e'},{label:'dV5',data:chartData.wfTechGen.map(d=>d.dV5),backgroundColor:'#1e40af'}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,x:{...opts.scales.x,stacked:true},y:{...opts.scales.y,stacked:true}}}})
+    }
+  }
+
+  // Step 4: Market Profile — Procedure-level market share bars
+  if(title.includes('Market Profile')&&chartData.wfMarketShare&&chartData.wfMarketShare.length){
+    mk('wfMarketShare',{type:'bar',data:{labels:chartData.wfMarketShare.map(d=>d.label),datasets:[{label:'Hospital',data:chartData.wfMarketShare.map(d=>d.hospital),backgroundColor:'#06b6d4',borderRadius:2},{label:'Total Market',data:chartData.wfMarketShare.map(d=>d.market),backgroundColor:'#94a3b8',borderRadius:2}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,x:{...opts.scales.x,ticks:{...opts.scales.x.ticks,maxRotation:60,minRotation:45,font:{size:9}}}}}})
+  }
+
+  // Step 5: Clinical Outcomes — Outcomes Radar + LOS Variability bars
+  if(title.includes('Clinical Outcomes')){
+    if(chartData.wfOutcomesRadar&&chartData.wfOutcomesRadar.length){
+      mk('wfOutcomesRadar',{type:'radar',data:{labels:chartData.wfOutcomesRadar.map(d=>d.label),datasets:[{label:'Top-Decile',data:chartData.wfOutcomesRadar.map(d=>d.top_decile),borderColor:xi,backgroundColor:'rgba(16,185,129,0.15)',borderWidth:1.5,pointRadius:3},{label:'National Avg',data:chartData.wfOutcomesRadar.map(d=>d.national),borderColor:'#94a3b8',borderDash:[3,3],backgroundColor:'rgba(148,163,184,0.1)',borderWidth:1.5,pointRadius:3},{label:'Hospital',data:chartData.wfOutcomesRadar.map(d=>d.hospital),borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,0.3)',borderWidth:2.5,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}},scales:{r:{angleLines:{color:'#1e293b'},grid:{color:'#1e293b'},pointLabels:{color:'#cbd5e1',font:{size:10}},ticks:{color:'#94a3b8',backdropColor:'transparent',font:{size:9}},suggestedMin:0,suggestedMax:100}}}})
+    }
+    if(chartData.wfLosVariability&&chartData.wfLosVariability.length){
+      mk('wfLosVariability',{type:'bar',data:{labels:chartData.wfLosVariability.map(d=>d.label),datasets:[{label:'Open',data:chartData.wfLosVariability.map(d=>d.open),backgroundColor:'#94a3b8'},{label:'MIS',data:chartData.wfLosVariability.map(d=>d.mis),backgroundColor:'#93c5fd'},{label:'dV',data:chartData.wfLosVariability.map(d=>d.davinci),backgroundColor:'#1e40af'}]},options:{...hOpts,plugins:{...hOpts.plugins,datalabels:{display:false}},scales:{...hOpts.scales,x:{...hOpts.scales.x,ticks:{...hOpts.scales.x.ticks,callback:v=>v+' days'}}}}})
+    }
+  }
+
+  // Step 6: Clinical Benefit Overlay (MOAT) — Cumulative Return line
+  if(title.includes('THE MOAT')&&chartData.wfCumulativeReturn&&chartData.wfCumulativeReturn.length){
+    mk('wfCumulativeReturn',{type:'line',data:{labels:chartData.wfCumulativeReturn.map(d=>'Y'+d.label),datasets:[{label:'Cumulative Return',data:chartData.wfCumulativeReturn.map(d=>d.cumulative),borderColor:xi,backgroundColor:'rgba(16,185,129,0.15)',fill:true,tension:0.2,pointRadius:5,borderWidth:3},{label:'Breakeven',data:chartData.wfCumulativeReturn.map(d=>0),borderColor:red,borderDash:[6,4],pointRadius:0,borderWidth:2}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>'$'+(v/1e6).toFixed(1)+'M'}}}}})
+  }
+
+  // Step 7: Surgeon Commitments — Composition donut + Per-surgeon bed days
+  if(title.includes('Surgeon Commitments')){
+    if(chartData.wfCommitmentComposition&&chartData.wfCommitmentComposition.length){
+      mk('wfCommitmentComposition',{type:'doughnut',data:{labels:chartData.wfCommitmentComposition.map(d=>d.label),datasets:[{data:chartData.wfCommitmentComposition.map(d=>d.value),backgroundColor:chartData.wfCommitmentComposition.map(d=>d.color)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9}}},datalabels:dlPct}}})
+    }
+    if(chartData.wfSurgeonBedDays&&chartData.wfSurgeonBedDays.length){
+      mk('wfSurgeonBedDays',{type:'bar',data:{labels:chartData.wfSurgeonBedDays.map(d=>d.label),datasets:[{label:'Bed Days Saved',data:chartData.wfSurgeonBedDays.map(d=>d.value),backgroundColor:xi,borderRadius:3}]},options:hOpts})
+    }
+  }
+
+  // Step 8: Business Plan — Annual P&L stacked bar
+  if(title.includes('Business Plan')&&chartData.wfAnnualPnl&&chartData.wfAnnualPnl.length){
+    mk('wfAnnualPnl',{type:'bar',data:{labels:chartData.wfAnnualPnl.map(d=>d.label),datasets:[{label:'Revenue',data:chartData.wfAnnualPnl.map(d=>d.revenue),backgroundColor:sp,stack:'returns'},{label:'Cost Avoidance',data:chartData.wfAnnualPnl.map(d=>d.cost_avoidance),backgroundColor:xi,stack:'returns'},{label:'Capital Expense',data:chartData.wfAnnualPnl.map(d=>d.capital_expense),backgroundColor:red,stack:'expenses'},{label:'Operating Expense',data:chartData.wfAnnualPnl.map(d=>d.operating_expense),backgroundColor:'#f59e0b',stack:'expenses'}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>'$'+(v/1e6).toFixed(0)+'M'}}}}})
   }
 }
 
