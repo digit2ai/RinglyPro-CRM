@@ -85,7 +85,14 @@ export default function ClinicalOutcomesPage({ projectId: propId }) {
   if (!id) return <div className="p-10 text-slate-400">No hospital selected.</div>
   if (loading) return <div className="p-10 text-slate-400">Loading clinical outcomes...</div>
 
-  const m = cms || {}
+  // The live CMS metrics endpoint returns a row-per-measure array (and is empty
+  // until Care Compare is ingested). Prefer a flat cms object stored on the
+  // project (extended_data.cms), which carries the verified star ratings + the
+  // baseline measures. Fall back to the array endpoint only if it's a flat object.
+  const m = (project?.extended_data?.cms && Object.keys(project.extended_data.cms).length)
+    ? project.extended_data.cms
+    : (cms && !Array.isArray(cms) ? cms : {})
+  const hasCms = m && Object.keys(m).length > 0
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
@@ -357,7 +364,7 @@ export default function ClinicalOutcomesPage({ projectId: propId }) {
         </div>
       )}
 
-      {!cms ? (
+      {!hasCms ? (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-8 text-center">
           <h3 className="text-white font-semibold mb-2">No CMS quality data loaded yet</h3>
           <p className="text-sm text-slate-400 mb-4">Click "Fetch CMS Quality Metrics" above to pull the latest Hospital Compare measures.</p>
@@ -385,7 +392,8 @@ export default function ClinicalOutcomesPage({ projectId: propId }) {
 
           {/* Outcomes table */}
           <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
-            <h3 className="font-bold text-white mb-4">Clinical Outcomes Baseline</h3>
+            <h3 className="font-bold text-white mb-1">Clinical Outcomes Baseline</h3>
+            {m.basis && <p className="text-[11px] text-slate-500 mb-3">{m.basis}</p>}
             <table className="w-full text-sm">
               <thead className="text-[10px] uppercase tracking-widest text-slate-500">
                 <tr><th className="text-left pb-2">Measure</th><th className="text-right pb-2">Current</th><th className="text-right pb-2">vs National</th><th className="text-left pb-2">Source</th></tr>
