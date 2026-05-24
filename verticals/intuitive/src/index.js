@@ -213,7 +213,7 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const audioDir = path.join(_AUDIO_DIR, String(projectId));
     const slide0Audio = path.join(audioDir, 'slide_0.mp3');
     const audioCountFile = path.join(audioDir, '.deck_version');
-    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v6-costavoid';
+    const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v7-narration-logic';
     const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
     const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
 
@@ -294,7 +294,8 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" style="width:280px;height:auto;margin-bottom:16px">
   <h1>${hospitalName}</h1>
   <p>SurgicalMind AI &mdash; da Vinci System Assessment</p>
-  <button onclick="startPresentation()">Tap to Start</button>
+  <button onclick="startPresentation()">&#9654;&nbsp; Tap to Play Presentation</button>
+  <p style="font-size:13px;color:#64748b;margin-top:-8px">Auto-plays all 11 slides with Rachel narration</p>
 </div>
 <div class="container" id="app" style="display:none">
   <div class="header">
@@ -327,7 +328,7 @@ Chart.defaults.borderColor='#1e293b';
 Chart.defaults.plugins.datalabels={display:false};
 const audio=document.getElementById('audio');
 
-function startPresentation(){document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';render();playAudio()}
+function startPresentation(){document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';auto=true;updatePlayBtn();render();playAudio()}
 function render(){
   const s=slides[cur];
   document.getElementById('slideContent').innerHTML='<h2>'+s.title+'</h2>'+s.html;
