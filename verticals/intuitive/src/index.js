@@ -316,7 +316,8 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   <div class="slide-area"><div class="slide" id="slideContent"></div></div>
   <div style="padding:8px 0;display:flex;justify-content:center"><div class="dots" id="dots"></div></div>
 </div>
-<audio id="audio" preload="none"></audio>
+<audio id="audio" preload="auto"></audio>
+<audio id="audioPrefetch" preload="auto" style="display:none"></audio>
 <script>
 const slides=${slidesJSON};
 const audioBase="${audioBase}";
@@ -352,8 +353,31 @@ function updatePlayBtn(){
   if(auto){btn.style.background='#eab308';btn.style.borderColor='#eab308';icon.innerHTML='&#10074;&#10074;';label.textContent='PAUSE';if(dot)dot.style.animation='pulse 1.5s infinite'}
   else{btn.style.background='#10b981';btn.style.borderColor='#10b981';icon.innerHTML='&#9654;';label.textContent='PLAY';if(dot)dot.style.animation='none'}
 }
-function playAudio(){audio.src=audioBase+'/'+cur;audio.play().catch(()=>{})}
-audio.onended=function(){if(auto&&cur<slides.length-1){cur++;render();playAudio()}else if(auto){auto=false;updatePlayBtn()}}
+var audioRetries=0,stallTimer=null;
+function prefetchNext(){var n=cur+1;if(n<slides.length){var pf=document.getElementById('audioPrefetch');if(pf){pf.src=audioBase+'/'+n;try{pf.load()}catch(e){}}}}
+function clearStall(){if(stallTimer){clearTimeout(stallTimer);stallTimer=null}}
+function advance(){if(cur<slides.length-1){cur++;render();playAudio()}else{auto=false;updatePlayBtn()}}
+function playAudio(){
+  clearStall();audioRetries=0;
+  audio.src=audioBase+'/'+cur;
+  try{audio.load()}catch(e){}
+  audio.play().catch(function(){});
+  prefetchNext();
+}
+// Clean completion -> next slide
+audio.onended=function(){clearStall();if(auto)advance()};
+// Network/decode error -> retry the same slide a couple times, then skip so the deck never hangs
+audio.onerror=function(){
+  if(!auto)return;
+  if(audioRetries<2){audioRetries++;setTimeout(function(){try{audio.load()}catch(e){}audio.play().catch(function(){})},900)}
+  else advance();
+};
+// Buffer stall -> nudge playback; if it can't resume within 12s, move on
+audio.onwaiting=function(){
+  if(!auto)return;clearStall();
+  stallTimer=setTimeout(function(){try{audio.play().catch(function(){})}catch(e){}stallTimer=setTimeout(function(){if(auto)advance()},6000)},6000);
+};
+audio.onplaying=function(){clearStall()};
 
 function renderCharts(){
   Object.values(charts).forEach(c=>{if(c&&c.destroy)c.destroy()});charts={};
