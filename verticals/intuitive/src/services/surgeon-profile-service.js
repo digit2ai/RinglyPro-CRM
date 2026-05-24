@@ -97,14 +97,25 @@ async function buildKolSignals(surgeons = [], opts = {}) {
       publicationCount = pub?.count || 0;
     } catch (e) { /* skip */ }
 
-    const roboticVol = parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0);
+    const mpupVol = parseInt(s.robotic_cases_last_yr || s.total_robotic_cases_last_yr || 0);
     const commitmentCases = parseInt(s.total_incremental_annual || 0);
-    const score = (roboticVol * 0.6) + (commitmentCases * 0.3) + (publicationCount * 4);
+    // Volume basis for the quadrant x-axis: prefer claims-derived MPUP robotic
+    // volume; if a surgeon has no MPUP match (common for pure-research KOLs),
+    // fall back to their captured commitment cases so the point is not pinned at 0.
+    const roboticVol = mpupVol || commitmentCases;
+    // Rebalanced so surgeons with real clinical volume/commitments rank alongside
+    // high-publication academics (was publication-dominated, which hid the operators).
+    const score = (roboticVol * 1.5) + (commitmentCases * 1.5) + (publicationCount * 2);
+    const specialty = s.surgeon_specialty || s.specialty || null;
     scored.push({
       surgeon_name: s.surgeon_name || s.full_name,
-      specialty: s.surgeon_specialty || s.specialty,
+      specialty: specialty,
+      // When neither specialty nor claims volume is known, the surgeon entered
+      // via PubMed only — label them a Research KOL rather than showing blanks.
+      kol_type: specialty ? 'Clinical' : (publicationCount > 0 ? 'Research' : 'Roster'),
       npi: s.npi,
       robotic_vol: roboticVol,
+      volume_is_commitment: !mpupVol && commitmentCases > 0,
       commitment_cases: commitmentCases,
       publications_5yr: publicationCount,
       composite_score: Math.round(score),
@@ -113,7 +124,7 @@ async function buildKolSignals(surgeons = [], opts = {}) {
   scored.sort((a, b) => b.composite_score - a.composite_score);
 
   return {
-    headline: `Top ${Math.min(5, scored.length)} KOLs by composite signal · robotic volume × 0.6 + commitments × 0.3 + publications × 4`,
+    headline: `Top ${Math.min(5, scored.length)} KOLs by composite signal · robotic/commitment volume × 1.5 + publications × 2`,
     top_kols: scored.slice(0, 5),
     methodology: 'Composite KOL score weights MPUP robotic volume, captured commitment cases, and 5-yr PubMed publication count. Tunable.',
   };

@@ -97,7 +97,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         ${metric('Total Beds', fmt(project.bed_count))}
         ${metric('Annual Surgical Vol', fmt(project.annual_surgical_volume))}
         ${metric('OR Count', fmt(project.total_or_count))}
-        ${metric('Operating Margin', project.operating_margin_pct ? project.operating_margin_pct + '%' : '--')}
+        ${metric('Robotic Cases/Yr', fmt(project.current_robotic_cases), '#8b5cf6')}
       </div>
       ${hp?.strategic_impact ? `
         <div class="info-box"><strong>${esc(hp.strategic_impact.headline)}</strong></div>
@@ -113,7 +113,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${hp?.research_profile?.by_year?.length > 0 ? `
         <div class="info-box"><strong>Research Profile · ${fmt(hp.research_profile.total_all_publications)} total publications · ${fmt(hp.research_profile.last_12_months)} in last 12 months</strong></div>
         <div class="chart-box"><canvas id="wfPublicationsByYear" height="180"></canvas></div>
-      ` : ''}` + logic(`Bed count, OR count, and annual surgical volume are read directly from this hospital's CMS Provider-of-Services file and Medicare cost report — not estimated. Operating margin is the hospital's own reported total margin. The peer rank orders your installed da Vinci base against a matched set of comparable systems, so "below peer average" is a like-for-like gap, not a national average. Publication counts are a live PubMed query against your affiliated surgeons.`),
+      ` : ''}` + logic(`Bed count, OR count, and annual surgical volume are read directly from this hospital's CMS Provider-of-Services file and Medicare cost report — not estimated. Robotic cases/yr is your current da Vinci case count, shown next to total surgical volume so the conversion headroom is visible. The peer rank orders your installed da Vinci base against a matched set of comparable systems, so "below peer average" is a like-for-like gap, not a national average. Publication counts are a live PubMed query against your affiliated surgeons.`),
   });
 
   // ───── SLIDE 3: SURGEON PROFILE ─────
@@ -132,20 +132,20 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         <div class="info-box"><strong>Top KOLs — Volume × Publications Quadrant</strong> · top-right = high-value KOLs</div>
         <div class="chart-box"><canvas id="wfKolQuadrant" height="240"></canvas></div>
         <table class="data-table">
-          <thead><tr><th>Top KOLs</th><th>Specialty</th><th style="text-align:right">Robotic Vol</th><th style="text-align:right">Publications</th><th style="text-align:right">Score</th></tr></thead>
+          <thead><tr><th>Top KOLs</th><th>Specialty / Type</th><th style="text-align:right">Robotic Vol</th><th style="text-align:right">Publications</th><th style="text-align:right">Score</th></tr></thead>
           <tbody>
             ${sp.kol_signals.top_kols.map(k => `
               <tr>
                 <td><strong>${esc(k.surgeon_name)}</strong></td>
-                <td>${esc(k.specialty || '--')}</td>
-                <td style="text-align:right;color:#06b6d4">${fmt(k.robotic_vol)}</td>
+                <td>${k.specialty ? esc(k.specialty) : `<span style="color:#a78bfa">Research KOL</span>`}</td>
+                <td style="text-align:right;color:#06b6d4">${k.robotic_vol > 0 ? fmt(k.robotic_vol) + (k.volume_is_commitment ? '<span style="color:#64748b;font-size:10px"> committed</span>' : '') : '<span style="color:#64748b">n/a</span>'}</td>
                 <td style="text-align:right;color:#8b5cf6">${k.publications_5yr}</td>
                 <td style="text-align:right;font-weight:700">${fmt(k.composite_score)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
-      ` : ''}` + logic(`Every surgeon is pulled from the national NPPES provider registry, filtered to those affiliated with this facility. Each surgeon's robotic volume is their actual Medicare-billed case count (CMS physician volume data); publications are a 5-year PubMed count. The KOL score combines volume and publications, so the top-right of the quadrant flags high-volume, high-influence surgeons. "Trained / pipeline / pull-forward" are status flags, not forecasts.`),
+      ` : ''}` + logic(`Every surgeon is pulled from the national NPPES registry, filtered to this facility's affiliations. Robotic volume is the surgeon's Medicare-billed robotic case count (CMS physician volume); where a surgeon has no claims match, we substitute their captured commitment cases and mark it "committed." Publications are a live 5-year PubMed count. The score combines volume and publications. Surgeons with clinical volume show their specialty; high-publication academics with no claims match are flagged <strong>Research KOL</strong> — both are real, they are just sourced differently.`),
   });
 
   // ───── SLIDE 4: ROBOTICS PROGRAM ─────
@@ -267,11 +267,15 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           <div class="chart-box"><canvas id="wfSurgeonBedDays" height="200"></canvas></div>
         </div>
       ` : ''}
-      ${sc?.master_table?.length > 0 ? `
+      ${(() => {
+        const committed = (sc?.master_table || []).filter(s => s.incremental_cases_yr > 0);
+        const pipelineCount = (sc?.master_table || []).length - committed.length;
+        if (!committed.length) return '';
+        return `
         <table class="data-table">
-          <thead><tr><th>Top Surgeons</th><th>Specialty</th><th>Trained</th><th style="text-align:right">Cases/Yr</th></tr></thead>
+          <thead><tr><th>Committed Surgeons</th><th>Specialty</th><th>Trained</th><th style="text-align:right">Cases/Yr</th></tr></thead>
           <tbody>
-            ${sc.master_table.slice(0, 6).map(s => `
+            ${committed.slice(0, 6).map(s => `
               <tr>
                 <td><strong>${esc(s.surgeon_name)}</strong></td>
                 <td>${esc(s.specialty || '--')}</td>
@@ -281,7 +285,8 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
             `).join('')}
           </tbody>
         </table>
-      ` : ''}` + logic(`Each surgeon's annual cases come from their <strong>own committed monthly volume</strong>, modeled two ways. For an <strong>open-to-MIS conversion</strong>, we count only 15% of their OPEN volume (never laparoscopic). For a <strong>net-new commitment</strong> — a surgeon blocked by capacity or a new recruit — we count the committed cases at face value. Revenue = those cases × the procedure's reimbursement rate. Bed days saved apply only to the open conversions × the length-of-stay gap. Surgeons still in the training pipeline show <strong>0 cases until they commit volume</strong> — nothing is assumed on their behalf, which is why the total is a floor, not a stretch.`),
+        ${pipelineCount > 0 ? `<div style="font-size:12px;color:#94a3b8;margin-top:8px">+ <strong style="color:#a78bfa">${pipelineCount}</strong> additional surgeons identified in the training pipeline — not yet counted in the totals above (volume booked only once they commit, keeping this a floor).</div>` : ''}`;
+      })()}` + logic(`Each surgeon's annual cases come from their <strong>own committed monthly volume</strong>, modeled two ways. For an <strong>open-to-MIS conversion</strong>, we count only 15% of their OPEN volume (never laparoscopic). For a <strong>net-new commitment</strong> — a surgeon blocked by capacity or a new recruit — we count the committed cases at face value. Revenue = those cases × the procedure's reimbursement rate. Bed days saved apply only to the open conversions × the length-of-stay gap. Surgeons still in the training pipeline show <strong>0 cases until they commit volume</strong> — nothing is assumed on their behalf, which is why the total is a floor, not a stretch.`),
   });
 
   // ───── SLIDE 9: BUSINESS PLAN ─────
@@ -336,11 +341,13 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           </div>
         `}
       ` : ''}
+      <div class="info-box"><strong>Projected Trajectory</strong> · the planned ramp that monthly actuals will be measured against</div>
+      <div class="chart-box"><canvas id="wfPerfProjection" height="220"></canvas></div>
       <div style="font-size:13px;color:#cbd5e1;line-height:1.6">
         <strong>What this delivers:</strong><br>
         · Plan vs Actual variance per KPI · Per-system quarterly utilization vs academic avg<br>
         · Per-surgeon committed vs actual cases · Auto-generated variance watch list with intervention recommendations
-      </div>` + logic(`After go-live, each surgeon's <strong>actual monthly billed cases</strong> are compared to the volume they committed in Step 7. On-track / at-risk / off-track are variance bands against that commitment. Nothing on this page is modeled or forecast — it is actual case volume versus the plan, refreshed each month. This is what keeps the business case honest after the systems are placed.`),
+      </div>` + logic(`The line is the <strong>planned trajectory</strong> from the business plan — cumulative incremental cases ramping Y1 through Y5 at the same adoption curve used in the proforma. After go-live, each surgeon's actual monthly billed cases are plotted against this line; on-track / at-risk / off-track are variance bands against the commitment. Nothing here is re-modeled — the projection is fixed at approval, and everything after is actual volume versus that plan, refreshed monthly.`),
   });
 
   // ───── SLIDE 11: EXECUTIVE SUMMARY CLOSER ─────
@@ -438,8 +445,9 @@ function buildWorkflowChartData(enrichments) {
   // Slide 3: Surgeon Profile — KOL Quadrant scatter
   if (sp?.kol_signals?.top_kols) {
     data.wfKolQuadrant = sp.kol_signals.top_kols.map(k => ({
-      x: k.robotic_vol, y: k.publications_5yr, r: Math.max(5, Math.min(20, k.commitment_cases / 5)),
-      label: k.surgeon_name, specialty: k.specialty || '',
+      x: k.robotic_vol, y: k.publications_5yr,
+      r: Math.max(7, Math.min(22, (k.commitment_cases || k.robotic_vol || 10) / 8 + 7)),
+      label: k.surgeon_name, specialty: k.specialty || 'Research KOL',
     }));
   }
 
@@ -508,6 +516,23 @@ function buildWorkflowChartData(enrichments) {
       capital_expense: -(y.capital_expense || 0),
       operating_expense: -(y.operating_expense || 0),
     }));
+  }
+
+  // Slide 10: Performance Tracking — Projected adoption trajectory (Y1-Y5).
+  // Annual + cumulative committed cases, ramped the same way the proforma ramps
+  // revenue. This fills the baseline-mode page and shows what actuals get measured against.
+  {
+    const totalCommitted = sc?.summary?.total_incremental_cases
+      || (bp?.proforma?.investment_summary ? Math.round((bp.proforma.investment_summary.incremental_revenue_5yr / 5) / 18500) : 0);
+    if (totalCommitted > 0) {
+      const ramp = { 1: 0.5, 2: 0.75, 3: 1.0, 4: 1.0, 5: 1.0 };
+      let cum = 0;
+      data.wfPerfProjection = [1, 2, 3, 4, 5].map(y => {
+        const annual = Math.round(totalCommitted * ramp[y]);
+        cum += annual;
+        return { label: 'Year ' + y, annual, cumulative: cum };
+      });
+    }
   }
 
   return data;

@@ -486,6 +486,11 @@ function renderCharts(){
   if(title.includes('Business Plan')&&chartData.wfAnnualPnl&&chartData.wfAnnualPnl.length){
     mk('wfAnnualPnl',{type:'bar',data:{labels:chartData.wfAnnualPnl.map(d=>d.label),datasets:[{label:'Revenue',data:chartData.wfAnnualPnl.map(d=>d.revenue),backgroundColor:sp,stack:'returns'},{label:'Cost Avoidance',data:chartData.wfAnnualPnl.map(d=>d.cost_avoidance),backgroundColor:xi,stack:'returns'},{label:'Capital Expense',data:chartData.wfAnnualPnl.map(d=>d.capital_expense),backgroundColor:red,stack:'expenses'},{label:'Operating Expense',data:chartData.wfAnnualPnl.map(d=>d.operating_expense),backgroundColor:'#f59e0b',stack:'expenses'}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:false}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>'$'+(v/1e6).toFixed(0)+'M'}}}}})
   }
+
+  // Step 9: Performance Tracking — Projected adoption trajectory (annual bars + cumulative line)
+  if(title.includes('Performance Tracking')&&chartData.wfPerfProjection&&chartData.wfPerfProjection.length){
+    mk('wfPerfProjection',{type:'bar',data:{labels:chartData.wfPerfProjection.map(d=>d.label),datasets:[{type:'line',label:'Cumulative Cases (Plan)',data:chartData.wfPerfProjection.map(d=>d.cumulative),borderColor:xi,backgroundColor:'rgba(16,185,129,0.12)',fill:true,tension:0.3,pointRadius:5,borderWidth:3,yAxisID:'y'},{type:'bar',label:'Annual Cases (Plan)',data:chartData.wfPerfProjection.map(d=>d.annual),backgroundColor:dv5,borderRadius:4,yAxisID:'y'}]},options:{...opts,plugins:{...opts.plugins,datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'top',formatter:v=>fmtN(v)}},scales:{...opts.scales,y:{...opts.scales.y,ticks:{...opts.scales.y.ticks,callback:v=>fmtN(v)}}}}})
+  }
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown')nextSlide();if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevSlide()});
