@@ -19,6 +19,7 @@
  */
 
 const peerService = require('./peer-comparison-service');
+const surgeonCommitmentsService = require('./surgeon-commitments-service');
 
 // System cost catalog (industry-standard list pricing)
 const SYSTEM_PRICES = {
@@ -72,7 +73,7 @@ function buildSystemAssumptions(project, plan, analysis = {}) {
 
 // ─── 2. 5-YEAR PROFORMA (Deck 3 Slide 13) ─────────────────────────────
 
-function buildFiveYearProforma(plan, analysis = {}, surgeons = []) {
+function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = null) {
   const systemQuantity = parseInt(plan?.system_quantity || 1);
   const systemPrice = parseFloat(plan?.system_price) || 2500000;
   const annualServiceCost = parseFloat(plan?.annual_service_cost) || 0;
@@ -107,7 +108,18 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = []) {
     : parseFloat(plan?.total_incremental_revenue || 0);
   if (totalSurgeonRevenue === 0) revenueFromConversion = totalIncrementalRevenue;
 
-  const totalClinicalSavings = parseFloat(plan?.total_clinical_outcome_savings || 0);
+  // Clinical cost avoidance: prefer the stored plan field, but if it's empty
+  // (common — it's only populated by an explicit clinical-outcomes dollarization run),
+  // derive it from the committed surgeons' bed-days saved × state-local bed-day cost.
+  // This is the SAME $ figure surfaced on Step 7 (Surgeon Commitments), so the two
+  // steps now agree instead of Step 8 showing $0.
+  let totalClinicalSavings = parseFloat(plan?.total_clinical_outcome_savings || 0);
+  if (!totalClinicalSavings && surgeons.length) {
+    try {
+      const bedDays = surgeonCommitmentsService.buildPerSurgeonBedDays(surgeons, project);
+      totalClinicalSavings = bedDays.reduce((s, r) => s + (r.dollar_value || 0), 0);
+    } catch (e) { /* leave at 0 if computation fails */ }
+  }
   const totalAnnualReturn = totalIncrementalRevenue + totalClinicalSavings;
 
   // Capital expenditure
@@ -407,7 +419,7 @@ async function buildBusinessPlanEnrichment({ projectId, models }) {
   } catch (e) { console.error('[business-plan] load error:', e.message); }
 
   const systemAssumptions = buildSystemAssumptions(project, plan, analysis);
-  const proforma = buildFiveYearProforma(plan, analysis, surgeons);
+  const proforma = buildFiveYearProforma(plan, analysis, surgeons, project);
   const twoPhasePlacement = buildTwoPhasePlacement(project, plan, analysis, surgeons);
   const orRoomRecommendations = buildOrRoomRecommendations(project, plan, analysis, surgeons);
   const acquisitionComparison = buildAcquisitionNpvComparison(plan);

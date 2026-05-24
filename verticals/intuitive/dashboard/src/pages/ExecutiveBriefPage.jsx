@@ -900,7 +900,7 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
             <ol className="list-decimal list-inside text-sm mt-2 space-y-2 text-slate-700">
               <li><strong>IT Security Review</strong> — platform infrastructure (Render/AWS, Anthropic-grade)</li>
               <li><strong>Surgeon Survey Distribution</strong> — confirm commitment volumes with selected surgeons</li>
-              <li><strong>Free Trial Period</strong> — 2-6 months, zero risk on cost / security / data</li>
+              <li><strong>Free Trial Period</strong> — duration open for discussion, zero risk on cost / security / data</li>
               <li><strong>Capital Placement</strong> — timing aligned to Phase 1 / Phase 2 plan</li>
               <li><strong>Performance Tracking Setup</strong> — monthly actuals ingest cadence + variance alerting thresholds</li>
             </ol>

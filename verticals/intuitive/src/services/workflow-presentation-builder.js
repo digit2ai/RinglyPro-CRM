@@ -345,7 +345,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       <div class="steps">
         <div class="step"><div class="step-num">1</div><div><strong>IT Security Review</strong><br><span style="color:#94a3b8;font-size:12px">Platform infrastructure (Render/AWS, Anthropic-grade)</span></div></div>
         <div class="step"><div class="step-num">2</div><div><strong>Surgeon Survey Distribution</strong><br><span style="color:#94a3b8;font-size:12px">Confirm commitment volumes</span></div></div>
-        <div class="step"><div class="step-num">3</div><div><strong>Free Trial Period (2-6 months)</strong><br><span style="color:#94a3b8;font-size:12px">Zero risk on cost, security, data</span></div></div>
+        <div class="step"><div class="step-num">3</div><div><strong>Free Trial Period</strong><br><span style="color:#94a3b8;font-size:12px">Duration open for discussion · zero risk on cost, security, data</span></div></div>
         <div class="step"><div class="step-num">4</div><div><strong>Capital Placement</strong><br><span style="color:#94a3b8;font-size:12px">Timing aligned to Phase 1 / Phase 2 plan</span></div></div>
       </div>`,
   });
@@ -390,7 +390,7 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
   scripts.push(`Once the program is live, performance tracking compares planned outcomes against monthly actuals. ${pt?.plan_vs_actual?.has_actuals ? 'Variance alerts surface surgeons or KPIs needing intervention.' : 'When monthly actuals are ingested, the system will surface variance alerts, surgeon performance gaps, and recommended interventions automatically.'}`);
 
   // Slide 11 — Executive Summary
-  scripts.push(`To close: we recommend ${eb?.recommendation ? 'placing ' + eb.recommendation.total_systems + ' ' + eb.recommendation.primary_system + ' systems in two phases' : 'a phased da Vinci placement strategy'}. Next steps are: IT security review, surgeon survey distribution, a free trial period of 2 to 6 months with zero risk on cost, security, or data, and capital placement aligned to the phase plan. Thank you for reviewing the ${hospitalName} da Vinci System Assessment. We look forward to partnering on your robotic surgery program.`);
+  scripts.push(`To close: we recommend ${eb?.recommendation ? 'placing ' + eb.recommendation.total_systems + ' ' + eb.recommendation.primary_system + ' systems in two phases' : 'a phased da Vinci placement strategy'}. Next steps are: IT security review, surgeon survey distribution, a free trial period with duration open for discussion and zero risk on cost, security, or data, and capital placement aligned to the phase plan. Thank you for reviewing the ${hospitalName} da Vinci System Assessment. We look forward to partnering on your robotic surgery program.`);
 
   return scripts;
 }
