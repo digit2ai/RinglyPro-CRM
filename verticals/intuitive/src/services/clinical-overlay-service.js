@@ -15,7 +15,21 @@
 
 const peerService = require('./peer-comparison-service');
 
-// LOS by modality per procedure family (from clinical-outcomes-service)
+// ─── DA VINCI-APPLICABLE PROCEDURE FILTER (per Greg Eriksen / Intuitive, 5/2026) ──
+// ONLY these procedure families count as convertible da Vinci-applicable open cases.
+// Non-applicable open surgery (orthopedics, trauma, open-heart bypass, etc.) is
+// explicitly excluded so the eligibility pool is exact.
+const DA_VINCI_APPLICABLE_PROCEDURES = {
+  urology:    ['Prostatectomy', 'Nephrectomy', 'Partial Nephrectomy', 'Pyeloplasty'],
+  gynecology: ['Hysterectomy', 'Myomectomy', 'Sacrocolpopexy', 'Endometriosis Excision'],
+  general:    ['Cholecystectomy', 'Hernia Repair', 'Colorectal Resection', 'Esophagectomy', 'Gastric Bypass'],
+  thoracic:   ['Lobectomy', 'Esophageal Resection'],
+  cardiac:    ['Mitral Valve Repair', 'CABG'],
+  head_neck:  ['Thyroidectomy', 'Parotid Gland Surgery'],
+  pediatric:  ['Pediatric Urologic (Pyeloplasty)'],
+};
+
+// LOS by modality per procedure family — all entries are da Vinci-applicable.
 const LOS_BY_PROCEDURE = [
   { name: 'Colorectal', open_los: 13, mis_los: 6, davinci_los: 5, opp: true },
   { name: 'Ventral Hernia', open_los: 11, mis_los: 5, davinci_los: 5, opp: true },
@@ -337,4 +351,5 @@ module.exports = {
   buildOutcomesDriverTable,
   buildComplicationBurden,
   LOS_BY_PROCEDURE,
+  DA_VINCI_APPLICABLE_PROCEDURES,
 };
