@@ -282,6 +282,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .step{display:flex;align-items:center;gap:12px;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px 16px}
 .step-num{width:32px;height:32px;border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;flex-shrink:0}
 .chart-box{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin:10px 0}
+.chart-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .dots{display:flex;gap:6px;flex-wrap:wrap}
 .dots .dot{width:10px;height:10px;border-radius:50%;background:#334155;cursor:pointer;transition:all .2s;flex-shrink:0}
 .dots .dot.active{background:#0ea5e9;transform:scale(1.3)}
@@ -292,6 +293,37 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .splash button:hover{background:#0284c7;transform:scale(1.05)}
 @media(min-width:640px){.metrics-grid{grid-template-columns:repeat(4,1fr)}}
 @media(min-width:768px){.slide{padding:32px}.slide h2{font-size:26px}}
+/* ── Mobile (phones) — Greg will open this from an SMS ── */
+@media(max-width:639px){
+  .container{padding:8px 10px}
+  .header{gap:6px;justify-content:center;padding:6px 0}
+  .header h2{font-size:11px;width:100%;text-align:center;margin-bottom:2px;white-space:normal}
+  .controls{width:100%;justify-content:center;gap:6px}
+  .controls button{padding:9px 12px;font-size:12px;min-height:38px}
+  #btnPrev,#btnNext{padding:9px 16px;font-size:16px}
+  .slide-counter{font-size:11px}
+  .slide-area{padding:10px 0}
+  .slide{padding:14px;border-radius:10px}
+  .slide h2{font-size:17px;margin-bottom:12px;padding-bottom:10px}
+  .metrics-grid{gap:8px;margin:12px 0}
+  .metric{padding:10px 6px}
+  .metric-value{font-size:15px;word-break:normal}
+  .metric-label{font-size:10px}
+  .info-box{font-size:12px;padding:10px 12px;line-height:1.55}
+  /* tables become horizontally scrollable instead of overflowing the slide */
+  .data-table{display:block;overflow-x:auto;white-space:nowrap;font-size:11px;-webkit-overflow-scrolling:touch}
+  .data-table th{font-size:9px;padding:6px 5px}
+  .data-table td{padding:6px 5px}
+  .chart-box{padding:8px;margin:8px 0}
+  .chart-2col{grid-template-columns:1fr}
+  .step{padding:10px 12px;gap:10px}
+  .step-num{width:28px;height:28px;font-size:13px}
+  .dots{gap:5px;justify-content:center}
+  .dots .dot{width:8px;height:8px}
+  .splash{gap:18px;padding:24px 16px}
+  .splash img{width:200px!important}
+  .splash button{padding:16px 28px;font-size:16px;width:100%;max-width:340px}
+}
 </style>
 </head>
 <body>

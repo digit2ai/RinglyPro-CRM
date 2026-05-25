@@ -262,7 +262,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         </div>
       ` : '<div class="info-box">Surgeon commitments will populate once Step 7 is completed.</div>'}
       ${sc?.summary?.composition?.length > 0 ? `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="chart-2col">
           <div class="chart-box"><canvas id="wfCommitmentComposition" height="200"></canvas></div>
           <div class="chart-box"><canvas id="wfSurgeonBedDays" height="200"></canvas></div>
         </div>
