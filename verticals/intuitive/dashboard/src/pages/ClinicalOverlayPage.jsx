@@ -161,6 +161,17 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         </div>
       )}
 
+      {enrichment?.conversion_formula && (
+        <div className="bg-sky-900/15 border-2 border-sky-600/50 rounded-xl p-5 mb-6">
+          <div className="text-[10px] uppercase tracking-widest text-sky-300 font-bold mb-1">The Conversion Formula — every number flows from this</div>
+          <div className="text-lg font-bold text-white mb-1">Incremental = {enrichment.conversion_formula.basis_pct}% × Open Soft-Tissue cases the da Vinci can perform</div>
+          <div className="text-sm text-slate-300 mb-3">For {enrichment.hospital_name}: {enrichment.conversion_formula.basis_pct}% × {fmt(enrichment.conversion_formula.open_applicable_cases)} open applicable cases = <span className="text-emerald-300 font-bold">{fmt(enrichment.conversion_formula.incremental_opportunity)} incremental cases</span>. Laparoscopic and robotic cases — and any open case outside these procedures — do <span className="text-red-300 font-semibold">NOT count</span>.</div>
+          <div className="text-[11px] text-slate-400 leading-relaxed">
+            <span className="text-slate-300 font-semibold">da Vinci-applicable procedures:</span> Urology (prostatectomy, nephrectomy, partial nephrectomy, pyeloplasty) · Gynecology (hysterectomy, myomectomy, sacrocolpopexy, endometriosis) · General (cholecystectomy, hernia repair, colorectal resection, esophagectomy, gastric bypass) · Thoracic (lobectomy, esophageal resection) · Cardiac (mitral valve repair, CABG) · Head &amp; Neck (thyroidectomy, parotid) · Pediatric urology
+          </div>
+        </div>
+      )}
+
       {enrichment?.complication_burden && (
         <div className="bg-emerald-900/15 border border-emerald-700/40 rounded-lg p-3 mb-4 text-sm text-emerald-200">
           <strong>The da Vinci alternative.</strong> Converting open cases to robotic recovers that bleed — here is the bed-day cost avoidance alone:

@@ -331,9 +331,22 @@ async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct
   const outcomesDriver = buildOutcomesDriverTable(project, bedDaysTable, bedDaysTable.total_converted_cases);
   const complicationBurden = buildComplicationBurden(bedDaysTable, project);
 
+  // THE SINGLE FORMULA: incremental conversion = 15% of OPEN soft-tissue cases
+  // the da Vinci can perform. Everything (savings, revenue, the conversion
+  // opportunity) flows from this. Nothing outside these procedures counts.
+  const openApplicable = complicationBurden.total_open_cases;
+  const conversionFormula = {
+    basis_pct: conversionPct,
+    open_applicable_cases: openApplicable,
+    incremental_opportunity: Math.round(openApplicable * conversionPct / 100),
+    applicable_procedures: DA_VINCI_APPLICABLE_PROCEDURES,
+    rule: `Incremental = ${conversionPct}% of OPEN soft-tissue cases the da Vinci can perform. Laparoscopic and robotic cases — and any open case outside these procedures — do NOT count toward the incremental.`,
+  };
+
   return {
     project_id: projectId,
     hospital_name: project.hospital_name,
+    conversion_formula: conversionFormula,
     complication_burden: complicationBurden,
     bed_days_savings: bedDaysTable,
     cost_of_waiting: costOfWaiting,
