@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#06102f">
+<title>Habla con Lina — Defensores de la Patria</title>
+<meta name="description" content="Habla con Lina, la asistente virtual de la campaña de Abelardo de la Espriella. Pregúntale sobre las propuestas, la trayectoria del Tigre o cómo votar el 31 de mayo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-900: #06102f;
+    --navy-800: #0b1a47;
+    --navy-700: #102258;
+    --yellow: #ffcb05;
+    --flame-1: #ff3b1f;
+    --flame-2: #ff7a00;
+    --red: #ce1126;
+    --text-on-dark: #f6f8ff;
+    --text-muted: #a9b4d6;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(ellipse at top, var(--navy-800) 0%, var(--navy-900) 60%);
+    color: var(--text-on-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 22px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .brand {
+    font-family: 'Anton', sans-serif;
+    font-size: 22px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #fff;
+    text-align: center; line-height: 1.05;
+    margin-bottom: 18px;
+  }
+  .brand .accent { color: var(--yellow); display: block; font-size: 13px; letter-spacing: 0.18em; margin-top: 4px; }
+
+  .lina-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
+  }
+  .lina-avatar {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--flame-1) 0%, var(--flame-2) 60%, var(--yellow) 100%);
+    display: grid; place-items: center; color: #fff;
+    font-family: 'Anton', sans-serif; font-size: 26px;
+    box-shadow: 0 8px 24px rgba(255,122,0,0.4);
+    position: relative;
+  }
+  .lina-avatar::after {
+    content: ''; position: absolute; bottom: 3px; right: 3px;
+    width: 14px; height: 14px; background: #22c55e;
+    border: 2.5px solid var(--navy-800); border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+    50%      { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+  }
+  .lina-title { font-family: 'Anton', sans-serif; font-size: 24px; color: #fff; letter-spacing: 0.03em; line-height: 1; text-transform: uppercase; }
+  .lina-sub { font-size: 11px; color: var(--yellow); font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-top: 5px; }
+
+  .photo-wrap {
+    width: 100%; max-width: 320px;
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid rgba(255,203,5,0.22);
+    box-shadow: 0 18px 44px rgba(0,0,0,0.5);
+    margin-bottom: 18px;
+  }
+  .photo-wrap img {
+    display: block; width: 100%; height: auto;
+    aspect-ratio: 4 / 5; object-fit: cover; object-position: center top;
+    background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-900) 100%);
+  }
+
+  .sub {
+    font-size: 14px; line-height: 1.55; color: var(--text-muted);
+    text-align: center; max-width: 360px; margin: 0 0 18px;
+  }
+  .sub strong { color: var(--yellow); }
+
+  .card {
+    width: 100%; max-width: 360px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 16px 18px 12px;
+    backdrop-filter: blur(10px);
+    border-top: 3px solid;
+    border-image: linear-gradient(90deg, var(--yellow), var(--flame-2), var(--red)) 1;
+  }
+  .card h2 { font-size: 12px; font-weight: 700; margin: 0 0 10px; color: var(--text-on-dark); letter-spacing: 0.12em; text-transform: uppercase; }
+  .card ul { margin: 0; padding: 0 0 0 18px; }
+  .card li { font-size: 13px; line-height: 1.6; color: var(--text-muted); margin: 0 0 4px; }
+
+  .mic-note { margin-top: 16px; font-size: 12px; color: var(--text-muted); text-align: center; max-width: 340px; opacity: 0.85; }
+  .mic-note strong { color: var(--yellow); }
+
+  .spacer { flex: 1 1 auto; min-height: 200px; }
+
+  @media (max-height: 640px) {
+    body { padding-top: 18px; }
+    .photo-wrap { max-width: 220px; }
+    .spacer { min-height: 170px; }
+  }
+</style>
+</head>
+<body>
+  <div class="brand">
+    Defensores de la Patria
+    <span class="accent">Abelardo de la Espriella · Presidente 2026</span>
+  </div>
+
+  <div class="lina-head">
+    <div class="lina-avatar">L</div>
+    <div>
+      <div class="lina-title">Habla con Lina</div>
+      <div class="lina-sub">Asistente IA · En vivo</div>
+    </div>
+  </div>
+
+  <div class="photo-wrap">
+    <img
+      src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a148dae069d64aa5d326c80.jpg"
+      alt="Lina, asistente virtual de la campaña de Abelardo de la Espriella">
+  </div>
+
+  <p class="sub">
+    Soy <strong>Lina</strong>, la asistente virtual del doctor Abelardo de la Espriella.
+    Conversemos sobre las propuestas, la trayectoria del Tigre o cómo votar el 31 de mayo.
+  </p>
+
+  <div class="card">
+    <h2>Pregúntale a Lina sobre</h2>
+    <ul>
+      <li>Las 13 propuestas del Plan País Milagro</li>
+      <li>La trayectoria del Tigre</li>
+      <li>Cómo votar por El Tigre el 31 de mayo</li>
+      <li>Cómo unirte al movimiento</li>
+    </ul>
+  </div>
+
+  <p class="mic-note">Toca el orbe en la esquina inferior y presiona <strong>"Iniciar llamada"</strong>. Permite el acceso al micrófono cuando lo solicite.</p>
+
+  <div class="spacer"></div>
+
+  <elevenlabs-convai agent-id="agent_7401kf279ahqe3hb1ecyct9ee1av"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js" async type="text/javascript"></script>
+</body>
+</html>
