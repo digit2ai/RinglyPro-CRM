@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#06102f">
+<title>Lina IA — Estimación de Costos para Patrocinio · Defensores de la Patria</title>
+<meta name="description" content="Estimación de costos del agente de IA Lina según el número de usuarios. Propuesta de patrocinio para la campaña presidencial de Abelardo de la Espriella.">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lina IA — Propuesta de Patrocinio · Defensores de la Patria">
+<meta property="og:description" content="Ruge la Patria Milagro. Estimación de costos del agente de IA Lina y propuesta de patrocinio para la recta final hacia el 31 de mayo.">
+<meta property="og:locale" content="es_CO">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-900: #06102f;
+    --navy-800: #0b1a47;
+    --navy-700: #102258;
+    --navy-600: #14306f;
+    --blue-400: #2a55d9;
+    --yellow: #ffcb05;
+    --yellow-deep: #f5b900;
+    --red: #ce1126;
+    --flame-1: #ff3b1f;
+    --flame-2: #ff7a00;
+    --flame-3: #ffb800;
+    --text-on-dark: #f6f8ff;
+    --text-muted: #a9b4d6;
+    --line: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    background: var(--navy-900);
+    color: var(--text-on-dark);
+    line-height: 1.6;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .display { font-family: 'Anton', sans-serif; letter-spacing: 0.02em; line-height: 0.95; text-transform: uppercase; }
+  a { color: var(--yellow); }
+
+  /* ===== HERO ===== */
+  .hero {
+    position: relative;
+    padding: 64px 24px 56px;
+    text-align: center;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 90% at 18% 30%, rgba(255,59,31,0.35) 0%, rgba(255,122,0,0.18) 35%, transparent 70%),
+      radial-gradient(ellipse 60% 80% at 85% 70%, rgba(43,85,217,0.25) 0%, transparent 65%),
+      linear-gradient(180deg, var(--navy-800) 0%, var(--navy-900) 100%);
+  }
+  .hero::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+    background: linear-gradient(90deg, var(--yellow) 0%, var(--flame-2) 50%, var(--red) 100%);
+  }
+  .kicker {
+    display: inline-block;
+    background: var(--yellow); color: var(--navy-900);
+    padding: 7px 20px; border-radius: 99px;
+    font-weight: 800; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(38px, 7vw, 76px);
+    color: #fff;
+  }
+  .hero h1 .y { color: var(--yellow); }
+  .hero h1 .b { color: var(--blue-400); }
+  .hero .lead {
+    margin: 22px auto 0; max-width: 720px;
+    font-size: clamp(16px, 2.4vw, 20px); color: var(--text-muted);
+  }
+  .hero .sub {
+    margin-top: 18px; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--flame-3);
+  }
+
+  /* ===== LAYOUT ===== */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  section.block { padding: 56px 0; border-bottom: 1px solid var(--line); }
+  section.block:last-of-type { border-bottom: none; }
+  .eyebrow {
+    color: var(--yellow); font-weight: 800; font-size: 12px;
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  h2.title {
+    font-family: 'Anton', sans-serif; text-transform: uppercase;
+    font-size: clamp(26px, 4.4vw, 42px); color: #fff; margin-bottom: 8px; line-height: 1.05;
+  }
+  h2.title + p { color: var(--text-muted); max-width: 760px; margin-bottom: 26px; }
+  p + p { margin-top: 14px; }
+  .muted { color: var(--text-muted); }
+  strong { color: #fff; }
+  .hl { color: var(--yellow); font-weight: 800; }
+
+  /* ===== SUMMARY CALLOUT ===== */
+  .callout {
+    background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%);
+    border: 1px solid rgba(255,203,5,0.3);
+    border-left: 4px solid var(--yellow);
+    border-radius: 14px;
+    padding: 26px 28px;
+    margin-top: 8px;
+  }
+  .callout .big { font-size: clamp(18px, 2.6vw, 24px); color: #fff; font-weight: 700; }
+  .callout .big .hl { font-size: 1.05em; }
+
+  /* ===== STAT CARDS ===== */
+  .stat-grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 8px;
+  }
+  .stat {
+    background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%);
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px 22px; position: relative; overflow: hidden;
+  }
+  .stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--yellow), var(--flame-2));
+  }
+  .stat .label { font-size: 13px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat .value { font-family: 'Anton', sans-serif; font-size: 40px; color: var(--yellow); margin-top: 6px; line-height: 1; }
+  .stat .value small { font-family: 'Manrope', sans-serif; font-size: 14px; color: var(--text-muted); font-weight: 600; display:block; margin-top:8px; letter-spacing: 0; text-transform: none; }
+  .stat .note { font-size: 13px; color: var(--text-muted); margin-top: 10px; }
+  .stat.voz .value { color: #ff8a5c; }
+  .stat.texto .value { color: #5fe39a; }
+
+  /* ===== TABLES ===== */
+  .table-scroll { overflow-x: auto; margin-top: 8px; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; min-width: 520px; }
+  thead th {
+    background: var(--navy-700); color: var(--yellow);
+    font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    text-align: left; padding: 14px 16px; font-weight: 800;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .col-texto { color: #5fe39a; font-weight: 700; }
+  .col-mixto { color: var(--yellow); font-weight: 800; }
+  .col-voz { color: #ff8a5c; font-weight: 700; }
+  .tbl-note { font-size: 13px; color: var(--text-muted); margin-top: 12px; font-style: italic; }
+
+  /* ===== SPONSOR TIERS ===== */
+  .tiers { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 8px; }
+  .tier {
+    background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%);
+    border: 1px solid var(--line); border-radius: 16px; padding: 26px 24px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .tier:hover { transform: translateY(-4px); border-color: rgba(255,203,5,0.4); }
+  .tier.featured { border-color: var(--yellow); box-shadow: 0 16px 50px rgba(0,0,0,0.45), 0 0 0 1px var(--yellow) inset; }
+  .tier .tname { font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; color: var(--text-muted); }
+  .tier.featured .tname { color: var(--yellow); }
+  .tier .ask { font-family: 'Anton', sans-serif; font-size: 44px; color: #fff; margin: 10px 0 4px; line-height: 1; }
+  .tier .cop { font-size: 14px; color: var(--text-muted); }
+  .tier .desc { font-size: 14px; color: var(--text-muted); margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .tier .badge { display:inline-block; background: var(--yellow); color: var(--navy-900); font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 10px; border-radius: 99px; margin-bottom: 12px; }
+
+  /* ===== LEVERS LIST ===== */
+  ol.levers, ul.plain { list-style: none; counter-reset: l; margin-top: 8px; }
+  ol.levers li, ul.plain li {
+    position: relative; padding: 14px 16px 14px 56px; margin-bottom: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+    border-radius: 12px; font-size: 15px;
+  }
+  ol.levers li { counter-increment: l; }
+  ol.levers li::before {
+    counter: l; content: counter(l);
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--flame-1), var(--flame-2));
+    color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 14px;
+  }
+  ul.plain li { padding-left: 40px; }
+  ul.plain li::before {
+    content: ''; position: absolute; left: 16px; top: 22px;
+    width: 10px; height: 10px; border-radius: 50%; background: var(--yellow);
+  }
+
+  /* ===== CLOSING ===== */
+  .closing {
+    text-align: center;
+    background:
+      radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,122,0,0.18) 0%, transparent 70%),
+      var(--navy-800);
+    padding: 64px 24px;
+  }
+  .closing h2 { font-family: 'Anton', sans-serif; text-transform: uppercase; font-size: clamp(28px, 5vw, 52px); color: #fff; }
+  .closing h2 .y { color: var(--yellow); }
+  .closing p { max-width: 720px; margin: 20px auto 0; color: var(--text-muted); font-size: 18px; }
+  .closing .slogan { margin-top: 28px; font-family: 'Anton', sans-serif; font-size: clamp(20px, 3.4vw, 30px); color: var(--yellow); letter-spacing: 0.02em; }
+
+  .footer { background: #03081e; padding: 28px 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  @media (max-width: 600px) {
+    section.block { padding: 42px 0; }
+    .hero { padding: 48px 20px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <span class="kicker">Defensores de la Patria · Presidente 2026</span>
+  <h1 class="display">Lina IA<br><span class="y">Propuesta de</span> <span class="b">Patrocinio</span></h1>
+  <p class="lead">
+    Lina es la asistente con inteligencia artificial de la campaña de Abelardo de la Espriella:
+    atiende a los colombianos las 24 horas, explica las propuestas del Plan País Milagro y orienta
+    sobre cómo votar el 31 de mayo. Cada conversación tiene un costo real; aquí lo estimamos según el número de usuarios.
+  </p>
+  <p class="sub">Ruge la Patria Milagro · 31 de mayo: tarjetón, Tigre y raya en primera no se falla</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== RESUMEN ===== -->
+  <section class="block">
+    <div class="eyebrow">Resumen ejecutivo</div>
+    <h2 class="title">La cifra clave</h2>
+    <div class="callout">
+      <p class="big">
+        Atender a la gente por <span class="hl">texto cuesta cerca de 7 veces menos</span> que por voz.
+        Con un patrocinio bien dimensionado, Lina puede conversar con <strong>cientos de miles de colombianos</strong>
+        sin frenar la campaña.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== BASE DE COSTOS ===== -->
+  <section class="block">
+    <div class="eyebrow">Transparencia</div>
+    <h2 class="title">Base de costos</h2>
+    <p>Todas las cifras usan la tarifa real de excedentes de la cuenta de ElevenLabs, no precios de lista.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Concepto</th><th>Valor</th><th>Origen</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Costo por crédito</td><td>US$0,000239 (US$0,24 por cada 1.000)</td><td>Facturación real: US$104 ÷ 434.707 créditos</td></tr>
+          <tr><td>Consumo de voz</td><td>~1.000 créditos por minuto</td><td>Tarifa documentada de ElevenLabs Agents</td></tr>
+          <tr><td>Conversación de voz promedio</td><td>3 minutos</td><td>Preguntas típicas: propuestas y cómo votar</td></tr>
+          <tr><td>Conversación de texto promedio</td><td>~10 mensajes</td><td>Modo chat de ElevenLabs (por mensaje)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== COSTO POR CONVERSACIÓN ===== -->
+  <section class="block">
+    <div class="eyebrow">Unidad básica</div>
+    <h2 class="title">Costo por conversación</h2>
+    <div class="stat-grid">
+      <div class="stat voz">
+        <div class="label">Voz · 3 minutos</div>
+        <div class="value">US$0,72<small>Voz del usuario + IA + síntesis de voz</small></div>
+      </div>
+      <div class="stat texto">
+        <div class="label">Solo texto · ~10 mensajes</div>
+        <div class="value">US$0,10<small>Solo el modelo de lenguaje, sin audio (rango US$0,05–0,15)</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">Mixto · 70% texto / 30% voz</div>
+        <div class="value">US$0,29<small>Mezcla recomendada para la campaña</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== POR QUÉ PATROCINIO ===== -->
+  <section class="block">
+    <div class="eyebrow">El reto</div>
+    <h2 class="title">Por qué se necesita patrocinio</h2>
+    <p>El plan actual (Pro, US$99 al mes, 500.000 créditos) solo alcanza, antes de cobrar excedentes, para aproximadamente:</p>
+    <ul class="plain">
+      <li><strong>~167 conversaciones de voz</strong> al mes, o</li>
+      <li><strong>~1.200 conversaciones de texto</strong> al mes.</li>
+    </ul>
+    <p class="muted">Una campaña presidencial supera ese límite <span class="hl">el primer día</span>. Por eso, prácticamente todo el tráfico de Lina se financia con excedentes, y ahí entra el patrocinio.</p>
+  </section>
+
+  <!-- ===== COSTO DIARIO ===== -->
+  <section class="block">
+    <div class="eyebrow">Escenarios de volumen</div>
+    <h2 class="title">Costo por día</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Conversaciones por día</th>
+            <th class="num">Solo texto</th>
+            <th class="num">Mixto 70/30</th>
+            <th class="num">Solo voz</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1.000</td><td class="num col-texto">US$100</td><td class="num col-mixto">US$286</td><td class="num col-voz">US$720</td></tr>
+          <tr><td>5.000</td><td class="num col-texto">US$500</td><td class="num col-mixto">US$1.430</td><td class="num col-voz">US$3.600</td></tr>
+          <tr><td>20.000</td><td class="num col-texto">US$2.000</td><td class="num col-mixto">US$5.720</td><td class="num col-voz">US$14.400</td></tr>
+          <tr><td>50.000</td><td class="num col-texto">US$5.000</td><td class="num col-mixto">US$14.300</td><td class="num col-voz">US$36.000</td></tr>
+          <tr><td>100.000</td><td class="num col-texto">US$10.000</td><td class="num col-mixto">US$28.600</td><td class="num col-voz">US$72.000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== RECTA FINAL ===== -->
+  <section class="block">
+    <div class="eyebrow">25 al 31 de mayo</div>
+    <h2 class="title">Recta final de 6 días</h2>
+    <p>Costo total acumulado durante los últimos seis días de campaña hacia la primera vuelta.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Conversaciones por día</th>
+            <th class="num">Solo texto (6 días)</th>
+            <th class="num">Mixto 70/30 (6 días)</th>
+            <th class="num">Solo voz (6 días)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1.000</td><td class="num col-texto">US$600</td><td class="num col-mixto">US$1.716</td><td class="num col-voz">US$4.320</td></tr>
+          <tr><td>5.000</td><td class="num col-texto">US$3.000</td><td class="num col-mixto">US$8.580</td><td class="num col-voz">US$21.600</td></tr>
+          <tr><td>20.000</td><td class="num col-texto">US$12.000</td><td class="num col-mixto">US$34.320</td><td class="num col-voz">US$86.400</td></tr>
+          <tr><td>50.000</td><td class="num col-texto">US$30.000</td><td class="num col-mixto">US$85.800</td><td class="num col-voz">US$216.000</td></tr>
+          <tr><td>100.000</td><td class="num col-texto">US$60.000</td><td class="num col-mixto">US$171.600</td><td class="num col-voz">US$432.000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== PATROCINIO RECOMENDADO ===== -->
+  <section class="block">
+    <div class="eyebrow">La inversión</div>
+    <h2 class="title">Monto de patrocinio recomendado</h2>
+    <p>Estimado con modalidad <strong>texto por defecto</strong> y un margen de seguridad del 20%.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tname">Conservador · 5.000/día</div>
+        <div class="ask">US$10.000</div>
+        <div class="cop">~COP $40.000.000</div>
+        <div class="desc">Costo estimado 6 días (mixto): ~US$8.580. Cubre una participación sólida con holgura.</div>
+      </div>
+      <div class="tier featured">
+        <span class="badge">Recomendado</span>
+        <div class="tname">Probable · 20.000/día</div>
+        <div class="ask">US$40–45 mil</div>
+        <div class="cop">~COP $160–180 millones</div>
+        <div class="desc">Costo estimado 6 días (mixto): ~US$34.320. Escenario realista para una campaña presidencial activa.</div>
+      </div>
+      <div class="tier">
+        <div class="tname">Viral · 50.000+/día</div>
+        <div class="ask">US$100.000</div>
+        <div class="cop">~COP $400.000.000</div>
+        <div class="desc">Costo estimado 6 días (mixto): ~US$85.800. Con tope de uso para proteger la inversión.</div>
+      </div>
+    </div>
+    <p class="tbl-note">Tasa aproximada de referencia: COP $4.000 por USD. Ajustar al cambio del día.</p>
+  </section>
+
+  <!-- ===== PALANCAS ===== -->
+  <section class="block">
+    <div class="eyebrow">Responsabilidad</div>
+    <h2 class="title">Cómo cuidamos la inversión del patrocinador</h2>
+    <ol class="levers">
+      <li><strong>Texto como modalidad predeterminada</strong> y la voz como opción: lleva la mezcla a 80–90% texto y reduce el costo entre 60% y 70%.</li>
+      <li><strong>Modelo de lenguaje rápido y económico</strong> (clase Gemini Flash o GPT-4o-mini): en texto la calidad de voz no influye.</li>
+      <li><strong>Tope máximo de créditos</strong> (configurado en 1.000.000) para que el gasto nunca se desborde.</li>
+      <li><strong>Voz por minuto con ElevenAgents</strong> (US$0,08–0,12 por minuto): cerca de la mitad de la tarifa actual.</li>
+      <li><strong>Límite de duración</strong> de las llamadas (por ejemplo, máximo 4 minutos) para acotar el costo por sesión.</li>
+    </ol>
+  </section>
+
+  <!-- ===== SALVEDADES ===== -->
+  <section class="block">
+    <div class="eyebrow">Notas</div>
+    <h2 class="title">Salvedades</h2>
+    <ul class="plain">
+      <li>El costo de texto depende sobre todo del modelo de lenguaje; se confirma en la consola de ElevenLabs ("Costos detallados") o midiendo una conversación de prueba.</li>
+      <li>Las cifras corresponden al esquema de créditos y excedentes del plan actual; cambiar de plan modifica los valores unitarios.</li>
+    </ul>
+  </section>
+
+</div>
+
+<!-- ===== CIERRE ===== -->
+<section class="closing">
+  <h2 class="display">Patrocinar a Lina es patrocinar<br><span class="y">la conversación con la gente</span></h2>
+  <p>
+    Una asistente que nunca se cansa, que habla con cada colombiano que toca la puerta digital del movimiento
+    y que multiplica el alcance del mensaje sin multiplicar el equipo: la gente que madruga, trabaja y cumple.
+  </p>
+  <div class="slogan">El 31 de mayo: Tigre y raya en primera no se falla.</div>
+</section>
+
+<footer class="footer">
+  © 2026 Movimiento Defensores de la Patria · Todos los derechos reservados<br>
+  defensoresdelapatria.app · Bogotá, Colombia · Documento de estimación de costos para patrocinadores
+</footer>
+
+</body>
+</html>
