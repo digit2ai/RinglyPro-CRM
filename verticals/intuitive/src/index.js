@@ -200,7 +200,7 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
       try {
         const wfBuilder = require('./services/workflow-presentation-builder');
         const enrichments = await wfBuilder.fetchAllEnrichments(projectId, models);
-        const wfChartData = wfBuilder.buildWorkflowChartData(enrichments);
+        const wfChartData = wfBuilder.buildWorkflowChartData(enrichments, project);
         chartData = { ...chartData, ...wfChartData };
       } catch (e) {
         console.error('[Intuitive Proposal] workflow chart data error:', e.message);
@@ -321,14 +321,14 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   .dots{gap:5px;justify-content:center}
   .dots .dot{width:8px;height:8px}
   .splash{gap:18px;padding:24px 16px}
-  .splash img{width:200px!important}
+  .splash img{width:min(360px,84vw)!important;margin-bottom:18px}
   .splash button{padding:16px 28px;font-size:16px;width:100%;max-width:340px}
 }
 </style>
 </head>
 <body>
 <div class="splash" id="splash">
-  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" style="width:280px;height:auto;margin-bottom:16px">
+  <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69e6c537c56ad279084e2bb6.png" alt="SurgicalMind AI" style="width:min(560px,82vw);height:auto;margin-bottom:24px">
   <h1>${hospitalName}</h1>
   <p>SurgicalMind AI &mdash; da Vinci System Assessment</p>
   <button onclick="startPresentation()">&#9654;&nbsp; Tap to Play Presentation</button>
@@ -430,6 +430,11 @@ function renderCharts(){
 
   // Use slide title to match charts instead of index (robust against slide reordering)
   var title = slides[cur] ? slides[cur].title : '';
+
+  // Slide 1 (Cover): holistic Hospital + Surgeon profile radar
+  if(title.includes('System Assessment')&&chartData.wfCoverSnapshot&&chartData.wfCoverSnapshot.length){
+    mk('wfCoverSnapshot',{type:'radar',data:{labels:chartData.wfCoverSnapshot.map(d=>d.axis),datasets:[{label:'Profile',data:chartData.wfCoverSnapshot.map(d=>d.value),borderColor:dv5,backgroundColor:'rgba(14,165,233,0.22)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:dv5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{r:{angleLines:{color:'#1e293b'},grid:{color:'#1e293b'},pointLabels:{color:'#cbd5e1',font:{size:11,weight:'bold'}},ticks:{display:false,backdropColor:'transparent'},suggestedMin:0,suggestedMax:100}}}})
+  }
 
   // Hospital Profile: Specialty Pie
   if(title.includes('Hospital Profile')&&chartData.specialtyPie&&chartData.specialtyPie.length){

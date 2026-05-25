@@ -75,18 +75,31 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
   // Each slide must return { title, html } to match the proposal template's expectation
 
   // ───── SLIDE 1: COVER ─────
+  const coverTrained = sp?.training_pipeline?.trained?.length || 0;
+  const coverPipeline = sp?.training_pipeline?.untrained?.length || 0;
+  const coverPullFwd = sp?.training_pipeline?.pull_forward?.length || 0;
+  const coverSurgeons = coverTrained + coverPipeline + coverPullFwd;
+  const coverCommitted = sc?.summary?.total_incremental_cases || sp?.training_pipeline?.total_committed_cases || 0;
   slides.push({
     title: `${hospitalName} — da Vinci System Assessment`,
     html: `
-      <div style="text-align:center;padding:20px 0">
-        <h3 style="font-size:32px;color:#f8fafc;margin-bottom:8px">${esc(hospitalName)}</h3>
-        <p style="color:#94a3b8;font-size:18px;margin-bottom:30px">Strategic Alignment Opportunity</p>
-        <div class="info-box" style="text-align:center;max-width:500px;margin:0 auto">
-          Prepared by <strong>SurgicalMind AI · Digit2AI</strong><br>
-          ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}<br>
-          <span style="font-size:10px;color:#64748b;margin-top:8px;display:inline-block">CONFIDENTIAL · For executive review</span>
-        </div>
-      </div>` + logic(`Every figure in this assessment is built from <strong>public, auditable data</strong> — CMS Hospital Compare, the Medicare cost report (HCRIS), CMS physician volume (MPUP), CMS inpatient stay data, the NPPES provider registry, and PubMed. Nothing is supplied by Intuitive and nothing is guessed. Each slide that follows shows both the result and the formula behind it, so any number can be traced back to its source.`),
+      <div style="text-align:center;padding:8px 0 4px">
+        <h3 style="font-size:30px;color:#f8fafc;margin-bottom:6px">${esc(hospitalName)}</h3>
+        <p style="color:#94a3b8;font-size:17px;margin-bottom:18px">Strategic Alignment Opportunity · Hospital &amp; Surgeon Profile at a Glance</p>
+      </div>
+      <div class="metrics-grid">
+        ${metric('Total Beds', fmt(project.bed_count), '#0ea5e9')}
+        ${metric('Annual Surgical Vol', fmt(project.annual_surgical_volume), '#0ea5e9')}
+        ${metric('Surgeons Tracked', fmt(coverSurgeons), '#8b5cf6')}
+        ${metric('Committed Cases/Yr', fmt(coverCommitted), '#10b981')}
+      </div>
+      <div class="info-box"><strong>Hospital &amp; Surgeon Profile Snapshot</strong> · relative strength across the six dimensions this assessment scores</div>
+      <div class="chart-box"><canvas id="wfCoverSnapshot" height="300"></canvas></div>
+      <div class="info-box" style="text-align:center">
+        Prepared by <strong>SurgicalMind AI · Digit2AI</strong> ·
+        ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} ·
+        <span style="color:#64748b">CONFIDENTIAL · For executive review</span>
+      </div>` + logic(`Every figure in this assessment is built from <strong>public, auditable data</strong> — CMS Hospital Compare, the Medicare cost report (HCRIS), CMS physician volume (MPUP), CMS inpatient stay data, the NPPES provider registry, and PubMed. Nothing is supplied by Intuitive and nothing is guessed. The snapshot above is a qualitative overview; each slide that follows shows both the result and the formula behind it, so any number can be traced back to its source.`),
   });
 
   // ───── SLIDE 2: HOSPITAL PROFILE ─────
@@ -422,9 +435,31 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
 
 // ─── Workflow Chart Data Builder (Chart.js configs per slide) ─────────
 
-function buildWorkflowChartData(enrichments) {
+function buildWorkflowChartData(enrichments, project = {}) {
   const { hp, sp, rp, mp, co, cb, sc, bp, pt, eb } = enrichments;
   const data = {};
+
+  // Slide 1 (Cover): holistic Hospital + Surgeon profile radar — a qualitative
+  // 0-100 fingerprint across the six dimensions this assessment scores.
+  {
+    const beds = parseInt(project.bed_count || 0);
+    const vol = parseInt(project.annual_surgical_volume || 0);
+    const robotic = parseInt(project.current_robotic_cases || 0);
+    const trained = sp?.training_pipeline?.trained?.length || 0;
+    const pipeline = sp?.training_pipeline?.untrained?.length || 0;
+    const pullFwd = sp?.training_pipeline?.pull_forward?.length || 0;
+    const surgeons = trained + pipeline + pullFwd;
+    const star = parseInt(project.extended_data?.cms?.overall_rating || 0);
+    const clamp = (n) => Math.max(8, Math.min(100, Math.round(n)));
+    data.wfCoverSnapshot = [
+      { axis: 'Surgical Scale', value: clamp(vol / 250) },                       // 20k vol -> 80
+      { axis: 'Robotic Program', value: clamp(vol ? (robotic / vol) * 100 / 0.30 : 0) }, // adoption vs 30% target
+      { axis: 'Surgeon Network', value: clamp(surgeons * 5) },                   // 19 -> 95
+      { axis: 'Training Pipeline', value: clamp(pipeline * 7) },                 // 13 -> 91
+      { axis: 'Bed Capacity', value: clamp(beds / 5) },                          // 419 -> 84
+      { axis: 'Clinical Quality', value: clamp(star * 20) },                     // 5 stars -> 100
+    ];
+  }
 
   // Slide 2: Hospital Profile — Strategic Impact bars + Peer Benchmark bars + Pubs line
   if (hp?.strategic_impact?.metrics) {
