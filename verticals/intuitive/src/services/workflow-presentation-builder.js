@@ -399,7 +399,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ` : ''}
       ${eb?.recommendation ? `
         <div class="info-box" style="background:rgba(30,64,175,0.1);border-color:rgba(30,64,175,0.3)">
-          <strong style="color:#93c5fd">Recommendation:</strong> Place ${eb.recommendation.total_systems} ${esc(eb.recommendation.primary_system)} systems in two phases
+          <strong style="color:#93c5fd">Recommendation:</strong> Place ${eb.recommendation.total_systems} ${esc(eb.recommendation.primary_system)} ${eb.recommendation.total_systems == 1 ? 'system' : 'systems in two phases'}, sized to the committed incremental volume
         </div>
       ` : ''}
       <div class="steps">
@@ -450,7 +450,7 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
   scripts.push(`Once the program is live, performance tracking compares planned outcomes against monthly actuals. ${pt?.plan_vs_actual?.has_actuals ? 'Variance alerts surface surgeons or KPIs needing intervention.' : 'When monthly actuals are ingested, the system will surface variance alerts, surgeon performance gaps, and recommended interventions automatically.'} The line on this chart is the planned trajectory from the business case — cumulative committed cases ramping year one through year five. After go-live, each surgeon's actual monthly cases are plotted against that line. Nothing here is re-modeled; the projection is fixed at approval, and everything after is actual volume versus the plan, refreshed each month.`);
 
   // Slide 11 — Executive Summary
-  scripts.push(`To close: we recommend ${eb?.recommendation ? 'placing ' + eb.recommendation.total_systems + ' ' + eb.recommendation.primary_system + ' systems in two phases' : 'a phased da Vinci placement strategy'}. And to be clear on these headline numbers: they're roll-ups of the surgeon commitments you just saw, and the recommended system count is sized to absorb that committed and projected volume — so the capital follows the demand, not the other way around. Next steps are: IT security review, surgeon survey distribution, a free trial period with duration open for discussion and zero risk on cost, security, or data, and capital placement aligned to the phase plan. Thank you for reviewing the ${hospitalName} da Vinci System Assessment. We look forward to partnering on your robotic surgery program.`);
+  scripts.push(`To close: we recommend ${eb?.recommendation ? 'placing ' + eb.recommendation.total_systems + ' ' + eb.recommendation.primary_system + ' ' + (eb.recommendation.total_systems == 1 ? 'system' : 'systems') + ', sized to the committed incremental volume' : 'a placement strategy sized to surgeon commitments'}. And to be clear on these headline numbers: they're roll-ups of the surgeon commitments you just saw, and the recommended system count is sized to absorb that committed and projected volume — so the capital follows the demand, not the other way around. Next steps are: IT security review, surgeon survey distribution, a free trial period with duration open for discussion and zero risk on cost, security, or data, and capital placement aligned to the phase plan. Thank you for reviewing the ${hospitalName} da Vinci System Assessment. We look forward to partnering on your robotic surgery program.`);
 
   return scripts;
 }
