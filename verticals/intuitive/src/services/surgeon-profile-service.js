@@ -291,15 +291,13 @@ async function buildSurgeonProfileEnrichment({ projectId, models }) {
   const allSurgeons = Object.values(mergedByKey);
 
   // Build the 4 enrichment blocks.
-  // Derive a core institution name for PubMed affiliation filtering (cuts common-
-  // surname collisions): "Mayo Clinic Florida" / "Mayo Clinic - Florida" -> "Mayo Clinic".
-  const affiliation = String(project.hospital_name || '')
-    .replace(/\s*[-–—]\s*/g, ' ')
-    .replace(/\b(florida|fl|jacksonville|n\.?e\.?|north|south|east|west|campus|hospital|medical center|health system)\b/gi, '')
-    .replace(/\s+/g, ' ').trim();
+  // Note: we rely on the FULL first name + surgery filter for PubMed
+  // disambiguation. A hard [Affiliation] requirement was tested but under-counts
+  // badly (PubMed only indexes affiliations on a subset of papers), so it's left
+  // off — the full-name query alone removes the common-surname inflation.
   const trainingPipeline = buildTrainingPipeline(surgeons); // commitments only for trained/untrained categorization
   const csrIntel = buildCsrIntel(surgeons);
-  const kolSignals = await buildKolSignals(allSurgeons, { models, affiliation });
+  const kolSignals = await buildKolSignals(allSurgeons, { models });
   const paymentLeaders = await buildPaymentLeaders(allSurgeons, models);
 
   return {
