@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
     surgeon_phone: { type: DataTypes.STRING(50), allowNull: true },
     surgeon_specialty: { type: DataTypes.STRING(100), allowNull: true },
     hospital_affiliation: { type: DataTypes.STRING(255), allowNull: true },
+    // Current (last 12 mo) da Vinci robotic case volume for this surgeon, from the
+    // Intuitive dV Account Report Card. Distinct from incremental commitments —
+    // this is existing activity, used for the Surgeon Profile roster + KOL ranking.
+    robotic_cases_last_yr: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
     // Per-procedure incremental volume commitments
     procedures: {
       type: DataTypes.JSONB, allowNull: false, defaultValue: [],
