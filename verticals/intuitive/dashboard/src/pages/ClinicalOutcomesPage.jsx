@@ -21,8 +21,12 @@ const COLOR_TOP_DECILE = '#10b981'
 const fmt = (n) => n != null ? (typeof n === 'number' ? n.toFixed(2) : n) : '--'
 
 function MetricRow({ label, value, unit, vsNational, source }) {
-  const better = vsNational != null && vsNational < 0
-  const worse = vsNational != null && vsNational > 0
+  // vsNational may be a numeric delta (negative = better) OR a string
+  // label ('better' / 'worse' / 'avg'). Handle both without crashing.
+  const isNum = typeof vsNational === 'number'
+  const str = typeof vsNational === 'string' ? vsNational.toLowerCase() : null
+  const better = (isNum && vsNational < 0) || str === 'better'
+  const worse = (isNum && vsNational > 0) || str === 'worse'
   return (
     <tr className="border-t border-slate-700">
       <td className="py-3 text-white">{label}</td>
@@ -30,7 +34,7 @@ function MetricRow({ label, value, unit, vsNational, source }) {
       <td className="py-3 text-right">
         {vsNational != null && (
           <span className={`text-xs font-bold ${better ? 'text-emerald-300' : worse ? 'text-red-300' : 'text-slate-400'}`}>
-            {vsNational > 0 ? '+' : ''}{vsNational.toFixed(2)}{unit || ''} vs national
+            {isNum ? `${vsNational > 0 ? '+' : ''}${vsNational.toFixed(2)}${unit || ''} vs national` : `${str === 'better' ? '↓ better' : str === 'worse' ? '↑ worse' : str} vs national`}
           </span>
         )}
       </td>
