@@ -234,9 +234,31 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
   slides.push({
     title: 'Step 6 · Clinical Benefit Overlay — THE MOAT',
     html: `
+      ${cb?.complication_burden ? `
+        <div style="background:linear-gradient(135deg,#450a0a 0%,#1a0606 100%);border:2px solid #ef4444;border-radius:12px;padding:22px;text-align:center;margin:14px 0">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#fca5a5;font-weight:700">The Cost of Staying Open — Daily Bleed</div>
+          <div style="font-size:46px;font-weight:bold;color:#ef4444;margin:8px 0">($${fmt(cb.complication_burden.daily_avoidable)}/day)</div>
+          <div style="font-size:13px;color:#fecaca">$${fmt(cb.complication_burden.total_annual_avoidable)}/yr in complications, readmissions &amp; infections da Vinci would prevent — across ${fmt(cb.complication_burden.total_open_cases)} open da Vinci-applicable cases</div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Open-Case Harm (CMS / peer-reviewed)</th><th style="text-align:right">Open Rate</th><th style="text-align:right">da Vinci</th><th style="text-align:right">Events/yr</th><th style="text-align:right">$ Lost/yr</th></tr></thead>
+          <tbody>
+            ${cb.complication_burden.rows.map(r => `
+              <tr>
+                <td>${esc(r.name)}</td>
+                <td style="text-align:right;color:#fca5a5">${r.open_rate_pct}%</td>
+                <td style="text-align:right;color:#86efac">${r.davinci_rate_pct}%</td>
+                <td style="text-align:right;color:#fcd34d">${fmt(r.avoidable_events_yr)}</td>
+                <td style="text-align:right;color:#fca5a5;font-weight:700">${fmtMoneyShort(r.annual_avoidable_cost)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : ''}
       ${cb?.bed_days_savings ? `
+        <div class="info-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3)"><strong style="color:#34d399">The da Vinci alternative.</strong> Converting open cases to robotic recovers that bleed — here is the bed-day cost avoidance alone:</div>
         <div style="background:linear-gradient(135deg,#064e3b 0%,#0c4a6e 100%);border:2px solid #10b981;border-radius:12px;padding:24px;text-align:center;margin:14px 0">
-          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#34d399;font-weight:700">Annual Cost Avoidance</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#34d399;font-weight:700">Annual Cost Avoidance (bed days)</div>
           <div style="font-size:48px;font-weight:bold;color:#10b981;margin:8px 0">${fmtMoneyShort(cb.bed_days_savings.total_dollar_savings)}</div>
           <div style="font-size:13px;color:#cbd5e1">@ $${cb.bed_days_savings.bed_day_cost_used.toLocaleString()}/day · ${cb.bed_days_savings.conversion_pct_assumed}% conversion · ${fmt(cb.bed_days_savings.total_bed_days_saved)} bed days saved</div>
         </div>
@@ -416,10 +438,10 @@ function buildWorkflowNarration(project, enrichments, hospitalName) {
   scripts.push(`${co?.outcomes_benchmark?.headline || 'Examining clinical outcomes against national benchmarks shows meaningful improvement targets.'} ${co?.los_variability?.opportunity_procedures?.length ? `The biggest length-of-stay opportunities are in ${co.los_variability.opportunity_procedures.slice(0, 3).join(', ')}.` : ''} These length-of-stay numbers are the average inpatient days per procedure by surgical approach — open, laparoscopic, and da Vinci — taken directly from Medicare inpatient data. The gap between approaches is the clinical headroom, and on the next slide we turn that headroom into dollars — but only on the open-to-da Vinci gap, and only for a conservative fifteen percent of your open cases. Laparoscopic cases are already minimally invasive, so they are never counted.`);
 
   // Slide 7 — Clinical Benefit Overlay
-  scripts.push(`This slide is the moat. Let me walk you through exactly how the cost avoidance is calculated, in four conservative steps. First, we start with your open cases only — laparoscopic cases are never counted, because they're already minimally invasive. Second, we convert just fifteen percent of those open cases to da Vinci. Third, each converted case saves the difference between open and da Vinci length of stay, in bed days. And fourth, we multiply those bed days by your state's cost per bed day. That produces an annual cost avoidance of ${cb?.bed_days_savings ? fmtMoneyShort(cb.bed_days_savings.total_dollar_savings) : 'a substantial figure'}, dollarized from peer-reviewed clinical literature applied to ${hospitalName}'s actual open case mix. ${cb?.investment_payback ? `Project IRR is ${cb.investment_payback.project_irr_pct} percent with payback in ${cb.investment_payback.estimated_payback_years || '5 plus'} years.` : ''} ${cb?.cost_of_waiting ? `Every month of delay costs ${fmtMoneyShort(cb.cost_of_waiting.monthly_cost_of_waiting)}.` : ''} AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. SurgicalMind AI can.`);
+  scripts.push(`This slide is the moat, and it opens with a hard number. ${cb?.complication_burden ? `Right now, ${hospitalName}'s open cases are bleeding ${fmtMoneyShort(cb.complication_burden.daily_avoidable)} every single day — that is ${fmtMoneyShort(cb.complication_burden.total_annual_avoidable)} a year — in surgical site infections, readmissions, and post-operative complications that da Vinci would prevent. That money leaves the building every day you stay open.` : 'Open-case complications, readmissions, and infections cost this hospital real money every day.'} Now the da Vinci alternative: converting those open cases to robotic recovers that bleed. On a deliberately conservative basis — open cases only, never laparoscopic, and just fifteen percent converting — the bed-day cost avoidance alone is ${cb?.bed_days_savings ? fmtMoneyShort(cb.bed_days_savings.total_dollar_savings) : 'substantial'}, dollarized from peer-reviewed literature against ${hospitalName}'s actual open case mix. ${cb?.investment_payback ? `Project IRR is ${cb.investment_payback.project_irr_pct} percent.` : ''} AcuityMD cannot produce this slide. Intuitive cannot produce this slide internally. SurgicalMind AI can.`);
 
   // Slide 8 — Surgeon Commitments
-  scripts.push(`${sc?.summary?.headline || 'We have captured surgeon-level volume commitments across three categories: open-to-MIS conversion, pull-forward capacity, and the training pipeline.'} Here's how each surgeon's cases are calculated. For an open-to-MIS conversion, we count fifteen percent of their open volume only — never laparoscopic. For a net-new commitment, a surgeon blocked by capacity or a new recruit, we count their committed cases at face value. Revenue is those cases times the procedure's reimbursement rate. Surgeons still in the training pipeline count as zero until they commit, so the total you see is a floor, not a stretch. This is what makes our business case defensible to your CFO: actual surgeon commitments, not theoretical conversions.`);
+  scripts.push(`This is the real driver of the business case — and it is not a blanket conversion percentage. It is actual surgeon commitments. ${sc?.summary ? `In this illustrative example, ${sc.summary.total_surgeons ? sc.summary.total_surgeons + ' ' : ''}named surgeons each commit additional da Vinci cases they would perform with unfettered robot access — together about ${fmt(sc.summary.total_incremental_cases)} incremental cases a year.` : 'Named surgeons each commit the additional da Vinci cases they would perform with unfettered robot access.'} The capital manager captures these after the surgeon survey, the tool sums the incremental volume, and the entire return — revenue, IRR, and the system recommendation itself — flows from that committed volume. The system count is sized to the commitments, never to a theoretical conversion of every open case. That is what makes it defensible to a CFO.`);
 
   // Slide 9 — Business Plan
   scripts.push(`The 5-year business plan delivers ${bp?.proforma?.headline || 'strong financial returns'}. ${bp?.two_phase_placement?.phase_1?.title || 'Phase 1 places the recommended systems at the main facility.'} ${bp?.two_phase_placement?.phase_2 ? bp.two_phase_placement.phase_2.title : ''} A word on how the returns ramp, because we don't assume full run-rate on day one. Conversion revenue builds at fifty, seventy-five, then one hundred percent as training and credentialing take hold. Volume from already-trained surgeons builds faster — eighty percent, then full. And volume from untrained surgeons sits behind a training year. Year zero carries the system's capital cost, and payback compares the cumulative return against it.`);

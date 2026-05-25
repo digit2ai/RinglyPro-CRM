@@ -243,6 +243,48 @@ function buildOutcomesDriverTable(project, bedDaysTable, totalCases = 0) {
   };
 }
 
+// ─── 5. COST OF OPEN COMPLICATIONS (Greg "gut punch") ─────────────────
+// Dollarizes what the hospital is losing RIGHT NOW from open-case complications
+// that da Vinci would avoid — complications, readmissions, infections, conversions
+// — across the FULL open da-Vinci-applicable volume, shown as an annual + DAILY
+// bleed. Sourced from CMS/AHRQ + peer-reviewed open-vs-robotic adverse-event deltas.
+function buildComplicationBurden(bedDaysTable, project) {
+  const totalOpenCases = bedDaysTable.procedures.reduce((s, p) => s + (p.open_cases || 0), 0);
+  // open rate, da Vinci rate, $ per event (peer-reviewed)
+  const drivers = [
+    { name: 'Surgical Site Infections', open_rate: 0.092, dv_rate: 0.028, cost_per_event: 28000, source: 'Marin JAMA Surg 2021; AHRQ HCUP' },
+    { name: '30-Day Readmissions',      open_rate: 0.162, dv_rate: 0.122, cost_per_event: 15700, source: 'Childers JAMA Surg 2019; HCUP' },
+    { name: 'Postop Complications',     open_rate: 0.205, dv_rate: 0.118, cost_per_event: 18500, source: 'Tam Ann Surg 2020; Cochrane' },
+    { name: 'Open-to-Lap Conversions',  open_rate: 0.080, dv_rate: 0.015, cost_per_event: 4200,  source: 'ECRI Institute 2023' },
+  ];
+  let totalAnnual = 0;
+  const rows = drivers.map(d => {
+    const delta = Math.max(0, d.open_rate - d.dv_rate);
+    const avoidableEvents = Math.round(totalOpenCases * delta);
+    const annual = avoidableEvents * d.cost_per_event;
+    totalAnnual += annual;
+    return {
+      name: d.name,
+      open_rate_pct: Math.round(d.open_rate * 1000) / 10,
+      davinci_rate_pct: Math.round(d.dv_rate * 1000) / 10,
+      avoidable_events_yr: avoidableEvents,
+      cost_per_event: d.cost_per_event,
+      annual_avoidable_cost: annual,
+      source: d.source,
+    };
+  });
+  const daily = Math.round(totalAnnual / 365);
+  return {
+    total_open_cases: totalOpenCases,
+    rows,
+    total_annual_avoidable: Math.round(totalAnnual),
+    daily_avoidable: daily,
+    weekly_avoidable: Math.round(totalAnnual / 52),
+    headline: `${(project.hospital_name || 'This hospital')}'s open cases are bleeding $${daily.toLocaleString()}/day in complications, readmissions, and infections that da Vinci would prevent.`,
+    methodology: 'For each adverse-event category: (open rate − da Vinci rate) × $ per event × full open da-Vinci-applicable volume. Rates from peer-reviewed open-vs-robotic literature; event costs from AHRQ HCUP / CMS. The daily figure is the run-rate the hospital pays by keeping these cases open.',
+  };
+}
+
 // ─── COMPOSITE BUILDER ────────────────────────────────────────────────
 
 async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct = 15 }) {
@@ -273,10 +315,12 @@ async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct
   const costOfWaiting = buildCostOfWaiting(bedDaysTable, businessPlan);
   const investmentPayback = buildInvestmentPayback(project, bedDaysTable, businessPlan, analysis);
   const outcomesDriver = buildOutcomesDriverTable(project, bedDaysTable, bedDaysTable.total_converted_cases);
+  const complicationBurden = buildComplicationBurden(bedDaysTable, project);
 
   return {
     project_id: projectId,
     hospital_name: project.hospital_name,
+    complication_burden: complicationBurden,
     bed_days_savings: bedDaysTable,
     cost_of_waiting: costOfWaiting,
     investment_payback: investmentPayback,
@@ -291,5 +335,6 @@ module.exports = {
   buildCostOfWaiting,
   buildInvestmentPayback,
   buildOutcomesDriverTable,
+  buildComplicationBurden,
   LOS_BY_PROCEDURE,
 };
