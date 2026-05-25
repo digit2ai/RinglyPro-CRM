@@ -104,7 +104,7 @@ async function buildKolSignals(surgeons = [], opts = {}) {
     let publicationCount = 0;
     try {
       const pub = await pubmed.fetchPublicationCount(s.surgeon_name || s.full_name, {
-        years: 5, models: opts.models,
+        years: 5, models: opts.models, affiliation: opts.affiliation,
       });
       publicationCount = pub?.count || 0;
     } catch (e) { /* skip */ }
@@ -290,10 +290,16 @@ async function buildSurgeonProfileEnrichment({ projectId, models }) {
   }
   const allSurgeons = Object.values(mergedByKey);
 
-  // Build the 4 enrichment blocks
+  // Build the 4 enrichment blocks.
+  // Derive a core institution name for PubMed affiliation filtering (cuts common-
+  // surname collisions): "Mayo Clinic Florida" / "Mayo Clinic - Florida" -> "Mayo Clinic".
+  const affiliation = String(project.hospital_name || '')
+    .replace(/\s*[-–—]\s*/g, ' ')
+    .replace(/\b(florida|fl|jacksonville|n\.?e\.?|north|south|east|west|campus|hospital|medical center|health system)\b/gi, '')
+    .replace(/\s+/g, ' ').trim();
   const trainingPipeline = buildTrainingPipeline(surgeons); // commitments only for trained/untrained categorization
   const csrIntel = buildCsrIntel(surgeons);
-  const kolSignals = await buildKolSignals(allSurgeons, { models });
+  const kolSignals = await buildKolSignals(allSurgeons, { models, affiliation });
   const paymentLeaders = await buildPaymentLeaders(allSurgeons, models);
 
   return {

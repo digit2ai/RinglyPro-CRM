@@ -21,10 +21,14 @@ function buildAuthorQuery(fullName) {
   const tokens = cleaned.split(/\s+/).filter(Boolean);
   if (tokens.length < 2) return null;
   const last = tokens[tokens.length - 1];
-  const firstInitial = (tokens[0] || '')[0];
+  const first = tokens[0] || '';
+  const firstInitial = first[0];
   if (!last || !firstInitial) return null;
-  // Disambiguate with surgery-related terms to reduce false positives from common names
-  return `${last} ${firstInitial}[Author]`;
+  // Prefer the FULL first name — PubMed indexes full author names (post-2002),
+  // so "Kim Gina[Author]" collides far less than the bare initial "Kim G[Author]"
+  // for common surnames. Fall back to the initial only when we have just one.
+  const authorName = first.length >= 3 ? `${last} ${first}` : `${last} ${firstInitial}`;
+  return `${authorName}[Author]`;
 }
 
 async function fetchPublicationCount(fullName, opts = {}) {
@@ -36,9 +40,13 @@ async function fetchPublicationCount(fullName, opts = {}) {
   const authorTerm = buildAuthorQuery(fullName);
   if (!authorTerm) return { count: 0, recent_pmids: [], skipped: true, reason: 'name_unparseable' };
 
-  // Filter to surgery/medicine to reduce false positives on common names
-  const term = `(${authorTerm}) AND (surgery[mh] OR surgical[tiab] OR robotic[tiab]) AND ("${minYear}"[PDAT] : "${maxYear}"[PDAT])`;
-  const cacheKey = `${authorTerm}|${minYear}-${maxYear}`;
+  // Filter to surgery/medicine to reduce false positives on common names.
+  // When an affiliation (the hospital) is supplied, require it too — this is the
+  // strongest disambiguator for common surnames (e.g., only Mayo Clinic "G Kim").
+  const aff = (opts.affiliation || '').trim();
+  let term = `(${authorTerm}) AND (surgery[mh] OR surgical[tiab] OR robotic[tiab]) AND ("${minYear}"[PDAT] : "${maxYear}"[PDAT])`;
+  if (aff) term += ` AND ("${aff}"[Affiliation])`;
+  const cacheKey = `${authorTerm}|${minYear}-${maxYear}|${aff || 'noaff'}`;
   const cached = await cache.get(opts.models, 'pubmed', cacheKey);
   if (cached) return cached;
 
