@@ -127,6 +127,46 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         <strong>The moat.</strong> This module shows the dollarized clinical improvement from converting open/lap volume to robotic. Reduced infection rates, reduced LOS, fewer complications — all multiplied by published cost-per-event. AcuityMD cannot produce this slide. <strong>Intuitive cannot produce this slide.</strong> We can.
       </div>
 
+      {/* ═══ GUT-PUNCH: Cost of Staying Open — Daily Bleed (Greg fix #2) ═══ */}
+      {enrichment?.complication_burden && (
+        <div className="bg-gradient-to-br from-red-950/60 to-slate-900/40 border-2 border-red-600/60 rounded-xl p-6 mb-6">
+          <div className="text-center mb-4">
+            <div className="text-[10px] uppercase tracking-widest text-red-300 font-bold mb-1">The Cost of Staying Open — Daily Bleed</div>
+            <div className="text-5xl font-bold text-red-400">(${fmt(enrichment.complication_burden.daily_avoidable)}/day)</div>
+            <div className="text-sm text-red-200 mt-2">${fmt(enrichment.complication_burden.total_annual_avoidable)}/yr in complications, readmissions &amp; infections da Vinci would prevent — across {fmt(enrichment.complication_burden.total_open_cases)} open da Vinci-applicable cases</div>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="text-left pb-2">Open-Case Harm (CMS / peer-reviewed)</th>
+                <th className="text-right pb-2">Open Rate</th>
+                <th className="text-right pb-2">da Vinci</th>
+                <th className="text-right pb-2">Events/yr</th>
+                <th className="text-right pb-2">$ Lost/yr</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enrichment.complication_burden.rows.map((r, i) => (
+                <tr key={i} className="border-t border-slate-700">
+                  <td className="py-2 text-white">{r.name}</td>
+                  <td className="py-2 text-right text-red-300">{r.open_rate_pct}%</td>
+                  <td className="py-2 text-right text-emerald-300">{r.davinci_rate_pct}%</td>
+                  <td className="py-2 text-right text-amber-300">{fmt(r.avoidable_events_yr)}</td>
+                  <td className="py-2 text-right text-red-300 font-bold">{fmtMoneyShort(r.annual_avoidable_cost)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="text-[10px] text-slate-500 italic mt-3">{enrichment.complication_burden.methodology}</div>
+        </div>
+      )}
+
+      {enrichment?.complication_burden && (
+        <div className="bg-emerald-900/15 border border-emerald-700/40 rounded-lg p-3 mb-4 text-sm text-emerald-200">
+          <strong>The da Vinci alternative.</strong> Converting open cases to robotic recovers that bleed — here is the bed-day cost avoidance alone:
+        </div>
+      )}
+
       {/* ═══ INFOGRAPHIC #4: Cost Avoidance Hero with 3-Panel (Deck 3 p8) ═══ */}
       {enrichment?.bed_days_savings && (
         <div className="bg-gradient-to-br from-emerald-900/40 via-cyan-900/30 to-slate-900/40 border-2 border-emerald-700/50 rounded-xl p-6 mb-6">
