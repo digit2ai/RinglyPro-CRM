@@ -14,7 +14,20 @@ const pubmed = require('./data-sources/pubmed');
 
 // ─── 1. TRAINING PIPELINE (Deck p11 format) ────────────────────────────
 
-function buildTrainingPipeline(surgeons = []) {
+// A surgeon is "CSR-captured" if we reached them through the CSR system — a survey,
+// a voice call, a CSR-tagged source, or any free-text CSR access note. Per the
+// 2026-05-26 review the Training Pipeline must ONLY show CSR-captured surgeons so it
+// is defensible as "N surgeons remaining with CSR capture access mode" — we cannot
+// admit knowing the roster from the account report card.
+function isCsrCaptured(s) {
+  const src = (s.source || '').toLowerCase();
+  return src === 'csr' || src === 'survey' || src === 'voice_call'
+    || !!(s.free_text_intel && String(s.free_text_intel).trim().length > 0);
+}
+
+function buildTrainingPipeline(allSurgeons = []) {
+  // CSR cross-reference: only surgeons confirmed through the CSR system are shown.
+  const surgeons = allSurgeons.filter(isCsrCaptured);
   const trained = [];
   const untrained = [];
   const needsProctoring = [];
@@ -42,7 +55,8 @@ function buildTrainingPipeline(surgeons = []) {
   }
 
   return {
-    headline: `${trained.length} trained · ${untrained.length} in pipeline · ${pullForward.length} pull-forward · ${needsProctoring.length} need proctoring`,
+    csr_captured_count: surgeons.length,
+    headline: `${surgeons.length} surgeons remaining with CSR capture access mode · ${trained.length} trained · ${untrained.length} in pipeline · ${pullForward.length} pull-forward · ${needsProctoring.length} need proctoring`,
     trained,
     untrained,
     pull_forward: pullForward,

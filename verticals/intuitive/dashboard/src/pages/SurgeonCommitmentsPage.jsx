@@ -122,25 +122,22 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
     setS({ ...s, surgeon_specialty: spec, procedures: newProcs })
   }
 
-  // Live total preview (mirrors backend math)
-  // For 'existing' = OPEN volume only × 15% conversion default (laparoscopic NEVER counted)
-  const previewCases = s.procedures.reduce((tot, p) => {
-    const monthly = parseFloat(p.incremental_cases_monthly || 0)
+  // Per-procedure annual cases (mirrors backend math):
+  //   CONVERTED ('existing')  = OPEN cases/mo × 12 × % converted (laparoscopic NEVER counted)
+  //   INCREMENTAL ('incremental') = direct annual figure the capital manager entered
+  const procAnnual = (p) => {
     if (p.patient_source === 'existing') {
+      const monthly = parseFloat(p.incremental_cases_monthly || 0)
       const pct = parseFloat(p.pct_converted_from_open || 15) / 100
-      return tot + Math.round(monthly * 12 * pct)
+      return Math.round(monthly * 12 * pct)
     }
-    return tot + Math.round(monthly * 12)
-  }, 0)
-  const previewRevenue = s.procedures.reduce((tot, p) => {
-    const monthly = parseFloat(p.incremental_cases_monthly || 0)
-    const rate = parseFloat(p.reimbursement_rate || 0)
-    if (p.patient_source === 'existing') {
-      const pct = parseFloat(p.pct_converted_from_open || 15) / 100
-      return tot + Math.round(monthly * 12 * pct * rate)
-    }
-    return tot + Math.round(monthly * 12 * rate)
-  }, 0)
+    return Math.round(parseFloat(p.incremental_cases_annual || 0))
+  }
+  // Live totals — Converted and Incremental kept SEPARATE (2026-05-26 review)
+  const convertedCases = s.procedures.filter(p => p.patient_source === 'existing').reduce((t, p) => t + procAnnual(p), 0)
+  const incrementalCases = s.procedures.filter(p => p.patient_source === 'incremental').reduce((t, p) => t + procAnnual(p), 0)
+  const previewCases = convertedCases + incrementalCases
+  const previewRevenue = s.procedures.reduce((tot, p) => tot + procAnnual(p) * parseFloat(p.reimbursement_rate || 0), 0)
 
   async function save() {
     if (saving) return
@@ -254,27 +251,26 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
       {/* Procedures editor */}
       <div className="mb-4">
         <label className="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Procedures</label>
-        <div className="text-[11px] text-amber-300 mb-2">
-          Note: "Existing" patient source converts <strong>OPEN volume only</strong> at the % set below. Laparoscopic cases are NEVER counted. Default 15%.
+        <div className="text-[11px] text-slate-400 mb-2 space-y-0.5">
+          <div><span className="text-red-300 font-semibold">CONVERTED</span> (Existing): system auto-calculates <strong>OPEN volume only</strong> × the % below. Laparoscopic is NEVER counted. Default 15%. Enter OPEN cases/mo.</div>
+          <div><span className="text-cyan-300 font-semibold">INCREMENTAL</span> (Net-new): capital manager enters the surgeon-committed <strong>net-new cases/yr</strong> directly (volume brought from another hospital). No conversion %.</div>
         </div>
         <table className="w-full text-sm border border-slate-700">
           <thead className="bg-slate-900 text-[10px] uppercase tracking-widest text-slate-500">
             <tr>
               <th className="text-left p-2">Procedure</th>
-              <th className="text-left p-2">Patient Source</th>
+              <th className="text-left p-2">Type</th>
               <th className="text-right p-2" title="Percent of OPEN volume only — laparoscopic excluded">% of OPEN</th>
-              <th className="text-right p-2">Cases/Mo</th>
+              <th className="text-right p-2">Open Cases/Mo</th>
+              <th className="text-right p-2" title="Surgeon-committed net-new cases per year (manual entry)">Net-new/Yr</th>
               <th className="text-right p-2">$/Case</th>
               <th className="text-right p-2">Annual</th>
             </tr>
           </thead>
           <tbody>
             {s.procedures.map((p, i) => {
-              const monthly = parseFloat(p.incremental_cases_monthly || 0)
-              const pct = parseFloat(p.pct_converted_from_open || 15) / 100
-              const annual = p.patient_source === 'existing'
-                ? Math.round(monthly * 12 * pct)
-                : Math.round(monthly * 12)
+              const isInc = p.patient_source === 'incremental'
+              const annual = procAnnual(p)
               return (
                 <tr key={i} className="border-t border-slate-700">
                   <td className="p-2 text-slate-200">{p.procedure_name}</td>
@@ -282,14 +278,14 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
                     <select
                       value={p.patient_source || 'existing'}
                       onChange={e => setProcedure(i, 'patient_source', e.target.value)}
-                      className="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs"
+                      className={`bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs ${isInc ? 'text-cyan-300' : 'text-red-300'}`}
                     >
-                      <option value="existing">Existing (convert open)</option>
+                      <option value="existing">Converted (open)</option>
                       <option value="incremental">Incremental (net-new)</option>
                     </select>
                   </td>
-                  <td className="p-2">
-                    {p.patient_source === 'existing' ? (
+                  <td className="p-2 text-right">
+                    {!isInc ? (
                       <input
                         type="number"
                         value={p.pct_converted_from_open ?? 15}
@@ -297,15 +293,28 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
                         title="% of OPEN volume only. Laparoscopic cases are NEVER counted."
                         className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
                       />
-                    ) : <span className="text-slate-500 text-xs">—</span>}
+                    ) : <span className="text-slate-600 text-xs">—</span>}
                   </td>
-                  <td className="p-2">
-                    <input
-                      type="number"
-                      value={p.incremental_cases_monthly || 0}
-                      onChange={e => setProcedure(i, 'incremental_cases_monthly', parseFloat(e.target.value) || 0)}
-                      className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
-                    />
+                  <td className="p-2 text-right">
+                    {!isInc ? (
+                      <input
+                        type="number"
+                        value={p.incremental_cases_monthly || 0}
+                        onChange={e => setProcedure(i, 'incremental_cases_monthly', parseFloat(e.target.value) || 0)}
+                        className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
+                      />
+                    ) : <span className="text-slate-600 text-xs">—</span>}
+                  </td>
+                  <td className="p-2 text-right">
+                    {isInc ? (
+                      <input
+                        type="number"
+                        value={p.incremental_cases_annual || 0}
+                        onChange={e => setProcedure(i, 'incremental_cases_annual', parseFloat(e.target.value) || 0)}
+                        title="Surgeon-committed net-new cases per year — manual entry by capital manager"
+                        className="w-20 bg-slate-900 border border-cyan-700 rounded px-2 py-1 text-cyan-200 text-xs text-right"
+                      />
+                    ) : <span className="text-slate-600 text-xs">—</span>}
                   </td>
                   <td className="p-2">
                     <input
@@ -340,6 +349,9 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
           <strong className="text-emerald-300">{fmt(previewCases)} cases/yr</strong>
           <span className="text-slate-500"> · </span>
           <strong className="text-cyan-300">{fmtMoney(previewRevenue)}</strong>
+          <div className="text-[11px] text-slate-500 mt-0.5">
+            <span className="text-red-300">{fmt(convertedCases)} converted</span> + <span className="text-cyan-300">{fmt(incrementalCases)} incremental (net-new)</span>
+          </div>
         </div>
         <div className="flex gap-2">
           <button onClick={onCancel} className="px-3 py-1.5 text-sm text-slate-400 hover:text-white">Cancel</button>
@@ -531,6 +543,15 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
 
   const grandTotalCases = surgeons.reduce((t, s) => t + (s.total_incremental_annual || 0), 0)
   const grandTotalRevenue = surgeons.reduce((t, s) => t + parseFloat(s.total_revenue_impact || 0), 0)
+  // Converted vs Incremental split across the whole roster (computed from stored procedures)
+  const splitTotals = surgeons.reduce((acc, s) => {
+    for (const p of (Array.isArray(s.procedures) ? s.procedures : [])) {
+      const a = parseInt(p.incremental_cases_annual || 0)
+      if (p.patient_source === 'incremental') acc.incremental += a
+      else acc.converted += a
+    }
+    return acc
+  }, { converted: 0, incremental: 0 })
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
@@ -560,10 +581,16 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         <div className="bg-slate-800/60 border border-slate-700 rounded p-4">
           <div className="text-3xl font-bold text-emerald-300">{fmt(grandTotalCases)}</div>
           <div className="text-xs text-slate-400">Total Cases/yr</div>
+          <div className="text-[11px] mt-1">
+            <span className="text-red-300">{fmt(splitTotals.converted)} converted</span>
+            <span className="text-slate-600"> · </span>
+            <span className="text-cyan-300">{fmt(splitTotals.incremental)} incremental</span>
+          </div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700 rounded p-4">
           <div className="text-3xl font-bold text-cyan-300">{fmtMoney(grandTotalRevenue)}</div>
           <div className="text-xs text-slate-400">Total Revenue Impact</div>
+          <div className="text-[11px] text-slate-500 mt-1">Converted = open×% · Incremental = net-new (manual)</div>
         </div>
       </div>
 

@@ -374,13 +374,17 @@ router.post('/:planId/surgeons', async (req, res) => {
       const monthly = parseFloat(p.incremental_cases_monthly || 0);
       let annual;
       if (p.patient_source === 'existing') {
-        // Apply conversion percentage to OPEN volume only (never laparoscopic)
-        // Default 15% per client meeting — open conversions are the only realistic source
+        // CONVERTED: apply conversion percentage to OPEN volume only (never laparoscopic).
+        // Default 15% per client meeting — open conversions are the only realistic source.
         const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
         annual = Math.round(monthly * 12 * pct);
       } else {
-        // Incremental (net-new) — use volume directly
-        annual = Math.round(monthly * 12);
+        // INCREMENTAL (net-new): capital-manager enters this DIRECTLY as an annual figure
+        // (surgeon commits N more cases/yr from another hospital). Honor the direct annual
+        // when present; fall back to monthly×12 for older records.
+        annual = p.incremental_cases_annual != null
+          ? Math.round(parseFloat(p.incremental_cases_annual))
+          : Math.round(monthly * 12);
       }
       p.incremental_cases_annual = annual;
       totalAnnual += annual;
@@ -458,12 +462,15 @@ router.patch('/:planId/surgeons/:id', async (req, res) => {
         const monthly = parseFloat(p.incremental_cases_monthly || 0);
         let annual;
         if (p.patient_source === 'existing') {
-          // OPEN volume only × pct (laparoscopic NEVER counted), default 15%
+          // CONVERTED: OPEN volume only × pct (laparoscopic NEVER counted), default 15%
           const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
           annual = Math.round(monthly * 12 * pct);
         } else {
-          // Net-new cases: explicit surgeon commitment (Dr. Jones commits 100 more/yr)
-          annual = Math.round(monthly * 12);
+          // INCREMENTAL (net-new): direct annual commitment entered by the capital manager
+          // (Dr. Jones commits 100 more/yr). Honor direct annual, fall back to monthly×12.
+          annual = p.incremental_cases_annual != null
+            ? Math.round(parseFloat(p.incremental_cases_annual))
+            : Math.round(monthly * 12);
         }
         p.incremental_cases_annual = annual;
         totalAnnual += annual;

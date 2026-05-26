@@ -105,7 +105,11 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
       const monthly = parseFloat(p.incremental_cases_monthly || 0);
       const rate = parseFloat(p.reimbursement_rate || 0);
       if (p.patient_source === 'incremental') {
-        const rev = monthly * 12 * rate;
+        // Net-new: honor the direct annual commitment when present (capital-manager entry).
+        const annual = p.incremental_cases_annual != null
+          ? parseFloat(p.incremental_cases_annual)
+          : monthly * 12;
+        const rev = annual * rate;
         if (trained) revenueFromNetNewTrained += rev;
         else revenueFromNetNewUntrained += rev;
       } else {
