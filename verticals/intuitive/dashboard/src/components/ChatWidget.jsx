@@ -15,7 +15,7 @@ const TOOL_LABELS = {
   send_surgeon_survey: 'Preparing survey',
 }
 
-async function streamChat({ question, conversationId, projectId, confirmedAction, onEvent, onError }) {
+async function streamChat({ question, conversationId, projectId, confirmedAction, pageContext, onEvent, onError }) {
   const token = localStorage.getItem('intuitive_token')
   const res = await fetch('/intuitive/api/v1/chat', {
     method: 'POST',
@@ -23,7 +23,7 @@ async function streamChat({ question, conversationId, projectId, confirmedAction
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
     },
-    body: JSON.stringify({ question, conversation_id: conversationId, project_id: projectId, confirmed_action: confirmedAction }),
+    body: JSON.stringify({ question, conversation_id: conversationId, project_id: projectId, confirmed_action: confirmedAction, page_context: pageContext }),
   })
   if (!res.ok) {
     onError(new Error(`HTTP ${res.status}`))
@@ -48,7 +48,7 @@ async function streamChat({ question, conversationId, projectId, confirmedAction
   }
 }
 
-export default function ChatWidget({ currentProjectId }) {
+export default function ChatWidget({ currentProjectId, currentPage }) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -68,12 +68,17 @@ export default function ChatWidget({ currentProjectId }) {
     let toolCalls = []
     setMessages(m => [...m, { role: 'assistant', content: '', toolCalls: [] }])
 
+    const pageContext = (currentPage && currentProjectId)
+      ? { slug: currentPage.slug, label: currentPage.label, projectId: currentProjectId }
+      : null
+
     try {
       await streamChat({
         question,
         conversationId,
         projectId: currentProjectId,
         confirmedAction,
+        pageContext,
         onEvent: (evt) => {
           if (evt.type === 'text') {
             assistantText += evt.content
@@ -145,6 +150,20 @@ export default function ChatWidget({ currentProjectId }) {
         </div>
         <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white text-lg">&times;</button>
       </div>
+
+      {currentPage && currentProjectId && (
+        <div className="border-b border-slate-800 px-3 py-2 bg-violet-950/30">
+          <button
+            onClick={() => { if (!busy) send(`Explain everything on this ${currentPage.label} page in plain language — walk me through each metric, the real numbers, and what they mean for the Intuitive da Vinci conversation.`) }}
+            disabled={busy}
+            className="w-full text-left text-xs text-violet-200 hover:text-white disabled:opacity-50 flex items-center gap-2"
+            title={`Explain the ${currentPage.label} page`}
+          >
+            <span className="text-violet-400">&#9889;</span>
+            <span>Explain this page <span className="text-violet-400/70">({currentPage.label})</span></span>
+          </button>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {messages.length === 0 && (

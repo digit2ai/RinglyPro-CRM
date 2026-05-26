@@ -243,7 +243,65 @@ NEVER fabricate surgeon names or numbers. If a search returns 0 results, say so.
 The targeting tools return target_score (0-100) and tier (A/B/C/D). Tier A = "Convert Now"
 based on Medicare robotic volume + Intuitive payment history + recency. Always show these.
 The enrich_surgeon tool returns kol_score + kol_badge — surface these when the user asks
-about thought leaders, researchers, or academic standing.`;
+about thought leaders, researchers, or academic standing.
+
+PAGE-AWARE EXPLANATIONS (CRITICAL):
+The rep may be viewing a specific workflow page when they chat. When a "CURRENT PAGE CONTEXT"
+block is present below, it contains the EXACT data rendered on the page the rep is looking at.
+When the rep asks to "explain this page", "what am I looking at", "walk me through this",
+"explain everything here", or any question that clearly refers to the page in front of them:
+  - Ground your answer ENTIRELY in the CURRENT PAGE CONTEXT data — those are the real
+    on-screen numbers. Do NOT call tools or invent figures; the data is already provided.
+  - Walk through each section/metric of that page in plain business language, quoting the
+    actual numbers, and explain WHY each one matters for the Intuitive da Vinci conversation
+    (capacity, utilization, conversion opportunity, clinical/financial impact, payback).
+  - Use short markdown sections or bullets with the real values. End with the single most
+    important takeaway a rep should say out loud in the room.
+  - If the page context is missing a value, say "not shown on this page" rather than guessing.`;
+
+// ─── Page registry: maps a dashboard route slug to the same enrichment the page renders ──
+// Lets "Ask SurgicalMind" explain the exact page the rep is looking at, grounded in real data.
+const PAGE_REGISTRY = {
+  'hospital-profile': { label: 'Hospital Profile', load: (id, models) => require('../services/hospital-profile-service').buildHospitalProfileEnrichment({ projectId: id, models }) },
+  'surgeon-profile':  { label: 'Surgeon Profile',  load: (id, models) => require('../services/surgeon-profile-service').buildSurgeonProfileEnrichment({ projectId: id, models }) },
+  'robotics-program': { label: 'Robotics Program',  load: (id, models) => require('../services/robotics-program-service').buildRoboticsProgramEnrichment({ projectId: id, models }) },
+  'market-profile':   { label: 'Market Profile',    load: (id, models) => require('../services/market-profile-service').buildMarketProfileEnrichment({ projectId: id, models }) },
+  'clinical-outcomes':{ label: 'Clinical Outcomes', load: (id, models) => require('../services/clinical-outcomes-service').buildClinicalOutcomesEnrichment({ projectId: id, models }) },
+  'clinical-overlay': { label: 'Clinical Benefit Overlay', load: (id, models) => require('../services/clinical-overlay-service').buildClinicalOverlayEnrichment({ projectId: id, models, conversionPct: 15 }) },
+  'surgeon-commitments': { label: 'Surgeon Commitments', load: (id, models) => require('../services/surgeon-commitments-service').buildSurgeonCommitmentsEnrichment({ projectId: id, models }) },
+  'commitments':      { label: 'Surgeon Commitments', load: (id, models) => require('../services/surgeon-commitments-service').buildSurgeonCommitmentsEnrichment({ projectId: id, models }) },
+  'business-plan':    { label: 'Business Plan',     load: (id, models) => require('../services/business-plan-service').buildBusinessPlanEnrichment({ projectId: id, models }) },
+  'executive':        { label: 'Executive Brief',   load: (id, models) => require('../services/executive-brief-service').buildExecutiveBrief({ projectId: id, models }) },
+};
+
+// Build the "CURRENT PAGE CONTEXT" system block from the page the rep is viewing.
+// Returns null if no recognized page / no project / load fails — chat still works normally.
+async function buildPageContextBlock(pageContext, models) {
+  if (!pageContext || !pageContext.slug) return null;
+  const entry = PAGE_REGISTRY[pageContext.slug];
+  const projectId = parseInt(pageContext.projectId, 10);
+  if (!entry || !projectId) return null;
+  try {
+    let hospitalName = '';
+    try {
+      const project = await models.IntuitiveProject.findByPk(projectId, { attributes: ['hospital_name'] });
+      hospitalName = project?.hospital_name || '';
+    } catch (e) {}
+    const data = await entry.load(projectId, models);
+    let json = JSON.stringify(data);
+    const CAP = 14000; // keep the injected block bounded
+    if (json.length > CAP) json = json.slice(0, CAP) + ' …[truncated]';
+    return `CURRENT PAGE CONTEXT — the rep is viewing the "${entry.label}" page`
+      + (hospitalName ? ` for ${hospitalName}` : '')
+      + ` (project ${projectId}).\n`
+      + `This is the EXACT data rendered on that page. Use it verbatim when explaining the page:\n`
+      + json;
+  } catch (err) {
+    console.error('buildPageContextBlock error:', err.message);
+    return `CURRENT PAGE CONTEXT — the rep is viewing the "${entry.label}" page (project ${projectId}). `
+      + `Page data could not be loaded; explain what this page generally covers and offer to pull specifics with a tool.`;
+  }
+}
 
 // ─── Tool definitions (cached) ────────────────────────────────
 const TOOLS = [
@@ -1322,7 +1380,7 @@ function sanitizeForReplay(rawMessages) {
 // ─── Main streaming endpoint ──────────────────────────────────
 router.post('/', requireAuth, async (req, res) => {
   const userId = req.user.id || req.user.user_id;
-  const { question, conversation_id, project_id, confirmed_action } = req.body || {};
+  const { question, conversation_id, project_id, confirmed_action, page_context } = req.body || {};
   if (!question && !confirmed_action) {
     return res.status(400).json({ error: 'question or confirmed_action required' });
   }
@@ -1383,6 +1441,14 @@ router.post('/', requireAuth, async (req, res) => {
     const userMessage = { role: 'user', content: question };
     const messages = [...history, userMessage];
 
+    // Page-aware context: if the rep is on a recognized workflow page, inject the EXACT
+    // enrichment that page renders so "explain this page" answers from real on-screen data.
+    const pageContextText = await buildPageContextBlock(page_context, models);
+    const systemBlocks = [
+      { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+    ];
+    if (pageContextText) systemBlocks.push({ type: 'text', text: pageContextText });
+
     const anthropic = getAnthropic();
     let stopReason = null;
     let assistantTurnContent = [];
@@ -1393,9 +1459,7 @@ router.post('/', requireAuth, async (req, res) => {
       const response = await anthropic.messages.create({
         model: SONNET_MODEL,
         max_tokens: 4096,
-        system: [
-          { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-        ],
+        system: systemBlocks,
         tools: TOOLS.map((t, i) => i === TOOLS.length - 1 ? { ...t, cache_control: { type: 'ephemeral' } } : t),
         messages,
       });

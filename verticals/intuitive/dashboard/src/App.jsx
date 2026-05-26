@@ -314,6 +314,21 @@ const STEP_DOCS = {
   },
 }
 
+// Workflow pages the "Ask SurgicalMind" widget can explain in full (slug → label).
+// Must match the backend PAGE_REGISTRY in src/routes/chat.js.
+const EXPLAINABLE_PAGES = {
+  'hospital-profile': 'Hospital Profile',
+  'surgeon-profile': 'Surgeon Profile',
+  'robotics-program': 'Robotics Program',
+  'market-profile': 'Market Profile',
+  'clinical-outcomes': 'Clinical Outcomes',
+  'clinical-overlay': 'Clinical Benefit Overlay',
+  'commitments': 'Surgeon Commitments',
+  'surgeon-commitments': 'Surgeon Commitments',
+  'business-plan': 'Business Plan',
+  'executive': 'Executive Brief',
+}
+
 export default function App() {
   const location = useLocation()
   const [currentProject, setCurrentProject] = useState(null)
@@ -682,7 +697,13 @@ export default function App() {
           <Route path="/ask" element={<AskPage />} />
           <Route path="/surgeon-targeting" element={<SurgeonTargetingPage />} />
         </Routes>
-        <ChatWidget currentProjectId={currentProject} />
+        <ChatWidget
+          currentProjectId={currentProject}
+          currentPage={(() => {
+            const slug = (location.pathname.split('/')[1] || '').toLowerCase()
+            return EXPLAINABLE_PAGES[slug] ? { slug, label: EXPLAINABLE_PAGES[slug] } : null
+          })()}
+        />
         </ErrorBoundary>
       </main>
     </div>
