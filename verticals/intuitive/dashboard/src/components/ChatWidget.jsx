@@ -54,11 +54,40 @@ export default function ChatWidget({ currentProjectId, currentPage }) {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [conversationId, setConversationId] = useState(null)
+  const [size, setSize] = useState(() => {
+    try { const s = JSON.parse(localStorage.getItem('intuitive_chat_size') || ''); if (s?.w && s?.h) return s } catch (e) {}
+    return { w: 400, h: 600 }
+  })
   const scrollRef = useRef(null)
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages, busy])
+
+  // Drag-to-resize from the top/left edges + top-left corner (widget is anchored bottom-right).
+  function startResize(e, dirs) {
+    e.preventDefault(); e.stopPropagation()
+    const startX = e.clientX, startY = e.clientY, startW = size.w, startH = size.h
+    const onMove = (ev) => {
+      const maxW = Math.min(window.innerWidth - 32, 1200)
+      const maxH = window.innerHeight - 32
+      let w = startW, h = startH
+      if (dirs.includes('left')) w = startW + (startX - ev.clientX)
+      if (dirs.includes('top')) h = startH + (startY - ev.clientY)
+      w = Math.max(320, Math.min(maxW, w))
+      h = Math.max(360, Math.min(maxH, h))
+      setSize({ w, h })
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.userSelect = ''
+      setSize((s) => { try { localStorage.setItem('intuitive_chat_size', JSON.stringify(s)) } catch (e) {}; return s })
+    }
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   async function send(question, confirmedAction) {
     if (!question && !confirmedAction) return
@@ -142,7 +171,17 @@ export default function ChatWidget({ currentProjectId, currentPage }) {
   }
 
   return (
-    <div className="no-print fixed bottom-6 right-6 z-50 w-[400px] h-[600px] bg-slate-950 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div
+      className="no-print fixed bottom-6 right-6 z-50 bg-slate-950 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+      style={{ width: size.w, height: size.h, maxWidth: 'calc(100vw - 2rem)', maxHeight: 'calc(100vh - 2rem)' }}
+    >
+      {/* Resize handles — top edge, left edge, top-left corner (window is pinned bottom-right) */}
+      <div onMouseDown={(e) => startResize(e, ['top'])} className="absolute top-0 left-4 right-10 h-1.5 cursor-ns-resize z-30" title="Drag to resize" />
+      <div onMouseDown={(e) => startResize(e, ['left'])} className="absolute top-4 left-0 bottom-0 w-1.5 cursor-ew-resize z-30" title="Drag to resize" />
+      <div onMouseDown={(e) => startResize(e, ['top', 'left'])} className="absolute top-0 left-0 w-5 h-5 cursor-nwse-resize z-30 group" title="Drag to resize">
+        <span className="absolute top-1 left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-violet-400/40 group-hover:border-violet-300 rounded-tl-sm" />
+      </div>
+
       <div className="bg-gradient-to-r from-violet-900/40 to-indigo-900/40 border-b border-slate-700 px-4 py-3 flex items-center justify-between">
         <div>
           <div className="text-sm font-bold text-white">Ask SurgicalMind</div>
