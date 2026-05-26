@@ -49,20 +49,32 @@ function losDeltaForProcedure(name) {
 // ─── 1. MASTER SURGEON TABLE (Deck 1 Slide 11) ────────────────────────
 
 function buildMasterSurgeonTable(surgeons) {
-  // Flatten all surgeons across all 3 categories into a single deck-formatted table
-  return surgeons.map(s => ({
-    id: s.id,
-    surgeon_name: s.surgeon_name,
-    specialty: s.surgeon_specialty || s.specialty || '—',
-    trained: s.trained !== false,
-    training_needs: s.training_needs || '',
-    proctoring: !!s.proctoring_needed,
-    incremental_cases_yr: parseInt(s.total_incremental_annual || 0),
-    revenue_impact: parseFloat(s.total_revenue_impact || 0),
-    commitment_category: s.commitment_category || 'open_to_mis',
-    facility: s.hospital_affiliation || '',
-    free_text_intel: s.free_text_intel || '',
-  })).sort((a, b) => b.incremental_cases_yr - a.incremental_cases_yr);
+  // Flatten all surgeons across all 3 categories into a single deck-formatted table.
+  // Per 2026-05-26 review: split each surgeon's committed volume into CONVERTED
+  // (existing OPEN × %) vs INCREMENTAL (net-new) so the table shows both cleanly.
+  return surgeons.map(s => {
+    const procs = Array.isArray(s.procedures) ? s.procedures : [];
+    let converted = 0, incremental = 0;
+    for (const p of procs) {
+      const a = parseInt(p.incremental_cases_annual || 0);
+      if (p.patient_source === 'incremental') incremental += a;
+      else converted += a;
+    }
+    return {
+      id: s.id,
+      surgeon_name: s.surgeon_name,
+      specialty: s.surgeon_specialty || s.specialty || '—',
+      trained: s.trained !== false,
+      training_needs: s.training_needs || '',
+      converted_cases_yr: converted,
+      incremental_cases_yr: incremental,
+      total_cases_yr: parseInt(s.total_incremental_annual || 0),
+      revenue_impact: parseFloat(s.total_revenue_impact || 0),
+      commitment_category: s.commitment_category || 'open_to_mis',
+      facility: s.hospital_affiliation || '',
+      free_text_intel: s.free_text_intel || '',
+    };
+  }).sort((a, b) => b.total_cases_yr - a.total_cases_yr);
 }
 
 // ─── 2. PER-SURGEON BED DAYS CALCULATOR (Deck 3 Slide 9) ──────────────

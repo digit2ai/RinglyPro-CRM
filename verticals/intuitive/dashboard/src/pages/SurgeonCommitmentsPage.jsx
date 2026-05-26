@@ -741,7 +741,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <h3 className="font-bold text-white mb-1">Master Surgeon Table — All Categories</h3>
           <p className="text-xs text-slate-500 mb-4">
-            Deck 1 Slide 11 format · All {enrichment.master_table.length} surgeons consolidated · Sorted by incremental cases/yr
+            Deck 1 Slide 11 format · All {enrichment.master_table.length} surgeons consolidated · Converted (open×%) and Incremental (net-new) shown separately
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -751,7 +751,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
                   <th className="text-left pb-2">Specialty</th>
                   <th className="text-center pb-2">Trained</th>
                   <th className="text-left pb-2">Training Needs</th>
-                  <th className="text-center pb-2">Proctoring</th>
+                  <th className="text-right pb-2">Conversion Cases/Yr</th>
                   <th className="text-right pb-2">Incremental Cases/Yr</th>
                   <th className="text-left pb-2">Category</th>
                 </tr>
@@ -767,12 +767,8 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
                       </span>
                     </td>
                     <td className="py-2 text-slate-400 text-xs">{s.training_needs || '—'}</td>
-                    <td className="py-2 text-center">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${s.proctoring ? 'bg-blue-900/50 text-blue-300' : 'bg-slate-700 text-slate-500'}`}>
-                        {s.proctoring ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                    <td className="py-2 text-right text-emerald-300 font-bold">{s.incremental_cases_yr.toLocaleString()}</td>
+                    <td className="py-2 text-right text-red-300 font-bold">{(s.converted_cases_yr || 0).toLocaleString()}</td>
+                    <td className="py-2 text-right text-cyan-300 font-bold">{(s.incremental_cases_yr || 0).toLocaleString()}</td>
                     <td className="py-2">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: categoryColor(s.commitment_category) + '40', color: categoryColor(s.commitment_category) }}>
                         {categoryLabel(s.commitment_category)}
@@ -782,8 +778,9 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
                 ))}
                 <tr className="border-t-2 border-slate-500 font-bold">
                   <td className="py-2 text-white">Total</td>
-                  <td colSpan="4"></td>
-                  <td className="py-2 text-right text-emerald-300">{enrichment.master_table.reduce((s, r) => s + r.incremental_cases_yr, 0).toLocaleString()}</td>
+                  <td colSpan="3"></td>
+                  <td className="py-2 text-right text-red-300">{enrichment.master_table.reduce((s, r) => s + (r.converted_cases_yr || 0), 0).toLocaleString()}</td>
+                  <td className="py-2 text-right text-cyan-300">{enrichment.master_table.reduce((s, r) => s + (r.incremental_cases_yr || 0), 0).toLocaleString()}</td>
                   <td></td>
                 </tr>
               </tbody>
