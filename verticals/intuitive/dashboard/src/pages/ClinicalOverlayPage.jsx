@@ -539,22 +539,48 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         </>
       )}
 
-      {/* ── Methodology note: Conversion vs. Incremental (annotation to explain the page) ── */}
-      <PageNotes title="Conversion vs. Incremental">
-        <p className="mb-2">
-          <span className="text-emerald-300 font-semibold">Conversion</span> = an existing <strong className="text-white">OPEN</strong> surgery switched to da Vinci. Same patient, same case — only the technique changes. It does <span className="text-red-300 font-semibold">not add new volume</span>; its value is <span className="text-emerald-300 font-semibold">clinical cost avoidance</span> — shorter stays (bed-days saved) and fewer complications, readmissions and infections. That is money the hospital <strong className="text-white">stops losing</strong>, not new income.
+      {/* ── Methodology note: Clinical Benefit Overlay (full demo walkthrough) ── */}
+      <PageNotes title="Clinical Benefit Overlay (the demo flagship)">
+        <p className="mb-3">
+          This is the <strong className="text-white">flagship slide</strong>: it turns da Vinci&rsquo;s clinical advantage into <strong className="text-white">CFO-grade dollars</strong>, with every figure traceable to public federal data or peer-reviewed literature. Here is what each block means and where its number comes from — top to bottom.
         </p>
-        <p className="mb-2 text-white font-semibold">"Incremental" is used in two different senses across this tool — do not mix them:</p>
-        <ul className="list-disc pl-5 mb-2 space-y-1">
+
+        <p className="mb-1 text-white font-semibold">What you are looking at, section by section:</p>
+        <ol className="list-decimal pl-5 mb-3 space-y-2">
           <li>
-            <span className="text-amber-300 font-semibold">Net-new incremental (revenue):</span> cases surgeons <strong className="text-white">commit to bring</strong> — e.g., recruited from another hospital or grown practice. New volume → <strong className="text-white">new revenue</strong>. This is what feeds the <span className="text-amber-300 font-semibold">Investment Payback (IRR / NPV / Payback)</span> via the Business Plan.
+            <span className="text-red-300 font-semibold">The daily bleed (Complication Burden).</span> What this hospital&rsquo;s <strong className="text-white">open</strong> cases cost <em>today</em> in avoidable surgical-site infections, 30-day readmissions and post-op complications. Formula: (open rate &minus; da Vinci rate) &times; cost per event &times; the hospital&rsquo;s open da Vinci-applicable volume. Rates from peer-reviewed studies (JAMA Surgery, Cochrane, ECRI); event costs from AHRQ HCUP / CMS. &rarr; <span className="text-emerald-300 font-semibold">cost avoidance</span>.
           </li>
           <li>
-            <span className="text-cyan-300 font-semibold">Conversion "incremental" (savings):</span> on this page, the "incremental opportunity" = <strong className="text-white">{conversionPct}% of the eligible OPEN da Vinci-applicable cases</strong> converting from open to robotic. No new volume → <span className="text-emerald-300 font-semibold">cost avoidance only</span>. Laparoscopic/robotic cases and out-of-scope procedures never count.
+            <span className="text-cyan-300 font-semibold">The Conversion Formula.</span> The single rule every number flows from: the opportunity = <strong className="text-white">{conversionPct}% of the eligible OPEN da Vinci-applicable cases</strong>. Laparoscopic cases, robotic cases, and any procedure outside the da Vinci-applicable list <span className="text-red-300 font-semibold">never count</span>. (This is a <span className="text-emerald-300 font-semibold">conversion</span> number — a savings opportunity, not new revenue.)
+          </li>
+          <li>
+            <span className="text-emerald-300 font-semibold">Bed-Days Cost Avoidance.</span> Converting an open case to da Vinci shortens the hospital stay. Per procedure: open cases &times; {conversionPct}% &times; (open length-of-stay &minus; da Vinci length-of-stay) = bed-days saved, dollarized at this state&rsquo;s bed-day cost (kff.org). Length-of-stay deltas from published literature. &rarr; <span className="text-emerald-300 font-semibold">cost avoidance</span>.
+          </li>
+          <li>
+            <span className="text-white font-semibold">Cost of Waiting.</span> The total annual opportunity shown per month / week / day — the urgency number. It is the <em>only</em> place clinical <span className="text-emerald-300 font-semibold">savings</span> and <span className="text-amber-300 font-semibold">incremental revenue</span> are shown together, to size what each month of delay forfeits. (They are different dollars; summed here only as a total-opportunity headline.)
+          </li>
+          <li>
+            <span className="text-amber-300 font-semibold">Investment Payback (IRR / NPV / Payback).</span> The <strong className="text-white">only revenue-side block.</strong> A true 5-year return on the capital purchase, driven by the contribution margin on <span className="text-amber-300 font-semibold">incremental (net-new) revenue</span> from surgeon commitments (the Business Plan), with an adoption ramp and an 8% hurdle rate. Clinical cost avoidance is reported <strong className="text-white">separately</strong> and is never folded into the IRR — that is what keeps it defensible to a CFO.
+          </li>
+          <li>
+            <span className="text-white font-semibold">Drivers by Specialty / Outcomes.</span> Where the savings come from, broken out by specialty and by clinical outcome, so every dollar is <strong className="text-white">auditable</strong> — not a black box.
+          </li>
+          <li>
+            <span className="text-white font-semibold">Literature Citations.</span> Every benchmark is footnoted to peer-reviewed sources, so nothing on the page is an unverifiable claim.
+          </li>
+        </ol>
+
+        <p className="mb-2 text-white font-semibold">Two words to keep straight (this is what usually confuses people):</p>
+        <ul className="list-disc pl-5 mb-3 space-y-1">
+          <li>
+            <span className="text-emerald-300 font-semibold">Conversion</span> = an existing <strong className="text-white">open</strong> case switched to da Vinci. Same case, different technique. No new volume &rarr; <span className="text-emerald-300 font-semibold">savings (cost avoidance)</span>.
+          </li>
+          <li>
+            <span className="text-amber-300 font-semibold">Incremental (net-new)</span> = additional cases surgeons <strong className="text-white">commit to bring</strong> (recruited from another hospital or grown practice). New volume &rarr; <span className="text-amber-300 font-semibold">new revenue</span>, which drives the IRR.
           </li>
         </ul>
         <p>
-          These are <strong className="text-white">different pools</strong> and must not be added together. <span className="text-slate-400 italic">Bottom line: this page is almost entirely <strong className="text-white">cost avoidance</strong> (conversion of existing open cases); the only revenue figure is Investment Payback, driven by <strong className="text-white">net-new surgeon-commitment volume</strong> (the Business Plan), not by the conversion pool.</span>
+          <span className="text-slate-400 italic">Bottom line: almost everything on this page is money the hospital <strong className="text-white">stops losing</strong> (cost avoidance); the single figure that reflects money <strong className="text-white">earned</strong> is Investment Payback. Together they form the full clinical + financial case — the slide neither Intuitive nor AcuityMD can produce.</span>
         </p>
       </PageNotes>
 
