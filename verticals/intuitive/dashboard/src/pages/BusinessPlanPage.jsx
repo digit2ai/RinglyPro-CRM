@@ -286,23 +286,31 @@ function PlanHeader({ plan, onUpdate, onRecalculate, recalculating }) {
 
 // ─── ROI Summary Cards ────────────────────────────────────────
 
-function ROISummary({ plan }) {
-  // Read directly from the model fields populated by /calculate.
-  // (Earlier code referenced plan.calculated_totals / plan.totals which never exist.)
-  const cases = Number(plan.total_incremental_cases_annual) || 0
-  const revenue = Number(plan.total_incremental_revenue) || 0
+function ROISummary({ plan, split }) {
+  // CONVERSION vs INCREMENTAL shown as separate metrics (2026-05-26 review).
+  //  - CONVERSION  = existing surgeons converting their own OPEN cases at this hospital (15%).
+  //  - INCREMENTAL = net-new volume a surgeon brings from ANOTHER hospital (survey-based).
+  // Prefer the live proforma split; fall back to the plan's stored total (legacy = conversion).
+  const convCases = split ? Number(split.conversion_cases_annual) || 0 : Number(plan.total_incremental_cases_annual) || 0
+  const convRev = split ? Number(split.conversion_revenue_annual) || 0 : Number(plan.total_incremental_revenue) || 0
+  const incCases = split ? Number(split.incremental_cases_annual) || 0 : 0
+  const incRev = split ? Number(split.incremental_revenue_annual) || 0 : 0
   const clinical = Number(plan.total_clinical_outcome_savings) || 0
   const combined = Number(plan.total_combined_roi) || 0
-  const payback = plan.payback_months
-  const fiveYear = Number(plan.five_year_net_benefit) || 0
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-      <MetricCard label="Incremental Cases/Year" value={fmt(cases)} />
-      <MetricCard label="Incremental Revenue" value={fmtDollar(revenue)} accent />
-      <MetricCard label="Clinical Outcome Savings" value={fmtDollar(clinical)} accent />
-      <MetricCard label="Combined ROI" value={combined > 0 ? fmtDollar(combined) : '--'} accent />
-      <MetricCard label="Payback Period" value={fmtMonths(payback)} />
-      <MetricCard label="5-Year Net Benefit" value={fiveYear !== 0 ? fmtDollar(fiveYear) : '--'} accent />
+    <div>
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <MetricCard label="Conversion Cases/Year" value={fmt(convCases)} />
+        <MetricCard label="Conversion Revenue" value={fmtDollar(convRev)} accent />
+        <MetricCard label="Incremental Cases/Year" value={fmt(incCases)} />
+        <MetricCard label="Incremental Revenue" value={fmtDollar(incRev)} accent />
+        <MetricCard label="Clinical Outcome Savings" value={fmtDollar(clinical)} accent />
+        <MetricCard label="Combined ROI" value={combined > 0 ? fmtDollar(combined) : (convRev + incRev + clinical > 0 ? fmtDollar(convRev + incRev + clinical) : '--')} accent />
+      </div>
+      <p className="text-[11px] text-slate-500 mt-2">
+        <span className="text-red-300 font-semibold">Conversion</span> = existing surgeons moving their own OPEN cases to robotic at this hospital (open volume × 15%, no survey needed).
+        <span className="text-cyan-300 font-semibold"> Incremental</span> = net-new cases a surgeon commits to bring from another hospital (surgeon survey &amp; commitment).
+      </p>
     </div>
   )
 }
@@ -1220,8 +1228,15 @@ export default function BusinessPlanPage({ projectId: propId }) {
               <div className="text-2xl font-bold text-amber-300 mt-1">${(bpEnrichment.proforma.investment_summary.total_cost_avoidance_5yr / 1e6).toFixed(1)}M</div>
             </div>
             <div className="bg-slate-900/60 border border-slate-700 rounded p-3">
-              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">5yr Incremental Revenue</div>
+              <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">5yr Revenue (Conversion + Incremental)</div>
               <div className="text-2xl font-bold text-violet-300 mt-1">${(bpEnrichment.proforma.investment_summary.incremental_revenue_5yr / 1e6).toFixed(1)}M</div>
+              {bpEnrichment.proforma.revenue_split && (
+                <div className="text-[10px] text-slate-500 mt-1">
+                  <span className="text-red-300">${(bpEnrichment.proforma.revenue_split.conversion_revenue_annual * 5 / 1e6).toFixed(1)}M conv</span>
+                  {' · '}
+                  <span className="text-cyan-300">${(bpEnrichment.proforma.revenue_split.incremental_revenue_annual * 5 / 1e6).toFixed(1)}M incr</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1514,7 +1529,7 @@ export default function BusinessPlanPage({ projectId: propId }) {
       )}
 
       {/* Section 2: ROI Summary */}
-      {plan && <ROISummary plan={plan} />}
+      {plan && <ROISummary plan={plan} split={bpEnrichment?.proforma?.revenue_split} />}
 
       {/* Section 3: Surgeon Commitments */}
       {plan && (

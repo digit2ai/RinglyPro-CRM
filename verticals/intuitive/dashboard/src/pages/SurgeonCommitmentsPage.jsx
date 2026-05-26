@@ -572,6 +572,27 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         </div>
       </div>
 
+      {/* Conversion vs Incremental — plain-language explainer (2026-05-26 review) */}
+      <div className="grid md:grid-cols-2 gap-3 mb-5">
+        <div className="bg-red-950/20 border border-red-800/40 rounded-lg p-4">
+          <div className="text-sm font-bold text-red-300 mb-1">Conversion (existing surgeons, this hospital)</div>
+          <div className="text-xs text-slate-300 leading-relaxed">
+            Existing surgeons moving their <strong>own OPEN cases</strong> to robotic — volume the hospital
+            <strong> already has</strong>. The system estimates it as <strong>open volume × 15%</strong>.
+            This is the <strong>goal expectation</strong> from the current roster and needs <strong>no survey</strong>.
+            Drives clinical savings (shorter stays, fewer complications) + conversion revenue.
+          </div>
+        </div>
+        <div className="bg-cyan-950/20 border border-cyan-800/40 rounded-lg p-4">
+          <div className="text-sm font-bold text-cyan-300 mb-1">Incremental (net-new from another hospital)</div>
+          <div className="text-xs text-slate-300 leading-relaxed">
+            <strong>New</strong> cases a surgeon commits to <strong>bring from another hospital</strong> if given access —
+            volume the hospital <strong>does not have today</strong>. Source: <strong>surgeon survey &amp; commitment</strong>
+            (the ASM conversation), typically <strong>20–40 cases/yr</strong> each. Entered manually. Drives incremental revenue.
+          </div>
+        </div>
+      </div>
+
       {/* Grand totals — Converted and Incremental are SEPARATE cards (2026-05-26 review) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div className="bg-slate-800/60 border border-slate-700 rounded p-4">

@@ -98,6 +98,10 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
   let revenueFromConversion = 0;   // patient_source='existing' (15% of OPEN model)
   let revenueFromNetNewTrained = 0;   // patient_source='incremental' AND trained=true
   let revenueFromNetNewUntrained = 0; // patient_source='incremental' AND trained=false
+  // Case counts kept separate so every page can show CONVERSION (existing surgeons,
+  // same hospital) vs INCREMENTAL (net-new from another hospital, survey-based).
+  let conversionCases = 0;
+  let incrementalCases = 0;
   for (const s of (surgeons || [])) {
     const procs = Array.isArray(s.procedures) ? s.procedures : [];
     const trained = s.trained !== false; // default true unless explicitly false
@@ -110,14 +114,17 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
           ? parseFloat(p.incremental_cases_annual)
           : monthly * 12;
         const rev = annual * rate;
+        incrementalCases += annual;
         if (trained) revenueFromNetNewTrained += rev;
         else revenueFromNetNewUntrained += rev;
       } else {
         const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
+        conversionCases += monthly * 12 * pct;
         revenueFromConversion += monthly * 12 * pct * rate;
       }
     }
   }
+  const incrementalRevenue = revenueFromNetNewTrained + revenueFromNetNewUntrained;
   // Fallback: if surgeons array is empty, use the plan's stored total under the conversion ramp
   const totalSurgeonRevenue = revenueFromConversion + revenueFromNetNewTrained + revenueFromNetNewUntrained;
   const totalIncrementalRevenue = totalSurgeonRevenue > 0
@@ -238,10 +245,23 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
     bed_days_preserved_5yr: Math.round((conversionBedDaysSaved || surgeons.reduce((s, sg) => s + parseInt(sg.total_incremental_annual || 0) * 2.5, 0)) * 5),
     total_cost_avoidance_5yr: totalClinicalSavings * 5,
     incremental_revenue_5yr: totalIncrementalRevenue * 5,
+    // Conversion vs Incremental kept explicitly separate for every downstream page.
+    conversion_cases_annual: Math.round(conversionCases),
+    conversion_revenue_annual: Math.round(revenueFromConversion),
+    incremental_cases_annual: Math.round(incrementalCases),
+    incremental_revenue_annual: Math.round(incrementalRevenue),
   };
 
   return {
     yearly: yearlyData,
+    // CONVERSION = existing surgeons converting their own OPEN cases at this hospital (15%).
+    // INCREMENTAL = net-new volume a surgeon brings from ANOTHER hospital (survey-based).
+    revenue_split: {
+      conversion_cases_annual: Math.round(conversionCases),
+      conversion_revenue_annual: Math.round(revenueFromConversion),
+      incremental_cases_annual: Math.round(incrementalCases),
+      incremental_revenue_annual: Math.round(incrementalRevenue),
+    },
     totals: {
       expense: Math.round(totalExpense),
       return: Math.round(totalReturn),
