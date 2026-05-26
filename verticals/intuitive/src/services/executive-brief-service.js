@@ -144,7 +144,7 @@ function buildKpiHeader(project, analysis = {}, surgeons = []) {
 
 // ─── 4-COLUMN EXECUTIVE SCOREBOARD (Deck 1 Slide 5) ─────────────────
 
-function buildScoreboard(project, analysis = {}, surgeons = [], plan = null) {
+function buildScoreboard(project, analysis = {}, surgeons = [], plan = null, cb = null) {
   const vol = analysis.volume_projection || {};
   const roi = analysis.roi_calculation || {};
   const util = analysis.utilization_forecast || {};
@@ -156,21 +156,21 @@ function buildScoreboard(project, analysis = {}, surgeons = [], plan = null) {
   const designYearCases = parseInt(vol.design_year_cases || 0);
   const surgeonIncremental = surgeons.reduce((s, sg) => s + (sg.total_incremental_annual || 0), 0);
 
-  // Estimate avoided open surgeries: 60% of new robotic cases come from open conversion (industry pattern)
-  const eligibleAvoidedOpen = Math.round(surgeonIncremental * 0.60) || Math.round(designYearCases * 0.45);
-
-  // Bed-days avoided: 2.5 day avg LOS delta * cases converted from open
-  const bedDaysAvoided = eligibleAvoidedOpen * 2.5;
-
-  // Complications avoided: 8% baseline open complication rate, 3% robotic = 5% delta
-  const complicationsAvoided = Math.round(eligibleAvoidedOpen * 0.05);
-
-  // Conversions avoided: 4% open-to-laparotomy conversion rate
-  const conversionsAvoided = Math.round(eligibleAvoidedOpen * 0.04);
+  // Use the SAME clinical-overlay figures the Clinical Benefit Overlay page shows,
+  // so the Executive Brief and the overlay never disagree. Fall back to crude
+  // estimates only if the overlay couldn't be computed.
+  const eligibleAvoidedOpen = cb?.bed_days_savings?.total_converted_cases
+    || Math.round(surgeonIncremental * 0.60) || Math.round(designYearCases * 0.45);
+  const bedDaysAvoided = cb?.bed_days_savings?.total_bed_days_saved || (eligibleAvoidedOpen * 2.5);
+  // Complications / conversions avoided — from the overlay's complication burden if present
+  const cbRow = (name) => (cb?.complication_burden?.rows || []).find(r => r.name.includes(name));
+  const complicationsAvoided = cbRow('Complication')?.avoidable_events_yr || Math.round(eligibleAvoidedOpen * 0.05);
+  const conversionsAvoided = cbRow('Conversion')?.avoidable_events_yr || Math.round(eligibleAvoidedOpen * 0.04);
 
   // Financial column
   const incrementalRevenue = surgeons.reduce((s, sg) => s + parseFloat(sg.total_revenue_impact || 0), 0);
-  const clinicalCostAvoided = plan ? parseFloat(plan.total_clinical_outcome_savings || 0) : (bedDaysAvoided * 2607); // national avg
+  const clinicalCostAvoided = cb?.bed_days_savings?.total_dollar_savings
+    || (plan ? parseFloat(plan.total_clinical_outcome_savings || 0) : (bedDaysAvoided * 2607));
   const totalDvRevenue = (vol.design_year_cases || 0) * 18500; // weighted avg per-case rev
 
   // Operational column
@@ -410,10 +410,18 @@ async function buildExecutiveBrief({ projectId, models }) {
     peers = await peerService.findPeerHospitals(project, models);
   } catch (e) { console.error('exec-brief: peer load:', e.message); }
 
+  // Pull the SAME Clinical Benefit Overlay figures the overlay page shows, so
+  // the Executive Brief is internally consistent with it.
+  let cb = null;
+  try {
+    const clinicalOverlayService = require('./clinical-overlay-service');
+    cb = await clinicalOverlayService.buildClinicalOverlayEnrichment({ projectId, models });
+  } catch (e) { console.error('exec-brief: overlay load:', e.message); }
+
   // Build all sections
   const diagnostic = buildDiagnostic(project, analysis);
   const kpiHeader = buildKpiHeader(project, analysis, surgeons);
-  const scoreboard = buildScoreboard(project, analysis, surgeons, plan);
+  const scoreboard = buildScoreboard(project, analysis, surgeons, plan, cb);
   const commitmentSummary = summarizeSurgeonCommitments(surgeons);
   const recommendation = buildTwoPhaseRecommendation(project, analysis, surgeons, plan);
 
@@ -438,21 +446,25 @@ async function buildExecutiveBrief({ projectId, models }) {
     citation: 'kff.org/state-indicator/expenses-per-inpatient-day',
   };
 
-  // Clinical Benefit Overlay summary (the moat)
+  // Clinical Benefit Overlay summary (the moat) — read straight from the same
+  // clinical-overlay enrichment the overlay page renders, so figures match exactly.
   const overlay = {
     headline: 'Dollarized clinical outcomes — the proof Intuitive cannot produce internally',
-    total_clinical_savings: clinicalOutcomes.length
-      ? clinicalOutcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0)
-      : 0,
-    drivers: clinicalOutcomes.length
-      ? clinicalOutcomes.map(c => ({
-          specialty: c.specialty,
-          savings: parseFloat(c.total_clinical_savings_annual || 0),
-          cases_converted: c.cases_converted_to_robotic || 0,
-        }))
-      : [],
-    note: clinicalOutcomes.length
-      ? 'Detailed methodology + literature citations available in Clinical Benefit Overlay tab.'
+    conversion_formula: cb?.conversion_formula || null,
+    daily_bleed: cb?.complication_burden?.daily_avoidable || 0,
+    annual_complication_burden: cb?.complication_burden?.total_annual_avoidable || 0,
+    total_clinical_savings: cb?.bed_days_savings?.total_dollar_savings
+      || (clinicalOutcomes.length ? clinicalOutcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0) : 0),
+    bed_days_saved: cb?.bed_days_savings?.total_bed_days_saved || 0,
+    project_irr_pct: cb?.investment_payback?.project_irr_pct ?? null,
+    estimated_payback_years: cb?.investment_payback?.estimated_payback_years ?? null,
+    drivers: (cb?.complication_burden?.rows || []).map(r => ({
+      specialty: r.name,
+      savings: r.annual_avoidable_cost,
+      cases_converted: r.avoidable_events_yr,
+    })),
+    note: cb
+      ? 'Figures match the Clinical Benefit Overlay tab (15% of open soft-tissue da Vinci-applicable; complications/readmissions/infections dollarized).'
       : 'Clinical outcomes have not been computed for this plan yet. Run Clinical Benefit Overlay to dollarize the moat.',
   };
 
