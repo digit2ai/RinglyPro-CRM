@@ -52,7 +52,6 @@ export default function RoboticsProgramPage({ projectId: propId }) {
   const systemModel = project?.current_system || 'None'
   const util = analysis.utilization_forecast || {}
   const pareto = analysis.procedure_pareto || {}
-  const designDay = analysis.design_day_analysis || {}
 
   // Specialty mix from project
   const specialties = []
@@ -80,7 +79,7 @@ export default function RoboticsProgramPage({ projectId: propId }) {
       {/* Current installed base */}
       <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
         <h3 className="font-bold text-white mb-4">Current Installed Base</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Systems Installed</div>
             <div className="text-3xl font-bold text-white mt-1">{systems}</div>
@@ -93,11 +92,7 @@ export default function RoboticsProgramPage({ projectId: propId }) {
             </div>
             <div className="text-[11px] text-slate-500">{(util.projected_utilization_pct || 0) > 85 ? 'oversaturated' : (util.projected_utilization_pct || 0) > 70 ? 'high' : 'healthy'}</div>
           </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Design Day (P75)</div>
-            <div className="text-3xl font-bold text-cyan-300 mt-1">{designDay.design_day || '--'}</div>
-            <div className="text-[11px] text-slate-500">cases per day</div>
-          </div>
+          {/* Design Day (P75) tile removed per 2026-05-26 review — no defendable source data. */}
           <div>
             <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Systems Needed</div>
             <div className="text-3xl font-bold text-violet-300 mt-1">{util.systems_needed || '--'}</div>

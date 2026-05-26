@@ -392,7 +392,7 @@ export default function HospitalProfilePage({ projectId: propId }) {
       {/* Loading state for enrichment */}
       {enrichmentLoading && !enrichment && (
         <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 mb-6 text-center">
-          <div className="text-sm text-slate-400">Loading deck-aligned enrichment (Strategic Impact, Capital Snapshot, Peer Benchmark, Research Profile)...</div>
+          <div className="text-sm text-slate-400">Loading deck-aligned enrichment (Strategic Impact, Capital Snapshot, Research Profile)...</div>
           <div className="text-[10px] text-slate-500 mt-1">PubMed lookup may take 3-5 seconds</div>
         </div>
       )}

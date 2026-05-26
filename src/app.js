@@ -197,7 +197,7 @@ app.use((req, res, next) => {
       if (u === SM_AUTH_USER && p === SM_AUTH_PASS) return next();
     } catch (e) {}
   }
-  res.setHeader('WWW-Authenticate', 'Basic realm="SurgicalMind — Intuitive Space", charset="UTF-8"');
+  res.setHeader('WWW-Authenticate', 'Basic realm="SurgicalMind - Intuitive Space", charset="UTF-8"');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   return res.status(401).type('html').send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Restricted</title><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:#cbd5e1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.b{text-align:center;max-width:420px;padding:32px}h1{font-size:20px;color:#fff;margin:0 0 8px}p{font-size:14px;line-height:1.6;color:#94a3b8;margin:0}</style></head><body><div class="b"><h1>Restricted access</h1><p>This is a private workspace. Sign in with the credentials provided to you.</p></div></body></html>');
 });

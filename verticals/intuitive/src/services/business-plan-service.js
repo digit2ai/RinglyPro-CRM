@@ -448,8 +448,8 @@ async function buildBusinessPlanEnrichment({ projectId, models }) {
   const systemAssumptions = buildSystemAssumptions(project, plan, analysis);
   const proforma = buildFiveYearProforma(plan, analysis, surgeons, project);
   const twoPhasePlacement = buildTwoPhasePlacement(project, plan, analysis, surgeons);
-  const orRoomRecommendations = buildOrRoomRecommendations(project, plan, analysis, surgeons);
-  const acquisitionComparison = buildAcquisitionNpvComparison(plan);
+  // OR-Level Room Recommendations + Acquisition Model NPV Comparison removed per
+  // 2026-05-26 review (OR rec irrelevant; Acquisition/NPV comparison is AMP-related).
 
   return {
     project_id: projectId,
@@ -458,8 +458,6 @@ async function buildBusinessPlanEnrichment({ projectId, models }) {
     system_assumptions: systemAssumptions,
     proforma,
     two_phase_placement: twoPhasePlacement,
-    or_room_recommendations: orRoomRecommendations,
-    acquisition_comparison: acquisitionComparison,
     generated_at: new Date().toISOString(),
   };
 }

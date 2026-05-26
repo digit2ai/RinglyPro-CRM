@@ -368,10 +368,11 @@ async function buildHospitalProfileEnrichment({ projectId, models }) {
     }
   } catch (e) {}
 
-  // Build 4 enrichment blocks
+  // Build enrichment blocks
   const strategicImpact = buildStrategicImpactSummary(project, analysis, surgeons, clinicalOutcomes);
   const capitalSnapshot = buildCapitalSnapshot(project, analysis);
-  const peerBenchmark = buildPeerBenchmark(project, analysis);
+  // AMP Peer Benchmark removed per 2026-05-26 review (not defendable in the deck —
+  // 12 vs peer-avg 26 / Mayo MN 54 comparison was AMP-positioning, comes out).
 
   // Research is async (PubMed call) — kick off in parallel
   let researchProfile = { total_publications: 0, skipped: true };
@@ -388,7 +389,6 @@ async function buildHospitalProfileEnrichment({ projectId, models }) {
     hospital_name: project.hospital_name,
     strategic_impact: strategicImpact,
     capital_snapshot: capitalSnapshot,
-    peer_benchmark: peerBenchmark,
     research_profile: researchProfile,
     generated_at: new Date().toISOString(),
   };
