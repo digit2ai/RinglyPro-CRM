@@ -177,6 +177,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── SurgicalMind "Intuitive Space" gate (owner request 2026-05-26) ──────────────
+// J. Cohen Googled "Surgical Mind AI" and reached the platform publicly. Per meeting
+// notes, the entire surgicalmind.app domain must sit behind a username/password.
+// HTTP Basic Auth gates EVERYTHING on this host (landing, presentation, whitepaper,
+// /intuitive dashboard + API + proposal links). The internal team's own access via
+// aiagent.ringlypro.com/intuitive is unaffected. Credentials are env-overridable.
+// To open the site back up publicly: set env SURGICALMIND_PUBLIC=1.
+const SM_AUTH_USER = process.env.SURGICALMIND_AUTH_USER || 'intuitive';
+const SM_AUTH_PASS = process.env.SURGICALMIND_AUTH_PASS || 'IntuitiveSpace2026';
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host !== 'www.surgicalmind.app' && host !== 'surgicalmind.app') return next();
+  if (process.env.SURGICALMIND_PUBLIC === '1') return next();
+  const hdr = req.get('authorization') || '';
+  if (hdr.startsWith('Basic ')) {
+    try {
+      const [u, p] = Buffer.from(hdr.slice(6), 'base64').toString('utf8').split(':');
+      if (u === SM_AUTH_USER && p === SM_AUTH_PASS) return next();
+    } catch (e) {}
+  }
+  res.setHeader('WWW-Authenticate', 'Basic realm="SurgicalMind — Intuitive Space", charset="UTF-8"');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  return res.status(401).type('html').send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Restricted</title><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:#cbd5e1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.b{text-align:center;max-width:420px;padding:32px}h1{font-size:20px;color:#fff;margin:0 0 8px}p{font-size:14px;line-height:1.6;color:#94a3b8;margin:0}</style></head><body><div class="b"><h1>Restricted access</h1><p>This is a private workspace. Sign in with the credentials provided to you.</p></div></body></html>');
+});
+
 // Custom domain: www.surgicalmind.app -> SurgicalMind AI platform
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
@@ -194,18 +219,9 @@ app.use((req, res, next) => {
     // Platform dashboard
     } else if (p === '/platform' || p === '/platform/' || p === '/dashboard' || p === '/dashboard/') {
       return res.redirect(301, '/intuitive/');
-    // Root: serve the main landing page
+    // Root: serve the main landing page (gated by the Intuitive Space Basic Auth above)
     } else if (p === '/' || p === '') {
-      // PUBLIC LANDING PAGE TAKEN OFFLINE (owner request 2026-05-26).
-      // Only the public marketing landing page is hidden — /intuitive (dashboard,
-      // proposal links, API), the CRM, and all other products stay fully online.
-      // Reversible: set env SURGICALMIND_LANDING_PUBLIC=1 to restore the landing page.
-      if (process.env.SURGICALMIND_LANDING_PUBLIC === '1') {
-        req.url = '/SurgicalMindAI.html';
-      } else {
-        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-        return res.status(404).type('html').send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not available</title><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:#cbd5e1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.b{text-align:center;max-width:420px;padding:32px}h1{font-size:20px;color:#fff;margin:0 0 8px}p{font-size:14px;line-height:1.6;color:#94a3b8;margin:0}</style></head><body><div class="b"><h1>This page is not publicly available</h1><p>SurgicalMind is a private platform. If you were given a direct link, please use that link.</p></div></body></html>');
-      }
+      req.url = '/SurgicalMindAI.html';
     }
   }
   next();

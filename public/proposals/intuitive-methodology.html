@@ -622,7 +622,7 @@ if (sessionStorage.getItem('nda_accepted')) {
   <section>
     <div class="section-number">6</div>
     <span class="section-label">Robot Compatibility Matrix</span>
-    <h2>Which da Vinci Model Fits Which Surgery?</h2>
+    <h2>Which robotic surgery Model Fits Which Surgery?</h2>
     <p class="section-desc">
       A 19-procedure x 4-system scoring matrix. Each cell is a 0-100 fit score based on FDA clearances, clinical evidence, system capabilities, and surgeon ergonomics.
     </p>
@@ -630,7 +630,7 @@ if (sessionStorage.getItem('nda_accepted')) {
     <div class="formula-card">
       <h4>Fit Score Matrix (Excerpt) <span class="tag">Expert Calibration</span></h4>
       <div class="formula-box" style="font-size: 12px;">
-        <span class="comment">// Procedure                   dV5   Xi    X     SP</span><br>
+        <span class="comment">// Procedure                   robotic system   Xi    X     SP</span><br>
         Radical Prostatectomy&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">98</span>&nbsp;&nbsp;&nbsp; <span class="number">92</span>&nbsp;&nbsp;&nbsp; <span class="number">75</span>&nbsp;&nbsp;&nbsp; <span class="number">85</span><br>
         Partial Nephrectomy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">96</span>&nbsp;&nbsp;&nbsp; <span class="number">90</span>&nbsp;&nbsp;&nbsp; <span class="number">72</span>&nbsp;&nbsp;&nbsp; <span class="number">60</span><br>
         Hysterectomy (Benign)&nbsp;&nbsp;&nbsp;&nbsp;     <span class="number">95</span>&nbsp;&nbsp;&nbsp; <span class="number">92</span>&nbsp;&nbsp;&nbsp; <span class="number">82</span>&nbsp;&nbsp;&nbsp; <span class="number">50</span><br>
@@ -682,7 +682,7 @@ if (sessionStorage.getItem('nda_accepted')) {
         Start at <span class="number">15</span>. Deduct <span class="number">-10</span> if OR sqft &lt; minimum. Deduct <span class="number">-5</span> if ceiling &lt; minimum.<br><br>
 
         <span class="comment">// DIMENSION 5: Hospital Type Bonus (0-10 pts)</span><br>
-        dV5 + Academic/400+ beds: &nbsp;&nbsp;<span class="highlight">+10</span><br>
+        robotic system + Academic/400+ beds: &nbsp;&nbsp;<span class="highlight">+10</span><br>
         X + Community/Rural: &nbsp;&nbsp;<span class="highlight">+10</span><br>
         Xi (any hospital): &nbsp;&nbsp;<span class="highlight">+7</span> <span class="comment">&larr; proven workhorse bonus</span><br>
         Other combinations: &nbsp;&nbsp;<span class="highlight">+3</span><br><br>

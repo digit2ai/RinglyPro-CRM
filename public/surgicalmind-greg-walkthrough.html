@@ -151,14 +151,14 @@
     <div class="step-num">3</div>
     <div>
       <div class="step-title">System Match</div>
-      <div class="step-subtitle">AI recommends which da Vinci system fits this hospital</div>
+      <div class="step-subtitle">AI recommends which robotic surgery system fits this hospital</div>
     </div>
     <div class="step-arrow">&#9660;</div>
   </div>
   <div class="step-body">
     <div class="section-label how">How the system does it</div>
     <ul>
-      <li>Loads the complete da Vinci catalog with specs for each model (Xi, Xi Dual Console, dV5, dV5 Dual Console, SP, X)</li>
+      <li>Loads the complete robotic surgery catalog with specs for each model (Xi, Xi Dual Console, robotic system, robotic system Dual Console, SP, X)</li>
       <li>Pulls the hospital's analysis data: surgical volume, specialty mix, OR count, growth trajectory, budget range</li>
       <li>Runs a weighted scoring algorithm: volume capacity, specialty coverage, infrastructure fit, growth headroom, budget alignment, competitive positioning</li>
       <li>Produces a ranked recommendation with scores and reasoning for each system</li>
@@ -303,7 +303,7 @@
   <div class="step-body">
     <div class="section-label how">How the system does it</div>
     <ul>
-      <li>Every da Vinci robot logs case data: robot serial, surgeon name, procedure type, date, console time, instruments used</li>
+      <li>Every robotic surgery system logs case data: robot serial, surgeon name, procedure type, date, console time, instruments used</li>
       <li>Intuitive's internal systems push data to the SurgicalMind Robot Data API (POST endpoint, batch case records, API key auth)</li>
       <li>Each case stored with unique constraint to prevent duplicates</li>
       <li>Manager clicks "Sync Robot Data" and selects a time period</li>
@@ -319,7 +319,7 @@
     <div class="section-label show">How to show Greg</div>
     <ul>
       <li>Show the tracking dashboard</li>
-      <li>Show "Sync from da Vinci Robot"</li>
+      <li>Show "Sync from robotic surgery system"</li>
       <li>Show variance tracking and per-surgeon breakdown</li>
     </ul>
     <div class="say-box">"Your robots already log every case. That data feeds directly into this dashboard. It matches each case to the surgeon's original commitment."</div>
@@ -348,7 +348,7 @@
   </ul>
 
   <h3>For the executive above Greg:</h3>
-  <div class="say-box">"One da Vinci system is a $1.5-2M deal. If this tool helps your team close even one additional system per quarter that they would have lost to a weak business plan, the ROI pays for itself 50 times over."</div>
+  <div class="say-box">"One robotic surgery system is a $1.5-2M deal. If this tool helps your team close even one additional system per quarter that they would have lost to a weak business plan, the ROI pays for itself 50 times over."</div>
 
   <h3>What to offer Greg:</h3>
   <ul>
@@ -418,7 +418,7 @@ This is an AI agent that handles about 80% of the admin work your Managers and D
 
 1. Manager enters a hospital name
 2. AI researches the hospital -- CMS data, annual reports, procedure volumes, clinical outcomes
-3. AI recommends which da Vinci system fits the hospital
+3. AI recommends which robotic surgery system fits the hospital
 4. AI generates a presentation deck with voice narration for the hospital pitch
 5. Manager sends surgeon surveys -- surgeons respond via email with volume commitments
 6. Survey responses import directly into the business plan with one click
