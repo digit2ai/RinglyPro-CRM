@@ -7,6 +7,7 @@ import {
   ComposedChart, Area, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Cell, LabelList, ReferenceLine,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // ─── Executive Brief (Step 10 of 10) — Comprehensive consolidated report ────
 //
@@ -906,6 +907,15 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
             </ol>
           </div>
         </Section>
+
+        <PageNotes title="Executive Brief">
+          <ul className="space-y-1.5 list-disc pl-4">
+            <li><span className="text-white font-semibold">What this is:</span> The one-page <span className="text-cyan-300">executive summary</span> for the CFO / VP Finance. It does not compute anything new — it rolls up the canonical figures from the detailed steps so leadership sees the whole case at a glance.</li>
+            <li><span className="text-white font-semibold">Every figure is sourced from the earlier steps:</span> the hospital metrics from the <span className="text-cyan-300">Hospital Profile</span>, the committed case counts from <span className="text-cyan-300">Surgeon Commitments</span>, the dollarized clinical savings from the <span className="text-cyan-300">Clinical Benefit Overlay</span>, and the IRR / payback from the <span className="text-cyan-300">Business Plan</span> proforma. The numbers here match those pages exactly by design.</li>
+            <li><span className="text-white font-semibold">Two kinds of dollars, never added together:</span> <span className="text-emerald-300">Cost avoidance</span> (money the hospital stops losing — bed-days saved and complications prevented by switching existing <span className="text-cyan-300">open</span> cases to da Vinci; a <span className="text-cyan-300">Conversion</span> is the same case, different technique, with no new volume) is reported separately from <span className="text-amber-300">revenue</span> (money the hospital earns from <span className="text-cyan-300">incremental / net-new</span> cases surgeons commit to bring). Only the incremental revenue drives the IRR / NPV.</li>
+            <li><span className="text-white font-semibold">Bottom line:</span> The IRR / NPV shown here equals the Business Plan's; the <span className="text-emerald-300">cost avoidance</span> equals the Clinical Benefit Overlay's. If a number looks different anywhere, the underlying step is the source of truth — this page is the consistent summary of all of them.</li>
+          </ul>
+        </PageNotes>
 
         {/* Footer */}
         <div className="text-[10px] text-slate-500 mt-8 mb-4 text-center italic">

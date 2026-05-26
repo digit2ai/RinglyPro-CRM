@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 import {
   BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList,
@@ -415,6 +416,16 @@ export default function ClinicalOutcomesPage({ projectId: propId }) {
           </div>
         </>
       )}
+
+      <PageNotes title="Current Clinical Outcomes (Baseline)">
+        <ul className="space-y-1.5 list-disc pl-4">
+          <li><span className="text-white font-semibold">What this answers:</span> Where the hospital stands <span className="text-white font-semibold">today</span> on quality — readmissions, infections, length of stay, safety events, patient experience. This is the <span className="text-cyan-300">baseline</span>, not a projection.</li>
+          <li><span className="text-white font-semibold">Where the numbers come from:</span> The star ratings and core outcome rates are <span className="text-white font-semibold">real public data</span> from <span className="text-cyan-300">CMS Hospital Compare</span> (plus HCAHPS, AHRQ PSI, NHSN). National-average and top-decile columns are <span className="text-white font-semibold">published benchmarks</span>; LOS-by-procedure figures come from CMS MedPAR Medicare Inpatient and Intuitive peer-reviewed meta-analyses. Where a hospital-specific value has not yet been ingested, a benchmark estimate stands in.</li>
+          <li><span className="text-white font-semibold">Key comparison:</span> each measure is shown against the national average — green <span className="text-emerald-300">↓ better</span>, red <span className="text-red-300">↑ worse</span> — and against the top-10% performer to size the improvement gap.</li>
+          <li><span className="text-white font-semibold">"Opportunity" procedures</span> are those where the open length of stay exceeds robotic by more than 5 days — the biggest <span className="text-cyan-300">conversion</span> targets (an existing open case switched to da Vinci, same case, different technique).</li>
+          <li><span className="text-white font-semibold">Bottom line:</span> No dollars are claimed on this page. It sets the starting point; the <span className="text-emerald-300">cost avoidance</span> (money the hospital stops losing through fewer bed-days and complications) is dollarized on the next page, the Clinical Benefit Overlay.</li>
+        </ul>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/market-profile/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Market Profile</button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 const fmt = (n) => (n != null && !isNaN(n)) ? Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '--'
 const fmtMoney = (n) => (n != null && !isNaN(n)) ? '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '--'
@@ -830,6 +831,18 @@ export default function ReportPage({ projectId: propId }) {
             <p className="text-xs text-slate-600 italic mt-3">Seasonality data is informational. The executive committee’s system-placement decision should not turn on month-by-month variation.</p>
           </Section>
         )}
+
+        {/* How to read this page — screen-only, hidden from the printed/PDF report */}
+        <div className="no-print">
+          <PageNotes title="Executive Report">
+            <ul className="space-y-1.5 list-disc pl-4">
+              <li><span className="text-white font-semibold">What this is:</span> The full written report — the complete <span className="text-cyan-300">aggregation</span> of every step into one document. It does not recompute anything; it assembles the figures already produced upstream so the whole case reads as one consistent record.</li>
+              <li><span className="text-white font-semibold">Every figure is sourced from the steps:</span> hospital metrics from the <span className="text-cyan-300">Hospital Profile</span>, committed cases from <span className="text-cyan-300">Surgeon Commitments</span>, dollarized savings from the <span className="text-cyan-300">Clinical Benefit Overlay</span>, and IRR / payback from the <span className="text-cyan-300">Business Plan</span> proforma. The report reconciles with those pages exactly.</li>
+              <li><span className="text-white font-semibold">Two kinds of dollars, never combined:</span> <span className="text-emerald-300">cost avoidance</span> (money the hospital stops losing when existing <span className="text-cyan-300">open</span> cases are converted to da Vinci — same case, different technique, no new volume) is reported separately from <span className="text-amber-300">revenue</span> (money earned from <span className="text-cyan-300">incremental / net-new</span> cases surgeons commit to bring). Only that incremental revenue drives the IRR / NPV.</li>
+              <li><span className="text-white font-semibold">Bottom line:</span> The IRR / NPV in this report equals the Business Plan's; the <span className="text-emerald-300">cost avoidance</span> equals the Clinical Benefit Overlay's. This is the consolidated record — the individual steps remain the source of truth.</li>
+            </ul>
+          </PageNotes>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ChatRenderer from '../components/ChatRenderer'
+import PageNotes from '../components/PageNotes'
 
 const SAMPLES = [
   'Compare AdventHealth Orlando, Orlando Health, and Tampa General for prostatectomy and hysterectomy_benign',
@@ -356,6 +357,18 @@ export default function AskPage() {
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <PageNotes title="Ask SurgicalMind">
+              <ul className="space-y-1.5 list-disc pl-4">
+                <li><span className="text-white font-semibold">What this answers:</span> any natural-language question about hospitals, surgeons, Open Payments, procedure volumes, your project pipeline, business plans, and surveys.</li>
+                <li><span className="text-white font-semibold">Where the answers come from:</span> this assistant is <span className="text-cyan-300">grounded in real data</span>. For US healthcare facts it calls live tools that query <span className="text-white font-semibold">authoritative CMS sources</span> (Hospital Compare, HCRIS, Open Payments, physician volume / MPUP, MS-DRG discharges), the <span className="text-cyan-300">NPI Registry</span>, IRS Form 990, state filings, and your own SurgicalMind project database, then quotes what those tools return.</li>
+                <li><span className="text-white font-semibold">No guessing:</span> it is instructed to <span className="text-white font-semibold">never fabricate</span> specific numbers, surgeon names, or NPIs — if a tool returns nothing, it says so. For non-US hospitals or current news it uses a live web search and cites the source links.</li>
+                <li><span className="text-white font-semibold">Watch the steps:</span> the small spinner lines show exactly which tool ran (for example "Querying Open Payments"), so every figure is traceable to a source.</li>
+                <li><span className="text-white font-semibold">Bottom line:</span> answers reflect the same verified data the other pages use — it does not invent figures. <span className="text-red-300">It is a research aid, not financial advice;</span> confirm critical numbers on their source page before acting.</li>
+              </ul>
+            </PageNotes>
           </div>
         </div>
 

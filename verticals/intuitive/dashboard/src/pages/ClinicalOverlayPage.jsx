@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, ReferenceLine, Cell, LabelList, ComposedChart, Area,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // Step 6 — Clinical Benefit Overlay with $ ROI (THE MOAT)
 // Mirrors Deck 1 p15 + Deck 3 p7/p8 (the CFO-grade payback + cost-of-waiting visuals)
@@ -539,8 +540,7 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
       )}
 
       {/* ── Methodology note: Conversion vs. Incremental (annotation to explain the page) ── */}
-      <div className="mt-8 bg-slate-800/40 border border-slate-700 rounded-lg p-5 text-sm text-slate-300 leading-relaxed">
-        <div className="text-[10px] uppercase tracking-widest text-cyan-300 font-bold mb-2">How to read this page · Conversion vs. Incremental</div>
+      <PageNotes title="Conversion vs. Incremental">
         <p className="mb-2">
           <span className="text-emerald-300 font-semibold">Conversion</span> = an existing <strong className="text-white">OPEN</strong> surgery switched to da Vinci. Same patient, same case — only the technique changes. It does <span className="text-red-300 font-semibold">not add new volume</span>; its value is <span className="text-emerald-300 font-semibold">clinical cost avoidance</span> — shorter stays (bed-days saved) and fewer complications, readmissions and infections. That is money the hospital <strong className="text-white">stops losing</strong>, not new income.
         </p>
@@ -556,7 +556,7 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         <p>
           These are <strong className="text-white">different pools</strong> and must not be added together. <span className="text-slate-400 italic">Bottom line: this page is almost entirely <strong className="text-white">cost avoidance</strong> (conversion of existing open cases); the only revenue figure is Investment Payback, driven by <strong className="text-white">net-new surgeon-commitment volume</strong> (the Business Plan), not by the conversion pool.</span>
         </p>
-      </div>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/clinical-outcomes/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Clinical Outcomes</button>

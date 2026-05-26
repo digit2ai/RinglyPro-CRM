@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 // AcuityMD-style territory intelligence — public CMS data only
 
@@ -507,6 +508,16 @@ export default function SurgeonTargetingPage() {
           </div>
         </div>
       )}
+
+      <PageNotes title="Surgeon Targeting">
+        <p className="mb-2"><span className="text-white font-semibold">What this answers:</span> which surgeons in a territory are the best prospects to recruit or develop, ranked into A/B/C/D tiers.</p>
+        <ul className="list-disc pl-5 space-y-1 mb-2">
+          <li>Every surgeon and their stats come from <span className="text-white font-semibold">public CMS data only</span>: the <span className="text-cyan-300">NPI Registry (NPPES)</span> for identity, <span className="text-cyan-300">CMS physician claims (MPUP)</span> for robotic case volume, and <span className="text-cyan-300">CMS Open Payments</span> for prior Intuitive industry payments. KOL signals add live PubMed and ClinicalTrials.gov counts.</li>
+          <li><span className="text-white font-semibold">Target score (0–100)</span> = robotic Medicare volume (up to 50 pts) + Intuitive $ exposure over 2 years (up to 35 pts) + how recently they were paid (up to 15 pts). <span className="text-white font-semibold">KOL score</span> = 5-yr publications + active trials + any Intuitive-sponsored trial.</li>
+          <li>Tiers: <span className="text-emerald-300">A (≥75) Convert Now</span>, B (≥50) Develop, C (≥25) Nurture, D Cold.</li>
+        </ul>
+        <p><span className="text-white font-semibold">Bottom line:</span> this is a prioritized prospecting list, not a financial forecast. A surgeon ranks high here because the public data says they do robotic volume and are engaged — turning that into committed <span className="text-amber-300">net-new (incremental) revenue</span> happens later on the Surgeon Commitments page.</p>
+      </PageNotes>
     </div>
   )
 }

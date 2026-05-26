@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -466,6 +467,16 @@ export default function DashboardPage() {
             </ul>
           </div>
         )}
+
+        <PageNotes title="Sales Operations Dashboard">
+          <p className="mb-2">This is the <span className="text-white font-semibold">entry point and pipeline tracker</span> — one row per hospital opportunity. It answers: <span className="text-cyan-300">which hospitals are in play, and what stage is each one at?</span></p>
+          <ul className="list-disc ml-5 space-y-1">
+            <li>Every row is a <span className="text-cyan-300">project</span> created on the Intake page — either by an AI research run or by manually entering hospital data. Nothing here is invented; the dashboard just summarizes what exists.</li>
+            <li>The <span className="text-white font-semibold">Stage</span>, <span className="text-white font-semibold">System</span>, <span className="text-white font-semibold">Survey</span>, and <span className="text-white font-semibold">Plan</span> columns are live status pulled from each project's own pages (analysis, surgeon surveys, business plan). The KPI cards at top simply count those statuses.</li>
+            <li>Click a hospital name to open its full 9-step workflow, starting with the Hospital Profile.</li>
+          </ul>
+          <p className="mt-2"><span className="text-white font-semibold">Bottom line:</span> this page contains no financial calculations — it is a directory and progress board. The real numbers live inside each project.</p>
+        </PageNotes>
 
       </div>
     </div>

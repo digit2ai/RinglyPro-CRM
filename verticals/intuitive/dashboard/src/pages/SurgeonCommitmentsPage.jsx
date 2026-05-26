@@ -5,6 +5,7 @@ import {
   BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Cell, LabelList,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 const COLOR_OPEN_TO_MIS = '#dc2626'
 const COLOR_PULL_FORWARD = '#0891b2'
@@ -881,6 +882,17 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         planId={plan?.id}
         onChange={load}
       />
+
+      <PageNotes title="Surgeon Commitments">
+        <p className="mb-2"><span className="text-white font-semibold">What this answers:</span> exactly how many extra cases each surgeon commits to bring, and what that is worth. This page is the <span className="text-white font-semibold">canonical source</span> of the program's volume and revenue.</p>
+        <ul className="list-disc pl-5 space-y-1 mb-2">
+          <li>Numbers here are <span className="text-white font-semibold">entered by the rep from the surgeons' own commitments</span> (not modeled). Each surgeon's committed cases are split into <span className="text-cyan-300">Converted</span> (an existing OPEN surgery switched to da Vinci — same case, new technique) and <span className="text-cyan-300">Incremental (net-new)</span> (additional cases recruited from elsewhere or grown).</li>
+          <li><span className="text-amber-300">Incremental = net-new revenue volume.</span> These extra cases are the <span className="text-white font-semibold">new revenue</span> that flows into the Business Plan and drives IRR / NPV / payback.</li>
+          <li><span className="text-emerald-300">Converted cases create cost avoidance, not new revenue</span> — value comes from bed-days saved (case count × the open→robotic length-of-stay delta per procedure, e.g. ~5 days for prostatectomy) at the state's bed-day cost.</li>
+          <li>Three commitment categories: <span className="text-white font-semibold">Open-to-MIS</span> (conversions), <span className="text-white font-semibold">Pull-Forward</span> (capacity/backlog relief — extra weekly cases × ~50 weeks), and <span className="text-white font-semibold">Training Pipeline</span> (surgeons being onboarded).</li>
+        </ul>
+        <p><span className="text-white font-semibold">Bottom line:</span> the <span className="text-amber-300">revenue</span> total is money the hospital earns from net-new cases; the <span className="text-emerald-300">bed-day cost avoidance</span> total is money it stops losing. They are shown separately and are never added into one ROI figure.</p>
+      </PageNotes>
     </div>
   )
 }

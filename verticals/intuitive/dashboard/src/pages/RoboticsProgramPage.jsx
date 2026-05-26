@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   ReferenceLine,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // Step 3 — Robotics Program Profile: current systems, utilization, specialty mix
 // Mirrors Deck 1 Slide 6 (System Utilization by Quarter) + Slide 8/9 + Deck 2 p15
@@ -402,6 +403,16 @@ export default function RoboticsProgramPage({ projectId: propId }) {
           </table>
         </div>
       )}
+
+      <PageNotes title="Robotics Program">
+        <p className="mb-2"><span className="text-white font-semibold">What this answers:</span> how the hospital's robotic fleet is performing today and where the headroom is — system utilization, the open/lap/robotic technique mix by year and procedure, and the tech-generation rollout.</p>
+        <ul className="list-disc pl-5 space-y-1 mb-2">
+          <li>The current fleet count and model come from the hospital's <span className="text-white font-semibold">entered intake</span>. Procedure volumes use <span className="text-cyan-300">real CMS Medicare Inpatient DRG data</span> for the hospital when available; otherwise they are <span className="text-white font-semibold">modeled</span> from annual surgical volume × procedure-family share.</li>
+          <li>The per-system quarterly utilization curve is <span className="text-white font-semibold">modeled</span> (total volume × specialty-weighted robotic share spread across installed systems) and compared to the <span className="text-cyan-300">77 cases/quarter</span> academic average (Intuitive AMP data). The peer modality benchmark is the National Academic Peer mix (CMS dataset, N≈21,409).</li>
+          <li>Rows highlighted as opportunities are procedures with high <span className="text-cyan-300">open</span> volume — the pool that could be <span className="text-cyan-300">converted</span> to da Vinci.</li>
+        </ul>
+        <p><span className="text-white font-semibold">Bottom line:</span> this page sizes the clinical headroom and conversion opportunity. Converting open cases is <span className="text-emerald-300">cost avoidance</span> (bed-days, OR time); it is not <span className="text-amber-300">new revenue</span>. Net-new revenue is committed separately on the Surgeon Commitments page.</p>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/surgeon-profile/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Surgeon Profile</button>

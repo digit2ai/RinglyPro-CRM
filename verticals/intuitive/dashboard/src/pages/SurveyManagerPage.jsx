@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 // ── Status Badge ───────────────────────────────────────────────
 
@@ -825,6 +826,16 @@ export default function SurveyManagerPage({ projectId: propId }) {
           })}
         </div>
       )}
+
+      <PageNotes title="Surgeon Surveys">
+        <ul className="space-y-1.5 list-disc pl-4">
+          <li><span className="text-white font-semibold">What this answers:</span> What case volumes will the surgeons actually commit to? This page collects those commitments directly from the surgeons — the source data behind the whole business case.</li>
+          <li><span className="text-white font-semibold">How it works:</span> each surgeon gets a unique private <span className="text-cyan-300">magic link</span> (a one-time personalized survey URL). When <span className="text-cyan-300">SendGrid</span> is configured (API key + verified sender), invitations are <span className="text-white font-semibold">emailed automatically</span>; otherwise the links are generated for manual distribution by the rep.</li>
+          <li><span className="text-white font-semibold">Where the numbers come from:</span> everything here is <span className="text-white font-semibold">real, surgeon-entered data</span> — their projected robotic case volumes, procedure preferences, and willingness to commit. Nothing is modeled on this page.</li>
+          <li><span className="text-white font-semibold">What it feeds:</span> these responses become the <span className="text-cyan-300">surgeon commitments</span> that drive the Business Plan. <span className="text-amber-300">Incremental (net-new)</span> cases a surgeon commits to bring (recruited or grown practice) become <span className="text-amber-300">new revenue</span> in the IRR; existing open cases they would switch to da Vinci are <span className="text-cyan-300">conversions</span> that yield <span className="text-emerald-300">clinical cost avoidance</span>.</li>
+          <li><span className="text-white font-semibold">Bottom line:</span> responses are confidential and used for business planning only. The more surgeons respond, the more grounded — and credible — every downstream financial figure becomes.</li>
+        </ul>
+      </PageNotes>
     </div>
   )
 }

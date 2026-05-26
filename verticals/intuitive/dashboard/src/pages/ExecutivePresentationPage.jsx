@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 // Executive Presentation — slide+voice deck aligned to the new 10-step workflow.
 //
@@ -120,6 +121,18 @@ export default function ExecutivePresentationPage({ projectId: propId }) {
       {/* Slide content */}
       <div className="max-w-6xl mx-auto px-6 pt-6">
         {slides[activeSlide]}
+      </div>
+
+      {/* How to read this page (hidden in print so it never breaks the slide-per-page deck) */}
+      <div className="max-w-6xl mx-auto px-6 print:hidden">
+        <PageNotes title="Executive Presentation">
+          <ul className="space-y-1.5 list-disc pl-4">
+            <li><span className="text-white font-semibold">What this is:</span> The slide deck version of the case, narrated by Rachel — a 10-slide <span className="text-cyan-300">executive summary</span> for a live CFO / board conversation. No slide computes anything new; each one displays figures already produced in the detailed steps.</li>
+            <li><span className="text-white font-semibold">Every figure traces back to the steps:</span> hospital metrics from the <span className="text-cyan-300">Hospital Profile</span>, committed cases from <span className="text-cyan-300">Surgeon Commitments</span>, dollarized savings from the <span className="text-cyan-300">Clinical Benefit Overlay</span> (the MOAT slide), and IRR / payback from the <span className="text-cyan-300">Business Plan</span>. The deck reconciles with those pages exactly.</li>
+            <li><span className="text-white font-semibold">Two kinds of dollars, never combined:</span> <span className="text-emerald-300">cost avoidance</span> (money the hospital stops losing when existing <span className="text-cyan-300">open</span> cases are converted to da Vinci — same case, different technique, no new volume) is kept separate from <span className="text-amber-300">revenue</span> (money earned from <span className="text-cyan-300">incremental / net-new</span> cases surgeons commit to bring). Only that incremental revenue drives the IRR / NPV.</li>
+            <li><span className="text-white font-semibold">Bottom line:</span> The IRR / NPV on these slides equals the Business Plan's, and the <span className="text-emerald-300">cost avoidance</span> equals the Clinical Benefit Overlay's. This is the consistent summary view — the underlying steps are the source of truth.</li>
+          </ul>
+        </PageNotes>
       </div>
 
       {/* Slide navigation (hidden in print) */}

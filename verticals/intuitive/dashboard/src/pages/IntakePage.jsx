@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 const HOSPITAL_TYPES = ['academic', 'community', 'rural', 'specialty', 'VA', 'military']
 const BUDGET_RANGES = ['<1M', '1-2M', '2-3M', '3M+']
@@ -586,6 +587,17 @@ export default function IntakePage({ onProjectCreated, currentProject }) {
           {loading ? 'Analyzing Hospital Profile...' : 'Run SurgicalMind AI Match'}
         </button>
       </form>
+
+      <PageNotes title="Hospital Assessment Intake">
+        <p className="mb-2">This is the <span className="text-white font-semibold">data-entry step</span> — it answers: <span className="text-cyan-300">what does this hospital actually look like?</span> Everything downstream (analysis, system match, ROI, business plan) is computed from what lands here, so accuracy of these inputs is everything.</p>
+        <p className="mb-2">There are two ways to fill it in, and they differ in provenance:</p>
+        <ul className="list-disc ml-5 space-y-1">
+          <li><span className="text-white font-semibold">AI Business Analyst Agent</span> — type a hospital name and the agent auto-fills the form, then cross-checks against <span className="text-emerald-300">public federal sources</span>: CMS Hospital Compare, the NPI Registry (surgeon roster), CMS HCRIS cost reports, CMS Open Payments, CMS physician procedure volume (MPUP), and IRS Form 990. Fields confirmed by a government source are tagged <span className="text-emerald-300">CFO-defensible</span> with a citation link; where the AI guessed and a source disagreed, the source value wins (shown in the reconciliation card).</li>
+            <li><span className="text-white font-semibold">Manual entry</span> — the rep types the numbers directly. These are <span className="text-cyan-300">entered estimates</span>, not verified, until a public source confirms them.</li>
+        </ul>
+        <p className="mt-2">No formula runs on this page — it only collects inputs. Confirmed (federal-source) values and entered/estimated values both flow forward, but only the confirmed ones carry a citation.</p>
+        <p className="mt-2"><span className="text-white font-semibold">Bottom line:</span> this page produces <span className="text-red-300">no dollar figures and no return</span>. It is the raw input. Treat green-cited fields as audited fact and everything else as an estimate to verify.</p>
+      </PageNotes>
     </div>
   )
 }

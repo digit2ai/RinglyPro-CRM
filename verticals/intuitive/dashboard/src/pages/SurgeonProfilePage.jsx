@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Cell, LabelList, Label,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // Step 2 — Surgeon Profile: credentialed surgeons, volume per surgeon, open/lap/robotic split
 
@@ -538,6 +539,16 @@ export default function SurgeonProfilePage({ projectId: propId }) {
           </table>
         )}
       </div>
+
+      <PageNotes title="Surgeon Profile">
+        <p className="mb-2"><span className="text-white font-semibold">What this answers:</span> who the credentialed surgeons are at this hospital and how much each one operates, split by technique (open / laparoscopic / robotic).</p>
+        <ul className="list-disc pl-5 space-y-1 mb-2">
+          <li>Surgeon names and IDs come from the <span className="text-cyan-300">NPI Registry (NPPES)</span> — the public federal directory of providers. This is <span className="text-white font-semibold">real, not modeled</span>.</li>
+          <li>Per-surgeon case volumes come from <span className="text-cyan-300">CMS Medicare physician claims</span> (MPUP). The robotic-vs-open-vs-lap split is the surgeon's actual claims-derived volume; where a surgeon has no claims match, captured commitment cases are used as a fallback.</li>
+          <li>The <span className="text-cyan-300">Training Pipeline</span> and CSR intel panels only show surgeons reached through the CSR system (survey, call, or a captured access note) — they reflect real contact, not the full roster.</li>
+        </ul>
+        <p><span className="text-white font-semibold">Bottom line:</span> this is the factual operator roster. A large <span className="text-white font-semibold">open</span> caseload is the pool that could be <span className="text-cyan-300">converted</span> to da Vinci later (cost avoidance); it does not by itself create <span className="text-amber-300">new revenue</span>. Net-new revenue is committed on the Surgeon Commitments page.</p>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/hospital-profile/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Hospital Profile</button>

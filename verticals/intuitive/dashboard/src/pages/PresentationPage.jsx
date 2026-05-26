@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 const COLORS = {
   sky: '#0ea5e9', emerald: '#10b981', yellow: '#eab308', red: '#ef4444',
@@ -738,6 +739,15 @@ export default function PresentationPage() {
         </h2>
         {slides[activeSlide]?.content}
       </div>
+
+      <PageNotes title="Presentation Deck">
+        <ul className="space-y-1.5 list-disc pl-4">
+          <li><span className="text-white font-semibold">What this is:</span> The client-facing slide deck — an <span className="text-cyan-300">executive summary</span> of the full assessment, narrated by Rachel. No slide produces a new number; each one displays figures already calculated in the detailed steps.</li>
+          <li><span className="text-white font-semibold">Every figure is sourced from the steps:</span> hospital metrics from the <span className="text-cyan-300">Hospital Profile</span>, committed cases from <span className="text-cyan-300">Surgeon Commitments</span>, dollarized savings from the <span className="text-cyan-300">Clinical Benefit Overlay</span>, and IRR / payback from the <span className="text-cyan-300">Business Plan</span> proforma. The deck reconciles with those pages exactly.</li>
+          <li><span className="text-white font-semibold">Two kinds of dollars, never added together:</span> <span className="text-emerald-300">cost avoidance</span> (money the hospital stops losing when existing <span className="text-cyan-300">open</span> cases are converted to da Vinci — same case, different technique, no new volume) is reported separately from <span className="text-amber-300">revenue</span> (money earned from <span className="text-cyan-300">incremental / net-new</span> cases surgeons commit to bring). Only the incremental revenue drives the IRR / NPV.</li>
+          <li><span className="text-white font-semibold">Bottom line:</span> The IRR / NPV here equals the Business Plan's; the <span className="text-emerald-300">cost avoidance</span> equals the Clinical Benefit Overlay's. This is the summary view — the underlying steps remain the source of truth.</li>
+        </ul>
+      </PageNotes>
 
       {/* Navigation */}
       <div className="flex items-center justify-between">

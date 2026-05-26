@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 export default function RecommendationsPage({ projectId: propId }) {
   const { projectId: paramId } = useParams()
@@ -228,6 +229,17 @@ export default function RecommendationsPage({ projectId: propId }) {
       ))}
 
       {recs.length === 0 && <div className="text-slate-400 text-center py-10">No recommendations generated yet. Run the analysis first.</div>}
+
+      <PageNotes title="System Recommendation">
+        <p className="mb-2">This page answers: <span className="text-cyan-300">which da Vinci model, and how many of them, should this hospital buy?</span> It is the output of the same analysis engine — no new outside data is pulled here.</p>
+        <ul className="list-disc ml-5 space-y-1">
+          <li><span className="text-white font-semibold">Fit Score (out of 100)</span> is a weighted match of the model to the hospital: volume fit (0–30), specialty coverage (0–25), budget fit (0–20), OR infrastructure (0–15), and a hospital-type bonus (0–10). Higher = better fit.</li>
+          <li><span className="text-white font-semibold">How many systems</span> = projected design-year robotic cases ÷ what one robot can handle per year, rounded up. One robot's yearly capacity ≈ (4.5 peak OR-hours/day × 70% target utilization × ~250 OR-days) ÷ ~2.5 hours per robotic case. The capacity card shows this exact arithmetic.</li>
+          <li>The projected case volume behind this is <span className="text-cyan-300">conversion-based</span> — existing open/laparoscopic cases that could shift to da Vinci (same cases, different technique), <span className="text-red-300">not net-new volume</span>. It sizes the equipment; it is not a revenue forecast.</li>
+          <li>When per-procedure clinical fit and volume-capacity math point to different models, the <span className="text-white font-semibold">Two Paths</span> card shows both — both are valid; the choice depends on whether clinical outcomes or capacity/ROI drives the decision.</li>
+        </ul>
+        <p className="mt-2"><span className="text-white font-semibold">Bottom line:</span> this is a <span className="text-cyan-300">capital-sizing recommendation</span> built on modeled volume and published capacity benchmarks. It tells you what to buy — the <span className="text-amber-300">new revenue</span> case is made separately from surgeon commitments and the Business Plan.</p>
+      </PageNotes>
     </div>
   )
 }

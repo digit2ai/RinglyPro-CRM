@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter,
   XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -416,6 +417,17 @@ export default function MarketProfilePage({ projectId: propId }) {
           <div className="text-sm text-slate-400">Loading market enrichment (Procedure Market Share · Growth Math · Competitive Landscape · Demographics)...</div>
         </div>
       )}
+
+      <PageNotes title="Market Profile">
+        <p className="mb-2">This page answers: <span className="text-cyan-300">how big is the surgical market around this hospital, how much of it does the hospital already capture, and who are the competitors?</span></p>
+        <ul className="list-disc ml-5 space-y-1">
+          <li><span className="text-white font-semibold">Hospital volume</span> is real: derived from <span className="text-emerald-300">public CMS Medicare Inpatient DRG data</span>. The <span className="text-white font-semibold">total regional market</span> is <span className="text-cyan-300">modeled</span> — estimated from state population (CBSA ≈ 8% of state population) × published procedure rates per 100,000 people.</li>
+          <li><span className="text-white font-semibold">Market Share</span> = hospital volume ÷ estimated regional market volume. <span className="text-white font-semibold">Remaining Opportunity</span> = regional market − hospital volume, valued at blended Medicare+commercial reimbursement rates.</li>
+          <li>The <span className="text-white font-semibold">Bed-Day Cost</span> uses the state non-profit hospital average (kff.org). <span className="text-white font-semibold">Demographics</span> use an eligible-pool factor (~65% robotic-eligible) and an Intuitive-published market growth rate.</li>
+        </ul>
+        <p className="mt-2"><span className="text-red-300">Important: the regional market gap is context only — it is NOT the conversion opportunity and NOT bookable revenue.</span> The real bookable case sizing comes from the conversion math (15% of open soft-tissue da Vinci-applicable cases) and from surgeon commitments, shown on other pages.</p>
+        <p className="mt-2"><span className="text-white font-semibold">Bottom line:</span> this is a <span className="text-cyan-300">market-sizing and positioning view</span> — a mix of real hospital data and modeled regional estimates. Treat the dollar opportunity figures as upper-bound context, not committed <span className="text-amber-300">revenue</span>.</p>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/robotics-program/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Robotics Program</button>

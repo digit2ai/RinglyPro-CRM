@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, ComposedChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList, ReferenceLine,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -1555,6 +1556,17 @@ export default function BusinessPlanPage({ projectId: propId }) {
           finalizing={finalizing}
         />
       )}
+
+      <PageNotes title="Business Plan Builder (Proforma ROI)">
+        <ul className="space-y-1.5 list-disc pl-4">
+          <li><span className="text-white font-semibold">What this answers:</span> Is buying the da Vinci system a sound financial decision? It produces the capital case — <span className="text-cyan-300">IRR</span>, <span className="text-cyan-300">NPV</span>, and <span className="text-cyan-300">payback</span>.</li>
+          <li><span className="text-white font-semibold">Where the numbers come from:</span> The case volumes are <span className="text-white font-semibold">real surgeon commitments</span> entered on the Surgeon Commitments page; reimbursement rates, system price (default $1.85M each), service cost, and contribution margin come from the plan inputs. Cost avoidance is pulled from the Clinical Benefit Overlay. The 5-year projection is <span className="text-white font-semibold">modeled</span> from those inputs.</li>
+          <li><span className="text-white font-semibold">What drives the return:</span> The IRR/NPV/payback are built on the <span className="text-amber-300">contribution margin (default 35%) of the case revenue</span> surgeons commit — chiefly the <span className="text-cyan-300">incremental (net-new)</span> cases they bring (recruited or grown practice) that earn <span className="text-amber-300">new revenue</span>. Year 0 is the capital outlay (cash out); each following year adds margin on revenue minus operating/service cost.</li>
+          <li><span className="text-white font-semibold">Reported separately, never folded in:</span> Clinical <span className="text-emerald-300">cost avoidance</span> from <span className="text-cyan-300">conversion</span> (an existing open surgery switched to da Vinci — same case, fewer bed-days, money the hospital stops losing) is shown in the value summary but is <span className="text-red-300">excluded from the IRR/NPV cash flows</span>. <span className="text-red-300">Revenue earned and money saved are never added into the same return figure.</span></li>
+          <li><span className="text-white font-semibold">Assumptions:</span> NPV discounted at an <span className="text-white font-semibold">8% hurdle rate</span>; adoption ramps so volume builds over years 1–3 (faster for already-trained surgeons, slower during training); contribution margin and 15% open-to-robotic conversion are configurable inputs.</li>
+          <li><span className="text-white font-semibold">Bottom line:</span> The headline IRR is the return on the capital purchase from <span className="text-amber-300">net-new revenue</span>; the clinical <span className="text-emerald-300">savings</span> are an additional, separately stated benefit.</li>
+        </ul>
+      </PageNotes>
     </div>
   )
 }

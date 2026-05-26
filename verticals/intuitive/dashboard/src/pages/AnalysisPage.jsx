@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import PageNotes from '../components/PageNotes'
 
 import ProcedureParetoChart from '../components/ProcedureParetoChart'
 import SeasonalityChart from '../components/SeasonalityChart'
@@ -495,6 +496,18 @@ export default function AnalysisPage({ projectId: propId }) {
           )}
         </SectionCard>
       </div>
+
+      <PageNotes title="Full Analysis">
+        <p className="mb-2">This page answers: <span className="text-cyan-300">how many robotic cases could this hospital do, how many systems would that take, and which da Vinci model fits?</span> The analysis engine runs these from the intake inputs — it does not pull new outside data here.</p>
+        <p className="mb-2">The three colored cards at the top divide the volume math into distinct buckets that must never be added together:</p>
+        <ul className="list-disc ml-5 space-y-1">
+          <li><span className="text-white font-semibold">Conversion</span> = an existing <span className="text-cyan-300">open or laparoscopic</span> surgery switched to da Vinci (same case, different technique). It is the same revenue, so the value is <span className="text-emerald-300">margin uplift / cost avoidance</span> only — <span className="text-red-300">no new volume, no new top-line revenue</span>. Modeled from your specialty mix using per-specialty convertibility rates (urology 85%, gynecology 45%, colorectal 35%, thoracic 30%, general 25%, head/neck 20%, cardiac 15%).</li>
+          <li><span className="text-white font-semibold">Market Incremental</span> = net-new cases captured from regional market share — modeled potential, not yet committed.</li>
+          <li><span className="text-white font-semibold">Surgeon Incremental</span> = net-new cases <span className="text-cyan-300">surgeons have actually committed to bring</span> (recruited or grown practice). This is <span className="text-amber-300">NEW revenue</span> and is the only volume that should drive IRR/NPV. It stays empty until surgeon surveys are collected.</li>
+        </ul>
+        <p className="mt-2"><span className="text-white font-semibold">Key formulas in plain words:</span> projected robotic volume = convertible cases × a 5-year adoption ramp (40% in Year 1, +15%/yr). Systems needed = projected design-year cases ÷ cases one robot can do per year, where one robot's capacity ≈ (4.5 peak OR-hours/day × 70% target utilization × ~250 OR-days) ÷ ~2.5 hours per robotic case. Margin uplift per converted case uses default ~$6,500 robotic vs ~$4,200 non-robotic margins (overridable per project).</p>
+        <p className="mt-2"><span className="text-white font-semibold">Bottom line:</span> Conversion = <span className="text-emerald-300">money saved (cost avoidance)</span>; Incremental = <span className="text-amber-300">money earned (new revenue)</span>. Most numbers here are <span className="text-cyan-300">modeled projections</span> built on published convertibility and capacity benchmarks — they are planning estimates, not guarantees.</p>
+      </PageNotes>
     </div>
   )
 }

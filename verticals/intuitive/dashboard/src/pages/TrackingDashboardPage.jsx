@@ -5,6 +5,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList, Cell,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // ─── Shared UI Helpers ────────────────────────────────────────
 
@@ -1110,6 +1111,17 @@ export default function TrackingDashboardPage({ planId: propPlanId }) {
           </div>
         </SectionCard>
       )}
+
+      <PageNotes title="Performance Tracking (Plan vs Actual)">
+        <ul className="space-y-1.5 list-disc pl-4">
+          <li><span className="text-white font-semibold">What this answers:</span> After the system is live, is the hospital actually hitting what the Business Plan promised?</li>
+          <li><span className="text-white font-semibold">Where the numbers come from:</span> "Plan" is the <span className="text-white font-semibold">Business Plan proforma</span> (the same committed cases, revenue, and savings). "Actual" is <span className="text-white font-semibold">real tracked results</span> — monthly post-go-live data ingested for this program. Until actuals are loaded the page shows baseline mode (plan trajectory only).</li>
+          <li><span className="text-white font-semibold">Key formula:</span> the plan target is pro-rated to the months elapsed (for example 6 of 12 months = half the annual plan), then variance = actual minus that pro-rated plan, as a percent.</li>
+          <li><span className="text-white font-semibold">The color codes</span> flag where to intervene: <span className="text-emerald-300">green</span> within ±5% of plan, <span className="text-amber-300">yellow</span> within ±15%, <span className="text-red-300">red</span> beyond 15% off plan. Per-system utilization is compared to an <span className="text-cyan-300">academic benchmark of 77 cases/quarter</span>.</li>
+          <li><span className="text-white font-semibold">Kept separate:</span> <span className="text-amber-300">incremental (net-new) revenue</span> and <span className="text-emerald-300">clinical cost avoidance</span> are tracked as distinct lines — money earned and money saved are never combined.</li>
+          <li><span className="text-white font-semibold">Bottom line:</span> this is the accountability scorecard and early-warning list — it shows whether the promised return is materializing and which surgeons or metrics need attention.</li>
+        </ul>
+      </PageNotes>
     </div>
   )
 }

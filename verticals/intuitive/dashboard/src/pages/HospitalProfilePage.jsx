@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Cell, ReferenceLine, LabelList,
 } from 'recharts'
+import PageNotes from '../components/PageNotes'
 
 // Step 1 — Hospital Profile: beds, financials, academic status, total cases
 // Mirrors Deck 1 Slide 1 (Academic Hospital Strategic Pillars) + Slide 5 (Da Vinci Impact)
@@ -412,6 +413,17 @@ export default function HospitalProfilePage({ projectId: propId }) {
           </div>
         </div>
       )}
+
+      <PageNotes title="Hospital Profile">
+        <p className="mb-2"><span className="text-white font-semibold">What this answers:</span> the hospital's strategic, operational, and financial impact from a Xi-to-dV5 program — beds, academic status, current fleet, and the 8 headline impact metrics.</p>
+        <ul className="list-disc pl-5 space-y-1 mb-2">
+          <li><span className="text-cyan-300">Incremental Cases / Incremental Revenue</span> are <span className="text-white font-semibold">net-new</span> cases the surgeons commit to bring (recruited or grown practice) — pulled from the <span className="text-white font-semibold">Surgeon Commitments</span> page. This is <span className="text-amber-300">money earned (new revenue)</span> and is what drives IRR/NPV.</li>
+          <li><span className="text-cyan-300">LOS Days Saved (Conversion)</span> is a modeled subset: <span className="text-white font-semibold">60% of incremental cases × 2.5-day length-of-stay delta</span>. This is <span className="text-emerald-300">money saved (cost avoidance)</span> from freed bed-days — never added to the revenue figure.</li>
+          <li><span className="text-cyan-300">OR Efficiency Time Savings</span> = case volume × 60 min/case × <span className="text-white font-semibold">14%</span> per-case efficiency (Intuitive published dV5-vs-Xi benchmark). <span className="text-cyan-300">Resident Learning Curve</span> uses a <span className="text-white font-semibold">33%</span> reduction (same source), academic centers only.</li>
+          <li><span className="text-cyan-300">Research Profile</span> publication counts are <span className="text-white font-semibold">real</span> live PubMed affiliation searches (NCBI). Capital Snapshot uses the hospital's entered current fleet plus the recommended placement split into Phase 1 / Phase 2.</li>
+        </ul>
+        <p><span className="text-white font-semibold">Bottom line:</span> the revenue metrics are <span className="text-amber-300">new earnings</span> from committed surgeons; the bed-day and OR-time metrics are <span className="text-emerald-300">cost avoidance</span>. They are reported side by side and never summed into one ROI number.</p>
+      </PageNotes>
 
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate('/intake')} className="text-sm text-slate-400 hover:text-slate-200">← Back to Hospital Intake</button>
