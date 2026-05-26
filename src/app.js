@@ -196,7 +196,16 @@ app.use((req, res, next) => {
       return res.redirect(301, '/intuitive/');
     // Root: serve the main landing page
     } else if (p === '/' || p === '') {
-      req.url = '/SurgicalMindAI.html';
+      // PUBLIC LANDING PAGE TAKEN OFFLINE (owner request 2026-05-26).
+      // Only the public marketing landing page is hidden — /intuitive (dashboard,
+      // proposal links, API), the CRM, and all other products stay fully online.
+      // Reversible: set env SURGICALMIND_LANDING_PUBLIC=1 to restore the landing page.
+      if (process.env.SURGICALMIND_LANDING_PUBLIC === '1') {
+        req.url = '/SurgicalMindAI.html';
+      } else {
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        return res.status(404).type('html').send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not available</title><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:#cbd5e1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.b{text-align:center;max-width:420px;padding:32px}h1{font-size:20px;color:#fff;margin:0 0 8px}p{font-size:14px;line-height:1.6;color:#94a3b8;margin:0}</style></head><body><div class="b"><h1>This page is not publicly available</h1><p>SurgicalMind is a private platform. If you were given a direct link, please use that link.</p></div></body></html>');
+      }
     }
   }
   next();
