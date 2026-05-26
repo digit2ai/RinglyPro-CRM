@@ -572,25 +572,26 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         </div>
       </div>
 
-      {/* Grand totals */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      {/* Grand totals — Converted and Incremental are SEPARATE cards (2026-05-26 review) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div className="bg-slate-800/60 border border-slate-700 rounded p-4">
           <div className="text-3xl font-bold text-white">{surgeons.length}</div>
           <div className="text-xs text-slate-400">Total Surgeons</div>
+          <div className="text-[11px] text-slate-500 mt-1">{fmt(grandTotalCases)} total cases/yr</div>
+        </div>
+        <div className="bg-slate-800/60 border border-red-700/40 rounded p-4">
+          <div className="text-3xl font-bold text-red-300">{fmt(splitTotals.converted)}</div>
+          <div className="text-xs text-slate-400">Converted Cases/yr</div>
+          <div className="text-[11px] text-slate-500 mt-1">Existing OPEN × % · auto</div>
+        </div>
+        <div className="bg-slate-800/60 border border-cyan-700/40 rounded p-4">
+          <div className="text-3xl font-bold text-cyan-300">{fmt(splitTotals.incremental)}</div>
+          <div className="text-xs text-slate-400">Incremental Cases/yr</div>
+          <div className="text-[11px] text-slate-500 mt-1">Net-new · manually entered</div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700 rounded p-4">
-          <div className="text-3xl font-bold text-emerald-300">{fmt(grandTotalCases)}</div>
-          <div className="text-xs text-slate-400">Total Cases/yr</div>
-          <div className="text-[11px] mt-1">
-            <span className="text-red-300">{fmt(splitTotals.converted)} converted</span>
-            <span className="text-slate-600"> · </span>
-            <span className="text-cyan-300">{fmt(splitTotals.incremental)} incremental</span>
-          </div>
-        </div>
-        <div className="bg-slate-800/60 border border-slate-700 rounded p-4">
-          <div className="text-3xl font-bold text-cyan-300">{fmtMoney(grandTotalRevenue)}</div>
+          <div className="text-3xl font-bold text-emerald-300">{fmtMoney(grandTotalRevenue)}</div>
           <div className="text-xs text-slate-400">Total Revenue Impact</div>
-          <div className="text-[11px] text-slate-500 mt-1">Converted = open×% · Incremental = net-new (manual)</div>
         </div>
       </div>
 
