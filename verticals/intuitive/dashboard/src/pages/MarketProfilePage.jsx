@@ -147,8 +147,9 @@ export default function MarketProfilePage({ projectId: propId }) {
       {/* ═══ ADDITION #1 + INFOGRAPHIC #2: Procedure-Level Market Share + Volume Bars ═══ */}
       {enrichment?.procedure_market_share && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
-          <h3 className="font-bold text-white mb-1">Procedure-Level Market Share + Remaining Opportunity</h3>
-          <p className="text-xs text-slate-500 mb-4">{enrichment.procedure_market_share.headline}</p>
+          <h3 className="font-bold text-white mb-1">Procedure-Level Market Share + Regional Market Context</h3>
+          <p className="text-xs text-slate-500 mb-2">{enrichment.procedure_market_share.headline}</p>
+          <p className="text-[11px] text-slate-400 mb-4 bg-slate-700/30 border border-slate-600/40 rounded px-3 py-2"><strong className="text-slate-300">Regional Market = context only, NOT the conversion opportunity.</strong> The bookable incremental is 15% of open soft-tissue da Vinci-applicable cases (see Clinical Benefit Overlay) — not this regional gap.</p>
 
           {/* Chart: hospital vs benchmark per procedure */}
           <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">Volume by Procedure (Hospital vs Market)</div>
@@ -183,7 +184,7 @@ export default function MarketProfilePage({ projectId: propId }) {
                 <th className="text-left pb-2">Procedure</th>
                 <th className="text-right pb-2">Hospital Vol</th>
                 <th className="text-right pb-2">Mkt Share</th>
-                <th className="text-right pb-2">Remaining Opportunity</th>
+                <th className="text-right pb-2">Regional Market Gap</th>
                 <th className="text-right pb-2">Opportunity $</th>
               </tr>
             </thead>
@@ -261,7 +262,7 @@ export default function MarketProfilePage({ projectId: propId }) {
 
           {/* Remaining Opportunity Scatter */}
           <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
-            <h3 className="font-bold text-white mb-1">Remaining Opportunity Quadrant</h3>
+            <h3 className="font-bold text-white mb-1">Regional Market Gap Quadrant <span className="text-[10px] text-slate-500 font-normal">(context only)</span></h3>
             <p className="text-xs text-slate-500 mb-4">Top-right = high opportunity remaining · dot size = current hospital volume</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">

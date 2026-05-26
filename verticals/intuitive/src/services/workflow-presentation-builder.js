@@ -190,14 +190,17 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
 
   // ───── SLIDE 5: MARKET PROFILE ─────
   slides.push({
-    title: 'Step 4 · Market Profile — Share + Remaining Opportunity',
+    title: 'Step 4 · Market Profile — Share + Regional Market Context',
     html: `
       ${mp?.procedure_market_share ? `
         <div class="metrics-grid">
           ${metric('Current Mkt Share', mp.procedure_market_share.blended_market_share_pct + '%', '#06b6d4')}
           ${metric('Hospital Volume', fmt(mp.procedure_market_share.total_hospital_volume))}
-          ${metric('Remaining Opportunity', fmt(mp.procedure_market_share.total_remaining_opportunity), '#ef4444')}
+          ${metric('Total Regional Market', fmt(mp.procedure_market_share.total_remaining_opportunity), '#94a3b8')}
           ${mp?.growth_math ? metric('+1% Share Value', fmtMoneyShort(mp.growth_math.dollars_per_1_pct_share), '#10b981') : ''}
+        </div>
+        <div class="info-box" style="background:rgba(148,163,184,0.10);border-color:rgba(148,163,184,0.35)">
+          <strong style="color:#cbd5e1">Total Regional Market = context only, NOT the conversion opportunity.</strong> This is the estimated regional case pool Mayo doesn't currently capture. The bookable incremental is the conservative <strong>15% of OPEN soft-tissue da Vinci-applicable cases</strong> (see Step 6) — not this market gap.
         </div>
       ` : ''}
       ${mp?.growth_math?.scenarios ? `
