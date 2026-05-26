@@ -73,9 +73,22 @@ function buildSystemAssumptions(project, plan, analysis = {}) {
 
 // ─── 2. 5-YEAR PROFORMA (Deck 3 Slide 13) ─────────────────────────────
 
+// True IRR via bisection (one sign change: capex out at t0, inflows after).
+function _irr(cashflows) {
+  const npv = (r) => cashflows.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0);
+  let lo = -0.9, hi = 5.0;
+  if (npv(lo) * npv(hi) > 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2, v = npv(mid);
+    if (Math.abs(v) < 1) return mid;
+    if (npv(lo) * v < 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = null) {
   const systemQuantity = parseInt(plan?.system_quantity || 1);
-  const systemPrice = parseFloat(plan?.system_price) || 2500000;
+  const systemPrice = parseFloat(plan?.system_price) || 1850000;
   const annualServiceCost = parseFloat(plan?.annual_service_cost) || 0;
   const acquisitionModel = plan?.acquisition_model || 'purchase';
 
@@ -151,6 +164,12 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
   const trainedRamp    = { 1: 0.8, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.0 };
   const untrainedRamp  = { 1: 0.25, 2: 0.75, 3: 1.0, 4: 1.0, 5: 1.0 };
 
+  // Contribution margin on incremental revenue (hard cash for the IRR; gross
+  // revenue + cost avoidance are still shown in the P&L as total value created).
+  const contributionMargin = (parseFloat(plan?.contribution_margin_pct) || 35) / 100;
+  const digitalSubscription = 70000;
+  const marginCashflows = [-capitalExpenditure]; // Y0 capex out (0 for lease/AMP)
+
   for (let y = 1; y <= 5; y++) {
     const yearRevenue =
       revenueFromConversion * conversionRamp[y] +
@@ -158,9 +177,11 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
       revenueFromNetNewUntrained * untrainedRamp[y];
     const yearCostAvoidance = totalClinicalSavings * conversionRamp[y];
     const yearReturn = yearRevenue + yearCostAvoidance;
-    const yearExpense = annualServiceCost + annualLeaseOrAmpExpense;
+    const yearExpense = annualServiceCost + annualLeaseOrAmpExpense + (y >= 2 ? digitalSubscription : 0);
     const yearNet = yearReturn - yearExpense;
     cumulativeNet += yearNet;
+    // Cash flow for IRR = contribution margin on revenue − operating expense
+    marginCashflows.push(Math.round(yearRevenue * contributionMargin - yearExpense));
     yearlyData.push({
       year: `Year ${y}`,
       capital_expense: 0,
@@ -177,19 +198,25 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
   const totalReturn = yearlyData.reduce((s, y) => s + y.revenue + y.cost_avoidance, 0);
   const totalNet = totalReturn - totalExpense;
 
-  // IRR + Payback
-  const paybackYearObj = yearlyData.find(y => y.cumulative_net >= 0 && y.year !== 'Year 0');
-  const paybackYears = paybackYearObj
-    ? parseInt(paybackYearObj.year.split(' ')[1]) - (yearlyData[parseInt(paybackYearObj.year.split(' ')[1])].cumulative_net / paybackYearObj.net_return)
-    : null;
-  const projectIRR = capitalExpenditure > 0
-    ? Math.round((totalAnnualReturn / capitalExpenditure) * 100 * 10) / 10
-    : 0;
+  // Proper multi-year IRR + NPV(8%) on the margin cash flows (matches the
+  // Clinical Benefit Overlay). Payback from cumulative margin cash flows.
+  const irr = _irr(marginCashflows);
+  const projectIRR = irr != null ? Math.round(irr * 100 * 10) / 10 : null;
+  const npv8 = Math.round(marginCashflows.reduce((s, cf, t) => s + cf / Math.pow(1.08, t), 0));
+  let mCum = 0, paybackYears = null;
+  for (let t = 0; t < marginCashflows.length; t++) {
+    mCum += marginCashflows[t];
+    if (mCum >= 0 && t > 0 && paybackYears === null) {
+      paybackYears = t - (marginCashflows[t] ? (mCum / marginCashflows[t]) : 0);
+    }
+  }
 
   // Investment Summary KPIs (mirrors Deck 3 Slide 13)
   const totalConvertedCases = surgeons.reduce((s, sg) => s + parseInt(sg.total_incremental_annual || 0), 0);
   const investmentSummary = {
     project_irr: projectIRR,
+    npv_8pct: npv8,
+    contribution_margin_pct: Math.round(contributionMargin * 100),
     estimated_payback_years: paybackYears ? Math.round(paybackYears * 10) / 10 : null,
     incremental_admissions_5yr: Math.round(totalIncrementalRevenue * 5 / 18500), // weighted per-case revenue
     open_to_mis_conversions_5yr: totalConvertedCases * 5,
@@ -206,9 +233,9 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
       net_return: Math.round(totalNet),
     },
     investment_summary: investmentSummary,
-    headline: paybackYears
-      ? `Project IRR ${projectIRR}% · Payback ${Math.round(paybackYears * 10) / 10} yrs · 5-yr net \$${Math.round(totalNet / 1e6 * 10) / 10}M`
-      : `Project IRR ${projectIRR}% · 5-yr net \$${Math.round(totalNet / 1e6 * 10) / 10}M`,
+    headline: projectIRR != null
+      ? `Project IRR ${projectIRR}% · NPV(8%) \$${Math.round(npv8 / 1e6 * 10) / 10}M · Payback ${paybackYears ? Math.round(paybackYears * 10) / 10 + ' yrs' : '5+ yrs'}`
+      : `NPV(8%) \$${Math.round(npv8 / 1e6 * 10) / 10}M · Payback ${paybackYears ? Math.round(paybackYears * 10) / 10 + ' yrs' : '5+ yrs'}`,
     methodology: 'Category-aware ramp: conversion revenue (existing/OPEN-only @ 15%) Y1 50%/Y2 75%/Y3+ 100%; net-new commitments from TRAINED surgeons Y1 80%/Y2+ 100%; net-new from UNTRAINED Y1 25%/Y2 75%/Y3+ 100%. Clinical cost avoidance follows the conversion ramp. Capital expensed Y0 for purchase, amortized over 5 yrs for lease/AMP.',
   };
 }

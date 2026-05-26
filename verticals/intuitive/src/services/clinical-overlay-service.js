@@ -120,71 +120,108 @@ function buildCostOfWaiting(bedDaysTable, businessPlan = {}) {
 
 // ─── 3. INVESTMENT PAYBACK ANALYSIS (Deck 1 p15 / Deck 3 p15) ─────────
 
-function buildInvestmentPayback(project, bedDaysTable, businessPlan = {}, analysis = {}) {
+// True IRR via bisection (one sign change expected: outflow at t0, inflows after).
+function computeIRR(cashflows) {
+  const npv = (r) => cashflows.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0);
+  let lo = -0.9, hi = 5.0;
+  if (npv(lo) * npv(hi) > 0) return null;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    const v = npv(mid);
+    if (Math.abs(v) < 1) return mid;
+    if (npv(lo) * v < 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function buildInvestmentPayback(project, bedDaysTable, businessPlan = {}, analysis = {}, bpSummary = null) {
   const matched = analysis.model_matching || {};
   const util = analysis.utilization_forecast || {};
 
-  // System cost (capital expenditure)
-  const systemPrice = parseFloat(businessPlan.system_price) || 2500000; // dV5 default
+  // Capital expenditure
+  const systemPrice = parseFloat(businessPlan.system_price) || 1850000; // dV5 ASP
   const systemQuantity = parseInt(businessPlan.system_quantity || util.systems_needed || matched.primary_recommendation?.quantity || 1);
-  const annualServiceCost = parseFloat(businessPlan.annual_service_cost) || 0;
   const capitalExpenditure = systemPrice * systemQuantity;
-  const totalSystemCost5yr = capitalExpenditure + (annualServiceCost * 5);
 
-  // Annual savings + revenue
-  const annualClinicalSavings = bedDaysTable?.total_dollar_savings || 0;
+  // Ongoing operating costs (annual): service contract + digital subscription (~$70k/yr from Y2).
+  const annualServiceCost = parseFloat(businessPlan.annual_service_cost) || 0; // dV5 service often bundled
+  const digitalSubscription = 70000;
+
+  // ── IRR is based on the HARD financial return only: contribution MARGIN on
+  // incremental revenue (not gross revenue, and NOT the soft clinical cost
+  // avoidance). Clinical cost avoidance is reported separately as added value.
+  const contributionMargin = (parseFloat(businessPlan.contribution_margin_pct) || 35) / 100;
   const annualIncrementalRevenue = parseFloat(businessPlan.total_incremental_revenue || 0);
-  const annualNetBenefit = annualClinicalSavings + annualIncrementalRevenue - annualServiceCost;
+  const annualClinicalSavings = bedDaysTable?.total_dollar_savings || 0; // reported separately
+  const annualMarginFull = annualIncrementalRevenue * contributionMargin;
 
-  // 5-year cumulative return
-  const cumulativeReturn = [];
+  // 5-year cash flows with adoption ramp (Y1 50% / Y2 75% / Y3+ 100%)
+  const cashflows = [-capitalExpenditure];
+  const cumulativeReturn = [{ year: 0, annual_return: 0, cumulative_return: -capitalExpenditure, breakeven: capitalExpenditure }];
   let cumNet = -capitalExpenditure;
-  cumulativeReturn.push({ year: 0, annual_return: 0, cumulative_return: cumNet, breakeven: capitalExpenditure });
   for (let y = 1; y <= 5; y++) {
-    // Ramp: 50% Y1, 75% Y2, 100% Y3+
     const ramp = y === 1 ? 0.5 : y === 2 ? 0.75 : 1.0;
-    const yearReturn = annualNetBenefit * ramp;
-    cumNet += yearReturn;
-    cumulativeReturn.push({ year: y, annual_return: Math.round(yearReturn), cumulative_return: Math.round(cumNet), breakeven: capitalExpenditure });
+    const ongoing = annualServiceCost + (y >= 2 ? digitalSubscription : 0);
+    const yearCash = Math.round(annualMarginFull * ramp - ongoing);
+    cashflows.push(yearCash);
+    cumNet += yearCash;
+    cumulativeReturn.push({ year: y, annual_return: yearCash, cumulative_return: Math.round(cumNet), breakeven: capitalExpenditure });
   }
 
-  // Payback year (first year cumulative ≥ 0)
+  // Proper IRR + NPV at an 8% hurdle rate
+  const irr = computeIRR(cashflows);
+  const project_irr_pct = irr != null ? Math.round(irr * 100 * 10) / 10 : null;
+  const hurdle = 0.08;
+  const npv8 = Math.round(cashflows.reduce((s, cf, t) => s + cf / Math.pow(1 + hurdle, t), 0));
+
+  // Payback (first year cumulative ≥ 0, interpolated)
   const paybackYear = cumulativeReturn.find(c => c.cumulative_return >= 0 && c.year > 0);
   const paybackYears = paybackYear
-    ? paybackYear.year - (cumulativeReturn[paybackYear.year - 1].cumulative_return < 0
+    ? paybackYear.year - (cumulativeReturn[paybackYear.year - 1].cumulative_return < 0 && paybackYear.annual_return
         ? Math.abs(cumulativeReturn[paybackYear.year - 1].cumulative_return) / paybackYear.annual_return
         : 0)
     : null;
 
-  // IRR (simplified): annual net benefit / capital expenditure
-  const project_irr_pct = capitalExpenditure > 0 ? Math.round((annualNetBenefit / capitalExpenditure) * 100 * 10) / 10 : 0;
+  const annualNetBenefit = Math.round(annualMarginFull - (annualServiceCost + digitalSubscription));
 
-  // 6 KPIs from the deck
+  // Canonical alignment: if the Business Plan proforma IRR/NPV/payback are passed
+  // in, use those so the moat slide, the Business Plan, and the Executive Brief
+  // all show the SAME figure (they use the same margin basis, slightly different ramps).
+  const irrOut = (bpSummary && bpSummary.project_irr != null) ? bpSummary.project_irr : project_irr_pct;
+  const npvOut = (bpSummary && bpSummary.npv_8pct != null) ? bpSummary.npv_8pct : npv8;
+  const paybackOut = (bpSummary && bpSummary.estimated_payback_years != null)
+    ? bpSummary.estimated_payback_years
+    : (paybackYears ? Math.round(paybackYears * 10) / 10 : null);
+
+  // KPIs
   const totalOpenToMisConversions = bedDaysTable?.total_converted_cases || 0;
   const bedDaysPreserved5yr = (bedDaysTable?.total_bed_days_saved || 0) * 5;
-  const totalCostAvoidance5yr = annualClinicalSavings * 5;
-  const incrementalAdmissions = Math.round(annualIncrementalRevenue / 18500); // weighted avg per-case rev
+  const totalCostAvoidance5yr = Math.round(annualClinicalSavings * 5);
   const incrementalRevenue5yr = annualIncrementalRevenue * 5;
 
   return {
-    project_irr_pct,
-    estimated_payback_years: paybackYears ? Math.round(paybackYears * 10) / 10 : null,
+    project_irr_pct: irrOut,
+    npv_8pct: npvOut,
+    estimated_payback_years: paybackOut,
     capital_expenditure: capitalExpenditure,
-    annual_net_benefit: Math.round(annualNetBenefit),
+    contribution_margin_pct: Math.round(contributionMargin * 100),
+    annual_revenue_margin: Math.round(annualMarginFull),
+    annual_net_benefit: annualNetBenefit,
+    annual_clinical_cost_avoidance: Math.round(annualClinicalSavings),
     cumulative_return_5yr: cumulativeReturn,
     kpis: [
-      { label: 'Project IRR', value: `${project_irr_pct}%`, raw: project_irr_pct },
-      { label: 'Estimated Payback', value: paybackYears ? `${Math.round(paybackYears * 10) / 10} Years` : 'n/a', raw: paybackYears },
-      { label: 'Incremental Admissions', value: incrementalAdmissions.toLocaleString(), raw: incrementalAdmissions },
+      { label: 'Project IRR', value: irrOut != null ? `${irrOut}%` : 'n/a', raw: irrOut },
+      { label: 'NPV @ 8%', value: '$' + npvOut.toLocaleString(), raw: npvOut },
+      { label: 'Estimated Payback', value: paybackOut ? `${paybackOut} Years` : 'n/a', raw: paybackOut },
       { label: 'Open-to-MIS Conversions', value: totalOpenToMisConversions.toLocaleString(), raw: totalOpenToMisConversions },
       { label: 'Bed-Days Preserved (5yr)', value: bedDaysPreserved5yr.toLocaleString(), raw: bedDaysPreserved5yr },
-      { label: 'Total Cost Avoidance (5yr)', value: '$' + totalCostAvoidance5yr.toLocaleString(), raw: totalCostAvoidance5yr },
+      { label: 'Clinical Cost Avoidance (5yr)', value: '$' + totalCostAvoidance5yr.toLocaleString(), raw: totalCostAvoidance5yr },
       { label: 'Incremental Revenue (5yr)', value: '$' + incrementalRevenue5yr.toLocaleString(), raw: incrementalRevenue5yr },
     ],
-    headline: paybackYears
-      ? `Project IRR ${project_irr_pct}% · Estimated Payback ${Math.round(paybackYears * 10) / 10} Years · Breakeven in Y${paybackYear?.year || '?'}`
-      : `Project IRR ${project_irr_pct}% · Payback beyond 5-year horizon`,
-    methodology: '5-year proforma with Y1=50%, Y2=75%, Y3+=100% adoption ramp. IRR simplified as annual net benefit ÷ capital expenditure. Breakeven = first year cumulative return ≥ capital expenditure.',
+    headline: irrOut != null
+      ? `Project IRR ${irrOut}% · NPV(8%) $${(npvOut / 1e6).toFixed(1)}M · Payback ${paybackOut ? paybackOut + ' yrs' : '5+ yrs'}`
+      : `Payback ${paybackOut ? paybackOut + ' yrs' : 'beyond 5-yr horizon'}`,
+    methodology: `True multi-year IRR/NPV on 5-yr cash flows. Return = ${Math.round(contributionMargin * 100)}% contribution margin on incremental revenue, ramped Y1 50% / Y2 75% / Y3+ 100%, minus service + digital subscription. Clinical cost avoidance is reported separately as added value, not folded into the capital IRR. NPV discounted at an 8% hurdle rate.`,
   };
 }
 
@@ -325,9 +362,19 @@ async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct
     }
   } catch (e) {}
 
+  // Pull the canonical IRR/NPV/payback from the Business Plan proforma so this
+  // page, the Business Plan page, and the Executive Brief all agree. (Safe one-way
+  // import: business-plan-service does not require clinical-overlay-service.)
+  let bpSummary = null;
+  try {
+    const businessPlanService = require('./business-plan-service');
+    const bpe = await businessPlanService.buildBusinessPlanEnrichment({ projectId, models });
+    bpSummary = bpe?.proforma?.investment_summary || null;
+  } catch (e) { /* fall back to local IRR */ }
+
   const bedDaysTable = buildBedDaysSavingsTable(project, conversionPct);
   const costOfWaiting = buildCostOfWaiting(bedDaysTable, businessPlan);
-  const investmentPayback = buildInvestmentPayback(project, bedDaysTable, businessPlan, analysis);
+  const investmentPayback = buildInvestmentPayback(project, bedDaysTable, businessPlan, analysis, bpSummary);
   const outcomesDriver = buildOutcomesDriverTable(project, bedDaysTable, bedDaysTable.total_converted_cases);
   const complicationBurden = buildComplicationBurden(bedDaysTable, project);
 
