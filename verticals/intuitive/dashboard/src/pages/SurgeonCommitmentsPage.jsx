@@ -699,7 +699,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
       )}
 
       {/* ═══ ADDITION #3 + INFOGRAPHIC #3: Pull-Forward Capacity Visualization (Deck 3 Slide 10) ═══ */}
-      {enrichment?.pull_forward_capacity?.length > 0 && (
+      {enrichment?.pull_forward_capacity?.length > 0 && enrichment.pull_forward_capacity.reduce((s, p) => s + (p.additional_annual_cases || 0), 0) > 0 && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
           <h3 className="font-bold text-white mb-1">Pull-Forward Capacity — Current vs Target Weekly Volume</h3>
           <p className="text-xs text-slate-500 mb-4">
