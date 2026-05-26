@@ -121,12 +121,23 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
     : parseFloat(plan?.total_incremental_revenue || 0);
   if (totalSurgeonRevenue === 0) revenueFromConversion = totalIncrementalRevenue;
 
-  // Clinical cost avoidance: prefer the stored plan field, but if it's empty
-  // (common — it's only populated by an explicit clinical-outcomes dollarization run),
-  // derive it from the committed surgeons' bed-days saved × state-local bed-day cost.
-  // This is the SAME $ figure surfaced on Step 7 (Surgeon Commitments), so the two
-  // steps now agree instead of Step 8 showing $0.
+  // Clinical cost avoidance (Clinical Outcome Savings). Per 2026-05-26 review:
+  // this is a SEPARATE number from incremental revenue — it is the bed-day $ saved by
+  // CONVERTING existing OPEN soft-tissue cases to robotic (hospital-wide 15% assumption),
+  // NOT the surgeons' net-new incremental volume. It must populate even when the committed
+  // surgeons carry only incremental (net-new) cases (which is why Step 8 showed $0 before:
+  // per-surgeon bed-days only counts converted cases). Canonical source = the Clinical
+  // Benefit Overlay's hospital-wide conversion model, so Step 8 now matches Step 6.
   let totalClinicalSavings = parseFloat(plan?.total_clinical_outcome_savings || 0);
+  let conversionBedDaysSaved = 0;
+  if (project) {
+    try {
+      const overlay = require('./clinical-overlay-service');
+      const bdt = overlay.buildBedDaysSavingsTable(project, 15);
+      conversionBedDaysSaved = bdt.total_bed_days_saved || 0;
+      if (!totalClinicalSavings) totalClinicalSavings = bdt.total_dollar_savings || 0;
+    } catch (e) { /* fall through to surgeon-derived below */ }
+  }
   if (!totalClinicalSavings && surgeons.length) {
     try {
       const bedDays = surgeonCommitmentsService.buildPerSurgeonBedDays(surgeons, project);
@@ -220,7 +231,7 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
     estimated_payback_years: paybackYears ? Math.round(paybackYears * 10) / 10 : null,
     incremental_admissions_5yr: Math.round(totalIncrementalRevenue * 5 / 18500), // weighted per-case revenue
     open_to_mis_conversions_5yr: totalConvertedCases * 5,
-    bed_days_preserved_5yr: surgeons.reduce((s, sg) => s + parseInt(sg.total_incremental_annual || 0) * 2.5, 0) * 5,
+    bed_days_preserved_5yr: Math.round((conversionBedDaysSaved || surgeons.reduce((s, sg) => s + parseInt(sg.total_incremental_annual || 0) * 2.5, 0)) * 5),
     total_cost_avoidance_5yr: totalClinicalSavings * 5,
     incremental_revenue_5yr: totalIncrementalRevenue * 5,
   };
