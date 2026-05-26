@@ -544,11 +544,17 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         <p className="mb-2">
           <span className="text-emerald-300 font-semibold">Conversion</span> = an existing <strong className="text-white">OPEN</strong> surgery switched to da Vinci. Same patient, same case — only the technique changes. It does <span className="text-red-300 font-semibold">not add new volume</span>; its value is <span className="text-emerald-300 font-semibold">clinical cost avoidance</span> — shorter stays (bed-days saved) and fewer complications, readmissions and infections. That is money the hospital <strong className="text-white">stops losing</strong>, not new income.
         </p>
-        <p className="mb-2">
-          On this page, <span className="text-cyan-300 font-semibold">"Incremental"</span> means the conversion opportunity itself — <strong className="text-white">{conversionPct}% of the eligible OPEN da Vinci-applicable cases</strong>. Laparoscopic cases, robotic cases, and any procedure outside the da Vinci-applicable list never count.
-        </p>
+        <p className="mb-2 text-white font-semibold">"Incremental" is used in two different senses across this tool — do not mix them:</p>
+        <ul className="list-disc pl-5 mb-2 space-y-1">
+          <li>
+            <span className="text-amber-300 font-semibold">Net-new incremental (revenue):</span> cases surgeons <strong className="text-white">commit to bring</strong> — e.g., recruited from another hospital or grown practice. New volume → <strong className="text-white">new revenue</strong>. This is what feeds the <span className="text-amber-300 font-semibold">Investment Payback (IRR / NPV / Payback)</span> via the Business Plan.
+          </li>
+          <li>
+            <span className="text-cyan-300 font-semibold">Conversion "incremental" (savings):</span> on this page, the "incremental opportunity" = <strong className="text-white">{conversionPct}% of the eligible OPEN da Vinci-applicable cases</strong> converting from open to robotic. No new volume → <span className="text-emerald-300 font-semibold">cost avoidance only</span>. Laparoscopic/robotic cases and out-of-scope procedures never count.
+          </li>
+        </ul>
         <p>
-          The only revenue-side block is <span className="text-amber-300 font-semibold">Investment Payback (IRR / NPV / Payback)</span>, driven by incremental <strong className="text-white">revenue</strong> margin from the Business Plan. Clinical cost avoidance is reported <strong className="text-white">separately</strong> and is never folded into the IRR — keeping the CFO case defensible. <span className="text-slate-400 italic">Bottom line: almost everything on this page is what the hospital <strong className="text-white">saves</strong> (cost avoidance); only Investment Payback reflects what it <strong className="text-white">earns</strong> (new revenue).</span>
+          These are <strong className="text-white">different pools</strong> and must not be added together. <span className="text-slate-400 italic">Bottom line: this page is almost entirely <strong className="text-white">cost avoidance</strong> (conversion of existing open cases); the only revenue figure is Investment Payback, driven by <strong className="text-white">net-new surgeon-commitment volume</strong> (the Business Plan), not by the conversion pool.</span>
         </p>
       </div>
 
