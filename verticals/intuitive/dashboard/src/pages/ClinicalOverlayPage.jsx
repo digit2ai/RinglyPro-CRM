@@ -538,6 +538,20 @@ export default function ClinicalOverlayPage({ projectId: propId }) {
         </>
       )}
 
+      {/* ── Methodology note: Conversion vs. Incremental (annotation to explain the page) ── */}
+      <div className="mt-8 bg-slate-800/40 border border-slate-700 rounded-lg p-5 text-sm text-slate-300 leading-relaxed">
+        <div className="text-[10px] uppercase tracking-widest text-cyan-300 font-bold mb-2">How to read this page · Conversion vs. Incremental</div>
+        <p className="mb-2">
+          <span className="text-emerald-300 font-semibold">Conversion</span> = an existing <strong className="text-white">OPEN</strong> surgery switched to da Vinci. Same patient, same case — only the technique changes. It does <span className="text-red-300 font-semibold">not add new volume</span>; its value is <span className="text-emerald-300 font-semibold">clinical cost avoidance</span> — shorter stays (bed-days saved) and fewer complications, readmissions and infections. That is money the hospital <strong className="text-white">stops losing</strong>, not new income.
+        </p>
+        <p className="mb-2">
+          On this page, <span className="text-cyan-300 font-semibold">"Incremental"</span> means the conversion opportunity itself — <strong className="text-white">{conversionPct}% of the eligible OPEN da Vinci-applicable cases</strong>. Laparoscopic cases, robotic cases, and any procedure outside the da Vinci-applicable list never count.
+        </p>
+        <p>
+          The only revenue-side block is <span className="text-amber-300 font-semibold">Investment Payback (IRR / NPV / Payback)</span>, driven by incremental <strong className="text-white">revenue</strong> margin from the Business Plan. Clinical cost avoidance is reported <strong className="text-white">separately</strong> and is never folded into the IRR — keeping the CFO case defensible. <span className="text-slate-400 italic">Bottom line: almost everything on this page is what the hospital <strong className="text-white">saves</strong> (cost avoidance); only Investment Payback reflects what it <strong className="text-white">earns</strong> (new revenue).</span>
+        </p>
+      </div>
+
       <div className="mt-8 flex justify-between">
         <button onClick={() => navigate(`/clinical-outcomes/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Clinical Outcomes</button>
         <button onClick={() => navigate(`/commitments/${id}`)} className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2 rounded">
