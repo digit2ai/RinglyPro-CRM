@@ -66,6 +66,12 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
       detail: '14% per-case efficiency × projected case volume (DV5 published benchmark)',
     },
     {
+      label: 'Incremental Cases',
+      value: incrementalCases > 0 ? `${incrementalCases.toLocaleString()}+ cases` : '—',
+      raw_value: incrementalCases,
+      detail: 'From surgeon commitments (net-new, manually entered on Step 7)',
+    },
+    {
       label: 'LOS Days Saved (Conversion)',
       value: losDaysSaved > 0 ? `${losDaysSaved.toLocaleString()} bed days` : '—',
       raw_value: losDaysSaved,
@@ -76,12 +82,6 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
       value: incrementalAccessLOS > 0 ? `${incrementalAccessLOS.toLocaleString()} bed days` : '—',
       raw_value: incrementalAccessLOS,
       detail: 'From pull-forward capacity expansion (surgeons waiting for access)',
-    },
-    {
-      label: 'Instrumentation Savings',
-      value: instrumentationSavings > 0 ? '$' + (instrumentationSavings / 1e6).toFixed(2) + 'M' : '—',
-      raw_value: instrumentationSavings,
-      detail: 'Xi-to-dV5 instrumentation cost reduction strategy',
     },
     {
       label: 'Research, Publication & Grants',
