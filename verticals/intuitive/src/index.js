@@ -587,6 +587,8 @@ app.get(`${BASE_PATH}/proposal/:projectId/guide`, async (req, res) => {
     const allSlides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
     // Printable guide omits the sales "Recommendation & Next Steps" closer (kept in the deck).
     const slides = allSlides.filter(s => !/Recommendation & Next Steps/.test(s.title));
+    let chartData = {};
+    try { chartData = wfBuilder.buildWorkflowChartData(enrichments, project) || {}; } catch (e) { console.error('[guide chartData]', e.message); }
     const mountPath = req.baseUrl || BASE_PATH || '';
     const generated = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     // Local formatters (the slide HTML already carries its own metric formatting).
@@ -669,6 +671,8 @@ app.get(`${BASE_PATH}/proposal/:projectId/guide`, async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${hospitalName} — Step-by-Step da Vinci Assessment Guide</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"><\/script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -694,7 +698,9 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
 .data-table th{text-align:left;color:#94a3b8;border-bottom:1px solid #334155;padding:7px 8px;text-transform:uppercase;font-size:10px;letter-spacing:1px}
 .data-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0}
-.chart-box,.chart-2col{display:none !important}
+.chart-box,.chart-2col{display:none}
+.chart-2col:has(#wfCommitmentComposition){display:block}
+.chart-box:has(#wfStrategicImpact),.chart-box:has(#wfKolQuadrant),.chart-box:has(#wfModalityTrend),.chart-box:has(#wfMarketShare),.chart-box:has(#wfLosVariability),.chart-box:has(#wfCumulativeReturn),.chart-box:has(#wfCommitmentComposition),.chart-box:has(#wfAnnualPnl),.chart-box:has(#wfPerfProjection){display:block;position:relative;height:300px;max-width:760px;margin:14px auto;background:#0b1428;border:1px solid #1e293b;border-radius:10px;padding:10px}
 .step-intro{font-size:14px;color:#cbd5e1;margin:8px 0 6px;line-height:1.65}
 .takeaway{margin-top:14px;background:rgba(16,185,129,0.07);border-left:3px solid #10b981;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#d1fae5;line-height:1.6}
 .takeaway .tk-label{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6ee7b7;font-weight:700;margin-right:8px}
@@ -718,7 +724,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   .step{page-break-before:always}
   .step:first-of-type{page-break-before:avoid}
   .toc{page-break-after:always}
-  .exec,.glossary,.takeaway,.appendix{page-break-inside:avoid}
+  .exec,.glossary,.takeaway,.appendix,.chart-box{page-break-inside:avoid}
 }
 </style></head>
 <body>
@@ -746,6 +752,31 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
   ${methodologyHtml}
   <div class="info-box" style="margin-top:24px;text-align:center;color:#64748b">End of guide · every figure is sourced from public, auditable data — see each step's "How these numbers are calculated".</div>
 </div>
+<script>
+const chartData=${JSON.stringify(chartData)};
+(function(){
+  if(!window.Chart){return;}
+  try{ Chart.register(ChartDataLabels); }catch(e){}
+  Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#1e293b';Chart.defaults.plugins.datalabels={display:false};
+  var dv5='#0ea5e9',xi='#10b981',xc='#eab308',sp='#8b5cf6',red='#ef4444';
+  var fmtN=function(n){return n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(0)+'K':String(Math.round(n));};
+  var dlH={display:true,color:'#e2e8f0',font:{size:10,weight:'bold'},anchor:'end',align:'right',offset:4,formatter:function(v){return String(Math.round(v));}};
+  var dlPct={display:true,color:'#fff',font:{size:10,weight:'bold'},anchor:'center',align:'center',formatter:function(v,ctx){var t=ctx.chart.data.datasets[0].data.reduce(function(s,x){return s+x;},0);return t>0?Math.round(v/t*100)+'%':'';}};
+  var opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'},beginAtZero:true}};
+  var hOpts={responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}},datalabels:dlH},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'},beginAtZero:true},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}};
+  var charts={};
+  function mk(id,cfg){var el=document.getElementById(id);if(!el)return;try{charts[id]=new Chart(el.getContext('2d'),cfg);}catch(e){}}
+  if(chartData.wfStrategicImpact&&chartData.wfStrategicImpact.length){mk('wfStrategicImpact',{type:'bar',data:{labels:chartData.wfStrategicImpact.map(function(d){return d.label;}),datasets:[{label:'Impact',data:chartData.wfStrategicImpact.map(function(d){return d.value;}),backgroundColor:xi,borderRadius:3}]},options:Object.assign({},hOpts,{plugins:Object.assign({},hOpts.plugins,{datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'right',offset:4,formatter:function(v,ctx){return chartData.wfStrategicImpact[ctx.dataIndex].display||v;}}})})});}
+  if(chartData.wfKolQuadrant&&chartData.wfKolQuadrant.length){mk('wfKolQuadrant',{type:'bubble',data:{datasets:[{label:'KOLs',data:chartData.wfKolQuadrant.map(function(d){return {x:d.x,y:d.y,r:d.r};}),backgroundColor:sp,borderColor:sp}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'center',align:'top',offset:8,formatter:function(v,ctx){return chartData.wfKolQuadrant[ctx.dataIndex].label.split(' ').slice(-1)[0];}}},scales:{x:{title:{display:true,text:'Robotic Volume (cases/yr)',color:'#94a3b8'},ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},y:{title:{display:true,text:'Publications (5yr)',color:'#94a3b8'},ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}}}}});}
+  if(chartData.wfModalityTrend&&chartData.wfModalityTrend.length){mk('wfModalityTrend',{type:'line',data:{labels:chartData.wfModalityTrend.map(function(d){return d.label;}),datasets:[{label:'Da Vinci',data:chartData.wfModalityTrend.map(function(d){return d.davinci;}),borderColor:'#1e40af',tension:0.3,borderWidth:3,pointRadius:4},{label:'Lap',data:chartData.wfModalityTrend.map(function(d){return d.lap;}),borderColor:'#93c5fd',tension:0.3,borderWidth:2,pointRadius:3},{label:'Open',data:chartData.wfModalityTrend.map(function(d){return d.open;}),borderColor:'#cbd5e1',borderDash:[3,3],tension:0.3,borderWidth:2,pointRadius:3}]},options:Object.assign({},opts,{scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return v+'%';}})})})})});}
+  if(chartData.wfMarketShare&&chartData.wfMarketShare.length){mk('wfMarketShare',{type:'bar',data:{labels:chartData.wfMarketShare.map(function(d){return d.label;}),datasets:[{label:'Hospital',data:chartData.wfMarketShare.map(function(d){return d.hospital;}),backgroundColor:'#06b6d4',borderRadius:2},{label:'Total Market',data:chartData.wfMarketShare.map(function(d){return d.market;}),backgroundColor:'#94a3b8',borderRadius:2}]},options:Object.assign({},opts,{scales:Object.assign({},opts.scales,{x:Object.assign({},opts.scales.x,{ticks:Object.assign({},opts.scales.x.ticks,{maxRotation:60,minRotation:45,font:{size:9}})})})})});}
+  if(chartData.wfLosVariability&&chartData.wfLosVariability.length){mk('wfLosVariability',{type:'bar',data:{labels:chartData.wfLosVariability.map(function(d){return d.label;}),datasets:[{label:'Open',data:chartData.wfLosVariability.map(function(d){return d.open;}),backgroundColor:'#94a3b8'},{label:'MIS',data:chartData.wfLosVariability.map(function(d){return d.mis;}),backgroundColor:'#93c5fd'},{label:'dV',data:chartData.wfLosVariability.map(function(d){return d.davinci;}),backgroundColor:'#1e40af'}]},options:Object.assign({},hOpts,{plugins:Object.assign({},hOpts.plugins,{datalabels:{display:false}}),scales:Object.assign({},hOpts.scales,{x:Object.assign({},hOpts.scales.x,{ticks:Object.assign({},hOpts.scales.x.ticks,{callback:function(v){return v+' days';}})})})})});}
+  if(chartData.wfCumulativeReturn&&chartData.wfCumulativeReturn.length){mk('wfCumulativeReturn',{type:'line',data:{labels:chartData.wfCumulativeReturn.map(function(d){return 'Y'+d.label;}),datasets:[{label:'Cumulative Return',data:chartData.wfCumulativeReturn.map(function(d){return d.cumulative;}),borderColor:xi,backgroundColor:'rgba(16,185,129,0.15)',fill:true,tension:0.2,pointRadius:5,borderWidth:3},{label:'Breakeven',data:chartData.wfCumulativeReturn.map(function(){return 0;}),borderColor:red,borderDash:[6,4],pointRadius:0,borderWidth:2}]},options:Object.assign({},opts,{scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return '$'+(v/1e6).toFixed(1)+'M';}})})})})});}
+  if(chartData.wfCommitmentComposition&&chartData.wfCommitmentComposition.length){mk('wfCommitmentComposition',{type:'doughnut',data:{labels:chartData.wfCommitmentComposition.map(function(d){return d.label;}),datasets:[{data:chartData.wfCommitmentComposition.map(function(d){return d.value;}),backgroundColor:chartData.wfCommitmentComposition.map(function(d){return d.color;})}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9}}},datalabels:dlPct}}});}
+  if(chartData.wfAnnualPnl&&chartData.wfAnnualPnl.length){mk('wfAnnualPnl',{type:'bar',data:{labels:chartData.wfAnnualPnl.map(function(d){return d.label;}),datasets:[{label:'Revenue',data:chartData.wfAnnualPnl.map(function(d){return d.revenue;}),backgroundColor:sp,stack:'returns'},{label:'Cost Avoidance',data:chartData.wfAnnualPnl.map(function(d){return d.cost_avoidance;}),backgroundColor:xi,stack:'returns'},{label:'Capital Expense',data:chartData.wfAnnualPnl.map(function(d){return d.capital_expense;}),backgroundColor:red,stack:'expenses'},{label:'Operating Expense',data:chartData.wfAnnualPnl.map(function(d){return d.operating_expense;}),backgroundColor:'#f59e0b',stack:'expenses'}]},options:Object.assign({},opts,{scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return '$'+(v/1e6).toFixed(0)+'M';}})})})})});}
+  if(chartData.wfPerfProjection&&chartData.wfPerfProjection.length){mk('wfPerfProjection',{type:'bar',data:{labels:chartData.wfPerfProjection.map(function(d){return d.label;}),datasets:[{type:'line',label:'Cumulative Cases (Plan)',data:chartData.wfPerfProjection.map(function(d){return d.cumulative;}),borderColor:xi,backgroundColor:'rgba(16,185,129,0.12)',fill:true,tension:0.3,pointRadius:5,borderWidth:3,yAxisID:'y'},{type:'bar',label:'Annual Cases (Plan)',data:chartData.wfPerfProjection.map(function(d){return d.annual;}),backgroundColor:dv5,borderRadius:4,yAxisID:'y'}]},options:Object.assign({},opts,{plugins:Object.assign({},opts.plugins,{datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'top',formatter:function(v){return fmtN(v);}}}),scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return fmtN(v);}})})})})});}
+})();
+<\/script>
 </body></html>`);
   } catch (error) {
     console.error('[Intuitive Proposal guide] Error:', error);
