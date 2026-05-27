@@ -717,10 +717,11 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .appendix{border-top:2px solid #334155;margin-top:26px;padding-top:18px}
 .appendix h3{font-size:16px;color:#f8fafc;margin-bottom:10px}
 .appendix li{margin:5px 0 5px 18px;font-size:12px;color:#cbd5e1}
-@page{margin:1.4cm}
+@page{margin:0}
 @media print{
+  html,body{background:#0f172a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .toolbar{display:none}
-  .wrap{max-width:100%;padding:0}
+  .wrap{max-width:100%;background:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:1.4cm 1.4cm 1.8cm}
   .step{page-break-before:always}
   .step:first-of-type{page-break-before:avoid}
   .toc{page-break-after:always}
