@@ -185,7 +185,7 @@ export default function SurgeonProfilePage({ projectId: propId }) {
                     { stage: 'Total Roster', value: surgeons.length, color: '#475569' },
                     { stage: 'Trained on dV', value: enrichment.training_pipeline.trained.length + enrichment.training_pipeline.pull_forward.length, color: '#22c55e' },
                     { stage: 'Open-to-MIS Committed', value: enrichment.training_pipeline.trained.length, color: '#10b981' },
-                    { stage: 'Pull-Forward (Access)', value: enrichment.training_pipeline.pull_forward.length, color: '#06b6d4' },
+                    { stage: 'Splitter', value: enrichment.training_pipeline.pull_forward.length, color: '#06b6d4' },
                     { stage: 'Pipeline (TR200)', value: enrichment.training_pipeline.untrained.length, color: '#f59e0b' },
                     { stage: 'Needs Proctoring', value: enrichment.training_pipeline.needs_proctoring.length, color: '#3b82f6' },
                   ].filter(d => d.value > 0)}
@@ -204,7 +204,7 @@ export default function SurgeonProfilePage({ projectId: propId }) {
                       { stage: 'Total Roster', color: '#475569' },
                       { stage: 'Trained on dV', color: '#22c55e' },
                       { stage: 'Open-to-MIS Committed', color: '#10b981' },
-                      { stage: 'Pull-Forward (Access)', color: '#06b6d4' },
+                      { stage: 'Splitter', color: '#06b6d4' },
                       { stage: 'Pipeline (TR200)', color: '#f59e0b' },
                       { stage: 'Needs Proctoring', color: '#3b82f6' },
                     ].map((d, i) => <Cell key={i} fill={d.color} />)}
@@ -322,7 +322,7 @@ export default function SurgeonProfilePage({ projectId: propId }) {
             </span>
           </div>
           <p className="text-xs text-slate-500 mb-4">{enrichment.training_pipeline.headline}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-emerald-950/30 border border-emerald-700/50 rounded-lg p-4">
               <div className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">Trained</div>
               <div className="text-3xl font-bold text-emerald-300 mt-1">{enrichment.training_pipeline.trained.length}</div>
@@ -331,16 +331,8 @@ export default function SurgeonProfilePage({ projectId: propId }) {
                 <div key={i} className="text-[11px] text-slate-300 truncate">• {s.surgeon_name} ({s.cases_annual} cases)</div>
               ))}
             </div>
-            <div className="bg-amber-950/30 border border-amber-700/50 rounded-lg p-4">
-              <div className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">In Training Pipeline</div>
-              <div className="text-3xl font-bold text-amber-300 mt-1">{enrichment.training_pipeline.untrained.length}</div>
-              <div className="text-[10px] text-amber-200 mb-2">need TR200 / luminary training</div>
-              {enrichment.training_pipeline.untrained.slice(0, 3).map((s, i) => (
-                <div key={i} className="text-[11px] text-slate-300 truncate">• {s.surgeon_name} {s.training_needs ? `(${s.training_needs})` : ''}</div>
-              ))}
-            </div>
             <div className="bg-cyan-950/30 border border-cyan-700/50 rounded-lg p-4">
-              <div className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold">Pull-Forward (Need Access)</div>
+              <div className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold">Splitter</div>
               <div className="text-3xl font-bold text-cyan-300 mt-1">{enrichment.training_pipeline.pull_forward.length}</div>
               <div className="text-[10px] text-cyan-200 mb-2">blocked by capacity</div>
               {enrichment.training_pipeline.pull_forward.slice(0, 3).map((s, i) => (
