@@ -309,9 +309,13 @@ async function autoSeedForPlan(planId, ctx) {
     const incrementalAnnual = cls.base_incremental;
     if (incrementalAnnual < 1) { skipped++; continue; }
 
-    const procedures = buildProcedureBreakdown(s.specialty, incrementalAnnual, financial);
-    const totalAnnual = procedures.reduce((sum, p) => sum + (p.incremental_cases_annual || 0), 0);
-    const totalRevenue = procedures.reduce((sum, p) => sum + ((p.incremental_cases_annual || 0) * (p.reimbursement_rate || 0)), 0);
+    // CLIENT RULE (2026-05): incremental (net-new) volume is MANUAL entry only.
+    // Auto-Seed imports the real surgeon ROSTER from analysis at ZERO committed
+    // cases/revenue — the rep manually enters each surgeon's committed volume.
+    // Nothing incremental is fabricated.
+    const procedures = [];
+    const totalAnnual = 0;
+    const totalRevenue = 0;
 
     // Categorize for the 3-tab CFO view: high-volume trained → open_to_mis,
     // medium-volume trained → pull_forward, no-data → training_pipeline
