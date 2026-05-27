@@ -584,7 +584,9 @@ app.get(`${BASE_PATH}/proposal/:projectId/guide`, async (req, res) => {
     const hospitalName = project.hospital_name || 'Your Hospital';
     const wfBuilder = require('./services/workflow-presentation-builder');
     const enrichments = await wfBuilder.fetchAllEnrichments(projectId, models);
-    const slides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
+    const allSlides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
+    // Printable guide omits the sales "Recommendation & Next Steps" closer (kept in the deck).
+    const slides = allSlides.filter(s => !/Recommendation & Next Steps/.test(s.title));
     const mountPath = req.baseUrl || BASE_PATH || '';
     const generated = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     // Local formatters (the slide HTML already carries its own metric formatting).
