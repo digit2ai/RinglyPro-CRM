@@ -66,18 +66,6 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
       detail: '14% per-case efficiency × projected case volume (DV5 published benchmark)',
     },
     {
-      label: 'Incremental Cases',
-      value: incrementalCases > 0 ? `${incrementalCases.toLocaleString()}+ cases` : '—',
-      raw_value: incrementalCases,
-      detail: 'From surgeon commitments across all three categories',
-    },
-    {
-      label: 'Incremental Revenue',
-      value: incrementalRevenue > 0 ? '$' + Math.round(incrementalRevenue / 1e6).toLocaleString() + 'M' : '—',
-      raw_value: incrementalRevenue,
-      detail: 'Annual revenue impact from incremental cases',
-    },
-    {
       label: 'LOS Days Saved (Conversion)',
       value: losDaysSaved > 0 ? `${losDaysSaved.toLocaleString()} bed days` : '—',
       raw_value: losDaysSaved,
