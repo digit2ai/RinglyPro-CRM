@@ -348,6 +348,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
       <span class="slide-counter" id="counter">1 / ${slides.length}</span>
       <button id="btnNext" onclick="nextSlide()">&rarr;</button>
       <div class="voice-indicator"><div class="dot" id="voiceDot"></div>Rachel</div>
+      <a href="${mountPath}/proposal/${projectId}/guide" target="_blank" rel="noopener" style="background:#1e293b;border:1px solid #334155;color:#7dd3fc;padding:6px 14px;border-radius:8px;font-size:13px;text-decoration:none;white-space:nowrap">Printable Guide</a>
     </div>
   </div>
   <div class="slide-area"><div class="slide" id="slideContent"></div></div>
@@ -567,6 +568,92 @@ document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowD
   } catch (error) {
     console.error('[Intuitive Proposal page] Error:', error);
     res.status(500).send('Error loading proposal: ' + error.message);
+  }
+});
+
+// ── Printable step-by-step guide (browser print → PDF). Uses the SAME builders
+//    and numbers as the slide deck; explains the logic behind every step.
+//    No audio/narration involved. Linked from the deck header. ──
+app.get(`${BASE_PATH}/proposal/:projectId/guide`, async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    const seq = models.sequelize;
+    const [projRows] = await seq.query('SELECT * FROM intuitive_projects WHERE id = :projectId', { replacements: { projectId } });
+    const project = projRows[0];
+    if (!project) return res.status(404).send('Project not found');
+    const hospitalName = project.hospital_name || 'Your Hospital';
+    const wfBuilder = require('./services/workflow-presentation-builder');
+    const enrichments = await wfBuilder.fetchAllEnrichments(projectId, models);
+    const slides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
+    const mountPath = req.baseUrl || BASE_PATH || '';
+    const generated = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const sections = slides.map((s) => `
+      <section class="step">
+        <h2 class="step-title">${s.title}</h2>
+        ${s.html}
+      </section>`).join('\n');
+    res.send(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${hospitalName} — Step-by-Step da Vinci Assessment Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.wrap{max-width:980px;margin:0 auto;padding:18px 28px 60px}
+.toolbar{position:sticky;top:0;background:#0f172a;border-bottom:1px solid #1e293b;padding:14px 0;display:flex;gap:12px;align-items:center;justify-content:space-between;z-index:10}
+.toolbar .t-left{font-size:13px;color:#94a3b8}
+.toolbar a{color:#7dd3fc;text-decoration:none}
+.toolbar .print-btn{background:#0ea5e9;border:1px solid #0ea5e9;color:#fff;font-weight:700;padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer}
+.doc-head{text-align:center;padding:26px 0 14px;border-bottom:2px solid #334155}
+.doc-head h1{font-size:30px;color:#f8fafc}
+.doc-head .sub{color:#94a3b8;font-size:15px;margin-top:6px}
+.doc-head .meta{color:#64748b;font-size:12px;margin-top:10px}
+.glossary{background:rgba(14,165,233,0.07);border:1px solid #0ea5e9;border-radius:10px;padding:16px 18px;margin:18px 0;font-size:13px;color:#cbd5e1}
+.glossary h3{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#7dd3fc;margin-bottom:8px}
+.glossary li{margin:5px 0 5px 18px}
+.step{border-top:1px solid #1e293b;padding:22px 0 6px}
+.step-title{font-size:20px;color:#f8fafc;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #334155}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.metric{background:#111c33;border:1px solid #334155;border-radius:10px;padding:14px 10px;text-align:center}
+.metric-value{font-size:18px;font-weight:bold;word-break:break-word}
+.metric-label{font-size:11px;color:#94a3b8;margin-top:4px}
+.info-box{background:#111c33;border:1px solid #334155;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;color:#cbd5e1}
+.data-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.data-table th{text-align:left;color:#94a3b8;border-bottom:1px solid #334155;padding:7px 8px;text-transform:uppercase;font-size:10px;letter-spacing:1px}
+.data-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0}
+.chart-box,.chart-2col{display:none !important}
+@media print{
+  .toolbar{display:none}
+  .wrap{max-width:100%;padding:0}
+  .step{page-break-before:always}
+  .step:first-of-type{page-break-before:avoid}
+}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <span class="t-left">Charts &amp; voice narration are in the <a href="${mountPath}/proposal/${projectId}">interactive deck</a> · this is the printable detail version</span>
+    <button class="print-btn" onclick="window.print()">Save as PDF / Print</button>
+  </div>
+  <div class="doc-head">
+    <h1>${hospitalName}</h1>
+    <div class="sub">da Vinci System Assessment · Step-by-Step Guide — the logic behind every number</div>
+    <div class="meta">Prepared by SurgicalMind AI · Digit2AI · ${generated} · CONFIDENTIAL — for executive review</div>
+  </div>
+  <div class="glossary">
+    <h3>Two terms to keep straight</h3>
+    <ul>
+      <li><strong style="color:#34d399">Conversion (cost avoidance)</strong> — this hospital's own existing OPEN cases switched to da Vinci. Same case, better technique &rarr; shorter stays, fewer complications &rarr; money the hospital <strong>stops losing</strong>. No new volume. (Step 6)</li>
+      <li><strong style="color:#a78bfa">Incremental (new revenue)</strong> — net-new cases surgeons commit to bring IN from other hospitals that lack da Vinci capacity &rarr; new volume &rarr; new revenue &rarr; drives the IRR / payback. (Steps 7&ndash;8)</li>
+      <li>They are never added into one ROI figure: the IRR is built only on the incremental revenue; conversion savings are reported separately.</li>
+    </ul>
+  </div>
+  ${sections}
+  <div class="info-box" style="margin-top:24px;text-align:center;color:#64748b">End of guide · every figure is sourced from public, auditable data (CMS, NPPES, PubMed) — see each step's "How these numbers are calculated".</div>
+</div>
+</body></html>`);
+  } catch (error) {
+    console.error('[Intuitive Proposal guide] Error:', error);
+    res.status(500).send('Error loading guide: ' + error.message);
   }
 });
 
