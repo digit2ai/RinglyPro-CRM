@@ -587,11 +587,83 @@ app.get(`${BASE_PATH}/proposal/:projectId/guide`, async (req, res) => {
     const slides = wfBuilder.buildWorkflowSlides(project, enrichments, hospitalName);
     const mountPath = req.baseUrl || BASE_PATH || '';
     const generated = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const sections = slides.map((s) => `
-      <section class="step">
+    // Local formatters (the slide HTML already carries its own metric formatting).
+    const fmtN = (n) => (n == null || isNaN(Number(n))) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const money = (n) => { if (n == null || isNaN(Number(n))) return '—'; const v = Number(n); if (v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B'; if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M'; if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K'; return '$' + Math.round(v); };
+    const bpSum = enrichments.bp?.proforma?.investment_summary || {};
+    const scSum = enrichments.sc?.summary || {};
+
+    // Per-step elaborated narrative (framing intro + plain-English takeaway), indexed to slide order.
+    const narr = [
+      { intro: `This assessment makes the business case for ${hospitalName}'s da Vinci robotic-surgery program, built end-to-end from public, auditable records — no figure is supplied by the device maker, and nothing is guessed. The radar shows relative strength across the six dimensions scored on the pages that follow.`,
+        takeaway: `Read each step as "the result, plus the formula behind it." Every number traces back to a named public source.` },
+      { intro: `Step 1 establishes the hospital's size and how its installed robotic base compares to a matched set of peer institutions. It answers a simple question: how much surgery happens here, and how much robotic headroom remains?`,
+        takeaway: `This is the baseline the whole case builds on — surgical scale, and the gap between current robotic use and what peers achieve.` },
+      { intro: `Step 2 identifies the surgeons who drive (or could drive) robotic volume — the key opinion leaders — and sorts them by training status. Robotic volume comes from Medicare claims; where a surgeon has no claims match, their captured commitment is used and clearly marked "committed."`,
+        takeaway: `Trained and pull-forward surgeons are the engine of the commitments in Step 7. Surgeons still in the pipeline are upside that is deliberately not yet counted.` },
+      { intro: `Step 3 shows the current robot fleet and how hard each system is worked, measured against the academic-program benchmark, and compares the open / laparoscopic / robotic case mix to peers.`,
+        takeaway: `Only the OPEN share is treated as convertible — and even then the case models just 15% of it. Laparoscopic cases are already minimally invasive and are never counted.` },
+      { intro: `Step 4 sizes the regional market and the hospital's share of it. The "remaining opportunity" is shown to size the market; it is explicitly context, not a promise.`,
+        takeaway: `The bookable number is NOT the market gap. It is the conservative 15%-of-open conversion (Step 6) plus the surgeon commitments (Step 7).` },
+      { intro: `Step 5 compares the hospital's current clinical outcomes — infections, readmissions, length of stay — against national benchmarks. No dollars are claimed here; this step simply locates the clinical headroom.`,
+        takeaway: `The gap between open and robotic length-of-stay is the raw material that Step 6 turns into dollars.` },
+      { intro: `Step 6 is the centerpiece on the savings side. Converting existing OPEN cases to da Vinci shortens stays and prevents complications, readmissions and infections. This is cost avoidance — money the hospital stops losing on cases it already performs.`,
+        takeaway: `This entire step is cost avoidance, not new revenue. It is reported separately and never folded into the IRR — which is exactly what keeps the financial case defensible to a CFO.` },
+      { intro: `Step 7 is the revenue engine. Named surgeons commit additional da Vinci cases — net-new volume they bring in from facilities where they are blocked by capacity, plus new recruits. The two cards split that committed volume into Incremental (net-new, drives revenue) and Conversion (open cases, drives savings).`,
+        takeaway: `The total is a floor, not a stretch: surgeons still in training count as zero until they commit. Incremental cases drive the revenue and the IRR; converted cases drive the cost avoidance.` },
+      { intro: `Step 8 turns the committed volume into a 5-year financial return. Returns ramp the way real adoption happens — not full run-rate on day one — and are discounted against the system's capital cost.`,
+        takeaway: `IRR, NPV and payback are built only on the contribution margin of net-new (incremental) revenue. Clinical cost avoidance is shown as a separate line so the board sees real cash vs. cost simply not spent.` },
+      { intro: `Step 9 is the accountability layer. The plan approved here becomes a fixed trajectory; after go-live, each surgeon's actual monthly billed cases are measured against it.`,
+        takeaway: `Nothing is re-modeled after approval — it is actual volume vs. the committed plan, refreshed monthly, with on-track / at-risk / off-track bands.` },
+      { intro: `The closing summary ties the clinical and financial cases together.`,
+        takeaway: `Two value streams, kept separate on purpose: money saved (conversion / cost avoidance) and money earned (incremental / new revenue). Together they form a case neither the device maker nor data-only competitors can produce.` },
+    ];
+
+    const sections = slides.map((s, i) => {
+      const n = narr[i] || {};
+      return `
+      <section class="step" id="step-${i}">
         <h2 class="step-title">${s.title}</h2>
+        ${n.intro ? `<p class="step-intro">${n.intro}</p>` : ''}
         ${s.html}
-      </section>`).join('\n');
+        ${n.takeaway ? `<div class="takeaway"><span class="tk-label">Takeaway</span> ${n.takeaway}</div>` : ''}
+      </section>`;
+    }).join('\n');
+
+    const tocHtml = `<div class="toc"><h3>Contents</h3><ol>${slides.map((s, i) => `<li><a href="#step-${i}">${s.title}</a></li>`).join('')}</ol></div>`;
+
+    const execHtml = `
+      <div class="exec">
+        <h3>Executive Summary — ${hospitalName}</h3>
+        <div class="exec-grid">
+          <div class="exec-item"><div class="v" style="color:#10b981">${bpSum.project_irr != null ? bpSum.project_irr + '%' : '—'}</div><div class="l">Project IRR</div></div>
+          <div class="exec-item"><div class="v" style="color:#06b6d4">${bpSum.estimated_payback_years != null ? bpSum.estimated_payback_years + ' yrs' : '—'}</div><div class="l">Payback</div></div>
+          <div class="exec-item"><div class="v" style="color:#a78bfa">${money(bpSum.incremental_revenue_5yr)}</div><div class="l">5-yr Incremental Revenue</div></div>
+          <div class="exec-item"><div class="v" style="color:#f59e0b">${money(bpSum.total_cost_avoidance_5yr)}</div><div class="l">5-yr Cost Avoidance</div></div>
+          <div class="exec-item"><div class="v" style="color:#06b6d4">${fmtN(scSum.total_incremental_cases)}</div><div class="l">Total Committed Cases / yr</div></div>
+          <div class="exec-item"><div class="v" style="color:#a78bfa">${fmtN(scSum.by_category?.pull_forward?.cases)}</div><div class="l">Incremental (net-new) cases</div></div>
+          <div class="exec-item"><div class="v" style="color:#34d399">${fmtN(scSum.by_category?.open_to_mis?.cases)}</div><div class="l">Conversion cases</div></div>
+          <div class="exec-item"><div class="v" style="color:#8b5cf6">${money(scSum.total_revenue_impact)}</div><div class="l">Annual Incremental Revenue</div></div>
+        </div>
+      </div>`;
+
+    const methodologyHtml = `
+      <div class="appendix">
+        <h3>Data Sources &amp; Methodology</h3>
+        <p style="font-size:13px;color:#cbd5e1;margin-bottom:8px">Every figure in this guide is built from public, auditable data. Nothing is supplied by the device manufacturer, and nothing is guessed.</p>
+        <ul>
+          <li><strong>CMS Hospital Compare</strong> — beds, OR count, outcome rates.</li>
+          <li><strong>CMS Medicare Cost Report (HCRIS)</strong> — facility financial baseline.</li>
+          <li><strong>CMS Physician Volume (MPUP)</strong> &amp; <strong>Medicare Inpatient (MS-DRG)</strong> — surgeon and procedure volumes, and length-of-stay by surgical approach.</li>
+          <li><strong>CMS Open Payments</strong> — industry-relationship context for KOLs.</li>
+          <li><strong>NPPES / NPI Registry</strong> — surgeon identity and facility affiliations.</li>
+          <li><strong>PubMed / NCBI</strong> — live 5-year publication counts.</li>
+          <li><strong>IRS Form 990 (ProPublica)</strong> &amp; state filings — non-profit financial context.</li>
+          <li><strong>kff.org</strong> — state cost-per-bed-day used to dollarize length-of-stay savings.</li>
+          <li><strong>Peer-reviewed literature</strong> (JAMA Surgery, Cochrane, AHRQ HCUP) — open-vs-robotic complication and length-of-stay deltas.</li>
+        </ul>
+        <p style="font-size:12px;color:#94a3b8;margin-top:10px"><strong>Conservative by design:</strong> only OPEN cases are convertible (never laparoscopic), only 15% of them are modeled to convert, surgeon commitments are counted at a floor (pipeline = 0 until they commit), and clinical cost avoidance is never folded into the capital IRR.</p>
+      </div>`;
     res.send(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${hospitalName} — Step-by-Step da Vinci Assessment Guide</title>
@@ -621,11 +693,30 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 .data-table th{text-align:left;color:#94a3b8;border-bottom:1px solid #334155;padding:7px 8px;text-transform:uppercase;font-size:10px;letter-spacing:1px}
 .data-table td{padding:7px 8px;border-bottom:1px solid #1e293b;color:#e2e8f0}
 .chart-box,.chart-2col{display:none !important}
+.step-intro{font-size:14px;color:#cbd5e1;margin:8px 0 6px;line-height:1.65}
+.takeaway{margin-top:14px;background:rgba(16,185,129,0.07);border-left:3px solid #10b981;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#d1fae5;line-height:1.6}
+.takeaway .tk-label{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6ee7b7;font-weight:700;margin-right:8px}
+.toc{background:#111c33;border:1px solid #334155;border-radius:10px;padding:16px 20px;margin:18px 0}
+.toc h3{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#94a3b8;margin-bottom:8px}
+.toc ol{margin-left:20px;font-size:14px;color:#cbd5e1}
+.toc li{margin:4px 0}
+.toc a{color:#7dd3fc;text-decoration:none}
+.exec{background:linear-gradient(135deg,rgba(14,165,233,0.10),rgba(16,185,129,0.06));border:1px solid #0ea5e9;border-radius:12px;padding:18px 20px;margin:18px 0}
+.exec h3{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#7dd3fc;margin-bottom:12px}
+.exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.exec-item .v{font-size:24px;font-weight:bold}
+.exec-item .l{font-size:11px;color:#94a3b8;margin-top:2px}
+.appendix{border-top:2px solid #334155;margin-top:26px;padding-top:18px}
+.appendix h3{font-size:16px;color:#f8fafc;margin-bottom:10px}
+.appendix li{margin:5px 0 5px 18px;font-size:12px;color:#cbd5e1}
+@page{margin:1.4cm}
 @media print{
   .toolbar{display:none}
   .wrap{max-width:100%;padding:0}
   .step{page-break-before:always}
   .step:first-of-type{page-break-before:avoid}
+  .toc{page-break-after:always}
+  .exec,.glossary,.takeaway,.appendix{page-break-inside:avoid}
 }
 </style></head>
 <body>
@@ -647,8 +738,11 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
       <li>They are never added into one ROI figure: the IRR is built only on the incremental revenue; conversion savings are reported separately.</li>
     </ul>
   </div>
+  ${execHtml}
+  ${tocHtml}
   ${sections}
-  <div class="info-box" style="margin-top:24px;text-align:center;color:#64748b">End of guide · every figure is sourced from public, auditable data (CMS, NPPES, PubMed) — see each step's "How these numbers are calculated".</div>
+  ${methodologyHtml}
+  <div class="info-box" style="margin-top:24px;text-align:center;color:#64748b">End of guide · every figure is sourced from public, auditable data — see each step's "How these numbers are calculated".</div>
 </div>
 </body></html>`);
   } catch (error) {
