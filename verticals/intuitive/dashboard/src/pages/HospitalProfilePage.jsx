@@ -123,42 +123,7 @@ export default function HospitalProfilePage({ projectId: propId }) {
         )
       })()}
 
-      {/* ═══ INFOGRAPHIC #1: Strategic Impact Bar Chart ═══ */}
-      {enrichment?.strategic_impact && (
-        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
-          <h3 className="font-bold text-white mb-1">Projected Strategic Impact — Visual</h3>
-          <p className="text-xs text-slate-500 mb-4">Horizontal bar view of the 8 impact metrics (normalized scale).</p>
-          <div className="h-80 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={enrichment.strategic_impact.metrics
-                  .filter(m => m.raw_value > 0)
-                  .map(m => ({
-                    label: m.label,
-                    value: m.raw_value,
-                    display: m.value,
-                  }))}
-                layout="vertical"
-                margin={{ left: 180, right: 50 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} />
-                <YAxis dataKey="label" type="category" stroke="#64748b" style={{ fontSize: 11 }} width={170} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
-                  labelStyle={{ color: '#e2e8f0' }}
-                  formatter={(v, n, p) => [p.payload.display, 'Value']}
-                />
-                <Bar dataKey="value" fill={COLOR_EMERALD}>
-                  <LabelList dataKey="display" position="right" style={{ fill: '#10b981', fontSize: 11, fontWeight: 'bold' }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* ─── ADDITION #1 (text version): Strategic Impact Summary (Deck p3) ─── */}
+      {/* ─── Strategic Impact Summary (Deck p3) ─── */}
       {enrichment?.strategic_impact && (
         <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-slate-700 rounded-lg p-5 mb-6">
           <div className="mb-3">
