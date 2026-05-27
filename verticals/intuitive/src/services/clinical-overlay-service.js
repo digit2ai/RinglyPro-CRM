@@ -378,16 +378,20 @@ async function buildClinicalOverlayEnrichment({ projectId, models, conversionPct
   const outcomesDriver = buildOutcomesDriverTable(project, bedDaysTable, bedDaysTable.total_converted_cases);
   const complicationBurden = buildComplicationBurden(bedDaysTable, project);
 
-  // THE SINGLE FORMULA: incremental conversion = 15% of OPEN soft-tissue cases
-  // the da Vinci can perform. Everything (savings, revenue, the conversion
-  // opportunity) flows from this. Nothing outside these procedures counts.
+  // THE CONVERSION FORMULA: the conversion opportunity = 15% of OPEN soft-tissue
+  // cases the da Vinci can perform. This drives the bed-day cost AVOIDANCE on this
+  // page only. It is NOT the surgeon-committed "incremental" net-new volume that
+  // surgeons bring in from other hospitals (that lives in Surgeon Commitments /
+  // the Business Plan and drives revenue + IRR). Nothing outside these procedures counts.
   const openApplicable = complicationBurden.total_open_cases;
+  const conversionOpportunity = Math.round(openApplicable * conversionPct / 100);
   const conversionFormula = {
     basis_pct: conversionPct,
     open_applicable_cases: openApplicable,
-    incremental_opportunity: Math.round(openApplicable * conversionPct / 100),
+    conversion_opportunity: conversionOpportunity,
+    incremental_opportunity: conversionOpportunity, // deprecated alias — use conversion_opportunity
     applicable_procedures: DA_VINCI_APPLICABLE_PROCEDURES,
-    rule: `Incremental = ${conversionPct}% of OPEN soft-tissue cases the da Vinci can perform. Laparoscopic and robotic cases — and any open case outside these procedures — do NOT count toward the incremental.`,
+    rule: `Conversion opportunity = ${conversionPct}% of OPEN soft-tissue cases the da Vinci can perform. Laparoscopic and robotic cases — and any open case outside these procedures — do NOT count. This is conversion / cost avoidance, not the surgeon-committed incremental volume (Surgeon Commitments / Step 7).`,
   };
 
   return {
