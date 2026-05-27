@@ -754,7 +754,7 @@ body{background:#0f172a;color:#e2e8f0;font-family:'Inter',system-ui,-apple-syste
 </div>
 <script>
 const chartData=${JSON.stringify(chartData)};
-(function(){
+window.addEventListener('load',function(){
   if(!window.Chart){return;}
   try{ Chart.register(ChartDataLabels); }catch(e){}
   Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#1e293b';Chart.defaults.plugins.datalabels={display:false};
@@ -775,7 +775,7 @@ const chartData=${JSON.stringify(chartData)};
   if(chartData.wfCommitmentComposition&&chartData.wfCommitmentComposition.length){mk('wfCommitmentComposition',{type:'doughnut',data:{labels:chartData.wfCommitmentComposition.map(function(d){return d.label;}),datasets:[{data:chartData.wfCommitmentComposition.map(function(d){return d.value;}),backgroundColor:chartData.wfCommitmentComposition.map(function(d){return d.color;})}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:9}}},datalabels:dlPct}}});}
   if(chartData.wfAnnualPnl&&chartData.wfAnnualPnl.length){mk('wfAnnualPnl',{type:'bar',data:{labels:chartData.wfAnnualPnl.map(function(d){return d.label;}),datasets:[{label:'Revenue',data:chartData.wfAnnualPnl.map(function(d){return d.revenue;}),backgroundColor:sp,stack:'returns'},{label:'Cost Avoidance',data:chartData.wfAnnualPnl.map(function(d){return d.cost_avoidance;}),backgroundColor:xi,stack:'returns'},{label:'Capital Expense',data:chartData.wfAnnualPnl.map(function(d){return d.capital_expense;}),backgroundColor:red,stack:'expenses'},{label:'Operating Expense',data:chartData.wfAnnualPnl.map(function(d){return d.operating_expense;}),backgroundColor:'#f59e0b',stack:'expenses'}]},options:Object.assign({},opts,{scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return '$'+(v/1e6).toFixed(0)+'M';}})})})})});}
   if(chartData.wfPerfProjection&&chartData.wfPerfProjection.length){mk('wfPerfProjection',{type:'bar',data:{labels:chartData.wfPerfProjection.map(function(d){return d.label;}),datasets:[{type:'line',label:'Cumulative Cases (Plan)',data:chartData.wfPerfProjection.map(function(d){return d.cumulative;}),borderColor:xi,backgroundColor:'rgba(16,185,129,0.12)',fill:true,tension:0.3,pointRadius:5,borderWidth:3,yAxisID:'y'},{type:'bar',label:'Annual Cases (Plan)',data:chartData.wfPerfProjection.map(function(d){return d.annual;}),backgroundColor:dv5,borderRadius:4,yAxisID:'y'}]},options:Object.assign({},opts,{plugins:Object.assign({},opts.plugins,{datalabels:{display:true,color:'#e2e8f0',font:{size:9,weight:'bold'},anchor:'end',align:'top',formatter:function(v){return fmtN(v);}}}),scales:Object.assign({},opts.scales,{y:Object.assign({},opts.scales.y,{ticks:Object.assign({},opts.scales.y.ticks,{callback:function(v){return fmtN(v);}})})})})});}
-})();
+});
 <\/script>
 </body></html>`);
   } catch (error) {
