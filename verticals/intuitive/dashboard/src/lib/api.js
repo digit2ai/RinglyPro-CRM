@@ -133,7 +133,7 @@ export const api = {
   getClinicalOutcomesEnrichment: (projectId) => request(`/clinical-outcomes/${projectId}/enrichment`),
 
   // Clinical Benefit Overlay enrichment (Deck 1 p15 + Deck 3 p7/p8 additions — THE MOAT)
-  getClinicalOverlayEnrichment: (projectId, conversionPct = 50) => request(`/clinical-overlay/${projectId}/enrichment?conversion_pct=${conversionPct}`),
+  getClinicalOverlayEnrichment: (projectId, conversionPct = 15) => request(`/clinical-overlay/${projectId}/enrichment?conversion_pct=${conversionPct}`),
 
   // Surgeon Commitments enrichment (Deck 1 p11 + Deck 3 p9/p10 — master table + bed days + pull-forward)
   getSurgeonCommitmentsEnrichment: (projectId) => request(`/surgeon-commitments/${projectId}/enrichment`),

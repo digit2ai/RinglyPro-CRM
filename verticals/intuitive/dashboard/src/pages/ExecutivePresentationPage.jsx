@@ -54,7 +54,7 @@ export default function ExecutivePresentationPage({ projectId: propId }) {
       api.getRoboticsProgramEnrichment(id).catch(() => ({ data: null })),
       api.getMarketProfileEnrichment(id).catch(() => ({ data: null })),
       api.getClinicalOutcomesEnrichment(id).catch(() => ({ data: null })),
-      api.getClinicalOverlayEnrichment(id, 50).catch(() => ({ data: null })),
+      api.getClinicalOverlayEnrichment(id, 15).catch(() => ({ data: null })),
       api.getSurgeonCommitmentsEnrichment(id).catch(() => ({ data: null })),
       api.getBusinessPlanEnrichment(id).catch(() => ({ data: null })),
       api.getPerformanceTrackingEnrichment(id).catch(() => ({ data: null })),
