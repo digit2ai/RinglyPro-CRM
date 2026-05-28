@@ -369,6 +369,9 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
 function SurgeonRow({ s, category, onEdit, onDelete }) {
   const cases = s.total_incremental_annual || 0
   const revenue = parseFloat(s.total_revenue_impact || 0)
+  const incrementalCases = (Array.isArray(s.procedures) ? s.procedures : [])
+    .filter(p => p.patient_source === 'incremental')
+    .reduce((t, p) => t + (parseInt(p.incremental_cases_annual || 0) || 0), 0)
   return (
     <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 mb-2 flex items-center gap-4">
       <div className="flex-1 min-w-0">
@@ -391,6 +394,10 @@ function SurgeonRow({ s, category, onEdit, onDelete }) {
       <div className="text-right">
         <div className="font-bold text-emerald-300">{fmt(cases)}</div>
         <div className="text-[10px] text-slate-500">cases/yr</div>
+      </div>
+      <div className="text-right">
+        <div className="font-bold text-violet-300">{fmt(incrementalCases)}</div>
+        <div className="text-[10px] text-slate-500">incremental</div>
       </div>
       <div className="text-right">
         <div className="font-bold text-cyan-300">{revenue >= 1000 ? '$' + (revenue / 1000).toFixed(0) + 'K' : fmtMoney(revenue)}</div>
