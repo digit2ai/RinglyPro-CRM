@@ -142,9 +142,109 @@
     text-transform: uppercase;
   }
   .foot b { color: var(--cyan); font-weight: 600; }
+
+  /* LOGIN OVERLAY - matches /intuitive/ SurgicalMind sign-in */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0b1220;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .auth-overlay[hidden] { display: none !important; }
+  .auth-box {
+    width: 100%; max-width: 420px;
+  }
+  .auth-brand {
+    text-align: center; margin-bottom: 22px;
+  }
+  .auth-brand-name {
+    font-size: 28px; font-weight: 800; letter-spacing: -0.01em;
+    color: var(--white);
+  }
+  .auth-brand-name span { color: #3b82f6; }
+  .auth-brand-sub {
+    margin-top: 10px;
+    color: var(--slate);
+    font-size: 13px;
+  }
+  .auth-card {
+    background: #131c33;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 26px 24px;
+  }
+  .auth-card h2 {
+    color: var(--white);
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .auth-label {
+    display: block;
+    color: var(--slate-2);
+    font-size: 12px; font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: 0.2px;
+  }
+  .auth-input {
+    width: 100%;
+    background: #dde7ff;
+    color: #0b1220;
+    border: 0; border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    margin-bottom: 14px;
+    outline: none;
+  }
+  .auth-input:focus { box-shadow: 0 0 0 2px var(--cyan); }
+  .auth-btn {
+    width: 100%;
+    background: #2563eb;
+    color: #fff;
+    border: 0; border-radius: 8px;
+    padding: 12px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .auth-btn:hover { background: #1d4ed8; }
+  .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .auth-err {
+    color: #f87171;
+    font-size: 13px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .auth-err[hidden] { display: none; }
+  .auth-foot {
+    margin-top: 16px;
+    text-align: center;
+    color: var(--slate);
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
+
+<!-- LOGIN OVERLAY (uses same /intuitive/api/v1/auth/login + intuitive_token as the dashboard) -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="auth-brand">
+      <div class="auth-brand-name">Surgical<span>Mind</span></div>
+      <div class="auth-brand-sub">Business Planning Platform for da&nbsp;Vinci Robotic Surgery</div>
+    </div>
+    <form class="auth-card" id="authForm" autocomplete="on">
+      <h2>Sign In</h2>
+      <div class="auth-err" id="authErr" hidden></div>
+      <label class="auth-label" for="authEmail">Email</label>
+      <input class="auth-input" id="authEmail" type="email" name="email" autocomplete="username" required>
+      <label class="auth-label" for="authPass">Password</label>
+      <input class="auth-input" id="authPass" type="password" name="password" autocomplete="current-password" required>
+      <button class="auth-btn" id="authBtn" type="submit">Sign In</button>
+      <div class="auth-foot">Powered by Digit2AI</div>
+    </form>
+  </div>
+</div>
 
 <main class="page">
   <div class="mark-row">
@@ -424,6 +524,68 @@
 
   <p class="foot">Digit2AI &middot; <b>Confidential preview</b> &middot; For Intuitive Surgical leadership</p>
 </main>
+
+<script>
+(function () {
+  var API_BASE = '/intuitive/api/v1';
+  var overlay  = document.getElementById('authOverlay');
+  var form     = document.getElementById('authForm');
+  var emailEl  = document.getElementById('authEmail');
+  var passEl   = document.getElementById('authPass');
+  var btn      = document.getElementById('authBtn');
+  var errEl    = document.getElementById('authErr');
+
+  function showErr(msg) { errEl.textContent = msg; errEl.hidden = false; }
+  function hideErr()    { errEl.hidden = true; errEl.textContent = ''; }
+  function unlock()     { overlay.hidden = true; document.body.style.overflow = ''; }
+  function lock()       { overlay.hidden = false; document.body.style.overflow = 'hidden'; setTimeout(function(){ emailEl.focus(); }, 30); }
+
+  function verifyToken(token) {
+    return fetch(API_BASE + '/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function (r) { return r.ok; }).catch(function () { return false; });
+  }
+
+  // On load: check existing token
+  lock();
+  var existing = localStorage.getItem('intuitive_token');
+  if (existing) {
+    verifyToken(existing).then(function (ok) {
+      if (ok) { unlock(); }
+      else { localStorage.removeItem('intuitive_token'); localStorage.removeItem('intuitive_user'); }
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    hideErr();
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    var payload = { email: emailEl.value.trim(), password: passEl.value };
+    fetch(API_BASE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; });
+    }).then(function (res) {
+      if (!res.ok || !res.data.token) {
+        showErr((res.data && (res.data.error || res.data.message)) || 'Invalid email or password');
+        return;
+      }
+      localStorage.setItem('intuitive_token', res.data.token);
+      if (res.data.user) localStorage.setItem('intuitive_user', JSON.stringify(res.data.user));
+      unlock();
+    }).catch(function () {
+      showErr('Network error. Please try again.');
+    }).finally(function () {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
