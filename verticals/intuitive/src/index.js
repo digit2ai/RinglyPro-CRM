@@ -215,7 +215,25 @@ app.get(`${BASE_PATH}/proposal/:projectId`, async (req, res) => {
     const audioCountFile = path.join(audioDir, '.deck_version');
     const currentDeckVersion = useLegacy ? 'legacy' : 'workflow-v18-mayo-2026-05-27-final';
     const cachedDeckVersion = fs.existsSync(audioCountFile) ? fs.readFileSync(audioCountFile, 'utf8').trim() : null;
-    const needsRegen = !fs.existsSync(slide0Audio) || cachedDeckVersion !== currentDeckVersion;
+    // Targeted single-slide regen knob: GET /proposal/:id?regen_slide=N deletes that
+    // slide's MP3 so the per-slide loop below regenerates ONLY it. Lets us fix a single
+    // slide's narration without re-spending ElevenLabs tokens on the other 10.
+    const regenSlideIdx = parseInt(req.query.regen_slide);
+    if (Number.isInteger(regenSlideIdx) && regenSlideIdx >= 0 && regenSlideIdx < scripts.length) {
+      const targetSlide = path.join(audioDir, 'slide_' + regenSlideIdx + '.mp3');
+      try { if (fs.existsSync(targetSlide)) fs.unlinkSync(targetSlide); } catch (e) {}
+      console.log('[Intuitive Proposal] Single-slide regen requested for slide ' + regenSlideIdx + ' on project ' + projectId);
+    }
+    // Detect ANY missing slide_N.mp3 (not just slide_0) so the per-slide loop catches it.
+    let anySlideMissing = false;
+    if (fs.existsSync(audioDir)) {
+      for (let i = 0; i < scripts.length; i++) {
+        if (!fs.existsSync(path.join(audioDir, 'slide_' + i + '.mp3'))) { anySlideMissing = true; break; }
+      }
+    } else {
+      anySlideMissing = true;
+    }
+    const needsRegen = anySlideMissing || cachedDeckVersion !== currentDeckVersion;
 
     if (needsRegen) {
       setImmediate(async () => {
