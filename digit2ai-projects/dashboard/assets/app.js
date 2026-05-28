@@ -449,6 +449,11 @@ async function drillDown(metric, filterValue) {
         renderDrillTable(container, 'Overdue Tasks', res.data || [], 'task');
         break;
       }
+      case 'agents_failed': {
+        const res = await api('/tasks/agents-failed');
+        renderDrillTable(container, 'Tasks With Failed AI Agent Runs', res.data || [], 'task');
+        break;
+      }
       case 'notifications': {
         navigateTo('notifications');
         return;

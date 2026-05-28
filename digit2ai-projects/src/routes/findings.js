@@ -259,7 +259,8 @@ async function detectAgentsFailed(ws) {
       description: `${r.n} task agent run${r.n === 1 ? '' : 's'} ended in failure. Check the task to see the error and rerun.`,
       impact_label: `${r.n} failed run${r.n === 1 ? '' : 's'}`,
       source_label: 'AI Agents',
-      fix_view: 'tasks'
+      fix_view: 'tasks',
+      fix_drill: 'agents_failed'
     };
   } catch (_) {
     return null; // column not present yet

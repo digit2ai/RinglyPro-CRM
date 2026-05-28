@@ -124,6 +124,24 @@ router.get('/overdue', async (req, res) => {
   }
 });
 
+// GET /api/v1/tasks/agents-failed - Tasks whose AI agent run failed
+router.get('/agents-failed', async (req, res) => {
+  try {
+    const tasks = await Task.findAll({
+      where: { workspace_id: 1, agent_status: 'failed' },
+      include: [
+        { model: Project, as: 'project', attributes: ['id', 'name'] },
+        { model: Contact, as: 'contact', attributes: ['id', 'first_name', 'last_name'] },
+        { model: StaffMember, as: 'assignee', attributes: ['id', 'first_name', 'last_name'], required: false }
+      ],
+      order: [['updated_at', 'DESC']]
+    });
+    res.json({ success: true, data: tasks });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/v1/tasks/:id - Single task
 router.get('/:id', async (req, res) => {
   try {
