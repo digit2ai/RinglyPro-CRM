@@ -57,7 +57,8 @@ async function detectStalledProjects(ws) {
     description: `${r.n} active project${r.n === 1 ? ' has' : 's have'} had no updates in over two weeks. Stalled projects drift toward abandonment — check in or close them out.`,
     impact_label: `${r.n} project${r.n === 1 ? '' : 's'} need a status update`,
     source_label: 'Projects',
-    fix_view: 'projects'
+    fix_view: 'projects',
+    fix_drill: 'stalled_projects'
   };
 }
 
@@ -187,7 +188,8 @@ async function detectProjectsPastDue(ws) {
     description: `${r.n} project${r.n === 1 ? ' is' : 's are'} past the committed due date but still listed as active. Update the timeline or mark complete to stop the slip from compounding.`,
     impact_label: `${r.n} past due`,
     source_label: 'Projects',
-    fix_view: 'projects'
+    fix_view: 'projects',
+    fix_drill: 'overdue_projects'
   };
 }
 

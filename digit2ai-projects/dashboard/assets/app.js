@@ -336,8 +336,16 @@ function renderFindingCard(f) {
   const p = palette[f.severity] || palette.info;
   const keyEsc = String(f.key).replace(/'/g, "\\'");
   const fixView = f.fix_view ? String(f.fix_view).replace(/'/g, "\\'") : '';
+  const fixDrill = f.fix_drill ? String(f.fix_drill).replace(/'/g, "\\'") : '';
+  const hasAction = fixView || fixDrill;
+  // Whole card is clickable when there's a destination — drill-down (specific
+  // underlying rows) wins over generic view nav. Dismiss button stops
+  // propagation so it doesn't also trigger the open.
+  const cardAttrs = hasAction
+    ? `style="margin-bottom:14px;border-top:3px solid ${p.bar};padding:18px 20px;cursor:pointer" onclick="findingFix('${keyEsc}','${fixView}','${fixDrill}')"`
+    : `style="margin-bottom:14px;border-top:3px solid ${p.bar};padding:18px 20px"`;
   return `
-    <div class="card" style="margin-bottom:14px;border-top:3px solid ${p.bar};padding:18px 20px">
+    <div class="card" ${cardAttrs}>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
         <h3 style="margin:0;font-size:16px;color:var(--text-primary)">${escapeHtml(f.title)}</h3>
         <span style="background:${p.badgeBg};color:${p.badgeFg};padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.05em;white-space:nowrap">${p.label}</span>
@@ -348,13 +356,14 @@ function renderFindingCard(f) {
         ${f.source_label ? `<span style="background:rgba(34,211,238,0.10);color:#22d3ee;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:600">${escapeHtml(f.source_label)}</span>` : ''}
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="findingFix('${keyEsc}','${fixView}')" style="background:linear-gradient(135deg,#7c5cff,#22d3ee);border:none">Fix This</button>
-        <button class="btn btn-ghost btn-sm" onclick="findingDismiss('${keyEsc}')">Dismiss</button>
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();findingFix('${keyEsc}','${fixView}','${fixDrill}')" style="background:linear-gradient(135deg,#7c5cff,#22d3ee);border:none">Fix This</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();findingDismiss('${keyEsc}')">Dismiss</button>
       </div>
     </div>`;
 }
 
-async function findingFix(_key, view) {
+async function findingFix(_key, view, drill) {
+  if (drill) { drillDown(drill); return; }
   if (view) navigateTo(view);
 }
 window.findingFix = findingFix;
