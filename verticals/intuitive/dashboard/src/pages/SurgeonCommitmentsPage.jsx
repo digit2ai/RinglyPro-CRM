@@ -20,10 +20,28 @@ const categoryColor = (cat) => {
   return COLOR_OPEN_TO_MIS
 }
 const categoryLabel = (cat) => {
-  if (cat === 'pull_forward') return 'Pull-Forward'
+  if (cat === 'pull_forward') return 'Splitter'
   if (cat === 'training_pipeline') return 'Training Pipeline'
   return 'Open-to-MIS'
 }
+
+// ─── Per-procedure math — mirrors backend src/utils/commitment-math.js ───
+// Each procedure carries TWO independent, summed components:
+//   CONVERTED = OPEN cases/mo × 12 × (% of OPEN)   (laparoscopic never counted)
+//   NET-NEW   = incremental_cases_annual (manual)  (surgeon-committed, another hospital)
+// Legacy rows: net-new only counts when net_new_clean OR patient_source==='incremental'.
+const _num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n }
+const procConv = (p) => {
+  const monthly = _num(p.incremental_cases_monthly)
+  const pct = (p.pct_converted_from_open != null ? _num(p.pct_converted_from_open) : 15) / 100
+  return Math.round(monthly * 12 * pct)
+}
+const procNetNew = (p) => {
+  const v = Math.round(_num(p.incremental_cases_annual))
+  if (p.net_new_clean) return v
+  return p.patient_source === 'incremental' ? v : 0
+}
+const procAnnualCases = (p) => procConv(p) + procNetNew(p)
 
 // ─── 3-Tab Surgeon Commitment Editor (Deck 3 Slides 9/10/11 pattern) ───
 //
@@ -79,9 +97,42 @@ function pickProcedures(specialty) {
   return PROCEDURE_LADDERS[specialty] || PROCEDURE_LADDERS['General Surgery']
 }
 
+// New procedure row factory — additive-ready (both components editable for every surgeon).
+function blankProc(p, category) {
+  return {
+    procedure_type: p.name,
+    procedure_name: p.name,
+    drg_code: p.drg,
+    patient_source: category === 'open_to_mis' ? 'existing' : 'incremental',
+    pct_converted_from_open: 15,
+    incremental_cases_monthly: 0,
+    incremental_cases_annual: 0,
+    reimbursement_rate: p.rate,
+    net_new_clean: true,
+  }
+}
+
+// Normalize a loaded surgeon's procedures into the clean additive model so EVERY field
+// is editable. Legacy 'existing' rows stored a stale converted-total in
+// incremental_cases_annual — reset it to 0 (real net-new starts at 0) before flagging clean.
+function normalizeInitial(initial) {
+  if (!initial) return null
+  const procedures = (Array.isArray(initial.procedures) ? initial.procedures : []).map(p => {
+    if (p.net_new_clean) return { ...p }
+    const isInc = p.patient_source === 'incremental'
+    return {
+      ...p,
+      pct_converted_from_open: p.pct_converted_from_open != null ? p.pct_converted_from_open : 15,
+      incremental_cases_annual: isInc ? (p.incremental_cases_annual || 0) : 0,
+      net_new_clean: true,
+    }
+  })
+  return { ...initial, procedures }
+}
+
 // ─── Add/Edit Surgeon Form ───
 function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
-  const [s, setS] = useState(initial || {
+  const [s, setS] = useState(normalizeInitial(initial) || {
     surgeon_name: '',
     surgeon_specialty: 'General Surgery',
     commitment_category: category,
@@ -92,51 +143,41 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
     target_weekly_volume: category === 'pull_forward' ? 4 : null,
     backlog_weeks: category === 'pull_forward' ? 6 : null,
     free_text_intel: '',
-    procedures: pickProcedures('General Surgery').map(p => ({
-      procedure_type: p.name,
-      procedure_name: p.name,
-      drg_code: p.drg,
-      patient_source: category === 'open_to_mis' ? 'existing' : 'incremental',
-      pct_converted_from_open: category === 'open_to_mis' ? 15 : null,
-      incremental_cases_monthly: 0,
-      reimbursement_rate: p.rate,
-    })),
+    procedures: pickProcedures('General Surgery').map(p => blankProc(p, category)),
   })
   const [saving, setSaving] = useState(false)
 
   function setProcedure(i, key, val) {
     const procs = [...s.procedures]
     procs[i] = { ...procs[i], [key]: val }
+    if (key === 'procedure_name') procs[i].procedure_type = val
     setS({ ...s, procedures: procs })
   }
 
+  function addProcedure() {
+    const blank = {
+      procedure_type: '', procedure_name: '', drg_code: '',
+      patient_source: 'existing', pct_converted_from_open: 15,
+      incremental_cases_monthly: 0, incremental_cases_annual: 0,
+      reimbursement_rate: 0, net_new_clean: true,
+    }
+    setS({ ...s, procedures: [...s.procedures, blank] })
+  }
+
+  function removeProcedure(i) {
+    setS({ ...s, procedures: s.procedures.filter((_, idx) => idx !== i) })
+  }
+
   function changeSpecialty(spec) {
-    const newProcs = pickProcedures(spec).map(p => ({
-      procedure_type: p.name,
-      procedure_name: p.name,
-      drg_code: p.drg,
-      patient_source: category === 'open_to_mis' ? 'existing' : 'incremental',
-      pct_converted_from_open: category === 'open_to_mis' ? 15 : null,
-      incremental_cases_monthly: 0,
-      reimbursement_rate: p.rate,
-    }))
+    const newProcs = pickProcedures(spec).map(p => blankProc(p, category))
     setS({ ...s, surgeon_specialty: spec, procedures: newProcs })
   }
 
-  // Per-procedure annual cases (mirrors backend math):
-  //   CONVERTED ('existing')  = OPEN cases/mo × 12 × % converted (laparoscopic NEVER counted)
-  //   INCREMENTAL ('incremental') = direct annual figure the capital manager entered
-  const procAnnual = (p) => {
-    if (p.patient_source === 'existing') {
-      const monthly = parseFloat(p.incremental_cases_monthly || 0)
-      const pct = parseFloat(p.pct_converted_from_open || 15) / 100
-      return Math.round(monthly * 12 * pct)
-    }
-    return Math.round(parseFloat(p.incremental_cases_annual || 0))
-  }
-  // Live totals — Converted and Incremental kept SEPARATE (2026-05-26 review)
-  const convertedCases = s.procedures.filter(p => p.patient_source === 'existing').reduce((t, p) => t + procAnnual(p), 0)
-  const incrementalCases = s.procedures.filter(p => p.patient_source === 'incremental').reduce((t, p) => t + procAnnual(p), 0)
+  // Per-procedure annual cases — ADDITIVE (converted + net-new), shared helpers.
+  const procAnnual = (p) => procAnnualCases(p)
+  // Live totals — Converted and Incremental are independent, summed components.
+  const convertedCases = s.procedures.reduce((t, p) => t + procConv(p), 0)
+  const incrementalCases = s.procedures.reduce((t, p) => t + procNetNew(p), 0)
   const previewCases = convertedCases + incrementalCases
   const previewRevenue = s.procedures.reduce((tot, p) => tot + procAnnual(p) * parseFloat(p.reimbursement_rate || 0), 0)
 
@@ -253,8 +294,9 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
       <div className="mb-4">
         <label className="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Procedures</label>
         <div className="text-[11px] text-slate-400 mb-2 space-y-0.5">
-          <div><span className="text-red-300 font-semibold">CONVERTED</span> (Existing): system auto-calculates <strong>OPEN volume only</strong> × the % below. Laparoscopic is NEVER counted. Default 15%. Enter OPEN cases/mo.</div>
-          <div><span className="text-cyan-300 font-semibold">INCREMENTAL</span> (Net-new): capital manager enters the surgeon-committed <strong>net-new cases/yr</strong> directly (volume brought from another hospital). No conversion %.</div>
+          <div>Every field is editable for every surgeon. A procedure can carry <strong>both</strong> components — they are summed.</div>
+          <div><span className="text-red-300 font-semibold">CONVERTED</span> = <strong>Open Cases/Mo × 12 × % of OPEN</strong> (laparoscopic never counted, default 15%). Existing volume switched to robotic — cost avoidance.</div>
+          <div><span className="text-cyan-300 font-semibold">NET-NEW</span> = <strong>Net-new/Yr</strong> entered directly (surgeon-committed volume brought from another hospital) — incremental revenue.</div>
         </div>
         <table className="w-full text-sm border border-slate-700">
           <thead className="bg-slate-900 text-[10px] uppercase tracking-widest text-slate-500">
@@ -266,6 +308,7 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
               <th className="text-right p-2" title="Surgeon-committed net-new cases per year (manual entry)">Net-new/Yr</th>
               <th className="text-right p-2">$/Case</th>
               <th className="text-right p-2">Annual</th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -274,7 +317,15 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
               const annual = procAnnual(p)
               return (
                 <tr key={i} className="border-t border-slate-700">
-                  <td className="p-2 text-slate-200">{p.procedure_name}</td>
+                  <td className="p-2">
+                    <input
+                      type="text"
+                      value={p.procedure_name || ''}
+                      onChange={e => setProcedure(i, 'procedure_name', e.target.value)}
+                      placeholder="Procedure name"
+                      className="w-40 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-slate-200 text-xs"
+                    />
+                  </td>
                   <td className="p-2">
                     <select
                       value={p.patient_source || 'existing'}
@@ -286,36 +337,31 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
                     </select>
                   </td>
                   <td className="p-2 text-right">
-                    {!isInc ? (
-                      <input
-                        type="number"
-                        value={p.pct_converted_from_open ?? 15}
-                        onChange={e => setProcedure(i, 'pct_converted_from_open', parseFloat(e.target.value) || 0)}
-                        title="% of OPEN volume only. Laparoscopic cases are NEVER counted."
-                        className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
-                      />
-                    ) : <span className="text-slate-600 text-xs">—</span>}
+                    <input
+                      type="number"
+                      value={p.pct_converted_from_open ?? 15}
+                      onChange={e => setProcedure(i, 'pct_converted_from_open', parseFloat(e.target.value) || 0)}
+                      title="% of OPEN volume only. Laparoscopic cases are NEVER counted."
+                      className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
+                    />
                   </td>
                   <td className="p-2 text-right">
-                    {!isInc ? (
-                      <input
-                        type="number"
-                        value={p.incremental_cases_monthly || 0}
-                        onChange={e => setProcedure(i, 'incremental_cases_monthly', parseFloat(e.target.value) || 0)}
-                        className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
-                      />
-                    ) : <span className="text-slate-600 text-xs">—</span>}
+                    <input
+                      type="number"
+                      value={p.incremental_cases_monthly || 0}
+                      onChange={e => setProcedure(i, 'incremental_cases_monthly', parseFloat(e.target.value) || 0)}
+                      title="Existing OPEN cases per month for this procedure"
+                      className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white text-xs text-right"
+                    />
                   </td>
                   <td className="p-2 text-right">
-                    {isInc ? (
-                      <input
-                        type="number"
-                        value={p.incremental_cases_annual || 0}
-                        onChange={e => setProcedure(i, 'incremental_cases_annual', parseFloat(e.target.value) || 0)}
-                        title="Surgeon-committed net-new cases per year — manual entry by capital manager"
-                        className="w-20 bg-slate-900 border border-cyan-700 rounded px-2 py-1 text-cyan-200 text-xs text-right"
-                      />
-                    ) : <span className="text-slate-600 text-xs">—</span>}
+                    <input
+                      type="number"
+                      value={p.incremental_cases_annual || 0}
+                      onChange={e => setProcedure(i, 'incremental_cases_annual', parseFloat(e.target.value) || 0)}
+                      title="Surgeon-committed net-new cases per year — manual entry by capital manager"
+                      className="w-20 bg-slate-900 border border-cyan-700 rounded px-2 py-1 text-cyan-200 text-xs text-right"
+                    />
                   </td>
                   <td className="p-2">
                     <input
@@ -326,11 +372,20 @@ function SurgeonForm({ initial, category, onSave, onCancel, planId }) {
                     />
                   </td>
                   <td className="p-2 text-right text-emerald-300 font-semibold">{fmt(annual)}</td>
+                  <td className="p-2 text-center">
+                    <button onClick={() => removeProcedure(i)} title="Remove procedure" className="text-red-400 hover:text-red-300 text-sm">×</button>
+                  </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
+        <button
+          onClick={addProcedure}
+          className="mt-2 text-xs font-semibold text-blue-300 hover:text-blue-200 border border-blue-700/50 hover:border-blue-500 rounded px-3 py-1.5"
+        >
+          + Add procedure
+        </button>
       </div>
 
       <div className="mb-3">
@@ -370,8 +425,7 @@ function SurgeonRow({ s, category, onEdit, onDelete }) {
   const cases = s.total_incremental_annual || 0
   const revenue = parseFloat(s.total_revenue_impact || 0)
   const incrementalCases = (Array.isArray(s.procedures) ? s.procedures : [])
-    .filter(p => p.patient_source === 'incremental')
-    .reduce((t, p) => t + (parseInt(p.incremental_cases_annual || 0) || 0), 0)
+    .reduce((t, p) => t + procNetNew(p), 0)
   return (
     <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 mb-2 flex items-center gap-4">
       <div className="flex-1 min-w-0">
@@ -545,18 +599,17 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
 
   const TABS = [
     { key: 'open_to_mis', label: 'Open-to-MIS Conversion', description: 'Surgeons converting their EXISTING OPEN volume (not laparoscopic) to robotic at 15% default. Bed-day savings driver. (Deck 3 Slide 9)', color: 'border-red-500' },
-    { key: 'pull_forward', label: 'Pull-Forward / Capacity', description: 'Proficient surgeons blocked by access. "Currently 2/wk, can do 4/wk if granted access." Incremental volume driver. (Deck 3 Slide 10)', color: 'border-cyan-500' },
+    { key: 'pull_forward', label: 'Splitter / Capacity', description: 'Proficient surgeons blocked by access. "Currently 2/wk, can do 4/wk if granted access." Incremental volume driver. (Deck 3 Slide 10)', color: 'border-cyan-500' },
     { key: 'training_pipeline', label: 'Training Pipeline', description: 'Untrained surgeons needing TR200. Future incremental volume after credentialing. (Deck 3 Slide 11)', color: 'border-violet-500' },
   ]
 
   const grandTotalCases = surgeons.reduce((t, s) => t + (s.total_incremental_annual || 0), 0)
   const grandTotalRevenue = surgeons.reduce((t, s) => t + parseFloat(s.total_revenue_impact || 0), 0)
-  // Converted vs Incremental split across the whole roster (computed from stored procedures)
+  // Converted vs Incremental split across the whole roster — ADDITIVE components.
   const splitTotals = surgeons.reduce((acc, s) => {
     for (const p of (Array.isArray(s.procedures) ? s.procedures : [])) {
-      const a = parseInt(p.incremental_cases_annual || 0)
-      if (p.patient_source === 'incremental') acc.incremental += a
-      else acc.converted += a
+      acc.converted += procConv(p)
+      acc.incremental += procNetNew(p)
     }
     return acc
   }, { converted: 0, incremental: 0 })
@@ -567,7 +620,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         <div>
           <div className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">Step 7 of 9 · Hospital Workflow</div>
           <h1 className="text-2xl font-bold text-white">Surgeon Commitments — {plan?.plan_name || 'Plan ' + plan?.id}</h1>
-          <p className="text-sm text-slate-400">3-category CFO-grade tracking · Open-to-MIS / Pull-Forward / Training Pipeline</p>
+          <p className="text-sm text-slate-400">3-category CFO-grade tracking · Open-to-MIS / Splitter / Training Pipeline</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => navigate(`/clinical-overlay/${id}`)} className="text-sm text-slate-400 hover:text-slate-200">← Clinical Overlay</button>
@@ -727,10 +780,10 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
         </div>
       )}
 
-      {/* ═══ ADDITION #3 + INFOGRAPHIC #3: Pull-Forward Capacity Visualization (Deck 3 Slide 10) ═══ */}
+      {/* ═══ ADDITION #3 + INFOGRAPHIC #3: Splitter Capacity Visualization (Deck 3 Slide 10) ═══ */}
       {enrichment?.pull_forward_capacity?.length > 0 && enrichment.pull_forward_capacity.reduce((s, p) => s + (p.additional_annual_cases || 0), 0) > 0 && (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
-          <h3 className="font-bold text-white mb-1">Pull-Forward Capacity — Current vs Target Weekly Volume</h3>
+          <h3 className="font-bold text-white mb-1">Splitter Capacity — Current vs Target Weekly Volume</h3>
           <p className="text-xs text-slate-500 mb-4">
             Surgeons blocked by access. Sorted by urgency (backlog weeks + capacity gap).
             Total additional annual cases if access granted: <strong className="text-cyan-300">{enrichment.pull_forward_capacity.reduce((s, p) => s + p.additional_annual_cases, 0).toLocaleString()}</strong>
@@ -856,7 +909,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
 
       {enrichmentLoading && !enrichment && (
         <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 mb-6 text-center">
-          <div className="text-sm text-slate-400">Loading deck-aligned visualizations (Master Table · Bed Days · Pull-Forward · Composition)...</div>
+          <div className="text-sm text-slate-400">Loading deck-aligned visualizations (Master Table · Bed Days · Splitter · Composition)...</div>
         </div>
       )}
 
@@ -896,7 +949,7 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
           <li>Numbers here are <span className="text-white font-semibold">entered by the rep from the surgeons' own commitments</span> (not modeled). Each surgeon's committed cases are split into <span className="text-cyan-300">Converted</span> (an existing OPEN surgery switched to da Vinci — same case, new technique) and <span className="text-cyan-300">Incremental (net-new)</span> (additional cases recruited from elsewhere or grown).</li>
           <li><span className="text-amber-300">Incremental = net-new revenue volume.</span> These extra cases are the <span className="text-white font-semibold">new revenue</span> that flows into the Business Plan and drives IRR / NPV / payback.</li>
           <li><span className="text-emerald-300">Converted cases create cost avoidance, not new revenue</span> — value comes from bed-days saved (case count × the open→robotic length-of-stay delta per procedure, e.g. ~5 days for prostatectomy) at the state's bed-day cost.</li>
-          <li>Three commitment categories: <span className="text-white font-semibold">Open-to-MIS</span> (conversions), <span className="text-white font-semibold">Pull-Forward</span> (capacity/backlog relief — extra weekly cases × ~50 weeks), and <span className="text-white font-semibold">Training Pipeline</span> (surgeons being onboarded).</li>
+          <li>Three commitment categories: <span className="text-white font-semibold">Open-to-MIS</span> (conversions), <span className="text-white font-semibold">Splitter</span> (capacity/backlog relief — extra weekly cases × ~50 weeks), and <span className="text-white font-semibold">Training Pipeline</span> (surgeons being onboarded).</li>
         </ul>
         <p><span className="text-white font-semibold">Bottom line:</span> the <span className="text-amber-300">revenue</span> total is money the hospital earns from net-new cases; the <span className="text-emerald-300">bed-day cost avoidance</span> total is money it stops losing. They are shown separately and are never added into one ROI figure.</p>
       </PageNotes>

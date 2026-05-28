@@ -1,6 +1,7 @@
 'use strict';
 const router = require('express').Router();
 const autoSeed = require('../services/auto-seed-commitments');
+const { procConv, procNetNew } = require('../utils/commitment-math');
 
 // POST /api/v1/business-plans - Create a business plan
 router.post('/', async (req, res) => {
@@ -353,40 +354,18 @@ router.post('/:planId/surgeons', async (req, res) => {
 
     if (!surgeon_name) return res.status(400).json({ error: 'surgeon_name is required' });
 
-    // Calculate totals from procedures
-    // Two paths (CFO-grade math per client meeting):
-    //  A) patient_source='existing' — OPEN volume only × pct_converted_from_open
-    //     (laparoscopic is NEVER counted). Default 15%. This is the conversion model.
-    //  B) patient_source='incremental' — NET-NEW cases the hospital doesn't have today
-    //     (e.g., Dr. Jones commits 100 more cases/yr because of capacity/recruitment).
-    //     Volume taken at face value, no multiplier.
+    // Calculate totals from procedures — ADDITIVE model (commitment-math.js):
+    // every procedure can carry BOTH a CONVERTED component (OPEN cases/mo × 12 × %,
+    // laparoscopic never counted) AND a NET-NEW component (incremental_cases_annual,
+    // surgeon-committed volume from another hospital). annual = converted + net-new.
+    // incremental_cases_annual is NOT overwritten — it stays the net-new value.
     const procs = procedures || [];
     let totalAnnual = 0;
     let totalRevenue = 0;
     for (const p of procs) {
-      // Default patient_source to 'existing' for back-compat
       if (!p.patient_source) p.patient_source = 'existing';
-      // Realistic default: 15% of OPEN-only volume (client meeting correction)
-      if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
-        p.pct_converted_from_open = 15;
-      }
-
-      const monthly = parseFloat(p.incremental_cases_monthly || 0);
-      let annual;
-      if (p.patient_source === 'existing') {
-        // CONVERTED: apply conversion percentage to OPEN volume only (never laparoscopic).
-        // Default 15% per client meeting — open conversions are the only realistic source.
-        const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
-        annual = Math.round(monthly * 12 * pct);
-      } else {
-        // INCREMENTAL (net-new): capital-manager enters this DIRECTLY as an annual figure
-        // (surgeon commits N more cases/yr from another hospital). Honor the direct annual
-        // when present; fall back to monthly×12 for older records.
-        annual = p.incremental_cases_annual != null
-          ? Math.round(parseFloat(p.incremental_cases_annual))
-          : Math.round(monthly * 12);
-      }
-      p.incremental_cases_annual = annual;
+      if (p.pct_converted_from_open == null) p.pct_converted_from_open = 15;
+      const annual = procConv(p) + procNetNew(p);
       totalAnnual += annual;
       totalRevenue += annual * (parseFloat(p.reimbursement_rate) || 0);
     }
@@ -449,30 +428,16 @@ router.patch('/:planId/surgeons/:id', async (req, res) => {
       if (req.body[f] !== undefined) updates[f] = req.body[f];
     }
 
-    // Recalculate if procedures changed — Existing/Incremental split (Deck 3 Slide 12 pattern)
+    // Recalculate if procedures changed — ADDITIVE model (commitment-math.js):
+    // annual = CONVERTED (OPEN cases/mo × 12 × %) + NET-NEW (incremental_cases_annual).
+    // incremental_cases_annual is preserved as the net-new value, not overwritten.
     if (updates.procedures) {
       let totalAnnual = 0;
       let totalRevenue = 0;
       for (const p of updates.procedures) {
         if (!p.patient_source) p.patient_source = 'existing';
-        if (p.patient_source === 'existing' && p.pct_converted_from_open == null) {
-          p.pct_converted_from_open = 15;
-        }
-
-        const monthly = parseFloat(p.incremental_cases_monthly || 0);
-        let annual;
-        if (p.patient_source === 'existing') {
-          // CONVERTED: OPEN volume only × pct (laparoscopic NEVER counted), default 15%
-          const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
-          annual = Math.round(monthly * 12 * pct);
-        } else {
-          // INCREMENTAL (net-new): direct annual commitment entered by the capital manager
-          // (Dr. Jones commits 100 more/yr). Honor direct annual, fall back to monthly×12.
-          annual = p.incremental_cases_annual != null
-            ? Math.round(parseFloat(p.incremental_cases_annual))
-            : Math.round(monthly * 12);
-        }
-        p.incremental_cases_annual = annual;
+        if (p.pct_converted_from_open == null) p.pct_converted_from_open = 15;
+        const annual = procConv(p) + procNetNew(p);
         totalAnnual += annual;
         totalRevenue += annual * (parseFloat(p.reimbursement_rate) || 0);
       }

@@ -20,6 +20,7 @@
 
 const peerService = require('./peer-comparison-service');
 const surgeonCommitmentsService = require('./surgeon-commitments-service');
+const { procConv, procNetNew } = require('../utils/commitment-math');
 
 // System cost catalog (industry-standard list pricing)
 const SYSTEM_PRICES = {
@@ -106,21 +107,18 @@ function buildFiveYearProforma(plan, analysis = {}, surgeons = [], project = nul
     const procs = Array.isArray(s.procedures) ? s.procedures : [];
     const trained = s.trained !== false; // default true unless explicitly false
     for (const p of procs) {
-      const monthly = parseFloat(p.incremental_cases_monthly || 0);
       const rate = parseFloat(p.reimbursement_rate || 0);
-      if (p.patient_source === 'incremental') {
-        // Net-new: honor the direct annual commitment when present (capital-manager entry).
-        const annual = p.incremental_cases_annual != null
-          ? parseFloat(p.incremental_cases_annual)
-          : monthly * 12;
-        const rev = annual * rate;
-        incrementalCases += annual;
-        if (trained) revenueFromNetNewTrained += rev;
-        else revenueFromNetNewUntrained += rev;
-      } else {
-        const pct = parseFloat(p.pct_converted_from_open || 15) / 100;
-        conversionCases += monthly * 12 * pct;
-        revenueFromConversion += monthly * 12 * pct * rate;
+      // ADDITIVE: each procedure can have BOTH components (commitment-math.js).
+      const conv = procConv(p);       // existing OPEN × % → conversion (cost avoidance + rev)
+      const netNew = procNetNew(p);   // surgeon-committed net-new → incremental revenue
+      if (conv > 0) {
+        conversionCases += conv;
+        revenueFromConversion += conv * rate;
+      }
+      if (netNew > 0) {
+        incrementalCases += netNew;
+        if (trained) revenueFromNetNewTrained += netNew * rate;
+        else revenueFromNetNewUntrained += netNew * rate;
       }
     }
   }

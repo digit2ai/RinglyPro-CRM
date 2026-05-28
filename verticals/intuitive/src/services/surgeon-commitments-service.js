@@ -12,6 +12,7 @@
  */
 
 const peerService = require('./peer-comparison-service');
+const { procConv, procNetNew } = require('../utils/commitment-math');
 
 // LOS deltas (open → robotic) per procedure family — same dataset as overlay service
 const LOS_DELTA_BY_PROCEDURE = {
@@ -56,9 +57,9 @@ function buildMasterSurgeonTable(surgeons) {
     const procs = Array.isArray(s.procedures) ? s.procedures : [];
     let converted = 0, incremental = 0;
     for (const p of procs) {
-      const a = parseInt(p.incremental_cases_annual || 0);
-      if (p.patient_source === 'incremental') incremental += a;
-      else converted += a;
+      // ADDITIVE: converted (OPEN × %) and net-new are independent components.
+      converted += procConv(p);
+      incremental += procNetNew(p);
     }
     return {
       id: s.id,
@@ -89,17 +90,17 @@ function buildPerSurgeonBedDays(surgeons, project) {
     const procDetail = [];
 
     for (const p of procedures) {
-      const annual = parseInt(p.incremental_cases_annual || (p.incremental_cases_monthly || 0) * 12);
-      if (!annual) continue;
-      // For open-to-MIS conversions, apply LOS delta
-      const isOpenConversion = s.commitment_category === 'open_to_mis' || p.patient_source === 'existing';
-      const losDelta = isOpenConversion ? losDeltaForProcedure(p.procedure_name) : 0;
-      const bedDays = Math.round(annual * losDelta);
+      // Bed-days saved apply ONLY to CONVERTED open cases (open→robotic LOS delta).
+      // Net-new cases are brand-new volume with no prior LOS baseline — no bed-days.
+      const convCases = procConv(p);
+      if (!convCases) continue;
+      const losDelta = losDeltaForProcedure(p.procedure_name);
+      const bedDays = Math.round(convCases * losDelta);
       totalBedDaysSaved += bedDays;
       if (bedDays > 0) {
         procDetail.push({
           procedure: p.procedure_name,
-          cases: annual,
+          cases: convCases,
           los_delta_days: losDelta,
           bed_days_saved: bedDays,
         });
