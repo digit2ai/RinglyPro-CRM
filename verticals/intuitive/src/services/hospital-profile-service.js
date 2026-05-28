@@ -30,9 +30,18 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
   // Clinical impact: bed-days saved from clinical outcomes
   const clinicalSavings = clinicalOutcomes.reduce((s, c) => s + parseFloat(c.total_clinical_savings_annual || 0), 0);
 
-  // LOS saved estimate from open conversion (60% of new cases × 2.5 day delta)
-  const openConvertedCases = Math.round(incrementalCases * 0.60);
-  const losDaysSaved = Math.round(openConvertedCases * 2.5);
+  // LOS Days Saved (Conversion) — use the canonical Clinical Overlay (Step 6) procedure-
+  // specific calc at the conservative 15% conversion, so this card matches the $17.5M
+  // 5-yr cost-avoidance figure flowing through the rest of the deck. Fall back to a
+  // simple estimate only if the overlay can't be loaded (e.g., bad project data).
+  let losDaysSaved;
+  try {
+    const overlay = require('./clinical-overlay-service');
+    const bdt = overlay.buildBedDaysSavingsTable(project, 15);
+    losDaysSaved = bdt?.total_bed_days_saved || Math.round(incrementalCases * 0.60 * 2.5);
+  } catch (e) {
+    losDaysSaved = Math.round(incrementalCases * 0.60 * 2.5);
+  }
 
   // Additional access (capacity expansion) — pull-forward bucket
   const pullForwardCases = surgeons
@@ -40,10 +49,16 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
     .reduce((s, sg) => s + (sg.total_incremental_annual || 0), 0);
   const incrementalAccessLOS = Math.round(pullForwardCases * 2.5);
 
-  // OR efficiency: 14% time savings per case * average case time * total cases (DV5 published benchmark)
-  const orMinPerCase = 60; // typical robotic case avg
+  // OR efficiency: 14% time savings per case (DV5 vs Xi published benchmark) applies to
+  // EVERY robotic case the new system runs — the hospital's existing robotic volume
+  // plus the committed incremental. Per-case avg minutes calibrated to realistic major
+  // robotic case mix (prostatectomy, partial nephrectomy, hysterectomy, colectomy, etc.)
+  // which run 150-240 min — ~180 min weighted average. The old 60-min/incremental-only
+  // formula gave ~2.5K min/yr (under-counts by ~30x).
+  const baselineRoboticCases = parseInt(project?.robotic_cases_last_yr || 0);
+  const orMinPerCase = 180;
   const efficiencyPct = 0.14;
-  const orTimeSavedMin = Math.round(incrementalCases * orMinPerCase * efficiencyPct);
+  const orTimeSavedMin = Math.round((baselineRoboticCases + incrementalCases) * orMinPerCase * efficiencyPct);
 
   // Instrumentation savings: $1,622,000 was UNC's number for 4 system swaps
   // Scale proportionally: $400K per system swap target estimate
@@ -58,18 +73,22 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
   // Resident learning curve: 33% reduction (UNC deck reference, published Intuitive benchmark)
   const learningCurveReduction = isAcademic ? 33 : null;
 
+  const orHours = Math.round(orTimeSavedMin / 60);
+  const orDays = Math.round(orHours / 8);
   const metrics = [
     {
       label: 'OR Efficiency Time Savings',
-      value: orTimeSavedMin > 0 ? `${orTimeSavedMin.toLocaleString()} min` : '—',
+      value: orTimeSavedMin > 0
+        ? `${orTimeSavedMin.toLocaleString()} min (~${orHours.toLocaleString()} hr · ~${orDays} OR-days/yr)`
+        : '—',
       raw_value: orTimeSavedMin,
-      detail: '14% per-case efficiency × projected case volume (DV5 published benchmark)',
+      detail: `DV5 vs Xi 14% per-case efficiency × (${baselineRoboticCases.toLocaleString()} existing robotic + ${incrementalCases.toLocaleString()} incremental committed) cases × ~${orMinPerCase} min/case avg`,
     },
     {
       label: 'LOS Days Saved (Conversion)',
       value: losDaysSaved > 0 ? `${losDaysSaved.toLocaleString()} bed days` : '—',
       raw_value: losDaysSaved,
-      detail: 'Estimated from 60% open conversion × 2.5 day LOS delta',
+      detail: 'Canonical Clinical Overlay (Step 6) figure — 15% of open soft-tissue cases × procedure-specific (open LOS − dV LOS); matches the 5-yr cost-avoidance.',
     },
   ];
 
