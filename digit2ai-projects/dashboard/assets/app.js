@@ -362,11 +362,33 @@ function renderFindingCard(f) {
     </div>`;
 }
 
-async function findingFix(_key, view, drill) {
+async function findingFix(key, view, drill) {
+  // 'finding' is the generic drill — backend returns the underlying rows
+  // via GET /findings/:key/items so we can show them in renderDrillTable
+  // without hardcoding per-finding endpoints in the frontend.
+  if (drill === 'finding') { findingDrillByKey(key); return; }
   if (drill) { drillDown(drill); return; }
   if (view) navigateTo(view);
 }
 window.findingFix = findingFix;
+
+async function findingDrillByKey(key) {
+  const container = document.getElementById('view-container');
+  if (!container) return;
+  container.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await api('/findings/' + encodeURIComponent(key) + '/items');
+    if (!res.success) {
+      container.innerHTML = `<p style="color:var(--danger);padding:24px">Could not load items: ${escapeHtml(res.error || 'unknown error')}</p>`;
+      return;
+    }
+    const { items = [], type = 'project', title = 'Items' } = (res.data || {});
+    renderDrillTable(container, title, items, type);
+  } catch (err) {
+    container.innerHTML = `<p style="color:var(--danger);padding:24px">Failed to load items: ${escapeHtml(err.message)}</p>`;
+  }
+}
+window.findingDrillByKey = findingDrillByKey;
 
 async function findingDismiss(key) {
   try {
@@ -525,6 +547,37 @@ function renderDrillTable(container, title, items, type) {
           <td>${t.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();completeTask(${t.id})">Done</button>` : '<span class="status-badge status-completed">done</span>'}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  } else if (type === 'minute') {
+    tableHtml = `<table class="data-table"><thead><tr><th>Subject</th><th>Project</th><th>Meeting Date</th><th>Action</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(m => `<tr class="clickable" onclick="navigateTo('minutes')">
+        <td><strong>${escapeHtml(m.title || '(untitled)')}</strong></td>
+        <td>${m.project ? `<span style="cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();showProjectDetail(${m.project.id})">${escapeHtml(m.project.name)}</span>` : '-'}</td>
+        <td>${m.meeting_date ? fmtDate(m.meeting_date) : '-'}</td>
+        <td><span class="status-badge status-overdue">Never sent</span></td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  } else if (type === 'milestone') {
+    tableHtml = `<table class="data-table"><thead><tr><th>Milestone</th><th>Project</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(m => `<tr class="clickable" onclick="showProjectDetail(${m.project?.id || 0})">
+        <td><strong>${escapeHtml(m.title || '(untitled)')}</strong></td>
+        <td>${m.project ? escapeHtml(m.project.name) : '-'}</td>
+        <td>${m.owner ? escapeHtml(m.owner) : '-'}</td>
+        <td><span style="color:var(--danger)">${m.due_date ? fmtDate(m.due_date) : '-'} (overdue)</span></td>
+        <td><span class="status-badge status-${m.status || 'pending'}">${escapeHtml(m.status || 'pending')}</span></td>
+      </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
+      '</tbody></table>';
+  } else if (type === 'contract') {
+    tableHtml = `<table class="data-table"><thead><tr><th>Project</th><th>Status</th><th>Amount</th><th>Drafted</th></tr></thead><tbody>` +
+      (items.length > 0 ? items.map(c => {
+        const amt = c.total_amount != null ? Number(c.total_amount).toLocaleString('en-US', { style: 'currency', currency: c.currency || 'USD' }) : '-';
+        return `<tr class="clickable" onclick="showProjectDetail(${c.project?.id || 0})">
+          <td><strong>${c.project ? escapeHtml(c.project.name) : '(unlinked)'}</strong></td>
+          <td><span class="status-badge status-${c.status || 'draft'}">${escapeHtml(c.status || 'draft')}</span></td>
+          <td>${amt}</td>
+          <td>${c.created_at ? fmtDate(c.created_at) : '-'}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--text-muted)">No items found</td></tr>') +
       '</tbody></table>';
   }
 

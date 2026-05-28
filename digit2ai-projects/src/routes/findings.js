@@ -79,7 +79,8 @@ async function detectTasksUnassignedNoOwner(ws) {
     description: `${r.n} pending task${r.n === 1 ? ' has' : 's have'} no assignee and no suggested owner in the description. These are likely to slip without a name attached.`,
     impact_label: `${r.n} unowned task${r.n === 1 ? '' : 's'}`,
     source_label: 'Tasks',
-    fix_view: 'tasks'
+    fix_view: 'tasks',
+    fix_drill: 'finding'
   };
 }
 
@@ -101,7 +102,8 @@ async function detectIntakeAging(ws) {
     description: `${r.n} project request${r.n === 1 ? '' : 's'} sat in pending_review for over a week (oldest: ${r.oldest_days} days). Long delays signal to submitters that you are not responsive.`,
     impact_label: `Oldest: ${r.oldest_days} days`,
     source_label: 'Inbox',
-    fix_view: 'inbox'
+    fix_view: 'inbox',
+    fix_drill: 'finding'
   };
 }
 
@@ -123,7 +125,8 @@ async function detectMinutesUnsent(ws) {
     description: `${r.n} meeting minute${r.n === 1 ? '' : 's'} ${r.n === 1 ? 'has notes and is' : 'have notes and are'} linked to a project but never went out. Stakeholders are missing the recap.`,
     impact_label: `${r.n} unsent recap${r.n === 1 ? '' : 's'}`,
     source_label: 'Meeting Minutes',
-    fix_view: 'minutes'
+    fix_view: 'minutes',
+    fix_drill: 'finding'
   };
 }
 
@@ -144,7 +147,8 @@ async function detectApprovedMissingKickoff(ws) {
     description: `${r.n} project${r.n === 1 ? ' was' : 's were'} approved but never got a kickoff meeting scheduled. The submitter is waiting on next steps.`,
     impact_label: `${r.n} project${r.n === 1 ? '' : 's'} without kickoff`,
     source_label: 'Projects',
-    fix_view: 'projects'
+    fix_view: 'projects',
+    fix_drill: 'finding'
   };
 }
 
@@ -166,7 +170,8 @@ async function detectOverdueMilestones(ws) {
     description: `${r.n} milestone${r.n === 1 ? '' : 's'} ${r.n === 1 ? 'is' : 'are'} past ${r.n === 1 ? 'its' : 'their'} due date and not marked complete. Either ship them or push the date.`,
     impact_label: `${r.n} overdue`,
     source_label: 'Milestones',
-    fix_view: 'projects'
+    fix_view: 'projects',
+    fix_drill: 'finding'
   };
 }
 
@@ -213,7 +218,8 @@ async function detectStakeholdersMissingPhone(ws) {
     description: `${r.n} project${r.n === 1 ? ' has' : 's have'} stakeholders without a phone on file. WhatsApp sends will skip those recipients silently.`,
     impact_label: `${r.n} project${r.n === 1 ? '' : 's'}`,
     source_label: 'Stakeholders',
-    fix_view: 'projects'
+    fix_view: 'projects',
+    fix_drill: 'finding'
   };
 }
 
@@ -235,7 +241,8 @@ async function detectContractsDraftStale(ws) {
       description: `${r.n} contract${r.n === 1 ? ' has' : 's have'} been in draft for over a week without being sent. The deal cools off until the paper is in front of the client.`,
       impact_label: `${r.n} unsent draft${r.n === 1 ? '' : 's'}`,
       source_label: 'Contracts',
-      fix_view: 'projects'
+      fix_view: 'projects',
+      fix_drill: 'finding'
     };
   } catch (_) {
     return null; // table not present, skip
@@ -293,6 +300,132 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('[findings] /findings error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/v1/findings/:key/items — return the underlying rows for a finding
+// so the Neural Findings card on the home page can drill straight into the
+// specific items that triggered the alert (e.g. "14 Projects With Stakeholders
+// Missing Phone Numbers" → the actual 14 projects). Returns:
+//   { items: [...], type: 'project'|'task'|'minute'|'milestone'|'contract', title }
+// Each finding's items query mirrors its detector's WHERE clause so counts
+// stay consistent with what gets shown.
+router.get('/:key/items', async (req, res) => {
+  try {
+    const ws = 1;
+    const key = String(req.params.key || '');
+    let q = null;
+    let type = 'project';
+    let title = 'Items';
+    switch (key) {
+      case 'projects.stalled.14d':
+        type = 'project'; title = 'Stalled Projects (no update in 14 days)';
+        q = `SELECT p.id, p.name, p.code, p.status, p.priority, p.progress, p.due_date,
+                    p.updated_at,
+                    jsonb_build_object('id', v.id, 'name', v.name, 'color', v.color) AS vertical
+             FROM d2_projects p LEFT JOIN d2_verticals v ON v.id = p.vertical_id
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND p.status NOT IN ('completed','cancelled')
+               AND p.updated_at < NOW() - INTERVAL '14 days'
+             ORDER BY p.updated_at ASC`;
+        break;
+      case 'projects.past_due.active':
+        type = 'project'; title = 'Active Projects Past Due Date';
+        q = `SELECT p.id, p.name, p.code, p.status, p.priority, p.progress, p.due_date,
+                    jsonb_build_object('id', v.id, 'name', v.name, 'color', v.color) AS vertical
+             FROM d2_projects p LEFT JOIN d2_verticals v ON v.id = p.vertical_id
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND p.status NOT IN ('completed','cancelled')
+               AND p.due_date IS NOT NULL AND p.due_date < CURRENT_DATE
+             ORDER BY p.due_date ASC`;
+        break;
+      case 'projects.approved.no_kickoff':
+        type = 'project'; title = 'Approved Projects Without a Kickoff Scheduled';
+        q = `SELECT p.id, p.name, p.code, p.status, p.priority, p.progress, p.due_date,
+                    jsonb_build_object('id', v.id, 'name', v.name, 'color', v.color) AS vertical
+             FROM d2_projects p LEFT JOIN d2_verticals v ON v.id = p.vertical_id
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND p.intake_status = 'approved' AND p.kickoff_event_id IS NULL
+             ORDER BY p.updated_at DESC`;
+        break;
+      case 'stakeholders.missing_phone':
+        type = 'project'; title = 'Projects With Stakeholders Missing Phone Numbers';
+        q = `SELECT DISTINCT p.id, p.name, p.code, p.status, p.priority, p.progress, p.due_date,
+                    jsonb_build_object('id', v.id, 'name', v.name, 'color', v.color) AS vertical
+             FROM d2_projects p
+                  LEFT JOIN d2_verticals v ON v.id = p.vertical_id,
+                  jsonb_array_elements(p.team_members) AS tm
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND jsonb_array_length(COALESCE(p.team_members,'[]'::jsonb)) > 0
+               AND (tm->>'phone' IS NULL OR tm->>'phone' = '')
+             ORDER BY p.name ASC`;
+        break;
+      case 'intake.aging.7d':
+        type = 'project'; title = 'Intake Requests Awaiting Review for 7+ Days';
+        q = `SELECT p.id, p.name, p.code, p.status, p.priority, p.progress, p.due_date,
+                    p.created_at,
+                    jsonb_build_object('id', v.id, 'name', v.name, 'color', v.color) AS vertical
+             FROM d2_projects p LEFT JOIN d2_verticals v ON v.id = p.vertical_id
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND p.intake_status = 'pending_review'
+               AND p.created_at < NOW() - INTERVAL '7 days'
+             ORDER BY p.created_at ASC`;
+        break;
+      case 'tasks.unassigned.no_owner':
+        type = 'task'; title = 'Tasks With No Owner';
+        q = `SELECT t.id, t.title, t.description, t.task_type, t.priority, t.status, t.due_date,
+                    CASE WHEN p.id IS NULL THEN NULL ELSE jsonb_build_object('id', p.id, 'name', p.name) END AS project
+             FROM d2_tasks t LEFT JOIN d2_projects p ON p.id = t.project_id
+             WHERE t.workspace_id = :ws AND t.status = 'pending'
+               AND t.assigned_staff_id IS NULL
+               AND (t.description IS NULL OR t.description NOT ILIKE '%owner:%')
+             ORDER BY COALESCE(t.due_date, t.created_at) ASC`;
+        break;
+      case 'minutes.unsent':
+        type = 'minute'; title = 'Meeting Minutes Never Sent to Stakeholders';
+        q = `SELECT m.id, m.subject AS title, m.meeting_date, m.created_at,
+                    CASE WHEN p.id IS NULL THEN NULL ELSE jsonb_build_object('id', p.id, 'name', p.name) END AS project
+             FROM d2_meeting_minutes m LEFT JOIN d2_projects p ON p.id = m.project_id
+             WHERE m.workspace_id = :ws AND m.project_id IS NOT NULL
+               AND m.notes IS NOT NULL AND LENGTH(TRIM(m.notes)) > 0
+               AND m.sent_at IS NULL
+             ORDER BY m.meeting_date DESC NULLS LAST, m.created_at DESC`;
+        break;
+      case 'milestones.overdue':
+        type = 'milestone'; title = 'Overdue Milestones';
+        q = `SELECT m.id, m.title, m.due_date, m.status, m.owner,
+                    jsonb_build_object('id', p.id, 'name', p.name) AS project
+             FROM d2_project_milestones m JOIN d2_projects p ON p.id = m.project_id
+             WHERE p.workspace_id = :ws AND p.archived_at IS NULL
+               AND m.due_date < CURRENT_DATE
+               AND m.status NOT IN ('completed','cancelled')
+             ORDER BY m.due_date ASC`;
+        break;
+      case 'contracts.draft.stale':
+        type = 'contract'; title = 'Draft Contracts Sitting for 7+ Days';
+        q = `SELECT c.id, c.status, c.created_at, c.total_amount_usd AS total_amount, c.currency,
+                    jsonb_build_object('id', p.id, 'name', p.name) AS project
+             FROM d2_project_contracts c JOIN d2_projects p ON p.id = c.project_id
+             WHERE c.workspace_id = :ws AND c.status = 'draft'
+               AND c.created_at < NOW() - INTERVAL '7 days'
+             ORDER BY c.created_at ASC`;
+        break;
+      case 'agents.failed':
+        type = 'task'; title = 'Tasks With Failed AI Agent Runs';
+        q = `SELECT t.id, t.title, t.description, t.task_type, t.priority, t.status, t.due_date,
+                    CASE WHEN p.id IS NULL THEN NULL ELSE jsonb_build_object('id', p.id, 'name', p.name) END AS project
+             FROM d2_tasks t LEFT JOIN d2_projects p ON p.id = t.project_id
+             WHERE t.workspace_id = :ws AND t.agent_status = 'failed'
+             ORDER BY t.updated_at DESC`;
+        break;
+      default:
+        return res.status(404).json({ success: false, error: 'Unknown finding key' });
+    }
+    const [rows] = await sequelize.query(q, { replacements: { ws } });
+    res.json({ success: true, data: { items: rows, type, title } });
+  } catch (error) {
+    console.error('[findings] /findings/:key/items error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
