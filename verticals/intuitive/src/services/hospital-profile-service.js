@@ -75,19 +75,20 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
 
   const orHours = Math.round(orTimeSavedMin / 60);
   const orDays = Math.round(orHours / 8);
+  const losDaysRounded = Math.round(losDaysSaved);
   const metrics = [
     {
       label: 'OR Efficiency Time Savings',
-      value: orTimeSavedMin > 0
-        ? `${orTimeSavedMin.toLocaleString()} min (~${orHours.toLocaleString()} hr · ~${orDays} OR-days/yr)`
-        : '—',
+      // Short label so it fits inside the chart bar without clipping; the long form
+      // (with minutes + formula) is in `detail`. raw_value still drives the bar length.
+      value: orTimeSavedMin > 0 ? `~${orHours.toLocaleString()} hr (~${orDays} OR-days/yr)` : '—',
       raw_value: orTimeSavedMin,
-      detail: `DV5 vs Xi 14% per-case efficiency × (${baselineRoboticCases.toLocaleString()} existing robotic + ${incrementalCases.toLocaleString()} incremental committed) cases × ~${orMinPerCase} min/case avg`,
+      detail: `DV5 vs Xi 14% per-case efficiency × (${baselineRoboticCases.toLocaleString()} existing robotic + ${incrementalCases.toLocaleString()} incremental committed) cases × ~${orMinPerCase} min/case avg = ${orTimeSavedMin.toLocaleString()} min/yr`,
     },
     {
       label: 'LOS Days Saved (Conversion)',
-      value: losDaysSaved > 0 ? `${losDaysSaved.toLocaleString()} bed days` : '—',
-      raw_value: losDaysSaved,
+      value: losDaysRounded > 0 ? `${losDaysRounded.toLocaleString()} bed days` : '—',
+      raw_value: losDaysRounded,
       detail: 'Canonical Clinical Overlay (Step 6) figure — 15% of open soft-tissue cases × procedure-specific (open LOS − dV LOS); matches the 5-yr cost-avoidance.',
     },
   ];
