@@ -166,16 +166,31 @@ function buildAggregatedSummary(surgeons, bedDaysData, pullForwardData, project)
   // Converted vs Net-New split — COMPONENT-based (commitment-math.js), identical to the
   // Surgeon Commitments page so the proposal/executive always match it. Do NOT bucket by
   // commitment_category (an open_to_mis surgeon can carry net-new cases, and vice versa).
+  //
+  // Revenue is split the same way. Per the established model:
+  //   total_net_new_revenue   = NEW $ from cases the hospital does not have today (Step 7
+  //                             Incremental card · drives the IRR).
+  //   total_converted_revenue = $ from existing cases switched to robotic (already booked
+  //                             revenue; the value-add for these is cost avoidance, NOT
+  //                             new revenue).
+  //   total_revenue_impact    = sum of both (legacy field — kept for back-compat).
   let totalConvertedCases = 0;
   let totalNetNewCases = 0;
+  let totalConvertedRevenue = 0;
+  let totalNetNewRevenue = 0;
   for (const sg of surgeons) {
     for (const p of (Array.isArray(sg.procedures) ? sg.procedures : [])) {
-      totalConvertedCases += procConv(p);
-      totalNetNewCases += procNetNew(p);
+      const conv = procConv(p);
+      const netNew = procNetNew(p);
+      const rate = parseFloat(p.reimbursement_rate || 0);
+      totalConvertedCases += conv;
+      totalNetNewCases += netNew;
+      totalConvertedRevenue += conv * rate;
+      totalNetNewRevenue += netNew * rate;
     }
   }
   const totalCases = totalConvertedCases + totalNetNewCases;
-  const totalRevenue = surgeons.reduce((s, sg) => s + parseFloat(sg.total_revenue_impact || 0), 0);
+  const totalRevenue = totalConvertedRevenue + totalNetNewRevenue;
   const totalBedDays = bedDaysData.reduce((s, b) => s + b.bed_days_saved, 0);
   const totalBedDayValue = totalBedDays * bedDayCost;
   const totalPullForwardCases = pullForwardData.reduce((s, p) => s + p.additional_annual_cases, 0);
@@ -194,6 +209,8 @@ function buildAggregatedSummary(surgeons, bedDaysData, pullForwardData, project)
     total_converted_cases: totalConvertedCases,
     total_net_new_cases: totalNetNewCases,
     total_revenue_impact: totalRevenue,
+    total_converted_revenue: totalConvertedRevenue,
+    total_net_new_revenue: totalNetNewRevenue,
     total_bed_days_saved: totalBedDays,
     total_bed_day_value: totalBedDayValue,
     total_combined_impact: totalRevenue + totalBedDayValue,

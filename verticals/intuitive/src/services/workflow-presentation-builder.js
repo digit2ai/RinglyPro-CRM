@@ -319,7 +319,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
           <div style="background:rgba(139,92,246,0.10);border:2px solid #8b5cf6;border-radius:12px;padding:16px">
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#c4b5fd;font-weight:700">Incremental · Net-New &rarr; Revenue</div>
             <div style="font-size:34px;font-weight:bold;color:#a78bfa;margin:4px 0">${fmt(sc.summary.total_net_new_cases || 0)} <span style="font-size:14px;color:#cbd5e1;font-weight:500">cases/yr</span></div>
-            <div style="font-size:13px;color:#cbd5e1">${fmtMoneyShort(sc.summary.total_revenue_impact)} new revenue · drives the Business Plan IRR</div>
+            <div style="font-size:13px;color:#cbd5e1">${fmtMoneyShort(sc.summary.total_net_new_revenue || 0)} new revenue · drives the Business Plan IRR (net-new cases × $/case)</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:6px">Net-new cases surgeons bring in from other facilities where they are blocked by capacity, plus new recruits. Brand-new volume for ${esc(hospitalName)} &mdash; not cases it already does.</div>
           </div>
           <div style="background:rgba(16,185,129,0.10);border:2px solid #10b981;border-radius:12px;padding:16px">
