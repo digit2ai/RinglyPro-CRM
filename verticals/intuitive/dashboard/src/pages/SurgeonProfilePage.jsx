@@ -173,49 +173,6 @@ export default function SurgeonProfilePage({ projectId: propId }) {
           </div>
         )}
 
-        {/* ── Chart 2: Training Funnel ── */}
-        {enrichment?.training_pipeline && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
-            <h3 className="font-bold text-white mb-1">Training & Commitment Funnel</h3>
-            <p className="text-xs text-slate-500 mb-4">Roster → Trained → Committed → Pull-Forward → Proctored</p>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    { stage: 'Total Roster', value: surgeons.length, color: '#475569' },
-                    { stage: 'Trained on dV', value: enrichment.training_pipeline.trained.length + enrichment.training_pipeline.pull_forward.length, color: '#22c55e' },
-                    { stage: 'Open-to-MIS Committed', value: enrichment.training_pipeline.trained.length, color: '#10b981' },
-                    { stage: 'Splitter', value: enrichment.training_pipeline.pull_forward.length, color: '#06b6d4' },
-                    { stage: 'Pipeline (TR200)', value: enrichment.training_pipeline.untrained.length, color: '#f59e0b' },
-                    { stage: 'Needs Proctoring', value: enrichment.training_pipeline.needs_proctoring.length, color: '#3b82f6' },
-                  ].filter(d => d.value > 0)}
-                  layout="vertical"
-                  margin={{ left: 110, right: 30 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis type="number" stroke="#64748b" style={{ fontSize: 10 }} allowDecimals={false} />
-                  <YAxis dataKey="stage" type="category" stroke="#64748b" style={{ fontSize: 10 }} width={100} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: 6 }}
-                    labelStyle={{ color: '#e2e8f0' }}
-                  />
-                  <Bar dataKey="value">
-                    {[
-                      { stage: 'Total Roster', color: '#475569' },
-                      { stage: 'Trained on dV', color: '#22c55e' },
-                      { stage: 'Open-to-MIS Committed', color: '#10b981' },
-                      { stage: 'Splitter', color: '#06b6d4' },
-                      { stage: 'Pipeline (TR200)', color: '#f59e0b' },
-                      { stage: 'Needs Proctoring', color: '#3b82f6' },
-                    ].map((d, i) => <Cell key={i} fill={d.color} />)}
-                    <LabelList dataKey="value" position="right" style={{ fill: '#fff', fontSize: 11, fontWeight: 'bold' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
         {/* ── Chart 3: KOL Scatter Quadrant (volume vs publications) ── */}
         {enrichment?.kol_signals?.top_kols?.length > 0 && (
           <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
@@ -347,44 +304,6 @@ export default function SurgeonProfilePage({ projectId: propId }) {
               <strong>{enrichment.training_pipeline.needs_proctoring.length} surgeons need proctoring:</strong>{' '}
               {enrichment.training_pipeline.needs_proctoring.slice(0, 5).map(s => s.surgeon_name).join(', ')}
               {enrichment.training_pipeline.needs_proctoring.length > 5 ? '...' : ''}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ─── ADDITION #2: CSR Intel Panel (Deck p12, p18) ─── */}
-      {enrichment?.csr_intel && (
-        <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 mb-6">
-          <h3 className="font-bold text-white mb-1">New Surgeons with Access Needs</h3>
-          <p className="text-xs text-slate-500 mb-4">{enrichment.csr_intel.headline}</p>
-          {enrichment.csr_intel.items.length > 0 ? (
-            <ul className="space-y-2.5">
-              {enrichment.csr_intel.items.map((it, i) => (
-                <li key={i} className="flex gap-3 pb-2 border-b border-slate-700/50 last:border-0">
-                  <span className="text-blue-400 mt-0.5">▶</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <strong className="text-white">{it.surgeon_name}</strong>
-                      <span className="text-xs text-slate-400">{it.specialty}</span>
-                      {it.commitment_category === 'pull_forward' && it.current_weekly && (
-                        <span className="text-[10px] uppercase font-bold bg-cyan-900/50 text-cyan-300 px-1.5 py-0.5 rounded">
-                          {it.current_weekly}→{it.target_weekly}/wk
-                        </span>
-                      )}
-                      {it.backlog_weeks && (
-                        <span className="text-[10px] uppercase font-bold bg-amber-900/50 text-amber-300 px-1.5 py-0.5 rounded">
-                          {it.backlog_weeks}wk backlog
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-slate-300 mt-1">{it.intel}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-xs text-slate-500 italic">
-              Use the Surgeon Commitments page (Step 7) to capture offline intel like "Dr. Ha-Thor started October 2025 - 1 day/week" or "Mazzola needs 1 day/wk - booking 5 months out".
             </div>
           )}
         </div>
