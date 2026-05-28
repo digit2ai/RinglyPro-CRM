@@ -136,9 +136,7 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
       ${sp?.training_pipeline ? `
         <div class="metrics-grid">
           ${metric('Trained', sp.training_pipeline.trained.length, '#10b981')}
-          ${metric('In Pipeline', sp.training_pipeline.untrained.length, '#f59e0b')}
           ${metric('Splitter', sp.training_pipeline.pull_forward.length, '#06b6d4')}
-          ${metric('Need Proctoring', sp.training_pipeline.needs_proctoring.length, '#3b82f6')}
         </div>
       ` : '<div class="info-box">Surgeon roster will populate once Hospital Intake runs NPPES + facility affiliation lookup.</div>'}
       ${sp?.kol_signals?.top_kols?.length > 0 ? `
