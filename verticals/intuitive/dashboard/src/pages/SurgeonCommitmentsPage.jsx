@@ -603,7 +603,6 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
     { key: 'training_pipeline', label: 'Training Pipeline', description: 'Untrained surgeons needing TR200. Future incremental volume after credentialing. (Deck 3 Slide 11)', color: 'border-violet-500' },
   ]
 
-  const grandTotalCases = surgeons.reduce((t, s) => t + (s.total_incremental_annual || 0), 0)
   const grandTotalRevenue = surgeons.reduce((t, s) => t + parseFloat(s.total_revenue_impact || 0), 0)
   // Converted vs Incremental split across the whole roster — ADDITIVE components.
   const splitTotals = surgeons.reduce((acc, s) => {
@@ -613,6 +612,10 @@ export default function SurgeonCommitmentsPage({ projectId: propId }) {
     }
     return acc
   }, { converted: 0, incremental: 0 })
+  // Grand total = component sum (converted + net-new), so it matches the split cards,
+  // the Master Table, and the proposal/executive (all use commitment-math). Stored
+  // total_incremental_annual can be stale for surgeons not re-saved since the additive change.
+  const grandTotalCases = splitTotals.converted + splitTotals.incremental
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">

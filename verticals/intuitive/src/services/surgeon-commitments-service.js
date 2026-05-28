@@ -163,7 +163,18 @@ function buildAggregatedSummary(surgeons, bedDaysData, pullForwardData, project)
   }
 
   const totalSurgeons = surgeons.length;
-  const totalCases = surgeons.reduce((s, sg) => s + parseInt(sg.total_incremental_annual || 0), 0);
+  // Converted vs Net-New split — COMPONENT-based (commitment-math.js), identical to the
+  // Surgeon Commitments page so the proposal/executive always match it. Do NOT bucket by
+  // commitment_category (an open_to_mis surgeon can carry net-new cases, and vice versa).
+  let totalConvertedCases = 0;
+  let totalNetNewCases = 0;
+  for (const sg of surgeons) {
+    for (const p of (Array.isArray(sg.procedures) ? sg.procedures : [])) {
+      totalConvertedCases += procConv(p);
+      totalNetNewCases += procNetNew(p);
+    }
+  }
+  const totalCases = totalConvertedCases + totalNetNewCases;
   const totalRevenue = surgeons.reduce((s, sg) => s + parseFloat(sg.total_revenue_impact || 0), 0);
   const totalBedDays = bedDaysData.reduce((s, b) => s + b.bed_days_saved, 0);
   const totalBedDayValue = totalBedDays * bedDayCost;
@@ -180,6 +191,8 @@ function buildAggregatedSummary(surgeons, bedDaysData, pullForwardData, project)
     headline: `${totalSurgeons} surgeons · ${totalCases.toLocaleString()} cases/yr · ${totalBedDays.toLocaleString()} bed days saved · $${Math.round(totalRevenue / 1e6 * 10) / 10}M revenue + $${Math.round(totalBedDayValue / 1e6 * 10) / 10}M cost avoidance`,
     total_surgeons: totalSurgeons,
     total_incremental_cases: totalCases,
+    total_converted_cases: totalConvertedCases,
+    total_net_new_cases: totalNetNewCases,
     total_revenue_impact: totalRevenue,
     total_bed_days_saved: totalBedDays,
     total_bed_day_value: totalBedDayValue,

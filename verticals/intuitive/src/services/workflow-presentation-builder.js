@@ -318,13 +318,13 @@ function buildWorkflowSlides(project, enrichments, hospitalName) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0">
           <div style="background:rgba(139,92,246,0.10);border:2px solid #8b5cf6;border-radius:12px;padding:16px">
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#c4b5fd;font-weight:700">Incremental · Net-New &rarr; Revenue</div>
-            <div style="font-size:34px;font-weight:bold;color:#a78bfa;margin:4px 0">${fmt(sc.summary.by_category?.pull_forward?.cases || 0)} <span style="font-size:14px;color:#cbd5e1;font-weight:500">cases/yr</span></div>
+            <div style="font-size:34px;font-weight:bold;color:#a78bfa;margin:4px 0">${fmt(sc.summary.total_net_new_cases || 0)} <span style="font-size:14px;color:#cbd5e1;font-weight:500">cases/yr</span></div>
             <div style="font-size:13px;color:#cbd5e1">${fmtMoneyShort(sc.summary.total_revenue_impact)} new revenue · drives the Business Plan IRR</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:6px">Net-new cases surgeons bring in from other facilities where they are blocked by capacity, plus new recruits. Brand-new volume for ${esc(hospitalName)} &mdash; not cases it already does.</div>
           </div>
           <div style="background:rgba(16,185,129,0.10);border:2px solid #10b981;border-radius:12px;padding:16px">
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#6ee7b7;font-weight:700">Conversion · Open &rarr; da Vinci &rarr; Cost Avoidance</div>
-            <div style="font-size:34px;font-weight:bold;color:#34d399;margin:4px 0">${fmt(sc.summary.by_category?.open_to_mis?.cases || 0)} <span style="font-size:14px;color:#cbd5e1;font-weight:500">cases/yr</span></div>
+            <div style="font-size:34px;font-weight:bold;color:#34d399;margin:4px 0">${fmt(sc.summary.total_converted_cases || 0)} <span style="font-size:14px;color:#cbd5e1;font-weight:500">cases/yr</span></div>
             <div style="font-size:13px;color:#cbd5e1">${fmtMoneyShort(sc.summary.total_bed_day_value)} cost avoidance · ${fmt(sc.summary.total_bed_days_saved)} bed days saved</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:6px">This hospital&rsquo;s existing OPEN cases switched to robotic &mdash; shorter stays, fewer complications. Money saved, not new revenue.</div>
           </div>
