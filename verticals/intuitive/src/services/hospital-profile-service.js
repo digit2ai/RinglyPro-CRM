@@ -55,7 +55,7 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
   // robotic case mix (prostatectomy, partial nephrectomy, hysterectomy, colectomy, etc.)
   // which run 150-240 min — ~180 min weighted average. The old 60-min/incremental-only
   // formula gave ~2.5K min/yr (under-counts by ~30x).
-  const baselineRoboticCases = parseInt(project?.robotic_cases_last_yr || 0);
+  const baselineRoboticCases = parseInt(project?.current_robotic_cases || project?.robotic_cases_last_yr || 0);
   const orMinPerCase = 180;
   const efficiencyPct = 0.14;
   const orTimeSavedMin = Math.round((baselineRoboticCases + incrementalCases) * orMinPerCase * efficiencyPct);
