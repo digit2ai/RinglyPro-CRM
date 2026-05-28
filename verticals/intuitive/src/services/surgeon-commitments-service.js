@@ -172,7 +172,7 @@ function buildAggregatedSummary(surgeons, bedDaysData, pullForwardData, project)
   // Categorical breakdown for donut chart
   const composition = [
     { name: 'Open-to-MIS Conversion', value: byCategory.open_to_mis.count, cases: byCategory.open_to_mis.cases, color: '#dc2626' },
-    { name: 'Pull-Forward / Capacity', value: byCategory.pull_forward.count, cases: byCategory.pull_forward.cases, color: '#0891b2' },
+    { name: 'Splitter / Capacity', value: byCategory.pull_forward.count, cases: byCategory.pull_forward.cases, color: '#0891b2' },
     { name: 'Training Pipeline', value: byCategory.training_pipeline.count, cases: byCategory.training_pipeline.cases, color: '#7c3aed' },
   ].filter(c => c.value > 0);
 

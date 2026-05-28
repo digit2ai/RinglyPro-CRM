@@ -423,7 +423,7 @@ export default function ExecutiveBriefPage({ projectId: propId }) {
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <KPI label="Trained" value={sp.training_pipeline.trained.length} color={C.emerald} />
                 <KPI label="In Training Pipeline" value={sp.training_pipeline.untrained.length} color={C.amber} />
-                <KPI label="Pull-Forward (Access)" value={sp.training_pipeline.pull_forward.length} color={C.cyan} />
+                <KPI label="Splitter (Access)" value={sp.training_pipeline.pull_forward.length} color={C.cyan} />
               </div>
             )}
             {sp.kol_signals?.top_kols?.length > 0 && (

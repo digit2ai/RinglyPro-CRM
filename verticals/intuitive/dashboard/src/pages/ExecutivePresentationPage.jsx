@@ -220,7 +220,7 @@ function buildSlides(project, data, hospitalName) {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <KPI label="Trained" value={sp.training_pipeline.trained.length} color="#10b981" />
           <KPI label="In Pipeline" value={sp.training_pipeline.untrained.length} color="#f59e0b" />
-          <KPI label="Pull-Forward" value={sp.training_pipeline.pull_forward.length} color="#06b6d4" />
+          <KPI label="Splitter" value={sp.training_pipeline.pull_forward.length} color="#06b6d4" />
         </div>
       )}
       {sp?.kol_signals?.top_kols?.length > 0 && (

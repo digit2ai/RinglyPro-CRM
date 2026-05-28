@@ -173,9 +173,9 @@ export default function SurgeonProfilePage({ projectId: propId }) {
           </div>
         )}
 
-        {/* ── Chart 3: KOL Scatter Quadrant (volume vs publications) ── */}
+        {/* ── Chart 3: KOL Scatter Quadrant (volume vs publications) — full width ── */}
         {enrichment?.kol_signals?.top_kols?.length > 0 && (
-          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5 lg:col-span-2">
             <h3 className="font-bold text-white mb-1">KOL Quadrant (Volume × Publications)</h3>
             <p className="text-xs text-slate-500 mb-4">Top-right = high-volume KOLs · dot size = commitment cases</p>
             <div className="h-64">
