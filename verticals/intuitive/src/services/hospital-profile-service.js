@@ -66,34 +66,10 @@ function buildStrategicImpactSummary(project, analysis = {}, surgeons = [], clin
       detail: '14% per-case efficiency × projected case volume (DV5 published benchmark)',
     },
     {
-      label: 'Incremental Cases',
-      value: incrementalCases > 0 ? `${incrementalCases.toLocaleString()}+ cases` : '—',
-      raw_value: incrementalCases,
-      detail: 'From surgeon commitments (net-new, manually entered on Step 7)',
-    },
-    {
       label: 'LOS Days Saved (Conversion)',
       value: losDaysSaved > 0 ? `${losDaysSaved.toLocaleString()} bed days` : '—',
       raw_value: losDaysSaved,
       detail: 'Estimated from 60% open conversion × 2.5 day LOS delta',
-    },
-    {
-      label: 'Incremental Access LOS Saved',
-      value: incrementalAccessLOS > 0 ? `${incrementalAccessLOS.toLocaleString()} bed days` : '—',
-      raw_value: incrementalAccessLOS,
-      detail: 'From pull-forward capacity expansion (surgeons waiting for access)',
-    },
-    {
-      label: 'Research, Publication & Grants',
-      value: researchEngagements > 0 ? `${researchEngagements}+ engagements` : (isAcademic ? '—' : 'n/a'),
-      raw_value: researchEngagements,
-      detail: isAcademic ? 'Academic medical center publication potential' : 'Non-academic — limited research activity',
-    },
-    {
-      label: 'Resident Learning Curve',
-      value: learningCurveReduction ? `${learningCurveReduction}% reduction` : 'n/a',
-      raw_value: learningCurveReduction,
-      detail: isAcademic ? 'DV5 vs Xi published learning curve improvement' : 'Non-academic — no residency program',
     },
   ];
 
