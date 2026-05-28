@@ -157,9 +157,10 @@ function updateThemeIcon() {
 // =====================================================
 // NAVIGATION
 // =====================================================
-function navigateTo(view) {
+function navigateTo(view, opts) {
   _lastDrilldown = null;
   currentView = view;
+  _pendingViewOpts = opts || null;
   document.querySelectorAll('.sidebar-nav li').forEach(li => {
     li.classList.toggle('active', li.dataset.view === view);
   });
@@ -265,7 +266,7 @@ async function renderOverview(container) {
         <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
         <div class="kpi-hint">Click to view details</div>
       </div>
-      <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="navigateTo('tasks')" data-tooltip="Open My To-Do List">
+      <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="navigateTo('tasks', {due:'overdue_today'})" data-tooltip="Open overdue + due today">
         <div class="stat-label">To-Do Items Due Today</div>
         <div class="stat-value">${s.tasks_due_today ?? 0}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' overdue from prior days' : ((s.tasks_due_today ?? 0) > 0 ? 'Due today' : 'Nothing due today')}</div>
@@ -374,6 +375,7 @@ window.findingDismiss = findingDismiss;
 // DRILL-DOWN: Click a KPI card to see the underlying data
 // =====================================================
 let _lastDrilldown = null;
+let _pendingViewOpts = null;
 
 async function drillDown(metric, filterValue) {
   _lastDrilldown = { metric, filterValue };
@@ -3241,6 +3243,7 @@ async function renderTasks(container) {
         </select>
         <select id="task-due-filter" onchange="filterTasks()">
           <option value="">All Due Dates</option>
+          <option value="overdue_today">Overdue + Due Today</option>
           <option value="overdue">Overdue</option>
           <option value="today">Due Today</option>
           <option value="this_week">Next 7 Days</option>
@@ -3257,6 +3260,15 @@ async function renderTasks(container) {
     </div>
     <div id="tasks-list"></div>
   `;
+
+  // Apply a preset from navigateTo('tasks', {due:'...'}) — used by the home
+  // KPI card "To-Do Items Due Today" so the list opens already scoped to
+  // Overdue + Due Today instead of dumping the full backlog.
+  if (_pendingViewOpts && _pendingViewOpts.due) {
+    const dueEl = document.getElementById('task-due-filter');
+    if (dueEl) dueEl.value = _pendingViewOpts.due;
+    _pendingViewOpts = null;
+  }
 
   filterTasks();
 }
@@ -3365,12 +3377,13 @@ function applyActiveTaskFilters(allTasks) {
     filtered = filtered.filter(t => {
       const d = t.due_date ? new Date(t.due_date) : null;
       switch (dueVal) {
-        case 'overdue':    return d && d < startOfToday && t.status === 'pending';
-        case 'today':      return d && d >= startOfToday && d < endOfToday;
-        case 'this_week':  return d && d >= startOfToday && d < in7;
-        case 'this_month': return d && d >= startOfToday && d < in30;
-        case 'none':       return !d;
-        default:           return true;
+        case 'overdue':       return d && d < startOfToday && t.status === 'pending';
+        case 'today':         return d && d >= startOfToday && d < endOfToday;
+        case 'overdue_today': return d && ((d < startOfToday && t.status === 'pending') || (d >= startOfToday && d < endOfToday));
+        case 'this_week':     return d && d >= startOfToday && d < in7;
+        case 'this_month':    return d && d >= startOfToday && d < in30;
+        case 'none':          return !d;
+        default:              return true;
       }
     });
   }
@@ -3816,7 +3829,7 @@ function printTaskGroup(assigneeName) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const now = new Date();
   const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
-  const dueLabel = { overdue: 'Overdue', today: 'Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
+  const dueLabel = { overdue: 'Overdue', today: 'Due Today', overdue_today: 'Overdue + Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
   const statusLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
   const headerLabel = dueLabel ? `${statusLabel} · ${dueLabel}` : statusLabel;
   const title = `To-Do List — ${assigneeName} (${headerLabel})`;
@@ -3912,7 +3925,7 @@ function copyTaskGroupText(assigneeName) {
 
   const now = new Date();
   const generated = now.toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
-  const dueLabel = { overdue: 'Overdue', today: 'Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
+  const dueLabel = { overdue: 'Overdue', today: 'Due Today', overdue_today: 'Overdue + Due Today', this_week: 'Next 7 Days', this_month: 'Next 30 Days', none: 'No Due Date' }[dueVal];
   const statusLabel = statusVal === 'completed' ? 'Completed' : statusVal === 'pending' ? 'Outstanding' : 'All';
   const headerLabel = dueLabel ? `${statusLabel} · ${dueLabel}` : statusLabel;
 
