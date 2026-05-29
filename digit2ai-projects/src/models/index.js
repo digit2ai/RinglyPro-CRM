@@ -242,7 +242,13 @@ const Task = sequelize.define('Task', {
   // access to the task's artifacts at /projects/artifact/:token/:idx.
   // Lets the email body link each artifact by title without exposing
   // anything else from the task or workspace.
-  agent_share_token: DataTypes.UUID
+  agent_share_token: DataTypes.UUID,
+  // Persistent artifact store — survives agent switches. When Senior BA
+  // produces artifacts[] we copy them here so a later Outreach Drafter
+  // re-run (which overwrites agent_structured) doesn't invalidate the
+  // magic links that already went out in emails. Senior BA re-runs DO
+  // replace this (latest-wins) since that matches "re-run = fresh output."
+  agent_artifacts: DataTypes.JSONB
 }, { tableName: 'd2_tasks' });
 
 // =====================================================

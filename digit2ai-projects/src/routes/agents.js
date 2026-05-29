@@ -257,26 +257,30 @@ router.post('/email-payload/:taskId', async (req, res) => {
       .filter(r => r && r.email)
       .map(r => ({ email: String(r.email).trim(), name: r.name ? String(r.name).trim() : '' })) : [];
 
-    // Resolve cover email + non-cover artifacts. Senior BA stores cover in
-    // artifacts[]; Outreach Drafter stores it as subject/body_text.
+    // Resolve cover email + non-cover artifacts. Artifacts live in the
+    // dedicated agent_artifacts column (survives agent re-runs); subject
+    // and cover body come from whichever agent's structured output is
+    // currently on the task (Outreach Drafter writes subject + body_text;
+    // Senior BA writes a cover_email artifact).
     let subject = String(s.subject || '');
     let coverBody = String(s.body_text || '');
     const artifactLinks = [];
     const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/$/, '');
 
-    if (Array.isArray(s.artifacts)) {
-      s.artifacts.forEach((a, idx) => {
-        if (!a || !a.content_md) return;
-        const type = String(a.type || '').toLowerCase();
-        const title = String(a.title || ('Artifact ' + (idx + 1))).trim();
-        if (type === 'cover_email' || type === 'email' || type === 'outreach_email') {
-          if (!coverBody) coverBody = String(a.content_md);
-          if (!subject && title) subject = title;
-        } else {
-          artifactLinks.push({ idx, title, url: `${base}/projects/artifact/${token}/${idx}` });
-        }
-      });
-    }
+    const artifactsSource = Array.isArray(task.agent_artifacts) && task.agent_artifacts.length
+      ? task.agent_artifacts
+      : (Array.isArray(s.artifacts) ? s.artifacts : []);
+    artifactsSource.forEach((a, idx) => {
+      if (!a || !a.content_md) return;
+      const type = String(a.type || '').toLowerCase();
+      const title = String(a.title || ('Artifact ' + (idx + 1))).trim();
+      if (type === 'cover_email' || type === 'email' || type === 'outreach_email') {
+        if (!coverBody) coverBody = String(a.content_md);
+        if (!subject && title) subject = title;
+      } else {
+        artifactLinks.push({ idx, title, url: `${base}/projects/artifact/${token}/${idx}` });
+      }
+    });
 
     // Build plain-text body — recipient sees the cover, then a "Materials"
     // section with each artifact name + clickable URL. Mail clients auto-

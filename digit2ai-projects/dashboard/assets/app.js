@@ -4383,6 +4383,16 @@ function _renderEmailHelper(t) {
   const s = t.agent_structured;
   if (!s || typeof s !== 'object') return '';
   const info = _extractEmailInfo(s);
+  // agent_artifacts is the persistent store and wins over agent_structured.artifacts
+  // (which gets wiped when a different agent re-runs on the same task). The
+  // backend already does this swap when building the email payload — we
+  // mirror it here so the preview count stays accurate.
+  if (Array.isArray(t.agent_artifacts) && t.agent_artifacts.length) {
+    info.artifacts = t.agent_artifacts
+      .filter(a => a && a.content_md)
+      .filter(a => !['cover_email', 'email', 'outreach_email'].includes(String(a.type || '').toLowerCase()))
+      .map((a, i) => ({ title: String(a.title || ('Artifact ' + (i + 1))), type: String(a.type || ''), content_md: a.content_md }));
+  }
   if (!info.subject && !info.body && !info.artifacts.length) return '';
   const recipientLine = info.recipients.length
     ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">To: ${info.recipients.map(r => escapeHtml(r.email + (r.name ? ' (' + r.name + ')' : ''))).join(', ')}</div>`

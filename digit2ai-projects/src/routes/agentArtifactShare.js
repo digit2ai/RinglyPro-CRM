@@ -71,8 +71,12 @@ router.get('/:token/:idx', async (req, res) => {
   try {
     const task = await Task.findOne({ where: { agent_share_token: token } });
     if (!task) return res.status(404).type('html').send(renderError('Not found', 'This artifact link is no longer valid. It may have been revoked.'));
-    const artifacts = (task.agent_structured && Array.isArray(task.agent_structured.artifacts))
-      ? task.agent_structured.artifacts : [];
+    // Read from agent_artifacts (persistent, survives agent switches);
+    // fall back to agent_structured.artifacts for older tasks created
+    // before the dedicated column was added.
+    const artifacts = (Array.isArray(task.agent_artifacts) && task.agent_artifacts.length)
+      ? task.agent_artifacts
+      : ((task.agent_structured && Array.isArray(task.agent_structured.artifacts)) ? task.agent_structured.artifacts : []);
     const artifact = artifacts[idx];
     if (!artifact) return res.status(404).type('html').send(renderError('Not found', 'This artifact does not exist for this link.'));
     res.type('html').send(renderArtifactPage({ artifact, task, idx, total: artifacts.length }));
@@ -92,8 +96,9 @@ router.get('/:token/:idx.json', async (req, res) => {
   try {
     const task = await Task.findOne({ where: { agent_share_token: token } });
     if (!task) return res.status(404).json({ success: false, error: 'not_found' });
-    const artifacts = (task.agent_structured && Array.isArray(task.agent_structured.artifacts))
-      ? task.agent_structured.artifacts : [];
+    const artifacts = (Array.isArray(task.agent_artifacts) && task.agent_artifacts.length)
+      ? task.agent_artifacts
+      : ((task.agent_structured && Array.isArray(task.agent_structured.artifacts)) ? task.agent_structured.artifacts : []);
     const artifact = artifacts[idx];
     if (!artifact) return res.status(404).json({ success: false, error: 'artifact_not_found' });
     res.json({ success: true, data: artifact });

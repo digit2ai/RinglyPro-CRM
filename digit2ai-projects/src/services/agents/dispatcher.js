@@ -63,6 +63,15 @@ async function processTaskById(taskId) {
     update.agent_output = result.output_md || '';
     update.agent_structured = result.structured || null;
     update.agent_error = null;
+    // Persist artifacts in their own column so they survive when a later
+    // re-run with a different agent overwrites agent_structured. The
+    // magic-link viewer reads from this column, not from agent_structured.
+    // Only write when the new run produced artifacts — otherwise leave
+    // any existing artifacts intact (Outreach Drafter doesn't generate
+    // artifacts, so it must not erase Senior BA's prior output).
+    if (result.structured && Array.isArray(result.structured.artifacts) && result.structured.artifacts.length) {
+      update.agent_artifacts = result.structured.artifacts;
+    }
   } else {
     update.agent_status = 'failed';
     update.agent_error = String(result.error || 'unknown').slice(0, 2000);

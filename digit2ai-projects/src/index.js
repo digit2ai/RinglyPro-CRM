@@ -749,6 +749,7 @@ app.get('*', (req, res) => {
       await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_language VARCHAR(8)");
       await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_share_token UUID");
       await sequelize.query("CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_tasks_agent_share_token ON d2_tasks (agent_share_token) WHERE agent_share_token IS NOT NULL");
+      await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_artifacts JSONB");
       await sequelize.query("CREATE INDEX IF NOT EXISTS idx_d2_tasks_agent_status ON d2_tasks (agent_status) WHERE agent_status IS NOT NULL");
     } catch (e) {
       console.log('[D2AI-Projects] tasks agent columns notice:', e.message.substring(0, 120));
