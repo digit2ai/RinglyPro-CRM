@@ -323,6 +323,13 @@ app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
   }
 });
 
+// Build version = process start time. Stamped into the script + stylesheet
+// query strings on every served index.html so a redeploy (new process =
+// new timestamp) invalidates the browser HTTP cache automatically. The SW
+// is already network-first but the browser's own cache wasn't honoring it
+// reliably, so users were stuck on old app.js after deploys.
+const BUILD_VERSION = String(Date.now());
+
 // SPA catch-all: serve dashboard for all non-API, non-intake routes
 app.get('*', (req, res) => {
   // Don't catch the intake static directory (already served above) or API
@@ -331,7 +338,17 @@ app.get('*', (req, res) => {
   }
   const indexPath = path.join(dashboardPath, 'index.html');
   if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
+    try {
+      let html = fs.readFileSync(indexPath, 'utf8');
+      html = html
+        .replace('/projects/assets/app.js"', `/projects/assets/app.js?v=${BUILD_VERSION}"`)
+        .replace('/projects/assets/styles.css"', `/projects/assets/styles.css?v=${BUILD_VERSION}"`);
+      res.set('Cache-Control', 'no-store').type('html').send(html);
+      return;
+    } catch (_) {
+      res.sendFile(indexPath);
+      return;
+    }
   } else {
     res.status(200).send(`
       <!DOCTYPE html>
