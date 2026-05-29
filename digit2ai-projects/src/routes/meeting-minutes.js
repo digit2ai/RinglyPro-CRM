@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { MeetingMinute, Project, Task } = require('../models');
 const { extractActionItems } = require('../services/actionItemExtractor');
-const { sendMinutesToStakeholders } = require('../services/meetingMinutesEmail');
+const { sendMinutesToStakeholders, collectStakeholders, buildHtml, buildText, fmtDate } = require('../services/meetingMinutesEmail');
 const { skipIfDisabled } = require('../services/emailSendGuard');
 
 // Non-blocking auto-send: fires after AI processing finishes so the
@@ -238,6 +238,52 @@ router.post('/:id/send', async (req, res) => {
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('[D2AI-MeetingMinutes] manual send error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/v1/meeting-minutes/:id/email-payload
+// Returns the email body + recipient list WITHOUT sending — the dashboard's
+// "Open in Apple Mail" flow consumes this and hands the payload to a mailto:
+// URL so the user can review + send through their own mail client.
+// Reuses the exact buildHtml/buildText the SendGrid path uses so the
+// recipient sees identical formatting whichever channel is chosen.
+router.post('/:id/email-payload', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const minute = await MeetingMinute.findOne({ where: { id, workspace_id: 1 } });
+    if (!minute) return res.status(404).json({ success: false, error: 'minute_not_found' });
+    if (!minute.notes || !minute.notes.trim()) {
+      return res.status(400).json({ success: false, error: 'no_notes' });
+    }
+    let project = null;
+    let recipients = [];
+    if (minute.project_id) {
+      project = await Project.findOne({ where: { id: minute.project_id, workspace_id: 1 } });
+      if (project) recipients = collectStakeholders(project);
+    }
+    const subject = `Meeting Minutes — ${minute.subject || 'Untitled'} · ${fmtDate(minute.meeting_date)}`;
+    const ctx = {
+      subject: minute.subject,
+      meetingDate: minute.meeting_date,
+      notes: minute.notes,
+      aiSummary: minute.ai_summary,
+      actionItems: minute.action_items_json,
+      projectName: project ? project.name : null
+    };
+    res.json({
+      success: true,
+      data: {
+        to: recipients.join(','),
+        recipients: recipients.map(email => ({ email, name: '' })),
+        subject,
+        body_text: buildText(ctx),
+        body_html: buildHtml(ctx),
+        links: []
+      }
+    });
+  } catch (error) {
+    console.error('[D2AI-MeetingMinutes] email-payload error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

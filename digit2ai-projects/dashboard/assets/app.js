@@ -8151,9 +8151,16 @@ function renderMinutesList(minutes) {
       ? `<span title="Sent ${fmtDateTime(m.sent_at)} to: ${sentTo.map(escapeHtml).join(', ')}" style="background:rgba(16,185,129,.15);color:#10b981;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600">&#10003; Sent (${sentTo.length})</span>`
       : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">not sent</span>';
     const sendDisabled = !m.project_id || !m.notes || !String(m.notes).trim();
+    // Apple Mail button uses the same disabled criteria as SendGrid (needs
+    // a linked project + non-empty notes — otherwise there's no recipient
+    // list and no body). When auto-send is off (default), this is the
+    // primary send path; the SendGrid button is a fallback.
+    const mailBtn = sendDisabled
+      ? ''
+      : `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openMinuteInMail(${m.id})" title="Open Apple Mail (or your default mail client) with the recap pre-filled — recommended for client recaps that have been landing in spam">📧 Mail</button>`;
     const sendBtn = sendDisabled
       ? `<button class="btn btn-sm btn-ghost" disabled title="${!m.project_id ? 'Link to a project first' : 'Add notes first'}" style="opacity:.4;cursor:not-allowed">Send</button>`
-      : `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();sendMinuteToStakeholders(${m.id})" id="send-mm-${m.id}">${m.sent_at ? 'Resend' : 'Send'}</button>`;
+      : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();sendMinuteToStakeholders(${m.id})" id="send-mm-${m.id}" title="Send via SendGrid (server-side). Auto-send is OFF — this is a manual fallback.">${m.sent_at ? 'Resend' : 'SendGrid'}</button>`;
     html += `<tr class="clickable" onclick="openMinutesModal(${m.id})">
       <td>${fmtDate(m.meeting_date)}</td>
       <td><strong>${escapeHtml(m.subject)}</strong></td>
@@ -8161,6 +8168,7 @@ function renderMinutesList(minutes) {
       <td><span style="color:var(--text-muted);font-size:12px">${escapeHtml(notesPreview)}</span></td>
       <td>${sentCell}</td>
       <td>
+        ${mailBtn}
         ${sendBtn}
         <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openMinutesModal(${m.id})">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMinute(${m.id})">Delete</button>
@@ -8170,6 +8178,83 @@ function renderMinutesList(minutes) {
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
+
+// Open the meeting-minutes recap in the user's default mail client (Apple
+// Mail) with the body + recipients pre-filled. Server returns the same
+// HTML/text body the SendGrid path would have sent so the recipient sees
+// identical formatting whichever channel is chosen.
+//
+// Why two buttons (Mail + SendGrid): SendGrid auto-send is disabled and
+// recipient spam folders were the trigger. Apple Mail is now the default
+// path; SendGrid is a labeled fallback for cases where the user prefers
+// the server to send (e.g. bulk recipients).
+async function openMinuteInMail(id) {
+  let payload = null;
+  try {
+    const r = await api('/meeting-minutes/' + id + '/email-payload', { method: 'POST', body: JSON.stringify({}) });
+    if (!r || !r.success) {
+      alert('Could not build email payload: ' + ((r && r.error) || 'unknown error'));
+      return;
+    }
+    payload = r.data;
+  } catch (err) {
+    alert('Could not build email payload: ' + err.message);
+    return;
+  }
+  if (!payload.to) {
+    if (!confirm('No recipients on file for this project — Apple Mail will open with an empty To: field. Continue?')) return;
+  }
+  let body = payload.body_text || '';
+  // mailto URLs cap around 2000 chars in some clients. Plain-text recap
+  // can be long (notes + action items) — truncate body with a note. The
+  // user can also use "Copy as HTML" to paste the full rich version.
+  const MAX = 1800;
+  let truncated = false;
+  if (body.length > MAX) {
+    body = body.slice(0, MAX) + '\n\n[...truncated. Use "Copy HTML Body" + paste into Mail for the full version.]';
+    truncated = true;
+  }
+  const url = `mailto:${encodeURIComponent(payload.to || '')}?subject=${encodeURIComponent(payload.subject || '')}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  if (typeof showCopyToast === 'function') {
+    const n = (payload.recipients || []).length;
+    showCopyToast(n ? `Opening Mail — ${n} recipient${n === 1 ? '' : 's'}${truncated ? ' (body truncated)' : ''}` : 'Opening Mail…');
+  }
+  // Stash payload for the "Copy as HTML" quick-action — user can paste
+  // the rich version into Mail compose if they want the styled card.
+  window._lastMinutePayload = payload;
+}
+window.openMinuteInMail = openMinuteInMail;
+
+async function copyMinuteAsHtml(id) {
+  let payload = window._lastMinutePayload;
+  // If no cached payload (page refresh, different minute), re-fetch.
+  if (!payload || !payload.body_html) {
+    try {
+      const r = await api('/meeting-minutes/' + id + '/email-payload', { method: 'POST', body: JSON.stringify({}) });
+      if (!r || !r.success) { alert('Could not build payload'); return; }
+      payload = r.data;
+    } catch (err) { alert('Could not build payload: ' + err.message); return; }
+  }
+  const html = payload.body_html || '';
+  const text = payload.body_text || '';
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      const item = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      });
+      await navigator.clipboard.write([item]);
+      if (typeof showCopyToast === 'function') showCopyToast('Rich HTML copied — paste into Mail compose for the styled recap');
+      return;
+    }
+  } catch (_) { /* fall through */ }
+  try {
+    await navigator.clipboard.writeText(text);
+    if (typeof showCopyToast === 'function') showCopyToast('Plain text copied (browser blocked rich-text copy)');
+  } catch (_) { alert('Copy failed — your browser blocked clipboard access.'); }
+}
+window.copyMinuteAsHtml = copyMinuteAsHtml;
 
 async function sendMinuteToStakeholders(id) {
   const btn = document.getElementById('send-mm-' + id);

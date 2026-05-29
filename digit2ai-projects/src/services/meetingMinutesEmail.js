@@ -214,4 +214,6 @@ async function sendMinutesToStakeholders(meetingMinuteId, { onlyTo } = {}) {
   return { sent, failed };
 }
 
-module.exports = { sendMinutesToStakeholders, collectStakeholders };
+// Exported for the email-payload endpoint so the "Open in Apple Mail"
+// UI flow can reuse the exact same body the SendGrid path uses.
+module.exports = { sendMinutesToStakeholders, collectStakeholders, buildHtml, buildText, fmtDate };
