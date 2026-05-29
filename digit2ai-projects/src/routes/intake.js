@@ -1229,6 +1229,116 @@ router.post('/projects/:id/reject', intakeAuth, requireAdmin, async (req, res) =
   }
 });
 
+// POST /api/v1/intake/projects/:id/approval-email-payload
+// POST /api/v1/intake/projects/:id/rejection-email-payload
+// Two thin endpoints that build the approval/rejection email body without
+// sending. The UI calls them after a successful /approve or /reject so the
+// user can review the draft and open it in Apple Mail (sidesteps SendGrid
+// spam folder issue). Reuse the exact buildApprovalBody / buildRejectionBody
+// the server-side path uses, so the recipient sees identical formatting
+// whichever channel is chosen.
+async function buildEmailDraftPayload({ project, kind, reason }) {
+  let companyName = '';
+  if (project.company_id) {
+    try { const co = await Company.findByPk(project.company_id); if (co) companyName = co.name || ''; } catch (_) {}
+  }
+  if (kind === 'rejection') {
+    const body = requestorNotification.buildRejectionBody({
+      toName: project.submitter_name,
+      company: companyName,
+      projectName: project.name,
+      reason
+    });
+    return {
+      to: project.submitter_email || '',
+      recipients: project.submitter_email ? [{ email: project.submitter_email, name: project.submitter_name || '' }] : [],
+      subject: body.subject,
+      body_text: body.text,
+      body_html: body.html,
+      reply_to: requestorNotification.REPLY_TO_EMAIL,
+      kind: 'rejection'
+    };
+  }
+  // approval — resolve magic link + kickoff meeting if scheduled
+  let magicLink = null;
+  try {
+    const intakeRow = await ProjectIntake.findOne({ where: { project_id: project.id } });
+    if (intakeRow) {
+      const token = await CompanyAccessToken.findOne({
+        where: { batch_id: intakeRow.batch_id },
+        order: [['created_at', 'ASC']]
+      });
+      if (token) {
+        const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+        magicLink = requestorNotification.buildMagicLink(baseUrl, token.token);
+      }
+    }
+  } catch (_) {}
+  let meeting = null;
+  if (project.kickoff_event_id) {
+    try {
+      const ev = await CalendarEvent.findByPk(project.kickoff_event_id);
+      if (ev) {
+        meeting = {
+          id: ev.id,
+          title: ev.title,
+          start_time: ev.start_time,
+          end_time: ev.end_time,
+          description: ev.description,
+          location: ev.location,
+          zoom_join_url: ev.zoom_join_url || null,
+          zoom_password: ev.zoom_password || null
+        };
+      }
+    } catch (_) {}
+  }
+  const body = requestorNotification.buildApprovalBody({
+    toEmail: project.submitter_email,
+    toName: project.submitter_name,
+    company: companyName,
+    projectName: project.name,
+    description: project.description,
+    magicLink,
+    meeting
+  });
+  return {
+    to: project.submitter_email || '',
+    recipients: project.submitter_email ? [{ email: project.submitter_email, name: project.submitter_name || '' }] : [],
+    subject: body.subject,
+    body_text: body.text,
+    body_html: body.html,
+    reply_to: requestorNotification.REPLY_TO_EMAIL,
+    kind: 'approval',
+    magic_link: magicLink,
+    meeting: meeting ? { start_time: meeting.start_time, zoom_join_url: meeting.zoom_join_url } : null
+  };
+}
+
+router.post('/projects/:id/approval-email-payload', intakeAuth, requireAdmin, async (req, res) => {
+  try {
+    const project = await Project.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const payload = await buildEmailDraftPayload({ project, kind: 'approval' });
+    res.json({ success: true, data: payload });
+  } catch (err) {
+    console.error('[D2AI-Intake] approval-email-payload error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/projects/:id/rejection-email-payload', intakeAuth, requireAdmin, async (req, res) => {
+  try {
+    const project = await Project.findByPk(req.params.id);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const reason = (req.body && req.body.reason) ? String(req.body.reason).trim() : '';
+    const payload = await buildEmailDraftPayload({ project, kind: 'rejection', reason });
+    res.json({ success: true, data: payload });
+  } catch (err) {
+    console.error('[D2AI-Intake] rejection-email-payload error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // SUBMITTER-FACING RESCHEDULE
 // =====================================================

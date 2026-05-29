@@ -38,22 +38,13 @@ function buildMagicLink(baseUrl, token) {
   return `${root}/projects/intake/batch.html?token=${token}`;
 }
 
-// One merged email sent after admin approves the project request.
-// Contains: acknowledgment + auto-scheduled kickoff (date, time, Zoom link,
-// .ics attachment) + magic link + reschedule note. Replaces the previous
-// pair of emails (acknowledgment + separate calendar invite).
-async function sendApprovalAcknowledgment({
-  toEmail, toName, company, projectName, description, magicLink, ccEmails, meeting
+// Build the approval email body (subject + text + html + optional .ics
+// attachment) WITHOUT sending. Exported so the "Open in Apple Mail" UI
+// flow can render the same content the SendGrid path would have sent.
+// Pure function: no env reads beyond the module-level constants.
+function buildApprovalBody({
+  toEmail, toName, company, projectName, description, magicLink, meeting
 }) {
-  if (!sgMail || !process.env.SENDGRID_API_KEY) {
-    console.log('[D2AI-Notify] SendGrid not configured — approval email skipped');
-    return { sent: false, reason: 'sendgrid_not_configured' };
-  }
-  if (!toEmail) {
-    console.log('[D2AI-Notify] No submitter email — approval email skipped');
-    return { sent: false, reason: 'no_email' };
-  }
-
   const fn = firstName(toName) || 'there';
   const co = company || '';
   const proj = projectName || 'your project';
@@ -168,15 +159,33 @@ ${SIGNATURE_EMAIL}`;
     <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
   </div>`;
 
+  return { subject, text, html, attachment };
+}
+
+// SendGrid-backed approval send. Gated by EMAIL_AUTOSEND_DISABLED. Kept for
+// historical paths that still rely on server-side send; the "Open in Apple
+// Mail" flow consumes the same buildApprovalBody output instead.
+async function sendApprovalAcknowledgment({
+  toEmail, toName, company, projectName, description, magicLink, ccEmails, meeting
+}) {
+  if (!sgMail || !process.env.SENDGRID_API_KEY) {
+    console.log('[D2AI-Notify] SendGrid not configured — approval email skipped');
+    return { sent: false, reason: 'sendgrid_not_configured' };
+  }
+  if (!toEmail) {
+    console.log('[D2AI-Notify] No submitter email — approval email skipped');
+    return { sent: false, reason: 'no_email' };
+  }
+  const body = buildApprovalBody({ toEmail, toName, company, projectName, description, magicLink, meeting });
   const msg = {
     to: toEmail,
     from: { email: ENVELOPE_FROM, name: FROM_NAME },
-    subject,
-    text,
-    html,
+    subject: body.subject,
+    text: body.text,
+    html: body.html,
     replyTo: SIGNATURE_EMAIL
   };
-  if (attachment) msg.attachments = [attachment];
+  if (body.attachment) msg.attachments = [body.attachment];
   const callerCc = (ccEmails || []).filter(e => e && e !== toEmail);
   const auto = buildCcBcc([toEmail, ...callerCc]);
   const cc = [...callerCc, ...(auto.cc || [])];
@@ -188,7 +197,7 @@ ${SIGNATURE_EMAIL}`;
   }
   try {
     await sgMail.send(msg);
-    console.log(`[D2AI-Notify] Approval+kickoff email sent to ${toEmail}${attachment ? ' (with .ics)' : ''}`);
+    console.log(`[D2AI-Notify] Approval+kickoff email sent to ${toEmail}${body.attachment ? ' (with .ics)' : ''}`);
     return { sent: true };
   } catch (err) {
     console.error('[D2AI-Notify] Approval send failed:', err.response?.body || err.message);
@@ -196,18 +205,8 @@ ${SIGNATURE_EMAIL}`;
   }
 }
 
-async function sendRejectionNotice({
-  toEmail, toName, company, projectName, reason
-}) {
-  if (!sgMail || !process.env.SENDGRID_API_KEY) {
-    console.log('[D2AI-Notify] SendGrid not configured — rejection email skipped');
-    return { sent: false, reason: 'sendgrid_not_configured' };
-  }
-  if (!toEmail) {
-    console.log('[D2AI-Notify] No submitter email — rejection email skipped');
-    return { sent: false, reason: 'no_email' };
-  }
-
+// Pure rejection-body builder — same shape as buildApprovalBody.
+function buildRejectionBody({ toName, company, projectName, reason }) {
   const fn = firstName(toName) || 'there';
   const co = company || '';
   const proj = projectName || 'your project';
@@ -249,6 +248,20 @@ ${SIGNATURE_EMAIL}`;
     <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
   </div>`;
 
+  return { subject, text, html };
+}
+
+// SendGrid-backed rejection send. Gated by EMAIL_AUTOSEND_DISABLED.
+async function sendRejectionNotice({ toEmail, toName, company, projectName, reason }) {
+  if (!sgMail || !process.env.SENDGRID_API_KEY) {
+    console.log('[D2AI-Notify] SendGrid not configured — rejection email skipped');
+    return { sent: false, reason: 'sendgrid_not_configured' };
+  }
+  if (!toEmail) {
+    console.log('[D2AI-Notify] No submitter email — rejection email skipped');
+    return { sent: false, reason: 'no_email' };
+  }
+  const body = buildRejectionBody({ toName, company, projectName, reason });
   if (skipIfDisabled(`requestor rejection -> ${toEmail}`)) {
     return { sent: false, reason: 'autosend_disabled' };
   }
@@ -256,9 +269,9 @@ ${SIGNATURE_EMAIL}`;
     await sgMail.send({
       to: toEmail,
       from: { email: ENVELOPE_FROM, name: FROM_NAME },
-      subject,
-      text,
-      html,
+      subject: body.subject,
+      text: body.text,
+      html: body.html,
       replyTo: SIGNATURE_EMAIL,
       ...buildCcBcc(toEmail)
     });
@@ -273,5 +286,9 @@ ${SIGNATURE_EMAIL}`;
 module.exports = {
   sendApprovalAcknowledgment,
   sendRejectionNotice,
-  buildMagicLink
+  buildApprovalBody,
+  buildRejectionBody,
+  buildMagicLink,
+  ENVELOPE_FROM_EMAIL: ENVELOPE_FROM,
+  REPLY_TO_EMAIL: SIGNATURE_EMAIL
 };

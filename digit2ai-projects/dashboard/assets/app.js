@@ -1468,11 +1468,13 @@ async function approveInboxItem(projectId) {
       if (rBtn) rBtn.disabled = false;
       return;
     }
-    if (status) status.textContent = `Approved. ${res.milestones_created} milestones created.`;
+    if (status) status.textContent = `Approved. ${res.milestones_created} milestones created. Preparing email draft…`;
     if (card) card.style.opacity = '0.5';
-    setTimeout(() => { if (card) card.remove(); }, 1500);
     refreshInboxBadge();
-    setTimeout(() => navigateTo('inbox'), 1600);
+    // The approval IIFE schedules the kickoff Zoom + calendar event after
+    // res.json returns; wait briefly so the payload reflects the meeting
+    // details, then open the draft modal.
+    setTimeout(() => openIntakeEmailDraft(projectId, 'approval'), 1800);
   } catch (e) {
     if (status) status.textContent = 'Error: ' + e.message;
     if (aBtn) aBtn.disabled = false;
@@ -2056,14 +2058,124 @@ async function rejectInboxItem(projectId) {
       if (status) status.textContent = 'Error: ' + (res.error || 'reject failed');
       return;
     }
-    if (status) status.textContent = 'Rejected.';
+    if (status) status.textContent = 'Rejected. Preparing email draft…';
     if (card) card.style.opacity = '0.5';
-    setTimeout(() => { if (card) card.remove(); }, 1000);
     refreshInboxBadge();
+    // Open the rejection email draft modal so the user can send the notice
+    // via Apple Mail. Pass the reason so the body matches what was logged.
+    setTimeout(() => openIntakeEmailDraft(projectId, 'rejection', reason || ''), 400);
   } catch (e) {
     if (status) status.textContent = 'Error: ' + e.message;
   }
 }
+
+// =====================================================
+// INTAKE EMAIL DRAFT MODAL — "Open in Apple Mail" for
+// approval / rejection notices. Sidesteps SendGrid spam-folder issue by
+// letting the user review + send each notice through their own client.
+// =====================================================
+async function openIntakeEmailDraft(projectId, kind, reason) {
+  const path = `/intake/projects/${projectId}/${kind}-email-payload`;
+  let payload = null;
+  try {
+    const body = kind === 'rejection' ? { reason: reason || '' } : {};
+    const r = await api(path, { method: 'POST', body: JSON.stringify(body) });
+    if (!r || !r.success) {
+      alert('Could not build the email draft: ' + ((r && r.error) || 'unknown error'));
+      return;
+    }
+    payload = r.data;
+  } catch (err) {
+    alert('Could not build the email draft: ' + err.message);
+    return;
+  }
+  _showIntakeEmailDraftModal(payload, projectId);
+}
+window.openIntakeEmailDraft = openIntakeEmailDraft;
+
+function _showIntakeEmailDraftModal(payload, projectId) {
+  const kindLabel = payload.kind === 'rejection' ? 'Rejection' : 'Approval';
+  const headerColor = payload.kind === 'rejection' ? '#dc2626' : '#10b981';
+  const headerBg = payload.kind === 'rejection' ? 'rgba(220,38,38,0.08)' : 'rgba(16,185,129,0.08)';
+  const recipientText = payload.to
+    ? `<strong>To:</strong> ${escapeHtml(payload.to)}`
+    : `<span style="color:#f59e0b"><strong>⚠ No recipient on file</strong> — Mail will open with empty To: field</span>`;
+  const meetingHint = payload.kind === 'approval' && payload.meeting && payload.meeting.start_time
+    ? `<div style="font-size:12px;color:var(--text-muted);margin:6px 0">Kickoff scheduled for ${escapeHtml(new Date(payload.meeting.start_time).toLocaleString())}${payload.meeting.zoom_join_url ? ' · Zoom link included in body' : ''}</div>`
+    : (payload.kind === 'approval' ? `<div style="font-size:12px;color:#f59e0b;margin:6px 0">⚠ No kickoff meeting was auto-scheduled — body falls back to "reply with times"</div>` : '');
+  const modalId = `intake-email-modal-${projectId}`;
+  const html = `
+    <div id="${modalId}" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px" onclick="if(event.target.id==='${modalId}')document.getElementById('${modalId}').remove()">
+      <div style="background:var(--bg-card);border:1px solid ${headerColor};border-radius:10px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:0">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);background:${headerBg};border-radius:10px 10px 0 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <h3 style="margin:0;color:${headerColor};font-size:16px">📧 ${kindLabel} Email Draft</h3>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('${modalId}').remove()">Close</button>
+          </div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:6px">${recipientText} · <strong>Subject:</strong> ${escapeHtml(payload.subject || '(no subject)')}</div>
+          ${meetingHint}
+        </div>
+        <div style="padding:18px 20px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-primary btn-sm" onclick="_intakeEmailOpenInMail(${projectId})">📧 Open in Mail</button>
+            <button class="btn btn-ghost btn-sm" onclick="_intakeEmailCopyHtml(${projectId})">Copy as HTML</button>
+            <button class="btn btn-ghost btn-sm" onclick="_intakeEmailCopyText(${projectId})">Copy Plain Text</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">SendGrid auto-send is OFF — recipient spam folders triggered the switch. Open this in Apple Mail to send through your own account. "Copy as HTML" preserves the styled card formatting.</div>
+          <div style="background:var(--bg-base);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:13px;white-space:pre-wrap;line-height:1.55;max-height:50vh;overflow:auto">${escapeHtml(payload.body_text || '(empty)')}</div>
+        </div>
+      </div>
+    </div>`;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = html;
+  document.body.appendChild(wrap.firstElementChild);
+  // Stash payload so the action buttons can reach it without re-fetching
+  window._lastIntakeDraft = window._lastIntakeDraft || {};
+  window._lastIntakeDraft[projectId] = payload;
+}
+
+function _intakeEmailOpenInMail(projectId) {
+  const p = (window._lastIntakeDraft || {})[projectId];
+  if (!p) { alert('Draft expired — re-open the modal.'); return; }
+  let body = p.body_text || '';
+  const MAX = 1800;
+  if (body.length > MAX) body = body.slice(0, MAX) + '\n\n[...truncated. Use Copy as HTML for the full version.]';
+  const url = `mailto:${encodeURIComponent(p.to || '')}?subject=${encodeURIComponent(p.subject || '')}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  if (typeof showCopyToast === 'function') showCopyToast('Opening Mail…');
+}
+window._intakeEmailOpenInMail = _intakeEmailOpenInMail;
+
+async function _intakeEmailCopyHtml(projectId) {
+  const p = (window._lastIntakeDraft || {})[projectId];
+  if (!p) return;
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      const item = new ClipboardItem({
+        'text/html': new Blob([p.body_html || ''], { type: 'text/html' }),
+        'text/plain': new Blob([p.body_text || ''], { type: 'text/plain' })
+      });
+      await navigator.clipboard.write([item]);
+      if (typeof showCopyToast === 'function') showCopyToast('HTML email copied — paste into Mail compose');
+      return;
+    }
+  } catch (_) {}
+  try {
+    await navigator.clipboard.writeText(p.body_text || '');
+    if (typeof showCopyToast === 'function') showCopyToast('Plain text copied (browser blocked rich copy)');
+  } catch (_) { alert('Copy failed.'); }
+}
+window._intakeEmailCopyHtml = _intakeEmailCopyHtml;
+
+async function _intakeEmailCopyText(projectId) {
+  const p = (window._lastIntakeDraft || {})[projectId];
+  if (!p) return;
+  try {
+    await navigator.clipboard.writeText(p.body_text || '');
+    if (typeof showCopyToast === 'function') showCopyToast('Plain text copied');
+  } catch (_) { alert('Copy failed.'); }
+}
+window._intakeEmailCopyText = _intakeEmailCopyText;
 
 // =====================================================
 // PROJECTS
