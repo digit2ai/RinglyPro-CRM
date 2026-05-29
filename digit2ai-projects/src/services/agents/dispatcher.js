@@ -11,11 +11,13 @@ const { Task, Project } = require('../../models');
 const researchBriefAgent = require('./researchBriefAgent');
 const outreachDrafterAgent = require('./outreachDrafterAgent');
 const inboxTriageAgent = require('./inboxTriageAgent');
+const businessAnalystAgent = require('./businessAnalystAgent');
 
 const AGENT_MAP = {
-  research: researchBriefAgent,
-  draft:    outreachDrafterAgent,
-  triage:   inboxTriageAgent
+  research:  researchBriefAgent,
+  draft:     outreachDrafterAgent,
+  triage:    inboxTriageAgent,
+  senior_ba: businessAnalystAgent
 };
 
 // Process one task by id. Caller is expected to have already flipped
@@ -38,7 +40,7 @@ async function processTaskById(taskId) {
   try {
     result = await agent.run({ task, project });
   } catch (err) {
-    result = { ok: false, error: err.message, output_md: '', structured: null, cost_estimate_usd: 0, model: agent.SONNET_MODEL || 'unknown' };
+    result = { ok: false, error: err.message, output_md: '', structured: null, cost_estimate_usd: 0, model: agent.SONNET_MODEL || agent.OPUS_MODEL || 'unknown' };
   }
   const update = {
     agent_processed_at: new Date(),
@@ -46,7 +48,15 @@ async function processTaskById(taskId) {
     agent_cost_usd: result.cost_estimate_usd || 0
   };
   if (result.ok) {
-    update.agent_status = 'ready_for_review';
+    // Agents may signal a non-default success status (e.g. Senior BA returns
+    // 'out_of_scope' when the task is purely human-only). Restrict the
+    // override to a known short whitelist so we don't blow the VARCHAR(20)
+    // limit on agent_status.
+    const ALLOWED_OVERRIDES = new Set(['ready_for_review', 'out_of_scope']);
+    const overrideStatus = ALLOWED_OVERRIDES.has(result.agent_status_override)
+      ? result.agent_status_override
+      : 'ready_for_review';
+    update.agent_status = overrideStatus;
     update.agent_output = result.output_md || '';
     update.agent_structured = result.structured || null;
     update.agent_error = null;

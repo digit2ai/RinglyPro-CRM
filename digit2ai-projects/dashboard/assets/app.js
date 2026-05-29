@@ -4173,7 +4173,7 @@ async function showTaskDetail(id) {
 // =====================================================
 function renderAgentPanel(t) {
   const status = t.agent_status;
-  const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage' };
+  const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
   const agentLabel = agentLabels[t.agent_type] || (t.agent_type || 'agent');
 
   // No status yet — offer manual run dropdown
@@ -4190,6 +4190,7 @@ function renderAgentPanel(t) {
               <option value="">Auto-classify</option>
               <option value="research">Research Brief</option>
               <option value="draft">Outreach Drafter</option>
+              <option value="senior_ba">Senior Business Analyst</option>
             </select>
             <button class="btn btn-primary btn-sm" onclick="runAgentManual(${t.id})">Run Agent</button>
           </div>
@@ -4207,6 +4208,7 @@ function renderAgentPanel(t) {
             <select id="manual-agent-type" style="padding:5px 10px;font-size:12px">
               <option value="research">Research Brief</option>
               <option value="draft">Outreach Drafter</option>
+              <option value="senior_ba">Senior Business Analyst</option>
             </select>
             <button class="btn btn-ghost btn-sm" onclick="runAgentManual(${t.id})">Force Run</button>
           </div>
@@ -4259,6 +4261,30 @@ function renderAgentPanel(t) {
           <span style="color:var(--text-muted)">🤖 ${agentLabel} — rejected. ${escapeHtml((t.agent_error || '').slice(0, 200))}</span>
           <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run</button>
         </div>
+      </div>`;
+  }
+
+  // out_of_scope — Senior BA detected this task is purely human-only
+  // (live meeting, phone call, in-person, signature) and refused cleanly.
+  // The prep materials (agenda, talking points, draft email) are in
+  // agent_output / structured.human_action_queue, so we still render them.
+  if (status === 'out_of_scope') {
+    const bodyHtmlOOS = simpleMarkdownToHtml(t.agent_output || '(no prep materials)');
+    return `
+      <div class="card" style="margin-top:18px;padding:16px 18px;border:1px solid #f59e0b;background:rgba(245,158,11,0.06)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <strong style="color:#b45309">🤖 ${agentLabel} — out of scope (human action required)</strong>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="approveAgentOutput(${t.id})">Approve &amp; Append Prep to Task</button>
+            <button class="btn btn-ghost btn-sm" onclick="editAgentOutput(${t.id})">Edit &amp; Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run Agent</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+          Senior BA declined to execute — task needs a person. Prep materials below are ready to use.
+          ${t.agent_model ? ' · Model: ' + escapeHtml(t.agent_model) : ''}${t.agent_cost_usd ? ' · Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
+        </div>
+        <div class="agent-output-body" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:var(--text-primary)">${bodyHtmlOOS}</div>
       </div>`;
   }
 
