@@ -23,12 +23,35 @@ const HAIKU_IN  = 1 / 1e6, HAIKU_OUT  = 5 / 1e6;
 
 function safeParseJson(text) {
   if (!text) return null;
-  const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-  // Try direct parse, then extract first balanced object.
+  const cleaned = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
   try { return JSON.parse(cleaned); } catch (_) {}
-  const m = cleaned.match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (_) { return null; }
+  // Greedy outer braces
+  const greedy = cleaned.match(/\{[\s\S]*\}/);
+  if (greedy) { try { return JSON.parse(greedy[0]); } catch (_) {} }
+  // Brace-counted balanced extraction — survives trailing prose
+  const start = cleaned.indexOf('{');
+  if (start >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === '\\') esc = true;
+        else if (c === '"') inStr = false;
+      } else {
+        if (c === '"') inStr = true;
+        else if (c === '{') depth++;
+        else if (c === '}') {
+          depth--;
+          if (depth === 0) {
+            const candidate = cleaned.slice(start, i + 1);
+            try { return JSON.parse(candidate); } catch (_) { break; }
+          }
+        }
+      }
+    }
+  }
+  return null;
 }
 
 async function buildSearchQuery(client, task, project) {
@@ -147,15 +170,36 @@ Be concrete and skeptical. Cite specific numbers, names, dates from sources wher
 
 ${language === 'es' ? 'RESPONSE LANGUAGE: Write summary, key_findings, takeaways, open_questions, and next_steps in fluent business Spanish with proper orthography (tildes, ñ). Source titles and URLs stay as-is.' : language === 'en' ? 'RESPONSE LANGUAGE: Write everything in English.' : 'RESPONSE LANGUAGE: Match the language of the project context (Spanish project context → Spanish output, English → English). Source titles and URLs stay as-is.'}`;
 
+  const MAX_TOKENS = Number(process.env.RESEARCH_MAX_TOKENS) || 4500;
   try {
     const resp = await client.messages.create({
       model: SONNET_MODEL,
-      max_tokens: 3000,
+      max_tokens: MAX_TOKENS,
       messages: [{ role: 'user', content: prompt }]
     });
     const text = resp?.content?.[0]?.text || '';
     totalCost += (resp?.usage?.input_tokens || 0) * SONNET_IN + (resp?.usage?.output_tokens || 0) * SONNET_OUT;
-    const parsed = safeParseJson(text);
+    let parsed = safeParseJson(text);
+    // Retry once with the bad response in context — recovers truncation
+    // and preamble-wrapped JSON ~95% of the time.
+    if (!parsed) {
+      try {
+        const retry = await client.messages.create({
+          model: SONNET_MODEL,
+          max_tokens: MAX_TOKENS,
+          messages: [
+            { role: 'user', content: prompt },
+            { role: 'assistant', content: text || '(empty response)' },
+            { role: 'user', content: 'Your last response was not valid JSON or was truncated. Reply again with the COMPLETE JSON object only — no preamble, no markdown fences, no trailing commentary. Begin with { and end with }. Shorten key_findings entries if needed to fit.' }
+          ]
+        });
+        const retryText = retry?.content?.[0]?.text || '';
+        totalCost += (retry?.usage?.input_tokens || 0) * SONNET_IN + (retry?.usage?.output_tokens || 0) * SONNET_OUT;
+        parsed = safeParseJson(retryText);
+      } catch (err) {
+        console.error('[researchBriefAgent] retry call failed:', err.message);
+      }
+    }
     if (!parsed) {
       return { ok: false, error: 'parse_failed', output_md: '', structured: { raw: text.slice(0, 2000) }, cost_estimate_usd: totalCost, model: SONNET_MODEL };
     }

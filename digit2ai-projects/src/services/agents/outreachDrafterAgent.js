@@ -28,11 +28,37 @@ function detectLang(project) {
 
 function safeParseJson(text) {
   if (!text) return null;
-  const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const cleaned = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
   try { return JSON.parse(cleaned); } catch (_) {}
-  const m = cleaned.match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (_) { return null; }
+  // Greedy outer braces — handles "Here's the JSON: {...}" preamble
+  const greedy = cleaned.match(/\{[\s\S]*\}/);
+  if (greedy) { try { return JSON.parse(greedy[0]); } catch (_) {} }
+  // Brace-counted extraction — finds the first balanced {...} block.
+  // Survives trailing prose after the JSON closes, which Sonnet
+  // occasionally adds despite the "JSON only" instruction.
+  const start = cleaned.indexOf('{');
+  if (start >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === '\\') esc = true;
+        else if (c === '"') inStr = false;
+      } else {
+        if (c === '"') inStr = true;
+        else if (c === '{') depth++;
+        else if (c === '}') {
+          depth--;
+          if (depth === 0) {
+            const candidate = cleaned.slice(start, i + 1);
+            try { return JSON.parse(candidate); } catch (_) { break; }
+          }
+        }
+      }
+    }
+  }
+  return null;
 }
 
 async function gatherContext(project) {
@@ -187,15 +213,37 @@ Produce JSON:
 
 The user will review before sending. Do NOT send. Output only valid JSON.`;
 
+  const MAX_TOKENS = Number(process.env.OUTREACH_MAX_TOKENS) || 4000;
   try {
     const resp = await client.messages.create({
       model: SONNET_MODEL,
-      max_tokens: 2500,
+      max_tokens: MAX_TOKENS,
       messages: [{ role: 'user', content: prompt }]
     });
     const text = resp?.content?.[0]?.text || '';
-    const cost = (resp?.usage?.input_tokens || 0) * SONNET_IN + (resp?.usage?.output_tokens || 0) * SONNET_OUT;
-    const parsed = safeParseJson(text);
+    let cost = (resp?.usage?.input_tokens || 0) * SONNET_IN + (resp?.usage?.output_tokens || 0) * SONNET_OUT;
+    let parsed = safeParseJson(text);
+    // Retry once if first pass produced incomplete/malformed JSON. Sonnet
+    // sometimes adds preamble or hits max_tokens mid-object; reissue with
+    // the bad reply in context and ask for JSON-only.
+    if (!parsed || !parsed.subject || !parsed.body_text) {
+      try {
+        const retry = await client.messages.create({
+          model: SONNET_MODEL,
+          max_tokens: MAX_TOKENS,
+          messages: [
+            { role: 'user', content: prompt },
+            { role: 'assistant', content: text || '(empty response)' },
+            { role: 'user', content: 'Your last response was not valid JSON or was missing required fields (subject, body_text). Reply again with the COMPLETE JSON object only — no preamble, no markdown fences, no trailing commentary. Begin with { and end with }. Keep body_text under 350 words and whatsapp_short under 80 words so the response fits the token budget.' }
+          ]
+        });
+        const retryText = retry?.content?.[0]?.text || '';
+        cost += (retry?.usage?.input_tokens || 0) * SONNET_IN + (retry?.usage?.output_tokens || 0) * SONNET_OUT;
+        parsed = safeParseJson(retryText);
+      } catch (err) {
+        console.error('[outreachDrafterAgent] retry call failed:', err.message);
+      }
+    }
     if (!parsed || !parsed.subject || !parsed.body_text) {
       return { ok: false, error: 'parse_failed', output_md: '', structured: { raw: text.slice(0, 2000) }, cost_estimate_usd: Number(cost.toFixed(4)), model: SONNET_MODEL };
     }
