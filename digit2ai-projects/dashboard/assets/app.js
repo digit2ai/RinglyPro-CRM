@@ -4344,6 +4344,7 @@ function _renderAgentPanelInner(t) {
   const isApproved = status === 'approved';
   const headerColor = isApproved ? '#10b981' : '#a78bfa';
   const headerBg = isApproved ? 'rgba(16,185,129,0.06)' : 'rgba(124,92,255,0.06)';
+  const emailHelper = _renderEmailHelper(t);
   return `
     <div class="card" style="margin-top:18px;padding:16px 18px;border:1px solid ${headerColor};background:${headerBg}">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
@@ -4358,9 +4359,147 @@ function _renderAgentPanelInner(t) {
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
         ${t.agent_model ? 'Model: ' + escapeHtml(t.agent_model) + ' · ' : ''}${t.agent_cost_usd ? 'Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_language && t.agent_language !== 'auto' ? ' · Lang: ' + escapeHtml(t.agent_language.toUpperCase()) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
       </div>
+      ${emailHelper}
       <div class="agent-output-body" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:var(--text-primary)">${bodyHtml}</div>
     </div>`;
 }
+
+// =====================================================
+// EMAIL HELPER — opens Mail with subject/body/recipient prefilled and
+// downloads artifacts as files (since mailto can't carry attachments)
+// =====================================================
+//
+// Why this shape: RFC 6068 forbids attachments in mailto URLs and every
+// mail client refuses them for security reasons. The best a browser can
+// do is (1) pre-fill the To/Subject/Body and (2) drop the artifacts on
+// the user's filesystem. The user then drags the downloaded files into
+// the open Mail compose window.
+//
+// Supports two agent shapes:
+//   - Outreach Drafter: structured.subject + .body_text + .suggested_recipients
+//   - Senior BA compound: structured.artifacts[] (with optional cover_email
+//     artifact) + structured.human_action_queue (drafts)
+function _renderEmailHelper(t) {
+  const s = t.agent_structured;
+  if (!s || typeof s !== 'object') return '';
+  const info = _extractEmailInfo(s);
+  if (!info.subject && !info.body && !info.artifacts.length) return '';
+  const recipientLine = info.recipients.length
+    ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">To: ${info.recipients.map(r => escapeHtml(r.email + (r.name ? ' (' + r.name + ')' : ''))).join(', ')}</div>`
+    : `<div style="font-size:12px;color:#f59e0b;margin-bottom:6px">⚠ No recipient on file — Mail will open with empty To: field</div>`;
+  const subjectLine = info.subject ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Subject: ${escapeHtml(info.subject)}</div>` : '';
+  const artifactsLine = info.artifacts.length
+    ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${info.artifacts.length} artifact${info.artifacts.length === 1 ? '' : 's'} will download as file${info.artifacts.length === 1 ? '' : 's'} — drag them into the Mail compose window after it opens.</div>`
+    : '';
+  return `
+    <div style="margin-bottom:12px;padding:12px 14px;border:1px solid #3b82f6;background:rgba(59,130,246,0.06);border-radius:6px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <strong style="color:#1d4ed8">📧 Send via Mail</strong>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="openInMailWithArtifacts(${t.id})">📧 Open in Mail${info.artifacts.length ? ' + Download ' + info.artifacts.length + ' file' + (info.artifacts.length === 1 ? '' : 's') : ''}</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmailBody(${t.id})">Copy Email Body</button>
+        </div>
+      </div>
+      ${recipientLine}
+      ${subjectLine}
+      ${artifactsLine}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Mailto cannot attach files — artifacts will save to your Downloads folder and you drag them into the Mail compose window.</div>
+    </div>`;
+}
+
+// Pull email subject / body / recipients / artifacts out of whichever agent
+// shape produced this task. Returns a unified object the email helper can
+// render and the open-in-mail action can consume.
+function _extractEmailInfo(s) {
+  const out = { subject: '', body: '', recipients: [], artifacts: [] };
+  if (!s) return out;
+  // Outreach Drafter shape
+  if (s.subject) out.subject = String(s.subject);
+  if (s.body_text) out.body = String(s.body_text);
+  if (Array.isArray(s.suggested_recipients)) {
+    s.suggested_recipients.forEach(r => {
+      if (r && r.email) out.recipients.push({ email: String(r.email).trim(), name: r.name ? String(r.name).trim() : '' });
+    });
+  }
+  // Senior BA compound shape: look for a cover_email artifact + non-cover artifacts
+  if (Array.isArray(s.artifacts)) {
+    s.artifacts.forEach(a => {
+      if (!a) return;
+      const type = String(a.type || '').toLowerCase();
+      if ((type === 'cover_email' || type === 'email' || type === 'outreach_email') && a.content_md) {
+        if (!out.body) out.body = String(a.content_md);
+        if (!out.subject && a.title) out.subject = String(a.title);
+      } else if (a.content_md) {
+        out.artifacts.push({ title: String(a.title || 'artifact'), type: type || 'other', content_md: String(a.content_md) });
+      }
+    });
+  }
+  return out;
+}
+
+// Trigger a browser download of a single artifact as a .md file.
+function _downloadTextFile(filename, content) {
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+// Safe filename: strip slashes, drop weird chars, append .md
+function _safeFilename(title) {
+  const base = String(title || 'artifact').replace(/[^a-z0-9\-_\s\.]/gi, '').trim().replace(/\s+/g, '_').slice(0, 80) || 'artifact';
+  return `${base}.md`;
+}
+
+async function openInMailWithArtifacts(taskId) {
+  // Re-read the task from cache or fetch fresh — we need agent_structured
+  // which may not be in the current DOM model.
+  let t = null;
+  try {
+    const r = await api('/tasks/' + taskId);
+    if (r && r.success) t = r.data;
+  } catch (_) {}
+  if (!t || !t.agent_structured) { alert('Could not load task data.'); return; }
+  const info = _extractEmailInfo(t.agent_structured);
+  // Download each artifact first so files are sitting in Downloads before
+  // Mail steals focus.
+  info.artifacts.forEach(a => _downloadTextFile(_safeFilename(a.title), a.content_md));
+  // Build the mailto URL. Some clients cap at 2000 chars, so we truncate
+  // a long body and add a note pointing to the attached artifacts.
+  const to = info.recipients.map(r => r.email).join(',');
+  let body = info.body || '';
+  const MAX = 1800;
+  if (body.length > MAX) {
+    body = body.slice(0, MAX) + '\n\n[...truncated. See attached artifacts for full content.]';
+  }
+  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(info.subject || '')}&body=${encodeURIComponent(body)}`;
+  // Small delay so the downloads register before window focus shifts to Mail.
+  setTimeout(() => { window.location.href = url; }, 300);
+  if (typeof showCopyToast === 'function') {
+    const n = info.artifacts.length;
+    showCopyToast(n ? `${n} file${n === 1 ? '' : 's'} downloaded — drag into Mail` : 'Opening Mail…');
+  }
+}
+window.openInMailWithArtifacts = openInMailWithArtifacts;
+
+async function copyEmailBody(taskId) {
+  let t = null;
+  try {
+    const r = await api('/tasks/' + taskId);
+    if (r && r.success) t = r.data;
+  } catch (_) {}
+  if (!t || !t.agent_structured) return;
+  const info = _extractEmailInfo(t.agent_structured);
+  try {
+    await navigator.clipboard.writeText(info.body || '');
+    if (typeof showCopyToast === 'function') showCopyToast('Email body copied');
+  } catch (_) { alert('Copy failed — your browser blocked clipboard access.'); }
+}
+window.copyEmailBody = copyEmailBody;
 
 // Minimal markdown-to-HTML — handles headings, bold, italics, links, lists,
 // code blocks, paragraphs. Theme-aware: uses CSS variables so headings stay
