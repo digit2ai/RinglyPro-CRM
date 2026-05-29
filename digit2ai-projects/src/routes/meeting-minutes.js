@@ -5,12 +5,17 @@ const router = express.Router();
 const { MeetingMinute, Project, Task } = require('../models');
 const { extractActionItems } = require('../services/actionItemExtractor');
 const { sendMinutesToStakeholders } = require('../services/meetingMinutesEmail');
+const { skipIfDisabled } = require('../services/emailSendGuard');
 
 // Non-blocking auto-send: fires after AI processing finishes so the
 // recipient gets the summary + action items, not raw notes only.
 // Only sends if the minute has notes, has a linked project, and was
 // never sent before (sent_at IS NULL). Manual /send re-sends regardless.
 function autoSendIfFirstTime(meetingMinuteId, delayMs = 4000) {
+  // Kill switch: EMAIL_AUTOSEND_DISABLED defaults ON. User reported SendGrid
+  // mail landing in spam — auto-send is off so they can review + send each
+  // recap via Apple Mail. Set EMAIL_AUTOSEND_DISABLED=0 to re-enable.
+  if (skipIfDisabled(`meeting-minutes auto-send #${meetingMinuteId}`)) return;
   setTimeout(async () => {
     try {
       const row = await MeetingMinute.findByPk(meetingMinuteId);

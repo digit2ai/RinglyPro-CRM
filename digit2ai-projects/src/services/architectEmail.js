@@ -22,6 +22,7 @@ try {
 } catch (e) { /* SendGrid optional */ }
 
 const { buildCcBcc } = require('./stakeholderRecipients');
+const { skipIfDisabled } = require('./emailSendGuard');
 
 const FROM_EMAIL = 'info@digit2ai.com';
 const FROM_NAME = 'Manuel Stagg / Digit2AI';
@@ -48,6 +49,9 @@ function stakeholderEmails(project) {
 }
 
 async function send({ to, subject, html, text, stakeholderFacing }) {
+  if (skipIfDisabled(`architect: ${subject} -> ${Array.isArray(to) ? to.join(',') : to}`)) {
+    return { sent: false, reason: 'autosend_disabled' };
+  }
   if (!sgMail || !process.env.SENDGRID_API_KEY) {
     console.log('[architectEmail] SendGrid not configured; would have sent:', subject, '->', to);
     return { sent: false, reason: 'sendgrid_not_configured' };

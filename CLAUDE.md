@@ -106,6 +106,7 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 - `BRAVE_SEARCH_API_KEY` — Optional. When set, the AI Business Analyst Agent uses Brave Search; otherwise falls back to DuckDuckGo HTML scrape (no key required).
 - `CHAT_DAILY_CAP_PER_USER` — Per-user daily message cap for `/api/v1/chat`. Default 200. Lower for cost control.
 - `WAIVE_SIGNUP_FEES_SLUGS` — Comma-separated chamber slugs that skip the $25 setup fee and $10/mo subscription at signup. Members in these chambers are activated immediately and a $0 'waived' transaction is recorded for audit. Default: `cv-2` (PACC-CFL promotional period). Remove a slug to restore paid signup; no code changes needed.
+- `EMAIL_AUTOSEND_DISABLED` — Default ON. Kills every server-initiated SendGrid send in `digit2ai-projects`: meeting-recap auto-send (4s after AI processing), requestor approval/rejection notices, architect-pipeline UAT/SIT/build-complete emails, and the four scheduled pollers (meetingReminder, rsvpReminder, inboxDigest, meetingMinutesPrompt). Reason: SendGrid mail was landing in client spam folders; user reviews drafts in the dashboard and sends each through Apple Mail via the magic-link / mailto helper. Set `EMAIL_AUTOSEND_DISABLED=0` to restore the original behavior. **Does not gate user-clicked sends** (campaigns, contracts, meeting invites, manual minutes /send) — those still go through SendGrid until per-flow Apple-Mail UIs land.
 
 ## Phase A — Public Source Refresh Schedule (Intuitive)
 

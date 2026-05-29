@@ -13,6 +13,7 @@ try {
 } catch (e) { /* SendGrid not installed — sends will fail loudly */ }
 
 const { buildCcBcc } = require('./stakeholderRecipients');
+const { skipIfDisabled } = require('./emailSendGuard');
 
 // Envelope From — must be a SendGrid-verified sender. info@digit2ai.com
 // is the verified shared mailbox; replies are routed back to the actual
@@ -182,6 +183,9 @@ ${SIGNATURE_EMAIL}`;
   if (cc.length) msg.cc = cc;
   if (auto.bcc && auto.bcc.length) msg.bcc = auto.bcc;
 
+  if (skipIfDisabled(`requestor approval -> ${toEmail}`)) {
+    return { sent: false, reason: 'autosend_disabled' };
+  }
   try {
     await sgMail.send(msg);
     console.log(`[D2AI-Notify] Approval+kickoff email sent to ${toEmail}${attachment ? ' (with .ics)' : ''}`);
@@ -245,6 +249,9 @@ ${SIGNATURE_EMAIL}`;
     <a href="mailto:${esc(SIGNATURE_EMAIL)}" style="color:#0a66c2">${esc(SIGNATURE_EMAIL)}</a></p>
   </div>`;
 
+  if (skipIfDisabled(`requestor rejection -> ${toEmail}`)) {
+    return { sent: false, reason: 'autosend_disabled' };
+  }
   try {
     await sgMail.send({
       to: toEmail,

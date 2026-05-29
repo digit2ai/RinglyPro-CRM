@@ -1004,51 +1004,60 @@ app.get('*', (req, res) => {
       console.log('[D2AI-Projects] build poller boot error:', pollErr.message);
     }
 
-    // Boot the day-before meeting reminder poller (hourly). Picks up project
-    // meetings whose start_time is within the next 24h and reminder_sent_at
-    // is NULL; sends a styled reminder email to every non-declined RSVP.
-    try {
-      const meetingReminder = require('./services/meetingReminder');
-      if (typeof meetingReminder.startPoller === 'function') {
-        meetingReminder.startPoller();
+    // All four scheduled email pollers are gated by EMAIL_AUTOSEND_DISABLED.
+    // User reported SendGrid mail landing in spam; auto-send is off by
+    // default and pollers don't even boot. Set EMAIL_AUTOSEND_DISABLED=0
+    // to restore the original behavior.
+    const { isAutoSendDisabled } = require('./services/emailSendGuard');
+    if (isAutoSendDisabled()) {
+      console.log('[D2AI-Projects] EMAIL_AUTOSEND_DISABLED — skipping meeting reminder / rsvp / inbox digest / minutes prompt pollers');
+    } else {
+      // Boot the day-before meeting reminder poller (hourly). Picks up project
+      // meetings whose start_time is within the next 24h and reminder_sent_at
+      // is NULL; sends a styled reminder email to every non-declined RSVP.
+      try {
+        const meetingReminder = require('./services/meetingReminder');
+        if (typeof meetingReminder.startPoller === 'function') {
+          meetingReminder.startPoller();
+        }
+      } catch (reminderErr) {
+        console.log('[D2AI-Projects] meeting reminder poller boot error:', reminderErr.message);
       }
-    } catch (reminderErr) {
-      console.log('[D2AI-Projects] meeting reminder poller boot error:', reminderErr.message);
-    }
 
-    // Boot the "Are you coming?" RSVP nudge poller (hourly). For meetings
-    // <48h away with at least one invited recipient who never clicked
-    // Yes/No/Maybe, sends a soft nudge with the same RSVP buttons.
-    try {
-      const rsvpReminder = require('./services/rsvpReminder');
-      if (typeof rsvpReminder.startPoller === 'function') {
-        rsvpReminder.startPoller();
+      // Boot the "Are you coming?" RSVP nudge poller (hourly). For meetings
+      // <48h away with at least one invited recipient who never clicked
+      // Yes/No/Maybe, sends a soft nudge with the same RSVP buttons.
+      try {
+        const rsvpReminder = require('./services/rsvpReminder');
+        if (typeof rsvpReminder.startPoller === 'function') {
+          rsvpReminder.startPoller();
+        }
+      } catch (nudgeErr) {
+        console.log('[D2AI-Projects] rsvp reminder poller boot error:', nudgeErr.message);
       }
-    } catch (nudgeErr) {
-      console.log('[D2AI-Projects] rsvp reminder poller boot error:', nudgeErr.message);
-    }
 
-    // Boot the intake-inbox digest poller (6h check, at most one email
-    // per 23h while there are pending_review project requests).
-    try {
-      const inboxDigest = require('./services/inboxDigest');
-      if (typeof inboxDigest.startPoller === 'function') {
-        inboxDigest.startPoller();
+      // Boot the intake-inbox digest poller (6h check, at most one email
+      // per 23h while there are pending_review project requests).
+      try {
+        const inboxDigest = require('./services/inboxDigest');
+        if (typeof inboxDigest.startPoller === 'function') {
+          inboxDigest.startPoller();
+        }
+      } catch (digestErr) {
+        console.log('[D2AI-Projects] inbox digest poller boot error:', digestErr.message);
       }
-    } catch (digestErr) {
-      console.log('[D2AI-Projects] inbox digest poller boot error:', digestErr.message);
-    }
 
-    // Boot the post-meeting minutes-prompt poller (hourly). For project
-    // meetings that ended in the last 6h with no minutes prompt yet,
-    // emails Manuel a one-click reminder to add the minutes.
-    try {
-      const minutesPrompt = require('./services/meetingMinutesPrompt');
-      if (typeof minutesPrompt.startPoller === 'function') {
-        minutesPrompt.startPoller();
+      // Boot the post-meeting minutes-prompt poller (hourly). For project
+      // meetings that ended in the last 6h with no minutes prompt yet,
+      // emails Manuel a one-click reminder to add the minutes.
+      try {
+        const minutesPrompt = require('./services/meetingMinutesPrompt');
+        if (typeof minutesPrompt.startPoller === 'function') {
+          minutesPrompt.startPoller();
+        }
+      } catch (mErr) {
+        console.log('[D2AI-Projects] minutes prompt poller boot error:', mErr.message);
       }
-    } catch (mErr) {
-      console.log('[D2AI-Projects] minutes prompt poller boot error:', mErr.message);
     }
   } catch (err) {
     console.error('[D2AI-Projects] Database setup error:', err.message);
