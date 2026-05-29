@@ -4172,6 +4172,13 @@ async function showTaskDetail(id) {
 // TASK AGENT PANEL (Task Agent Loop v1)
 // =====================================================
 function renderAgentPanel(t) {
+  // Wrap so _showAgentProcessing can locate and swap the panel by id when
+  // the user clicks Run Agent (lets us flip to a "running…" indicator
+  // immediately while the inline /run endpoint blocks for 30-60s).
+  return `<div id="agent-panel-${t.id}" data-agent-panel-task="${t.id}">${_renderAgentPanelInner(t)}</div>`;
+}
+
+function _renderAgentPanelInner(t) {
   const status = t.agent_status;
   const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
   const agentLabel = agentLabels[t.agent_type] || (t.agent_type || 'agent');
@@ -4343,21 +4350,65 @@ function simpleMarkdownToHtml(md) {
   return s;
 }
 
+// Show a live "running…" indicator while the inline /run endpoint blocks
+// (Senior BA on Opus 4.7 takes 30-60s; users need to see it's working).
+// We optimistically swap the agent panel to a processing state with an
+// elapsed-time counter, then refresh from server when the API responds.
+function _showAgentProcessing(taskId, agentLabel) {
+  const slots = document.querySelectorAll('[data-agent-panel-task="' + taskId + '"], #agent-panel-' + taskId);
+  // Fallback: locate by scanning for the existing agent card
+  const startedAt = Date.now();
+  const html = `
+    <div class="card" id="agent-panel-${taskId}" data-agent-panel-task="${taskId}" style="margin-top:18px;padding:14px 16px;border:1px solid #38bdf8;background:rgba(56,189,248,0.08)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="spinner" style="width:18px;height:18px"></div>
+        <div style="flex:1">
+          <strong style="color:#0369a1">🤖 ${escapeHtml(agentLabel)} — running</strong>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
+            Senior BA reads the task + project context, then drafts a structured deliverable. Typically 20-60 seconds.
+            <span id="agent-elapsed-${taskId}" style="margin-left:6px;font-variant-numeric:tabular-nums">0s</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  if (slots.length) {
+    slots.forEach(el => { el.outerHTML = html; });
+  } else {
+    // Fallback: append above the description card if we can't find the existing panel
+    const detail = document.getElementById('view-container');
+    if (detail) {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      detail.insertBefore(wrap.firstElementChild, detail.firstChild.nextSibling);
+    }
+  }
+  const tick = () => {
+    const el = document.getElementById('agent-elapsed-' + taskId);
+    if (!el) return; // panel was replaced (run finished) — stop ticking
+    el.textContent = Math.round((Date.now() - startedAt) / 1000) + 's';
+    setTimeout(tick, 1000);
+  };
+  setTimeout(tick, 1000);
+}
+
 async function runAgentManual(taskId) {
   const sel = document.getElementById('manual-agent-type');
   const explicit = sel ? sel.value : '';
   const body = explicit ? { agent_type: explicit } : {};
+  const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
+  _showAgentProcessing(taskId, agentLabels[explicit] || 'AI Agent');
   if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
   const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify(body) });
-  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); return; }
+  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); }
   showTaskDetail(taskId);
 }
 window.runAgentManual = runAgentManual;
 
 async function runAgentNow(taskId) {
+  _showAgentProcessing(taskId, 'AI Agent');
   if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
   const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({}) });
-  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); return; }
+  if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); }
   showTaskDetail(taskId);
 }
 window.runAgentNow = runAgentNow;

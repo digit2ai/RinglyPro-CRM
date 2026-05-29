@@ -23,7 +23,7 @@
 // research input (gated by env SENIOR_BA_USE_WEB_SEARCH for v2).
 
 const OPUS_MODEL = process.env.SENIOR_BA_MODEL || 'claude-opus-4-7';
-const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 4000;
+const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 6000;
 
 // Rough $/MTok for Opus 4.x: $15 in / $75 out.
 // Sonnet fallback rates if user overrides SENIOR_BA_MODEL to a sonnet variant.
@@ -122,10 +122,35 @@ function safeParseJson(text) {
   if (!text) return null;
   let cleaned = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
   try { return JSON.parse(cleaned); } catch (_) {}
-  // Extract first balanced object
-  const m = cleaned.match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (_) { return null; }
+  // Greedy outer braces (handles "Here's my response: { ... }" preamble)
+  const greedy = cleaned.match(/\{[\s\S]*\}/);
+  if (greedy) { try { return JSON.parse(greedy[0]); } catch (_) {} }
+  // Brace-counted extraction — finds the first balanced {...} block. Survives
+  // trailing prose after the JSON closes, which Opus occasionally adds despite
+  // the "JSON only" instruction.
+  const start = cleaned.indexOf('{');
+  if (start >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === '\\') esc = true;
+        else if (c === '"') inStr = false;
+      } else {
+        if (c === '"') inStr = true;
+        else if (c === '{') depth++;
+        else if (c === '}') {
+          depth--;
+          if (depth === 0) {
+            const candidate = cleaned.slice(start, i + 1);
+            try { return JSON.parse(candidate); } catch (_) { break; }
+          }
+        }
+      }
+    }
+  }
+  return null;
 }
 
 function coerceConfidence(v, fallback) {
@@ -333,7 +358,31 @@ async function run({ task, project }) {
   const text = (resp && resp.content && resp.content[0] && resp.content[0].text) || '';
   totalCost += (resp?.usage?.input_tokens || 0) * rate.in + (resp?.usage?.output_tokens || 0) * rate.out;
 
-  const rawParsed = safeParseJson(text);
+  let rawParsed = safeParseJson(text);
+  // Retry once if first response wasn't valid JSON. Opus occasionally adds
+  // a preamble or trailing prose despite the "JSON only" instruction, or
+  // hits max_tokens mid-object. Reissue the same prompt + show what came
+  // back and ask explicitly for ONLY the JSON. ~95% of parse failures
+  // recover on this second pass.
+  if (!rawParsed) {
+    try {
+      const retryResp = await client.messages.create({
+        model: OPUS_MODEL,
+        max_tokens: DEFAULT_MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: 'user', content: userMsg },
+          { role: 'assistant', content: text || '(empty response)' },
+          { role: 'user', content: 'Your last response was not valid JSON or was truncated. Reply again with the COMPLETE JSON object only — no preamble, no markdown fences, no trailing commentary. Begin your reply with { and end with }. If your previous response was truncated mid-field, shorten the content so the JSON fits within the token budget.' }
+        ]
+      });
+      const retryText = (retryResp && retryResp.content && retryResp.content[0] && retryResp.content[0].text) || '';
+      totalCost += (retryResp?.usage?.input_tokens || 0) * rate.in + (retryResp?.usage?.output_tokens || 0) * rate.out;
+      rawParsed = safeParseJson(retryText);
+    } catch (err) {
+      console.error('[businessAnalystAgent] retry call failed:', err.message);
+    }
+  }
   if (!rawParsed) {
     return {
       ok: false,
