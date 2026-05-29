@@ -35,17 +35,17 @@
   .head-pill{display:inline-block;background:var(--verde);color:#fff;padding:3px 9px;border-radius:11px;font-weight:700;font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
 
   /* HERO */
-  .hero{padding:14px 0 12px;text-align:center;border-bottom:1px solid var(--line)}
-  .hero h1{font-size:22px;font-weight:900;line-height:1.18;letter-spacing:-0.3px;color:var(--ink)}
+  .hero{padding:10px 0 9px;text-align:center;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:19px;font-weight:900;line-height:1.18;letter-spacing:-0.3px;color:var(--ink)}
   .hero h1 em{font-style:normal;color:var(--verde);font-weight:900}
-  .hero .sub{margin-top:6px;font-size:11.5px;color:var(--gray);max-width:580px;margin-left:auto;margin-right:auto}
-  .hero .stats{display:flex;justify-content:center;gap:26px;margin-top:10px;flex-wrap:wrap}
+  .hero .sub{margin-top:5px;font-size:10.5px;color:var(--gray);max-width:580px;margin-left:auto;margin-right:auto}
+  .hero .stats{display:flex;justify-content:center;gap:22px;margin-top:7px;flex-wrap:wrap}
   .hero .stat{text-align:center}
-  .hero .stat .v{font-size:17px;font-weight:900;color:var(--verde-dark);line-height:1}
-  .hero .stat .l{font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:700;margin-top:3px}
+  .hero .stat .v{font-size:15px;font-weight:900;color:var(--verde-dark);line-height:1}
+  .hero .stat .l{font-size:7px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gray);font-weight:700;margin-top:2px}
 
   /* GENERIC SECTION */
-  .sec{padding:11px 0;border-bottom:1px solid var(--line)}
+  .sec{padding:8px 0;border-bottom:1px solid var(--line)}
   .sec:last-of-type{border-bottom:none}
   .sl{display:flex;align-items:center;gap:8px;margin-bottom:7px}
   .sl .num{display:inline-block;background:var(--verde);color:#fff;font-weight:900;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;font-size:10px}
@@ -53,12 +53,12 @@
   .sl .kicker{margin-left:auto;font-size:8.5px;color:var(--gray);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
 
   /* WHY (emphasis block) */
-  .why{background:linear-gradient(135deg,var(--verde-light) 0%,#fff 100%);border:1.5px solid var(--verde);border-radius:8px;padding:11px 13px;margin:6px 0 0}
-  .why .lead{font-size:11.5px;color:var(--ink);font-weight:600;line-height:1.5;margin-bottom:8px}
-  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .why-card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 9px}
-  .why-card h4{font-size:10px;font-weight:800;color:var(--verde-dark);margin-bottom:3px;line-height:1.25}
-  .why-card p{font-size:9.5px;color:var(--gray);line-height:1.4}
+  .why{background:linear-gradient(135deg,var(--verde-light) 0%,#fff 100%);border:1.5px solid var(--verde);border-radius:8px;padding:9px 11px;margin:4px 0 0}
+  .why .lead{font-size:10.5px;color:var(--ink);font-weight:600;line-height:1.45;margin-bottom:7px}
+  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .why-card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:7px 8px}
+  .why-card h4{font-size:9.5px;font-weight:800;color:var(--verde-dark);margin-bottom:3px;line-height:1.25}
+  .why-card p{font-size:9px;color:var(--gray);line-height:1.35}
 
   /* WHAT — modules grid */
   .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -74,6 +74,22 @@
   .triple ol,.triple ul{margin-left:14px}
   .triple li{font-size:9.5px;color:var(--gray);margin-bottom:2.5px;line-height:1.35}
   .triple li strong{color:var(--ink);font-weight:700}
+
+  /* PRICING TIERS */
+  .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .tier{border:1px solid var(--line);border-radius:6px;padding:8px 9px;background:#fff;position:relative;display:flex;flex-direction:column}
+  .tier.featured{border:1.5px solid var(--verde);background:linear-gradient(180deg,var(--verde-light) 0%,#fff 60%)}
+  .tier .tname{font-size:8.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--verde-dark);margin-bottom:2px}
+  .tier .trange{font-size:9.5px;color:var(--gray);font-weight:600;margin-bottom:6px}
+  .tier .tprice{font-size:18px;font-weight:900;color:var(--ink);line-height:1}
+  .tier .tprice small{font-size:9px;font-weight:600;color:var(--gray);letter-spacing:0.3px}
+  .tier .tcop{font-size:9px;color:var(--gray);margin-top:2px;font-weight:600}
+  .tier .tnote{font-size:8.5px;color:var(--gray);margin-top:5px;line-height:1.35;padding-top:5px;border-top:1px dashed var(--line)}
+  .tier-featured-pill{position:absolute;top:-7px;right:7px;background:var(--gold);color:#fff;font-size:7px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:8px;text-transform:uppercase}
+  .setup-row{margin-top:7px;display:flex;align-items:center;justify-content:space-between;background:#fafbfa;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:5px;padding:7px 11px;font-size:10px}
+  .setup-row strong{color:var(--ink);font-weight:800}
+  .setup-row .setup-price{font-size:12px;font-weight:900;color:var(--verde-dark)}
+  .trm-note{margin-top:5px;font-size:8px;color:var(--gray);text-align:right;font-style:italic}
 
   /* FOOTER */
   .foot{margin-top:auto;padding-top:9px;border-top:2px solid var(--verde);display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
@@ -208,6 +224,47 @@
         </ul>
       </div>
     </div>
+  </div>
+
+  <!-- PRICING TIERS -->
+  <div class="sec">
+    <div class="sl"><span class="num">4</span><span class="ttl">Inversion: tarifas por tier</span><span class="kicker">Escalonado segun crecimiento de la red</span></div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tname">Tier 1 — Lanzamiento</div>
+        <div class="trange">1 a 99 miembros activos</div>
+        <div class="tprice">$140 <small>USD/mes</small></div>
+        <div class="tcop">~$590,000 COP/mes</div>
+        <div class="tnote">Cohorte fundadora: patrocinadores, palcos y socios estrategicos. Plataforma completa.</div>
+      </div>
+      <div class="tier featured">
+        <span class="tier-featured-pill">Recomendado</span>
+        <div class="tname">Tier 2 — Operacion</div>
+        <div class="trange">100 a 499 miembros activos</div>
+        <div class="tprice">$215 <small>USD/mes</small></div>
+        <div class="tcop">~$905,000 COP/mes</div>
+        <div class="tnote">Apertura ampliada. Reportes ejecutivos a junta directiva. Soporte 24h.</div>
+      </div>
+      <div class="tier">
+        <div class="tname">Tier 3 — Escala</div>
+        <div class="trange">500 a 999 miembros activos</div>
+        <div class="tprice">$615 <small>USD/mes</small></div>
+        <div class="tcop">~$2,585,000 COP/mes</div>
+        <div class="tnote">Infraestructura Pro. SLA 99.9%. MCP de IA via API. Soporte prioritario.</div>
+      </div>
+      <div class="tier">
+        <div class="tname">Tier 4 — Enterprise</div>
+        <div class="trange">1,000+ miembros activos</div>
+        <div class="tprice">A definir</div>
+        <div class="tcop">Rango $1,200 – $3,500 USD/mes</div>
+        <div class="tnote">Infra dedicada, voz IA con identidad del club, SLA personalizado, integraciones.</div>
+      </div>
+    </div>
+    <div class="setup-row">
+      <span><strong>Setup unico de implementacion:</strong> branding, migracion, capacitacion y configuracion legal &middot; aplica a tier 1, 2 y 3</span>
+      <span class="setup-price">$2,000 USD &middot; ~$8.4M COP</span>
+    </div>
+    <div class="trm-note">Tipo de cambio referencial $4,200 COP/USD &middot; ajustar a TRM del dia de la firma &middot; descuento del 10% por pago anual adelantado</div>
   </div>
 
   <!-- FOOTER -->
