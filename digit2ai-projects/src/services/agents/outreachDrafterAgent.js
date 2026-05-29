@@ -78,6 +78,22 @@ function renderMarkdown(task, parsed) {
   lines.push(`# Outreach Draft: ${task.title || ''}`);
   lines.push(`*Language: ${parsed.language || 'en'}*`);
   lines.push('');
+  // Attachments-needed warning: surfaces BEFORE the email so the user sees
+  // the TODO list before they even read the cover note. The drafter cannot
+  // create artifacts; if the task implies any, they appear here.
+  if (Array.isArray(parsed.attachments_needed) && parsed.attachments_needed.length) {
+    lines.push('## ⚠ Attachments You Must Create Before Sending');
+    lines.push('Outreach Drafter cannot generate slide decks or documents. The email below references these — you (or the Senior Business Analyst agent) must produce them first:');
+    lines.push('');
+    parsed.attachments_needed.forEach((a, i) => {
+      lines.push(`${i + 1}. **${a.title || '(untitled)'}** — ${a.format || 'format unspecified'}`);
+      if (a.purpose) lines.push(`   - Purpose: ${a.purpose}`);
+      if (a.rough_outline) lines.push(`   - Suggested content: ${a.rough_outline}`);
+    });
+    lines.push('');
+    lines.push('> Tip: switch this task to **Senior Business Analyst** to generate the deck outline + supporting documents in one run.');
+    lines.push('');
+  }
   lines.push('## Email');
   lines.push(`**Subject:** ${parsed.subject || '(no subject)'}`);
   lines.push('');
@@ -133,6 +149,12 @@ async function run({ task, project, language }) {
 Target language: ${lang}.
 Tone: professional, warm, concrete. Avoid corporate fluff. Spanish: usted form. English: friendly-professional.
 
+CRITICAL CONSTRAINT — YOU CANNOT CREATE ATTACHMENTS
+You can ONLY write the message text. You CANNOT generate slide decks, PDFs, documents, or any other artifact. If the task asks you to "send X with attached Y" or "share the deck":
+- The email body must reference attachments ONLY as items the user will attach themselves (e.g. "I will share the deck shortly", "the materials below will follow under separate cover"). Never claim attachments are already included.
+- List every artifact the user must create + attach in attachments_needed[] — be specific about title, format (deck / one-pager / spreadsheet), purpose, and length. The user reads this as a TODO list.
+- If the entire task is "send X" where X does not yet exist, the email is just a placeholder cover note — say so honestly in tone_notes.
+
 TASK
 ${task.title}
 ${task.description || '(no description)'}
@@ -155,11 +177,12 @@ Produce JSON:
 {
   "language": "${lang}",
   "subject": "...",
-  "body_text": "plain text email body",
+  "body_text": "plain text email body — must NOT claim attachments exist if they have not been generated",
   "body_html": "minimal HTML email body, paragraphs only, no inline styles",
   "whatsapp_short": "WhatsApp version, max 3 short paragraphs, can use *bold*",
   "suggested_recipients": [{"email": "...", "name": "...", "reason": "why include"}],
-  "tone_notes": "any tone choices the user should know about"
+  "attachments_needed": [{"title": "Executive Presentation Deck", "format": "deck (10-15 slides)", "purpose": "board-level overview", "rough_outline": "1-2 sentences on what should be in it"}],
+  "tone_notes": "any tone choices the user should know about, including any honest disclosure (e.g. 'this is a cover note for materials the user must still create')"
 }
 
 The user will review before sending. Do NOT send. Output only valid JSON.`;

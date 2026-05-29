@@ -85,6 +85,10 @@ DELIVERABLE TYPES (pick exactly one based on task intent)
 - feasibility_writeup — concept validation: is this possible, what would it cost
 - requirements_scope — list of in-scope / out-of-scope items, acceptance criteria
 - refusal_human_action_required — task needs a person; deliver prep materials only
+- compound_artifact_package — task asks for MULTIPLE artifacts (e.g. "send presentation deck AND documentation"). You produce each artifact with REAL content in artifacts[], not just a description of what should be in it.
+
+WHEN TO USE compound_artifact_package
+If the task wording asks for more than one deliverable (verbs like "Send X and Y", "Prepare materials including A, B, C", "Share deck + documentation"), pick compound_artifact_package and produce EVERY referenced artifact in the artifacts[] array — full content, not summaries. Do NOT pretend one artifact stands for the others. If the task asks for a deck + a one-pager doc, artifacts must contain BOTH with their actual content.
 
 OUTPUT FORMAT
 Respond with a single JSON object. No prose before or after. No markdown fences. The JSON must conform to this schema (additional fields allowed but the named fields are required):
@@ -113,8 +117,19 @@ Respond with a single JSON object. No prose before or after. No markdown fences.
   "verify_flags": [
     "specific claims in this deliverable that the user should fact-check before relying on them (regulations, current pricing, contact names, recent events)"
   ],
-  "confidence_overall": "high|medium|low"
+  "confidence_overall": "high|medium|low",
+  "artifacts": [
+    {
+      "type": "deck_outline | prose_document | one_pager | cover_email | spreadsheet_outline | checklist | other",
+      "title": "what this artifact is called",
+      "audience": "who this artifact is for (board / executive / partner / internal / etc.)",
+      "format_hint": "deck (10-15 slides) | one-page brief | 2-3 page doc | email body | etc.",
+      "content_md": "FULL CONTENT of the artifact in markdown. For a deck this means a slide-by-slide outline with the actual key message and bullet points for each slide. For a prose_document this means actual paragraphs. NEVER write 'a deck covering X' as a stand-in for the deck — write the deck."
+    }
+  ]
 }
+
+NOTE on artifacts[]: required only when deliverable_type is compound_artifact_package. For all other deliverable_types, artifacts may be omitted or empty.
 
 Respond with the JSON object only.`;
 
@@ -199,7 +214,14 @@ function normalize(parsed) {
     })).filter(h => h.action) : [],
     open_questions: Array.isArray(p.open_questions) ? p.open_questions.map(q => String(q || '').trim()).filter(Boolean) : [],
     verify_flags: Array.isArray(p.verify_flags) ? p.verify_flags.map(v => String(v || '').trim()).filter(Boolean) : [],
-    confidence_overall: coerceConfidence(p.confidence_overall, 'medium')
+    confidence_overall: coerceConfidence(p.confidence_overall, 'medium'),
+    artifacts: Array.isArray(p.artifacts) ? p.artifacts.map(a => ({
+      type: String((a && a.type) || 'other').trim().toLowerCase().replace(/\s+/g, '_'),
+      title: String((a && a.title) || '(untitled)').trim(),
+      audience: String((a && a.audience) || '').trim(),
+      format_hint: String((a && a.format_hint) || '').trim(),
+      content_md: String((a && a.content_md) || '').trim()
+    })).filter(a => a.content_md) : []
   };
 }
 
@@ -225,6 +247,31 @@ function renderMarkdown(task, parsed) {
   if (parsed.executive_summary) {
     lines.push('## Executive Summary');
     lines.push(parsed.executive_summary);
+    lines.push('');
+  }
+
+  // Artifacts come immediately after the summary because they ARE the
+  // deliverable for compound tasks. Each artifact is rendered with a
+  // visible separator + title so the user can scroll to one, copy its
+  // content into Keynote/Slides/Docs, and move on.
+  if (parsed.artifacts && parsed.artifacts.length) {
+    lines.push('## Generated Artifacts');
+    lines.push(`*${parsed.artifacts.length} artifact${parsed.artifacts.length === 1 ? '' : 's'} produced. Copy the content of each into your tool of choice (Keynote / Slides / Docs / Email).*`);
+    lines.push('');
+    parsed.artifacts.forEach((a, i) => {
+      lines.push(`---`);
+      lines.push('');
+      lines.push(`### Artifact ${i + 1}: ${a.title}`);
+      const meta = [];
+      if (a.format_hint) meta.push(a.format_hint);
+      if (a.audience) meta.push('Audience: ' + a.audience);
+      if (a.type) meta.push('Type: ' + a.type.replace(/_/g, ' '));
+      if (meta.length) lines.push(`*${meta.join(' · ')}*`);
+      lines.push('');
+      lines.push(a.content_md);
+      lines.push('');
+    });
+    lines.push(`---`);
     lines.push('');
   }
 
