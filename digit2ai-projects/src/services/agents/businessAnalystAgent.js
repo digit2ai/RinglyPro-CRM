@@ -23,7 +23,7 @@
 // research input (gated by env SENIOR_BA_USE_WEB_SEARCH for v2).
 
 const OPUS_MODEL = process.env.SENIOR_BA_MODEL || 'claude-opus-4-7';
-const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 6000;
+const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 12000;
 
 // Rough $/MTok for Opus 4.x: $15 in / $75 out.
 // Sonnet fallback rates if user overrides SENIOR_BA_MODEL to a sonnet variant.
@@ -89,6 +89,14 @@ DELIVERABLE TYPES (pick exactly one based on task intent)
 
 WHEN TO USE compound_artifact_package
 If the task wording asks for more than one deliverable (verbs like "Send X and Y", "Prepare materials including A, B, C", "Share deck + documentation"), pick compound_artifact_package and produce EVERY referenced artifact in the artifacts[] array — full content, not summaries. Do NOT pretend one artifact stands for the others. If the task asks for a deck + a one-pager doc, artifacts must contain BOTH with their actual content.
+
+TOKEN BUDGET FOR COMPOUND MODE
+You must fit ALL artifacts plus the rest of the JSON envelope in a single response. Stay under these caps so the response does not truncate mid-JSON:
+- Total artifacts: up to 4 (combine related items if the task asks for 5+)
+- Each artifact's content_md: target 800 words, hard cap 1500 words
+- key_findings: 4 items max in compound mode
+- recommendations: 3 items max in compound mode
+- If you run out of budget mid-artifact, FINISH that artifact concisely (do not leave it half-written) — better a complete short deck outline than a truncated detailed one. Drop later artifacts entirely rather than truncating them.
 
 OUTPUT FORMAT
 Respond with a single JSON object. No prose before or after. No markdown fences. The JSON must conform to this schema (additional fields allowed but the named fields are required):

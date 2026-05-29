@@ -4388,22 +4388,23 @@ function _renderEmailHelper(t) {
     ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">To: ${info.recipients.map(r => escapeHtml(r.email + (r.name ? ' (' + r.name + ')' : ''))).join(', ')}</div>`
     : `<div style="font-size:12px;color:#f59e0b;margin-bottom:6px">⚠ No recipient on file — Mail will open with empty To: field</div>`;
   const subjectLine = info.subject ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Subject: ${escapeHtml(info.subject)}</div>` : '';
-  const artifactsLine = info.artifacts.length
-    ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${info.artifacts.length} artifact${info.artifacts.length === 1 ? '' : 's'} will download as file${info.artifacts.length === 1 ? '' : 's'} — drag them into the Mail compose window after it opens.</div>`
+  const artifactsLineMagic = info.artifacts.length
+    ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${info.artifacts.length} artifact${info.artifacts.length === 1 ? '' : 's'} will be included as private links in the email — recipient sees the title and clicks to view.</div>`
     : '';
   return `
     <div style="margin-bottom:12px;padding:12px 14px;border:1px solid #3b82f6;background:rgba(59,130,246,0.06);border-radius:6px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px">
         <strong style="color:#1d4ed8">📧 Send via Mail</strong>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="openInMailWithArtifacts(${t.id})">📧 Open in Mail${info.artifacts.length ? ' + Download ' + info.artifacts.length + ' file' + (info.artifacts.length === 1 ? '' : 's') : ''}</button>
-          <button class="btn btn-ghost btn-sm" onclick="copyEmailBody(${t.id})">Copy Email Body</button>
+          <button class="btn btn-primary btn-sm" onclick="openInMailWithMagicLinks(${t.id})">📧 Open in Mail</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmailAsHtml(${t.id})" title="Copy a rich-text version that shows only the artifact title as a hyperlink (paste into Apple Mail / Gmail compose for the cleanest look)">Copy as HTML</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmailBody(${t.id})">Copy Plain Text</button>
         </div>
       </div>
       ${recipientLine}
       ${subjectLine}
-      ${artifactsLine}
-      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Mailto cannot attach files — artifacts will save to your Downloads folder and you drag them into the Mail compose window.</div>
+      ${artifactsLineMagic}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Artifacts are served as private magic links — recipient clicks the title in the email and sees the artifact rendered as a web page (printable / save as PDF).</div>
     </div>`;
 }
 
@@ -4437,69 +4438,83 @@ function _extractEmailInfo(s) {
   return out;
 }
 
-// Trigger a browser download of a single artifact as a .md file.
-function _downloadTextFile(filename, content) {
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-}
-
-// Safe filename: strip slashes, drop weird chars, append .md
-function _safeFilename(title) {
-  const base = String(title || 'artifact').replace(/[^a-z0-9\-_\s\.]/gi, '').trim().replace(/\s+/g, '_').slice(0, 80) || 'artifact';
-  return `${base}.md`;
-}
-
-async function openInMailWithArtifacts(taskId) {
-  // Re-read the task from cache or fetch fresh — we need agent_structured
-  // which may not be in the current DOM model.
-  let t = null;
+// Fetch the server-built email payload — backend mints the share token
+// (if not set), generates magic-link URLs for each non-cover artifact,
+// and assembles plain-text + HTML bodies with the artifacts embedded
+// as labeled links. Returns null on error.
+async function _fetchEmailPayload(taskId) {
   try {
-    const r = await api('/tasks/' + taskId);
-    if (r && r.success) t = r.data;
-  } catch (_) {}
-  if (!t || !t.agent_structured) { alert('Could not load task data.'); return; }
-  const info = _extractEmailInfo(t.agent_structured);
-  // Download each artifact first so files are sitting in Downloads before
-  // Mail steals focus.
-  info.artifacts.forEach(a => _downloadTextFile(_safeFilename(a.title), a.content_md));
-  // Build the mailto URL. Some clients cap at 2000 chars, so we truncate
-  // a long body and add a note pointing to the attached artifacts.
-  const to = info.recipients.map(r => r.email).join(',');
-  let body = info.body || '';
+    const r = await api('/agents/email-payload/' + taskId, { method: 'POST', body: JSON.stringify({}) });
+    if (!r || !r.success) {
+      alert('Could not build email payload: ' + (r && r.error ? r.error : 'unknown error'));
+      return null;
+    }
+    return r.data;
+  } catch (err) {
+    alert('Could not build email payload: ' + err.message);
+    return null;
+  }
+}
+
+async function openInMailWithMagicLinks(taskId) {
+  const p = await _fetchEmailPayload(taskId);
+  if (!p) return;
+  let body = p.body_text || '';
+  // mailto URLs cap around 2000 chars in some clients. Truncate body and
+  // add a pointer note if oversized — the magic links are still in the
+  // truncated section so the recipient can still access materials.
   const MAX = 1800;
   if (body.length > MAX) {
-    body = body.slice(0, MAX) + '\n\n[...truncated. See attached artifacts for full content.]';
+    body = body.slice(0, MAX) + '\n\n[...truncated. See the materials links above for full content.]';
   }
-  const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(info.subject || '')}&body=${encodeURIComponent(body)}`;
-  // Small delay so the downloads register before window focus shifts to Mail.
-  setTimeout(() => { window.location.href = url; }, 300);
+  const url = `mailto:${encodeURIComponent(p.to || '')}?subject=${encodeURIComponent(p.subject || '')}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
   if (typeof showCopyToast === 'function') {
-    const n = info.artifacts.length;
-    showCopyToast(n ? `${n} file${n === 1 ? '' : 's'} downloaded — drag into Mail` : 'Opening Mail…');
+    const n = (p.links && p.links.length) || 0;
+    showCopyToast(n ? `Opening Mail — ${n} artifact link${n === 1 ? '' : 's'} included` : 'Opening Mail…');
   }
 }
-window.openInMailWithArtifacts = openInMailWithArtifacts;
+window.openInMailWithMagicLinks = openInMailWithMagicLinks;
+
+// Backwards-compat alias (old SW caches may still call the old name).
+window.openInMailWithArtifacts = openInMailWithMagicLinks;
 
 async function copyEmailBody(taskId) {
-  let t = null;
+  const p = await _fetchEmailPayload(taskId);
+  if (!p) return;
   try {
-    const r = await api('/tasks/' + taskId);
-    if (r && r.success) t = r.data;
-  } catch (_) {}
-  if (!t || !t.agent_structured) return;
-  const info = _extractEmailInfo(t.agent_structured);
-  try {
-    await navigator.clipboard.writeText(info.body || '');
-    if (typeof showCopyToast === 'function') showCopyToast('Email body copied');
+    await navigator.clipboard.writeText(p.body_text || '');
+    if (typeof showCopyToast === 'function') showCopyToast('Plain-text email body copied');
   } catch (_) { alert('Copy failed — your browser blocked clipboard access.'); }
 }
 window.copyEmailBody = copyEmailBody;
+
+// Copy the HTML version to clipboard. When pasted into Apple Mail / Gmail
+// compose, the artifact links render as proper Title-only hyperlinks
+// (no raw URLs visible) — which is what mailto cannot do.
+async function copyEmailAsHtml(taskId) {
+  const p = await _fetchEmailPayload(taskId);
+  if (!p) return;
+  const html = p.body_html || '';
+  const text = p.body_text || '';
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      const item = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      });
+      await navigator.clipboard.write([item]);
+      if (typeof showCopyToast === 'function') showCopyToast('HTML email copied — paste into Mail compose');
+      return;
+    }
+  } catch (_) { /* fall through to plain-text fallback */ }
+  // Fallback: plain-text copy (mail clients won't render hyperlinks)
+  try {
+    await navigator.clipboard.writeText(text);
+    if (typeof showCopyToast === 'function') showCopyToast('Plain text copied (browser blocked rich-text copy)');
+  } catch (_) { alert('Copy failed — your browser blocked clipboard access.'); }
+}
+window.copyEmailAsHtml = copyEmailAsHtml;
 
 // Minimal markdown-to-HTML — handles headings, bold, italics, links, lists,
 // code blocks, paragraphs. Theme-aware: uses CSS variables so headings stay

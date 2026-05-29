@@ -5,6 +5,7 @@
 // (SELECT ... FOR UPDATE SKIP LOCKED) so two concurrent ticks cannot
 // process the same row twice.
 
+const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const { sequelize, Task, Project } = require('../models');
@@ -216,6 +217,108 @@ router.put('/triage/:projectId', async (req, res) => {
     res.json({ success: true, data: { id: project.id, triage_brief: project.triage_brief, triage_structured: project.triage_structured, triage_at: project.triage_at, triage_model: project.triage_model } });
   } catch (err) {
     console.error('[D2AI-Agents] triage PUT error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/v1/agents/email-payload/:taskId
+// Mints (or reuses) a public share token for the task and assembles the
+// ready-to-send email payload:
+//   - to: comma-joined recipient emails from structured.suggested_recipients
+//         (Outreach Drafter) or empty if Senior BA has none on file
+//   - subject: from structured.subject OR the cover_email artifact's title
+//   - body_text: plain-text body (cover email content) with each non-email
+//                artifact appended as a labeled URL the recipient can click
+//   - body_html: rich HTML version with proper <a href> anchors for the
+//                "copy as HTML" flow (mailto can't carry HTML)
+//   - links: structured list of artifact links the UI can show + copy
+//
+// Why server-built: mailto can't include HTML and can't attach files. The
+// recipient sees clickable URLs in plain text + we expose an HTML version
+// for users who paste into Apple Mail / Gmail compose to get true
+// "Title-only" hyperlinks.
+router.post('/email-payload/:taskId', async (req, res) => {
+  try {
+    const id = parseInt(req.params.taskId, 10);
+    const task = await Task.findOne({ where: { id, workspace_id: 1 } });
+    if (!task) return res.status(404).json({ success: false, error: 'task_not_found' });
+
+    // Mint share token if missing — UUID v4 is unique enough; the unique
+    // index on the column guards against collision.
+    let token = task.agent_share_token;
+    if (!token) {
+      token = crypto.randomUUID();
+      await task.update({ agent_share_token: token });
+    }
+
+    const s = task.agent_structured || {};
+    // Resolve recipients
+    const recipients = Array.isArray(s.suggested_recipients) ? s.suggested_recipients
+      .filter(r => r && r.email)
+      .map(r => ({ email: String(r.email).trim(), name: r.name ? String(r.name).trim() : '' })) : [];
+
+    // Resolve cover email + non-cover artifacts. Senior BA stores cover in
+    // artifacts[]; Outreach Drafter stores it as subject/body_text.
+    let subject = String(s.subject || '');
+    let coverBody = String(s.body_text || '');
+    const artifactLinks = [];
+    const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/$/, '');
+
+    if (Array.isArray(s.artifacts)) {
+      s.artifacts.forEach((a, idx) => {
+        if (!a || !a.content_md) return;
+        const type = String(a.type || '').toLowerCase();
+        const title = String(a.title || ('Artifact ' + (idx + 1))).trim();
+        if (type === 'cover_email' || type === 'email' || type === 'outreach_email') {
+          if (!coverBody) coverBody = String(a.content_md);
+          if (!subject && title) subject = title;
+        } else {
+          artifactLinks.push({ idx, title, url: `${base}/projects/artifact/${token}/${idx}` });
+        }
+      });
+    }
+
+    // Build plain-text body — recipient sees the cover, then a "Materials"
+    // section with each artifact name + clickable URL. Mail clients auto-
+    // hyperlink the URL.
+    let body_text = coverBody.trim();
+    if (artifactLinks.length) {
+      body_text += '\n\n— Materials —\n';
+      artifactLinks.forEach(l => {
+        body_text += `\n• ${l.title}\n  ${l.url}\n`;
+      });
+    }
+
+    // Build HTML body — proper anchor tags with title-only display.
+    // For pasting into Mail / Gmail compose, which renders HTML.
+    function esc(t) {
+      return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    const coverHtml = esc(coverBody).split(/\n{2,}/).map(p => `<p style="margin:0 0 12px;line-height:1.6">${p.replace(/\n/g, '<br>')}</p>`).join('');
+    let body_html = coverHtml;
+    if (artifactLinks.length) {
+      body_html += '<p style="margin:18px 0 6px"><strong>Materials</strong></p><ul style="margin:0 0 12px 22px;padding:0;line-height:1.7">';
+      artifactLinks.forEach(l => {
+        body_html += `<li><a href="${esc(l.url)}" style="color:#2563eb;text-decoration:underline">${esc(l.title)}</a></li>`;
+      });
+      body_html += '</ul>';
+    }
+
+    res.json({
+      success: true,
+      data: {
+        to: recipients.map(r => r.email).join(','),
+        recipients,
+        subject,
+        body_text,
+        body_html,
+        links: artifactLinks,
+        share_token: token
+      }
+    });
+  } catch (err) {
+    console.error('[agents] /email-payload error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

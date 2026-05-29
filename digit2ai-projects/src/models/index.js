@@ -237,7 +237,12 @@ const Task = sequelize.define('Task', {
   agent_cost_usd: DataTypes.DECIMAL(8, 4),
   // 'auto' | 'en' | 'es' — preserved across re-runs so users serving mixed
   // English / Spanish clients don't have to re-pick every retry.
-  agent_language: DataTypes.STRING(8)
+  agent_language: DataTypes.STRING(8),
+  // Minted on first "Open in Mail" — opaque token that grants public read
+  // access to the task's artifacts at /projects/artifact/:token/:idx.
+  // Lets the email body link each artifact by title without exposing
+  // anything else from the task or workspace.
+  agent_share_token: DataTypes.UUID
 }, { tableName: 'd2_tasks' });
 
 // =====================================================

@@ -100,6 +100,13 @@ app.get('/nda/:token', (req, res) => {
 });
 app.use('/nda', express.static(path.join(dashboardPath, 'nda')));
 
+// Public artifact viewer — recipient of an outreach email clicks
+// /projects/artifact/<token>/<idx> and sees the artifact (deck outline,
+// doc, etc.) rendered as a standalone HTML page. Token-gated, no auth.
+// MUST be mounted BEFORE the SPA catch-all so the path doesn't get
+// hijacked by index.html.
+app.use('/artifact', require('./routes/agentArtifactShare'));
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/findings', authenticateToken, findingsRoutes);
@@ -740,6 +747,8 @@ app.get('*', (req, res) => {
       await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_model VARCHAR(60)');
       await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_cost_usd NUMERIC(8,4)');
       await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_language VARCHAR(8)");
+      await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_share_token UUID");
+      await sequelize.query("CREATE UNIQUE INDEX IF NOT EXISTS idx_d2_tasks_agent_share_token ON d2_tasks (agent_share_token) WHERE agent_share_token IS NOT NULL");
       await sequelize.query("CREATE INDEX IF NOT EXISTS idx_d2_tasks_agent_status ON d2_tasks (agent_status) WHERE agent_status IS NOT NULL");
     } catch (e) {
       console.log('[D2AI-Projects] tasks agent columns notice:', e.message.substring(0, 120));
