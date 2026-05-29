@@ -95,17 +95,32 @@ router.post('/worker/tick', async (_req, res) => {
 });
 
 // POST /api/v1/agents/run/:taskId
-// Manual trigger. Body: { agent_type? } overrides the classifier.
+// Manual trigger.
+// Body:
+//   { agent_type }              — run a specific agent (overrides classifier)
+//   { reclassify: true }        — discard existing agent_type and re-classify
+//   {}                          — re-run the agent already chosen for this task;
+//                                 only reclassify if no agent_type is set
+//
+// Why preserve agent_type by default: a user who picks "Senior Business
+// Analyst" and hits Retry expects the SAME agent to run again. Re-classifying
+// silently flips them to whatever the regex matches first (e.g. "Send" -> draft)
+// which produces wrong-shape output.
 router.post('/run/:taskId', async (req, res) => {
   const id = parseInt(req.params.taskId, 10);
   const explicit = req.body && req.body.agent_type;
+  const forceReclassify = !!(req.body && req.body.reclassify);
   try {
+    const task = await Task.findOne({ where: { id, workspace_id: 1 } });
+    if (!task) return res.status(404).json({ success: false, error: 'task_not_found' });
+
     if (explicit) {
       await dispatcher.setAgentTypeAndQueue(id, explicit);
+    } else if (!forceReclassify && task.agent_type) {
+      // Preserve existing choice — reset run-state but keep agent_type
+      await task.update({ agent_status: 'pending', agent_output: null, agent_structured: null, agent_error: null });
     } else {
-      // Reset + classify
-      const task = await Task.findOne({ where: { id, workspace_id: 1 } });
-      if (!task) return res.status(404).json({ success: false, error: 'task_not_found' });
+      // No agent set yet OR caller explicitly asked to reclassify
       await task.update({ agent_status: null, agent_type: null, agent_output: null, agent_structured: null, agent_error: null });
       const chosen = await classifier.classifyAndQueue(id);
       if (!chosen) return res.json({ success: true, agent_type: null, status: 'skipped', message: 'classifier returned no agent for this task' });

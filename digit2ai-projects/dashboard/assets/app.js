@@ -4178,6 +4178,23 @@ function renderAgentPanel(t) {
   return `<div id="agent-panel-${t.id}" data-agent-panel-task="${t.id}">${_renderAgentPanelInner(t)}</div>`;
 }
 
+// Inline "Switch agent" dropdown rendered next to Re-run buttons. Lets the
+// user swap the agent (e.g. Outreach Drafter -> Senior BA) without having
+// to wipe state through the reclassify path.
+function _renderAgentSwitchControls(t) {
+  const sid = `switch-agent-sel-${t.id}`;
+  const opts = [
+    { v: '', l: 'Switch agent…' },
+    { v: 'senior_ba', l: 'Senior Business Analyst' },
+    { v: 'research', l: 'Research Brief' },
+    { v: 'draft', l: 'Outreach Drafter' }
+  ].filter(o => o.v !== t.agent_type)
+   .map(o => `<option value="${o.v}">${o.l}</option>`).join('');
+  return `
+    <select id="${sid}" style="padding:5px 10px;font-size:12px">${opts}</select>
+    <button class="btn btn-ghost btn-sm" onclick="switchAgent(${t.id}, '${sid}')">Switch &amp; Run</button>`;
+}
+
 function _renderAgentPanelInner(t) {
   const status = t.agent_status;
   const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
@@ -4230,7 +4247,7 @@ function _renderAgentPanelInner(t) {
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="color:#92400e"><strong>🤖 ${agentLabel}</strong> — queued. Will run within 2 minutes.</span>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Run Now</button>
+            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id}, '${t.agent_type || ''}')">Run Now</button>
             <button class="btn btn-ghost btn-sm" onclick="reclassifyAgent(${t.id})">Re-classify</button>
           </div>
         </div>
@@ -4256,7 +4273,10 @@ function _renderAgentPanelInner(t) {
             <strong style="color:#ef4444">🤖 ${agentLabel} — failed</strong>
             <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${err}</div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Retry</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary btn-sm" onclick="runAgentNow(${t.id}, '${t.agent_type || ''}')">Retry ${escapeHtml(agentLabel)}</button>
+            ${_renderAgentSwitchControls(t)}
+          </div>
         </div>
       </div>`;
   }
@@ -4266,7 +4286,10 @@ function _renderAgentPanelInner(t) {
       <div class="card" style="margin-top:18px;padding:14px 16px;border:1px solid var(--border);background:#f8fafc">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="color:var(--text-muted)">🤖 ${agentLabel} — rejected. ${escapeHtml((t.agent_error || '').slice(0, 200))}</span>
-          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id}, '${t.agent_type || ''}')">Re-run ${escapeHtml(agentLabel)}</button>
+            ${_renderAgentSwitchControls(t)}
+          </div>
         </div>
       </div>`;
   }
@@ -4284,7 +4307,8 @@ function _renderAgentPanelInner(t) {
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="approveAgentOutput(${t.id})">Approve &amp; Append Prep to Task</button>
             <button class="btn btn-ghost btn-sm" onclick="editAgentOutput(${t.id})">Edit &amp; Save</button>
-            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run Agent</button>
+            <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id}, '${t.agent_type || ''}')">Re-run ${escapeHtml(agentLabel)}</button>
+            ${_renderAgentSwitchControls(t)}
           </div>
         </div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
@@ -4307,7 +4331,8 @@ function _renderAgentPanelInner(t) {
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${!isApproved ? `<button class="btn btn-primary btn-sm" onclick="approveAgentOutput(${t.id})">Approve &amp; Append to Task</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="editAgentOutput(${t.id})">Edit &amp; Save</button>
-          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id})">Re-run Agent</button>
+          <button class="btn btn-ghost btn-sm" onclick="runAgentNow(${t.id}, '${t.agent_type || ''}')">Re-run ${escapeHtml(agentLabel)}</button>
+          ${_renderAgentSwitchControls(t)}
         </div>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
@@ -4404,17 +4429,34 @@ async function runAgentManual(taskId) {
 }
 window.runAgentManual = runAgentManual;
 
-async function runAgentNow(taskId) {
-  _showAgentProcessing(taskId, 'AI Agent');
+// Re-run the SAME agent already chosen for this task. If you want to switch
+// agent, use switchAgentTo(taskId, newType). If you want to wipe the
+// choice and re-classify, use reclassifyAgent(taskId).
+async function runAgentNow(taskId, agentType) {
+  const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
+  _showAgentProcessing(taskId, agentLabels[agentType] || 'AI Agent');
   if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
-  const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({}) });
+  const body = agentType ? { agent_type: agentType } : {};
+  const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify(body) });
   if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); }
   showTaskDetail(taskId);
 }
 window.runAgentNow = runAgentNow;
 
+// Reads the per-panel "switch agent" dropdown and runs the chosen agent
+// instead of the currently-stored one. Called by the "Switch" buttons we
+// added to the ready/approved/failed/oos/rejected panels.
+async function switchAgent(taskId, selectId) {
+  const sel = document.getElementById(selectId);
+  const newType = sel ? sel.value : '';
+  if (!newType) { alert('Pick an agent first.'); return; }
+  await runAgentNow(taskId, newType);
+}
+window.switchAgent = switchAgent;
+
 async function reclassifyAgent(taskId) {
-  await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({}) });
+  _showAgentProcessing(taskId, 'AI Agent');
+  await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify({ reclassify: true }) });
   showTaskDetail(taskId);
 }
 window.reclassifyAgent = reclassifyAgent;
