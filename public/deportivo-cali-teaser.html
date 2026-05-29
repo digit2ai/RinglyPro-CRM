@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CamaraVirtual.app — Teaser para Asociacion Deportivo Cali</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde:#006837;
+    --verde-dark:#00422a;
+    --verde-light:#e8f4ed;
+    --gold:#C9A84C;
+    --ink:#0f1a2e;
+    --gray:#4a5568;
+    --line:#cfd8d2;
+    --bg:#ffffff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:11px;line-height:1.4}
+  .sheet{
+    width:8.5in; min-height:11in; margin:0 auto;
+    padding:0.45in 0.5in 0.4in;
+    background:#fff;
+    display:flex; flex-direction:column;
+  }
+
+  /* HEADER STRIP */
+  .head{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:3px solid var(--verde)}
+  .brand{font-weight:900;letter-spacing:1px;font-size:13px;color:var(--verde-dark)}
+  .brand .dot{color:var(--gold)}
+  .brand small{display:block;font-weight:600;letter-spacing:2.5px;color:var(--gray);font-size:8px;text-transform:uppercase;margin-top:2px}
+  .head-right{text-align:right;font-size:9px;color:var(--gray);line-height:1.45}
+  .head-right strong{color:var(--ink)}
+  .head-pill{display:inline-block;background:var(--verde);color:#fff;padding:3px 9px;border-radius:11px;font-weight:700;font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+
+  /* HERO */
+  .hero{padding:14px 0 12px;text-align:center;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:22px;font-weight:900;line-height:1.18;letter-spacing:-0.3px;color:var(--ink)}
+  .hero h1 em{font-style:normal;color:var(--verde);font-weight:900}
+  .hero .sub{margin-top:6px;font-size:11.5px;color:var(--gray);max-width:580px;margin-left:auto;margin-right:auto}
+  .hero .stats{display:flex;justify-content:center;gap:26px;margin-top:10px;flex-wrap:wrap}
+  .hero .stat{text-align:center}
+  .hero .stat .v{font-size:17px;font-weight:900;color:var(--verde-dark);line-height:1}
+  .hero .stat .l{font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:700;margin-top:3px}
+
+  /* GENERIC SECTION */
+  .sec{padding:11px 0;border-bottom:1px solid var(--line)}
+  .sec:last-of-type{border-bottom:none}
+  .sl{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .sl .num{display:inline-block;background:var(--verde);color:#fff;font-weight:900;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;font-size:10px}
+  .sl .ttl{font-size:13px;font-weight:800;color:var(--ink);letter-spacing:0.2px}
+  .sl .kicker{margin-left:auto;font-size:8.5px;color:var(--gray);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+
+  /* WHY (emphasis block) */
+  .why{background:linear-gradient(135deg,var(--verde-light) 0%,#fff 100%);border:1.5px solid var(--verde);border-radius:8px;padding:11px 13px;margin:6px 0 0}
+  .why .lead{font-size:11.5px;color:var(--ink);font-weight:600;line-height:1.5;margin-bottom:8px}
+  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .why-card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 9px}
+  .why-card h4{font-size:10px;font-weight:800;color:var(--verde-dark);margin-bottom:3px;line-height:1.25}
+  .why-card p{font-size:9.5px;color:var(--gray);line-height:1.4}
+
+  /* WHAT — modules grid */
+  .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .mod{border:1px solid var(--line);border-radius:5px;padding:7px 9px;background:#fafbfa}
+  .mod h4{font-size:9.5px;font-weight:800;color:var(--ink);margin-bottom:2px}
+  .mod h4 .tag{display:inline-block;background:var(--gold);color:#fff;font-size:7px;font-weight:800;letter-spacing:0.5px;padding:1px 5px;border-radius:8px;margin-left:5px;vertical-align:middle}
+  .mod p{font-size:8.8px;color:var(--gray);line-height:1.35}
+
+  /* HOW / WHEN / WHERE row */
+  .triple{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:10px}
+  .triple .col{border:1px solid var(--line);border-left:3px solid var(--verde);border-radius:5px;padding:8px 10px;background:#fff}
+  .triple .col h4{font-size:10.5px;font-weight:800;color:var(--verde-dark);margin-bottom:5px;letter-spacing:0.3px}
+  .triple ol,.triple ul{margin-left:14px}
+  .triple li{font-size:9.5px;color:var(--gray);margin-bottom:2.5px;line-height:1.35}
+  .triple li strong{color:var(--ink);font-weight:700}
+
+  /* FOOTER */
+  .foot{margin-top:auto;padding-top:9px;border-top:2px solid var(--verde);display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
+  .foot .cta{flex:1}
+  .foot .cta h3{font-size:12px;font-weight:900;color:var(--ink);margin-bottom:2px}
+  .foot .cta p{font-size:9.5px;color:var(--gray);line-height:1.45}
+  .foot .cta p strong{color:var(--verde-dark)}
+  .foot .stamp{text-align:right;font-size:8.5px;color:var(--gray);line-height:1.5}
+  .foot .stamp .sig{font-size:11px;font-weight:800;color:var(--ink);letter-spacing:0.5px}
+
+  /* PRINT */
+  @page{ size:Letter; margin:0 }
+  @media print{
+    html,body{background:#fff}
+    .sheet{box-shadow:none;width:8.5in;min-height:10.95in;margin:0;padding:0.4in 0.45in 0.35in}
+    .why{background:#f0f7f3;border-color:var(--verde)}
+    a{color:inherit;text-decoration:none}
+  }
+  @media screen{
+    body{background:#e5e7eb;padding:24px 0}
+    .sheet{box-shadow:0 4px 24px rgba(0,0,0,.12);border-radius:4px}
+    .toolbar{max-width:8.5in;margin:0 auto 14px;display:flex;justify-content:flex-end}
+    .toolbar button{background:var(--verde);color:#fff;border:none;padding:8px 16px;font-weight:700;font-size:12px;border-radius:6px;cursor:pointer;letter-spacing:0.5px}
+    .toolbar button:hover{background:var(--verde-dark)}
+  }
+  @media print{ .toolbar{display:none!important} }
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+
+<div class="sheet">
+
+  <!-- HEADER -->
+  <div class="head">
+    <div class="brand">
+      CAMARA<span class="dot">VIRTUAL</span>.APP
+      <small>Sistema operativo digital para camaras y asociaciones</small>
+    </div>
+    <div class="head-right">
+      <span class="head-pill">Confidencial</span><br>
+      Preparado para: <strong>Asociacion Deportivo Cali</strong><br>
+      Por: Digit2AI &middot; Neural Intelligence Platform
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>El ecosistema digital que convierte a <em>Deportivo Cali</em><br>en el motor de negocios del Valle del Cauca.</h1>
+    <p class="sub">Una camara digital privada, con IA, donde patrocinadores, socios, proveedores y aficionados empresarios encuentran negocios reales, miden el ROI y le devuelven valor al club mas alla del estadio.</p>
+    <div class="stats">
+      <div class="stat"><div class="v">9</div><div class="l">Modulos Activos</div></div>
+      <div class="stat"><div class="v">8</div><div class="l">Modelos de IA</div></div>
+      <div class="stat"><div class="v">24</div><div class="l">Sectores</div></div>
+      <div class="stat"><div class="v">&lt;5 min</div><div class="l">Onboarding</div></div>
+      <div class="stat"><div class="v">100%</div><div class="l">Datos Aislados</div></div>
+    </div>
+  </div>
+
+  <!-- WHY (EMPHASIS) -->
+  <div class="sec">
+    <div class="sl"><span class="num">1</span><span class="ttl">Por que Deportivo Cali lo necesita</span><span class="kicker">El argumento central</span></div>
+    <div class="why">
+      <div class="lead">El Deportivo Cali ya es una marca, una comunidad y una red. Lo que falta es la capa digital que monetice esa red mas alla del marketing tradicional: una camara virtual privada del club que convierte a patrocinadores, socios, palcos corporativos y aficionados empresarios en una economia activa, medible y recurrente.</div>
+      <div class="why-grid">
+        <div class="why-card">
+          <h4>Retencion y expansion de patrocinadores</h4>
+          <p>Los patrocinadores ya no solo pagan por visibilidad: hacen negocios entre ellos dentro de la plataforma del club. ROI demostrable con datos.</p>
+        </div>
+        <div class="why-card">
+          <h4>Nueva linea de ingresos recurrentes</h4>
+          <p>Membresia B2B mensual, comisiones por proyectos cerrados y fideicomiso de fondos. Ingresos que no dependen de la taquilla ni del resultado deportivo.</p>
+        </div>
+        <div class="why-card">
+          <h4>Datos duros, no anecdotas</h4>
+          <p>HCI (salud de la red), TrustRank, Gini regional y Monte Carlo. El club le entrega a su junta y a sus patrocinadores cifras, no promesas.</p>
+        </div>
+        <div class="why-card">
+          <h4>Liderazgo regional del Valle</h4>
+          <p>Cali necesita un articulador empresarial visible. El club tiene la marca, la confianza y la convocatoria; la plataforma le da la infraestructura.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT -->
+  <div class="sec">
+    <div class="sl"><span class="num">2</span><span class="ttl">Que es: 9 modulos vivos</span><span class="kicker">Ya construido y en produccion</span></div>
+    <div class="mods">
+      <div class="mod"><h4>Panel de Control</h4><p>Miembros activos, proyectos abiertos, cotizaciones, indice HCI — en tiempo real.</p></div>
+      <div class="mod"><h4>Directorio</h4><p>Busqueda con filtros por 24 sectores y 6 regiones. Encuentra socios al instante.</p></div>
+      <div class="mod"><h4>Matching con IA <span class="tag">AI</span></h4><p>Similaridad coseno, score de confianza y correccion Gini de equidad regional.</p></div>
+      <div class="mod"><h4>Proyectos P2B</h4><p>Plan-to-Business: equipo, hitos, 6 fases, firmas y entrega con trazabilidad total.</p></div>
+      <div class="mod"><h4>Intercambio (RFQ)</h4><p>Marketplace privado: registrar empresa, publicar cotizaciones, responder ofertas.</p></div>
+      <div class="mod"><h4>Analitica de Red <span class="tag">AI</span></h4><p>Gini, TrustRank, HCI y Monte Carlo. Datos, no suposiciones.</p></div>
+      <div class="mod"><h4>Pagos y Fideicomiso</h4><p>Stripe para membresias. Escrow por hito para proyectos. Confianza en cada peso.</p></div>
+      <div class="mod"><h4>Gobernanza</h4><p>Roles para directivos, capitulos y comites. Verificacion de identidad y auditoria.</p></div>
+      <div class="mod"><h4>Orquestador MCP <span class="tag">AI</span></h4><p>7 herramientas de IA via API: matching, riesgo, oportunidades, reportes.</p></div>
+    </div>
+  </div>
+
+  <!-- WHEN / HOW / WHERE -->
+  <div class="sec">
+    <div class="sl"><span class="num">3</span><span class="ttl">Cuando, Como y Donde</span><span class="kicker">Activacion en semanas, no en trimestres</span></div>
+    <div class="triple">
+      <div class="col">
+        <h4>COMO se activa</h4>
+        <ol>
+          <li><strong>Branding del club</strong> aplicado a la plataforma (verde-blanco, escudo, dominio propio).</li>
+          <li><strong>Carga inicial</strong> de patrocinadores actuales, palcos corporativos y socios estrategicos.</li>
+          <li><strong>Capacitacion</strong> al equipo comercial del club + admin training (4 horas).</li>
+          <li><strong>Lanzamiento privado</strong> con los 50 primeros miembros antes de apertura masiva.</li>
+        </ol>
+      </div>
+      <div class="col">
+        <h4>CUANDO esta listo</h4>
+        <ul>
+          <li><strong>Semana 1-2:</strong> Configuracion, branding y migracion de patrocinadores actuales.</li>
+          <li><strong>Semana 3:</strong> Capacitacion del staff y carga de directorio inicial.</li>
+          <li><strong>Semana 4:</strong> Soft-launch con cohorte fundadora.</li>
+          <li><strong>Mes 2 en adelante:</strong> Apertura comercial, RFQs activos y reportes mensuales a junta.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>DONDE vive</h4>
+        <ul>
+          <li><strong>Dominio dedicado</strong> del club (ej. negocios.deportivocali.co).</li>
+          <li><strong>Infraestructura aislada:</strong> base de datos exclusiva, sin cruce con otras camaras.</li>
+          <li><strong>Acceso web + movil</strong> responsive, sin instalacion.</li>
+          <li><strong>Soporte y SLA</strong> 99.9% gestionado por Digit2AI desde Render Cloud.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="foot">
+    <div class="cta">
+      <h3>Proximo paso: una sesion de 45 minutos con la junta del club.</h3>
+      <p>Demostramos la plataforma en vivo con datos del Valle del Cauca y entregamos una proyeccion de ingresos recurrentes a 12 meses para Deportivo Cali. <strong>Sin compromiso, sin costo.</strong></p>
+    </div>
+    <div class="stamp">
+      <div class="sig">Digit2AI</div>
+      Neural Intelligence Platform<br>
+      digitalinformation2ai@gmail.com<br>
+      www.camaravirtual.app
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
