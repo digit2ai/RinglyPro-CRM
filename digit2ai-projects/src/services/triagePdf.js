@@ -328,7 +328,15 @@ async function streamTriagePdf({ project, lang, res }) {
     });
   }
 
-  // Paint footer on every page (chrome) — pdfkit lets us walk buffered pages
+  // Paint footer on every page (chrome) — pdfkit lets us walk buffered pages.
+  //
+  // CRITICAL: footer text positions at y = page.height - 30, which is BELOW the
+  // bottom margin (margin.bottom = 60). pdfkit's text() auto-pages whenever the
+  // cursor lands outside the writable area. Two text() calls per page × N pages
+  // silently inflated the PDF by 2N blank chrome-only pages (prod: 5 real pages
+  // -> 15 total). Workaround: zero margins.bottom while painting the footer so
+  // the cursor stays inside the "writable" zone (the brief window covers both
+  // text() calls per page; lineBreak:false is belt-and-suspenders).
   const range = doc.bufferedPageRange();
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
@@ -341,12 +349,18 @@ async function streamTriagePdf({ project, lang, res }) {
     const fh = doc.page.height;
     const fm = doc.page.margins.left;
     const fy = fh - 36;
-    doc.save();
-    doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(fm, fy).lineTo(fw - fm, fy).stroke();
-    doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED);
-    doc.text(lbl.footer, fm, fy + 6, { width: fw - fm * 2 - 80, align: 'left' });
-    doc.text(`${lbl.page} ${i + 1} ${lbl.of} ${range.count}`, fw - fm - 80, fy + 6, { width: 80, align: 'right' });
-    doc.restore();
+    const savedBottom = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+    try {
+      doc.save();
+      doc.strokeColor('#e2e8f0').lineWidth(0.5).moveTo(fm, fy).lineTo(fw - fm, fy).stroke();
+      doc.font('Helvetica').fontSize(8).fillColor(COLOR_MUTED);
+      doc.text(lbl.footer, fm, fy + 6, { width: fw - fm * 2 - 80, align: 'left', lineBreak: false });
+      doc.text(`${lbl.page} ${i + 1} ${lbl.of} ${range.count}`, fw - fm - 80, fy + 6, { width: 80, align: 'right', lineBreak: false });
+      doc.restore();
+    } finally {
+      doc.page.margins.bottom = savedBottom;
+    }
   }
 
   doc.end();
