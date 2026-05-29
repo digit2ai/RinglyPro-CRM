@@ -722,6 +722,7 @@ app.get('*', (req, res) => {
       await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_error TEXT');
       await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_model VARCHAR(60)');
       await sequelize.query('ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_cost_usd NUMERIC(8,4)');
+      await sequelize.query("ALTER TABLE d2_tasks ADD COLUMN IF NOT EXISTS agent_language VARCHAR(8)");
       await sequelize.query("CREATE INDEX IF NOT EXISTS idx_d2_tasks_agent_status ON d2_tasks (agent_status) WHERE agent_status IS NOT NULL");
     } catch (e) {
       console.log('[D2AI-Projects] tasks agent columns notice:', e.message.substring(0, 120));

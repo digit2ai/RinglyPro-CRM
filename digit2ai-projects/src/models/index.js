@@ -234,7 +234,10 @@ const Task = sequelize.define('Task', {
   agent_processed_at: DataTypes.DATE,
   agent_error: DataTypes.TEXT,
   agent_model: DataTypes.STRING(60),
-  agent_cost_usd: DataTypes.DECIMAL(8, 4)
+  agent_cost_usd: DataTypes.DECIMAL(8, 4),
+  // 'auto' | 'en' | 'es' — preserved across re-runs so users serving mixed
+  // English / Spanish clients don't have to re-pick every retry.
+  agent_language: DataTypes.STRING(8)
 }, { tableName: 'd2_tasks' });
 
 // =====================================================

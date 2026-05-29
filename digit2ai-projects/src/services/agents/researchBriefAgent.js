@@ -85,7 +85,7 @@ function renderMarkdown(task, parsed) {
   return lines.join('\n');
 }
 
-async function run({ task, project }) {
+async function run({ task, project, language }) {
   if (!task || !task.title) {
     return { ok: false, error: 'missing_task', output_md: '', structured: null, cost_estimate_usd: 0, model: SONNET_MODEL };
   }
@@ -143,7 +143,9 @@ Produce a JSON object matching this schema:
   "confidence": "high" | "medium" | "low"
 }
 
-Be concrete and skeptical. Cite specific numbers, names, dates from sources where possible. If sources are thin or contradictory, say so in open_questions and mark confidence accordingly. Output only valid JSON.`;
+Be concrete and skeptical. Cite specific numbers, names, dates from sources where possible. If sources are thin or contradictory, say so in open_questions and mark confidence accordingly. Output only valid JSON.
+
+${language === 'es' ? 'RESPONSE LANGUAGE: Write summary, key_findings, takeaways, open_questions, and next_steps in fluent business Spanish with proper orthography (tildes, ñ). Source titles and URLs stay as-is.' : language === 'en' ? 'RESPONSE LANGUAGE: Write everything in English.' : 'RESPONSE LANGUAGE: Match the language of the project context (Spanish project context → Spanish output, English → English). Source titles and URLs stay as-is.'}`;
 
   try {
     const resp = await client.messages.create({

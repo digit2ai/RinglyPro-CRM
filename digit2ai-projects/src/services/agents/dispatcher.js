@@ -36,9 +36,12 @@ async function processTaskById(taskId) {
   if (task.project_id) {
     try { project = await Project.findOne({ where: { id: task.project_id, workspace_id: 1 } }); } catch (_) {}
   }
+  // Read the language preference off the task. 'auto' (or null/empty) lets the
+  // agent detect from project context. 'en'/'es' force the response language.
+  const language = task.agent_language || 'auto';
   let result;
   try {
-    result = await agent.run({ task, project });
+    result = await agent.run({ task, project, language });
   } catch (err) {
     result = { ok: false, error: err.message, output_md: '', structured: null, cost_estimate_usd: 0, model: agent.SONNET_MODEL || agent.OPUS_MODEL || 'unknown' };
   }

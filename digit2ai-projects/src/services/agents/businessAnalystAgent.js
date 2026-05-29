@@ -295,8 +295,28 @@ function renderMarkdown(task, parsed) {
   return lines.join('\n');
 }
 
+// Resolve the response-language instruction. 'auto' means: detect from the
+// project name + description (Spanish project → Spanish output, English →
+// English). 'en'/'es' force it. The instruction is appended to the user
+// message so it overrides the system prompt's English default.
+function buildLanguageInstruction(language, project) {
+  const lang = (language || 'auto').toLowerCase();
+  if (lang === 'es') {
+    return 'RESPOND ENTIRELY IN SPANISH. Every field in the JSON — executive_summary, key_findings, recommendations, next_steps, human_action_queue drafts, verify_flags, open_questions — must be in fluent business Spanish. Use proper Spanish orthography (tildes, ñ, ¿¡). The deliverable_type enum value stays in English (it is a code identifier, not user-facing text).';
+  }
+  if (lang === 'en') {
+    return 'RESPOND ENTIRELY IN ENGLISH. All narrative fields must be in English even if the project name or description contains Spanish.';
+  }
+  // auto-detect
+  const ctx = `${project?.name || ''} ${project?.description || ''}`.toLowerCase();
+  const spanishHints = /\b(camara|cámara|colombia|argentina|méxico|mexico|españa|espana|para|comercio|empresa|inteligencia|de los|de las)\b/.test(ctx);
+  return spanishHints
+    ? 'Detect the dominant language of the project context above. If it is Spanish (or the project clearly serves a Spanish-speaking audience), respond entirely in Spanish with proper orthography (tildes, ñ, ¿¡). Otherwise respond in English. The deliverable_type enum value stays in English regardless.'
+    : 'Respond in the same language the project context is written in (default English). Match the audience\'s language so the deliverable is usable without translation.';
+}
+
 // Build the user message — keeps the system prompt clean and reusable.
-function buildUserMessage({ task, project }) {
+function buildUserMessage({ task, project, language }) {
   const today = new Date().toISOString().slice(0, 10);
   return `Today is ${today}.
 
@@ -312,12 +332,15 @@ PROJECT CONTEXT
 - Sector / country: ${project?.sector || '(unknown)'} / ${project?.country || '(unknown)'}
 - Project purpose: ${project?.description || '(no project description on file)'}
 
+LANGUAGE
+${buildLanguageInstruction(language, project)}
+
 If the project context is missing or empty, infer cautiously from the task title alone and set confidence_overall to "low" or "medium". If the task title is itself ambiguous (under 4 words, no domain hint), produce a deliverable_type = "requirements_scope" that lists the clarifying questions you would need answered before producing a full artifact — that is itself a useful deliverable.
 
 Respond with the JSON object only.`;
 }
 
-async function run({ task, project }) {
+async function run({ task, project, language }) {
   if (!task || !task.title) {
     return { ok: false, error: 'missing_task', output_md: '', structured: null, cost_estimate_usd: 0, model: OPUS_MODEL };
   }
@@ -333,7 +356,7 @@ async function run({ task, project }) {
 
   let totalCost = 0;
   const rate = rateFor(OPUS_MODEL);
-  const userMsg = buildUserMessage({ task, project });
+  const userMsg = buildUserMessage({ task, project, language });
 
   let resp;
   try {

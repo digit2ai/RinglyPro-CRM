@@ -4178,11 +4178,13 @@ function renderAgentPanel(t) {
   return `<div id="agent-panel-${t.id}" data-agent-panel-task="${t.id}">${_renderAgentPanelInner(t)}</div>`;
 }
 
-// Inline "Switch agent" dropdown rendered next to Re-run buttons. Lets the
-// user swap the agent (e.g. Outreach Drafter -> Senior BA) without having
-// to wipe state through the reclassify path.
+// Inline "Switch agent" + language dropdowns rendered next to Re-run buttons.
+// Lets the user swap the agent (e.g. Outreach Drafter -> Senior BA) and/or
+// change the response language without going through the reclassify path.
 function _renderAgentSwitchControls(t) {
   const sid = `switch-agent-sel-${t.id}`;
+  const lid = `switch-agent-lang-${t.id}`;
+  const lang = t.agent_language || 'auto';
   const opts = [
     { v: '', l: 'Switch agent…' },
     { v: 'senior_ba', l: 'Senior Business Analyst' },
@@ -4192,13 +4194,29 @@ function _renderAgentSwitchControls(t) {
    .map(o => `<option value="${o.v}">${o.l}</option>`).join('');
   return `
     <select id="${sid}" style="padding:5px 10px;font-size:12px">${opts}</select>
-    <button class="btn btn-ghost btn-sm" onclick="switchAgent(${t.id}, '${sid}')">Switch &amp; Run</button>`;
+    <select id="${lid}" title="Response language" style="padding:5px 10px;font-size:12px">
+      <option value="auto"${lang === 'auto' ? ' selected' : ''}>Lang: Auto</option>
+      <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+      <option value="es"${lang === 'es' ? ' selected' : ''}>Spanish</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="switchAgent(${t.id}, '${sid}', '${lid}')">Switch &amp; Run</button>`;
 }
 
 function _renderAgentPanelInner(t) {
   const status = t.agent_status;
   const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
   const agentLabel = agentLabels[t.agent_type] || (t.agent_type || 'agent');
+
+  // Language dropdown shared by every agent-trigger surface. 'auto' is the
+  // default; user can force EN or ES. Selection is persisted on the task
+  // by the route handler so re-runs remember it.
+  const lang = t.agent_language || 'auto';
+  const langSelect = (id) => `
+    <select id="${id}" title="Response language" style="padding:5px 10px;font-size:12px">
+      <option value="auto"${lang === 'auto' ? ' selected' : ''}>Lang: Auto</option>
+      <option value="en"${lang === 'en' ? ' selected' : ''}>English</option>
+      <option value="es"${lang === 'es' ? ' selected' : ''}>Spanish</option>
+    </select>`;
 
   // No status yet — offer manual run dropdown
   if (!status) {
@@ -4209,13 +4227,14 @@ function _renderAgentPanelInner(t) {
             <strong style="background:linear-gradient(135deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent">🤖 AI Agent</strong>
             <span style="color:var(--text-muted);font-size:12px;margin-left:8px">No agent run yet on this task</span>
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <select id="manual-agent-type" style="padding:5px 10px;font-size:12px">
               <option value="">Auto-classify</option>
               <option value="research">Research Brief</option>
               <option value="draft">Outreach Drafter</option>
               <option value="senior_ba">Senior Business Analyst</option>
             </select>
+            ${langSelect('manual-agent-lang')}
             <button class="btn btn-primary btn-sm" onclick="runAgentManual(${t.id})">Run Agent</button>
           </div>
         </div>
@@ -4228,12 +4247,13 @@ function _renderAgentPanelInner(t) {
       <div class="card" style="margin-top:18px;padding:12px 16px;background:#f8fafc;border:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="color:var(--text-muted);font-size:13px">🤖 No agent assigned — task does not match any agent's triggers.</span>
-          <div style="display:flex;gap:6px;align-items:center">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <select id="manual-agent-type" style="padding:5px 10px;font-size:12px">
               <option value="research">Research Brief</option>
               <option value="draft">Outreach Drafter</option>
               <option value="senior_ba">Senior Business Analyst</option>
             </select>
+            ${langSelect('manual-agent-lang')}
             <button class="btn btn-ghost btn-sm" onclick="runAgentManual(${t.id})">Force Run</button>
           </div>
         </div>
@@ -4336,7 +4356,7 @@ function _renderAgentPanelInner(t) {
         </div>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
-        ${t.agent_model ? 'Model: ' + escapeHtml(t.agent_model) + ' · ' : ''}${t.agent_cost_usd ? 'Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
+        ${t.agent_model ? 'Model: ' + escapeHtml(t.agent_model) + ' · ' : ''}${t.agent_cost_usd ? 'Cost: $' + Number(t.agent_cost_usd).toFixed(4) : ''}${t.agent_language && t.agent_language !== 'auto' ? ' · Lang: ' + escapeHtml(t.agent_language.toUpperCase()) : ''}${t.agent_processed_at ? ' · ' + fmtDateTime(t.agent_processed_at) : ''}
       </div>
       <div class="agent-output-body" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-size:13.5px;line-height:1.55;color:var(--text-primary)">${bodyHtml}</div>
     </div>`;
@@ -4416,10 +4436,19 @@ function _showAgentProcessing(taskId, agentLabel) {
   setTimeout(tick, 1000);
 }
 
+function _readLang(elementId) {
+  const el = elementId ? document.getElementById(elementId) : null;
+  const v = el ? el.value : '';
+  return (v === 'en' || v === 'es' || v === 'auto') ? v : null;
+}
+
 async function runAgentManual(taskId) {
   const sel = document.getElementById('manual-agent-type');
   const explicit = sel ? sel.value : '';
-  const body = explicit ? { agent_type: explicit } : {};
+  const language = _readLang('manual-agent-lang');
+  const body = {};
+  if (explicit) body.agent_type = explicit;
+  if (language) body.language = language;
   const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
   _showAgentProcessing(taskId, agentLabels[explicit] || 'AI Agent');
   if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
@@ -4430,27 +4459,30 @@ async function runAgentManual(taskId) {
 window.runAgentManual = runAgentManual;
 
 // Re-run the SAME agent already chosen for this task. If you want to switch
-// agent, use switchAgentTo(taskId, newType). If you want to wipe the
-// choice and re-classify, use reclassifyAgent(taskId).
-async function runAgentNow(taskId, agentType) {
+// agent, use switchAgent(taskId, selectId, langSelectId). If you want to
+// wipe the choice and re-classify, use reclassifyAgent(taskId).
+async function runAgentNow(taskId, agentType, language) {
   const agentLabels = { research: 'Research Brief', draft: 'Outreach Drafter', triage: 'Inbox Triage', senior_ba: 'Senior Business Analyst' };
   _showAgentProcessing(taskId, agentLabels[agentType] || 'AI Agent');
   if (typeof showCopyToast === 'function') showCopyToast('Agent running…');
-  const body = agentType ? { agent_type: agentType } : {};
+  const body = {};
+  if (agentType) body.agent_type = agentType;
+  if (language) body.language = language;
   const r = await api('/agents/run/' + taskId, { method: 'POST', body: JSON.stringify(body) });
   if (!r.success) { alert('Agent run failed: ' + (r.error || 'unknown')); }
   showTaskDetail(taskId);
 }
 window.runAgentNow = runAgentNow;
 
-// Reads the per-panel "switch agent" dropdown and runs the chosen agent
-// instead of the currently-stored one. Called by the "Switch" buttons we
-// added to the ready/approved/failed/oos/rejected panels.
-async function switchAgent(taskId, selectId) {
+// Reads the per-panel "switch agent" + language dropdowns and runs the
+// chosen agent in the chosen language. Picking only a language (and no
+// new agent) just re-runs the current agent in that language.
+async function switchAgent(taskId, selectId, langSelectId) {
   const sel = document.getElementById(selectId);
   const newType = sel ? sel.value : '';
-  if (!newType) { alert('Pick an agent first.'); return; }
-  await runAgentNow(taskId, newType);
+  const language = _readLang(langSelectId);
+  if (!newType && !language) { alert('Pick an agent or language first.'); return; }
+  await runAgentNow(taskId, newType, language);
 }
 window.switchAgent = switchAgent;
 

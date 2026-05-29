@@ -106,7 +106,7 @@ function renderMarkdown(task, parsed) {
   return lines.join('\n');
 }
 
-async function run({ task, project }) {
+async function run({ task, project, language }) {
   if (!task || !task.title) {
     return { ok: false, error: 'missing_task', output_md: '', structured: null, cost_estimate_usd: 0, model: SONNET_MODEL };
   }
@@ -119,7 +119,9 @@ async function run({ task, project }) {
   }
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const lang = detectLang(project);
+  // Honor an explicit user choice (en/es); fall back to project-context
+  // detection on 'auto' (or anything else).
+  const lang = (language === 'en' || language === 'es') ? language : detectLang(project);
   const ctx = await gatherContext(project);
 
   const meetingsBlock = ctx.meetings.map(m => `- ${m.title || 'Meeting'} (${m.start_time ? new Date(m.start_time).toISOString().slice(0, 10) : 'no date'})`).join('\n') || '(no recent meetings)';

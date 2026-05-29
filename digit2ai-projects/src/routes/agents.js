@@ -110,9 +110,15 @@ router.post('/run/:taskId', async (req, res) => {
   const id = parseInt(req.params.taskId, 10);
   const explicit = req.body && req.body.agent_type;
   const forceReclassify = !!(req.body && req.body.reclassify);
+  // Language preference for the agent's response. 'auto' lets the agent
+  // detect from project context; 'en'/'es' force the language. Persisted
+  // on the task so re-runs preserve the choice.
+  const rawLang = req.body && req.body.language;
+  const language = (rawLang === 'en' || rawLang === 'es' || rawLang === 'auto') ? rawLang : null;
   try {
     const task = await Task.findOne({ where: { id, workspace_id: 1 } });
     if (!task) return res.status(404).json({ success: false, error: 'task_not_found' });
+    if (language) await task.update({ agent_language: language });
 
     if (explicit) {
       await dispatcher.setAgentTypeAndQueue(id, explicit);
