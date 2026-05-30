@@ -108,10 +108,7 @@
   .gc-table .gc-cell { padding: 12px 18px; font-size: 13px; line-height: 1.5; }
   .gc-table .gc-row.head .gc-cell { font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase; }
   .gc-table .gc-cell.therm { color: var(--ink-mute); border-right: 1px solid var(--line); }
-  .gc-table .gc-cell.therm::before { content: '🌡️ '; opacity: 0.6; margin-right: 4px; }
   .gc-table .gc-cell.doc { color: var(--ink); }
-  .gc-table .gc-cell.doc::before { content: '⚕️ '; margin-right: 4px; }
-  .gc-table .gc-row.head .gc-cell.therm::before, .gc-table .gc-row.head .gc-cell.doc::before { content: ''; margin: 0; }
   .gc-table .gc-row.head .gc-cell.therm { color: var(--ink-mute); }
   .gc-table .gc-row.head .gc-cell.doc { color: var(--violet); }
 
@@ -143,7 +140,7 @@
   .agents-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .agents-row + .agents-row { margin-top: 10px; }
   .agent { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; padding: 12px 10px; text-align: center; }
-  .agent .e { font-size: 22px; margin-bottom: 4px; }
+  .agent .e { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--violet); margin-bottom: 6px; }
   .agent .n { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
   .agent .d { font-size: 10.5px; color: var(--ink-mute); line-height: 1.35; }
 
@@ -200,7 +197,7 @@
   .why h3 { font-size: 17px; font-weight: 800; margin-bottom: 14px; }
   .why ul { list-style: none; }
   .why li { font-size: 13.5px; color: var(--ink); padding: 8px 0 8px 28px; position: relative; line-height: 1.55; }
-  .why li::before { content: '✓'; position: absolute; left: 0; top: 8px; color: var(--cyan); font-weight: 900; font-size: 16px; }
+  .why li::before { content: ''; position: absolute; left: 0; top: 16px; width: 14px; height: 2px; background: var(--cyan); border-radius: 2px; }
 
   /* CTA */
   .cta-wrap { margin-top: 60px; padding: 36px 24px; background: var(--grad-soft); border: 1px solid rgba(124,92,255,0.4); border-radius: 16px; text-align: center; }
@@ -693,19 +690,19 @@
 
       <div class="ddt-grid">
         <div class="ddt">
-          <div class="step"><span class="icon">🔍</span>1 · Detect</div>
+          <div class="step">01 · Detect</div>
           <h3>Finds the money leak before anyone else sees it</h3>
           <p>The MCP brain reads your prospect's CRM, billing system, support inbox, voice channel, ops dashboards, and contracts — <strong>all at once, continuously.</strong> It surfaces the patterns humans miss: silent churn signals, billing errors compounding week-over-week, sales pipeline rotating out of one segment, support tickets piling up on one rep, contracts about to auto-renew at the wrong rate. <strong>The leak gets named before it costs real money.</strong></p>
         </div>
 
         <div class="ddt">
-          <div class="step"><span class="icon">🧠</span>2 · Diagnose</div>
+          <div class="step">02 · Diagnose</div>
           <h3>Root cause — not just the symptom</h3>
           <p>A thermometer says <em>"102°F."</em> A doctor says <em>"bacterial infection from a wound that didn't heal — here's why."</em> The MCP brain cross-references the symptom against every connected system, eliminates dead ends, and tells your prospect which <strong>broken process, missing handoff, or bad assumption</strong> is actually causing the leak. With <strong>confidence scores</strong>. With <strong>evidence</strong>. Not vibes.</p>
         </div>
 
         <div class="ddt">
-          <div class="step"><span class="icon">⚕️</span>3 · Treat</div>
+          <div class="step">03 · Treat</div>
           <h3>Ships the fix — not a recommendation</h3>
           <p>Most AI ends at <em>"you should consider..."</em>. Neural Intelligence MCP does the actual work: <strong>drafts the email to the at-risk customer, opens the ticket to fix the billing error, schedules the meeting with the rep who's drowning, generates the board deck on what changed.</strong> Your prospect reviews and approves with one click — but the work is already done. That's the doctor visit ending in a written prescription, not a referral to "see a specialist."</p>
         </div>
@@ -754,11 +751,11 @@
 
     <div class="mcp-grid">
       <div class="mcp-card">
-        <h4><span class="ico">🧠</span> Why this matters</h4>
+        <h4>Why this matters</h4>
         <p>One generic chatbot can't both research a market, draft a board deck, and write production code. Our agents are specialized and chained — each agent's output is the next agent's input. The customer gets work product that's actually usable, not a vague summary.</p>
       </div>
       <div class="mcp-card">
-        <h4><span class="ico">🎯</span> What the customer gets</h4>
+        <h4>What the customer gets</h4>
         <p>Concrete deliverables on a calendar: a slide-by-slide deck, a working web app, a board memo, an AI agent that answers their phones — produced by the right agent for the job, reviewed by a human, and shipped on a defined timeline.</p>
       </div>
     </div>
@@ -770,44 +767,44 @@
       </div>
       <div class="agents-row">
         <div class="agent">
-          <div class="e">📊</div>
+          <div class="e">01</div>
           <div class="n">Senior Business Analyst</div>
           <div class="d">Drafts decks, business plans, market research, strategy memos.</div>
         </div>
         <div class="agent">
-          <div class="e">🔍</div>
+          <div class="e">02</div>
           <div class="n">Research Brief</div>
           <div class="d">Web search + synthesis. Competitive scans, regulatory checks, partner shortlists.</div>
         </div>
         <div class="agent">
-          <div class="e">✉️</div>
+          <div class="e">03</div>
           <div class="n">Outreach Drafter</div>
           <div class="d">Writes emails, WhatsApp messages, and follow-ups in EN or ES.</div>
         </div>
         <div class="agent">
-          <div class="e">🛠️</div>
+          <div class="e">04</div>
           <div class="n">Architect &amp; Builder</div>
           <div class="d">Scopes the build, writes code, runs UAT, ships the live app.</div>
         </div>
       </div>
       <div class="agents-row">
         <div class="agent">
-          <div class="e">📥</div>
+          <div class="e">05</div>
           <div class="n">Inbox Triage</div>
           <div class="d">Scores every incoming project request, flags regulatory risks, recommends go/no-go.</div>
         </div>
         <div class="agent">
-          <div class="e">📝</div>
+          <div class="e">06</div>
           <div class="n">Meeting Minutes Synthesizer</div>
           <div class="d">Turns raw call notes into summary + action items + tasks auto-assigned to owners.</div>
         </div>
         <div class="agent">
-          <div class="e">📞</div>
+          <div class="e">07</div>
           <div class="n">Voice AI Agents</div>
           <div class="d">Rachel (EN), Ana &amp; Lina (ES) answer phones 24/7 — qualify leads, book, log to CRM.</div>
         </div>
         <div class="agent">
-          <div class="e">🚨</div>
+          <div class="e">08</div>
           <div class="n">Neural Findings</div>
           <div class="d">Watches every project for stalls, missing owners, overdue milestones — pings before things slip.</div>
         </div>
@@ -897,7 +894,7 @@
     <div class="scripts">
       <div class="script-row">
         <div class="says">"Sounds expensive. We don't have enterprise budget."</div>
-        <div class="reply">"Digit2AI starts at the project level, not enterprise. Submit your request — the AI triage will tell you in a day whether your scope fits an existing platform (weeks, 5-figures) or a custom build (months, larger). No commitment to find out."</div>
+        <div class="reply">"Digit2AI starts at the project level, not enterprise. <strong>We ship in days, not months.</strong> Submit your request — the AI triage will tell you within hours whether your scope fits an existing platform or needs a custom build, and either path delivers in days. No commitment to find out."</div>
       </div>
       <div class="script-row">
         <div class="says">"We already have a tech team. Why would we need this?"</div>
@@ -1011,7 +1008,7 @@
       var text = (src.textContent || '').trim();
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function () {
-          btn.textContent = 'Copied ✓';
+          btn.textContent = 'Copied';
           setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
         }).catch(function () {
           btn.textContent = 'Copy failed';
@@ -1168,7 +1165,7 @@
           '</div>' +
 
           '<div class="result-cta">' +
-            '<button type="button" class="demo-btn-primary" id="d-submit">✓ Accept &amp; Submit to digit2ai.com</button>' +
+            '<button type="button" class="demo-btn-primary" id="d-submit">Accept &amp; Submit to digit2ai.com</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-rerun">Re-run with same description</button>' +
             '<span class="demo-status" id="d-submit-status"></span>' +
           '</div>' +
@@ -1249,7 +1246,7 @@
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
         .then(function (res) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '✓ Accept &amp; Submit to digit2ai.com';
+          submitBtn.innerHTML = 'Accept &amp; Submit to digit2ai.com';
           if (!res.ok || !res.json || !res.json.success) {
             setError((res.json && res.json.error) || 'Submission failed. Please try again or send the prospect to digit2ai.com directly.');
             return;
@@ -1260,18 +1257,18 @@
           var batchId = data.batch_id || data.batch || '';
           setSubmitted(
             '<div class="demo-success">' +
-              '<h3>✓ Submitted to digit2ai.com</h3>' +
+              '<h3>Submitted to digit2ai.com</h3>' +
               '<p>Manuel will review within 48 hours. The triage you just edited is attached to the intake record so he sees your reading of the problem from minute one.</p>' +
               (magicUrl ? '<p style="margin-top:8px"><strong>Prospect workspace link</strong> (send to your prospect):<br><a href="' + esc(magicUrl) + '" target="_blank">' + esc(magicUrl) + '</a></p>' : '') +
               (batchId ? '<p style="margin-top:6px;font-size:12px;color:var(--ink-mute)">Intake batch #' + esc(String(batchId)) + '</p>' : '') +
             '</div>'
           );
           submitBtn.disabled = true;
-          submitBtn.textContent = '✓ Submitted';
+          submitBtn.textContent = 'Submitted';
         })
         .catch(function (err) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '✓ Accept &amp; Submit to digit2ai.com';
+          submitBtn.innerHTML = 'Accept &amp; Submit to digit2ai.com';
           setError('Network error on submit: ' + (err.message || 'request failed'));
         });
     }
