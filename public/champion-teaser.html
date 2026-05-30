@@ -177,6 +177,103 @@
   .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--bg-elev); border: 1px solid var(--line-strong); color: var(--ink-dim); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
   .copy-btn:hover { color: var(--cyan); border-color: var(--cyan); }
 
+  /* Live demo block — "Try it now" form + editable triage result */
+  .demo { margin-top: 60px; background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 16px; padding: 30px 28px; }
+  .demo-head { text-align: center; margin-bottom: 22px; }
+  .demo-head h2 { font-size: clamp(22px, 3.5vw, 28px); font-weight: 900; margin-bottom: 6px; }
+  .demo-head h2 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
+  .demo-head p { color: var(--ink-dim); font-size: 14px; max-width: 600px; margin: 0 auto; }
+
+  .demo-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .demo-form-row { grid-column: 1 / -1; }
+  .demo-form label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: var(--ink-mute); text-transform: uppercase; margin-bottom: 5px; }
+  .demo-form input, .demo-form textarea, .demo-form select {
+    width: 100%;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+  }
+  .demo-form input:focus, .demo-form textarea:focus, .demo-form select:focus { outline: none; border-color: var(--violet); }
+  .demo-form textarea { resize: vertical; min-height: 140px; font-family: inherit; }
+  .demo-form .hint { font-size: 11px; color: var(--ink-mute); margin-top: 4px; }
+  .demo-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .demo-btn-primary {
+    background: var(--grad);
+    color: #020617;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 16px rgba(124,92,255,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .demo-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(124,92,255,0.4); }
+  .demo-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .demo-btn-ghost { background: transparent; color: var(--ink-dim); border: 1px solid var(--line-strong); padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .demo-btn-ghost:hover { color: var(--cyan); border-color: var(--cyan); }
+  .demo-status { font-size: 12px; color: var(--ink-mute); margin-left: 4px; }
+
+  .demo-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Triage result panel */
+  .result { margin-top: 24px; padding: 24px; background: var(--bg-elev); border-radius: 12px; border: 1px solid var(--line-strong); }
+  .result-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .verdict-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .verdict-go { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); }
+  .verdict-poc { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber); }
+  .verdict-stop { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid var(--red); }
+  .fit-score { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .fit-score span { color: var(--ink-mute); font-weight: 500; }
+  .result-edit-hint { font-size: 11px; color: var(--ink-mute); margin-left: auto; font-style: italic; }
+
+  .result-block { margin-bottom: 18px; }
+  .result-block h4 { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--violet); margin-bottom: 6px; }
+  .result-block .editable {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+    min-height: 36px;
+    outline: none;
+  }
+  .result-block .editable:hover { border-color: var(--line-strong); }
+  .result-block .editable:focus { border-color: var(--violet); background: rgba(124,92,255,0.05); }
+  .result-block .editable.list { padding: 8px 12px 8px 28px; }
+  .result-block .editable.list li { margin-bottom: 4px; }
+
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .tech-cell { background: rgba(124,92,255,0.06); border: 1px solid rgba(124,92,255,0.2); border-radius: 8px; padding: 12px 14px; }
+  .tech-cell .lbl { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--violet); margin-bottom: 6px; }
+  .tech-cell .val { font-size: 13px; color: var(--ink); line-height: 1.5; outline: none; }
+
+  .result-cta { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+  .demo-success {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background: rgba(16,185,129,0.08);
+    border: 1px solid var(--green);
+    border-radius: 12px;
+  }
+  .demo-success h3 { color: var(--green); font-size: 17px; margin-bottom: 6px; }
+  .demo-success p { color: var(--ink); font-size: 13.5px; margin-bottom: 12px; }
+  .demo-success a { color: var(--cyan); text-decoration: underline; word-break: break-all; }
+  .demo-error { margin-top: 14px; padding: 14px 18px; background: rgba(239,68,68,0.08); border: 1px solid var(--red); border-radius: 8px; color: var(--red); font-size: 13px; }
+
   /* Footer */
   .ft { margin-top: 50px; padding-top: 22px; border-top: 1px solid var(--line); text-align: center; font-size: 11.5px; color: var(--ink-mute); }
   .ft a { color: var(--violet); text-decoration: none; }
@@ -192,6 +289,9 @@
     .flow-steps { grid-template-columns: 1fr; }
     .step:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -8px; transform: translateX(-50%); }
     .script-row { grid-template-columns: 1fr; gap: 14px; }
+    .demo-form { grid-template-columns: 1fr; }
+    .tech-grid { grid-template-columns: 1fr; }
+    .demo { padding: 22px 18px; }
   }
 </style>
 </head>
@@ -449,8 +549,50 @@
   </section>
 
   <!-- ============================================================ -->
+  <!-- LIVE DEMO: Try the AI Triage right here -->
+  <section class="demo" id="demo">
+    <div class="demo-head">
+      <h2>Try it <em>right now</em> — live AI Triage</h2>
+      <p>Paste a prospect's problem (or your own). Our Neural Intelligence stack reads it, scores fit, sketches the technical solution, and shows you what we'd build. You can edit anything before sending it to the real intake.</p>
+    </div>
+
+    <div class="demo-form">
+      <div class="demo-form-row">
+        <label for="d-desc">Describe the problem · in your prospect's own words</label>
+        <textarea id="d-desc" placeholder="Example: We run a chamber of commerce with 1,200 member businesses. Members tell us they can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days..." required></textarea>
+        <div class="hint">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</div>
+      </div>
+      <div>
+        <label for="d-name">Prospect name <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <input id="d-name" type="text" placeholder="Jane Doe">
+      </div>
+      <div>
+        <label for="d-email">Prospect email <span style="font-weight:400;color:var(--ink-mute)">(optional, required to submit)</span></label>
+        <input id="d-email" type="email" placeholder="jane@company.com">
+      </div>
+      <div>
+        <label for="d-company">Company <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <input id="d-company" type="text" placeholder="Company name">
+      </div>
+      <div>
+        <label for="d-country">Country <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <input id="d-country" type="text" placeholder="Colombia, USA, Philippines…">
+      </div>
+    </div>
+
+    <div class="demo-actions">
+      <button type="button" class="demo-btn-primary" id="d-run">Run AI Triage</button>
+      <span class="demo-status" id="d-status"></span>
+    </div>
+
+    <div id="d-result"></div>
+    <div id="d-error"></div>
+    <div id="d-submitted"></div>
+  </section>
+
+  <!-- ============================================================ -->
   <div class="cta-wrap">
-    <h2>Send your next prospect to digit2ai.com</h2>
+    <h2>Or send your prospect to digit2ai.com directly</h2>
     <p>One link. Three minutes of their time. A real recommendation within 48 hours. Use the copy below verbatim or remix it.</p>
     <a href="https://digit2ai.com" target="_blank" class="cta-btn">Open digit2ai.com →</a>
 
@@ -468,6 +610,7 @@
 </div>
 
 <script>
+  // ---------------- Copy-paste button for the referral message ----------------
   (function () {
     var btn = document.getElementById('copy-btn');
     var src = document.getElementById('copy-text');
@@ -482,22 +625,264 @@
           btn.textContent = 'Copy failed';
           setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
         });
-      } else {
-        // Fallback for browsers without Clipboard API
-        var range = document.createRange();
-        range.selectNode(src);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(range);
-        try {
-          document.execCommand('copy');
-          btn.textContent = 'Copied ✓';
-        } catch (e) {
-          btn.textContent = 'Select &amp; copy manually';
-        }
-        window.getSelection().removeAllRanges();
-        setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
       }
     });
+  })();
+
+  // ---------------- Live AI Triage demo ----------------
+  // Posts to the public triage endpoint, renders editable result, then
+  // on Accept hands off to the real intake-submission endpoint.
+  (function () {
+    var API_BASE = '/projects/api/v1/intake';
+    var ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; }); }
+    function txt(el) { return (el.textContent || '').trim(); }
+    function listText(el) {
+      // Pull contenteditable list back into an array
+      var items = el.querySelectorAll('li');
+      var out = [];
+      items.forEach(function (li) { var t = (li.textContent || '').trim(); if (t) out.push(t); });
+      return out;
+    }
+
+    var runBtn = document.getElementById('d-run');
+    var statusEl = document.getElementById('d-status');
+    var resultEl = document.getElementById('d-result');
+    var errorEl = document.getElementById('d-error');
+    var submittedEl = document.getElementById('d-submitted');
+    if (!runBtn) return;
+
+    var state = { triage: null, lang: 'en' };
+
+    function setStatus(msg) { if (statusEl) statusEl.textContent = msg || ''; }
+    function setError(msg) {
+      if (!errorEl) return;
+      errorEl.innerHTML = msg ? '<div class="demo-error">' + esc(msg) + '</div>' : '';
+    }
+    function setSubmitted(html) {
+      if (!submittedEl) return;
+      submittedEl.innerHTML = html || '';
+    }
+
+    runBtn.addEventListener('click', function () {
+      var desc = (document.getElementById('d-desc').value || '').trim();
+      if (desc.length < 30) {
+        setError('Please describe the problem in at least 30 characters.');
+        return;
+      }
+      setError('');
+      setSubmitted('');
+      resultEl.innerHTML = '';
+      runBtn.disabled = true;
+      setStatus('Running AI Triage…');
+      runBtn.innerHTML = '<span class="demo-spinner"></span>Triaging…';
+
+      var body = {
+        description: desc,
+        name: (document.getElementById('d-name').value || '').trim() || undefined,
+        email: (document.getElementById('d-email').value || '').trim() || undefined,
+        company: (document.getElementById('d-company').value || '').trim() || undefined,
+        country: (document.getElementById('d-country').value || '').trim() || undefined
+      };
+
+      fetch(API_BASE + '/public-triage-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+        .then(function (res) {
+          runBtn.disabled = false;
+          runBtn.textContent = 'Re-run AI Triage';
+          setStatus('');
+          if (!res.ok || !res.json || !res.json.success) {
+            setError((res.json && res.json.error) || 'Triage failed. Please try again.');
+            return;
+          }
+          state.triage = res.json.data;
+          state.lang = state.triage.language || 'en';
+          renderResult();
+        })
+        .catch(function (err) {
+          runBtn.disabled = false;
+          runBtn.textContent = 'Run AI Triage';
+          setStatus('');
+          setError('Network error: ' + (err.message || 'request failed'));
+        });
+    });
+
+    function renderResult() {
+      var t = state.triage;
+      var verdictMap = { go: { cls: 'verdict-go', lbl: 'GO' }, poc: { cls: 'verdict-poc', lbl: 'Proof of Concept' }, stop: { cls: 'verdict-stop', lbl: 'STOP' } };
+      var v = verdictMap[t.verdict] || verdictMap.poc;
+      var listToHtml = function (arr) {
+        if (!arr || !arr.length) return '<li>—</li>';
+        return arr.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+      };
+
+      var html = '' +
+        '<div class="result" id="d-result-inner">' +
+          '<div class="result-head">' +
+            '<span class="verdict-pill ' + v.cls + '">' + v.lbl + '</span>' +
+            '<span class="fit-score">' + t.fit_score + '<span>/10 fit</span></span>' +
+            '<span class="result-edit-hint">All fields below are editable — click to refine before submitting</span>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>Auto-suggested project title</h4>' +
+            '<div class="editable" id="d-title" contenteditable="true">' + esc(t.project_title_suggested) + '</div>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>Fit reasoning</h4>' +
+            '<div class="editable" id="d-fit-reason" contenteditable="true">' + esc(t.fit_reasoning) + '</div>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>Your problem — in our words</h4>' +
+            '<div class="editable" id="d-problem-our-words" contenteditable="true">' + esc(t.problem_in_our_words) + '</div>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>Technical solution — how we would build it</h4>' +
+            '<div class="editable" id="d-tech-summary" contenteditable="true">' + esc(t.technical_solution.summary) + '</div>' +
+            '<div class="tech-grid">' +
+              '<div class="tech-cell">' +
+                '<div class="lbl">Neural Intelligence agents involved</div>' +
+                '<ul class="val" id="d-agents" contenteditable="true">' + listToHtml(t.technical_solution.agents_involved) + '</ul>' +
+              '</div>' +
+              '<div class="tech-cell">' +
+                '<div class="lbl">What we build (concrete deliverables)</div>' +
+                '<ul class="val" id="d-what" contenteditable="true">' + listToHtml(t.technical_solution.what_we_build) + '</ul>' +
+              '</div>' +
+              '<div class="tech-cell">' +
+                '<div class="lbl">Data sources connected via MCP</div>' +
+                '<ul class="val" id="d-data" contenteditable="true">' + listToHtml(t.technical_solution.data_sources_via_mcp) + '</ul>' +
+              '</div>' +
+              '<div class="tech-cell">' +
+                '<div class="lbl">Delivery window</div>' +
+                '<div class="val" id="d-window" contenteditable="true">' + esc(t.technical_solution.delivery_window) + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>What you would see in week 1</h4>' +
+            '<ul class="editable list" id="d-week1" contenteditable="true">' + listToHtml(t.week_1_deliverables) + '</ul>' +
+          '</div>' +
+
+          '<div class="result-block">' +
+            '<h4>Things to verify (questions for the human reviewer)</h4>' +
+            '<ul class="editable list" id="d-flags" contenteditable="true">' + listToHtml(t.verify_flags) + '</ul>' +
+          '</div>' +
+
+          '<div class="result-cta">' +
+            '<button type="button" class="demo-btn-primary" id="d-submit">✓ Accept &amp; Submit to digit2ai.com</button>' +
+            '<button type="button" class="demo-btn-ghost" id="d-rerun">Re-run with same description</button>' +
+            '<span class="demo-status" id="d-submit-status"></span>' +
+          '</div>' +
+        '</div>';
+
+      resultEl.innerHTML = html;
+      document.getElementById('d-submit').addEventListener('click', acceptAndSubmit);
+      document.getElementById('d-rerun').addEventListener('click', function () { runBtn.click(); });
+      document.getElementById('d-result-inner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function acceptAndSubmit() {
+      // Validate required fields for the real intake. The prospect's name + email
+      // are required by /public/request — pull from the form inputs.
+      var name = (document.getElementById('d-name').value || '').trim();
+      var email = (document.getElementById('d-email').value || '').trim();
+      if (!name) { setError('Prospect name is required to submit to digit2ai.com.'); return; }
+      if (!email || email.indexOf('@') < 0) { setError('A valid prospect email is required to submit to digit2ai.com.'); return; }
+      setError('');
+
+      // Build the project description by combining the original problem with
+      // the (possibly edited) technical-solution sketch so Manuel sees both
+      // the prospect's words and the AI's reading + plan when he reviews.
+      var origDesc = (document.getElementById('d-desc').value || '').trim();
+      var title = txt(document.getElementById('d-title')) || 'Untitled project';
+      var techSummary = txt(document.getElementById('d-tech-summary'));
+      var windowTxt = txt(document.getElementById('d-window'));
+      var agents = listText(document.getElementById('d-agents'));
+      var what = listText(document.getElementById('d-what'));
+      var data = listText(document.getElementById('d-data'));
+      var week1 = listText(document.getElementById('d-week1'));
+      var flags = listText(document.getElementById('d-flags'));
+      var problemOurWords = txt(document.getElementById('d-problem-our-words'));
+      var fitReason = txt(document.getElementById('d-fit-reason'));
+
+      var lines = [];
+      lines.push('=== ORIGINAL PROSPECT DESCRIPTION ===');
+      lines.push(origDesc);
+      lines.push('');
+      lines.push('=== AI TRIAGE — PRE-SCREENED BY CHAMPION ===');
+      lines.push('Verdict: ' + (state.triage.verdict || 'poc').toUpperCase() + '  ·  Fit score: ' + state.triage.fit_score + '/10');
+      lines.push('Fit reasoning: ' + fitReason);
+      lines.push('');
+      lines.push('Problem in our words: ' + problemOurWords);
+      lines.push('');
+      lines.push('=== PROPOSED TECHNICAL SOLUTION ===');
+      lines.push(techSummary);
+      lines.push('');
+      if (agents.length) { lines.push('Neural Intelligence agents involved:'); agents.forEach(function (a) { lines.push('  - ' + a); }); lines.push(''); }
+      if (what.length) { lines.push('What we build:'); what.forEach(function (a) { lines.push('  - ' + a); }); lines.push(''); }
+      if (data.length) { lines.push('Data sources via MCP:'); data.forEach(function (a) { lines.push('  - ' + a); }); lines.push(''); }
+      if (windowTxt) { lines.push('Delivery window: ' + windowTxt); lines.push(''); }
+      if (week1.length) { lines.push('Week 1 deliverables:'); week1.forEach(function (a) { lines.push('  - ' + a); }); lines.push(''); }
+      if (flags.length) { lines.push('Verify-this flags for reviewer:'); flags.forEach(function (a) { lines.push('  - ' + a); }); lines.push(''); }
+      var richDescription = lines.join('\n');
+
+      var company = (document.getElementById('d-company').value || '').trim();
+      var country = (document.getElementById('d-country').value || '').trim();
+
+      var submitBtn = document.getElementById('d-submit');
+      var submitStatus = document.getElementById('d-submit-status');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="demo-spinner"></span>Submitting…';
+
+      fetch(API_BASE + '/public/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: name,
+          email: email,
+          company_name: company || undefined,
+          country: country || undefined,
+          project_title: title,
+          project_description: richDescription,
+          problem: origDesc,
+          heard_from: 'Champion-pre-triaged via /champion-teaser.html'
+        })
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+        .then(function (res) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '✓ Accept &amp; Submit to digit2ai.com';
+          if (!res.ok || !res.json || !res.json.success) {
+            setError((res.json && res.json.error) || 'Submission failed. Please try again or send the prospect to digit2ai.com directly.');
+            return;
+          }
+          // Success — show confirmation with the magic link if returned.
+          var data = res.json.data || res.json;
+          var magicUrl = data.url || (data.token ? '/projects/intake/batch.html?token=' + data.token : null);
+          var batchId = data.batch_id || data.batch || '';
+          setSubmitted(
+            '<div class="demo-success">' +
+              '<h3>✓ Submitted to digit2ai.com</h3>' +
+              '<p>Manuel will review within 48 hours. The triage you just edited is attached to the intake record so he sees your reading of the problem from minute one.</p>' +
+              (magicUrl ? '<p style="margin-top:8px"><strong>Prospect workspace link</strong> (send to your prospect):<br><a href="' + esc(magicUrl) + '" target="_blank">' + esc(magicUrl) + '</a></p>' : '') +
+              (batchId ? '<p style="margin-top:6px;font-size:12px;color:var(--ink-mute)">Intake batch #' + esc(String(batchId)) + '</p>' : '') +
+            '</div>'
+          );
+          submitBtn.disabled = true;
+          submitBtn.textContent = '✓ Submitted';
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '✓ Accept &amp; Submit to digit2ai.com';
+          setError('Network error on submit: ' + (err.message || 'request failed'));
+        });
+    }
   })();
 </script>
 </body>

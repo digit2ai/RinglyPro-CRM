@@ -209,6 +209,237 @@ router.post('/public/request', async (req, res) => {
 });
 
 // =====================================================
+// PUBLIC TRIAGE PREVIEW (champion-facing demo) — no auth
+// =====================================================
+// POST /public-triage-preview
+//   Body: { description, name?, email?, company?, country? }
+//   Returns: { verdict, fit_score, fit_reasoning, problem_in_our_words,
+//             technical_solution{...}, week_1_deliverables[], verify_flags[],
+//             language, project_title_suggested }
+//
+// Powers the "Try it now" form at the bottom of /champion-teaser.html. A
+// champion (or their prospect) pastes a problem in plain language, and
+// Claude returns a shorter triage verdict PLUS a technical-solution sketch
+// (which Neural Intelligence agents would handle it, what we'd build,
+// rough delivery window). The champion reviews + edits the result, then
+// clicks "Accept & Submit" which forwards to /public/request to create the
+// real intake.
+//
+// Defaults: claude-sonnet-4-6 (cheaper, faster for triage); language
+// auto-detected from the description (Spanish-leaning text -> Spanish
+// output); rate-limited 10/hour per IP via in-process token bucket
+// (sufficient for v1; promote to Redis if abuse becomes a problem).
+
+const _triageBuckets = new Map();
+function _triageRateLimit(ip) {
+  const now = Date.now();
+  const HOUR = 60 * 60 * 1000;
+  const LIMIT = 10;
+  let b = _triageBuckets.get(ip);
+  if (!b || now - b.windowStart > HOUR) {
+    b = { windowStart: now, count: 0 };
+    _triageBuckets.set(ip, b);
+  }
+  if (b.count >= LIMIT) {
+    const retryInSec = Math.ceil((HOUR - (now - b.windowStart)) / 1000);
+    return { allowed: false, retryInSec };
+  }
+  b.count += 1;
+  return { allowed: true };
+}
+
+function _detectLang(text) {
+  const s = String(text || '').toLowerCase();
+  // Strong signals: tildes / ñ / common Spanish stop-words
+  if (/[áéíóúñ¿¡]/i.test(s)) return 'es';
+  if (/\b(que|para|con|los|las|una|por|nuestro|empresa|cliente|necesito|proyecto|cámara|cámaras|colombia|argentina|méxico|españa|peru|chile)\b/.test(s)) return 'es';
+  return 'en';
+}
+
+function _safeParseJson(text) {
+  if (!text) return null;
+  const cleaned = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();
+  try { return JSON.parse(cleaned); } catch (_) {}
+  const start = cleaned.indexOf('{');
+  if (start >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (c === '\\') esc = true;
+        else if (c === '"') inStr = false;
+      } else {
+        if (c === '"') inStr = true;
+        else if (c === '{') depth++;
+        else if (c === '}') {
+          depth--;
+          if (depth === 0) {
+            try { return JSON.parse(cleaned.slice(start, i + 1)); } catch (_) { return null; }
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+const TRIAGE_SYSTEM_PROMPT = `You are a senior solutions architect at Digit2AI, evaluating an incoming prospect request for the Neural Intelligence platform.
+
+ABOUT DIGIT2AI
+- We build custom AI-powered software for any business that needs to act faster than its tooling allows
+- Our Neural Intelligence stack includes 8 specialized agents coordinated via the MCP (Model Context Protocol) standard:
+  - Senior Business Analyst (decks, business plans, market research, strategy)
+  - Research Brief (web search + synthesis, competitive scans, regulatory checks)
+  - Outreach Drafter (emails, WhatsApp, follow-ups in EN/ES)
+  - Architect & Builder (scopes the build, writes code, runs UAT, ships the app)
+  - Inbox Triage (scores incoming requests, flags risks)
+  - Meeting Minutes Synthesizer (summary + action items + auto-task creation)
+  - Voice AI Agents (Rachel EN / Ana & Lina ES — answer phones, qualify leads)
+  - Neural Findings (proactive monitoring of project risks, stalls, missing owners)
+- 21 live platforms across 22 verticals: chambers of commerce, financial wellness, logistics, mobility, healthcare, urban innovation, hospitality, language training
+- Customers in 5+ countries, EN + ES native, regulatory experience from Colombian habeas data to US HIPAA
+
+YOUR JOB
+Read the prospect's problem description. Produce a SHORT triage verdict PLUS a concrete technical-solution sketch. Be specific. Never invent numbers. If the problem is vague, set verdict to "poc" and ask for the clarifying questions in verify_flags.
+
+VERDICT KEY
+- "go" — clear fit with an existing platform or an obvious custom build path; fit_score 8-10
+- "poc" — promising but needs a small validation phase; fit_score 5-7
+- "stop" — out of scope, regulated in ways we can't handle, or so vague we can't help yet; fit_score 0-4
+
+OUTPUT FORMAT
+Respond with a single JSON object. No prose before or after. No markdown fences. The JSON must conform to this schema:
+
+{
+  "language": "en" | "es",
+  "project_title_suggested": "short auto-suggested project name, 4-8 words",
+  "verdict": "go" | "poc" | "stop",
+  "fit_score": 7,
+  "fit_reasoning": "one sentence explaining the score",
+  "problem_in_our_words": "2 sentences confirming we understood the prospect's problem in plain language",
+  "technical_solution": {
+    "summary": "one-paragraph approach to the build",
+    "agents_involved": ["Senior Business Analyst", "Architect & Builder"],
+    "what_we_build": ["concrete deliverable 1", "concrete deliverable 2", "concrete deliverable 3"],
+    "data_sources_via_mcp": ["specific system 1", "specific system 2"],
+    "delivery_window": "X-Y weeks"
+  },
+  "week_1_deliverables": ["concrete first thing they see", "second thing"],
+  "verify_flags": ["specific thing the human reviewer needs to confirm or that the prospect needs to clarify"]
+}
+
+Respond with the JSON object only.`;
+
+router.post('/public-triage-preview', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: `Too many triage previews from this IP. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).`,
+        retry_in_seconds: rl.retryInSec
+      });
+    }
+
+    const body = req.body || {};
+    const description = String(body.description || '').trim();
+    if (!description || description.length < 30) {
+      return res.status(400).json({ success: false, error: 'Description must be at least 30 characters.' });
+    }
+    if (description.length > 5000) {
+      return res.status(400).json({ success: false, error: 'Description must be under 5000 characters.' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ success: false, error: 'Triage service not configured (no API key on server).' });
+    }
+    let Anthropic;
+    try { Anthropic = require('@anthropic-ai/sdk'); } catch (_) {
+      return res.status(503).json({ success: false, error: 'Triage SDK unavailable on server.' });
+    }
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const lang = body.language === 'en' || body.language === 'es' ? body.language : _detectLang(description);
+    const userMsg = `Today is ${new Date().toISOString().slice(0, 10)}.
+
+RESPONSE LANGUAGE: ${lang === 'es' ? 'Respond entirely in fluent business Spanish with proper orthography (tildes, ñ, ¿¡). The deliverable_type enum strings stay in English (they are code identifiers).' : 'Respond in English.'}
+
+PROSPECT CONTEXT
+- Name: ${body.name || '(not provided)'}
+- Company: ${body.company || '(not provided)'}
+- Country: ${body.country || '(not provided)'}
+
+PROBLEM DESCRIPTION
+${description}
+
+Produce the triage verdict + technical solution as a single JSON object. Respond with the JSON only.`;
+
+    const MODEL = process.env.TRIAGE_PREVIEW_MODEL || 'claude-sonnet-4-6';
+    let resp;
+    try {
+      resp = await client.messages.create({
+        model: MODEL,
+        max_tokens: 2500,
+        system: TRIAGE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMsg }]
+      });
+    } catch (err) {
+      console.error('[D2AI-Intake] public-triage-preview Claude call failed:', err.message);
+      return res.status(502).json({ success: false, error: 'Triage upstream call failed. Please try again.' });
+    }
+    const rawText = resp?.content?.[0]?.text || '';
+    let parsed = _safeParseJson(rawText);
+    if (!parsed) {
+      // One retry asking for clean JSON
+      try {
+        const retry = await client.messages.create({
+          model: MODEL,
+          max_tokens: 2500,
+          system: TRIAGE_SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: userMsg },
+            { role: 'assistant', content: rawText || '(empty)' },
+            { role: 'user', content: 'Your last response was not valid JSON. Reply again with the COMPLETE JSON object only, no preamble, no markdown fences. Begin with { and end with }.' }
+          ]
+        });
+        parsed = _safeParseJson(retry?.content?.[0]?.text || '');
+      } catch (_) {}
+    }
+    if (!parsed) {
+      return res.status(502).json({ success: false, error: 'Triage returned a malformed response. Please rephrase your description and try again.' });
+    }
+
+    // Defensive normalization so the UI never crashes on missing fields
+    const ts = parsed.technical_solution || {};
+    const out = {
+      language: parsed.language === 'es' ? 'es' : 'en',
+      project_title_suggested: String(parsed.project_title_suggested || '').trim().slice(0, 120) || 'Untitled Project',
+      verdict: ['go', 'poc', 'stop'].includes(parsed.verdict) ? parsed.verdict : 'poc',
+      fit_score: Math.max(0, Math.min(10, Number(parsed.fit_score) || 5)),
+      fit_reasoning: String(parsed.fit_reasoning || '').trim(),
+      problem_in_our_words: String(parsed.problem_in_our_words || '').trim(),
+      technical_solution: {
+        summary: String(ts.summary || '').trim(),
+        agents_involved: Array.isArray(ts.agents_involved) ? ts.agents_involved.map(a => String(a).trim()).filter(Boolean) : [],
+        what_we_build: Array.isArray(ts.what_we_build) ? ts.what_we_build.map(a => String(a).trim()).filter(Boolean) : [],
+        data_sources_via_mcp: Array.isArray(ts.data_sources_via_mcp) ? ts.data_sources_via_mcp.map(a => String(a).trim()).filter(Boolean) : [],
+        delivery_window: String(ts.delivery_window || '').trim()
+      },
+      week_1_deliverables: Array.isArray(parsed.week_1_deliverables) ? parsed.week_1_deliverables.map(a => String(a).trim()).filter(Boolean) : [],
+      verify_flags: Array.isArray(parsed.verify_flags) ? parsed.verify_flags.map(a => String(a).trim()).filter(Boolean) : [],
+      model: MODEL
+    };
+
+    res.json({ success: true, data: out });
+  } catch (err) {
+    console.error('[D2AI-Intake] public-triage-preview error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
 // GET /share/:token/discussion — no auth. Returns a single project (and its
