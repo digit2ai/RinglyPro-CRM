@@ -103,6 +103,7 @@
   .agents-top .core { display: inline-block; background: var(--grad); color: #020617; padding: 10px 22px; border-radius: 20px; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; }
   .agents-top .label { font-size: 11px; color: var(--ink-mute); margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
   .agents-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .agents-row + .agents-row { margin-top: 10px; }
   .agent { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; padding: 12px 10px; text-align: center; }
   .agent .e { font-size: 22px; margin-bottom: 4px; }
   .agent .n { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
@@ -213,7 +214,7 @@
   </section>
 
   <div class="pitch">
-    <p>We build <strong>custom AI-powered software</strong> for organizations that need to act faster than their tooling allows — chambers of commerce, banks, healthcare networks, mobility companies, and regional governments. We do it with a stack of specialized AI agents called <strong>MCP Neural AI</strong> — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <strong>digit2ai.com</strong>, our system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
+    <p>We build <strong>custom AI-powered software</strong> for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called <strong>Neural Intelligence</strong>, wired together through the open <strong>MCP standard</strong> — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <strong>digit2ai.com</strong>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
   </div>
 
   <!-- ============================================================ -->
@@ -252,15 +253,39 @@
         <div class="agent">
           <div class="e">✉️</div>
           <div class="n">Outreach Drafter</div>
-          <div class="d">Writes the actual emails, WhatsApp messages, and follow-ups in the right language.</div>
+          <div class="d">Writes emails, WhatsApp messages, and follow-ups in EN or ES.</div>
         </div>
         <div class="agent">
           <div class="e">🛠️</div>
           <div class="n">Architect &amp; Builder</div>
-          <div class="d">Scopes the build, writes the code, runs UAT, ships the live app.</div>
+          <div class="d">Scopes the build, writes code, runs UAT, ships the live app.</div>
+        </div>
+      </div>
+      <div class="agents-row">
+        <div class="agent">
+          <div class="e">📥</div>
+          <div class="n">Inbox Triage</div>
+          <div class="d">Scores every incoming project request, flags regulatory risks, recommends go/no-go.</div>
+        </div>
+        <div class="agent">
+          <div class="e">📝</div>
+          <div class="n">Meeting Minutes Synthesizer</div>
+          <div class="d">Turns raw call notes into summary + action items + tasks auto-assigned to owners.</div>
+        </div>
+        <div class="agent">
+          <div class="e">📞</div>
+          <div class="n">Voice AI Agents</div>
+          <div class="d">Rachel (EN), Ana &amp; Lina (ES) answer phones 24/7 — qualify leads, book, log to CRM.</div>
+        </div>
+        <div class="agent">
+          <div class="e">🚨</div>
+          <div class="n">Neural Findings</div>
+          <div class="d">Watches every project for stalls, missing owners, overdue milestones — pings before things slip.</div>
         </div>
       </div>
     </div>
+
+    <p style="font-size: 12px; color: var(--ink-mute); text-align: center; margin-top: 14px; font-style: italic;">…and the catalog keeps growing. New agents (Compliance Scanner, Stakeholder Matcher, Pipeline Forecaster) ship every quarter — every customer gets the new ones automatically.</p>
   </section>
 
   <!-- ============================================================ -->
@@ -286,7 +311,7 @@
         <div class="num">03 · 22 PLATFORMS</div>
         <h3>Pre-Built Vertical Platforms</h3>
         <p class="what">21 live platforms across 22 verticals — chambers of commerce, financial wellness, healthcare matching, urban innovation, mobility, hospitality. When a prospect's vertical matches one, deployment drops from months to weeks.</p>
-        <div class="deliv"><strong>Live examples</strong>CamaraVirtual (chambers), PLANEA (financial wellness, Colombia), Cali CityLab (urban innovation), SurgicalMind (healthcare), Torna Idioma (language learning).</div>
+        <div class="deliv"><strong>Live examples</strong>CamaraVirtual (chamber networks), PLANEA (financial wellness), Cali CityLab (urban innovation), Pinaxis (warehouse analytics), HISPATEC (professional networks), Torna Idioma (corporate language training), CW Carriers (logistics).</div>
       </div>
       <div class="pillar">
         <div class="num">04 · VOICE AI</div>
@@ -300,7 +325,7 @@
   <!-- ============================================================ -->
   <section class="sec">
     <div class="sec-num"><span class="n">3</span> Real projects you can name-drop</div>
-    <h2>Customers across LATAM, Asia, and US healthcare.</h2>
+    <h2>Across industries: chambers, finance, logistics, mobility, healthcare, urban gov, hospitality.</h2>
     <p class="lead">Use these in conversations. They're real and current — if a prospect's industry matches, mention the closest one.</p>
 
     <div class="projects">
@@ -326,10 +351,10 @@
       </div>
 
       <div class="proj">
-        <div class="head-line"><span class="flag">🏥</span><span class="country">US Healthcare · Surgical Robotics</span></div>
-        <h3>SurgicalMind AI — Surgeon engagement intelligence</h3>
-        <div class="prob"><strong>The problem</strong>Intuitive Surgical's reps spend hours preparing for surgeon meetings, pulling data from CMS, hospital systems, and competitor analyses by hand.</div>
-        <div class="sol"><strong>What we built</strong>A Snowflake-backed AI agent that synthesizes surgeon volume data, hospital P&amp;L, regulatory updates, and competitor moves into prep briefs in 90 seconds.</div>
+        <div class="head-line"><span class="flag">🏭</span><span class="country">Logistics &amp; Manufacturing</span></div>
+        <h3>Pinaxis — Warehouse operations intelligence</h3>
+        <div class="prob"><strong>The problem</strong>Mid-size warehouses run on spreadsheets and gut feel. Managers can't see throughput, picker performance, or SLA breaches until end-of-week, when it's too late to react.</div>
+        <div class="sol"><strong>What we built</strong>A real-time operations dashboard with AI agents that read WMS data, flag bottlenecks the moment they appear, and draft the corrective email to the shift lead — generalizable across any manufacturing or fulfillment operation.</div>
       </div>
     </div>
   </section>
@@ -400,7 +425,7 @@
       </div>
       <div class="script-row">
         <div class="says">"We're in [country/industry]. Will this work for us?"</div>
-        <div class="reply">"Digit2AI has live projects in Argentina, Colombia, Mexico, the Philippines, and US healthcare. We work in English and Spanish natively, and we've handled regulatory frameworks from Colombian habeas data to US HIPAA. Submit the request — the AI will tell you in the triage report what regulatory and language considerations apply."</div>
+        <div class="reply">"Digit2AI has live projects across chambers of commerce, financial services, logistics, mobility, healthcare, urban government, and hospitality — in five countries and counting. We work in English and Spanish natively, and we've handled regulatory frameworks from Colombian habeas data to US HIPAA. Submit the request — the AI triage tells you in the report exactly which regulatory and language considerations apply to your scope."</div>
       </div>
     </div>
   </section>
