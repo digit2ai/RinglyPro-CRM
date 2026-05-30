@@ -83,6 +83,38 @@
   .pitch p { font-size: 17px; line-height: 1.55; color: var(--ink); }
   .pitch strong { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
 
+  /* Doctor vs Thermometer game-changer section */
+  .gc-hero { background: linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(34,211,238,0.06) 100%); border: 1px solid rgba(124,92,255,0.3); border-radius: 14px; padding: 28px 28px 20px; margin-top: 22px; }
+  .gc-tagline { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(18px, 3vw, 24px); font-weight: 900; line-height: 1.3; text-align: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .gc-tagline .vs { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--ink-mute); background: var(--bg-elev); padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line-strong); }
+  .gc-tagline .strike { color: var(--ink-mute); text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+  .gc-tagline .win { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .gc-setup { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 760px; margin: 0 auto 18px; text-align: center; }
+  .gc-setup strong { color: var(--ink); }
+
+  .ddt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 8px; }
+  .ddt { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; position: relative; }
+  .ddt::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); border-radius: 12px 12px 0 0; }
+  .ddt .step { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--violet); margin-bottom: 12px; text-transform: uppercase; }
+  .ddt .step .icon { font-size: 20px; line-height: 1; }
+  .ddt h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
+  .ddt p { font-size: 13.5px; color: var(--ink-dim); line-height: 1.55; }
+  .ddt p strong { color: var(--ink); font-weight: 600; }
+
+  .gc-table { margin-top: 22px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .gc-table .gc-row { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+  .gc-table .gc-row:last-child { border-bottom: none; }
+  .gc-table .gc-row.head { background: rgba(124,92,255,0.06); font-weight: 800; }
+  .gc-table .gc-cell { padding: 12px 18px; font-size: 13px; line-height: 1.5; }
+  .gc-table .gc-row.head .gc-cell { font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .gc-table .gc-cell.therm { color: var(--ink-mute); border-right: 1px solid var(--line); }
+  .gc-table .gc-cell.therm::before { content: '🌡️ '; opacity: 0.6; margin-right: 4px; }
+  .gc-table .gc-cell.doc { color: var(--ink); }
+  .gc-table .gc-cell.doc::before { content: '⚕️ '; margin-right: 4px; }
+  .gc-table .gc-row.head .gc-cell.therm::before, .gc-table .gc-row.head .gc-cell.doc::before { content: ''; margin: 0; }
+  .gc-table .gc-row.head .gc-cell.therm { color: var(--ink-mute); }
+  .gc-table .gc-row.head .gc-cell.doc { color: var(--violet); }
+
   /* Animated MCP brain stage (hero visual) */
   .stage { margin: 36px 0 8px; background: linear-gradient(180deg, rgba(124,92,255,0.04) 0%, rgba(34,211,238,0.04) 100%); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
   .stage svg { display: block; width: 100%; height: auto; max-height: 540px; }
@@ -298,6 +330,9 @@
     .demo-form { grid-template-columns: 1fr; }
     .tech-grid { grid-template-columns: 1fr; }
     .demo { padding: 22px 18px; }
+    .ddt-grid { grid-template-columns: 1fr; }
+    .gc-table .gc-row { grid-template-columns: 1fr; }
+    .gc-table .gc-cell.therm { border-right: none; border-bottom: 1px dashed var(--line); }
   }
 </style>
 </head>
@@ -642,8 +677,78 @@
   </div>
 
   <!-- ============================================================ -->
+  <!-- GAME-CHANGER: Doctor vs Thermometer framing -->
+  <section class="sec" id="game-changer">
+    <div class="sec-num"><span class="n">1</span> Why this is the game-changer</div>
+    <h2>Most AI is a thermometer. Digit2AI is the doctor.</h2>
+    <p class="lead">A thermometer tells you a number — 102°F, $40K below pipeline, churn up 6%. A doctor sees the number, asks why, walks the patient through every system, finds the root cause, and prescribes a treatment. Then administers it. That is the difference between every AI dashboard your prospect already owns and Neural Intelligence MCP.</p>
+
+    <div class="gc-hero">
+      <div class="gc-tagline">
+        <span class="strike">"Here's a chart. Good luck."</span>
+        <span class="vs">VS</span>
+        <span class="win">"Here's the leak. Here's why. Here's the fix — already in motion."</span>
+      </div>
+      <p class="gc-setup">Most AI products stop at <strong>observability</strong> — they show you what's wrong and leave the rest to your team. Neural Intelligence MCP runs the full clinical loop: <strong>detect → diagnose → treat</strong>. Three capabilities, one brain, eight specialized agents, wired into your prospect's real systems through the open MCP standard.</p>
+
+      <div class="ddt-grid">
+        <div class="ddt">
+          <div class="step"><span class="icon">🔍</span>1 · Detect</div>
+          <h3>Finds the money leak before anyone else sees it</h3>
+          <p>The MCP brain reads your prospect's CRM, billing system, support inbox, voice channel, ops dashboards, and contracts — <strong>all at once, continuously.</strong> It surfaces the patterns humans miss: silent churn signals, billing errors compounding week-over-week, sales pipeline rotating out of one segment, support tickets piling up on one rep, contracts about to auto-renew at the wrong rate. <strong>The leak gets named before it costs real money.</strong></p>
+        </div>
+
+        <div class="ddt">
+          <div class="step"><span class="icon">🧠</span>2 · Diagnose</div>
+          <h3>Root cause — not just the symptom</h3>
+          <p>A thermometer says <em>"102°F."</em> A doctor says <em>"bacterial infection from a wound that didn't heal — here's why."</em> The MCP brain cross-references the symptom against every connected system, eliminates dead ends, and tells your prospect which <strong>broken process, missing handoff, or bad assumption</strong> is actually causing the leak. With <strong>confidence scores</strong>. With <strong>evidence</strong>. Not vibes.</p>
+        </div>
+
+        <div class="ddt">
+          <div class="step"><span class="icon">⚕️</span>3 · Treat</div>
+          <h3>Ships the fix — not a recommendation</h3>
+          <p>Most AI ends at <em>"you should consider..."</em>. Neural Intelligence MCP does the actual work: <strong>drafts the email to the at-risk customer, opens the ticket to fix the billing error, schedules the meeting with the rep who's drowning, generates the board deck on what changed.</strong> Your prospect reviews and approves with one click — but the work is already done. That's the doctor visit ending in a written prescription, not a referral to "see a specialist."</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="gc-table" aria-label="Thermometer vs Doctor comparison">
+      <div class="gc-row head">
+        <div class="gc-cell therm">Most AI products</div>
+        <div class="gc-cell doc">Digit2AI Neural Intelligence MCP</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">Reads data inside one app</div>
+        <div class="gc-cell doc">Reads data across every connected system and cross-references it</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">Shows a dashboard</div>
+        <div class="gc-cell doc">Diagnoses what changed and why, with confidence + evidence</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">Suggests "you should consider..."</div>
+        <div class="gc-cell doc">Drafts the email, opens the ticket, ships the fix</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">Works on what you paste in</div>
+        <div class="gc-cell doc">Works on live business data via MCP</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">Forgets the conversation</div>
+        <div class="gc-cell doc">Remembers every project, every decision, every promise</div>
+      </div>
+      <div class="gc-row">
+        <div class="gc-cell therm">One generic model</div>
+        <div class="gc-cell doc">Eight specialists, each routed by the MCP brain to the right job</div>
+      </div>
+    </div>
+
+    <p class="lead" style="text-align:center;margin-top:22px;margin-bottom:0">When the click happens, this is the sentence the champion will repeat: <em style="color:var(--ink);font-weight:600;font-style:normal">"Their AI doesn't just take your temperature — it diagnoses and treats the problem, on your live data, with eight specialists."</em></p>
+  </section>
+
+  <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">1</span> What MCP Neural AI actually means</div>
+    <div class="sec-num"><span class="n">2</span> What MCP Neural AI actually means</div>
     <h2>It's a coordinated team of AI agents — not one chatbot.</h2>
     <p class="lead">"MCP" stands for <em>Model Context Protocol</em> — the way our specialized agents share context and hand work between each other. When a customer brings us a problem, we don't throw it at one big model; we route it through agents that each do one thing very well.</p>
 
@@ -714,7 +819,7 @@
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">2</span> The four things we deliver</div>
+    <div class="sec-num"><span class="n">3</span> The four things we deliver</div>
     <h2>Custom software · AI agents on tap · 22 vertical platforms · Voice AI</h2>
     <p class="lead">When you're talking to a prospect, this is the menu. Most customers buy one or two — the platforms and the build service are the two most common.</p>
 
@@ -742,43 +847,6 @@
         <h3>Voice AI Agents That Answer Phones</h3>
         <p class="what">RinglyPro voice agents (Rachel in English, Ana &amp; Lina in Spanish) answer inbound calls 24/7. They book appointments, qualify leads, answer FAQs, hand off to humans when needed, and log everything into the customer's CRM.</p>
         <div class="deliv"><strong>What ships</strong>A dedicated phone number, branded greeting, custom knowledge base, calendar integration, full call transcripts and analytics dashboard.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================ -->
-  <section class="sec">
-    <div class="sec-num"><span class="n">3</span> Real projects you can name-drop</div>
-    <h2>Across industries: chambers, finance, logistics, mobility, healthcare, urban gov, hospitality.</h2>
-    <p class="lead">Use these in conversations. They're real and current — if a prospect's industry matches, mention the closest one.</p>
-
-    <div class="projects">
-      <div class="proj">
-        <div class="head-line"><span class="flag">🇦🇷</span><span class="country">Argentina · Chamber Network</span></div>
-        <h3>CamaraVirtual.app — Federation of provincial &amp; sectoral chambers</h3>
-        <div class="prob"><strong>The problem</strong>Argentine chambers operate in silos. Member businesses can't find each other across provinces. Boards waste meetings on tooling instead of strategy.</div>
-        <div class="sol"><strong>What we built</strong>An AI-powered B2B engine that matches members across the federated chamber network, surfaces business opportunities, and gives each chamber its own branded portal.</div>
-      </div>
-
-      <div class="proj">
-        <div class="head-line"><span class="flag">🇨🇴</span><span class="country">Colombia · Financial Wellness</span></div>
-        <h3>PLANEA — Integral financial planning for households</h3>
-        <div class="prob"><strong>The problem</strong>Colombian families don't trust banks for advice. Existing wellness apps stop at scoring — they don't tell you how to fix it.</div>
-        <div class="sol"><strong>What we built</strong>An AI behavioral-coaching layer on top of financial assessment — a "Path to Green" with actionable, personalized remediation steps and progress tracking.</div>
-      </div>
-
-      <div class="proj">
-        <div class="head-line"><span class="flag">🇵🇭</span><span class="country">Philippines · Mobility &amp; Banking</span></div>
-        <h3>SubicRide — Employee mobility for Subic Bay Freeport Zone</h3>
-        <div class="prob"><strong>The problem</strong>Industrial zone employees lack reliable transport. Local banks lack executive dashboards for risk and branch performance.</div>
-        <div class="sol"><strong>What we built</strong>An AI-powered employee mobility platform plus a separate executive AI dashboard for bank presidents — KPI monitoring, risk exposure, AI-driven alerts.</div>
-      </div>
-
-      <div class="proj">
-        <div class="head-line"><span class="flag">🏭</span><span class="country">Logistics &amp; Manufacturing</span></div>
-        <h3>Pinaxis — Warehouse operations intelligence</h3>
-        <div class="prob"><strong>The problem</strong>Mid-size warehouses run on spreadsheets and gut feel. Managers can't see throughput, picker performance, or SLA breaches until end-of-week, when it's too late to react.</div>
-        <div class="sol"><strong>What we built</strong>A real-time operations dashboard with AI agents that read WMS data, flag bottlenecks the moment they appear, and draft the corrective email to the shift lead — generalizable across any manufacturing or fulfillment operation.</div>
       </div>
     </div>
   </section>
