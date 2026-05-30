@@ -1168,6 +1168,30 @@
     }
 
     runBtn.addEventListener('click', function () {
+      // Guard: if a triage already ran for this request, do NOT re-run on
+      // accidental double-click. Point the champion at the Accept & Submit
+      // button below instead. Each Claude call costs money and a re-run
+      // also wipes any inline edits the champion made to the result.
+      // To force a fresh triage they must explicitly change the description
+      // (or click "Re-run with same description" inside the result panel).
+      if (state.triage) {
+        setError('');
+        var msg = document.getElementById('d-result-inner');
+        if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setStatus('Triage already ran — press "Accept & Submit to digit2ai.com" below to submit your project.');
+        // Re-show a callout above the result so it's impossible to miss.
+        var hint = document.getElementById('d-already-hint');
+        if (!hint) {
+          hint = document.createElement('div');
+          hint.id = 'd-already-hint';
+          hint.style.cssText = 'margin-top:14px;padding:12px 16px;background:rgba(245,158,11,0.08);border:1px solid var(--amber);border-radius:8px;color:var(--ink);font-size:13px;line-height:1.5';
+          hint.innerHTML = '<strong style="color:var(--amber)">Already triaged.</strong> Review and edit the result below, then press <strong>Accept &amp; Submit to digit2ai.com</strong>. To run a fresh triage, change the description text above or use the <em>Re-run with same description</em> button inside the result panel.';
+          (resultEl.parentNode || document.body).insertBefore(hint, resultEl);
+        }
+        setTimeout(function () { var h = document.getElementById('d-already-hint'); if (h) h.remove(); }, 8000);
+        return;
+      }
+
       var desc = (document.getElementById('d-desc').value || '').trim();
       if (desc.length < 30) {
         setError('Please describe the problem in at least 30 characters.');
@@ -1195,14 +1219,21 @@
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
         .then(function (res) {
           runBtn.disabled = false;
-          runBtn.textContent = 'Re-run AI Triage';
           setStatus('');
           if (!res.ok || !res.json || !res.json.success) {
+            // No triage result — reset button so champion can retry
+            runBtn.textContent = 'Run AI Triage';
             setError((res.json && res.json.error) || 'Triage failed. Please try again.');
             return;
           }
           state.triage = res.json.data;
           state.lang = state.triage.language || 'en';
+          // Post-success: button changes meaning. It no longer re-runs
+          // automatically; the click-guard above intercepts and points
+          // the champion at Accept & Submit. Label reflects that.
+          runBtn.textContent = 'Press below to submit your project ↓';
+          runBtn.style.opacity = '0.75';
+          runBtn.style.cursor = 'pointer';
           renderResult();
         })
         .catch(function (err) {
@@ -1287,7 +1318,15 @@
 
       resultEl.innerHTML = html;
       document.getElementById('d-submit').addEventListener('click', acceptAndSubmit);
-      document.getElementById('d-rerun').addEventListener('click', function () { runBtn.click(); });
+      document.getElementById('d-rerun').addEventListener('click', function () {
+        // Explicit re-run: clear cached triage so the click-guard above
+        // doesn't intercept, then trigger the top Run button.
+        state.triage = null;
+        resultEl.innerHTML = '';
+        runBtn.style.opacity = '';
+        runBtn.textContent = 'Run AI Triage';
+        runBtn.click();
+      });
       document.getElementById('d-result-inner').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
