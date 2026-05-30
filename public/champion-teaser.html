@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digit2AI Champion Teaser — Understand What You're Selling</title>
+<meta name="description" content="The 5-minute crash course for Digit2AI champions: what MCP Neural AI actually does, real customer projects, and the exact script for turning a conversation into a digit2ai.com intake.">
+<link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1220;
+    --bg-card: #131c2f;
+    --bg-elev: #1a2440;
+    --ink: #e2e8f0;
+    --ink-dim: #94a3b8;
+    --ink-mute: #64748b;
+    --line: rgba(148, 163, 184, 0.15);
+    --line-strong: rgba(148, 163, 184, 0.3);
+    --grad: linear-gradient(135deg, #7c5cff 0%, #22d3ee 100%);
+    --grad-soft: linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(34,211,238,0.12) 100%);
+    --violet: #a78bfa;
+    --cyan: #22d3ee;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; height: 360px;
+    background: radial-gradient(ellipse at top, rgba(124,92,255,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 24px 80px; position: relative; z-index: 1; }
+
+  /* Header */
+  .hd { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 13px; font-weight: 800; letter-spacing: 1px; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; text-transform: uppercase; }
+  .brand .lab { display: block; font-size: 9px; letter-spacing: 2px; color: var(--ink-mute); font-weight: 600; margin-top: 2px; }
+  .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
+  .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
+
+  /* Hero */
+  .hero { padding: 30px 0 38px; text-align: center; }
+  .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .hero h1 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
+  .hero .sub { font-size: 16px; color: var(--ink-dim); max-width: 680px; margin: 0 auto; }
+
+  /* 30-second pitch */
+  .pitch {
+    background: var(--grad-soft);
+    border: 1px solid rgba(124,92,255,0.3);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 30px 0;
+    position: relative;
+  }
+  .pitch::before {
+    content: 'MEMORIZE THIS';
+    position: absolute;
+    top: -10px; left: 24px;
+    background: var(--bg);
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--violet);
+  }
+  .pitch p { font-size: 17px; line-height: 1.55; color: var(--ink); }
+  .pitch strong { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+
+  /* Section heading */
+  .sec { margin: 50px 0 24px; }
+  .sec-num { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--violet); font-weight: 700; margin-bottom: 8px; }
+  .sec-num .n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--grad); color: #020617; font-size: 11px; font-weight: 900; }
+  .sec h2 { font-size: clamp(22px, 3.5vw, 30px); font-weight: 800; line-height: 1.2; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .sec .lead { color: var(--ink-dim); font-size: 15px; max-width: 720px; margin-bottom: 22px; }
+
+  /* MCP explainer */
+  .mcp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .mcp-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  .mcp-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .mcp-card h4 .ico { font-size: 18px; }
+  .mcp-card p { font-size: 13.5px; color: var(--ink-dim); line-height: 1.55; }
+
+  /* Agent diagram */
+  .agents { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin: 18px 0 0; }
+  .agents-top { text-align: center; margin-bottom: 18px; }
+  .agents-top .core { display: inline-block; background: var(--grad); color: #020617; padding: 10px 22px; border-radius: 20px; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; }
+  .agents-top .label { font-size: 11px; color: var(--ink-mute); margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  .agents-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .agent { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; padding: 12px 10px; text-align: center; }
+  .agent .e { font-size: 22px; margin-bottom: 4px; }
+  .agent .n { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+  .agent .d { font-size: 10.5px; color: var(--ink-mute); line-height: 1.35; }
+
+  /* 4-pillar grid */
+  .pillars { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .pillar { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; position: relative; overflow: hidden; }
+  .pillar::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); }
+  .pillar .num { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--violet); margin-bottom: 8px; }
+  .pillar h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
+  .pillar .what { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 12px; line-height: 1.55; }
+  .pillar .deliv { font-size: 12px; color: var(--ink-mute); padding-top: 12px; border-top: 1px solid var(--line); }
+  .pillar .deliv strong { color: var(--cyan); display: block; margin-bottom: 4px; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; }
+
+  /* Projects grid (social proof) */
+  .projects { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .proj { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .proj .head-line { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .proj .flag { font-size: 18px; }
+  .proj .country { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink-mute); text-transform: uppercase; }
+  .proj h3 { font-size: 16px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
+  .proj .prob, .proj .sol { font-size: 13px; line-height: 1.55; margin-bottom: 8px; }
+  .proj .prob strong, .proj .sol strong { color: var(--violet); font-weight: 700; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .proj .prob { color: var(--ink-dim); }
+  .proj .sol { color: var(--ink); }
+
+  /* Flow diagram */
+  .flow { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 26px 20px; }
+  .flow-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-items: stretch; }
+  .step { text-align: center; position: relative; }
+  .step .circle { display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: var(--grad); color: #020617; font-weight: 900; font-size: 18px; margin-bottom: 8px; box-shadow: 0 4px 14px rgba(124, 92, 255, 0.3); }
+  .step .name { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 4px; letter-spacing: 0.5px; }
+  .step .desc { font-size: 10.5px; color: var(--ink-mute); line-height: 1.35; padding: 0 4px; }
+  .step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    top: 16px;
+    right: -8px;
+    color: var(--ink-mute);
+    font-size: 18px;
+    z-index: 0;
+  }
+
+  /* Script tabs */
+  .scripts { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .script-row { padding: 18px 22px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+  .script-row:last-child { border-bottom: none; }
+  .script-row .says { font-size: 13px; color: var(--ink-dim); }
+  .script-row .says::before { content: 'PROSPECT SAYS'; display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--ink-mute); margin-bottom: 6px; }
+  .script-row .reply { font-size: 13.5px; color: var(--ink); border-left: 3px solid var(--cyan); padding-left: 14px; }
+  .script-row .reply::before { content: 'YOU SAY'; display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--cyan); margin-bottom: 6px; }
+
+  /* Why digit2ai.com */
+  .why { background: var(--grad-soft); border: 1px solid rgba(124,92,255,0.3); border-radius: 12px; padding: 24px; }
+  .why h3 { font-size: 17px; font-weight: 800; margin-bottom: 14px; }
+  .why ul { list-style: none; }
+  .why li { font-size: 13.5px; color: var(--ink); padding: 8px 0 8px 28px; position: relative; line-height: 1.55; }
+  .why li::before { content: '✓'; position: absolute; left: 0; top: 8px; color: var(--cyan); font-weight: 900; font-size: 16px; }
+
+  /* CTA */
+  .cta-wrap { margin-top: 60px; padding: 36px 24px; background: var(--grad-soft); border: 1px solid rgba(124,92,255,0.4); border-radius: 16px; text-align: center; }
+  .cta-wrap h2 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+  .cta-wrap p { color: var(--ink-dim); font-size: 14px; margin-bottom: 22px; max-width: 540px; margin-left: auto; margin-right: auto; }
+  .cta-btn { display: inline-block; background: var(--grad); color: #020617; padding: 16px 36px; border-radius: 999px; font-weight: 800; font-size: 15px; text-decoration: none; letter-spacing: 0.5px; box-shadow: 0 6px 24px rgba(124, 92, 255, 0.4); transition: transform 0.2s, box-shadow 0.2s; }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(124, 92, 255, 0.5); }
+
+  /* Copy block */
+  .copy-block { margin-top: 24px; padding: 16px 18px; background: rgba(0,0,0,0.25); border: 1px dashed var(--line-strong); border-radius: 10px; text-align: left; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12.5px; line-height: 1.6; color: var(--ink); position: relative; }
+  .copy-block::before { content: 'COPY-PASTE READY'; display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--cyan); margin-bottom: 8px; font-family: 'Inter', sans-serif; }
+  .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--bg-elev); border: 1px solid var(--line-strong); color: var(--ink-dim); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+  .copy-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* Footer */
+  .ft { margin-top: 50px; padding-top: 22px; border-top: 1px solid var(--line); text-align: center; font-size: 11.5px; color: var(--ink-mute); }
+  .ft a { color: var(--violet); text-decoration: none; }
+  .ft a:hover { color: var(--cyan); }
+
+  /* Mobile */
+  @media (max-width: 720px) {
+    .wrap { padding: 24px 16px 60px; }
+    .hd { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .hd-meta { text-align: left; }
+    .mcp-grid, .pillars, .projects { grid-template-columns: 1fr; }
+    .agents-row { grid-template-columns: repeat(2, 1fr); }
+    .flow-steps { grid-template-columns: 1fr; }
+    .step:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -8px; transform: translateX(-50%); }
+    .script-row { grid-template-columns: 1fr; gap: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hd">
+    <div>
+      <div class="brand">DIGIT2AI<span class="lab">Neural Intelligence</span></div>
+    </div>
+    <div class="hd-meta">
+      <span class="hd-pill">Champion Brief</span><br>
+      Internal use · For partners who sell Digit2AI
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>What you're <em>actually selling</em></h1>
+    <p class="sub">A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.</p>
+  </section>
+
+  <div class="pitch">
+    <p>We build <strong>custom AI-powered software</strong> for organizations that need to act faster than their tooling allows — chambers of commerce, banks, healthcare networks, mobility companies, and regional governments. We do it with a stack of specialized AI agents called <strong>MCP Neural AI</strong> — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <strong>digit2ai.com</strong>, our system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">1</span> What MCP Neural AI actually means</div>
+    <h2>It's a coordinated team of AI agents — not one chatbot.</h2>
+    <p class="lead">"MCP" stands for <em>Model Context Protocol</em> — the way our specialized agents share context and hand work between each other. When a customer brings us a problem, we don't throw it at one big model; we route it through agents that each do one thing very well.</p>
+
+    <div class="mcp-grid">
+      <div class="mcp-card">
+        <h4><span class="ico">🧠</span> Why this matters</h4>
+        <p>One generic chatbot can't both research a market, draft a board deck, and write production code. Our agents are specialized and chained — each agent's output is the next agent's input. The customer gets work product that's actually usable, not a vague summary.</p>
+      </div>
+      <div class="mcp-card">
+        <h4><span class="ico">🎯</span> What the customer gets</h4>
+        <p>Concrete deliverables on a calendar: a slide-by-slide deck, a working web app, a board memo, an AI agent that answers their phones — produced by the right agent for the job, reviewed by a human, and shipped on a defined timeline.</p>
+      </div>
+    </div>
+
+    <div class="agents">
+      <div class="agents-top">
+        <div class="core">MCP CORE — routes each task to the right specialist</div>
+        <div class="label">↓ Customer's problem flows into the right agent ↓</div>
+      </div>
+      <div class="agents-row">
+        <div class="agent">
+          <div class="e">📊</div>
+          <div class="n">Senior Business Analyst</div>
+          <div class="d">Drafts decks, business plans, market research, strategy memos.</div>
+        </div>
+        <div class="agent">
+          <div class="e">🔍</div>
+          <div class="n">Research Brief</div>
+          <div class="d">Web search + synthesis. Competitive scans, regulatory checks, partner shortlists.</div>
+        </div>
+        <div class="agent">
+          <div class="e">✉️</div>
+          <div class="n">Outreach Drafter</div>
+          <div class="d">Writes the actual emails, WhatsApp messages, and follow-ups in the right language.</div>
+        </div>
+        <div class="agent">
+          <div class="e">🛠️</div>
+          <div class="n">Architect &amp; Builder</div>
+          <div class="d">Scopes the build, writes the code, runs UAT, ships the live app.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">2</span> The four things we deliver</div>
+    <h2>Custom software · AI agents on tap · 22 vertical platforms · Voice AI</h2>
+    <p class="lead">When you're talking to a prospect, this is the menu. Most customers buy one or two — the platforms and the build service are the two most common.</p>
+
+    <div class="pillars">
+      <div class="pillar">
+        <div class="num">01 · BUILD SERVICE</div>
+        <h3>AI-Built Custom Software</h3>
+        <p class="what">Prospect describes their problem. Our intake AI scores fit and drafts a build plan. A human reviews. The Architect agent writes the code, runs SIT (system integration testing), hands off to UAT (user acceptance testing), ships to production.</p>
+        <div class="deliv"><strong>What ships</strong>A working web app on their domain, with documentation, ongoing AI agent support, and a 99.9% SLA.</div>
+      </div>
+      <div class="pillar">
+        <div class="num">02 · BA-ON-DEMAND</div>
+        <h3>Senior Business Analyst on tap</h3>
+        <p class="what">For prospects who don't need software — they need help thinking. Our Senior BA agent produces decks, business plans, competitive analyses, regulatory write-ups, partnership briefs, and roadmaps. Real content, not summaries.</p>
+        <div class="deliv"><strong>What ships</strong>A reviewable artifact (deck outline, prose document, framework, roadmap) per task, in English or Spanish, with confidence flags and verify-this notes.</div>
+      </div>
+      <div class="pillar">
+        <div class="num">03 · 22 PLATFORMS</div>
+        <h3>Pre-Built Vertical Platforms</h3>
+        <p class="what">21 live platforms across 22 verticals — chambers of commerce, financial wellness, healthcare matching, urban innovation, mobility, hospitality. When a prospect's vertical matches one, deployment drops from months to weeks.</p>
+        <div class="deliv"><strong>Live examples</strong>CamaraVirtual (chambers), PLANEA (financial wellness, Colombia), Cali CityLab (urban innovation), SurgicalMind (healthcare), Torna Idioma (language learning).</div>
+      </div>
+      <div class="pillar">
+        <div class="num">04 · VOICE AI</div>
+        <h3>Voice AI Agents That Answer Phones</h3>
+        <p class="what">RinglyPro voice agents (Rachel in English, Ana &amp; Lina in Spanish) answer inbound calls 24/7. They book appointments, qualify leads, answer FAQs, hand off to humans when needed, and log everything into the customer's CRM.</p>
+        <div class="deliv"><strong>What ships</strong>A dedicated phone number, branded greeting, custom knowledge base, calendar integration, full call transcripts and analytics dashboard.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">3</span> Real projects you can name-drop</div>
+    <h2>Customers across LATAM, Asia, and US healthcare.</h2>
+    <p class="lead">Use these in conversations. They're real and current — if a prospect's industry matches, mention the closest one.</p>
+
+    <div class="projects">
+      <div class="proj">
+        <div class="head-line"><span class="flag">🇦🇷</span><span class="country">Argentina · Chamber Network</span></div>
+        <h3>CamaraVirtual.app — Federation of provincial &amp; sectoral chambers</h3>
+        <div class="prob"><strong>The problem</strong>Argentine chambers operate in silos. Member businesses can't find each other across provinces. Boards waste meetings on tooling instead of strategy.</div>
+        <div class="sol"><strong>What we built</strong>An AI-powered B2B engine that matches members across the federated chamber network, surfaces business opportunities, and gives each chamber its own branded portal.</div>
+      </div>
+
+      <div class="proj">
+        <div class="head-line"><span class="flag">🇨🇴</span><span class="country">Colombia · Financial Wellness</span></div>
+        <h3>PLANEA — Integral financial planning for households</h3>
+        <div class="prob"><strong>The problem</strong>Colombian families don't trust banks for advice. Existing wellness apps stop at scoring — they don't tell you how to fix it.</div>
+        <div class="sol"><strong>What we built</strong>An AI behavioral-coaching layer on top of financial assessment — a "Path to Green" with actionable, personalized remediation steps and progress tracking.</div>
+      </div>
+
+      <div class="proj">
+        <div class="head-line"><span class="flag">🇵🇭</span><span class="country">Philippines · Mobility &amp; Banking</span></div>
+        <h3>SubicRide — Employee mobility for Subic Bay Freeport Zone</h3>
+        <div class="prob"><strong>The problem</strong>Industrial zone employees lack reliable transport. Local banks lack executive dashboards for risk and branch performance.</div>
+        <div class="sol"><strong>What we built</strong>An AI-powered employee mobility platform plus a separate executive AI dashboard for bank presidents — KPI monitoring, risk exposure, AI-driven alerts.</div>
+      </div>
+
+      <div class="proj">
+        <div class="head-line"><span class="flag">🏥</span><span class="country">US Healthcare · Surgical Robotics</span></div>
+        <h3>SurgicalMind AI — Surgeon engagement intelligence</h3>
+        <div class="prob"><strong>The problem</strong>Intuitive Surgical's reps spend hours preparing for surgeon meetings, pulling data from CMS, hospital systems, and competitor analyses by hand.</div>
+        <div class="sol"><strong>What we built</strong>A Snowflake-backed AI agent that synthesizes surgeon volume data, hospital P&amp;L, regulatory updates, and competitor moves into prep briefs in 90 seconds.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">4</span> How a prospect becomes a customer</div>
+    <h2>From digit2ai.com submission to live software in days, not months.</h2>
+    <p class="lead">This is the flow you're motivating prospects toward. The intake is the first commitment — everything else follows from it.</p>
+
+    <div class="flow">
+      <div class="flow-steps">
+        <div class="step">
+          <div class="circle">1</div>
+          <div class="name">SUBMIT</div>
+          <div class="desc">Prospect fills the intake form at digit2ai.com — describes the problem in their own words.</div>
+        </div>
+        <div class="step">
+          <div class="circle">2</div>
+          <div class="name">AI TRIAGE</div>
+          <div class="desc">Our intake agent scores fit, drafts a recommendation, and flags regulatory issues — in minutes.</div>
+        </div>
+        <div class="step">
+          <div class="circle">3</div>
+          <div class="name">HUMAN REVIEW</div>
+          <div class="desc">A real person (Manuel) reviews the AI verdict, approves or rejects within 48 hours.</div>
+        </div>
+        <div class="step">
+          <div class="circle">4</div>
+          <div class="name">KICKOFF</div>
+          <div class="desc">Auto-scheduled Zoom kickoff. Architect agent writes the build plan. Contract goes out.</div>
+        </div>
+        <div class="step">
+          <div class="circle">5</div>
+          <div class="name">SHIP</div>
+          <div class="desc">Build → SIT → UAT → live software on their domain, with ongoing AI agent support.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">5</span> Champion's script</div>
+    <h2>What to say when a prospect says X.</h2>
+    <p class="lead">Six conversations you'll have on repeat. The right-side reply is battle-tested — use it verbatim or paraphrase.</p>
+
+    <div class="scripts">
+      <div class="script-row">
+        <div class="says">"Sounds expensive. We don't have enterprise budget."</div>
+        <div class="reply">"Digit2AI starts at the project level, not enterprise. Submit your request — the AI triage will tell you in a day whether your scope fits an existing platform (weeks, 5-figures) or a custom build (months, larger). No commitment to find out."</div>
+      </div>
+      <div class="script-row">
+        <div class="says">"We already have a tech team. Why would we need this?"</div>
+        <div class="reply">"Your tech team builds the things only your tech team can build. Digit2AI handles the AI-heavy work — voice agents, document drafting, market research, regulatory scans — that would take your team six months to learn. We're the AI layer, not the replacement."</div>
+      </div>
+      <div class="script-row">
+        <div class="says">"Can your AI really replace what my consultant does?"</div>
+        <div class="reply">"Not replace — accelerate. Our Senior BA agent produces a deck outline or business plan in 20 minutes. Your consultant then reviews, edits, and adds the human judgment. You're paying for thinking time, not typing time."</div>
+      </div>
+      <div class="script-row">
+        <div class="says">"How fast can you actually ship?"</div>
+        <div class="reply">"If your problem matches one of our 22 vertical platforms — weeks. If it's a fresh build — months, with a deck-and-business-plan deliverable in the first two weeks so you see progress immediately. The intake form will tell us which path."</div>
+      </div>
+      <div class="script-row">
+        <div class="says">"What if I just want to talk to someone first?"</div>
+        <div class="reply">"The intake form IS the way to talk to someone. It auto-schedules a kickoff Zoom with Manuel within 48 hours of approval. Filling it out is faster than going back and forth on email — and the AI triage means he'll come to the call already knowing what you need."</div>
+      </div>
+      <div class="script-row">
+        <div class="says">"We're in [country/industry]. Will this work for us?"</div>
+        <div class="reply">"Digit2AI has live projects in Argentina, Colombia, Mexico, the Philippines, and US healthcare. We work in English and Spanish natively, and we've handled regulatory frameworks from Colombian habeas data to US HIPAA. Submit the request — the AI will tell you in the triage report what regulatory and language considerations apply."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="sec">
+    <div class="sec-num"><span class="n">6</span> Why the intake form (not your phone number)</div>
+    <h2>Send prospects to digit2ai.com — here's why it's better for them AND you.</h2>
+    <p class="lead">Hard truth: "Let me set up a call with Manuel" creates 3 weeks of email scheduling. The intake form skips all of that.</p>
+
+    <div class="why">
+      <h3>What the intake form does for your prospect</h3>
+      <ul>
+        <li><strong>Captures everything in one shot</strong> — submitter info, project description, budget hints, regulatory context. No back-and-forth.</li>
+        <li><strong>AI triage in minutes</strong> — they get a fit score and recommended path before any human is involved. Saves them time even if they don't move forward.</li>
+        <li><strong>Auto-scheduled kickoff</strong> — when approved, a Zoom + .ics invite goes out with kickoff details automatically. No "what times work for you" loops.</li>
+        <li><strong>Magic-link workspace</strong> — they get a private link to track their project, add notes, and reschedule meetings without needing an account.</li>
+        <li><strong>Transparent timeline</strong> — they see AI-generated milestones from day one. No surprises about "when will this be done."</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <div class="cta-wrap">
+    <h2>Send your next prospect to digit2ai.com</h2>
+    <p>One link. Three minutes of their time. A real recommendation within 48 hours. Use the copy below verbatim or remix it.</p>
+    <a href="https://digit2ai.com" target="_blank" class="cta-btn">Open digit2ai.com →</a>
+
+    <div class="copy-block">
+      <button class="copy-btn" id="copy-btn">Copy</button>
+      <span id="copy-text">Hey [Name] — based on what you described, I think Digit2AI is the right fit. They build AI-powered software and AI agents for organizations exactly like yours. Their intake form takes 3 minutes, an AI triages your request in minutes, and a human gets back within 48 hours with a recommendation — even if the answer is "not a fit," you get a real explanation. No sales call gauntlet. Here's the link: digit2ai.com. Tell them [Your Name] sent you so we can track the referral.</span>
+    </div>
+  </div>
+
+  <footer class="ft">
+    <p>Digit2AI · Neural Intelligence · <a href="https://digit2ai.com" target="_blank">digit2ai.com</a></p>
+    <p style="margin-top: 6px">Champion-only brief. Update or replace any section to match your audience.</p>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('copy-btn');
+    var src = document.getElementById('copy-text');
+    if (!btn || !src) return;
+    btn.addEventListener('click', function () {
+      var text = (src.textContent || '').trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied ✓';
+          setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
+        }).catch(function () {
+          btn.textContent = 'Copy failed';
+          setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
+        });
+      } else {
+        // Fallback for browsers without Clipboard API
+        var range = document.createRange();
+        range.selectNode(src);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        try {
+          document.execCommand('copy');
+          btn.textContent = 'Copied ✓';
+        } catch (e) {
+          btn.textContent = 'Select &amp; copy manually';
+        }
+        window.getSelection().removeAllRanges();
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
