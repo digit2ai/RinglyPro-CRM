@@ -112,6 +112,21 @@
   .gc-table .gc-row.head .gc-cell.therm { color: var(--ink-mute); }
   .gc-table .gc-row.head .gc-cell.doc { color: var(--violet); }
 
+  /* Army-of-agents roster — division cards with pill chips */
+  .army { margin-top: 18px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+  .army-head { text-align: center; margin-bottom: 18px; }
+  .army-head h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .army-head p { font-size: 13px; color: var(--ink-dim); max-width: 660px; margin: 0 auto; line-height: 1.55; }
+  .army-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .squad { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .squad h4 { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--violet); text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .squad h4 .count { background: rgba(124,92,255,0.18); color: var(--violet); padding: 2px 7px; border-radius: 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+  .squad-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { display: inline-block; background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.18); color: var(--ink); padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 500; line-height: 1.4; transition: border-color 0.15s, background 0.15s; }
+  .pill:hover { border-color: var(--cyan); background: rgba(34,211,238,0.12); }
+  .army-foot { margin-top: 16px; text-align: center; font-size: 12px; color: var(--ink-mute); font-style: italic; }
+  .army-foot strong { color: var(--cyan); font-style: normal; font-weight: 700; }
+
   /* Animated MCP brain stage (hero visual) */
   .stage { margin: 36px 0 8px; background: linear-gradient(180deg, rgba(124,92,255,0.04) 0%, rgba(34,211,238,0.04) 100%); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
   .stage svg { display: block; width: 100%; height: auto; max-height: 540px; }
@@ -330,6 +345,7 @@
     .ddt-grid { grid-template-columns: 1fr; }
     .gc-table .gc-row { grid-template-columns: 1fr; }
     .gc-table .gc-cell.therm { border-right: none; border-bottom: 1px dashed var(--line); }
+    .army-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -811,7 +827,105 @@
       </div>
     </div>
 
-    <p style="font-size: 12px; color: var(--ink-mute); text-align: center; margin-top: 14px; font-style: italic;">…and the catalog keeps growing. New agents (Compliance Scanner, Stakeholder Matcher, Pipeline Forecaster) ship every quarter — every customer gets the new ones automatically.</p>
+    <!-- ===== FULL ARMY: specialist agents available on demand ===== -->
+    <div class="army" id="army">
+      <div class="army-head">
+        <h3>The full army — 50+ specialist agents on call</h3>
+        <p>The 8 core agents above are the always-on stack. Behind them sits a roster of specialists the MCP brain spins up the moment a project needs them. No new contracts. No "let me find a partner who does that." Every customer gets the whole army from day one.</p>
+      </div>
+
+      <div class="army-grid">
+        <div class="squad">
+          <h4>Engineering &amp; Build <span class="count">12</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Full Stack Developer</span>
+            <span class="pill">Senior Frontend Engineer</span>
+            <span class="pill">Senior Backend Engineer</span>
+            <span class="pill">Senior DevOps / SRE</span>
+            <span class="pill">Senior Database Architect</span>
+            <span class="pill">Senior API Designer</span>
+            <span class="pill">Senior Mobile Engineer</span>
+            <span class="pill">Senior SIT Tester</span>
+            <span class="pill">Senior UAT Coordinator</span>
+            <span class="pill">Senior Production Release Manager</span>
+            <span class="pill">Senior Security Engineer</span>
+            <span class="pill">Senior Performance Engineer</span>
+          </div>
+        </div>
+
+        <div class="squad">
+          <h4>Data, ML &amp; Math <span class="count">8</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Data Engineer</span>
+            <span class="pill">Senior Data Analyst</span>
+            <span class="pill">Senior Data Scientist</span>
+            <span class="pill">Mathematics SME</span>
+            <span class="pill">Senior ML / AI Engineer</span>
+            <span class="pill">Senior Forecasting Analyst</span>
+            <span class="pill">Senior BI / Dashboard Builder</span>
+            <span class="pill">Senior Statistician</span>
+          </div>
+        </div>
+
+        <div class="squad">
+          <h4>Business &amp; Strategy <span class="count">8</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Project Manager</span>
+            <span class="pill">Senior Product Manager</span>
+            <span class="pill">Senior Strategy Consultant</span>
+            <span class="pill">Senior Operations Analyst</span>
+            <span class="pill">Senior Process Improvement</span>
+            <span class="pill">Senior M&amp;A Analyst</span>
+            <span class="pill">Senior Pricing Analyst</span>
+            <span class="pill">Senior Change Management</span>
+          </div>
+        </div>
+
+        <div class="squad">
+          <h4>Sales, Marketing &amp; Customer <span class="count">9</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Sales Engineer</span>
+            <span class="pill">Senior Lead Qualifier</span>
+            <span class="pill">Senior Content Marketer</span>
+            <span class="pill">Senior SEO Specialist</span>
+            <span class="pill">Senior Brand Strategist</span>
+            <span class="pill">Senior CRM Hygiene Specialist</span>
+            <span class="pill">Senior Customer Success Manager</span>
+            <span class="pill">Senior Churn Prevention Analyst</span>
+            <span class="pill">Senior Onboarding Specialist</span>
+          </div>
+        </div>
+
+        <div class="squad">
+          <h4>Finance &amp; Risk <span class="count">7</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Accountant</span>
+            <span class="pill">Senior FP&amp;A Analyst</span>
+            <span class="pill">Senior Treasury Analyst</span>
+            <span class="pill">Senior Tax Strategist</span>
+            <span class="pill">Senior Auditor</span>
+            <span class="pill">Senior Risk Modeler</span>
+            <span class="pill">Senior Invoice Reconciler</span>
+          </div>
+        </div>
+
+        <div class="squad">
+          <h4>Legal, Compliance &amp; HR <span class="count">8</span></h4>
+          <div class="squad-pills">
+            <span class="pill">Senior Contract Drafter</span>
+            <span class="pill">Senior NDA / IP Reviewer</span>
+            <span class="pill">Senior Compliance Officer</span>
+            <span class="pill">Senior Regulatory Researcher</span>
+            <span class="pill">Senior Privacy Officer (GDPR / HIPAA)</span>
+            <span class="pill">Senior Recruiter</span>
+            <span class="pill">Senior Performance Reviewer</span>
+            <span class="pill">Senior Training Designer</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="army-foot"><strong>8 core + 52 specialists = 60-agent workforce</strong> · routed by one MCP brain · wired to the customer's live systems via the open Model Context Protocol · new specialists added every quarter, every customer gets them automatically</p>
+    </div>
   </section>
 
   <!-- ============================================================ -->
