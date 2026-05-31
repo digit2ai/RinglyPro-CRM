@@ -472,6 +472,199 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key stays server-side.
 //
 // =====================================================
+// FUNNEL ANALYTICS (T3.3)
+// =====================================================
+// Lightweight client-side event log. Each visitor's session_id is a
+// random UUID stored in localStorage. Events accumulate without
+// linking to user identity. /funnel-summary returns Sankey-shaped
+// counts so we can see drop-off between funnel stages.
+//
+// Admin view at /champion-funnel.html is BasicAuth-protected via
+// BASIC_AUTH_USER / BASIC_AUTH_PASS. Document in CLAUDE.md.
+
+const VALID_FUNNEL_EVENTS = new Set([
+  'page_visible',
+  'orb_visible',
+  'orb_clicked',
+  'mic_granted',
+  'mic_denied',
+  'session_started',
+  'triage_started',
+  'triage_completed',
+  'submit_clicked',
+  'submit_succeeded',
+  'submit_failed',
+  'abandoned',
+  'transcript_emailed',
+  'transcript_copied',
+  'pdf_downloaded',
+  'roi_calculated',
+  'roi_shared',
+  'faq_opened',
+  'hero_variant_shown'
+]);
+
+router.post('/funnel-event', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const event = String(b.event || '').trim().slice(0, 64);
+    if (!event || !VALID_FUNNEL_EVENTS.has(event)) {
+      return res.status(400).json({ success: false, error: 'Invalid event name.' });
+    }
+    const sessionId = String(b.session_id || '').trim().slice(0, 64);
+    if (!sessionId || sessionId.length < 8) return res.status(400).json({ success: false, error: 'session_id required.' });
+
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const ipHash = _crypto.createHash('sha256').update(ip + (process.env.SESSION_SALT || 'd2ai-default-salt')).digest('hex').slice(0, 32);
+
+    const _str = (v, max) => (v == null ? null : String(v).trim().slice(0, max || 255) || null);
+
+    await sequelize.query(
+      `INSERT INTO d2_funnel_events
+         (session_id, event_name, partner_slug, utm_source, utm_campaign,
+          lang, hero_variant, metadata, ip_hash, user_agent)
+       VALUES (:sid, :ev, :ps, :us, :uc, :lang, :hv, :meta::jsonb, :ip, :ua)`,
+      {
+        replacements: {
+          sid: sessionId,
+          ev: event,
+          ps: _str(b.partner_slug, 120),
+          us: _str(b.utm_source, 120),
+          uc: _str(b.utm_campaign, 255),
+          lang: _str(b.lang, 8),
+          hv: Number.isInteger(b.hero_variant) ? b.hero_variant : null,
+          meta: b.metadata ? JSON.stringify(b.metadata).slice(0, 2000) : null,
+          ip: ipHash,
+          ua: String(req.headers['user-agent'] || '').slice(0, 500) || null
+        }
+      }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[D2AI-Intake] funnel-event error:', err.message);
+    res.status(500).json({ success: false, error: 'Save failed.' });
+  }
+});
+
+// BasicAuth gate for admin views — checks BASIC_AUTH_USER / _PASS env.
+function _basicAuthGate(req, res) {
+  const user = process.env.BASIC_AUTH_USER;
+  const pass = process.env.BASIC_AUTH_PASS;
+  if (!user || !pass) {
+    // If admin creds aren't configured, allow only from localhost
+    // for development convenience.
+    const ip = (req.connection?.remoteAddress || '').replace(/^::ffff:/, '');
+    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') return true;
+    res.status(503).json({ success: false, error: 'Admin not configured (BASIC_AUTH_USER + BASIC_AUTH_PASS env vars unset).' });
+    return false;
+  }
+  const auth = req.headers.authorization || '';
+  const m = auth.match(/^Basic (.+)$/);
+  if (!m) {
+    res.set('WWW-Authenticate', 'Basic realm="Digit2AI Admin"');
+    res.status(401).send('Authentication required.');
+    return false;
+  }
+  let decoded = '';
+  try { decoded = Buffer.from(m[1], 'base64').toString('utf8'); } catch (_) {}
+  const [u, p] = decoded.split(':');
+  if (u !== user || p !== pass) {
+    res.set('WWW-Authenticate', 'Basic realm="Digit2AI Admin"');
+    res.status(401).send('Bad credentials.');
+    return false;
+  }
+  return true;
+}
+
+router.get('/funnel-summary', async (req, res) => {
+  if (!_basicAuthGate(req, res)) return;
+  try {
+    const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 7));
+    const sinceClause = `created_at >= NOW() - INTERVAL '${days} days'`;
+    // Step counts (one count per unique session per event)
+    const stepRows = await sequelize.query(
+      `SELECT event_name, COUNT(DISTINCT session_id)::int AS sessions
+         FROM d2_funnel_events
+        WHERE ${sinceClause}
+        GROUP BY event_name`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    const steps = {};
+    stepRows.forEach(r => { steps[r.event_name] = r.sessions; });
+    // Total unique sessions
+    const totalRows = await sequelize.query(
+      `SELECT COUNT(DISTINCT session_id)::int AS total FROM d2_funnel_events WHERE ${sinceClause}`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    const totalSessions = (totalRows[0] && totalRows[0].total) || 0;
+    // Variant breakdown for T3.4
+    const variantRows = await sequelize.query(
+      `SELECT hero_variant, COUNT(DISTINCT session_id)::int AS sessions,
+              COUNT(DISTINCT CASE WHEN event_name='submit_succeeded' THEN session_id END)::int AS submits
+         FROM d2_funnel_events
+        WHERE ${sinceClause} AND hero_variant IS NOT NULL
+        GROUP BY hero_variant
+        ORDER BY hero_variant`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    // Partner breakdown
+    const partnerRows = await sequelize.query(
+      `SELECT partner_slug,
+              COUNT(DISTINCT session_id)::int AS sessions,
+              COUNT(DISTINCT CASE WHEN event_name='submit_succeeded' THEN session_id END)::int AS submits
+         FROM d2_funnel_events
+        WHERE ${sinceClause} AND partner_slug IS NOT NULL
+        GROUP BY partner_slug
+        ORDER BY sessions DESC
+        LIMIT 20`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    res.json({
+      success: true,
+      days,
+      total_sessions: totalSessions,
+      steps,
+      variants: variantRows,
+      top_partners: partnerRows
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] funnel-summary error:', err.message);
+    res.status(500).json({ success: false, error: 'Summary failed.' });
+  }
+});
+
+// GET /ab-summary — variant -> conversion rate (joins on funnel)
+router.get('/ab-summary', async (req, res) => {
+  if (!_basicAuthGate(req, res)) return;
+  try {
+    const days = Math.max(1, Math.min(180, parseInt(req.query.days, 10) || 30));
+    const rows = await sequelize.query(
+      `SELECT hero_variant,
+              COUNT(DISTINCT session_id)::int AS sessions,
+              COUNT(DISTINCT CASE WHEN event_name='triage_started' THEN session_id END)::int AS triaged,
+              COUNT(DISTINCT CASE WHEN event_name='submit_succeeded' THEN session_id END)::int AS submitted
+         FROM d2_funnel_events
+        WHERE created_at >= NOW() - INTERVAL '${days} days' AND hero_variant IS NOT NULL
+        GROUP BY hero_variant
+        ORDER BY hero_variant`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    const variants = rows.map(r => ({
+      variant: r.hero_variant,
+      sessions: r.sessions,
+      triaged: r.triaged,
+      submitted: r.submitted,
+      triage_rate: r.sessions ? r.triaged / r.sessions : 0,
+      submit_rate: r.sessions ? r.submitted / r.sessions : 0
+    }));
+    res.json({ success: true, days, variants });
+  } catch (err) {
+    console.error('[D2AI-Intake] ab-summary error:', err.message);
+    res.status(500).json({ success: false, error: 'AB summary failed.' });
+  }
+});
+
+// =====================================================
 // PARTNER DASHBOARD (T3.1)
 // =====================================================
 // Magic-link auth for /champion-dashboard.html. Partner enters email

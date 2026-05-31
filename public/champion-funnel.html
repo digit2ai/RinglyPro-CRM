@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Funnel Analytics — Digit2AI Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root {
+    --bg: #05070e;
+    --bg-card: #0a0d1a;
+    --bg-elev: #0c1733;
+    --ink: #e5e7eb;
+    --ink-dim: #9aa3b2;
+    --ink-mute: #5a6378;
+    --line: #1f2937;
+    --line-strong: #2f3a4f;
+    --accent-cyan: #22d3ee;
+    --accent-violet: #8b5cf6;
+    --accent-magenta: #ec4899;
+    --amber: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --grad: linear-gradient(135deg, #22d3ee 0%, #3b82f6 35%, #8b5cf6 70%, #ec4899 100%);
+    --radius: 14px;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 22px 60px; }
+  .hd { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; flex-wrap: wrap; }
+  .hd-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; margin: 0; }
+  .hd-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-cyan); font-weight: 800; }
+  .day-toggle { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; background: var(--bg-elev); }
+  .day-toggle button { background: transparent; border: none; padding: 6px 14px; border-radius: 999px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--ink-mute); cursor: pointer; }
+  .day-toggle button.active { background: var(--grad); color: #020617; }
+
+  .panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 18px; }
+  .panel-title { font-size: 14px; font-weight: 800; color: var(--ink); margin: 0 0 14px; }
+
+  /* Funnel bars */
+  .funnel-row { display: grid; grid-template-columns: 220px 1fr 100px 80px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-lbl { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.6px; color: var(--ink-dim); }
+  .funnel-bar-wrap { background: var(--bg-elev); border-radius: 6px; overflow: hidden; height: 22px; position: relative; }
+  .funnel-bar { background: var(--grad); height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+  .funnel-count { font-family: var(--font-mono); font-weight: 700; font-size: 13px; text-align: right; color: var(--ink); }
+  .funnel-pct { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); text-align: right; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-mute); font-weight: 700; padding: 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 10px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); }
+  tr:last-child td { border-bottom: none; }
+
+  .winner { color: var(--green); font-weight: 700; }
+  .loading { color: var(--ink-mute); font-size: 13px; padding: 16px; text-align: center; }
+  .err { color: var(--red); font-size: 13px; padding: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <div>
+      <span class="hd-eyebrow">Digit2AI Admin</span>
+      <h1 class="hd-title">Funnel Analytics</h1>
+    </div>
+    <div class="day-toggle" id="day-toggle">
+      <button data-days="1">1d</button>
+      <button data-days="7" class="active">7d</button>
+      <button data-days="30">30d</button>
+      <button data-days="90">90d</button>
+    </div>
+  </div>
+
+  <div id="content"><div class="loading">Loading…</div></div>
+</div>
+
+<script>
+  var API = '/projects/api/v1/intake';
+  var FUNNEL_ORDER = [
+    'page_visible', 'orb_visible', 'orb_clicked', 'mic_granted',
+    'session_started', 'triage_started', 'triage_completed',
+    'submit_clicked', 'submit_succeeded'
+  ];
+
+  function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
+  function pct(n, total) { return total > 0 ? ((n / total) * 100).toFixed(1) + '%' : '—'; }
+
+  function render(j) {
+    if (!j || !j.success) {
+      document.getElementById('content').innerHTML = '<div class="err">' + (j && j.error ? j.error : 'No data') + '</div>';
+      return;
+    }
+    var total = j.total_sessions || 0;
+    var steps = j.steps || {};
+
+    // Funnel section
+    var funnelHtml = '<section class="panel"><h2 class="panel-title">Funnel — last ' + j.days + ' days · ' + fmt(total) + ' unique sessions</h2>';
+    FUNNEL_ORDER.forEach(function (ev) {
+      var c = steps[ev] || 0;
+      var w = total > 0 ? (c / total) * 100 : 0;
+      funnelHtml += '<div class="funnel-row">' +
+        '<div class="funnel-lbl">' + ev.replace(/_/g, ' ') + '</div>' +
+        '<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:' + w.toFixed(1) + '%"></div></div>' +
+        '<div class="funnel-count">' + fmt(c) + '</div>' +
+        '<div class="funnel-pct">' + pct(c, total) + '</div>' +
+        '</div>';
+    });
+    funnelHtml += '</section>';
+
+    // A/B variants
+    var variantsHtml = '';
+    if (j.variants && j.variants.length) {
+      variantsHtml = '<section class="panel"><h2 class="panel-title">Hero variant performance (T3.4)</h2><table><thead><tr><th>Variant</th><th>Sessions</th><th>Submits</th><th>Submit rate</th></tr></thead><tbody>';
+      var bestRate = -1, bestIdx = -1;
+      j.variants.forEach(function (v, i) {
+        var r = v.sessions > 0 ? v.submits / v.sessions : 0;
+        if (r > bestRate) { bestRate = r; bestIdx = i; }
+      });
+      j.variants.forEach(function (v, i) {
+        var r = v.sessions > 0 ? v.submits / v.sessions : 0;
+        var cls = (i === bestIdx && v.sessions >= 50) ? ' class="winner"' : '';
+        variantsHtml += '<tr' + cls + '><td>Variant ' + v.hero_variant + '</td><td>' + fmt(v.sessions) + '</td><td>' + fmt(v.submits) + '</td><td>' + (r * 100).toFixed(2) + '%</td></tr>';
+      });
+      variantsHtml += '</tbody></table></section>';
+    }
+
+    // Top partners
+    var partnersHtml = '';
+    if (j.top_partners && j.top_partners.length) {
+      partnersHtml = '<section class="panel"><h2 class="panel-title">Top partners by sessions</h2><table><thead><tr><th>Partner slug</th><th>Sessions</th><th>Submits</th><th>Conversion</th></tr></thead><tbody>';
+      j.top_partners.forEach(function (p) {
+        var r = p.sessions > 0 ? p.submits / p.sessions : 0;
+        partnersHtml += '<tr><td>' + p.partner_slug + '</td><td>' + fmt(p.sessions) + '</td><td>' + fmt(p.submits) + '</td><td>' + (r * 100).toFixed(1) + '%</td></tr>';
+      });
+      partnersHtml += '</tbody></table></section>';
+    }
+
+    document.getElementById('content').innerHTML = funnelHtml + variantsHtml + partnersHtml;
+  }
+
+  function load(days) {
+    document.getElementById('content').innerHTML = '<div class="loading">Loading…</div>';
+    fetch(API + '/funnel-summary?days=' + days, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function (e) {
+        document.getElementById('content').innerHTML = '<div class="err">' + (e.message || 'Load failed') + '</div>';
+      });
+  }
+
+  document.querySelectorAll('.day-toggle button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.day-toggle button').forEach(function (x) { x.classList.toggle('active', x === b); });
+      load(parseInt(b.dataset.days, 10) || 7);
+    });
+  });
+
+  load(7);
+</script>
+</body>
+</html>

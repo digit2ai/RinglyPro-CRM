@@ -3047,6 +3047,58 @@
 </script>
 
 <script>
+  // ---------------- Funnel analytics emitter (T3.3) ----------------
+  //
+  // Lightweight event log so we can measure where prospects drop off.
+  // session_id is a random UUID persisted to localStorage so a returning
+  // visitor's events stitch into one session across reloads. Events
+  // POST to /funnel-event; failures are silent (analytics never breaks UX).
+  var FUNNEL_SESSION_KEY = 'd2ai_funnel_session';
+  (function () {
+    try {
+      var sid = localStorage.getItem(FUNNEL_SESSION_KEY);
+      if (!sid) {
+        sid = ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx').replace(/[xy]/g, function (c) {
+          var r = Math.random() * 16 | 0;
+          var v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        }) + '-' + Date.now().toString(36);
+        try { localStorage.setItem(FUNNEL_SESSION_KEY, sid); } catch (_) {}
+      }
+      window.__funnelSessionId = sid;
+    } catch (_) { window.__funnelSessionId = 'anon-' + Date.now(); }
+  })();
+  window.__emitFunnelEvent = function (event, metadata) {
+    try {
+      var a = window._partnerAttribution || {};
+      var hv = window.__heroVariant;
+      var payload = {
+        event: event,
+        session_id: window.__funnelSessionId,
+        partner_slug: a.partner_slug || null,
+        utm_source: a.utm_source || null,
+        utm_campaign: a.utm_campaign || null,
+        lang: document.body.classList.contains('lang-es') ? 'es' : 'en',
+        hero_variant: (typeof hv === 'number') ? hv : null,
+        metadata: metadata || null
+      };
+      // Fire-and-forget; use sendBeacon when available for unload safety
+      if (navigator.sendBeacon) {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/projects/api/v1/intake/funnel-event', blob);
+      } else {
+        fetch('/projects/api/v1/intake/funnel-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true
+        }).catch(function () {});
+      }
+    } catch (_) {}
+  };
+  // Fire page_visible once attribution + sessionId resolved.
+  setTimeout(function () { try { window.__emitFunnelEvent('page_visible'); } catch (_) {} }, 200);
+
   // ---------------- Partner attribution (T1.1) ----------------
   //
   // Parses ?partner=<slug> + UTM params from the URL on load. Persists to
@@ -3950,6 +4002,7 @@
           // T2.1 — submission succeeded, drop the saved session so the
           // resume banner doesn't reappear on next visit.
           if (typeof window.__clearSavedSession === 'function') window.__clearSavedSession();
+          if (window.__emitFunnelEvent) window.__emitFunnelEvent('submit_succeeded');
         })
         .catch(function (err) {
           submitBtn.disabled = false;
@@ -4262,6 +4315,7 @@
     // into the existing renderResult() pipeline.
     function runTriageFromAgent(payload) {
       triageFiredThisSession = true; // T2.3 — suppress abandoned-modal
+      if (window.__emitFunnelEvent) window.__emitFunnelEvent('triage_started');
       setState('thinking');
       var lang = wrap.dataset.lang || 'en';
       return fetch(API_BASE + '/voice-trigger-triage', {
@@ -4281,6 +4335,7 @@
         .then(function (res) {
           setState('idle');
           if (res && res.success && res.data) {
+            if (window.__emitFunnelEvent) window.__emitFunnelEvent('triage_completed', { verdict: res.data.verdict, fit_score: res.data.fit_score });
             // Hand off to the existing renderResult — same shape, same UI.
             // Stash on the global state object so the existing Accept &
             // Submit flow works unchanged.
@@ -4325,6 +4380,7 @@
       if (connecting || session) return;
       connecting = true;
       triageFiredThisSession = false; // T2.3 — reset per session
+      if (window.__emitFunnelEvent) window.__emitFunnelEvent('orb_clicked');
       caption.style.opacity = '0.7';
 
       // Check SDK loaded (window.__ElevenLabsConversation is set by the
