@@ -2279,7 +2279,13 @@
       // Build the project description by combining the original problem with
       // the (possibly edited) technical-solution sketch so Manuel sees both
       // the prospect's words and the AI's reading + plan when he reviews.
+      // Voice-path safety net: if d-desc is blank (orb conversation, the
+      // user never typed in the textarea), fall back to the editable
+      // "problem in our words" so the Intake never sees an empty problem.
       var origDesc = (document.getElementById('d-desc').value || '').trim();
+      if (!origDesc) {
+        origDesc = (txt(document.getElementById('d-problem-our-words')) || '').trim();
+      }
       var title = txt(document.getElementById('d-title')) || 'Untitled project';
       var techSummary = txt(document.getElementById('d-tech-summary'));
       var windowTxt = txt(document.getElementById('d-window'));
@@ -2371,6 +2377,17 @@
       state.triage = triageData;
       state.lang = (triageData && triageData.language) || getLang();
       renderResult();
+      // CRITICAL: hydrate the keyboard demo's #d-desc textarea with the
+      // original description the convai agent sent into voice-trigger-
+      // triage. Without this, acceptAndSubmit() reads d-desc as empty
+      // and the Intake endpoint rejects with "problem is required".
+      // Prefer original_description (echoed by the server); fall back to
+      // problem_in_our_words so we never submit a blank problem field.
+      var desc = (triageData && triageData.original_description)
+        || (triageData && triageData.problem_in_our_words)
+        || '';
+      var descEl = document.getElementById('d-desc');
+      if (descEl && desc) { descEl.value = desc; }
       var el = document.getElementById('d-result-inner');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       // Mark the top "Run AI Triage" button as already-triaged so the

@@ -867,6 +867,11 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
       },
       week_1_deliverables: Array.isArray(parsed.week_1_deliverables) ? parsed.week_1_deliverables.map(a => String(a).trim()).filter(Boolean) : [],
       verify_flags: Array.isArray(parsed.verify_flags) ? parsed.verify_flags.map(a => String(a).trim()).filter(Boolean) : [],
+      // Echo the original description back so the orb client can hydrate
+      // the keyboard-demo textarea (#d-desc) — otherwise the Accept &
+      // Submit handler reads an empty value and the Intake endpoint
+      // rejects with "problem is required".
+      original_description: description,
       model: MODEL,
       source: 'voice'
     };
