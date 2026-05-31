@@ -7,29 +7,46 @@
 <meta name="description" content="The 5-minute crash course for the Digit2AI Partnership: what MCP Neural AI actually does, real customer projects, and the exact script for turning a conversation into a digit2ai.com intake.">
 <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0b1220;
-    --bg-card: #131c2f;
-    --bg-elev: #1a2440;
-    --ink: #e2e8f0;
-    --ink-dim: #94a3b8;
-    --ink-mute: #64748b;
-    --line: rgba(148, 163, 184, 0.15);
-    --line-strong: rgba(148, 163, 184, 0.3);
-    --grad: linear-gradient(135deg, #7c5cff 0%, #22d3ee 100%);
-    --grad-soft: linear-gradient(135deg, rgba(124,92,255,0.12) 0%, rgba(34,211,238,0.12) 100%);
-    --violet: #a78bfa;
+    /* Digit2AI design tokens — mirrors aiagent.ringlypro.com/digit2ai */
+    --bg: #05070e;
+    --bg-elev: #0b0e1a;
+    --bg-card: rgba(255,255,255,0.025);
+    --bg-card-hover: rgba(255,255,255,0.045);
+    --ink: #e8ecf4;
+    --ink-dim: #9aa4b8;
+    --ink-mute: #6b7386;
+    --line: rgba(255,255,255,0.08);
+    --line-strong: rgba(255,255,255,0.14);
+    --accent-cyan: #22d3ee;
+    --accent-blue: #3b82f6;
+    --accent-violet: #8b5cf6;
+    --accent-magenta: #ec4899;
+    --accent-lime: #84cc16;
+    /* 4-stop signature gradient — cyan → blue → violet → magenta */
+    --grad: linear-gradient(135deg, #22d3ee 0%, #3b82f6 40%, #8b5cf6 75%, #ec4899 100%);
+    --grad-soft: linear-gradient(135deg, rgba(34,211,238,0.14), rgba(139,92,246,0.14));
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --font-sans: 'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-display: 'Instrument Serif','Times New Roman',serif;
+    --font-mono: 'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+    /* Legacy aliases used throughout the file — keep working with new palette */
+    --violet: #8b5cf6;
     --cyan: #22d3ee;
-    --green: #10b981;
+    --green: #84cc16;
     --amber: #f59e0b;
-    --red: #ef4444;
+    --red: #ec4899;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: var(--font-sans);
     background: var(--bg);
     color: var(--ink);
     line-height: 1.6;
@@ -37,13 +54,41 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
+  /* Ambient aurora — Digit2AI signature backdrop. Three soft radial
+     gradients in the brand-gradient hues, plus a fine noise grain on
+     top to keep the dark feel from going flat. */
   body::before {
     content: '';
     position: fixed;
-    top: 0; left: 0; right: 0; height: 360px;
-    background: radial-gradient(ellipse at top, rgba(124,92,255,0.15) 0%, transparent 70%);
+    inset: 0;
     pointer-events: none;
     z-index: 0;
+    background:
+      radial-gradient(900px 600px at 18% -8%, rgba(34,211,238,0.10), transparent 60%),
+      radial-gradient(800px 500px at 82% 12%, rgba(139,92,246,0.10), transparent 60%),
+      radial-gradient(700px 500px at 50% 110%, rgba(236,72,153,0.08), transparent 65%);
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 200px 200px;
+  }
+  /* Italic Instrument Serif emphasis with gradient clip — Digit2AI brand
+     signature for marketing copy. Applied to <em> inside headings + hero. */
+  h1 em, h2 em, .hero em, .pitch em, .gc-tagline em, .demo-head em {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .wrap { max-width: 980px; margin: 0 auto; padding: 32px 24px 80px; position: relative; z-index: 1; }
 
@@ -57,7 +102,7 @@
   /* Hero */
   .hero { padding: 30px 0 38px; text-align: center; }
   .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 16px; }
-  .hero h1 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
+  /* .hero h1 em handled by the global h1 em rule above (italic serif + gradient) */
   .hero .sub { font-size: 16px; color: var(--ink-dim); max-width: 680px; margin: 0 auto; }
 
   /* Hero logo (Digit2AI mark, large, centered under the hero text) */
@@ -252,7 +297,7 @@
   .demo { margin-top: 60px; background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 16px; padding: 30px 28px; }
   .demo-head { text-align: center; margin-bottom: 22px; }
   .demo-head h2 { font-size: clamp(22px, 3.5vw, 28px); font-weight: 900; margin-bottom: 6px; }
-  .demo-head h2 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
+  /* .demo-head h2 em handled by the global em rule above */
   .demo-head p { color: var(--ink-dim); font-size: 14px; max-width: 600px; margin: 0 auto; }
 
   .demo-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
