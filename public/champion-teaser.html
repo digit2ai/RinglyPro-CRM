@@ -99,6 +99,34 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* T4.3 Sample prompt cards — three one-tap example projects */
+  .sample-prompts { margin: 12px 0 24px; }
+  .spx-head { text-align: center; margin-bottom: 14px; }
+  .spx-title { font-size: 15px; font-weight: 700; color: var(--ink-dim); margin: 0; }
+  .spx-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 760px) { .spx-grid { grid-template-columns: 1fr; } }
+  .spx-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    min-height: 44px;
+  }
+  .spx-card:hover { border-color: var(--accent-cyan); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(34,211,238,0.15); }
+  .spx-card:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+  .spx-eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent-cyan); font-weight: 800; }
+  .spx-h { font-size: 14.5px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .spx-d { font-size: 12.5px; color: var(--ink-dim); line-height: 1.5; }
+  .spx-cta { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent-cyan); margin-top: 6px; }
+
   /* ROI calculator (T2.5) — live 3-input → 3-output widget. */
   .roi { margin: 56px 0 36px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; padding: 28px 26px; }
   .roi-head { text-align: center; margin-bottom: 24px; }
@@ -1910,6 +1938,88 @@
       </div>
     </div>
   </div>
+
+  <!-- T4.3 Sample prompt cards — three one-tap example projects below
+       the orb. Tap a card to pre-fill the keyboard demo textarea +
+       scroll + auto-focus the Run AI Triage button. Doesn't auto-run.
+       Helps non-talkers + cold visitors start a conversation. -->
+  <section class="sample-prompts" id="sample-prompts" aria-labelledby="sp-h">
+    <header class="spx-head">
+      <h2 id="sp-h" class="spx-title">
+        <span class="i18n-en">Not sure what to say? Try one of these.</span>
+        <span class="i18n-es">¿No sabes qué decir? Prueba uno de estos.</span>
+        <span class="i18n-pt">Não sabe o que dizer? Tente um destes.</span>
+      </h2>
+    </header>
+    <div class="spx-grid">
+      <button type="button" class="spx-card" data-prompt-key="logistics">
+        <span class="spx-eyebrow">
+          <span class="i18n-en">Logistics ops</span>
+          <span class="i18n-es">Operaciones logísticas</span>
+          <span class="i18n-pt">Operações de logística</span>
+        </span>
+        <span class="spx-h">
+          <span class="i18n-en">Dispatch auto-pilot</span>
+          <span class="i18n-es">Piloto automático de despacho</span>
+          <span class="i18n-pt">Piloto automático de despacho</span>
+        </span>
+        <span class="spx-d">
+          <span class="i18n-en">40-truck freight broker losing 10 loads a week to manual dispatch on 12 load boards.</span>
+          <span class="i18n-es">Broker de carga con 40 camiones pierde 10 cargas a la semana por despacho manual en 12 tableros.</span>
+          <span class="i18n-pt">Broker de frete com 40 caminhões perde 10 cargas por semana com despacho manual em 12 quadros de cargas.</span>
+        </span>
+        <span class="spx-cta">
+          <span class="i18n-en">Use this →</span>
+          <span class="i18n-es">Usar este →</span>
+          <span class="i18n-pt">Usar este →</span>
+        </span>
+      </button>
+      <button type="button" class="spx-card" data-prompt-key="ecommerce">
+        <span class="spx-eyebrow">
+          <span class="i18n-en">E-commerce</span>
+          <span class="i18n-es">E-commerce</span>
+          <span class="i18n-pt">E-commerce</span>
+        </span>
+        <span class="spx-h">
+          <span class="i18n-en">Churn rescue agent</span>
+          <span class="i18n-es">Agente anti-churn</span>
+          <span class="i18n-pt">Agente anti-churn</span>
+        </span>
+        <span class="spx-d">
+          <span class="i18n-en">DTC brand with 8K monthly subscribers — 11% churn, no exit-survey data, no personalized save flow.</span>
+          <span class="i18n-es">Marca DTC con 8K suscriptores mensuales — 11% de churn, sin datos de salida, sin flujo personalizado.</span>
+          <span class="i18n-pt">Marca DTC com 8K assinantes mensais — 11% de churn, sem dados de saída, sem fluxo personalizado.</span>
+        </span>
+        <span class="spx-cta">
+          <span class="i18n-en">Use this →</span>
+          <span class="i18n-es">Usar este →</span>
+          <span class="i18n-pt">Usar este →</span>
+        </span>
+      </button>
+      <button type="button" class="spx-card" data-prompt-key="compliance">
+        <span class="spx-eyebrow">
+          <span class="i18n-en">Compliance</span>
+          <span class="i18n-es">Cumplimiento</span>
+          <span class="i18n-pt">Conformidade</span>
+        </span>
+        <span class="spx-h">
+          <span class="i18n-en">Document AI for regulated workflows</span>
+          <span class="i18n-es">IA de documentos para flujos regulados</span>
+          <span class="i18n-pt">IA de documentos para fluxos regulados</span>
+        </span>
+        <span class="spx-d">
+          <span class="i18n-en">Mid-size lender processes 600 loan applications a week — KYC + AML review still done by hand by 4 analysts.</span>
+          <span class="i18n-es">Prestamista mediano procesa 600 solicitudes a la semana — KYC + AML revisado a mano por 4 analistas.</span>
+          <span class="i18n-pt">Credor de médio porte processa 600 solicitações por semana — KYC + AML revisado manualmente por 4 analistas.</span>
+        </span>
+        <span class="spx-cta">
+          <span class="i18n-en">Use this →</span>
+          <span class="i18n-es">Usar este →</span>
+          <span class="i18n-pt">Usar este →</span>
+        </span>
+      </button>
+    </div>
+  </section>
 
   <!-- Social proof block (T1.2) — sits between the orb and the
        MEMORIZE THIS pitch. Stat strip animates up on first scroll-into-
@@ -5224,6 +5334,42 @@
           sendBtn.innerHTML = originalText;
           if (status) { status.textContent = err.message || 'Failed'; status.className = 'abm-status err'; }
         });
+    });
+  })();
+
+  // ---------------- Sample prompt cards (T4.3) ----------------
+  //
+  // Three one-tap example projects below the orb. Tap a card to
+  // pre-fill the keyboard demo textarea + scroll + auto-focus the
+  // Run AI Triage button. Does NOT auto-run — the prospect should
+  // see what they're about to submit before triaging.
+  (function () {
+    var cards = document.querySelectorAll('.spx-card');
+    if (!cards.length) return;
+    // The card descriptions ARE the textarea content. Read from the
+    // visible .spx-d in the current language at click time.
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        var lang = document.body.classList.contains('lang-pt') ? 'pt'
+                 : document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var dEl = card.querySelector('.spx-d .i18n-' + lang)
+               || card.querySelector('.spx-d .i18n-en');
+        var text = dEl ? dEl.textContent.trim() : '';
+        if (!text) return;
+        var desc = document.getElementById('d-desc');
+        if (!desc) return;
+        desc.value = text;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        // Scroll the demo into view + focus the Run button so Enter
+        // triggers it. Don't trigger automatically — let the user
+        // confirm by looking at what got filled.
+        var demo = document.getElementById('demo');
+        if (demo && demo.scrollIntoView) demo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(function () {
+          var run = document.querySelector('#demo .demo-btn-primary');
+          if (run) try { run.focus(); } catch (_) {}
+        }, 500);
+      });
     });
   })();
 
