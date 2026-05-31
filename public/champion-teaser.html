@@ -123,35 +123,32 @@
   .orb-wrap:hover { transform: scale(1.02); }
   .orb-wrap:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; border-radius: 50%; }
   .orb-wrap.disabled { cursor: not-allowed; opacity: 0.6; }
-  .orb-svg { width: 280px; height: 280px; display: block; }
+  .orb-svg {
+    width: 280px; height: 280px; display: block;
+    /* Glassy drop-shadow on the SVG container — replaces the in-SVG
+       filter that was breaking transform-based animations. */
+    filter: drop-shadow(0 8px 32px rgba(34, 211, 238, 0.25))
+            drop-shadow(0 4px 18px rgba(139, 92, 246, 0.20));
+  }
   @media (max-width: 720px) {
     .orb-wrap, .orb-svg { width: 220px; height: 220px; }
     .orb-wave { width: 220px !important; }
   }
 
-  /* IDLE — gentle breathing pulse on the core + outer glow.
-     CRITICAL: SVG circles need transform-box: fill-box for transform-origin
-     to work as expected. Without it, "center" resolves to (0,0) of the
-     SVG viewport and the scale animation looks broken or invisible. */
-  .orb-glow,
-  .orb-core,
-  .orb-core-inner,
-  .orb-highlight,
-  .orb-ring,
-  .orb-particle {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  .orb-glow { animation: orbBreath 4.5s ease-in-out infinite; }
-  .orb-core { animation: orbBreath 4.5s ease-in-out infinite; }
-  .orb-core-inner { animation: orbBreathInner 4.5s ease-in-out infinite; }
-  .orb-highlight { animation: orbHighlight 4.5s ease-in-out infinite; }
-  @keyframes orbBreath { 0%, 100% { transform: scale(1); opacity: 0.92; } 50% { transform: scale(1.08); opacity: 1; } }
-  @keyframes orbBreathInner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.92); } }
-  @keyframes orbHighlight { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
+  /* IDLE — handled by SMIL animations inside the SVG (see <animate>
+     tags on .orb-glow / .orb-core / .orb-core-inner / .orb-highlight).
+     SMIL works reliably across browsers for SVG attribute animation
+     where CSS transforms on SVG elements are fragile. */
 
-  /* Listening rings — hidden by default, faded in when state=listening */
-  .orb-ring { opacity: 0; }
+  /* Listening / Thinking / Speaking state changes ride on top of the
+     idle SMIL animations by toggling brightness, hue and ring visibility. */
+  .orb-wrap[data-state="listening"] .orb-svg {
+    filter: drop-shadow(0 8px 32px rgba(34, 211, 238, 0.55))
+            drop-shadow(0 4px 18px rgba(139, 92, 246, 0.35))
+            brightness(1.15);
+    transition: filter 200ms ease;
+  }
+  .orb-ring { opacity: 0; transition: opacity 200ms ease; transform-box: fill-box; transform-origin: center; }
   .orb-wrap[data-state="listening"] .orb-ring {
     opacity: 1;
     animation: orbRingPulse 1.6s ease-out infinite;
@@ -160,17 +157,8 @@
   .orb-wrap[data-state="listening"] .orb-ring-2 { animation-delay: 0.5s; }
   .orb-wrap[data-state="listening"] .orb-ring-3 { animation-delay: 1.0s; }
   @keyframes orbRingPulse {
-    0% { transform: scale(0.85); opacity: 0.9; stroke-width: 1.5; }
-    100% { transform: scale(1.22); opacity: 0; stroke-width: 0.5; }
-  }
-  /* Listening core: faster breath; amplitude-driven scale baked via --orb-amp */
-  .orb-wrap[data-state="listening"] .orb-core,
-  .orb-wrap[data-state="listening"] .orb-glow {
-    animation: orbBreathListen 1.8s ease-in-out infinite;
-  }
-  @keyframes orbBreathListen {
-    0%, 100% { transform: scale(calc(1 + (var(--orb-amp, 0) * 0.18))); filter: brightness(1.1); }
-    50%      { transform: scale(calc(1.06 + (var(--orb-amp, 0) * 0.22))); filter: brightness(1.35); }
+    0% { opacity: 0.9; stroke-width: 1.5; }
+    100% { opacity: 0; stroke-width: 0.5; }
   }
 
   /* Thinking — particles orbit, core slow-rotates, rings tighten */
@@ -619,24 +607,39 @@
             <feGaussianBlur stdDeviation="6"/>
           </filter>
         </defs>
-        <!-- outer ambient glow -->
-        <circle class="orb-glow" cx="120" cy="120" r="110" fill="url(#orbGlow)"/>
-        <!-- listening amplitude rings (controlled by JS via CSS vars) -->
+        <!-- outer ambient glow — animates radius via SMIL (CSS transforms
+             on filtered SVG elements are unreliable across browsers; SMIL
+             animation of the r attribute Just Works everywhere). -->
+        <circle class="orb-glow" cx="120" cy="120" r="110" fill="url(#orbGlow)">
+          <animate attributeName="r" values="100;118;100" dur="4.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="4.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- listening amplitude rings (animated via JS state, hidden in idle) -->
         <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.45"/>
         <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.55"/>
         <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.65"/>
-        <!-- thinking-state orbiting particles -->
+        <!-- thinking-state orbiting particles (animated via CSS rotate on the group) -->
         <g class="orb-particles">
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
           <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
           <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
         </g>
-        <!-- core breathing body -->
-        <circle class="orb-core" cx="120" cy="120" r="64" fill="url(#orbCore)" filter="url(#orbBlur)"/>
-        <circle class="orb-core-inner" cx="120" cy="120" r="42" fill="url(#orbCore)" opacity="0.9"/>
+        <!-- core breathing body — SMIL animations on r so the pulse is
+             always visible regardless of filter/transform-box quirks.
+             Removed the SVG blur filter (was clipping the animation).
+             A CSS drop-shadow on the wrapping container gives the same
+             glassy look without breaking the SMIL animation. -->
+        <circle class="orb-core" cx="120" cy="120" r="64" fill="url(#orbCore)">
+          <animate attributeName="r" values="60;70;60" dur="4.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle class="orb-core-inner" cx="120" cy="120" r="42" fill="url(#orbCore)" opacity="0.92">
+          <animate attributeName="r" values="44;38;44" dur="4.5s" repeatCount="indefinite"/>
+        </circle>
         <!-- inner highlight (glassy) -->
-        <ellipse class="orb-highlight" cx="106" cy="100" rx="22" ry="14" fill="rgba(255,255,255,0.35)" opacity="0.5"/>
+        <ellipse class="orb-highlight" cx="106" cy="100" rx="22" ry="14" fill="rgba(255,255,255,0.35)" opacity="0.5">
+          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4.5s" repeatCount="indefinite"/>
+        </ellipse>
       </svg>
       <!-- speaking-state waveform bars (frequency analyzer painted by JS) -->
       <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
@@ -1622,10 +1625,26 @@
 
 </div>
 
-<!-- ElevenLabs Conversational AI browser SDK — loads non-blocking. If it
-     fails to load (network blocked, CDN down) the orb gracefully falls
-     back to the keyboard demo with a friendly message. -->
-<script src="https://unpkg.com/@elevenlabs/client@latest/dist/lib.umd.js" crossorigin async></script>
+<!-- ElevenLabs Conversational AI browser SDK — package is ESM-only, so
+     we load via esm.sh which serves it with proper CORS headers and an
+     ESM-compatible bundle. The default UMD bundle URL on unpkg has no
+     Access-Control-Allow-Origin header and gets blocked. -->
+<script type="module">
+  // Expose the Conversation class globally so the non-module orb
+  // controller (further down in this file) can find it. We intentionally
+  // pin the version we tested against — bumping requires a manual check
+  // that the API hasn't changed.
+  try {
+    const mod = await import('https://esm.sh/@elevenlabs/client@1.9.0');
+    window.__ElevenLabsConversation = mod.Conversation || (mod.default && mod.default.Conversation);
+    if (window.__ElevenLabsConversation) {
+      window.dispatchEvent(new Event('elevenlabs-sdk-ready'));
+    }
+  } catch (e) {
+    console.warn('[orb] ElevenLabs SDK failed to load — voice mode will be unavailable.', e);
+    window.dispatchEvent(new Event('elevenlabs-sdk-failed'));
+  }
+</script>
 
 <script>
   // ---------------- Language toggle (EN / ES) ----------------
@@ -2253,9 +2272,11 @@
       connecting = true;
       caption.style.opacity = '0.7';
 
-      // Check SDK loaded
-      var SDK = window.ElevenLabs || window.elevenlabs || (window.ElevenLabsClient ? { Conversation: window.ElevenLabsClient.Conversation } : null);
-      if (!SDK || !SDK.Conversation) {
+      // Check SDK loaded (window.__ElevenLabsConversation is set by the
+      // ESM loader script in the head). If still undefined, the import
+      // either failed or hasn't completed yet.
+      var Conversation = window.__ElevenLabsConversation;
+      if (!Conversation) {
         connecting = false;
         showFallback();
         return;
@@ -2278,9 +2299,8 @@
 
         navigator.mediaDevices.getUserMedia({ audio: true })
           .then(function (stream) {
-            // Start convai session. The SDK's API surface varies slightly
-            // by version; try the canonical Conversation.startSession.
-            return SDK.Conversation.startSession({
+            // Start convai session. Canonical API: Conversation.startSession.
+            return Conversation.startSession({
               agentId: cfg.agent_id,
               clientTools: {
                 // The agent calls this tool when it decides the prospect's
