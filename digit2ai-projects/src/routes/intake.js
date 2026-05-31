@@ -1365,18 +1365,30 @@ You sound like a thoughtful senior consultant on a discovery call — warm, calm
 // the orb works on first deploy with these defaults.
 const DEFAULT_CONVAI_EN = 'agent_7801ksz3yfcaedzbmt500a01br0k';
 const DEFAULT_CONVAI_ES = 'agent_5001ksz3z3tteabvtgh6fjgz7yw8';
+// PT-BR agent (T4.2). Created via ElevenLabs API on rollout; env var
+// override available. Until the agent ID is set on Render, PT users
+// fall through to the EN agent (graceful — Charlotte voice is
+// multilingual). Set ELEVENLABS_CONVAI_PARTNERSHIP_PT to switch.
+const DEFAULT_CONVAI_PT = null;
 
 router.get('/partnership-orb-config', (req, res) => {
-  const lang = (req.query.lang === 'es') ? 'es' : 'en';
-  const agentId = lang === 'es'
-    ? (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_ES || DEFAULT_CONVAI_ES)
-    : (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || DEFAULT_CONVAI_EN);
+  const reqLang = String(req.query.lang || '').toLowerCase();
+  const lang = (reqLang === 'es' || reqLang === 'pt') ? reqLang : 'en';
+  let agentId;
+  if (lang === 'es') agentId = process.env.ELEVENLABS_CONVAI_PARTNERSHIP_ES || DEFAULT_CONVAI_ES;
+  else if (lang === 'pt') agentId = process.env.ELEVENLABS_CONVAI_PARTNERSHIP_PT || DEFAULT_CONVAI_PT;
+  else agentId = process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || DEFAULT_CONVAI_EN;
+  // Fall back to EN agent for PT until the PT agent is created — the
+  // EN convai voice (Adam) is multilingual and can handle PT-BR.
+  const fellBack = (lang === 'pt' && !agentId);
+  if (fellBack) agentId = process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || DEFAULT_CONVAI_EN;
   res.json({
     success: true,
     data: {
       language: lang,
       agent_id: agentId,
       configured: !!agentId,
+      fell_back_to: fellBack ? 'en' : null,
       // Hint to the client whether the orb is even usable. Frontend
       // falls back to the textarea path when configured = false.
       fallback_reason: agentId ? null : 'agent_id_not_set'
