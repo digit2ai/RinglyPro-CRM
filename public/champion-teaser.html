@@ -99,6 +99,40 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* Partner attribution badge — appears above the hero h1 when the page
+     was loaded with ?partner=<slug> or has a recent attribution stored.
+     Small but visible: tells the prospect their partner sent them. */
+  .partner-badge[hidden] { display: none !important; }
+  .partner-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 auto 14px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.10), rgba(139,92,246,0.10));
+    border: 1px solid rgba(34,211,238,0.35);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .partner-badge .pb-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 6px var(--accent-cyan);
+    animation: partnerDotPulse 2s ease-in-out infinite;
+  }
+  .partner-badge strong {
+    color: var(--accent-cyan);
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: none;
+  }
+  @keyframes partnerDotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.3); opacity: 0.6; }
+  }
+
   /* Hero */
   .hero { padding: 30px 0 38px; text-align: center; }
   .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 900; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 16px; }
@@ -745,6 +779,17 @@
   </header>
 
   <section class="hero">
+    <!-- Partner attribution badge — only renders when ?partner=<slug> is in
+         the URL or stored in localStorage. Hidden by default; the partner-
+         attribution IIFE below toggles [hidden] off + fills #partner-name. -->
+    <div class="partner-badge" id="partner-badge" hidden>
+      <span class="pb-dot"></span>
+      <span class="pb-text">
+        <span class="i18n-en">Referred by </span>
+        <span class="i18n-es">Referido por </span>
+        <strong id="partner-name"></strong>
+      </span>
+    </div>
     <h1>
       <span class="i18n-en">Joint Venture &mdash; <em>Partnership</em></span>
       <span class="i18n-es">Joint Venture &mdash; <em>Partnership</em></span>
@@ -1914,6 +1959,103 @@
 </script>
 
 <script>
+  // ---------------- Partner attribution (T1.1) ----------------
+  //
+  // Parses ?partner=<slug> + UTM params from the URL on load. Persists to
+  // localStorage so the attribution survives reloads / language toggles
+  // for 30 days. Renders the "Referred by: <partner>" badge in the hero.
+  // The collected fields are appended to every Accept-and-Submit POST
+  // (and the orb's submit path) so prospects are attributed to the right
+  // Partner downstream.
+  //
+  // Slug sanitization: alphanumeric + dash + underscore only, 1-120 chars.
+  // Anything else is dropped to prevent XSS via the badge or DB injection
+  // surface. The server also re-validates + truncates.
+  var PARTNER_ATTRIB_KEY = 'd2ai_partner_attribution';
+  var PARTNER_ATTRIB_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+  function _sanitizeSlug(s) {
+    if (!s) return '';
+    s = String(s).trim().slice(0, 120);
+    return s.replace(/[^a-zA-Z0-9_\-\.\s]/g, '').trim();
+  }
+  function _sanitizeUtm(s) {
+    if (!s) return '';
+    return String(s).trim().slice(0, 255).replace(/[<>"]/g, '');
+  }
+
+  function _readPartnerFromUrl() {
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      var slug = _sanitizeSlug(qs.get('partner') || qs.get('ref') || qs.get('p') || '');
+      var attrib = {
+        partner_slug:  slug || null,
+        utm_source:    _sanitizeUtm(qs.get('utm_source'))   || null,
+        utm_campaign:  _sanitizeUtm(qs.get('utm_campaign')) || null,
+        utm_medium:    _sanitizeUtm(qs.get('utm_medium'))   || null,
+        utm_content:   _sanitizeUtm(qs.get('utm_content'))  || null,
+        utm_term:      _sanitizeUtm(qs.get('utm_term'))     || null,
+        referrer_url:  (document.referrer || '').slice(0, 500) || null,
+        captured_at:   Date.now()
+      };
+      var hasAny = slug || attrib.utm_source || attrib.utm_campaign;
+      return hasAny ? attrib : null;
+    } catch (_) { return null; }
+  }
+  function _readPartnerFromStorage() {
+    try {
+      var raw = localStorage.getItem(PARTNER_ATTRIB_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.captured_at) return null;
+      if (Date.now() - parsed.captured_at > PARTNER_ATTRIB_TTL_MS) {
+        localStorage.removeItem(PARTNER_ATTRIB_KEY);
+        return null;
+      }
+      return parsed;
+    } catch (_) { return null; }
+  }
+  function _writePartnerToStorage(a) {
+    try { localStorage.setItem(PARTNER_ATTRIB_KEY, JSON.stringify(a)); } catch (_) {}
+  }
+
+  // Resolve once on load. URL wins over storage; storage backs up across
+  // reloads. Exposed on window for the submit + voice paths to read.
+  window._partnerAttribution = (function () {
+    var fromUrl = _readPartnerFromUrl();
+    if (fromUrl) { _writePartnerToStorage(fromUrl); return fromUrl; }
+    return _readPartnerFromStorage();
+  })();
+
+  // Render the badge if we have attribution.
+  (function renderPartnerBadge() {
+    var a = window._partnerAttribution;
+    if (!a || !a.partner_slug) return;
+    var badge = document.getElementById('partner-badge');
+    var name = document.getElementById('partner-name');
+    if (!badge || !name) return;
+    // Pretty-print the slug: "manuel-stagg" → "Manuel Stagg"
+    var pretty = a.partner_slug
+      .replace(/[-_\.]+/g, ' ')
+      .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    name.textContent = pretty;
+    badge.hidden = false;
+  })();
+
+  // Helper for submit paths to attach attribution to any payload.
+  window.attachPartnerAttribution = function (payload) {
+    var a = window._partnerAttribution;
+    if (!a) return payload;
+    if (a.partner_slug) payload.partner_slug = a.partner_slug;
+    if (a.utm_source)   payload.utm_source   = a.utm_source;
+    if (a.utm_campaign) payload.utm_campaign = a.utm_campaign;
+    if (a.utm_medium)   payload.utm_medium   = a.utm_medium;
+    if (a.utm_content)  payload.utm_content  = a.utm_content;
+    if (a.utm_term)     payload.utm_term     = a.utm_term;
+    if (a.referrer_url) payload.referrer_url = a.referrer_url;
+    return payload;
+  };
+
   // ---------------- Language toggle (EN / ES) ----------------
   // Reads localStorage on load, swaps body class, persists choice. Every
   // translatable element ships both languages inline as .i18n-en /
@@ -2326,19 +2468,24 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="demo-spinner"></span>' + t('submitting');
 
+      // Base submission payload + partner attribution (T1.1) layered on
+      // top so commission tracking + the partner dashboard can attribute
+      // the deal back to whoever drove the prospect here.
+      var submitPayload = window.attachPartnerAttribution({
+        full_name: name,
+        email: email,
+        company_name: company || undefined,
+        country: country || undefined,
+        project_title: title,
+        project_description: richDescription,
+        problem: origDesc,
+        heard_from: 'Partnership-pre-triaged via /champion-teaser.html'
+      });
+
       fetch(API_BASE + '/public/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: name,
-          email: email,
-          company_name: company || undefined,
-          country: country || undefined,
-          project_title: title,
-          project_description: richDescription,
-          problem: origDesc,
-          heard_from: 'Partnership-pre-triaged via /champion-teaser.html'
-        })
+        body: JSON.stringify(submitPayload)
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
         .then(function (res) {
           submitBtn.disabled = false;

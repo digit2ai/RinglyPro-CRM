@@ -167,7 +167,15 @@ const Project = sequelize.define('Project', {
   build_started_at: DataTypes.DATE,
   build_completed_at: DataTypes.DATE,
   uat_approved_at: DataTypes.DATE,
-  uat_approved_by: DataTypes.STRING(255)
+  uat_approved_by: DataTypes.STRING(255),
+  // Partner attribution + UTM tracking (migration 014)
+  partner_slug: DataTypes.STRING(120),
+  utm_source: DataTypes.STRING(120),
+  utm_campaign: DataTypes.STRING(255),
+  utm_medium: DataTypes.STRING(120),
+  utm_content: DataTypes.STRING(255),
+  utm_term: DataTypes.STRING(255),
+  referrer_url: DataTypes.TEXT
 }, { tableName: 'd2_projects' });
 
 // =====================================================

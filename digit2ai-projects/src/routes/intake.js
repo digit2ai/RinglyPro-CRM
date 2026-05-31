@@ -128,7 +128,16 @@ router.post('/public/request', async (req, res) => {
       existing_stack: b.existing_stack || null,
       heard_from: b.heard_from || null,
       best_contact_time: b.best_time || null,
-      intake_status: 'pending_review'
+      intake_status: 'pending_review',
+      // Partner attribution + UTM tracking (migration 014). All optional;
+      // populated from query string params parsed client-side on load.
+      partner_slug: (b.partner_slug || '').toString().trim().slice(0, 120) || null,
+      utm_source:   (b.utm_source   || '').toString().trim().slice(0, 120) || null,
+      utm_campaign: (b.utm_campaign || '').toString().trim().slice(0, 255) || null,
+      utm_medium:   (b.utm_medium   || '').toString().trim().slice(0, 120) || null,
+      utm_content:  (b.utm_content  || '').toString().trim().slice(0, 255) || null,
+      utm_term:     (b.utm_term     || '').toString().trim().slice(0, 255) || null,
+      referrer_url: (b.referrer_url || '').toString().trim() || null
     }, { transaction: t });
 
     await ProjectIntake.create({
@@ -187,7 +196,12 @@ router.post('/public/request', async (req, res) => {
       batch_id: batch.id,
       project_id: project.id,
       token: accessToken.token,
-      url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`
+      url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`,
+      // Echo attribution back so the Partner can verify their code wired
+      // correctly (the dashboard will read partner_slug to attribute deals).
+      partner_slug: project.partner_slug || null,
+      utm_source:   project.utm_source   || null,
+      utm_campaign: project.utm_campaign || null
     });
 
     // Schedule the Inbox Triage Agent for the freshly-submitted intake.

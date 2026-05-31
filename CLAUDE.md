@@ -110,6 +110,16 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 - `ELEVENLABS_CONVAI_PARTNERSHIP_EN` — ElevenLabs Conversational AI agent ID for the English Partnership orb on `/champion-teaser.html`. The orb on the teaser page connects directly to this agent via the browser SDK. **No API key is sent to the browser** — agent IDs are public per ElevenLabs convai design; the API key stays server-side. When unset, the orb shows a friendly "voice mode unavailable" caption and the keyboard demo stays the active path. Sister var: `ELEVENLABS_CONVAI_PARTNERSHIP_ES` for the Spanish agent (same orb, switches based on the page's language toggle).
 - `ELEVENLABS_CONVAI_PARTNERSHIP_ES` — Spanish-language convai agent ID. See `ELEVENLABS_CONVAI_PARTNERSHIP_EN` for the full setup recipe. Must be a separate dedicated agent (per the `ringlypro_elevenlabs_agents` reference memory: "Each product gets its own dedicated convai agent; never share agents across unrelated products").
 
+## Partner Attribution + UTM Tracking (T1.1)
+
+- Migration: `digit2ai-projects/migrations/014_partner_attribution.sql` (LIVE)
+- Adds 7 nullable columns to `d2_projects`: `partner_slug`, `utm_source`, `utm_campaign`, `utm_medium`, `utm_content`, `utm_term`, `referrer_url`
+- Indexes: `idx_d2_projects_partner_slug` (partial), `idx_d2_projects_utm_source` (partial)
+- Frontend (`/champion-teaser.html`) parses `?partner=<slug>` (+ alias `?ref=<slug>`, `?p=<slug>`) and the standard 5 UTM params from `window.location.search` on load. Persists to `localStorage['d2ai_partner_attribution']` for 30 days so attribution survives reloads/language toggles. Renders a "Referred by: <Pretty Name>" badge above the hero h1 when present.
+- Submission path (`acceptAndSubmit` → POST `/projects/api/v1/intake/public/request`) attaches all attribution fields to the payload via `window.attachPartnerAttribution(payload)`. Server (`intake.js`) persists them on the `d2_projects` row + echoes `partner_slug`/`utm_source`/`utm_campaign` back in the success response so Partners can verify their code wired correctly.
+- Slug sanitization: alphanumeric + dash/underscore/dot/space only, capped at 120 chars. UTM params capped at 255. Both client + server enforce.
+- Test URL: `https://aiagent.ringlypro.com/champion-teaser.html?partner=manuel-stagg&utm_source=linkedin&utm_campaign=launch-2026`
+
 ## Partnership Orb — ElevenLabs Convai Setup Recipe
 
 The animated voice-interactive orb on `/champion-teaser.html` is powered by ElevenLabs Conversational AI. To enable it in production, create two dedicated convai agents (one EN, one ES) and wire their IDs into the env vars above.
