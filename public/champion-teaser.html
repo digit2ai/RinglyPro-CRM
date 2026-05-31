@@ -3323,33 +3323,40 @@
         var email = (emailInput.value || '').trim();
         if (!email || email.indexOf('@') < 0) { setStatus(lang === 'es' ? 'Email inválido' : 'Invalid email', 'err'); emailInput.focus(); return; }
         if (!transcriptStore.length) { setStatus(lang === 'es' ? 'Vacío' : 'Empty', 'err'); return; }
-        emailBtn.disabled = true;
-        var origText = emailBtn.innerHTML;
-        emailBtn.innerHTML = '<span class="i18n-en">Sending…</span><span class="i18n-es">Enviando…</span>';
-        var payload = window.attachPartnerAttribution({
-          email: email,
-          transcript: transcriptStore,
-          language: lang
-        });
-        fetch('/projects/api/v1/intake/email-transcript', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-          .then(function (res) {
-            emailBtn.disabled = false;
-            emailBtn.innerHTML = origText;
-            if (res.ok && res.j && res.j.success) {
-              setStatus(lang === 'es' ? 'Enviado ' : 'Sent ', 'ok');
-            } else {
-              setStatus((res.j && res.j.error) || (lang === 'es' ? 'Falló' : 'Failed'), 'err');
-            }
-          })
-          .catch(function (err) {
-            emailBtn.disabled = false;
-            emailBtn.innerHTML = origText;
-            setStatus(err.message || 'Failed', 'err');
-          });
+        // Build a mailto: URL that opens the user's default mail client
+        // with the transcript pre-filled. No server dependency, no env
+        // vars — works on every machine. Matches the project-wide Apple
+        // Mail pattern documented in CLAUDE.md (EMAIL_AUTOSEND_DISABLED).
+        var subject = lang === 'es'
+          ? 'Tu conversación con el MCP Neural Brain'
+          : 'Your conversation with the MCP Neural Brain';
+        var intro = lang === 'es'
+          ? 'Aquí tienes una copia de la conversación que tuviste en aiagent.ringlypro.com:\n\n'
+          : 'Here is a copy of the conversation you had at aiagent.ringlypro.com:\n\n';
+        var lineFor = function (m) {
+          var who = m.role === 'user'
+            ? (lang === 'es' ? 'Tú' : 'You')
+            : (lang === 'es' ? 'MCP Neural Brain' : 'MCP Neural Brain');
+          return '[' + who + ']\n' + (m.text || '') + '\n';
+        };
+        var body = intro + transcriptStore.map(lineFor).join('\n');
+        var footer = lang === 'es'
+          ? '\n\n— Enviado desde aiagent.ringlypro.com/champion-teaser.html'
+          : '\n\n— Sent from aiagent.ringlypro.com/champion-teaser.html';
+        body += footer;
+        // Mailto length limits vary by client (~2000 chars safe).
+        // Truncate very long transcripts so the mail client still opens.
+        var MAX = 1800;
+        if (body.length > MAX) body = body.slice(0, MAX) + '\n\n[…truncated]';
+        var url = 'mailto:' + encodeURIComponent(email)
+          + '?subject=' + encodeURIComponent(subject)
+          + '&body=' + encodeURIComponent(body);
+        try {
+          window.location.href = url;
+          setStatus(lang === 'es' ? 'Abriendo email' : 'Opening mail', 'ok');
+        } catch (e) {
+          setStatus(lang === 'es' ? 'No se pudo abrir' : 'Could not open', 'err');
+        }
       });
     })();
     window._orbAddTranscriptLine = addTranscriptLine;
@@ -3607,6 +3614,10 @@
                   else if (msg.source === 'ai' || msg.source === 'agent' || msg.type === 'agent_response') role = 'agent';
                   text = msg.message || msg.text || msg.transcript || '';
                   if (role && text) window._orbAddTranscriptLine(role, text);
+                  // If the user said a stop phrase, end the session.
+                  if (role === 'user' && text && typeof window.__checkStopCommand === 'function') {
+                    window.__checkStopCommand(text);
+                  }
                 } catch (_) {}
               }
             }).then(function (s) {
@@ -3614,6 +3625,7 @@
               connecting = false;
               startWaveform(stream);
               setState('listening');
+              startSessionTimer(); // 10-min cap + visible countdown
             });
           })
           .catch(function (err) {
@@ -3627,6 +3639,69 @@
           });
       });
     }
+
+    // ---------------- 10-minute session timer ----------------
+    // Hard cap on conversation length to control cost and keep demos
+    // tight. Visible countdown in the orb caption when the timer is
+    // under 60s left. Auto-ends the session at 0 with a friendly
+    // notification.
+    var SESSION_MAX_MS = 10 * 60 * 1000; // 10 minutes
+    var sessionTimerId = null;
+    var sessionTickId = null;
+    var sessionStartedAt = 0;
+    function startSessionTimer() {
+      sessionStartedAt = Date.now();
+      // Hard cutoff at 10:00
+      sessionTimerId = setTimeout(function () {
+        var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var msg = lang === 'es'
+          ? 'Tiempo máximo alcanzado (10 minutos). La conversación terminó.'
+          : 'Time limit reached (10 minutes). Conversation ended.';
+        endVoiceSession();
+        // Surface in the SR status + transcript so the user knows why it ended.
+        if (srStatus) srStatus.textContent = msg;
+        if (window._orbAddTranscriptLine) window._orbAddTranscriptLine('agent', msg);
+      }, SESSION_MAX_MS);
+      // Tick every second; show countdown in caption when <60s left.
+      sessionTickId = setInterval(function () {
+        var remainingMs = SESSION_MAX_MS - (Date.now() - sessionStartedAt);
+        if (remainingMs <= 0) return; // cutoff handler runs separately
+        wrap.dataset.remaining = String(Math.ceil(remainingMs / 1000));
+        if (remainingMs < 60000) {
+          var s = Math.ceil(remainingMs / 1000);
+          var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+          if (srStatus) srStatus.textContent = (lang === 'es' ? 'Termina en ' : 'Ends in ') + s + 's';
+        }
+      }, 1000);
+    }
+    function clearSessionTimer() {
+      if (sessionTimerId) { clearTimeout(sessionTimerId); sessionTimerId = null; }
+      if (sessionTickId)  { clearInterval(sessionTickId); sessionTickId = null; }
+      delete wrap.dataset.remaining;
+    }
+
+    // ---------------- Voice "stop" command detection ----------------
+    // Listen to user transcript lines (from onMessage) and end the
+    // session if the user says any common stop phrase. EN + ES.
+    var STOP_PHRASES_EN = ['stop the conversation', 'end the conversation', 'stop conversation', 'end conversation', 'goodbye', 'good bye', 'that is all', "that's all", 'we are done', "we're done", 'hang up', 'stop please', 'please stop'];
+    var STOP_PHRASES_ES = ['detén la conversación', 'detener la conversación', 'termina la conversación', 'terminar la conversación', 'adiós', 'eso es todo', 'hemos terminado', 'cuelga', 'detente por favor', 'por favor detente'];
+    window.__checkStopCommand = function (text) {
+      if (!text || !session) return false;
+      var low = String(text).toLowerCase();
+      var hit = STOP_PHRASES_EN.some(function (p) { return low.indexOf(p) >= 0; })
+             || STOP_PHRASES_ES.some(function (p) { return low.indexOf(p) >= 0; });
+      // Single-word "stop" / "para" — only count if it's the whole message
+      // (otherwise we'd match "stop sign", "para mí", etc.)
+      var trimmed = low.trim().replace(/[.!?,;]+$/, '');
+      if (trimmed === 'stop' || trimmed === 'para' || trimmed === 'detente' || trimmed === 'alto') hit = true;
+      if (hit) {
+        var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var msg = lang === 'es' ? 'Conversación detenida.' : 'Conversation stopped.';
+        if (window._orbAddTranscriptLine) window._orbAddTranscriptLine('agent', msg);
+        setTimeout(endVoiceSession, 300); // small delay so the user sees the ack
+      }
+      return hit;
+    };
 
     // Release the mic tracks so the browser indicator turns off.
     function releaseMic() {
@@ -3643,6 +3718,7 @@
         try { session.endSession && session.endSession(); } catch (_) {}
         session = null;
       }
+      clearSessionTimer();
       stopWaveform();
       releaseMic();
       setState('idle');
