@@ -338,7 +338,24 @@
   @media (max-width: 480px) { .hero-logo { --orb-size: 260px; margin: 16px 0 80px; } .orb-wave { width: 200px !important; } }
   @media (max-width: 360px) { .hero-logo { --orb-size: 230px; margin: 14px 0 68px; } .orb-wave { width: 180px !important; } }
 
-  /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup. */
+  /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup.
+     The futuristic ring rotations + scan beam are CSS animations on
+     <g> wrappers. */
+  .orb-ring-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 32s linear infinite; }
+  .orb-ring-mid   { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpinRev 22s linear infinite; }
+  .orb-ring-inner { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 14s linear infinite; }
+  .orb-iris-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpinRev 18s linear infinite; }
+  .orb-iris-segs  { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 9s linear infinite; }
+  @keyframes orbSpin    { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+  @keyframes orbSpinRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+  /* Scan beam — radar sweep around the orb every 6s */
+  .orb-scan { transform-box: fill-box; transform-origin: 120px 120px; animation: orbScanSweep 6s linear infinite; }
+  @keyframes orbScanSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* Crosshair perimeter marks — HUD blink */
+  .orb-crosshair { animation: orbCrosshairBlink 2.4s ease-in-out infinite; }
+  @keyframes orbCrosshairBlink { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.5; } }
 
   /* Listening / Thinking / Speaking state changes ride on top of the
      idle SMIL animations by toggling brightness, hue and ring visibility. */
@@ -551,6 +568,9 @@
      drop-shadow brighten so the orb still reads as alive without
      triggering vestibular discomfort. */
   @media (prefers-reduced-motion: reduce) {
+    .orb-ring-outer, .orb-ring-mid, .orb-ring-inner,
+    .orb-iris-outer, .orb-iris-segs,
+    .orb-scan, .orb-crosshair,
     .orb-particle, .narrating-pill { animation: none !important; }
     .orb-svg animate, .orb-svg animateTransform { display: none; }
     .orb-wrap[data-state="listening"] .orb-svg { transform: none !important; }
@@ -1233,16 +1253,22 @@
       <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
       <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <radialGradient id="orbCore" cx="0.5" cy="0.5">
-            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.95"/>
-            <stop offset="0.45" stop-color="#3b82f6" stop-opacity="0.85"/>
-            <stop offset="0.78" stop-color="#8b5cf6" stop-opacity="0.7"/>
-            <stop offset="1" stop-color="#ec4899" stop-opacity="0.55"/>
+          <radialGradient id="orbCore" cx="0.5" cy="0.45">
+            <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+            <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+            <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+            <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+            <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
           </radialGradient>
           <radialGradient id="orbGlow" cx="0.5" cy="0.5">
-            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.35"/>
-            <stop offset="0.5" stop-color="#8b5cf6" stop-opacity="0.18"/>
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+            <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
             <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+            <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+            <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
           </radialGradient>
           <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#22d3ee"/>
@@ -1250,16 +1276,56 @@
             <stop offset="0.75" stop-color="#8b5cf6"/>
             <stop offset="1" stop-color="#ec4899"/>
           </linearGradient>
+          <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+            <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+          </linearGradient>
         </defs>
-        <!-- Soft ambient glow — animates radius via SMIL. -->
-        <circle class="orb-glow" cx="120" cy="120" r="110" fill="url(#orbGlow)">
-          <animate attributeName="r" values="100;118;100" dur="4.5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.7;1;0.7" dur="4.5s" repeatCount="indefinite"/>
+
+        <!-- Outer ambient glow halo -->
+        <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+          <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
         </circle>
-        <!-- Listening amplitude rings (driven by JS state, hidden in idle) -->
-        <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.45"/>
-        <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.55"/>
-        <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.65"/>
+
+        <!-- OUTER FRAME — rotating dashed rings (Iron Man / Tron) -->
+        <g class="orb-ring-outer">
+          <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+          <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+          <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+          <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+          <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+        </g>
+
+        <!-- Mid ring (counter-rotates) -->
+        <g class="orb-ring-mid">
+          <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+          <g fill="#a5f3fc">
+            <circle cx="120" cy="24"  r="1.5"/>
+            <circle cx="188" cy="52"  r="1.5"/>
+            <circle cx="216" cy="120" r="1.5"/>
+            <circle cx="188" cy="188" r="1.5"/>
+            <circle cx="120" cy="216" r="1.5"/>
+            <circle cx="52"  cy="188" r="1.5"/>
+            <circle cx="24"  cy="120" r="1.5"/>
+            <circle cx="52"  cy="52"  r="1.5"/>
+          </g>
+        </g>
+
+        <!-- Inner ring (rotates fastest) -->
+        <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+
+        <!-- SCAN BEAM — radar sweep -->
+        <g class="orb-scan">
+          <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+        </g>
+
+        <!-- Listening amplitude rings (JS-driven, hidden in idle) -->
+        <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+        <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+        <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+
         <!-- Thinking-state orbiting particles -->
         <g class="orb-particles">
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
@@ -1267,17 +1333,37 @@
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
           <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
         </g>
-        <!-- Core breathing body — SMIL on r so the pulse is always visible. -->
-        <circle class="orb-core" cx="120" cy="120" r="64" fill="url(#orbCore)">
-          <animate attributeName="r" values="60;70;60" dur="4.5s" repeatCount="indefinite"/>
+
+        <!-- CORE — layered iris (arc-reactor) -->
+        <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+          <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
         </circle>
-        <circle class="orb-core-inner" cx="120" cy="120" r="42" fill="url(#orbCore)" opacity="0.92">
-          <animate attributeName="r" values="44;38;44" dur="4.5s" repeatCount="indefinite"/>
+        <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+
+        <!-- Main core body -->
+        <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+          <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+          <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Brightest inner pinpoint -->
+        <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+          <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
         </circle>
         <!-- Glassy highlight -->
-        <ellipse class="orb-highlight" cx="106" cy="100" rx="22" ry="14" fill="rgba(255,255,255,0.35)" opacity="0.5">
-          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4.5s" repeatCount="indefinite"/>
+        <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+          <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
         </ellipse>
+
+        <!-- CROSSHAIR — HUD perimeter marks -->
+        <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+          <line x1="120" y1="2"   x2="120" y2="10"/>
+          <line x1="120" y1="230" x2="120" y2="238"/>
+          <line x1="2"   y1="120" x2="10"  y2="120"/>
+          <line x1="230" y1="120" x2="238" y2="120"/>
+        </g>
       </svg>
       <!-- speaking-state waveform bars (frequency analyzer painted by JS) -->
       <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
