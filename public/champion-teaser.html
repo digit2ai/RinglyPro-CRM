@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Digit2AI Partner Teaser — Understand What You're Selling</title>
-<meta name="description" content="The 5-minute crash course for Digit2AI partners: what MCP Neural AI actually does, real customer projects, and the exact script for turning a conversation into a digit2ai.com intake.">
+<title>Digit2AI Partnership Teaser — Understand What You're Selling</title>
+<meta name="description" content="The 5-minute crash course for the Digit2AI Partnership: what MCP Neural AI actually does, real customer projects, and the exact script for turning a conversation into a digit2ai.com intake.">
 <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -379,9 +379,9 @@
           <button type="button" data-lang="es">ES</button>
         </div>
         <div>
-          <span class="hd-pill"><span class="i18n-en">Partner Brief</span><span class="i18n-es">Brief para Partner</span></span><br>
-          <span class="i18n-en">Internal use · For partners who sell Digit2AI</span>
-          <span class="i18n-es">Uso interno · Para partners que venden Digit2AI</span>
+          <span class="hd-pill"><span class="i18n-en">Partnership Brief</span><span class="i18n-es">Brief del Partnership</span></span><br>
+          <span class="i18n-en">Internal use · For the Partnership who sells Digit2AI</span>
+          <span class="i18n-es">Uso interno · Para el Partnership que vende Digit2AI</span>
         </div>
       </div>
     </div>
@@ -831,8 +831,8 @@
     </div>
 
     <p class="lead" style="text-align:center;margin-top:22px;margin-bottom:0">
-      <span class="i18n-en">When the click happens, this is the sentence the partner will repeat: <em style="color:var(--ink);font-weight:600;font-style:normal">"Their AI doesn't just take your temperature — it diagnoses and treats the problem, on your live data, with eight specialists."</em></span>
-      <span class="i18n-es">Cuando ocurre el clic mental, esta es la frase que el partner va a repetir: <em style="color:var(--ink);font-weight:600;font-style:normal">"Su IA no solo te toma la temperatura — diagnostica y trata el problema, sobre tus datos vivos, con ocho especialistas."</em></span>
+      <span class="i18n-en">When the click happens, this is the sentence the Partnership will repeat in every prospect conversation: <em style="color:var(--ink);font-weight:600;font-style:normal">"Their AI doesn't just take your temperature — it diagnoses and treats the problem, on your live data, with eight specialists."</em></span>
+      <span class="i18n-es">Cuando ocurre el clic mental, esta es la frase que el Partnership va a repetir en cada conversación con un prospecto: <em style="color:var(--ink);font-weight:600;font-style:normal">"Su IA no solo te toma la temperatura — diagnostica y trata el problema, sobre tus datos vivos, con ocho especialistas."</em></span>
     </p>
   </section>
 
@@ -1167,8 +1167,8 @@
   <section class="sec">
     <div class="sec-num">
       <span class="n">5</span>
-      <span class="i18n-en">Partner's script</span>
-      <span class="i18n-es">Guion del Partner</span>
+      <span class="i18n-en">Partnership script</span>
+      <span class="i18n-es">Guion del Partnership</span>
     </div>
     <h2>
       <span class="i18n-en">What to say when a prospect says X.</span>
@@ -1359,8 +1359,8 @@
   <footer class="ft">
     <p>Digit2AI · Neural Intelligence · <a href="https://digit2ai.com" target="_blank">digit2ai.com</a></p>
     <p style="margin-top: 6px">
-      <span class="i18n-en">Partner-only brief. Update or replace any section to match your audience.</span>
-      <span class="i18n-es">Brief solo para Partners. Actualiza o reemplaza cualquier sección para que coincida con tu audiencia.</span>
+      <span class="i18n-en">Partnership-only brief. Update or replace any section to match your audience.</span>
+      <span class="i18n-es">Brief solo para el Partnership. Actualiza o reemplaza cualquier sección para que coincida con tu audiencia.</span>
     </p>
   </footer>
 
@@ -1539,9 +1539,9 @@
 
     runBtn.addEventListener('click', function () {
       // Guard: if a triage already ran for this request, do NOT re-run on
-      // accidental double-click. Point the partner at the Accept & Submit
+      // accidental double-click. Point the Partnership at the Accept & Submit
       // button below instead. Each Claude call costs money and a re-run
-      // also wipes any inline edits the partner made to the result.
+      // also wipes any inline edits the Partnership made to the result.
       // To force a fresh triage they must explicitly change the description
       // (or click "Re-run with same description" inside the result panel).
       if (state.triage) {
@@ -1577,7 +1577,7 @@
       var body = {
         description: desc,
         // Force the triage AI to respond in the page's selected language.
-        // Partner-teaser runs in EN by default; ES users get ES triage.
+        // Partnership-teaser runs in EN by default; ES users get ES triage.
         language: getLang(),
         name: (document.getElementById('d-name').value || '').trim() || undefined,
         email: (document.getElementById('d-email').value || '').trim() || undefined,
@@ -1594,7 +1594,7 @@
           runBtn.disabled = false;
           setStatus('');
           if (!res.ok || !res.json || !res.json.success) {
-            // No triage result — reset button so partner can retry
+            // No triage result — reset button so Partnership can retry
             runBtn.textContent = t('run_label');
             setError((res.json && res.json.error) || t('triage_failed'));
             return;
@@ -1603,7 +1603,7 @@
           state.lang = state.triage.language || getLang();
           // Post-success: button changes meaning. It no longer re-runs
           // automatically; the click-guard above intercepts and points
-          // the partner at Accept & Submit. Label reflects that.
+          // the Partnership at Accept & Submit. Label reflects that.
           runBtn.textContent = t('submit_below');
           runBtn.style.opacity = '0.75';
           runBtn.style.cursor = 'pointer';
@@ -1735,7 +1735,7 @@
       lines.push('=== ORIGINAL PROSPECT DESCRIPTION ===');
       lines.push(origDesc);
       lines.push('');
-      lines.push('=== AI TRIAGE — PRE-SCREENED BY PARTNER ===');
+      lines.push('=== AI TRIAGE — PRE-SCREENED BY PARTNERSHIP ===');
       lines.push('Verdict: ' + (state.triage.verdict || 'poc').toUpperCase() + '  ·  Fit score: ' + state.triage.fit_score + '/10');
       lines.push('Fit reasoning: ' + fitReason);
       lines.push('');
@@ -1771,7 +1771,7 @@
           project_title: title,
           project_description: richDescription,
           problem: origDesc,
-          heard_from: 'Partner-pre-triaged via /champion-teaser.html'
+          heard_from: 'Partnership-pre-triaged via /champion-teaser.html'
         })
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
         .then(function (res) {
