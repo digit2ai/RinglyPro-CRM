@@ -99,6 +99,92 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* ROI calculator (T2.5) — live 3-input → 3-output widget. */
+  .roi { margin: 56px 0 36px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; padding: 28px 26px; }
+  .roi-head { text-align: center; margin-bottom: 24px; }
+  .roi-eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-cyan); margin-bottom: 8px; }
+  .roi-title { font-size: clamp(20px, 3vw, 26px); font-weight: 800; line-height: 1.25; margin: 0 0 8px; }
+  .roi-sub { font-size: 14px; color: var(--ink-dim); margin: 0; }
+  .roi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .roi-inputs { display: flex; flex-direction: column; gap: 18px; }
+  .roi-field { display: flex; flex-direction: column; gap: 8px; }
+  .roi-lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; color: var(--ink-dim); line-height: 1.4; }
+  .roi-lbl strong { font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: var(--accent-cyan); flex-shrink: 0; }
+  .roi-field input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .roi-field input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+    border-radius: 3px;
+  }
+  .roi-field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--accent-cyan);
+    margin-top: -8px;
+    box-shadow: 0 4px 10px rgba(34, 211, 238, 0.4);
+    transition: transform 0.15s;
+  }
+  .roi-field input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .roi-field input[type="range"]::-moz-range-track { height: 6px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet)); border-radius: 3px; }
+  .roi-field input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--accent-cyan); box-shadow: 0 4px 10px rgba(34, 211, 238, 0.4); }
+  .roi-field input[type="range"]:focus-visible { outline: none; }
+  .roi-field input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent-cyan); outline-offset: 3px; }
+
+  .roi-currency { display: inline-flex; gap: 0; border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px; background: var(--bg-elev); align-self: flex-start; margin-top: 4px; }
+  .roi-cur { background: transparent; border: none; padding: 6px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--ink-mute); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .roi-cur.active { background: var(--grad); color: #020617; }
+  .roi-cur:not(.active):hover { color: var(--ink); }
+
+  .roi-results { display: flex; flex-direction: column; gap: 14px; }
+  .roi-card { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; text-align: center; }
+  .roi-card-highlight {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(139, 92, 246, 0.10));
+    border-color: rgba(34, 211, 238, 0.45);
+  }
+  .roi-num {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.05;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .roi-card-lbl {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .roi-share { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+  .roi-share-btn { background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 9px 16px; border-radius: 8px; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .roi-share-btn:hover { background: var(--accent-cyan); color: #020617; }
+  .roi-share-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 3px; }
+  .roi-share-status { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.8px; color: var(--ink-mute); }
+  .roi-share-status.ok { color: var(--accent-cyan); }
+  .roi-foot { font-size: 12px; color: var(--ink-mute); line-height: 1.5; margin: 8px 0 0; }
+
+  @media (max-width: 720px) {
+    .roi { padding: 22px 18px; }
+    .roi-grid { grid-template-columns: 1fr; gap: 22px; }
+  }
+
   /* FAQ section (T2.4) — collapsible Q&As with native <details>. */
   .faq { margin: 56px 0 36px; }
   .faq-head { text-align: center; margin-bottom: 24px; }
@@ -2819,6 +2905,97 @@
     <script type="application/ld+json" id="faq-jsonld"></script>
   </section>
 
+  <!-- =================================================================
+       T2.5 — ROI calculator.
+       Interactive widget: team size + hours/week wasted on the painful
+       process + average loaded hourly cost → annual hours saved,
+       annual $ saved, payback weeks at midpoint Digit2AI project cost
+       ($50K assumed). Shareable URL: ?roi=team=10&hr=8&rate=85.
+       ================================================================= -->
+  <section class="roi" id="roi" aria-labelledby="roi-h">
+    <header class="roi-head">
+      <span class="roi-eyebrow">
+        <span class="i18n-en">Quick math</span>
+        <span class="i18n-es">Cálculo rápido</span>
+      </span>
+      <h2 id="roi-h" class="roi-title">
+        <span class="i18n-en">What does the manual process actually cost you?</span>
+        <span class="i18n-es">¿Cuánto te cuesta realmente el proceso manual?</span>
+      </h2>
+      <p class="roi-sub">
+        <span class="i18n-en">Drag the sliders. The math updates live. Share the result with your CFO.</span>
+        <span class="i18n-es">Mueve los controles. El cálculo se actualiza en vivo. Comparte el resultado con tu CFO.</span>
+      </p>
+    </header>
+    <div class="roi-grid">
+      <div class="roi-inputs">
+        <label class="roi-field">
+          <span class="roi-lbl">
+            <span class="i18n-en">Team size (people doing this work)</span>
+            <span class="i18n-es">Tamaño del equipo (personas haciendo este trabajo)</span>
+            <strong id="roi-team-out">10</strong>
+          </span>
+          <input type="range" id="roi-team" min="1" max="200" step="1" value="10" aria-label="Team size">
+        </label>
+        <label class="roi-field">
+          <span class="roi-lbl">
+            <span class="i18n-en">Hours per week each person spends on it</span>
+            <span class="i18n-es">Horas por semana que cada persona dedica</span>
+            <strong id="roi-hrs-out">8</strong>
+          </span>
+          <input type="range" id="roi-hrs" min="1" max="40" step="1" value="8" aria-label="Hours per week">
+        </label>
+        <label class="roi-field">
+          <span class="roi-lbl">
+            <span class="i18n-en">Average loaded hourly cost</span>
+            <span class="i18n-es">Costo promedio por hora</span>
+            <strong id="roi-rate-out">$85</strong>
+          </span>
+          <input type="range" id="roi-rate" min="20" max="300" step="5" value="85" aria-label="Hourly cost">
+        </label>
+        <div class="roi-currency">
+          <button type="button" class="roi-cur active" data-cur="USD">USD</button>
+          <button type="button" class="roi-cur" data-cur="MXN">MXN</button>
+          <button type="button" class="roi-cur" data-cur="COP">COP</button>
+        </div>
+      </div>
+      <div class="roi-results">
+        <div class="roi-card">
+          <span class="roi-num" id="roi-hours-saved">20,800</span>
+          <span class="roi-card-lbl">
+            <span class="i18n-en">Hours wasted per year</span>
+            <span class="i18n-es">Horas desperdiciadas por año</span>
+          </span>
+        </div>
+        <div class="roi-card roi-card-highlight">
+          <span class="roi-num" id="roi-dollars-saved">$1,768,000</span>
+          <span class="roi-card-lbl">
+            <span class="i18n-en">Dollars wasted per year</span>
+            <span class="i18n-es">Dólares desperdiciados por año</span>
+          </span>
+        </div>
+        <div class="roi-card">
+          <span class="roi-num" id="roi-payback">2.0</span>
+          <span class="roi-card-lbl">
+            <span class="i18n-en">Weeks to pay back a $50K project</span>
+            <span class="i18n-es">Semanas para recuperar un proyecto de $50K</span>
+          </span>
+        </div>
+        <div class="roi-share">
+          <button type="button" class="roi-share-btn" id="roi-share">
+            <span class="i18n-en">Copy shareable link</span>
+            <span class="i18n-es">Copiar enlace compartible</span>
+          </button>
+          <span class="roi-share-status" id="roi-share-status" aria-live="polite"></span>
+        </div>
+        <p class="roi-foot">
+          <span class="i18n-en">Assumes a $50K mid-range Digit2AI project. Real quotes range from $35K (focused MVP) to $250K (multi-system platform). Numbers are estimates — actuals depend on scope.</span>
+          <span class="i18n-es">Asume un proyecto Digit2AI de gama media de $50K. Cotizaciones reales van de $35K (MVP enfocado) a $250K (plataforma multi-sistema). Los números son estimaciones — los reales dependen del alcance.</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================================================ -->
   <div class="cta-wrap">
     <h2>
@@ -4401,6 +4578,124 @@
         try { console.log('[orb] voice agent not configured; using fallback'); } catch (_) {}
       }
     });
+  })();
+
+  // ---------------- ROI calculator (T2.5) ----------------
+  //
+  // Live math: hoursPerYearWasted = team * hrsPerWeek * 52
+  // Dollars   = hoursPerYearWasted * hourlyRate
+  // Payback   = $50K / weeklyCost where weeklyCost = team * hrsPerWeek * hourlyRate
+  //
+  // Shareable URL: ?roi=team=10&hr=8&rate=85&cur=USD
+  // When the page loads with that param, sliders pre-populate.
+  // Currency toggle reformats display but does NOT convert values
+  // (intentional — the prospect knows their own market's hourly cost
+  // in their local currency).
+  (function () {
+    var teamEl = document.getElementById('roi-team');
+    var hrsEl  = document.getElementById('roi-hrs');
+    var rateEl = document.getElementById('roi-rate');
+    if (!teamEl || !hrsEl || !rateEl) return;
+    var teamOut = document.getElementById('roi-team-out');
+    var hrsOut  = document.getElementById('roi-hrs-out');
+    var rateOut = document.getElementById('roi-rate-out');
+    var hoursOut   = document.getElementById('roi-hours-saved');
+    var dollarsOut = document.getElementById('roi-dollars-saved');
+    var paybackOut = document.getElementById('roi-payback');
+    var shareBtn   = document.getElementById('roi-share');
+    var shareStatus = document.getElementById('roi-share-status');
+    var curBtns = document.querySelectorAll('.roi-cur');
+    var PROJECT_COST = 50000;
+    var currency = 'USD';
+    var CUR_SYMBOLS = { USD: '$', MXN: 'MX$', COP: 'COL$' };
+    var CUR_SUFFIX = { USD: '', MXN: '', COP: '' };
+    var CUR_LOCALE = { USD: 'en-US', MXN: 'es-MX', COP: 'es-CO' };
+
+    function fmtNum(n, lang) {
+      return Number(n).toLocaleString(lang === 'es' ? 'es-MX' : 'en-US', { maximumFractionDigits: 0 });
+    }
+    function fmtMoney(n) {
+      var locale = CUR_LOCALE[currency] || 'en-US';
+      var rounded = Math.round(n);
+      return CUR_SYMBOLS[currency] + rounded.toLocaleString(locale, { maximumFractionDigits: 0 });
+    }
+
+    function recompute() {
+      var team = parseInt(teamEl.value, 10) || 0;
+      var hrs  = parseInt(hrsEl.value, 10) || 0;
+      var rate = parseInt(rateEl.value, 10) || 0;
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      // Reflect raw inputs
+      if (teamOut) teamOut.textContent = fmtNum(team, lang);
+      if (hrsOut)  hrsOut.textContent  = fmtNum(hrs, lang);
+      if (rateOut) rateOut.textContent = fmtMoney(rate);
+      // Outputs
+      var hoursYr = team * hrs * 52;
+      var dollarsYr = hoursYr * rate;
+      var weeklyCost = team * hrs * rate;
+      var paybackWeeks = weeklyCost > 0 ? PROJECT_COST / weeklyCost : 0;
+      if (hoursOut)   hoursOut.textContent   = fmtNum(hoursYr, lang);
+      if (dollarsOut) dollarsOut.textContent = fmtMoney(dollarsYr);
+      if (paybackOut) paybackOut.textContent = paybackWeeks.toFixed(1);
+    }
+
+    [teamEl, hrsEl, rateEl].forEach(function (el) {
+      el.addEventListener('input', recompute);
+    });
+    curBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        curBtns.forEach(function (x) { x.classList.toggle('active', x === b); });
+        currency = b.dataset.cur || 'USD';
+        recompute();
+      });
+    });
+    // Re-emit on language toggle so number-formatting uses the right locale.
+    document.querySelectorAll('.lang-toggle button').forEach(function (b) {
+      b.addEventListener('click', function () { setTimeout(recompute, 50); });
+    });
+
+    // Pre-populate from ?roi=team=N&hr=N&rate=N&cur=USD
+    (function preload() {
+      try {
+        var raw = new URLSearchParams(window.location.search).get('roi');
+        if (!raw) return;
+        var parts = raw.split(/[&,]/);
+        parts.forEach(function (p) {
+          var kv = p.split('=');
+          if (kv.length !== 2) return;
+          var k = kv[0].trim().toLowerCase(), v = kv[1].trim();
+          if (k === 'team') teamEl.value = Math.max(1, Math.min(200, parseInt(v, 10) || 10));
+          else if (k === 'hr' || k === 'hrs') hrsEl.value = Math.max(1, Math.min(40, parseInt(v, 10) || 8));
+          else if (k === 'rate') rateEl.value = Math.max(20, Math.min(300, parseInt(v, 10) || 85));
+          else if (k === 'cur' && CUR_SYMBOLS[v.toUpperCase()]) {
+            currency = v.toUpperCase();
+            curBtns.forEach(function (x) { x.classList.toggle('active', x.dataset.cur === currency); });
+          }
+        });
+      } catch (_) {}
+    })();
+
+    // Share button — builds the URL with current state + copies to clipboard
+    if (shareBtn) shareBtn.addEventListener('click', function () {
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      var url = window.location.origin + window.location.pathname
+        + '?roi=team=' + teamEl.value + '&hr=' + hrsEl.value + '&rate=' + rateEl.value + '&cur=' + currency;
+      // Preserve partner attribution if any
+      var partner = window._partnerAttribution && window._partnerAttribution.partner_slug;
+      if (partner) url += '&partner=' + encodeURIComponent(partner);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          if (shareStatus) { shareStatus.textContent = lang === 'es' ? 'Copiado al portapapeles' : 'Copied to clipboard'; shareStatus.className = 'roi-share-status ok'; }
+          setTimeout(function () { if (shareStatus) { shareStatus.textContent = ''; shareStatus.className = 'roi-share-status'; } }, 3000);
+        }).catch(function () {
+          if (shareStatus) { shareStatus.textContent = url; shareStatus.className = 'roi-share-status'; }
+        });
+      } else {
+        if (shareStatus) { shareStatus.textContent = url; shareStatus.className = 'roi-share-status'; }
+      }
+    });
+
+    recompute();
   })();
 
   // ---------------- FAQ JSON-LD generator (T2.4) ----------------
