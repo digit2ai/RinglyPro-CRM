@@ -116,7 +116,7 @@
   .hero-logo {
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
-    margin: 28px 0 72px;
+    margin: 28px 0 130px;
     --orb-size: 380px;
   }
   .orb-wrap {
@@ -165,10 +165,10 @@
   /* Responsive scaling — preserve dominance on tablet, then shrink
      gracefully on phones so the orb still feels like the focal point
      without overflowing or crowding the caption. */
-  @media (max-width: 900px) { .hero-logo { --orb-size: 340px; margin: 24px 0 60px; } }
-  @media (max-width: 720px) { .hero-logo { --orb-size: 300px; margin: 20px 0 52px; } .orb-wave { width: 240px !important; } }
-  @media (max-width: 480px) { .hero-logo { --orb-size: 260px; margin: 16px 0 44px; } .orb-wave { width: 200px !important; } }
-  @media (max-width: 360px) { .hero-logo { --orb-size: 230px; margin: 14px 0 36px; } .orb-wave { width: 180px !important; } }
+  @media (max-width: 900px) { .hero-logo { --orb-size: 340px; margin: 24px 0 110px; } }
+  @media (max-width: 720px) { .hero-logo { --orb-size: 300px; margin: 20px 0 96px; } .orb-wave { width: 240px !important; } }
+  @media (max-width: 480px) { .hero-logo { --orb-size: 260px; margin: 16px 0 80px; } .orb-wave { width: 200px !important; } }
+  @media (max-width: 360px) { .hero-logo { --orb-size: 230px; margin: 14px 0 68px; } .orb-wave { width: 180px !important; } }
 
   /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup.
      The futuristic ring rotations + scan beam are CSS animations on
