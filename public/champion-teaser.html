@@ -99,6 +99,125 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* Abandoned-conversation modal (T2.3) — pops when the user ends
+     the orb session before triage. Captures warm leads. */
+  .abandon-modal[hidden] { display: none !important; }
+  .abandon-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .abm-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 7, 20, 0.72);
+    backdrop-filter: blur(6px);
+    animation: abmFade 0.25s ease-out;
+  }
+  @keyframes abmFade { from { opacity: 0; } to { opacity: 1; } }
+  .abm-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 16px;
+    padding: 28px 26px 22px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,211,238,0.15);
+    animation: abmSlideUp 0.3s ease-out;
+  }
+  @keyframes abmSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .abm-close {
+    position: absolute; top: 12px; right: 14px;
+    background: transparent; border: none;
+    color: var(--ink-mute);
+    font-size: 24px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+  }
+  .abm-close:hover { color: var(--ink); background: var(--bg-elev); }
+  .abm-close:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+  .abm-icon {
+    display: inline-flex;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(34, 211, 238, 0.12);
+    color: var(--accent-cyan);
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .abm-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+  .abm-sub {
+    font-size: 13.5px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+    margin: 0 0 18px;
+  }
+  .abm-email, .abm-name {
+    width: 100%;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+  .abm-email:focus, .abm-name:focus {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 1px;
+    border-color: var(--accent-cyan);
+  }
+  .abm-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .abm-btn {
+    flex: 1;
+    padding: 11px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .abm-btn-primary { background: var(--grad); color: #020617; }
+  .abm-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(34,211,238,0.3); }
+  .abm-btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; }
+  .abm-btn-ghost { background: transparent; color: var(--ink-mute); border-color: var(--line-strong); }
+  .abm-btn-ghost:hover { color: var(--ink); border-color: var(--accent-cyan); }
+  .abm-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+  .abm-status {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    color: var(--ink-mute);
+    margin: 10px 0 0;
+    min-height: 14px;
+  }
+  .abm-status.ok { color: var(--accent-cyan); }
+  .abm-status.err { color: var(--red); }
+  @media (max-width: 480px) {
+    .abm-card { padding: 24px 20px 18px; }
+    .abm-title { font-size: 18px; }
+    .abm-actions { flex-direction: column; }
+  }
+
   /* Resume banner (T2.1) — slides down from top on page load when a
      saved session (<30 min old) is detected in localStorage. */
   .resume-banner[hidden] { display: none !important; }
@@ -1209,6 +1328,43 @@
           <span class="i18n-es">Empezar de nuevo</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Abandoned-conversation modal (T2.3) — appears when the user
+       ends the orb session before running the triage. Captures the
+       prospect's email + the transcript so Manuel can follow up.
+       Hidden by default; the orb controller flips [hidden] off. -->
+  <div class="abandon-modal" id="abandon-modal" hidden role="dialog" aria-modal="true" aria-labelledby="abm-title">
+    <div class="abm-backdrop" id="abm-backdrop"></div>
+    <div class="abm-card" role="document">
+      <button type="button" class="abm-close" id="abm-close" aria-label="Close">×</button>
+      <div class="abm-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+      </div>
+      <h3 id="abm-title" class="abm-title">
+        <span class="i18n-en">Want us to follow up?</span>
+        <span class="i18n-es">¿Quieres que te contactemos?</span>
+      </h3>
+      <p class="abm-sub">
+        <span class="i18n-en">You ended the conversation before running the AI Triage. Drop your email and we will send a copy of what we discussed plus a quick reach-out from a real human within 48 hours.</span>
+        <span class="i18n-es">Terminaste la conversación antes de correr el AI Triage. Déjanos tu email y te enviamos una copia de lo que conversamos más un mensaje de un humano real en 48 horas.</span>
+      </p>
+      <input type="email" class="abm-email" id="abm-email" placeholder="you@example.com" autocomplete="email">
+      <input type="text"  class="abm-name"  id="abm-name"  placeholder="Your name (optional)" autocomplete="name">
+      <div class="abm-actions">
+        <button type="button" class="abm-btn abm-btn-primary" id="abm-send">
+          <span class="i18n-en">Yes, follow up with me</span>
+          <span class="i18n-es">Sí, contáctame</span>
+        </button>
+        <button type="button" class="abm-btn abm-btn-ghost" id="abm-skip">
+          <span class="i18n-en">No thanks</span>
+          <span class="i18n-es">No gracias</span>
+        </button>
+      </div>
+      <p class="abm-status" id="abm-status" aria-live="polite"></p>
     </div>
   </div>
 
@@ -3608,6 +3764,7 @@
       });
     })();
     window._orbAddTranscriptLine = addTranscriptLine;
+    window.__getOrbTranscript = function () { return transcriptStore.slice(); };
     function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
     function showFallback(msg) {
       wrap.classList.add('disabled');
@@ -3718,6 +3875,7 @@
     // mechanism. We POST to /voice-trigger-triage and pipe the result
     // into the existing renderResult() pipeline.
     function runTriageFromAgent(payload) {
+      triageFiredThisSession = true; // T2.3 — suppress abandoned-modal
       setState('thinking');
       var lang = wrap.dataset.lang || 'en';
       return fetch(API_BASE + '/voice-trigger-triage', {
@@ -3780,6 +3938,7 @@
     function activateOrb() {
       if (connecting || session) return;
       connecting = true;
+      triageFiredThisSession = false; // T2.3 — reset per session
       caption.style.opacity = '0.7';
 
       // Check SDK loaded (window.__ElevenLabsConversation is set by the
@@ -3961,7 +4120,27 @@
     // End the voice session cleanly: tell the SDK to disconnect, stop
     // the waveform painter, release the mic, return to idle. Safe to
     // call multiple times.
+    // T2.3 — track whether the triage tool fired this session so we
+    // can show the abandoned-conversation modal only when the user
+    // ended early. Reset on each new activation.
+    var triageFiredThisSession = false;
+    window.__markTriageFired = function () { triageFiredThisSession = true; };
+
+    function maybeShowAbandonModal() {
+      // Only show if: meaningful transcript (>=2 lines) AND triage
+      // did not fire AND the user does not already have a result panel.
+      if (triageFiredThisSession) return;
+      var hasContent = (typeof transcriptStore !== 'undefined') && transcriptStore && transcriptStore.length >= 2;
+      if (!hasContent) return;
+      var modal = document.getElementById('abandon-modal');
+      if (!modal) return;
+      modal.hidden = false;
+      var emailInput = document.getElementById('abm-email');
+      if (emailInput) setTimeout(function () { emailInput.focus(); }, 100);
+    }
+
     function endVoiceSession() {
+      var wasActive = !!session;
       if (session) {
         try { session.endSession && session.endSession(); } catch (_) {}
         session = null;
@@ -3969,6 +4148,11 @@
       clearSessionTimer();
       stopWaveform();
       releaseMic();
+      if (wasActive) {
+        // Defer modal a hair so the SR status announces "Conversation
+        // ended" before the modal grabs focus.
+        setTimeout(maybeShowAbandonModal, 400);
+      }
       setState('idle');
       connecting = false;
     }
@@ -4007,6 +4191,91 @@
         // message. Just log for debugging.
         try { console.log('[orb] voice agent not configured; using fallback'); } catch (_) {}
       }
+    });
+  })();
+
+  // ---------------- Abandoned-conversation modal (T2.3) ----------------
+  //
+  // Wires the modal's Send / Skip / Close buttons. The orb's
+  // endVoiceSession() calls maybeShowAbandonModal() which flips
+  // [hidden] off when triage didn't fire and the transcript has
+  // meaningful content. Esc closes; clicking the backdrop closes.
+  (function () {
+    var modal = document.getElementById('abandon-modal');
+    if (!modal) return;
+    var emailEl = document.getElementById('abm-email');
+    var nameEl = document.getElementById('abm-name');
+    var sendBtn = document.getElementById('abm-send');
+    var skipBtn = document.getElementById('abm-skip');
+    var closeBtn = document.getElementById('abm-close');
+    var backdrop = document.getElementById('abm-backdrop');
+    var status = document.getElementById('abm-status');
+    function close() {
+      modal.hidden = true;
+      if (status) { status.textContent = ''; status.className = 'abm-status'; }
+      if (emailEl) emailEl.value = '';
+      if (nameEl) nameEl.value = '';
+    }
+    if (skipBtn) skipBtn.addEventListener('click', close);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (backdrop) backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+      if (!modal.hidden && e.key === 'Escape') close();
+    });
+
+    if (sendBtn) sendBtn.addEventListener('click', function () {
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      var email = (emailEl.value || '').trim();
+      if (!email || email.indexOf('@') < 0) {
+        if (status) { status.textContent = lang === 'es' ? 'Necesito un email válido' : 'Need a valid email'; status.className = 'abm-status err'; }
+        emailEl.focus();
+        return;
+      }
+      sendBtn.disabled = true;
+      var originalText = sendBtn.innerHTML;
+      sendBtn.innerHTML = '<span class="i18n-en">Sending…</span><span class="i18n-es">Enviando…</span>';
+      var transcript = (typeof window._orbAddTranscriptLine === 'function' && window.__getOrbTranscript)
+        ? window.__getOrbTranscript()
+        : (window.__orbTranscriptStore || []);
+      // Fallback: read from the visible body if module-scope var unavailable
+      if (!transcript.length) {
+        var body = document.getElementById('ot-body');
+        if (body) {
+          transcript = Array.prototype.map.call(body.querySelectorAll('.ot-msg'), function (m) {
+            return {
+              role: m.classList.contains('ot-msg-user') ? 'user' : 'agent',
+              text: (m.lastChild && m.lastChild.textContent || '').trim()
+            };
+          }).filter(function (m) { return m.text; });
+        }
+      }
+      var payload = window.attachPartnerAttribution({
+        email: email,
+        name: (nameEl.value || '').trim() || undefined,
+        transcript: transcript,
+        language: lang,
+        referrer_url: document.referrer || undefined
+      });
+      fetch('/projects/api/v1/intake/abandoned-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = originalText;
+          if (res.ok && res.j && res.j.success) {
+            if (status) { status.textContent = lang === 'es' ? 'Recibido. Te contactaremos pronto.' : 'Got it. We will be in touch.'; status.className = 'abm-status ok'; }
+            setTimeout(close, 1800);
+          } else {
+            if (status) { status.textContent = (res.j && res.j.error) || (lang === 'es' ? 'Falló el envío' : 'Send failed'); status.className = 'abm-status err'; }
+          }
+        })
+        .catch(function (err) {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = originalText;
+          if (status) { status.textContent = err.message || 'Failed'; status.className = 'abm-status err'; }
+        });
     });
   })();
 

@@ -471,6 +471,73 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key. Agent IDs are public per ElevenLabs convai design;
 //   the API key stays server-side.
 //
+// POST /abandoned-conversation (T2.3)
+//   Public. Captures the warm leads who started a voice conversation
+//   but ended (Esc / click-stop / 10-min timeout) BEFORE running the
+//   AI Triage. The transcript + email lands in d2_abandoned_conversations
+//   for follow-up.
+//
+//   Body: { email, name?, company?, country?, transcript: [...],
+//           language, partner_slug?, utm_*, referrer_url? }
+//
+//   Rate-limited per IP via the shared triage bucket. Email validated
+//   server-side. ip_hash stored (not raw IP) for spam analysis without
+//   PII baggage.
+router.post('/abandoned-conversation', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({ success: false, error: `Too many submissions. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0) return res.status(400).json({ success: false, error: 'Valid email required.' });
+    const transcript = Array.isArray(b.transcript) ? b.transcript.slice(0, 200) : [];
+    const lang = b.language === 'es' ? 'es' : 'en';
+    const ua = String(req.headers['user-agent'] || '').slice(0, 500);
+    const crypto = require('crypto');
+    const ipHash = crypto.createHash('sha256').update(ip + (process.env.SESSION_SALT || 'd2ai-default-salt')).digest('hex').slice(0, 32);
+
+    const _str = (v, max) => (v == null ? null : String(v).trim().slice(0, max || 255) || null);
+    const row = await sequelize.query(
+      `INSERT INTO d2_abandoned_conversations
+         (email, name, company, country, transcript, transcript_len, language,
+          partner_slug, utm_source, utm_campaign, utm_medium, utm_content, utm_term,
+          referrer_url, user_agent, ip_hash)
+       VALUES (:email, :name, :company, :country, :transcript::jsonb, :tlen, :lang,
+               :partner_slug, :utm_source, :utm_campaign, :utm_medium, :utm_content, :utm_term,
+               :referrer_url, :user_agent, :ip_hash)
+       RETURNING id, created_at`,
+      {
+        replacements: {
+          email,
+          name:         _str(b.name, 255),
+          company:      _str(b.company, 255),
+          country:      _str(b.country, 120),
+          transcript:   JSON.stringify(transcript),
+          tlen:         transcript.length,
+          lang,
+          partner_slug: _str(b.partner_slug, 120),
+          utm_source:   _str(b.utm_source, 120),
+          utm_campaign: _str(b.utm_campaign, 255),
+          utm_medium:   _str(b.utm_medium, 120),
+          utm_content:  _str(b.utm_content, 255),
+          utm_term:     _str(b.utm_term, 255),
+          referrer_url: _str(b.referrer_url, 500),
+          user_agent:   ua || null,
+          ip_hash:      ipHash
+        },
+        type: sequelize.QueryTypes.INSERT
+      }
+    );
+    res.json({ success: true, id: row[0][0].id });
+  } catch (err) {
+    console.error('[D2AI-Intake] abandoned-conversation error:', err.message);
+    res.status(500).json({ success: false, error: 'Save failed.' });
+  }
+});
+
 // POST /email-transcript
 //   Public, user-clicked. Sends the orb conversation transcript to the
 //   prospect's email so they can share it internally before submitting.
