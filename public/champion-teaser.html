@@ -60,6 +60,11 @@
   .hero h1 em { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
   .hero .sub { font-size: 16px; color: var(--ink-dim); max-width: 680px; margin: 0 auto; }
 
+  /* Hero logo (Digit2AI mark, large, centered under the hero text) */
+  .hero-logo { display: flex; justify-content: center; align-items: center; margin: 8px 0 28px; }
+  .hero-logo img { display: block; max-width: 320px; width: 60%; height: auto; filter: drop-shadow(0 6px 24px rgba(124, 92, 255, 0.25)); }
+  @media (max-width: 720px) { .hero-logo img { max-width: 220px; width: 70%; } }
+
   /* 30-second pitch */
   .pitch {
     background: var(--grad-soft);
@@ -397,6 +402,10 @@
       <span class="i18n-es">Un curso intensivo de 5 minutos para que puedas responder con confianza a cualquier pregunta de un prospecto — y convertir la conversación en una solicitud real en digit2ai.com.</span>
     </p>
   </section>
+
+  <div class="hero-logo">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI" loading="lazy">
+  </div>
 
   <div class="pitch">
     <p>
