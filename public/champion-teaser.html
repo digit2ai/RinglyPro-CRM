@@ -83,6 +83,18 @@
   .pitch p { font-size: 17px; line-height: 1.55; color: var(--ink); }
   .pitch strong { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
 
+  /* Language toggle (EN / ES) */
+  .lang-toggle { display: inline-flex; gap: 0; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; background: var(--bg-elev); }
+  .lang-toggle button { background: transparent; border: none; padding: 5px 12px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; color: var(--ink-mute); cursor: pointer; font-family: inherit; transition: background 0.15s, color 0.15s; }
+  .lang-toggle button.active { background: var(--grad); color: #020617; }
+  .lang-toggle button:not(.active):hover { color: var(--ink); }
+  /* CSS-driven i18n: a single body class toggles which language's spans
+     are visible. Each translatable element ships with both languages
+     inline; one is always hidden. No JS needed for the swap itself —
+     only for clicking the toggle + persisting the choice. */
+  body.lang-es .i18n-en { display: none; }
+  body.lang-en .i18n-es { display: none; }
+
   /* Doctor vs Thermometer game-changer section */
   .gc-hero { background: linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(34,211,238,0.06) 100%); border: 1px solid rgba(124,92,255,0.3); border-radius: 14px; padding: 28px 28px 20px; margin-top: 22px; }
   .gc-tagline { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: clamp(18px, 3vw, 24px); font-weight: 900; line-height: 1.3; text-align: center; flex-wrap: wrap; margin-bottom: 12px; }
@@ -203,9 +215,13 @@
   .script-row { padding: 18px 22px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
   .script-row:last-child { border-bottom: none; }
   .script-row .says { font-size: 13px; color: var(--ink-dim); }
-  .script-row .says::before { content: 'PROSPECT SAYS'; display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--ink-mute); margin-bottom: 6px; }
+  .script-row .says::before { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--ink-mute); margin-bottom: 6px; }
+  body.lang-en .script-row .says::before { content: 'PROSPECT SAYS'; }
+  body.lang-es .script-row .says::before { content: 'EL PROSPECTO DICE'; }
   .script-row .reply { font-size: 13.5px; color: var(--ink); border-left: 3px solid var(--cyan); padding-left: 14px; }
-  .script-row .reply::before { content: 'YOU SAY'; display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--cyan); margin-bottom: 6px; }
+  .script-row .reply::before { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2px; color: var(--cyan); margin-bottom: 6px; }
+  body.lang-en .script-row .reply::before { content: 'YOU SAY'; }
+  body.lang-es .script-row .reply::before { content: 'TÚ DICES'; }
 
   /* Why digit2ai.com */
   .why { background: var(--grad-soft); border: 1px solid rgba(124,92,255,0.3); border-radius: 12px; padding: 24px; }
@@ -349,7 +365,7 @@
   }
 </style>
 </head>
-<body>
+<body class="lang-en">
 <div class="wrap">
 
   <header class="hd">
@@ -357,18 +373,36 @@
       <div class="brand">DIGIT2AI<span class="lab">Neural Intelligence</span></div>
     </div>
     <div class="hd-meta">
-      <span class="hd-pill">Champion Brief</span><br>
-      Internal use · For partners who sell Digit2AI
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" data-lang="en" class="active">EN</button>
+          <button type="button" data-lang="es">ES</button>
+        </div>
+        <div>
+          <span class="hd-pill"><span class="i18n-en">Champion Brief</span><span class="i18n-es">Brief para Champion</span></span><br>
+          <span class="i18n-en">Internal use · For partners who sell Digit2AI</span>
+          <span class="i18n-es">Uso interno · Para socios que venden Digit2AI</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <section class="hero">
-    <h1>What you're <em>actually selling</em></h1>
-    <p class="sub">A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.</p>
+    <h1>
+      <span class="i18n-en">What you're <em>actually selling</em></span>
+      <span class="i18n-es">Lo que <em>realmente estás vendiendo</em></span>
+    </h1>
+    <p class="sub">
+      <span class="i18n-en">A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.</span>
+      <span class="i18n-es">Un curso intensivo de 5 minutos para que puedas responder con confianza a cualquier pregunta de un prospecto — y convertir la conversación en una solicitud real en digit2ai.com.</span>
+    </p>
   </section>
 
   <div class="pitch">
-    <p>We build <strong>custom AI-powered software</strong> for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called <strong>Neural Intelligence</strong>, wired together through the open <strong>MCP standard</strong> — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <strong>digit2ai.com</strong>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
+    <p>
+      <span class="i18n-en">We build <strong>custom AI-powered software</strong> for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called <strong>Neural Intelligence</strong>, wired together through the open <strong>MCP standard</strong> — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <strong>digit2ai.com</strong>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.</span>
+      <span class="i18n-es">Construimos <strong>software personalizado impulsado por IA</strong> para cualquier empresa que necesite moverse más rápido de lo que sus herramientas le permiten — operaciones, finanzas, ventas, servicio al cliente, operaciones ejecutivas. Lo hacemos con una pila coordinada de agentes de IA especializados llamada <strong>Neural Intelligence</strong>, conectada mediante el estándar abierto <strong>MCP</strong> — un equipo senior de consultoría que vive dentro del software, define el alcance del trabajo, redacta los entregables, construye el producto y lo mantiene funcionando. Los prospectos envían una solicitud en <strong>digit2ai.com</strong>, el sistema la clasifica en minutos, y una persona real responde con un plan de construcción en 48 horas.</span>
+    </p>
   </div>
 
   <!-- ============================================================ -->
@@ -437,8 +471,10 @@
       </g>
 
       <!-- header text -->
-      <text class="subtitle" x="450" y="38" text-anchor="middle">MODEL CONTEXT PROTOCOL  ·  DIGIT2AI NEURAL INTELLIGENCE</text>
-      <text class="title" x="450" y="66" text-anchor="middle">One brain. Eight agents. Your customer's stack — wired in.</text>
+      <text class="subtitle i18n-en" x="450" y="38" text-anchor="middle">MODEL CONTEXT PROTOCOL  ·  DIGIT2AI NEURAL INTELLIGENCE</text>
+      <text class="subtitle i18n-es" x="450" y="38" text-anchor="middle">MODEL CONTEXT PROTOCOL  ·  DIGIT2AI NEURAL INTELLIGENCE</text>
+      <text class="title i18n-en" x="450" y="66" text-anchor="middle">One brain. Eight agents. Your customer's stack — wired in.</text>
+      <text class="title i18n-es" x="450" y="66" text-anchor="middle">Un cerebro. Ocho agentes. La pila de tu cliente — conectada.</text>
 
       <!-- center glow + breathing pulses (center 450, 360) -->
       <circle class="glow" cx="450" cy="360" r="220">
@@ -685,144 +721,204 @@
 
     </svg>
     <div class="stage-caption">
-      <strong>MCP CORE</strong> · context, routing, orchestrator  ·  <strong>8 SPECIALIZED AGENTS</strong> · each wired to the customer's actual systems via the open Model Context Protocol
+      <span class="i18n-en"><strong>MCP CORE</strong> · context, routing, orchestrator  ·  <strong>8 SPECIALIZED AGENTS</strong> · each wired to the customer's actual systems via the open Model Context Protocol</span>
+      <span class="i18n-es"><strong>NÚCLEO MCP</strong> · contexto, enrutamiento, orquestador  ·  <strong>8 AGENTES ESPECIALIZADOS</strong> · cada uno conectado a los sistemas reales del cliente mediante el estándar abierto Model Context Protocol</span>
     </div>
   </div>
 
   <!-- ============================================================ -->
   <!-- GAME-CHANGER: Doctor vs Thermometer framing -->
   <section class="sec" id="game-changer">
-    <div class="sec-num"><span class="n">1</span> Why this is the game-changer</div>
-    <h2>Most AI is a thermometer. Digit2AI is the doctor.</h2>
-    <p class="lead">A thermometer tells you a number — 102°F, $40K below pipeline, churn up 6%. A doctor sees the number, asks why, walks the patient through every system, finds the root cause, and prescribes a treatment. Then administers it. That is the difference between every AI dashboard your prospect already owns and Neural Intelligence MCP.</p>
+    <div class="sec-num">
+      <span class="n">1</span>
+      <span class="i18n-en">Why this is the game-changer</span>
+      <span class="i18n-es">Por qué esto cambia las reglas del juego</span>
+    </div>
+    <h2>
+      <span class="i18n-en">Most AI is a thermometer. Digit2AI is the doctor.</span>
+      <span class="i18n-es">La mayoría de la IA es un termómetro. Digit2AI es el médico.</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">A thermometer tells you a number — 102°F, $40K below pipeline, churn up 6%. A doctor sees the number, asks why, walks the patient through every system, finds the root cause, and prescribes a treatment. Then administers it. That is the difference between every AI dashboard your prospect already owns and Neural Intelligence MCP.</span>
+      <span class="i18n-es">Un termómetro te dice un número — 39°C, $40K por debajo del pipeline, churn subió 6%. Un médico ve el número, pregunta por qué, examina al paciente sistema por sistema, encuentra la causa raíz y receta un tratamiento. Y luego lo administra. Esa es la diferencia entre cualquier dashboard de IA que tu prospecto ya tiene y Neural Intelligence MCP.</span>
+    </p>
 
     <div class="gc-hero">
       <div class="gc-tagline">
-        <span class="strike">"Here's a chart. Good luck."</span>
+        <span class="strike">
+          <span class="i18n-en">"Here's a chart. Good luck."</span>
+          <span class="i18n-es">"Aquí tienes una gráfica. Buena suerte."</span>
+        </span>
         <span class="vs">VS</span>
-        <span class="win">"Here's the leak. Here's why. Here's the fix — already in motion."</span>
+        <span class="win">
+          <span class="i18n-en">"Here's the leak. Here's why. Here's the fix — already in motion."</span>
+          <span class="i18n-es">"Aquí está la fuga. Aquí está por qué. Aquí está la solución — ya en marcha."</span>
+        </span>
       </div>
-      <p class="gc-setup">Most AI products stop at <strong>observability</strong> — they show you what's wrong and leave the rest to your team. Neural Intelligence MCP runs the full clinical loop: <strong>detect → diagnose → treat</strong>. Three capabilities, one brain, eight specialized agents, wired into your prospect's real systems through the open MCP standard.</p>
+      <p class="gc-setup">
+        <span class="i18n-en">Most AI products stop at <strong>observability</strong> — they show you what's wrong and leave the rest to your team. Neural Intelligence MCP runs the full clinical loop: <strong>detect → diagnose → treat</strong>. Three capabilities, one brain, eight specialized agents, wired into your prospect's real systems through the open MCP standard.</span>
+        <span class="i18n-es">La mayoría de los productos de IA se detienen en la <strong>observabilidad</strong> — te muestran qué está mal y dejan el resto a tu equipo. Neural Intelligence MCP ejecuta el ciclo clínico completo: <strong>detectar → diagnosticar → tratar</strong>. Tres capacidades, un cerebro, ocho agentes especializados, conectados a los sistemas reales de tu prospecto mediante el estándar abierto MCP.</span>
+      </p>
 
       <div class="ddt-grid">
         <div class="ddt">
-          <div class="step">01 · Detect</div>
-          <h3>Finds the money leak before anyone else sees it</h3>
-          <p>The MCP brain reads your prospect's CRM, billing system, support inbox, voice channel, ops dashboards, and contracts — <strong>all at once, continuously.</strong> It surfaces the patterns humans miss: silent churn signals, billing errors compounding week-over-week, sales pipeline rotating out of one segment, support tickets piling up on one rep, contracts about to auto-renew at the wrong rate. <strong>The leak gets named before it costs real money.</strong></p>
+          <div class="step"><span class="i18n-en">01 · Detect</span><span class="i18n-es">01 · Detectar</span></div>
+          <h3>
+            <span class="i18n-en">Finds the money leak before anyone else sees it</span>
+            <span class="i18n-es">Encuentra la fuga de dinero antes que cualquier otro la vea</span>
+          </h3>
+          <p>
+            <span class="i18n-en">The MCP brain reads your prospect's CRM, billing system, support inbox, voice channel, ops dashboards, and contracts — <strong>all at once, continuously.</strong> It surfaces the patterns humans miss: silent churn signals, billing errors compounding week-over-week, sales pipeline rotating out of one segment, support tickets piling up on one rep, contracts about to auto-renew at the wrong rate. <strong>The leak gets named before it costs real money.</strong></span>
+            <span class="i18n-es">El cerebro MCP lee el CRM de tu prospecto, su sistema de facturación, su bandeja de soporte, su canal de voz, sus dashboards de operaciones y sus contratos — <strong>todo al mismo tiempo, de forma continua.</strong> Saca a la luz los patrones que los humanos no ven: señales silenciosas de churn, errores de facturación que se acumulan semana tras semana, pipeline de ventas que rota fuera de un segmento, tickets de soporte amontonándose en un solo representante, contratos a punto de renovarse automáticamente a la tarifa equivocada. <strong>La fuga se nombra antes de que cueste dinero real.</strong></span>
+          </p>
         </div>
 
         <div class="ddt">
-          <div class="step">02 · Diagnose</div>
-          <h3>Root cause — not just the symptom</h3>
-          <p>A thermometer says <em>"102°F."</em> A doctor says <em>"bacterial infection from a wound that didn't heal — here's why."</em> The MCP brain cross-references the symptom against every connected system, eliminates dead ends, and tells your prospect which <strong>broken process, missing handoff, or bad assumption</strong> is actually causing the leak. With <strong>confidence scores</strong>. With <strong>evidence</strong>. Not vibes.</p>
+          <div class="step"><span class="i18n-en">02 · Diagnose</span><span class="i18n-es">02 · Diagnosticar</span></div>
+          <h3>
+            <span class="i18n-en">Root cause — not just the symptom</span>
+            <span class="i18n-es">Causa raíz — no solo el síntoma</span>
+          </h3>
+          <p>
+            <span class="i18n-en">A thermometer says <em>"102°F."</em> A doctor says <em>"bacterial infection from a wound that didn't heal — here's why."</em> The MCP brain cross-references the symptom against every connected system, eliminates dead ends, and tells your prospect which <strong>broken process, missing handoff, or bad assumption</strong> is actually causing the leak. With <strong>confidence scores</strong>. With <strong>evidence</strong>. Not vibes.</span>
+            <span class="i18n-es">Un termómetro dice <em>"39°C."</em> Un médico dice <em>"infección bacteriana de una herida que no sanó — aquí está el porqué."</em> El cerebro MCP cruza el síntoma con cada sistema conectado, descarta callejones sin salida y le dice a tu prospecto qué <strong>proceso roto, qué entrega perdida o qué suposición equivocada</strong> está realmente causando la fuga. Con <strong>puntajes de confianza</strong>. Con <strong>evidencia</strong>. No con corazonadas.</span>
+          </p>
         </div>
 
         <div class="ddt">
-          <div class="step">03 · Treat</div>
-          <h3>Ships the fix — not a recommendation</h3>
-          <p>Most AI ends at <em>"you should consider..."</em>. Neural Intelligence MCP does the actual work: <strong>drafts the email to the at-risk customer, opens the ticket to fix the billing error, schedules the meeting with the rep who's drowning, generates the board deck on what changed.</strong> Your prospect reviews and approves with one click — but the work is already done. That's the doctor visit ending in a written prescription, not a referral to "see a specialist."</p>
+          <div class="step"><span class="i18n-en">03 · Treat</span><span class="i18n-es">03 · Tratar</span></div>
+          <h3>
+            <span class="i18n-en">Ships the fix — not a recommendation</span>
+            <span class="i18n-es">Entrega la solución — no una recomendación</span>
+          </h3>
+          <p>
+            <span class="i18n-en">Most AI ends at <em>"you should consider..."</em>. Neural Intelligence MCP does the actual work: <strong>drafts the email to the at-risk customer, opens the ticket to fix the billing error, schedules the meeting with the rep who's drowning, generates the board deck on what changed.</strong> Your prospect reviews and approves with one click — but the work is already done. That's the doctor visit ending in a written prescription, not a referral to "see a specialist."</span>
+            <span class="i18n-es">La mayoría de la IA termina con <em>"deberías considerar..."</em>. Neural Intelligence MCP hace el trabajo real: <strong>redacta el correo para el cliente en riesgo, abre el ticket para corregir el error de facturación, agenda la reunión con el representante saturado, genera la presentación de directorio sobre lo que cambió.</strong> Tu prospecto revisa y aprueba con un clic — pero el trabajo ya está hecho. Esa es la consulta médica que termina con una receta escrita, no con una derivación para "ver a un especialista".</span>
+          </p>
         </div>
       </div>
     </div>
 
     <div class="gc-table" aria-label="Thermometer vs Doctor comparison">
       <div class="gc-row head">
-        <div class="gc-cell therm">Most AI products</div>
+        <div class="gc-cell therm"><span class="i18n-en">Most AI products</span><span class="i18n-es">La mayoría de los productos de IA</span></div>
         <div class="gc-cell doc">Digit2AI Neural Intelligence MCP</div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">Reads data inside one app</div>
-        <div class="gc-cell doc">Reads data across every connected system and cross-references it</div>
+        <div class="gc-cell therm"><span class="i18n-en">Reads data inside one app</span><span class="i18n-es">Lee datos dentro de una sola aplicación</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Reads data across every connected system and cross-references it</span><span class="i18n-es">Lee datos a través de cada sistema conectado y los cruza entre sí</span></div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">Shows a dashboard</div>
-        <div class="gc-cell doc">Diagnoses what changed and why, with confidence + evidence</div>
+        <div class="gc-cell therm"><span class="i18n-en">Shows a dashboard</span><span class="i18n-es">Muestra un dashboard</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Diagnoses what changed and why, with confidence + evidence</span><span class="i18n-es">Diagnostica qué cambió y por qué, con confianza + evidencia</span></div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">Suggests "you should consider..."</div>
-        <div class="gc-cell doc">Drafts the email, opens the ticket, ships the fix</div>
+        <div class="gc-cell therm"><span class="i18n-en">Suggests "you should consider..."</span><span class="i18n-es">Sugiere "deberías considerar..."</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Drafts the email, opens the ticket, ships the fix</span><span class="i18n-es">Redacta el correo, abre el ticket, entrega la solución</span></div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">Works on what you paste in</div>
-        <div class="gc-cell doc">Works on live business data via MCP</div>
+        <div class="gc-cell therm"><span class="i18n-en">Works on what you paste in</span><span class="i18n-es">Funciona con lo que pegas dentro</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Works on live business data via MCP</span><span class="i18n-es">Funciona con los datos vivos del negocio mediante MCP</span></div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">Forgets the conversation</div>
-        <div class="gc-cell doc">Remembers every project, every decision, every promise</div>
+        <div class="gc-cell therm"><span class="i18n-en">Forgets the conversation</span><span class="i18n-es">Olvida la conversación</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Remembers every project, every decision, every promise</span><span class="i18n-es">Recuerda cada proyecto, cada decisión, cada promesa</span></div>
       </div>
       <div class="gc-row">
-        <div class="gc-cell therm">One generic model</div>
-        <div class="gc-cell doc">Eight specialists, each routed by the MCP brain to the right job</div>
+        <div class="gc-cell therm"><span class="i18n-en">One generic model</span><span class="i18n-es">Un solo modelo genérico</span></div>
+        <div class="gc-cell doc"><span class="i18n-en">Eight specialists, each routed by the MCP brain to the right job</span><span class="i18n-es">Ocho especialistas, cada uno enrutado por el cerebro MCP al trabajo correcto</span></div>
       </div>
     </div>
 
-    <p class="lead" style="text-align:center;margin-top:22px;margin-bottom:0">When the click happens, this is the sentence the champion will repeat: <em style="color:var(--ink);font-weight:600;font-style:normal">"Their AI doesn't just take your temperature — it diagnoses and treats the problem, on your live data, with eight specialists."</em></p>
+    <p class="lead" style="text-align:center;margin-top:22px;margin-bottom:0">
+      <span class="i18n-en">When the click happens, this is the sentence the champion will repeat: <em style="color:var(--ink);font-weight:600;font-style:normal">"Their AI doesn't just take your temperature — it diagnoses and treats the problem, on your live data, with eight specialists."</em></span>
+      <span class="i18n-es">Cuando ocurre el clic mental, esta es la frase que el champion va a repetir: <em style="color:var(--ink);font-weight:600;font-style:normal">"Su IA no solo te toma la temperatura — diagnostica y trata el problema, sobre tus datos vivos, con ocho especialistas."</em></span>
+    </p>
   </section>
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">2</span> What MCP Neural AI actually means</div>
-    <h2>It's a coordinated team of AI agents — not one chatbot.</h2>
-    <p class="lead">"MCP" stands for <em>Model Context Protocol</em> — the way our specialized agents share context and hand work between each other. When a customer brings us a problem, we don't throw it at one big model; we route it through agents that each do one thing very well.</p>
+    <div class="sec-num">
+      <span class="n">2</span>
+      <span class="i18n-en">What MCP Neural AI actually means</span>
+      <span class="i18n-es">Qué significa realmente MCP Neural AI</span>
+    </div>
+    <h2>
+      <span class="i18n-en">It's a coordinated team of AI agents — not one chatbot.</span>
+      <span class="i18n-es">Es un equipo coordinado de agentes de IA — no un chatbot.</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">"MCP" stands for <em>Model Context Protocol</em> — the way our specialized agents share context and hand work between each other. When a customer brings us a problem, we don't throw it at one big model; we route it through agents that each do one thing very well.</span>
+      <span class="i18n-es">"MCP" significa <em>Model Context Protocol</em> — la forma en que nuestros agentes especializados comparten contexto y se pasan el trabajo entre sí. Cuando un cliente nos trae un problema, no se lo lanzamos a un modelo grande; lo enrutamos a través de agentes que hacen cada uno una cosa muy bien.</span>
+    </p>
 
     <div class="mcp-grid">
       <div class="mcp-card">
-        <h4>Why this matters</h4>
-        <p>One generic chatbot can't both research a market, draft a board deck, and write production code. Our agents are specialized and chained — each agent's output is the next agent's input. The customer gets work product that's actually usable, not a vague summary.</p>
+        <h4><span class="i18n-en">Why this matters</span><span class="i18n-es">Por qué importa esto</span></h4>
+        <p>
+          <span class="i18n-en">One generic chatbot can't both research a market, draft a board deck, and write production code. Our agents are specialized and chained — each agent's output is the next agent's input. The customer gets work product that's actually usable, not a vague summary.</span>
+          <span class="i18n-es">Un solo chatbot genérico no puede investigar un mercado, redactar una presentación para directorio y escribir código de producción a la vez. Nuestros agentes son especializados y están encadenados — la salida de cada agente es la entrada del siguiente. El cliente recibe entregables realmente utilizables, no un resumen vago.</span>
+        </p>
       </div>
       <div class="mcp-card">
-        <h4>What the customer gets</h4>
-        <p>Concrete deliverables on a calendar: a slide-by-slide deck, a working web app, a board memo, an AI agent that answers their phones — produced by the right agent for the job, reviewed by a human, and shipped on a defined timeline.</p>
+        <h4><span class="i18n-en">What the customer gets</span><span class="i18n-es">Qué recibe el cliente</span></h4>
+        <p>
+          <span class="i18n-en">Concrete deliverables on a calendar: a slide-by-slide deck, a working web app, a board memo, an AI agent that answers their phones — produced by the right agent for the job, reviewed by a human, and shipped on a defined timeline.</span>
+          <span class="i18n-es">Entregables concretos con fechas: una presentación slide por slide, una aplicación web funcionando, un memo para directorio, un agente de IA que contesta sus teléfonos — producidos por el agente correcto para cada tarea, revisados por un humano y entregados en un plazo definido.</span>
+        </p>
       </div>
     </div>
 
     <div class="agents">
       <div class="agents-top">
-        <div class="core">MCP CORE — routes each task to the right specialist</div>
-        <div class="label">↓ Customer's problem flows into the right agent ↓</div>
+        <div class="core"><span class="i18n-en">MCP CORE — routes each task to the right specialist</span><span class="i18n-es">NÚCLEO MCP — enruta cada tarea al especialista correcto</span></div>
+        <div class="label">
+          <span class="i18n-en">↓ Customer's problem flows into the right agent ↓</span>
+          <span class="i18n-es">↓ El problema del cliente fluye al agente correcto ↓</span>
+        </div>
       </div>
       <div class="agents-row">
         <div class="agent">
           <div class="e">01</div>
-          <div class="n">Senior Business Analyst</div>
-          <div class="d">Drafts decks, business plans, market research, strategy memos.</div>
+          <div class="n"><span class="i18n-en">Senior Business Analyst</span><span class="i18n-es">Analista de Negocio Senior</span></div>
+          <div class="d"><span class="i18n-en">Drafts decks, business plans, market research, strategy memos.</span><span class="i18n-es">Redacta presentaciones, planes de negocio, investigación de mercado, memos de estrategia.</span></div>
         </div>
         <div class="agent">
           <div class="e">02</div>
-          <div class="n">Research Brief</div>
-          <div class="d">Web search + synthesis. Competitive scans, regulatory checks, partner shortlists.</div>
+          <div class="n"><span class="i18n-en">Research Brief</span><span class="i18n-es">Investigación Sintetizada</span></div>
+          <div class="d"><span class="i18n-en">Web search + synthesis. Competitive scans, regulatory checks, partner shortlists.</span><span class="i18n-es">Búsqueda web + síntesis. Análisis competitivos, revisiones regulatorias, listas cortas de socios.</span></div>
         </div>
         <div class="agent">
           <div class="e">03</div>
-          <div class="n">Outreach Drafter</div>
-          <div class="d">Writes emails, WhatsApp messages, and follow-ups in EN or ES.</div>
+          <div class="n"><span class="i18n-en">Outreach Drafter</span><span class="i18n-es">Redactor de Outreach</span></div>
+          <div class="d"><span class="i18n-en">Writes emails, WhatsApp messages, and follow-ups in EN or ES.</span><span class="i18n-es">Escribe correos, mensajes de WhatsApp y seguimientos en inglés o español.</span></div>
         </div>
         <div class="agent">
           <div class="e">04</div>
-          <div class="n">Architect &amp; Builder</div>
-          <div class="d">Scopes the build, writes code, runs UAT, ships the live app.</div>
+          <div class="n"><span class="i18n-en">Architect &amp; Builder</span><span class="i18n-es">Arquitecto y Constructor</span></div>
+          <div class="d"><span class="i18n-en">Scopes the build, writes code, runs UAT, ships the live app.</span><span class="i18n-es">Define el alcance, escribe el código, ejecuta UAT, despliega la app en producción.</span></div>
         </div>
       </div>
       <div class="agents-row">
         <div class="agent">
           <div class="e">05</div>
-          <div class="n">Inbox Triage</div>
-          <div class="d">Scores every incoming project request, flags regulatory risks, recommends go/no-go.</div>
+          <div class="n"><span class="i18n-en">Inbox Triage</span><span class="i18n-es">Triage de Bandeja</span></div>
+          <div class="d"><span class="i18n-en">Scores every incoming project request, flags regulatory risks, recommends go/no-go.</span><span class="i18n-es">Califica cada solicitud entrante, marca riesgos regulatorios, recomienda continuar o detener.</span></div>
         </div>
         <div class="agent">
           <div class="e">06</div>
-          <div class="n">Meeting Minutes Synthesizer</div>
-          <div class="d">Turns raw call notes into summary + action items + tasks auto-assigned to owners.</div>
+          <div class="n"><span class="i18n-en">Meeting Minutes Synthesizer</span><span class="i18n-es">Sintetizador de Actas</span></div>
+          <div class="d"><span class="i18n-en">Turns raw call notes into summary + action items + tasks auto-assigned to owners.</span><span class="i18n-es">Convierte notas crudas de llamadas en resumen + items de acción + tareas asignadas automáticamente a sus dueños.</span></div>
         </div>
         <div class="agent">
           <div class="e">07</div>
-          <div class="n">Voice AI Agents</div>
-          <div class="d">Rachel (EN), Ana &amp; Lina (ES) answer phones 24/7 — qualify leads, book, log to CRM.</div>
+          <div class="n"><span class="i18n-en">Voice AI Agents</span><span class="i18n-es">Agentes de Voz IA</span></div>
+          <div class="d"><span class="i18n-en">Rachel (EN), Ana &amp; Lina (ES) answer phones 24/7 — qualify leads, book, log to CRM.</span><span class="i18n-es">Rachel (EN), Ana y Lina (ES) contestan teléfonos 24/7 — califican leads, agendan, registran en el CRM.</span></div>
         </div>
         <div class="agent">
           <div class="e">08</div>
-          <div class="n">Neural Findings</div>
-          <div class="d">Watches every project for stalls, missing owners, overdue milestones — pings before things slip.</div>
+          <div class="n"><span class="i18n-en">Neural Findings</span><span class="i18n-es">Hallazgos Neurales</span></div>
+          <div class="d"><span class="i18n-en">Watches every project for stalls, missing owners, overdue milestones — pings before things slip.</span><span class="i18n-es">Vigila cada proyecto buscando estancamientos, dueños faltantes, hitos vencidos — avisa antes de que las cosas se caigan.</span></div>
         </div>
       </div>
     </div>
@@ -830,13 +926,19 @@
     <!-- ===== FULL ARMY: specialist agents available on demand ===== -->
     <div class="army" id="army">
       <div class="army-head">
-        <h3>The full army — 50+ specialist agents on call</h3>
-        <p>The 8 core agents above are the always-on stack. Behind them sits a roster of specialists the MCP brain spins up the moment a project needs them. No new contracts. No "let me find a partner who does that." Every customer gets the whole army from day one.</p>
+        <h3>
+          <span class="i18n-en">The full army — 50+ specialist agents on call</span>
+          <span class="i18n-es">El ejército completo — 50+ agentes especialistas a disposición</span>
+        </h3>
+        <p>
+          <span class="i18n-en">The 8 core agents above are the always-on stack. Behind them sits a roster of specialists the MCP brain spins up the moment a project needs them. No new contracts. No "let me find a partner who does that." Every customer gets the whole army from day one.</span>
+          <span class="i18n-es">Los 8 agentes principales arriba son la pila siempre activa. Detrás de ellos hay un roster de especialistas que el cerebro MCP activa en el momento que un proyecto los necesita. Sin contratos nuevos. Sin "déjame buscar a un socio que haga eso." Cada cliente recibe el ejército completo desde el día uno.</span>
+        </p>
       </div>
 
       <div class="army-grid">
         <div class="squad">
-          <h4>Engineering &amp; Build <span class="count">12</span></h4>
+          <h4><span class="i18n-en">Engineering &amp; Build</span><span class="i18n-es">Ingeniería y Construcción</span> <span class="count">12</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Full Stack Developer</span>
             <span class="pill">Senior Frontend Engineer</span>
@@ -854,7 +956,7 @@
         </div>
 
         <div class="squad">
-          <h4>Data, ML &amp; Math <span class="count">8</span></h4>
+          <h4><span class="i18n-en">Data, ML &amp; Math</span><span class="i18n-es">Datos, ML y Matemáticas</span> <span class="count">8</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Data Engineer</span>
             <span class="pill">Senior Data Analyst</span>
@@ -868,7 +970,7 @@
         </div>
 
         <div class="squad">
-          <h4>Business &amp; Strategy <span class="count">8</span></h4>
+          <h4><span class="i18n-en">Business &amp; Strategy</span><span class="i18n-es">Negocios y Estrategia</span> <span class="count">8</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Project Manager</span>
             <span class="pill">Senior Product Manager</span>
@@ -882,7 +984,7 @@
         </div>
 
         <div class="squad">
-          <h4>Sales, Marketing &amp; Customer <span class="count">9</span></h4>
+          <h4><span class="i18n-en">Sales, Marketing &amp; Customer</span><span class="i18n-es">Ventas, Marketing y Cliente</span> <span class="count">9</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Sales Engineer</span>
             <span class="pill">Senior Lead Qualifier</span>
@@ -897,7 +999,7 @@
         </div>
 
         <div class="squad">
-          <h4>Finance &amp; Risk <span class="count">7</span></h4>
+          <h4><span class="i18n-en">Finance &amp; Risk</span><span class="i18n-es">Finanzas y Riesgo</span> <span class="count">7</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Accountant</span>
             <span class="pill">Senior FP&amp;A Analyst</span>
@@ -910,7 +1012,7 @@
         </div>
 
         <div class="squad">
-          <h4>Legal, Compliance &amp; HR <span class="count">8</span></h4>
+          <h4><span class="i18n-en">Legal, Compliance &amp; HR</span><span class="i18n-es">Legal, Cumplimiento y RR.HH.</span> <span class="count">8</span></h4>
           <div class="squad-pills">
             <span class="pill">Senior Contract Drafter</span>
             <span class="pill">Senior NDA / IP Reviewer</span>
@@ -924,76 +1026,138 @@
         </div>
       </div>
 
-      <p class="army-foot"><strong>8 core + 52 specialists = 60-agent workforce</strong> · routed by one MCP brain · wired to the customer's live systems via the open Model Context Protocol · new specialists added every quarter, every customer gets them automatically</p>
+      <p class="army-foot">
+        <span class="i18n-en"><strong>8 core + 52 specialists = 60-agent workforce</strong> · routed by one MCP brain · wired to the customer's live systems via the open Model Context Protocol · new specialists added every quarter, every customer gets them automatically</span>
+        <span class="i18n-es"><strong>8 principales + 52 especialistas = fuerza de 60 agentes</strong> · enrutados por un cerebro MCP · conectados a los sistemas vivos del cliente mediante el estándar abierto Model Context Protocol · nuevos especialistas cada trimestre, cada cliente los recibe automáticamente</span>
+      </p>
     </div>
   </section>
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">3</span> The four things we deliver</div>
-    <h2>Custom software · AI agents on tap · 22 vertical platforms · Voice AI</h2>
-    <p class="lead">When you're talking to a prospect, this is the menu. Most customers buy one or two — the platforms and the build service are the two most common.</p>
+    <div class="sec-num">
+      <span class="n">3</span>
+      <span class="i18n-en">The four things we deliver</span>
+      <span class="i18n-es">Las cuatro cosas que entregamos</span>
+    </div>
+    <h2>
+      <span class="i18n-en">Custom software · AI agents on tap · 22 vertical platforms · Voice AI</span>
+      <span class="i18n-es">Software personalizado · Agentes de IA bajo demanda · 22 plataformas verticales · IA de Voz</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">When you're talking to a prospect, this is the menu. Most customers buy one or two — the platforms and the build service are the two most common.</span>
+      <span class="i18n-es">Cuando hablas con un prospecto, este es el menú. La mayoría de los clientes compra uno o dos — las plataformas y el servicio de construcción son los dos más comunes.</span>
+    </p>
 
     <div class="pillars">
       <div class="pillar">
-        <div class="num">01 · BUILD SERVICE</div>
-        <h3>AI-Built Custom Software</h3>
-        <p class="what">Prospect describes their problem. Our intake AI scores fit and drafts a build plan. A human reviews. The Architect agent writes the code, runs SIT (system integration testing), hands off to UAT (user acceptance testing), ships to production.</p>
-        <div class="deliv"><strong>What ships</strong>A working web app on their domain, with documentation, ongoing AI agent support, and a 99.9% SLA.</div>
+        <div class="num"><span class="i18n-en">01 · BUILD SERVICE</span><span class="i18n-es">01 · SERVICIO DE CONSTRUCCIÓN</span></div>
+        <h3>
+          <span class="i18n-en">AI-Built Custom Software</span>
+          <span class="i18n-es">Software Personalizado Construido por IA</span>
+        </h3>
+        <p class="what">
+          <span class="i18n-en">Prospect describes their problem. Our intake AI scores fit and drafts a build plan. A human reviews. The Architect agent writes the code, runs SIT (system integration testing), hands off to UAT (user acceptance testing), ships to production.</span>
+          <span class="i18n-es">El prospecto describe su problema. Nuestra IA de intake califica el ajuste y redacta un plan de construcción. Un humano revisa. El agente Arquitecto escribe el código, ejecuta SIT (pruebas de integración de sistema), entrega a UAT (pruebas de aceptación de usuario), y despliega en producción.</span>
+        </p>
+        <div class="deliv">
+          <strong><span class="i18n-en">What ships</span><span class="i18n-es">Qué se entrega</span></strong>
+          <span class="i18n-en">A working web app on their domain, with documentation, ongoing AI agent support, and a 99.9% SLA.</span>
+          <span class="i18n-es">Una aplicación web funcionando en su dominio, con documentación, soporte continuo de agentes de IA y un SLA del 99.9%.</span>
+        </div>
       </div>
       <div class="pillar">
-        <div class="num">02 · BA-ON-DEMAND</div>
-        <h3>Senior Business Analyst on tap</h3>
-        <p class="what">For prospects who don't need software — they need help thinking. Our Senior BA agent produces decks, business plans, competitive analyses, regulatory write-ups, partnership briefs, and roadmaps. Real content, not summaries.</p>
-        <div class="deliv"><strong>What ships</strong>A reviewable artifact (deck outline, prose document, framework, roadmap) per task, in English or Spanish, with confidence flags and verify-this notes.</div>
+        <div class="num"><span class="i18n-en">02 · BA-ON-DEMAND</span><span class="i18n-es">02 · BA BAJO DEMANDA</span></div>
+        <h3>
+          <span class="i18n-en">Senior Business Analyst on tap</span>
+          <span class="i18n-es">Analista de Negocio Senior a demanda</span>
+        </h3>
+        <p class="what">
+          <span class="i18n-en">For prospects who don't need software — they need help thinking. Our Senior BA agent produces decks, business plans, competitive analyses, regulatory write-ups, partnership briefs, and roadmaps. Real content, not summaries.</span>
+          <span class="i18n-es">Para prospectos que no necesitan software — necesitan ayuda para pensar. Nuestro agente Senior BA produce presentaciones, planes de negocio, análisis competitivos, redacciones regulatorias, briefs de alianzas y hojas de ruta. Contenido real, no resúmenes.</span>
+        </p>
+        <div class="deliv">
+          <strong><span class="i18n-en">What ships</span><span class="i18n-es">Qué se entrega</span></strong>
+          <span class="i18n-en">A reviewable artifact (deck outline, prose document, framework, roadmap) per task, in English or Spanish, with confidence flags and verify-this notes.</span>
+          <span class="i18n-es">Un artefacto revisable (esquema de presentación, documento, framework, hoja de ruta) por tarea, en inglés o español, con marcadores de confianza y notas para verificar.</span>
+        </div>
       </div>
       <div class="pillar">
-        <div class="num">03 · 22 PLATFORMS</div>
-        <h3>Pre-Built Vertical Platforms</h3>
-        <p class="what">21 live platforms across 22 verticals — chambers of commerce, financial wellness, healthcare matching, urban innovation, mobility, hospitality. When a prospect's vertical matches one, deployment drops from months to weeks.</p>
-        <div class="deliv"><strong>Live examples</strong>CamaraVirtual (chamber networks), PLANEA (financial wellness), Cali CityLab (urban innovation), Pinaxis (warehouse analytics), HISPATEC (professional networks), Torna Idioma (corporate language training), CW Carriers (logistics).</div>
+        <div class="num"><span class="i18n-en">03 · 22 PLATFORMS</span><span class="i18n-es">03 · 22 PLATAFORMAS</span></div>
+        <h3>
+          <span class="i18n-en">Pre-Built Vertical Platforms</span>
+          <span class="i18n-es">Plataformas Verticales Pre-Construidas</span>
+        </h3>
+        <p class="what">
+          <span class="i18n-en">21 live platforms across 22 verticals — chambers of commerce, financial wellness, healthcare matching, urban innovation, mobility, hospitality. When a prospect's vertical matches one, deployment drops from months to weeks.</span>
+          <span class="i18n-es">21 plataformas en vivo en 22 verticales — cámaras de comercio, bienestar financiero, matching de salud, innovación urbana, movilidad, hospitalidad. Cuando la vertical del prospecto coincide con una, el despliegue cae de meses a días.</span>
+        </p>
+        <div class="deliv">
+          <strong><span class="i18n-en">Live examples</span><span class="i18n-es">Ejemplos en vivo</span></strong>
+          CamaraVirtual <span class="i18n-en">(chamber networks)</span><span class="i18n-es">(redes de cámaras)</span>, PLANEA <span class="i18n-en">(financial wellness)</span><span class="i18n-es">(bienestar financiero)</span>, Cali CityLab <span class="i18n-en">(urban innovation)</span><span class="i18n-es">(innovación urbana)</span>, Pinaxis <span class="i18n-en">(warehouse analytics)</span><span class="i18n-es">(analítica de bodegas)</span>, HISPATEC <span class="i18n-en">(professional networks)</span><span class="i18n-es">(redes profesionales)</span>, Torna Idioma <span class="i18n-en">(corporate language training)</span><span class="i18n-es">(capacitación corporativa de idiomas)</span>, CW Carriers <span class="i18n-en">(logistics)</span><span class="i18n-es">(logística)</span>.
+        </div>
       </div>
       <div class="pillar">
-        <div class="num">04 · VOICE AI</div>
-        <h3>Voice AI Agents That Answer Phones</h3>
-        <p class="what">RinglyPro voice agents (Rachel in English, Ana &amp; Lina in Spanish) answer inbound calls 24/7. They book appointments, qualify leads, answer FAQs, hand off to humans when needed, and log everything into the customer's CRM.</p>
-        <div class="deliv"><strong>What ships</strong>A dedicated phone number, branded greeting, custom knowledge base, calendar integration, full call transcripts and analytics dashboard.</div>
+        <div class="num"><span class="i18n-en">04 · VOICE AI</span><span class="i18n-es">04 · IA DE VOZ</span></div>
+        <h3>
+          <span class="i18n-en">Voice AI Agents That Answer Phones</span>
+          <span class="i18n-es">Agentes de IA de Voz que Contestan Teléfonos</span>
+        </h3>
+        <p class="what">
+          <span class="i18n-en">RinglyPro voice agents (Rachel in English, Ana &amp; Lina in Spanish) answer inbound calls 24/7. They book appointments, qualify leads, answer FAQs, hand off to humans when needed, and log everything into the customer's CRM.</span>
+          <span class="i18n-es">Los agentes de voz de RinglyPro (Rachel en inglés, Ana y Lina en español) contestan llamadas entrantes 24/7. Agendan citas, califican leads, responden preguntas frecuentes, transfieren a humanos cuando es necesario y registran todo en el CRM del cliente.</span>
+        </p>
+        <div class="deliv">
+          <strong><span class="i18n-en">What ships</span><span class="i18n-es">Qué se entrega</span></strong>
+          <span class="i18n-en">A dedicated phone number, branded greeting, custom knowledge base, calendar integration, full call transcripts and analytics dashboard.</span>
+          <span class="i18n-es">Un número telefónico dedicado, saludo con marca, base de conocimiento personalizada, integración con calendario, transcripciones completas de llamadas y dashboard de analítica.</span>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">4</span> How a prospect becomes a customer</div>
-    <h2>From digit2ai.com submission to live software in days, not months.</h2>
-    <p class="lead">This is the flow you're motivating prospects toward. The intake is the first commitment — everything else follows from it.</p>
+    <div class="sec-num">
+      <span class="n">4</span>
+      <span class="i18n-en">How a prospect becomes a customer</span>
+      <span class="i18n-es">Cómo un prospecto se convierte en cliente</span>
+    </div>
+    <h2>
+      <span class="i18n-en">From digit2ai.com submission to live software in days, not months.</span>
+      <span class="i18n-es">De la solicitud en digit2ai.com a software en producción en días, no meses.</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">This is the flow you're motivating prospects toward. The intake is the first commitment — everything else follows from it.</span>
+      <span class="i18n-es">Este es el flujo hacia el que estás motivando a los prospectos. El intake es el primer compromiso — todo lo demás se desprende de él.</span>
+    </p>
 
     <div class="flow">
       <div class="flow-steps">
         <div class="step">
           <div class="circle">1</div>
-          <div class="name">SUBMIT</div>
-          <div class="desc">Prospect fills the intake form at digit2ai.com — describes the problem in their own words.</div>
+          <div class="name"><span class="i18n-en">SUBMIT</span><span class="i18n-es">ENVÍO</span></div>
+          <div class="desc"><span class="i18n-en">Prospect fills the intake form at digit2ai.com — describes the problem in their own words.</span><span class="i18n-es">El prospecto llena el formulario de intake en digit2ai.com — describe el problema con sus propias palabras.</span></div>
         </div>
         <div class="step">
           <div class="circle">2</div>
-          <div class="name">AI TRIAGE</div>
-          <div class="desc">Our intake agent scores fit, drafts a recommendation, and flags regulatory issues — in minutes.</div>
+          <div class="name"><span class="i18n-en">AI TRIAGE</span><span class="i18n-es">TRIAGE IA</span></div>
+          <div class="desc"><span class="i18n-en">Our intake agent scores fit, drafts a recommendation, and flags regulatory issues — in minutes.</span><span class="i18n-es">Nuestro agente de intake califica el ajuste, redacta una recomendación y marca temas regulatorios — en minutos.</span></div>
         </div>
         <div class="step">
           <div class="circle">3</div>
-          <div class="name">HUMAN REVIEW</div>
-          <div class="desc">A real person (Manuel) reviews the AI verdict, approves or rejects within 48 hours.</div>
+          <div class="name"><span class="i18n-en">HUMAN REVIEW</span><span class="i18n-es">REVISIÓN HUMANA</span></div>
+          <div class="desc"><span class="i18n-en">A real person (Manuel) reviews the AI verdict, approves or rejects within 48 hours.</span><span class="i18n-es">Una persona real (Manuel) revisa el veredicto de la IA, aprueba o rechaza dentro de 48 horas.</span></div>
         </div>
         <div class="step">
           <div class="circle">4</div>
           <div class="name">KICKOFF</div>
-          <div class="desc">Auto-scheduled Zoom kickoff. Architect agent writes the build plan. Contract goes out.</div>
+          <div class="desc"><span class="i18n-en">Auto-scheduled Zoom kickoff. Architect agent writes the build plan. Contract goes out.</span><span class="i18n-es">Kickoff por Zoom agendado automáticamente. El agente Arquitecto escribe el plan de construcción. Sale el contrato.</span></div>
         </div>
         <div class="step">
           <div class="circle">5</div>
-          <div class="name">SHIP</div>
-          <div class="desc">Build → SIT → UAT → live software on their domain, with ongoing AI agent support.</div>
+          <div class="name"><span class="i18n-en">SHIP</span><span class="i18n-es">ENTREGA</span></div>
+          <div class="desc"><span class="i18n-en">Build → SIT → UAT → live software on their domain, with ongoing AI agent support.</span><span class="i18n-es">Construcción → SIT → UAT → software en vivo en su dominio, con soporte continuo de agentes de IA.</span></div>
         </div>
       </div>
     </div>
@@ -1001,52 +1165,126 @@
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">5</span> Champion's script</div>
-    <h2>What to say when a prospect says X.</h2>
-    <p class="lead">Six conversations you'll have on repeat. The right-side reply is battle-tested — use it verbatim or paraphrase.</p>
+    <div class="sec-num">
+      <span class="n">5</span>
+      <span class="i18n-en">Champion's script</span>
+      <span class="i18n-es">Guion del Champion</span>
+    </div>
+    <h2>
+      <span class="i18n-en">What to say when a prospect says X.</span>
+      <span class="i18n-es">Qué decir cuando un prospecto dice X.</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">Six conversations you'll have on repeat. The right-side reply is battle-tested — use it verbatim or paraphrase.</span>
+      <span class="i18n-es">Seis conversaciones que tendrás una y otra vez. La respuesta de la derecha está probada en batalla — úsala tal cual o parafrasea.</span>
+    </p>
 
     <div class="scripts">
       <div class="script-row">
-        <div class="says">"Sounds expensive. We don't have enterprise budget."</div>
-        <div class="reply">"Digit2AI starts at the project level, not enterprise. <strong>We ship in days, not months.</strong> Submit your request — the AI triage will tell you within hours whether your scope fits an existing platform or needs a custom build, and either path delivers in days. No commitment to find out."</div>
+        <div class="says">
+          <span class="i18n-en">"Sounds expensive. We don't have enterprise budget."</span>
+          <span class="i18n-es">"Suena caro. No tenemos presupuesto enterprise."</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"Digit2AI starts at the project level, not enterprise. <strong>We ship in days, not months.</strong> Submit your request — the AI triage will tell you within hours whether your scope fits an existing platform or needs a custom build, and either path delivers in days. No commitment to find out."</span>
+          <span class="i18n-es">"Digit2AI empieza a nivel proyecto, no enterprise. <strong>Entregamos en días, no meses.</strong> Envía tu solicitud — el triage de IA te dirá en horas si tu alcance encaja en una plataforma existente o necesita construcción a la medida, y ambos caminos entregan en días. Sin compromiso para averiguarlo."</span>
+        </div>
       </div>
       <div class="script-row">
-        <div class="says">"We already have a tech team. Why would we need this?"</div>
-        <div class="reply">"Your tech team builds the things only your tech team can build. Digit2AI handles the AI-heavy work — voice agents, document drafting, market research, regulatory scans — that would take your team six months to learn. We're the AI layer, not the replacement."</div>
+        <div class="says">
+          <span class="i18n-en">"We already have a tech team. Why would we need this?"</span>
+          <span class="i18n-es">"Ya tenemos un equipo de tecnología. ¿Por qué necesitaríamos esto?"</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"Your tech team builds the things only your tech team can build. Digit2AI handles the AI-heavy work — voice agents, document drafting, market research, regulatory scans — that would take your team six months to learn. We're the AI layer, not the replacement."</span>
+          <span class="i18n-es">"Tu equipo de tecnología construye las cosas que solo tu equipo puede construir. Digit2AI se encarga del trabajo pesado de IA — agentes de voz, redacción de documentos, investigación de mercado, escaneos regulatorios — que a tu equipo le tomaría seis meses aprender. Somos la capa de IA, no el reemplazo."</span>
+        </div>
       </div>
       <div class="script-row">
-        <div class="says">"Can your AI really replace what my consultant does?"</div>
-        <div class="reply">"Not replace — accelerate. Our Senior BA agent produces a deck outline or business plan in 20 minutes. Your consultant then reviews, edits, and adds the human judgment. You're paying for thinking time, not typing time."</div>
+        <div class="says">
+          <span class="i18n-en">"Can your AI really replace what my consultant does?"</span>
+          <span class="i18n-es">"¿Tu IA realmente puede reemplazar lo que hace mi consultor?"</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"Not replace — accelerate. Our Senior BA agent produces a deck outline or business plan in 20 minutes. Your consultant then reviews, edits, and adds the human judgment. You're paying for thinking time, not typing time."</span>
+          <span class="i18n-es">"No reemplaza — acelera. Nuestro agente Senior BA produce el esquema de una presentación o un plan de negocio en 20 minutos. Tu consultor revisa, edita y agrega el juicio humano. Le pagas por tiempo de pensar, no por tiempo de escribir."</span>
+        </div>
       </div>
       <div class="script-row">
-        <div class="says">"How fast can you actually ship?"</div>
-        <div class="reply">"If your problem matches one of our 22 vertical platforms — weeks. If it's a fresh build — months, with a deck-and-business-plan deliverable in the first two weeks so you see progress immediately. The intake form will tell us which path."</div>
+        <div class="says">
+          <span class="i18n-en">"How fast can you actually ship?"</span>
+          <span class="i18n-es">"¿Qué tan rápido pueden entregar de verdad?"</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"If your problem matches one of our 22 vertical platforms — days. If it's a fresh build — also in days, with a deck-and-business-plan deliverable in the first week so you see progress immediately. The intake form will tell us which path."</span>
+          <span class="i18n-es">"Si tu problema encaja con una de nuestras 22 plataformas verticales — días. Si es una construcción nueva — también en días, con un entregable de presentación y plan de negocio en la primera semana para que veas progreso de inmediato. El formulario de intake nos dirá cuál camino tomar."</span>
+        </div>
       </div>
       <div class="script-row">
-        <div class="says">"What if I just want to talk to someone first?"</div>
-        <div class="reply">"The intake form IS the way to talk to someone. It auto-schedules a kickoff Zoom with Manuel within 48 hours of approval. Filling it out is faster than going back and forth on email — and the AI triage means he'll come to the call already knowing what you need."</div>
+        <div class="says">
+          <span class="i18n-en">"What if I just want to talk to someone first?"</span>
+          <span class="i18n-es">"¿Y si solo quiero hablar con alguien primero?"</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"The intake form IS the way to talk to someone. It auto-schedules a kickoff Zoom with Manuel within 48 hours of approval. Filling it out is faster than going back and forth on email — and the AI triage means he'll come to the call already knowing what you need."</span>
+          <span class="i18n-es">"El formulario de intake ES la forma de hablar con alguien. Agenda automáticamente un kickoff por Zoom con Manuel dentro de las 48 horas posteriores a la aprobación. Llenarlo es más rápido que ir y volver por correo — y el triage de IA significa que él llegará a la llamada ya sabiendo qué necesitas."</span>
+        </div>
       </div>
       <div class="script-row">
-        <div class="says">"We're in [country/industry]. Will this work for us?"</div>
-        <div class="reply">"Digit2AI has live projects across chambers of commerce, financial services, logistics, mobility, healthcare, urban government, and hospitality — in five countries and counting. We work in English and Spanish natively, and we've handled regulatory frameworks from Colombian habeas data to US HIPAA. Submit the request — the AI triage tells you in the report exactly which regulatory and language considerations apply to your scope."</div>
+        <div class="says">
+          <span class="i18n-en">"We're in [country/industry]. Will this work for us?"</span>
+          <span class="i18n-es">"Estamos en [país/industria]. ¿Esto va a funcionar para nosotros?"</span>
+        </div>
+        <div class="reply">
+          <span class="i18n-en">"Digit2AI has live projects across chambers of commerce, financial services, logistics, mobility, healthcare, urban government, and hospitality — in five countries and counting. We work in English and Spanish natively, and we've handled regulatory frameworks from Colombian habeas data to US HIPAA. Submit the request — the AI triage tells you in the report exactly which regulatory and language considerations apply to your scope."</span>
+          <span class="i18n-es">"Digit2AI tiene proyectos activos en cámaras de comercio, servicios financieros, logística, movilidad, salud, gobierno urbano y hospitalidad — en cinco países y contando. Trabajamos nativamente en inglés y español, y hemos manejado marcos regulatorios desde habeas data colombiano hasta HIPAA en Estados Unidos. Envía la solicitud — el triage de IA te dice en el reporte exactamente qué consideraciones regulatorias y de idioma aplican a tu alcance."</span>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ============================================================ -->
   <section class="sec">
-    <div class="sec-num"><span class="n">6</span> Why the intake form (not your phone number)</div>
-    <h2>Send prospects to digit2ai.com — here's why it's better for them AND you.</h2>
-    <p class="lead">Hard truth: "Let me set up a call with Manuel" creates 3 weeks of email scheduling. The intake form skips all of that.</p>
+    <div class="sec-num">
+      <span class="n">6</span>
+      <span class="i18n-en">Why the intake form (not your phone number)</span>
+      <span class="i18n-es">Por qué el formulario de intake (no tu teléfono)</span>
+    </div>
+    <h2>
+      <span class="i18n-en">Send prospects to digit2ai.com — here's why it's better for them AND you.</span>
+      <span class="i18n-es">Manda a tus prospectos a digit2ai.com — esta es la razón por la que es mejor para ellos Y para ti.</span>
+    </h2>
+    <p class="lead">
+      <span class="i18n-en">Hard truth: "Let me set up a call with Manuel" creates 3 weeks of email scheduling. The intake form skips all of that.</span>
+      <span class="i18n-es">Verdad incómoda: "Déjame agendar una llamada con Manuel" genera 3 semanas de correos para coordinar. El formulario de intake se salta todo eso.</span>
+    </p>
 
     <div class="why">
-      <h3>What the intake form does for your prospect</h3>
+      <h3>
+        <span class="i18n-en">What the intake form does for your prospect</span>
+        <span class="i18n-es">Lo que el formulario de intake hace por tu prospecto</span>
+      </h3>
       <ul>
-        <li><strong>Captures everything in one shot</strong> — submitter info, project description, budget hints, regulatory context. No back-and-forth.</li>
-        <li><strong>AI triage in minutes</strong> — they get a fit score and recommended path before any human is involved. Saves them time even if they don't move forward.</li>
-        <li><strong>Auto-scheduled kickoff</strong> — when approved, a Zoom + .ics invite goes out with kickoff details automatically. No "what times work for you" loops.</li>
-        <li><strong>Magic-link workspace</strong> — they get a private link to track their project, add notes, and reschedule meetings without needing an account.</li>
-        <li><strong>Transparent timeline</strong> — they see AI-generated milestones from day one. No surprises about "when will this be done."</li>
+        <li>
+          <span class="i18n-en"><strong>Captures everything in one shot</strong> — submitter info, project description, budget hints, regulatory context. No back-and-forth.</span>
+          <span class="i18n-es"><strong>Captura todo de una vez</strong> — datos del solicitante, descripción del proyecto, pistas de presupuesto, contexto regulatorio. Sin ir y volver.</span>
+        </li>
+        <li>
+          <span class="i18n-en"><strong>AI triage in minutes</strong> — they get a fit score and recommended path before any human is involved. Saves them time even if they don't move forward.</span>
+          <span class="i18n-es"><strong>Triage de IA en minutos</strong> — reciben un puntaje de ajuste y un camino recomendado antes de que cualquier humano se involucre. Les ahorra tiempo incluso si no avanzan.</span>
+        </li>
+        <li>
+          <span class="i18n-en"><strong>Auto-scheduled kickoff</strong> — when approved, a Zoom + .ics invite goes out with kickoff details automatically. No "what times work for you" loops.</span>
+          <span class="i18n-es"><strong>Kickoff agendado automáticamente</strong> — cuando se aprueba, sale una invitación de Zoom + .ics con los detalles del kickoff automáticamente. Sin ciclos de "qué horarios te funcionan".</span>
+        </li>
+        <li>
+          <span class="i18n-en"><strong>Magic-link workspace</strong> — they get a private link to track their project, add notes, and reschedule meetings without needing an account.</span>
+          <span class="i18n-es"><strong>Workspace con magic-link</strong> — reciben un enlace privado para hacer seguimiento al proyecto, agregar notas y reprogramar reuniones sin necesidad de crear una cuenta.</span>
+        </li>
+        <li>
+          <span class="i18n-en"><strong>Transparent timeline</strong> — they see AI-generated milestones from day one. No surprises about "when will this be done."</span>
+          <span class="i18n-es"><strong>Cronograma transparente</strong> — ven hitos generados por IA desde el día uno. Sin sorpresas sobre "cuándo va a estar listo".</span>
+        </li>
       </ul>
     </div>
   </section>
@@ -1055,36 +1293,42 @@
   <!-- LIVE DEMO: Try the AI Triage right here -->
   <section class="demo" id="demo">
     <div class="demo-head">
-      <h2>Try it <em>right now</em> — live AI Triage</h2>
-      <p>Paste a prospect's problem (or your own). Our Neural Intelligence stack reads it, scores fit, sketches the technical solution, and shows you what we'd build. You can edit anything before sending it to the real intake.</p>
+      <h2>
+        <span class="i18n-en">Try it <em>right now</em> — live AI Triage</span>
+        <span class="i18n-es">Pruébalo <em>ahora mismo</em> — Triage de IA en vivo</span>
+      </h2>
+      <p>
+        <span class="i18n-en">Paste a prospect's problem (or your own). Our Neural Intelligence stack reads it, scores fit, sketches the technical solution, and shows you what we'd build. You can edit anything before sending it to the real intake.</span>
+        <span class="i18n-es">Pega el problema de un prospecto (o el tuyo). Nuestra pila Neural Intelligence lo lee, califica el ajuste, esboza la solución técnica y te muestra qué construiríamos. Puedes editar cualquier cosa antes de enviarlo al intake real.</span>
+      </p>
     </div>
 
     <div class="demo-form">
       <div class="demo-form-row">
-        <label for="d-desc">Describe the problem · in your prospect's own words</label>
-        <textarea id="d-desc" placeholder="Example: We run a chamber of commerce with 1,200 member businesses. Members tell us they can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days..." required></textarea>
-        <div class="hint">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</div>
+        <label for="d-desc"><span class="i18n-en">Describe the problem · in your prospect's own words</span><span class="i18n-es">Describe el problema · con las palabras del prospecto</span></label>
+        <textarea id="d-desc" required></textarea>
+        <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
       </div>
       <div>
-        <label for="d-name">Prospect name <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <label for="d-name"><span class="i18n-en">Prospect name</span><span class="i18n-es">Nombre del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
         <input id="d-name" type="text" placeholder="Jane Doe">
       </div>
       <div>
-        <label for="d-email">Prospect email <span style="font-weight:400;color:var(--ink-mute)">(optional, required to submit)</span></label>
+        <label for="d-email"><span class="i18n-en">Prospect email</span><span class="i18n-es">Email del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional, required to submit</span><span class="i18n-es">opcional, requerido para enviar</span>)</span></label>
         <input id="d-email" type="email" placeholder="jane@company.com">
       </div>
       <div>
-        <label for="d-company">Company <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <label for="d-company"><span class="i18n-en">Company</span><span class="i18n-es">Empresa</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
         <input id="d-company" type="text" placeholder="Company name">
       </div>
       <div>
-        <label for="d-country">Country <span style="font-weight:400;color:var(--ink-mute)">(optional)</span></label>
+        <label for="d-country"><span class="i18n-en">Country</span><span class="i18n-es">País</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
         <input id="d-country" type="text" placeholder="Colombia, USA, Philippines…">
       </div>
     </div>
 
     <div class="demo-actions">
-      <button type="button" class="demo-btn-primary" id="d-run">Run AI Triage</button>
+      <button type="button" class="demo-btn-primary" id="d-run"><span class="i18n-en">Run AI Triage</span><span class="i18n-es">Ejecutar Triage de IA</span></button>
       <span class="demo-status" id="d-status"></span>
     </div>
 
@@ -1095,39 +1339,165 @@
 
   <!-- ============================================================ -->
   <div class="cta-wrap">
-    <h2>Or send your prospect to digit2ai.com directly</h2>
-    <p>One link. Three minutes of their time. A real recommendation within 48 hours. Use the copy below verbatim or remix it.</p>
-    <a href="https://digit2ai.com" target="_blank" class="cta-btn">Open digit2ai.com →</a>
+    <h2>
+      <span class="i18n-en">Or send your prospect to digit2ai.com directly</span>
+      <span class="i18n-es">O manda a tu prospecto directamente a digit2ai.com</span>
+    </h2>
+    <p>
+      <span class="i18n-en">One link. Three minutes of their time. A real recommendation within 48 hours. Use the copy below verbatim or remix it.</span>
+      <span class="i18n-es">Un enlace. Tres minutos de su tiempo. Una recomendación real en 48 horas. Usa el texto de abajo tal cual o adáptalo.</span>
+    </p>
+    <a href="https://digit2ai.com" target="_blank" class="cta-btn"><span class="i18n-en">Open digit2ai.com →</span><span class="i18n-es">Abrir digit2ai.com →</span></a>
 
     <div class="copy-block">
-      <button class="copy-btn" id="copy-btn">Copy</button>
-      <span id="copy-text">Hey [Name] — based on what you described, I think Digit2AI is the right fit. They build AI-powered software and AI agents for organizations exactly like yours. Their intake form takes 3 minutes, an AI triages your request in minutes, and a human gets back within 48 hours with a recommendation — even if the answer is "not a fit," you get a real explanation. No sales call gauntlet. Here's the link: digit2ai.com. Tell them [Your Name] sent you so we can track the referral.</span>
+      <button class="copy-btn" id="copy-btn"><span class="i18n-en">Copy</span><span class="i18n-es">Copiar</span></button>
+      <span id="copy-text-en" class="i18n-en">Hey [Name] — based on what you described, I think Digit2AI is the right fit. They build AI-powered software and AI agents for organizations exactly like yours. Their intake form takes 3 minutes, an AI triages your request in minutes, and a human gets back within 48 hours with a recommendation — even if the answer is "not a fit," you get a real explanation. No sales call gauntlet. Here's the link: digit2ai.com. Tell them [Your Name] sent you so we can track the referral.</span>
+      <span id="copy-text-es" class="i18n-es">Hola [Nombre] — por lo que me describiste, creo que Digit2AI es la opción correcta. Construyen software impulsado por IA y agentes de IA para organizaciones exactamente como la tuya. Su formulario de intake toma 3 minutos, una IA califica tu solicitud en minutos y un humano responde en 48 horas con una recomendación — incluso si la respuesta es "no es buen fit", recibes una explicación real. Sin la gimnasia de llamadas de ventas. Aquí el enlace: digit2ai.com. Diles que [Tu Nombre] te mandó para que podamos rastrear el referido.</span>
     </div>
   </div>
 
   <footer class="ft">
     <p>Digit2AI · Neural Intelligence · <a href="https://digit2ai.com" target="_blank">digit2ai.com</a></p>
-    <p style="margin-top: 6px">Champion-only brief. Update or replace any section to match your audience.</p>
+    <p style="margin-top: 6px">
+      <span class="i18n-en">Champion-only brief. Update or replace any section to match your audience.</span>
+      <span class="i18n-es">Brief solo para Champions. Actualiza o reemplaza cualquier sección para que coincida con tu audiencia.</span>
+    </p>
   </footer>
 
 </div>
 
 <script>
+  // ---------------- Language toggle (EN / ES) ----------------
+  // Reads localStorage on load, swaps body class, persists choice. Every
+  // translatable element ships both languages inline as .i18n-en /
+  // .i18n-es spans; CSS handles the show/hide via body.lang-en /
+  // body.lang-es. JS only needs to flip the class and set placeholders
+  // (which are attributes and can't be split inline).
+  var I18N = {
+    en: {
+      desc_placeholder: "Example: We run a chamber of commerce with 1,200 member businesses. Members tell us they can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days...",
+      copy_label: 'Copy', copied: 'Copied', copy_failed: 'Copy failed',
+      describe_30: 'Please describe the problem in at least 30 characters.',
+      run_label: 'Run AI Triage', triaging: 'Triaging…',
+      submit_below: 'Press below to submit your project ↓',
+      status_running: 'Running AI Triage…',
+      triage_failed: 'Triage failed. Please try again.',
+      network_err: 'Network error: ',
+      already_status: 'Triage already ran — press "Accept & Submit to digit2ai.com" below to submit your project.',
+      already_html: '<strong style="color:var(--amber)">Already triaged.</strong> Review and edit the result below, then press <strong>Accept &amp; Submit to digit2ai.com</strong>. To run a fresh triage, change the description text above or use the <em>Re-run with same description</em> button inside the result panel.',
+      need_name: 'Prospect name is required to submit to digit2ai.com.',
+      need_email: 'A valid prospect email is required to submit to digit2ai.com.',
+      verdict_go: 'GO', verdict_poc: 'Proof of Concept', verdict_stop: 'STOP',
+      fit_label: '/10 fit',
+      edit_hint: 'All fields below are editable — click to refine before submitting',
+      block_title: 'Auto-suggested project title',
+      block_fit: 'Fit reasoning',
+      block_problem: 'Your problem — in our words',
+      block_tech: 'Technical solution — how we would build it',
+      block_agents: 'Neural Intelligence agents involved',
+      block_what: 'What we build (concrete deliverables)',
+      block_data: 'Data sources connected via MCP',
+      block_window: 'Delivery window',
+      block_week1: 'What you would see in week 1',
+      block_flags: 'Things to verify (questions for the human reviewer)',
+      btn_accept: 'Accept & Submit to digit2ai.com',
+      btn_rerun: 'Re-run with same description',
+      submitting: 'Submitting…',
+      submit_failed: 'Submission failed. Please try again or send the prospect to digit2ai.com directly.',
+      success_h: 'Submitted to digit2ai.com',
+      success_p: 'Manuel will review within 48 hours. The triage you just edited is attached to the intake record so he sees your reading of the problem from minute one.',
+      success_link_lbl: 'Prospect workspace link',
+      success_link_hint: '(send to your prospect):',
+      submitted: 'Submitted',
+      net_err_submit: 'Network error on submit: '
+    },
+    es: {
+      desc_placeholder: 'Ejemplo: Operamos una cámara de comercio con 1.200 empresas afiliadas. Los miembros nos dicen que no logran encontrarse entre sí para hacer negocios en nuestros 6 sectores. Nuestra junta quiere una plataforma digital pero no sabe qué es realista en 90 días...',
+      copy_label: 'Copiar', copied: 'Copiado', copy_failed: 'Error al copiar',
+      describe_30: 'Por favor describe el problema con al menos 30 caracteres.',
+      run_label: 'Ejecutar Triage de IA', triaging: 'Procesando…',
+      submit_below: 'Presiona abajo para enviar tu proyecto ↓',
+      status_running: 'Ejecutando Triage de IA…',
+      triage_failed: 'Falló el triage. Intenta de nuevo.',
+      network_err: 'Error de red: ',
+      already_status: 'El triage ya se ejecutó — presiona "Aceptar y Enviar a digit2ai.com" abajo para enviar tu proyecto.',
+      already_html: '<strong style="color:var(--amber)">Triage ya ejecutado.</strong> Revisa y edita el resultado abajo, luego presiona <strong>Aceptar y Enviar a digit2ai.com</strong>. Para correr un triage nuevo, cambia el texto de la descripción arriba o usa el botón <em>Re-ejecutar con la misma descripción</em> dentro del panel de resultados.',
+      need_name: 'El nombre del prospecto es requerido para enviar a digit2ai.com.',
+      need_email: 'Se requiere un email válido del prospecto para enviar a digit2ai.com.',
+      verdict_go: 'ADELANTE', verdict_poc: 'Prueba de Concepto', verdict_stop: 'DETENER',
+      fit_label: '/10 de ajuste',
+      edit_hint: 'Todos los campos de abajo son editables — haz clic para refinar antes de enviar',
+      block_title: 'Título de proyecto auto-sugerido',
+      block_fit: 'Razonamiento del ajuste',
+      block_problem: 'Tu problema — en nuestras palabras',
+      block_tech: 'Solución técnica — cómo lo construiríamos',
+      block_agents: 'Agentes de Neural Intelligence involucrados',
+      block_what: 'Qué construimos (entregables concretos)',
+      block_data: 'Fuentes de datos conectadas vía MCP',
+      block_window: 'Ventana de entrega',
+      block_week1: 'Qué verías en la semana 1',
+      block_flags: 'Cosas a verificar (preguntas para el revisor humano)',
+      btn_accept: 'Aceptar y Enviar a digit2ai.com',
+      btn_rerun: 'Re-ejecutar con la misma descripción',
+      submitting: 'Enviando…',
+      submit_failed: 'Falló el envío. Intenta de nuevo o manda al prospecto a digit2ai.com directamente.',
+      success_h: 'Enviado a digit2ai.com',
+      success_p: 'Manuel revisará dentro de 48 horas. El triage que acabas de editar está adjunto al registro de intake para que vea tu lectura del problema desde el minuto uno.',
+      success_link_lbl: 'Enlace del workspace del prospecto',
+      success_link_hint: '(mándaselo a tu prospecto):',
+      submitted: 'Enviado',
+      net_err_submit: 'Error de red al enviar: '
+    }
+  };
+  function getLang() { return document.body.classList.contains('lang-es') ? 'es' : 'en'; }
+  function t(key) { return (I18N[getLang()] || I18N.en)[key]; }
+  function applyLangPlaceholders() {
+    var lang = getLang();
+    var desc = document.getElementById('d-desc');
+    if (desc) desc.placeholder = I18N[lang].desc_placeholder;
+  }
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem('teaser-lang'); } catch (_) {}
+    if (saved !== 'en' && saved !== 'es') saved = 'en';
+    document.body.classList.remove('lang-en', 'lang-es');
+    document.body.classList.add('lang-' + saved);
+    var btns = document.querySelectorAll('.lang-toggle button');
+    btns.forEach(function (b) {
+      b.classList.toggle('active', b.dataset.lang === saved);
+      b.addEventListener('click', function () {
+        var lang = b.dataset.lang;
+        document.body.classList.remove('lang-en', 'lang-es');
+        document.body.classList.add('lang-' + lang);
+        btns.forEach(function (x) { x.classList.toggle('active', x.dataset.lang === lang); });
+        try { localStorage.setItem('teaser-lang', lang); } catch (_) {}
+        applyLangPlaceholders();
+      });
+    });
+    applyLangPlaceholders();
+  })();
+
   // ---------------- Copy-paste button for the referral message ----------------
   (function () {
     var btn = document.getElementById('copy-btn');
-    var src = document.getElementById('copy-text');
-    if (!btn || !src) return;
+    if (!btn) return;
     btn.addEventListener('click', function () {
+      var lang = getLang();
+      var src = document.getElementById('copy-text-' + lang);
+      if (!src) return;
       var text = (src.textContent || '').trim();
+      function showCopied(label) {
+        // The button has language spans inside; restore them after the toast
+        btn.dataset._restore = btn.innerHTML;
+        btn.textContent = label;
+        setTimeout(function () {
+          if (btn.dataset._restore) { btn.innerHTML = btn.dataset._restore; delete btn.dataset._restore; }
+        }, 1800);
+      }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () {
-          btn.textContent = 'Copied';
-          setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
-        }).catch(function () {
-          btn.textContent = 'Copy failed';
-          setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
-        });
+        navigator.clipboard.writeText(text)
+          .then(function () { showCopied(t('copied')); })
+          .catch(function () { showCopied(t('copy_failed')); });
       }
     });
   })();
@@ -1144,7 +1514,7 @@
       // Pull contenteditable list back into an array
       var items = el.querySelectorAll('li');
       var out = [];
-      items.forEach(function (li) { var t = (li.textContent || '').trim(); if (t) out.push(t); });
+      items.forEach(function (li) { var v = (li.textContent || '').trim(); if (v) out.push(v); });
       return out;
     }
 
@@ -1178,14 +1548,14 @@
         setError('');
         var msg = document.getElementById('d-result-inner');
         if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setStatus('Triage already ran — press "Accept & Submit to digit2ai.com" below to submit your project.');
+        setStatus(t('already_status'));
         // Re-show a callout above the result so it's impossible to miss.
         var hint = document.getElementById('d-already-hint');
         if (!hint) {
           hint = document.createElement('div');
           hint.id = 'd-already-hint';
           hint.style.cssText = 'margin-top:14px;padding:12px 16px;background:rgba(245,158,11,0.08);border:1px solid var(--amber);border-radius:8px;color:var(--ink);font-size:13px;line-height:1.5';
-          hint.innerHTML = '<strong style="color:var(--amber)">Already triaged.</strong> Review and edit the result below, then press <strong>Accept &amp; Submit to digit2ai.com</strong>. To run a fresh triage, change the description text above or use the <em>Re-run with same description</em> button inside the result panel.';
+          hint.innerHTML = t('already_html');
           (resultEl.parentNode || document.body).insertBefore(hint, resultEl);
         }
         setTimeout(function () { var h = document.getElementById('d-already-hint'); if (h) h.remove(); }, 8000);
@@ -1194,18 +1564,21 @@
 
       var desc = (document.getElementById('d-desc').value || '').trim();
       if (desc.length < 30) {
-        setError('Please describe the problem in at least 30 characters.');
+        setError(t('describe_30'));
         return;
       }
       setError('');
       setSubmitted('');
       resultEl.innerHTML = '';
       runBtn.disabled = true;
-      setStatus('Running AI Triage…');
-      runBtn.innerHTML = '<span class="demo-spinner"></span>Triaging…';
+      setStatus(t('status_running'));
+      runBtn.innerHTML = '<span class="demo-spinner"></span>' + t('triaging');
 
       var body = {
         description: desc,
+        // Force the triage AI to respond in the page's selected language.
+        // Champion-teaser.html runs in EN by default; ES users get ES triage.
+        language: getLang(),
         name: (document.getElementById('d-name').value || '').trim() || undefined,
         email: (document.getElementById('d-email').value || '').trim() || undefined,
         company: (document.getElementById('d-company').value || '').trim() || undefined,
@@ -1222,32 +1595,36 @@
           setStatus('');
           if (!res.ok || !res.json || !res.json.success) {
             // No triage result — reset button so champion can retry
-            runBtn.textContent = 'Run AI Triage';
-            setError((res.json && res.json.error) || 'Triage failed. Please try again.');
+            runBtn.textContent = t('run_label');
+            setError((res.json && res.json.error) || t('triage_failed'));
             return;
           }
           state.triage = res.json.data;
-          state.lang = state.triage.language || 'en';
+          state.lang = state.triage.language || getLang();
           // Post-success: button changes meaning. It no longer re-runs
           // automatically; the click-guard above intercepts and points
           // the champion at Accept & Submit. Label reflects that.
-          runBtn.textContent = 'Press below to submit your project ↓';
+          runBtn.textContent = t('submit_below');
           runBtn.style.opacity = '0.75';
           runBtn.style.cursor = 'pointer';
           renderResult();
         })
         .catch(function (err) {
           runBtn.disabled = false;
-          runBtn.textContent = 'Run AI Triage';
+          runBtn.textContent = t('run_label');
           setStatus('');
-          setError('Network error: ' + (err.message || 'request failed'));
+          setError(t('network_err') + (err.message || 'request failed'));
         });
     });
 
     function renderResult() {
-      var t = state.triage;
-      var verdictMap = { go: { cls: 'verdict-go', lbl: 'GO' }, poc: { cls: 'verdict-poc', lbl: 'Proof of Concept' }, stop: { cls: 'verdict-stop', lbl: 'STOP' } };
-      var v = verdictMap[t.verdict] || verdictMap.poc;
+      var tr = state.triage;
+      var verdictMap = {
+        go:   { cls: 'verdict-go',   lbl: t('verdict_go') },
+        poc:  { cls: 'verdict-poc',  lbl: t('verdict_poc') },
+        stop: { cls: 'verdict-stop', lbl: t('verdict_stop') }
+      };
+      var v = verdictMap[tr.verdict] || verdictMap.poc;
       var listToHtml = function (arr) {
         if (!arr || !arr.length) return '<li>—</li>';
         return arr.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
@@ -1257,61 +1634,61 @@
         '<div class="result" id="d-result-inner">' +
           '<div class="result-head">' +
             '<span class="verdict-pill ' + v.cls + '">' + v.lbl + '</span>' +
-            '<span class="fit-score">' + t.fit_score + '<span>/10 fit</span></span>' +
-            '<span class="result-edit-hint">All fields below are editable — click to refine before submitting</span>' +
+            '<span class="fit-score">' + tr.fit_score + '<span>' + t('fit_label') + '</span></span>' +
+            '<span class="result-edit-hint">' + t('edit_hint') + '</span>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>Auto-suggested project title</h4>' +
-            '<div class="editable" id="d-title" contenteditable="true">' + esc(t.project_title_suggested) + '</div>' +
+            '<h4>' + t('block_title') + '</h4>' +
+            '<div class="editable" id="d-title" contenteditable="true">' + esc(tr.project_title_suggested) + '</div>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>Fit reasoning</h4>' +
-            '<div class="editable" id="d-fit-reason" contenteditable="true">' + esc(t.fit_reasoning) + '</div>' +
+            '<h4>' + t('block_fit') + '</h4>' +
+            '<div class="editable" id="d-fit-reason" contenteditable="true">' + esc(tr.fit_reasoning) + '</div>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>Your problem — in our words</h4>' +
-            '<div class="editable" id="d-problem-our-words" contenteditable="true">' + esc(t.problem_in_our_words) + '</div>' +
+            '<h4>' + t('block_problem') + '</h4>' +
+            '<div class="editable" id="d-problem-our-words" contenteditable="true">' + esc(tr.problem_in_our_words) + '</div>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>Technical solution — how we would build it</h4>' +
-            '<div class="editable" id="d-tech-summary" contenteditable="true">' + esc(t.technical_solution.summary) + '</div>' +
+            '<h4>' + t('block_tech') + '</h4>' +
+            '<div class="editable" id="d-tech-summary" contenteditable="true">' + esc(tr.technical_solution.summary) + '</div>' +
             '<div class="tech-grid">' +
               '<div class="tech-cell">' +
-                '<div class="lbl">Neural Intelligence agents involved</div>' +
-                '<ul class="val" id="d-agents" contenteditable="true">' + listToHtml(t.technical_solution.agents_involved) + '</ul>' +
+                '<div class="lbl">' + t('block_agents') + '</div>' +
+                '<ul class="val" id="d-agents" contenteditable="true">' + listToHtml(tr.technical_solution.agents_involved) + '</ul>' +
               '</div>' +
               '<div class="tech-cell">' +
-                '<div class="lbl">What we build (concrete deliverables)</div>' +
-                '<ul class="val" id="d-what" contenteditable="true">' + listToHtml(t.technical_solution.what_we_build) + '</ul>' +
+                '<div class="lbl">' + t('block_what') + '</div>' +
+                '<ul class="val" id="d-what" contenteditable="true">' + listToHtml(tr.technical_solution.what_we_build) + '</ul>' +
               '</div>' +
               '<div class="tech-cell">' +
-                '<div class="lbl">Data sources connected via MCP</div>' +
-                '<ul class="val" id="d-data" contenteditable="true">' + listToHtml(t.technical_solution.data_sources_via_mcp) + '</ul>' +
+                '<div class="lbl">' + t('block_data') + '</div>' +
+                '<ul class="val" id="d-data" contenteditable="true">' + listToHtml(tr.technical_solution.data_sources_via_mcp) + '</ul>' +
               '</div>' +
               '<div class="tech-cell">' +
-                '<div class="lbl">Delivery window</div>' +
-                '<div class="val" id="d-window" contenteditable="true">' + esc(t.technical_solution.delivery_window) + '</div>' +
+                '<div class="lbl">' + t('block_window') + '</div>' +
+                '<div class="val" id="d-window" contenteditable="true">' + esc(tr.technical_solution.delivery_window) + '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>What you would see in week 1</h4>' +
-            '<ul class="editable list" id="d-week1" contenteditable="true">' + listToHtml(t.week_1_deliverables) + '</ul>' +
+            '<h4>' + t('block_week1') + '</h4>' +
+            '<ul class="editable list" id="d-week1" contenteditable="true">' + listToHtml(tr.week_1_deliverables) + '</ul>' +
           '</div>' +
 
           '<div class="result-block">' +
-            '<h4>Things to verify (questions for the human reviewer)</h4>' +
-            '<ul class="editable list" id="d-flags" contenteditable="true">' + listToHtml(t.verify_flags) + '</ul>' +
+            '<h4>' + t('block_flags') + '</h4>' +
+            '<ul class="editable list" id="d-flags" contenteditable="true">' + listToHtml(tr.verify_flags) + '</ul>' +
           '</div>' +
 
           '<div class="result-cta">' +
-            '<button type="button" class="demo-btn-primary" id="d-submit">Accept &amp; Submit to digit2ai.com</button>' +
-            '<button type="button" class="demo-btn-ghost" id="d-rerun">Re-run with same description</button>' +
+            '<button type="button" class="demo-btn-primary" id="d-submit">' + t('btn_accept') + '</button>' +
+            '<button type="button" class="demo-btn-ghost" id="d-rerun">' + t('btn_rerun') + '</button>' +
             '<span class="demo-status" id="d-submit-status"></span>' +
           '</div>' +
         '</div>';
@@ -1324,7 +1701,7 @@
         state.triage = null;
         resultEl.innerHTML = '';
         runBtn.style.opacity = '';
-        runBtn.textContent = 'Run AI Triage';
+        runBtn.textContent = t('run_label');
         runBtn.click();
       });
       document.getElementById('d-result-inner').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1335,8 +1712,8 @@
       // are required by /public/request — pull from the form inputs.
       var name = (document.getElementById('d-name').value || '').trim();
       var email = (document.getElementById('d-email').value || '').trim();
-      if (!name) { setError('Prospect name is required to submit to digit2ai.com.'); return; }
-      if (!email || email.indexOf('@') < 0) { setError('A valid prospect email is required to submit to digit2ai.com.'); return; }
+      if (!name) { setError(t('need_name')); return; }
+      if (!email || email.indexOf('@') < 0) { setError(t('need_email')); return; }
       setError('');
 
       // Build the project description by combining the original problem with
@@ -1381,7 +1758,7 @@
       var submitBtn = document.getElementById('d-submit');
       var submitStatus = document.getElementById('d-submit-status');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="demo-spinner"></span>Submitting…';
+      submitBtn.innerHTML = '<span class="demo-spinner"></span>' + t('submitting');
 
       fetch(API_BASE + '/public/request', {
         method: 'POST',
@@ -1399,9 +1776,9 @@
       }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
         .then(function (res) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Accept &amp; Submit to digit2ai.com';
+          submitBtn.innerHTML = t('btn_accept');
           if (!res.ok || !res.json || !res.json.success) {
-            setError((res.json && res.json.error) || 'Submission failed. Please try again or send the prospect to digit2ai.com directly.');
+            setError((res.json && res.json.error) || t('submit_failed'));
             return;
           }
           // Success — show confirmation with the magic link if returned.
@@ -1410,19 +1787,19 @@
           var batchId = data.batch_id || data.batch || '';
           setSubmitted(
             '<div class="demo-success">' +
-              '<h3>Submitted to digit2ai.com</h3>' +
-              '<p>Manuel will review within 48 hours. The triage you just edited is attached to the intake record so he sees your reading of the problem from minute one.</p>' +
-              (magicUrl ? '<p style="margin-top:8px"><strong>Prospect workspace link</strong> (send to your prospect):<br><a href="' + esc(magicUrl) + '" target="_blank">' + esc(magicUrl) + '</a></p>' : '') +
+              '<h3>' + t('success_h') + '</h3>' +
+              '<p>' + t('success_p') + '</p>' +
+              (magicUrl ? '<p style="margin-top:8px"><strong>' + t('success_link_lbl') + '</strong> ' + t('success_link_hint') + '<br><a href="' + esc(magicUrl) + '" target="_blank">' + esc(magicUrl) + '</a></p>' : '') +
               (batchId ? '<p style="margin-top:6px;font-size:12px;color:var(--ink-mute)">Intake batch #' + esc(String(batchId)) + '</p>' : '') +
             '</div>'
           );
           submitBtn.disabled = true;
-          submitBtn.textContent = 'Submitted';
+          submitBtn.textContent = t('submitted');
         })
         .catch(function (err) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Accept &amp; Submit to digit2ai.com';
-          setError('Network error on submit: ' + (err.message || 'request failed'));
+          submitBtn.innerHTML = t('btn_accept');
+          setError(t('net_err_submit') + (err.message || 'request failed'));
         });
     }
   })();
