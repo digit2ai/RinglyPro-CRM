@@ -471,6 +471,201 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key. Agent IDs are public per ElevenLabs convai design;
 //   the API key stays server-side.
 //
+// =====================================================
+// PARTNER DASHBOARD (T3.1)
+// =====================================================
+// Magic-link auth for /champion-dashboard.html. Partner enters email
+// + slug, server generates a 32-byte hex token, returns the magic URL.
+// Clicking the URL sets an HttpOnly cookie + redirects to the
+// dashboard. Cookie auth carries forward to /partner-stats.
+//
+// Email send via SendGrid if configured; otherwise the response
+// surfaces the URL directly (matches the EMAIL_AUTOSEND_DISABLED
+// project pattern documented in CLAUDE.md).
+const _crypto = require('crypto');
+const PARTNER_SESSION_DAYS = 7;
+const PARTNER_COOKIE = 'd2ai_partner_session';
+
+function _slug(s) {
+  return String(s || '').trim().toLowerCase().slice(0, 120).replace(/[^a-z0-9_\-\.]/g, '').replace(/^-+|-+$/g, '');
+}
+function _ipHash(req) {
+  const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+  return _crypto.createHash('sha256').update(ip + (process.env.SESSION_SALT || 'd2ai-default-salt')).digest('hex').slice(0, 32);
+}
+function _partnerLoginRateLimit(ip) {
+  // Reuse the triage bucket — same shape, just shares the cap.
+  return _triageRateLimit(ip);
+}
+
+// POST /partner-login { email, partner_slug }
+//   Public. Generates a session token + magic URL. Always returns the
+//   URL in the response so the partner can copy/click it directly
+//   (production SendGrid may not be configured; the user-clicked
+//   nature of the action bypasses EMAIL_AUTOSEND_DISABLED if SG is on).
+router.post('/partner-login', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _partnerLoginRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({ success: false, error: `Too many login attempts. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    const slug = _slug(b.partner_slug);
+    if (!email || email.indexOf('@') < 0) return res.status(400).json({ success: false, error: 'Valid email required.' });
+    if (!slug) return res.status(400).json({ success: false, error: 'partner_slug required (e.g. "manuel-stagg").' });
+
+    const token = _crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + PARTNER_SESSION_DAYS * 24 * 60 * 60 * 1000);
+    await sequelize.query(
+      `INSERT INTO d2_partner_sessions (token, partner_slug, email, name, expires_at, ip_hash)
+       VALUES (:token, :slug, :email, :name, :exp, :ip)`,
+      {
+        replacements: {
+          token, slug, email,
+          name: String(b.name || '').trim().slice(0, 255) || null,
+          exp: expiresAt,
+          ip: _ipHash(req)
+        }
+      }
+    );
+    const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    const magicUrl = `${baseUrl}/projects/api/v1/intake/partner-verify?token=${token}`;
+
+    // Best-effort SendGrid send if configured (user-clicked, bypasses
+    // EMAIL_AUTOSEND_DISABLED). Failures are silent — magic URL is
+    // always also in the response.
+    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
+      try {
+        const sgMail = require('@sendgrid/mail');
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        await sgMail.send({
+          to: email,
+          from: process.env.SENDGRID_FROM_EMAIL,
+          subject: 'Your Digit2AI Partner Dashboard login',
+          text: `Click here to access your Partner Dashboard:\n\n${magicUrl}\n\nThis link expires in ${PARTNER_SESSION_DAYS} days.`,
+          html: `<p>Click here to access your Partner Dashboard:</p><p><a href="${magicUrl}" style="color:#22d3ee">${magicUrl}</a></p><p>This link expires in ${PARTNER_SESSION_DAYS} days.</p>`
+        });
+      } catch (e) { /* swallow — URL is in the response anyway */ }
+    }
+    res.json({ success: true, magic_url: magicUrl, expires_at: expiresAt });
+  } catch (err) {
+    console.error('[D2AI-Intake] partner-login error:', err.message);
+    res.status(500).json({ success: false, error: 'Login failed.' });
+  }
+});
+
+// GET /partner-verify?token=...
+//   Validates the magic-link token, sets an HttpOnly cookie carrying
+//   the same token, and redirects to /champion-dashboard.html.
+router.get('/partner-verify', async (req, res) => {
+  try {
+    const token = String(req.query.token || '').trim();
+    if (!token || token.length !== 64) return res.status(400).send('Invalid token.');
+    const rows = await sequelize.query(
+      `SELECT partner_slug, email, expires_at, revoked_at FROM d2_partner_sessions WHERE token = :token LIMIT 1`,
+      { replacements: { token }, type: sequelize.QueryTypes.SELECT }
+    );
+    if (!rows.length) return res.status(401).send('Session not found or expired.');
+    const s = rows[0];
+    if (s.revoked_at) return res.status(401).send('Session revoked.');
+    if (new Date(s.expires_at) < new Date()) return res.status(401).send('Session expired. Request a new link.');
+    await sequelize.query(
+      `UPDATE d2_partner_sessions SET last_used_at = NOW(), used_count = used_count + 1 WHERE token = :token`,
+      { replacements: { token } }
+    );
+    // Set HttpOnly cookie — Secure flag if we're served over HTTPS
+    const secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const maxAge = PARTNER_SESSION_DAYS * 24 * 60 * 60;
+    res.setHeader('Set-Cookie', `${PARTNER_COOKIE}=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secure ? '; Secure' : ''}`);
+    res.redirect('/champion-dashboard.html?logged_in=1');
+  } catch (err) {
+    console.error('[D2AI-Intake] partner-verify error:', err.message);
+    res.status(500).send('Verify failed.');
+  }
+});
+
+// GET /partner-stats
+//   Cookie-authed. Returns the partner's referrals + aggregate stats.
+//   Reads the token from the HttpOnly cookie. Joins on d2_projects
+//   WHERE partner_slug = me.
+router.get('/partner-stats', async (req, res) => {
+  try {
+    const cookieHeader = req.headers.cookie || '';
+    const m = cookieHeader.match(new RegExp(`(?:^|; )${PARTNER_COOKIE}=([^;]+)`));
+    if (!m) return res.status(401).json({ success: false, error: 'Not logged in.' });
+    const token = m[1];
+    const rows = await sequelize.query(
+      `SELECT partner_slug, email, name, expires_at, revoked_at FROM d2_partner_sessions WHERE token = :token LIMIT 1`,
+      { replacements: { token }, type: sequelize.QueryTypes.SELECT }
+    );
+    if (!rows.length) return res.status(401).json({ success: false, error: 'Session not found.' });
+    const sess = rows[0];
+    if (sess.revoked_at) return res.status(401).json({ success: false, error: 'Session revoked.' });
+    if (new Date(sess.expires_at) < new Date()) return res.status(401).json({ success: false, error: 'Session expired.' });
+    const slug = sess.partner_slug;
+
+    // Referrals — every d2_projects row where partner_slug matches.
+    const referrals = await sequelize.query(
+      `SELECT id, name AS project_title, status, intake_status, workflow_phase,
+              submitter_name, submitter_email, company_id,
+              target_total_usd, target_delivery_weeks,
+              created_at
+         FROM d2_projects
+        WHERE partner_slug = :slug
+        ORDER BY created_at DESC
+        LIMIT 200`,
+      { replacements: { slug }, type: sequelize.QueryTypes.SELECT }
+    );
+    // Aggregate stats
+    const totalSubs = referrals.length;
+    const last30 = referrals.filter(r => (Date.now() - new Date(r.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000).length;
+    const totalBudget = referrals.reduce((sum, r) => sum + (parseFloat(r.target_total_usd) || 0), 0);
+    // Commission: 10% of stated budget as a placeholder. Document this.
+    const COMMISSION_RATE = 0.10;
+    const estCommission = totalBudget * COMMISSION_RATE;
+    // Status breakdown
+    const statusCounts = {};
+    referrals.forEach(r => {
+      const key = r.workflow_phase || r.intake_status || r.status || 'unknown';
+      statusCounts[key] = (statusCounts[key] || 0) + 1;
+    });
+    // Last 30d trend (per-day counts)
+    const dayCounts = {};
+    referrals.forEach(r => {
+      const day = new Date(r.created_at).toISOString().slice(0, 10);
+      if ((Date.now() - new Date(r.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000) {
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+      }
+    });
+
+    res.json({
+      success: true,
+      partner: { slug, email: sess.email, name: sess.name },
+      referrals,
+      stats: {
+        total_submissions: totalSubs,
+        last_30_days: last30,
+        total_stated_budget_usd: totalBudget,
+        estimated_commission_usd: estCommission,
+        commission_rate: COMMISSION_RATE,
+        status_counts: statusCounts,
+        last_30_days_trend: dayCounts
+      }
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] partner-stats error:', err.message);
+    res.status(500).json({ success: false, error: 'Stats failed.' });
+  }
+});
+
+// POST /partner-logout — clears the cookie
+router.post('/partner-logout', (req, res) => {
+  res.setHeader('Set-Cookie', `${PARTNER_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+  res.json({ success: true });
+});
+
 // POST /abandoned-conversation (T2.3)
 //   Public. Captures the warm leads who started a voice conversation
 //   but ended (Esc / click-stop / 10-min timeout) BEFORE running the
