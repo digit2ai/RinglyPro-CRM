@@ -110,30 +110,65 @@
      #orb-wrap. Click-to-activate; states transition via the orb
      controller. All animations are CSS keyframes so the orb plays even
      when the browser tab loses focus during voice ops. */
-  .hero-logo { display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 8px 0 36px; }
+  /* The orb is the heart of the teaser — give it room to breathe and
+     read as the hero centerpiece, not a decorative blob. Margins
+     expanded so the pitch block below sits well clear of the orb. */
+  .hero-logo {
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    margin: 28px 0 72px;
+    --orb-size: 380px;
+  }
   .orb-wrap {
     position: relative;
-    width: 280px; height: 280px;
+    width: var(--orb-size); height: var(--orb-size);
     cursor: pointer;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: transform 200ms ease;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    /* Reactive scale: --orb-amp (0..1) is fed by the mic AnalyserNode
+       during the listening state. Subtle (max 6% scale) so it feels
+       alive without being twitchy. */
+    --orb-amp: 0;
+    will-change: transform;
   }
   .orb-wrap:hover { transform: scale(1.02); }
-  .orb-wrap:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; border-radius: 50%; }
+  .orb-wrap:focus-visible {
+    outline: 3px solid var(--accent-cyan);
+    outline-offset: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.15);
+  }
   .orb-wrap.disabled { cursor: not-allowed; opacity: 0.6; }
   .orb-svg {
-    width: 280px; height: 280px; display: block;
+    width: 100%; height: 100%; display: block;
     /* Glassy drop-shadow on the SVG container — replaces the in-SVG
-       filter that was breaking transform-based animations. */
-    filter: drop-shadow(0 8px 32px rgba(34, 211, 238, 0.25))
-            drop-shadow(0 4px 18px rgba(139, 92, 246, 0.20));
+       filter that was breaking transform-based animations. The shadow
+       brightens when amplitude rises (listening state). */
+    filter: drop-shadow(0 8px 32px rgba(34, 211, 238, calc(0.25 + var(--orb-amp) * 0.35)))
+            drop-shadow(0 4px 18px rgba(139, 92, 246, calc(0.20 + var(--orb-amp) * 0.25)));
+    transition: filter 80ms linear;
   }
-  @media (max-width: 720px) {
-    .orb-wrap, .orb-svg { width: 220px; height: 220px; }
-    .orb-wave { width: 220px !important; }
+
+  /* During the listening state, push amplitude into a gentle scale +
+     ring stroke-width + glow brightness so the orb visibly reacts to
+     the user's voice. */
+  .orb-wrap[data-state="listening"] .orb-svg {
+    transform: scale(calc(1 + var(--orb-amp) * 0.06));
+    transition: transform 80ms linear, filter 80ms linear;
   }
+  .orb-wrap[data-state="listening"] .orb-ring {
+    stroke-width: calc(1.5px + var(--orb-amp) * 2px) !important;
+  }
+
+  /* Responsive scaling — preserve dominance on tablet, then shrink
+     gracefully on phones so the orb still feels like the focal point
+     without overflowing or crowding the caption. */
+  @media (max-width: 900px) { .hero-logo { --orb-size: 340px; margin: 24px 0 60px; } }
+  @media (max-width: 720px) { .hero-logo { --orb-size: 300px; margin: 20px 0 52px; } .orb-wave { width: 240px !important; } }
+  @media (max-width: 480px) { .hero-logo { --orb-size: 260px; margin: 16px 0 44px; } .orb-wave { width: 200px !important; } }
+  @media (max-width: 360px) { .hero-logo { --orb-size: 230px; margin: 14px 0 36px; } .orb-wave { width: 180px !important; } }
 
   /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup.
      The futuristic ring rotations + scan beam are CSS animations on
@@ -213,11 +248,14 @@
   }
   .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.85; }
 
-  /* Caption — language-aware micro instruction below the orb */
+  /* Caption — language-aware micro instruction below the orb.
+     Sits beneath the SVG, wraps cleanly on narrow widths. */
   .orb-caption {
     position: absolute;
-    bottom: -8px;
-    left: 0; right: 0;
+    bottom: -18px;
+    left: 50%; transform: translateX(-50%);
+    width: max-content;
+    max-width: min(360px, 92vw);
     text-align: center;
     font-family: var(--font-mono);
     font-size: 10.5px;
@@ -225,6 +263,19 @@
     text-transform: uppercase;
     color: var(--ink-mute);
     transition: color 200ms ease;
+    line-height: 1.4;
+  }
+  @media (max-width: 480px) {
+    .orb-caption { font-size: 9.5px; letter-spacing: 1.1px; bottom: -22px; }
+  }
+  @media (max-width: 360px) {
+    .orb-caption { font-size: 9px; letter-spacing: 0.9px; }
+  }
+  /* SR-only state announcer (visually hidden, read by AT) */
+  .orb-sr {
+    position: absolute !important;
+    width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
   .orb-wrap:hover .orb-caption { color: var(--accent-cyan); }
   .orb-wrap[data-state="listening"] .orb-caption { color: var(--accent-cyan); }
@@ -272,19 +323,42 @@
      [hidden] must beat the layout rule, otherwise it shows on every load. */
   .orb-fallback[hidden] { display: none !important; }
   .orb-fallback {
-    margin-top: 28px;
+    margin-top: 36px;
     font-size: 12.5px;
     color: var(--amber);
     text-align: center;
-    max-width: 360px;
-    line-height: 1.5;
-    padding: 10px 14px;
+    max-width: min(420px, 92vw);
+    line-height: 1.55;
+    padding: 14px 18px;
     border: 1px solid rgba(245, 158, 11, 0.3);
     border-radius: var(--radius-sm);
     background: rgba(245, 158, 11, 0.06);
   }
+  @media (max-width: 480px) {
+    .orb-fallback { font-size: 11.5px; padding: 12px 14px; margin-top: 28px; }
+    .orb-fallback strong { font-size: 12.5px; }
+  }
   /* When fallback is active, hide the orb caption so the two don't fight */
   .hero-logo:has(.orb-fallback:not([hidden])) .orb-caption { display: none; }
+
+  /* Accessibility — prefers-reduced-motion: kill all rotation, scan,
+     pulse, and amplitude-driven scale. Keep state colors + the
+     drop-shadow brighten so the orb still reads as alive without
+     triggering vestibular discomfort. */
+  @media (prefers-reduced-motion: reduce) {
+    .orb-ring-outer, .orb-ring-mid, .orb-ring-inner,
+    .orb-iris-outer, .orb-iris-segs,
+    .orb-scan, .orb-crosshair,
+    .orb-particle, .narrating-pill {
+      animation: none !important;
+    }
+    .orb-svg animate, .orb-svg animateTransform { display: none; }
+    .orb-wrap[data-state="listening"] .orb-svg { transform: none !important; }
+    .orb-wrap[data-state="listening"] .orb-ring { animation: none !important; opacity: 1; }
+    .orb-wrap[data-state="thinking"] .orb-particles { opacity: 1; }
+    .orb-wrap[data-state="thinking"] .orb-core { animation: none !important; }
+    .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.5; }
+  }
 
   /* 30-second pitch */
   .pitch {
@@ -630,8 +704,11 @@
        thinking / speaking are driven by the orb controller in the inline JS. -->
   <div class="hero-logo">
     <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
-         aria-label="Activate Partnership brain — click and speak"
+         aria-label="Activate Partnership brain — press Enter or Space to start a voice conversation"
+         aria-pressed="false"
+         aria-describedby="orb-caption orb-sr-status"
          data-state="idle" data-configured="false">
+      <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
       <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <!-- 4-color signature gradient for the core iris -->
@@ -2262,11 +2339,23 @@
     var waveCanvas = document.getElementById('orb-wave');
     var API_BASE = '/projects/api/v1/intake';
 
+    var srStatus = document.getElementById('orb-sr-status');
+    var SR_LABELS = {
+      en: { idle: 'Partnership brain ready. Press Enter to start a voice conversation.', listening: 'Listening.', thinking: 'Analyzing your project.', speaking: 'The Partnership brain is speaking.' },
+      es: { idle: 'Cerebro del Partnership listo. Presiona Enter para iniciar una conversación de voz.', listening: 'Escuchando.', thinking: 'Analizando tu proyecto.', speaking: 'El cerebro del Partnership está hablando.' }
+    };
     function setState(s) {
       wrap.setAttribute('data-state', s);
+      // aria-pressed reflects "is the voice session currently active"
+      wrap.setAttribute('aria-pressed', (s !== 'idle') ? 'true' : 'false');
       // Toggle a body-level class while the orb is narrating so the
       // result-panel "Listening to the brain..." pill auto-shows.
       document.body.classList.toggle('orb-narrating', s === 'speaking');
+      // Announce state changes to screen readers
+      if (srStatus) {
+        var lang = (document.body.classList.contains('lang-es')) ? 'es' : 'en';
+        srStatus.textContent = (SR_LABELS[lang] && SR_LABELS[lang][s]) || '';
+      }
     }
     function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
     function showFallback(msg) {
@@ -2312,14 +2401,18 @@
     }
 
     // Build the waveform painter using a frequency analyzer over the
-    // output audio stream. The convai SDK exposes the output element;
-    // we attach an AnalyserNode and repaint 60fps.
+    // mic input stream. The same analyser feeds (a) the canvas bars
+    // shown during the speaking state and (b) a smoothed RMS amplitude
+    // value pushed into the --orb-amp CSS var, which the orb visuals
+    // read to scale rings/glow in response to the user's voice.
+    var ampSmoothed = 0; // EMA-smoothed amplitude so the visual doesn't jitter
     function startWaveform(mediaStream) {
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         var source = audioCtx.createMediaStreamSource(mediaStream);
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.6;
         source.connect(analyser);
         var ctx2d = waveCanvas.getContext('2d');
         var buf = new Uint8Array(analyser.frequencyBinCount);
@@ -2327,6 +2420,17 @@
         function paint() {
           if (!analyser) return;
           analyser.getByteFrequencyData(buf);
+          // ---- Amplitude tap: focus on lower-mid band (speech energy
+          // lives mostly in bins ~2–24 at fftSize=128). RMS-normalized,
+          // gain-boosted, then EMA-smoothed to feel responsive but not
+          // jittery. Mapped 0..1 and written to --orb-amp 60×/sec.
+          var sum = 0, count = 0, hi = Math.min(24, buf.length);
+          for (var k = 2; k < hi; k++) { sum += buf[k] * buf[k]; count++; }
+          var rms = count ? Math.sqrt(sum / count) / 255 : 0; // 0..1
+          var boosted = Math.min(1, rms * 2.4);              // perceived loudness
+          ampSmoothed = ampSmoothed * 0.7 + boosted * 0.3;
+          setAmp(ampSmoothed);
+          // ---- Canvas bars (speaking-state visual)
           ctx2d.clearRect(0, 0, w, h);
           var barW = (w / buf.length) * 1.6;
           for (var i = 0; i < buf.length; i++) {
@@ -2349,6 +2453,8 @@
       if (waveAnim) cancelAnimationFrame(waveAnim);
       waveAnim = null;
       analyser = null;
+      ampSmoothed = 0;
+      setAmp(0);
       if (waveCanvas) {
         var c = waveCanvas.getContext('2d');
         if (c) c.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
