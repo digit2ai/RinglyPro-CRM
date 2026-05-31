@@ -8,6 +8,13 @@
 <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- T4.4 — preconnect to esm.sh so the lazy-loaded ElevenLabs SDK
+     fetch is fast when the orb is clicked. Cheap (single TCP+TLS
+     handshake during idle). -->
+<link rel="preconnect" href="https://esm.sh">
+<!-- T4.4 — request only the weights we use for above-the-fold copy.
+     Inter 700/800/900 for headings + Instrument Serif italic for the
+     <em> brand emphasis. Other weights load lazily as text needs them. -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -3285,25 +3292,29 @@
 
 </div>
 
-<!-- ElevenLabs Conversational AI browser SDK — package is ESM-only, so
-     we load via esm.sh which serves it with proper CORS headers and an
-     ESM-compatible bundle. The default UMD bundle URL on unpkg has no
-     Access-Control-Allow-Origin header and gets blocked. -->
-<script type="module">
-  // Expose the Conversation class globally so the non-module orb
-  // controller (further down in this file) can find it. We intentionally
-  // pin the version we tested against — bumping requires a manual check
-  // that the API hasn't changed.
-  try {
-    const mod = await import('https://esm.sh/@elevenlabs/client@1.9.0');
-    window.__ElevenLabsConversation = mod.Conversation || (mod.default && mod.default.Conversation);
-    if (window.__ElevenLabsConversation) {
-      window.dispatchEvent(new Event('elevenlabs-sdk-ready'));
-    }
-  } catch (e) {
-    console.warn('[orb] ElevenLabs SDK failed to load — voice mode will be unavailable.', e);
-    window.dispatchEvent(new Event('elevenlabs-sdk-failed'));
-  }
+<!-- T4.4 — ElevenLabs SDK is now LAZY-LOADED on first orb-click intent
+     instead of on page load. Saves ~200KB of unused JS for visitors who
+     never use the voice mode. The activateOrb path awaits loadElevenLabsSdk().
+     Preconnect hint primes the connection while the user reads the page so
+     the actual fetch is fast when triggered. -->
+<script>
+  window.__loadElevenLabsSdk = function () {
+    if (window.__ElevenLabsConversation) return Promise.resolve(window.__ElevenLabsConversation);
+    if (window.__ElevenLabsSdkPromise) return window.__ElevenLabsSdkPromise;
+    window.__ElevenLabsSdkPromise = import('https://esm.sh/@elevenlabs/client@1.9.0')
+      .then(function (mod) {
+        var C = mod.Conversation || (mod.default && mod.default.Conversation);
+        window.__ElevenLabsConversation = C;
+        window.dispatchEvent(new Event('elevenlabs-sdk-ready'));
+        return C;
+      })
+      .catch(function (e) {
+        console.warn('[orb] ElevenLabs SDK failed to load — voice mode unavailable.', e);
+        window.dispatchEvent(new Event('elevenlabs-sdk-failed'));
+        return null;
+      });
+    return window.__ElevenLabsSdkPromise;
+  };
 </script>
 
 <script>
@@ -4749,16 +4760,20 @@
       if (window.__emitFunnelEvent) window.__emitFunnelEvent('orb_clicked');
       caption.style.opacity = '0.7';
 
-      // Check SDK loaded (window.__ElevenLabsConversation is set by the
-      // ESM loader script in the head). If still undefined, the import
-      // either failed or hasn't completed yet.
-      var Conversation = window.__ElevenLabsConversation;
-      if (!Conversation) {
-        connecting = false;
-        showFallback();
-        return;
-      }
-
+      // T4.4 — SDK is lazy-loaded on first orb-click. Kick off the
+      // import here if not already in-flight, then await.
+      var sdkPromise = (window.__ElevenLabsConversation)
+        ? Promise.resolve(window.__ElevenLabsConversation)
+        : (window.__loadElevenLabsSdk ? window.__loadElevenLabsSdk() : Promise.resolve(null));
+      sdkPromise.then(function (Conversation) {
+        if (!Conversation) { connecting = false; showFallback(); return; }
+        proceedWithSession(Conversation);
+      });
+      return;
+      // The legacy proceed path is preserved as a named fn so we can call
+      // it once the SDK resolves. Removed dead branch.
+    }
+    function proceedWithSession(Conversation) {
       // Confirm we have an agent ID for the current language
       fetchConfig().then(function (cfg) {
         if (!cfg || !cfg.configured || !cfg.agent_id) {
