@@ -129,18 +129,29 @@
     .orb-wave { width: 220px !important; }
   }
 
-  /* IDLE — gentle breathing pulse on the core + outer glow. 4-color
-     gradient embedded in the SVG (orbCore radialGradient). */
-  .orb-glow { animation: orbBreath 4.5s ease-in-out infinite; transform-origin: center; }
-  .orb-core { animation: orbBreath 4.5s ease-in-out infinite; transform-origin: center; }
-  .orb-core-inner { animation: orbBreathInner 4.5s ease-in-out infinite; transform-origin: center; }
-  .orb-highlight { animation: orbHighlight 4.5s ease-in-out infinite; transform-origin: 106px 100px; }
-  @keyframes orbBreath { 0%, 100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.06); opacity: 1; } }
-  @keyframes orbBreathInner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.96); } }
-  @keyframes orbHighlight { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.65; } }
+  /* IDLE — gentle breathing pulse on the core + outer glow.
+     CRITICAL: SVG circles need transform-box: fill-box for transform-origin
+     to work as expected. Without it, "center" resolves to (0,0) of the
+     SVG viewport and the scale animation looks broken or invisible. */
+  .orb-glow,
+  .orb-core,
+  .orb-core-inner,
+  .orb-highlight,
+  .orb-ring,
+  .orb-particle {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .orb-glow { animation: orbBreath 4.5s ease-in-out infinite; }
+  .orb-core { animation: orbBreath 4.5s ease-in-out infinite; }
+  .orb-core-inner { animation: orbBreathInner 4.5s ease-in-out infinite; }
+  .orb-highlight { animation: orbHighlight 4.5s ease-in-out infinite; }
+  @keyframes orbBreath { 0%, 100% { transform: scale(1); opacity: 0.92; } 50% { transform: scale(1.08); opacity: 1; } }
+  @keyframes orbBreathInner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.92); } }
+  @keyframes orbHighlight { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
 
   /* Listening rings — hidden by default, faded in when state=listening */
-  .orb-ring { opacity: 0; transform-origin: center; }
+  .orb-ring { opacity: 0; }
   .orb-wrap[data-state="listening"] .orb-ring {
     opacity: 1;
     animation: orbRingPulse 1.6s ease-out infinite;
@@ -150,15 +161,17 @@
   .orb-wrap[data-state="listening"] .orb-ring-3 { animation-delay: 1.0s; }
   @keyframes orbRingPulse {
     0% { transform: scale(0.85); opacity: 0.9; stroke-width: 1.5; }
-    100% { transform: scale(1.18); opacity: 0; stroke-width: 0.5; }
+    100% { transform: scale(1.22); opacity: 0; stroke-width: 0.5; }
   }
-  /* Listening core: faster breath + amplitude-driven scale via --orb-amp */
+  /* Listening core: faster breath; amplitude-driven scale baked via --orb-amp */
   .orb-wrap[data-state="listening"] .orb-core,
   .orb-wrap[data-state="listening"] .orb-glow {
-    animation: orbBreathFast 2s ease-in-out infinite;
-    transform: scale(calc(1 + (var(--orb-amp, 0) * 0.18)));
+    animation: orbBreathListen 1.8s ease-in-out infinite;
   }
-  @keyframes orbBreathFast { 0%, 100% { filter: brightness(1.05); } 50% { filter: brightness(1.25); } }
+  @keyframes orbBreathListen {
+    0%, 100% { transform: scale(calc(1 + (var(--orb-amp, 0) * 0.18))); filter: brightness(1.1); }
+    50%      { transform: scale(calc(1.06 + (var(--orb-amp, 0) * 0.22))); filter: brightness(1.35); }
+  }
 
   /* Thinking — particles orbit, core slow-rotates, rings tighten */
   .orb-particles { opacity: 0; }
@@ -219,15 +232,23 @@
   .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · speaking'; }
   body.lang-es .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · hablando'; }
 
-  /* Fallback notice when voice can't initialize */
+  /* Fallback notice — shown only when voice mode can't initialize.
+     [hidden] must beat the layout rule, otherwise it shows on every load. */
+  .orb-fallback[hidden] { display: none !important; }
   .orb-fallback {
-    margin-top: 16px;
-    font-size: 12px;
+    margin-top: 28px;
+    font-size: 12.5px;
     color: var(--amber);
     text-align: center;
-    max-width: 320px;
-    line-height: 1.4;
+    max-width: 360px;
+    line-height: 1.5;
+    padding: 10px 14px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius-sm);
+    background: rgba(245, 158, 11, 0.06);
   }
+  /* When fallback is active, hide the orb caption so the two don't fight */
+  .hero-logo:has(.orb-fallback:not([hidden])) .orb-caption { display: none; }
 
   /* 30-second pitch */
   .pitch {
@@ -623,10 +644,13 @@
         <span class="i18n-en">Click to speak with the Partnership brain</span>
         <span class="i18n-es">Haz clic para hablar con el cerebro del Partnership</span>
       </div>
-      <div class="orb-fallback" id="orb-fallback" hidden>
-        <span class="i18n-en">Voice mode unavailable — use the keyboard demo below.</span>
-        <span class="i18n-es">Modo de voz no disponible — usa el demo de teclado abajo.</span>
-      </div>
+    </div>
+    <!-- Fallback message sits OUTSIDE the orb-wrap so it can't overlap the
+         caption. Hidden by default; shown by JS only when the SDK fails,
+         mic is denied, or the convai agent IDs are not configured. -->
+    <div class="orb-fallback" id="orb-fallback" hidden>
+      <span class="i18n-en">Voice mode unavailable — use the keyboard demo below.</span>
+      <span class="i18n-es">Modo de voz no disponible — usa el demo de teclado abajo.</span>
     </div>
   </div>
 
