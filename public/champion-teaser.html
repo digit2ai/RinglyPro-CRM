@@ -1017,15 +1017,6 @@
   .ot-status.ok { color: var(--accent-cyan); }
   .ot-status.err { color: var(--red); }
 
-  /* Mobile: panel drops below orb and goes full-width */
-  @media (max-width: 900px) {
-    .orb-transcript {
-      width: 100%;
-      max-width: 100%;
-      margin-top: 18px;
-      max-height: 360px;
-    }
-  }
   /* Desktop layout: orb + transcript side-by-side when transcript visible */
   @media (min-width: 901px) {
     .hero-logo:has(.orb-transcript:not([hidden])) {
@@ -1034,6 +1025,130 @@
       gap: 36px;
       justify-content: center;
     }
+  }
+  /* Mobile bottom-sheet drawer (T4.1) — transcript slides up from the
+     bottom edge so it doesn't push the orb out of view. A drag handle
+     at the top makes it feel native; users can tap the handle (or the
+     backdrop) to collapse it back to the peek state. */
+  @media (max-width: 900px) {
+    .orb-transcript {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      width: 100%;
+      max-width: 100%;
+      max-height: 60vh;
+      z-index: 90;
+      border-radius: 18px 18px 0 0;
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+      box-shadow: 0 -12px 36px rgba(0,0,0,0.6), 0 -1px 0 rgba(34, 211, 238, 0.6);
+      transition: transform 0.25s ease;
+      transform: translateY(0);
+      animation: otDrawerIn 0.32s ease-out;
+    }
+    @keyframes otDrawerIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .orb-transcript.peeked {
+      transform: translateY(calc(100% - 56px));
+    }
+    /* Drag handle — small horizontal bar at top of drawer. Doubles as
+       the tap-to-collapse / tap-to-expand affordance. */
+    .ot-head::before {
+      content: '';
+      position: absolute;
+      top: 6px; left: 50%;
+      transform: translateX(-50%);
+      width: 44px; height: 4px;
+      border-radius: 2px;
+      background: var(--line-strong);
+      pointer-events: none;
+    }
+    .ot-head { position: relative; padding-top: 18px; cursor: grab; }
+    .ot-head:active { cursor: grabbing; }
+    /* Pad the body so it doesn't get hidden under iOS Safari toolbar */
+    .ot-body { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  }
+
+  /* Full-screen voice mode (T4.1) — toggles body.orb-fullscreen.
+     Hides everything except the orb + transcript + a giant stop button.
+     iOS-safe area aware, locks scroll. */
+  body.orb-fullscreen {
+    overflow: hidden;
+  }
+  body.orb-fullscreen .hero-logo {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: radial-gradient(circle at 50% 40%, #0d1530 0%, #05070e 70%);
+    margin: 0 !important;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    --orb-size: min(72vmin, 480px);
+  }
+  body.orb-fullscreen .hero-logo > *:not(.orb-wrap):not(#orb-fullscreen-bar):not(.orb-transcript) { display: none !important; }
+  body.orb-fullscreen #orb-fullscreen-bar { display: flex !important; }
+  /* Hide non-essential page chrome while in full-screen mode */
+  body.orb-fullscreen > *:not(.hero-logo):not(#abandon-modal):not(.sticky-cta) { display: none !important; }
+
+  .orb-fullscreen-bar { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 0 16px; padding-bottom: env(safe-area-inset-bottom, 16px); }
+  .ofs-status { font-family: var(--font-mono); font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-mute); }
+  .ofs-stop {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+    min-height: 52px;
+    min-width: 200px;
+    box-shadow: 0 8px 28px rgba(239, 68, 68, 0.4);
+  }
+  .ofs-stop:hover { transform: translateY(-1px); }
+  .ofs-stop:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+  .ofs-exit {
+    background: transparent;
+    color: var(--ink-mute);
+    border: 1px solid var(--line-strong);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .ofs-exit:hover { color: var(--ink); border-color: var(--accent-cyan); }
+  /* Toggle button to ENTER fullscreen — only visible on mobile while orb is active */
+  .orb-fs-toggle {
+    display: none;
+    position: absolute;
+    top: -6px; right: -6px;
+    z-index: 5;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(5, 7, 20, 0.85);
+    color: var(--accent-cyan);
+    border: 1px solid var(--accent-cyan);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .orb-fs-toggle:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 3px; }
+  .orb-fs-toggle svg { width: 18px; height: 18px; }
+  @media (max-width: 900px) {
+    .orb-wrap[data-state]:not([data-state="idle"]) + .orb-fs-toggle { display: inline-flex; }
+    .orb-fs-toggle { display: inline-flex; }
+    body.orb-fullscreen .orb-fs-toggle { display: none; }
   }
 
   /* Social proof block (T1.2) — stat strip + horizontal logo marquee.
@@ -1742,6 +1857,30 @@
         <span class="ot-status" id="ot-status" aria-live="polite"></span>
       </footer>
     </aside>
+    <!-- T4.1 Full-screen voice mode toggle (mobile only). Sits in the
+         top-right of the orb-wrap when the orb is active. Tapping it
+         enters body.orb-fullscreen which hides every other element. -->
+    <button type="button" class="orb-fs-toggle" id="orb-fs-toggle" hidden
+            aria-label="Enter full-screen voice mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/>
+      </svg>
+    </button>
+    <!-- T4.1 Full-screen-mode bottom bar (only shows when body.orb-fullscreen) -->
+    <div class="orb-fullscreen-bar" id="orb-fullscreen-bar">
+      <div class="ofs-status" id="ofs-status">
+        <span class="i18n-en">Listening</span>
+        <span class="i18n-es">Escuchando</span>
+      </div>
+      <button type="button" class="ofs-stop" id="ofs-stop">
+        <span class="i18n-en">Stop conversation</span>
+        <span class="i18n-es">Detener conversación</span>
+      </button>
+      <button type="button" class="ofs-exit" id="ofs-exit">
+        <span class="i18n-en">Exit full screen</span>
+        <span class="i18n-es">Salir de pantalla completa</span>
+      </button>
+    </div>
     <!-- Fallback message sits OUTSIDE the orb-wrap so it can't overlap the
          caption. Hidden by default; shown by JS only when the SDK fails,
          mic is denied, or the convai agent IDs are not configured. -->
@@ -4515,6 +4654,7 @@
               startWaveform(stream);
               setState('listening');
               startSessionTimer(); // 10-min cap + visible countdown
+              acquireWakeLock();   // T4.1 — keep screen on
             });
           })
           .catch(function (err) {
@@ -4528,6 +4668,95 @@
           });
       });
     }
+
+    // ---------------- T4.1 Mobile orb v2 ----------------
+    // Full-screen voice mode toggle + Wake Lock API to keep screens on
+    // during conversations + bottom-sheet peek for the transcript.
+    var wakeLockSentinel = null;
+    function acquireWakeLock() {
+      try {
+        if (!('wakeLock' in navigator)) return;
+        navigator.wakeLock.request('screen').then(function (sentinel) {
+          wakeLockSentinel = sentinel;
+          sentinel.addEventListener('release', function () { wakeLockSentinel = null; });
+        }).catch(function () { /* user gesture required on some platforms */ });
+      } catch (_) {}
+    }
+    function releaseWakeLock() {
+      try { if (wakeLockSentinel) wakeLockSentinel.release(); } catch (_) {}
+      wakeLockSentinel = null;
+    }
+    // Re-acquire on visibility return (browsers drop the lock on tab blur)
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && session) acquireWakeLock();
+    });
+
+    function enterFullscreen() {
+      document.body.classList.add('orb-fullscreen');
+      try { document.body.scrollIntoView({ behavior: 'instant', block: 'start' }); } catch (_) {}
+      // Try real browser fullscreen too — best-effort
+      try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){}); } catch (_) {}
+    }
+    function exitFullscreen() {
+      document.body.classList.remove('orb-fullscreen');
+      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); } catch (_) {}
+    }
+    (function wireFsControls() {
+      var fsToggle = document.getElementById('orb-fs-toggle');
+      var fsStop = document.getElementById('ofs-stop');
+      var fsExit = document.getElementById('ofs-exit');
+      var fsStatus = document.getElementById('ofs-status');
+      if (fsToggle) fsToggle.addEventListener('click', function () {
+        if (!session) return;
+        enterFullscreen();
+      });
+      if (fsStop) fsStop.addEventListener('click', function () {
+        endVoiceSession();
+        exitFullscreen();
+      });
+      if (fsExit) fsExit.addEventListener('click', exitFullscreen);
+      // Sync the status text with the orb data-state
+      var mo = new MutationObserver(function () {
+        if (!fsStatus) return;
+        var s = wrap.getAttribute('data-state');
+        var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var label = '';
+        if (s === 'listening') label = lang === 'es' ? 'Escuchando' : 'Listening';
+        else if (s === 'thinking') label = lang === 'es' ? 'Analizando' : 'Analyzing';
+        else if (s === 'speaking') label = lang === 'es' ? 'Hablando' : 'Speaking';
+        else label = '';
+        var spans = fsStatus.querySelectorAll('span');
+        if (spans.length >= 2) {
+          spans[0].textContent = lang === 'es' ? '' : label;
+          spans[1].textContent = lang === 'es' ? label : '';
+        }
+      });
+      mo.observe(wrap, { attributes: true, attributeFilter: ['data-state'] });
+
+      // Show fullscreen toggle while the orb is active (CSS already
+      // handles visibility on mobile; we just toggle the [hidden] attr
+      // so screen readers don't surface a hidden control).
+      var stateObserver = new MutationObserver(function () {
+        var s = wrap.getAttribute('data-state');
+        if (fsToggle) fsToggle.hidden = (s === 'idle');
+      });
+      stateObserver.observe(wrap, { attributes: true, attributeFilter: ['data-state'] });
+    })();
+
+    // Mobile transcript peek — tap the header to collapse/expand the
+    // bottom-sheet drawer. Desktop layout is unaffected.
+    (function wireDrawerPeek() {
+      var tx = document.getElementById('orb-transcript');
+      var head = tx && tx.querySelector('.ot-head');
+      if (!tx || !head) return;
+      head.addEventListener('click', function (e) {
+        // Don't toggle when clicking the action buttons
+        if (e.target.closest('button')) return;
+        if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+          tx.classList.toggle('peeked');
+        }
+      });
+    })();
 
     // ---------------- 10-minute session timer ----------------
     // Hard cap on conversation length to control cost and keep demos
@@ -4630,6 +4859,8 @@
       clearSessionTimer();
       stopWaveform();
       releaseMic();
+      releaseWakeLock();          // T4.1
+      exitFullscreen();           // T4.1 — leave fullscreen on session end
       if (wasActive) {
         // Defer modal a hair so the SR status announces "Conversation
         // ended" before the modal grabs focus.
