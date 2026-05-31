@@ -451,6 +451,75 @@
     .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.5; }
   }
 
+  /* Demo walkthrough (T1.3) — 4-scene animated SVG above the orb.
+     Cold visitors watch this loop, then scroll to the live orb to try
+     it. Scene timing controlled by data-scene attribute on .dw-stage. */
+  .demo-walkthrough { margin: 22px 0 24px; padding: 24px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; }
+  .dw-header { text-align: center; margin-bottom: 18px; }
+  .dw-eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-cyan); margin-bottom: 8px; }
+  .dw-title { font-size: clamp(18px, 3vw, 24px); font-weight: 800; line-height: 1.3; margin: 0; }
+  .dw-title em { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .dw-stage { position: relative; aspect-ratio: 16 / 9; max-height: 360px; margin: 0 auto; background: linear-gradient(180deg, #050714 0%, #0a1024 100%); border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,92,255,0.2); }
+  .dw-svg { width: 100%; height: 100%; display: block; }
+
+  /* Scene state machine — each scene reveals certain SVG groups */
+  .dw-stage .dw-orb-pulse { transform-box: fill-box; transform-origin: 150px 160px; animation: dwPulse 1.6s ease-in-out infinite; }
+  @keyframes dwPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.25); opacity: 0.5; } }
+  .dw-wave, .dw-thinking, .dw-result { opacity: 0; transition: opacity 0.4s ease; }
+  .dw-wave rect { animation: dwBar 0.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .dw-wave rect:nth-child(2) { animation-delay: -0.1s; }
+  .dw-wave rect:nth-child(3) { animation-delay: -0.2s; }
+  .dw-wave rect:nth-child(4) { animation-delay: -0.3s; }
+  .dw-wave rect:nth-child(5) { animation-delay: -0.4s; }
+  .dw-wave rect:nth-child(6) { animation-delay: -0.5s; }
+  .dw-wave rect:nth-child(7) { animation-delay: -0.6s; }
+  .dw-wave rect:nth-child(8) { animation-delay: -0.7s; }
+  .dw-wave rect:nth-child(9) { animation-delay: -0.8s; }
+  @keyframes dwBar { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1.4); } }
+  .dw-thinking circle { animation: dwThink 1.2s ease-in-out infinite; }
+  .dw-thinking circle:nth-child(2) { animation-delay: 0.15s; }
+  .dw-thinking circle:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dwThink { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-6px); opacity: 1; } }
+  .dw-result { transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
+
+  .dw-stage[data-scene="2"] .dw-wave { opacity: 1; }
+  .dw-stage[data-scene="3"] .dw-thinking { opacity: 1; }
+  .dw-stage[data-scene="4"] .dw-result { opacity: 1; transform: translateY(0); }
+  .dw-stage[data-scene="4"] .dw-orb { opacity: 0.25; }
+  .dw-stage .dw-orb { transition: opacity 0.4s ease; }
+
+  /* Caption + dots */
+  .dw-caption { position: absolute; bottom: 14px; left: 14px; right: 14px; text-align: center; pointer-events: none; }
+  .dw-cap { display: none; font-size: 14px; line-height: 1.4; color: var(--ink); background: rgba(5,7,20,0.85); padding: 10px 16px; border-radius: 8px; backdrop-filter: blur(6px); max-width: 480px; margin: 0 auto; }
+  .dw-stage[data-scene="1"] .dw-cap-1,
+  .dw-stage[data-scene="2"] .dw-cap-2,
+  .dw-stage[data-scene="3"] .dw-cap-3,
+  .dw-stage[data-scene="4"] .dw-cap-4 { display: block; }
+  .dw-dots { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
+  .dw-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: background 0.3s ease, transform 0.3s ease; }
+  .dw-stage[data-scene="1"] .dw-dot-1,
+  .dw-stage[data-scene="2"] .dw-dot-2,
+  .dw-stage[data-scene="3"] .dw-dot-3,
+  .dw-stage[data-scene="4"] .dw-dot-4 { background: var(--accent-cyan); transform: scale(1.4); }
+
+  /* CTA */
+  .dw-cta { text-align: center; margin-top: 18px; }
+  .dw-cta-btn { background: var(--grad); color: #020617; border: none; padding: 12px 28px; border-radius: 999px; font-weight: 800; font-size: 14px; letter-spacing: 0.4px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; font-family: inherit; }
+  .dw-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,211,238,0.3); }
+  .dw-cta-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .demo-walkthrough { padding: 18px 14px; }
+    .dw-stage { aspect-ratio: 4 / 3; }
+    .dw-cap { font-size: 12px; padding: 8px 12px; }
+    .dw-result text:not(:first-child) { font-size: 9px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dw-orb-pulse, .dw-wave rect, .dw-thinking circle { animation: none; }
+  }
+
   /* Social proof block (T1.2) — stat strip + horizontal logo marquee.
      Sits between the orb and MEMORIZE THIS pitch. Stat counters
      animate up on first scroll-into-view via JS. */
@@ -898,6 +967,113 @@
       <span class="i18n-en">A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.</span>
       <span class="i18n-es">Un curso intensivo de 5 minutos para que puedas responder con confianza a cualquier pregunta de un prospecto — y convertir la conversación en una solicitud real en digit2ai.com.</span>
     </p>
+  </section>
+
+  <!-- =================================================================
+       T1.3 — Demo walkthrough.
+       60-second animated walkthrough that simulates the orb conversation
+       end-to-end. Plays silently with captions in current language so
+       cold visitors understand WHAT the orb does before they click the
+       mic. Loops indefinitely; "Try it yourself ↓" CTA at the end
+       scrolls to the real orb below.
+       Pure SVG/CSS — no external assets, no autoplay video constraints.
+       ================================================================= -->
+  <section class="demo-walkthrough" id="demo-walkthrough" aria-labelledby="demo-wt-h">
+    <div class="dw-header">
+      <span class="dw-eyebrow">
+        <span class="i18n-en">60-second tour</span>
+        <span class="i18n-es">Recorrido de 60 segundos</span>
+      </span>
+      <h2 id="demo-wt-h" class="dw-title">
+        <span class="i18n-en">What happens when a prospect <em>talks to the brain</em></span>
+        <span class="i18n-es">Qué pasa cuando un prospecto <em>habla con el cerebro</em></span>
+      </h2>
+    </div>
+    <div class="dw-stage" id="dw-stage" data-scene="1">
+      <svg class="dw-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="dwCore" cx="0.5" cy="0.45">
+            <stop offset="0" stop-color="#a5f3fc"/>
+            <stop offset="0.5" stop-color="#3b82f6" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#8b5cf6" stop-opacity="0.5"/>
+          </radialGradient>
+          <radialGradient id="dwGlow" cx="0.5" cy="0.5">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+            <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <!-- Mini orb (left side) -->
+        <g class="dw-orb">
+          <circle class="dw-orb-halo" cx="150" cy="160" r="78" fill="url(#dwGlow)"/>
+          <circle class="dw-orb-ring" cx="150" cy="160" r="58" fill="none" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/>
+          <circle class="dw-orb-core" cx="150" cy="160" r="42" fill="url(#dwCore)"/>
+          <circle class="dw-orb-pulse" cx="150" cy="160" r="22" fill="#a5f3fc" opacity="0.9"/>
+        </g>
+        <!-- Sound wave (user speaking, shown scene 2) -->
+        <g class="dw-wave">
+          <rect x="270" y="155" width="3" height="10" rx="1.5" fill="#22d3ee"/>
+          <rect x="278" y="148" width="3" height="24" rx="1.5" fill="#22d3ee"/>
+          <rect x="286" y="142" width="3" height="36" rx="1.5" fill="#3b82f6"/>
+          <rect x="294" y="138" width="3" height="44" rx="1.5" fill="#8b5cf6"/>
+          <rect x="302" y="146" width="3" height="28" rx="1.5" fill="#ec4899"/>
+          <rect x="310" y="152" width="3" height="16" rx="1.5" fill="#ec4899"/>
+          <rect x="318" y="148" width="3" height="24" rx="1.5" fill="#8b5cf6"/>
+          <rect x="326" y="143" width="3" height="34" rx="1.5" fill="#3b82f6"/>
+          <rect x="334" y="150" width="3" height="20" rx="1.5" fill="#22d3ee"/>
+        </g>
+        <!-- Thinking dots (scene 3) -->
+        <g class="dw-thinking">
+          <circle cx="290" cy="160" r="5" fill="#8b5cf6"/>
+          <circle cx="310" cy="160" r="5" fill="#8b5cf6"/>
+          <circle cx="330" cy="160" r="5" fill="#8b5cf6"/>
+        </g>
+        <!-- Result card (scene 4) -->
+        <g class="dw-result">
+          <rect x="260" y="80" width="320" height="160" rx="12" fill="#0c1733" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
+          <rect x="276" y="98" width="80" height="22" rx="11" fill="#10b981" opacity="0.85"/>
+          <text x="316" y="113" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#0a0d1a">GO</text>
+          <text x="376" y="115" font-family="JetBrains Mono, monospace" font-size="22" font-weight="800" fill="#22d3ee">9</text>
+          <text x="394" y="115" font-family="JetBrains Mono, monospace" font-size="11" fill="#9aa3b2">/10 fit</text>
+          <text x="276" y="148" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#e5e7eb">Dispatch Auto-Pilot</text>
+          <text x="276" y="170" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">MCP agent watches 12 boards,</text>
+          <text x="276" y="184" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">scores lanes, drafts rate-cons,</text>
+          <text x="276" y="198" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">texts the assigned driver.</text>
+          <text x="276" y="222" font-family="JetBrains Mono, monospace" font-size="10" fill="#22d3ee">6–8 WEEKS · LIVE ON YOUR DOMAIN</text>
+        </g>
+      </svg>
+      <!-- Caption track — swaps text by scene index. Bilingual. -->
+      <div class="dw-caption" aria-live="polite">
+        <div class="dw-cap dw-cap-1">
+          <span class="i18n-en">1 — Prospect clicks the orb and talks naturally.</span>
+          <span class="i18n-es">1 — El prospecto hace clic en el orbe y habla naturalmente.</span>
+        </div>
+        <div class="dw-cap dw-cap-2">
+          <span class="i18n-en">2 — Manny or Lina asks 2–3 targeted questions to refine the request.</span>
+          <span class="i18n-es">2 — Manny o Lina hacen 2–3 preguntas específicas para refinar la solicitud.</span>
+        </div>
+        <div class="dw-cap dw-cap-3">
+          <span class="i18n-en">3 — Asks permission, then runs the AI Triage on the refined project.</span>
+          <span class="i18n-es">3 — Pide permiso, luego corre el AI Triage sobre el proyecto refinado.</span>
+        </div>
+        <div class="dw-cap dw-cap-4">
+          <span class="i18n-en">4 — Verdict, fit score, technical solution and delivery window — ready to edit and submit.</span>
+          <span class="i18n-es">4 — Veredicto, puntuación de ajuste, solución técnica y ventana de entrega — listo para editar y enviar.</span>
+        </div>
+      </div>
+      <!-- Progress dots -->
+      <div class="dw-dots" aria-hidden="true">
+        <span class="dw-dot dw-dot-1"></span>
+        <span class="dw-dot dw-dot-2"></span>
+        <span class="dw-dot dw-dot-3"></span>
+        <span class="dw-dot dw-dot-4"></span>
+      </div>
+    </div>
+    <div class="dw-cta">
+      <button type="button" class="dw-cta-btn" id="dw-cta-btn">
+        <span class="i18n-en">Try it yourself ↓</span>
+        <span class="i18n-es">Pruébalo tú mismo ↓</span>
+      </button>
+    </div>
   </section>
 
   <!-- ANIMATED ORB — voice-interactive Partnership brain (replaces static logo).
@@ -2210,6 +2386,58 @@
     if (a.referrer_url) payload.referrer_url = a.referrer_url;
     return payload;
   };
+
+  // ---------------- Demo walkthrough (T1.3) ----------------
+  //
+  // Plays the 4-scene loop indefinitely. Scene timing:
+  //   1 (orb at rest)        — 2.0s
+  //   2 (user speaking)      — 4.5s
+  //   3 (orb thinking)       — 2.5s
+  //   4 (result panel)       — 5.0s  → loop back
+  // Total loop ≈ 14s. CTA scrolls to live orb.
+  (function () {
+    var stage = document.getElementById('dw-stage');
+    var ctaBtn = document.getElementById('dw-cta-btn');
+    if (!stage) return;
+    var DURATIONS = [2000, 4500, 2500, 5000];
+    var scene = 1;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function advance() {
+      scene = scene >= 4 ? 1 : scene + 1;
+      stage.setAttribute('data-scene', String(scene));
+      setTimeout(advance, DURATIONS[scene - 1]);
+    }
+    // Only auto-play when visible to save CPU + battery on tabs in
+    // background. IntersectionObserver pauses + resumes.
+    var paused = true;
+    var timer = null;
+    function start() {
+      if (!paused) return;
+      paused = false;
+      timer = setTimeout(function tick() {
+        if (paused) return;
+        scene = scene >= 4 ? 1 : scene + 1;
+        stage.setAttribute('data-scene', String(scene));
+        timer = setTimeout(tick, DURATIONS[scene - 1]);
+      }, DURATIONS[scene - 1]);
+    }
+    function stop() { paused = true; if (timer) { clearTimeout(timer); timer = null; } }
+    if (!reduce) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { e.isIntersecting ? start() : stop(); });
+      }, { threshold: 0.25 });
+      io.observe(stage);
+    }
+    // CTA — smooth scroll to the live orb and focus it for screen-reader users.
+    if (ctaBtn) {
+      ctaBtn.addEventListener('click', function () {
+        var wrap = document.getElementById('orb-wrap');
+        if (!wrap) return;
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { try { wrap.focus(); } catch (_) {} }, 700);
+      });
+    }
+  })();
 
   // ---------------- Social proof block (T1.2) ----------------
   //
