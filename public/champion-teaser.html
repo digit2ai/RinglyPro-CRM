@@ -652,8 +652,18 @@
          caption. Hidden by default; shown by JS only when the SDK fails,
          mic is denied, or the convai agent IDs are not configured. -->
     <div class="orb-fallback" id="orb-fallback" hidden>
-      <span class="i18n-en">Voice mode unavailable — use the keyboard demo below.</span>
-      <span class="i18n-es">Modo de voz no disponible — usa el demo de teclado abajo.</span>
+      <div class="i18n-en">
+        <strong>Voice mode not configured yet.</strong><br>
+        Create your ElevenLabs convai agent (5 min), set the agent ID as a Render env var, redeploy.<br>
+        <a href="/projects/api/v1/intake/partnership-orb-system-prompt?lang=en" target="_blank" rel="noopener" style="color:var(--accent-cyan);text-decoration:underline">Get the ready-to-paste setup recipe →</a><br>
+        <span style="color:var(--ink-mute);font-size:11px">Meanwhile, the keyboard demo below works perfectly.</span>
+      </div>
+      <div class="i18n-es">
+        <strong>Modo de voz aún sin configurar.</strong><br>
+        Crea el agente convai en ElevenLabs (5 min), pon el agent ID como env var en Render, redeploya.<br>
+        <a href="/projects/api/v1/intake/partnership-orb-system-prompt?lang=es" target="_blank" rel="noopener" style="color:var(--accent-cyan);text-decoration:underline">Obtener la receta de configuración lista para pegar →</a><br>
+        <span style="color:var(--ink-mute);font-size:11px">Mientras tanto, el demo de teclado abajo funciona perfecto.</span>
+      </div>
     </div>
   </div>
 
