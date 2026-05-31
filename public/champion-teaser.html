@@ -326,6 +326,56 @@
     50%      { opacity: 1; box-shadow: 0 0 0 6px rgba(34, 211, 238, 0); }
   }
 
+  /* Approval-required banner — sits above the Accept & Submit button on
+     the result panel so the prospect understands NOTHING gets sent
+     without their click. Reinforces what the voice agent says. */
+  .approval-required {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin: 22px 0 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), rgba(245, 158, 11, 0.04));
+    border: 1.5px solid rgba(245, 158, 11, 0.4);
+    border-radius: 10px;
+    animation: approvalPulse 2.4s ease-in-out 3;
+  }
+  .approval-required .ar-icon {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: #0a0d1a;
+    font-weight: 900;
+    font-size: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .approval-required .ar-text {
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .approval-required .ar-text strong { color: var(--amber); }
+  .approval-required .ar-warn {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  @keyframes approvalPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    50%      { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.18); }
+  }
+
+  /* Pulsing tint on the Accept & Submit button for the first ~6s after
+     render — draws the eye to the action that submits to Digit2AI. */
+  .pulse-on-load { animation: submitGlow 1.8s ease-in-out 3; }
+  @keyframes submitGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
+    50%      { box-shadow: 0 0 0 10px rgba(34, 211, 238, 0.25); }
+  }
+
   /* Fallback notice — shown only when voice mode can't initialize.
      [hidden] must beat the layout rule, otherwise it shows on every load. */
   .orb-fallback[hidden] { display: none !important; }
@@ -2188,8 +2238,16 @@
             '<ul class="editable list" id="d-flags" contenteditable="true">' + listToHtml(tr.verify_flags) + '</ul>' +
           '</div>' +
 
+          '<div class="approval-required">' +
+            '<span class="ar-icon" aria-hidden="true">!</span>' +
+            '<div class="ar-text">' +
+              (getLang() === 'es'
+                ? '<strong>Aprobación requerida.</strong> Edita lo que necesites, luego presiona <strong>Aceptar y Enviar a digit2ai.com</strong> abajo. <span class="ar-warn">Sin este clic, NADA se envía al equipo de Digit2AI Intake.</span>'
+                : '<strong>Approval required.</strong> Edit anything that needs adjusting, then click <strong>Accept &amp; Submit to digit2ai.com</strong> below. <span class="ar-warn">Without this click, NOTHING is sent to the Digit2AI Intake team.</span>') +
+            '</div>' +
+          '</div>' +
           '<div class="result-cta">' +
-            '<button type="button" class="demo-btn-primary" id="d-submit">' + t('btn_accept') + '</button>' +
+            '<button type="button" class="demo-btn-primary pulse-on-load" id="d-submit">' + t('btn_accept') + '</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-rerun">' + t('btn_rerun') + '</button>' +
             '<span class="demo-status" id="d-submit-status"></span>' +
           '</div>' +
@@ -2569,7 +2627,20 @@
           return;
         }
 
-        navigator.mediaDevices.getUserMedia({ audio: true })
+        navigator.mediaDevices.getUserMedia({
+            // Robust voice capture: turn on the browser's built-in DSP so
+            // background noise (keyboards, fans, traffic, side chatter)
+            // is suppressed before the audio ever hits the convai STT,
+            // echo from speakers is cancelled (prevents the agent
+            // hearing itself), and quiet/loud speakers are normalized.
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              channelCount: 1,
+              sampleRate: 48000
+            }
+          })
           .then(function (stream) {
             micStream = stream;
             // Start convai session. Canonical API: Conversation.startSession.
