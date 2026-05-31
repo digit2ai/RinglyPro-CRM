@@ -533,6 +533,35 @@
     50%      { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.18); }
   }
 
+  /* T2.2 — Print stylesheet for "Download PDF" on the triage result.
+     Activated by adding body.printing-triage before window.print().
+     Hides every other element on the page so the print captures just
+     the result panel, in dark-on-light for ink-saving. */
+  @media print {
+    body.printing-triage > *:not(.demo) { display: none !important; }
+    body.printing-triage .demo > *:not(#d-result) { display: none !important; }
+    body.printing-triage #d-result .approval-required,
+    body.printing-triage #d-result .result-cta { display: none !important; }
+    body.printing-triage {
+      background: #ffffff !important;
+      color: #111 !important;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    body.printing-triage #d-result-inner {
+      background: #fff !important;
+      color: #111 !important;
+      padding: 24px !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    body.printing-triage .verdict-pill,
+    body.printing-triage .fit-score { color: #111 !important; }
+    body.printing-triage .editable[contenteditable] { color: #111 !important; background: transparent !important; border: 1px solid #ccc !important; padding: 8px 10px !important; }
+    body.printing-triage h4 { color: #444 !important; }
+    body.printing-triage .narrating-pill,
+    body.printing-triage .result-edit-hint { display: none !important; }
+  }
+
   /* Pulsing tint on the Accept & Submit button for the first ~6s after
      render — draws the eye to the action that submits to Digit2AI. */
   .pulse-on-load { animation: submitGlow 1.8s ease-in-out 3; }
@@ -3132,6 +3161,12 @@
           '</div>' +
           '<div class="result-cta">' +
             '<button type="button" class="demo-btn-primary pulse-on-load" id="d-submit">' + t('btn_accept') + '</button>' +
+            '<button type="button" class="demo-btn-ghost" id="d-email-me">' +
+              (getLang() === 'es' ? 'Enviarme una copia' : 'Email me a copy') +
+            '</button>' +
+            '<button type="button" class="demo-btn-ghost" id="d-pdf">' +
+              (getLang() === 'es' ? 'Descargar PDF' : 'Download PDF') +
+            '</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-rerun">' + t('btn_rerun') + '</button>' +
             '<span class="demo-status" id="d-submit-status"></span>' +
           '</div>' +
@@ -3139,6 +3174,8 @@
 
       resultEl.innerHTML = html;
       document.getElementById('d-submit').addEventListener('click', acceptAndSubmit);
+      document.getElementById('d-email-me').addEventListener('click', emailMeTriageResult);
+      document.getElementById('d-pdf').addEventListener('click', downloadTriagePdf);
       document.getElementById('d-rerun').addEventListener('click', function () {
         // Explicit re-run: clear cached triage so the click-guard above
         // doesn't intercept, then trigger the top Run button.
@@ -3149,6 +3186,124 @@
         runBtn.click();
       });
       document.getElementById('d-result-inner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ---------------- T2.2 — Email me / Download PDF ----------------
+    //
+    // Both operate on the CURRENT (possibly edited) result panel state
+    // so the prospect gets whatever they're looking at on screen — not
+    // a stale copy of the raw triage payload. Email opens their default
+    // mail client via mailto; PDF uses window.print() against a small
+    // print stylesheet that hides everything else on the page.
+
+    function _txt(el) {
+      if (!el) return '';
+      return (el.innerText || el.textContent || '').trim();
+    }
+    function _listToText(el) {
+      if (!el) return '';
+      var items = el.querySelectorAll('li');
+      if (!items.length) return _txt(el);
+      var out = [];
+      items.forEach(function (li) { var v = _txt(li); if (v) out.push('  - ' + v); });
+      return out.join('\n');
+    }
+
+    function _snapshotTriageForExport() {
+      var tr = state.triage || {};
+      var lang = getLang();
+      return {
+        lang: lang,
+        verdict: (tr.verdict || 'poc').toUpperCase(),
+        fit_score: tr.fit_score,
+        title: _txt(document.getElementById('d-title')) || tr.project_title_suggested || '',
+        fit_reason: _txt(document.getElementById('d-fit-reason')) || tr.fit_reasoning || '',
+        problem_in_our_words: _txt(document.getElementById('d-problem-our-words')) || tr.problem_in_our_words || '',
+        tech_summary: _txt(document.getElementById('d-tech-summary')) || (tr.technical_solution && tr.technical_solution.summary) || '',
+        agents: _listToText(document.getElementById('d-agents')),
+        what: _listToText(document.getElementById('d-what')),
+        data: _listToText(document.getElementById('d-data')),
+        window: _txt(document.getElementById('d-window')) || (tr.technical_solution && tr.technical_solution.delivery_window) || '',
+        week1: _listToText(document.getElementById('d-week1')),
+        flags: _listToText(document.getElementById('d-flags')),
+        partner: (window._partnerAttribution && window._partnerAttribution.partner_slug) || ''
+      };
+    }
+
+    function emailMeTriageResult() {
+      var email = (document.getElementById('d-email').value || '').trim();
+      var lang = getLang();
+      var status = document.getElementById('d-submit-status');
+      if (!email || email.indexOf('@') < 0) {
+        if (status) { status.textContent = lang === 'es' ? 'Necesito un email válido arriba' : 'Need a valid email above'; status.style.color = 'var(--red)'; }
+        var emailInput = document.getElementById('d-email'); if (emailInput) emailInput.focus();
+        return;
+      }
+      var s = _snapshotTriageForExport();
+      var subject = (lang === 'es' ? 'Tu triage del MCP Neural Brain — ' : 'Your MCP Neural Brain triage — ') + (s.title || 'Untitled Project');
+      var lines = [];
+      lines.push(lang === 'es' ? 'Aquí está el resumen del triage que acabas de generar en aiagent.ringlypro.com:' : 'Here is the triage summary you just generated at aiagent.ringlypro.com:');
+      lines.push('');
+      lines.push((lang === 'es' ? 'VEREDICTO: ' : 'VERDICT: ') + s.verdict + '   ' + (lang === 'es' ? 'AJUSTE: ' : 'FIT: ') + s.fit_score + '/10');
+      lines.push('');
+      lines.push((lang === 'es' ? 'TÍTULO PROPUESTO:' : 'SUGGESTED PROJECT TITLE:'));
+      lines.push(s.title);
+      lines.push('');
+      lines.push((lang === 'es' ? 'POR QUÉ ENCAJA:' : 'WHY IT FITS:'));
+      lines.push(s.fit_reason);
+      lines.push('');
+      lines.push((lang === 'es' ? 'TU PROBLEMA EN NUESTRAS PALABRAS:' : 'YOUR PROBLEM IN OUR WORDS:'));
+      lines.push(s.problem_in_our_words);
+      lines.push('');
+      lines.push((lang === 'es' ? 'SOLUCIÓN TÉCNICA PROPUESTA:' : 'PROPOSED TECHNICAL SOLUTION:'));
+      lines.push(s.tech_summary);
+      lines.push('');
+      if (s.agents) { lines.push((lang === 'es' ? 'AGENTES NEURAL INTELLIGENCE:' : 'NEURAL INTELLIGENCE AGENTS:')); lines.push(s.agents); lines.push(''); }
+      if (s.what)   { lines.push((lang === 'es' ? 'QUÉ CONSTRUIMOS:' : 'WHAT WE BUILD:')); lines.push(s.what); lines.push(''); }
+      if (s.data)   { lines.push((lang === 'es' ? 'FUENTES DE DATOS VÍA MCP:' : 'DATA SOURCES VIA MCP:')); lines.push(s.data); lines.push(''); }
+      if (s.window) { lines.push((lang === 'es' ? 'VENTANA DE ENTREGA: ' : 'DELIVERY WINDOW: ') + s.window); lines.push(''); }
+      if (s.week1)  { lines.push((lang === 'es' ? 'ENTREGABLES SEMANA 1:' : 'WEEK 1 DELIVERABLES:')); lines.push(s.week1); lines.push(''); }
+      if (s.flags)  { lines.push((lang === 'es' ? 'BANDERAS A VERIFICAR:' : 'VERIFY-THIS FLAGS:')); lines.push(s.flags); lines.push(''); }
+      if (s.partner) { lines.push((lang === 'es' ? 'Referido por: ' : 'Referred by: ') + s.partner); }
+      lines.push('');
+      lines.push((lang === 'es' ? '— Generado en aiagent.ringlypro.com/champion-teaser.html' : '— Generated at aiagent.ringlypro.com/champion-teaser.html'));
+      var body = lines.join('\n');
+      // Mailto body limit varies; truncate well under 2000 chars for safety
+      if (body.length > 1900) body = body.slice(0, 1900) + '\n\n[…truncated]';
+      var url = 'mailto:' + encodeURIComponent(email)
+        + '?subject=' + encodeURIComponent(subject)
+        + '&body=' + encodeURIComponent(body);
+      try {
+        window.location.href = url;
+        if (status) { status.textContent = lang === 'es' ? 'Abriendo email…' : 'Opening mail…'; status.style.color = 'var(--accent-cyan)'; }
+      } catch (e) {
+        if (status) { status.textContent = lang === 'es' ? 'No se pudo abrir' : 'Could not open'; status.style.color = 'var(--red)'; }
+      }
+    }
+
+    function downloadTriagePdf() {
+      // Use window.print() against a print stylesheet that hides every
+      // page chrome except the result panel. The user picks "Save as
+      // PDF" in the print dialog. No external library needed.
+      var lang = getLang();
+      var status = document.getElementById('d-submit-status');
+      document.body.classList.add('printing-triage');
+      // Set a friendly filename via the title — most browsers use
+      // document.title as the default PDF filename in their print dialog.
+      var savedTitle = document.title;
+      var s = _snapshotTriageForExport();
+      var date = new Date().toISOString().slice(0, 10);
+      var slug = (s.title || 'Project').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+      document.title = 'digit2ai-triage-' + slug + '-' + date;
+      setTimeout(function () {
+        try { window.print(); } catch (_) {}
+        // Restore after the print dialog closes
+        setTimeout(function () {
+          document.body.classList.remove('printing-triage');
+          document.title = savedTitle;
+          if (status) { status.textContent = lang === 'es' ? 'PDF listo' : 'PDF ready'; status.style.color = 'var(--accent-cyan)'; }
+        }, 400);
+      }, 80);
     }
 
     function acceptAndSubmit() {
