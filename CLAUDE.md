@@ -110,6 +110,12 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 - `ELEVENLABS_CONVAI_PARTNERSHIP_EN` — ElevenLabs Conversational AI agent ID for the English Partnership orb on `/champion-teaser.html`. The orb on the teaser page connects directly to this agent via the browser SDK. **No API key is sent to the browser** — agent IDs are public per ElevenLabs convai design; the API key stays server-side. When unset, the orb shows a friendly "voice mode unavailable" caption and the keyboard demo stays the active path. Sister var: `ELEVENLABS_CONVAI_PARTNERSHIP_ES` for the Spanish agent (same orb, switches based on the page's language toggle).
 - `ELEVENLABS_CONVAI_PARTNERSHIP_ES` — Spanish-language convai agent ID. See `ELEVENLABS_CONVAI_PARTNERSHIP_EN` for the full setup recipe. Must be a separate dedicated agent (per the `ringlypro_elevenlabs_agents` reference memory: "Each product gets its own dedicated convai agent; never share agents across unrelated products").
 
+## Trust Signals + Live Transcript (T1.2, T1.4)
+
+- `GET /projects/api/v1/intake/partnership-trust-signals?lang=en|es` — returns the social-proof stats (21 platforms, 22 verticals, 99.9% SLA, $300B TAM) + the partner badge list shown on the social-proof block. Numbers sourced from `company_digit2ai.md` memory — never invent. Updating just the endpoint refreshes the page without redeploy.
+- `POST /projects/api/v1/intake/email-transcript` — user-clicked send (bypasses `EMAIL_AUTOSEND_DISABLED`). Body: `{ email, transcript: [{role, text, ts}], language, partner_slug? }`. Renders a branded HTML email + plain-text fallback via SendGrid. Rate-limited via the shared triage bucket. Requires `SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL`.
+- Frontend: orb-transcript panel (`#orb-transcript`) shows live user + agent messages color-coded (cyan = user, violet = agent). Listens to the convai SDK's `onMessage` callback. Copy / Clear / Email buttons. Slides in to the right of the orb on desktop, drops below on mobile. Persists visible after orb returns to idle so the prospect can copy/email after the call.
+
 ## Partner Attribution + UTM Tracking (T1.1)
 
 - Migration: `digit2ai-projects/migrations/014_partner_attribution.sql` (LIVE)

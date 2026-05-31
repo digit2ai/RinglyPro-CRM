@@ -471,6 +471,69 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key. Agent IDs are public per ElevenLabs convai design;
 //   the API key stays server-side.
 //
+// POST /email-transcript
+//   Public, user-clicked. Sends the orb conversation transcript to the
+//   prospect's email so they can share it internally before submitting.
+//
+//   Body: { email, transcript: [{role, text, ts}], language, partner_slug? }
+//
+//   User-clicked sends bypass EMAIL_AUTOSEND_DISABLED (the guard only
+//   gates background auto-triggers). Rate-limited: 5 transcripts per
+//   hour per IP to prevent abuse.
+router.post('/email-transcript', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    // Reuse the triage rate limiter buckets — same window/key shape, smaller cap.
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({ success: false, error: `Too many transcript requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0) return res.status(400).json({ success: false, error: 'Valid email required.' });
+    const transcript = Array.isArray(b.transcript) ? b.transcript.slice(0, 200) : [];
+    if (!transcript.length) return res.status(400).json({ success: false, error: 'Transcript is empty.' });
+    const lang = b.language === 'es' ? 'es' : 'en';
+    const partner = String(b.partner_slug || '').trim().slice(0, 120);
+
+    if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM_EMAIL) {
+      return res.status(503).json({ success: false, error: 'Email transport not configured (SENDGRID_API_KEY or SENDGRID_FROM_EMAIL unset).' });
+    }
+    let sgMail;
+    try { sgMail = require('@sendgrid/mail'); }
+    catch (_) { return res.status(503).json({ success: false, error: 'SendGrid SDK unavailable.' }); }
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    // Render transcript as a clean HTML email + plain-text fallback.
+    const ESC = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const lines = transcript.map(m => {
+      const who = m.role === 'user' ? (lang === 'es' ? 'Tú' : 'You')
+                : m.role === 'agent' ? (lang === 'es' ? 'MCP Neural Brain' : 'MCP Neural Brain')
+                : (m.role || 'system');
+      const color = m.role === 'user' ? '#22d3ee' : '#8b5cf6';
+      return `<div style="margin:0 0 12px 0;padding:10px 14px;background:#0c1733;border-left:3px solid ${color};border-radius:6px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:${color};margin-bottom:4px">${ESC(who)}</div><div style="color:#e5e7eb;line-height:1.5">${ESC(m.text)}</div></div>`;
+    }).join('');
+    const heading = lang === 'es' ? 'Tu conversación con el MCP Neural Brain' : 'Your conversation with the MCP Neural Brain';
+    const intro = lang === 'es' ? 'Aquí tienes una copia de la conversación que acabas de tener en aiagent.ringlypro.com. Compártela con tu equipo o úsala para refinar tu solicitud antes de enviarla al intake de Digit2AI.' : 'Here is a copy of the conversation you just had at aiagent.ringlypro.com. Share it with your team or use it to refine your request before submitting to the Digit2AI intake.';
+    const footer = lang === 'es' ? 'Cuando estés listo para enviar: <a href="https://aiagent.ringlypro.com/champion-teaser.html" style="color:#22d3ee">vuelve a la página</a> y corre el AI Triage.' : 'When you are ready to submit: <a href="https://aiagent.ringlypro.com/champion-teaser.html" style="color:#22d3ee">return to the page</a> and run the AI Triage.';
+
+    const html = `<!doctype html><html><body style="margin:0;padding:0;background:#05070e;font-family:Arial,sans-serif;color:#e5e7eb"><table width="100%" cellpadding="0" cellspacing="0" style="background:#05070e"><tr><td align="center" style="padding:32px 16px"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#0a0d1a;border-radius:14px;padding:32px"><tr><td><h1 style="font-size:22px;font-weight:800;color:#fff;margin:0 0 12px 0">${ESC(heading)}</h1><p style="font-size:14px;color:#9aa3b2;margin:0 0 24px 0;line-height:1.55">${ESC(intro)}</p>${lines}<p style="font-size:13px;color:#9aa3b2;margin:24px 0 0 0;line-height:1.55">${footer}</p>${partner ? `<p style="font-size:11px;color:#5a6378;margin:20px 0 0 0;font-family:monospace">Partner: ${ESC(partner)}</p>` : ''}</td></tr></table></td></tr></table></body></html>`;
+    const text = transcript.map(m => `[${m.role}] ${m.text}`).join('\n\n');
+
+    await sgMail.send({
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL,
+      subject: heading,
+      text,
+      html
+    });
+    res.json({ success: true, sent_to: email });
+  } catch (err) {
+    console.error('[D2AI-Intake] email-transcript error:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to send. ' + (err.message || '') });
+  }
+});
+
 // GET /partnership-trust-signals
 //   Public. Returns the stats + trust signals shown on the social-proof
 //   block above the orb on /champion-teaser.html. Server-driven so

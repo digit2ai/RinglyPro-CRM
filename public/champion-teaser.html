@@ -451,6 +451,169 @@
     .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.5; }
   }
 
+  /* Live transcript panel (T1.4) — slides in when orb leaves idle.
+     Desktop: sits to the right of the orb in a 2-col flex layout.
+     Mobile: drops below the orb full-width. */
+  .orb-transcript[hidden] { display: none !important; }
+  .orb-transcript {
+    width: 380px;
+    max-width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 480px;
+    animation: otSlideIn 0.4s ease-out;
+    box-shadow: 0 12px 36px rgba(34, 211, 238, 0.15);
+  }
+  @keyframes otSlideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .ot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(90deg, rgba(34,211,238,0.08), rgba(139,92,246,0.05));
+  }
+  .ot-title {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+  }
+  .ot-pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+    animation: otPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes otPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+  .ot-actions { display: flex; gap: 6px; }
+  .ot-btn {
+    background: transparent;
+    color: var(--ink-mute);
+    border: 1px solid var(--line-strong);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .ot-btn:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+  .ot-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+  .ot-btn-primary {
+    background: var(--grad);
+    color: #020617;
+    border-color: transparent;
+  }
+  .ot-btn-primary:hover { color: #020617; opacity: 0.9; }
+  .ot-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 200px;
+    scroll-behavior: smooth;
+  }
+  .ot-msg {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+    max-width: 90%;
+    word-wrap: break-word;
+    animation: otMsgIn 0.25s ease-out;
+  }
+  @keyframes otMsgIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .ot-msg-user {
+    align-self: flex-end;
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    color: #e0f7fa;
+  }
+  .ot-msg-agent {
+    align-self: flex-start;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    color: #f3eaff;
+  }
+  .ot-msg-role {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 2px;
+  }
+  .ot-empty {
+    align-self: center;
+    color: var(--ink-mute);
+    font-size: 12px;
+    font-style: italic;
+    margin: auto 0;
+    text-align: center;
+    padding: 24px;
+  }
+  .ot-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    background: rgba(5,7,20,0.4);
+  }
+  .ot-email {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-elev);
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .ot-email:focus { outline: 2px solid var(--accent-cyan); outline-offset: 1px; }
+  .ot-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    color: var(--ink-mute);
+  }
+  .ot-status.ok { color: var(--accent-cyan); }
+  .ot-status.err { color: var(--red); }
+
+  /* Mobile: panel drops below orb and goes full-width */
+  @media (max-width: 900px) {
+    .orb-transcript {
+      width: 100%;
+      max-width: 100%;
+      margin-top: 18px;
+      max-height: 360px;
+    }
+  }
+  /* Desktop layout: orb + transcript side-by-side when transcript visible */
+  @media (min-width: 901px) {
+    .hero-logo:has(.orb-transcript:not([hidden])) {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 36px;
+      justify-content: center;
+    }
+  }
+
   /* Demo walkthrough (T1.3) — 4-scene animated SVG above the orb.
      Cold visitors watch this loop, then scroll to the live orb to try
      it. Scene timing controlled by data-scene attribute on .dw-stage. */
@@ -1226,6 +1389,40 @@
         </span>
       </div>
     </div>
+    <!-- Live transcript panel (T1.4) — slides in when orb leaves idle.
+         Streams what the user says + what the orb says in real time,
+         color-coded. Copy + email buttons let prospects take the
+         conversation with them.
+         Layout: sits to the right of the orb on desktop (≥900px),
+         drops below on mobile. -->
+    <aside class="orb-transcript" id="orb-transcript" hidden aria-live="polite" aria-label="Live conversation transcript">
+      <header class="ot-head">
+        <span class="ot-title">
+          <span class="ot-pulse"></span>
+          <span class="i18n-en">Live transcript</span>
+          <span class="i18n-es">Transcripción en vivo</span>
+        </span>
+        <div class="ot-actions">
+          <button type="button" class="ot-btn ot-btn-icon" id="ot-copy" title="Copy">
+            <span class="i18n-en">Copy</span>
+            <span class="i18n-es">Copiar</span>
+          </button>
+          <button type="button" class="ot-btn ot-btn-icon" id="ot-clear" title="Clear">
+            <span class="i18n-en">Clear</span>
+            <span class="i18n-es">Borrar</span>
+          </button>
+        </div>
+      </header>
+      <div class="ot-body" id="ot-body" role="log"></div>
+      <footer class="ot-foot">
+        <input type="email" class="ot-email" id="ot-email" placeholder="you@example.com" autocomplete="email">
+        <button type="button" class="ot-btn ot-btn-primary" id="ot-email-btn">
+          <span class="i18n-en">Email this</span>
+          <span class="i18n-es">Enviar por email</span>
+        </button>
+        <span class="ot-status" id="ot-status" aria-live="polite"></span>
+      </footer>
+    </aside>
     <!-- Fallback message sits OUTSIDE the orb-wrap so it can't overlap the
          caption. Hidden by default; shown by JS only when the SDK fails,
          mic is denied, or the convai agent IDs are not configured. -->
@@ -3072,7 +3269,114 @@
         var lang = (document.body.classList.contains('lang-es')) ? 'es' : 'en';
         srStatus.textContent = (SR_LABELS[lang] && SR_LABELS[lang][s]) || '';
       }
+      // Show transcript panel as soon as orb leaves idle; hide on return.
+      var tx = document.getElementById('orb-transcript');
+      if (tx) {
+        if (s !== 'idle') { tx.hidden = false; }
+        // Don't auto-hide on return-to-idle — keep transcript visible so
+        // the user can copy/email it after the conversation ends.
+      }
     }
+
+    // ---------------- Live transcript (T1.4) ----------------
+    var transcriptStore = []; // [{role:'user'|'agent', text, ts}]
+    function addTranscriptLine(role, text) {
+      if (!text) return;
+      text = String(text).trim();
+      if (!text) return;
+      transcriptStore.push({ role: role, text: text, ts: Date.now() });
+      var body = document.getElementById('ot-body');
+      if (!body) return;
+      // Remove empty-state placeholder if present
+      var empty = body.querySelector('.ot-empty');
+      if (empty) empty.remove();
+      var div = document.createElement('div');
+      div.className = 'ot-msg ot-msg-' + role;
+      var roleLabel = document.createElement('span');
+      roleLabel.className = 'ot-msg-role';
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      roleLabel.textContent = role === 'user' ? (lang === 'es' ? 'Tú' : 'You')
+                                              : (lang === 'es' ? 'Cerebro' : 'Brain');
+      var txt = document.createElement('span');
+      txt.textContent = text;
+      div.appendChild(roleLabel);
+      div.appendChild(txt);
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+    // Wire copy/clear/email controls. Idempotent — runs once even if
+    // setState is called before DOM ready.
+    (function wireTranscriptControls() {
+      var body = document.getElementById('ot-body');
+      var copyBtn = document.getElementById('ot-copy');
+      var clearBtn = document.getElementById('ot-clear');
+      var emailBtn = document.getElementById('ot-email-btn');
+      var emailInput = document.getElementById('ot-email');
+      var status = document.getElementById('ot-status');
+      if (!body) return;
+      // Empty-state hint
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      var emptyDiv = document.createElement('div');
+      emptyDiv.className = 'ot-empty';
+      emptyDiv.textContent = lang === 'es'
+        ? 'La conversación aparecerá aquí cuando el orbe comience.'
+        : 'Conversation will appear here once the orb starts.';
+      body.appendChild(emptyDiv);
+
+      function setStatus(msg, cls) {
+        if (!status) return;
+        status.textContent = msg || '';
+        status.className = 'ot-status' + (cls ? ' ' + cls : '');
+        if (msg) setTimeout(function () { if (status.textContent === msg) { status.textContent = ''; status.className = 'ot-status'; } }, 3500);
+      }
+      if (copyBtn) copyBtn.addEventListener('click', function () {
+        if (!transcriptStore.length) { setStatus(lang === 'es' ? 'Vacío' : 'Empty', 'err'); return; }
+        var text = transcriptStore.map(function (m) { return '[' + m.role + '] ' + m.text; }).join('\n\n');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { setStatus(lang === 'es' ? 'Copiado' : 'Copied', 'ok'); }).catch(function () { setStatus(lang === 'es' ? 'Falló' : 'Failed', 'err'); });
+        } else {
+          setStatus(lang === 'es' ? 'Clipboard no disponible' : 'Clipboard unavailable', 'err');
+        }
+      });
+      if (clearBtn) clearBtn.addEventListener('click', function () {
+        transcriptStore = [];
+        body.innerHTML = '';
+        body.appendChild(emptyDiv);
+      });
+      if (emailBtn) emailBtn.addEventListener('click', function () {
+        var email = (emailInput.value || '').trim();
+        if (!email || email.indexOf('@') < 0) { setStatus(lang === 'es' ? 'Email inválido' : 'Invalid email', 'err'); emailInput.focus(); return; }
+        if (!transcriptStore.length) { setStatus(lang === 'es' ? 'Vacío' : 'Empty', 'err'); return; }
+        emailBtn.disabled = true;
+        var origText = emailBtn.innerHTML;
+        emailBtn.innerHTML = '<span class="i18n-en">Sending…</span><span class="i18n-es">Enviando…</span>';
+        var payload = window.attachPartnerAttribution({
+          email: email,
+          transcript: transcriptStore,
+          language: lang
+        });
+        fetch('/projects/api/v1/intake/email-transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            emailBtn.disabled = false;
+            emailBtn.innerHTML = origText;
+            if (res.ok && res.j && res.j.success) {
+              setStatus(lang === 'es' ? 'Enviado ' : 'Sent ', 'ok');
+            } else {
+              setStatus((res.j && res.j.error) || (lang === 'es' ? 'Falló' : 'Failed'), 'err');
+            }
+          })
+          .catch(function (err) {
+            emailBtn.disabled = false;
+            emailBtn.innerHTML = origText;
+            setStatus(err.message || 'Failed', 'err');
+          });
+      });
+    })();
+    window._orbAddTranscriptLine = addTranscriptLine;
     function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
     function showFallback(msg) {
       wrap.classList.add('disabled');
@@ -3315,8 +3619,19 @@
                 }
               },
               onMessage: function (msg) {
-                // Optional: surface transcript or agent messages later
-                // (iteration 2). For now we just react to mode changes.
+                // Push transcript lines into the live panel (T1.4). The
+                // ElevenLabs convai SDK emits two distinct message shapes:
+                //   { source: 'user'|'ai', message: '...' }
+                //   { type: 'user_transcript'|'agent_response', text: '...' }
+                // We handle both defensively.
+                if (!msg || !window._orbAddTranscriptLine) return;
+                try {
+                  var role = null, text = null;
+                  if (msg.source === 'user' || msg.type === 'user_transcript') role = 'user';
+                  else if (msg.source === 'ai' || msg.source === 'agent' || msg.type === 'agent_response') role = 'agent';
+                  text = msg.message || msg.text || msg.transcript || '';
+                  if (role && text) window._orbAddTranscriptLine(role, text);
+                } catch (_) {}
               }
             }).then(function (s) {
               session = s;
