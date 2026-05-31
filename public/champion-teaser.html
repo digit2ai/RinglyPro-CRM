@@ -2894,15 +2894,17 @@
     var btns = document.querySelectorAll('.lang-toggle button');
     btns.forEach(function (b) {
       b.classList.toggle('active', b.dataset.lang === saved);
-      b.addEventListener('click', function () {
-        var lang = b.dataset.lang;
-        document.body.classList.remove('lang-en', 'lang-es');
-        document.body.classList.add('lang-' + lang);
-        btns.forEach(function (x) { x.classList.toggle('active', x.dataset.lang === lang); });
-        try { localStorage.setItem('teaser-lang', lang); } catch (_) {}
-        applyLangPlaceholders();
-      });
+      b.addEventListener('click', function () { window.__setLang(b.dataset.lang); });
     });
+    // Exposed for T2.1 resume handler to restore the saved language.
+    window.__setLang = function (lang) {
+      if (lang !== 'en' && lang !== 'es') lang = 'en';
+      document.body.classList.remove('lang-en', 'lang-es');
+      document.body.classList.add('lang-' + lang);
+      btns.forEach(function (x) { x.classList.toggle('active', x.dataset.lang === lang); });
+      try { localStorage.setItem('teaser-lang', lang); } catch (_) {}
+      applyLangPlaceholders();
+    };
     applyLangPlaceholders();
   })();
 
@@ -3248,6 +3250,9 @@
           );
           submitBtn.disabled = true;
           submitBtn.textContent = t('submitted');
+          // T2.1 — submission succeeded, drop the saved session so the
+          // resume banner doesn't reappear on next visit.
+          if (typeof window.__clearSavedSession === 'function') window.__clearSavedSession();
         })
         .catch(function (err) {
           submitBtn.disabled = false;
@@ -3259,7 +3264,9 @@
     // Bridge for the Partnership orb (next IIFE) — lets the voice path
     // hand the triage result into the same renderResult pipeline the
     // keyboard demo uses. Same UI, same Accept & Submit flow.
+    // Also exposed for T2.1 resume handler to redraw a saved result.
     window._teaserState = state;
+    window.__renderResult = renderResult;
     window.renderTriageResultFromOrb = function (triageData) {
       state.triage = triageData;
       state.lang = (triageData && triageData.language) || getLang();
