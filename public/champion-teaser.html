@@ -99,6 +99,73 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* Resume banner (T2.1) — slides down from top on page load when a
+     saved session (<30 min old) is detected in localStorage. */
+  .resume-banner[hidden] { display: none !important; }
+  .resume-banner {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: linear-gradient(90deg, rgba(34,211,238,0.14), rgba(139,92,246,0.14));
+    border-bottom: 1px solid rgba(34,211,238,0.35);
+    backdrop-filter: blur(8px);
+    animation: rbSlideIn 0.4s ease-out;
+  }
+  @keyframes rbSlideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .rb-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .rb-icon {
+    flex-shrink: 0;
+    color: var(--accent-cyan);
+    display: inline-flex;
+  }
+  .rb-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .rb-title { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+  .rb-sub { font-size: 12px; color: var(--ink-mute); line-height: 1.4; }
+  .rb-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .rb-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .rb-btn-primary {
+    background: var(--grad);
+    color: #020617;
+    border-color: transparent;
+  }
+  .rb-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(34,211,238,0.3); }
+  .rb-btn-ghost {
+    background: transparent;
+    color: var(--ink-mute);
+    border-color: var(--line-strong);
+  }
+  .rb-btn-ghost:hover { color: var(--ink); border-color: var(--accent-cyan); }
+  .rb-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+  @media (max-width: 720px) {
+    .rb-inner { flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+    .rb-text { flex: 1 1 100%; }
+    .rb-actions { flex: 1 1 100%; justify-content: stretch; }
+    .rb-actions .rb-btn { flex: 1; }
+  }
+
   /* Sticky "Talk to the Brain" floating CTA (T1.5).
      Appears bottom-right once the user scrolls past the live orb.
      Mini animated orb icon + label. Click scrolls back + focuses.
@@ -271,27 +338,7 @@
   @media (max-width: 480px) { .hero-logo { --orb-size: 260px; margin: 16px 0 80px; } .orb-wave { width: 200px !important; } }
   @media (max-width: 360px) { .hero-logo { --orb-size: 230px; margin: 14px 0 68px; } .orb-wave { width: 180px !important; } }
 
-  /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup.
-     The futuristic ring rotations + scan beam are CSS animations on
-     <g> wrappers (which CAN be safely rotated even on SVG groups). */
-
-  /* Rotating outer rings — different speeds + directions for the iris feel */
-  .orb-ring-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 32s linear infinite; }
-  .orb-ring-mid   { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpinRev 22s linear infinite; }
-  .orb-ring-inner { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 14s linear infinite; }
-  .orb-iris-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpinRev 18s linear infinite; }
-  .orb-iris-segs  { transform-box: fill-box; transform-origin: 120px 120px; animation: orbSpin 9s linear infinite; }
-  @keyframes orbSpin    { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
-  @keyframes orbSpinRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-
-  /* Scan beam — sweeps around the orb once every 6s, fades in/out as it
-     enters/leaves view (creates the "radar pulse" feel). */
-  .orb-scan { transform-box: fill-box; transform-origin: 120px 120px; animation: orbScanSweep 6s linear infinite; }
-  @keyframes orbScanSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-  /* Crosshair perimeter marks fade in/out gently (like a sci-fi targeting HUD) */
-  .orb-crosshair { animation: orbCrosshairBlink 2.4s ease-in-out infinite; }
-  @keyframes orbCrosshairBlink { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.5; } }
+  /* IDLE breath — handled by SMIL <animate> tags inside the SVG markup. */
 
   /* Listening / Thinking / Speaking state changes ride on top of the
      idle SMIL animations by toggling brightness, hue and ring visibility. */
@@ -504,12 +551,7 @@
      drop-shadow brighten so the orb still reads as alive without
      triggering vestibular discomfort. */
   @media (prefers-reduced-motion: reduce) {
-    .orb-ring-outer, .orb-ring-mid, .orb-ring-inner,
-    .orb-iris-outer, .orb-iris-segs,
-    .orb-scan, .orb-crosshair,
-    .orb-particle, .narrating-pill {
-      animation: none !important;
-    }
+    .orb-particle, .narrating-pill { animation: none !important; }
     .orb-svg animate, .orb-svg animateTransform { display: none; }
     .orb-wrap[data-state="listening"] .orb-svg { transform: none !important; }
     .orb-wrap[data-state="listening"] .orb-ring { animation: none !important; opacity: 1; }
@@ -679,75 +721,6 @@
       gap: 36px;
       justify-content: center;
     }
-  }
-
-  /* Demo walkthrough (T1.3) — 4-scene animated SVG above the orb.
-     Cold visitors watch this loop, then scroll to the live orb to try
-     it. Scene timing controlled by data-scene attribute on .dw-stage. */
-  .demo-walkthrough { margin: 22px 0 24px; padding: 24px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; }
-  .dw-header { text-align: center; margin-bottom: 18px; }
-  .dw-eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-cyan); margin-bottom: 8px; }
-  .dw-title { font-size: clamp(18px, 3vw, 24px); font-weight: 800; line-height: 1.3; margin: 0; }
-  .dw-title em { font-family: 'Instrument Serif', Georgia, serif; font-style: italic; font-weight: 400; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .dw-stage { position: relative; aspect-ratio: 16 / 9; max-height: 360px; margin: 0 auto; background: linear-gradient(180deg, #050714 0%, #0a1024 100%); border-radius: 12px; overflow: hidden; border: 1px solid rgba(124,92,255,0.2); }
-  .dw-svg { width: 100%; height: 100%; display: block; }
-
-  /* Scene state machine — each scene reveals certain SVG groups */
-  .dw-stage .dw-orb-pulse { transform-box: fill-box; transform-origin: 150px 160px; animation: dwPulse 1.6s ease-in-out infinite; }
-  @keyframes dwPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.25); opacity: 0.5; } }
-  .dw-wave, .dw-thinking, .dw-result { opacity: 0; transition: opacity 0.4s ease; }
-  .dw-wave rect { animation: dwBar 0.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-  .dw-wave rect:nth-child(2) { animation-delay: -0.1s; }
-  .dw-wave rect:nth-child(3) { animation-delay: -0.2s; }
-  .dw-wave rect:nth-child(4) { animation-delay: -0.3s; }
-  .dw-wave rect:nth-child(5) { animation-delay: -0.4s; }
-  .dw-wave rect:nth-child(6) { animation-delay: -0.5s; }
-  .dw-wave rect:nth-child(7) { animation-delay: -0.6s; }
-  .dw-wave rect:nth-child(8) { animation-delay: -0.7s; }
-  .dw-wave rect:nth-child(9) { animation-delay: -0.8s; }
-  @keyframes dwBar { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1.4); } }
-  .dw-thinking circle { animation: dwThink 1.2s ease-in-out infinite; }
-  .dw-thinking circle:nth-child(2) { animation-delay: 0.15s; }
-  .dw-thinking circle:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes dwThink { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-6px); opacity: 1; } }
-  .dw-result { transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
-
-  .dw-stage[data-scene="2"] .dw-wave { opacity: 1; }
-  .dw-stage[data-scene="3"] .dw-thinking { opacity: 1; }
-  .dw-stage[data-scene="4"] .dw-result { opacity: 1; transform: translateY(0); }
-  .dw-stage[data-scene="4"] .dw-orb { opacity: 0.25; }
-  .dw-stage .dw-orb { transition: opacity 0.4s ease; }
-
-  /* Caption + dots */
-  .dw-caption { position: absolute; bottom: 14px; left: 14px; right: 14px; text-align: center; pointer-events: none; }
-  .dw-cap { display: none; font-size: 14px; line-height: 1.4; color: var(--ink); background: rgba(5,7,20,0.85); padding: 10px 16px; border-radius: 8px; backdrop-filter: blur(6px); max-width: 480px; margin: 0 auto; }
-  .dw-stage[data-scene="1"] .dw-cap-1,
-  .dw-stage[data-scene="2"] .dw-cap-2,
-  .dw-stage[data-scene="3"] .dw-cap-3,
-  .dw-stage[data-scene="4"] .dw-cap-4 { display: block; }
-  .dw-dots { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
-  .dw-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: background 0.3s ease, transform 0.3s ease; }
-  .dw-stage[data-scene="1"] .dw-dot-1,
-  .dw-stage[data-scene="2"] .dw-dot-2,
-  .dw-stage[data-scene="3"] .dw-dot-3,
-  .dw-stage[data-scene="4"] .dw-dot-4 { background: var(--accent-cyan); transform: scale(1.4); }
-
-  /* CTA */
-  .dw-cta { text-align: center; margin-top: 18px; }
-  .dw-cta-btn { background: var(--grad); color: #020617; border: none; padding: 12px 28px; border-radius: 999px; font-weight: 800; font-size: 14px; letter-spacing: 0.4px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; font-family: inherit; }
-  .dw-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,211,238,0.3); }
-  .dw-cta-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; }
-
-  /* Mobile */
-  @media (max-width: 600px) {
-    .demo-walkthrough { padding: 18px 14px; }
-    .dw-stage { aspect-ratio: 4 / 3; }
-    .dw-cap { font-size: 12px; padding: 8px 12px; }
-    .dw-result text:not(:first-child) { font-size: 9px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dw-orb-pulse, .dw-wave rect, .dw-thinking circle { animation: none; }
   }
 
   /* Social proof block (T1.2) — stat strip + horizontal logo marquee.
@@ -1156,6 +1129,40 @@
 </style>
 </head>
 <body class="lang-en">
+  <!-- Resume banner (T2.1) — slides down from top on load when a recent
+       (<30 min) saved session is detected in localStorage. Hidden by
+       default; the resume IIFE flips [hidden] off if state exists. -->
+  <div class="resume-banner" id="resume-banner" hidden role="region" aria-label="Resume previous conversation">
+    <div class="rb-inner">
+      <div class="rb-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8v4l3 2"/>
+          <circle cx="12" cy="12" r="9"/>
+        </svg>
+      </div>
+      <div class="rb-text">
+        <strong class="rb-title">
+          <span class="i18n-en">Your previous conversation is still here.</span>
+          <span class="i18n-es">Tu conversación anterior sigue aquí.</span>
+        </strong>
+        <span class="rb-sub">
+          <span class="i18n-en">Pick up where you left off — your transcript and triage result are saved.</span>
+          <span class="i18n-es">Continúa donde lo dejaste — tu transcripción y resultado del triage están guardados.</span>
+        </span>
+      </div>
+      <div class="rb-actions">
+        <button type="button" class="rb-btn rb-btn-primary" id="rb-resume">
+          <span class="i18n-en">Resume</span>
+          <span class="i18n-es">Reanudar</span>
+        </button>
+        <button type="button" class="rb-btn rb-btn-ghost" id="rb-fresh">
+          <span class="i18n-en">Start fresh</span>
+          <span class="i18n-es">Empezar de nuevo</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sticky "Talk to the Brain" floating CTA (T1.5).
        Hidden by default; the IIFE near </body> shows it once the user
        scrolls past the orb, hides while the orb is in any active state. -->
@@ -1213,113 +1220,6 @@
     </p>
   </section>
 
-  <!-- =================================================================
-       T1.3 — Demo walkthrough.
-       60-second animated walkthrough that simulates the orb conversation
-       end-to-end. Plays silently with captions in current language so
-       cold visitors understand WHAT the orb does before they click the
-       mic. Loops indefinitely; "Try it yourself ↓" CTA at the end
-       scrolls to the real orb below.
-       Pure SVG/CSS — no external assets, no autoplay video constraints.
-       ================================================================= -->
-  <section class="demo-walkthrough" id="demo-walkthrough" aria-labelledby="demo-wt-h">
-    <div class="dw-header">
-      <span class="dw-eyebrow">
-        <span class="i18n-en">60-second tour</span>
-        <span class="i18n-es">Recorrido de 60 segundos</span>
-      </span>
-      <h2 id="demo-wt-h" class="dw-title">
-        <span class="i18n-en">What happens when a prospect <em>talks to the brain</em></span>
-        <span class="i18n-es">Qué pasa cuando un prospecto <em>habla con el cerebro</em></span>
-      </h2>
-    </div>
-    <div class="dw-stage" id="dw-stage" data-scene="1">
-      <svg class="dw-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <radialGradient id="dwCore" cx="0.5" cy="0.45">
-            <stop offset="0" stop-color="#a5f3fc"/>
-            <stop offset="0.5" stop-color="#3b82f6" stop-opacity="0.9"/>
-            <stop offset="1" stop-color="#8b5cf6" stop-opacity="0.5"/>
-          </radialGradient>
-          <radialGradient id="dwGlow" cx="0.5" cy="0.5">
-            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
-            <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <!-- Mini orb (left side) -->
-        <g class="dw-orb">
-          <circle class="dw-orb-halo" cx="150" cy="160" r="78" fill="url(#dwGlow)"/>
-          <circle class="dw-orb-ring" cx="150" cy="160" r="58" fill="none" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/>
-          <circle class="dw-orb-core" cx="150" cy="160" r="42" fill="url(#dwCore)"/>
-          <circle class="dw-orb-pulse" cx="150" cy="160" r="22" fill="#a5f3fc" opacity="0.9"/>
-        </g>
-        <!-- Sound wave (user speaking, shown scene 2) -->
-        <g class="dw-wave">
-          <rect x="270" y="155" width="3" height="10" rx="1.5" fill="#22d3ee"/>
-          <rect x="278" y="148" width="3" height="24" rx="1.5" fill="#22d3ee"/>
-          <rect x="286" y="142" width="3" height="36" rx="1.5" fill="#3b82f6"/>
-          <rect x="294" y="138" width="3" height="44" rx="1.5" fill="#8b5cf6"/>
-          <rect x="302" y="146" width="3" height="28" rx="1.5" fill="#ec4899"/>
-          <rect x="310" y="152" width="3" height="16" rx="1.5" fill="#ec4899"/>
-          <rect x="318" y="148" width="3" height="24" rx="1.5" fill="#8b5cf6"/>
-          <rect x="326" y="143" width="3" height="34" rx="1.5" fill="#3b82f6"/>
-          <rect x="334" y="150" width="3" height="20" rx="1.5" fill="#22d3ee"/>
-        </g>
-        <!-- Thinking dots (scene 3) -->
-        <g class="dw-thinking">
-          <circle cx="290" cy="160" r="5" fill="#8b5cf6"/>
-          <circle cx="310" cy="160" r="5" fill="#8b5cf6"/>
-          <circle cx="330" cy="160" r="5" fill="#8b5cf6"/>
-        </g>
-        <!-- Result card (scene 4) -->
-        <g class="dw-result">
-          <rect x="260" y="80" width="320" height="160" rx="12" fill="#0c1733" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
-          <rect x="276" y="98" width="80" height="22" rx="11" fill="#10b981" opacity="0.85"/>
-          <text x="316" y="113" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="800" fill="#0a0d1a">GO</text>
-          <text x="376" y="115" font-family="JetBrains Mono, monospace" font-size="22" font-weight="800" fill="#22d3ee">9</text>
-          <text x="394" y="115" font-family="JetBrains Mono, monospace" font-size="11" fill="#9aa3b2">/10 fit</text>
-          <text x="276" y="148" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#e5e7eb">Dispatch Auto-Pilot</text>
-          <text x="276" y="170" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">MCP agent watches 12 boards,</text>
-          <text x="276" y="184" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">scores lanes, drafts rate-cons,</text>
-          <text x="276" y="198" font-family="Inter, sans-serif" font-size="11" fill="#9aa3b2">texts the assigned driver.</text>
-          <text x="276" y="222" font-family="JetBrains Mono, monospace" font-size="10" fill="#22d3ee">6–8 WEEKS · LIVE ON YOUR DOMAIN</text>
-        </g>
-      </svg>
-      <!-- Caption track — swaps text by scene index. Bilingual. -->
-      <div class="dw-caption" aria-live="polite">
-        <div class="dw-cap dw-cap-1">
-          <span class="i18n-en">1 — Prospect clicks the orb and talks naturally.</span>
-          <span class="i18n-es">1 — El prospecto hace clic en el orbe y habla naturalmente.</span>
-        </div>
-        <div class="dw-cap dw-cap-2">
-          <span class="i18n-en">2 — Manny or Lina asks 2–3 targeted questions to refine the request.</span>
-          <span class="i18n-es">2 — Manny o Lina hacen 2–3 preguntas específicas para refinar la solicitud.</span>
-        </div>
-        <div class="dw-cap dw-cap-3">
-          <span class="i18n-en">3 — Asks permission, then runs the AI Triage on the refined project.</span>
-          <span class="i18n-es">3 — Pide permiso, luego corre el AI Triage sobre el proyecto refinado.</span>
-        </div>
-        <div class="dw-cap dw-cap-4">
-          <span class="i18n-en">4 — Verdict, fit score, technical solution and delivery window — ready to edit and submit.</span>
-          <span class="i18n-es">4 — Veredicto, puntuación de ajuste, solución técnica y ventana de entrega — listo para editar y enviar.</span>
-        </div>
-      </div>
-      <!-- Progress dots -->
-      <div class="dw-dots" aria-hidden="true">
-        <span class="dw-dot dw-dot-1"></span>
-        <span class="dw-dot dw-dot-2"></span>
-        <span class="dw-dot dw-dot-3"></span>
-        <span class="dw-dot dw-dot-4"></span>
-      </div>
-    </div>
-    <div class="dw-cta">
-      <button type="button" class="dw-cta-btn" id="dw-cta-btn">
-        <span class="i18n-en">Try it yourself ↓</span>
-        <span class="i18n-es">Pruébalo tú mismo ↓</span>
-      </button>
-    </div>
-  </section>
-
   <!-- ANIMATED ORB — voice-interactive Partnership brain (replaces static logo).
        Falls back gracefully to the keyboard demo if ElevenLabs SDK can't load
        or mic permission is denied. Click to activate; states: idle / listening /
@@ -1333,23 +1233,16 @@
       <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
       <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <!-- 4-color signature gradient for the core iris -->
-          <radialGradient id="orbCore" cx="0.5" cy="0.45">
-            <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
-            <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
-            <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
-            <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
-            <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+          <radialGradient id="orbCore" cx="0.5" cy="0.5">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.95"/>
+            <stop offset="0.45" stop-color="#3b82f6" stop-opacity="0.85"/>
+            <stop offset="0.78" stop-color="#8b5cf6" stop-opacity="0.7"/>
+            <stop offset="1" stop-color="#ec4899" stop-opacity="0.55"/>
           </radialGradient>
           <radialGradient id="orbGlow" cx="0.5" cy="0.5">
-            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
-            <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.35"/>
+            <stop offset="0.5" stop-color="#8b5cf6" stop-opacity="0.18"/>
             <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
-            <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
-            <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
-            <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
           </radialGradient>
           <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#22d3ee"/>
@@ -1357,105 +1250,34 @@
             <stop offset="0.75" stop-color="#8b5cf6"/>
             <stop offset="1" stop-color="#ec4899"/>
           </linearGradient>
-          <!-- Sweep gradient for the scan beam — transparent edges, bright cyan middle -->
-          <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
-            <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
-            <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-          </linearGradient>
-          <!-- Tick marks pattern for the outermost ring (hash marks every 6°) -->
-          <pattern id="orbTicks" x="0" y="0" width="6" height="2" patternUnits="userSpaceOnUse">
-            <rect width="1" height="2" fill="#22d3ee" opacity="0.6"/>
-          </pattern>
         </defs>
-
-        <!-- Outer ambient glow halo -->
-        <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
-          <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+        <!-- Soft ambient glow — animates radius via SMIL. -->
+        <circle class="orb-glow" cx="120" cy="120" r="110" fill="url(#orbGlow)">
+          <animate attributeName="r" values="100;118;100" dur="4.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="4.5s" repeatCount="indefinite"/>
         </circle>
-
-        <!-- ============= OUTER FRAME — rotating dashed rings (Iron Man / Tron vibe) ============= -->
-        <!-- Slowest ring with long dashes -->
-        <g class="orb-ring-outer">
-          <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
-          <!-- 4 anchor "data nodes" at cardinal points -->
-          <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
-          <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
-          <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
-          <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
-        </g>
-
-        <!-- Mid ring (counter-rotates), thicker dashed strokes -->
-        <g class="orb-ring-mid">
-          <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
-          <!-- 8 small notches along the ring -->
-          <g fill="#a5f3fc">
-            <circle cx="120" cy="24"  r="1.5"/>
-            <circle cx="188" cy="52"  r="1.5"/>
-            <circle cx="216" cy="120" r="1.5"/>
-            <circle cx="188" cy="188" r="1.5"/>
-            <circle cx="120" cy="216" r="1.5"/>
-            <circle cx="52"  cy="188" r="1.5"/>
-            <circle cx="24"  cy="120" r="1.5"/>
-            <circle cx="52"  cy="52"  r="1.5"/>
-          </g>
-        </g>
-
-        <!-- Inner ring (rotates fastest), solid -->
-        <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
-
-        <!-- ============= SCAN BEAM — sweeps around once per ~6s ============= -->
-        <g class="orb-scan">
-          <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-        </g>
-
-        <!-- ============= LISTENING amplitude rings (hidden in idle) ============= -->
-        <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
-        <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
-        <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
-
-        <!-- ============= THINKING particles (orbit perimeter) ============= -->
+        <!-- Listening amplitude rings (driven by JS state, hidden in idle) -->
+        <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.45"/>
+        <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.55"/>
+        <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.65"/>
+        <!-- Thinking-state orbiting particles -->
         <g class="orb-particles">
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
           <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
           <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
           <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
         </g>
-
-        <!-- ============= CORE — layered iris (arc-reactor look) ============= -->
-        <!-- Outer iris ring -->
-        <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
-          <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+        <!-- Core breathing body — SMIL on r so the pulse is always visible. -->
+        <circle class="orb-core" cx="120" cy="120" r="64" fill="url(#orbCore)">
+          <animate attributeName="r" values="60;70;60" dur="4.5s" repeatCount="indefinite"/>
         </circle>
-        <!-- Iris segment ring — 6 evenly-spaced arc segments via dasharray -->
-        <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
-
-        <!-- Main core body — soft glow gradient -->
-        <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
-          <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+        <circle class="orb-core-inner" cx="120" cy="120" r="42" fill="url(#orbCore)" opacity="0.92">
+          <animate attributeName="r" values="44;38;44" dur="4.5s" repeatCount="indefinite"/>
         </circle>
-        <!-- Mid core (pulses counter to outer) -->
-        <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
-          <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
-        </circle>
-        <!-- Brightest inner pinpoint — the "AI soul" -->
-        <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
-          <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
-        </circle>
-        <!-- Glassy highlight (slightly off-center, gives 3D feel) -->
-        <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
-          <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+        <!-- Glassy highlight -->
+        <ellipse class="orb-highlight" cx="106" cy="100" rx="22" ry="14" fill="rgba(255,255,255,0.35)" opacity="0.5">
+          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4.5s" repeatCount="indefinite"/>
         </ellipse>
-
-        <!-- ============= CROSSHAIR — subtle precision marks on the perimeter ============= -->
-        <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
-          <line x1="120" y1="2"   x2="120" y2="10"/>
-          <line x1="120" y1="230" x2="120" y2="238"/>
-          <line x1="2"   y1="120" x2="10"  y2="120"/>
-          <line x1="230" y1="120" x2="238" y2="120"/>
-        </g>
       </svg>
       <!-- speaking-state waveform bars (frequency analyzer painted by JS) -->
       <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
@@ -2665,56 +2487,129 @@
     return payload;
   };
 
-  // ---------------- Demo walkthrough (T1.3) ----------------
+  // ---------------- Conversation auto-save + recovery (T2.1) ----------------
   //
-  // Plays the 4-scene loop indefinitely. Scene timing:
-  //   1 (orb at rest)        — 2.0s
-  //   2 (user speaking)      — 4.5s
-  //   3 (orb thinking)       — 2.5s
-  //   4 (result panel)       — 5.0s  → loop back
-  // Total loop ≈ 14s. CTA scrolls to live orb.
-  (function () {
-    var stage = document.getElementById('dw-stage');
-    var ctaBtn = document.getElementById('dw-cta-btn');
-    if (!stage) return;
-    var DURATIONS = [2000, 4500, 2500, 5000];
-    var scene = 1;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function advance() {
-      scene = scene >= 4 ? 1 : scene + 1;
-      stage.setAttribute('data-scene', String(scene));
-      setTimeout(advance, DURATIONS[scene - 1]);
-    }
-    // Only auto-play when visible to save CPU + battery on tabs in
-    // background. IntersectionObserver pauses + resumes.
-    var paused = true;
-    var timer = null;
-    function start() {
-      if (!paused) return;
-      paused = false;
-      timer = setTimeout(function tick() {
-        if (paused) return;
-        scene = scene >= 4 ? 1 : scene + 1;
-        stage.setAttribute('data-scene', String(scene));
-        timer = setTimeout(tick, DURATIONS[scene - 1]);
-      }, DURATIONS[scene - 1]);
-    }
-    function stop() { paused = true; if (timer) { clearTimeout(timer); timer = null; } }
-    if (!reduce) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) { e.isIntersecting ? start() : stop(); });
-      }, { threshold: 0.25 });
-      io.observe(stage);
-    }
-    // CTA — smooth scroll to the live orb and focus it for screen-reader users.
-    if (ctaBtn) {
-      ctaBtn.addEventListener('click', function () {
-        var wrap = document.getElementById('orb-wrap');
-        if (!wrap) return;
-        wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(function () { try { wrap.focus(); } catch (_) {} }, 700);
+  // Persists active conversation state (transcript, triage payload, form
+  // inputs, language) to localStorage every 5 seconds during a session.
+  // On page load, if a recent saved state exists (<30 min old), shows the
+  // resume banner. Cleared on successful submission.
+  //
+  // State shape:
+  //   {
+  //     v: 1,
+  //     saved_at: <timestamp>,
+  //     transcript: [{role, text, ts}],
+  //     triage: <triage payload or null>,
+  //     form: { name, email, company, country, desc },
+  //     lang: 'en' | 'es'
+  //   }
+  //
+  // Why 30 min: long enough that a tab reload / accidental close is
+  // recoverable; short enough that a different session next morning
+  // doesn't show stale state. The banner only shows when the session
+  // has meaningful content (transcript ≥ 2 lines OR triage present),
+  // not for empty / abandoned visits.
+  var SESSION_KEY = 'd2ai_session_state';
+  var SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  var SESSION_SCHEMA_VERSION = 1;
+
+  window.__sessionRestore = null; // populated below if state is fresh
+
+  function _readSession() {
+    try {
+      var raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || s.v !== SESSION_SCHEMA_VERSION) return null;
+      if (Date.now() - (s.saved_at || 0) > SESSION_TTL_MS) {
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      var hasContent = (Array.isArray(s.transcript) && s.transcript.length >= 2) || !!s.triage;
+      if (!hasContent) return null; // ignore trivial sessions
+      return s;
+    } catch (_) { return null; }
+  }
+  function _writeSession(state) {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(state)); } catch (_) {}
+  }
+  function _clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (_) {} }
+  window.__clearSavedSession = _clearSession;
+
+  // Snapshot the current state of the page into a session object.
+  // Called by the periodic auto-saver and by event hooks (after each
+  // transcript line, after triage lands, after submit).
+  window.__snapshotSession = function () {
+    try {
+      var transcript = (typeof transcriptStore !== 'undefined' && Array.isArray(transcriptStore)) ? transcriptStore.slice() : [];
+      var teaserState = window._teaserState || {};
+      var triage = teaserState.triage || null;
+      var form = {};
+      ['d-name','d-email','d-company','d-country','d-desc'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) form[id] = el.value || '';
       });
-    }
+      // Only persist if there's something worth saving.
+      if (!transcript.length && !triage) return;
+      _writeSession({
+        v: SESSION_SCHEMA_VERSION,
+        saved_at: Date.now(),
+        transcript: transcript,
+        triage: triage,
+        form: form,
+        lang: document.body.classList.contains('lang-es') ? 'es' : 'en'
+      });
+    } catch (_) {}
+  };
+  // Auto-save every 5s as belt-and-suspenders against missed event hooks.
+  setInterval(window.__snapshotSession, 5000);
+
+  // On load: detect saved state, surface the resume banner.
+  (function () {
+    var saved = _readSession();
+    if (!saved) return;
+    window.__sessionRestore = saved; // resume handler reads this
+    var banner = document.getElementById('resume-banner');
+    var resumeBtn = document.getElementById('rb-resume');
+    var freshBtn = document.getElementById('rb-fresh');
+    if (!banner) return;
+    banner.hidden = false;
+
+    if (resumeBtn) resumeBtn.addEventListener('click', function () {
+      banner.hidden = true;
+      var s = window.__sessionRestore;
+      if (!s) return;
+      // 1. Restore language
+      if (s.lang && typeof window.__setLang === 'function') window.__setLang(s.lang);
+      // 2. Restore form inputs
+      if (s.form) Object.keys(s.form).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = s.form[id] || '';
+      });
+      // 3. Restore transcript (panel + module store)
+      if (s.transcript && s.transcript.length && typeof window._orbAddTranscriptLine === 'function') {
+        // Clear existing then replay (clears empty-state placeholder too)
+        var body = document.getElementById('ot-body');
+        var clearBtn = document.getElementById('ot-clear');
+        if (clearBtn) clearBtn.click();
+        var tx = document.getElementById('orb-transcript');
+        if (tx) tx.hidden = false;
+        s.transcript.forEach(function (m) { window._orbAddTranscriptLine(m.role, m.text); });
+      }
+      // 4. Restore triage result panel
+      if (s.triage && typeof window.renderTriageResultFromOrb === 'function') {
+        // renderTriageResultFromOrb scrolls to the result; we don't want
+        // that on restore (user just landed). Suppress scroll by stubbing
+        // the result element briefly. Simpler: call renderResult directly.
+        window._teaserState.triage = s.triage;
+        if (typeof window.__renderResult === 'function') window.__renderResult();
+      }
+    });
+    if (freshBtn) freshBtn.addEventListener('click', function () {
+      banner.hidden = true;
+      _clearSession();
+      window.__sessionRestore = null;
+    });
   })();
 
   // ---------------- Social proof block (T1.2) ----------------
