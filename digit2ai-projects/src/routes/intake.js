@@ -472,6 +472,57 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key stays server-side.
 //
 // =====================================================
+// A/B HEADLINE VARIANTS (T3.4)
+// =====================================================
+// Three hero headline variants, deterministically assigned per
+// session via hash(session_id) % 3. The client passes its
+// session_id from localStorage; server returns the variant index
+// + EN/ES copy. Client emits hero_variant_shown so the funnel
+// analytics can compute conversion per variant.
+//
+// Variants explore different framing — outcome vs. capability vs.
+// social proof — to find which hero copy converts best for the
+// Partnership intake.
+
+const HERO_VARIANTS = [
+  {
+    // Variant 0 — Outcome / speed (existing copy, kept as control)
+    en: { eyebrow: 'Partnership Brief', h1_pre: 'Joint Venture —', h1_em: 'Partnership', sub: 'A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.' },
+    es: { eyebrow: 'Brief del Partnership', h1_pre: 'Joint Venture —', h1_em: 'Partnership', sub: 'Un curso intensivo de 5 minutos para que puedas responder con confianza a cualquier pregunta de un prospecto — y convertir la conversación en una solicitud real en digit2ai.com.' }
+  },
+  {
+    // Variant 1 — Problem-led (pain framing)
+    en: { eyebrow: 'For decision makers', h1_pre: 'Stop guessing.', h1_em: 'Start shipping.', sub: 'Talk to the MCP Neural Brain. In 5 minutes you walk out with a verdict, fit score, technical solution and delivery window — ready to share with your team.' },
+    es: { eyebrow: 'Para tomadores de decisiones', h1_pre: 'Deja de adivinar.', h1_em: 'Empieza a entregar.', sub: 'Habla con el MCP Neural Brain. En 5 minutos sales con un veredicto, puntuación de ajuste, solución técnica y ventana de entrega — listo para compartir con tu equipo.' }
+  },
+  {
+    // Variant 2 — Social proof / scale framing
+    en: { eyebrow: 'Trusted by 21 platforms', h1_pre: 'Your project,', h1_em: 'scoped in 5 minutes.', sub: 'The same Neural Intelligence stack that runs 22 verticals across the Americas. Tell it your problem in plain language — get a build plan back the same call.' },
+    es: { eyebrow: 'Confiado por 21 plataformas', h1_pre: 'Tu proyecto,', h1_em: 'definido en 5 minutos.', sub: 'La misma pila Neural Intelligence que corre 22 verticales en las Américas. Cuéntale tu problema en lenguaje natural — recibe un plan de construcción en la misma llamada.' }
+  }
+];
+
+function _variantForSession(sessionId) {
+  if (!sessionId) return 0;
+  const h = _crypto.createHash('md5').update(String(sessionId)).digest();
+  return h[0] % HERO_VARIANTS.length;
+}
+
+// GET /hero-variant?session_id=...
+//   Public. Returns the variant index + EN+ES copy for the given
+//   session_id. Deterministic — same session always sees the same
+//   variant. Client must pass its localStorage funnel session_id.
+router.get('/hero-variant', (req, res) => {
+  const sid = String(req.query.session_id || '').trim();
+  const idx = _variantForSession(sid);
+  res.json({
+    success: true,
+    variant: idx,
+    copy: HERO_VARIANTS[idx]
+  });
+});
+
+// =====================================================
 // FUNNEL ANALYTICS (T3.3)
 // =====================================================
 // Lightweight client-side event log. Each visitor's session_id is a

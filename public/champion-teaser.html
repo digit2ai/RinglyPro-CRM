@@ -1540,7 +1540,7 @@
           <button type="button" data-lang="es">ES</button>
         </div>
         <div>
-          <span class="hd-pill"><span class="i18n-en">Partnership Brief</span><span class="i18n-es">Brief del Partnership</span></span><br>
+          <span class="hd-pill" id="hero-eyebrow"><span class="i18n-en">Partnership Brief</span><span class="i18n-es">Brief del Partnership</span></span><br>
           <span class="i18n-en">Internal use · For the Partnership who sells Digit2AI</span>
           <span class="i18n-es">Uso interno · Para el Partnership que vende Digit2AI</span>
         </div>
@@ -1560,11 +1560,11 @@
         <strong id="partner-name"></strong>
       </span>
     </div>
-    <h1>
-      <span class="i18n-en">Joint Venture &mdash; <em>Partnership</em></span>
-      <span class="i18n-es">Joint Venture &mdash; <em>Partnership</em></span>
+    <h1 id="hero-h1">
+      <span class="i18n-en"><span class="hh-pre">Joint Venture &mdash;</span> <em class="hh-em">Partnership</em></span>
+      <span class="i18n-es"><span class="hh-pre">Joint Venture &mdash;</span> <em class="hh-em">Partnership</em></span>
     </h1>
-    <p class="sub">
+    <p class="sub" id="hero-sub">
       <span class="i18n-en">A 5-minute crash course so you can answer any prospect question with confidence — and turn the conversation into a real intake at digit2ai.com.</span>
       <span class="i18n-es">Un curso intensivo de 5 minutos para que puedas responder con confianza a cualquier pregunta de un prospecto — y convertir la conversación en una solicitud real en digit2ai.com.</span>
     </p>
@@ -3098,6 +3098,46 @@
   };
   // Fire page_visible once attribution + sessionId resolved.
   setTimeout(function () { try { window.__emitFunnelEvent('page_visible'); } catch (_) {} }, 200);
+
+  // ---------------- A/B hero variant (T3.4) ----------------
+  //
+  // Server deterministically assigns variant 0/1/2 per session_id
+  // (md5 hash mod 3). We fetch + apply on load, emit
+  // hero_variant_shown so /ab-summary can compute conversion rate
+  // per variant.
+  //
+  // Visible only if the page has loaded the variant info BEFORE
+  // first paint or shortly after — we accept a small flash because
+  // measuring real conversion is worth more than perfect SSR
+  // discipline for this scope.
+  (function () {
+    var sid = window.__funnelSessionId;
+    if (!sid) return;
+    fetch('/projects/api/v1/intake/hero-variant?session_id=' + encodeURIComponent(sid))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.success || typeof j.variant !== 'number') return;
+        window.__heroVariant = j.variant;
+        var copy = j.copy || {};
+        // Apply EN copy + ES copy in parallel — each i18n-en/i18n-es
+        // span gets replaced; the existing CSS show/hide does the rest.
+        function apply(langKey) {
+          var c = copy[langKey] || {};
+          var eyebrow = document.querySelector('#hero-eyebrow .i18n-' + langKey);
+          var h1Pre   = document.querySelector('#hero-h1 .i18n-' + langKey + ' .hh-pre');
+          var h1Em    = document.querySelector('#hero-h1 .i18n-' + langKey + ' .hh-em');
+          var sub     = document.querySelector('#hero-sub .i18n-' + langKey);
+          if (eyebrow && c.eyebrow) eyebrow.textContent = c.eyebrow;
+          if (h1Pre   && c.h1_pre)  h1Pre.innerHTML     = c.h1_pre;
+          if (h1Em    && c.h1_em)   h1Em.innerHTML      = c.h1_em;
+          if (sub     && c.sub)     sub.textContent     = c.sub;
+        }
+        apply('en');
+        apply('es');
+        if (window.__emitFunnelEvent) window.__emitFunnelEvent('hero_variant_shown', { variant: j.variant });
+      })
+      .catch(function () { /* keep default copy on failure */ });
+  })();
 
   // ---------------- Partner attribution (T1.1) ----------------
   //
