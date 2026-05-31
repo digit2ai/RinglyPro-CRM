@@ -220,6 +220,37 @@
   .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · speaking'; }
   body.lang-es .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · hablando'; }
 
+  /* "Narrating" indicator — small animated pill that shows on the AI
+     Triage result panel while the orb is speaking the verdict. Pulses
+     gently so it reads as live. Auto-hidden when the orb leaves the
+     speaking state. */
+  .narrating-pill {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.15), rgba(139,92,246,0.15));
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    animation: narratingPulse 1.4s ease-in-out infinite;
+  }
+  .narrating-pill .narrating-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+  body.orb-narrating .narrating-pill { display: inline-flex; }
+  @keyframes narratingPulse {
+    0%, 100% { opacity: 0.85; box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
+    50%      { opacity: 1; box-shadow: 0 0 0 6px rgba(34, 211, 238, 0); }
+  }
+
   /* Fallback notice — shown only when voice mode can't initialize.
      [hidden] must beat the layout rule, otherwise it shows on every load. */
   .orb-fallback[hidden] { display: none !important; }
@@ -1925,6 +1956,11 @@
           '<div class="result-head">' +
             '<span class="verdict-pill ' + v.cls + '">' + v.lbl + '</span>' +
             '<span class="fit-score">' + tr.fit_score + '<span>' + t('fit_label') + '</span></span>' +
+            // Narrating pill — auto-shows when body.orb-narrating is set by
+            // the orb controller during voice narration of the verdict.
+            '<span class="narrating-pill" aria-live="polite"><span class="narrating-dot"></span>' +
+              (getLang() === 'es' ? 'El cerebro está narrando' : 'Brain narrating') +
+            '</span>' +
             '<span class="result-edit-hint">' + t('edit_hint') + '</span>' +
           '</div>' +
 
@@ -2140,7 +2176,12 @@
     var waveCanvas = document.getElementById('orb-wave');
     var API_BASE = '/projects/api/v1/intake';
 
-    function setState(s) { wrap.setAttribute('data-state', s); }
+    function setState(s) {
+      wrap.setAttribute('data-state', s);
+      // Toggle a body-level class while the orb is narrating so the
+      // result-panel "Listening to the brain..." pill auto-shows.
+      document.body.classList.toggle('orb-narrating', s === 'speaking');
+    }
     function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
     function showFallback(msg) {
       wrap.classList.add('disabled');
@@ -2263,7 +2304,22 @@
               window.renderTriageResultFromOrb(res.data);
             }
             // Tell the agent how the triage went so it can narrate.
-            return { verdict: res.data.verdict, fit_score: res.data.fit_score, ok: true };
+            // Return enough material for a 3-5 sentence richer narration:
+            // verdict + score + reasoning + project title + 1-2 sentence
+            // solution + delivery window. Technical summary truncated to
+            // 200 chars so the voice reply stays conversational.
+            var d = res.data;
+            var techSummary = (d.technical_solution && d.technical_solution.summary) || '';
+            if (techSummary.length > 200) techSummary = techSummary.slice(0, 200).replace(/\s+\S*$/, '') + '...';
+            return {
+              ok: true,
+              verdict: d.verdict,
+              fit_score: d.fit_score,
+              fit_reasoning: d.fit_reasoning || '',
+              project_title: d.project_title_suggested || '',
+              technical_summary: techSummary,
+              delivery_window: (d.technical_solution && d.technical_solution.delivery_window) || ''
+            };
           }
           return { ok: false, error: (res && res.error) || 'triage_failed' };
         })
