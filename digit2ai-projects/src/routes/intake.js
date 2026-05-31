@@ -471,6 +471,48 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 //   the API key. Agent IDs are public per ElevenLabs convai design;
 //   the API key stays server-side.
 //
+// GET /partnership-trust-signals
+//   Public. Returns the stats + trust signals shown on the social-proof
+//   block above the orb on /champion-teaser.html. Server-driven so
+//   numbers + partner list can be updated without a deploy.
+//
+//   Stats come from CLAUDE.md / memory company_digit2ai.md — never
+//   invented. Bumping any number here requires updating that memory
+//   first (single source of truth).
+router.get('/partnership-trust-signals', (req, res) => {
+  const lang = req.query.lang === 'es' ? 'es' : 'en';
+  res.json({
+    success: true,
+    data: {
+      language: lang,
+      stats: [
+        { value: '21',     label_en: 'Live Platforms',  label_es: 'Plataformas en Vivo' },
+        { value: '22',     label_en: 'Verticals',       label_es: 'Verticales' },
+        { value: '99.9%',  label_en: 'SLA',             label_es: 'SLA' },
+        { value: '$300B',  label_en: 'TAM',             label_es: 'TAM' }
+      ],
+      // Verticals currently live in production. Logos optional — text
+      // badges render when logo_url is null.
+      partners: [
+        { slug: 'camaravirtual', name: 'CamaraVirtual', logo_url: null, url: 'https://camaravirtual.com' },
+        { slug: 'planea',        name: 'PLANEA',        logo_url: null, url: null },
+        { slug: 'pinaxis',       name: 'Pinaxis',       logo_url: null, url: null },
+        { slug: 'hispatec',      name: 'HISPATEC',      logo_url: null, url: null },
+        { slug: 'torna-idioma',  name: 'Torna Idioma',  logo_url: null, url: null },
+        { slug: 'cw-carriers',   name: 'CW Carriers',   logo_url: null, url: null },
+        { slug: 'cali-citylab',  name: 'Cali CityLab',  logo_url: null, url: null },
+        { slug: 'pacc-cfl',      name: 'PACC-CFL',      logo_url: null, url: null },
+        { slug: 'pcci',          name: 'PCCI',          logo_url: null, url: null },
+        { slug: 'surgical-mind', name: 'SurgicalMind',  logo_url: null, url: null },
+        { slug: 'visionarium',   name: 'Visionarium',   logo_url: 'https://visionarium.app', url: 'https://visionarium.app' },
+        { slug: 'tunjoracing',   name: 'Tunjo Racing',  logo_url: null, url: null }
+      ],
+      foot_en: 'Trusted by chambers, manufacturers, logistics, healthcare and education leaders across the Americas.',
+      foot_es: 'Confiado por cámaras, manufactureras, logística, salud y líderes educativos a través de las Américas.'
+    }
+  });
+});
+
 // POST /voice-trigger-triage
 //   Public. Called by the convai agent (via the orb) once it has
 //   gathered enough context conversationally. Same shape as

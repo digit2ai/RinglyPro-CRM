@@ -451,6 +451,106 @@
     .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.5; }
   }
 
+  /* Social proof block (T1.2) — stat strip + horizontal logo marquee.
+     Sits between the orb and MEMORIZE THIS pitch. Stat counters
+     animate up on first scroll-into-view via JS. */
+  .sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .social-proof {
+    margin: 36px 0 30px;
+    padding: 26px 22px 22px;
+    background: linear-gradient(180deg, rgba(34,211,238,0.05) 0%, rgba(124,92,255,0.05) 100%);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .sp-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .sp-stat {
+    padding: 8px 4px;
+    border-right: 1px solid var(--line);
+  }
+  .sp-stat:last-child { border-right: none; }
+  .sp-num {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 900;
+    line-height: 1.05;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sp-lbl {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  @media (max-width: 720px) {
+    .sp-stats { grid-template-columns: repeat(2, 1fr); gap: 14px 6px; }
+    .sp-stat:nth-child(2) { border-right: none; }
+    .sp-stat:nth-child(1), .sp-stat:nth-child(2) { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  }
+
+  /* Marquee — infinite horizontal scroll of partner badges.
+     Pauses on hover, respects prefers-reduced-motion. */
+  .sp-marquee {
+    overflow: hidden;
+    margin: 18px -22px 14px;
+    position: relative;
+    mask-image: linear-gradient(90deg, transparent 0, #000 12%, #000 88%, transparent 100%);
+  }
+  .sp-marquee-track {
+    display: inline-flex;
+    gap: 12px;
+    padding: 4px 22px;
+    white-space: nowrap;
+    animation: spMarquee 38s linear infinite;
+    will-change: transform;
+  }
+  .sp-marquee:hover .sp-marquee-track { animation-play-state: paused; }
+  @keyframes spMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sp-marquee-track { animation: none; flex-wrap: wrap; justify-content: center; white-space: normal; }
+    .sp-marquee { mask-image: none; }
+  }
+  .sp-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: var(--ink);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .sp-badge:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  .sp-foot {
+    font-size: 12px;
+    color: var(--ink-mute);
+    max-width: 640px;
+    margin: 8px auto 0;
+    line-height: 1.5;
+  }
+
   /* 30-second pitch */
   .pitch {
     background: var(--grad-soft);
@@ -968,6 +1068,61 @@
       </div>
     </div>
   </div>
+
+  <!-- Social proof block (T1.2) — sits between the orb and the
+       MEMORIZE THIS pitch. Stat strip animates up on first scroll-into-
+       view. Logo wall scrolls horizontally as an infinite marquee.
+       Both sourced from GET /partnership-trust-signals so the numbers
+       and partner list can be updated without redeploying. -->
+  <section class="social-proof" id="social-proof" aria-labelledby="social-proof-h">
+    <h2 id="social-proof-h" class="sr-only">
+      <span class="i18n-en">Trust signals</span>
+      <span class="i18n-es">Señales de confianza</span>
+    </h2>
+    <div class="sp-stats" id="sp-stats">
+      <!-- Stat cards rendered by JS from /partnership-trust-signals.
+           Fallback static skeleton in case the endpoint is slow:
+           keeps layout from jumping. -->
+      <div class="sp-stat" data-target="21">
+        <div class="sp-num"><span class="sp-counter">21</span></div>
+        <div class="sp-lbl"><span class="i18n-en">Live Platforms</span><span class="i18n-es">Plataformas en Vivo</span></div>
+      </div>
+      <div class="sp-stat" data-target="22">
+        <div class="sp-num"><span class="sp-counter">22</span></div>
+        <div class="sp-lbl"><span class="i18n-en">Verticals</span><span class="i18n-es">Verticales</span></div>
+      </div>
+      <div class="sp-stat" data-target="99.9" data-suffix="%">
+        <div class="sp-num"><span class="sp-counter">99.9</span><span>%</span></div>
+        <div class="sp-lbl"><span class="i18n-en">SLA</span><span class="i18n-es">SLA</span></div>
+      </div>
+      <div class="sp-stat" data-target="300" data-prefix="$" data-suffix="B">
+        <div class="sp-num"><span>$</span><span class="sp-counter">300</span><span>B</span></div>
+        <div class="sp-lbl"><span class="i18n-en">TAM</span><span class="i18n-es">TAM</span></div>
+      </div>
+    </div>
+    <div class="sp-marquee" aria-label="Partner platforms">
+      <div class="sp-marquee-track" id="sp-marquee-track">
+        <!-- Logo / text badges rendered by JS. Static fallback shown if
+             the endpoint is unavailable. -->
+        <span class="sp-badge">CamaraVirtual</span>
+        <span class="sp-badge">PLANEA</span>
+        <span class="sp-badge">Pinaxis</span>
+        <span class="sp-badge">HISPATEC</span>
+        <span class="sp-badge">Torna Idioma</span>
+        <span class="sp-badge">CW Carriers</span>
+        <span class="sp-badge">Cali CityLab</span>
+        <span class="sp-badge">PACC-CFL</span>
+        <span class="sp-badge">PCCI</span>
+        <span class="sp-badge">SurgicalMind</span>
+        <span class="sp-badge">Visionarium</span>
+        <span class="sp-badge">Tunjo Racing</span>
+      </div>
+    </div>
+    <p class="sp-foot">
+      <span class="i18n-en">Trusted by chambers, manufacturers, logistics, healthcare and education leaders across the Americas.</span>
+      <span class="i18n-es">Confiado por cámaras, manufactureras, logística, salud y líderes educativos a través de las Américas.</span>
+    </p>
+  </section>
 
   <div class="pitch">
     <p>
@@ -2055,6 +2210,104 @@
     if (a.referrer_url) payload.referrer_url = a.referrer_url;
     return payload;
   };
+
+  // ---------------- Social proof block (T1.2) ----------------
+  //
+  // Fetches /partnership-trust-signals once on load, replaces the
+  // static fallback badges + stat labels with server data. Stat
+  // counters animate up from 0 to their target when the block first
+  // scrolls into view. Animation respects prefers-reduced-motion
+  // (just snaps to the final value).
+  (function () {
+    var statsEl = document.getElementById('sp-stats');
+    var trackEl = document.getElementById('sp-marquee-track');
+    if (!statsEl || !trackEl) return;
+
+    // Hydrate from API. Graceful fallback to the static HTML if the
+    // request fails — the page still looks correct.
+    var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+    fetch('/projects/api/v1/intake/partnership-trust-signals?lang=' + lang)
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.success || !j.data) return;
+        var d = j.data;
+        // Replace stat cards
+        if (Array.isArray(d.stats) && d.stats.length) {
+          statsEl.innerHTML = d.stats.map(function (s, i) {
+            var num = String(s.value || '');
+            var prefix = '', suffix = '', target = num;
+            var m = num.match(/^([^0-9\.]*)([0-9\.]+)(.*)$/);
+            if (m) { prefix = m[1]; target = m[2]; suffix = m[3]; }
+            return '<div class="sp-stat" data-target="' + target + '">' +
+                     '<div class="sp-num">' +
+                       (prefix ? '<span>' + prefix + '</span>' : '') +
+                       '<span class="sp-counter">' + target + '</span>' +
+                       (suffix ? '<span>' + suffix + '</span>' : '') +
+                     '</div>' +
+                     '<div class="sp-lbl">' +
+                       '<span class="i18n-en">' + (s.label_en || '') + '</span>' +
+                       '<span class="i18n-es">' + (s.label_es || '') + '</span>' +
+                     '</div>' +
+                   '</div>';
+          }).join('');
+        }
+        // Replace marquee — duplicate the badge list so the CSS
+        // keyframe translateX(-50%) gives a seamless infinite loop.
+        if (Array.isArray(d.partners) && d.partners.length) {
+          var badges = d.partners.map(function (p) {
+            var name = p.name || p.slug || '';
+            var safeName = name.replace(/[<>"]/g, '');
+            var inner = p.url
+              ? '<a class="sp-badge" href="' + p.url.replace(/"/g, '') + '" target="_blank" rel="noopener">' + safeName + '</a>'
+              : '<span class="sp-badge">' + safeName + '</span>';
+            return inner;
+          }).join('');
+          trackEl.innerHTML = badges + badges; // duplicate for loop
+        }
+        startCounters();
+      })
+      .catch(function () { startCounters(); });
+
+    // Counter animation — runs once when the stats block first
+    // scrolls into view. ~1.5s ease-out, supports decimals.
+    var animated = false;
+    function startCounters() {
+      if (animated) return;
+      // prefers-reduced-motion: skip animation, snap to target.
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) { animated = true; return; }
+      var counters = statsEl.querySelectorAll('.sp-counter');
+      if (!counters.length) return;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting || animated) return;
+          animated = true;
+          io.disconnect();
+          counters.forEach(function (c) {
+            var target = parseFloat(c.parentElement.parentElement.getAttribute('data-target') || c.textContent) || 0;
+            var decimals = String(target).indexOf('.') >= 0 ? 1 : 0;
+            var duration = 1500;
+            var startTime = performance.now();
+            function step(now) {
+              var t = Math.min(1, (now - startTime) / duration);
+              var eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+              var val = target * eased;
+              c.textContent = decimals ? val.toFixed(1) : Math.round(val).toString();
+              if (t < 1) requestAnimationFrame(step);
+              else c.textContent = decimals ? target.toFixed(1) : String(target);
+            }
+            requestAnimationFrame(step);
+          });
+        });
+      }, { threshold: 0.4 });
+      io.observe(statsEl);
+    }
+    // If page loads with the stats already in view (e.g. tall viewport),
+    // fire counters as soon as the API returns / fallback path runs.
+    if (statsEl.getBoundingClientRect().top < window.innerHeight) {
+      setTimeout(startCounters, 100);
+    }
+  })();
 
   // ---------------- Language toggle (EN / ES) ----------------
   // Reads localStorage on load, swaps body class, persists choice. Every
