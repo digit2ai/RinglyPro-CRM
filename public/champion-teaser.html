@@ -99,6 +99,65 @@
   .hd-meta { font-size: 11px; color: var(--ink-mute); text-align: right; }
   .hd-pill { display: inline-block; background: var(--grad-soft); color: var(--violet); padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(124,92,255,0.3); margin-bottom: 6px; }
 
+  /* FAQ section (T2.4) — collapsible Q&As with native <details>. */
+  .faq { margin: 56px 0 36px; }
+  .faq-head { text-align: center; margin-bottom: 24px; }
+  .faq-eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-cyan); margin-bottom: 8px; }
+  .faq-title { font-size: clamp(22px, 3.5vw, 30px); font-weight: 800; line-height: 1.2; margin: 0; }
+  .faq-list { display: flex; flex-direction: column; gap: 10px; max-width: 820px; margin: 0 auto; }
+  .faq-item {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .faq-item[open] { border-color: rgba(34, 211, 238, 0.45); }
+  .faq-item > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    user-select: none;
+  }
+  .faq-item > summary::-webkit-details-marker { display: none; }
+  .faq-item > summary:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; border-radius: 12px; }
+  .faq-item .faq-q { flex: 1; line-height: 1.4; }
+  .faq-item .faq-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(34, 211, 238, 0.10);
+    color: var(--accent-cyan);
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: transform 0.25s ease, background 0.2s;
+  }
+  .faq-item[open] .faq-icon { transform: rotate(45deg); background: var(--accent-cyan); color: #020617; }
+  .faq-item .faq-a {
+    padding: 0 20px 18px;
+    color: var(--ink-dim);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .faq-item .faq-a p { margin: 0; }
+  @media (max-width: 600px) {
+    .faq-item > summary { font-size: 14px; padding: 14px 16px; }
+    .faq-item .faq-a { padding: 0 16px 16px; font-size: 13.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faq-item .faq-icon { transition: none; }
+  }
+
   /* Abandoned-conversation modal (T2.3) — pops when the user ends
      the orb session before triage. Captures warm leads. */
   .abandon-modal[hidden] { display: none !important; }
@@ -2610,6 +2669,156 @@
     <div id="d-submitted"></div>
   </section>
 
+  <!-- =================================================================
+       T2.4 — FAQ / objection handler.
+       8 collapsible Q&As covering the most common objections. Bilingual
+       inline. schema.org FAQPage JSON-LD is rendered by JS in the
+       current language so Google can index the answers as rich snippets.
+       ================================================================= -->
+  <section class="faq" id="faq" aria-labelledby="faq-h">
+    <header class="faq-head">
+      <span class="faq-eyebrow">
+        <span class="i18n-en">Common questions</span>
+        <span class="i18n-es">Preguntas frecuentes</span>
+      </span>
+      <h2 id="faq-h" class="faq-title">
+        <span class="i18n-en">Before you commit</span>
+        <span class="i18n-es">Antes de comprometerte</span>
+      </h2>
+    </header>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">Is this really AI — or just ChatGPT with a logo?</span>
+            <span class="i18n-es">¿Esto es realmente IA, o solo ChatGPT con un logo?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">It is real. Each Neural Intelligence agent is a coordinated stack of specialized LLM calls (Claude + GPT-4), wired through the open Model Context Protocol (MCP) to your live data — your CRM, your inbox, your finance system. ChatGPT is a chat box. Digit2AI is a team of senior consultants that lives inside your software, scopes the work, drafts the deliverables, builds the product, and keeps it running.</span>
+            <span class="i18n-es">Es real. Cada agente de Neural Intelligence es una pila coordinada de llamadas a LLM especializados (Claude + GPT-4), conectada por el estándar abierto Model Context Protocol (MCP) a tus datos en vivo — tu CRM, tu correo, tu sistema financiero. ChatGPT es un chat. Digit2AI es un equipo de consultores senior que vive dentro de tu software, define el alcance, redacta los entregables, construye el producto y lo mantiene corriendo.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">What if the AI Triage gets it wrong?</span>
+            <span class="i18n-es">¿Qué pasa si el AI Triage se equivoca?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">The triage is a first read, not a final verdict. Every field on the result panel is editable — title, fit reasoning, technical solution, delivery window. You refine it in plain language before clicking Accept &amp; Submit. Manuel reviews every submission within 48 hours and follows up by Zoom if anything is unclear. The AI never auto-commits Digit2AI to a project.</span>
+            <span class="i18n-es">El triage es una primera lectura, no un veredicto final. Cada campo del panel de resultado es editable — título, razonamiento de ajuste, solución técnica, ventana de entrega. Lo refinas en lenguaje natural antes de presionar Aceptar y Enviar. Manuel revisa cada solicitud en 48 horas y hace seguimiento por Zoom si algo no es claro. El AI nunca compromete automáticamente a Digit2AI a un proyecto.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">How much does a project cost?</span>
+            <span class="i18n-es">¿Cuánto cuesta un proyecto?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">Most Digit2AI projects land in the five-figure to low six-figure range, depending on scope, integrations, and regulatory complexity. A focused MVP shipping in 4-6 weeks typically runs $35K-$75K. A multi-system platform with custom integrations and ongoing support runs $100K-$250K. We never quote without seeing the triage result first — every number is grounded in actual scope.</span>
+            <span class="i18n-es">La mayoría de proyectos de Digit2AI están entre cinco cifras y seis cifras bajas, según el alcance, integraciones y complejidad regulatoria. Un MVP enfocado que se entrega en 4-6 semanas típicamente cuesta $35K-$75K. Una plataforma multi-sistema con integraciones personalizadas y soporte continuo cuesta $100K-$250K. Nunca cotizamos sin ver el triage primero — cada número está basado en alcance real.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">What about my data, IP, and NDA?</span>
+            <span class="i18n-es">¿Qué pasa con mis datos, propiedad intelectual y NDA?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">Mutual NDA is signed before any production data touches our environment. All work product is yours — you own the code, the data, the models. We deploy on your domain when possible. For HIPAA / GDPR / PCI scopes, we work under your BAA / DPA. Source code lives in your private repo from day one if you want it that way.</span>
+            <span class="i18n-es">Firmamos NDA mutuo antes de que cualquier dato de producción toque nuestro entorno. Todo el trabajo es tuyo — eres dueño del código, los datos, los modelos. Desplegamos en tu dominio cuando es posible. Para alcances HIPAA / GDPR / PCI, trabajamos bajo tu BAA / DPA. El código fuente vive en tu repo privado desde el día uno si así lo prefieres.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">Can it integrate with my existing tools?</span>
+            <span class="i18n-es">¿Se puede integrar con mis herramientas actuales?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">Yes — that is the whole point of MCP. We have shipped MCP connectors for Salesforce, HubSpot, GoHighLevel, Slack, Microsoft 365, Google Workspace, Stripe, QuickBooks, Twilio, SendGrid, Zoom, Snowflake, Postgres, MySQL, AWS S3, and dozens more. If a system has an API, we can wire it in. If it does not, we have built scrapers, MFT bridges, and PLC webhook intakes for tools that pre-date the cloud.</span>
+            <span class="i18n-es">Sí — ese es el punto completo de MCP. Hemos enviado conectores MCP para Salesforce, HubSpot, GoHighLevel, Slack, Microsoft 365, Google Workspace, Stripe, QuickBooks, Twilio, SendGrid, Zoom, Snowflake, Postgres, MySQL, AWS S3, y docenas más. Si un sistema tiene una API, lo conectamos. Si no, hemos construido scrapers, puentes MFT, e ingestas webhook de PLCs para herramientas que pre-datan la nube.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">How fast can you actually deliver?</span>
+            <span class="i18n-es">¿Qué tan rápido pueden entregar?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">Days to ship the first working slice. 2-4 weeks to a usable MVP. 6-12 weeks to a production-grade platform with integrations + SIT/UAT. Compare to traditional consulting: 6-9 months to a Statement of Work, 9-18 months to a working pilot. We move faster because the Architect agent writes the build plan + scaffolds the codebase the same day you sign — no team to stand up.</span>
+            <span class="i18n-es">Días para entregar la primera versión funcional. 2-4 semanas para un MVP usable. 6-12 semanas para una plataforma de producción con integraciones + SIT/UAT. Compara con la consultoría tradicional: 6-9 meses para un SOW, 9-18 meses para un piloto funcional. Nos movemos más rápido porque el agente Arquitecto escribe el plan de construcción + arma el código el mismo día que firmas — no hay equipo que armar.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">What languages and platforms do you build in?</span>
+            <span class="i18n-es">¿En qué lenguajes y plataformas construyen?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">Default stack: Node.js + Express + PostgreSQL + React for web, React Native for mobile, Python for ML / data pipelines. We deploy on Render, AWS, Azure, GCP, Vercel, Cloudflare — whatever fits your existing infrastructure. For Spanish-speaking markets we have native bilingual UX in every product. The 60-agent army includes Senior Full Stack, Mobile, DevOps/SRE, Database Architect, Security Engineer, and Performance Engineer specialists.</span>
+            <span class="i18n-es">Stack por defecto: Node.js + Express + PostgreSQL + React para web, React Native para móvil, Python para ML / pipelines de datos. Desplegamos en Render, AWS, Azure, GCP, Vercel, Cloudflare — lo que encaje con tu infraestructura existente. Para mercados hispanohablantes tenemos UX bilingüe nativo en cada producto. El ejército de 60 agentes incluye especialistas Senior Full Stack, Móvil, DevOps/SRE, Arquitecto de Bases de Datos, Ingeniero de Seguridad, e Ingeniero de Rendimiento.</span>
+          </p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">
+            <span class="i18n-en">What if I am not technical — can I still describe my project?</span>
+            <span class="i18n-es">¿Y si no soy técnico — aún puedo describir mi proyecto?</span>
+          </span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>
+            <span class="i18n-en">That is exactly what the orb is for. Tell Manny or Lina what problem you are trying to solve in plain language — "our dispatch team spends 4 hours every morning chasing emails" or "we cannot tell which loan applications are real from our spam." The brain asks 2-3 clarifying questions, summarizes back what it heard, and translates that into a technical solution sketch. You do not need to know what an API is. You need to know what is broken.</span>
+            <span class="i18n-es">Para eso exactamente es el orbe. Cuéntale a Manny o Lina qué problema intentas resolver en lenguaje natural — "mi equipo de despacho gasta 4 horas cada mañana persiguiendo correos" o "no podemos distinguir las solicitudes reales del spam." El cerebro hace 2-3 preguntas aclaratorias, resume lo que escuchó, y lo traduce en un boceto técnico de solución. No necesitas saber qué es una API. Necesitas saber qué está roto.</span>
+          </p>
+        </div>
+      </details>
+    </div>
+    <!-- schema.org FAQPage JSON-LD injected by JS (language-aware) -->
+    <script type="application/ld+json" id="faq-jsonld"></script>
+  </section>
+
   <!-- ============================================================ -->
   <div class="cta-wrap">
     <h2>
@@ -4191,6 +4400,46 @@
         // message. Just log for debugging.
         try { console.log('[orb] voice agent not configured; using fallback'); } catch (_) {}
       }
+    });
+  })();
+
+  // ---------------- FAQ JSON-LD generator (T2.4) ----------------
+  //
+  // schema.org FAQPage structured data so Google can index the
+  // Q&As as rich-result snippets. Regenerates whenever the
+  // language toggles so the indexed answer matches what is
+  // actually visible on the page.
+  (function () {
+    var script = document.getElementById('faq-jsonld');
+    var faqEl = document.getElementById('faq');
+    if (!script || !faqEl) return;
+    function build() {
+      var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+      var items = faqEl.querySelectorAll('.faq-item');
+      var mainEntity = [];
+      items.forEach(function (item) {
+        var qEl = item.querySelector('.faq-q .i18n-' + lang);
+        var aEl = item.querySelector('.faq-a .i18n-' + lang);
+        if (!qEl || !aEl) return;
+        mainEntity.push({
+          '@type': 'Question',
+          'name': (qEl.textContent || '').trim(),
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': (aEl.textContent || '').trim()
+          }
+        });
+      });
+      script.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        'mainEntity': mainEntity
+      });
+    }
+    build();
+    // Re-emit on language toggle so the indexed FAQ matches what users see.
+    document.querySelectorAll('.lang-toggle button').forEach(function (b) {
+      b.addEventListener('click', function () { setTimeout(build, 50); });
     });
   })();
 
