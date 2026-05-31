@@ -107,6 +107,28 @@ curl -s "https://aiagent.ringlypro.com/aiastore/health"
 - `CHAT_DAILY_CAP_PER_USER` — Per-user daily message cap for `/api/v1/chat`. Default 200. Lower for cost control.
 - `WAIVE_SIGNUP_FEES_SLUGS` — Comma-separated chamber slugs that skip the $25 setup fee and $10/mo subscription at signup. Members in these chambers are activated immediately and a $0 'waived' transaction is recorded for audit. Default: `cv-2` (PACC-CFL promotional period). Remove a slug to restore paid signup; no code changes needed.
 - `EMAIL_AUTOSEND_DISABLED` — Default ON. Kills every server-initiated SendGrid send in `digit2ai-projects`: meeting-recap auto-send (4s after AI processing), requestor approval/rejection notices, architect-pipeline UAT/SIT/build-complete emails, and the four scheduled pollers (meetingReminder, rsvpReminder, inboxDigest, meetingMinutesPrompt). Reason: SendGrid mail was landing in client spam folders; user reviews drafts in the dashboard and sends each through Apple Mail via the magic-link / mailto helper. Set `EMAIL_AUTOSEND_DISABLED=0` to restore the original behavior. **Does not gate user-clicked sends** (campaigns, contracts, meeting invites, manual minutes /send) — those still go through SendGrid until per-flow Apple-Mail UIs land.
+- `ELEVENLABS_CONVAI_PARTNERSHIP_EN` — ElevenLabs Conversational AI agent ID for the English Partnership orb on `/champion-teaser.html`. The orb on the teaser page connects directly to this agent via the browser SDK. **No API key is sent to the browser** — agent IDs are public per ElevenLabs convai design; the API key stays server-side. When unset, the orb shows a friendly "voice mode unavailable" caption and the keyboard demo stays the active path. Sister var: `ELEVENLABS_CONVAI_PARTNERSHIP_ES` for the Spanish agent (same orb, switches based on the page's language toggle).
+- `ELEVENLABS_CONVAI_PARTNERSHIP_ES` — Spanish-language convai agent ID. See `ELEVENLABS_CONVAI_PARTNERSHIP_EN` for the full setup recipe. Must be a separate dedicated agent (per the `ringlypro_elevenlabs_agents` reference memory: "Each product gets its own dedicated convai agent; never share agents across unrelated products").
+
+## Partnership Orb — ElevenLabs Convai Setup Recipe
+
+The animated voice-interactive orb on `/champion-teaser.html` is powered by ElevenLabs Conversational AI. To enable it in production, create two dedicated convai agents (one EN, one ES) and wire their IDs into the env vars above.
+
+**Per-agent setup (do once for EN, once for ES):**
+
+1. Log into the ElevenLabs dashboard → **Conversational AI** → **Agents** → **Create New Agent**
+2. Name: `Digit2AI Partnership Brain (EN)` / `(ES)` — keep these distinct from Rachel / Ana / Lina
+3. **Voice**: pick a premium multilingual or language-specific voice — for EN, something warm and confident (e.g. "Adam" or a custom voice); for ES, a fluent LATAM voice with proper neutral accent
+4. **System prompt**: paste the full teaser content as context (the 6 sections, 60-agent roster, 4 deliverables, 5-step flow, doctor-vs-thermometer framing, all script replies). Add structured intake instructions: detect when prospect is describing a project vs asking general questions; in intake mode, gather industry/problem/current-state/timeline/budget hints; ask at most 4 clarifying questions; when ready, call the `run_partnership_triage` client tool with `{ description, conversation_summary, name?, email?, company?, country? }`
+5. **Client tools** → add a tool named `run_partnership_triage` with parameters matching the payload shape the orb sends to `/api/v1/intake/voice-trigger-triage`. The orb's controller registers a JS handler under the same name; the SDK bridges the agent's tool call to the browser-side handler, which POSTs to the backend and returns the verdict
+6. **First-message greeting**: "Hi, I'm the Digit2AI Partnership brain. Tell me about your project — or ask me anything about what we do." (Spanish equivalent for the ES agent)
+7. Save → copy the **Agent ID** from the agent detail page
+8. On Render, set `ELEVENLABS_CONVAI_PARTNERSHIP_EN` (or `_ES`) to that agent ID and redeploy
+9. Reload `/champion-teaser.html` → click the orb → mic permission prompt → orb enters listening state → speak
+
+**Fallback behavior:** if either agent ID is unset, the SDK fails to load, or the user denies mic permission, the orb shows a friendly fallback message and the keyboard demo (textarea + Run AI Triage button) below the hero remains the working path. Voice is an enhancement, not a requirement.
+
+**Cost model:** ~$0.15-$0.40 per 3-5 minute prospect demo (covers STT + LLM + TTS bundled by convai). At 50 demos/month per Partner, ~$10-22/month. Pennies per closed deal.
 
 ## Phase A — Public Source Refresh Schedule (Intuitive)
 

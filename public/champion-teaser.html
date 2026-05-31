@@ -105,10 +105,129 @@
   /* .hero h1 em handled by the global h1 em rule above (italic serif + gradient) */
   .hero .sub { font-size: 16px; color: var(--ink-dim); max-width: 680px; margin: 0 auto; }
 
-  /* Hero logo (Digit2AI mark, large, centered under the hero text) */
-  .hero-logo { display: flex; justify-content: center; align-items: center; margin: 8px 0 28px; }
-  .hero-logo img { display: block; max-width: 320px; width: 60%; height: auto; filter: drop-shadow(0 6px 24px rgba(124, 92, 255, 0.25)); }
-  @media (max-width: 720px) { .hero-logo img { max-width: 220px; width: 70%; } }
+  /* Animated Partnership Orb — replaces the static logo. Four states
+     (idle / listening / thinking / speaking) driven by data-state on
+     #orb-wrap. Click-to-activate; states transition via the orb
+     controller. All animations are CSS keyframes so the orb plays even
+     when the browser tab loses focus during voice ops. */
+  .hero-logo { display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 8px 0 36px; }
+  .orb-wrap {
+    position: relative;
+    width: 280px; height: 280px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 200ms ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .orb-wrap:hover { transform: scale(1.02); }
+  .orb-wrap:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 4px; border-radius: 50%; }
+  .orb-wrap.disabled { cursor: not-allowed; opacity: 0.6; }
+  .orb-svg { width: 280px; height: 280px; display: block; }
+  @media (max-width: 720px) {
+    .orb-wrap, .orb-svg { width: 220px; height: 220px; }
+    .orb-wave { width: 220px !important; }
+  }
+
+  /* IDLE — gentle breathing pulse on the core + outer glow. 4-color
+     gradient embedded in the SVG (orbCore radialGradient). */
+  .orb-glow { animation: orbBreath 4.5s ease-in-out infinite; transform-origin: center; }
+  .orb-core { animation: orbBreath 4.5s ease-in-out infinite; transform-origin: center; }
+  .orb-core-inner { animation: orbBreathInner 4.5s ease-in-out infinite; transform-origin: center; }
+  .orb-highlight { animation: orbHighlight 4.5s ease-in-out infinite; transform-origin: 106px 100px; }
+  @keyframes orbBreath { 0%, 100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.06); opacity: 1; } }
+  @keyframes orbBreathInner { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.96); } }
+  @keyframes orbHighlight { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.65; } }
+
+  /* Listening rings — hidden by default, faded in when state=listening */
+  .orb-ring { opacity: 0; transform-origin: center; }
+  .orb-wrap[data-state="listening"] .orb-ring {
+    opacity: 1;
+    animation: orbRingPulse 1.6s ease-out infinite;
+  }
+  .orb-wrap[data-state="listening"] .orb-ring-1 { animation-delay: 0s; }
+  .orb-wrap[data-state="listening"] .orb-ring-2 { animation-delay: 0.5s; }
+  .orb-wrap[data-state="listening"] .orb-ring-3 { animation-delay: 1.0s; }
+  @keyframes orbRingPulse {
+    0% { transform: scale(0.85); opacity: 0.9; stroke-width: 1.5; }
+    100% { transform: scale(1.18); opacity: 0; stroke-width: 0.5; }
+  }
+  /* Listening core: faster breath + amplitude-driven scale via --orb-amp */
+  .orb-wrap[data-state="listening"] .orb-core,
+  .orb-wrap[data-state="listening"] .orb-glow {
+    animation: orbBreathFast 2s ease-in-out infinite;
+    transform: scale(calc(1 + (var(--orb-amp, 0) * 0.18)));
+  }
+  @keyframes orbBreathFast { 0%, 100% { filter: brightness(1.05); } 50% { filter: brightness(1.25); } }
+
+  /* Thinking — particles orbit, core slow-rotates, rings tighten */
+  .orb-particles { opacity: 0; }
+  .orb-particle {
+    transform-box: fill-box;
+    transform-origin: 120px 120px;
+    animation: orbOrbit 2.6s linear infinite;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  .orb-wrap[data-state="thinking"] .orb-particles { opacity: 1; }
+  .orb-wrap[data-state="thinking"] .orb-core { animation: orbThinkSpin 6s linear infinite; }
+  .orb-wrap[data-state="thinking"] .orb-ring { opacity: 0.7; animation: orbRingTight 2.4s ease-in-out infinite; }
+  @keyframes orbOrbit { from { transform: rotate(0deg) translate(0); } to { transform: rotate(360deg) translate(0); } }
+  @keyframes orbThinkSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes orbRingTight {
+    0%, 100% { transform: scale(1); stroke-opacity: 0.4; }
+    50% { transform: scale(0.92); stroke-opacity: 0.7; }
+  }
+
+  /* Speaking — core gets a saturated halo, waveform canvas shows */
+  .orb-wrap[data-state="speaking"] .orb-core,
+  .orb-wrap[data-state="speaking"] .orb-glow {
+    filter: brightness(1.3) saturate(1.2);
+  }
+  .orb-wave {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px; height: 60px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .orb-wrap[data-state="speaking"] .orb-wave { opacity: 0.85; }
+
+  /* Caption — language-aware micro instruction below the orb */
+  .orb-caption {
+    position: absolute;
+    bottom: -8px;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    transition: color 200ms ease;
+  }
+  .orb-wrap:hover .orb-caption { color: var(--accent-cyan); }
+  .orb-wrap[data-state="listening"] .orb-caption { color: var(--accent-cyan); }
+  .orb-wrap[data-state="thinking"] .orb-caption { color: var(--accent-violet); }
+  .orb-wrap[data-state="speaking"] .orb-caption { color: var(--accent-magenta); }
+  .orb-wrap[data-state="listening"] .orb-caption::after { content: ' · listening'; }
+  body.lang-es .orb-wrap[data-state="listening"] .orb-caption::after { content: ' · escuchando'; }
+  .orb-wrap[data-state="thinking"] .orb-caption::after { content: ' · analyzing'; }
+  body.lang-es .orb-wrap[data-state="thinking"] .orb-caption::after { content: ' · analizando'; }
+  .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · speaking'; }
+  body.lang-es .orb-wrap[data-state="speaking"] .orb-caption::after { content: ' · hablando'; }
+
+  /* Fallback notice when voice can't initialize */
+  .orb-fallback {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--amber);
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.4;
+  }
 
   /* 30-second pitch */
   .pitch {
@@ -448,8 +567,67 @@
     </p>
   </section>
 
+  <!-- ANIMATED ORB — voice-interactive Partnership brain (replaces static logo).
+       Falls back gracefully to the keyboard demo if ElevenLabs SDK can't load
+       or mic permission is denied. Click to activate; states: idle / listening /
+       thinking / speaking are driven by the orb controller in the inline JS. -->
   <div class="hero-logo">
-    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="Digit2AI" loading="lazy">
+    <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
+         aria-label="Activate Partnership brain — click and speak"
+         data-state="idle" data-configured="false">
+      <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="orbCore" cx="0.5" cy="0.5">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.95"/>
+            <stop offset="0.45" stop-color="#3b82f6" stop-opacity="0.85"/>
+            <stop offset="0.78" stop-color="#8b5cf6" stop-opacity="0.7"/>
+            <stop offset="1" stop-color="#ec4899" stop-opacity="0.55"/>
+          </radialGradient>
+          <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+            <stop offset="0" stop-color="#22d3ee" stop-opacity="0.35"/>
+            <stop offset="0.5" stop-color="#8b5cf6" stop-opacity="0.18"/>
+            <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#22d3ee"/>
+            <stop offset="0.4" stop-color="#3b82f6"/>
+            <stop offset="0.75" stop-color="#8b5cf6"/>
+            <stop offset="1" stop-color="#ec4899"/>
+          </linearGradient>
+          <filter id="orbBlur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+        </defs>
+        <!-- outer ambient glow -->
+        <circle class="orb-glow" cx="120" cy="120" r="110" fill="url(#orbGlow)"/>
+        <!-- listening amplitude rings (controlled by JS via CSS vars) -->
+        <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.45"/>
+        <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.55"/>
+        <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-opacity="0.65"/>
+        <!-- thinking-state orbiting particles -->
+        <g class="orb-particles">
+          <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+          <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+          <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+          <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+        </g>
+        <!-- core breathing body -->
+        <circle class="orb-core" cx="120" cy="120" r="64" fill="url(#orbCore)" filter="url(#orbBlur)"/>
+        <circle class="orb-core-inner" cx="120" cy="120" r="42" fill="url(#orbCore)" opacity="0.9"/>
+        <!-- inner highlight (glassy) -->
+        <ellipse class="orb-highlight" cx="106" cy="100" rx="22" ry="14" fill="rgba(255,255,255,0.35)" opacity="0.5"/>
+      </svg>
+      <!-- speaking-state waveform bars (frequency analyzer painted by JS) -->
+      <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
+      <div class="orb-caption" id="orb-caption">
+        <span class="i18n-en">Click to speak with the Partnership brain</span>
+        <span class="i18n-es">Haz clic para hablar con el cerebro del Partnership</span>
+      </div>
+      <div class="orb-fallback" id="orb-fallback" hidden>
+        <span class="i18n-en">Voice mode unavailable — use the keyboard demo below.</span>
+        <span class="i18n-es">Modo de voz no disponible — usa el demo de teclado abajo.</span>
+      </div>
+    </div>
   </div>
 
   <div class="pitch">
@@ -1420,6 +1598,11 @@
 
 </div>
 
+<!-- ElevenLabs Conversational AI browser SDK — loads non-blocking. If it
+     fails to load (network blocked, CDN down) the orb gracefully falls
+     back to the keyboard demo with a friendly message. -->
+<script src="https://unpkg.com/@elevenlabs/client@latest/dist/lib.umd.js" crossorigin async></script>
+
 <script>
   // ---------------- Language toggle (EN / ES) ----------------
   // Reads localStorage on load, swaps body class, persists choice. Every
@@ -1856,6 +2039,293 @@
           setError(t('net_err_submit') + (err.message || 'request failed'));
         });
     }
+
+    // Bridge for the Partnership orb (next IIFE) — lets the voice path
+    // hand the triage result into the same renderResult pipeline the
+    // keyboard demo uses. Same UI, same Accept & Submit flow.
+    window._teaserState = state;
+    window.renderTriageResultFromOrb = function (triageData) {
+      state.triage = triageData;
+      state.lang = (triageData && triageData.language) || getLang();
+      renderResult();
+      var el = document.getElementById('d-result-inner');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Mark the top "Run AI Triage" button as already-triaged so the
+      // double-click guard kicks in (same UX as keyboard path).
+      if (runBtn) {
+        runBtn.textContent = t('submit_below');
+        runBtn.style.opacity = '0.75';
+      }
+    };
+  })();
+
+  // ---------------- Partnership Orb Controller ----------------
+  //
+  // State machine: idle -> listening -> thinking -> speaking -> listening...
+  // Driven by the ElevenLabs Conversational AI browser SDK. The convai
+  // agent handles STT + LLM + TTS in one bundled stream. Our job here is:
+  //   1. Fetch the agent ID from /api/v1/intake/partnership-orb-config
+  //   2. On orb click: request mic, start the convai session
+  //   3. Map SDK events to data-state on #orb-wrap for the visual
+  //   4. Paint the speaking-state waveform from the SDK's output stream
+  //   5. When the agent calls our voice-trigger-triage tool, take over:
+  //      switch orb to "thinking", POST the description, render the
+  //      existing result panel (renderResult is already defined above)
+  //   6. Graceful fallback if SDK doesn't load or mic denied
+  //
+  // NOTE: this iteration ships the orb + plumbing. The full agent-side
+  // tool wiring (the convai "client tool" that triggers the triage)
+  // needs to be configured in the ElevenLabs dashboard against the
+  // agent IDs — see CLAUDE.md for the setup recipe. Until those agent
+  // IDs land in env vars, the orb shows a friendly "voice mode coming
+  // soon" caption and the keyboard demo below stays the active path.
+  (function () {
+    var wrap = document.getElementById('orb-wrap');
+    if (!wrap) return;
+    var caption = document.getElementById('orb-caption');
+    var fallbackEl = document.getElementById('orb-fallback');
+    var waveCanvas = document.getElementById('orb-wave');
+    var API_BASE = '/projects/api/v1/intake';
+
+    function setState(s) { wrap.setAttribute('data-state', s); }
+    function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
+    function showFallback(msg) {
+      wrap.classList.add('disabled');
+      wrap.setAttribute('aria-disabled', 'true');
+      if (fallbackEl) {
+        fallbackEl.hidden = false;
+        if (msg) {
+          // Replace fallback span text in active language only — keep
+          // the i18n structure for the toggle.
+          var en = fallbackEl.querySelector('.i18n-en');
+          var es = fallbackEl.querySelector('.i18n-es');
+          if (en) en.textContent = msg;
+          if (es) es.textContent = msg;
+        }
+      }
+    }
+
+    // State machine sentinel — guards against double-activation
+    var session = null;
+    var connecting = false;
+    var audioCtx = null;
+    var analyser = null;
+    var waveAnim = null;
+
+    // Fetch agent config (the right agent ID for the current language).
+    // Re-fetched whenever the language toggle flips, so EN/ES users always
+    // get their dedicated agent.
+    function fetchConfig() {
+      var lang = (document.body.classList.contains('lang-es')) ? 'es' : 'en';
+      return fetch(API_BASE + '/partnership-orb-config?lang=' + lang)
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.success && j.data) {
+            wrap.dataset.configured = j.data.configured ? 'true' : 'false';
+            wrap.dataset.agentId = j.data.agent_id || '';
+            wrap.dataset.lang = j.data.language;
+            return j.data;
+          }
+          return null;
+        })
+        .catch(function () { return null; });
+    }
+
+    // Build the waveform painter using a frequency analyzer over the
+    // output audio stream. The convai SDK exposes the output element;
+    // we attach an AnalyserNode and repaint 60fps.
+    function startWaveform(mediaStream) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var source = audioCtx.createMediaStreamSource(mediaStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        source.connect(analyser);
+        var ctx2d = waveCanvas.getContext('2d');
+        var buf = new Uint8Array(analyser.frequencyBinCount);
+        var w = waveCanvas.width, h = waveCanvas.height;
+        function paint() {
+          if (!analyser) return;
+          analyser.getByteFrequencyData(buf);
+          ctx2d.clearRect(0, 0, w, h);
+          var barW = (w / buf.length) * 1.6;
+          for (var i = 0; i < buf.length; i++) {
+            var v = buf[i] / 255;
+            var barH = v * h * 0.95;
+            var x = i * barW;
+            var grad = ctx2d.createLinearGradient(0, h, 0, h - barH);
+            grad.addColorStop(0, '#22d3ee');
+            grad.addColorStop(0.5, '#8b5cf6');
+            grad.addColorStop(1, '#ec4899');
+            ctx2d.fillStyle = grad;
+            ctx2d.fillRect(x, h - barH, barW * 0.7, barH);
+          }
+          waveAnim = requestAnimationFrame(paint);
+        }
+        paint();
+      } catch (e) { /* analyser optional — orb still works without waveform */ }
+    }
+    function stopWaveform() {
+      if (waveAnim) cancelAnimationFrame(waveAnim);
+      waveAnim = null;
+      analyser = null;
+      if (waveCanvas) {
+        var c = waveCanvas.getContext('2d');
+        if (c) c.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+      }
+    }
+
+    // Bridge: when the agent gathers enough context and decides to
+    // trigger the triage, it calls this via the SDK's client-tools
+    // mechanism. We POST to /voice-trigger-triage and pipe the result
+    // into the existing renderResult() pipeline.
+    function runTriageFromAgent(payload) {
+      setState('thinking');
+      var lang = wrap.dataset.lang || 'en';
+      return fetch(API_BASE + '/voice-trigger-triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: payload && payload.description || '',
+          conversation_summary: payload && payload.conversation_summary || '',
+          name: payload && payload.name || undefined,
+          email: payload && payload.email || undefined,
+          company: payload && payload.company || undefined,
+          country: payload && payload.country || undefined,
+          language: lang
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          setState('idle');
+          if (res && res.success && res.data) {
+            // Hand off to the existing renderResult — same shape, same UI.
+            // Stash on the global state object so the existing Accept &
+            // Submit flow works unchanged.
+            if (window._teaserState) { window._teaserState.triage = res.data; }
+            // Trigger the result render by simulating the post-success
+            // path of the keyboard demo. The keyboard demo's IIFE
+            // already wired everything; we expose a tiny hook below.
+            if (typeof window.renderTriageResultFromOrb === 'function') {
+              window.renderTriageResultFromOrb(res.data);
+            }
+            // Tell the agent how the triage went so it can narrate.
+            return { verdict: res.data.verdict, fit_score: res.data.fit_score, ok: true };
+          }
+          return { ok: false, error: (res && res.error) || 'triage_failed' };
+        })
+        .catch(function (err) {
+          setState('idle');
+          return { ok: false, error: err.message };
+        });
+    }
+    // Expose for the SDK's client-tools to call from the agent side.
+    window.runPartnershipTriage = runTriageFromAgent;
+
+    // Click-to-activate. Asks for mic permission and starts the convai
+    // session. If anything fails, fall back to the keyboard demo.
+    function activateOrb() {
+      if (connecting || session) return;
+      connecting = true;
+      caption.style.opacity = '0.7';
+
+      // Check SDK loaded
+      var SDK = window.ElevenLabs || window.elevenlabs || (window.ElevenLabsClient ? { Conversation: window.ElevenLabsClient.Conversation } : null);
+      if (!SDK || !SDK.Conversation) {
+        connecting = false;
+        showFallback();
+        return;
+      }
+
+      // Confirm we have an agent ID for the current language
+      fetchConfig().then(function (cfg) {
+        if (!cfg || !cfg.configured || !cfg.agent_id) {
+          connecting = false;
+          showFallback();
+          return;
+        }
+
+        // Request mic
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          connecting = false;
+          showFallback();
+          return;
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function (stream) {
+            // Start convai session. The SDK's API surface varies slightly
+            // by version; try the canonical Conversation.startSession.
+            return SDK.Conversation.startSession({
+              agentId: cfg.agent_id,
+              clientTools: {
+                // The agent calls this tool when it decides the prospect's
+                // description is complete enough to triage.
+                run_partnership_triage: function (params) {
+                  return runTriageFromAgent(params || {});
+                }
+              },
+              onConnect: function () { setState('listening'); },
+              onDisconnect: function () { setState('idle'); stopWaveform(); session = null; },
+              onError: function (e) {
+                console.error('[orb] convai error', e);
+                setState('idle');
+                stopWaveform();
+                showFallback();
+              },
+              onModeChange: function (mode) {
+                // mode values from SDK: 'listening', 'speaking', 'thinking'
+                if (mode && mode.mode) {
+                  if (mode.mode === 'speaking') setState('speaking');
+                  else if (mode.mode === 'listening') setState('listening');
+                  else if (mode.mode === 'thinking') setState('thinking');
+                }
+              },
+              onMessage: function (msg) {
+                // Optional: surface transcript or agent messages later
+                // (iteration 2). For now we just react to mode changes.
+              }
+            }).then(function (s) {
+              session = s;
+              connecting = false;
+              startWaveform(stream);
+              setState('listening');
+            });
+          })
+          .catch(function (err) {
+            console.error('[orb] mic / session error', err);
+            connecting = false;
+            // Mic denied or session start failed — fall back
+            var msg = (err && err.name === 'NotAllowedError')
+              ? 'Microphone permission denied — use the keyboard demo below.'
+              : null;
+            showFallback(msg);
+          });
+      });
+    }
+
+    wrap.addEventListener('click', activateOrb);
+    wrap.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateOrb(); }
+    });
+
+    // Refresh config on language toggle so EN/ES users connect to the
+    // right agent on next activation.
+    var langBtns = document.querySelectorAll('.lang-toggle button');
+    langBtns.forEach(function (b) {
+      b.addEventListener('click', function () { setTimeout(fetchConfig, 50); });
+    });
+
+    // Initial config fetch. If voice isn't configured server-side
+    // (env vars unset), the orb stays visible but click is a no-op
+    // beyond showing the fallback message.
+    fetchConfig().then(function (cfg) {
+      if (!cfg || !cfg.configured) {
+        // Don't disable yet — let the user click to see the fallback
+        // message. Just log for debugging.
+        try { console.log('[orb] voice agent not configured; using fallback'); } catch (_) {}
+      }
+    });
   })();
 </script>
 </body>

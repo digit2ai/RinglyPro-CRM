@@ -448,6 +448,167 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 });
 
 // =====================================================
+// PARTNERSHIP ORB — voice-driven triage (champion-teaser orb)
+// =====================================================
+//
+// GET /partnership-orb-config
+//   Public, no auth. Returns the ElevenLabs convai agent ID for the
+//   requested language so the browser SDK can connect without leaking
+//   the API key. Agent IDs are public per ElevenLabs convai design;
+//   the API key stays server-side.
+//
+// POST /voice-trigger-triage
+//   Public. Called by the convai agent (via the orb) once it has
+//   gathered enough context conversationally. Same shape as
+//   /public-triage-preview but also accepts a conversation_summary
+//   string the agent built up over the dialogue. We compose the final
+//   description from { description, conversation_summary } and reuse
+//   the existing triage prompt path so output stays consistent
+//   regardless of whether intake came via keyboard or voice.
+//
+// Why a separate route: the orb's call path is conceptually different
+// (the AI agent decides when to call this, not the user) and may grow
+// orb-specific telemetry. Keeping them separate lets us evolve voice
+// UX without destabilizing the keyboard demo.
+
+router.get('/partnership-orb-config', (req, res) => {
+  const lang = (req.query.lang === 'es') ? 'es' : 'en';
+  const agentId = lang === 'es'
+    ? (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_ES || '')
+    : (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || '');
+  res.json({
+    success: true,
+    data: {
+      language: lang,
+      agent_id: agentId,
+      configured: !!agentId,
+      // Hint to the client whether the orb is even usable. Frontend
+      // falls back to the textarea path when configured = false.
+      fallback_reason: agentId ? null : 'agent_id_not_set'
+    }
+  });
+});
+
+router.post('/voice-trigger-triage', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: `Too many triage requests from this IP. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).`,
+        retry_in_seconds: rl.retryInSec
+      });
+    }
+
+    const body = req.body || {};
+    const rawDesc = String(body.description || '').trim();
+    const summary = String(body.conversation_summary || '').trim();
+    // Compose the final description. If the agent only sent a summary
+    // (typical case — the orb conversation produces a summary, not a
+    // raw description), use it. If both, concatenate so the triage
+    // sees the original ask + the agent's distilled context.
+    let description = rawDesc;
+    if (summary) {
+      description = rawDesc
+        ? rawDesc + '\n\n— Conversation context —\n' + summary
+        : summary;
+    }
+    if (!description || description.length < 30) {
+      return res.status(400).json({ success: false, error: 'Description (or conversation_summary) must be at least 30 characters.' });
+    }
+    if (description.length > 8000) {
+      return res.status(400).json({ success: false, error: 'Description must be under 8000 characters.' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ success: false, error: 'Triage service not configured (no API key on server).' });
+    }
+    let Anthropic;
+    try { Anthropic = require('@anthropic-ai/sdk'); } catch (_) {
+      return res.status(503).json({ success: false, error: 'Triage SDK unavailable on server.' });
+    }
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const lang = body.language === 'en' || body.language === 'es' ? body.language : _detectLang(description);
+    const userMsg = `Today is ${new Date().toISOString().slice(0, 10)}.
+
+RESPONSE LANGUAGE: ${lang === 'es' ? 'Respond entirely in fluent business Spanish with proper orthography (tildes, ñ, ¿¡). The deliverable_type enum strings stay in English (they are code identifiers).' : 'Respond in English.'}
+
+PROSPECT CONTEXT
+- Name: ${body.name || '(not provided)'}
+- Company: ${body.company || '(not provided)'}
+- Country: ${body.country || '(not provided)'}
+- Source: voice conversation via Partnership orb
+
+PROBLEM DESCRIPTION (assembled from the prospect's voice conversation with the Partnership AI brain)
+${description}
+
+Produce the triage verdict + technical solution as a single JSON object. Respond with the JSON only.`;
+
+    const MODEL = process.env.TRIAGE_PREVIEW_MODEL || 'claude-sonnet-4-6';
+    let resp;
+    try {
+      resp = await client.messages.create({
+        model: MODEL,
+        max_tokens: 2500,
+        system: TRIAGE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMsg }]
+      });
+    } catch (err) {
+      console.error('[D2AI-Intake] voice-trigger-triage Claude call failed:', err.message);
+      return res.status(502).json({ success: false, error: 'Triage upstream call failed. Please try again.' });
+    }
+    const rawText = resp?.content?.[0]?.text || '';
+    let parsed = _safeParseJson(rawText);
+    if (!parsed) {
+      try {
+        const retry = await client.messages.create({
+          model: MODEL,
+          max_tokens: 2500,
+          system: TRIAGE_SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: userMsg },
+            { role: 'assistant', content: rawText || '(empty)' },
+            { role: 'user', content: 'Your last response was not valid JSON. Reply again with the COMPLETE JSON object only, no preamble, no markdown fences. Begin with { and end with }.' }
+          ]
+        });
+        parsed = _safeParseJson(retry?.content?.[0]?.text || '');
+      } catch (_) {}
+    }
+    if (!parsed) {
+      return res.status(502).json({ success: false, error: 'Triage returned a malformed response.' });
+    }
+
+    const ts = parsed.technical_solution || {};
+    const out = {
+      language: parsed.language === 'es' ? 'es' : 'en',
+      project_title_suggested: String(parsed.project_title_suggested || '').trim().slice(0, 120) || 'Untitled Project',
+      verdict: ['go', 'poc', 'stop'].includes(parsed.verdict) ? parsed.verdict : 'poc',
+      fit_score: Math.max(0, Math.min(10, Number(parsed.fit_score) || 5)),
+      fit_reasoning: String(parsed.fit_reasoning || '').trim(),
+      problem_in_our_words: String(parsed.problem_in_our_words || '').trim(),
+      technical_solution: {
+        summary: String(ts.summary || '').trim(),
+        agents_involved: Array.isArray(ts.agents_involved) ? ts.agents_involved.map(a => String(a).trim()).filter(Boolean) : [],
+        what_we_build: Array.isArray(ts.what_we_build) ? ts.what_we_build.map(a => String(a).trim()).filter(Boolean) : [],
+        data_sources_via_mcp: Array.isArray(ts.data_sources_via_mcp) ? ts.data_sources_via_mcp.map(a => String(a).trim()).filter(Boolean) : [],
+        delivery_window: String(ts.delivery_window || '').trim()
+      },
+      week_1_deliverables: Array.isArray(parsed.week_1_deliverables) ? parsed.week_1_deliverables.map(a => String(a).trim()).filter(Boolean) : [],
+      verify_flags: Array.isArray(parsed.verify_flags) ? parsed.verify_flags.map(a => String(a).trim()).filter(Boolean) : [],
+      model: MODEL,
+      source: 'voice'
+    };
+
+    res.json({ success: true, data: out });
+  } catch (err) {
+    console.error('[D2AI-Intake] voice-trigger-triage error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
 // GET /share/:token/discussion — no auth. Returns a single project (and its
