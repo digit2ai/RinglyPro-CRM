@@ -671,11 +671,19 @@ In intake mode:
   });
 });
 
+// Default convai agent IDs — created via the ElevenLabs API on
+// 2026-05-31, configured with the auto-generated teaser system prompt
+// + run_partnership_triage client tool. Env vars override these so the
+// user can swap to a custom agent without code change, but out-of-box
+// the orb works on first deploy with these defaults.
+const DEFAULT_CONVAI_EN = 'agent_7801ksz3yfcaedzbmt500a01br0k';
+const DEFAULT_CONVAI_ES = 'agent_5001ksz3z3tteabvtgh6fjgz7yw8';
+
 router.get('/partnership-orb-config', (req, res) => {
   const lang = (req.query.lang === 'es') ? 'es' : 'en';
   const agentId = lang === 'es'
-    ? (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_ES || '')
-    : (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || '');
+    ? (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_ES || DEFAULT_CONVAI_ES)
+    : (process.env.ELEVENLABS_CONVAI_PARTNERSHIP_EN || DEFAULT_CONVAI_EN);
   res.json({
     success: true,
     data: {
