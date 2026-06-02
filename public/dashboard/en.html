@@ -1257,6 +1257,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<select id="dirRegion">'+regionOptions()+'</select>';
     html += '<select id="dirSector">'+sectorOptions()+'</select>';
     html += '<button class="btn btn-primary" id="dirBtn">Search</button>';
+    html += '<button class="btn btn-outline" id="dirPrintBtn" title="Print or save the current directory as a PDF">Print PDF</button>';
     html += '</div>';
     if (isAdmin) {
       html += '<button class="btn btn-primary" id="dirAddMemberBtn" style="background:#28a745;color:white">+ Add Member</button>';
@@ -1264,6 +1265,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '</div>';
     html += '<div id="dirResults"><div class="loading">Loading...</div></div>';
     el.innerHTML = html;
+
+    // Holds the members from the most recent search so Print PDF can render
+    // exactly what the user is currently looking at (filters applied).
+    var lastDirMembers = [];
 
     if (isAdmin) {
       document.getElementById('dirAddMemberBtn').addEventListener('click', showAddMemberModal);
@@ -1285,6 +1290,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         var res = await apiFetch('/members?' + params.toString());
         if (!res.success) { out.innerHTML = '<div class="error-msg">Error searching</div>'; return; }
         var members = res.data.members || [];
+        lastDirMembers = members;
         if (members.length === 0) { out.innerHTML = '<p class="text-muted">No members found.</p>'; return; }
         var h = '<div class="result-cards">';
         members.forEach(function(m) {
@@ -1351,7 +1357,71 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       }
     }
 
+    async function printDir() {
+      if (!lastDirMembers.length) { alert('No members to print. Run a search first.'); return; }
+      var info = await loadChamberInfo();
+      var chamberName = (info && info.name) || 'VirtualChamber.app';
+      var logo = resolveChamberLogo(info);
+
+      // Active-filter context line for the printed header.
+      var ctx = [];
+      var sVal = document.getElementById('dirSearch').value.trim();
+      var rSel = document.getElementById('dirRegion');
+      var secSel = document.getElementById('dirSector');
+      if (sVal) ctx.push('Search: "' + sVal + '"');
+      if (rSel && rSel.value) ctx.push('Region: ' + rSel.options[rSel.selectedIndex].text);
+      if (secSel && secSel.value) ctx.push('Sector: ' + secSel.options[secSel.selectedIndex].text);
+      var ctxLine = ctx.length ? ctx.join('  |  ') : 'All members';
+
+      var today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+      var rows = lastDirMembers.map(function(m, i) {
+        return '<tr>'
+          + '<td class="num">' + (i+1) + '</td>'
+          + '<td>' + esc((m.first_name||'') + ' ' + (m.last_name||'')) + '</td>'
+          + '<td>' + esc(m.company_name||'--') + '</td>'
+          + '<td>' + esc(m.membership_type||'--') + '</td>'
+          + '<td>' + esc(m.sector||'--') + '</td>'
+          + '<td>' + esc(m.country||'--') + '</td>'
+          + '<td class="num">' + (m.years_experience ? m.years_experience : '--') + '</td>'
+          + '</tr>';
+      }).join('');
+
+      var doc = '<!doctype html><html><head><meta charset="utf-8"><title>'
+        + esc(chamberName) + ' - Member Directory</title><style>'
+        + '*{box-sizing:border-box} body{font-family:Arial,Helvetica,sans-serif;color:#1a1a2e;margin:32px;}'
+        + '.head{display:flex;align-items:center;gap:16px;border-bottom:3px solid #003DA5;padding-bottom:16px;margin-bottom:18px;}'
+        + '.head img{height:64px;width:64px;border-radius:10px;object-fit:cover;}'
+        + '.head h1{margin:0;font-size:22px;color:#003DA5;} .head .sub{margin:2px 0 0;font-size:13px;color:#555;}'
+        + '.meta{font-size:12px;color:#555;margin-bottom:14px;} .meta b{color:#1a1a2e;}'
+        + 'table{width:100%;border-collapse:collapse;font-size:12px;} '
+        + 'th{background:#003DA5;color:#fff;text-align:left;padding:7px 9px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;} '
+        + 'td{padding:6px 9px;border-bottom:1px solid #e2e6ee;} tr:nth-child(even) td{background:#f5f7fb;} '
+        + 'td.num,th.num{text-align:center;width:42px;} '
+        + '.foot{margin-top:20px;font-size:10px;color:#999;text-align:center;} '
+        + '@media print{body{margin:14px;} th{-webkit-print-color-adjust:exact;print-color-adjust:exact;} tr{page-break-inside:avoid;}}'
+        + '</style></head><body>'
+        + '<div class="head"><img src="' + esc(logo) + '" alt=""><div><h1>' + esc(chamberName) + '</h1>'
+        + '<p class="sub">Member Directory</p></div></div>'
+        + '<div class="meta"><b>' + lastDirMembers.length + '</b> member' + (lastDirMembers.length===1?'':'s')
+        + ' &nbsp;&middot;&nbsp; ' + esc(ctxLine) + ' &nbsp;&middot;&nbsp; Generated ' + esc(today) + '</div>'
+        + '<table><thead><tr><th class="num">#</th><th>Name</th><th>Company</th><th>Membership</th>'
+        + '<th>Sector</th><th>Country</th><th class="num">Exp.</th></tr></thead><tbody>'
+        + rows + '</tbody></table>'
+        + '<div class="foot">' + esc(chamberName) + ' &middot; Generated from the Virtual Chamber directory on ' + esc(today) + '</div>'
+        + '</body></html>';
+
+      var w = window.open('', '_blank');
+      if (!w) { alert('Please allow pop-ups to print the directory.'); return; }
+      w.document.open();
+      w.document.write(doc);
+      w.document.close();
+      // Wait for the logo image to load so it appears in the PDF, then print.
+      w.onload = function() { setTimeout(function(){ w.focus(); w.print(); }, 250); };
+    }
+
     document.getElementById('dirBtn').addEventListener('click', searchDir);
+    document.getElementById('dirPrintBtn').addEventListener('click', printDir);
     document.getElementById('dirSearch').addEventListener('keypress', function(e){ if(e.key==='Enter') searchDir(); });
     searchDir();
   }
