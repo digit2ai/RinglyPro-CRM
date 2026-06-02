@@ -2357,14 +2357,15 @@ async function printProjectsPDF() {
   const listRes = await api('/projects');
   if (!listRes.success || !listRes.data.length) { alert('No projects to print.'); return; }
 
-  // Only print CRITICAL-priority projects
-  const criticalList = listRes.data.filter(p => p.priority === 'critical');
-  if (!criticalList.length) { alert('No CRITICAL projects to print.'); return; }
+  // Respect the Priority filter selected on the dashboard. Empty = All Priority.
+  const prFilter = (document.getElementById('project-priority-filter')?.value) || '';
+  const filteredList = prFilter ? listRes.data.filter(p => p.priority === prFilter) : listRes.data;
+  if (!filteredList.length) { alert('No ' + prFilter.toUpperCase() + ' projects to print.'); return; }
 
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
   // Fetch full detail + tasks for each project in parallel
-  const detailsUnsorted = await Promise.all(criticalList.map(async p => {
+  const detailsUnsorted = await Promise.all(filteredList.map(async p => {
     const [det, tasksRes] = await Promise.all([api(`/projects/${p.id}`), api(`/tasks?project_id=${p.id}`)]);
     return { ...(det.success ? det.data : p), tasks: tasksRes.success ? tasksRes.data : [] };
   }));
@@ -2391,7 +2392,6 @@ async function printProjectsPDF() {
       return `<li style="margin-bottom:4px;color:${t.status==='completed'?'#16a34a':tOver?'#dc2626':'#333'}">${esc(t.title)} <span style="color:#888">[${t.status}${t.priority?' - '+t.priority:''}${t.due_date?' - '+fmtD(t.due_date):''}${t.assignee?' - '+t.assignee.first_name+' '+(t.assignee.last_name||''):''}]</span></li>`;
     }).join('');
     const contacts = (p.contacts||[]).map(c => `<li>${esc(c.first_name+' '+(c.last_name||''))}${c.ProjectContact?.role?' <span style="color:#888">('+c.ProjectContact.role+')</span>':''}</li>`).join('');
-    const updates = (p.updates||[]).slice(0,5).map(u => `<li style="margin-bottom:4px">${esc(u.content)} <span style="color:#888">- ${u.user_email||''} ${fmtD(u.created_at)}</span></li>`).join('');
 
     return `
       <div style="page-break-inside:avoid;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:20px">
@@ -2429,7 +2429,6 @@ async function printProjectsPDF() {
         ${milestones ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Milestones ('+p.milestones.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+milestones+'</ul></div>' : ''}
         ${tasks ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Tasks ('+p.tasks.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+tasks+'</ul></div>' : ''}
         ${contacts ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Linked Contacts</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+contacts+'</ul></div>' : ''}
-        ${updates ? '<div><strong style="font-size:12px;color:#555">Recent Updates</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+updates+'</ul></div>' : ''}
       </div>`;
   }).join('');
 
@@ -2442,8 +2441,8 @@ async function printProjectsPDF() {
       .summary { font-size:12px; color:#555; margin-bottom:20px; padding:10px 14px; background:#f5f5f5; border-radius:6px; }
       @media print { body { padding:0; } }
     </style></head><body>
-    <h1>Digit2Ai Projects Report — CRITICAL</h1>
-    <p class="meta">Generated: ${now} | ${details.length} critical project${details.length===1?'':'s'}</p>
+    <h1>Digit2Ai Projects Report${prFilter ? ' — ' + prFilter.toUpperCase() : ''}</h1>
+    <p class="meta">Generated: ${now} | ${details.length}${prFilter ? ' ' + prFilter : ''} project${details.length===1?'':'s'}</p>
     <div class="summary">${summaryLine}</div>
     ${cards}
   </body></html>`;
