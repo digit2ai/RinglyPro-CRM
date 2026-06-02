@@ -865,6 +865,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     return h;
   }
 
+  // Sector is stored in the DB as a Spanish slug (canonical taxonomy from the
+  // platform's Spanish origin). Map it to the English label for display. Falls
+  // back to prettifying any unknown/legacy slug (e.g. 'professional_services').
+  var SECTOR_LABELS = {};
+  SECTORS.forEach(function(s){ SECTOR_LABELS[s.v] = s.label; });
+  function sectorLabel(v) {
+    if (!v) return '--';
+    if (SECTOR_LABELS[v]) return SECTOR_LABELS[v];
+    return String(v).replace(/_/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  }
+
   var REGIONS = [
     {id:1,name:'Orlando Metro'},{id:2,name:'Tampa Bay Area'},{id:3,name:'South Florida'},
     {id:4,name:'North / Central FL'},{id:5,name:'International / Philippines'}
@@ -1297,7 +1308,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '<div class="result-card" data-member-id="'+m.id+'" style="cursor:pointer">';
           h += '<div class="rc-name">'+esc(m.first_name)+' '+esc(m.last_name)+'</div>';
           h += '<div class="rc-company">'+esc(m.company_name||'--')+' <span class="badge '+badgeClass(m.membership_type)+'">'+esc(m.membership_type)+'</span></div>';
-          h += '<div class="rc-meta"><span>'+esc(m.sector||'--')+'</span><span>'+esc(m.country||'--')+'</span>';
+          h += '<div class="rc-meta"><span>'+esc(sectorLabel(m.sector))+'</span><span>'+esc(m.country||'--')+'</span>';
           if (m.years_experience) h += '<span>'+m.years_experience+' yrs exp.</span>';
           h += '</div>';
           var canMsg = !currentMember || currentMember.id !== m.id;
@@ -1381,7 +1392,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           + '<td>' + esc((m.first_name||'') + ' ' + (m.last_name||'')) + '</td>'
           + '<td>' + esc(m.company_name||'--') + '</td>'
           + '<td>' + esc(m.membership_type||'--') + '</td>'
-          + '<td>' + esc(m.sector||'--') + '</td>'
+          + '<td>' + esc(sectorLabel(m.sector)) + '</td>'
           + '<td>' + esc(m.country||'--') + '</td>'
           + '<td class="num">' + (m.years_experience ? m.years_experience : '--') + '</td>'
           + '</tr>';
@@ -1439,7 +1450,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (m.verification_level) html += ' <span class="badge badge-green">'+esc(m.verification_level)+'</span>';
       html += '<table style="margin-top:16px;width:100%">';
       html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Company</td><td>'+esc(m.company_name||'--')+'</td></tr>';
-      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Sector</td><td>'+esc(m.sector||'--')+'</td></tr>';
+      html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Sector</td><td>'+esc(sectorLabel(m.sector))+'</td></tr>';
       html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Country</td><td>'+esc(m.country||'--')+'</td></tr>';
       html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Sub-specialty</td><td>'+esc(m.sub_specialty||'--')+'</td></tr>';
       html += '<tr><td style="font-weight:600;padding:6px 12px 6px 0;color:var(--gray-500)">Experience</td><td>'+(m.years_experience ? m.years_experience+' years' : '--')+'</td></tr>';
