@@ -1318,13 +1318,11 @@
      are visible. Each translatable element ships with both languages
      inline; one is always hidden. No JS needed for the swap itself —
      only for clicking the toggle + persisting the choice. */
-  /* T4.2 — three-way i18n switching. When a translation pair has no
-     i18n-pt sibling, PT visitors fall back to seeing the i18n-en
-     content (handled at JS-toggle time, not CSS). */
-  body.lang-en .i18n-es, body.lang-en .i18n-pt { display: none; }
-  body.lang-es .i18n-en, body.lang-es .i18n-pt { display: none; }
-  body.lang-pt .i18n-en, body.lang-pt .i18n-es { display: none; }
-  body.lang-pt .i18n-en.pt-fallback { display: inline; }
+  body.lang-es .i18n-en { display: none; }
+  body.lang-en .i18n-es { display: none; }
+  /* PT spans are hidden in both EN and ES modes (kept in markup as
+     dead spans so a future re-introduction needs no HTML churn). */
+  .i18n-pt { display: none; }
 
   /* Doctor vs Thermometer game-changer section */
   .gc-hero { background: linear-gradient(135deg, rgba(124,92,255,0.10) 0%, rgba(34,211,238,0.06) 100%); border: 1px solid rgba(124,92,255,0.3); border-radius: 14px; padding: 28px 28px 20px; margin-top: 22px; }
@@ -1694,7 +1692,6 @@
         <div class="lang-toggle" role="group" aria-label="Language">
           <button type="button" data-lang="en" class="active">EN</button>
           <button type="button" data-lang="es">ES</button>
-          <button type="button" data-lang="pt">PT</button>
         </div>
         <div>
           <span class="hd-pill" id="hero-eyebrow"><span class="i18n-en">Partnership Brief</span><span class="i18n-es">Brief del Partnership</span></span><br>
@@ -3810,67 +3807,19 @@
       success_link_hint: '(mándaselo a tu prospecto):',
       submitted: 'Enviado',
       net_err_submit: 'Error de red al enviar: '
-    },
-    pt: {
-      desc_placeholder: "Exemplo: Operamos uma câmara de comércio com 1.200 empresas associadas. Os membros nos dizem que não conseguem se encontrar para fazer negócios entre nossos 6 setores...",
-      copy_label: 'Copiar', copied: 'Copiado', copy_failed: 'Falha ao copiar',
-      describe_30: 'Descreva o problema em pelo menos 30 caracteres.',
-      run_label: 'Rodar AI Triage', triaging: 'Triagem em andamento...',
-      submit_below: 'Pressione abaixo para enviar seu projeto ↓',
-      status_running: 'Rodando AI Triage...',
-      triage_failed: 'Triagem falhou. Tente novamente.',
-      network_err: 'Erro de rede: ',
-      already_status: 'Triagem já rodou — pressione "Aceitar e Enviar para digit2ai.com" abaixo.',
-      already_html: '<strong style="color:var(--amber)">Já triado.</strong> Revise e edite o resultado abaixo, depois pressione <strong>Aceitar e Enviar para digit2ai.com</strong>.',
-      need_name: 'Nome do prospecto é obrigatório para enviar ao digit2ai.com.',
-      need_email: 'Email válido do prospecto é obrigatório para enviar ao digit2ai.com.',
-      verdict_go: 'GO', verdict_poc: 'Prova de Conceito', verdict_stop: 'STOP',
-      fit_label: '/10 ajuste',
-      edit_hint: 'Todos os campos abaixo são editáveis — clique para refinar antes de enviar',
-      block_title: 'Título do projeto sugerido',
-      block_fit: 'Por que encaixa',
-      block_problem: 'Seu problema — nas nossas palavras',
-      block_tech: 'Solução técnica proposta',
-      block_agents: 'Agentes Neural Intelligence envolvidos',
-      block_what: 'O que construímos',
-      block_data: 'Fontes de dados via MCP',
-      block_window: 'Janela de entrega',
-      block_week1: 'Entregáveis da Semana 1',
-      block_flags: 'Bandeiras para verificar',
-      btn_accept: 'Aceitar e Enviar para digit2ai.com',
-      btn_rerun: 'Rodar novamente com a mesma descrição',
-      submitting: 'Enviando...',
-      submit_failed: 'Envio falhou. Tente novamente ou mande o prospecto direto para digit2ai.com.',
-      success_h: 'Enviado para digit2ai.com',
-      success_p: 'Manuel revisará em 48 horas. O triage editado está anexado ao registro de intake.',
-      success_link_lbl: 'Link do workspace do prospecto',
-      success_link_hint: '(mande para seu prospecto):',
-      submitted: 'Enviado',
-      net_err_submit: 'Erro de rede ao enviar: '
     }
   };
-  function getLang() {
-    if (document.body.classList.contains('lang-pt')) return 'pt';
-    if (document.body.classList.contains('lang-es')) return 'es';
-    return 'en';
-  }
-  function t(key) {
-    // PT-BR i18n strings haven't all been authored yet (T4.2). Fall
-    // back to EN whenever the key is missing on PT or ES.
-    var lang = getLang();
-    var dict = I18N[lang] || I18N.en;
-    if (dict[key] != null) return dict[key];
-    return (I18N.en[key] != null) ? I18N.en[key] : '';
-  }
+  function getLang() { return document.body.classList.contains('lang-es') ? 'es' : 'en'; }
+  function t(key) { return (I18N[getLang()] || I18N.en)[key]; }
   function applyLangPlaceholders() {
     var lang = getLang();
     var desc = document.getElementById('d-desc');
-    if (desc) desc.placeholder = (I18N[lang] && I18N[lang].desc_placeholder) || I18N.en.desc_placeholder;
+    if (desc) desc.placeholder = I18N[lang].desc_placeholder;
   }
   (function () {
     var saved = null;
     try { saved = localStorage.getItem('teaser-lang'); } catch (_) {}
-    if (saved !== 'en' && saved !== 'es' && saved !== 'pt') saved = 'en';
+    if (saved !== 'en' && saved !== 'es') saved = 'en';
     document.body.classList.remove('lang-en', 'lang-es');
     document.body.classList.add('lang-' + saved);
     var btns = document.querySelectorAll('.lang-toggle button');
@@ -3879,27 +3828,12 @@
       b.addEventListener('click', function () { window.__setLang(b.dataset.lang); });
     });
     // Exposed for T2.1 resume handler to restore the saved language.
-    // T4.2 — supports 'en', 'es', 'pt' (PT-BR). For PT, any i18n-en
-    // span that lacks a sibling i18n-pt gets the .pt-fallback class
-    // so the user sees the EN content instead of empty space.
     window.__setLang = function (lang) {
-      if (lang !== 'en' && lang !== 'es' && lang !== 'pt') lang = 'en';
-      document.body.classList.remove('lang-en', 'lang-es', 'lang-pt');
+      if (lang !== 'en' && lang !== 'es') lang = 'en';
+      document.body.classList.remove('lang-en', 'lang-es');
       document.body.classList.add('lang-' + lang);
       btns.forEach(function (x) { x.classList.toggle('active', x.dataset.lang === lang); });
       try { localStorage.setItem('teaser-lang', lang); } catch (_) {}
-      // PT fallback tagging: walk every .i18n-en, mark .pt-fallback
-      // when no sibling .i18n-pt exists. Idempotent — safe to re-run.
-      if (lang === 'pt') {
-        document.querySelectorAll('.i18n-en').forEach(function (el) {
-          var parent = el.parentNode;
-          if (!parent) return;
-          var hasPt = !!parent.querySelector(':scope > .i18n-pt');
-          el.classList.toggle('pt-fallback', !hasPt);
-        });
-      } else {
-        document.querySelectorAll('.pt-fallback').forEach(function (el) { el.classList.remove('pt-fallback'); });
-      }
       applyLangPlaceholders();
     };
     applyLangPlaceholders();
@@ -4066,7 +4000,7 @@
             // Narrating pill — auto-shows when body.orb-narrating is set by
             // the orb controller during voice narration of the verdict.
             '<span class="narrating-pill" aria-live="polite"><span class="narrating-dot"></span>' +
-              ({ en: 'Brain narrating', es: 'El cerebro está narrando', pt: 'Cérebro narrando' }[getLang()] || 'Brain narrating') +
+              (getLang() === 'es' ? 'El cerebro está narrando' : 'Brain narrating') +
             '</span>' +
             '<span class="result-edit-hint">' + t('edit_hint') + '</span>' +
           '</div>' +
@@ -4122,20 +4056,18 @@
           '<div class="approval-required">' +
             '<span class="ar-icon" aria-hidden="true">!</span>' +
             '<div class="ar-text">' +
-              ({
-                en: '<strong>Approval required.</strong> Edit anything that needs adjusting, then click <strong>Accept &amp; Submit to digit2ai.com</strong> below. <span class="ar-warn">Without this click, NOTHING is sent to the Digit2AI Intake team.</span>',
-                es: '<strong>Aprobación requerida.</strong> Edita lo que necesites, luego presiona <strong>Aceptar y Enviar a digit2ai.com</strong> abajo. <span class="ar-warn">Sin este clic, NADA se envía al equipo de Digit2AI Intake.</span>',
-                pt: '<strong>Aprovação obrigatória.</strong> Edite o que precisar, depois clique em <strong>Aceitar e Enviar para digit2ai.com</strong> abaixo. <span class="ar-warn">Sem este clique, NADA é enviado para a equipe de Intake da Digit2AI.</span>'
-              }[getLang()]) +
+              (getLang() === 'es'
+                ? '<strong>Aprobación requerida.</strong> Edita lo que necesites, luego presiona <strong>Aceptar y Enviar a digit2ai.com</strong> abajo. <span class="ar-warn">Sin este clic, NADA se envía al equipo de Digit2AI Intake.</span>'
+                : '<strong>Approval required.</strong> Edit anything that needs adjusting, then click <strong>Accept &amp; Submit to digit2ai.com</strong> below. <span class="ar-warn">Without this click, NOTHING is sent to the Digit2AI Intake team.</span>') +
             '</div>' +
           '</div>' +
           '<div class="result-cta">' +
             '<button type="button" class="demo-btn-primary pulse-on-load" id="d-submit">' + t('btn_accept') + '</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-email-me">' +
-              ({ en: 'Email me a copy', es: 'Enviarme una copia', pt: 'Enviar uma cópia para mim' }[getLang()]) +
+              (getLang() === 'es' ? 'Enviarme una copia' : 'Email me a copy') +
             '</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-pdf">' +
-              ({ en: 'Download PDF', es: 'Descargar PDF', pt: 'Baixar PDF' }[getLang()]) +
+              (getLang() === 'es' ? 'Descargar PDF' : 'Download PDF') +
             '</button>' +
             '<button type="button" class="demo-btn-ghost" id="d-rerun">' + t('btn_rerun') + '</button>' +
             '<span class="demo-status" id="d-submit-status"></span>' +
@@ -4450,8 +4382,7 @@
     var srStatus = document.getElementById('orb-sr-status');
     var SR_LABELS = {
       en: { idle: 'Partnership brain ready. Press Enter to start a voice conversation.', listening: 'Listening.', thinking: 'Analyzing your project.', speaking: 'The Partnership brain is speaking.' },
-      es: { idle: 'Cerebro del Partnership listo. Presiona Enter para iniciar una conversación de voz.', listening: 'Escuchando.', thinking: 'Analizando tu proyecto.', speaking: 'El cerebro del Partnership está hablando.' },
-      pt: { idle: 'Cérebro da Parceria pronto. Pressione Enter para iniciar uma conversa por voz.', listening: 'Escutando.', thinking: 'Analisando seu projeto.', speaking: 'O cérebro da Parceria está falando.' }
+      es: { idle: 'Cerebro del Partnership listo. Presiona Enter para iniciar una conversación de voz.', listening: 'Escuchando.', thinking: 'Analizando tu proyecto.', speaking: 'El cerebro del Partnership está hablando.' }
     };
     function setState(s) {
       wrap.setAttribute('data-state', s);
@@ -5365,8 +5296,7 @@
     // visible .spx-d in the current language at click time.
     cards.forEach(function (card) {
       card.addEventListener('click', function () {
-        var lang = document.body.classList.contains('lang-pt') ? 'pt'
-                 : document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
         var dEl = card.querySelector('.spx-d .i18n-' + lang)
                || card.querySelector('.spx-d .i18n-en');
         var text = dEl ? dEl.textContent.trim() : '';
