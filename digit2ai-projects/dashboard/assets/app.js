@@ -2356,10 +2356,15 @@ function openZoomMeeting() {
 async function printProjectsPDF() {
   const listRes = await api('/projects');
   if (!listRes.success || !listRes.data.length) { alert('No projects to print.'); return; }
+
+  // Only print CRITICAL-priority projects
+  const criticalList = listRes.data.filter(p => p.priority === 'critical');
+  if (!criticalList.length) { alert('No CRITICAL projects to print.'); return; }
+
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
   // Fetch full detail + tasks for each project in parallel
-  const detailsUnsorted = await Promise.all(listRes.data.map(async p => {
+  const detailsUnsorted = await Promise.all(criticalList.map(async p => {
     const [det, tasksRes] = await Promise.all([api(`/projects/${p.id}`), api(`/tasks?project_id=${p.id}`)]);
     return { ...(det.success ? det.data : p), tasks: tasksRes.success ? tasksRes.data : [] };
   }));
@@ -2437,8 +2442,8 @@ async function printProjectsPDF() {
       .summary { font-size:12px; color:#555; margin-bottom:20px; padding:10px 14px; background:#f5f5f5; border-radius:6px; }
       @media print { body { padding:0; } }
     </style></head><body>
-    <h1>Digit2Ai Projects Report</h1>
-    <p class="meta">Generated: ${now} | ${details.length} project${details.length===1?'':'s'}</p>
+    <h1>Digit2Ai Projects Report — CRITICAL</h1>
+    <p class="meta">Generated: ${now} | ${details.length} critical project${details.length===1?'':'s'}</p>
     <div class="summary">${summaryLine}</div>
     ${cards}
   </body></html>`;
