@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lina Stagg — Health Summary (June 2026)</title>
+<style>
+  :root{
+    --ink:#1f2933; --soft:#52606d; --line:#e4e7eb; --bg:#f5f7fa;
+    --good:#0a7c42; --goodbg:#e6f4ec; --watch:#9a6700; --watchbg:#fff6e0;
+    --alert:#b42318; --alertbg:#fdecea; --blue:#0b5fa4; --bluebg:#e8f1fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:24px 18px 64px}
+  header.top{background:linear-gradient(135deg,#0b5fa4,#0a7c42);color:#fff;border-radius:16px;padding:24px 26px;margin-bottom:22px}
+  header.top h1{margin:0 0 4px;font-size:26px;letter-spacing:.2px}
+  header.top .meta{font-size:14px;opacity:.92}
+  header.top .asof{margin-top:10px;font-size:13px;opacity:.85}
+  h2{font-size:20px;margin:30px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--soft);text-transform:uppercase;letter-spacing:.6px}
+  p{margin:8px 0}
+  .lead{font-size:16px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+  .card.good{border-left:5px solid var(--good)} .card.good h4{color:var(--good)}
+  .card.watch{border-left:5px solid var(--watch)} .card.watch h4{color:var(--watch)}
+  .card h4{margin:0 0 6px;font-size:15px}
+  .card p{margin:4px 0;font-size:14px;color:var(--soft)}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;vertical-align:middle}
+  .pill.good{background:var(--goodbg);color:var(--good)}
+  .pill.watch{background:var(--watchbg);color:var(--watch)}
+  .pill.alert{background:var(--alertbg);color:var(--alert)}
+  .pill.norm{background:#eef1f4;color:var(--soft)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f3f6;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--soft)}
+  tr:last-child td{border-bottom:none}
+  td.val{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  .med-group{margin:12px 0}
+  .med-group .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--blue);padding:3px 10px;border-radius:6px;margin-bottom:6px}
+  .med-group .tag.rej{background:#7a3ea8}
+  .med-group .tag.kid{background:#0a7c42}
+  .med-group .tag.mind{background:#0b5fa4}
+  .med-group .tag.other{background:#52606d}
+  ul.steps{list-style:none;padding:0;margin:10px 0;counter-reset:s}
+  ul.steps li{position:relative;padding:12px 14px 12px 50px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+  ul.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ul.steps li b{display:block;margin-bottom:2px}
+  ul.steps li span{font-size:14px;color:var(--soft)}
+  .banner{border-radius:12px;padding:14px 16px;margin:14px 0;font-size:15px}
+  .banner.good{background:var(--goodbg);border:1px solid #bfe3cd}
+  .banner.watch{background:var(--watchbg);border:1px solid #ffe2a6}
+  .contacts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.contacts{grid-template-columns:1fr}}
+  .contacts .c{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-size:14px}
+  .contacts .c b{display:block}
+  .disc{margin-top:30px;font-size:12.5px;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .legend{font-size:13px;color:var(--soft);margin:6px 0 0}
+  .legend .pill{margin-right:6px}
+  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}header.top{background:#0b5fa4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,table,ul.steps li,.banner,.contacts .c,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Lina's Health Summary</h1>
+    <div class="meta">Lina Marcela Stagg &nbsp;•&nbsp; Born Nov 28, 1974 &nbsp;•&nbsp; MRN 08594392 &nbsp;•&nbsp; Primary doctor: Renan Pimentel Valdivia, MD</div>
+    <div class="asof">Plain-language summary of recent results &nbsp;•&nbsp; Visits May 11 – June 3, 2026 &nbsp;•&nbsp; Kidney transplant (~11 yrs) • post-bariatric surgery</div>
+  </header>
+
+  <!-- ===================== THE BIG PICTURE ===================== -->
+  <h2>What is going on — in plain English</h2>
+  <p class="lead">The overall picture is <b>mostly reassuring</b>. The transplant is healthy and the dangerous anemia from April has improved a lot. There are a few things that need steady attention — mainly the <b>acid level in the blood</b> and the <b>kidney working at about half strength</b> — but all of them have a clear plan.</p>
+
+  <div class="banner good"><b>The good news first.</b> The transplanted kidney is <b>not</b> being rejected, two dangerous transplant viruses are both negative, the anti-rejection drug level is finally in the right range, the severe anemia is much better, and the CT scan of the head was completely normal.</div>
+
+  <h3>Good news</h3>
+  <div class="cards">
+    <div class="card good"><h4>Transplant is safe <span class="pill good">Good</span></h4>
+      <p>CMV virus: <b>Not detected</b>. BK virus: <b>Not detected</b>. These are the two infections that most threaten a transplanted kidney — both negative.</p></div>
+    <div class="card good"><h4>Anti-rejection level fixed <span class="pill good">In range</span></h4>
+      <p>Tacrolimus (Prograf) went from too low (3.4 in April) up to <b>7.2</b> — now in the target zone after switching to twice-a-day dosing.</p></div>
+    <div class="card good"><h4>Anemia much better <span class="pill good">Improving</span></h4>
+      <p>Hemoglobin rose from a dangerous <b>7.1 in April to 11.3 now</b>. The blood smear shows young new red cells — a sign the bone marrow is recovering.</p></div>
+    <div class="card good"><h4>Head CT normal <span class="pill good">Normal</span></h4>
+      <p>The headache was scanned. The brain is normal — no bleeding, no mass, nothing dangerous.</p></div>
+    <div class="card good"><h4>No blood infection <span class="pill good">Clear</span></h4>
+      <p>Blood culture grew nothing and the lactic acid was normal — no sign of a bloodstream infection or sepsis.</p></div>
+    <div class="card good"><h4>Nutrition holding up <span class="pill good">Normal</span></h4>
+      <p>Albumin (a protein that shows nutrition) is normal at <b>3.98</b>. Keep the protein going.</p></div>
+  </div>
+
+  <h3>Needs attention</h3>
+  <div class="cards">
+    <div class="card watch"><h4>Blood is too acidic <span class="pill alert">Low CO₂ 14.3</span></h4>
+      <p>The bicarbonate (CO₂) is low, meaning the blood is too acidic. This is common when a transplant kidney is weaker. It causes tiredness and can wear on the kidney and muscles. <b>The fix is already prescribed:</b> sodium bicarbonate and Bicitra — take them every day.</p></div>
+    <div class="card watch"><h4>Kidney at about half strength <span class="pill watch">eGFR 53</span></h4>
+      <p>The transplant kidney is filtering at about 53% (Stage 3). Mild dehydration signs too (high BUN ratio). Stay well hydrated and keep transplant follow-ups.</p></div>
+    <div class="card watch"><h4>Protein &amp; blood in urine <span class="pill watch">Protein 2+</span></h4>
+      <p>The kidney is leaking a little protein and blood. Not an emergency, but the kidney/transplant doctor should track it.</p></div>
+    <div class="card watch"><h4>Blood sugar a bit high <span class="pill watch">Glucose 153</span></h4>
+      <p>Often caused by the steroid (prednisone). Farxiga helps protect against this. Worth a recheck and a mention to the doctor.</p></div>
+    <div class="card watch"><h4>Immune system turned down <span class="pill watch">Low WBC 3.82</span></h4>
+      <p>White cells and lymphocytes are low — this is <b>expected</b> from the anti-rejection medicines. It means infections must be taken seriously: call the doctor for any fever.</p></div>
+    <div class="card watch"><h4>Stay hydrated <span class="pill watch">BUN/Creat 25</span></h4>
+      <p>The blood chemistry hints at not enough fluids. More water helps the kidney and the acid level — confirm your daily fluid target with the transplant team.</p></div>
+  </div>
+
+  <!-- ===================== MEDICATIONS ===================== -->
+  <h2>Medications — what each one is for</h2>
+  <p class="legend">The four anti-rejection medicines are the most important — never skip them.</p>
+
+  <div class="med-group">
+    <span class="tag rej">Anti-rejection — most important</span>
+    <table>
+      <tr><th>Medicine</th><th>How to take</th><th>What it does</th></tr>
+      <tr><td><b>Tacrolimus (Prograf)</b> 5 mg</td><td class="val">Twice a day</td><td>Stops the body from attacking the transplanted kidney.</td></tr>
+      <tr><td><b>Tacrolimus (Prograf)</b> 1 mg</td><td class="val">2 caps AM + 1 cap PM</td><td>Fine-tunes the dose (7 mg total morning, 6 mg evening).</td></tr>
+      <tr><td><b>Mycophenolic acid (Myfortic)</b> 360 mg</td><td class="val">3× daily — morning, noon, bedtime</td><td>Second anti-rejection drug. Can lower blood counts.</td></tr>
+      <tr><td><b>Prednisone (Deltasone)</b> 5 mg</td><td class="val">Once a day</td><td>Steroid that helps prevent rejection. Can raise blood sugar.</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag kid">Kidney, blood pressure &amp; blood acid</span>
+    <table>
+      <tr><th>Medicine</th><th>How to take</th><th>What it does</th></tr>
+      <tr><td><b>Sodium bicarbonate</b> 650 mg</td><td class="val">3× daily</td><td>Fixes the low acid level (the CO₂ 14.3 problem).</td></tr>
+      <tr><td><b>Bicitra</b> (citric acid–sodium citrate)</td><td class="val">As prescribed</td><td>Also reduces blood acid — works with the bicarbonate.</td></tr>
+      <tr><td><b>Fosinopril (Monopril)</b> 20 mg</td><td class="val">Once a day</td><td>Lowers blood pressure and protects the kidney.</td></tr>
+      <tr><td><b>Spironolactone (Aldactone)</b> 25 mg</td><td class="val">Once a day</td><td>Water pill for blood pressure. Watch potassium.</td></tr>
+      <tr><td><b>Farxiga (dapagliflozin)</b> 10 mg</td><td class="val">Once a day</td><td>Protects the kidney and helps with blood sugar.</td></tr>
+      <tr><td><b>Pantoprazole (Protonix)</b> 40 mg</td><td class="val">Twice a day</td><td>Protects the stomach (important with the steroid).</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag mind">Mood, sleep &amp; headaches</span>
+    <table>
+      <tr><th>Medicine</th><th>How to take</th><th>What it does</th></tr>
+      <tr><td><b>Sertraline (Zoloft)</b> 100 mg</td><td class="val">Once a day</td><td>For anxiety and mood.</td></tr>
+      <tr><td><b>Buspirone (BuSpar)</b> 10 mg</td><td class="val">At bedtime</td><td>For anxiety (long-term).</td></tr>
+      <tr><td><b>Alprazolam (Xanax)</b> 0.5 mg</td><td class="val">As needed, up to 3×/day</td><td>Fast relief for anxiety. Use sparingly.</td></tr>
+      <tr><td><b>Trazodone (Desyrel)</b> 50 mg</td><td class="val">At bedtime</td><td>Helps with sleep.</td></tr>
+      <tr><td><b>Diphenhydramine (Benadryl)</b> 25 mg</td><td class="val">As needed</td><td>Allergy relief / sleep. Adds drowsiness.</td></tr>
+      <tr><td><b>Topiramate (Topamax)</b> 100 mg</td><td class="val">As prescribed</td><td>Prevents migraines.</td></tr>
+      <tr><td><b>Butalbital-acetaminophen-caffeine (Fioricet)</b></td><td class="val">As needed</td><td>For headaches. Contains a sedative — use carefully.</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag other">Vitamins &amp; short-term</span>
+    <table>
+      <tr><th>Medicine</th><th>How to take</th><th>What it does</th></tr>
+      <tr><td><b>Multivitamin with folic acid</b></td><td class="val">Once a day</td><td>Replaces vitamins (needed after bariatric surgery).</td></tr>
+      <tr><td><b>Fluconazole (Diflucan)</b> 200 mg</td><td class="val">One-time dose</td><td>Antifungal — prevented an infection.</td></tr>
+    </table>
+  </div>
+
+  <!-- ===================== TEST RESULTS ===================== -->
+  <h2>Test results — the numbers, explained</h2>
+  <p class="legend"><span class="pill good">Good</span><span class="pill norm">Normal</span><span class="pill watch">Watch</span><span class="pill alert">Important</span></p>
+
+  <h3>Blood count (CBC) — June 2, 2026</h3>
+  <table>
+    <tr><th>Test</th><th>Result</th><th>Flag</th><th>Plain meaning</th></tr>
+    <tr><td>Hemoglobin</td><td class="val">11.3</td><td><span class="pill good">Up from 7.1</span></td><td>Still a little low, but a huge improvement from April. Anemia recovering.</td></tr>
+    <tr><td>White blood cells (WBC)</td><td class="val">3.82</td><td><span class="pill watch">Low</span></td><td>Low — expected from anti-rejection meds. Watch for infection.</td></tr>
+    <tr><td>Red blood cells (RBC)</td><td class="val">3.95</td><td><span class="pill watch">Low</span></td><td>Slightly low — fits the anemia, improving.</td></tr>
+    <tr><td>Hematocrit</td><td class="val">37.8</td><td><span class="pill norm">Normal</span></td><td>Percent of blood that is red cells — back in range.</td></tr>
+    <tr><td>Platelets</td><td class="val">164</td><td><span class="pill norm">Normal</span></td><td>Clotting cells — fine.</td></tr>
+    <tr><td>Lymphocytes (absolute)</td><td class="val">0.72</td><td><span class="pill watch">Low</span></td><td>A type of immune cell — low from the anti-rejection meds.</td></tr>
+  </table>
+
+  <h3>Blood smear (Morphology) — June 2, 2026</h3>
+  <p>The lab looked at the blood cells under a microscope. Several cells looked unusual (teardrop cells, spherocytes, smudge cells, giant platelets). On their own these are <b>not alarming</b> and fit the anemia and immunosuppression. One finding — <b>polychromasia (young red cells)</b> — is actually a <b>good sign</b>: the bone marrow is making fresh red cells. Worth showing the blood specialist alongside the counts.</p>
+
+  <h3>Chemistry panel (CMP) — June 3, 2026</h3>
+  <table>
+    <tr><th>Test</th><th>Result</th><th>Flag</th><th>Plain meaning</th></tr>
+    <tr><td>Bicarbonate (CO₂)</td><td class="val">14.3</td><td><span class="pill alert">Low</span></td><td>Blood is too acidic. The main thing to fix — bicarbonate meds do this.</td></tr>
+    <tr><td>Kidney filter rate (eGFR)</td><td class="val">53.3</td><td><span class="pill watch">Low</span></td><td>Transplant kidney working at about half strength (Stage 3).</td></tr>
+    <tr><td>BUN</td><td class="val">30.8</td><td><span class="pill watch">High</span></td><td>Waste product — high, points to the kidney and to needing more fluids.</td></tr>
+    <tr><td>BUN / Creatinine ratio</td><td class="val">25</td><td><span class="pill watch">High</span></td><td>Suggests mild dehydration — drink more water.</td></tr>
+    <tr><td>Creatinine</td><td class="val">1.23</td><td><span class="pill norm">Normal</span></td><td>Kidney waste marker — at the upper edge of normal.</td></tr>
+    <tr><td>Glucose</td><td class="val">153</td><td><span class="pill watch">High</span></td><td>Blood sugar high — likely the steroid. Recheck.</td></tr>
+    <tr><td>Potassium</td><td class="val">5.0</td><td><span class="pill norm">Normal</span></td><td>Top of normal — watch with the kidney + water pill.</td></tr>
+    <tr><td>Albumin</td><td class="val">3.98</td><td><span class="pill good">Normal</span></td><td>Nutrition protein — normal. Good news, keep eating protein.</td></tr>
+    <tr><td>Sodium / Chloride / Calcium</td><td class="val">137 / 109 / 9.6</td><td><span class="pill norm">Normal</span></td><td>All in range.</td></tr>
+    <tr><td>Liver tests (AST/ALT/AlkPhos)</td><td class="val">28 / 16 / 104</td><td><span class="pill norm">Normal</span></td><td>Liver looks fine.</td></tr>
+  </table>
+
+  <h3>Transplant monitoring (Tampa General) — May 29, 2026</h3>
+  <table>
+    <tr><th>Test</th><th>Result</th><th>Flag</th><th>Plain meaning</th></tr>
+    <tr><td>CMV virus (PCR)</td><td class="val">Not detected</td><td><span class="pill good">Good</span></td><td>No CMV infection — important for transplant safety.</td></tr>
+    <tr><td>BK virus (PCR)</td><td class="val">Not detected</td><td><span class="pill good">Good</span></td><td>No BK virus — this one can damage a transplant kidney.</td></tr>
+    <tr><td>Phosphorus</td><td class="val">4.3</td><td><span class="pill norm">Normal</span></td><td>Mineral level — fine (top of range).</td></tr>
+    <tr><td>Magnesium</td><td class="val">2.3</td><td><span class="pill norm">Normal</span></td><td>Mineral level — fine.</td></tr>
+  </table>
+
+  <h3>ER visit labs — May 11, 2026</h3>
+  <table>
+    <tr><th>Test</th><th>Result</th><th>Flag</th><th>Plain meaning</th></tr>
+    <tr><td>Blood culture</td><td class="val">No growth</td><td><span class="pill good">Good</span></td><td>No bloodstream infection.</td></tr>
+    <tr><td>Lactic acid</td><td class="val">0.89</td><td><span class="pill good">Normal</span></td><td>No sign of sepsis.</td></tr>
+    <tr><td>Urine protein</td><td class="val">2+</td><td><span class="pill watch">Abnormal</span></td><td>Kidney leaking some protein — follow with kidney doctor.</td></tr>
+    <tr><td>Urine blood</td><td class="val">1+</td><td><span class="pill watch">Abnormal</span></td><td>A little blood in the urine — track it.</td></tr>
+  </table>
+
+  <!-- ===================== NEXT STEPS ===================== -->
+  <h2>Next steps — how to fix this</h2>
+  <ul class="steps">
+    <li><b>Take every medicine on schedule — no skips.</b><span>Especially the 4 anti-rejection meds and the 2 acid-fixing meds (sodium bicarbonate 3×/day + Bicitra). This is the single most important thing.</span></li>
+    <li><b>Drink more fluids.</b><span>The blood chemistry shows mild dehydration. More water helps the kidney and the acid level. Ask the transplant team for a daily fluid target (some transplant patients have limits).</span></li>
+    <li><b>Recheck the chemistry panel (CMP) in a few weeks.</b><span>Specifically to confirm the bicarbonate (CO₂ 14.3) is climbing back toward normal once the bicarbonate meds are taken consistently.</span></li>
+    <li><b>Call the transplant / kidney team about three things.</b><span>The low bicarbonate (14.3), the kidney function (eGFR 53), and the protein &amp; blood in the urine. Dr. Anwar (transplant) and Dr. Pimentel (primary) should know.</span></li>
+    <li><b>Recheck the blood count (CBC).</b><span>To confirm the hemoglobin keeps rising past 11.3 and the low white count stays stable.</span></li>
+    <li><b>Watch the blood sugar.</b><span>Glucose was 153. Mention it to the doctor — it may just be the steroid, but it should be rechecked.</span></li>
+    <li><b>Protect against infection.</b><span>Because the immune system is turned down, avoid sick contacts, wash hands often, and call the doctor right away for fever, chills, burning urine, or feeling suddenly worse.</span></li>
+    <li><b>Keep eating protein at every meal.</b><span>Albumin is normal now (3.98) — protein keeps the blood, muscles, and healing strong. Don't let it slip.</span></li>
+  </ul>
+
+  <!-- ===================== CARE TEAM ===================== -->
+  <h2>Care team</h2>
+  <div class="contacts">
+    <div class="c"><b>Renan Pimentel Valdivia, MD</b>Primary care doctor (PCP)</div>
+    <div class="c"><b>Amber Anwar, MD</b>Transplant — Tampa General</div>
+    <div class="c"><b>Hassan Hasanein, MD</b>Blood specialist (Hematology) — Florida Cancer Specialists</div>
+    <div class="c"><b>AdventHealth Wesley Chapel</b>Recent labs &amp; imaging — (813) 929-5110</div>
+  </div>
+
+  <div class="disc">
+    <b>Please read:</b> This is a plain-language summary put together from Lina's own MyChart records to make them easier to understand. It is <b>not</b> a diagnosis or medical advice, and it does not replace her doctors. Always confirm medicines, doses, and decisions with the care team. For an emergency — trouble breathing, chest pain, severe weakness, high fever, or confusion — call 911 or go to the nearest emergency room.
+  </div>
+
+</div>
+</body>
+</html>
