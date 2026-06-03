@@ -359,11 +359,26 @@ router.post('/seed/lina-stagg', async (req, res) => {
       { patient_id: pid, order_date: '2026-04-15', test_name: 'Ferritin', test_code: 'FERR', facility: 'FCS - Center Pointe Drive, Ft. Myers, FL', ordering_doctor: 'Hassan Hasanein, MD', status: 'Completed', result_value: '103.10 ng/mL (Normal - Range: 30-200). Previous: 40.50. Went UP -- iron stores are adequate.', result_date: '2026-04-17' },
       { patient_id: pid, order_date: '2026-04-15', test_name: 'Transferrin', test_code: 'TRANS', facility: 'FCS - Center Pointe Drive, Ft. Myers, FL', ordering_doctor: 'Hassan Hasanein, MD', status: 'Completed', result_value: '162 mg/dL (LOW - Range: 203-362). Iron carrier protein too low. Body has iron but cannot deliver it to bone marrow.', result_date: '2026-04-16', notes: 'Low transferrin = protein malnutrition + CKD. Need more dietary protein to produce transferrin.' },
       { patient_id: pid, order_date: '2026-04-15', test_name: 'Vitamin B12', test_code: 'B12', facility: 'FCS - Center Pointe Drive, Ft. Myers, FL', ordering_doctor: 'Hassan Hasanein, MD', status: 'Completed', result_value: '434 pg/mL (In range but DROPPED 47% - Range: 200-1100). Previous: 817. Bariatric malabsorption -- may need B12 injections.', result_date: '2026-04-17' },
-      { patient_id: pid, order_date: '2026-05-21', test_name: 'Tacrolimus Level (by GC/MS)', test_code: 'FK506', facility: 'AdventHealth', status: 'Resulted', result_value: '7.2 mcg/L (latest, 05/21/2026) -- now IN target range (5-7). Recovered from prior low levels after switch to twice-daily Prograf.', result_date: '2026-05-21', notes: 'Trend (target 5-7 mcg/L): 05/21/2026 7.2; 05/21/2026 7.1; 04/28/2026 4.2 [Low]; 04/28/2026 4.2 [Low]; 04/17/2026 3.4 [Low]. Clear upward response: 3.4 -> 4.2 -> 7.1-7.2 after moving from once-daily to twice-daily empty-stomach dosing. Now therapeutic; recheck trough just before a dose to confirm steady state.' }
+      { patient_id: pid, order_date: '2026-05-21', test_name: 'Tacrolimus Level (by GC/MS)', test_code: 'FK506', facility: 'AdventHealth', status: 'Resulted', result_value: '7.2 mcg/L (latest, 05/21/2026) -- now IN target range (5-7). Recovered from prior low levels after switch to twice-daily Prograf.', result_date: '2026-05-21', notes: 'Trend (target 5-7 mcg/L): 05/21/2026 7.2; 05/21/2026 7.1; 04/28/2026 4.2 [Low]; 04/28/2026 4.2 [Low]; 04/17/2026 3.4 [Low]. Clear upward response: 3.4 -> 4.2 -> 7.1-7.2 after moving from once-daily to twice-daily empty-stomach dosing. Now therapeutic; recheck trough just before a dose to confirm steady state.' },
+      // June 2026 AdventHealth headache workup
+      { patient_id: pid, order_date: '2026-06-02', test_name: 'CBC With Differential', test_code: 'CBC-D', facility: 'AdventHealth', status: 'Resulted', result_value: 'Collected 06/02/2026 3:59 PM. NRBC Absolute 0.00 (normal). Remaining numeric values not captured in source.', result_date: '2026-06-02', notes: 'Components & reference ranges (values not captured): WBC 4.80-10.80; RBC 4.20-5.40; Hemoglobin 12.0-16.0; Hematocrit 36.0-48.0; MCV 80.0-98.0; MCH 27.0-31.0; MCHC 32.0-36.0; RDW 11.0-14.5; Platelets 150-400; MPV 8.0-13.0; Neutrophils 36-66 %; Lymphocytes 24-44 %; Monocytes 0-12 %; Eosinophils 0-4 %; Basophils 0-2 %; with absolutes; NRBC Absolute 0.00; Immature Granulocytes 0-8 %.' },
+      { patient_id: pid, order_date: '2026-06-03', test_name: 'CBC Without Differential', test_code: 'CBC', facility: 'AdventHealth', status: 'Resulted', result_value: 'Collected 06/03/2026 12:39 AM. NRBC Absolute 0.00 (normal). Remaining numeric values not captured in source.', result_date: '2026-06-03', notes: 'Components & reference ranges (values not captured): WBC 4.80-10.80; RBC 4.20-5.40; Hemoglobin 12.0-16.0; Hematocrit 36.0-48.0; MCV 80.0-98.0; MCH 27.0-31.0; MCHC 32.0-36.0; RDW 11.0-14.5; Platelets 150-400; MPV 8.0-13.0; NRBC Absolute 0.00.' },
+      { patient_id: pid, order_date: '2026-06-02', test_name: 'Morphology Review (Auto)', test_code: 'MORPH', facility: 'AdventHealth', status: 'Resulted', result_value: 'ABNORMAL peripheral smear (same draw as CBC w/ Diff, 06/02/2026 3:59 PM). RBC, WBC, and Platelet morphology all flagged abnormal.', result_date: '2026-06-02', notes: 'Dacryocytes (teardrop cells): Few [abnormal]. Giant Platelets: Present [abnormal]. Platelet Estimate: Adequate [normal]. Polychromasia: 1+ [abnormal]. Smudge Cells: Present [abnormal]. Spherocytes: Few [abnormal]. RBC Morphology: abnormal. WBC Morphology: abnormal. Platelet Morphology: abnormal. Note: teardrop cells + spherocytes + polychromasia are consistent with her CKD/anemia picture.' }
     ];
     for (const l of labsData) {
       await MedicalLabOrder.findOrCreate({ where: { patient_id: pid, test_name: l.test_name, order_date: l.order_date }, defaults: l });
     }
+
+    // June 2026 headache workup -- CT brain (normal)
+    await MedicalImagingOrder.findOrCreate({
+      where: { patient_id: pid, imaging_test: 'CT Head', order_date: '2026-06-02' },
+      defaults: {
+        patient_id: pid, order_date: '2026-06-02', imaging_test: 'CT Head', body_area: 'Brain',
+        contrast: 'Without IV Contrast', facility: 'AdventHealth', ordering_doctor: 'Frederick Weiss, MD',
+        reason: 'Headache', priority: 'Routine', status: 'Resulted',
+        notes: 'IMPRESSION: Normal CT brain. CT BRAIN WITHOUT CONTRAST, indication headache, comparison 6/2/2026 CT. No midline shift, no hemorrhage, no mass or mass effect, ventricles age appropriate, basal cisterns patent, no herniation, cerebellum/brainstem normal, no tonsillar ectopia >5 mm, sinuses/mastoids clear, orbits/scalp/calvaria unremarkable. Created/Signed by Frederick Weiss, MD, 6/2/2026 18:51 EDT. Location: ORLDPACOSRR08.'
+      }
+    });
 
     // Providers
     const providersData = [
@@ -555,11 +570,7 @@ router.post('/seed/initial', async (req, res) => {
     const labsData = [
       { patient_id: pid, order_date: '2026-03-03', test_name: 'Lipase', test_code: '606', facility: 'Quest Diagnostics', facility_account: '66098353', lab_ref: 'G317440903', ordering_doctor: 'Hala Al-Jiboury, MD', diagnosis_reason: 'K21.9, R10.13, F17.200', specimen_source: 'Blood, Venous', expected_date: 'Once', status: 'Ordered' },
       { patient_id: pid, order_date: '2026-03-03', test_name: 'CBC', test_code: '1759', facility: 'Quest Diagnostics', facility_account: '66098353', lab_ref: 'G317440903', ordering_doctor: 'Hala Al-Jiboury, MD', diagnosis_reason: 'K21.9, R10.13, F17.200', specimen_source: 'Blood, Venous', expected_date: 'Once', status: 'Ordered' },
-      { patient_id: pid, order_date: '2026-03-03', test_name: 'Comprehensive Metabolic Panel', test_code: '10231', facility: 'Quest Diagnostics', facility_account: '66098353', lab_ref: 'G317440903', ordering_doctor: 'Hala Al-Jiboury, MD', diagnosis_reason: 'K21.9, R10.13, F17.200', specimen_source: 'Blood, Venous', expected_date: 'Once', status: 'Ordered' },
-      // June 2026 AdventHealth headache workup
-      { patient_id: pid, order_date: '2026-06-02', test_name: 'CBC With Differential', test_code: 'CBC-D', facility: 'AdventHealth', status: 'Resulted', result_value: 'Collected 06/02/2026 3:59 PM. NRBC Absolute 0.00 (normal). Remaining numeric values not captured in source.', result_date: '2026-06-02', notes: 'Components & reference ranges (values not captured): WBC 4.80-10.80; RBC 4.20-5.40; Hemoglobin 12.0-16.0; Hematocrit 36.0-48.0; MCV 80.0-98.0; MCH 27.0-31.0; MCHC 32.0-36.0; RDW 11.0-14.5; Platelets 150-400; MPV 8.0-13.0; Neutrophils 36-66 %; Lymphocytes 24-44 %; Monocytes 0-12 %; Eosinophils 0-4 %; Basophils 0-2 %; with absolutes; NRBC Absolute 0.00; Immature Granulocytes 0-8 %.' },
-      { patient_id: pid, order_date: '2026-06-03', test_name: 'CBC Without Differential', test_code: 'CBC', facility: 'AdventHealth', status: 'Resulted', result_value: 'Collected 06/03/2026 12:39 AM. NRBC Absolute 0.00 (normal). Remaining numeric values not captured in source.', result_date: '2026-06-03', notes: 'Components & reference ranges (values not captured): WBC 4.80-10.80; RBC 4.20-5.40; Hemoglobin 12.0-16.0; Hematocrit 36.0-48.0; MCV 80.0-98.0; MCH 27.0-31.0; MCHC 32.0-36.0; RDW 11.0-14.5; Platelets 150-400; MPV 8.0-13.0; NRBC Absolute 0.00.' },
-      { patient_id: pid, order_date: '2026-06-02', test_name: 'Morphology Review (Auto)', test_code: 'MORPH', facility: 'AdventHealth', status: 'Resulted', result_value: 'ABNORMAL peripheral smear (same draw as CBC w/ Diff, 06/02/2026 3:59 PM). RBC, WBC, and Platelet morphology all flagged abnormal.', result_date: '2026-06-02', notes: 'Dacryocytes (teardrop cells): Few [abnormal]. Giant Platelets: Present [abnormal]. Platelet Estimate: Adequate [normal]. Polychromasia: 1+ [abnormal]. Smudge Cells: Present [abnormal]. Spherocytes: Few [abnormal]. RBC Morphology: abnormal. WBC Morphology: abnormal. Platelet Morphology: abnormal.' }
+      { patient_id: pid, order_date: '2026-03-03', test_name: 'Comprehensive Metabolic Panel', test_code: '10231', facility: 'Quest Diagnostics', facility_account: '66098353', lab_ref: 'G317440903', ordering_doctor: 'Hala Al-Jiboury, MD', diagnosis_reason: 'K21.9, R10.13, F17.200', specimen_source: 'Blood, Venous', expected_date: 'Once', status: 'Ordered' }
     ];
     for (const l of labsData) {
       await MedicalLabOrder.findOrCreate({ where: { patient_id: pid, test_name: l.test_name, order_date: l.order_date }, defaults: l });
@@ -574,17 +585,6 @@ router.post('/seed/initial', async (req, res) => {
         ordering_doctor: 'Hala Al-Jiboury, MD', order_id: '1303697176',
         reason: 'Smoker with epigastric abdominal pain, rule out structural causes including pancreas',
         priority: 'Routine', expiration_date: '2027-03-03', status: 'Ordered'
-      }
-    });
-
-    // June 2026 headache workup -- CT brain (normal)
-    await MedicalImagingOrder.findOrCreate({
-      where: { patient_id: pid, imaging_test: 'CT Head', order_date: '2026-06-02' },
-      defaults: {
-        patient_id: pid, order_date: '2026-06-02', imaging_test: 'CT Head', body_area: 'Brain',
-        contrast: 'Without IV Contrast', facility: 'AdventHealth', ordering_doctor: 'Frederick Weiss, MD',
-        reason: 'Headache', priority: 'Routine', status: 'Resulted',
-        notes: 'IMPRESSION: Normal CT brain. CT BRAIN WITHOUT CONTRAST, indication headache, comparison 6/2/2026 CT. No midline shift, no hemorrhage, no mass or mass effect, ventricles age appropriate, basal cisterns patent, no herniation, cerebellum/brainstem normal, no tonsillar ectopia >5 mm, sinuses/mastoids clear, orbits/scalp/calvaria unremarkable. Created/Signed by Frederick Weiss, MD, 6/2/2026 18:51 EDT. Location: ORLDPACOSRR08.'
       }
     });
 
