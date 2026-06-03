@@ -62,6 +62,29 @@
   .disc{margin-top:30px;font-size:12.5px;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .legend{font-size:13px;color:var(--soft);margin:6px 0 0}
   .legend .pill{margin-right:6px}
+  @media(max-width:600px){
+    .wrap{padding:16px 12px 48px}
+    header.top{padding:20px 16px}
+    header.top h1{font-size:21px;padding-right:74px}
+    header.top .meta{font-size:12.5px}
+    header.top .asof{font-size:12px}
+    .langswitch{top:14px;right:14px;padding:4px 10px;font-size:12px}
+    h2{font-size:18px;margin:26px 0 10px}
+    .lead{font-size:15px}
+    ul.steps li{padding:11px 12px 11px 46px}
+    /* Turn medication + result tables into stacked cards */
+    .med-group table,.results table{border:none;background:transparent}
+    .med-group table tr,.results table tr{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:11px 13px}
+    .med-group table tr:first-child,.results table tr:first-child{display:none}
+    .med-group table td,.results table td{display:block;border:none;padding:2px 0;font-size:14px;white-space:normal}
+    .med-group table td:first-child,.results table td:first-child{font-weight:700;font-size:15px;margin-bottom:5px}
+    td.val{white-space:normal}
+    .med-group table td:nth-of-type(2)::before{content:"How to take — ";font-weight:600;color:var(--soft)}
+    .med-group table td:nth-of-type(3)::before{content:"What it does — ";font-weight:600;color:var(--soft)}
+    .results table td:nth-of-type(2)::before{content:"Result: ";font-weight:600;color:var(--soft)}
+    .results table td:nth-of-type(3){margin:3px 0}
+    .results table td:nth-of-type(4)::before{content:"Meaning — ";font-weight:600;color:var(--soft)}
+  }
   @media print{body{background:#fff}.wrap{max-width:100%;padding:0}header.top{background:#0b5fa4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.langswitch{display:none}.card,table,ul.steps li,.banner,.contacts .c,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head>
@@ -166,6 +189,7 @@
 
   <!-- ===================== TEST RESULTS ===================== -->
   <h2>Test results — the numbers, explained</h2>
+  <div class="results">
   <p class="legend"><span class="pill good">Good</span><span class="pill norm">Normal</span><span class="pill watch">Watch</span><span class="pill alert">Important</span></p>
 
   <h3>Blood count (CBC) — June 2, 2026</h3>
@@ -214,6 +238,8 @@
     <tr><td>Urine protein</td><td class="val">2+</td><td><span class="pill watch">Abnormal</span></td><td>Kidney leaking some protein — follow with kidney doctor.</td></tr>
     <tr><td>Urine blood</td><td class="val">1+</td><td><span class="pill watch">Abnormal</span></td><td>A little blood in the urine — track it.</td></tr>
   </table>
+
+  </div><!-- /.results -->
 
   <!-- ===================== HOME / DIET ===================== -->
   <h2>What you can do at home to lower the blood acid</h2>
