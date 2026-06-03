@@ -77,17 +77,24 @@
   .triple li{font-size:9px;color:var(--gray);margin-bottom:2px;line-height:1.32}
   .triple li strong{color:var(--ink);font-weight:700}
 
-  /* PRICING */
-  .opt2{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;align-items:stretch}
-  .opt2 .o2-hero{background:linear-gradient(135deg,#fff8e1 0%,#fff 100%);border:1.5px solid var(--gold);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
-  .opt2 .o2-hero .h{font-size:9px;font-weight:800;color:var(--navy-dark);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px}
-  .opt2 .o2-hero .v{font-size:17px;font-weight:900;color:var(--ink);line-height:1.05}
-  .opt2 .o2-hero .v em{font-style:normal;color:var(--navy-dark)}
-  .opt2 .o2-cell{border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;display:flex;flex-direction:column;justify-content:center}
-  .opt2 .o2-cell .l{font-size:8px;font-weight:800;color:var(--gray);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px}
-  .opt2 .o2-cell .n{font-size:14px;font-weight:900;color:var(--ink);line-height:1.05}
-  .opt2 .o2-cell .n small{font-size:9px;font-weight:600;color:var(--gray)}
-  .opt2 .o2-cell .sub{font-size:8.5px;color:var(--gray);margin-top:2px;line-height:1.3}
+  /* PRICING TIERS */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .plan{border:1px solid var(--line);border-radius:7px;padding:9px 10px;background:#fff;display:flex;flex-direction:column;position:relative}
+  .plan.popular{border:1.5px solid var(--navy);background:linear-gradient(180deg,var(--navy-light) 0%,#fff 55%)}
+  .plan .pname{font-size:10.5px;font-weight:900;color:var(--navy-dark);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:1px}
+  .plan .psub{font-size:8.5px;color:var(--gray);font-weight:600;margin-bottom:7px;line-height:1.3}
+  .plan .pprice{font-size:20px;font-weight:900;color:var(--ink);line-height:1}
+  .plan .pprice small{font-size:9.5px;font-weight:600;color:var(--gray);letter-spacing:0.3px}
+  .plan .pcop{font-size:8.5px;color:var(--gray);margin-top:2px;font-weight:600}
+  .plan .pmeter{margin-top:6px;padding:6px 8px;background:#fafbfa;border:1px solid var(--line);border-radius:4px;font-size:8.5px;color:var(--ink);font-weight:700;line-height:1.4}
+  .plan .pmeter span{display:block;color:var(--navy-dark)}
+  .plan ul{list-style:none;margin:7px 0 0;padding:0;flex:1}
+  .plan ul li{font-size:8.5px;color:var(--gray);line-height:1.42;padding-left:11px;position:relative;margin-bottom:2.5px}
+  .plan ul li::before{content:"";position:absolute;left:0;top:5px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+  .plan ul li.head{font-weight:800;color:var(--ink);padding-left:0;margin-top:5px;margin-bottom:3px;font-size:9px;text-transform:uppercase;letter-spacing:0.7px}
+  .plan ul li.head::before{display:none}
+  .plan ul li.bold{color:var(--ink);font-weight:700}
+  .plan-popular-pill{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:7.5px;font-weight:800;letter-spacing:1.5px;padding:3px 9px;border-radius:10px;text-transform:uppercase;white-space:nowrap}
   .setup-row{margin-top:7px;display:flex;align-items:center;justify-content:space-between;background:#fafbfa;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:5px;padding:7px 11px;font-size:10px}
   .setup-row strong{color:var(--ink);font-weight:800}
   .setup-row .setup-price{font-size:12px;font-weight:900;color:var(--navy-dark)}
@@ -152,16 +159,17 @@
     .triple .col{padding:10px 12px}
     .triple .col h4{font-size:12px}
     .triple li{font-size:11.5px;line-height:1.45;margin-bottom:4px}
-    .opt2{grid-template-columns:1fr;gap:8px}
-    .opt2 .o2-hero{padding:14px 14px;align-items:flex-start}
-    .opt2 .o2-hero .h{font-size:10.5px}
-    .opt2 .o2-hero .v{font-size:24px}
-    .opt2 .o2-hero .sub{font-size:11px!important}
-    .opt2 .o2-cell{padding:10px 12px}
-    .opt2 .o2-cell .l{font-size:9.5px}
-    .opt2 .o2-cell .n{font-size:18px}
-    .opt2 .o2-cell .n small{font-size:11.5px}
-    .opt2 .o2-cell .sub{font-size:10.5px;line-height:1.4}
+    .plans{grid-template-columns:1fr;gap:10px}
+    .plan{padding:14px 14px}
+    .plan .pname{font-size:13px}
+    .plan .psub{font-size:11px}
+    .plan .pprice{font-size:26px}
+    .plan .pprice small{font-size:12px}
+    .plan .pcop{font-size:10.5px}
+    .plan .pmeter{font-size:11px;padding:8px 10px}
+    .plan ul li{font-size:11px;line-height:1.5;padding-left:14px;margin-bottom:4px}
+    .plan ul li::before{top:7px;width:6px;height:6px}
+    .plan ul li.head{font-size:11.5px;margin-top:9px}
     .setup-row{flex-direction:column;align-items:flex-start;gap:7px;padding:11px 12px;font-size:12px}
     .setup-row .setup-price{font-size:16px}
     .trm-note{font-size:10px;text-align:left;line-height:1.45}
@@ -201,7 +209,7 @@
 
   <!-- HERO -->
   <div class="hero">
-    <h1>El equipo comercial del <em>Deportivo Cali</em> no necesita mas tiempo,<br>necesita un <em>copiloto que llame, busque y haga seguimiento</em> por el.</h1>
+    <h1>El equipo comercial del <em>Deportivo Cali</em> necesita un <em>copiloto que llame, busque y haga seguimiento</em> por el.</h1>
     <p class="sub">RinglyPro AI Outbound Caller convierte una lista de prospectos en patrocinadores reales: encuentra negocios verificados en Cali, llama con voz IA, agenda seguimientos automaticos y diagnostica fugas de ingresos en tu CRM actual.</p>
     <div class="stats">
       <div class="stat"><div class="v">9</div><div class="l">Modulos IA</div></div>
@@ -289,32 +297,85 @@
 
   <!-- PRICING -->
   <div class="sec">
-    <div class="sl"><span class="num">4</span><span class="ttl">Inversion: modelo por agente comercial</span><span class="kicker">Pago solo por uso real &middot; sin compromiso anual</span></div>
-    <div class="opt2">
-      <div class="o2-hero">
-        <div class="h">Mensualidad base del club</div>
-        <div class="v">$0 <em>USD/mes</em></div>
-        <div class="sub" style="font-size:8.5px;color:var(--gray);margin-top:3px;line-height:1.3">No hay mensualidad fija de plataforma. El club paga solo por agentes activos y consumo de tokens IA.</div>
+    <div class="sl"><span class="num">4</span><span class="ttl">Inversion: 3 planes para escoger</span><span class="kicker">Activacion en 3 dias &middot; sin compromiso anual</span></div>
+    <div class="plans">
+
+      <!-- STARTER -->
+      <div class="plan">
+        <div class="pname">Starter</div>
+        <div class="psub">Para pequeños equipos comerciales</div>
+        <div class="pprice">$180 <small>USD/mes</small></div>
+        <div class="pcop">~$756,000 COP/mes</div>
+        <div class="pmeter">
+          <span>2,000 tokens / mes</span>
+          <span>400 minutos de voz</span>
+        </div>
+        <ul>
+          <li class="head">AI Inbound</li>
+          <li>Contestadora IA 24/7</li>
+          <li>Recepcionista IA con voz humana</li>
+          <li>Captura automatica de leads entrantes</li>
+          <li>Agendamiento por telefono u online</li>
+          <li>CRM co-pilot para llamadas y leads</li>
+          <li>Dashboard CRM movil</li>
+          <li>Integracion con calendarios</li>
+          <li class="head">AI Outbound &amp; Sales</li>
+          <li>Campañas salientes automatizadas</li>
+          <li>Recoleccion B2B de leads</li>
+          <li>Sistema IA de generacion de leads</li>
+        </ul>
       </div>
-      <div class="o2-cell">
-        <div class="l">Por agente comercial</div>
-        <div class="n">$35 <small>USD/mes</small></div>
-        <div class="sub">~$147,000 COP/mes &middot; acceso completo al Business Copilot</div>
+
+      <!-- GROWTH (POPULAR) -->
+      <div class="plan popular">
+        <span class="plan-popular-pill">Mas popular</span>
+        <div class="pname">Growth</div>
+        <div class="psub">Para clubes en crecimiento</div>
+        <div class="pprice">$540 <small>USD/mes</small></div>
+        <div class="pcop">~$2,270,000 COP/mes</div>
+        <div class="pmeter">
+          <span>6,000 tokens / mes (3x)</span>
+          <span>1,200 minutos de voz</span>
+        </div>
+        <ul>
+          <li class="bold">Todo lo de Starter, mas:</li>
+          <li>3x mas tokens (6,000/mes)</li>
+          <li>Neural Intelligence analytics</li>
+          <li>Analisis de transcripts + sentiment</li>
+          <li>Deteccion de ingresos perdidos + alertas</li>
+          <li>ROI por fuente de lead</li>
+          <li>Analytics de campañas salientes</li>
+          <li>Soporte prioritario por correo</li>
+        </ul>
       </div>
-      <div class="o2-cell">
-        <div class="l">Llamada IA saliente</div>
-        <div class="n">$0.18 <small>USD/min</small></div>
-        <div class="sub">~$760 COP/min &middot; voz natural en espanol, grabacion incluida</div>
+
+      <!-- ENTERPRISE -->
+      <div class="plan">
+        <div class="pname">Enterprise / Call Center</div>
+        <div class="psub">Infraestructura IA para equipos grandes</div>
+        <div class="pprice">Custom <small>/mes</small></div>
+        <div class="pcop">Cotizacion personalizada</div>
+        <div class="pmeter">
+          <span>Tokens ilimitados</span>
+          <span>Minutos de voz ilimitados</span>
+        </div>
+        <ul>
+          <li class="bold">Todo lo de Growth, mas:</li>
+          <li>Llamadas IA entrantes/salientes ilimitadas</li>
+          <li>Despliegue multi-sede / franquicia</li>
+          <li>Plataforma white-label multi-tenant</li>
+          <li>Workflows multilingues (EN/ES+)</li>
+          <li>Integraciones y API personalizadas</li>
+          <li>Account manager dedicado</li>
+          <li>SLA garantizado con soporte prioritario</li>
+          <li>Precios por volumen para agencias y SaaS</li>
+        </ul>
       </div>
-      <div class="o2-cell">
-        <div class="l">Lead verificado</div>
-        <div class="n">$0.25 <small>USD/lead</small></div>
-        <div class="sub">~$1,050 COP/lead &middot; telefono y web validados por Google Places</div>
-      </div>
+
     </div>
 
     <div class="setup-row">
-      <span><span class="opt-pill">Opcional</span><strong>Setup unico de implementacion:</strong> branding del agente, migracion de listas, capacitacion y configuracion legal</span>
+      <span><strong>Setup inicial:</strong> branding del agente, migracion de listas, capacitacion y configuracion legal &middot; entrega en <strong>3 dias habiles</strong></span>
       <span class="setup-price">$1,400 USD &middot; ~$5.9M COP</span>
     </div>
     <div class="trm-note">Tipo de cambio referencial $4,200 COP/USD &middot; ajustar a TRM del dia de la firma</div>
