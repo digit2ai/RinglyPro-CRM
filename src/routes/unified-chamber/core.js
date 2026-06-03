@@ -4,7 +4,7 @@
  * surface and adds admin write paths.
  */
 const express = require('express');
-const { sequelize, QueryTypes, bcrypt, signToken, authMiddleware, requireAdmin } = require('./lib/shared');
+const { sequelize, QueryTypes, jwt, JWT_SECRET, bcrypt, signToken, authMiddleware, requireAdmin } = require('./lib/shared');
 
 // Canonical lists -- mirror the dropdowns in public/dashboard/{en,index}.html
 // and public/signup-member/{en,index}.html. Server validates against these so
@@ -221,6 +221,118 @@ router.post('/auth/login', async (req, res) => {
   } catch (err) {
     console.error('[/auth/login]', err.message);
     return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /auth/forgot-password -- request a password reset link.
+// Mirrors the main CRM /login flow: returns the reset link instantly (so the
+// member can proceed even if SendGrid is down) AND best-effort emails it.
+// The token is a self-contained JWT bound to the current password hash, so it
+// auto-invalidates the moment the password changes (single use) -- no DB column
+// or migration required.
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
+    const [member] = await sequelize.query(
+      `SELECT id, email, password_hash, first_name, status
+       FROM members WHERE chamber_id = :c AND email = :email`,
+      { replacements: { c: req.chamber_id, email: String(email).toLowerCase().trim() }, type: QueryTypes.SELECT }
+    );
+    if (!member || member.status === 'deleted' || member.status === 'suspended') {
+      return res.json({ success: false, error: 'No active account found with this email address' });
+    }
+    // Bind the token to the last 12 chars of the current hash -> single use.
+    const pwc = String(member.password_hash || '').slice(-12);
+    const resetToken = jwt.sign(
+      { member_id: member.id, chamber_id: req.chamber_id, email: member.email, type: 'member_password_reset', pwc },
+      JWT_SECRET, { expiresIn: '1h' }
+    );
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const resetLink = `${baseUrl}/${req.chamber.slug}/dashboard/?reset_token=${encodeURIComponent(resetToken)}`;
+
+    // Best-effort branded email. Never blocks the link from being returned.
+    let emailed = false;
+    try {
+      const sgKey = process.env.SENDGRID_API_KEY;
+      const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+      if (sgKey && fromEmail) {
+        const sgMail = require('@sendgrid/mail');
+        sgMail.setApiKey(sgKey);
+        const chamberName = req.chamber.name || 'Virtual Chamber';
+        await sgMail.send({
+          to: member.email,
+          from: { email: fromEmail, name: chamberName },
+          subject: `Reset your ${chamberName} password`,
+          text: `Hi ${member.first_name || ''},\n\nWe received a request to reset your ${chamberName} member password. Use the link below (valid for 1 hour):\n\n${resetLink}\n\nIf you did not request this, you can safely ignore this email -- your password will not change.`,
+          html: `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e">`
+            + `<h2 style="color:#003DA5">${chamberName}</h2>`
+            + `<p>Hi ${member.first_name || 'there'},</p>`
+            + `<p>We received a request to reset your member password. Click the button below to choose a new one. This link is valid for <b>1 hour</b>.</p>`
+            + `<p style="text-align:center;margin:28px 0"><a href="${resetLink}" style="background:#CE1126;color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-weight:700;display:inline-block">Reset Password</a></p>`
+            + `<p style="font-size:12px;color:#777">If the button doesn't work, copy and paste this link:<br><a href="${resetLink}">${resetLink}</a></p>`
+            + `<p style="font-size:12px;color:#777">If you did not request this, you can safely ignore this email -- your password will not change.</p>`
+            + `</div>`
+        });
+        emailed = true;
+      }
+    } catch (mailErr) {
+      console.error('[/auth/forgot-password email]', mailErr.message);
+    }
+
+    return res.json({
+      success: true,
+      message: emailed ? 'A reset link has been emailed to you. You can also use the link below.' : 'Use the link below to reset your password.',
+      resetLink,
+      emailed,
+      expiresIn: '1 hour'
+    });
+  } catch (err) {
+    console.error('[/auth/forgot-password]', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to process reset request' });
+  }
+});
+
+// POST /auth/reset-password -- set a new password using a reset token.
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ success: false, error: 'Token and new password are required' });
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters long' });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded.type !== 'member_password_reset') throw new Error('wrong token type');
+    } catch (e) {
+      return res.status(400).json({ success: false, error: 'This reset link is invalid or has expired. Please request a new one.' });
+    }
+    if (decoded.chamber_id !== req.chamber_id) {
+      return res.status(400).json({ success: false, error: 'This reset link does not match this chamber.' });
+    }
+    const [member] = await sequelize.query(
+      `SELECT id, email, password_hash, status FROM members
+       WHERE chamber_id = :c AND id = :id AND email = :email`,
+      { replacements: { c: req.chamber_id, id: decoded.member_id, email: decoded.email }, type: QueryTypes.SELECT }
+    );
+    if (!member) return res.status(400).json({ success: false, error: 'Account not found for this reset link.' });
+    if (member.status === 'deleted' || member.status === 'suspended') {
+      return res.status(403).json({ success: false, error: 'Account ' + member.status });
+    }
+    // Single-use enforcement: token was bound to the password hash at issue time.
+    if (decoded.pwc !== String(member.password_hash || '').slice(-12)) {
+      return res.status(400).json({ success: false, error: 'This reset link has already been used. Please request a new one.' });
+    }
+    const hashed = await bcrypt.hash(String(newPassword), 10);
+    await sequelize.query(
+      `UPDATE members SET password_hash = :h, updated_at = NOW() WHERE chamber_id = :c AND id = :id`,
+      { replacements: { h: hashed, c: req.chamber_id, id: member.id } }
+    );
+    return res.json({ success: true, message: 'Your password has been updated. You can now sign in.' });
+  } catch (err) {
+    console.error('[/auth/reset-password]', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to reset password' });
   }
 });
 

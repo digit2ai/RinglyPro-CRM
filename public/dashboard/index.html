@@ -630,6 +630,11 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         .login-msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
         .login-back { display:block; text-align:center; margin-top:18px; font-size:13px; color:rgba(255,255,255,0.6); text-decoration:none; }
         .login-back:hover { color:#FCD116; }
+        .login-forgot { display:block; text-align:center; margin-top:14px; font-size:13px; color:rgba(255,255,255,0.85); text-decoration:none; cursor:pointer; }
+        .login-forgot:hover { color:#FCD116; }
+        .login-msg.success { background:rgba(40,167,69,0.18); color:#9be8ad; border:1px solid rgba(40,167,69,0.4); }
+        .login-link-box { margin-top:14px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); word-break:break-all; }
+        .login-link-box a { color:#FCD116; font-size:13px; text-decoration:underline; }
       </style>
       <div class="login-wrap">
         <div class="login-card">
@@ -644,10 +649,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             <button type="submit" id="loginBtn">Iniciar Sesion</button>
             ${errorHtml || '<div id="loginMsg"></div>'}
           </form>
+          <a class="login-forgot" id="forgotPwLink">Olvidaste tu contrasena?</a>
           <a href="${BASE || '/'}" class="login-back">&larr; Volver al sitio</a>
         </div>
       </div>
     `;
+    document.getElementById('forgotPwLink').addEventListener('click', function(){ showForgotPasswordScreen(); });
     document.getElementById('dashLoginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       var email = document.getElementById('loginEmail').value.trim();
@@ -671,6 +678,156 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         }
       } catch(e) {
         showLoginScreen('Error de conexion. Intenta de nuevo.');
+      }
+    });
+  }
+
+  // "Olvidaste tu contrasena?" -- ingresa el correo y recibe un enlace de reinicio.
+  async function showForgotPasswordScreen() {
+    var info = await loadChamberInfo();
+    var chamberName = (info && info.name) || 'CamaraVirtual.app';
+    var chamberLogo = resolveChamberLogo(info);
+    var logoHtml = '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:120px;width:120px;border-radius:18px;object-fit:cover;background:white;padding:6px;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.35)">';
+    document.body.innerHTML = `
+      <style>
+        .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
+        .login-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:36px 32px; max-width:420px; width:100%; backdrop-filter:blur(12px); }
+        .login-card h2 { color:#fff; font-size:24px; font-weight:800; margin-bottom:8px; text-align:center; }
+        .login-card p { color:rgba(255,255,255,0.7); font-size:14px; text-align:center; margin-bottom:24px; }
+        .login-card label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .login-card input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:16px; box-sizing:border-box; }
+        .login-card input:focus { border-color:#FCD116; }
+        .login-card button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+        .login-card button:hover { background:#a50d1e; }
+        .login-card button:disabled { opacity:0.6; cursor:not-allowed; }
+        .login-msg { margin-top:14px; padding:10px; border-radius:6px; font-size:13px; text-align:center; }
+        .login-msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+        .login-msg.success { background:rgba(40,167,69,0.18); color:#9be8ad; border:1px solid rgba(40,167,69,0.4); }
+        .login-link-box { margin-top:14px; padding:12px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); word-break:break-all; }
+        .login-link-box a { color:#FCD116; font-size:13px; text-decoration:underline; }
+        .login-back { display:block; text-align:center; margin-top:18px; font-size:13px; color:rgba(255,255,255,0.6); text-decoration:none; cursor:pointer; }
+        .login-back:hover { color:#FCD116; }
+      </style>
+      <div class="login-wrap">
+        <div class="login-card">
+          ${logoHtml}
+          <h2>Restablecer contrasena</h2>
+          <p>Ingresa tu correo de miembro y te enviaremos un enlace de reinicio.</p>
+          <form id="forgotForm">
+            <label>Correo electronico</label>
+            <input type="email" id="forgotEmail" required placeholder="tu@correo.com" autocomplete="email">
+            <button type="submit" id="forgotBtn">Enviar enlace</button>
+            <div id="forgotMsg"></div>
+          </form>
+          <a class="login-back" id="backToLogin">&larr; Volver a iniciar sesion</a>
+        </div>
+      </div>
+    `;
+    document.getElementById('backToLogin').addEventListener('click', function(){ showLoginScreen(); });
+    document.getElementById('forgotForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var email = document.getElementById('forgotEmail').value.trim();
+      var btn = document.getElementById('forgotBtn');
+      var msg = document.getElementById('forgotMsg');
+      btn.disabled = true; btn.textContent = 'Enviando...';
+      msg.className = ''; msg.innerHTML = '';
+      try {
+        var res = await fetch(API + '/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+        if (data.success) {
+          var html = '<div class="login-msg success">' + esc(data.message || 'Enlace generado.') + '</div>';
+          if (data.resetLink) {
+            html += '<div class="login-link-box"><a href="' + esc(data.resetLink) + '">Haz clic aqui para restablecer tu contrasena</a></div>';
+          }
+          msg.innerHTML = html;
+          btn.textContent = 'Enlace enviado';
+        } else {
+          msg.innerHTML = '<div class="login-msg error">' + esc(data.error || 'No se pudo procesar la solicitud.') + '</div>';
+          btn.disabled = false; btn.textContent = 'Enviar enlace';
+        }
+      } catch(err) {
+        msg.innerHTML = '<div class="login-msg error">Error de conexion. Intenta de nuevo.</div>';
+        btn.disabled = false; btn.textContent = 'Enviar enlace';
+      }
+    });
+  }
+
+  // Se llega mediante el enlace de reinicio (?reset_token=...) -- define nueva contrasena.
+  async function showResetPasswordScreen(token) {
+    var info = await loadChamberInfo();
+    var chamberName = (info && info.name) || 'CamaraVirtual.app';
+    var chamberLogo = resolveChamberLogo(info);
+    var logoHtml = '<img src="' + chamberLogo + '" alt="' + chamberName + '" style="height:120px;width:120px;border-radius:18px;object-fit:cover;background:white;padding:6px;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.35)">';
+    document.body.innerHTML = `
+      <style>
+        .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#0a1628 0%,#002670 55%,#003DA5 100%); font-family:'Inter',sans-serif; padding:20px; }
+        .login-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:36px 32px; max-width:420px; width:100%; backdrop-filter:blur(12px); }
+        .login-card h2 { color:#fff; font-size:24px; font-weight:800; margin-bottom:8px; text-align:center; }
+        .login-card p { color:rgba(255,255,255,0.7); font-size:14px; text-align:center; margin-bottom:24px; }
+        .login-card label { display:block; font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+        .login-card input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:#fff; font-size:15px; outline:none; margin-bottom:16px; box-sizing:border-box; }
+        .login-card input:focus { border-color:#FCD116; }
+        .login-card button { width:100%; padding:14px; background:#CE1126; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+        .login-card button:hover { background:#a50d1e; }
+        .login-card button:disabled { opacity:0.6; cursor:not-allowed; }
+        .login-msg { margin-top:14px; padding:10px; border-radius:6px; font-size:13px; text-align:center; }
+        .login-msg.error { background:rgba(192,57,43,0.18); color:#ff8b8b; border:1px solid rgba(192,57,43,0.4); }
+        .login-msg.success { background:rgba(40,167,69,0.18); color:#9be8ad; border:1px solid rgba(40,167,69,0.4); }
+        .login-back { display:block; text-align:center; margin-top:18px; font-size:13px; color:rgba(255,255,255,0.6); text-decoration:none; cursor:pointer; }
+        .login-back:hover { color:#FCD116; }
+      </style>
+      <div class="login-wrap">
+        <div class="login-card">
+          ${logoHtml}
+          <h2>Define una nueva contrasena</h2>
+          <p>Elige una nueva contrasena para tu cuenta de ${esc(chamberName)}.</p>
+          <form id="resetForm">
+            <label>Nueva contrasena</label>
+            <input type="password" id="resetPass" required placeholder="Al menos 8 caracteres" autocomplete="new-password">
+            <label>Confirmar nueva contrasena</label>
+            <input type="password" id="resetPass2" required placeholder="Repite la contrasena" autocomplete="new-password">
+            <button type="submit" id="resetBtn">Actualizar contrasena</button>
+            <div id="resetMsg"></div>
+          </form>
+          <a class="login-back" id="backToLogin2">&larr; Volver a iniciar sesion</a>
+        </div>
+      </div>
+    `;
+    document.getElementById('backToLogin2').addEventListener('click', function(){
+      history.replaceState({}, '', location.pathname);
+      showLoginScreen();
+    });
+    document.getElementById('resetForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var p1 = document.getElementById('resetPass').value;
+      var p2 = document.getElementById('resetPass2').value;
+      var btn = document.getElementById('resetBtn');
+      var msg = document.getElementById('resetMsg');
+      msg.className = ''; msg.innerHTML = '';
+      if (p1.length < 8) { msg.innerHTML = '<div class="login-msg error">La contrasena debe tener al menos 8 caracteres.</div>'; return; }
+      if (p1 !== p2) { msg.innerHTML = '<div class="login-msg error">Las contrasenas no coinciden.</div>'; return; }
+      btn.disabled = true; btn.textContent = 'Actualizando...';
+      try {
+        var res = await fetch(API + '/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, newPassword: p1 })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msg.innerHTML = '<div class="login-msg success">' + esc(data.message || 'Contrasena actualizada.') + ' Redirigiendo...</div>';
+          setTimeout(function(){ history.replaceState({}, '', location.pathname); showLoginScreen(); }, 1800);
+        } else {
+          msg.innerHTML = '<div class="login-msg error">' + esc(data.error || 'No se pudo restablecer la contrasena.') + '</div>';
+          btn.disabled = false; btn.textContent = 'Actualizar contrasena';
+        }
+      } catch(err) {
+        msg.innerHTML = '<div class="login-msg error">Error de conexion. Intenta de nuevo.</div>';
+        btn.disabled = false; btn.textContent = 'Actualizar contrasena';
       }
     });
   }
@@ -725,6 +882,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
   // -- Init --
   async function init() {
+    // Enlace de reinicio de contrasena: ?reset_token=... -> muestra el formulario.
+    var resetTok = new URLSearchParams(location.search).get('reset_token');
+    if (resetTok) { showResetPasswordScreen(resetTok); return; }
     if (await handleStripeReturn()) {
       // Token now stored; fall through to normal flow
     }
