@@ -248,7 +248,10 @@ router.post('/auth/forgot-password', async (req, res) => {
       { member_id: member.id, chamber_id: req.chamber_id, email: member.email, type: 'member_password_reset', pwc },
       JWT_SECRET, { expiresIn: '1h' }
     );
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    // Render terminates TLS at the proxy, so req.protocol is 'http'. Trust the
+    // forwarded proto so the clicked link doesn't bounce through http -> https.
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${proto}://${req.get('host')}`;
     const resetLink = `${baseUrl}/${req.chamber.slug}/dashboard/?reset_token=${encodeURIComponent(resetToken)}`;
 
     // Best-effort branded email. Never blocks the link from being returned.
