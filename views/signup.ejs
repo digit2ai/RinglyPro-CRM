@@ -117,10 +117,26 @@
                         </div>
                     </div>
 
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div class="flex items-start">
-                            <i class="fas fa-sms text-blue-500 mr-2 mt-0.5"></i>
-                            <p class="text-sm text-blue-700">No password needed now. Once you finish signup, we'll text a temporary password to the phone number you enter in the next step.</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="password" class="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
+                            <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="confirmPassword" class="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
+                            <button type="button" onclick="togglePassword('confirmPassword')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -180,7 +196,7 @@
                             <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             <input type="tel" id="phoneNumber" class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="+1 (555) 123-4567" required>
                         </div>
-                        <p class="text-xs text-blue-600 mt-1">This will be your Rachel AI number for receiving calls. Your temporary login password is also texted here after checkout — use a mobile number that can receive SMS.</p>
+                        <p class="text-xs text-blue-600 mt-1">This will be your Rachel AI number for receiving calls</p>
                     </div>
 
                     <div class="flex space-x-3">
@@ -493,6 +509,22 @@
                 }
             }
 
+            // Validate password match + length on step 1
+            if (currentStep === 1) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (password.length < 8) {
+                    alert('Password must be at least 8 characters long');
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match');
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -501,7 +533,8 @@
                 registrationData = {
                     firstName: document.getElementById('firstName').value,
                     lastName: document.getElementById('lastName').value,
-                    email: document.getElementById('email').value
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
                 };
             } else if (currentStep === 2) {
                 registrationData = {
