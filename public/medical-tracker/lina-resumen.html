@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lina Stagg — Resumen de salud (junio 2026)</title>
+<style>
+  :root{
+    --ink:#1f2933; --soft:#52606d; --line:#e4e7eb; --bg:#f5f7fa;
+    --good:#0a7c42; --goodbg:#e6f4ec; --watch:#9a6700; --watchbg:#fff6e0;
+    --alert:#b42318; --alertbg:#fdecea; --blue:#0b5fa4; --bluebg:#e8f1fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:24px 18px 64px}
+  header.top{position:relative;background:linear-gradient(135deg,#0b5fa4,#0a7c42);color:#fff;border-radius:16px;padding:24px 26px;margin-bottom:22px}
+  header.top h1{margin:0 0 4px;font-size:26px;letter-spacing:.2px}
+  header.top .meta{font-size:14px;opacity:.92}
+  header.top .asof{margin-top:10px;font-size:13px;opacity:.85}
+  .langswitch{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35)}
+  .langswitch:hover{background:rgba(255,255,255,.3)}
+  h2{font-size:20px;margin:30px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--soft);text-transform:uppercase;letter-spacing:.6px}
+  p{margin:8px 0}
+  .lead{font-size:16px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+  .card.good{border-left:5px solid var(--good)} .card.good h4{color:var(--good)}
+  .card.watch{border-left:5px solid var(--watch)} .card.watch h4{color:var(--watch)}
+  .card h4{margin:0 0 6px;font-size:15px}
+  .card p{margin:4px 0;font-size:14px;color:var(--soft)}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;vertical-align:middle}
+  .pill.good{background:var(--goodbg);color:var(--good)}
+  .pill.watch{background:var(--watchbg);color:var(--watch)}
+  .pill.alert{background:var(--alertbg);color:var(--alert)}
+  .pill.norm{background:#eef1f4;color:var(--soft)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f3f6;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--soft)}
+  tr:last-child td{border-bottom:none}
+  td.val{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  .med-group{margin:12px 0}
+  .med-group .tag{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--blue);padding:3px 10px;border-radius:6px;margin-bottom:6px}
+  .med-group .tag.rej{background:#7a3ea8}
+  .med-group .tag.kid{background:#0a7c42}
+  .med-group .tag.mind{background:#0b5fa4}
+  .med-group .tag.other{background:#52606d}
+  ul.steps{list-style:none;padding:0;margin:10px 0;counter-reset:s}
+  ul.steps li{position:relative;padding:12px 14px 12px 50px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+  ul.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  ul.steps li b{display:block;margin-bottom:2px}
+  ul.steps li span{font-size:14px;color:var(--soft)}
+  .banner{border-radius:12px;padding:14px 16px;margin:14px 0;font-size:15px}
+  .banner.good{background:var(--goodbg);border:1px solid #bfe3cd}
+  .banner.watch{background:var(--watchbg);border:1px solid #ffe2a6}
+  .contacts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.contacts{grid-template-columns:1fr}}
+  .contacts .c{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;font-size:14px}
+  .contacts .c b{display:block}
+  .disc{margin-top:30px;font-size:12.5px;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .legend{font-size:13px;color:var(--soft);margin:6px 0 0}
+  .legend .pill{margin-right:6px}
+  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}header.top{background:#0b5fa4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.langswitch{display:none}.card,table,ul.steps li,.banner,.contacts .c,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="langswitch" href="lina-summary.html">English</a>
+    <h1>Resumen de salud de Lina</h1>
+    <div class="meta">Lina Marcela Stagg &nbsp;•&nbsp; Nació el 28 de noviembre de 1974 &nbsp;•&nbsp; MRN 08594392 &nbsp;•&nbsp; Médico de cabecera: Renan Pimentel Valdivia, MD</div>
+    <div class="asof">Resumen en lenguaje sencillo de los resultados recientes &nbsp;•&nbsp; Visitas del 11 de mayo al 3 de junio de 2026 &nbsp;•&nbsp; Trasplante de riñón (~11 años) • cirugía posbariátrica</div>
+  </header>
+
+  <!-- ===================== EL PANORAMA ===================== -->
+  <h2>Qué está pasando — en palabras sencillas</h2>
+  <p class="lead">El panorama general es <b>en su mayoría tranquilizador</b>. El trasplante está sano y la anemia peligrosa de abril ha mejorado mucho. Hay algunas cosas que necesitan atención constante —sobre todo el <b>nivel de ácido en la sangre</b> y el <b>riñón funcionando a cerca de la mitad de su capacidad</b>— pero todas tienen un plan claro.</p>
+
+  <div class="banner good"><b>Primero, las buenas noticias.</b> El riñón trasplantado <b>no</b> está siendo rechazado, dos virus peligrosos para el trasplante salieron negativos, el nivel del medicamento antirrechazo por fin está en el rango correcto, la anemia grave está mucho mejor y la tomografía (CT) de la cabeza salió completamente normal.</div>
+
+  <h3>Buenas noticias</h3>
+  <div class="cards">
+    <div class="card good"><h4>El trasplante está seguro <span class="pill good">Bien</span></h4>
+      <p>Virus CMV: <b>No detectado</b>. Virus BK: <b>No detectado</b>. Estas son las dos infecciones que más amenazan a un riñón trasplantado — ambas negativas.</p></div>
+    <div class="card good"><h4>Nivel antirrechazo corregido <span class="pill good">En rango</span></h4>
+      <p>El tacrolimus (Prograf) pasó de estar muy bajo (3.4 en abril) a <b>7.2</b> — ahora en la zona objetivo tras cambiar a dos veces al día.</p></div>
+    <div class="card good"><h4>La anemia, mucho mejor <span class="pill good">Mejorando</span></h4>
+      <p>La hemoglobina subió de un peligroso <b>7.1 en abril a 11.3 ahora</b>. El frotis de sangre muestra glóbulos rojos nuevos y jóvenes — señal de que la médula ósea se está recuperando.</p></div>
+    <div class="card good"><h4>Tomografía de cabeza normal <span class="pill good">Normal</span></h4>
+      <p>Se estudió el dolor de cabeza. El cerebro está normal — sin sangrado, sin masas, nada peligroso.</p></div>
+    <div class="card good"><h4>Sin infección en la sangre <span class="pill good">Limpio</span></h4>
+      <p>El cultivo de sangre no mostró crecimiento y el ácido láctico fue normal — sin señales de infección en la sangre ni de sepsis.</p></div>
+    <div class="card good"><h4>La nutrición se mantiene <span class="pill good">Normal</span></h4>
+      <p>La albúmina (una proteína que refleja la nutrición) está normal en <b>3.98</b>. Hay que seguir con la proteína.</p></div>
+  </div>
+
+  <h3>Necesita atención</h3>
+  <div class="cards">
+    <div class="card watch"><h4>La sangre está demasiado ácida <span class="pill alert">CO₂ bajo 14.3</span></h4>
+      <p>El bicarbonato (CO₂) está bajo, lo que significa que la sangre está demasiado ácida. Esto es común cuando un riñón trasplantado está más débil. Causa cansancio y puede desgastar el riñón y los músculos. <b>La solución ya está recetada:</b> bicarbonato de sodio y Bicitra — tomarlos todos los días.</p></div>
+    <div class="card watch"><h4>Riñón a media capacidad <span class="pill watch">eGFR 53</span></h4>
+      <p>El riñón trasplantado filtra a cerca del 53% (etapa 3). También hay señales leves de deshidratación (relación BUN alta). Mantenerse bien hidratada y continuar los controles del trasplante.</p></div>
+    <div class="card watch"><h4>Proteína y sangre en la orina <span class="pill watch">Proteína 2+</span></h4>
+      <p>El riñón está dejando escapar un poco de proteína y sangre. No es una emergencia, pero el médico del riñón/trasplante debe darle seguimiento.</p></div>
+    <div class="card watch"><h4>Azúcar en sangre algo alta <span class="pill watch">Glucosa 153</span></h4>
+      <p>A menudo la causa el esteroide (prednisona). Farxiga ayuda a protegerla. Conviene volver a medir y comentarlo con el médico.</p></div>
+    <div class="card watch"><h4>Sistema inmune bajado <span class="pill watch">GB bajos 3.82</span></h4>
+      <p>Los glóbulos blancos y los linfocitos están bajos — esto es <b>esperado</b> por los medicamentos antirrechazo. Significa que hay que tomar en serio las infecciones: llamar al médico ante cualquier fiebre.</p></div>
+    <div class="card watch"><h4>Mantenerse hidratada <span class="pill watch">BUN/Creat 25</span></h4>
+      <p>La química de la sangre sugiere falta de líquidos. Más agua ayuda al riñón y al nivel de ácido — confirmar con el equipo de trasplante cuánto líquido tomar al día.</p></div>
+  </div>
+
+  <!-- ===================== MEDICAMENTOS ===================== -->
+  <h2>Medicamentos — para qué sirve cada uno</h2>
+  <p class="legend">Los cuatro medicamentos antirrechazo son los más importantes — nunca se deben saltar.</p>
+
+  <div class="med-group">
+    <span class="tag rej">Antirrechazo — los más importantes</span>
+    <table>
+      <tr><th>Medicamento</th><th>Cómo tomarlo</th><th>Para qué sirve</th></tr>
+      <tr><td><b>Tacrolimus (Prograf)</b> 5 mg</td><td class="val">Dos veces al día</td><td>Evita que el cuerpo ataque al riñón trasplantado.</td></tr>
+      <tr><td><b>Tacrolimus (Prograf)</b> 1 mg</td><td class="val">2 cáps. mañana + 1 cáps. noche</td><td>Ajusta la dosis con precisión (7 mg en la mañana, 6 mg en la noche).</td></tr>
+      <tr><td><b>Ácido micofenólico (Myfortic)</b> 360 mg</td><td class="val">3× al día — mañana, mediodía, noche</td><td>Segundo medicamento antirrechazo. Puede bajar las células de la sangre.</td></tr>
+      <tr><td><b>Prednisona (Deltasone)</b> 5 mg</td><td class="val">Una vez al día</td><td>Esteroide que ayuda a prevenir el rechazo. Puede subir el azúcar.</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag kid">Riñón, presión arterial y ácido en sangre</span>
+    <table>
+      <tr><th>Medicamento</th><th>Cómo tomarlo</th><th>Para qué sirve</th></tr>
+      <tr><td><b>Bicarbonato de sodio</b> 650 mg</td><td class="val">3× al día</td><td>Corrige el nivel bajo de ácido (el problema del CO₂ 14.3).</td></tr>
+      <tr><td><b>Bicitra</b> (ácido cítrico–citrato de sodio)</td><td class="val">Según indicación</td><td>También reduce el ácido en la sangre — trabaja junto con el bicarbonato.</td></tr>
+      <tr><td><b>Fosinopril (Monopril)</b> 20 mg</td><td class="val">Una vez al día</td><td>Baja la presión arterial y protege el riñón.</td></tr>
+      <tr><td><b>Espironolactona (Aldactone)</b> 25 mg</td><td class="val">Una vez al día</td><td>Diurético para la presión. Vigilar el potasio.</td></tr>
+      <tr><td><b>Farxiga (dapagliflozina)</b> 10 mg</td><td class="val">Una vez al día</td><td>Protege el riñón y ayuda con el azúcar.</td></tr>
+      <tr><td><b>Pantoprazol (Protonix)</b> 40 mg</td><td class="val">Dos veces al día</td><td>Protege el estómago (importante con el esteroide).</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag mind">Ánimo, sueño y dolores de cabeza</span>
+    <table>
+      <tr><th>Medicamento</th><th>Cómo tomarlo</th><th>Para qué sirve</th></tr>
+      <tr><td><b>Sertralina (Zoloft)</b> 100 mg</td><td class="val">Una vez al día</td><td>Para la ansiedad y el ánimo.</td></tr>
+      <tr><td><b>Buspirona (BuSpar)</b> 10 mg</td><td class="val">Al acostarse</td><td>Para la ansiedad (a largo plazo).</td></tr>
+      <tr><td><b>Alprazolam (Xanax)</b> 0.5 mg</td><td class="val">Según se necesite, hasta 3×/día</td><td>Alivio rápido de la ansiedad. Usar con moderación.</td></tr>
+      <tr><td><b>Trazodona (Desyrel)</b> 50 mg</td><td class="val">Al acostarse</td><td>Ayuda a dormir.</td></tr>
+      <tr><td><b>Difenhidramina (Benadryl)</b> 25 mg</td><td class="val">Según se necesite</td><td>Alivio de alergias / sueño. Aumenta la somnolencia.</td></tr>
+      <tr><td><b>Topiramato (Topamax)</b> 100 mg</td><td class="val">Según indicación</td><td>Previene las migrañas.</td></tr>
+      <tr><td><b>Butalbital-acetaminofén-cafeína (Fioricet)</b></td><td class="val">Según se necesite</td><td>Para los dolores de cabeza. Contiene un sedante — usar con cuidado.</td></tr>
+    </table>
+  </div>
+
+  <div class="med-group">
+    <span class="tag other">Vitaminas y de corto plazo</span>
+    <table>
+      <tr><th>Medicamento</th><th>Cómo tomarlo</th><th>Para qué sirve</th></tr>
+      <tr><td><b>Multivitamínico con ácido fólico</b></td><td class="val">Una vez al día</td><td>Repone vitaminas (necesario tras la cirugía bariátrica).</td></tr>
+      <tr><td><b>Fluconazol (Diflucan)</b> 200 mg</td><td class="val">Dosis única</td><td>Antifúngico — previno una infección.</td></tr>
+    </table>
+  </div>
+
+  <!-- ===================== RESULTADOS ===================== -->
+  <h2>Resultados de los análisis — los números, explicados</h2>
+  <p class="legend"><span class="pill good">Bien</span><span class="pill norm">Normal</span><span class="pill watch">Vigilar</span><span class="pill alert">Importante</span></p>
+
+  <h3>Conteo de sangre (CBC) — 2 de junio de 2026</h3>
+  <table>
+    <tr><th>Análisis</th><th>Resultado</th><th>Estado</th><th>Qué significa</th></tr>
+    <tr><td>Hemoglobina</td><td class="val">11.3</td><td><span class="pill good">Subió de 7.1</span></td><td>Aún un poco baja, pero una gran mejora desde abril. La anemia se está recuperando.</td></tr>
+    <tr><td>Glóbulos blancos (GB)</td><td class="val">3.82</td><td><span class="pill watch">Bajo</span></td><td>Bajos — esperado por los medicamentos antirrechazo. Vigilar infecciones.</td></tr>
+    <tr><td>Glóbulos rojos (GR)</td><td class="val">3.95</td><td><span class="pill watch">Bajo</span></td><td>Levemente bajos — coincide con la anemia, mejorando.</td></tr>
+    <tr><td>Hematocrito</td><td class="val">37.8</td><td><span class="pill norm">Normal</span></td><td>Porcentaje de la sangre que son glóbulos rojos — de vuelta en rango.</td></tr>
+    <tr><td>Plaquetas</td><td class="val">164</td><td><span class="pill norm">Normal</span></td><td>Células de coagulación — bien.</td></tr>
+    <tr><td>Linfocitos (absolutos)</td><td class="val">0.72</td><td><span class="pill watch">Bajo</span></td><td>Un tipo de célula inmune — bajos por los medicamentos antirrechazo.</td></tr>
+  </table>
+
+  <h3>Frotis de sangre (morfología) — 2 de junio de 2026</h3>
+  <p>El laboratorio observó las células de la sangre al microscopio. Varias se veían inusuales (células en lágrima, esferocitos, células manchadas, plaquetas gigantes). Por sí solas <b>no son alarmantes</b> y encajan con la anemia y la inmunosupresión. Un hallazgo —la <b>policromasia (glóbulos rojos jóvenes)</b>— es en realidad una <b>buena señal</b>: la médula ósea está fabricando glóbulos rojos nuevos. Conviene mostrarlo al especialista en sangre junto con los conteos.</p>
+
+  <h3>Panel químico (CMP) — 3 de junio de 2026</h3>
+  <table>
+    <tr><th>Análisis</th><th>Resultado</th><th>Estado</th><th>Qué significa</th></tr>
+    <tr><td>Bicarbonato (CO₂)</td><td class="val">14.3</td><td><span class="pill alert">Bajo</span></td><td>La sangre está demasiado ácida. Lo principal a corregir — los medicamentos de bicarbonato lo hacen.</td></tr>
+    <tr><td>Filtrado del riñón (eGFR)</td><td class="val">53.3</td><td><span class="pill watch">Bajo</span></td><td>El riñón trasplantado funciona a cerca de la mitad (etapa 3).</td></tr>
+    <tr><td>BUN (urea)</td><td class="val">30.8</td><td><span class="pill watch">Alto</span></td><td>Producto de desecho — alto, apunta al riñón y a la necesidad de más líquidos.</td></tr>
+    <tr><td>Relación BUN/Creatinina</td><td class="val">25</td><td><span class="pill watch">Alto</span></td><td>Sugiere deshidratación leve — tomar más agua.</td></tr>
+    <tr><td>Creatinina</td><td class="val">1.23</td><td><span class="pill norm">Normal</span></td><td>Marcador de desecho del riñón — en el borde superior de lo normal.</td></tr>
+    <tr><td>Glucosa</td><td class="val">153</td><td><span class="pill watch">Alto</span></td><td>Azúcar en sangre alta — probablemente el esteroide. Volver a medir.</td></tr>
+    <tr><td>Potasio</td><td class="val">5.0</td><td><span class="pill norm">Normal</span></td><td>Límite alto de lo normal — vigilar con el riñón y el diurético.</td></tr>
+    <tr><td>Albúmina</td><td class="val">3.98</td><td><span class="pill good">Normal</span></td><td>Proteína de nutrición — normal. Buena noticia, seguir comiendo proteína.</td></tr>
+    <tr><td>Sodio / Cloruro / Calcio</td><td class="val">137 / 109 / 9.6</td><td><span class="pill norm">Normal</span></td><td>Todo en rango.</td></tr>
+    <tr><td>Pruebas de hígado (AST/ALT/FosfAlc)</td><td class="val">28 / 16 / 104</td><td><span class="pill norm">Normal</span></td><td>El hígado se ve bien.</td></tr>
+  </table>
+
+  <h3>Control del trasplante (Tampa General) — 29 de mayo de 2026</h3>
+  <table>
+    <tr><th>Análisis</th><th>Resultado</th><th>Estado</th><th>Qué significa</th></tr>
+    <tr><td>Virus CMV (PCR)</td><td class="val">No detectado</td><td><span class="pill good">Bien</span></td><td>Sin infección por CMV — importante para la seguridad del trasplante.</td></tr>
+    <tr><td>Virus BK (PCR)</td><td class="val">No detectado</td><td><span class="pill good">Bien</span></td><td>Sin virus BK — este puede dañar el riñón trasplantado.</td></tr>
+    <tr><td>Fósforo</td><td class="val">4.3</td><td><span class="pill norm">Normal</span></td><td>Nivel de mineral — bien (borde alto).</td></tr>
+    <tr><td>Magnesio</td><td class="val">2.3</td><td><span class="pill norm">Normal</span></td><td>Nivel de mineral — bien.</td></tr>
+  </table>
+
+  <h3>Análisis de la visita a urgencias — 11 de mayo de 2026</h3>
+  <table>
+    <tr><th>Análisis</th><th>Resultado</th><th>Estado</th><th>Qué significa</th></tr>
+    <tr><td>Cultivo de sangre</td><td class="val">Sin crecimiento</td><td><span class="pill good">Bien</span></td><td>Sin infección en la sangre.</td></tr>
+    <tr><td>Ácido láctico</td><td class="val">0.89</td><td><span class="pill good">Normal</span></td><td>Sin señales de sepsis.</td></tr>
+    <tr><td>Proteína en orina</td><td class="val">2+</td><td><span class="pill watch">Anormal</span></td><td>El riñón deja escapar algo de proteína — dar seguimiento con el médico del riñón.</td></tr>
+    <tr><td>Sangre en orina</td><td class="val">1+</td><td><span class="pill watch">Anormal</span></td><td>Un poco de sangre en la orina — darle seguimiento.</td></tr>
+  </table>
+
+  <!-- ===================== PRÓXIMOS PASOS ===================== -->
+  <h2>Próximos pasos — cómo solucionarlo</h2>
+  <ul class="steps">
+    <li><b>Tomar cada medicamento a su horario — sin saltarse ninguno.</b><span>Sobre todo los 4 medicamentos antirrechazo y los 2 que corrigen el ácido (bicarbonato de sodio 3× al día + Bicitra). Esto es lo más importante de todo.</span></li>
+    <li><b>Tomar más líquidos.</b><span>La química de la sangre muestra deshidratación leve. Más agua ayuda al riñón y al nivel de ácido. Pedir al equipo de trasplante una meta diaria de líquidos (algunos pacientes de trasplante tienen límites).</span></li>
+    <li><b>Repetir el panel químico (CMP) en unas semanas.</b><span>En específico para confirmar que el bicarbonato (CO₂ 14.3) está volviendo hacia lo normal una vez que se tomen los medicamentos de bicarbonato con constancia.</span></li>
+    <li><b>Llamar al equipo de trasplante / riñón por tres cosas.</b><span>El bicarbonato bajo (14.3), la función del riñón (eGFR 53) y la proteína y sangre en la orina. El Dr. Anwar (trasplante) y el Dr. Pimentel (cabecera) deben saberlo.</span></li>
+    <li><b>Repetir el conteo de sangre (CBC).</b><span>Para confirmar que la hemoglobina sigue subiendo por encima de 11.3 y que los glóbulos blancos bajos se mantienen estables.</span></li>
+    <li><b>Vigilar el azúcar en sangre.</b><span>La glucosa fue 153. Comentarlo con el médico — puede ser solo el esteroide, pero hay que volver a medir.</span></li>
+    <li><b>Protegerse de infecciones.</b><span>Como el sistema inmune está bajado, evitar el contacto con personas enfermas, lavarse las manos con frecuencia y llamar al médico de inmediato si hay fiebre, escalofríos, ardor al orinar o si se siente peor de repente.</span></li>
+    <li><b>Seguir comiendo proteína en cada comida.</b><span>La albúmina ahora está normal (3.98) — la proteína mantiene fuerte la sangre, los músculos y la recuperación. No hay que descuidarla.</span></li>
+  </ul>
+
+  <!-- ===================== EQUIPO MÉDICO ===================== -->
+  <h2>Equipo médico</h2>
+  <div class="contacts">
+    <div class="c"><b>Renan Pimentel Valdivia, MD</b>Médico de cabecera</div>
+    <div class="c"><b>Amber Anwar, MD</b>Trasplante — Tampa General</div>
+    <div class="c"><b>Hassan Hasanein, MD</b>Especialista en sangre (Hematología) — Florida Cancer Specialists</div>
+    <div class="c"><b>AdventHealth Wesley Chapel</b>Análisis e imágenes recientes — (813) 929-5110</div>
+  </div>
+
+  <div class="disc">
+    <b>Por favor, lea esto:</b> Este es un resumen en lenguaje sencillo elaborado a partir de los propios registros de MyChart de Lina para que sean más fáciles de entender. <b>No</b> es un diagnóstico ni consejo médico, y no reemplaza a sus médicos. Confirme siempre los medicamentos, las dosis y las decisiones con el equipo médico. Ante una emergencia —dificultad para respirar, dolor de pecho, debilidad intensa, fiebre alta o confusión— llame al 911 o vaya a la sala de emergencias más cercana.
+  </div>
+
+</div>
+</body>
+</html>

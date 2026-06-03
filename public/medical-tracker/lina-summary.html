@@ -14,10 +14,12 @@
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
   .wrap{max-width:880px;margin:0 auto;padding:24px 18px 64px}
-  header.top{background:linear-gradient(135deg,#0b5fa4,#0a7c42);color:#fff;border-radius:16px;padding:24px 26px;margin-bottom:22px}
+  header.top{position:relative;background:linear-gradient(135deg,#0b5fa4,#0a7c42);color:#fff;border-radius:16px;padding:24px 26px;margin-bottom:22px}
   header.top h1{margin:0 0 4px;font-size:26px;letter-spacing:.2px}
   header.top .meta{font-size:14px;opacity:.92}
   header.top .asof{margin-top:10px;font-size:13px;opacity:.85}
+  .langswitch{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35)}
+  .langswitch:hover{background:rgba(255,255,255,.3)}
   h2{font-size:20px;margin:30px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--line)}
   h3{font-size:15px;margin:18px 0 8px;color:var(--soft);text-transform:uppercase;letter-spacing:.6px}
   p{margin:8px 0}
@@ -60,13 +62,14 @@
   .disc{margin-top:30px;font-size:12.5px;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .legend{font-size:13px;color:var(--soft);margin:6px 0 0}
   .legend .pill{margin-right:6px}
-  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}header.top{background:#0b5fa4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,table,ul.steps li,.banner,.contacts .c,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}header.top{background:#0b5fa4 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.langswitch{display:none}.card,table,ul.steps li,.banner,.contacts .c,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header class="top">
+    <a class="langswitch" href="lina-resumen.html">Español</a>
     <h1>Lina's Health Summary</h1>
     <div class="meta">Lina Marcela Stagg &nbsp;•&nbsp; Born Nov 28, 1974 &nbsp;•&nbsp; MRN 08594392 &nbsp;•&nbsp; Primary doctor: Renan Pimentel Valdivia, MD</div>
     <div class="asof">Plain-language summary of recent results &nbsp;•&nbsp; Visits May 11 – June 3, 2026 &nbsp;•&nbsp; Kidney transplant (~11 yrs) • post-bariatric surgery</div>
