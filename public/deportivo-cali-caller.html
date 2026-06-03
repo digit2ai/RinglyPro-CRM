@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RinglyPro AI Outbound Caller + Business Copilot — Teaser para Asociacion Deportivo Cali</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1d4a;
+    --navy-dark:#061536;
+    --navy-light:#e6eef8;
+    --teal:#00A3E0;
+    --gold:#C5A55A;
+    --ink:#0f1a2e;
+    --gray:#4a5568;
+    --line:#d2d8e0;
+    --bg:#ffffff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:11px;line-height:1.4}
+  .sheet{
+    width:8.5in; min-height:11in; margin:0 auto;
+    padding:0.35in 0.45in 0.3in;
+    background:#fff;
+    display:flex; flex-direction:column;
+  }
+
+  /* HEADER */
+  .head{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:3px solid var(--navy)}
+  .brand{font-weight:900;letter-spacing:1px;font-size:13px;color:var(--navy-dark)}
+  .brand .dot{color:var(--teal)}
+  .brand small{display:block;font-weight:600;letter-spacing:2.5px;color:var(--gray);font-size:8px;text-transform:uppercase;margin-top:2px}
+  .head-right{text-align:right;font-size:9px;color:var(--gray);line-height:1.45}
+  .head-right strong{color:var(--ink)}
+  .head-pill{display:inline-block;background:var(--navy);color:#fff;padding:3px 9px;border-radius:11px;font-weight:700;font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+
+  /* HERO */
+  .hero{padding:10px 0 9px;text-align:center;border-bottom:1px solid var(--line)}
+  .hero h1{font-size:19px;font-weight:900;line-height:1.18;letter-spacing:-0.3px;color:var(--ink)}
+  .hero h1 em{font-style:normal;color:var(--navy);font-weight:900}
+  .hero .sub{margin-top:5px;font-size:10.5px;color:var(--gray);max-width:620px;margin-left:auto;margin-right:auto}
+  .hero .stats{display:flex;justify-content:center;gap:22px;margin-top:7px;flex-wrap:wrap}
+  .hero .stat{text-align:center}
+  .hero .stat .v{font-size:15px;font-weight:900;color:var(--navy-dark);line-height:1}
+  .hero .stat .l{font-size:7px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gray);font-weight:700;margin-top:2px}
+
+  /* SECTION */
+  .sec{padding:8px 0;border-bottom:1px solid var(--line)}
+  .sec:last-of-type{border-bottom:none}
+  .sl{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .sl .num{display:inline-block;background:var(--navy);color:#fff;font-weight:900;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px;font-size:10px}
+  .sl .ttl{font-size:13px;font-weight:800;color:var(--ink);letter-spacing:0.2px}
+  .sl .kicker{margin-left:auto;font-size:8.5px;color:var(--gray);font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+
+  /* WHY */
+  .why{background:linear-gradient(135deg,var(--navy-light) 0%,#fff 100%);border:1.5px solid var(--navy);border-radius:8px;padding:9px 11px;margin:4px 0 0}
+  .why .lead{font-size:10.5px;color:var(--ink);font-weight:600;line-height:1.45;margin-bottom:7px}
+  .why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .why-card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:7px 8px}
+  .why-card h4{font-size:9.5px;font-weight:800;color:var(--navy-dark);margin-bottom:3px;line-height:1.25}
+  .why-card p{font-size:9px;color:var(--gray);line-height:1.35}
+
+  /* MODULES */
+  .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+  .mod{border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:#fafbfa}
+  .mod h4{font-size:9.5px;font-weight:800;color:var(--ink);margin-bottom:2px}
+  .mod h4 .tag{display:inline-block;background:var(--teal);color:#fff;font-size:7px;font-weight:800;letter-spacing:0.5px;padding:1px 5px;border-radius:8px;margin-left:5px;vertical-align:middle}
+  .mod h4 .tag.brain{background:var(--gold)}
+  .mod p{font-size:8.5px;color:var(--gray);line-height:1.32}
+
+  /* TRIPLE */
+  .triple{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px}
+  .triple .col{border:1px solid var(--line);border-left:3px solid var(--navy);border-radius:5px;padding:7px 9px;background:#fff}
+  .triple .col h4{font-size:10px;font-weight:800;color:var(--navy-dark);margin-bottom:4px;letter-spacing:0.3px}
+  .triple ol,.triple ul{margin-left:13px}
+  .triple li{font-size:9px;color:var(--gray);margin-bottom:2px;line-height:1.32}
+  .triple li strong{color:var(--ink);font-weight:700}
+
+  /* PRICING */
+  .opt2{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:6px;align-items:stretch}
+  .opt2 .o2-hero{background:linear-gradient(135deg,#fff8e1 0%,#fff 100%);border:1.5px solid var(--gold);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
+  .opt2 .o2-hero .h{font-size:9px;font-weight:800;color:var(--navy-dark);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px}
+  .opt2 .o2-hero .v{font-size:17px;font-weight:900;color:var(--ink);line-height:1.05}
+  .opt2 .o2-hero .v em{font-style:normal;color:var(--navy-dark)}
+  .opt2 .o2-cell{border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;display:flex;flex-direction:column;justify-content:center}
+  .opt2 .o2-cell .l{font-size:8px;font-weight:800;color:var(--gray);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:3px}
+  .opt2 .o2-cell .n{font-size:14px;font-weight:900;color:var(--ink);line-height:1.05}
+  .opt2 .o2-cell .n small{font-size:9px;font-weight:600;color:var(--gray)}
+  .opt2 .o2-cell .sub{font-size:8.5px;color:var(--gray);margin-top:2px;line-height:1.3}
+  .setup-row{margin-top:7px;display:flex;align-items:center;justify-content:space-between;background:#fafbfa;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:5px;padding:7px 11px;font-size:10px}
+  .setup-row strong{color:var(--ink);font-weight:800}
+  .setup-row .setup-price{font-size:12px;font-weight:900;color:var(--navy-dark)}
+  .setup-row .opt-pill{display:inline-block;background:var(--teal);color:#fff;font-size:7.5px;font-weight:800;letter-spacing:1.2px;padding:2px 7px;border-radius:9px;text-transform:uppercase;margin-right:6px;vertical-align:middle}
+  .trm-note{margin-top:5px;font-size:8px;color:var(--gray);text-align:right;font-style:italic}
+
+  /* FOOTER */
+  .foot{margin-top:auto;padding-top:9px;border-top:2px solid var(--navy);display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
+  .foot .cta{flex:1}
+  .foot .cta h3{font-size:12px;font-weight:900;color:var(--ink);margin-bottom:2px}
+  .foot .cta p{font-size:9.5px;color:var(--gray);line-height:1.45}
+  .foot .cta p strong{color:var(--navy-dark)}
+  .foot .stamp{text-align:right;font-size:8.5px;color:var(--gray);line-height:1.5}
+  .foot .stamp .sig{font-size:11px;font-weight:800;color:var(--ink);letter-spacing:0.5px}
+
+  /* PRINT */
+  @page{ size:Letter; margin:0 }
+  @media print{
+    html,body{background:#fff}
+    .sheet{box-shadow:none;width:8.5in;min-height:10.95in;margin:0;padding:0.4in 0.45in 0.35in}
+    .why{background:#eef3fa;border-color:var(--navy)}
+    a{color:inherit;text-decoration:none}
+  }
+  @media screen{
+    body{background:#e5e7eb;padding:24px 0}
+    .sheet{box-shadow:0 4px 24px rgba(0,0,0,.12);border-radius:4px}
+    .toolbar{max-width:8.5in;margin:0 auto 14px;display:flex;justify-content:flex-end}
+    .toolbar button{background:var(--navy);color:#fff;border:none;padding:8px 16px;font-weight:700;font-size:12px;border-radius:6px;cursor:pointer;letter-spacing:0.5px}
+    .toolbar button:hover{background:var(--navy-dark)}
+  }
+  @media print{ .toolbar{display:none!important} }
+
+  /* MOBILE */
+  @media screen and (max-width: 820px){
+    html,body{font-size:13px}
+    body{padding:8px 0}
+    .sheet{width:100%;min-height:auto;padding:18px 16px 22px;border-radius:0;box-shadow:none}
+    .toolbar{max-width:100%;padding:0 16px}
+    .head{flex-direction:column;align-items:flex-start;gap:8px}
+    .head-right{text-align:left;font-size:10.5px}
+    .hero{padding:14px 0 12px}
+    .hero h1{font-size:22px;line-height:1.22}
+    .hero .sub{font-size:13px;line-height:1.5}
+    .hero .stats{gap:18px;margin-top:14px}
+    .hero .stat .v{font-size:19px}
+    .hero .stat .l{font-size:8.5px}
+    .sec{padding:14px 0}
+    .sl{flex-wrap:wrap;gap:6px}
+    .sl .ttl{font-size:15px}
+    .sl .kicker{margin-left:0;font-size:10px;flex-basis:100%}
+    .why{padding:12px 12px}
+    .why .lead{font-size:12.5px;line-height:1.5}
+    .why-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .why-card{padding:9px 10px}
+    .why-card h4{font-size:11.5px}
+    .why-card p{font-size:11px;line-height:1.42}
+    .mods{grid-template-columns:repeat(2,1fr);gap:7px}
+    .mod{padding:8px 10px}
+    .mod h4{font-size:11.5px}
+    .mod p{font-size:10.5px;line-height:1.42}
+    .triple{grid-template-columns:1fr;gap:8px}
+    .triple .col{padding:10px 12px}
+    .triple .col h4{font-size:12px}
+    .triple li{font-size:11.5px;line-height:1.45;margin-bottom:4px}
+    .opt2{grid-template-columns:1fr;gap:8px}
+    .opt2 .o2-hero{padding:14px 14px;align-items:flex-start}
+    .opt2 .o2-hero .h{font-size:10.5px}
+    .opt2 .o2-hero .v{font-size:24px}
+    .opt2 .o2-hero .sub{font-size:11px!important}
+    .opt2 .o2-cell{padding:10px 12px}
+    .opt2 .o2-cell .l{font-size:9.5px}
+    .opt2 .o2-cell .n{font-size:18px}
+    .opt2 .o2-cell .n small{font-size:11.5px}
+    .opt2 .o2-cell .sub{font-size:10.5px;line-height:1.4}
+    .setup-row{flex-direction:column;align-items:flex-start;gap:7px;padding:11px 12px;font-size:12px}
+    .setup-row .setup-price{font-size:16px}
+    .trm-note{font-size:10px;text-align:left;line-height:1.45}
+    .foot{flex-direction:column;align-items:flex-start;gap:12px;padding-top:14px}
+    .foot .cta h3{font-size:14px;line-height:1.3}
+    .foot .cta p{font-size:11.5px;line-height:1.5}
+    .foot .stamp{text-align:left;font-size:11px}
+    .foot .stamp .sig{font-size:13px}
+    .toolbar button{width:100%;padding:12px 16px;font-size:14px}
+  }
+  @media screen and (max-width: 460px){
+    .why-grid{grid-template-columns:1fr}
+    .mods{grid-template-columns:1fr}
+    .hero h1{font-size:19px}
+    .hero .stats{gap:14px}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+
+<div class="sheet">
+
+  <!-- HEADER -->
+  <div class="head">
+    <div class="brand">
+      RINGLY<span class="dot">PRO</span> AI OUTBOUND
+      <small>Business Copilot &middot; Voz IA &middot; Lead Collector &middot; Neural Intelligence</small>
+    </div>
+    <div class="head-right">
+      <span class="head-pill">Confidencial</span><br>
+      Preparado para: <strong>Asociacion Deportivo Cali</strong><br>
+      Por: Digit2AI &middot; Neural Intelligence Platform
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>El equipo comercial del <em>Deportivo Cali</em> no necesita mas tiempo,<br>necesita un <em>copiloto que llame, busque y haga seguimiento</em> por el.</h1>
+    <p class="sub">RinglyPro AI Outbound Caller convierte una lista de prospectos en patrocinadores reales: encuentra negocios verificados en Cali, llama con voz IA, agenda seguimientos automaticos y diagnostica fugas de ingresos en tu CRM actual.</p>
+    <div class="stats">
+      <div class="stat"><div class="v">9</div><div class="l">Modulos IA</div></div>
+      <div class="stat"><div class="v">24/7</div><div class="l">Llamadas Automaticas</div></div>
+      <div class="stat"><div class="v">+1,000</div><div class="l">Prospectos/Dia</div></div>
+      <div class="stat"><div class="v">&lt;2 min</div><div class="l">Setup por Lista</div></div>
+      <div class="stat"><div class="v">100%</div><div class="l">Conversaciones Grabadas</div></div>
+    </div>
+  </div>
+
+  <!-- WHY -->
+  <div class="sec">
+    <div class="sl"><span class="num">1</span><span class="ttl">Por que el Deportivo Cali lo necesita</span><span class="kicker">El argumento central</span></div>
+    <div class="why">
+      <div class="lead">El club tiene cientos de patrocinadores potenciales en el Valle del Cauca sin contactar y decenas de patrocinadores actuales que se pierden por falta de seguimiento. El equipo comercial no puede llamar mil empresas al mes. La IA si — y lo hace en voz natural, en espanol, con la identidad del club.</div>
+      <div class="why-grid">
+        <div class="why-card">
+          <h4>Captacion masiva de patrocinadores nuevos</h4>
+          <p>AI Lead Collector busca por categoria y ciudad, devuelve telefonos y webs verificados. La IA llama y filtra los interesados antes de pasar el lead al equipo humano.</p>
+        </div>
+        <div class="why-card">
+          <h4>Cero patrocinadores perdidos por silencio</h4>
+          <p>Seguimientos automaticos en cadena: si no contesta, vuelve a marcar; si responde, agenda tarea para el cierre humano. Nadie se cae del pipeline.</p>
+        </div>
+        <div class="why-card">
+          <h4>Diagnostico del CRM actual</h4>
+          <p>Neural Intelligence sube el export del CRM del club y devuelve fugas de ingresos, contactos olvidados y workflows de un clic para activarlos hoy.</p>
+        </div>
+        <div class="why-card">
+          <h4>Costo marginal por contacto</h4>
+          <p>Llamar a 1,000 prospectos con personal cuesta semanas y miles de dolares. La IA lo hace en horas a fraccion del costo. ROI medible desde el primer mes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT — 9 modules -->
+  <div class="sec">
+    <div class="sl"><span class="num">2</span><span class="ttl">Que es: 9 modulos del Business Copilot</span><span class="kicker">Ya en produccion en RinglyPro</span></div>
+    <div class="mods">
+      <div class="mod"><h4>AI Lead Collector <span class="tag">IA</span></h4><p>Busca en Google Places por categoria, ciudad y estado. Devuelve telefono y web verificados. 100-500 leads por ejecucion.</p></div>
+      <div class="mod"><h4>Outbound Call <span class="tag">VOZ</span></h4><p>Llamadas con agente IA — voz natural en espanol, con la identidad del club. Conversa, califica y agenda.</p></div>
+      <div class="mod"><h4>Prospect Manager</h4><p>Sube tu lista (CSV), agenda llamadas por bloques de horario, ve resultados en vivo y exporta al CRM.</p></div>
+      <div class="mod"><h4>Business Copilot <span class="tag">IA</span></h4><p>El cerebro central — interpreta resultados, sugiere proxima accion, prioriza el pipeline diario del equipo comercial.</p></div>
+      <div class="mod"><h4>Neural Intelligence <span class="tag brain">CRM</span></h4><p>Sube el export de GoHighLevel, HubSpot, Zoho o RinglyPro. Devuelve fugas de ingresos y workflows de un clic.</p></div>
+      <div class="mod"><h4>Tasks</h4><p>Pendientes del equipo comercial sincronizados con las llamadas. Prioridad, asignacion y due date automaticos.</p></div>
+      <div class="mod"><h4>Follow-ups</h4><p>Cadenas de seguimiento automaticas (llamada, SMS, WhatsApp). Reglas por estado del lead. Cero seguimientos olvidados.</p></div>
+      <div class="mod"><h4>Messages</h4><p>SMS y WhatsApp salientes desde la misma plataforma. Plantillas bilingues y respuestas via IA fuera de horario.</p></div>
+      <div class="mod"><h4>Tokens (Uso)</h4><p>Medidor transparente de consumo de IA (llamadas, mensajes, busquedas). Reportes mensuales al area financiera del club.</p></div>
+    </div>
+  </div>
+
+  <!-- HOW / WHEN / WHERE -->
+  <div class="sec">
+    <div class="sl"><span class="num">3</span><span class="ttl">Cuando, Como y Donde</span><span class="kicker">Activacion en 2 semanas</span></div>
+    <div class="triple">
+      <div class="col">
+        <h4>COMO se activa</h4>
+        <ol>
+          <li><strong>Branding del club</strong> aplicado al agente IA (nombre, tono, identidad institucional).</li>
+          <li><strong>Carga inicial</strong> de la lista de patrocinadores actuales y prospectos del Valle.</li>
+          <li><strong>Capacitacion</strong> al equipo comercial (3 horas, presencial o remota).</li>
+          <li><strong>Piloto controlado</strong> con 50-100 llamadas antes de escalar a campañas masivas.</li>
+        </ol>
+      </div>
+      <div class="col">
+        <h4>CUANDO esta listo</h4>
+        <ul>
+          <li><strong>Semana 1:</strong> Configuracion del agente, carga de prospectos y capacitacion.</li>
+          <li><strong>Semana 2:</strong> Piloto controlado + ajustes del script con feedback real.</li>
+          <li><strong>Semana 3 en adelante:</strong> Campañas a volumen, seguimientos automaticos y reportes a junta.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>DONDE vive</h4>
+        <ul>
+          <li><strong>Acceso web + movil</strong> responsive para el equipo comercial, sin instalacion.</li>
+          <li><strong>Infraestructura aislada:</strong> grabaciones, leads y CRM exclusivos del club.</li>
+          <li><strong>Conexion con</strong> tu CRM actual (GoHighLevel, HubSpot, Zoho, RinglyPro nativo).</li>
+          <li><strong>Soporte y SLA</strong> 99.9% gestionado por Digit2AI.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="sec">
+    <div class="sl"><span class="num">4</span><span class="ttl">Inversion: modelo por agente comercial</span><span class="kicker">Pago solo por uso real &middot; sin compromiso anual</span></div>
+    <div class="opt2">
+      <div class="o2-hero">
+        <div class="h">Mensualidad base del club</div>
+        <div class="v">$0 <em>USD/mes</em></div>
+        <div class="sub" style="font-size:8.5px;color:var(--gray);margin-top:3px;line-height:1.3">No hay mensualidad fija de plataforma. El club paga solo por agentes activos y consumo de tokens IA.</div>
+      </div>
+      <div class="o2-cell">
+        <div class="l">Por agente comercial</div>
+        <div class="n">$35 <small>USD/mes</small></div>
+        <div class="sub">~$147,000 COP/mes &middot; acceso completo al Business Copilot</div>
+      </div>
+      <div class="o2-cell">
+        <div class="l">Llamada IA saliente</div>
+        <div class="n">$0.18 <small>USD/min</small></div>
+        <div class="sub">~$760 COP/min &middot; voz natural en espanol, grabacion incluida</div>
+      </div>
+      <div class="o2-cell">
+        <div class="l">Lead verificado</div>
+        <div class="n">$0.25 <small>USD/lead</small></div>
+        <div class="sub">~$1,050 COP/lead &middot; telefono y web validados por Google Places</div>
+      </div>
+    </div>
+
+    <div class="setup-row">
+      <span><span class="opt-pill">Opcional</span><strong>Setup unico de implementacion:</strong> branding del agente, migracion de listas, capacitacion y configuracion legal</span>
+      <span class="setup-price">$1,400 USD &middot; ~$5.9M COP</span>
+    </div>
+    <div class="trm-note">Tipo de cambio referencial $4,200 COP/USD &middot; ajustar a TRM del dia de la firma</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="foot">
+    <div class="cta">
+      <h3>Proximo paso: un piloto de 100 llamadas con prospectos reales del Valle.</h3>
+      <p>Configuramos el agente IA con la identidad del Deportivo Cali, cargamos una lista de 100 patrocinadores potenciales y entregamos al club un reporte con: llamadas exitosas, interesados calificados y leads listos para cierre humano. <strong>Sin compromiso, sin costo de setup.</strong></p>
+    </div>
+    <div class="stamp">
+      <div class="sig">Digit2AI</div>
+      Neural Intelligence Platform<br>
+      mstagg@digit2ai.com<br>
+      www.ringlypro.com
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
