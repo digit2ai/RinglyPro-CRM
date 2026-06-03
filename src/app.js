@@ -263,6 +263,21 @@ app.use('/chamber/:legacy_slug', (req, res, next) => {
     return res.redirect(301, '/' + newSlug + req.path + search);
 });
 
+// RinglyPro plan signup wizard. MUST run BEFORE express.static — otherwise
+// the chamber wizard at public/signup/index.html ("Registra tu Camara") is
+// served on aiagent.ringlypro.com and query params like
+// ?plan=growth&amount=540&tokens=6000&billing=monthly are ignored.
+// Chamber custom domains (camaravirtual.app / virtualchamber.app) rewrite
+// req.url to /signup/index.html or /signup/en.html earlier in the chain, so
+// those requests no longer match these exact paths and fall through to static.
+app.get(['/signup', '/signup/'], (req, res) => {
+  res.render('signup', {
+    title: `${CLIENT_NAME} - Sign Up`,
+    clientName: CLIENT_NAME,
+    clientId: CLIENT_ID
+  });
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
@@ -1724,14 +1739,8 @@ app.get('/login', (req, res) => {
   });
 });
 
-// Signup page route
-app.get('/signup', (req, res) => {
-  res.render('signup', {
-    title: `${CLIENT_NAME} - Sign Up`,
-    clientName: CLIENT_NAME,
-    clientId: CLIENT_ID
-  });
-});
+// Signup page route is registered earlier (before express.static) so the
+// RinglyPro signup.ejs wins over the chamber static wizard. See above.
 
 // Register page route (alias for signup - used by all-in-one landing page)
 app.get('/register', (req, res) => {
