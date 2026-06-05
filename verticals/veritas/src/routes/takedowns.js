@@ -2,7 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const { Takedown, Detection } = require('../models');
+const { Takedown, Detection, Asset } = require('../models');
+const templates = require('../services/takedown-templates');
 
 function tenantId(req) {
   return parseInt(req.query.tenant_id || req.body.tenant_id || 1, 10);
@@ -71,6 +72,28 @@ router.patch('/:id', async (req, res) => {
     res.json({ success: true, data: takedown });
   } catch (e) {
     console.error('Veritas takedowns PATCH error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/v1/takedowns/:id/letter  — generate the takedown letter/report draft
+router.get('/:id/letter', async (req, res) => {
+  try {
+    const tid = tenantId(req);
+    const takedown = await Takedown.findOne({ where: { id: req.params.id, tenant_id: tid } });
+    if (!takedown) return res.status(404).json({ error: 'not found' });
+    const detection = await Detection.findOne({ where: { id: takedown.detection_id, tenant_id: tid } });
+    const asset = detection ? await Asset.findOne({ where: { id: detection.asset_id, tenant_id: tid } }) : null;
+    const letter = templates.generate({
+      method: takedown.method,
+      detection: detection ? detection.toJSON() : {},
+      asset: asset ? asset.toJSON() : {}
+    });
+    // mailto helper for the Apple-Mail magic-link pattern (no auto-send)
+    const mailto = `mailto:?subject=${encodeURIComponent(letter.subject)}&body=${encodeURIComponent(letter.body)}`;
+    res.json({ success: true, data: { ...letter, mailto, takedown_id: takedown.id } });
+  } catch (e) {
+    console.error('Veritas letter error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });

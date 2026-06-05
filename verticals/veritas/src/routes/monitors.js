@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { Monitor } = require('../models');
+const adscan = require('../services/adscan');
 
 function tenantId(req) {
   return parseInt(req.query.tenant_id || req.body.tenant_id || 1, 10);
@@ -51,6 +52,17 @@ router.patch('/:id', async (req, res) => {
     res.json({ success: true, data: monitor });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/v1/monitors/:id/scan  — run this monitor now (ad-library scan)
+router.post('/:id/scan', async (req, res) => {
+  try {
+    const result = await adscan.scanMonitor(parseInt(req.params.id, 10), tenantId(req));
+    res.json({ success: true, data: result });
+  } catch (e) {
+    console.error('Veritas monitor scan error:', e.message);
+    res.status(e.message === 'monitor not found' ? 404 : 500).json({ error: e.message });
   }
 });
 

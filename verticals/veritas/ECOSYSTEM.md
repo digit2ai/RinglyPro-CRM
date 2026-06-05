@@ -1,6 +1,34 @@
 # Veritas — AI Deepfake Detection & Takedown (Digit2AI Vertical)
 
-> **Status:** PLAN ONLY — no code written yet. This document is the build spec for review.
+> **Status:** PHASE 0 SHIPPED + Phase 2 scaffolding live (stub engine, no external keys yet).
+> Built by the RinglyPro AI Architect via a self-paced `/loop`.
+> **Mount point:** `/veritas` (custom domain candidate: `veritas.app` or `veritas.digit2ai.com`)
+> **Live:** dashboard `/veritas/` · landing `/veritas-landing.html` · health `/veritas/health`
+
+## Shipped so far
+
+**Phase 0 (live):** self-contained Express sub-app mounted at `/veritas`; `df_` schema
+(tenants, monitors, assets, detections, takedowns, usage) via Sequelize + SQL migration;
+provider-agnostic detection engine (`services/detection.js`, deterministic stub);
+REST API `/api/v1/{monitors,detections,takedowns,scan}` + `/health`; static dashboard
+(stat cards, detections feed, takedown tracker with status-advance, live scan box);
+bilingual EN/ES landing page; idempotent seeder (3 monitors / 7 detections / 5 takedowns).
+
+**Phase 2 scaffolding (live, stubbed):**
+- `services/takedown-templates.js` — DMCA / impersonation / trademark letter generators;
+  `GET /api/v1/takedowns/:id/letter` returns the draft + a `mailto:` magic link
+  (Apple-Mail pattern, no auto-send). Dashboard "Letter" button opens a review modal.
+- `services/adscan.js` — monitor → candidate-fetch → detect → persist pipeline.
+  Candidate fetch is STUBBED (synthetic) until `META_AD_LIBRARY_TOKEN` is set, then
+  `fetchCandidates()` swaps to the real Meta Ad Library API with no pipeline change.
+  `POST /api/v1/monitors/:id/scan` runs it; dashboard "Scan now" button triggers it.
+
+**Still gated on external accounts/keys (see §8):** real detection provider, Meta Ad
+Library token, AWS Rekognition (likeness), legal-reviewed templates, convai agents.
+
+---
+
+> _Original plan below (kept for reference)._
 > **Mount point:** `/veritas` (custom domain candidate: `veritas.app` or `veritas.digit2ai.com`)
 > **Pattern reference:** mirrors `verticals/intuitive` and `verticals/cw_carriers` (self-contained Express sub-app mounted in `src/app.js`).
 > **Competitive reference:** revelum.ai (deepfake detection + takedown; 20M ads/mo, 99.8% accuracy, <24h takedown claims).

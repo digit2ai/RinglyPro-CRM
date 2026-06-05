@@ -135,6 +135,20 @@ tr:hover td{background:rgba(34,211,238,.03)}
     </div>
   </div>
 
+  <div id="letterModal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;max-width:680px;width:100%;max-height:86vh;display:flex;flex-direction:column">
+      <div style="padding:18px;border-bottom:1px solid var(--border)">
+        <div id="letterTitle" style="font-weight:700;font-size:16px"></div>
+        <div id="letterMeta" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+      </div>
+      <pre id="letterBody" style="margin:0;padding:18px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--text);line-height:1.55;flex:1"></pre>
+      <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+        <a id="letterMail" class="btn sm" href="#">Open in Mail</a>
+        <button class="btn sm ghost" onclick="closeLetter()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div class="note">Phase 0 demo — detections shown are sample data from a deterministic stub engine. Wire a detection provider (Hive / Reality Defender) to analyze live media. Every record is tenant-isolated.</div>
 
   <div class="foot">
@@ -200,7 +214,9 @@ async function loadMonitors(){
     <div class="mon">
       <div><div class="mtype">${esc(m.type)}</div><div class="t">${esc(m.target_label)}</div>
         <div class="m">${(m.platforms||[]).join(', ')} · ${esc(m.cadence)}</div></div>
-      <div><span class="badge b-${m.status==='active'?'removed':'draft'}">${esc(m.status)}</span></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn sm ghost" onclick="scanMonitor(${m.id})">Scan now</button>
+        <span class="badge b-${m.status==='active'?'removed':'draft'}">${esc(m.status)}</span></div>
     </div>`).join('');
 }
 
@@ -211,15 +227,16 @@ async function loadTakedowns(){
   document.getElementById('tdCount').textContent = rows.length + ' total';
   document.getElementById('tdTable').querySelector('tbody').innerHTML = rows.map(t=>{
     const next = TD_NEXT[t.status];
-    const btn = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${next}</button>`
+    const adv = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${next}</button>`
       : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'✓ done':'—'}</span>`;
+    const letter = `<button class="btn sm ghost" onclick="viewLetter(${t.id})">Letter</button>`;
     return `<tr>
       <td><span class="badge b-${t.status}">${esc(t.status)}</span></td>
       <td class="platform">${esc(t.platform||'')}</td>
       <td style="text-transform:uppercase;font-size:11px;color:var(--muted)">${esc(t.method||'')}</td>
       <td style="font-size:12px;color:var(--muted)">${esc(t.reference_id||'—')}</td>
       <td class="impact">${esc(t.notes||'')}</td>
-      <td>${btn}</td>
+      <td style="white-space:nowrap;display:flex;gap:6px">${letter}${adv}</td>
     </tr>`;
   }).join('');
 }
@@ -235,6 +252,25 @@ async function advance(id,status){
     body:JSON.stringify({tenant_id:TENANT, status})});
   await Promise.all([loadTakedowns(), loadStats()]);
 }
+
+async function scanMonitor(id){
+  const res = await j(`${API}/monitors/${id}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT})});
+  await Promise.all([loadDetections(), loadStats(), loadMonitors()]);
+  if(res.data){ alert(`Scan complete (${res.data.source}): ${res.data.new_detections} new, ${res.data.deepfakes} deepfake(s).`); }
+}
+
+async function viewLetter(tdId){
+  const res = await j(`${API}/takedowns/${tdId}/letter?tenant_id=${TENANT}`);
+  if(!res.success){ alert(res.error||'error'); return; }
+  const d = res.data;
+  document.getElementById('letterTitle').textContent = d.subject;
+  document.getElementById('letterMeta').textContent = `${d.platformName} · submit at: ${d.portal}`;
+  document.getElementById('letterBody').textContent = d.body;
+  document.getElementById('letterMail').href = d.mailto;
+  document.getElementById('letterModal').style.display = 'flex';
+}
+function closeLetter(){ document.getElementById('letterModal').style.display='none'; }
 
 async function runScan(){
   const url = document.getElementById('scanUrl').value.trim();
