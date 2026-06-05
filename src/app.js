@@ -1309,6 +1309,36 @@ app.get('/debug/intuitive-error', (req, res) => {
 });
 
 // =====================================================
+// VERITAS — AI Deepfake Detection & Takedown (served at /veritas/)
+// =====================================================
+
+let veritasApp = null;
+let veritasError = null;
+try {
+  veritasApp = require('../verticals/veritas/src/index');
+  app.get('/veritas', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/veritas/');
+    next();
+  });
+  app.use('/veritas', veritasApp);
+  console.log('🛡️ Veritas Deepfake Detection mounted at /veritas');
+  console.log('   - Dashboard UI: /veritas/');
+  console.log('   - Health Check: /veritas/health');
+  console.log('   - API: /veritas/api/v1/*');
+} catch (error) {
+  veritasError = error;
+  console.log('⚠️ Veritas not available:', error.message);
+}
+
+app.get('/debug/veritas-error', (req, res) => {
+  res.json({
+    service: 'Veritas Deepfake Detection',
+    available: !veritasError,
+    error: veritasError ? { message: veritasError.message, stack: veritasError.stack } : null
+  });
+});
+
+// =====================================================
 // DIGIT2AI CONTACTS & PROJECTS HUB
 // =====================================================
 

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Veritas — Deepfake Protection Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0b0f1a; --panel:#121829; --panel-2:#0e1424; --border:#1e2740;
+  --text:#e7ecf9; --muted:#8a96b8; --cyan:#22d3ee; --cyan-2:#0ea5e9;
+  --red:#ef4444; --amber:#f59e0b; --green:#22c55e; --violet:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sora',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1320px;margin:0 auto;padding:0 22px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(11,15,26,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex;align-items:center;gap:16px;padding:14px 22px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:.02em}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;font-size:16px}
+.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+.spacer{flex:1}
+.pill{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:6px 12px;border-radius:99px;display:flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:p 1.8s infinite}
+@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}50%{box-shadow:0 0 0 8px rgba(34,197,94,0)}}
+
+h1{font-size:26px;font-weight:800;margin:26px 0 4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:8px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px}
+.stat .n{font-size:30px;font-weight:800;line-height:1}
+.stat .l{font-size:12px;color:var(--muted);margin-top:8px;text-transform:uppercase;letter-spacing:.06em}
+.stat.red .n{color:var(--red)} .stat.amber .n{color:var(--amber)} .stat.green .n{color:var(--green)} .stat.cyan .n{color:var(--cyan)}
+
+.grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-top:22px}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.panel h2{font-size:15px;font-weight:700;padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.panel h2 .tag{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
+
+.scan{background:linear-gradient(160deg,var(--panel) 0%,var(--panel-2) 100%);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:22px}
+.scan .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.scan input,.scan select{background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:11px 13px;border-radius:10px;font-family:inherit;font-size:14px}
+.scan input{flex:1;min-width:220px}
+.btn{background:linear-gradient(135deg,var(--cyan-2),var(--violet));color:#fff;border:none;padding:11px 20px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:transform .15s,filter .15s}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:8px}
+#scanResult{margin-top:12px;font-size:14px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:11px 18px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+td{padding:12px 18px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(34,211,238,.03)}
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.b-deepfake{background:rgba(239,68,68,.15);color:#fca5a5}
+.b-suspect{background:rgba(245,158,11,.15);color:#fcd34d}
+.b-clean{background:rgba(34,197,94,.15);color:#86efac}
+.b-removed{background:rgba(34,197,94,.15);color:#86efac}
+.b-submitted{background:rgba(14,165,233,.15);color:#7dd3fc}
+.b-acknowledged{background:rgba(139,92,246,.15);color:#c4b5fd}
+.b-draft{background:rgba(138,150,184,.15);color:#cbd5e1}
+.b-rejected{background:rgba(239,68,68,.12);color:#fca5a5}
+.conf{font-weight:700}
+.platform{color:var(--muted);font-size:12px;text-transform:capitalize}
+.who{font-weight:600}
+.impact{color:var(--muted);font-size:12px;max-width:340px}
+.mon{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border)}
+.mon:last-child{border-bottom:none}
+.mon .t{font-weight:600;font-size:14px}
+.mon .m{font-size:12px;color:var(--muted);margin-top:2px}
+.mtype{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);font-weight:700}
+.foot{text-align:center;color:var(--muted);font-size:12px;padding:34px 0;margin-top:24px;border-top:1px solid var(--border)}
+.foot a:hover{color:var(--cyan)}
+.note{font-size:12px;color:var(--muted);background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 13px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">
+  <div class="brand"><span class="mark">🛡️</span><div>Veritas<small>Deepfake Protection</small></div></div>
+  <div class="spacer"></div>
+  <div class="pill"><span class="dot"></span><span id="health">Live · stub engine</span></div>
+</div></div>
+
+<div class="wrap">
+  <h1>Protection Console</h1>
+  <div class="sub">Detect and remove deepfakes at scale — brand, executive, and likeness protection. <span id="tenantName"></span></div>
+
+  <div class="cards" id="statCards"></div>
+
+  <!-- On-demand scan -->
+  <div class="scan">
+    <h2 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px">🔍 Who should we check?</h2>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">Paste a link to a video, image, or audio clip and run an instant analysis.</div>
+    <div class="row">
+      <input id="scanUrl" placeholder="https://facebook.com/... or paste any media URL" />
+      <select id="scanType">
+        <option value="video">Video</option>
+        <option value="image">Image</option>
+        <option value="audio">Audio</option>
+      </select>
+      <input id="scanWho" placeholder="Who is targeted? (optional)" style="min-width:160px;flex:0 0 200px" />
+      <button class="btn" onclick="runScan()">Run analysis</button>
+    </div>
+    <div id="scanResult"></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>🚨 Detections <span class="tag" id="detCount"></span></h2>
+      <div style="overflow-x:auto">
+        <table id="detTable"><thead><tr>
+          <th>Verdict</th><th>Conf.</th><th>Targeted</th><th>Platform</th><th>Impact</th><th>Action</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📡 Active Monitors</h2>
+      <div id="monList"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h2>📨 Takedown Tracker <span class="tag" id="tdCount"></span></h2>
+    <div style="overflow-x:auto">
+      <table id="tdTable"><thead><tr>
+        <th>Status</th><th>Platform</th><th>Method</th><th>Ref</th><th>Notes</th><th>Advance</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="note">Phase 0 demo — detections shown are sample data from a deterministic stub engine. Wire a detection provider (Hive / Reality Defender) to analyze live media. Every record is tenant-isolated.</div>
+
+  <div class="foot">
+    Veritas — a <strong>Digit2AI</strong> vertical · AI deepfake detection &amp; takedown<br/>
+    <a href="https://digit2ai.com" target="_blank" rel="noopener">Powered by DIGIT2AI</a>
+  </div>
+</div>
+
+<script>
+const API = '/veritas/api/v1';
+const TENANT = 1;
+
+async function j(url, opts){ const r = await fetch(url, opts); return r.json(); }
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function loadHealth(){
+  try{ const h = await j('/veritas/health');
+    document.getElementById('health').textContent = 'Live · ' + h.detection_provider + ' engine';
+  }catch(e){}
+}
+
+async function loadStats(){
+  const res = await j(`${API}/detections/summary?tenant_id=${TENANT}`);
+  const s = res.data || {};
+  const cards = [
+    {n:s.deepfakes_detected||0, l:'Deepfakes detected', c:'red'},
+    {n:s.suspect||0, l:'Suspect — under review', c:'amber'},
+    {n:s.takedowns_removed||0, l:'Content removed', c:'green'},
+    {n:s.takedowns_active||0, l:'Takedowns in flight', c:'cyan'},
+    {n:s.active_monitors||0, l:'Active monitors', c:''},
+    {n:(s.accuracy||0)+'%', l:'Detection accuracy', c:''}
+  ];
+  document.getElementById('statCards').innerHTML = cards.map(c=>
+    `<div class="stat ${c.c}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
+}
+
+async function loadDetections(){
+  const res = await j(`${API}/detections?tenant_id=${TENANT}`);
+  const rows = res.data || [];
+  document.getElementById('detCount').textContent = rows.length + ' total';
+  document.getElementById('detTable').querySelector('tbody').innerHTML = rows.map(d=>{
+    const asset = d.VeritasAsset || {};
+    const hasTd = d.VeritasTakedowns && d.VeritasTakedowns.length;
+    const action = d.verdict === 'clean' ? '<span style="color:var(--muted);font-size:12px">—</span>'
+      : hasTd ? '<span style="color:var(--muted);font-size:12px">filed</span>'
+      : `<button class="btn sm" onclick="fileTakedown(${d.id})">File takedown</button>`;
+    return `<tr>
+      <td><span class="badge b-${d.verdict}">${d.verdict}</span></td>
+      <td class="conf">${d.confidence}%</td>
+      <td class="who">${esc(d.targeted_person)}</td>
+      <td class="platform">${esc(asset.source_platform||'')}</td>
+      <td class="impact">${esc(d.deepfakes_impact)}</td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadMonitors(){
+  const res = await j(`${API}/monitors?tenant_id=${TENANT}`);
+  const rows = res.data || [];
+  document.getElementById('monList').innerHTML = rows.map(m=>`
+    <div class="mon">
+      <div><div class="mtype">${esc(m.type)}</div><div class="t">${esc(m.target_label)}</div>
+        <div class="m">${(m.platforms||[]).join(', ')} · ${esc(m.cadence)}</div></div>
+      <div><span class="badge b-${m.status==='active'?'removed':'draft'}">${esc(m.status)}</span></div>
+    </div>`).join('');
+}
+
+const TD_NEXT = { draft:'submitted', submitted:'acknowledged', acknowledged:'removed' };
+async function loadTakedowns(){
+  const res = await j(`${API}/takedowns?tenant_id=${TENANT}`);
+  const rows = res.data || [];
+  document.getElementById('tdCount').textContent = rows.length + ' total';
+  document.getElementById('tdTable').querySelector('tbody').innerHTML = rows.map(t=>{
+    const next = TD_NEXT[t.status];
+    const btn = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${next}</button>`
+      : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'✓ done':'—'}</span>`;
+    return `<tr>
+      <td><span class="badge b-${t.status}">${esc(t.status)}</span></td>
+      <td class="platform">${esc(t.platform||'')}</td>
+      <td style="text-transform:uppercase;font-size:11px;color:var(--muted)">${esc(t.method||'')}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(t.reference_id||'—')}</td>
+      <td class="impact">${esc(t.notes||'')}</td>
+      <td>${btn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function fileTakedown(detId){
+  await j(`${API}/takedowns`, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, detection_id:detId, method:'impersonation'})});
+  await Promise.all([loadDetections(), loadTakedowns(), loadStats()]);
+}
+
+async function advance(id,status){
+  await j(`${API}/takedowns/${id}`, {method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, status})});
+  await Promise.all([loadTakedowns(), loadStats()]);
+}
+
+async function runScan(){
+  const url = document.getElementById('scanUrl').value.trim();
+  const media_type = document.getElementById('scanType').value;
+  const who = document.getElementById('scanWho').value.trim();
+  const out = document.getElementById('scanResult');
+  if(!url){ out.innerHTML = '<span style="color:var(--amber)">Enter a media URL first.</span>'; return; }
+  out.innerHTML = 'Analyzing…';
+  const res = await j(`${API}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, url, media_type, targeted_person:who})});
+  if(res.success){
+    const d = res.data;
+    out.innerHTML = `<span class="badge b-${d.verdict}">${d.verdict}</span>
+      <strong style="margin-left:8px">${d.confidence}% confidence</strong>
+      <span style="color:var(--muted)"> · ${d.provider} engine</span>`;
+    document.getElementById('scanUrl').value='';
+    await Promise.all([loadDetections(), loadStats()]);
+  } else {
+    out.innerHTML = '<span style="color:var(--red)">'+esc(res.error||'error')+'</span>';
+  }
+}
+
+(async function init(){
+  document.getElementById('tenantName').textContent = '· Digit2AI (Demo)';
+  await Promise.all([loadHealth(), loadStats(), loadDetections(), loadMonitors(), loadTakedowns()]);
+})();
+</script>
+</body>
+</html>
