@@ -196,6 +196,34 @@ node verticals/intuitive/scripts/ingest-florida-ahca.js --file=/path/to/florida_
 
 TODO: wire actual Render cron jobs once first quarterly refresh window approaches.
 
+## Veritas — AI Deepfake Detection & Takedown
+
+**Purpose:** Digit2AI vertical (modeled on revelum.ai) that detects and removes deepfakes/impersonations at scale — brand, executive, and likeness protection. Mounted at `/veritas`.
+
+**Location:** `verticals/veritas/` (self-contained Express Router, own Sequelize instance via `src/db.js` using `CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration at `verticals/veritas/migrations/20260605_veritas_tables.sql`. All tables multi-tenant (`tenant_id`), `df_` prefix: tenants, monitors, assets, detections, takedowns, usage.
+
+**Live:** dashboard `/veritas/` · landing `/public/veritas-landing.html` (bilingual EN/ES) · health `/veritas/health` · debug `/debug/veritas-error`.
+
+**Detection engine:** `src/services/detection.js` is provider-agnostic. Phase 0 = deterministic stub (zero keys). Swap to a real provider via `VERITAS_DETECTION_PROVIDER` (`hive`|`reality_defender`|`sensity`) + that provider's key — the `detect()` contract is unchanged.
+
+**REST API (`/veritas/api/v1/*`):**
+- `GET/POST /monitors`, `PATCH /monitors/:id` (pause/resume), `POST /monitors/:id/scan` (runs ad-library pipeline)
+- `GET /detections`, `GET /detections/summary` (dashboard stat cards)
+- `GET/POST /takedowns`, `PATCH /takedowns/:id` (status flow), `GET /takedowns/:id/letter` (DMCA/impersonation/trademark draft + mailto magic link)
+- `POST /scan` (on-demand single-asset "Who should we check?")
+- `POST /webhooks/candidate` (external scanners / n8n push media for analysis; api_key auth)
+
+**Ad scanning:** `src/services/adscan.js` — monitor → fetchCandidates → detect → persist. Candidate fetch is STUBBED (synthetic) until `META_AD_LIBRARY_TOKEN` is set, then swaps to the real Meta Ad Library API with no pipeline change.
+
+**Environment Variables:**
+- `VERITAS_DETECTION_PROVIDER` — `hive`|`reality_defender`|`sensity` (default `stub`). Selects the deepfake-detection backend behind `services/detection.js`.
+- `HIVE_API_KEY` / `REALITY_DEFENDER_API_KEY` — provider key for live detection (Phase 1).
+- `META_AD_LIBRARY_TOKEN` — Meta Graph token enabling real ad scanning in `services/adscan.js` (Phase 2). Unset = synthetic stub candidates.
+- `VERITAS_WEBHOOK_API_KEY` — secret validated on `POST /veritas/api/v1/webhooks/candidate`. When unset, auth is skipped (dev/demo).
+- `ELEVENLABS_CONVAI_VERITAS_EN` / `_ES` — convai "protection analyst" agent IDs (Phase 2; dedicated agents per the ringlypro_elevenlabs_agents rule).
+
+Full build status + remaining external dependencies (provider keys, AWS Rekognition for likeness, legal-reviewed templates) are tracked in `verticals/veritas/ECOSYSTEM.md`.
+
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table
 MCP Tool Call → POST /api/oee/tools/call → OEE route handler → PostgreSQL → response

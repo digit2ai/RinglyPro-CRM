@@ -121,7 +121,31 @@ tr:hover td{background:rgba(34,211,238,.03)}
     </div>
 
     <div class="panel">
-      <h2>📡 Active Monitors</h2>
+      <h2>📡 Monitors
+        <span class="tag" style="display:flex;gap:6px;margin-left:auto">
+          <button class="btn sm ghost" onclick="scanAll()">Scan all</button>
+          <button class="btn sm" onclick="toggleAddMon()">+ Add</button>
+        </span>
+      </h2>
+      <div id="addMonForm" style="display:none;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel-2)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="nmType" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit">
+            <option value="brand">Brand</option><option value="person">Person</option><option value="keyword">Keyword</option>
+          </select>
+          <input id="nmLabel" placeholder="Label (e.g. Acme Corp)" style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
+        </div>
+        <input id="nmTerms" placeholder="Search terms, comma-separated" style="width:100%;margin-top:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)">
+          <label><input type="checkbox" class="nmPlat" value="facebook" checked> Facebook</label>
+          <label><input type="checkbox" class="nmPlat" value="instagram" checked> Instagram</label>
+          <label><input type="checkbox" class="nmPlat" value="tiktok"> TikTok</label>
+          <label><input type="checkbox" class="nmPlat" value="youtube"> YouTube</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <button class="btn sm" onclick="addMonitor()">Create monitor</button>
+          <span id="nmMsg" style="font-size:12px;color:var(--cyan)"></span>
+        </div>
+      </div>
       <div id="monList"></div>
     </div>
   </div>
@@ -186,17 +210,20 @@ async function loadStats(){
     `<div class="stat ${c.c}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
 }
 
+let DETECTIONS = {};
 async function loadDetections(){
   const res = await j(`${API}/detections?tenant_id=${TENANT}`);
   const rows = res.data || [];
+  DETECTIONS = {};
   document.getElementById('detCount').textContent = rows.length + ' total';
   document.getElementById('detTable').querySelector('tbody').innerHTML = rows.map(d=>{
+    DETECTIONS[d.id] = d;
     const asset = d.VeritasAsset || {};
     const hasTd = d.VeritasTakedowns && d.VeritasTakedowns.length;
     const action = d.verdict === 'clean' ? '<span style="color:var(--muted);font-size:12px">—</span>'
       : hasTd ? '<span style="color:var(--muted);font-size:12px">filed</span>'
-      : `<button class="btn sm" onclick="fileTakedown(${d.id})">File takedown</button>`;
-    return `<tr>
+      : `<button class="btn sm" onclick="event.stopPropagation();fileTakedown(${d.id})">File takedown</button>`;
+    return `<tr style="cursor:pointer" onclick="viewEvidence(${d.id})" title="View evidence">
       <td><span class="badge b-${d.verdict}">${d.verdict}</span></td>
       <td class="conf">${d.confidence}%</td>
       <td class="who">${esc(d.targeted_person)}</td>
@@ -207,18 +234,78 @@ async function loadDetections(){
   }).join('');
 }
 
+function viewEvidence(id){
+  const d = DETECTIONS[id]; if(!d) return;
+  const asset = d.VeritasAsset || {};
+  const sig = (d.evidence && d.evidence.signals) || {};
+  const sigRows = Object.keys(sig).length
+    ? Object.entries(sig).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);text-transform:capitalize">${esc(k.replace(/_/g,' '))}</span><strong>${esc(v)}</strong></div>`).join('')
+    : '<div style="color:var(--muted)">No signal breakdown.</div>';
+  document.getElementById('letterTitle').textContent = `${d.verdict.toUpperCase()} · ${d.confidence}% — ${esc(d.targeted_person||'')}`;
+  document.getElementById('letterMeta').textContent = `${esc(asset.source_platform||'')} · ${esc(asset.media_type||'')} · provider: ${esc(d.provider||'')}`;
+  document.getElementById('letterBody').textContent =
+    'Source: ' + (asset.source_url||'—') + '\n\nImpact: ' + (d.deepfakes_impact||'—') + '\n\nSignals:';
+  // reuse the letter modal shell but render signals as HTML below
+  document.getElementById('letterBody').innerHTML =
+    'Source: ' + esc(asset.source_url||'—') + '<br><br>Impact: ' + esc(d.deepfakes_impact||'—')
+    + '<br><br><strong>Detection signals</strong><div style="margin-top:8px">' + sigRows + '</div>';
+  document.getElementById('letterMail').style.display = 'none';
+  document.getElementById('letterModal').style.display = 'flex';
+}
+
 async function loadMonitors(){
   const res = await j(`${API}/monitors?tenant_id=${TENANT}`);
   const rows = res.data || [];
-  document.getElementById('monList').innerHTML = rows.map(m=>`
-    <div class="mon">
+  document.getElementById('monList').innerHTML = rows.map(m=>{
+    const toggle = m.status==='active'
+      ? `<button class="btn sm ghost" onclick="setMonitor(${m.id},'paused')" title="Pause">Pause</button>`
+      : `<button class="btn sm ghost" onclick="setMonitor(${m.id},'active')" title="Resume">Resume</button>`;
+    return `<div class="mon">
       <div><div class="mtype">${esc(m.type)}</div><div class="t">${esc(m.target_label)}</div>
         <div class="m">${(m.platforms||[]).join(', ')} · ${esc(m.cadence)}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn sm ghost" onclick="scanMonitor(${m.id})">Scan now</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn sm ghost" onclick="scanMonitor(${m.id})">Scan</button>
+        ${toggle}
         <span class="badge b-${m.status==='active'?'removed':'draft'}">${esc(m.status)}</span></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
+
+async function setMonitor(id,status){
+  await j(`${API}/monitors/${id}`, {method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, status})});
+  await Promise.all([loadMonitors(), loadStats()]);
+}
+
+async function scanAll(){
+  const res = await j(`${API}/monitors?tenant_id=${TENANT}`);
+  const mons = (res.data||[]).filter(m=>m.status==='active');
+  let added=0, df=0;
+  for(const m of mons){
+    const r = await j(`${API}/monitors/${m.id}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tenant_id:TENANT})});
+    if(r.data){ added+=r.data.new_detections; df+=r.data.deepfakes; }
+  }
+  await Promise.all([loadDetections(), loadStats(), loadMonitors()]);
+  alert(`Scanned ${mons.length} monitor(s): ${added} new detection(s), ${df} deepfake(s).`);
+}
+
+async function addMonitor(){
+  const type = document.getElementById('nmType').value;
+  const target_label = document.getElementById('nmLabel').value.trim();
+  const terms = document.getElementById('nmTerms').value.trim();
+  const out = document.getElementById('nmMsg');
+  if(!target_label){ out.textContent='Enter a label.'; return; }
+  const platforms = Array.from(document.querySelectorAll('.nmPlat:checked')).map(c=>c.value);
+  const res = await j(`${API}/monitors`, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, type, target_label, query_terms:terms?terms.split(',').map(s=>s.trim()):[], platforms, cadence:'daily'})});
+  if(res.success){
+    document.getElementById('nmLabel').value=''; document.getElementById('nmTerms').value='';
+    out.textContent='Monitor added.';
+    await Promise.all([loadMonitors(), loadStats()]);
+    setTimeout(()=>{out.textContent='';}, 2000);
+  } else { out.textContent = res.error||'error'; }
+}
+function toggleAddMon(){ const f=document.getElementById('addMonForm'); f.style.display = f.style.display==='none'?'block':'none'; }
 
 const TD_NEXT = { draft:'submitted', submitted:'acknowledged', acknowledged:'removed' };
 async function loadTakedowns(){
@@ -268,6 +355,7 @@ async function viewLetter(tdId){
   document.getElementById('letterMeta').textContent = `${d.platformName} · submit at: ${d.portal}`;
   document.getElementById('letterBody').textContent = d.body;
   document.getElementById('letterMail').href = d.mailto;
+  document.getElementById('letterMail').style.display = '';
   document.getElementById('letterModal').style.display = 'flex';
 }
 function closeLetter(){ document.getElementById('letterModal').style.display='none'; }
