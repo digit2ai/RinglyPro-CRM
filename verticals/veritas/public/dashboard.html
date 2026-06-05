@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Veritas — Deepfake Protection Console</title>
+<title>Veritas — Consola de Protección contra Deepfakes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -21,8 +21,8 @@ a{color:inherit;text-decoration:none}
 .topbar{position:sticky;top:0;z-index:20;background:rgba(11,15,26,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
 .topbar .wrap{display:flex;align-items:center;gap:16px;padding:14px 22px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:.02em}
-.brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;font-size:16px}
-.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:grid;place-items:center;font-size:15px;font-weight:800;color:#fff}
+.brand small{display:block;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.16em;text-transform:uppercase}
 .spacer{flex:1}
 .pill{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:6px 12px;border-radius:99px;display:flex;align-items:center;gap:7px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:p 1.8s infinite}
@@ -83,73 +83,73 @@ tr:hover td{background:rgba(34,211,238,.03)}
 </head>
 <body>
 <div class="topbar"><div class="wrap">
-  <div class="brand"><span class="mark">🛡️</span><div>Veritas<small>Deepfake Protection</small></div></div>
+  <div class="brand"><span class="mark">V</span><div>Veritas<small>Protección contra Deepfakes</small></div></div>
   <div class="spacer"></div>
-  <div class="pill"><span class="dot"></span><span id="health">Live · stub engine</span></div>
+  <div class="pill"><span class="dot"></span><span id="health">En vivo</span></div>
 </div></div>
 
 <div class="wrap">
-  <h1>Protection Console</h1>
-  <div class="sub">Detect and remove deepfakes at scale — brand, executive, and likeness protection. <span id="tenantName"></span></div>
+  <h1>Consola de Protección</h1>
+  <div class="sub">Detecta y elimina deepfakes a gran escala — protección de marca, imagen y figuras públicas. <span id="tenantName"></span></div>
 
   <div class="cards" id="statCards"></div>
 
-  <!-- On-demand scan -->
+  <!-- Análisis bajo demanda -->
   <div class="scan">
-    <h2 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px">🔍 Who should we check?</h2>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px">Paste a link to a video, image, or audio clip and run an instant analysis.</div>
+    <h2 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px">¿A quién debemos revisar?</h2>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">Pega el enlace a un video, imagen o audio y ejecuta un análisis instantáneo.</div>
     <div class="row">
-      <input id="scanUrl" placeholder="https://facebook.com/... or paste any media URL" />
+      <input id="scanUrl" placeholder="https://facebook.com/... o pega cualquier URL de medios" />
       <select id="scanType">
         <option value="video">Video</option>
-        <option value="image">Image</option>
+        <option value="image">Imagen</option>
         <option value="audio">Audio</option>
       </select>
-      <input id="scanWho" placeholder="Who is targeted? (optional)" style="min-width:160px;flex:0 0 200px" />
-      <button class="btn" onclick="runScan()">Run analysis</button>
+      <input id="scanWho" placeholder="¿A quién suplantan? (opcional)" style="min-width:160px;flex:0 0 200px" />
+      <button class="btn" onclick="runScan()">Ejecutar análisis</button>
     </div>
     <div id="scanResult"></div>
   </div>
 
-  <!-- Analytics -->
+  <!-- Analítica -->
   <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:22px">
     <div class="panel">
-      <h2>📈 Detections over time</h2>
+      <h2>Detecciones en el tiempo</h2>
       <div style="padding:18px"><canvas id="chartTime" height="120"></canvas></div>
     </div>
     <div class="panel">
-      <h2>🧬 Verdict mix</h2>
+      <h2>Distribución de veredictos</h2>
       <div style="padding:18px"><canvas id="chartVerdict" height="120"></canvas></div>
     </div>
   </div>
 
   <div class="grid">
     <div class="panel">
-      <h2>🚨 Detections <span class="tag" id="detCount"></span>
-        <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/detections/export.csv?tenant_id=1">Export CSV</a>
+      <h2>Detecciones <span class="tag" id="detCount"></span>
+        <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/detections/export.csv?tenant_id=1">Exportar CSV</a>
       </h2>
       <div style="overflow-x:auto">
         <table id="detTable"><thead><tr>
-          <th>Verdict</th><th>Conf.</th><th>Targeted</th><th>Platform</th><th>Impact</th><th>Action</th>
+          <th>Veredicto</th><th>Conf.</th><th>Suplantado</th><th>Plataforma</th><th>Impacto</th><th>Acción</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
 
     <div class="panel">
-      <h2>📡 Monitors
+      <h2>Monitores
         <span class="tag" style="display:flex;gap:6px;margin-left:auto">
-          <button class="btn sm ghost" onclick="scanAll()">Scan all</button>
-          <button class="btn sm" onclick="toggleAddMon()">+ Add</button>
+          <button class="btn sm ghost" onclick="scanAll()">Escanear todo</button>
+          <button class="btn sm" onclick="toggleAddMon()">+ Añadir</button>
         </span>
       </h2>
       <div id="addMonForm" style="display:none;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--panel-2)">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <select id="nmType" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit">
-            <option value="brand">Brand</option><option value="person">Person</option><option value="keyword">Keyword</option>
+            <option value="brand">Marca</option><option value="person">Persona</option><option value="keyword">Palabra clave</option>
           </select>
-          <input id="nmLabel" placeholder="Label (e.g. Acme Corp)" style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
+          <input id="nmLabel" placeholder="Etiqueta (p. ej. Abelardo de la Espriella)" style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
         </div>
-        <input id="nmTerms" placeholder="Search terms, comma-separated" style="width:100%;margin-top:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
+        <input id="nmTerms" placeholder="Términos de búsqueda, separados por comas" style="width:100%;margin-top:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-family:inherit" />
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)">
           <label><input type="checkbox" class="nmPlat" value="facebook" checked> Facebook</label>
           <label><input type="checkbox" class="nmPlat" value="instagram" checked> Instagram</label>
@@ -157,7 +157,7 @@ tr:hover td{background:rgba(34,211,238,.03)}
           <label><input type="checkbox" class="nmPlat" value="youtube"> YouTube</label>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
-          <button class="btn sm" onclick="addMonitor()">Create monitor</button>
+          <button class="btn sm" onclick="addMonitor()">Crear monitor</button>
           <span id="nmMsg" style="font-size:12px;color:var(--cyan)"></span>
         </div>
       </div>
@@ -166,12 +166,12 @@ tr:hover td{background:rgba(34,211,238,.03)}
   </div>
 
   <div class="panel" style="margin-top:18px">
-    <h2>📨 Takedown Tracker <span class="tag" id="tdCount"></span>
-      <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/takedowns/export.csv?tenant_id=1">Export CSV</a>
+    <h2>Seguimiento de retiros <span class="tag" id="tdCount"></span>
+      <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/takedowns/export.csv?tenant_id=1">Exportar CSV</a>
     </h2>
     <div style="overflow-x:auto">
       <table id="tdTable"><thead><tr>
-        <th>Status</th><th>Platform</th><th>Method</th><th>Ref</th><th>Notes</th><th>Advance</th>
+        <th>Estado</th><th>Plataforma</th><th>Método</th><th>Ref</th><th>Notas</th><th>Avanzar</th>
       </tr></thead><tbody></tbody></table>
     </div>
   </div>
@@ -184,17 +184,17 @@ tr:hover td{background:rgba(34,211,238,.03)}
       </div>
       <pre id="letterBody" style="margin:0;padding:18px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--text);line-height:1.55;flex:1"></pre>
       <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
-        <a id="letterMail" class="btn sm" href="#">Open in Mail</a>
-        <button class="btn sm ghost" onclick="closeLetter()">Close</button>
+        <a id="letterMail" class="btn sm" href="#">Abrir en Mail</a>
+        <button class="btn sm ghost" onclick="closeLetter()">Cerrar</button>
       </div>
     </div>
   </div>
 
-  <div class="note">Phase 0 demo — detections shown are sample data from a deterministic stub engine. Wire a detection provider (Hive / Reality Defender) to analyze live media. Every record is tenant-isolated.</div>
+  <div class="note">Demostración — las detecciones mostradas son datos de ejemplo de un motor determinista. Conecta un proveedor de detección (Hive / Reality Defender) para analizar medios reales. Cada registro está aislado por cliente.</div>
 
   <div class="foot">
-    Veritas — a <strong>Digit2AI</strong> vertical · AI deepfake detection &amp; takedown<br/>
-    <a href="https://digit2ai.com" target="_blank" rel="noopener">Powered by DIGIT2AI</a>
+    Veritas — una vertical de <strong>Digit2AI</strong> · detección y retiro de deepfakes con IA<br/>
+    <a href="https://digit2ai.com" target="_blank" rel="noopener">Desarrollado por DIGIT2AI</a>
   </div>
 </div>
 
@@ -202,13 +202,21 @@ tr:hover td{background:rgba(34,211,238,.03)}
 const API = '/veritas/api/v1';
 const TENANT = 1;
 
-async function j(url, opts){ const r = await fetch(url, opts); return r.json(); }
+// Mapas de presentación (los valores de la API quedan en inglés)
+const VERDICT_ES = { clean:'Auténtico', suspect:'Sospechoso', deepfake:'Deepfake' };
+const STATUS_ES  = { draft:'Borrador', submitted:'Enviado', acknowledged:'Reconocido', removed:'Eliminado', rejected:'Rechazado' };
+const METHOD_ES  = { dmca:'DMCA', impersonation:'Suplantación', trademark:'Marca' };
+const TYPE_ES    = { brand:'Marca', person:'Persona', keyword:'Palabra clave' };
+const CADENCE_ES = { hourly:'cada hora', daily:'diario', weekly:'semanal' };
+const MONSTAT_ES = { active:'activo', paused:'pausado' };
+const SIGNAL_ES  = { face_warping:'Distorsión facial', temporal_inconsistency:'Inconsistencia temporal', audio_lipsync_drift:'Desfase de labios/audio' };
 
+async function j(url, opts){ const r = await fetch(url, opts); return r.json(); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 async function loadHealth(){
   try{ const h = await j('/veritas/health');
-    document.getElementById('health').textContent = 'Live · ' + h.detection_provider + ' engine';
+    document.getElementById('health').textContent = 'En vivo · motor: ' + h.detection_provider;
   }catch(e){}
 }
 
@@ -216,12 +224,12 @@ async function loadStats(){
   const res = await j(`${API}/detections/summary?tenant_id=${TENANT}`);
   const s = res.data || {};
   const cards = [
-    {n:s.deepfakes_detected||0, l:'Deepfakes detected', c:'red'},
-    {n:s.suspect||0, l:'Suspect — under review', c:'amber'},
-    {n:s.takedowns_removed||0, l:'Content removed', c:'green'},
-    {n:s.takedowns_active||0, l:'Takedowns in flight', c:'cyan'},
-    {n:s.active_monitors||0, l:'Active monitors', c:''},
-    {n:(s.accuracy||0)+'%', l:'Detection accuracy', c:''}
+    {n:s.deepfakes_detected||0, l:'Deepfakes detectados', c:'red'},
+    {n:s.suspect||0, l:'Sospechosos — en revisión', c:'amber'},
+    {n:s.takedowns_removed||0, l:'Contenido eliminado', c:'green'},
+    {n:s.takedowns_active||0, l:'Retiros en curso', c:'cyan'},
+    {n:s.active_monitors||0, l:'Monitores activos', c:''},
+    {n:(s.accuracy||0)+'%', l:'Precisión de detección', c:''}
   ];
   document.getElementById('statCards').innerHTML = cards.map(c=>
     `<div class="stat ${c.c}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
@@ -241,7 +249,7 @@ async function loadCharts(){
     CHARTS.time = new Chart(t.getContext('2d'), {
       type:'line',
       data:{ labels:d.byDay.map(x=>x.date), datasets:[
-        {label:'All detections', data:d.byDay.map(x=>x.total), borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,.12)', fill:true, tension:.3, pointRadius:3},
+        {label:'Todas las detecciones', data:d.byDay.map(x=>x.total), borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,.12)', fill:true, tension:.3, pointRadius:3},
         {label:'Deepfakes', data:d.byDay.map(x=>x.deepfake), borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.10)', fill:true, tension:.3, pointRadius:3}
       ]},
       options:{responsive:true, plugins:{legend:{labels:{color:axis,font:{size:11}}}},
@@ -252,7 +260,7 @@ async function loadCharts(){
   if(v){
     CHARTS.verdict = new Chart(v.getContext('2d'), {
       type:'doughnut',
-      data:{ labels:['Clean','Suspect','Deepfake'], datasets:[{
+      data:{ labels:['Auténtico','Sospechoso','Deepfake'], datasets:[{
         data:[d.byVerdict.clean||0, d.byVerdict.suspect||0, d.byVerdict.deepfake||0],
         backgroundColor:['#22c55e','#f59e0b','#ef4444'], borderColor:'#121829', borderWidth:2 }]},
       options:{responsive:true, plugins:{legend:{position:'bottom',labels:{color:axis,font:{size:11}}}}}
@@ -264,16 +272,16 @@ async function loadDetections(){
   const res = await j(`${API}/detections?tenant_id=${TENANT}`);
   const rows = res.data || [];
   DETECTIONS = {};
-  document.getElementById('detCount').textContent = rows.length + ' total';
+  document.getElementById('detCount').textContent = rows.length + ' en total';
   document.getElementById('detTable').querySelector('tbody').innerHTML = rows.map(d=>{
     DETECTIONS[d.id] = d;
     const asset = d.VeritasAsset || {};
     const hasTd = d.VeritasTakedowns && d.VeritasTakedowns.length;
     const action = d.verdict === 'clean' ? '<span style="color:var(--muted);font-size:12px">—</span>'
-      : hasTd ? '<span style="color:var(--muted);font-size:12px">filed</span>'
-      : `<button class="btn sm" onclick="event.stopPropagation();fileTakedown(${d.id})">File takedown</button>`;
-    return `<tr style="cursor:pointer" onclick="viewEvidence(${d.id})" title="View evidence">
-      <td><span class="badge b-${d.verdict}">${d.verdict}</span></td>
+      : hasTd ? '<span style="color:var(--muted);font-size:12px">solicitado</span>'
+      : `<button class="btn sm" onclick="event.stopPropagation();fileTakedown(${d.id})">Solicitar retiro</button>`;
+    return `<tr style="cursor:pointer" onclick="viewEvidence(${d.id})" title="Ver evidencia">
+      <td><span class="badge b-${d.verdict}">${VERDICT_ES[d.verdict]||d.verdict}</span></td>
       <td class="conf">${d.confidence}%</td>
       <td class="who">${esc(d.targeted_person)}</td>
       <td class="platform">${esc(asset.source_platform||'')}</td>
@@ -288,16 +296,13 @@ function viewEvidence(id){
   const asset = d.VeritasAsset || {};
   const sig = (d.evidence && d.evidence.signals) || {};
   const sigRows = Object.keys(sig).length
-    ? Object.entries(sig).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);text-transform:capitalize">${esc(k.replace(/_/g,' '))}</span><strong>${esc(v)}</strong></div>`).join('')
-    : '<div style="color:var(--muted)">No signal breakdown.</div>';
-  document.getElementById('letterTitle').textContent = `${d.verdict.toUpperCase()} · ${d.confidence}% — ${esc(d.targeted_person||'')}`;
-  document.getElementById('letterMeta').textContent = `${esc(asset.source_platform||'')} · ${esc(asset.media_type||'')} · provider: ${esc(d.provider||'')}`;
-  document.getElementById('letterBody').textContent =
-    'Source: ' + (asset.source_url||'—') + '\n\nImpact: ' + (d.deepfakes_impact||'—') + '\n\nSignals:';
-  // reuse the letter modal shell but render signals as HTML below
+    ? Object.entries(sig).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${esc(SIGNAL_ES[k]||k.replace(/_/g,' '))}</span><strong>${esc(v)}</strong></div>`).join('')
+    : '<div style="color:var(--muted)">Sin desglose de señales.</div>';
+  document.getElementById('letterTitle').textContent = `${VERDICT_ES[d.verdict]||d.verdict} · ${d.confidence}% — ${d.targeted_person||''}`;
+  document.getElementById('letterMeta').textContent = `${asset.source_platform||''} · ${asset.media_type||''} · motor: ${d.provider||''}`;
   document.getElementById('letterBody').innerHTML =
-    'Source: ' + esc(asset.source_url||'—') + '<br><br>Impact: ' + esc(d.deepfakes_impact||'—')
-    + '<br><br><strong>Detection signals</strong><div style="margin-top:8px">' + sigRows + '</div>';
+    'Fuente: ' + esc(asset.source_url||'—') + '<br><br>Impacto: ' + esc(d.deepfakes_impact||'—')
+    + '<br><br><strong>Señales de detección</strong><div style="margin-top:8px">' + sigRows + '</div>';
   document.getElementById('letterMail').style.display = 'none';
   document.getElementById('letterModal').style.display = 'flex';
 }
@@ -307,15 +312,16 @@ async function loadMonitors(){
   const rows = res.data || [];
   document.getElementById('monList').innerHTML = rows.map(m=>{
     const toggle = m.status==='active'
-      ? `<button class="btn sm ghost" onclick="setMonitor(${m.id},'paused')" title="Pause">Pause</button>`
-      : `<button class="btn sm ghost" onclick="setMonitor(${m.id},'active')" title="Resume">Resume</button>`;
+      ? `<button class="btn sm ghost" onclick="setMonitor(${m.id},'paused')" title="Pausar">Pausar</button>`
+      : `<button class="btn sm ghost" onclick="setMonitor(${m.id},'active')" title="Reanudar">Reanudar</button>`;
+    const cad = CADENCE_ES[m.cadence]||m.cadence;
     return `<div class="mon">
-      <div><div class="mtype">${esc(m.type)}</div><div class="t">${esc(m.target_label)}</div>
-        <div class="m">${(m.platforms||[]).join(', ')} · ${esc(m.cadence)}</div></div>
+      <div><div class="mtype">${TYPE_ES[m.type]||esc(m.type)}</div><div class="t">${esc(m.target_label)}</div>
+        <div class="m">${(m.platforms||[]).join(', ')} · ${cad}</div></div>
       <div style="display:flex;align-items:center;gap:6px">
-        <button class="btn sm ghost" onclick="scanMonitor(${m.id})">Scan</button>
+        <button class="btn sm ghost" onclick="scanMonitor(${m.id})">Escanear</button>
         ${toggle}
-        <span class="badge b-${m.status==='active'?'removed':'draft'}">${esc(m.status)}</span></div>
+        <span class="badge b-${m.status==='active'?'removed':'draft'}">${MONSTAT_ES[m.status]||esc(m.status)}</span></div>
     </div>`;
   }).join('');
 }
@@ -335,7 +341,7 @@ async function scanAll(){
     if(r.data){ added+=r.data.new_detections; df+=r.data.deepfakes; }
   }
   await Promise.all([loadDetections(), loadStats(), loadMonitors(), loadCharts()]);
-  alert(`Scanned ${mons.length} monitor(s): ${added} new detection(s), ${df} deepfake(s).`);
+  alert(`Se escanearon ${mons.length} monitor(es): ${added} detección(es) nueva(s), ${df} deepfake(s).`);
 }
 
 async function addMonitor(){
@@ -343,13 +349,13 @@ async function addMonitor(){
   const target_label = document.getElementById('nmLabel').value.trim();
   const terms = document.getElementById('nmTerms').value.trim();
   const out = document.getElementById('nmMsg');
-  if(!target_label){ out.textContent='Enter a label.'; return; }
+  if(!target_label){ out.textContent='Ingresa una etiqueta.'; return; }
   const platforms = Array.from(document.querySelectorAll('.nmPlat:checked')).map(c=>c.value);
   const res = await j(`${API}/monitors`, {method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({tenant_id:TENANT, type, target_label, query_terms:terms?terms.split(',').map(s=>s.trim()):[], platforms, cadence:'daily'})});
   if(res.success){
     document.getElementById('nmLabel').value=''; document.getElementById('nmTerms').value='';
-    out.textContent='Monitor added.';
+    out.textContent='Monitor añadido.';
     await Promise.all([loadMonitors(), loadStats()]);
     setTimeout(()=>{out.textContent='';}, 2000);
   } else { out.textContent = res.error||'error'; }
@@ -360,16 +366,16 @@ const TD_NEXT = { draft:'submitted', submitted:'acknowledged', acknowledged:'rem
 async function loadTakedowns(){
   const res = await j(`${API}/takedowns?tenant_id=${TENANT}`);
   const rows = res.data || [];
-  document.getElementById('tdCount').textContent = rows.length + ' total';
+  document.getElementById('tdCount').textContent = rows.length + ' en total';
   document.getElementById('tdTable').querySelector('tbody').innerHTML = rows.map(t=>{
     const next = TD_NEXT[t.status];
-    const adv = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${next}</button>`
-      : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'✓ done':'—'}</span>`;
-    const letter = `<button class="btn sm ghost" onclick="viewLetter(${t.id})">Letter</button>`;
+    const adv = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${STATUS_ES[next]||next}</button>`
+      : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'✓ listo':'—'}</span>`;
+    const letter = `<button class="btn sm ghost" onclick="viewLetter(${t.id})">Carta</button>`;
     return `<tr>
-      <td><span class="badge b-${t.status}">${esc(t.status)}</span></td>
+      <td><span class="badge b-${t.status}">${STATUS_ES[t.status]||esc(t.status)}</span></td>
       <td class="platform">${esc(t.platform||'')}</td>
-      <td style="text-transform:uppercase;font-size:11px;color:var(--muted)">${esc(t.method||'')}</td>
+      <td style="font-size:11px;color:var(--muted)">${METHOD_ES[t.method]||esc(t.method||'')}</td>
       <td style="font-size:12px;color:var(--muted)">${esc(t.reference_id||'—')}</td>
       <td class="impact">${esc(t.notes||'')}</td>
       <td style="white-space:nowrap;display:flex;gap:6px">${letter}${adv}</td>
@@ -393,7 +399,7 @@ async function scanMonitor(id){
   const res = await j(`${API}/monitors/${id}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({tenant_id:TENANT})});
   await Promise.all([loadDetections(), loadStats(), loadMonitors(), loadCharts()]);
-  if(res.data){ alert(`Scan complete (${res.data.source}): ${res.data.new_detections} new, ${res.data.deepfakes} deepfake(s).`); }
+  if(res.data){ alert(`Escaneo completo (${res.data.source}): ${res.data.new_detections} nueva(s), ${res.data.deepfakes} deepfake(s).`); }
 }
 
 async function viewLetter(tdId){
@@ -401,7 +407,7 @@ async function viewLetter(tdId){
   if(!res.success){ alert(res.error||'error'); return; }
   const d = res.data;
   document.getElementById('letterTitle').textContent = d.subject;
-  document.getElementById('letterMeta').textContent = `${d.platformName} · submit at: ${d.portal}`;
+  document.getElementById('letterMeta').textContent = `${d.platformName} · enviar en: ${d.portal}`;
   document.getElementById('letterBody').textContent = d.body;
   document.getElementById('letterMail').href = d.mailto;
   document.getElementById('letterMail').style.display = '';
@@ -414,17 +420,17 @@ async function runScan(){
   const media_type = document.getElementById('scanType').value;
   const who = document.getElementById('scanWho').value.trim();
   const out = document.getElementById('scanResult');
-  if(!url){ out.innerHTML = '<span style="color:var(--amber)">Enter a media URL first.</span>'; return; }
-  out.innerHTML = 'Analyzing…';
+  if(!url){ out.innerHTML = '<span style="color:var(--amber)">Primero ingresa una URL de medios.</span>'; return; }
+  out.innerHTML = 'Analizando…';
   const res = await j(`${API}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({tenant_id:TENANT, url, media_type, targeted_person:who})});
   if(res.success){
     const d = res.data;
-    out.innerHTML = `<span class="badge b-${d.verdict}">${d.verdict}</span>
-      <strong style="margin-left:8px">${d.confidence}% confidence</strong>
-      <span style="color:var(--muted)"> · ${d.provider} engine</span>`;
+    out.innerHTML = `<span class="badge b-${d.verdict}">${VERDICT_ES[d.verdict]||d.verdict}</span>
+      <strong style="margin-left:8px">${d.confidence}% de confianza</strong>
+      <span style="color:var(--muted)"> · motor ${d.provider}</span>`;
     document.getElementById('scanUrl').value='';
-    await Promise.all([loadDetections(), loadStats()]);
+    await Promise.all([loadDetections(), loadStats(), loadCharts()]);
   } else {
     out.innerHTML = '<span style="color:var(--red)">'+esc(res.error||'error')+'</span>';
   }
