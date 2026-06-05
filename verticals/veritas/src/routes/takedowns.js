@@ -76,6 +76,35 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+function csvCell(v) {
+  const s = v == null ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+// GET /api/v1/takedowns/export.csv?tenant_id=N
+router.get('/export.csv', async (req, res) => {
+  try {
+    const tid = tenantId(req);
+    const rows = await Takedown.findAll({ where: { tenant_id: tid }, order: [['created_at', 'DESC']] });
+    const header = ['id', 'status', 'platform', 'method', 'reference_id', 'notes', 'submitted_at', 'removed_at', 'created_at'];
+    const lines = [header.join(',')];
+    for (const t of rows) {
+      lines.push([
+        t.id, t.status, t.platform, t.method, t.reference_id, t.notes,
+        t.submitted_at && t.submitted_at.toISOString(),
+        t.removed_at && t.removed_at.toISOString(),
+        t.created_at && t.created_at.toISOString()
+      ].map(csvCell).join(','));
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="veritas-takedowns-${new Date().toISOString().slice(0,10)}.csv"`);
+    res.send(lines.join('\n'));
+  } catch (e) {
+    console.error('Veritas takedowns export error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/v1/takedowns/:id/letter  — generate the takedown letter/report draft
 router.get('/:id/letter', async (req, res) => {
   try {

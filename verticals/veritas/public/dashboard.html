@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#0b0f1a; --panel:#121829; --panel-2:#0e1424; --border:#1e2740;
@@ -110,9 +111,23 @@ tr:hover td{background:rgba(34,211,238,.03)}
     <div id="scanResult"></div>
   </div>
 
+  <!-- Analytics -->
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:22px">
+    <div class="panel">
+      <h2>📈 Detections over time</h2>
+      <div style="padding:18px"><canvas id="chartTime" height="120"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>🧬 Verdict mix</h2>
+      <div style="padding:18px"><canvas id="chartVerdict" height="120"></canvas></div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="panel">
-      <h2>🚨 Detections <span class="tag" id="detCount"></span></h2>
+      <h2>🚨 Detections <span class="tag" id="detCount"></span>
+        <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/detections/export.csv?tenant_id=1">Export CSV</a>
+      </h2>
       <div style="overflow-x:auto">
         <table id="detTable"><thead><tr>
           <th>Verdict</th><th>Conf.</th><th>Targeted</th><th>Platform</th><th>Impact</th><th>Action</th>
@@ -151,7 +166,9 @@ tr:hover td{background:rgba(34,211,238,.03)}
   </div>
 
   <div class="panel" style="margin-top:18px">
-    <h2>📨 Takedown Tracker <span class="tag" id="tdCount"></span></h2>
+    <h2>📨 Takedown Tracker <span class="tag" id="tdCount"></span>
+      <a class="btn sm ghost" style="margin-left:auto" href="/veritas/api/v1/takedowns/export.csv?tenant_id=1">Export CSV</a>
+    </h2>
     <div style="overflow-x:auto">
       <table id="tdTable"><thead><tr>
         <th>Status</th><th>Platform</th><th>Method</th><th>Ref</th><th>Notes</th><th>Advance</th>
@@ -211,6 +228,38 @@ async function loadStats(){
 }
 
 let DETECTIONS = {};
+let CHARTS = {};
+async function loadCharts(){
+  if(typeof Chart === 'undefined') return;
+  const res = await j(`${API}/detections/timeline?tenant_id=${TENANT}`);
+  const d = res.data || { byDay:[], byVerdict:{} };
+  const axis='#8a96b8', grid='#1e2740';
+  Object.values(CHARTS).forEach(c=>{try{c.destroy()}catch(e){}}); CHARTS={};
+
+  const t = document.getElementById('chartTime');
+  if(t){
+    CHARTS.time = new Chart(t.getContext('2d'), {
+      type:'line',
+      data:{ labels:d.byDay.map(x=>x.date), datasets:[
+        {label:'All detections', data:d.byDay.map(x=>x.total), borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,.12)', fill:true, tension:.3, pointRadius:3},
+        {label:'Deepfakes', data:d.byDay.map(x=>x.deepfake), borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.10)', fill:true, tension:.3, pointRadius:3}
+      ]},
+      options:{responsive:true, plugins:{legend:{labels:{color:axis,font:{size:11}}}},
+        scales:{x:{ticks:{color:axis,font:{size:10}},grid:{color:grid}},y:{beginAtZero:true,ticks:{color:axis,font:{size:10},precision:0},grid:{color:grid}}}}
+    });
+  }
+  const v = document.getElementById('chartVerdict');
+  if(v){
+    CHARTS.verdict = new Chart(v.getContext('2d'), {
+      type:'doughnut',
+      data:{ labels:['Clean','Suspect','Deepfake'], datasets:[{
+        data:[d.byVerdict.clean||0, d.byVerdict.suspect||0, d.byVerdict.deepfake||0],
+        backgroundColor:['#22c55e','#f59e0b','#ef4444'], borderColor:'#121829', borderWidth:2 }]},
+      options:{responsive:true, plugins:{legend:{position:'bottom',labels:{color:axis,font:{size:11}}}}}
+    });
+  }
+}
+
 async function loadDetections(){
   const res = await j(`${API}/detections?tenant_id=${TENANT}`);
   const rows = res.data || [];
@@ -285,7 +334,7 @@ async function scanAll(){
     const r = await j(`${API}/monitors/${m.id}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tenant_id:TENANT})});
     if(r.data){ added+=r.data.new_detections; df+=r.data.deepfakes; }
   }
-  await Promise.all([loadDetections(), loadStats(), loadMonitors()]);
+  await Promise.all([loadDetections(), loadStats(), loadMonitors(), loadCharts()]);
   alert(`Scanned ${mons.length} monitor(s): ${added} new detection(s), ${df} deepfake(s).`);
 }
 
@@ -343,7 +392,7 @@ async function advance(id,status){
 async function scanMonitor(id){
   const res = await j(`${API}/monitors/${id}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({tenant_id:TENANT})});
-  await Promise.all([loadDetections(), loadStats(), loadMonitors()]);
+  await Promise.all([loadDetections(), loadStats(), loadMonitors(), loadCharts()]);
   if(res.data){ alert(`Scan complete (${res.data.source}): ${res.data.new_detections} new, ${res.data.deepfakes} deepfake(s).`); }
 }
 
@@ -383,7 +432,7 @@ async function runScan(){
 
 (async function init(){
   document.getElementById('tenantName').textContent = '· Digit2AI (Demo)';
-  await Promise.all([loadHealth(), loadStats(), loadDetections(), loadMonitors(), loadTakedowns()]);
+  await Promise.all([loadHealth(), loadStats(), loadDetections(), loadMonitors(), loadTakedowns(), loadCharts()]);
 })();
 </script>
 </body>
