@@ -28,6 +28,7 @@ router.use('/api/v1/detections', require('./routes/detections'));
 router.use('/api/v1/takedowns', require('./routes/takedowns'));
 router.use('/api/v1/scan', require('./routes/scan'));
 router.use('/api/v1/webhooks', require('./routes/webhooks'));
+router.use('/api/v1/analyst', require('./routes/analyst'));
 
 // ── Static dashboard (no build step — single self-contained HTML) ───────────
 const publicDir = path.join(__dirname, '..', 'public');

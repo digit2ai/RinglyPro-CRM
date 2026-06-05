@@ -176,6 +176,25 @@ tr:hover td{background:rgba(34,211,238,.03)}
     </div>
   </div>
 
+  <div class="panel" style="margin-top:18px">
+    <h2>Analista de Protección <span class="tag" id="analystMode"></span></h2>
+    <div style="padding:18px">
+      <div id="analystVoice" style="display:none;margin-bottom:14px"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Pregunta sobre el estado de la protección de la campaña.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="askInput" placeholder="p. ej. ¿Cuántos deepfakes hay? ¿Qué se eliminó?" onkeydown="if(event.key==='Enter')askAnalyst()" style="flex:1;min-width:240px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:11px 13px;border-radius:10px;font-family:inherit;font-size:14px" />
+        <button class="btn" onclick="askAnalyst()">Preguntar</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn sm ghost" onclick="askQuick('¿Cuántos deepfakes hay?')">Deepfakes</button>
+        <button class="btn sm ghost" onclick="askQuick('¿Cuál es el estado de los retiros?')">Retiros</button>
+        <button class="btn sm ghost" onclick="askQuick('¿Qué monitores están activos?')">Monitores</button>
+        <button class="btn sm ghost" onclick="askQuick('¿Cuáles son las prioridades de riesgo?')">Riesgo</button>
+      </div>
+      <div id="askAnswer" style="margin-top:14px;font-size:14px;line-height:1.55;color:var(--text);min-height:22px"></div>
+    </div>
+  </div>
+
   <div id="letterModal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:20px">
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;max-width:680px;width:100%;max-height:86vh;display:flex;flex-direction:column">
       <div style="padding:18px;border-bottom:1px solid var(--border)">
@@ -436,9 +455,43 @@ async function runScan(){
   }
 }
 
+async function loadAnalyst(){
+  try{
+    const cfg = (await j(`${API}/analyst/config`)).data || {};
+    const modeEl = document.getElementById('analystMode');
+    if(cfg.enabled && cfg.agent_id_es){
+      // Voz activa: cargar el widget convai de ElevenLabs (el agent-id es público)
+      modeEl.textContent = 'voz + texto';
+      const host = document.getElementById('analystVoice');
+      host.style.display = 'block';
+      host.innerHTML = `<elevenlabs-convai agent-id="${cfg.agent_id_es}"></elevenlabs-convai>`;
+      if(!document.getElementById('convai-sdk')){
+        const s = document.createElement('script');
+        s.id = 'convai-sdk'; s.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+        s.async = true; s.type = 'text/javascript';
+        document.body.appendChild(s);
+      }
+    } else {
+      modeEl.textContent = 'texto';
+    }
+  }catch(e){ document.getElementById('analystMode').textContent = 'texto'; }
+}
+
+async function askAnalyst(){
+  const input = document.getElementById('askInput');
+  const q = input.value.trim();
+  const out = document.getElementById('askAnswer');
+  if(!q){ return; }
+  out.textContent = 'Analizando…';
+  const res = await j(`${API}/analyst/ask`, {method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tenant_id:TENANT, question:q})});
+  out.textContent = res.success ? res.data.answer : (res.error || 'error');
+}
+function askQuick(q){ document.getElementById('askInput').value = q; askAnalyst(); }
+
 (async function init(){
   document.getElementById('tenantName').textContent = '· Defensores de la Patria — Abelardo de la Espriella';
-  await Promise.all([loadHealth(), loadStats(), loadDetections(), loadMonitors(), loadTakedowns(), loadCharts()]);
+  await Promise.all([loadHealth(), loadStats(), loadDetections(), loadMonitors(), loadTakedowns(), loadCharts(), loadAnalyst()]);
 })();
 </script>
 </body>
