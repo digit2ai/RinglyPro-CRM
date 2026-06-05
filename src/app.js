@@ -1321,7 +1321,7 @@ try {
     next();
   });
   app.use('/veritas', veritasApp);
-  console.log('🛡️ Veritas Deepfake Detection mounted at /veritas');
+  console.log('Veritas Deepfake Detection mounted at /veritas');
   console.log('   - Dashboard UI: /veritas/');
   console.log('   - Health Check: /veritas/health');
   console.log('   - API: /veritas/api/v1/*');

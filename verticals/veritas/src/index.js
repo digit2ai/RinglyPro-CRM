@@ -41,16 +41,16 @@ router.get('/', (req, res) => {
 (async function initialize() {
   try {
     await sequelize.sync({ alter: false });
-    console.log('  🛡️ VERITAS database tables synced (df_*)');
+    console.log('  VERITAS database tables synced (df_*)');
     try {
       const result = await seedSampleData();
-      if (result.seeded) console.log(`  🛡️ VERITAS seeded sample data (${result.detections} detections)`);
-      else console.log(`  🛡️ VERITAS sample data present (${result.detections} detections)`);
+      if (result.seeded) console.log(`  VERITAS seeded sample data (${result.detections} detections)`);
+      else console.log(`  VERITAS sample data present (${result.detections} detections)`);
     } catch (seedErr) {
-      console.error('  ⚠️ VERITAS seed error:', seedErr.message);
+      console.error('  VERITAS seed error:', seedErr.message);
     }
   } catch (err) {
-    console.error('  ⚠️ VERITAS DB sync error:', err.message);
+    console.error('  VERITAS DB sync error:', err.message);
   }
 })();
 

@@ -370,7 +370,7 @@ async function loadTakedowns(){
   document.getElementById('tdTable').querySelector('tbody').innerHTML = rows.map(t=>{
     const next = TD_NEXT[t.status];
     const adv = next ? `<button class="btn sm ghost" onclick="advance(${t.id},'${next}')">→ ${STATUS_ES[next]||next}</button>`
-      : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'✓ listo':'—'}</span>`;
+      : `<span style="color:var(--muted);font-size:12px">${t.status==='removed'?'listo':'—'}</span>`;
     const letter = `<button class="btn sm ghost" onclick="viewLetter(${t.id})">Carta</button>`;
     return `<tr>
       <td><span class="badge b-${t.status}">${STATUS_ES[t.status]||esc(t.status)}</span></td>

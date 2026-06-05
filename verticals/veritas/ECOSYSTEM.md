@@ -96,10 +96,10 @@ try {
     next();
   });
   app.use('/veritas', veritasApp);
-  console.log('🛡️ Veritas Deepfake Protection mounted at /veritas');
+  console.log('Veritas Deepfake Protection mounted at /veritas');
 } catch (error) {
   veritasError = error;
-  console.log('⚠️ Veritas not available:', error.message);
+  console.log('Veritas not available:', error.message);
 }
 ```
 
