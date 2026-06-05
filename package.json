@@ -103,6 +103,9 @@
     "ws": "^8.19.0",
     "xlsx": "^0.18.5"
   },
+  "optionalDependencies": {
+    "@realitydefender/realitydefender": "^0.1.17"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "eslint": "^8.55.0",

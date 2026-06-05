@@ -12,6 +12,10 @@
  *     { provider, rawScore, confidence (0-100), verdict, evidence }
  */
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
 const PROVIDER = process.env.VERITAS_DETECTION_PROVIDER || 'stub';
 
 // Normalize any provider's raw 0..1 score into a 0-100 confidence + verdict.
@@ -58,9 +62,71 @@ async function detectHive(input) {
   return detectStub(input);
 }
 
+// Download a remote media URL to a temp file (Reality Defender's SDK takes a path).
+async function downloadToTemp(mediaUrl, mediaType) {
+  const res = await fetch(mediaUrl);
+  if (!res.ok) throw new Error('media download failed: HTTP ' + res.status);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const ext = mediaType === 'image' ? 'jpg' : mediaType === 'audio' ? 'mp3' : 'mp4';
+  const name = 'veritas-' + Date.now() + '-' + Math.round(Math.random() * 1e9) + '.' + ext;
+  const tmp = path.join(os.tmpdir(), name);
+  fs.writeFileSync(tmp, buf);
+  return tmp;
+}
+
+/**
+ * Reality Defender adapter.
+ * Activated by VERITAS_DETECTION_PROVIDER=reality_defender + REALITY_DEFENDER_API_KEY.
+ * Uses the official @realitydefender/realitydefender SDK (optionalDependency).
+ * ANY failure (no key, SDK absent, download/API error) gracefully falls back to
+ * the stub so production is never left without a verdict.
+ *
+ * SDK result shape: { status: 'MANIPULATED'|'AUTHENTIC'|..., score: 0..1, models: [{name,status,score}] }
+ */
 async function detectRealityDefender(input) {
-  // TODO Phase 1: REALITY_DEFENDER_API_KEY.
-  return detectStub(input);
+  const apiKey = process.env.REALITY_DEFENDER_API_KEY;
+  if (!apiKey) return detectStub(input);
+
+  let RealityDefender;
+  try {
+    ({ RealityDefender } = require('@realitydefender/realitydefender'));
+  } catch (e) {
+    console.warn('[Veritas] Reality Defender SDK not installed; using stub. (npm i @realitydefender/realitydefender)');
+    return detectStub(input);
+  }
+
+  let tmp;
+  try {
+    tmp = await downloadToTemp(input.mediaUrl, input.mediaType);
+    const client = new RealityDefender({ apiKey });
+    const result = await client.detect({ filePath: tmp });
+
+    const rawScore = typeof result.score === 'number' ? result.score : 0;
+    const { confidence } = scoreToVerdict(rawScore);
+
+    // Prefer RD's own status label; fall back to our thresholds.
+    const st = String(result.status || '').toUpperCase();
+    let verdict;
+    if (['MANIPULATED', 'SYNTHETIC', 'FAKE', 'ARTIFICIAL'].includes(st)) verdict = 'deepfake';
+    else if (['AUTHENTIC', 'REAL'].includes(st)) verdict = confidence >= 45 ? 'suspect' : 'clean';
+    else verdict = scoreToVerdict(rawScore).verdict;
+
+    return {
+      provider: 'reality_defender',
+      rawScore,
+      confidence,
+      verdict,
+      evidence: {
+        rd_status: result.status,
+        models: (result.models || []).map(m => ({ name: m.name, status: m.status, score: m.score }))
+      }
+    };
+  } catch (e) {
+    console.error('[Veritas] Reality Defender error:', e.message, '— falling back to stub.');
+    return detectStub(input);
+  } finally {
+    if (tmp) { try { fs.unlinkSync(tmp); } catch (e) {} }
+  }
 }
 
 async function detect(input) {

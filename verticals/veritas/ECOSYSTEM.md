@@ -120,6 +120,14 @@ Indexes: `idx_df_detections_verdict`, `idx_df_assets_monitor`, partial index on 
 
 ---
 
+## Reality Defender adapter — IMPLEMENTED (needs only a key)
+
+`services/detection.js` now ships a working **Reality Defender** adapter (recommended provider for elections/impersonation; multimodal video/image/audio/text). Activate with:
+- `VERITAS_DETECTION_PROVIDER=reality_defender`
+- `REALITY_DEFENDER_API_KEY=<key>` (free tier = 50 scans/mo at app.realitydefender.ai → Settings → API Keys)
+
+Flow: download the media URL to a temp file → official `@realitydefender/realitydefender` SDK `detect({filePath})` → normalize `{status, score 0..1, models}` to our `{verdict, confidence, evidence}` → delete temp file. The SDK is an **optionalDependency**; ANY failure (no key, SDK absent, download/API error) falls back to the deterministic stub, so production always returns a verdict. Verified: stub default + both fallback paths. The real API path validates once a key is set.
+
 ## 4. Detection engine — BUY, don't build
 
 "99.8% accuracy, trained on millions of synthetic samples" is a real ML problem. **Do not train from scratch.** Wrap providers behind `services/detection.js` so we stay provider-agnostic and can A/B.
