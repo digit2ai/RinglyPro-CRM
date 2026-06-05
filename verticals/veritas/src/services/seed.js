@@ -2,9 +2,12 @@
 
 /**
  * Veritas — sample data seeder (idempotent).
- * Seeds one demo tenant with monitors, assets, detections, and takedowns so the
- * dashboard is fully populated on first boot. Safe to run repeatedly: it no-ops
- * if the demo tenant already has detections.
+ * Seeds the demo tenant (Defensores de la Patria — Abelardo de la Espriella
+ * presidential campaign) with monitors, assets, detections, and takedowns so
+ * the dashboard is fully populated on first boot. Safe to run repeatedly: it
+ * no-ops if the demo tenant already has detections.
+ *
+ * Spanish copy uses proper orthography (tildes / ñ / comillas angulares).
  */
 
 const { Tenant, Monitor, Asset, Detection, Takedown } = require('../models');
@@ -19,27 +22,28 @@ async function seedSampleData() {
   // Tenant
   await Tenant.findOrCreate({
     where: { id: DEMO_TENANT_ID },
-    defaults: { id: DEMO_TENANT_ID, name: 'Digit2AI (Demo)', plan: 'enterprise', seats: 10, contact_email: 'support@veritas.app' }
+    defaults: { id: DEMO_TENANT_ID, name: 'Defensores de la Patria', plan: 'enterprise', seats: 10, contact_email: 'proteccion@defensoresdelapatria.com' }
   });
 
-  // Monitors
+  // Monitors — what the campaign protects
   const monitors = await Monitor.bulkCreate([
-    { tenant_id: DEMO_TENANT_ID, type: 'brand',   target_label: 'Digit2AI', query_terms: ['Digit2AI', 'digit2ai.com'], platforms: ['facebook', 'instagram'], cadence: 'daily', last_scanned_at: new Date() },
-    { tenant_id: DEMO_TENANT_ID, type: 'person',  target_label: 'Manuel Stagg (CEO)', query_terms: ['Manuel Stagg'], platforms: ['facebook', 'instagram', 'tiktok'], cadence: 'daily', last_scanned_at: new Date() },
-    { tenant_id: DEMO_TENANT_ID, type: 'keyword', target_label: 'Crypto giveaway scam', query_terms: ['free crypto', 'doubling event'], platforms: ['youtube', 'facebook'], cadence: 'hourly', last_scanned_at: new Date() }
+    { tenant_id: DEMO_TENANT_ID, type: 'person',  target_label: 'Abelardo de la Espriella («El Tigre»)', query_terms: ['Abelardo de la Espriella', 'El Tigre'], platforms: ['facebook', 'instagram', 'tiktok', 'youtube'], cadence: 'daily', last_scanned_at: new Date() },
+    { tenant_id: DEMO_TENANT_ID, type: 'brand',   target_label: 'Defensores de la Patria', query_terms: ['Defensores de la Patria', 'País Milagro'], platforms: ['facebook', 'instagram'], cadence: 'daily', last_scanned_at: new Date() },
+    { tenant_id: DEMO_TENANT_ID, type: 'keyword', target_label: 'Estafas de donación a la campaña', query_terms: ['donación campaña', 'apoya al Tigre'], platforms: ['facebook', 'youtube'], cadence: 'hourly', last_scanned_at: new Date() }
   ], { returning: true });
 
-  const mBrand = monitors[0].id, mPerson = monitors[1].id, mKeyword = monitors[2].id;
+  const mPerson = monitors[0].id, mBrand = monitors[1].id, mKeyword = monitors[2].id;
 
-  // Assets + detections + takedowns
+  // Detections — realistic political-deepfake scenarios
   const rows = [
-    { monitor: mKeyword, platform: 'facebook',  media: 'video', verdict: 'deepfake', confidence: 96, person: 'Manuel Stagg', impact: 'Fake video promoting a crypto "doubling" scam using the CEO likeness.', td_status: 'removed',      method: 'impersonation' },
-    { monitor: mBrand,   platform: 'instagram', media: 'image', verdict: 'deepfake', confidence: 91, person: 'Digit2AI brand', impact: 'Counterfeit ad with cloned Digit2AI logo and fake testimonial.',          td_status: 'submitted',    method: 'trademark' },
-    { monitor: mPerson,  platform: 'tiktok',    media: 'video', verdict: 'deepfake', confidence: 88, person: 'Manuel Stagg', impact: 'Lip-synced deepfake endorsing an unrelated investment app.',                  td_status: 'acknowledged', method: 'impersonation' },
-    { monitor: mKeyword, platform: 'youtube',   media: 'video', verdict: 'suspect',  confidence: 63, person: 'Manuel Stagg', impact: 'Possible voice-clone in a livestream thumbnail; under review.',               td_status: 'draft',        method: 'dmca' },
-    { monitor: mBrand,   platform: 'facebook',  media: 'image', verdict: 'suspect',  confidence: 52, person: 'Digit2AI brand', impact: 'Ad reusing brand imagery without authorization.',                          td_status: 'draft',        method: 'trademark' },
-    { monitor: mPerson,  platform: 'instagram', media: 'image', verdict: 'clean',    confidence: 12, person: 'Manuel Stagg', impact: 'Authentic press photo — no manipulation detected.',                          td_status: null,           method: null },
-    { monitor: mBrand,   platform: 'instagram', media: 'image', verdict: 'clean',    confidence: 8,  person: 'Digit2AI brand', impact: 'Legitimate partner repost.',                                              td_status: null,           method: null }
+    { monitor: mKeyword, platform: 'facebook',  media: 'video', verdict: 'deepfake', confidence: 97, person: 'Abelardo de la Espriella', impact: 'Video falso donde «Abelardo» anuncia su retiro de la segunda vuelta — desinformación electoral.', td_status: 'removed',      method: 'impersonation' },
+    { monitor: mPerson,  platform: 'youtube',   media: 'video', verdict: 'deepfake', confidence: 94, person: 'Abelardo de la Espriella', impact: 'Deepfake del candidato promocionando una plataforma de criptomonedas fraudulenta.',          td_status: 'submitted',    method: 'impersonation' },
+    { monitor: mKeyword, platform: 'facebook',  media: 'audio', verdict: 'deepfake', confidence: 90, person: 'Abelardo de la Espriella', impact: 'Audio con voz clonada del candidato pidiendo donaciones a una cuenta bancaria fraudulenta.', td_status: 'acknowledged', method: 'impersonation' },
+    { monitor: mBrand,   platform: 'instagram', media: 'image', verdict: 'deepfake', confidence: 89, person: 'Defensores de la Patria', impact: 'Anuncio falso con el logo de la campaña que solicita donaciones a una cuenta no oficial.',  td_status: 'submitted',    method: 'trademark' },
+    { monitor: mPerson,  platform: 'tiktok',    media: 'video', verdict: 'suspect',  confidence: 64, person: 'Abelardo de la Espriella', impact: 'Clip editado fuera de contexto atribuido al candidato; en revisión.',                     td_status: 'draft',        method: 'dmca' },
+    { monitor: mBrand,   platform: 'facebook',  media: 'image', verdict: 'suspect',  confidence: 51, person: 'Defensores de la Patria', impact: 'Imagen de campaña reutilizada sin autorización.',                                       td_status: 'draft',        method: 'trademark' },
+    { monitor: mPerson,  platform: 'instagram', media: 'image', verdict: 'clean',    confidence: 9,  person: 'Abelardo de la Espriella', impact: 'Fotografía de prensa auténtica — sin manipulación detectada.',                       td_status: null,           method: null },
+    { monitor: mBrand,   platform: 'facebook',  media: 'image', verdict: 'clean',    confidence: 6,  person: 'Defensores de la Patria', impact: 'Publicación legítima de un simpatizante.',                                            td_status: null,           method: null }
   ];
 
   let order = 0;
@@ -76,7 +80,7 @@ async function seedSampleData() {
         method: r.method,
         status: r.td_status,
         reference_id: r.td_status === 'draft' ? null : `VRT-${1000 + order}`,
-        notes: `${r.method.toUpperCase()} request for ${r.person}`,
+        notes: `Solicitud de ${r.method.toUpperCase()} para ${r.person}`,
         submitted_at: ['submitted', 'acknowledged', 'removed'].includes(r.td_status) ? now : null,
         removed_at: r.td_status === 'removed' ? now : null
       });
