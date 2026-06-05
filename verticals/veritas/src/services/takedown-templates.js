@@ -14,18 +14,20 @@
  * dependency list).
  */
 
-// Where to send each platform's reports (reference only; operator confirms).
+// Where to send each platform's reports. `email` = the platform's real DMCA
+// designated-agent inbox (verified; best for copyright/trademark). `portal` =
+// the web form (required for pure impersonation reports).
 const PLATFORM_ABUSE = {
-  facebook:  { name: 'Meta (Facebook)', portal: 'https://www.facebook.com/help/contact/impersonation' },
-  instagram: { name: 'Meta (Instagram)', portal: 'https://help.instagram.com/contact/636276399721841' },
-  tiktok:    { name: 'TikTok', portal: 'https://www.tiktok.com/legal/report/feedback' },
-  youtube:   { name: 'YouTube', portal: 'https://support.google.com/youtube/answer/2807622' },
-  web:       { name: 'Web host / registrar', portal: 'WHOIS abuse contact' }
+  facebook:  { name: 'Meta (Facebook)', email: 'ip@fb.com',            portal: 'https://www.facebook.com/help/contact/impersonation' },
+  instagram: { name: 'Meta (Instagram)', email: 'ip@instagram.com',    portal: 'https://help.instagram.com/contact/636276399721841' },
+  tiktok:    { name: 'TikTok',          email: 'Copyright@tiktok.com',  portal: 'https://www.tiktok.com/legal/report/Copyright' },
+  youtube:   { name: 'YouTube',         email: 'dmca-agent@google.com', portal: 'https://support.google.com/youtube/answer/2807622' },
+  web:       { name: 'Web host / registrar', email: '',                portal: 'WHOIS abuse contact' }
 };
 
 function header(platform) {
   const p = PLATFORM_ABUSE[platform] || PLATFORM_ABUSE.web;
-  return { platformName: p.name, portal: p.portal };
+  return { platformName: p.name, portal: p.portal, email: p.email || '' };
 }
 
 function impersonationLetter({ targeted_person, platform, source_url, confidence }) {
@@ -93,7 +95,7 @@ function generate({ method, detection = {}, asset = {} }) {
     source_url: asset.source_url,
     confidence: detection.confidence
   };
-  const { portal, platformName } = header(platform);
+  const { portal, platformName, email } = header(platform);
 
   let body, subject;
   switch (method) {
@@ -111,7 +113,7 @@ function generate({ method, detection = {}, asset = {} }) {
       subject = `Impersonation / Deepfake Report — ${ctx.targeted_person || 'rights holder'}`;
       break;
   }
-  return { method: method || 'impersonation', platform, platformName, portal, subject, body };
+  return { method: method || 'impersonation', platform, platformName, portal, email, subject, body };
 }
 
 module.exports = { generate, PLATFORM_ABUSE };

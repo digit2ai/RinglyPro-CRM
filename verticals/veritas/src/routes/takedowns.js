@@ -118,8 +118,10 @@ router.get('/:id/letter', async (req, res) => {
       detection: detection ? detection.toJSON() : {},
       asset: asset ? asset.toJSON() : {}
     });
-    // mailto helper for the Apple-Mail magic-link pattern (no auto-send)
-    const mailto = `mailto:?subject=${encodeURIComponent(letter.subject)}&body=${encodeURIComponent(letter.body)}`;
+    // mailto helper for the Apple-Mail magic-link pattern (no auto-send).
+    // Pre-fills the platform's real DMCA agent inbox as the recipient.
+    const to = letter.email ? encodeURIComponent(letter.email) : '';
+    const mailto = `mailto:${to}?subject=${encodeURIComponent(letter.subject)}&body=${encodeURIComponent(letter.body)}`;
     res.json({ success: true, data: { ...letter, mailto, takedown_id: takedown.id } });
   } catch (e) {
     console.error('Veritas letter error:', e.message);

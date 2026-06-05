@@ -428,7 +428,7 @@ async function viewLetter(tdId){
   if(!res.success){ alert(res.error||'error'); return; }
   const d = res.data;
   document.getElementById('letterTitle').textContent = d.subject;
-  document.getElementById('letterMeta').textContent = `${d.platformName} · enviar en: ${d.portal}`;
+  document.getElementById('letterMeta').textContent = `${d.platformName} · correo: ${d.email || '(usar formulario)'} · formulario: ${d.portal}`;
   document.getElementById('letterBody').textContent = d.body;
   document.getElementById('letterMail').href = d.mailto;
   document.getElementById('letterMail').style.display = '';
