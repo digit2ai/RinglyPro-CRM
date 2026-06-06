@@ -43,12 +43,19 @@ router.get('/', (req, res) => {
   try {
     await sequelize.sync({ alter: false });
     console.log('  VERITAS database tables synced (df_*)');
-    try {
-      const result = await seedSampleData();
-      if (result.seeded) console.log(`  VERITAS seeded sample data (${result.detections} detections)`);
-      else console.log(`  VERITAS sample data present (${result.detections} detections)`);
-    } catch (seedErr) {
-      console.error('  VERITAS seed error:', seedErr.message);
+    // Demo seeding is OPT-IN. Set VERITAS_SEED_DEMO=1 to populate sample data.
+    // Default (unset) leaves the tenant clean for real scans — and never
+    // re-seeds on restart.
+    if (process.env.VERITAS_SEED_DEMO === '1') {
+      try {
+        const result = await seedSampleData();
+        if (result.seeded) console.log(`  VERITAS seeded sample data (${result.detections} detections)`);
+        else console.log(`  VERITAS sample data present (${result.detections} detections)`);
+      } catch (seedErr) {
+        console.error('  VERITAS seed error:', seedErr.message);
+      }
+    } else {
+      console.log('  VERITAS demo seeding disabled (set VERITAS_SEED_DEMO=1 to enable)');
     }
   } catch (err) {
     console.error('  VERITAS DB sync error:', err.message);

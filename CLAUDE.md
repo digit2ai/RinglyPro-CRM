@@ -220,6 +220,7 @@ TODO: wire actual Render cron jobs once first quarterly refresh window approache
 - `HIVE_API_KEY` / `REALITY_DEFENDER_API_KEY` — provider key for live detection (Phase 1).
 - `META_AD_LIBRARY_TOKEN` — Meta Graph token enabling real ad scanning in `services/adscan.js` (Phase 2). Unset = synthetic stub candidates.
 - `VERITAS_WEBHOOK_API_KEY` — secret validated on `POST /veritas/api/v1/webhooks/candidate`. When unset, auth is skipped (dev/demo).
+- `VERITAS_SEED_DEMO` — set to `1` to populate the demo tenant with sample Defensores detections/monitors/takedowns on boot. Default (unset) = NO seeding, and never re-seeds on restart (keeps the tenant clean for real scans).
 - `ELEVENLABS_CONVAI_VERITAS_EN` / `_ES` — convai "protection analyst" agent IDs (Phase 2; dedicated agents per the ringlypro_elevenlabs_agents rule).
 
 Full build status + remaining external dependencies (provider keys, AWS Rekognition for likeness, legal-reviewed templates) are tracked in `verticals/veritas/ECOSYSTEM.md`.
