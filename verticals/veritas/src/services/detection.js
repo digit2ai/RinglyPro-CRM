@@ -18,6 +18,12 @@ const path = require('path');
 
 const PROVIDER = process.env.VERITAS_DETECTION_PROVIDER || 'stub';
 
+// API keys pasted into env panels often pick up line-wraps / trailing spaces.
+// Strip ALL whitespace so a newline can't poison the X-API-KEY HTTP header.
+function rdKey() {
+  return (process.env.REALITY_DEFENDER_API_KEY || '').replace(/\s+/g, '');
+}
+
 // Normalize any provider's raw 0..1 score into a 0-100 confidence + verdict.
 function scoreToVerdict(rawScore) {
   const confidence = Math.round(rawScore * 100);
@@ -84,7 +90,7 @@ async function downloadToTemp(mediaUrl, mediaType) {
  * SDK result shape: { status: 'MANIPULATED'|'AUTHENTIC'|..., score: 0..1, models: [{name,status,score}] }
  */
 async function detectRealityDefender(input) {
-  const apiKey = process.env.REALITY_DEFENDER_API_KEY;
+  const apiKey = rdKey();
   if (!apiKey) return detectStub(input);
 
   let RealityDefender;
@@ -154,7 +160,7 @@ function diagnostics() {
 // Verbose RD self-test — surfaces the exact failing stage + error (no swallow).
 async function realityDefenderSelftest(testUrl) {
   const url = testUrl || 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Example.jpg';
-  const apiKey = process.env.REALITY_DEFENDER_API_KEY;
+  const apiKey = rdKey();
   if (!apiKey) return { ok: false, stage: 'key', error: 'REALITY_DEFENDER_API_KEY not present' };
   let RealityDefender;
   try { ({ RealityDefender } = require('@realitydefender/realitydefender')); }
