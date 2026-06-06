@@ -128,8 +128,17 @@ async function detectRealityDefender(input) {
       }
     };
   } catch (e) {
-    console.error('[Veritas] Reality Defender error:', e.message, '— falling back to stub.');
-    return detectStub(input);
+    // A per-image RD failure must NOT fabricate a verdict (the stub would invent
+    // a random score and could falsely flag a deepfake). Treat un-analyzable
+    // media as clean/0 with an error note so it never becomes a false positive.
+    console.error('[Veritas] Reality Defender error:', e.message, '— marking unanalyzable (clean).');
+    return {
+      provider: 'reality_defender',
+      rawScore: 0,
+      confidence: 0,
+      verdict: 'clean',
+      evidence: { error: e.message, note: 'No se pudo analizar este medio; no se marca como deepfake.' }
+    };
   } finally {
     if (tmp) { try { fs.unlinkSync(tmp); } catch (e) {} }
   }
