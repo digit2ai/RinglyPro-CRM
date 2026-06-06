@@ -14,7 +14,10 @@
   --flame-1:#ff3b1f; --flame-2:#ff7a00; --flame-3:#ffb800;
   --green:#22c55e; --text:#f6f8ff; --muted:#a9b4d6;
   font-family:'Manrope',system-ui,-apple-system,sans-serif; color:var(--text);
-  background:var(--navy-900); line-height:1.6; position:relative; overflow:hidden;
+  background:var(--navy-900); line-height:1.6;
+  /* Full-bleed: break out of GHL's boxed container so it spans edge-to-edge */
+  position:relative; left:50%; right:50%; width:100vw; max-width:100vw;
+  margin-left:-50vw; margin-right:-50vw; overflow:hidden;
   -webkit-font-smoothing:antialiased;
 }
 #vrt-lp *{box-sizing:border-box; margin:0; padding:0}
