@@ -6,7 +6,7 @@
 <!-- ====================================================================== -->
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-<div id="vrt-lp" class="en">
+<div id="vrt-lp" class="es">
 <style>
 #vrt-lp{
   --navy-900:#06102f; --navy-800:#0b1a47; --navy-700:#102258; --navy-600:#14306f;
@@ -108,6 +108,25 @@
   #vrt-lp .vlp-pillars,#vrt-lp .vlp-steps{grid-template-columns:1fr}
   #vrt-lp .vlp-stats .vlp-wrap{grid-template-columns:repeat(2,1fr); gap:26px}
 }
+@media(max-width:600px){
+  #vrt-lp .vlp-nav .vlp-wrap{padding:11px 14px; gap:10px; flex-wrap:wrap}
+  #vrt-lp .vlp-brand{font-size:20px}
+  #vrt-lp .vlp-navcta{padding:9px 14px; font-size:13px}
+  #vrt-lp .vlp-wrap{padding:0 16px}
+  #vrt-lp .vlp-hero{padding:46px 0 38px}
+  #vrt-lp .vlp-hero .vlp-wrap{gap:24px}
+  #vrt-lp .vlp-h1{font-size:clamp(33px,9vw,46px)}
+  #vrt-lp .vlp-lead{font-size:16px}
+  #vrt-lp .vlp-ctas{gap:10px}
+  #vrt-lp .vlp-btn{padding:13px 18px; font-size:14px; flex:1; justify-content:center}
+  #vrt-lp .vlp-card{padding:18px}
+  #vrt-lp .vlp-line{font-size:13px}
+  #vrt-lp .vlp-stats .vlp-wrap{padding:26px 16px; gap:20px}
+  #vrt-lp .vlp-stats .n{font-size:30px}
+  #vrt-lp .vlp-sec{padding:46px 0}
+  #vrt-lp .vlp-pillar{padding:22px}
+  #vrt-lp .vlp-band{padding:34px 20px}
+}
 </style>
 
 <!-- NAV -->
@@ -118,8 +137,8 @@
   </div>
   <div class="vlp-spacer"></div>
   <div class="vlp-lang">
-    <button class="on" onclick="vlpLang('en')" data-vlp="en">EN</button>
-    <button onclick="vlpLang('es')" data-vlp="es">ES</button>
+    <button onclick="vlpLang('en')" data-vlp="en">EN</button>
+    <button class="on" onclick="vlpLang('es')" data-vlp="es">ES</button>
   </div>
   <a href="https://aiagent.ringlypro.com/veritas/" target="_blank" rel="noopener" class="vlp-navcta"><span data-en>Open Console</span><span data-es>Abrir Consola</span></a>
 </div></nav>
@@ -210,8 +229,8 @@
     try{ localStorage.setItem('vrt_lang', l); }catch(e){}
   }
   window.vlpLang = vlpLang;
-  var saved='en';
-  try{ var s=localStorage.getItem('vrt_lang'); if(s){saved=s;} else if((navigator.language||'').toLowerCase().indexOf('es')===0){saved='es';} }catch(e){}
+  var saved='es';  // Spanish is the default; respects an explicit user choice
+  try{ var s=localStorage.getItem('vrt_lang'); if(s){saved=s;} }catch(e){}
   vlpLang(saved);
 })();
 </script>

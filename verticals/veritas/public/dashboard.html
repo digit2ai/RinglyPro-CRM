@@ -41,6 +41,34 @@ h1{font-size:26px;font-weight:800;margin:26px 0 4px}
 
 .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-top:22px}
 @media(max-width:960px){.grid{grid-template-columns:1fr}}
+@media(max-width:600px){
+  .wrap{padding:0 13px}
+  .topbar .wrap{padding:11px 13px;gap:9px;flex-wrap:wrap}
+  .brand{font-size:17px;gap:9px} .brand .mark{width:28px;height:28px}
+  .brand small{font-size:9px;letter-spacing:.12em}
+  .pill{font-size:10px;padding:5px 9px}
+  h1{font-size:21px;margin:18px 0 4px}
+  .sub{font-size:12px;margin-bottom:16px}
+  .cards{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:6px}
+  .stat{padding:13px;border-radius:12px}
+  .stat .n{font-size:23px} .stat .l{font-size:9px}
+  .scan{padding:16px;margin-top:16px} .scan h2{font-size:14px}
+  #scanBtn{width:100%;font-size:15px;padding:14px 16px}
+  #radarBox{width:140px}
+  .grid{gap:14px;margin-top:14px}
+  .panel{border-radius:13px}
+  .panel h2{padding:13px;font-size:13px;flex-wrap:wrap;gap:7px}
+  .panel h2 .tag{margin-left:0;width:100%}
+  table{font-size:11px}
+  th{padding:8px 11px;font-size:9px} td{padding:9px 11px}
+  .impact{max-width:none;font-size:11px}
+  .btn.sm{padding:6px 9px;font-size:10px}
+  .mon{padding:11px 13px;flex-wrap:wrap;gap:8px}
+  canvas{max-height:190px}
+  #letterModal{padding:10px}
+  #letterModal>div{max-height:92vh}
+  #letterBody{font-size:12px;padding:14px}
+}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 .panel h2{font-size:15px;font-weight:700;padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .panel h2 .tag{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600}
