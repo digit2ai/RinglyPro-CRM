@@ -137,4 +137,16 @@ async function detect(input) {
   }
 }
 
-module.exports = { detect, scoreToVerdict, activeProvider: () => PROVIDER };
+// Non-sensitive diagnostics to confirm a real provider is actually active.
+function diagnostics() {
+  let sdk_loadable = false;
+  try { require.resolve('@realitydefender/realitydefender'); sdk_loadable = true; } catch (e) {}
+  return {
+    provider: PROVIDER,
+    reality_defender_key_present: !!process.env.REALITY_DEFENDER_API_KEY,
+    reality_defender_sdk_installed: sdk_loadable,
+    search_configured: !!(process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX)
+  };
+}
+
+module.exports = { detect, scoreToVerdict, activeProvider: () => PROVIDER, diagnostics };

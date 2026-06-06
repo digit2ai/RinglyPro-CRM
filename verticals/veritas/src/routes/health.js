@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
     status: dbOk ? 'healthy' : 'degraded',
     db: dbOk,
     detection_provider: detection.activeProvider(),
+    detection: detection.diagnostics(),
     timestamp: new Date().toISOString()
   });
 });
