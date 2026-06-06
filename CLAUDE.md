@@ -220,6 +220,8 @@ TODO: wire actual Render cron jobs once first quarterly refresh window approache
 - `HIVE_API_KEY` / `REALITY_DEFENDER_API_KEY` — provider key for live detection (Phase 1).
 - `META_AD_LIBRARY_TOKEN` — Meta Graph token enabling real ad scanning in `services/adscan.js` (Phase 2). Unset = synthetic stub candidates.
 - `VERITAS_WEBHOOK_API_KEY` — secret validated on `POST /veritas/api/v1/webhooks/candidate`. When unset, auth is skipped (dev/demo).
+- `VERITAS_JWT_SECRET` — secret for signing the console login JWT (cookie `veritas_token`). Falls back to `JWT_SECRET` then a default. SET THIS on prod so tokens can't be forged.
+- `VERITAS_DEFAULT_PASSWORD` — shared password seeded for the 4 console operator accounts (mstagg@, lala@, abelardo@, eduardo@ digit2ai.com). Default `defensoresdelapatria@7`. Accounts live in `df_users`; login at `/veritas/login`, gate redirects unauthed users. Cookie is SameSite=None;Secure (works direct + best-effort in iframe; third-party-cookie blockers may require direct access).
 - `VERITAS_SEED_DEMO` — set to `1` to populate the demo tenant with sample Defensores detections/monitors/takedowns on boot. Default (unset) = NO seeding, and never re-seeds on restart (keeps the tenant clean for real scans).
 - `VERITAS_SEARCH_API_KEY` + `VERITAS_SEARCH_CX` — Google Custom Search API key + Search Engine ID. Powers the one-click "¡Veritas, por favor escanea ya!" button (`POST /veritas/api/v1/scan/now`): web image search for the candidate → Reality Defender on each result. When unset, the button returns a "configure search" message (no fake results). Free tier 100 queries/day.
 - `VERITAS_SCAN_QUERY` — the search term the scan button uses. Default `Abelardo de la Espriella`.

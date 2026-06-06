@@ -88,6 +88,17 @@ const Usage = sequelize.define('VeritasUsage', {
   takedowns_count: { type: DataTypes.INTEGER, defaultValue: 0 }
 }, { tableName: 'df_usage', timestamps: false, indexes: [{ fields: ['tenant_id'] }] });
 
+// ─── df_users ─────────────────────────────────────────────────────────────
+// Console operators (login accounts).
+const User = sequelize.define('VeritasUser', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
+  name: { type: DataTypes.STRING },
+  password_hash: { type: DataTypes.STRING, allowNull: false },
+  role: { type: DataTypes.STRING, defaultValue: 'operator' },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'df_users', timestamps: false });
+
 // Associations
 Monitor.hasMany(Asset, { foreignKey: 'monitor_id' });
 Asset.belongsTo(Monitor, { foreignKey: 'monitor_id' });
@@ -96,4 +107,4 @@ Detection.belongsTo(Asset, { foreignKey: 'asset_id' });
 Detection.hasMany(Takedown, { foreignKey: 'detection_id' });
 Takedown.belongsTo(Detection, { foreignKey: 'detection_id' });
 
-module.exports = { sequelize, Tenant, Monitor, Asset, Detection, Takedown, Usage };
+module.exports = { sequelize, Tenant, Monitor, Asset, Detection, Takedown, Usage, User };
