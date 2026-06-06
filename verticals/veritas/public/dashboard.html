@@ -321,9 +321,9 @@ async function loadDetections(){
     DETECTIONS[d.id] = d;
     const asset = d.VeritasAsset || {};
     const hasTd = d.VeritasTakedowns && d.VeritasTakedowns.length;
-    const action = d.verdict === 'clean' ? '<span style="color:var(--muted);font-size:12px">—</span>'
-      : hasTd ? '<span style="color:var(--muted);font-size:12px">solicitado</span>'
-      : `<button class="btn sm" onclick="event.stopPropagation();fileTakedown(${d.id})">Solicitar retiro</button>`;
+    const action = d.verdict === 'clean'
+      ? '<span style="color:var(--muted);font-size:12px">—</span>'
+      : `<button class="btn sm" onclick="event.stopPropagation();reportByEmail(${d.id})" title="Crear retiro y abrir correo pre-rellenado">Reportar por correo</button>`;
     return `<tr style="cursor:pointer" onclick="viewEvidence(${d.id})" title="Ver evidencia">
       <td><span class="badge b-${d.verdict}">${VERDICT_ES[d.verdict]||d.verdict}</span></td>
       <td class="conf">${d.confidence}%</td>
@@ -431,6 +431,21 @@ async function fileTakedown(detId){
   await j(`${API}/takedowns`, {method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({tenant_id:TENANT, detection_id:detId, method:'impersonation'})});
   await Promise.all([loadDetections(), loadTakedowns(), loadStats()]);
+}
+
+// One click on a fake -> create a takedown (for tracking) + open the pre-filled
+// email to that platform's abuse/DMCA contact, ready to send.
+async function reportByEmail(detId){
+  const d = DETECTIONS[detId];
+  let tdId = d && d.VeritasTakedowns && d.VeritasTakedowns[0] && d.VeritasTakedowns[0].id;
+  if(!tdId){
+    const r = await j(`${API}/takedowns`, {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tenant_id:TENANT, detection_id:detId, method:'impersonation'})});
+    if(!r.success){ alert(r.error||'error'); return; }
+    tdId = r.data.id;
+    await Promise.all([loadDetections(), loadTakedowns(), loadStats()]);
+  }
+  await viewLetter(tdId);  // opens modal with recipient email + body + "Abrir en Mail"
 }
 
 async function advance(id,status){
