@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root{
   --bg:#0b0f1a; --panel:#121829; --panel-2:#0e1424; --border:#1e2740;
@@ -169,14 +170,14 @@ tr:hover td{background:rgba(34,211,238,.03)}
   </div>
 
   <!-- Analítica -->
-  <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:22px">
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:22px">
     <div class="panel">
-      <h2>Detecciones en el tiempo</h2>
-      <div style="padding:18px"><canvas id="chartTime" height="120"></canvas></div>
+      <h2>Nivel de riesgo <span class="tag" id="riskTag"></span></h2>
+      <div style="padding:18px"><canvas id="chartRisk" height="150"></canvas></div>
     </div>
     <div class="panel">
-      <h2>Distribución de veredictos</h2>
-      <div style="padding:18px"><canvas id="chartVerdict" height="120"></canvas></div>
+      <h2>Embudo de protección</h2>
+      <div style="padding:18px"><canvas id="chartFunnel" height="150"></canvas></div>
     </div>
   </div>
 
@@ -320,31 +321,56 @@ let DETECTIONS = {};
 let CHARTS = {};
 async function loadCharts(){
   if(typeof Chart === 'undefined') return;
-  const res = await j(`${API}/detections/timeline?tenant_id=${TENANT}`);
-  const d = res.data || { byDay:[], byVerdict:{} };
+  if(window.ChartDataLabels){ try{ Chart.register(window.ChartDataLabels); }catch(e){} }
   const axis='#8a96b8', grid='#1e2740';
+
+  // Pull live data: summary + all detections (for per-item confidence bands)
+  const s = ((await j(`${API}/detections/summary?tenant_id=${TENANT}`)).data) || {};
+  const dets = ((await j(`${API}/detections?tenant_id=${TENANT}`)).data) || [];
+
+  // Risk bands by confidence
+  let alto=0, medio=0, bajo=0;
+  dets.forEach(d=>{ if(d.confidence>=75) alto++; else if(d.confidence>=45) medio++; else bajo++; });
+  document.getElementById('riskTag').textContent = alto>0 ? (alto+' de alto riesgo') : 'sin amenazas críticas';
+
+  // Protection funnel
+  const analizadas = s.total_scanned || dets.length || 0;
+  const amenazas   = (s.deepfakes_detected||0) + (s.suspect||0);
+  const reportadas = (s.takedowns_active||0) + (s.takedowns_removed||0);
+  const eliminadas = s.takedowns_removed || 0;
+
   Object.values(CHARTS).forEach(c=>{try{c.destroy()}catch(e){}}); CHARTS={};
 
-  const t = document.getElementById('chartTime');
-  if(t){
-    CHARTS.time = new Chart(t.getContext('2d'), {
-      type:'line',
-      data:{ labels:d.byDay.map(x=>x.date), datasets:[
-        {label:'Todas las detecciones', data:d.byDay.map(x=>x.total), borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,.12)', fill:true, tension:.3, pointRadius:3},
-        {label:'Deepfakes', data:d.byDay.map(x=>x.deepfake), borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.10)', fill:true, tension:.3, pointRadius:3}
-      ]},
-      options:{responsive:true, plugins:{legend:{labels:{color:axis,font:{size:11}}}},
-        scales:{x:{ticks:{color:axis,font:{size:10}},grid:{color:grid}},y:{beginAtZero:true,ticks:{color:axis,font:{size:10},precision:0},grid:{color:grid}}}}
+  const barLabel = {color:'#e7ecf9', font:{size:12,weight:'bold'}, anchor:'end', align:'end', offset:4, clamp:true, formatter:v=>v};
+  const baseOpts = {
+    indexAxis:'y', responsive:true, maintainAspectRatio:true,
+    layout:{padding:{right:26}},
+    plugins:{ legend:{display:false}, datalabels:barLabel,
+      tooltip:{callbacks:{label:c=>' '+c.parsed.x}} },
+    scales:{ x:{beginAtZero:true,ticks:{color:axis,font:{size:10},precision:0},grid:{color:grid}},
+             y:{ticks:{color:axis,font:{size:12}},grid:{display:false}} }
+  };
+
+  // Chart 1 — risk severity (how dangerous are the threats)
+  const r = document.getElementById('chartRisk');
+  if(r){
+    CHARTS.risk = new Chart(r.getContext('2d'), {
+      type:'bar',
+      data:{ labels:['Alto (≥75%)','Medio (45–74%)','Bajo (<45%)'],
+        datasets:[{ data:[alto,medio,bajo], backgroundColor:['#ef4444','#f59e0b','#22c55e'], borderRadius:6, barThickness:30 }]},
+      options: baseOpts
     });
   }
-  const v = document.getElementById('chartVerdict');
-  if(v){
-    CHARTS.verdict = new Chart(v.getContext('2d'), {
-      type:'doughnut',
-      data:{ labels:['Auténtico','Sospechoso','Deepfake'], datasets:[{
-        data:[d.byVerdict.clean||0, d.byVerdict.suspect||0, d.byVerdict.deepfake||0],
-        backgroundColor:['#22c55e','#f59e0b','#ef4444'], borderColor:'#121829', borderWidth:2 }]},
-      options:{responsive:true, plugins:{legend:{position:'bottom',labels:{color:axis,font:{size:11}}}}}
+
+  // Chart 2 — protection funnel (what we've acted on)
+  const f = document.getElementById('chartFunnel');
+  if(f){
+    CHARTS.funnel = new Chart(f.getContext('2d'), {
+      type:'bar',
+      data:{ labels:['Analizadas','Amenazas','Reportadas','Eliminadas'],
+        datasets:[{ data:[analizadas,amenazas,reportadas,eliminadas],
+          backgroundColor:['#22d3ee','#f59e0b','#8b5cf6','#22c55e'], borderRadius:6, barThickness:24 }]},
+      options: baseOpts
     });
   }
 }
