@@ -96,21 +96,44 @@ tr:hover td{background:rgba(34,211,238,.03)}
 
   <div class="cards" id="statCards"></div>
 
-  <!-- Análisis bajo demanda -->
-  <div class="scan">
-    <h2 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px">¿A quién debemos revisar?</h2>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px">Pega el enlace a un video, imagen o audio y ejecuta un análisis instantáneo.</div>
-    <div class="row">
-      <input id="scanUrl" placeholder="https://facebook.com/... o pega cualquier URL de medios" />
-      <select id="scanType">
-        <option value="video">Video</option>
-        <option value="image">Imagen</option>
-        <option value="audio">Audio</option>
-      </select>
-      <input id="scanWho" placeholder="¿A quién suplantan? (opcional)" style="min-width:160px;flex:0 0 200px" />
-      <button class="btn" onclick="runScan()">Ejecutar análisis</button>
+  <!-- Escaneo de un clic -->
+  <div class="scan" style="text-align:center">
+    <h2 style="font-size:16px;font-weight:800;justify-content:center;display:flex;gap:8px">Monitoreo de Abelardo de la Espriella</h2>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px">Veritas busca imágenes del candidato en la web y detecta deepfakes automáticamente.</div>
+
+    <div id="radarBox" style="display:none;margin:22px auto 6px;width:170px">
+      <svg viewBox="0 0 120 120" width="150" height="150" aria-hidden="true">
+        <defs>
+          <radialGradient id="rdrDisc" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0b1f3a"/><stop offset="1" stop-color="#05101f"/></radialGradient>
+          <linearGradient id="rdrSweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee" stop-opacity="0"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".85"/></linearGradient>
+        </defs>
+        <circle cx="60" cy="60" r="58" fill="url(#rdrDisc)" stroke="rgba(34,211,238,.35)" stroke-width="1"/>
+        <g stroke="#22d3ee" stroke-opacity=".25" fill="none" stroke-width="1">
+          <circle cx="60" cy="60" r="18"/><circle cx="60" cy="60" r="36"/><circle cx="60" cy="60" r="54"/>
+          <line x1="2" y1="60" x2="118" y2="60"/><line x1="60" y1="2" x2="60" y2="118"/>
+        </g>
+        <circle cx="60" cy="60" r="0" fill="none" stroke="#22d3ee" stroke-width="2">
+          <animate attributeName="r" values="2;56" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".8;0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="60" cy="60" r="0" fill="none" stroke="#8b5cf6" stroke-width="2">
+          <animate attributeName="r" values="2;56" dur="2s" begin="1s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".7;0" dur="2s" begin="1s" repeatCount="indefinite"/>
+        </circle>
+        <g>
+          <path d="M60 60 L60 4 A56 56 0 0 1 100 22 Z" fill="url(#rdrSweep)"/>
+          <line x1="60" y1="60" x2="60" y2="4" stroke="#67e8f9" stroke-width="1.6"/>
+          <animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="1.8s" repeatCount="indefinite"/>
+        </g>
+        <circle cx="60" cy="60" r="3" fill="#22d3ee"/>
+        <circle cx="86" cy="40" r="2.4" fill="#a7f3d0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.1;0.15;0.45;1" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="40" cy="82" r="2" fill="#67e8f9"><animate attributeName="opacity" values="0;0;1;0" keyTimes="0;0.6;0.66;0.95" dur="1.8s" repeatCount="indefinite"/></circle>
+      </svg>
+      <div id="radarStatus" style="font-size:13px;color:var(--cyan);font-weight:700;letter-spacing:.03em;margin-top:4px">Veritas está escaneando la web…</div>
     </div>
-    <div id="scanResult"></div>
+
+    <button id="scanBtn" class="btn" style="margin-top:18px;font-size:16px;padding:15px 30px;box-shadow:0 10px 30px rgba(34,211,238,.25)" onclick="scanNow()">¡Veritas, por favor escanea ya!</button>
+    <div id="scanResult" style="margin-top:14px"></div>
   </div>
 
   <!-- Analítica -->
@@ -436,24 +459,37 @@ async function viewLetter(tdId){
 }
 function closeLetter(){ document.getElementById('letterModal').style.display='none'; }
 
-async function runScan(){
-  const url = document.getElementById('scanUrl').value.trim();
-  const media_type = document.getElementById('scanType').value;
-  const who = document.getElementById('scanWho').value.trim();
+async function scanNow(){
+  const btn = document.getElementById('scanBtn');
+  const radar = document.getElementById('radarBox');
   const out = document.getElementById('scanResult');
-  if(!url){ out.innerHTML = '<span style="color:var(--amber)">Primero ingresa una URL de medios.</span>'; return; }
-  out.innerHTML = 'Analizando…';
-  const res = await j(`${API}/scan`, {method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({tenant_id:TENANT, url, media_type, targeted_person:who})});
-  if(res.success){
-    const d = res.data;
-    out.innerHTML = `<span class="badge b-${d.verdict}">${VERDICT_ES[d.verdict]||d.verdict}</span>
-      <strong style="margin-left:8px">${d.confidence}% de confianza</strong>
-      <span style="color:var(--muted)"> · motor ${d.provider}</span>`;
-    document.getElementById('scanUrl').value='';
-    await Promise.all([loadDetections(), loadStats(), loadCharts()]);
-  } else {
-    out.innerHTML = '<span style="color:var(--red)">'+esc(res.error||'error')+'</span>';
+  btn.style.display = 'none';
+  radar.style.display = 'block';
+  out.innerHTML = '';
+  try {
+    const res = await j(`${API}/scan/now`, {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tenant_id:TENANT})});
+    radar.style.display = 'none';
+    btn.style.display = '';
+    if(res.success){
+      const d = res.data;
+      if(d.configured === false){
+        out.innerHTML = '<span style="color:var(--amber)">'+esc(d.message)+'</span>';
+        return;
+      }
+      out.innerHTML = `<strong>Escaneo completo</strong> · ${d.scanned} imagen(es) analizada(s) · `
+        + `<span style="color:var(--red);font-weight:700">${d.deepfake} deepfake(s)</span>, `
+        + `${d.suspect} sospechoso(s), ${d.clean} auténtico(s)`
+        + (d.skipped ? ` · ${d.skipped} ya revisadas` : '')
+        + ` <span style="color:var(--muted)">· motor ${d.provider}</span>`;
+      await Promise.all([loadDetections(), loadStats(), loadCharts()]);
+    } else {
+      out.innerHTML = '<span style="color:var(--red)">'+esc(res.error||'error')+'</span>';
+    }
+  } catch(e){
+    radar.style.display = 'none';
+    btn.style.display = '';
+    out.innerHTML = '<span style="color:var(--red)">'+esc(e.message)+'</span>';
   }
 }
 
