@@ -151,7 +151,9 @@ function diagnostics() {
     provider: PROVIDER,
     reality_defender_key_present: !!process.env.REALITY_DEFENDER_API_KEY,
     reality_defender_sdk_installed: sdk_loadable,
-    search_configured: !!(process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX),
+    search_configured: !!(process.env.BRAVE_SEARCH_API_KEY || (process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX)),
+    search_brave: !!process.env.BRAVE_SEARCH_API_KEY,
+    search_google: !!(process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX),
     node_version: process.version,
     global_fetch: typeof fetch !== 'undefined'
   };

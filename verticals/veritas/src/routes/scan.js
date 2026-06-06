@@ -13,21 +13,43 @@ function tenantId(req) {
 const SCAN_QUERY = process.env.VERITAS_SCAN_QUERY || 'Abelardo de la Espriella';
 const MAX_MEDIA_PER_SCAN = parseInt(process.env.VERITAS_SCAN_MAX || '10', 10);
 
-// Web image search via Google Custom Search (reliable; free tier 100/day).
-// Returns absolute image URLs for the query. Requires VERITAS_SEARCH_API_KEY + _CX.
+// Web image search. Prefers Brave (likely already configured project-wide via
+// BRAVE_SEARCH_API_KEY); falls back to Google Custom Search. Whitespace-stripped
+// keys so a wrapped paste can't corrupt the request.
 async function searchImages(query, count) {
-  // Strip whitespace/newlines so a wrapped paste can't corrupt the request.
-  const key = (process.env.VERITAS_SEARCH_API_KEY || '').replace(/\s+/g, '');
-  const cx = (process.env.VERITAS_SEARCH_CX || '').replace(/\s+/g, '');
-  if (!key || !cx) return { configured: false, urls: [] };
-  const u = 'https://www.googleapis.com/customsearch/v1?searchType=image&num=' +
-    Math.min(count, 10) + '&key=' + encodeURIComponent(key) + '&cx=' + encodeURIComponent(cx) +
-    '&q=' + encodeURIComponent(query);
-  const r = await fetch(u);
-  if (!r.ok) throw new Error('search HTTP ' + r.status);
-  const j = await r.json();
-  const urls = (j.items || []).map(it => it.link).filter(Boolean);
-  return { configured: true, urls };
+  const brave = (process.env.BRAVE_SEARCH_API_KEY || '').replace(/\s+/g, '');
+  const gKey = (process.env.VERITAS_SEARCH_API_KEY || '').replace(/\s+/g, '');
+  const gCx = (process.env.VERITAS_SEARCH_CX || '').replace(/\s+/g, '');
+
+  // 1) Brave image search
+  if (brave) {
+    try {
+      const u = 'https://api.search.brave.com/res/v1/images/search?count=' +
+        Math.min(count, 20) + '&q=' + encodeURIComponent(query);
+      const r = await fetch(u, { headers: { 'X-Subscription-Token': brave, 'Accept': 'application/json' } });
+      if (r.ok) {
+        const j = await r.json();
+        const urls = (j.results || [])
+          .map(it => (it.properties && it.properties.url) || (it.thumbnail && it.thumbnail.src))
+          .filter(Boolean);
+        if (urls.length) return { configured: true, source: 'brave', urls };
+      }
+    } catch (e) { /* fall through to Google */ }
+  }
+
+  // 2) Google Custom Search
+  if (gKey && gCx) {
+    const u = 'https://www.googleapis.com/customsearch/v1?searchType=image&num=' +
+      Math.min(count, 10) + '&key=' + encodeURIComponent(gKey) + '&cx=' + encodeURIComponent(gCx) +
+      '&q=' + encodeURIComponent(query);
+    const r = await fetch(u);
+    if (!r.ok) throw new Error('Google search HTTP ' + r.status);
+    const j = await r.json();
+    const urls = (j.items || []).map(it => it.link).filter(Boolean);
+    return { configured: true, source: 'google', urls };
+  }
+
+  return { configured: false, urls: [] };
 }
 
 // GET /api/v1/scan/rd-selftest — verbose Reality Defender pipeline test
