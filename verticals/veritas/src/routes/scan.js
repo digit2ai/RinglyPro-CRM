@@ -29,6 +29,16 @@ async function searchImages(query, count) {
   return { configured: true, urls };
 }
 
+// GET /api/v1/scan/rd-selftest — verbose Reality Defender pipeline test
+router.get('/rd-selftest', async (req, res) => {
+  try {
+    const result = await detection.realityDefenderSelftest(req.query.url);
+    res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // POST /api/v1/scan/now — one-click: search the web for the candidate's images,
 // run each through the detection engine, surface any deepfakes.
 router.post('/now', async (req, res) => {

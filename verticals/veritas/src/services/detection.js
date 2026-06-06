@@ -145,8 +145,32 @@ function diagnostics() {
     provider: PROVIDER,
     reality_defender_key_present: !!process.env.REALITY_DEFENDER_API_KEY,
     reality_defender_sdk_installed: sdk_loadable,
-    search_configured: !!(process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX)
+    search_configured: !!(process.env.VERITAS_SEARCH_API_KEY && process.env.VERITAS_SEARCH_CX),
+    node_version: process.version,
+    global_fetch: typeof fetch !== 'undefined'
   };
 }
 
-module.exports = { detect, scoreToVerdict, activeProvider: () => PROVIDER, diagnostics };
+// Verbose RD self-test — surfaces the exact failing stage + error (no swallow).
+async function realityDefenderSelftest(testUrl) {
+  const url = testUrl || 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Example.jpg';
+  const apiKey = process.env.REALITY_DEFENDER_API_KEY;
+  if (!apiKey) return { ok: false, stage: 'key', error: 'REALITY_DEFENDER_API_KEY not present' };
+  let RealityDefender;
+  try { ({ RealityDefender } = require('@realitydefender/realitydefender')); }
+  catch (e) { return { ok: false, stage: 'sdk', error: e.message }; }
+  let tmp;
+  try { tmp = await downloadToTemp(url, 'image'); }
+  catch (e) { return { ok: false, stage: 'download', error: e.message }; }
+  try {
+    const client = new RealityDefender({ apiKey });
+    const r = await client.detect({ filePath: tmp });
+    return { ok: true, status: r.status, score: r.score };
+  } catch (e) {
+    return { ok: false, stage: 'detect', error: e.message, code: e.code || null };
+  } finally {
+    if (tmp) { try { fs.unlinkSync(tmp); } catch (e) {} }
+  }
+}
+
+module.exports = { detect, scoreToVerdict, activeProvider: () => PROVIDER, diagnostics, realityDefenderSelftest };
