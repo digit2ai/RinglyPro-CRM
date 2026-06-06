@@ -49,6 +49,23 @@ async function searchImages(query, count) {
     return { configured: true, source: 'google', urls };
   }
 
+  // 3) Keyless fallback: DuckDuckGo image search (no API key required)
+  try {
+    const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36';
+    const tRes = await fetch('https://duckduckgo.com/?q=' + encodeURIComponent(query) + '&iax=images&ia=images', { headers: { 'User-Agent': UA } });
+    const tHtml = await tRes.text();
+    const m = tHtml.match(/vqd=["']?([0-9-]{10,})/);
+    if (m) {
+      const r = await fetch('https://duckduckgo.com/i.js?l=us-en&o=json&q=' + encodeURIComponent(query) + '&vqd=' + m[1] + '&f=,,,&p=1',
+        { headers: { 'User-Agent': UA, 'Referer': 'https://duckduckgo.com/' } });
+      if (r.ok) {
+        const j = await r.json();
+        const urls = (j.results || []).map(it => it.image).filter(Boolean).slice(0, count);
+        if (urls.length) return { configured: true, source: 'duckduckgo', urls };
+      }
+    }
+  } catch (e) { /* no source available */ }
+
   return { configured: false, urls: [] };
 }
 
@@ -86,39 +103,48 @@ router.post('/now', async (req, res) => {
     }
 
     let scanned = 0, deepfake = 0, suspect = 0, clean = 0, skipped = 0;
-    const items = [];
+
+    // Dedupe first (never re-scan a URL already analyzed — protects RD credits).
+    const fresh = [];
     for (const url of search.urls) {
       const existing = await Asset.findOne({ where: { tenant_id: tid, source_url: url } });
-      if (existing) { skipped++; continue; }
+      if (existing) skipped++; else fresh.push(url);
+    }
 
-      let result;
-      try { result = await detection.detect({ mediaUrl: url, mediaType: 'image' }); }
-      catch (e) { skipped++; continue; }
+    // Run detections in parallel so a 10-image scan finishes in ~one round-trip.
+    const items = await Promise.all(fresh.map(async (url) => {
+      try {
+        const result = await detection.detect({ mediaUrl: url, mediaType: 'image' });
+        const asset = await Asset.create({
+          tenant_id: tid, source_platform: 'web', source_url: url, media_type: 'image',
+          raw_meta: { web_scan: true, query, source: search.source }
+        });
+        await Detection.create({
+          tenant_id: tid, asset_id: asset.id, provider: result.provider,
+          provider_score: result.rawScore, confidence: result.confidence, verdict: result.verdict,
+          targeted_person: query,
+          deepfakes_impact: result.verdict === 'clean'
+            ? 'Sin manipulación detectada.'
+            : `Posible ${result.verdict} hallado en la web (${result.confidence}%).`,
+          evidence: result.evidence
+        });
+        return { url, verdict: result.verdict, confidence: result.confidence };
+      } catch (e) { return null; }
+    }));
 
-      const asset = await Asset.create({
-        tenant_id: tid, source_platform: 'web', source_url: url, media_type: 'image',
-        raw_meta: { web_scan: true, query }
-      });
-      await Detection.create({
-        tenant_id: tid, asset_id: asset.id, provider: result.provider,
-        provider_score: result.rawScore, confidence: result.confidence, verdict: result.verdict,
-        targeted_person: query,
-        deepfakes_impact: result.verdict === 'clean'
-          ? 'Sin manipulación detectada.'
-          : `Posible ${result.verdict} hallado en la web (${result.confidence}%).`,
-        evidence: result.evidence
-      });
+    for (const it of items) {
+      if (!it) { skipped++; continue; }
       scanned++;
-      if (result.verdict === 'deepfake') deepfake++;
-      else if (result.verdict === 'suspect') suspect++;
+      if (it.verdict === 'deepfake') deepfake++;
+      else if (it.verdict === 'suspect') suspect++;
       else clean++;
-      items.push({ url, verdict: result.verdict, confidence: result.confidence });
     }
 
     res.json({
       success: true,
-      data: { configured: true, query, provider: detection.activeProvider(),
-              found: search.urls.length, scanned, skipped, deepfake, suspect, clean, items }
+      data: { configured: true, query, provider: detection.activeProvider(), source: search.source,
+              found: search.urls.length, scanned, skipped, deepfake, suspect, clean,
+              items: items.filter(Boolean) }
     });
   } catch (e) {
     console.error('Veritas scan/now error:', e.message);
