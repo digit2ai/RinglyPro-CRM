@@ -16,8 +16,9 @@ const MAX_MEDIA_PER_SCAN = parseInt(process.env.VERITAS_SCAN_MAX || '10', 10);
 // Web image search via Google Custom Search (reliable; free tier 100/day).
 // Returns absolute image URLs for the query. Requires VERITAS_SEARCH_API_KEY + _CX.
 async function searchImages(query, count) {
-  const key = process.env.VERITAS_SEARCH_API_KEY;
-  const cx = process.env.VERITAS_SEARCH_CX;
+  // Strip whitespace/newlines so a wrapped paste can't corrupt the request.
+  const key = (process.env.VERITAS_SEARCH_API_KEY || '').replace(/\s+/g, '');
+  const cx = (process.env.VERITAS_SEARCH_CX || '').replace(/\s+/g, '');
   if (!key || !cx) return { configured: false, urls: [] };
   const u = 'https://www.googleapis.com/customsearch/v1?searchType=image&num=' +
     Math.min(count, 10) + '&key=' + encodeURIComponent(key) + '&cx=' + encodeURIComponent(cx) +
