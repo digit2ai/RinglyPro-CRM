@@ -47,6 +47,11 @@ async function showApp() {
   // ('token'), so users with an existing Hub session also skip the CRM login.
   if (TOKEN) localStorage.setItem('token', TOKEN);
 
+  // Restore RinglyPro group collapse state (collapsed by default).
+  if (typeof toggleRinglyProGroup === 'function') {
+    toggleRinglyProGroup(localStorage.getItem('d2ai_rp_open') === '1');
+  }
+
   // Resolve role + apply per-role nav restrictions before loading anything heavy
   let role = 'admin';
   try {
@@ -254,6 +259,19 @@ function openCrmEmbed(url, title, el) {
     </div>`;
 }
 window.openCrmEmbed = openCrmEmbed;
+
+// Collapsible RinglyPro nav group. Collapsed by default; state persists.
+function toggleRinglyProGroup(forceOpen) {
+  const items = document.querySelectorAll('.rp-item');
+  const caret = document.getElementById('rp-caret');
+  const open = typeof forceOpen === 'boolean'
+    ? forceOpen
+    : !(items[0] && items[0].style.display !== 'none');
+  items.forEach(li => { li.style.display = open ? '' : 'none'; });
+  if (caret) caret.innerHTML = open ? '&#9662;' : '&#9656;'; // ▾ / ▸
+  try { localStorage.setItem('d2ai_rp_open', open ? '1' : '0'); } catch (e) {}
+}
+window.toggleRinglyProGroup = toggleRinglyProGroup;
 
 // =====================================================
 // OVERVIEW / DASHBOARD

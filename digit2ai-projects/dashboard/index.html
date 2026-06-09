@@ -51,26 +51,20 @@
           <li data-view="tasks"><span class="nav-text">To-Do List</span></li>
           <li data-view="minutes"><span class="nav-text">Meeting Minutes</span></li>
           <li data-view="staff"><span class="nav-text">Staff & Roles</span></li>
-          <li data-view="notifications"><span class="nav-text">Alerts</span><span id="notif-badge" class="badge hidden">0</span></li>
-          <li data-view="ai"><span class="nav-text">Ask AI</span></li>
-          <li data-view="activity"><span class="nav-text">History</span></li>
           <li data-view="settings"><span class="nav-text">Settings</span></li>
           <li class="nav-divider"></li>
-          <li style="padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);pointer-events:none">RinglyPro</li>
-          <li onclick="openCrmEmbed('/neural/intelligence.html','Neural Intelligence', this)" style="cursor:pointer"><span class="nav-text">Neural Intelligence</span></li>
-          <li onclick="openCrmEmbed('/?section=today','Calls & Calendar', this)" style="cursor:pointer"><span class="nav-text">Calls &amp; Calendar</span></li>
-          <li onclick="openCrmEmbed('/?section=followups','Follow-ups', this)" style="cursor:pointer"><span class="nav-text">Follow-ups</span></li>
-          <li onclick="openCrmEmbed('/crm/tasks.html','CRM Tasks', this)" style="cursor:pointer"><span class="nav-text">CRM Tasks</span></li>
-          <li onclick="openCrmEmbed('/crm/pipeline.html','Pipeline', this)" style="cursor:pointer"><span class="nav-text">Pipeline</span></li>
-          <li onclick="openCrmEmbed('/mcp-copilot/index.html','Business Copilot', this)" style="cursor:pointer"><span class="nav-text">Business Copilot</span></li>
-          <li onclick="openCrmEmbed('/mcp-copilot/prospect-manager.html','Prospect Manager', this)" style="cursor:pointer"><span class="nav-text">Prospect Manager</span></li>
-          <li onclick="openCrmEmbed('/mcp-copilot/press-release-manager.html','Press Release Manager', this)" style="cursor:pointer"><span class="nav-text">Press Releases</span></li>
-          <li onclick="openCrmEmbed('/admin-client-manager.html','Client Manager', this)" style="cursor:pointer"><span class="nav-text">Client Manager</span></li>
-          <li onclick="openCrmEmbed('/crm/agent.html?crm=ghl','GoHighLevel', this)" style="cursor:pointer"><span class="nav-text">GoHighLevel</span></li>
-          <li onclick="openCrmEmbed('/crm/agent.html?crm=hubspot','HubSpot', this)" style="cursor:pointer"><span class="nav-text">HubSpot</span></li>
-          <li onclick="openCrmEmbed('/crm/agent.html?crm=zoho','Zoho CRM', this)" style="cursor:pointer"><span class="nav-text">Zoho CRM</span></li>
-          <li class="nav-divider"></li>
-          <li onclick="window.open('/verticals/','_blank')" style="cursor:pointer"><span class="nav-text">Verticals</span></li>
+          <li id="rp-group-toggle" onclick="toggleRinglyProGroup()" style="cursor:pointer;padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between"><span>RinglyPro</span><span id="rp-caret">&#9656;</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/neural/intelligence.html','Neural Intelligence', this)" style="cursor:pointer;display:none"><span class="nav-text">Neural Intelligence</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/?section=today','Calls & Calendar', this)" style="cursor:pointer;display:none"><span class="nav-text">Calls &amp; Calendar</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/?section=followups','Follow-ups', this)" style="cursor:pointer;display:none"><span class="nav-text">Follow-ups</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/crm/tasks.html','CRM Tasks', this)" style="cursor:pointer;display:none"><span class="nav-text">CRM Tasks</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/crm/pipeline.html','Pipeline', this)" style="cursor:pointer;display:none"><span class="nav-text">Pipeline</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/mcp-copilot/index.html','Business Copilot', this)" style="cursor:pointer;display:none"><span class="nav-text">Business Copilot</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/mcp-copilot/prospect-manager.html','Prospect Manager', this)" style="cursor:pointer;display:none"><span class="nav-text">Prospect Manager</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/mcp-copilot/press-release-manager.html','Press Release Manager', this)" style="cursor:pointer;display:none"><span class="nav-text">Press Releases</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/admin-client-manager.html','Client Manager', this)" style="cursor:pointer;display:none"><span class="nav-text">Client Manager</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/crm/agent.html?crm=ghl','GoHighLevel', this)" style="cursor:pointer;display:none"><span class="nav-text">GoHighLevel</span></li>
+          <li class="rp-item" onclick="openCrmEmbed('/crm/agent.html?crm=hubspot','HubSpot', this)" style="cursor:pointer;display:none"><span class="nav-text">HubSpot</span></li>
         </ul>
         <div class="sidebar-footer">
           <div id="user-info" class="user-info"></div>
