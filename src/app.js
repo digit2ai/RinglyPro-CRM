@@ -907,6 +907,11 @@ const callReportRoutes = require('./routes/call-report');
 app.use('/api/call-report', callReportRoutes);
 console.log('📊 Call Report routes mounted at /api/call-report');
 
+// Projects-Bridge routes — surfaces client-15 calls/messages/follow-ups into /projects Hub
+const projectsBridgeRoutes = require('./routes/projects-bridge');
+app.use('/api/projects-bridge', projectsBridgeRoutes);
+console.log('🔗 Projects-Bridge routes mounted at /api/projects-bridge (client 15)');
+
 // RinglyPro Neural Intelligence routes
 let neuralRoutes = null;
 try {

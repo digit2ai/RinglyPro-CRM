@@ -43,6 +43,10 @@ async function showApp() {
   document.getElementById('main-app').classList.remove('hidden');
   document.getElementById('user-info').textContent = USER?.email || '';
 
+  // Single sign-on: mirror the Hub's CRM JWT into the key embedded CRM pages read
+  // ('token'), so users with an existing Hub session also skip the CRM login.
+  if (TOKEN) localStorage.setItem('token', TOKEN);
+
   // Resolve role + apply per-role nav restrictions before loading anything heavy
   let role = 'admin';
   try {
@@ -112,6 +116,10 @@ async function doLogin() {
       USER = { email: data.user?.email || email, name: data.user?.businessName || email };
       localStorage.setItem('d2ai_token', TOKEN);
       localStorage.setItem('d2ai_user', JSON.stringify(USER));
+      // Single sign-on: the Hub authenticates against the main CRM (/api/auth/login),
+      // so this token is a valid CRM JWT. Mirror it into the key the embedded CRM
+      // pages read ('token') so Call Management / Messages etc. don't re-prompt.
+      localStorage.setItem('token', TOKEN);
       showApp();
     } else {
       errEl.textContent = data.error || data.message || 'Login failed';
@@ -126,6 +134,7 @@ function logout() {
   USER = null;
   localStorage.removeItem('d2ai_token');
   localStorage.removeItem('d2ai_user');
+  localStorage.removeItem('token'); // also clear the mirrored CRM SSO token
   showLogin();
 }
 
@@ -165,7 +174,7 @@ function navigateTo(view, opts) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', inbox: 'Project Request Inbox', contacts: 'People & Pipeline', projects: 'My Projects',
+    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -179,6 +188,7 @@ async function renderView(view) {
   try {
     switch (view) {
       case 'overview': await renderOverview(container); break;
+      case 'messages': renderMessages(container); break;
       case 'inbox': await renderInbox(container); break;
       case 'contacts': await renderContacts(container); break;
       case 'projects': await renderProjects(container); break;
@@ -214,6 +224,20 @@ function verticalOptions(selectedId) {
 }
 
 // =====================================================
+// MESSAGES (embedded CRM calls/voicemails/SMS for client 15)
+// "Embed now, native later" — iframes the standalone /projects-messages.html
+// page, which pulls from /api/projects-bridge/messages on the main CRM.
+// =====================================================
+function renderMessages(container) {
+  container.innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden;height:calc(100vh - 160px);min-height:520px">
+      <iframe src="${location.origin}/projects-messages.html"
+              style="width:100%;height:100%;border:0;display:block;background:transparent"
+              title="Calls & Messages"></iframe>
+    </div>`;
+}
+
+// =====================================================
 // OVERVIEW / DASHBOARD
 // =====================================================
 async function renderOverview(container) {
@@ -241,12 +265,13 @@ async function renderOverview(container) {
   };
   const calendarBadge    = mkBadge(s.meetings_today ?? 0, '#2563eb');
   const outstandingBadge = mkBadge(s.pending_tasks ?? 0, '#ef4444');
-  const remindersBadge   = mkBadge(s.pending_reminders ?? 0, '#f59e0b');
+  // Messages replaces the old Reminder quick-action. Its unread badge is filled
+  // async by loadCrmCallStats() from /api/projects-bridge/call-stats (client 15).
   const quickActionsHtml = `
     <div class="quick-actions">
       <button class="quick-action-btn" style="position:relative" onclick="openCalendarWeek()"><span class="qa-label">Calendar</span>${calendarBadge}</button>
       <button class="quick-action-btn" style="position:relative" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span>${outstandingBadge}</button>
-      <button class="quick-action-btn" style="position:relative" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')"><span class="qa-label">Reminder</span>${remindersBadge}</button>
+      <button class="quick-action-btn" style="position:relative" onclick="navigateTo('messages')"><span class="qa-label">Messages</span><span id="qa-msg-badge"></span></button>
     </div>`;
 
   container.innerHTML = `
@@ -271,6 +296,18 @@ async function renderOverview(container) {
         <div class="stat-value">${s.tasks_due_today ?? 0}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' overdue from prior days' : ((s.tasks_due_today ?? 0) > 0 ? 'Due today' : 'Nothing due today')}</div>
       </div>
+      <div class="card card-stat card-accent-cyan card-clickable" onclick="navigateTo('messages')" data-tooltip="Open calls & messages">
+        <div class="stat-label">Calls Received Today</div>
+        <div class="stat-value" id="kpi-calls-today">&middot;</div>
+        <div class="stat-change stat-neutral">Inbound to your business line</div>
+        <div class="kpi-hint">Click to view messages</div>
+      </div>
+      <div class="card card-stat card-accent-purple card-clickable" onclick="navigateTo('messages')" data-tooltip="Leads waiting on a callback">
+        <div class="stat-label">Calls To Follow Up</div>
+        <div class="stat-value" id="kpi-followups">&middot;</div>
+        <div class="stat-change stat-neutral">Leads not yet contacted back</div>
+        <div class="kpi-hint">Click to view messages</div>
+      </div>
     </div>
 
     <div id="neural-findings-panel">
@@ -291,6 +328,39 @@ async function renderOverview(container) {
 
   // Neural Findings — fetched async so the rest of the page renders first
   loadNeuralFindings();
+
+  // CRM call/message stats (client 15) — fills the two KPI cards + Messages badge
+  loadCrmCallStats();
+}
+
+// Pulls client-15 call/message counts from the main CRM via the projects-bridge.
+// Fills: #kpi-calls-today, #kpi-followups, and the Messages quick-action badge.
+async function loadCrmCallStats() {
+  try {
+    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`);
+    const d = await res.json();
+    const callsEl = document.getElementById('kpi-calls-today');
+    const followEl = document.getElementById('kpi-followups');
+    if (callsEl) callsEl.textContent = d.calls_today ?? 0;
+    if (followEl) followEl.textContent = d.follow_ups_pending ?? 0;
+
+    const badge = document.getElementById('qa-msg-badge');
+    const unread = d.unread_messages ?? 0;
+    if (badge) {
+      if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : String(unread);
+        badge.style.cssText = 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;min-width:20px;text-align:center;line-height:1.2;box-shadow:0 2px 6px #ef444466';
+      } else {
+        badge.textContent = '';
+        badge.style.cssText = '';
+      }
+    }
+  } catch (e) {
+    const callsEl = document.getElementById('kpi-calls-today');
+    const followEl = document.getElementById('kpi-followups');
+    if (callsEl && callsEl.textContent === '·') callsEl.textContent = '0';
+    if (followEl && followEl.textContent === '·') followEl.textContent = '0';
+  }
 }
 
 // =====================================================

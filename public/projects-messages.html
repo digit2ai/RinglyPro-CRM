@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages</title>
+  <style>
+    :root {
+      --bg: #0f172a; --panel: #1e293b; --panel-2: #172033;
+      --border: #2a3852; --text: #e2e8f0; --muted: #94a3b8;
+      --accent: #2563eb; --accent-2: #7c5cff; --cyan: #22d3ee; --green: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 16px;
+    }
+    .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .head h1 { font-size: 18px; margin: 0; }
+    .refresh {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .refresh:hover { filter: brightness(1.08); }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item {
+      background: var(--panel); border: 1px solid var(--border);
+      border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px;
+    }
+    .item.voicemail { border-left-color: var(--accent-2); }
+    .item.sms       { border-left-color: var(--green); }
+    .row1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .kind {
+      font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      background: rgba(37,99,235,.15); color: #93c5fd; padding: 2px 8px; border-radius: 6px;
+    }
+    .kind.voicemail { background: rgba(124,92,255,.15); color: #c4b5fd; }
+    .kind.sms       { background: rgba(16,185,129,.15); color: #6ee7b7; }
+    .phone { font-weight: 600; font-size: 14px; }
+    .dur { font-size: 12px; color: var(--cyan); background: rgba(34,211,238,.1); padding: 2px 8px; border-radius: 10px; }
+    .ts { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .body { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+    audio { margin-top: 10px; width: 100%; height: 34px; }
+    .empty, .err { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 14px; }
+    .err { color: #f87171; }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .8s linear infinite; margin: 48px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <h1>Calls &amp; Messages</h1>
+    <button class="refresh" onclick="load()">&#8635; Refresh</button>
+  </div>
+  <div id="list" class="list"><div class="spinner"></div></div>
+
+  <script>
+    const ORIGIN = location.origin;
+
+    function fmtDur(secs) {
+      secs = parseInt(secs, 10) || 0;
+      if (!secs) return '';
+      const m = Math.floor(secs / 60), s = secs % 60;
+      return `Duration: ${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function fmtTs(ts) {
+      try {
+        const d = new Date(ts);
+        return d.toLocaleString('en-US', {
+          timeZone: 'America/New_York',
+          weekday: 'short', month: 'short', day: 'numeric',
+          hour: 'numeric', minute: '2-digit'
+        });
+      } catch { return ''; }
+    }
+
+    function normKind(k) {
+      k = (k || '').toLowerCase();
+      if (k === 'voicemail') return 'voicemail';
+      if (k === 'sms' || k === 'whatsapp') return 'sms';
+      return 'call';
+    }
+
+    function kindLabel(k, raw) {
+      if (k === 'voicemail') return 'Voicemail';
+      if (k === 'sms') return (raw || '').toLowerCase() === 'whatsapp' ? 'WhatsApp' : 'SMS';
+      return 'AI Phone Call';
+    }
+
+    function audioHtml(it) {
+      // ElevenLabs AI call recording
+      if (it.conv_id) {
+        return `<audio controls preload="none" src="${ORIGIN}/api/messages/elevenlabs-audio/${encodeURIComponent(it.conv_id)}"></audio>`;
+      }
+      // Twilio recording (voicemail) — proxy by SID if the URL ends in a RExxxx SID
+      if (it.recording_url) {
+        const m = String(it.recording_url).match(/(RE[a-zA-Z0-9]+)/);
+        const src = m ? `${ORIGIN}/api/messages/recording/${m[1]}` : it.recording_url;
+        return `<audio controls preload="none" src="${src}"></audio>`;
+      }
+      return '';
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function load() {
+      const list = document.getElementById('list');
+      list.innerHTML = '<div class="spinner"></div>';
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/messages?limit=60`);
+        const data = await res.json();
+        if (!data.success) {
+          list.innerHTML = `<div class="err">Could not load messages: ${esc(data.error || 'unknown error')}</div>`;
+          return;
+        }
+        const items = data.items || [];
+        if (!items.length) {
+          list.innerHTML = `<div class="empty">No calls or messages yet. When someone calls your business number, Lina's calls and voicemails will appear here.</div>`;
+          return;
+        }
+        list.innerHTML = items.map(it => {
+          const k = normKind(it.kind);
+          const dur = fmtDur(it.secs);
+          const body = esc(it.body).trim();
+          return `
+            <div class="item ${k}">
+              <div class="row1">
+                <span class="kind ${k}">${kindLabel(k, it.kind)}</span>
+                <span class="phone">${esc(it.phone || 'Unknown')}</span>
+                ${dur ? `<span class="dur">${dur}</span>` : ''}
+                <span class="ts">${fmtTs(it.ts)}</span>
+              </div>
+              ${body ? `<div class="body">${body}</div>` : ''}
+              ${audioHtml(it)}
+            </div>`;
+        }).join('');
+      } catch (err) {
+        list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
