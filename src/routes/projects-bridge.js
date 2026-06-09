@@ -115,4 +115,29 @@ router.get('/messages', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/projects-bridge/neural
+ * Neural Intelligence health score + KPI panels for client 15, for the Hub home.
+ * Proxies the main CRM's /api/neural/dashboard/15 server-side so the admin key
+ * is never exposed to the browser.
+ */
+router.get('/neural', async (req, res) => {
+  try {
+    const port = process.env.PORT || 10000;
+    const key = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const upstream = await fetch(
+      `http://127.0.0.1:${port}/api/neural/dashboard/${D2AI_CLIENT_ID}`,
+      { headers: { 'X-Api-Key': key }, signal: ctrl.signal }
+    );
+    clearTimeout(t);
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.error('[ProjectsBridge] neural error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

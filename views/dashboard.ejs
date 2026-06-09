@@ -4141,6 +4141,21 @@
 
             // Start auto-refresh for messages
             startMessagesAutoRefresh();
+
+            // Deep-link support: /?section=<tab> jumps straight to a section so the
+            // Projects Hub can embed individual CRM screens via iframe.
+            // e.g. /?section=messages, /?section=today, /?section=followups,
+            //      /?section=neural, /?section=pipeline, /?section=tasks,
+            //      /?section=crm-agent-ghl|crm-agent-hubspot|crm-agent-zoho
+            try {
+                const section = new URLSearchParams(window.location.search).get('section');
+                if (section) {
+                    setTimeout(() => {
+                        const btn = document.querySelector(`[onclick*="sidebarNav('${section}'"]`);
+                        sidebarNav(section, btn || null);
+                    }, 300);
+                }
+            } catch (e) { /* non-fatal */ }
         });
 
         // PWA Install functionality

@@ -237,6 +237,24 @@ function renderMessages(container) {
     </div>`;
 }
 
+// Generic embed for RinglyPro CRM screens in the Hub left pane ("embed now").
+// Same-origin iframe; SSO token is mirrored to localStorage 'token' at login so
+// these pages don't re-prompt. el = clicked <li> (for active highlight).
+function openCrmEmbed(url, title, el) {
+  _lastDrilldown = null;
+  currentView = 'crm-embed';
+  document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const t = document.getElementById('page-title');
+  if (t) t.textContent = title;
+  const container = document.getElementById('view-container');
+  container.innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden;height:calc(100vh - 150px);min-height:520px">
+      <iframe src="${url}" style="width:100%;height:100%;border:0;display:block;background:#fff" title="${escapeHtml(title)}"></iframe>
+    </div>`;
+}
+window.openCrmEmbed = openCrmEmbed;
+
 // =====================================================
 // OVERVIEW / DASHBOARD
 // =====================================================
@@ -310,6 +328,10 @@ async function renderOverview(container) {
       </div>
     </div>
 
+    <div id="neural-kpi-panel" style="margin-bottom:24px">
+      <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Loading Neural Intelligence...</div>
+    </div>
+
     <div id="neural-findings-panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:12px">
@@ -331,6 +353,58 @@ async function renderOverview(container) {
 
   // CRM call/message stats (client 15) — fills the two KPI cards + Messages badge
   loadCrmCallStats();
+
+  // Neural Intelligence KPIs (client 15) — overall score + the 5 health panels
+  loadNeuralKpis();
+}
+
+// Renders the RinglyPro Neural Intelligence health score + KPI panels on the
+// Hub home, sourced from /api/projects-bridge/neural (proxies the CRM neural API).
+async function loadNeuralKpis() {
+  const panel = document.getElementById('neural-kpi-panel');
+  if (!panel) return;
+  try {
+    const res = await fetch(`${location.origin}/api/projects-bridge/neural`);
+    const d = await res.json();
+    if (!d || !d.success) { panel.style.display = 'none'; return; }
+
+    const scoreColor = d.healthScore >= 80 ? '#10b981' : d.healthScore >= 65 ? '#22d3ee' : d.healthScore >= 45 ? '#f59e0b' : '#ef4444';
+    const arrow = (t) => t && t.direction === 'up' ? '&#9650;' : t && t.direction === 'down' ? '&#9660;' : '&#8722;';
+    const arrowColor = (t) => t && t.direction === 'up' ? '#10b981' : t && t.direction === 'down' ? '#ef4444' : 'var(--text-muted)';
+    const usd = (n) => '$' + (Number(n) || 0).toLocaleString('en-US');
+
+    const panels = (d.panels || []).map(p => {
+      const c = p.score >= 80 ? '#10b981' : p.score >= 65 ? '#22d3ee' : p.score >= 45 ? '#f59e0b' : '#ef4444';
+      return `
+        <div class="card" style="padding:16px 18px;border-top:3px solid ${c}">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">${escapeHtml(p.name || '')}</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px">
+            <span style="font-size:28px;font-weight:800;color:${c}">${p.score ?? 0}</span>
+            <span style="font-size:12px;color:${arrowColor(p.trend)}">${arrow(p.trend)} ${p.trend ? (p.trend.points ?? 0) : 0} pts</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.45">${escapeHtml(p.topFinding || '')}</div>
+        </div>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="card card-accent-blue" style="margin-bottom:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:16px;cursor:pointer" onclick="openCrmEmbed('${location.origin}/neural/intelligence.html','Neural Intelligence')" title="Open full Neural Intelligence">
+          <div style="width:74px;height:74px;border-radius:50%;border:5px solid ${scoreColor};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:${scoreColor}">${d.healthScore ?? 0}</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)">RinglyPro Business Copilot</div>
+            <div style="font-size:18px;font-weight:700">${escapeHtml(d.scoreLabel || '')}</div>
+            <div style="font-size:12px;color:${arrowColor(d.trend)}">${arrow(d.trend)} ${d.trend ? (d.trend.points ?? 0) : 0} pts vs last ${d.trend ? (d.trend.period || '30 days') : '30 days'}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:28px;margin-left:auto">
+          <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Revenue at Risk</div><div style="font-size:20px;font-weight:700;color:#ef4444">${usd(d.revenueAtRisk)}</div></div>
+          <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Recovery Potential</div><div style="font-size:20px;font-weight:700;color:#10b981">${usd(d.recoveryPotential)}</div></div>
+        </div>
+      </div>
+      <div class="card-grid">${panels}</div>`;
+  } catch (e) {
+    panel.style.display = 'none';
+  }
 }
 
 // Pulls client-15 call/message counts from the main CRM via the projects-bridge.
