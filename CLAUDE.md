@@ -247,3 +247,30 @@ The Digit2AI Projects Hub doubles as the owner's (client 15) single command cent
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table
 MCP Tool Call → POST /api/oee/tools/call → OEE route handler → PostgreSQL → response
+
+## AgroMercadoDigital — National Agro Marketplace (Venezuela)
+
+**Purpose:** Digital marketplace for Venezuela's agricultural sector (semovientes, maquinaria, insumos, subastas en vivo, divisas BCV). **Developed by ISTC (Ingeniería y Servicios Tecnológicos Colón)** — owns/registered the AgroMercado platform; **AI layer by Digit2AI**. Product for Grupo Agrollano = **AgrollanoDigital** (white-label of AgroMercado, a separate `tenant_id`). The alliance is **ISTC × Digit2AI** (never "AgroMercado × Digit2AI"). See `project_agrollano_istc` memory.
+
+**Location:** `verticals/agromercado/` — self-contained Express Router (own Sequelize via `src/db.js` using `CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration at `verticals/agromercado/migrations/20260610_agromercado_tables.sql`. All tables multi-tenant (`tenant_id`), `am_` prefix: users, products, auctions, bids, fx_rates, kyc, directory, farms, service_requests. Built from ISTC tech-spec v1.0.1.
+
+**Live:** dashboard `/agromercado/` (admin/ops, full-bleed Spanish) · health `/agromercado/health` · debug `/debug/agromercado-error`. Public storefront stays on ISTC's Vercel app (https://agromercado-vzla.vercel.app). Board teaser: `public/agromercado-teaser.html` (GHL digit2ai.com/agromercado).
+
+**REST API (`/agromercado/api/v1/*`):**
+- `auth`: `POST /auth/register|login|logout`, `GET /auth/me`, `POST /auth/verify` (KYC submit). Roles admin|producer|buyer, JWT in HttpOnly+Secure cookie `agromercado_token`.
+- `products`: `GET /products/categories` (8 cats + counts), `GET /products`, `GET /products/:id`, `POST /products` (verified producer), `PATCH /products/:id`. JSONB `metadata` + GIN index.
+- `subastas`: `GET /subastas`, `GET /subastas/:id` (computes next min bid), `GET /subastas/:id/stream` (SSE live bids), `POST /subastas/:id/puja` (ACID row-locked), `POST /subastas` + `PATCH /subastas/:id/cerrar` (admin), `GET /subastas/reglamento`. Min-bid: `P_min = P_actual + Δ_base × (1 + ln(Count_pujas + 1))` in `src/utils/bid.js`.
+- `divisas`: `GET /divisas/rates`, `GET /divisas/convert?usd=&rate=bcv|parallel`. Poller fires 09:00 & 13:00 (`src/services/fxPoller.js`); parallel fallback = official + 40% when source down.
+- `services`: KYC review (`GET/PATCH /services/kyc`), directory (`GET/POST /services/directory`), farms (`GET/POST /services/farms`), financing/logistics leads (`POST/GET /services/request`).
+- `ai` (Digit2AI layer): `GET /ai/market-trends`, `GET /ai/auction-trail/:id`, `GET /ai/fraud-flags` (admin), `GET /ai/monitor` (dashboard stats).
+
+**Environment Variables:**
+- `AGROMERCADO_JWT_SECRET` — signs the `agromercado_token` cookie (fallback `JWT_SECRET`). SET on prod.
+- `AGROMERCADO_WHATSAPP_TOKEN` / `AGROMERCADO_WHATSAPP_PHONE_ID` — WhatsApp Cloud API for bid/auction/KYC alerts. Unset = log-only (no send), same disabled-by-default safety as `EMAIL_AUTOSEND_DISABLED`.
+- `AGROMERCADO_FX_SOURCE_URL` — JSON endpoint for BCV/parallel rates. Unset = poller uses cache fallback only (no live fetch).
+- `AGROMERCADO_SEED_DEMO` — `1` seeds one tenant with sample categories/products/auctions/FX/directory on boot (idempotent). Default unset = no seed.
+
+**Data Flow:**
+Browser → /agromercado/api/v1/* (Express Router) → Sequelize → PostgreSQL (am_* tables)
+FX poller (09:00/13:00) → AGROMERCADO_FX_SOURCE_URL → am_fx_rates ← /divisas/convert
+Bid POST → ACID txn (row-lock auction) → recompute P_min (ln formula) → am_bids → SSE broadcast to lot subscribers
