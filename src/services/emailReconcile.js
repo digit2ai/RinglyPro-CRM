@@ -347,7 +347,12 @@ async function getMessageBody(clientId, accountId, messageId) {
     { bind: [parseInt(accountId, 10), clientId], type: QueryTypes.SELECT }
   );
   if (!acc) throw new Error('Account not found');
-  if (acc.provider === 'gmail') return getGmailMessageBody(acc, messageId);
+  if (acc.provider === 'gmail') {
+    const body = await getGmailMessageBody(acc, messageId);
+    // Opening = reading: drop it from the unread inbox + count on the next load.
+    _cache.delete(clientId);
+    return body;
+  }
   // IMAP body rendering needs MIME parsing — deferred; open in webmail for now.
   return { from: '', from_name: '', subject: '', date: '', html: '', text: 'In-app preview for IMAP accounts is coming soon — open this in your mail app for now.' };
 }
@@ -361,6 +366,10 @@ async function getGmailMessageBody(account, messageId) {
   client.setCredentials(creds);
   const gmail = google.gmail({ version: 'v1', auth: client });
   const full = await gmail.users.messages.get({ userId: 'me', id: messageId, format: 'full' });
+  // Mark read (remove UNREAD) — opening an email reads it, like a real mail app.
+  try {
+    await gmail.users.messages.modify({ userId: 'me', id: messageId, requestBody: { removeLabelIds: ['UNREAD'] } });
+  } catch (e) { /* non-fatal — still show the body */ }
   const headers = (full.data.payload && full.data.payload.headers) || [];
   const h = (n) => { const x = headers.find(x => x.name.toLowerCase() === n.toLowerCase()); return x ? x.value : ''; };
   const body = extractGmailBody(full.data.payload);
