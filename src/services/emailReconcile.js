@@ -120,16 +120,38 @@ function imapConfig(account) {
   };
 }
 
-// Verify credentials work (used on add).
+// Verify credentials work (used on add). Throws an actionable error on failure.
 async function testImap(a) {
   const client = new ImapFlow({
     host: a.host, port: parseInt(a.port, 10) || 993, secure: a.secure !== false,
     auth: { user: a.user || a.email, pass: a.password },
     logger: false, socketTimeout: 15000, greetingTimeout: 10000, connectionTimeout: 10000
   });
-  await client.connect();
-  await client.logout().catch(() => {});
-  return true;
+  try {
+    await client.connect();
+    await client.logout().catch(() => {});
+    return true;
+  } catch (e) {
+    throw new Error(friendlyImapError(e));
+  }
+}
+
+// Translate imapflow's terse errors into something the user can act on.
+function friendlyImapError(e) {
+  const msg = (e && e.message) || '';
+  if (e && (e.authenticationFailed || e.serverResponseCode === 'AUTHENTICATIONFAILED')) {
+    return 'Authentication failed — use an app-specific password (not your normal login password) and confirm the email/username is correct.';
+  }
+  if (/<!DOCTYPE|<html/i.test(msg)) {
+    return 'The mail host returned a web page instead of an IMAP reply — outbound IMAP (port 993) is likely blocked on the server, or the host/port is wrong.';
+  }
+  if (/timeout/i.test(msg)) {
+    return 'Connection timed out — the server may be blocking outbound IMAP, or the host/port is wrong.';
+  }
+  if (/ENOTFOUND|EAI_AGAIN/i.test(msg)) {
+    return `Could not resolve the IMAP host "${''}" — check the host name.`;
+  }
+  return msg || 'IMAP connection failed';
 }
 
 async function fetchAccount(account, limit) {
@@ -202,8 +224,9 @@ async function getSummary(clientId, { limit = 12, force = false } = {}) {
       items.push(...r.items);
       persistStatus(acc.id, r.unread, null);
     } catch (e) {
-      perAccount.push({ id: acc.id, label: acc.label || acc.email_address, email: acc.email_address, unread: 0, error: e.message });
-      persistStatus(acc.id, 0, e.message);
+      const friendly = friendlyImapError(e);
+      perAccount.push({ id: acc.id, label: acc.label || acc.email_address, email: acc.email_address, unread: 0, error: friendly });
+      persistStatus(acc.id, 0, friendly);
     }
   }));
 

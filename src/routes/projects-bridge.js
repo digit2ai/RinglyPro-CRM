@@ -168,6 +168,25 @@ router.get('/neural', async (req, res) => {
   }
 });
 
+// TEMP DIAGNOSTIC: raw TLS probe to confirm whether the host can reach an IMAP
+// server (returns the greeting bytes) vs. getting a proxy/HTML block page.
+// Not sensitive (just a connection test to a public mail host).
+router.get('/email-probe', async (req, res) => {
+  const tls = require('tls');
+  const host = String(req.query.host || 'imap.mail.me.com');
+  const port = parseInt(req.query.port, 10) || 993;
+  const result = await new Promise((resolve) => {
+    let done = false;
+    const finish = (o) => { if (!done) { done = true; try { socket.destroy(); } catch (e) {} resolve(o); } };
+    const socket = tls.connect({ host, port, servername: host, timeout: 10000 }, () => {});
+    socket.setTimeout(10000);
+    socket.on('data', (d) => finish({ ok: true, greeting: d.toString('utf8').slice(0, 200) }));
+    socket.on('error', (e) => finish({ ok: false, error: e.message }));
+    socket.on('timeout', () => finish({ ok: false, error: 'timeout (no greeting within 10s)' }));
+  });
+  res.json({ host, port, ...result });
+});
+
 // =====================================================
 // EMAIL RECONCILIATION (client 15) — JWT-gated; inbox content is sensitive.
 // =====================================================
