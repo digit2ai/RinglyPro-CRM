@@ -302,7 +302,7 @@ async function fetchGmail(account, limit) {
         userId: 'me', id: m.id, format: 'metadata', metadataHeaders: ['From', 'Subject', 'Date']
       });
       const headers = (full.data.payload && full.data.payload.headers) || [];
-      const h = (n) => { const x = headers.find(x => x.name.toLowerCase() === n); return x ? x.value : ''; };
+      const h = (n) => { const x = headers.find(x => x.name.toLowerCase() === n.toLowerCase()); return x ? x.value : ''; };
       const fromRaw = h('From');
       const nameMatch = fromRaw.match(/^"?([^"<]*)"?\s*<?([^>]*)>?$/);
       const tsMs = full.data.internalDate ? parseInt(full.data.internalDate, 10) : Date.now();
