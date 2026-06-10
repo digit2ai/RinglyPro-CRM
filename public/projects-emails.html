@@ -74,7 +74,7 @@
   <div class="overlay" id="overlay">
     <div class="modal">
       <h2>Connect an email account</h2>
-      <p class="hint">Uses IMAP with an <strong>app password</strong> (not your normal login password). Pick a preset to fill the server, then enter your address + app password.</p>
+      <p class="hint">Uses IMAP with an <strong>app-specific password</strong> — <em>not</em> your normal login password. Requires 2-factor on the account. iCloud: appleid.apple.com → Sign-In &amp; Security. Gmail: Google Account → Security → App passwords (enter it with no spaces).</p>
       <div class="presets" id="presets"></div>
       <div class="field"><label>Display name</label><input id="f-label" placeholder="e.g. Digit2AI Gmail"></div>
       <div class="field"><label>Email address</label><input id="f-email" placeholder="you@example.com" autocomplete="off"></div>
@@ -186,7 +186,7 @@
         host:  document.getElementById('f-host').value.trim(),
         port:  document.getElementById('f-port').value.trim(),
         user:  document.getElementById('f-user').value.trim() || document.getElementById('f-email').value.trim(),
-        password: document.getElementById('f-pass').value
+        password: document.getElementById('f-pass').value.replace(/\s+/g, '') // app passwords have no spaces; Gmail shows them spaced
       };
       if (!body.email || !body.host || !body.password){ errEl.textContent='Email, host and app password are required.'; return; }
       const btn = document.getElementById('save-btn');
