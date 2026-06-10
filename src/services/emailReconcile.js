@@ -15,6 +15,7 @@
 
 const crypto = require('crypto');
 const { ImapFlow } = require('imapflow');
+const { google } = require('googleapis');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 
@@ -198,6 +199,124 @@ async function persistStatus(id, unread, error) {
   } catch (e) { /* non-fatal */ }
 }
 
+// ---- Gmail (OAuth, password-free) ------------------------------------------
+const GMAIL_REDIRECT = process.env.GMAIL_OAUTH_REDIRECT_URI
+  || 'https://aiagent.ringlypro.com/api/projects-bridge/email-oauth/google/callback';
+const GMAIL_SCOPES = [
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/userinfo.email'
+];
+
+function gmailOAuthClient() {
+  return new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, GMAIL_REDIRECT);
+}
+
+// Auth URL the user visits to grant read-only Gmail access. `state` carries the
+// caller's JWT so the callback can verify it's client 15.
+function getGmailAuthUrl(state) {
+  return gmailOAuthClient().generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',          // force a refresh_token every time
+    scope: GMAIL_SCOPES,
+    state
+  });
+}
+
+async function exchangeGmailCode(code) {
+  const client = gmailOAuthClient();
+  const { tokens } = await client.getToken(code);
+  client.setCredentials(tokens);
+  // Resolve the account's email address.
+  let email = '';
+  try {
+    const oauth2 = google.oauth2({ version: 'v2', auth: client });
+    const { data } = await oauth2.userinfo.get();
+    email = data.email || '';
+  } catch (e) { /* fall back below */ }
+  return { tokens, email };
+}
+
+// Upsert a Gmail account (one row per address). Tokens stored encrypted.
+async function saveGmailAccount(clientId, tokens, email) {
+  await ensureTable();
+  const refreshEnc = tokens.refresh_token ? encrypt(tokens.refresh_token) : null;
+  const accessEnc = tokens.access_token ? encrypt(tokens.access_token) : null;
+  const expiresAt = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
+
+  const [existing] = await sequelize.query(
+    `SELECT id, imap_password_enc FROM email_accounts WHERE client_id = $1 AND provider = 'gmail' AND email_address = $2 LIMIT 1`,
+    { bind: [clientId, email], type: QueryTypes.SELECT }
+  );
+  if (existing) {
+    await sequelize.query(
+      `UPDATE email_accounts
+          SET access_token = $1, token_expires_at = $2, scope = $3, is_active = true,
+              refresh_token = COALESCE($4, refresh_token), last_error = NULL, updated_at = NOW()
+        WHERE id = $5`,
+      { bind: [accessEnc, expiresAt, GMAIL_SCOPES.join(' '), refreshEnc, existing.id], type: QueryTypes.UPDATE }
+    );
+    _cache.delete(clientId);
+    return existing.id;
+  }
+  const [row] = await sequelize.query(
+    `INSERT INTO email_accounts
+       (client_id, label, email_address, provider, refresh_token, access_token, token_expires_at, scope)
+     VALUES ($1,$2,$3,'gmail',$4,$5,$6,$7) RETURNING id`,
+    { bind: [clientId, email, email, refreshEnc, accessEnc, expiresAt, GMAIL_SCOPES.join(' ')], type: QueryTypes.INSERT }
+  );
+  _cache.delete(clientId);
+  return Array.isArray(row) ? row[0] : row;
+}
+
+async function fetchGmail(account, limit) {
+  const client = gmailOAuthClient();
+  const creds = {};
+  if (account.refresh_token) creds.refresh_token = decrypt(account.refresh_token);
+  if (account.access_token) creds.access_token = decrypt(account.access_token);
+  if (account.token_expires_at) creds.expiry_date = new Date(account.token_expires_at).getTime();
+  client.setCredentials(creds);
+  // Persist a refreshed access token if the library rotates it.
+  client.on('tokens', (t) => {
+    if (t && t.access_token) {
+      sequelize.query(
+        `UPDATE email_accounts SET access_token = $1, token_expires_at = $2, updated_at = NOW() WHERE id = $3`,
+        { bind: [encrypt(t.access_token), t.expiry_date ? new Date(t.expiry_date) : null, account.id], type: QueryTypes.UPDATE }
+      ).catch(() => {});
+    }
+  });
+
+  const gmail = google.gmail({ version: 'v1', auth: client });
+  const result = { unread: 0, items: [] };
+
+  const label = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
+  result.unread = label.data.messagesUnread || 0;
+
+  const list = await gmail.users.messages.list({ userId: 'me', q: 'is:unread in:inbox', maxResults: limit });
+  const msgs = list.data.messages || [];
+  for (const m of msgs) {
+    try {
+      const full = await gmail.users.messages.get({
+        userId: 'me', id: m.id, format: 'metadata', metadataHeaders: ['From', 'Subject', 'Date']
+      });
+      const headers = (full.data.payload && full.data.payload.headers) || [];
+      const h = (n) => { const x = headers.find(x => x.name.toLowerCase() === n); return x ? x.value : ''; };
+      const fromRaw = h('From');
+      const nameMatch = fromRaw.match(/^"?([^"<]*)"?\s*<?([^>]*)>?$/);
+      const tsMs = full.data.internalDate ? parseInt(full.data.internalDate, 10) : Date.now();
+      result.items.push({
+        account_id: account.id,
+        account: account.label || account.email_address,
+        email_address: account.email_address,
+        from: (nameMatch && nameMatch[2]) ? nameMatch[2].trim() : fromRaw,
+        from_name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : '',
+        subject: h('Subject') || '(no subject)',
+        ts: new Date(tsMs).toISOString()
+      });
+    } catch (e) { /* skip a single message */ }
+  }
+  return result;
+}
+
 // ---- aggregate (cached) -----------------------------------------------------
 const _cache = new Map(); // clientId -> { at, data }
 const CACHE_MS = 60 * 1000;
@@ -218,7 +337,7 @@ async function getSummary(clientId, { limit = 12, force = false } = {}) {
 
   await Promise.all(accounts.map(async (acc) => {
     try {
-      const r = await fetchAccount(acc, limit);
+      const r = acc.provider === 'gmail' ? await fetchGmail(acc, limit) : await fetchAccount(acc, limit);
       totalUnread += r.unread;
       perAccount.push({ id: acc.id, label: acc.label || acc.email_address, email: acc.email_address, unread: r.unread, error: null });
       items.push(...r.items);
@@ -237,5 +356,6 @@ async function getSummary(clientId, { limit = 12, force = false } = {}) {
 }
 
 module.exports = {
-  listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt
+  listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
+  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount
 };

@@ -74,7 +74,9 @@
   <div class="overlay" id="overlay">
     <div class="modal">
       <h2>Connect an email account</h2>
-      <p class="hint">Uses IMAP with an <strong>app-specific password</strong> — <em>not</em> your normal login password. Requires 2-factor on the account. iCloud: appleid.apple.com → Sign-In &amp; Security. Gmail: Google Account → Security → App passwords (enter it with no spaces).</p>
+      <button class="btn" id="gmail-oauth-btn" style="width:100%;margin-bottom:12px;background:linear-gradient(135deg,#ea4335,#4285f4);color:#fff">Connect Gmail / Workspace — no password</button>
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:12px">— or connect any inbox with an app password —</div>
+      <p class="hint">IMAP needs an <strong>app-specific password</strong> — <em>not</em> your normal login password — and 2-factor on the account. iCloud: appleid.apple.com → Sign-In &amp; Security → App-Specific Passwords. (Gmail is easier via the blue button above.)</p>
       <div class="presets" id="presets"></div>
       <div class="field"><label>Display name</label><input id="f-label" placeholder="e.g. Digit2AI Gmail"></div>
       <div class="field"><label>Email address</label><input id="f-email" placeholder="you@example.com" autocomplete="off"></div>
@@ -215,6 +217,13 @@
     document.getElementById('cancel-btn').addEventListener('click', closeModal);
     document.getElementById('save-btn').addEventListener('click', saveAccount);
     document.getElementById('refresh-btn').addEventListener('click', () => load(true));
+    document.getElementById('gmail-oauth-btn').addEventListener('click', () => {
+      if (!token()) { document.getElementById('form-err').textContent = 'Please sign in to the Hub first.'; return; }
+      window._oauthPending = true;
+      window.open(`${ORIGIN}/api/projects-bridge/email-oauth/google/start?token=${encodeURIComponent(token())}`, '_blank', 'noopener');
+    });
+    // When the user returns from the Google consent tab, pick up the new account.
+    window.addEventListener('focus', () => { if (window._oauthPending) { window._oauthPending = false; closeModal(); load(true); } });
     document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeModal(); });
 
     renderPresets();

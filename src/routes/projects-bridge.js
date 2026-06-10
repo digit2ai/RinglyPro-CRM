@@ -249,4 +249,45 @@ router.delete('/email-accounts/:id', requireClient15, async (req, res) => {
   }
 });
 
+// ---- Gmail OAuth (password-free) ----
+// Start: requireClient15 reads the token from ?token= (it's a top-level redirect,
+// so we can't set an Authorization header). State carries the JWT for the callback.
+router.get('/email-oauth/google/start', requireClient15, (req, res) => {
+  try {
+    const state = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token || '';
+    const url = emailReconcile.getGmailAuthUrl(state);
+    res.redirect(url);
+  } catch (error) {
+    res.status(500).send('Could not start Gmail connection: ' + error.message);
+  }
+});
+
+// Callback: Google redirects here. Verify the JWT carried in `state` is client 15.
+router.get('/email-oauth/google/callback', async (req, res) => {
+  const done = (msg, ok) => res.type('html').send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gmail</title>
+    <style>body{font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}
+    .c{max-width:380px;padding:24px}.ok{color:#10b981}.err{color:#f87171}button{margin-top:16px;background:#2563eb;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-weight:600;cursor:pointer}</style></head>
+    <body><div class="c"><h2 class="${ok ? 'ok' : 'err'}">${ok ? '&#10003; Gmail connected' : 'Could not connect'}</h2>
+    <p>${msg}</p><button onclick="window.close()">Close this tab</button></div></body></html>`);
+  try {
+    const { code, state, error } = req.query;
+    if (error) return done('Google returned: ' + error, false);
+    if (!code) return done('Missing authorization code.', false);
+    try {
+      const decoded = jwt.verify(state || '', process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+      if (parseInt(decoded.clientId || decoded.client_id, 10) !== D2AI_CLIENT_ID) return done('Not authorized.', false);
+    } catch (e) { return done('Session expired — please retry from the Email screen.', false); }
+
+    const { tokens, email } = await emailReconcile.exchangeGmailCode(code);
+    if (!tokens.refresh_token) {
+      return done('Google did not return a refresh token. Remove RinglyPro at myaccount.google.com/permissions, then retry.', false);
+    }
+    await emailReconcile.saveGmailAccount(D2AI_CLIENT_ID, tokens, email || 'gmail account');
+    return done(`Connected ${email || 'your Gmail'}. Return to the Email tab and hit Refresh.`, true);
+  } catch (e) {
+    console.error('[ProjectsBridge] gmail callback error:', e.message);
+    return done(e.message, false);
+  }
+});
+
 module.exports = router;
