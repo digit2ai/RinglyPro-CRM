@@ -146,7 +146,19 @@
           list.innerHTML = `<div class="empty">No email accounts connected yet.<br><br><button class="btn btn-primary" onclick="openModal()">+ Connect your first inbox</button></div>`;
           return;
         }
-        if (!items.length){ list.innerHTML = `<div class="empty">All caught up — no unread email across your connected inboxes.</div>`; return; }
+        if (!items.length){
+          const errored = (data.accounts || []).filter(a => a.error);
+          if (errored.length){
+            list.innerHTML = errored.map(a => `
+              <div class="mail" style="border-left-color:var(--red)">
+                <div class="top"><span class="from">${esc(a.label || a.email)}</span></div>
+                <div class="subject" style="color:#f87171">${esc(a.error)}</div>
+              </div>`).join('');
+          } else {
+            list.innerHTML = `<div class="empty">All caught up — no unread email across your connected inboxes.</div>`;
+          }
+          return;
+        }
         list.innerHTML = items.map(m => `
           <div class="mail">
             <div class="top">
