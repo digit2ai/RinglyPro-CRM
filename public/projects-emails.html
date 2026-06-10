@@ -97,6 +97,12 @@
     function token() { return localStorage.getItem('token') || ''; }
     function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    // Never blow up on a non-JSON (HTML 5xx / gateway) response.
+    async function parseJsonSafe(res){
+      const text = await res.text();
+      try { return JSON.parse(text); }
+      catch { return { success:false, error: res.status >= 500 ? `Server error (${res.status}) — the request may have timed out. Please try again.` : `Unexpected response (${res.status}).` }; }
+    }
     function notifyParent(){ try { window.parent.postMessage({ type:'email-stats-changed' }, ORIGIN); } catch(e){} }
 
     const PRESETS = {
@@ -129,7 +135,7 @@
       if (!token()){ list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
       try {
         const res = await fetch(`${ORIGIN}/api/projects-bridge/emails?limit=15${force?'&force=1':''}`, { headers: authHeaders() });
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
         if (!data.success){ list.innerHTML = `<div class="err">${esc(data.error||'Could not load email')}</div>`; return; }
         renderAccounts(data.accounts);
         notifyParent();
@@ -189,7 +195,7 @@
         const res = await fetch(`${ORIGIN}/api/projects-bridge/email-accounts`, {
           method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(body)
         });
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
         if (!data.success){ errEl.textContent = data.error || 'Could not connect.'; return; }
         closeModal(); load(true);
       } catch (e){ errEl.textContent = 'Error: ' + e.message; }
