@@ -241,7 +241,8 @@ The Digit2AI Projects Hub doubles as the owner's (client 15) single command cent
 - **SSO**: the Hub logs in via the CRM `/api/auth/login`; its JWT is mirrored to `localStorage['token']` so embedded CRM screens (and the RinglyPro nav group) don't re-prompt.
 
 **Environment Variables:**
-- `EMAIL_CRED_SECRET` — secret used to derive the AES-256-GCM key that encrypts stored IMAP app passwords in `email_accounts`. Falls back to `JWT_SECRET`. SET THIS on prod so credentials aren't encrypted under a guessable default.
+- `EMAIL_CRED_SECRET` — secret used to derive the AES-256-GCM key that encrypts stored IMAP app passwords + Gmail OAuth tokens in `email_accounts`. Falls back to `JWT_SECRET`. SET THIS on prod so credentials aren't encrypted under a guessable default.
+- `GMAIL_OAUTH_REDIRECT_URI` — OAuth redirect for the password-free Gmail connect flow. Default `https://aiagent.ringlypro.com/api/projects-bridge/email-oauth/google/callback`. Must be added as an Authorized redirect URI on the `GOOGLE_CLIENT_ID` OAuth client, and `gmail.readonly` added to the consent screen (owner added as a test user while the app is in Testing). Reuses the existing `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (also used by Calendar OAuth).
 
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table
