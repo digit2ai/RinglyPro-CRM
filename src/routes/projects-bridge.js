@@ -279,6 +279,10 @@ router.get('/email-oauth/google/callback', async (req, res) => {
     } catch (e) { return done('Session expired — please retry from the Email screen.', false); }
 
     const { tokens, email } = await emailReconcile.exchangeGmailCode(code);
+    const granted = tokens.scope || '';
+    if (!/gmail\.modify|gmail\.readonly|mail\.google\.com/.test(granted)) {
+      return done('You signed in, but did NOT grant Gmail access. Reconnect and make sure to CHECK the box "Read, compose, and send emails from your Gmail account" before clicking Continue.', false);
+    }
     if (!tokens.refresh_token) {
       return done('Google did not return a refresh token. Remove RinglyPro at myaccount.google.com/permissions, then retry.', false);
     }
