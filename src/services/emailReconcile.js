@@ -121,20 +121,34 @@ function imapConfig(account) {
   };
 }
 
-// Verify credentials work (used on add). Throws an actionable error on failure.
+// Verify credentials work (used on add). Returns the password variant that
+// authenticated (Apple app-specific passwords are shown with dashes but some
+// servers want them without — try both). Throws an actionable error on failure.
 async function testImap(a) {
-  const client = new ImapFlow({
+  const base = {
     host: a.host, port: parseInt(a.port, 10) || 993, secure: a.secure !== false,
-    auth: { user: a.user || a.email, pass: a.password },
     logger: false, socketTimeout: 15000, greetingTimeout: 10000, connectionTimeout: 10000
-  });
-  try {
-    await client.connect();
-    await client.logout().catch(() => {});
-    return true;
-  } catch (e) {
-    throw new Error(friendlyImapError(e));
+  };
+  const user = a.user || a.email;
+  const raw = String(a.password);
+  const variants = [raw];
+  const noDash = raw.replace(/-/g, '');
+  if (noDash !== raw) variants.push(noDash);
+
+  let lastErr;
+  for (const pass of variants) {
+    const client = new ImapFlow({ ...base, auth: { user, pass } });
+    try {
+      await client.connect();
+      await client.logout().catch(() => {});
+      return pass; // the variant that worked
+    } catch (e) {
+      lastErr = e;
+      await client.logout().catch(() => {});
+      if (!(e.authenticationFailed || e.serverResponseCode === 'AUTHENTICATIONFAILED')) break;
+    }
   }
+  throw new Error(friendlyImapError(lastErr));
 }
 
 // Translate imapflow's terse errors into something the user can act on.

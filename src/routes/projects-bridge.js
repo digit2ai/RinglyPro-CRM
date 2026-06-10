@@ -238,12 +238,13 @@ router.post('/email-accounts', requireClient15, async (req, res) => {
     if (!email || !host || !password) {
       return res.json({ success: false, error: 'email, host and password are required' });
     }
+    let workingPassword;
     try {
-      await emailReconcile.testImap({ email, host, port, secure, user, password });
+      workingPassword = await emailReconcile.testImap({ email, host, port, secure, user, password });
     } catch (e) {
       return res.json({ success: false, error: `Could not connect: ${e.message}` });
     }
-    const id = await emailReconcile.addImapAccount(D2AI_CLIENT_ID, { label, email, host, port, secure, user, password });
+    const id = await emailReconcile.addImapAccount(D2AI_CLIENT_ID, { label, email, host, port, secure, user, password: workingPassword });
     res.json({ success: true, id: id && (id.id || id) });
   } catch (error) {
     console.error('[ProjectsBridge] add email account error:', error.message);
