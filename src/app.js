@@ -1344,6 +1344,37 @@ app.get('/debug/veritas-error', (req, res) => {
 });
 
 // =====================================================
+// AGROMERCADO DIGITAL — national agro marketplace (served at /agromercado/)
+// Developed by ISTC; AI layer by Digit2AI. Self-contained vertical.
+// =====================================================
+
+let agromercadoApp = null;
+let agromercadoError = null;
+try {
+  agromercadoApp = require('../verticals/agromercado/src/index');
+  app.get('/agromercado', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/agromercado/');
+    next();
+  });
+  app.use('/agromercado', agromercadoApp);
+  console.log('AgroMercadoDigital mounted at /agromercado');
+  console.log('   - Dashboard UI: /agromercado/');
+  console.log('   - Health Check: /agromercado/health');
+  console.log('   - API: /agromercado/api/v1/*');
+} catch (error) {
+  agromercadoError = error;
+  console.log('⚠️ AgroMercado not available:', error.message);
+}
+
+app.get('/debug/agromercado-error', (req, res) => {
+  res.json({
+    service: 'AgroMercadoDigital',
+    available: !agromercadoError,
+    error: agromercadoError ? { message: agromercadoError.message, stack: agromercadoError.stack } : null
+  });
+});
+
+// =====================================================
 // DIGIT2AI CONTACTS & PROJECTS HUB
 // =====================================================
 

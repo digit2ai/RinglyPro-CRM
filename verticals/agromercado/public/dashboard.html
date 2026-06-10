@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgroMercadoDigital — Panel de Operaciones</title>
+<style>
+  :root{--bg:#0b1f17;--panel:#10271d;--line:#1f3a2c;--green:#3ad07f;--cyan:#8fe0ff;--ink:#e7f3ec;--muted:#9bb3a6;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  header{background:linear-gradient(135deg,#0f3d2e,#1b5e3f);padding:22px 26px;border-bottom:1px solid var(--line);}
+  header h1{font-size:20px;font-weight:800;letter-spacing:.3px;}
+  header .sub{font-size:12.5px;color:#c7e3d3;margin-top:3px;}
+  .wrap{max-width:1200px;margin:0 auto;padding:22px 26px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .card .k{font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);}
+  .card .v{font-size:28px;font-weight:800;margin-top:6px;color:#fff;}
+  .card .v.cyan{color:var(--cyan);}
+  .card .v.green{color:var(--green);}
+  h2{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin:30px 0 12px;}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  th,td{text-align:left;padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+  .pill.live{background:rgba(58,208,127,.18);color:var(--green);}
+  .pill.warn{background:rgba(243,210,122,.18);color:#f3d27a;}
+  .fxrow{display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;}
+  .fxrow .fx{font-size:13px;color:var(--muted);}
+  .fxrow .fx b{color:#fff;}
+  .err{color:#ff9b9b;font-size:13px;margin-top:10px;}
+  .foot{color:#6f877a;font-size:11.5px;margin:28px 0 8px;text-align:center;}
+  .refresh{float:right;font-size:12px;color:var(--cyan);cursor:pointer;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>AgroMercadoDigital · Panel de Operaciones</h1>
+  <div class="sub">ISTC · Ingeniería y Servicios Tecnológicos Colón &nbsp;·&nbsp; Capa de IA: Digit2AI</div>
+</header>
+<div class="wrap">
+  <button class="refresh" onclick="loadAll()">Actualizar</button>
+  <h2>Indicadores en Vivo</h2>
+  <div class="cards" id="cards"></div>
+  <div class="fxrow" id="fxrow"></div>
+
+  <h2>Tendencias de Mercado por Categoría</h2>
+  <table id="trends"><thead><tr><th>Categoría</th><th>Publicaciones</th><th>Precio prom. (USD)</th><th>Mín</th><th>Máx</th></tr></thead><tbody></tbody></table>
+
+  <h2>Subastas</h2>
+  <table id="auctions"><thead><tr><th>Lote</th><th>Categoría</th><th>Inicio (USD)</th><th>Puja actual</th><th>Estado</th></tr></thead><tbody></tbody></table>
+
+  <div id="err" class="err"></div>
+  <div class="foot">Documento operativo · Datos en tiempo real desde la base de datos · AgroMercadoDigital</div>
+</div>
+<script>
+  var API = '/agromercado/api/v1';
+  function el(t,c,txt){var e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;}
+  function card(k,v,cls){var c=el('div','card');c.appendChild(el('div','k',k));var val=el('div','v '+(cls||''),v);c.appendChild(val);return c;}
+  function money(n){return n==null?'—':'$'+Number(n).toLocaleString('es-VE',{minimumFractionDigits:0});}
+
+  async function loadAll(){
+    document.getElementById('err').textContent='';
+    try{
+      var m = await (await fetch(API+'/ai/monitor')).json();
+      var s = m.stats||{};
+      var cards=document.getElementById('cards'); cards.innerHTML='';
+      cards.appendChild(card('Publicaciones activas', (s.active_listings||0).toLocaleString('es-VE'),'cyan'));
+      cards.appendChild(card('Vendedores', (s.sellers||0).toLocaleString('es-VE')));
+      cards.appendChild(card('Verificados (KYC)', (s.verified_sellers||0).toLocaleString('es-VE'),'green'));
+      cards.appendChild(card('Subastas en vivo', (s.live_auctions||0).toLocaleString('es-VE')));
+      cards.appendChild(card('Pujas totales', (s.total_bids||0).toLocaleString('es-VE')));
+      var fx=document.getElementById('fxrow'); fx.innerHTML='';
+      if(s.fx){fx.innerHTML='<div class="fx">BCV oficial: <b>Bs. '+s.fx.bcv_ves+'</b></div><div class="fx">Paralelo: <b>Bs. '+(s.fx.parallel_ves||'—')+'</b></div>';}
+      else {fx.innerHTML='<div class="fx">Sin cotización de divisas registrada.</div>';}
+
+      var t = await (await fetch(API+'/ai/market-trends')).json();
+      var tb=document.querySelector('#trends tbody'); tb.innerHTML='';
+      (t.trends||[]).forEach(function(r){
+        var tr=el('tr');
+        tr.appendChild(el('td',null,r.name||r.category_id));
+        tr.appendChild(el('td',null,r.listings));
+        tr.appendChild(el('td',null,money(r.avg_price_usd)));
+        tr.appendChild(el('td',null,money(r.min_price_usd)));
+        tr.appendChild(el('td',null,money(r.max_price_usd)));
+        tb.appendChild(tr);
+      });
+
+      var a = await (await fetch(API+'/subastas')).json();
+      var ab=document.querySelector('#auctions tbody'); ab.innerHTML='';
+      (a.auctions||[]).forEach(function(x){
+        var tr=el('tr');
+        tr.appendChild(el('td',null,x.title));
+        tr.appendChild(el('td',null,x.category_id));
+        tr.appendChild(el('td',null,money(x.start_price_usd)));
+        tr.appendChild(el('td',null,money(x.current_bid_usd)));
+        var st=el('td'); var pill=el('span','pill '+(x.status==='live'?'live':'warn'),x.status); st.appendChild(pill); tr.appendChild(st);
+        ab.appendChild(tr);
+      });
+    }catch(e){ document.getElementById('err').textContent='Error cargando datos: '+e.message; }
+  }
+  loadAll();
+  setInterval(loadAll, 30000);
+</script>
+</body>
+</html>
