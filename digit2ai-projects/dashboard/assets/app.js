@@ -245,9 +245,11 @@ function verticalOptions(selectedId) {
 // page, which pulls from /api/projects-bridge/messages on the main CRM.
 // =====================================================
 function renderMessages(container) {
+  // Cache-bust so the freshest embed page always loads after a deploy.
+  const v = (window.BUILD_VERSION || Date.now());
   container.innerHTML = `
     <div class="card" style="padding:0;overflow:hidden;height:calc(100vh - 160px);min-height:520px">
-      <iframe src="${location.origin}/projects-messages.html"
+      <iframe src="${location.origin}/projects-messages.html?v=${v}"
               style="width:100%;height:100%;border:0;display:block;background:transparent"
               title="Calls & Messages"></iframe>
     </div>`;

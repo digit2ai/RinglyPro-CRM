@@ -18,11 +18,18 @@
     }
     .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .head h1 { font-size: 18px; margin: 0; }
+    .head-btns { display: flex; gap: 8px; }
     .refresh {
       background: var(--accent); color: #fff; border: none; border-radius: 8px;
       padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .refresh:hover { filter: brightness(1.08); }
+    .mark-all {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .mark-all:hover { color: var(--text); border-color: var(--muted); }
+
     .list { display: flex; flex-direction: column; gap: 10px; }
     .item {
       background: var(--panel); border: 1px solid var(--border);
@@ -33,15 +40,11 @@
     .item.voicemail { border-left-color: var(--accent-2); }
     .item.sms       { border-left-color: var(--green); }
     .item.read { opacity: .5; }
-    .item.read:hover { opacity: .7; }
-    .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block; flex: 0 0 auto; }
-    .head-btns { display: flex; gap: 8px; }
-    .mark-all {
-      background: transparent; color: var(--muted); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
-    }
-    .mark-all:hover { color: var(--text); border-color: var(--muted); }
+    .item.read:hover { opacity: .72; }
+
     .row1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .unread-dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; display: inline-block; flex: 0 0 auto; box-shadow: 0 0 0 3px rgba(239,68,68,.18); }
+    .item.read .unread-dot { display: none; }
     .kind {
       font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
       background: rgba(37,99,235,.15); color: #93c5fd; padding: 2px 8px; border-radius: 6px;
@@ -51,6 +54,17 @@
     .phone { font-weight: 600; font-size: 14px; }
     .dur { font-size: 12px; color: var(--cyan); background: rgba(34,211,238,.1); padding: 2px 8px; border-radius: 10px; }
     .ts { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+    .status { flex: 0 0 auto; }
+    .mark-btn {
+      background: rgba(37,99,235,.14); color: #93c5fd; border: 1px solid rgba(37,99,235,.4);
+      border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .mark-btn:hover { background: rgba(37,99,235,.28); color: #dbeafe; }
+    .read-label { display: none; font-size: 12px; font-weight: 600; color: var(--green); }
+    .item.read .mark-btn { display: none; }
+    .item.read .read-label { display: inline; }
+
     .body { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
     audio { margin-top: 10px; width: 100%; height: 34px; }
     .empty, .err { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 14px; }
@@ -66,8 +80,8 @@
   <div class="head">
     <h1>Calls &amp; Messages</h1>
     <div class="head-btns">
-      <button class="mark-all" onclick="markAllRead()">Mark all read</button>
-      <button class="refresh" onclick="load()">&#8635; Refresh</button>
+      <button class="mark-all" id="mark-all-btn">Mark all read</button>
+      <button class="refresh" id="refresh-btn">&#8635; Refresh</button>
     </div>
   </div>
   <div id="list" class="list"><div class="spinner"></div></div>
@@ -84,8 +98,7 @@
 
     function fmtTs(ts) {
       try {
-        const d = new Date(ts);
-        return d.toLocaleString('en-US', {
+        return new Date(ts).toLocaleString('en-US', {
           timeZone: 'America/New_York',
           weekday: 'short', month: 'short', day: 'numeric',
           hour: 'numeric', minute: '2-digit'
@@ -110,12 +123,12 @@
       if (!it.recording_url) return '';
       let src = String(it.recording_url);
       if (src.startsWith('/')) {
-        src = ORIGIN + src;               // already a proxy path (elevenlabs-audio / recording)
+        src = ORIGIN + src;                       // already a proxy path
       } else {
         const m = src.match(/(RE[a-zA-Z0-9]+)/);  // raw Twilio recording → proxy by SID
         if (m) src = `${ORIGIN}/api/messages/recording/${m[1]}`;
       }
-      return `<audio controls preload="none" src="${src}" onclick="event.stopPropagation()"></audio>`;
+      return `<audio controls preload="none" src="${src}"></audio>`;
     }
 
     function esc(s) {
@@ -123,32 +136,23 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // Tell the parent Hub to refresh its unread badge / KPI cards.
     function notifyParent() {
       try { window.parent.postMessage({ type: 'crm-messages-read' }, ORIGIN); } catch (e) {}
     }
 
-    async function markItemRead(el) {
-      if (!el || el.classList.contains('read')) return;
-      const id = el.getAttribute('data-id');
+    async function markItemRead(item) {
+      if (!item || item.classList.contains('read')) return;
+      const id = item.getAttribute('data-id');
       if (!id) return;
-      el.classList.remove('unread');
-      el.classList.add('read');
-      const dot = el.querySelector('.unread-dot');
-      if (dot) dot.remove();
+      item.classList.add('read');                 // optimistic — CSS swaps button → "Read"
       try {
         await fetch(`${ORIGIN}/api/projects-bridge/messages/${encodeURIComponent(id)}/read`, { method: 'POST' });
-      } catch (e) { /* optimistic — leave marked read */ }
+      } catch (e) { /* keep optimistic state */ }
       notifyParent();
     }
 
     async function markAllRead() {
-      document.querySelectorAll('.item.unread').forEach(el => {
-        el.classList.remove('unread');
-        el.classList.add('read');
-        const dot = el.querySelector('.unread-dot');
-        if (dot) dot.remove();
-      });
+      document.querySelectorAll('.item:not(.read)').forEach(el => el.classList.add('read'));
       try {
         await fetch(`${ORIGIN}/api/projects-bridge/messages/read-all`, { method: 'POST' });
       } catch (e) {}
@@ -174,15 +178,19 @@
           const k = normKind(it.kind);
           const dur = fmtDur(it.secs);
           const body = esc(it.body).trim();
-          const isRead = it.read === true;
+          const readCls = it.read === true ? ' read' : '';
           return `
-            <div class="item ${k} ${isRead ? 'read' : 'unread'}" data-id="${it.id}" onclick="markItemRead(this)">
+            <div class="item ${k}${readCls}" data-id="${it.id}">
               <div class="row1">
-                ${isRead ? '' : '<span class="unread-dot" title="Unread"></span>'}
+                <span class="unread-dot" title="Unread"></span>
                 <span class="kind ${k}">${kindLabel(k, it.kind)}</span>
                 <span class="phone">${esc(it.phone || 'Unknown')}</span>
                 ${dur ? `<span class="dur">${dur}</span>` : ''}
                 <span class="ts">${fmtTs(it.ts)}</span>
+                <span class="status">
+                  <button class="mark-btn" type="button">Mark read</button>
+                  <span class="read-label">&#10003; Read</span>
+                </span>
               </div>
               ${body ? `<div class="body">${body}</div>` : ''}
               ${audioHtml(it)}
@@ -192,6 +200,15 @@
         list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`;
       }
     }
+
+    // Event delegation — survives re-renders, and lets the audio controls work.
+    document.getElementById('list').addEventListener('click', (e) => {
+      if (e.target.closest('audio')) return;       // don't hijack the player
+      const item = e.target.closest('.item');
+      if (item) markItemRead(item);
+    });
+    document.getElementById('mark-all-btn').addEventListener('click', markAllRead);
+    document.getElementById('refresh-btn').addEventListener('click', load);
 
     load();
   </script>
