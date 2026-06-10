@@ -202,8 +202,11 @@ async function persistStatus(id, unread, error) {
 // ---- Gmail (OAuth, password-free) ------------------------------------------
 const GMAIL_REDIRECT = process.env.GMAIL_OAUTH_REDIRECT_URI
   || 'https://aiagent.ringlypro.com/api/projects-bridge/email-oauth/google/callback';
+// gmail.modify = read + mark-as-read + send/reply (future AI reply agent), but
+// NOT permanent delete. One scope for the whole roadmap → one client consent,
+// one Google verification. Reading uses the exact same calls as readonly.
 const GMAIL_SCOPES = [
-  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/userinfo.email'
 ];
 
