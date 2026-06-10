@@ -230,6 +230,19 @@ TODO: wire actual Render cron jobs once first quarterly refresh window approache
 
 Full build status + remaining external dependencies (provider keys, AWS Rekognition for likeness, legal-reviewed templates) are tracked in `verticals/veritas/ECOSYSTEM.md`.
 
+## Projects Hub — Client 15 Command Center (`/projects`)
+
+The Digit2AI Projects Hub doubles as the owner's (client 15) single command center, surfacing RinglyPro CRM data alongside projects. Glue lives in `src/routes/projects-bridge.js` (mounted `/api/projects-bridge`, hard-scoped to `D2AI_CLIENT_ID = 15`, runs on the main CRM sequelize).
+
+- **Lina → Projects calendar**: client-15 carve-out in `src/routes/elevenlabs-tools.js` books into `d2_calendar_events` (not the CRM `appointments` table). Availability/conflict checks honor 9–19h, 30-min slots, weekdays.
+- **Calls & Messages**: `GET /call-stats` (calls today, follow-ups pending, unread messages), `GET /messages` (inbound feed from the `messages` table, unread-first), `POST /messages/:id/read` + `/messages/read-all`. Embedded view: `public/projects-messages.html`. Hub shows a Messages nav badge + Home KPIs.
+- **Neural KPIs**: `GET /neural` proxies the CRM `/api/neural/dashboard/15` server-side (admin key hidden). Rendered as a KPI panel on the Hub home.
+- **Email reconciliation** (multi-account unified inbox): `email_accounts` table (auto-created), app passwords AES-256-GCM encrypted. Service `src/services/emailReconcile.js` (IMAP via `imapflow`, 60s cache). JWT-gated endpoints (client-15 token): `GET /email-stats`, `GET /emails`, `GET/POST/DELETE /email-accounts`. Embedded view `public/projects-emails.html` with an Add-account flow (provider presets: iCloud/Gmail/365/Network Solutions/Yahoo). Hub shows an Email nav badge.
+- **SSO**: the Hub logs in via the CRM `/api/auth/login`; its JWT is mirrored to `localStorage['token']` so embedded CRM screens (and the RinglyPro nav group) don't re-prompt.
+
+**Environment Variables:**
+- `EMAIL_CRED_SECRET` — secret used to derive the AES-256-GCM key that encrypts stored IMAP app passwords in `email_accounts`. Falls back to `JWT_SECRET`. SET THIS on prod so credentials aren't encrypted under a guessable default.
+
 **Data Flow:**
 PLC / Sensor → n8n → POST /api/oee/webhooks/machine-event → machine_events table
 MCP Tool Call → POST /api/oee/tools/call → OEE route handler → PostgreSQL → response
