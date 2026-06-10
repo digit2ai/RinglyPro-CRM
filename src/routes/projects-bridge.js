@@ -188,7 +188,7 @@ function requireClient15(req, res, next) {
 // Unread totals + per-account breakdown (for the Email badge/card).
 router.get('/email-stats', requireClient15, async (req, res) => {
   try {
-    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID, { limit: 1 });
+    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID);
     res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts });
   } catch (error) {
     console.error('[ProjectsBridge] email-stats error:', error.message);
@@ -199,9 +199,8 @@ router.get('/email-stats', requireClient15, async (req, res) => {
 // Recent unread emails merged across all accounts (for the unified inbox view).
 router.get('/emails', requireClient15, async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 30);
     const force = req.query.force === '1';
-    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID, { limit, force });
+    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID, { force });
     res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts, items: data.items });
   } catch (error) {
     console.error('[ProjectsBridge] emails error:', error.message);

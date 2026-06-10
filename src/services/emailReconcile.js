@@ -313,7 +313,9 @@ async function fetchGmail(account, limit) {
         from: (nameMatch && nameMatch[2]) ? nameMatch[2].trim() : fromRaw,
         from_name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : '',
         subject: h('Subject') || '(no subject)',
-        ts: new Date(tsMs).toISOString()
+        ts: new Date(tsMs).toISOString(),
+        // Deep-link straight to this message in Gmail web, in the right account.
+        open_url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email_address)}#all/${m.id}`
       });
     } catch (e) { /* skip a single message */ }
   }
@@ -323,8 +325,11 @@ async function fetchGmail(account, limit) {
 // ---- aggregate (cached) -----------------------------------------------------
 const _cache = new Map(); // clientId -> { at, data }
 const CACHE_MS = 60 * 1000;
+const FETCH_PER_ACCOUNT = 25; // fixed batch so the cache is consistent across callers
 
-async function getSummary(clientId, { limit = 12, force = false } = {}) {
+// Always fetches the same full batch regardless of caller, so the badge endpoint
+// (which only reads total_unread) can't poison the cache for the inbox view.
+async function getSummary(clientId, { force = false } = {}) {
   await ensureTable();
   const cached = _cache.get(clientId);
   if (!force && cached && (Date.now() - cached.at) < CACHE_MS) return cached.data;
@@ -340,7 +345,9 @@ async function getSummary(clientId, { limit = 12, force = false } = {}) {
 
   await Promise.all(accounts.map(async (acc) => {
     try {
-      const r = acc.provider === 'gmail' ? await fetchGmail(acc, limit) : await fetchAccount(acc, limit);
+      const r = acc.provider === 'gmail'
+        ? await fetchGmail(acc, FETCH_PER_ACCOUNT)
+        : await fetchAccount(acc, FETCH_PER_ACCOUNT);
       totalUnread += r.unread;
       perAccount.push({ id: acc.id, label: acc.label || acc.email_address, email: acc.email_address, unread: r.unread, error: null });
       items.push(...r.items);
@@ -353,7 +360,7 @@ async function getSummary(clientId, { limit = 12, force = false } = {}) {
   }));
 
   items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
-  const data = { total_unread: totalUnread, accounts: perAccount, items: items.slice(0, limit * Math.max(accounts.length, 1)) };
+  const data = { total_unread: totalUnread, accounts: perAccount, items };
   _cache.set(clientId, { at: Date.now(), data });
   return data;
 }

@@ -31,7 +31,8 @@
     .acct-chip .rm:hover { color: var(--red); }
     .list { display: flex; flex-direction: column; gap: 8px; }
     .mail { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent);
-      border-radius: 10px; padding: 12px 14px; }
+      border-radius: 10px; padding: 12px 14px; transition: background .15s; }
+    .mail:hover { background: var(--panel-2); }
     .mail .top { display: flex; align-items: center; gap: 10px; margin-bottom: 3px; flex-wrap: wrap; }
     .mail .from { font-weight: 600; font-size: 14px; }
     .mail .acct { font-size: 11px; color: var(--cyan); background: rgba(34,211,238,.1); padding: 1px 8px; border-radius: 10px; }
@@ -159,15 +160,18 @@
           }
           return;
         }
-        list.innerHTML = items.map(m => `
-          <div class="mail">
+        list.innerHTML = items.map(m => {
+          const clickable = m.open_url ? `onclick="window.open('${m.open_url.replace(/'/g, "\\'")}','_blank','noopener')" style="cursor:pointer"` : '';
+          return `
+          <div class="mail" ${clickable} title="${m.open_url ? 'Open in Gmail' : ''}">
             <div class="top">
               <span class="from">${esc(m.from_name || m.from || 'Unknown')}</span>
               <span class="acct">${esc(m.account)}</span>
               <span class="ts">${fmtTs(m.ts)}</span>
             </div>
             <div class="subject">${esc(m.subject)}</div>
-          </div>`).join('');
+          </div>`;
+        }).join('');
       } catch (err){ list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`; }
     }
 
