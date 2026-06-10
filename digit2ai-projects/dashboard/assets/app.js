@@ -52,6 +52,17 @@ async function showApp() {
     toggleRinglyProGroup(localStorage.getItem('d2ai_rp_open') === '1');
   }
 
+  // When the embedded Messages iframe marks something read, refresh the unread badge.
+  if (!window._crmMsgListener) {
+    window._crmMsgListener = true;
+    window.addEventListener('message', (e) => {
+      if (e.origin !== location.origin) return;
+      if (e.data && e.data.type === 'crm-messages-read' && typeof loadCrmCallStats === 'function') {
+        loadCrmCallStats();
+      }
+    });
+  }
+
   // Resolve role + apply per-role nav restrictions before loading anything heavy
   let role = 'admin';
   try {

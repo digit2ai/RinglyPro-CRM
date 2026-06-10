@@ -27,9 +27,20 @@
     .item {
       background: var(--panel); border: 1px solid var(--border);
       border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px;
+      cursor: pointer; transition: opacity .15s, background .15s;
     }
+    .item:hover { background: var(--panel-2); }
     .item.voicemail { border-left-color: var(--accent-2); }
     .item.sms       { border-left-color: var(--green); }
+    .item.read { opacity: .5; }
+    .item.read:hover { opacity: .7; }
+    .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block; flex: 0 0 auto; }
+    .head-btns { display: flex; gap: 8px; }
+    .mark-all {
+      background: transparent; color: var(--muted); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .mark-all:hover { color: var(--text); border-color: var(--muted); }
     .row1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
     .kind {
       font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
@@ -54,7 +65,10 @@
 <body>
   <div class="head">
     <h1>Calls &amp; Messages</h1>
-    <button class="refresh" onclick="load()">&#8635; Refresh</button>
+    <div class="head-btns">
+      <button class="mark-all" onclick="markAllRead()">Mark all read</button>
+      <button class="refresh" onclick="load()">&#8635; Refresh</button>
+    </div>
   </div>
   <div id="list" class="list"><div class="spinner"></div></div>
 
@@ -93,22 +107,52 @@
     }
 
     function audioHtml(it) {
-      // ElevenLabs AI call recording
-      if (it.conv_id) {
-        return `<audio controls preload="none" src="${ORIGIN}/api/messages/elevenlabs-audio/${encodeURIComponent(it.conv_id)}"></audio>`;
+      if (!it.recording_url) return '';
+      let src = String(it.recording_url);
+      if (src.startsWith('/')) {
+        src = ORIGIN + src;               // already a proxy path (elevenlabs-audio / recording)
+      } else {
+        const m = src.match(/(RE[a-zA-Z0-9]+)/);  // raw Twilio recording → proxy by SID
+        if (m) src = `${ORIGIN}/api/messages/recording/${m[1]}`;
       }
-      // Twilio recording (voicemail) — proxy by SID if the URL ends in a RExxxx SID
-      if (it.recording_url) {
-        const m = String(it.recording_url).match(/(RE[a-zA-Z0-9]+)/);
-        const src = m ? `${ORIGIN}/api/messages/recording/${m[1]}` : it.recording_url;
-        return `<audio controls preload="none" src="${src}"></audio>`;
-      }
-      return '';
+      return `<audio controls preload="none" src="${src}" onclick="event.stopPropagation()"></audio>`;
     }
 
     function esc(s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Tell the parent Hub to refresh its unread badge / KPI cards.
+    function notifyParent() {
+      try { window.parent.postMessage({ type: 'crm-messages-read' }, ORIGIN); } catch (e) {}
+    }
+
+    async function markItemRead(el) {
+      if (!el || el.classList.contains('read')) return;
+      const id = el.getAttribute('data-id');
+      if (!id) return;
+      el.classList.remove('unread');
+      el.classList.add('read');
+      const dot = el.querySelector('.unread-dot');
+      if (dot) dot.remove();
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/${encodeURIComponent(id)}/read`, { method: 'POST' });
+      } catch (e) { /* optimistic — leave marked read */ }
+      notifyParent();
+    }
+
+    async function markAllRead() {
+      document.querySelectorAll('.item.unread').forEach(el => {
+        el.classList.remove('unread');
+        el.classList.add('read');
+        const dot = el.querySelector('.unread-dot');
+        if (dot) dot.remove();
+      });
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/read-all`, { method: 'POST' });
+      } catch (e) {}
+      notifyParent();
     }
 
     async function load() {
@@ -130,9 +174,11 @@
           const k = normKind(it.kind);
           const dur = fmtDur(it.secs);
           const body = esc(it.body).trim();
+          const isRead = it.read === true;
           return `
-            <div class="item ${k}">
+            <div class="item ${k} ${isRead ? 'read' : 'unread'}" data-id="${it.id}" onclick="markItemRead(this)">
               <div class="row1">
+                ${isRead ? '' : '<span class="unread-dot" title="Unread"></span>'}
                 <span class="kind ${k}">${kindLabel(k, it.kind)}</span>
                 <span class="phone">${esc(it.phone || 'Unknown')}</span>
                 ${dur ? `<span class="dur">${dur}</span>` : ''}

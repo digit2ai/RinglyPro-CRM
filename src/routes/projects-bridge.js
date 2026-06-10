@@ -72,39 +72,29 @@ router.get('/call-stats', async (req, res) => {
 
 /**
  * GET /api/projects-bridge/messages?limit=40
- * Recent call + voicemail + SMS history for client 15, newest first.
- * Powers the embedded Messages view at /projects-messages.html.
+ * Recent inbound call + voicemail + SMS history for client 15, newest first.
+ * Sourced from the messages table only — that's where AI-call summaries live
+ * (message_type='call', body=summary, recording_url=elevenlabs-audio proxy) AND
+ * where the `read` flag lives, so every item is markable. Powers the embedded
+ * Messages view at /projects-messages.html.
  */
 router.get('/messages', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 40, 100);
 
     const rows = await sequelize.query(
-      `SELECT * FROM (
-          SELECT 'call'::text AS kind,
-                 id,
-                 from_number AS phone,
-                 COALESCE(duration, 0) AS secs,
-                 COALESCE(NULLIF(notes, ''), caller_name, '') AS body,
-                 recording_url,
-                 elevenlabs_conversation_id AS conv_id,
-                 COALESCE(start_time, created_at) AS ts
-            FROM calls
-           WHERE client_id = $1 AND direction = 'incoming'
-          UNION ALL
-          SELECT COALESCE(NULLIF(message_type, ''), 'message')::text AS kind,
-                 id,
-                 from_number AS phone,
-                 COALESCE(call_duration, 0) AS secs,
-                 COALESCE(body, '') AS body,
-                 recording_url,
-                 NULL AS conv_id,
-                 COALESCE(call_start_time, created_at) AS ts
-            FROM messages
-           WHERE client_id = $1
-       ) x
-       ORDER BY ts DESC
-       LIMIT $2`,
+      `SELECT id,
+              COALESCE(NULLIF(message_type, ''), 'message') AS kind,
+              from_number AS phone,
+              COALESCE(call_duration, 0) AS secs,
+              COALESCE(body, '') AS body,
+              recording_url,
+              read,
+              COALESCE(call_start_time, created_at) AS ts
+         FROM messages
+        WHERE client_id = $1 AND direction = 'incoming'
+        ORDER BY ts DESC
+        LIMIT $2`,
       { bind: [D2AI_CLIENT_ID, limit], type: QueryTypes.SELECT }
     );
 
@@ -112,6 +102,42 @@ router.get('/messages', async (req, res) => {
   } catch (error) {
     console.error('[ProjectsBridge] messages error:', error.message);
     res.json({ success: false, items: [], error: error.message });
+  }
+});
+
+/**
+ * POST /api/projects-bridge/messages/:id/read
+ * Mark one inbound message (client 15) as read.
+ */
+router.post('/messages/:id/read', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!id) return res.json({ success: false, error: 'invalid id' });
+    await sequelize.query(
+      `UPDATE messages SET read = true WHERE id = $1 AND client_id = $2`,
+      { bind: [id, D2AI_CLIENT_ID], type: QueryTypes.UPDATE }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] mark-read error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/projects-bridge/messages/read-all
+ * Mark every inbound message (client 15) as read.
+ */
+router.post('/messages/read-all', async (req, res) => {
+  try {
+    await sequelize.query(
+      `UPDATE messages SET read = true WHERE client_id = $1 AND direction = 'incoming' AND read = false`,
+      { bind: [D2AI_CLIENT_ID], type: QueryTypes.UPDATE }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] read-all error:', error.message);
+    res.json({ success: false, error: error.message });
   }
 });
 
