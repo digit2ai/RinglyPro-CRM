@@ -86,8 +86,14 @@
     #am-teaser .am-msg.agent{border-left-color:#8fe0ff;color:#d6eefb;}
     #am-teaser .am-msg .who{display:block;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;opacity:.65;margin-bottom:2px;}
     #am-teaser .am-orb-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
-    #am-teaser .am-orb-stop{display:none;background:#c0392b;color:#fff;border:none;border-radius:9px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;}
-    #am-teaser .am-orb-stage[data-active="1"] .am-orb-stop{display:inline-block;}
+    #am-teaser .am-orb-progress{width:260px;max-width:82%;height:6px;background:rgba(255,255,255,.16);border-radius:6px;overflow:hidden;display:none;}
+    #am-teaser .am-orb-stage[data-active="1"] .am-orb-progress{display:block;}
+    #am-teaser .am-orb-bar{height:100%;width:0;background:linear-gradient(90deg,#6fcf97,#8fe0ff);border-radius:6px;transition:width .2s linear;}
+    #am-teaser .am-orb-time{font-size:11.5px;color:#bcd9c8;letter-spacing:.5px;display:none;font-variant-numeric:tabular-nums;}
+    #am-teaser .am-orb-stage[data-active="1"] .am-orb-time{display:block;}
+    #am-teaser .am-orb .o-pause{display:none;}
+    #am-teaser .am-orb[data-state="speaking"] .o-play{display:none;}
+    #am-teaser .am-orb[data-state="speaking"] .o-pause{display:inline;}
     @media(prefers-reduced-motion:reduce){#am-teaser .am-orb *{animation:none !important;}}
   </style>
 
@@ -99,9 +105,9 @@
       <p class="am-sub">El mercado digital nacional del sector agropecuario venezolano, impulsado por una plataforma de inteligencia artificial de Estados Unidos.</p>
       <div class="am-addr">Documento dirigido a la Junta Directiva del Grupo Agrollano</div>
 
-      <!-- ===== Orb de voz IA (Lina) ===== -->
+      <!-- ===== Presentación de voz (Lina — MP3 pregrabado, sin dependencia de señal en vivo) ===== -->
       <div class="am-orb-stage" id="amOrbStage" data-state="idle" data-active="0">
-        <button class="am-orb" id="amOrb" data-state="idle" type="button" aria-label="Hablar con Lina, asistente de voz IA">
+        <button class="am-orb" id="amOrb" data-state="idle" type="button" aria-label="Reproducir la presentación de voz de Lina">
           <svg viewBox="0 0 172 172" role="img" aria-hidden="true">
             <defs>
               <radialGradient id="amCoreGrad" cx="50%" cy="42%" r="60%">
@@ -126,91 +132,46 @@
             </g>
             <circle class="o-core" cx="86" cy="86" r="40" fill="url(#amCoreGrad)"/>
             <circle cx="86" cy="86" r="40" fill="none" stroke="#eafff4" stroke-opacity=".25" stroke-width="1"/>
-            <path d="M86 74 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M78 80 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M94 80 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#063d22" fill-opacity=".75"/>
+            <!-- Play icon (idle/paused) -->
+            <path class="o-play" d="M77 71 L77 101 L104 86 Z" fill="#063d22" fill-opacity=".82"/>
+            <!-- Pause icon (playing) -->
+            <g class="o-pause" fill="#063d22" fill-opacity=".82">
+              <rect x="76" y="72" width="7.5" height="28" rx="2.5"/>
+              <rect x="88.5" y="72" width="7.5" height="28" rx="2.5"/>
+            </g>
           </svg>
         </button>
-        <div class="am-orb-cap" id="amOrbCap">Hablar con Lina</div>
-        <div class="am-orb-hint" id="amOrbHint">Asistente de voz con IA. Pulse el orbe y pregúntele a Lina por qué AgroMercado es una oportunidad, cómo funciona y qué gana el Grupo Agrollano.</div>
-        <div class="am-orb-transcript" id="amOrbTranscript" aria-live="polite"></div>
-        <div class="am-orb-actions">
-          <button class="am-orb-stop" id="amOrbStop" type="button">Detener conversación</button>
-        </div>
+        <div class="am-orb-cap" id="amOrbCap">Escuchar a Lina</div>
+        <div class="am-orb-hint" id="amOrbHint">Presentación de voz (aprox. 4 min). Pulse el orbe para que Lina le explique por qué AgroMercado es una oportunidad, cómo funciona y qué gana el Grupo Agrollano.</div>
+        <div class="am-orb-progress" id="amOrbProgress" aria-hidden="true"><div class="am-orb-bar" id="amOrbBar"></div></div>
+        <div class="am-orb-time" id="amOrbTime">0:00</div>
+        <audio id="amAudio" preload="metadata" src="https://aiagent.ringlypro.com/agromercado-lina-presentacion.mp3"></audio>
       </div>
     </div>
   </div>
 
-  <!-- ElevenLabs SDK lazy-loader -->
-  <script>
-    window.__amLoadEleven = function(){
-      if (window.__amConv) return Promise.resolve(window.__amConv);
-      if (window.__amConvP) return window.__amConvP;
-      window.__amConvP = import('https://esm.sh/@elevenlabs/client@1.9.0')
-        .then(function(m){ var C = m.Conversation || (m.default && m.default.Conversation); window.__amConv = C; return C; })
-        .catch(function(e){ console.warn('[am-orb] SDK load failed', e); return null; });
-      return window.__amConvP;
-    };
-  </script>
+  <!-- Reproductor de la presentación de voz (Lina) -->
   <script>
     (function(){
-      var AGENT_ID = 'agent_8701kts27sfrf6rs4zxrkr7qhwd0'; // Lina ES — AgroMercado x Digit2AI alianza
       var stage = document.getElementById('amOrbStage');
       var orb = document.getElementById('amOrb');
       var cap = document.getElementById('amOrbCap');
-      var hint = document.getElementById('amOrbHint');
-      var tx = document.getElementById('amOrbTranscript');
-      var stopBtn = document.getElementById('amOrbStop');
-      if (!orb) return;
-      var convo = null, connecting = false;
-      var CAP = { idle:'Hablar con Lina', connecting:'Conectando…', listening:'Escuchando', thinking:'Analizando', speaking:'Lina hablando' };
-
-      function setState(s){
-        orb.dataset.state = s; stage.dataset.state = s; cap.textContent = CAP[s] || CAP.idle;
-      }
-      function addMsg(role, text){
-        if (!text) return;
-        tx.classList.add('show');
-        var d = document.createElement('div');
-        d.className = 'am-msg ' + (role === 'user' ? 'user' : 'agent');
-        var w = document.createElement('span'); w.className = 'who';
-        w.textContent = role === 'user' ? 'Usted' : 'Lina';
-        var p = document.createElement('span'); p.textContent = text;
-        d.appendChild(w); d.appendChild(p); tx.appendChild(d); tx.scrollTop = tx.scrollHeight;
-      }
-      function fallback(msg){
-        connecting = false; stage.dataset.active = '0'; setState('idle');
-        hint.textContent = msg || 'Modo de voz no disponible en este momento. Puede escribirnos a mstagg@digit2ai.com.';
-      }
-      async function start(){
-        if (connecting || convo) return;
-        connecting = true; setState('connecting');
-        hint.textContent = 'Permita el acceso al micrófono para hablar con Lina…';
-        try { await navigator.mediaDevices.getUserMedia({ audio:true }); }
-        catch(e){ fallback('Para usar el modo de voz, active el permiso del micrófono y vuelva a pulsar el orbe.'); return; }
-        var Conversation = await window.__amLoadEleven();
-        if (!Conversation){ fallback(); return; }
-        try {
-          convo = await Conversation.startSession({
-            agentId: AGENT_ID,
-            connectionType: 'webrtc',
-            onConnect: function(){ connecting = false; stage.dataset.active = '1'; setState('listening'); hint.textContent = 'Conectado. Hágale a Lina cualquier pregunta sobre la alianza.'; },
-            onDisconnect: function(){ convo = null; stage.dataset.active = '0'; setState('idle'); hint.textContent = 'Conversación finalizada. Pulse el orbe para hablar de nuevo.'; },
-            onError: function(err){ console.warn('[am-orb]', err); fallback(); },
-            onModeChange: function(m){ var mode = m && m.mode; if (mode === 'speaking') setState('speaking'); else if (mode === 'listening') setState('listening'); },
-            onMessage: function(msg){
-              if (!msg) return;
-              var role = msg.source === 'user' ? 'user' : 'agent';
-              var text = msg.message || msg.text || '';
-              addMsg(role, text);
-            }
-          });
-        } catch(e){ console.warn('[am-orb] startSession failed', e); fallback(); }
-      }
-      async function stop(){
-        try { if (convo) await convo.endSession(); } catch(e){}
-        convo = null; stage.dataset.active = '0'; setState('idle');
-      }
-      orb.addEventListener('click', function(){ if (convo) { stop(); } else { start(); } });
-      stopBtn.addEventListener('click', stop);
+      var bar = document.getElementById('amOrbBar');
+      var timeEl = document.getElementById('amOrbTime');
+      var audio = document.getElementById('amAudio');
+      if (!orb || !audio) return;
+      function fmt(t){ if (!isFinite(t) || t < 0) return '0:00'; var m = Math.floor(t/60), s = Math.floor(t%60); return m + ':' + (s<10?'0':'') + s; }
+      function setState(s){ orb.dataset.state = s; stage.dataset.state = s; }
+      orb.addEventListener('click', function(){
+        if (audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function(){ cap.textContent = 'Pulse de nuevo para reproducir'; }); }
+        else { audio.pause(); }
+      });
+      audio.addEventListener('play', function(){ stage.dataset.active = '1'; setState('speaking'); cap.textContent = 'Lina presentando — pulse para pausar'; });
+      audio.addEventListener('pause', function(){ if (!audio.ended) { setState('idle'); cap.textContent = 'Reanudar presentación'; } });
+      audio.addEventListener('ended', function(){ stage.dataset.active = '0'; setState('idle'); cap.textContent = 'Escuchar de nuevo'; bar.style.width = '0%'; });
+      audio.addEventListener('timeupdate', function(){ if (audio.duration) { bar.style.width = (audio.currentTime/audio.duration*100) + '%'; timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration); } });
+      audio.addEventListener('loadedmetadata', function(){ timeEl.textContent = '0:00 / ' + fmt(audio.duration); });
+      audio.addEventListener('error', function(){ cap.textContent = 'No se pudo cargar el audio'; });
     })();
   </script>
 
