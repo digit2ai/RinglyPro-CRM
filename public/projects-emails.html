@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email</title>
+  <style>
+    :root {
+      --bg: #0f172a; --panel: #1e293b; --panel-2: #172033;
+      --border: #2a3852; --text: #e2e8f0; --muted: #94a3b8;
+      --accent: #2563eb; --accent-2: #7c5cff; --cyan: #22d3ee; --green: #10b981; --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 16px; }
+    .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+    .head h1 { font-size: 18px; margin: 0; }
+    .head-btns { display: flex; gap: 8px; }
+    .btn { border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .accounts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .acct-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 12px; font-size: 12.5px; }
+    .acct-chip .cnt { background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+    .acct-chip.err { border-color: rgba(239,68,68,.5); }
+    .acct-chip.err .cnt { background: var(--red); }
+    .acct-chip .rm { color: var(--muted); cursor: pointer; font-weight: 700; }
+    .acct-chip .rm:hover { color: var(--red); }
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .mail { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+      border-radius: 10px; padding: 12px 14px; }
+    .mail .top { display: flex; align-items: center; gap: 10px; margin-bottom: 3px; flex-wrap: wrap; }
+    .mail .from { font-weight: 600; font-size: 14px; }
+    .mail .acct { font-size: 11px; color: var(--cyan); background: rgba(34,211,238,.1); padding: 1px 8px; border-radius: 10px; }
+    .mail .ts { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .mail .subject { font-size: 13.5px; color: var(--text); }
+    .empty, .err { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 14px; }
+    .err { color: #f87171; }
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .8s linear infinite; margin: 40px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* modal */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .overlay.open { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 460px; padding: 20px; }
+    .modal h2 { margin: 0 0 4px; font-size: 17px; }
+    .modal p.hint { margin: 0 0 14px; font-size: 12.5px; color: var(--muted); }
+    .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .preset { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+    .preset:hover { border-color: var(--accent); }
+    .field { margin-bottom: 10px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .field input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 11px; font-size: 13px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+    .form-err { color: #f87171; font-size: 12.5px; min-height: 16px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <h1>Email — Unified Inbox</h1>
+    <div class="head-btns">
+      <button class="btn btn-ghost" id="add-btn">+ Add account</button>
+      <button class="btn btn-primary" id="refresh-btn">&#8635; Refresh</button>
+    </div>
+  </div>
+  <div class="accounts" id="accounts"></div>
+  <div id="list" class="list"><div class="spinner"></div></div>
+
+  <!-- Add account modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Connect an email account</h2>
+      <p class="hint">Uses IMAP with an <strong>app password</strong> (not your normal login password). Pick a preset to fill the server, then enter your address + app password.</p>
+      <div class="presets" id="presets"></div>
+      <div class="field"><label>Display name</label><input id="f-label" placeholder="e.g. Digit2AI Gmail"></div>
+      <div class="field"><label>Email address</label><input id="f-email" placeholder="you@example.com" autocomplete="off"></div>
+      <div class="grid2">
+        <div class="field"><label>IMAP host</label><input id="f-host" placeholder="imap.gmail.com"></div>
+        <div class="field"><label>Port</label><input id="f-port" value="993"></div>
+      </div>
+      <div class="field"><label>Username (usually your email)</label><input id="f-user" placeholder="you@example.com" autocomplete="off"></div>
+      <div class="field"><label>App password</label><input id="f-pass" type="password" autocomplete="new-password"></div>
+      <div class="form-err" id="form-err"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="save-btn">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ORIGIN = location.origin;
+    function token() { return localStorage.getItem('token') || ''; }
+    function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function notifyParent(){ try { window.parent.postMessage({ type:'email-stats-changed' }, ORIGIN); } catch(e){} }
+
+    const PRESETS = {
+      'iCloud / Apple Mail': { host:'imap.mail.me.com', port:993 },
+      'Gmail / Workspace':   { host:'imap.gmail.com', port:993 },
+      'Outlook / 365':       { host:'outlook.office365.com', port:993 },
+      'Network Solutions':   { host:'mail.', port:993 },
+      'Yahoo':               { host:'imap.mail.yahoo.com', port:993 }
+    };
+
+    function fmtTs(ts){
+      try { return new Date(ts).toLocaleString('en-US',{ timeZone:'America/New_York', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }); }
+      catch { return ''; }
+    }
+
+    function renderAccounts(accounts){
+      const el = document.getElementById('accounts');
+      if (!accounts || !accounts.length){ el.innerHTML=''; return; }
+      el.innerHTML = accounts.map(a => `
+        <span class="acct-chip ${a.error?'err':''}" title="${a.error?esc(a.error):esc(a.email||a.label)}">
+          ${esc(a.label || a.email)} <span class="cnt">${a.error ? '!' : (a.unread||0)}</span>
+          <span class="rm" data-id="${a.id}" title="Remove">&times;</span>
+        </span>`).join('');
+      el.querySelectorAll('.rm').forEach(x => x.addEventListener('click', () => removeAccount(x.getAttribute('data-id'))));
+    }
+
+    async function load(force){
+      const list = document.getElementById('list');
+      list.innerHTML = '<div class="spinner"></div>';
+      if (!token()){ list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/emails?limit=15${force?'&force=1':''}`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!data.success){ list.innerHTML = `<div class="err">${esc(data.error||'Could not load email')}</div>`; return; }
+        renderAccounts(data.accounts);
+        notifyParent();
+        const items = data.items || [];
+        if (!data.accounts || !data.accounts.length){
+          list.innerHTML = `<div class="empty">No email accounts connected yet.<br><br><button class="btn btn-primary" onclick="openModal()">+ Connect your first inbox</button></div>`;
+          return;
+        }
+        if (!items.length){ list.innerHTML = `<div class="empty">All caught up — no unread email across your connected inboxes.</div>`; return; }
+        list.innerHTML = items.map(m => `
+          <div class="mail">
+            <div class="top">
+              <span class="from">${esc(m.from_name || m.from || 'Unknown')}</span>
+              <span class="acct">${esc(m.account)}</span>
+              <span class="ts">${fmtTs(m.ts)}</span>
+            </div>
+            <div class="subject">${esc(m.subject)}</div>
+          </div>`).join('');
+      } catch (err){ list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`; }
+    }
+
+    // ---- add account modal ----
+    function openModal(){
+      document.getElementById('form-err').textContent='';
+      ['f-label','f-email','f-host','f-user','f-pass'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('f-port').value='993';
+      document.getElementById('overlay').classList.add('open');
+    }
+    function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+
+    function renderPresets(){
+      const el = document.getElementById('presets');
+      el.innerHTML = Object.keys(PRESETS).map(name => `<button type="button" class="preset" data-name="${esc(name)}">${esc(name)}</button>`).join('');
+      el.querySelectorAll('.preset').forEach(b => b.addEventListener('click', () => {
+        const p = PRESETS[b.getAttribute('data-name')];
+        document.getElementById('f-host').value = p.host;
+        document.getElementById('f-port').value = p.port;
+        if (!document.getElementById('f-label').value) document.getElementById('f-label').value = b.getAttribute('data-name');
+      }));
+    }
+
+    async function saveAccount(){
+      const errEl = document.getElementById('form-err');
+      errEl.textContent = '';
+      const body = {
+        label: document.getElementById('f-label').value.trim(),
+        email: document.getElementById('f-email').value.trim(),
+        host:  document.getElementById('f-host').value.trim(),
+        port:  document.getElementById('f-port').value.trim(),
+        user:  document.getElementById('f-user').value.trim() || document.getElementById('f-email').value.trim(),
+        password: document.getElementById('f-pass').value
+      };
+      if (!body.email || !body.host || !body.password){ errEl.textContent='Email, host and app password are required.'; return; }
+      const btn = document.getElementById('save-btn');
+      btn.disabled = true; btn.textContent = 'Connecting…';
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-accounts`, {
+          method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!data.success){ errEl.textContent = data.error || 'Could not connect.'; return; }
+        closeModal(); load(true);
+      } catch (e){ errEl.textContent = 'Error: ' + e.message; }
+      finally { btn.disabled = false; btn.textContent = 'Connect'; }
+    }
+
+    async function removeAccount(id){
+      if (!id) return;
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/email-accounts/${encodeURIComponent(id)}`, { method:'DELETE', headers: authHeaders() });
+      } catch(e){}
+      load(true);
+    }
+
+    window.openModal = openModal;
+    document.getElementById('add-btn').addEventListener('click', openModal);
+    document.getElementById('cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('save-btn').addEventListener('click', saveAccount);
+    document.getElementById('refresh-btn').addEventListener('click', () => load(true));
+    document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeModal(); });
+
+    renderPresets();
+    load();
+  </script>
+</body>
+</html>

@@ -12,8 +12,10 @@
 
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const { sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
+const emailReconcile = require('../services/emailReconcile');
 
 // Hard-scoped to the Digit2AI / RinglyPro owner tenant. Matches D2AI_CLIENT_ID
 // in routes/elevenlabs-tools.js (Lina's Projects-calendar carve-out).
@@ -162,6 +164,87 @@ router.get('/neural', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('[ProjectsBridge] neural error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// =====================================================
+// EMAIL RECONCILIATION (client 15) — JWT-gated; inbox content is sensitive.
+// =====================================================
+function requireClient15(req, res, next) {
+  try {
+    const h = req.headers.authorization || '';
+    const token = h.startsWith('Bearer ') ? h.slice(7) : (req.query.token || '');
+    if (!token) return res.status(401).json({ success: false, error: 'auth required' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+    const cid = parseInt(decoded.clientId || decoded.client_id, 10);
+    if (cid !== D2AI_CLIENT_ID) return res.status(403).json({ success: false, error: 'forbidden' });
+    next();
+  } catch (e) {
+    return res.status(401).json({ success: false, error: 'invalid token' });
+  }
+}
+
+// Unread totals + per-account breakdown (for the Email badge/card).
+router.get('/email-stats', requireClient15, async (req, res) => {
+  try {
+    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID, { limit: 1 });
+    res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-stats error:', error.message);
+    res.json({ success: false, total_unread: 0, accounts: [], error: error.message });
+  }
+});
+
+// Recent unread emails merged across all accounts (for the unified inbox view).
+router.get('/emails', requireClient15, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 30);
+    const force = req.query.force === '1';
+    const data = await emailReconcile.getSummary(D2AI_CLIENT_ID, { limit, force });
+    res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts, items: data.items });
+  } catch (error) {
+    console.error('[ProjectsBridge] emails error:', error.message);
+    res.json({ success: false, items: [], accounts: [], error: error.message });
+  }
+});
+
+// List connected accounts (no secrets).
+router.get('/email-accounts', requireClient15, async (req, res) => {
+  try {
+    const accounts = await emailReconcile.listAccounts(D2AI_CLIENT_ID);
+    res.json({ success: true, accounts });
+  } catch (error) {
+    res.json({ success: false, accounts: [], error: error.message });
+  }
+});
+
+// Add an IMAP account (tests the connection before saving).
+router.post('/email-accounts', requireClient15, async (req, res) => {
+  try {
+    const { label, email, host, port, secure, user, password } = req.body || {};
+    if (!email || !host || !password) {
+      return res.json({ success: false, error: 'email, host and password are required' });
+    }
+    try {
+      await emailReconcile.testImap({ email, host, port, secure, user, password });
+    } catch (e) {
+      return res.json({ success: false, error: `Could not connect: ${e.message}` });
+    }
+    const id = await emailReconcile.addImapAccount(D2AI_CLIENT_ID, { label, email, host, port, secure, user, password });
+    res.json({ success: true, id: id && (id.id || id) });
+  } catch (error) {
+    console.error('[ProjectsBridge] add email account error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Remove an account.
+router.delete('/email-accounts/:id', requireClient15, async (req, res) => {
+  try {
+    await emailReconcile.deleteAccount(D2AI_CLIENT_ID, req.params.id);
+    res.json({ success: true });
+  } catch (error) {
     res.json({ success: false, error: error.message });
   }
 });

@@ -60,6 +60,9 @@ async function showApp() {
       if (e.data && e.data.type === 'crm-messages-read' && typeof loadCrmCallStats === 'function') {
         loadCrmCallStats();
       }
+      if (e.data && e.data.type === 'email-stats-changed' && typeof refreshEmailBadge === 'function') {
+        refreshEmailBadge();
+      }
     });
   }
 
@@ -87,11 +90,13 @@ async function showApp() {
   loadRoles();
   refreshInboxBadge();
   refreshMessagesBadge();
+  refreshEmailBadge();
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
       if (document.hidden) return;
       refreshInboxBadge();
       refreshMessagesBadge();
+      refreshEmailBadge();
     }, 60000);
   }
   navigateTo('overview');
@@ -117,6 +122,29 @@ async function refreshMessagesBadge() {
     const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`);
     const d = await res.json();
     setMessagesBadge(d.unread_messages ?? 0);
+  } catch (e) { /* silent */ }
+}
+
+// Unread email badge on the Email nav item (client 15, across all inboxes).
+function setEmailBadge(unread) {
+  const badge = document.getElementById('email-badge');
+  if (!badge) return;
+  if (unread > 0) {
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+async function refreshEmailBadge() {
+  if (!TOKEN) return;
+  try {
+    const res = await fetch(`${location.origin}/api/projects-bridge/email-stats`, {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const d = await res.json();
+    if (d && d.success) setEmailBadge(d.total_unread ?? 0);
   } catch (e) { /* silent */ }
 }
 
@@ -212,7 +240,7 @@ function navigateTo(view, opts) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', contacts: 'People & Pipeline', projects: 'My Projects',
+    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -227,6 +255,7 @@ async function renderView(view) {
     switch (view) {
       case 'overview': await renderOverview(container); break;
       case 'messages': renderMessages(container); break;
+      case 'email': renderEmails(container); break;
       case 'inbox': await renderInbox(container); break;
       case 'contacts': await renderContacts(container); break;
       case 'projects': await renderProjects(container); break;
@@ -274,6 +303,16 @@ function renderMessages(container) {
       <iframe src="${location.origin}/projects-messages.html?v=${v}"
               style="width:100%;height:100%;border:0;display:block;background:transparent"
               title="Calls & Messages"></iframe>
+    </div>`;
+}
+
+function renderEmails(container) {
+  const v = (window.BUILD_VERSION || Date.now());
+  container.innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden;height:calc(100vh - 160px);min-height:520px">
+      <iframe src="${location.origin}/projects-emails.html?v=${v}"
+              style="width:100%;height:100%;border:0;display:block;background:transparent"
+              title="Email"></iframe>
     </div>`;
 }
 
