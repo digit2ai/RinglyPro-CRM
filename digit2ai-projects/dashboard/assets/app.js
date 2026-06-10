@@ -86,10 +86,12 @@ async function showApp() {
   loadStaff();
   loadRoles();
   refreshInboxBadge();
+  refreshMessagesBadge();
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
       if (document.hidden) return;
       refreshInboxBadge();
+      refreshMessagesBadge();
     }, 60000);
   }
   navigateTo('overview');
@@ -98,6 +100,26 @@ async function showApp() {
 // =====================================================
 // INBOX BADGE (pending project requests)
 // =====================================================
+// Unread CRM messages badge on the Messages nav item (client 15).
+function setMessagesBadge(unread) {
+  const badge = document.getElementById('messages-badge');
+  if (!badge) return;
+  if (unread > 0) {
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+async function refreshMessagesBadge() {
+  try {
+    const res = await fetch(`${location.origin}/api/projects-bridge/call-stats`);
+    const d = await res.json();
+    setMessagesBadge(d.unread_messages ?? 0);
+  } catch (e) { /* silent */ }
+}
+
 async function refreshInboxBadge() {
   try {
     const res = await api('/projects/inbox/count');
@@ -449,8 +471,9 @@ async function loadCrmCallStats() {
     if (callsEl) callsEl.textContent = d.calls_today ?? 0;
     if (followEl) followEl.textContent = d.follow_ups_pending ?? 0;
 
-    const badge = document.getElementById('qa-msg-badge');
     const unread = d.unread_messages ?? 0;
+    setMessagesBadge(unread); // keep the left-pane Messages nav badge in sync
+    const badge = document.getElementById('qa-msg-badge');
     if (badge) {
       if (unread > 0) {
         badge.textContent = unread > 99 ? '99+' : String(unread);
