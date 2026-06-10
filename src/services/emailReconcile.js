@@ -314,12 +314,66 @@ async function fetchGmail(account, limit) {
         from_name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : '',
         subject: h('Subject') || '(no subject)',
         ts: new Date(tsMs).toISOString(),
-        // Deep-link straight to this message in Gmail web, in the right account.
+        message_id: m.id,
+        provider: 'gmail',
+        // Fallback deep-link to this message in Gmail web, in the right account.
         open_url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email_address)}#all/${m.id}`
       });
     } catch (e) { /* skip a single message */ }
   }
   return result;
+}
+
+// ---- single message body (for the in-app reader) ---------------------------
+function decodeB64Url(data) {
+  return Buffer.from(String(data).replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+}
+function extractGmailBody(payload) {
+  let html = '', text = '';
+  (function walk(p) {
+    if (!p) return;
+    const mt = p.mimeType || '';
+    if (mt === 'text/html' && p.body && p.body.data) html = html || decodeB64Url(p.body.data);
+    else if (mt === 'text/plain' && p.body && p.body.data) text = text || decodeB64Url(p.body.data);
+    if (p.parts) p.parts.forEach(walk);
+  })(payload);
+  return { html, text };
+}
+
+async function getMessageBody(clientId, accountId, messageId) {
+  await ensureTable();
+  const [acc] = await sequelize.query(
+    `SELECT * FROM email_accounts WHERE id = $1 AND client_id = $2 LIMIT 1`,
+    { bind: [parseInt(accountId, 10), clientId], type: QueryTypes.SELECT }
+  );
+  if (!acc) throw new Error('Account not found');
+  if (acc.provider === 'gmail') return getGmailMessageBody(acc, messageId);
+  // IMAP body rendering needs MIME parsing — deferred; open in webmail for now.
+  return { from: '', from_name: '', subject: '', date: '', html: '', text: 'In-app preview for IMAP accounts is coming soon — open this in your mail app for now.' };
+}
+
+async function getGmailMessageBody(account, messageId) {
+  const client = gmailOAuthClient();
+  const creds = {};
+  if (account.refresh_token) creds.refresh_token = decrypt(account.refresh_token);
+  if (account.access_token) creds.access_token = decrypt(account.access_token);
+  if (account.token_expires_at) creds.expiry_date = new Date(account.token_expires_at).getTime();
+  client.setCredentials(creds);
+  const gmail = google.gmail({ version: 'v1', auth: client });
+  const full = await gmail.users.messages.get({ userId: 'me', id: messageId, format: 'full' });
+  const headers = (full.data.payload && full.data.payload.headers) || [];
+  const h = (n) => { const x = headers.find(x => x.name.toLowerCase() === n.toLowerCase()); return x ? x.value : ''; };
+  const body = extractGmailBody(full.data.payload);
+  const fromRaw = h('From');
+  const nameMatch = fromRaw.match(/^"?([^"<]*)"?\s*<?([^>]*)>?$/);
+  return {
+    from: (nameMatch && nameMatch[2]) ? nameMatch[2].trim() : fromRaw,
+    from_name: (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : '',
+    subject: h('Subject') || '(no subject)',
+    date: h('Date') || '',
+    html: body.html || '',
+    text: body.text || full.data.snippet || ''
+  };
 }
 
 // ---- aggregate (cached) -----------------------------------------------------
@@ -367,5 +421,5 @@ async function getSummary(clientId, { force = false } = {}) {
 
 module.exports = {
   listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
-  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount
+  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody
 };

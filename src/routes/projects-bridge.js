@@ -208,6 +208,19 @@ router.get('/emails', requireClient15, async (req, res) => {
   }
 });
 
+// Full body of one message, for the in-app reader.
+router.get('/email-message', requireClient15, async (req, res) => {
+  try {
+    const { account_id, id } = req.query;
+    if (!account_id || !id) return res.json({ success: false, error: 'account_id and id are required' });
+    const msg = await emailReconcile.getMessageBody(D2AI_CLIENT_ID, account_id, id);
+    res.json({ success: true, message: msg });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-message error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
 // List connected accounts (no secrets).
 router.get('/email-accounts', requireClient15, async (req, res) => {
   try {

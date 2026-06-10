@@ -33,6 +33,16 @@
     .mail { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent);
       border-radius: 10px; padding: 12px 14px; transition: background .15s; }
     .mail:hover { background: var(--panel-2); }
+    /* in-app reader */
+    .reader { display: flex; flex-direction: column; height: calc(100vh - 120px); min-height: 420px; }
+    .r-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .back { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+    .back:hover { border-color: var(--muted); }
+    .r-open { font-size: 12.5px; color: var(--cyan); text-decoration: none; white-space: nowrap; }
+    .r-open:hover { text-decoration: underline; }
+    .r-subject { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+    .r-meta { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+    .r-body { flex: 1; width: 100%; border: 0; border-radius: 10px; background: #fff; }
     .mail .top { display: flex; align-items: center; gap: 10px; margin-bottom: 3px; flex-wrap: wrap; }
     .mail .from { font-weight: 600; font-size: 14px; }
     .mail .acct { font-size: 11px; color: var(--cyan); background: rgba(34,211,238,.1); padding: 1px 8px; border-radius: 10px; }
@@ -97,6 +107,7 @@
 
   <script>
     const ORIGIN = location.origin;
+    let LAST_ITEMS = [];
     function token() { return localStorage.getItem('token') || ''; }
     function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -160,10 +171,12 @@
           }
           return;
         }
-        list.innerHTML = items.map(m => {
-          const clickable = m.open_url ? `onclick="window.open('${m.open_url.replace(/'/g, "\\'")}','_blank','noopener')" style="cursor:pointer"` : '';
+        LAST_ITEMS = items;
+        list.innerHTML = items.map((m, i) => {
+          const canOpen = m.message_id != null && m.account_id != null;
+          const attrs = canOpen ? `onclick="openMessage(${i})" style="cursor:pointer"` : '';
           return `
-          <div class="mail" ${clickable} title="${m.open_url ? 'Open in Gmail' : ''}">
+          <div class="mail" ${attrs} title="${canOpen ? 'Open' : ''}">
             <div class="top">
               <span class="from">${esc(m.from_name || m.from || 'Unknown')}</span>
               <span class="acct">${esc(m.account)}</span>
@@ -174,6 +187,58 @@
         }).join('');
       } catch (err){ list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`; }
     }
+
+    // ---- in-app message reader (Apple Mail-style, no new window) ----
+    async function openMessage(index) {
+      const item = LAST_ITEMS[index];
+      if (!item || item.message_id == null) return;
+      const list = document.getElementById('list');
+      list.innerHTML = '<div class="spinner"></div>';
+      try {
+        const res = await fetch(
+          `${ORIGIN}/api/projects-bridge/email-message?account_id=${encodeURIComponent(item.account_id)}&id=${encodeURIComponent(item.message_id)}`,
+          { headers: authHeaders() }
+        );
+        const data = await parseJsonSafe(res);
+        if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Could not open message')}</div>`; return; }
+        renderReader(data.message, item);
+      } catch (e) {
+        list.innerHTML = `<div class="err">Failed to open: ${esc(e.message)}</div>`;
+      }
+    }
+
+    function renderReader(m, item) {
+      const list = document.getElementById('list');
+      const fromName = esc(m.from_name || m.from || item.from_name || item.from || 'Unknown');
+      const fromAddr = esc(m.from || item.from || '');
+      const subject = esc(m.subject || item.subject || '(no subject)');
+      const dateStr = esc(m.date || fmtTs(item.ts));
+      const openLink = item.open_url
+        ? `<a class="r-open" href="${item.open_url}" target="_blank" rel="noopener">Open in Gmail &#8599;</a>` : '';
+
+      list.innerHTML = `
+        <div class="reader">
+          <div class="r-head">
+            <button class="back" id="reader-back">&#8592; Inbox</button>
+            ${openLink}
+          </div>
+          <h2 class="r-subject">${subject}</h2>
+          <div class="r-meta">${fromName}${fromAddr && fromAddr !== fromName ? ' &lt;' + fromAddr + '&gt;' : ''} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${esc(item.account || '')}</div>
+          <iframe class="r-body" id="reader-frame" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+        </div>`;
+
+      document.getElementById('reader-back').addEventListener('click', () => load());
+
+      // Render the email content inside a sandboxed iframe (no scripts) so it's safe.
+      const frame = document.getElementById('reader-frame');
+      const inner = (m.html && m.html.trim())
+        ? m.html
+        : `<pre style="white-space:pre-wrap;word-wrap:break-word;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1.5;color:#111;margin:0">${esc(m.text || '(no content)')}</pre>`;
+      frame.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_blank">
+        <style>body{margin:0;padding:14px;background:#fff;color:#111;font-family:-apple-system,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%}img{max-width:100%;height:auto}a{color:#2563eb}</style>
+        </head><body>${inner}</body></html>`;
+    }
+    window.openMessage = openMessage;
 
     // ---- add account modal ----
     function openModal(){
