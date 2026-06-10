@@ -93,7 +93,7 @@ router.get('/messages', async (req, res) => {
               COALESCE(call_start_time, created_at) AS ts
          FROM messages
         WHERE client_id = $1 AND direction = 'incoming'
-        ORDER BY ts DESC
+        ORDER BY read ASC, ts DESC
         LIMIT $2`,
       { bind: [D2AI_CLIENT_ID, limit], type: QueryTypes.SELECT }
     );
