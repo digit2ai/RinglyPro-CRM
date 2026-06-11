@@ -8024,6 +8024,39 @@ function showQuickAdd() {
 // =====================================================
 // NLP WIDGET
 // =====================================================
+// Voice dictation for the AI chat — uses the browser's built-in speech-to-text
+// (Web Speech API; Chrome + iOS Safari). Speaks → fills the input → auto-sends.
+function startDictation(inputId, target) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById(target === 'ai' ? 'ai-mic' : 'nlp-mic');
+  if (!SR) {
+    alert('Voice input isn\'t supported in this browser. Try Chrome on desktop or Safari on iPhone.');
+    return;
+  }
+  // Toggle off if already listening.
+  if (window._dictating) { try { window._dictating.stop(); } catch (e) {} return; }
+
+  const rec = new SR();
+  rec.lang = (typeof getLang === 'function' && getLang() === 'es') ? 'es-ES' : 'en-US';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  window._dictating = rec;
+  if (micBtn) micBtn.classList.add('listening');
+
+  rec.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    const input = document.getElementById(inputId);
+    if (input) input.value = text;
+    // Small delay so the user sees what was heard, then send.
+    setTimeout(() => sendAICommand(target), 150);
+  };
+  const cleanup = () => { window._dictating = null; if (micBtn) micBtn.classList.remove('listening'); };
+  rec.onerror = cleanup;
+  rec.onend = cleanup;
+  try { rec.start(); } catch (e) { cleanup(); }
+}
+window.startDictation = startDictation;
+
 async function sendAICommand(target) {
   const inputId = target === 'ai' ? 'ai-input' : 'nlp-input';
   const msgContainerId = target === 'ai' ? 'ai-messages' : 'nlp-messages';
