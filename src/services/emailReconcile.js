@@ -117,7 +117,10 @@ function imapConfig(account) {
     logger: false,
     socketTimeout: 20000,
     greetingTimeout: 12000,
-    connectionTimeout: 12000
+    connectionTimeout: 12000,
+    // Shared mail hosts (Network Solutions, GoDaddy, cPanel) serve a wildcard
+    // platform cert that won't match the domain host — still TLS-encrypted.
+    tls: { rejectUnauthorized: false }
   };
 }
 
@@ -127,7 +130,8 @@ function imapConfig(account) {
 async function testImap(a) {
   const base = {
     host: a.host, port: parseInt(a.port, 10) || 993, secure: a.secure !== false,
-    logger: false, socketTimeout: 15000, greetingTimeout: 10000, connectionTimeout: 10000
+    logger: false, socketTimeout: 15000, greetingTimeout: 10000, connectionTimeout: 10000,
+    tls: { rejectUnauthorized: false } // shared mail hosts use a wildcard platform cert
   };
   const user = a.user || a.email;
   const raw = String(a.password);
@@ -164,7 +168,8 @@ function friendlyImapError(e) {
     return 'Connection timed out — the server may be blocking outbound IMAP, or the host/port is wrong.';
   }
   if (/ENOTFOUND|EAI_AGAIN/i.test(msg)) {
-    return `Could not resolve the IMAP host "${''}" — check the host name.`;
+    const hm = msg.match(/ENOTFOUND\s+(\S+)/i);
+    return `Could not find the IMAP server${hm ? ' "' + hm[1] + '"' : ''} — double-check the host name.`;
   }
   return msg || 'IMAP connection failed';
 }

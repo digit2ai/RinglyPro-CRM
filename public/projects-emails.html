@@ -123,7 +123,7 @@
       'iCloud / Apple Mail': { host:'imap.mail.me.com', port:993 },
       'Gmail / Workspace':   { host:'imap.gmail.com', port:993 },
       'Outlook / 365':       { host:'outlook.office365.com', port:993 },
-      'Network Solutions':   { host:'mail.', port:993 },
+      'Network Solutions':   { host:'imap.', port:993, deriveFromEmail:true },
       'Yahoo':               { host:'imap.mail.yahoo.com', port:993 }
     };
 
@@ -254,7 +254,12 @@
       el.innerHTML = Object.keys(PRESETS).map(name => `<button type="button" class="preset" data-name="${esc(name)}">${esc(name)}</button>`).join('');
       el.querySelectorAll('.preset').forEach(b => b.addEventListener('click', () => {
         const p = PRESETS[b.getAttribute('data-name')];
-        document.getElementById('f-host').value = p.host;
+        let host = p.host;
+        if (p.deriveFromEmail) {
+          const dom = (document.getElementById('f-email').value.trim().split('@')[1] || '').trim();
+          host = dom ? 'imap.' + dom : 'imap.';   // e.g. imap.digit2ai.com
+        }
+        document.getElementById('f-host').value = host;
         document.getElementById('f-port').value = p.port;
         if (!document.getElementById('f-label').value) document.getElementById('f-label').value = b.getAttribute('data-name');
       }));
