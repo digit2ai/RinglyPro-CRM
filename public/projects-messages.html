@@ -81,6 +81,11 @@
       font-size: 12.5px; font-weight: 700; cursor: pointer; margin-top: 10px; }
     .fu-btn:hover { filter: brightness(1.08); }
     .fu-btn:disabled { background: rgba(16,185,129,.18); color: #10b981; cursor: default; }
+    .fu-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .rm-btn { background: transparent; color: #94a3b8; border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .rm-btn:hover { color: #e2e8f0; border-color: #475569; }
+    .rm-btn.danger:hover { color: #f87171; border-color: #f87171; }
   </style>
 </head>
 <body>
@@ -200,9 +205,14 @@
                   <button class="mark-btn" type="button">Mark read</button>
                   <span class="read-label">&#10003; Read</span>
                 </span>`;
-          const fuBtn = needsFu
-            ? `<button class="fu-btn" type="button" onclick="event.stopPropagation();markFollowupDone('${conv}', this)">Mark followed up</button>`
-            : '';
+          const phone = esc(it.phone || '');
+          const fuActions = needsFu ? `
+              <div class="fu-actions">
+                ${phone ? `<a class="rm-btn" href="tel:${phone}" onclick="event.stopPropagation()">&#128222; Call</a>` : ''}
+                ${phone ? `<a class="rm-btn" href="sms:${phone}" onclick="event.stopPropagation()">&#128172; Text</a>` : ''}
+                <button class="fu-btn" type="button" onclick="event.stopPropagation();markFollowupDone('${conv}', this)">Mark followed up</button>
+                <button class="rm-btn danger" type="button" onclick="event.stopPropagation();removeFollowup('${conv}', this)">Remove</button>
+              </div>` : '';
           return `
             <div class="item ${k}${readCls}${needsFu ? ' fu' : ''}" data-id="${it.id}">
               <div class="row1">
@@ -216,7 +226,7 @@
               </div>
               ${body ? `<div class="body">${body}</div>` : ''}
               ${audioHtml(it)}
-              ${fuBtn ? `<div>${fuBtn}</div>` : ''}
+              ${fuActions}
             </div>`;
         }).join('');
       } catch (err) {
@@ -249,10 +259,32 @@
     }
     window.markFollowupDone = markFollowupDone;
 
+    // Remove a lead from the worklist entirely (not a lead / dismiss).
+    async function removeFollowup(conv, btn) {
+      if (!conv) return;
+      const item = btn ? btn.closest('.item') : null;
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/follow-ups/${encodeURIComponent(conv)}`, { method: 'DELETE' });
+      } catch (e) { /* optimistic */ }
+      notifyParent();
+      if (item) {
+        item.style.transition = 'opacity .2s'; item.style.opacity = '0';
+        setTimeout(() => {
+          item.remove();
+          const list = document.getElementById('list');
+          if (FOLLOWUPS && list && !list.querySelector('.item')) {
+            list.innerHTML = '<div class="empty">All followed up — no recent leads waiting on a callback.</div>';
+          }
+        }, 200);
+      }
+    }
+    window.removeFollowup = removeFollowup;
+
     // Event delegation — survives re-renders, and lets the audio controls work.
     document.getElementById('list').addEventListener('click', (e) => {
       if (e.target.closest('audio')) return;       // don't hijack the player
       if (e.target.closest('.fu-btn')) return;     // follow-up button handles itself
+      if (e.target.closest('.rm-btn')) return;     // call/text/remove handle themselves
       if (FOLLOWUPS) return;                        // no read-toggling in follow-up mode
       const item = e.target.closest('.item');
       if (item) markItemRead(item);

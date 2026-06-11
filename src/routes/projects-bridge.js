@@ -128,6 +128,24 @@ router.post('/follow-ups/:conversationId/done', async (req, res) => {
 });
 
 /**
+ * DELETE /api/projects-bridge/follow-ups/:conversationId
+ * Remove a lead from the follow-up worklist entirely (not a lead / dismiss).
+ * Drops the lead_tracker row; the underlying call still exists in Messages.
+ */
+router.delete('/follow-ups/:conversationId', async (req, res) => {
+  try {
+    await sequelize.query(
+      `DELETE FROM lead_tracker WHERE client_id = $1 AND conversation_id = $2`,
+      { bind: [D2AI_CLIENT_ID, req.params.conversationId], type: QueryTypes.DELETE }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] follow-up remove error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/projects-bridge/messages?limit=40
  * Recent inbound call + voicemail + SMS history for client 15, newest first.
  * Sourced from the messages table only — that's where AI-call summaries live
