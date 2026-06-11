@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AgrollanoDigital — Una alianza ISTC × Digit2AI</title>
+<title>Agrollano Ecosistema Digital — Una alianza ISTC × Digit2AI</title>
 <style>html,body{margin:0;padding:0;background:#ffffff;}</style>
 </head>
 <body>
@@ -86,6 +86,9 @@
     #am-teaser .am-msg.agent{border-left-color:#8fe0ff;color:#d6eefb;}
     #am-teaser .am-msg .who{display:block;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;opacity:.65;margin-bottom:2px;}
     #am-teaser .am-orb-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+    #am-teaser .am-orb-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;}
+    #am-teaser .am-orb-stop{display:none;background:#c0392b;color:#fff;border:none;border-radius:9px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;}
+    #am-teaser .am-orb-stage[data-active="1"] .am-orb-stop{display:inline-block;}
     #am-teaser .am-orb-progress{width:260px;max-width:82%;height:6px;background:rgba(255,255,255,.16);border-radius:6px;overflow:hidden;display:none;}
     #am-teaser .am-orb-stage[data-active="1"] .am-orb-progress{display:block;}
     #am-teaser .am-orb-bar{height:100%;width:0;background:linear-gradient(90deg,#6fcf97,#8fe0ff);border-radius:6px;transition:width .2s linear;}
@@ -114,7 +117,7 @@
   <div class="am-hero">
     <div class="am-wrap">
       <span class="am-kicker">Propuesta de Alianza</span>
-      <div class="am-lockup">AgrollanoDigital</div>
+      <div class="am-lockup">Agrollano Ecosistema Digital</div>
       <div class="am-partners"><b>ISTC</b> · Venezuela <span class="am-x">×</span> <b>Digit2AI</b> · EE. UU.</div>
       <p class="am-sub">El mercado digital nacional del sector agropecuario venezolano para el Grupo Agrollano. Desarrollado por ISTC (Ingeniería y Servicios Tecnológicos Colón) sobre su plataforma AgroMercado, con la inteligencia artificial de Digit2AI.</p>
       <div class="am-addr">Documento dirigido a la Junta Directiva del Grupo Agrollano</div>
@@ -146,46 +149,91 @@
             </g>
             <circle class="o-core" cx="86" cy="86" r="40" fill="url(#amCoreGrad)"/>
             <circle cx="86" cy="86" r="40" fill="none" stroke="#eafff4" stroke-opacity=".25" stroke-width="1"/>
-            <!-- Play icon (idle/paused) -->
-            <path class="o-play" d="M77 71 L77 101 L104 86 Z" fill="#063d22" fill-opacity=".82"/>
-            <!-- Pause icon (playing) -->
-            <g class="o-pause" fill="#063d22" fill-opacity=".82">
-              <rect x="76" y="72" width="7.5" height="28" rx="2.5"/>
-              <rect x="88.5" y="72" width="7.5" height="28" rx="2.5"/>
-            </g>
+            <!-- Mic glyph -->
+            <path d="M86 74 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M78 80 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M94 80 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#063d22" fill-opacity=".75"/>
           </svg>
         </button>
-        <div class="am-orb-cap" id="amOrbCap">Escuchar a Lina</div>
-        <div class="am-orb-hint" id="amOrbHint">Presentación de voz (aprox. 4 min). Pulse el orbe para que Lina le explique por qué AgrollanoDigital es una oportunidad, cómo funciona y qué gana el Grupo Agrollano.</div>
-        <div class="am-orb-progress" id="amOrbProgress" aria-hidden="true"><div class="am-orb-bar" id="amOrbBar"></div></div>
-        <div class="am-orb-time" id="amOrbTime">0:00</div>
-        <audio id="amAudio" preload="metadata" src="https://aiagent.ringlypro.com/agromercado-lina-presentacion.mp3"></audio>
+        <div class="am-orb-cap" id="amOrbCap">Hablar con Lina</div>
+        <div class="am-orb-hint" id="amOrbHint">Asistente de voz con IA. Pulse el orbe y pregúntele a Lina por qué Agrollano Ecosistema Digital es una oportunidad, cómo funciona y qué gana el Grupo Agrollano.</div>
+        <div class="am-orb-transcript" id="amOrbTranscript" aria-live="polite"></div>
+        <div class="am-orb-actions">
+          <button class="am-orb-stop" id="amOrbStop" type="button">Detener conversación</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Reproductor de la presentación de voz (Lina) -->
+  <!-- ElevenLabs SDK lazy-loader (cargado al primer clic del orbe) -->
+  <script>
+    window.__amLoadEleven = function(){
+      if (window.__amConv) return Promise.resolve(window.__amConv);
+      if (window.__amConvP) return window.__amConvP;
+      window.__amConvP = import('https://esm.sh/@elevenlabs/client@1.9.0')
+        .then(function(m){ var C = m.Conversation || (m.default && m.default.Conversation); window.__amConv = C; return C; })
+        .catch(function(e){ console.warn('[am-orb] SDK load failed', e); return null; });
+      return window.__amConvP;
+    };
+  </script>
+  <!-- Controlador de voz interactiva (Lina, ElevenLabs convai) -->
   <script>
     (function(){
+      var AGENT_ID = 'agent_8701kts27sfrf6rs4zxrkr7qhwd0'; // Lina ES — Agrollano Ecosistema Digital
       var stage = document.getElementById('amOrbStage');
       var orb = document.getElementById('amOrb');
       var cap = document.getElementById('amOrbCap');
-      var bar = document.getElementById('amOrbBar');
-      var timeEl = document.getElementById('amOrbTime');
-      var audio = document.getElementById('amAudio');
-      if (!orb || !audio) return;
-      function fmt(t){ if (!isFinite(t) || t < 0) return '0:00'; var m = Math.floor(t/60), s = Math.floor(t%60); return m + ':' + (s<10?'0':'') + s; }
-      function setState(s){ orb.dataset.state = s; stage.dataset.state = s; }
-      orb.addEventListener('click', function(){
-        if (audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function(){ cap.textContent = 'Pulse de nuevo para reproducir'; }); }
-        else { audio.pause(); }
-      });
-      audio.addEventListener('play', function(){ stage.dataset.active = '1'; setState('speaking'); cap.textContent = 'Lina presentando — pulse para pausar'; });
-      audio.addEventListener('pause', function(){ if (!audio.ended) { setState('idle'); cap.textContent = 'Reanudar presentación'; } });
-      audio.addEventListener('ended', function(){ stage.dataset.active = '0'; setState('idle'); cap.textContent = 'Escuchar de nuevo'; bar.style.width = '0%'; });
-      audio.addEventListener('timeupdate', function(){ if (audio.duration) { bar.style.width = (audio.currentTime/audio.duration*100) + '%'; timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration); } });
-      audio.addEventListener('loadedmetadata', function(){ timeEl.textContent = '0:00 / ' + fmt(audio.duration); });
-      audio.addEventListener('error', function(){ cap.textContent = 'No se pudo cargar el audio'; });
+      var hint = document.getElementById('amOrbHint');
+      var tx = document.getElementById('amOrbTranscript');
+      var stopBtn = document.getElementById('amOrbStop');
+      if (!orb) return;
+      var convo = null, connecting = false;
+      var CAP = { idle:'Hablar con Lina', connecting:'Conectando…', listening:'Escuchando', thinking:'Analizando', speaking:'Lina hablando' };
+
+      function setState(s){ orb.dataset.state = s; stage.dataset.state = s; cap.textContent = CAP[s] || CAP.idle; }
+      function addMsg(role, text){
+        if (!text) return;
+        tx.classList.add('show');
+        var d = document.createElement('div');
+        d.className = 'am-msg ' + (role === 'user' ? 'user' : 'agent');
+        var w = document.createElement('span'); w.className = 'who';
+        w.textContent = role === 'user' ? 'Usted' : 'Lina';
+        var p = document.createElement('span'); p.textContent = text;
+        d.appendChild(w); d.appendChild(p); tx.appendChild(d); tx.scrollTop = tx.scrollHeight;
+      }
+      function fallback(msg){
+        connecting = false; stage.dataset.active = '0'; setState('idle');
+        hint.textContent = msg || 'Modo de voz no disponible en este momento. Puede escribirnos a mstagg@digit2ai.com.';
+      }
+      async function start(){
+        if (connecting || convo) return;
+        connecting = true; setState('connecting');
+        hint.textContent = 'Permita el acceso al micrófono para hablar con Lina…';
+        try { await navigator.mediaDevices.getUserMedia({ audio:true }); }
+        catch(e){ fallback('Para usar el modo de voz, active el permiso del micrófono y vuelva a pulsar el orbe.'); return; }
+        var Conversation = await window.__amLoadEleven();
+        if (!Conversation){ fallback(); return; }
+        try {
+          convo = await Conversation.startSession({
+            agentId: AGENT_ID,
+            connectionType: 'webrtc',
+            onConnect: function(){ connecting = false; stage.dataset.active = '1'; setState('listening'); hint.textContent = 'Conectado. Hágale a Lina cualquier pregunta sobre Agrollano Ecosistema Digital.'; },
+            onDisconnect: function(){ convo = null; stage.dataset.active = '0'; setState('idle'); hint.textContent = 'Conversación finalizada. Pulse el orbe para hablar de nuevo.'; },
+            onError: function(err){ console.warn('[am-orb]', err); fallback(); },
+            onModeChange: function(m){ var mode = m && m.mode; if (mode === 'speaking') setState('speaking'); else if (mode === 'listening') setState('listening'); },
+            onMessage: function(msg){
+              if (!msg) return;
+              var role = msg.source === 'user' ? 'user' : 'agent';
+              var text = msg.message || msg.text || '';
+              addMsg(role, text);
+            }
+          });
+        } catch(e){ console.warn('[am-orb] startSession failed', e); fallback(); }
+      }
+      async function stop(){
+        try { if (convo) await convo.endSession(); } catch(e){}
+        convo = null; stage.dataset.active = '0'; setState('idle');
+      }
+      orb.addEventListener('click', function(){ if (convo) { stop(); } else { start(); } });
+      stopBtn.addEventListener('click', stop);
     })();
   </script>
 
@@ -199,9 +247,9 @@
 
     <!-- QUE ES AGROLLANODIGITAL -->
     <section>
-      <h2>Qué es AgrollanoDigital</h2>
+      <h2>Qué es Agrollano Ecosistema Digital</h2>
       <h3>Un marketplace agropecuario nacional, con cobertura en los 23 estados</h3>
-      <p>AgrollanoDigital es el mercado digital del Grupo Agrollano, construido sobre AgroMercado, la plataforma ya desarrollada y registrada por ISTC. Allí los actores del campo compran, venden y subastan en línea, con verificación de vendedores (KYC), directorio de profesionales certificados, mapa de fincas y una calculadora de cambio BCV/paralelo en tiempo real.</p>
+      <p>Agrollano Ecosistema Digital es el mercado digital del Grupo Agrollano, construido sobre AgroMercado, la plataforma ya desarrollada y registrada por ISTC. Allí los actores del campo compran, venden y subastan en línea, con verificación de vendedores (KYC), directorio de profesionales certificados, mapa de fincas y una calculadora de cambio BCV/paralelo en tiempo real.</p>
       <div class="am-grid">
         <div class="am-card"><div class="t">Semovientes</div><div class="d">Ganado con registro y certificación genética.</div></div>
         <div class="am-card"><div class="t">Maquinaria agrícola</div><div class="d">Tractores, cosechadoras e implementos.</div></div>
@@ -218,7 +266,7 @@
     <section>
       <h2>La Alianza que lo Construye</h2>
       <h3>ISTC y Digit2AI: desarrollo conceptual venezolano más inteligencia artificial</h3>
-      <p>AgrollanoDigital es el resultado de una alianza de dos especialistas. <b>ISTC</b> (Ingeniería y Servicios Tecnológicos Colón), empresa venezolana, aporta el desarrollo conceptual y de software y es propietaria de la plataforma base, AgroMercado. <b>Digit2AI</b> (Estados Unidos) aporta la capa de inteligencia artificial: un ecosistema coordinado de agentes especializados que trabajan de forma continua dentro del sistema. Eso es lo que diferencia a AgrollanoDigital de un clasificado tradicional.</p>
+      <p>Agrollano Ecosistema Digital es el resultado de una alianza de dos especialistas. <b>ISTC</b> (Ingeniería y Servicios Tecnológicos Colón), empresa venezolana, aporta el desarrollo conceptual y de software y es propietaria de la plataforma base, AgroMercado. <b>Digit2AI</b> (Estados Unidos) aporta la capa de inteligencia artificial: un ecosistema coordinado de agentes especializados que trabajan de forma continua dentro del sistema. Eso es lo que diferencia a Agrollano Ecosistema Digital de un clasificado tradicional.</p>
       <div class="am-grid">
         <div class="am-card"><div class="t">ISTC · Venezuela</div><div class="d">Desarrollo conceptual y de software; propietaria de la plataforma AgroMercado.</div></div>
         <div class="am-card"><div class="t">Digit2AI · EE. UU.</div><div class="d">Capa de inteligencia artificial que da fiabilidad y datos al sistema.</div></div>
@@ -233,7 +281,7 @@
     <section>
       <h2>Arquitectura Técnica</h2>
       <h3>Una plataforma construida en tres módulos</h3>
-      <p>AgrollanoDigital se estructura en tres módulos desacoplados que se pueden escalar, asegurar y operar de forma independiente. Esta separación da robustez, seguridad por capas y un camino claro de crecimiento.</p>
+      <p>Agrollano Ecosistema Digital se estructura en tres módulos desacoplados que se pueden escalar, asegurar y operar de forma independiente. Esta separación da robustez, seguridad por capas y un camino claro de crecimiento.</p>
       <div class="am-modules">
         <div class="am-module">
           <div class="am-mod-n">1</div>
@@ -292,7 +340,7 @@
     <section style="border-bottom:none;">
       <div class="am-cta">
         <h3>Próximo Paso</h3>
-        <p>Proponemos una demostración en vivo de la plataforma AgroMercado, base de AgrollanoDigital, y una reunión para definir el modelo de alianza entre el Grupo Agrollano, ISTC y Digit2AI. La estructura queda abierta y se definirá en conjunto.</p>
+        <p>Proponemos una demostración en vivo de la plataforma AgroMercado, base de Agrollano Ecosistema Digital, y una reunión para definir el modelo de alianza entre el Grupo Agrollano, ISTC y Digit2AI. La estructura queda abierta y se definirá en conjunto.</p>
         <a class="am-btn" href="https://agromercado-vzla.vercel.app/" target="_blank" rel="noopener">Ver la plataforma en vivo</a>
       </div>
     </section>
