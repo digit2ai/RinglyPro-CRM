@@ -98,6 +98,16 @@
     #am-teaser .am-partners{margin-top:12px;font-size:16px;font-weight:600;color:#d7efe0;letter-spacing:.2px;}
     #am-teaser .am-partners .am-x{font-weight:300;opacity:.7;margin:0 8px;}
     #am-teaser .am-partners b{color:#fff;}
+    #am-teaser .am-modules{display:flex;flex-direction:column;gap:14px;margin-top:24px;}
+    #am-teaser .am-module{display:flex;gap:18px;background:#f5f9f6;border:1px solid #e1ece5;border-left:4px solid #2e7d4f;border-radius:12px;padding:18px 20px;}
+    #am-teaser .am-mod-n{flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0f3d2e,#2e7d4f);color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;}
+    #am-teaser .am-mod-body{flex:1;min-width:0;}
+    #am-teaser .am-mod-t{font-weight:700;font-size:17px;color:#13301f;margin-bottom:5px;}
+    #am-teaser .am-mod-d{font-size:14.5px;color:#33473c;line-height:1.55;}
+    #am-teaser .am-mod-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;}
+    #am-teaser .am-mod-tags span{font-size:12px;background:#e3f0e8;color:#2e7d4f;border:1px solid #cfe5d8;padding:4px 10px;border-radius:999px;font-weight:600;}
+    #am-teaser .am-stack-note{margin-top:16px;font-size:13px;color:#5a6f63;font-style:italic;}
+    @media(max-width:560px){#am-teaser .am-module{flex-direction:column;gap:10px;}}
   </style>
 
   <!-- HERO -->
@@ -217,6 +227,40 @@
         <div class="am-card"><div class="t">Trazabilidad de subastas</div><div class="d">Seguimiento de remates en vivo con registro confiable.</div></div>
         <div class="am-card"><div class="t">Infraestructura empresarial</div><div class="d">Robusta, segura y escalable a nivel nacional.</div></div>
       </div>
+    </section>
+
+    <!-- ARQUITECTURA TECNICA (3 MODULOS) -->
+    <section>
+      <h2>Arquitectura Técnica</h2>
+      <h3>Una plataforma construida en tres módulos</h3>
+      <p>AgrollanoDigital se estructura en tres módulos desacoplados que se pueden escalar, asegurar y operar de forma independiente. Esta separación da robustez, seguridad por capas y un camino claro de crecimiento.</p>
+      <div class="am-modules">
+        <div class="am-module">
+          <div class="am-mod-n">1</div>
+          <div class="am-mod-body">
+            <div class="am-mod-t">Motor Transaccional</div>
+            <div class="am-mod-d">El núcleo del sistema: catálogo de productos, subastas en vivo y la capa transaccional. Es la base más robusta y segura de la plataforma, diseñada para operar de forma confiable en las condiciones de conectividad del campo venezolano.</div>
+            <div class="am-mod-tags"><span>PostgreSQL</span><span>Transacciones ACID</span><span>Subastas en tiempo real</span><span>Cálculo BCV / divisas</span></div>
+          </div>
+        </div>
+        <div class="am-module">
+          <div class="am-mod-n">2</div>
+          <div class="am-mod-body">
+            <div class="am-mod-t">Administración y Operación</div>
+            <div class="am-mod-d">El panel de control para administrar la plataforma y operar el modelo de marca propia del Grupo Agrollano. Roles diferenciados para administración, contabilidad y soporte, con monitoreo continuo de la operación.</div>
+            <div class="am-mod-tags"><span>Panel multi-rol</span><span>Modelo de marca propia</span><span>Verificación KYC</span><span>Monitoreo continuo</span></div>
+          </div>
+        </div>
+        <div class="am-module">
+          <div class="am-mod-n">3</div>
+          <div class="am-mod-body">
+            <div class="am-mod-t">Inteligencia y Requerimientos de Negocio</div>
+            <div class="am-mod-d">La capa de inteligencia artificial de Digit2AI y los requerimientos de negocio que guían toda la plataforma: tendencias de precios en tiempo real, verificación antifraude, trazabilidad y reportería para la toma de decisiones de la Junta.</div>
+            <div class="am-mod-tags"><span>IA Digit2AI</span><span>Tendencias de mercado</span><span>Antifraude</span><span>Reportería ejecutiva</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="am-stack-note">Desarrollo y plataforma por ISTC · Capa de inteligencia artificial por Digit2AI · Infraestructura empresarial segura y escalable.</div>
     </section>
 
     <!-- EL VALOR PARA AGROLLANO -->
