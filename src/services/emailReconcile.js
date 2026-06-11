@@ -159,7 +159,7 @@ async function testImap(a) {
 function friendlyImapError(e) {
   const msg = (e && e.message) || '';
   if (e && (e.authenticationFailed || e.serverResponseCode === 'AUTHENTICATIONFAILED')) {
-    return 'Authentication failed — use an app-specific password (not your normal login password) and confirm the email/username is correct.';
+    return 'Login rejected by the mail server. Gmail/iCloud need an app-specific password; Network Solutions and most other hosts use the normal mailbox password. Confirm the username is the full email address — and that this is a real mailbox, not a forwarding alias (aliases like info@ often have no IMAP login).';
   }
   if (/<!DOCTYPE|<html/i.test(msg)) {
     return 'The mail host returned a web page instead of an IMAP reply — outbound IMAP (port 993) is likely blocked on the server, or the host/port is wrong.';
