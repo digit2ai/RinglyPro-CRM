@@ -77,6 +77,57 @@ router.get('/call-stats', async (req, res) => {
 });
 
 /**
+ * GET /api/projects-bridge/follow-ups
+ * The actual recent leads (last 7 days, not yet followed up) behind the
+ * "Calls To Follow Up" KPI — phone, date, type, and Lina's call summary.
+ */
+router.get('/follow-ups', async (req, res) => {
+  try {
+    const leads = await sequelize.query(
+      `SELECT lt.conversation_id, lt.lead_date, lt.lead_type, lt.subcategory,
+              lt.phone, lt.business_name, lt.duration, lt.summary
+         FROM lead_tracker lt
+        WHERE lt.client_id = $1
+          AND lt.lead_date >= (CURRENT_DATE - INTERVAL '7 days')
+          AND lt.conversation_id NOT IN (
+                SELECT conversation_id FROM lead_followups WHERE client_id = $1
+          )
+        ORDER BY lt.lead_date DESC, lt.created_at DESC`,
+      { bind: [D2AI_CLIENT_ID], type: QueryTypes.SELECT }
+    );
+    res.json({ success: true, count: leads.length, leads });
+  } catch (error) {
+    console.error('[ProjectsBridge] follow-ups error:', error.message);
+    res.json({ success: false, leads: [], error: error.message });
+  }
+});
+
+/**
+ * POST /api/projects-bridge/follow-ups/:conversationId/done
+ * Mark a lead as followed up (drops it from the worklist + KPI).
+ */
+router.post('/follow-ups/:conversationId/done', async (req, res) => {
+  try {
+    const convId = req.params.conversationId;
+    const [lead] = await sequelize.query(
+      `SELECT lead_date, lead_type, phone FROM lead_tracker WHERE client_id = $1 AND conversation_id = $2 LIMIT 1`,
+      { bind: [D2AI_CLIENT_ID, convId], type: QueryTypes.SELECT }
+    );
+    const leadDate = lead && lead.lead_date ? lead.lead_date : new Date().toISOString().split('T')[0];
+    await sequelize.query(
+      `INSERT INTO lead_followups (client_id, conversation_id, lead_date, lead_type, phone)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (client_id, conversation_id) DO UPDATE SET followed_up_at = NOW()`,
+      { bind: [D2AI_CLIENT_ID, convId, leadDate, (lead && lead.lead_type) || 'warm', (lead && lead.phone) || ''] }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] follow-up done error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+/**
  * GET /api/projects-bridge/messages?limit=40
  * Recent inbound call + voicemail + SMS history for client 15, newest first.
  * Sourced from the messages table only — that's where AI-call summaries live

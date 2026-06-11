@@ -275,7 +275,7 @@ function navigateTo(view, opts) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', contacts: 'People & Pipeline', projects: 'My Projects',
+    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', followups: 'Calls To Follow Up', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -291,6 +291,7 @@ async function renderView(view) {
       case 'overview': await renderOverview(container); break;
       case 'messages': renderMessages(container); break;
       case 'email': renderEmails(container); break;
+      case 'followups': await renderFollowups(container); break;
       case 'inbox': await renderInbox(container); break;
       case 'contacts': await renderContacts(container); break;
       case 'projects': await renderProjects(container); break;
@@ -340,6 +341,64 @@ function renderMessages(container) {
               title="Calls & Messages"></iframe>
     </div>`;
 }
+
+// Calls To Follow Up — the actual recent leads behind the KPI, with actions.
+async function renderFollowups(container) {
+  container.innerHTML = '<div class="spinner"></div>';
+  let res;
+  try {
+    res = await fetch(`${location.origin}/api/projects-bridge/follow-ups`).then(r => r.json());
+  } catch (e) {
+    container.innerHTML = `<p style="padding:24px;color:var(--danger)">Failed to load: ${escapeHtml(e.message)}</p>`;
+    return;
+  }
+  const leads = (res && res.leads) || [];
+  const head = `
+    <div class="section-header"><h3>${leads.length} Call${leads.length !== 1 ? 's' : ''} To Follow Up</h3></div>
+    <p class="section-hint">Recent leads (last 7 days) your AI receptionist flagged from inbound calls. Reach out, then mark each done.</p>`;
+  if (!leads.length) {
+    container.innerHTML = head + `<div class="empty-state"><div class="empty-icon">&#9989;</div><h3>All followed up</h3><p>No recent leads waiting on a callback.</p></div>`;
+    return;
+  }
+  container.innerHTML = head + `<div id="followup-list">${leads.map(renderFollowupCard).join('')}</div>`;
+}
+
+function renderFollowupCard(l) {
+  const typeColor = l.lead_type === 'hot' ? '#ef4444' : '#f59e0b';
+  let date = '';
+  try { date = l.lead_date ? new Date(l.lead_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : ''; } catch (e) {}
+  const conv = String(l.conversation_id).replace(/'/g, "\\'");
+  const phone = l.phone ? escapeHtml(l.phone) : '';
+  return `
+    <div class="card" id="fu-${escapeHtml(String(l.conversation_id))}" style="margin-bottom:12px;border-left:3px solid ${typeColor};padding:16px 18px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="background:${typeColor}22;color:${typeColor};padding:2px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(l.lead_type || 'lead')}</span>
+        <strong style="font-size:15px">${phone || 'Unknown'}</strong>
+        ${l.subcategory ? `<span style="font-size:12px;color:var(--text-muted)">${escapeHtml(l.subcategory)}</span>` : ''}
+        <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">${date}</span>
+      </div>
+      ${l.summary ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 12px">${escapeHtml(l.summary)}</p>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${phone ? `<a class="btn btn-ghost btn-sm" href="tel:${phone}">&#128222; Call</a>` : ''}
+        ${phone ? `<a class="btn btn-ghost btn-sm" href="sms:${phone}">&#128172; Text</a>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="markFollowupDone('${conv}')">Mark followed up</button>
+      </div>
+    </div>`;
+}
+
+async function markFollowupDone(conv) {
+  try {
+    await fetch(`${location.origin}/api/projects-bridge/follow-ups/${encodeURIComponent(conv)}/done`, { method: 'POST' });
+    const el = document.getElementById('fu-' + conv);
+    if (el) el.remove();
+    if (typeof loadCrmCallStats === 'function') loadCrmCallStats(); // refresh Home KPI
+    const list = document.getElementById('followup-list');
+    if (list && !list.children.length) renderView('followups'); // re-render empty state
+  } catch (e) {
+    alert('Could not mark followed up: ' + e.message);
+  }
+}
+window.markFollowupDone = markFollowupDone;
 
 function renderEmails(container) {
   const v = (window.BUILD_VERSION || Date.now());
@@ -448,7 +507,7 @@ async function renderOverview(container) {
         <div class="stat-change stat-neutral">Inbound to your business line</div>
         <div class="kpi-hint">Click to view messages</div>
       </div>
-      <div class="card card-stat card-accent-purple card-clickable" onclick="navigateTo('messages')" data-tooltip="Leads waiting on a callback">
+      <div class="card card-stat card-accent-purple card-clickable" onclick="navigateTo('followups')" data-tooltip="Open the leads waiting on a callback">
         <div class="stat-label">Calls To Follow Up</div>
         <div class="stat-value" id="kpi-followups">&middot;</div>
         <div class="stat-change stat-neutral">Recent leads (7 days) not contacted back</div>
