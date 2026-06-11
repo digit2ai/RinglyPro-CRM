@@ -189,7 +189,7 @@
         const items = data.items || [];
         if (!items.length) {
           list.innerHTML = FOLLOWUPS
-            ? `<div class="empty">All followed up — no recent leads waiting on a callback.</div>`
+            ? `<div class="empty">Nothing flagged for follow-up. Open <strong>Calls &amp; Messages</strong> and tap &#9734; Flag for follow-up on any call.</div>`
             : `<div class="empty">No calls or messages yet. When someone calls your business number, Lina's calls and voicemails will appear here.</div>`;
           return;
         }
@@ -198,26 +198,24 @@
           const dur = fmtDur(it.secs);
           const body = esc(it.body).trim();
           const readCls = it.read === true ? ' read' : '';
-          const needsFu = it.needs_followup === true;
-          const conv = String(it.conversation_id || '').replace(/'/g, "\\'");
+          const flagged = it.flagged === true;
+          const phone = esc(it.phone || '');
           const statusHtml = FOLLOWUPS ? '' : `
                 <span class="status">
                   <button class="mark-btn" type="button">Mark read</button>
                   <span class="read-label">&#10003; Read</span>
                 </span>`;
-          const phone = esc(it.phone || '');
-          const fuActions = needsFu ? `
-              <div class="fu-actions">
-                ${phone ? `<a class="rm-btn" href="tel:${phone}" onclick="event.stopPropagation()">&#128222; Call</a>` : ''}
-                ${phone ? `<a class="rm-btn" href="sms:${phone}" onclick="event.stopPropagation()">&#128172; Text</a>` : ''}
-                <button class="fu-btn" type="button" onclick="event.stopPropagation();markFollowupDone('${conv}', this)">Mark followed up</button>
-                <button class="rm-btn danger" type="button" onclick="event.stopPropagation();removeFollowup('${conv}', this)">Remove</button>
-              </div>` : '';
+          const flagBtn = flagged
+            ? `<button class="fu-btn flagged" type="button" onclick="event.stopPropagation();toggleFollowup(${it.id}, true, this)">&#9733; Following up &mdash; remove</button>`
+            : `<button class="rm-btn" type="button" onclick="event.stopPropagation();toggleFollowup(${it.id}, false, this)">&#9734; Flag for follow-up</button>`;
+          const callText = (flagged && phone) ? `
+                <a class="rm-btn" href="tel:${phone}" onclick="event.stopPropagation()">&#128222; Call</a>
+                <a class="rm-btn" href="sms:${phone}" onclick="event.stopPropagation()">&#128172; Text</a>` : '';
           return `
-            <div class="item ${k}${readCls}${needsFu ? ' fu' : ''}" data-id="${it.id}">
+            <div class="item ${k}${readCls}${flagged ? ' fu' : ''}" data-id="${it.id}">
               <div class="row1">
                 <span class="unread-dot" title="Unread"></span>
-                ${needsFu ? '<span class="fu-badge">Follow up</span>' : ''}
+                ${flagged ? '<span class="fu-badge">Follow up</span>' : ''}
                 <span class="kind ${k}">${kindLabel(k, it.kind)}</span>
                 <span class="phone">${esc(it.phone || 'Unknown')}</span>
                 ${dur ? `<span class="dur">${dur}</span>` : ''}
@@ -226,7 +224,7 @@
               </div>
               ${body ? `<div class="body">${body}</div>` : ''}
               ${audioHtml(it)}
-              ${fuActions}
+              <div class="fu-actions">${callText}${flagBtn}</div>
             </div>`;
         }).join('');
       } catch (err) {
@@ -234,51 +232,17 @@
       }
     }
 
-    // Mark a lead call as followed up (drops it from the follow-up worklist + KPI).
-    async function markFollowupDone(conv, btn) {
-      if (!conv) return;
-      const item = btn ? btn.closest('.item') : null;
-      if (btn) { btn.disabled = true; btn.textContent = '✓ Followed up'; }
+    // Flag / unflag a call or message for follow-up (drives the Home KPI).
+    async function toggleFollowup(id, isFlagged, btn) {
+      if (!id) return;
+      if (btn) btn.disabled = true;
       try {
-        await fetch(`${ORIGIN}/api/projects-bridge/follow-ups/${encodeURIComponent(conv)}/done`, { method: 'POST' });
+        await fetch(`${ORIGIN}/api/projects-bridge/messages/${id}/flag`, { method: isFlagged ? 'DELETE' : 'POST' });
       } catch (e) { /* optimistic */ }
-      notifyParent(); // refreshes the "Calls To Follow Up" KPI on Home
-      if (FOLLOWUPS && item) {
-        item.style.transition = 'opacity .2s'; item.style.opacity = '0';
-        setTimeout(() => {
-          item.remove();
-          const list = document.getElementById('list');
-          if (list && !list.querySelector('.item')) {
-            list.innerHTML = '<div class="empty">All followed up — no recent leads waiting on a callback.</div>';
-          }
-        }, 200);
-      } else if (item) {
-        item.classList.remove('fu');
-        const badge = item.querySelector('.fu-badge'); if (badge) badge.remove();
-      }
+      notifyParent();   // refresh the "Calls To Follow Up" KPI on Home
+      load();           // re-render with fresh flag state
     }
-    window.markFollowupDone = markFollowupDone;
-
-    // Remove a lead from the worklist entirely (not a lead / dismiss).
-    async function removeFollowup(conv, btn) {
-      if (!conv) return;
-      const item = btn ? btn.closest('.item') : null;
-      try {
-        await fetch(`${ORIGIN}/api/projects-bridge/follow-ups/${encodeURIComponent(conv)}`, { method: 'DELETE' });
-      } catch (e) { /* optimistic */ }
-      notifyParent();
-      if (item) {
-        item.style.transition = 'opacity .2s'; item.style.opacity = '0';
-        setTimeout(() => {
-          item.remove();
-          const list = document.getElementById('list');
-          if (FOLLOWUPS && list && !list.querySelector('.item')) {
-            list.innerHTML = '<div class="empty">All followed up — no recent leads waiting on a callback.</div>';
-          }
-        }, 200);
-      }
-    }
-    window.removeFollowup = removeFollowup;
+    window.toggleFollowup = toggleFollowup;
 
     // Event delegation — survives re-renders, and lets the audio controls work.
     document.getElementById('list').addEventListener('click', (e) => {

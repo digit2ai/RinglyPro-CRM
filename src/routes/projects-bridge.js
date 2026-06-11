@@ -21,6 +21,24 @@ const emailReconcile = require('../services/emailReconcile');
 // in routes/elevenlabs-tools.js (Lina's Projects-calendar carve-out).
 const D2AI_CLIENT_ID = 15;
 
+// User-driven follow-up flags: a call/message the owner marked "follow up" from
+// the Calls & Messages window. THIS drives the "Calls To Follow Up" KPI now —
+// not Lina's auto lead-detection.
+let _flagsTableReady = false;
+async function ensureFlagsTable() {
+  if (_flagsTableReady) return;
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS projects_followup_flags (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL,
+      message_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (client_id, message_id)
+    )
+  `);
+  _flagsTableReady = true;
+}
+
 /**
  * GET /api/projects-bridge/call-stats
  * Numbers for the Projects Hub home dashboard:
@@ -40,17 +58,10 @@ router.get('/call-stats', async (req, res) => {
       { bind: [D2AI_CLIENT_ID], type: QueryTypes.SELECT }
     );
 
-    // Recent un-followed-up leads only (last 7 days) — an actionable worklist,
-    // not the all-time backlog. The "mark followed up" action is rarely used, so
-    // counting all-time inflates this to months of leads.
+    // Follow-ups = calls/messages the owner flagged from the Calls & Messages window.
+    await ensureFlagsTable();
     const [followRow] = await sequelize.query(
-      `SELECT COUNT(*)::int AS n
-         FROM lead_tracker lt
-        WHERE lt.client_id = $1
-          AND lt.lead_date >= (CURRENT_DATE - INTERVAL '7 days')
-          AND lt.conversation_id NOT IN (
-                SELECT conversation_id FROM lead_followups WHERE client_id = $1
-          )`,
+      `SELECT COUNT(*)::int AS n FROM projects_followup_flags WHERE client_id = $1`,
       { bind: [D2AI_CLIENT_ID], type: QueryTypes.SELECT }
     );
 
@@ -157,10 +168,10 @@ router.get('/messages', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 40, 100);
     const followupsOnly = req.query.mode === 'followups';
+    await ensureFlagsTable();
 
-    // LEFT JOIN tags each call with needs_followup when it's a recent lead
-    // (last 7 days) not yet marked followed up. messages.twilio_sid holds the
-    // ElevenLabs conversation id, which matches lead_tracker.conversation_id.
+    // `flagged` = the owner marked this call/message "follow up". In followups
+    // mode we return only flagged items.
     const rows = await sequelize.query(
       `SELECT m.id,
               COALESCE(NULLIF(m.message_type, ''), 'message') AS kind,
@@ -171,16 +182,13 @@ router.get('/messages', async (req, res) => {
               m.read,
               m.twilio_sid AS conversation_id,
               COALESCE(m.call_start_time, m.created_at) AS ts,
-              (lt.conversation_id IS NOT NULL) AS needs_followup
+              (f.message_id IS NOT NULL) AS flagged
          FROM messages m
-         LEFT JOIN lead_tracker lt
-           ON lt.client_id = m.client_id
-          AND lt.conversation_id = m.twilio_sid
-          AND lt.lead_date >= (CURRENT_DATE - INTERVAL '7 days')
-          AND lt.conversation_id NOT IN (SELECT conversation_id FROM lead_followups WHERE client_id = m.client_id)
+         LEFT JOIN projects_followup_flags f
+           ON f.client_id = m.client_id AND f.message_id = m.id
         WHERE m.client_id = $1 AND m.direction = 'incoming'
-          ${followupsOnly ? 'AND lt.conversation_id IS NOT NULL' : ''}
-        ORDER BY needs_followup DESC, ts DESC
+          ${followupsOnly ? 'AND f.message_id IS NOT NULL' : ''}
+        ORDER BY ts DESC
         LIMIT $2`,
       { bind: [D2AI_CLIENT_ID, limit], type: QueryTypes.SELECT }
     );
@@ -207,6 +215,41 @@ router.post('/messages/:id/read', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('[ProjectsBridge] mark-read error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/projects-bridge/messages/:id/flag  — flag a call/message for follow-up
+ * DELETE /api/projects-bridge/messages/:id/flag — unflag it
+ */
+router.post('/messages/:id/flag', async (req, res) => {
+  try {
+    await ensureFlagsTable();
+    const id = parseInt(req.params.id, 10);
+    if (!id) return res.json({ success: false, error: 'invalid id' });
+    await sequelize.query(
+      `INSERT INTO projects_followup_flags (client_id, message_id) VALUES ($1, $2)
+       ON CONFLICT (client_id, message_id) DO NOTHING`,
+      { bind: [D2AI_CLIENT_ID, id], type: QueryTypes.INSERT }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/messages/:id/flag', async (req, res) => {
+  try {
+    await ensureFlagsTable();
+    const id = parseInt(req.params.id, 10);
+    if (!id) return res.json({ success: false, error: 'invalid id' });
+    await sequelize.query(
+      `DELETE FROM projects_followup_flags WHERE client_id = $1 AND message_id = $2`,
+      { bind: [D2AI_CLIENT_ID, id], type: QueryTypes.DELETE }
+    );
+    res.json({ success: true });
+  } catch (error) {
     res.json({ success: false, error: error.message });
   }
 });
