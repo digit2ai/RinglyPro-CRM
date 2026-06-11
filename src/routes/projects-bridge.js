@@ -138,19 +138,31 @@ router.post('/follow-ups/:conversationId/done', async (req, res) => {
 router.get('/messages', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 40, 100);
+    const followupsOnly = req.query.mode === 'followups';
 
+    // LEFT JOIN tags each call with needs_followup when it's a recent lead
+    // (last 7 days) not yet marked followed up. messages.twilio_sid holds the
+    // ElevenLabs conversation id, which matches lead_tracker.conversation_id.
     const rows = await sequelize.query(
-      `SELECT id,
-              COALESCE(NULLIF(message_type, ''), 'message') AS kind,
-              from_number AS phone,
-              COALESCE(call_duration, 0) AS secs,
-              COALESCE(body, '') AS body,
-              recording_url,
-              read,
-              COALESCE(call_start_time, created_at) AS ts
-         FROM messages
-        WHERE client_id = $1 AND direction = 'incoming'
-        ORDER BY read ASC, ts DESC
+      `SELECT m.id,
+              COALESCE(NULLIF(m.message_type, ''), 'message') AS kind,
+              m.from_number AS phone,
+              COALESCE(m.call_duration, 0) AS secs,
+              COALESCE(m.body, '') AS body,
+              m.recording_url,
+              m.read,
+              m.twilio_sid AS conversation_id,
+              COALESCE(m.call_start_time, m.created_at) AS ts,
+              (lt.conversation_id IS NOT NULL) AS needs_followup
+         FROM messages m
+         LEFT JOIN lead_tracker lt
+           ON lt.client_id = m.client_id
+          AND lt.conversation_id = m.twilio_sid
+          AND lt.lead_date >= (CURRENT_DATE - INTERVAL '7 days')
+          AND lt.conversation_id NOT IN (SELECT conversation_id FROM lead_followups WHERE client_id = m.client_id)
+        WHERE m.client_id = $1 AND m.direction = 'incoming'
+          ${followupsOnly ? 'AND lt.conversation_id IS NOT NULL' : ''}
+        ORDER BY needs_followup DESC, ts DESC
         LIMIT $2`,
       { bind: [D2AI_CLIENT_ID, limit], type: QueryTypes.SELECT }
     );
