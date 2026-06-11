@@ -5126,12 +5126,13 @@ async function openTaskEditModal(id) {
 // NOTIFICATIONS
 // =====================================================
 async function renderNotifications(container) {
-  const res = await api('/notifications');
+  // Only OPEN (unread) reminders/alerts — reading one clears it from the list.
+  const res = await api('/notifications?unread_only=true');
   if (!res.success) return;
 
   container.innerHTML = `
     <div class="section-header">
-      <h3>${res.data.length} Notifications</h3>
+      <h3>${res.data.length} Open</h3>
       <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark All Read</button>
     </div>
     <div class="timeline" id="notif-list"></div>
