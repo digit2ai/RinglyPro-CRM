@@ -425,8 +425,8 @@ async function renderOverview(container) {
     ${quickActionsHtml}
 
     <div class="card card-accent-blue" style="margin-bottom:24px">
-      <div class="section-header"><h3>Coming Up Next</h3></div>
-      <p class="section-hint">Your upcoming meetings and events</p>
+      <div class="section-header"><h3>Coming Up — Today &amp; Tomorrow</h3></div>
+      <p class="section-hint">Your meetings and events for today and tomorrow</p>
       <div id="upcoming-list"></div>
     </div>
 
@@ -474,7 +474,7 @@ async function renderOverview(container) {
   // Upcoming events - clickable (still wired since Coming Up Next is above the stat cards)
   document.getElementById('upcoming-list').innerHTML = d.upcoming_events.length > 0
     ? d.upcoming_events.map(e => `<div class="timeline-item" style="cursor:pointer" onclick="showEventDetail(${e.id})"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-content"><strong>${e.title}</strong><br><span class="timeline-time">${fmtDateTime(e.start_time)}</span>${e.event_type ? ' <span class="status-badge status-planning">'+e.event_type+'</span>' : ''}</div></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">No events scheduled. <a href="#" onclick="event.preventDefault();openEventModal()" style="color:var(--accent)">Schedule one now</a></p>';
+    : '<p style="color:var(--text-muted);font-size:13px;padding:12px">Nothing scheduled for today or tomorrow. <a href="#" onclick="event.preventDefault();openEventModal()" style="color:var(--accent)">Schedule something</a></p>';
 
   // Neural Findings — fetched async so the rest of the page renders first
   loadNeuralFindings();
