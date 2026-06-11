@@ -40,10 +40,14 @@ router.get('/call-stats', async (req, res) => {
       { bind: [D2AI_CLIENT_ID], type: QueryTypes.SELECT }
     );
 
+    // Recent un-followed-up leads only (last 7 days) — an actionable worklist,
+    // not the all-time backlog. The "mark followed up" action is rarely used, so
+    // counting all-time inflates this to months of leads.
     const [followRow] = await sequelize.query(
       `SELECT COUNT(*)::int AS n
          FROM lead_tracker lt
         WHERE lt.client_id = $1
+          AND lt.lead_date >= (CURRENT_DATE - INTERVAL '7 days')
           AND lt.conversation_id NOT IN (
                 SELECT conversation_id FROM lead_followups WHERE client_id = $1
           )`,

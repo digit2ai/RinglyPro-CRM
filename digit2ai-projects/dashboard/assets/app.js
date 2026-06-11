@@ -451,7 +451,7 @@ async function renderOverview(container) {
       <div class="card card-stat card-accent-purple card-clickable" onclick="navigateTo('messages')" data-tooltip="Leads waiting on a callback">
         <div class="stat-label">Calls To Follow Up</div>
         <div class="stat-value" id="kpi-followups">&middot;</div>
-        <div class="stat-change stat-neutral">Leads not yet contacted back</div>
+        <div class="stat-change stat-neutral">Recent leads (7 days) not contacted back</div>
         <div class="kpi-hint">Click to view messages</div>
       </div>
     </div>
