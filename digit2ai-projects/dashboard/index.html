@@ -86,7 +86,7 @@
               <input type="text" id="global-search" placeholder="Search...">
             </div>
             <button id="theme-toggle-btn" class="icon-btn" title="Switch dark/light mode" onclick="setTheme(getTheme()==='dark'?'light':'dark')">&#127769;</button>
-            <button id="notif-btn" class="icon-btn" title="Check your alerts">&#128276;</button>
+            <button id="notif-btn" class="icon-btn" title="Check your alerts" style="position:relative">&#128276;<span id="bell-badge" class="badge hidden" style="position:absolute;top:-4px;right:-4px">0</span></button>
             <button id="quick-add-btn" class="btn btn-primary btn-sm" title="Create something new">+ Create</button>
           </div>
         </header>

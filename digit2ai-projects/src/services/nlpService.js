@@ -434,21 +434,38 @@ async function executeCommand(inputText, userEmail) {
         break;
       }
 
-      case 'create_task':
-      case 'create_reminder': {
+      case 'create_task': {
         const titleMatch = inputText.match(/(?:to|about|for)\s+(.+?)(?:\s+(?:on|by|next|tomorrow|today)|$)/i);
-        const title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|remind|new|make|don'?t\s+let\s+me\s+forget|i\s+need\s+to\s+remember)\s+(a\s+)?(task|todo|to[\s-]?do|reminder|follow[\s-]?up|me|us)\s*/i, '').trim() || 'Follow-up';
+        const title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|new|make)\s+(a\s+)?(task|todo|to[\s-]?do|follow[\s-]?up)\s*/i, '').trim() || 'Follow-up';
         const task = await Task.create({
-          workspace_id: 1, user_email: userEmail, title,
-          task_type: intent === 'create_reminder' ? 'reminder' : 'task',
+          workspace_id: 1, user_email: userEmail, title, task_type: 'task',
           due_date: entities.date ? new Date(entities.date) : null,
           priority: entities.priority || 'medium'
         });
         await logActivity(userEmail, 'created', 'task', task.id, title, { via: 'nlp' });
         data = task;
-        response = `Got it! Created ${task.task_type}: "${title}"` +
+        response = `Got it! Created task: "${title}"` +
           (entities.date ? ` (due: ${entities.date})` : '') +
           `. You can find it in the Tasks section.`;
+        break;
+      }
+
+      case 'create_reminder': {
+        // On-demand reminders are ALERTS (the bell / Alerts & Updates), not tasks.
+        const titleMatch = inputText.match(/(?:about|that|to|for|of)\s+(.+)$/i);
+        let title = titleMatch
+          ? titleMatch[1].trim()
+          : inputText
+              .replace(/^(remind|alert|notify)\s+(me|us)\s*/i, '')
+              .replace(/^(don'?t\s+let\s+me\s+forget|i\s+need\s+to\s+remember)\s*(to|about|that)?\s*/i, '')
+              .trim();
+        if (!title) title = 'Reminder';
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        const message = entities.date ? `Reminder for ${entities.date}` : 'On-demand reminder';
+        await createNotification(userEmail, 'reminder', title, message, 'reminder', null);
+        await logActivity(userEmail, 'created', 'reminder', null, title, { via: 'nlp' });
+        data = { title };
+        response = `Reminder set: "${title}". It's now in your Alerts & Updates — tap the bell, top-right.`;
         break;
       }
 

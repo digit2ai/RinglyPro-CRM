@@ -91,12 +91,14 @@ async function showApp() {
   refreshInboxBadge();
   refreshMessagesBadge();
   refreshEmailBadge();
+  refreshNotifBadge();
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
       if (document.hidden) return;
       refreshInboxBadge();
       refreshMessagesBadge();
       refreshEmailBadge();
+      refreshNotifBadge();
     }, 60000);
   }
   navigateTo('overview');
@@ -163,6 +165,22 @@ function paintQaBadge(elId, n, color) {
     el.textContent = '';
     el.style.cssText = '';
   }
+}
+
+// Unread alerts badge on the topbar bell (Alerts & Updates / reminders).
+async function refreshNotifBadge() {
+  try {
+    const res = await api('/notifications?unread_only=true');
+    const badge = document.getElementById('bell-badge');
+    if (!badge) return;
+    const n = (res && res.success && Array.isArray(res.data)) ? res.data.length : 0;
+    if (n > 0) {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch (e) { /* silent */ }
 }
 
 async function refreshInboxBadge() {
@@ -5130,10 +5148,12 @@ async function renderNotifications(container) {
 async function markRead(id) {
   await api(`/notifications/${id}/read`, { method: 'PUT' });
   renderView('notifications');
+  refreshNotifBadge();
 }
 async function markAllRead() {
   await api('/notifications/read-all', { method: 'PUT' });
   renderView('notifications');
+  refreshNotifBadge();
 }
 
 // =====================================================
@@ -8019,6 +8039,11 @@ async function sendAICommand(target) {
     const res = await api('/nlp/command', { method: 'POST', body: JSON.stringify({ text }) });
     const response = res.data?.response || res.error || (res.success ? 'Done.' : 'Sorry, I could not process that.');
     msgContainer.innerHTML += `<div class="nlp-msg system">${escHtml(response)}</div>`;
+    // A new reminder is an alert — refresh the bell badge (and the Alerts view if open).
+    if (res.data?.intent === 'create_reminder') {
+      refreshNotifBadge();
+      if (currentView === 'notifications') renderView('notifications');
+    }
   } catch (err) {
     msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;
   }
