@@ -10,14 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --teal: #0d6e6e;
-    --teal-dark: #094d4d;
-    --teal-light: #e8f4f4;
-    --navy: #1a2332;
-    --navy-light: #2d3a4d;
-    --gold: #c8952e;
-    --gold-light: #f5e6c8;
-    --gold-dark: #a67a24;
+    --teal: #2f50c8;
+    --teal-dark: #1d36a3;
+    --teal-light: #e8edfc;
+    --navy: #14245f;
+    --navy-light: #273a86;
+    --gold: #e3a51c;
+    --gold-light: #f7e6bb;
+    --gold-dark: #b9831a;
     --white: #ffffff;
     --gray-50: #f8f9fa;
     --gray-100: #f1f3f5;
@@ -60,7 +60,7 @@
     transition: background 0.3s, box-shadow 0.3s;
   }
   .header.scrolled {
-    background: rgba(26,35,50,0.92);
+    background: rgba(16,27,73,0.94);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 2px 24px rgba(0,0,0,0.18);
@@ -126,7 +126,7 @@
   /* ── HERO ── */
   .hero {
     min-height: 100vh;
-    background: linear-gradient(160deg, var(--navy) 0%, var(--teal-dark) 55%, var(--teal) 100%);
+    background: linear-gradient(165deg, #14245f 0%, #21379b 45%, #2d4cc4 100%);
     color: var(--white);
     display: flex;
     flex-direction: column;
@@ -183,16 +183,16 @@
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 15px;
-    background: var(--gold);
-    color: var(--white);
+    background: #f5c63f;
+    color: var(--navy);
     padding: 14px 32px;
-    border-radius: 6px;
-    border: 2px solid var(--gold);
+    border-radius: 8px;
+    border: 2px solid #f5c63f;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
     display: inline-block;
   }
-  .btn-gold:hover { background: var(--gold-dark); transform: translateY(-1px); }
+  .btn-gold:hover { background: #ecb820; border-color: #ecb820; transform: translateY(-1px); }
   .btn-outline {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -499,9 +499,9 @@
     font-weight: 600;
     padding: 10px 20px;
     border-radius: 30px;
-    background: rgba(13,110,110,0.12);
+    background: rgba(47,80,200,0.12);
     color: var(--teal);
-    border: 1px solid rgba(13,110,110,0.2);
+    border: 1px solid rgba(47,80,200,0.22);
   }
   .hci-display {
     background: var(--navy);
@@ -708,7 +708,7 @@
       position: absolute;
       top: 64px;
       left: 0; right: 0;
-      background: rgba(26,35,50,0.96);
+      background: rgba(16,27,73,0.97);
       backdrop-filter: blur(12px);
       padding: 24px 32px;
       gap: 18px;
@@ -780,7 +780,7 @@
   .orb-btn[data-state="speaking"] .o-core { animation: orbBreath 1.6s ease-in-out infinite; }
   .orb-btn:hover { filter: brightness(1.08); }
   .orb-cap { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 600; color: var(--gold); transition: color .2s; }
-  .orb-stage[data-state="listening"] .orb-cap { color: #2ee6a6; }
+  .orb-stage[data-state="listening"] .orb-cap { color: #6f9bff; }
   .orb-stage[data-state="speaking"] .orb-cap { color: #7fd9ff; }
   .orb-hint { font-family: 'Inter', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.72); max-width: 460px; text-align: center; line-height: 1.55; }
   .orb-transcript { display: none; width: 100%; max-width: 560px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 16px; margin-top: 2px; max-height: 230px; overflow-y: auto; backdrop-filter: blur(4px); }
@@ -788,7 +788,7 @@
   @keyframes orbFade { from { opacity: 0; } to { opacity: 1; } }
   .orb-msg { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.55; margin-bottom: 9px; padding-left: 12px; border-left: 2px solid transparent; text-align: left; }
   .orb-msg.user { border-left-color: var(--gold); color: rgba(255,255,255,0.92); }
-  .orb-msg.agent { border-left-color: #2ee6a6; color: rgba(255,255,255,0.86); }
+  .orb-msg.agent { border-left-color: #6f9bff; color: rgba(255,255,255,0.86); }
   .orb-msg .who { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; opacity: .6; margin-bottom: 2px; }
   .orb-stop { display: none; background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 10px 22px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: .3px; }
   .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
@@ -826,28 +826,28 @@
         <svg viewBox="0 0 168 168" role="img" aria-hidden="true">
           <defs>
             <radialGradient id="htCoreGrad" cx="50%" cy="42%" r="60%">
-              <stop offset="0%" stop-color="#aef0e6"/>
-              <stop offset="45%" stop-color="#1aa39a"/>
-              <stop offset="100%" stop-color="#094d4d"/>
+              <stop offset="0%" stop-color="#bcd0ff"/>
+              <stop offset="45%" stop-color="#3a5fe0"/>
+              <stop offset="100%" stop-color="#16245f"/>
             </radialGradient>
             <radialGradient id="htGlowGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#2ee6a6" stop-opacity=".65"/>
-              <stop offset="100%" stop-color="#2ee6a6" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#5a82ff" stop-opacity=".65"/>
+              <stop offset="100%" stop-color="#5a82ff" stop-opacity="0"/>
             </radialGradient>
           </defs>
           <circle class="o-glow" cx="84" cy="84" r="80" fill="url(#htGlowGrad)"/>
-          <g class="o-ring o-r1" fill="none" stroke="#c8952e" stroke-opacity=".55" stroke-width="1.3">
+          <g class="o-ring o-r1" fill="none" stroke="#f5c63f" stroke-opacity=".6" stroke-width="1.3">
             <circle cx="84" cy="84" r="72" stroke-dasharray="6 10"/>
           </g>
-          <g class="o-ring o-r2" fill="none" stroke="#2ee6a6" stroke-opacity=".5" stroke-width="1.1">
+          <g class="o-ring o-r2" fill="none" stroke="#6f9bff" stroke-opacity=".5" stroke-width="1.1">
             <circle cx="84" cy="84" r="61" stroke-dasharray="3 14"/>
           </g>
-          <g class="o-ring o-r3" fill="none" stroke="#7fe6d4" stroke-opacity=".4" stroke-width="1">
+          <g class="o-ring o-r3" fill="none" stroke="#acc4ff" stroke-opacity=".4" stroke-width="1">
             <circle cx="84" cy="84" r="51" stroke-dasharray="2 8"/>
           </g>
           <circle class="o-core" cx="84" cy="84" r="39" fill="url(#htCoreGrad)"/>
           <circle cx="84" cy="84" r="39" fill="none" stroke="#eafffa" stroke-opacity=".25" stroke-width="1"/>
-          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#063d3a" fill-opacity=".8"/>
+          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a1840" fill-opacity=".85"/>
         </svg>
       </button>
       <div class="orb-cap" id="orbCap">Hablar con Lina</div>
