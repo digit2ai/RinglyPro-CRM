@@ -11,6 +11,31 @@ let VERTICALS = [];
 let currentView = 'overview';
 
 // =====================================================
+// PWA INSTALL
+// =====================================================
+let _deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); _deferredInstall = e; showInstallBanner('android'); });
+window.addEventListener('appinstalled', () => { _deferredInstall = null; hideInstallBanner(); });
+function pwaStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+function pwaIsIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function maybeShowIosInstallHint() { if (pwaIsIOS() && !pwaStandalone()) showInstallBanner('ios'); }
+function hideInstallBanner() { const b = document.getElementById('pwa-install-banner'); if (b) b.remove(); }
+function showInstallBanner(kind) {
+  if (pwaStandalone() || document.getElementById('pwa-install-banner')) return;
+  if (localStorage.getItem('d2ai_install_dismissed')) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9000;background:linear-gradient(135deg,#7c5cff,#2563eb);color:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.4);font-size:14px;max-width:520px;margin:0 auto';
+  banner.innerHTML = kind === 'ios'
+    ? `<span style="flex:1">Install this app &mdash; tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.</span><button id="pwa-x" style="background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer">Got it</button>`
+    : `<span style="flex:1">Install Digit2AI Projects as an app</span><button id="pwa-go" style="background:#fff;border:0;color:#2563eb;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer">Install</button><button id="pwa-x" style="background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1">&times;</button>`;
+  document.body.appendChild(banner);
+  const x = document.getElementById('pwa-x'); if (x) x.addEventListener('click', () => { localStorage.setItem('d2ai_install_dismissed', '1'); hideInstallBanner(); });
+  const go = document.getElementById('pwa-go'); if (go) go.addEventListener('click', async () => { if (!_deferredInstall) return; _deferredInstall.prompt(); try { await _deferredInstall.userChoice; } catch (e) {} _deferredInstall = null; hideInstallBanner(); });
+}
+window.showInstallBanner = showInstallBanner;
+
+// =====================================================
 // API HELPER
 // =====================================================
 async function api(path, opts = {}) {
@@ -92,6 +117,7 @@ async function showApp() {
   refreshMessagesBadge();
   refreshEmailBadge();
   refreshNotifBadge();
+  maybeShowIosInstallHint(); // iOS has no install prompt event — show the hint
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
       if (document.hidden) return;
@@ -101,7 +127,10 @@ async function showApp() {
       refreshNotifBadge();
     }, 60000);
   }
-  navigateTo('overview');
+  // PWA shortcut deep-links: /projects/?view=email|messages|calendar|...
+  const vp = new URLSearchParams(location.search).get('view');
+  const allowed = ['overview', 'inbox', 'messages', 'email', 'contacts', 'projects', 'calendar', 'tasks', 'minutes', 'staff', 'settings', 'followups'];
+  navigateTo(allowed.includes(vp) ? vp : 'overview');
 }
 
 // =====================================================

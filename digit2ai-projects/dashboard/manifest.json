@@ -1,19 +1,38 @@
 {
-  "name": "Digit2Ai Projects",
-  "short_name": "Digit2Ai Projects",
-  "description": "Contacts & Projects Management",
+  "name": "Digit2AI Projects Hub",
+  "short_name": "Digit2AI",
+  "id": "/projects/",
+  "description": "Your business command center — projects, calls, email, calendar and AI tools",
   "start_url": "/projects/",
   "scope": "/projects/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#2563eb",
   "orientation": "any",
+  "categories": ["business", "productivity"],
   "icons": [
+    {
+      "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    { "name": "Email", "short_name": "Email", "url": "/projects/?view=email" },
+    { "name": "Calls & Messages", "short_name": "Messages", "url": "/projects/?view=messages" },
+    { "name": "Calendar", "short_name": "Calendar", "url": "/projects/?view=calendar" }
   ]
 }
