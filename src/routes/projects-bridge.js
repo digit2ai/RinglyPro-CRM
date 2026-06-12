@@ -26,7 +26,8 @@ const D2AI_CLIENT_ID = 15;
 router.get('/version', (req, res) => {
   res.json({
     commit: (process.env.RENDER_GIT_COMMIT || 'unknown').slice(0, 12),
-    imap_read: true
+    imap_read: true,
+    reply_agent: true
   });
 });
 
@@ -354,6 +355,33 @@ router.get('/email-message', requireClient15, async (req, res) => {
     res.json({ success: true, message: msg });
   } catch (error) {
     console.error('[ProjectsBridge] email-message error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// AI: draft a reply to an email.
+router.post('/email-draft', requireClient15, async (req, res) => {
+  try {
+    const { from_name, from, subject, original, instruction } = req.body || {};
+    const draft = await emailReconcile.draftReply({
+      fromName: from_name, fromAddr: from, subject, original, instruction, myName: 'Manuel Stagg'
+    });
+    res.json({ success: true, draft });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-draft error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Send a reply (Gmail API or SMTP, threaded to the original).
+router.post('/email-send', requireClient15, async (req, res) => {
+  try {
+    const { account_id, original_id, to, subject, body } = req.body || {};
+    if (!account_id || !to || !body) return res.json({ success: false, error: 'account_id, to and body are required' });
+    await emailReconcile.sendReply(D2AI_CLIENT_ID, account_id, { to, subject, body, original_id });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-send error:', error.message);
     res.json({ success: false, error: error.message });
   }
 });

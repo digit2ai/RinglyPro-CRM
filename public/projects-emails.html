@@ -216,20 +216,37 @@
       const openLink = item.open_url
         ? `<a class="r-open" href="${item.open_url}" target="_blank" rel="noopener">Open in Gmail &#8599;</a>` : '';
 
+      const inStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-size:13px;margin-bottom:8px';
       list.innerHTML = `
         <div class="reader">
           <div class="r-head">
             <button class="back" id="reader-back">&#8592; Inbox</button>
-            ${openLink}
+            <span style="display:flex;gap:8px;align-items:center">
+              <button id="reply-ai-btn" style="cursor:pointer;border:1px solid var(--accent);color:#dbeafe;background:linear-gradient(135deg,#7c5cff,#2563eb);border-radius:8px;padding:7px 14px;font-weight:600;font-size:12.5px">&#10024; Reply with AI</button>
+              ${openLink}
+            </span>
           </div>
           <h2 class="r-subject">${subject}</h2>
           <div class="r-meta">${fromName}${fromAddr && fromAddr !== fromName ? ' &lt;' + fromAddr + '&gt;' : ''} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${esc(item.account || '')}</div>
           <iframe class="r-body" id="reader-frame" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
+          <div id="reply-panel" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+            <input id="reply-instruction" placeholder="What should the reply say? (optional) — e.g. thank them and confirm Tuesday 2pm" style="${inStyle}">
+            <button id="reply-draft-btn" class="btn btn-primary">&#10024; Draft with AI</button>
+            <div id="reply-compose" style="display:none;margin-top:10px">
+              <label style="font-size:12px;color:var(--muted)">To</label><input id="reply-to" style="${inStyle}">
+              <label style="font-size:12px;color:var(--muted)">Subject</label><input id="reply-subject" style="${inStyle}">
+              <textarea id="reply-body" rows="9" style="${inStyle};resize:vertical;font-family:inherit"></textarea>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button id="reply-send-btn" class="btn btn-primary">Send</button>
+                <button id="reply-redraft-btn" class="btn btn-ghost">Re-draft</button>
+                <span id="reply-status" style="font-size:12.5px"></span>
+              </div>
+            </div>
+          </div>
         </div>`;
 
       document.getElementById('reader-back').addEventListener('click', () => load());
 
-      // Render the email content inside a sandboxed iframe (no scripts) so it's safe.
       const frame = document.getElementById('reader-frame');
       const inner = (m.html && m.html.trim())
         ? m.html
@@ -237,6 +254,61 @@
       frame.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base target="_blank">
         <style>body{margin:0;padding:14px;background:#fff;color:#111;font-family:-apple-system,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%}img{max-width:100%;height:auto}a{color:#2563eb}</style>
         </head><body>${inner}</body></html>`;
+
+      // ---- AI reply wiring ----
+      const origText = (m.text && m.text.trim()) ? m.text : (m.html || '').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const replyTo = m.from || item.from || '';
+      const rawSubj = m.subject || item.subject || '';
+      const replySubj = /^re:/i.test(rawSubj) ? rawSubj : 'Re: ' + rawSubj;
+
+      document.getElementById('reply-ai-btn').addEventListener('click', () => {
+        const p = document.getElementById('reply-panel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'block') document.getElementById('reply-instruction').focus();
+      });
+
+      async function doDraft() {
+        const btn = document.getElementById('reply-draft-btn');
+        const status = document.getElementById('reply-status');
+        btn.disabled = true; const orig = btn.innerHTML; btn.innerHTML = 'Drafting…';
+        try {
+          const res = await fetch(`${ORIGIN}/api/projects-bridge/email-draft`, {
+            method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ from_name: m.from_name || item.from_name, from: replyTo, subject: rawSubj, original: origText, instruction: document.getElementById('reply-instruction').value.trim() })
+          });
+          const data = await parseJsonSafe(res);
+          if (!data.success) { status.style.color = '#f87171'; status.textContent = data.error || 'Draft failed'; return; }
+          document.getElementById('reply-to').value = replyTo;
+          document.getElementById('reply-subject').value = replySubj;
+          document.getElementById('reply-body').value = data.draft || '';
+          document.getElementById('reply-compose').style.display = 'block';
+          status.textContent = '';
+        } catch (e) { status.style.color = '#f87171'; status.textContent = e.message; }
+        finally { btn.disabled = false; btn.innerHTML = orig; }
+      }
+      document.getElementById('reply-draft-btn').addEventListener('click', doDraft);
+      document.getElementById('reply-redraft-btn').addEventListener('click', doDraft);
+
+      document.getElementById('reply-send-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('reply-send-btn');
+        const status = document.getElementById('reply-status');
+        const body = document.getElementById('reply-body').value.trim();
+        const to = document.getElementById('reply-to').value.trim();
+        const subject = document.getElementById('reply-subject').value.trim();
+        if (!to || !body) { status.style.color = '#f87171'; status.textContent = 'To and message are required.'; return; }
+        btn.disabled = true; btn.textContent = 'Sending…';
+        try {
+          const res = await fetch(`${ORIGIN}/api/projects-bridge/email-send`, {
+            method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ account_id: item.account_id, original_id: item.message_id, to, subject, body })
+          });
+          const data = await parseJsonSafe(res);
+          if (!data.success) { status.style.color = '#f87171'; status.textContent = data.error || 'Send failed'; btn.disabled = false; btn.textContent = 'Send'; return; }
+          status.style.color = '#10b981'; status.textContent = '✓ Sent';
+          btn.textContent = 'Sent';
+          setTimeout(() => load(), 1200); // back to inbox
+        } catch (e) { status.style.color = '#f87171'; status.textContent = e.message; btn.disabled = false; btn.textContent = 'Send'; }
+      });
     }
     window.openMessage = openMessage;
 

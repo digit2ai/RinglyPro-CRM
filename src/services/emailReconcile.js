@@ -475,7 +475,94 @@ async function getSummary(clientId, { force = false } = {}) {
   return data;
 }
 
+// ===== AI reply agent =====================================================
+// Draft a reply with Claude. Drafting is provider-agnostic (pure LLM).
+async function draftReply({ fromName, fromAddr, subject, original, instruction, myName }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  if (!apiKey) throw new Error('AI drafting is not configured (ANTHROPIC_API_KEY missing).');
+  const Anthropic = require('@anthropic-ai/sdk');
+  const anthropic = new Anthropic({ apiKey });
+  const who = myName || 'the user';
+  const system = `You draft professional, concise email replies on behalf of ${who}. Output ONLY the reply body text — no "Subject:" line, no surrounding quotes, no explanation of what you did. Tone: warm, professional, brief, and to the point. NEVER invent facts, prices, dates, names, or commitments that aren't in ${who}'s instruction or the original email. End with a simple sign-off (e.g. "Best,\\n${who}") unless the instruction says otherwise.`;
+  const content = `Email received:\nFrom: ${fromName || ''} <${fromAddr || ''}>\nSubject: ${subject || ''}\n\n${(original || '').slice(0, 6000)}\n\n----\n${instruction ? 'Write the reply following this instruction: ' + instruction : 'Write a sensible, professional reply.'}`;
+  const resp = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    system,
+    messages: [{ role: 'user', content }]
+  });
+  return (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+}
+
+function gmailClientFor(account) {
+  const client = gmailOAuthClient();
+  const creds = {};
+  if (account.refresh_token) creds.refresh_token = decrypt(account.refresh_token);
+  if (account.access_token) creds.access_token = decrypt(account.access_token);
+  if (account.token_expires_at) creds.expiry_date = new Date(account.token_expires_at).getTime();
+  client.setCredentials(creds);
+  return client;
+}
+
+async function sendReply(clientId, accountId, payload) {
+  await ensureTable();
+  const [acc] = await sequelize.query(
+    `SELECT * FROM email_accounts WHERE id = $1 AND client_id = $2 LIMIT 1`,
+    { bind: [parseInt(accountId, 10), clientId], type: QueryTypes.SELECT }
+  );
+  if (!acc) throw new Error('Account not found');
+  return acc.provider === 'gmail' ? sendGmailReply(acc, payload) : sendSmtpReply(acc, payload);
+}
+
+async function sendGmailReply(account, { to, subject, body, original_id }) {
+  const gmail = google.gmail({ version: 'v1', auth: gmailClientFor(account) });
+  let threadId, inReplyTo, references;
+  if (original_id) {
+    try {
+      const meta = await gmail.users.messages.get({ userId: 'me', id: original_id, format: 'metadata', metadataHeaders: ['Message-ID', 'References'] });
+      threadId = meta.data.threadId;
+      const hs = (meta.data.payload && meta.data.payload.headers) || [];
+      const get = n => { const x = hs.find(h => h.name.toLowerCase() === n); return x ? x.value : ''; };
+      inReplyTo = get('message-id');
+      references = get('references');
+    } catch (e) { /* send without threading */ }
+  }
+  const lines = [
+    `From: ${account.email_address}`, `To: ${to}`, `Subject: ${subject}`,
+    'MIME-Version: 1.0', 'Content-Type: text/plain; charset="UTF-8"'
+  ];
+  if (inReplyTo) { lines.push(`In-Reply-To: ${inReplyTo}`); lines.push(`References: ${(references ? references + ' ' : '') + inReplyTo}`); }
+  const raw = lines.join('\r\n') + '\r\n\r\n' + (body || '');
+  const encoded = Buffer.from(raw, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded, threadId } });
+  return { sent: true };
+}
+
+async function sendSmtpReply(account, { to, subject, body, original_id }) {
+  const nodemailer = require('nodemailer');
+  const smtpHost = (account.imap_host || '').replace(/^imap\./i, 'smtp.') || account.imap_host;
+  const pass = decrypt(account.imap_password_enc);
+  let inReplyTo;
+  if (original_id) {
+    try {
+      const ic = new ImapFlow(imapConfig(account));
+      await ic.connect();
+      const lock = await ic.getMailboxLock('INBOX');
+      try { const m = await ic.fetchOne(String(original_id), { envelope: true }, { uid: true }); inReplyTo = m && m.envelope && m.envelope.messageId; }
+      finally { lock.release(); }
+      await ic.logout().catch(() => {});
+    } catch (e) { /* no threading */ }
+  }
+  const transporter = nodemailer.createTransport({
+    host: smtpHost, port: 465, secure: true,
+    auth: { user: account.imap_user || account.email_address, pass },
+    tls: { rejectUnauthorized: false }, connectionTimeout: 15000
+  });
+  await transporter.sendMail({ from: account.email_address, to, subject, text: body, inReplyTo, references: inReplyTo });
+  return { sent: true };
+}
+
 module.exports = {
   listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
-  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody
+  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody, draftReply, sendReply
 };
