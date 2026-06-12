@@ -26,8 +26,14 @@ const CHAMBER_LANGUAGES = new Set(['English', 'Spanish']);
 // $10/mo subscription at signup. Members are activated immediately and a
 // $0 "waived" transaction is recorded for audit. Remove the slug from the
 // env var to restore paid signup with no other code changes.
-const WAIVED_FEE_SLUGS = (process.env.WAIVE_SIGNUP_FEES_SLUGS || 'cv-2')
-  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+// cv-105 (HISPANOTEC) is permanently FREE — always waived regardless of the
+// WAIVE_SIGNUP_FEES_SLUGS env var, so it never falls back to paid Stripe signup.
+const ALWAYS_WAIVED_SLUGS = ['cv-105'];
+const WAIVED_FEE_SLUGS = Array.from(new Set([
+  ...ALWAYS_WAIVED_SLUGS,
+  ...(process.env.WAIVE_SIGNUP_FEES_SLUGS || 'cv-2')
+    .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+]));
 function signupFeesWaived(chamberSlug) {
   return WAIVED_FEE_SLUGS.includes(String(chamberSlug || '').toLowerCase());
 }
