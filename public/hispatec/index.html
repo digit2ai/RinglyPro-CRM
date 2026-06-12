@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HISPATEC -- Plataforma de Integración Estratégica Hispana</title>
-<meta name="description" content="HISPATEC conecta talento, recursos y oportunidades del mundo hispano. Plataforma de integración estratégica para profesionales hispanohablantes.">
+<title>HISPANOTEC -- Plataforma de Integración Estratégica Hispana</title>
+<meta name="description" content="HISPANOTEC conecta talento, recursos y oportunidades del mundo hispano. Plataforma de integración estratégica para profesionales hispanohablantes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -757,13 +757,49 @@
     .section-title { font-size: 24px; }
     .hci-display { flex-direction: column; text-align: center; }
   }
+
+  /* ── VOICE ORB (Lina) ── */
+  .orb-stage { margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .orb-btn { position: relative; width: 168px; height: 168px; cursor: pointer; border: none; background: transparent; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+  .orb-btn svg { display: block; width: 168px; height: 168px; overflow: visible; }
+  .orb-btn .o-ring { transform-box: fill-box; transform-origin: center; }
+  .orb-btn .o-r1 { animation: orbSpin 18s linear infinite; }
+  .orb-btn .o-r2 { animation: orbSpinR 12s linear infinite; }
+  .orb-btn .o-r3 { animation: orbSpin 8s linear infinite; }
+  .orb-btn .o-core { transform-box: fill-box; transform-origin: center; animation: orbBreath 3.4s ease-in-out infinite; }
+  .orb-btn .o-glow { transform-box: fill-box; transform-origin: center; animation: orbGlow 3.4s ease-in-out infinite; }
+  @keyframes orbSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  @keyframes orbSpinR { from { transform: rotate(360deg); } to { transform: rotate(0); } }
+  @keyframes orbBreath { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  @keyframes orbGlow { 0%,100% { opacity: .45; } 50% { opacity: .9; } }
+  .orb-btn[data-state="connecting"] .o-core { animation: orbBreath 1s ease-in-out infinite; }
+  .orb-btn[data-state="listening"] .o-glow { animation: orbGlow 1.1s ease-in-out infinite; }
+  .orb-btn[data-state="listening"] .o-r1,
+  .orb-btn[data-state="listening"] .o-r2,
+  .orb-btn[data-state="listening"] .o-r3 { animation-duration: 6s; }
+  .orb-btn[data-state="speaking"] .o-core { animation: orbBreath 1.6s ease-in-out infinite; }
+  .orb-btn:hover { filter: brightness(1.08); }
+  .orb-cap { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 600; color: var(--gold); transition: color .2s; }
+  .orb-stage[data-state="listening"] .orb-cap { color: #2ee6a6; }
+  .orb-stage[data-state="speaking"] .orb-cap { color: #7fd9ff; }
+  .orb-hint { font-family: 'Inter', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.72); max-width: 460px; text-align: center; line-height: 1.55; }
+  .orb-transcript { display: none; width: 100%; max-width: 560px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 16px; margin-top: 2px; max-height: 230px; overflow-y: auto; backdrop-filter: blur(4px); }
+  .orb-transcript.show { display: block; animation: orbFade .3s ease; }
+  @keyframes orbFade { from { opacity: 0; } to { opacity: 1; } }
+  .orb-msg { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.55; margin-bottom: 9px; padding-left: 12px; border-left: 2px solid transparent; text-align: left; }
+  .orb-msg.user { border-left-color: var(--gold); color: rgba(255,255,255,0.92); }
+  .orb-msg.agent { border-left-color: #2ee6a6; color: rgba(255,255,255,0.86); }
+  .orb-msg .who { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; opacity: .6; margin-bottom: 2px; }
+  .orb-stop { display: none; background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 10px 22px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: .3px; }
+  .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
+  @media (prefers-reduced-motion: reduce) { .orb-btn * { animation: none !important; } }
 </style>
 </head>
 <body>
 
 <!-- ═══════ HEADER ═══════ -->
 <header class="header" id="header">
-  <a href="#hero" class="header-logo">HISPA<span>TEC</span></a>
+  <a href="#hero" class="header-logo">HISPANO<span>TEC</span></a>
   <nav>
     <ul class="header-nav" id="navMenu">
       <li><a href="#quees" data-es="¿Qué es" data-en="About">¿Qué es</a></li>
@@ -786,20 +822,125 @@
   <div class="hero-content">
     <h1 data-es="Acción, <em>no solo palabras.</em>" data-en="Action, <em>not just words.</em>">Acción, <em>no solo palabras.</em></h1>
     <p data-es="Plataforma de Integración Estratégica Hispana -- conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform -- connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integración Estratégica Hispana -- conectando talento, recursos y oportunidades del mundo hispano.</p>
-    <div class="hero-ctas">
-      <a href="#registro" class="btn-gold" data-es="Únete a la Red" data-en="Join the Network">Únete a la Red</a>
+    <div class="orb-stage" id="orbStage" data-state="idle" data-active="0">
+      <button class="orb-btn" id="orbBtn" data-state="idle" type="button" aria-label="Hablar con Lina, asistente de voz con IA">
+        <svg viewBox="0 0 168 168" role="img" aria-hidden="true">
+          <defs>
+            <radialGradient id="htCoreGrad" cx="50%" cy="42%" r="60%">
+              <stop offset="0%" stop-color="#aef0e6"/>
+              <stop offset="45%" stop-color="#1aa39a"/>
+              <stop offset="100%" stop-color="#094d4d"/>
+            </radialGradient>
+            <radialGradient id="htGlowGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#2ee6a6" stop-opacity=".65"/>
+              <stop offset="100%" stop-color="#2ee6a6" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle class="o-glow" cx="84" cy="84" r="80" fill="url(#htGlowGrad)"/>
+          <g class="o-ring o-r1" fill="none" stroke="#c8952e" stroke-opacity=".55" stroke-width="1.3">
+            <circle cx="84" cy="84" r="72" stroke-dasharray="6 10"/>
+          </g>
+          <g class="o-ring o-r2" fill="none" stroke="#2ee6a6" stroke-opacity=".5" stroke-width="1.1">
+            <circle cx="84" cy="84" r="61" stroke-dasharray="3 14"/>
+          </g>
+          <g class="o-ring o-r3" fill="none" stroke="#7fe6d4" stroke-opacity=".4" stroke-width="1">
+            <circle cx="84" cy="84" r="51" stroke-dasharray="2 8"/>
+          </g>
+          <circle class="o-core" cx="84" cy="84" r="39" fill="url(#htCoreGrad)"/>
+          <circle cx="84" cy="84" r="39" fill="none" stroke="#eafffa" stroke-opacity=".25" stroke-width="1"/>
+          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#063d3a" fill-opacity=".8"/>
+        </svg>
+      </button>
+      <div class="orb-cap" id="orbCap">Hablar con Lina</div>
+      <div class="orb-hint" id="orbHint">Asistente de voz con IA. Pulse el orbe y pregúntele a Lina por qué HISPANOTEC es una oportunidad, cómo funciona y cómo unirse a la red.</div>
+      <div class="orb-transcript" id="orbTranscript" aria-live="polite"></div>
+      <button class="orb-stop" id="orbStop" type="button">Detener conversación</button>
     </div>
   </div>
 </section>
 
+<!-- ElevenLabs SDK lazy-loader (loaded on first orb click) -->
+<script>
+  window.__htLoadEleven = function () {
+    if (window.__htConv) return Promise.resolve(window.__htConv);
+    if (window.__htConvP) return window.__htConvP;
+    window.__htConvP = import('https://esm.sh/@elevenlabs/client@1.9.0')
+      .then(function (m) { var C = m.Conversation || (m.default && m.default.Conversation); window.__htConv = C; return C; })
+      .catch(function (e) { console.warn('[ht-orb] SDK load failed', e); return null; });
+    return window.__htConvP;
+  };
+</script>
+<!-- Interactive voice controller (Lina ES — ElevenLabs convai) -->
+<script>
+  (function () {
+    var AGENT_ID = 'agent_4801ktyq36h5ezgrwv8b9hqn9eda'; // Lina ES — HISPANOTEC
+    var stage = document.getElementById('orbStage');
+    var orb = document.getElementById('orbBtn');
+    var cap = document.getElementById('orbCap');
+    var hint = document.getElementById('orbHint');
+    var tx = document.getElementById('orbTranscript');
+    var stopBtn = document.getElementById('orbStop');
+    if (!orb) return;
+    var convo = null, connecting = false;
+    var CAP = { idle: 'Hablar con Lina', connecting: 'Conectando…', listening: 'Escuchando', thinking: 'Analizando', speaking: 'Lina hablando' };
+
+    function setState(s) { orb.dataset.state = s; stage.dataset.state = s; cap.textContent = CAP[s] || CAP.idle; }
+    function addMsg(role, text) {
+      if (!text) return;
+      tx.classList.add('show');
+      var d = document.createElement('div');
+      d.className = 'orb-msg ' + (role === 'user' ? 'user' : 'agent');
+      var w = document.createElement('span'); w.className = 'who';
+      w.textContent = role === 'user' ? 'Usted' : 'Lina';
+      var p = document.createElement('span'); p.textContent = text;
+      d.appendChild(w); d.appendChild(p); tx.appendChild(d); tx.scrollTop = tx.scrollHeight;
+    }
+    function fallback(msg) {
+      connecting = false; stage.dataset.active = '0'; setState('idle');
+      hint.textContent = msg || 'Modo de voz no disponible en este momento. Puede escribirnos a info@fundacionraiceshispanas.org.';
+    }
+    async function start() {
+      if (connecting || convo) return;
+      connecting = true; setState('connecting');
+      hint.textContent = 'Permita el acceso al micrófono para hablar con Lina…';
+      try { await navigator.mediaDevices.getUserMedia({ audio: true }); }
+      catch (e) { fallback('Para usar el modo de voz, active el permiso del micrófono y vuelva a pulsar el orbe.'); return; }
+      var Conversation = await window.__htLoadEleven();
+      if (!Conversation) { fallback(); return; }
+      try {
+        convo = await Conversation.startSession({
+          agentId: AGENT_ID,
+          connectionType: 'webrtc',
+          onConnect: function () { connecting = false; stage.dataset.active = '1'; setState('listening'); hint.textContent = 'Conectado. Hágale a Lina cualquier pregunta sobre HISPANOTEC.'; },
+          onDisconnect: function () { convo = null; stage.dataset.active = '0'; setState('idle'); hint.textContent = 'Conversación finalizada. Pulse el orbe para hablar de nuevo.'; },
+          onError: function (err) { console.warn('[ht-orb]', err); fallback(); },
+          onModeChange: function (m) { var mode = m && m.mode; if (mode === 'speaking') setState('speaking'); else if (mode === 'listening') setState('listening'); },
+          onMessage: function (msg) {
+            if (!msg) return;
+            var role = msg.source === 'user' ? 'user' : 'agent';
+            var text = msg.message || msg.text || '';
+            addMsg(role, text);
+          }
+        });
+      } catch (e) { console.warn('[ht-orb] startSession failed', e); fallback(); }
+    }
+    async function stop() {
+      try { if (convo) await convo.endSession(); } catch (e) {}
+      convo = null; stage.dataset.active = '0'; setState('idle');
+    }
+    orb.addEventListener('click', function () { if (convo) { stop(); } else { start(); } });
+    stopBtn.addEventListener('click', stop);
+  })();
+</script>
+
 <!-- ═══════ QUE ES ═══════ -->
 <section class="section" id="quees">
   <div class="gold-line"></div>
-  <h2 class="section-title" data-es="¿Qué es HISPATEC?" data-en="What is HISPATEC">¿Qué es HISPATEC?</h2>
+  <h2 class="section-title" data-es="¿Qué es HISPANOTEC?" data-en="What is HISPANOTEC">¿Qué es HISPANOTEC?</h2>
   <p class="section-subtitle" data-es="Claridad sobre nuestra misión y modelo." data-en="Clarity about our mission and model.">Claridad sobre nuestra misión y modelo.</p>
   <div class="quees-grid">
     <div class="quees-text">
-      <p data-es="HISPATEC es una plataforma de integración estratégica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro propósito es generar proyectos de alto impacto en sectores estratégicos, coordinando talento distribuido en más de 22 países con una infraestructura digital avanzada." data-en="HISPATEC is a strategic integration platform that connects professionals, companies, and institutions from the Spanish-speaking world. Our purpose is to generate high-impact projects in strategic sectors, coordinating distributed talent across 22+ countries with advanced digital infrastructure.">HISPATEC es una plataforma de integración estratégica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro propósito es generar proyectos de alto impacto en sectores estratégicos, coordinando talento distribuido en más de 22 países con una infraestructura digital avanzada.</p>
+      <p data-es="HISPANOTEC es una plataforma de integración estratégica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro propósito es generar proyectos de alto impacto en sectores estratégicos, coordinando talento distribuido en más de 22 países con una infraestructura digital avanzada." data-en="HISPANOTEC is a strategic integration platform that connects professionals, companies, and institutions from the Spanish-speaking world. Our purpose is to generate high-impact projects in strategic sectors, coordinating distributed talent across 22+ countries with advanced digital infrastructure.">HISPANOTEC es una plataforma de integración estratégica que conecta a profesionales, empresas e instituciones del mundo hispanohablante. Nuestro propósito es generar proyectos de alto impacto en sectores estratégicos, coordinando talento distribuido en más de 22 países con una infraestructura digital avanzada.</p>
       <p data-es="No buscamos representar ideologías ni competir con cámaras de comercio. Somos un nodo de confianza y acción: conectamos a quienes pueden con quienes necesitan, y ejecutamos proyectos reales con gobernanza transparente." data-en="We don't seek to represent ideologies or compete with chambers of commerce. We are a trust and action node: we connect those who can with those who need, and we execute real projects with transparent governance.">No buscamos representar ideologías ni competir con cámaras de comercio. Somos un nodo de confianza y acción: conectamos a quienes pueden con quienes necesitan, y ejecutamos proyectos reales con gobernanza transparente.</p>
     </div>
     <div>
@@ -944,7 +1085,7 @@
   <div class="section-inner">
     <div class="gold-line"></div>
     <h2 class="section-title" data-es="De la Idea a la Realidad" data-en="From Idea to Reality">De la Idea a la Realidad</h2>
-    <p class="section-subtitle" data-es="El ciclo de vida de cada proyecto dentro de HISPATEC." data-en="The lifecycle of each project within HISPATEC.">El ciclo de vida de cada proyecto dentro de HISPATEC.</p>
+    <p class="section-subtitle" data-es="El ciclo de vida de cada proyecto dentro de HISPANOTEC." data-en="The lifecycle of each project within HISPANOTEC.">El ciclo de vida de cada proyecto dentro de HISPANOTEC.</p>
     <div class="timeline">
       <div class="timeline-step">
         <div class="timeline-num">1</div>
@@ -980,7 +1121,7 @@
   <div class="section-inner">
     <div class="gold-line"></div>
     <h2 class="section-title" data-es="Proyectos Piloto" data-en="Pilot Projects">Proyectos Piloto</h2>
-    <p class="section-subtitle" data-es="Iniciativas en fase de diseño que demuestran el modelo HISPATEC en acción." data-en="Initiatives in the design phase that demonstrate the HISPATEC model in action.">Iniciativas en fase de diseño que demuestran el modelo HISPATEC en acción.</p>
+    <p class="section-subtitle" data-es="Iniciativas en fase de diseño que demuestran el modelo HISPANOTEC en acción." data-en="Initiatives in the design phase that demonstrate the HISPANOTEC model in action.">Iniciativas en fase de diseño que demuestran el modelo HISPANOTEC en acción.</p>
     <div class="cards-grid cards-grid-3">
 
       <div class="card">
@@ -1030,7 +1171,7 @@
     <div class="tier-card tier-honorificos">
       <h3 data-es="Honorificos" data-en="Honorary">Honorificos</h3>
       <div class="tier-subtitle" data-es="Embajadores de la Red" data-en="Network Ambassadors">Embajadores de la Red</div>
-      <p data-es="Figuras de reconocido prestigio que representan la misión de HISPATEC. Rol de representación institucional y apertura de puertas." data-en="Figures of recognized prestige who represent HISPATEC's mission. Institutional representation and door-opening role.">Figuras de reconocido prestigio que representan la misión de HISPATEC. Rol de representación institucional y apertura de puertas.</p>
+      <p data-es="Figuras de reconocido prestigio que representan la misión de HISPANOTEC. Rol de representación institucional y apertura de puertas." data-en="Figures of recognized prestige who represent HISPANOTEC's mission. Institutional representation and door-opening role.">Figuras de reconocido prestigio que representan la misión de HISPANOTEC. Rol de representación institucional y apertura de puertas.</p>
     </div>
 
     <div class="tier-card tier-numerarios">
@@ -1211,7 +1352,7 @@
               </div>
             </div>
           </div>
-          <button type="submit" class="btn-submit" data-es="Registrarse en HISPATEC" data-en="Register at HISPATEC">Registrarse en HISPATEC</button>
+          <button type="submit" class="btn-submit" data-es="Registrarse en HISPANOTEC" data-en="Register at HISPANOTEC">Registrarse en HISPANOTEC</button>
           <div class="form-msg" id="formMsg"></div>
           <p style="text-align:center;margin-top:16px;font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,255,255,0.7);">
             <span data-es="¿Ya tienes cuenta?" data-en="Already have an account?">¿Ya tienes cuenta?</span>
@@ -1254,7 +1395,7 @@
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-brand">
-      <h3>HISPA<span>TEC</span></h3>
+      <h3>HISPANO<span>TEC</span></h3>
       <p data-es="Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform. Connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano.</p>
     </div>
     <div class="footer-col">
@@ -1276,7 +1417,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <p>&copy; 2026 HISPATEC -- Plataforma de Integración Estratégica Hispana</p>
+    <p>&copy; 2026 HISPANOTEC -- Plataforma de Integración Estratégica Hispana</p>
   </div>
 </footer>
 
@@ -1396,7 +1537,7 @@
     })
     .finally(function() {
       btn.disabled = false;
-      btn.textContent = currentLang === 'es' ? 'Registrarse en HISPATEC' : 'Register at HISPATEC';
+      btn.textContent = currentLang === 'es' ? 'Registrarse en HISPANOTEC' : 'Register at HISPANOTEC';
     });
   };
 
