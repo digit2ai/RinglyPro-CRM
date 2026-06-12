@@ -796,6 +796,119 @@
   .orb-stop { display: none; background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 10px 22px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: .3px; }
   .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
   @media (prefers-reduced-motion: reduce) { .orb-btn * { animation: none !important; } }
+
+  /* ── ECOSISTEMA EN MOVIMIENTO (animated workflow) ── */
+  .wf-section {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 0%, #1d317e 0%, #14245f 45%, #0c1740 100%);
+    color: #fff;
+  }
+  .wf-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(120,160,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,160,255,0.06) 1px, transparent 1px);
+    background-size: 46px 46px;
+    animation: gridShift 22s linear infinite;
+    pointer-events: none;
+  }
+  .wf-section .section-inner { position: relative; z-index: 1; }
+  .wf-banner {
+    margin: 8px auto 4px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: var(--gold);
+    letter-spacing: .3px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .wf-banner .wf-bolt { width: 18px; height: 18px; stroke: var(--gold); fill: none; animation: wfBolt 1.6s ease-in-out infinite; }
+  @keyframes wfBolt { 0%,100% { opacity: .55; transform: translateX(0); } 50% { opacity: 1; transform: translateX(3px); } }
+
+  .wf-pipeline {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: 1080px;
+    margin: 52px auto 0;
+  }
+  .wf-line {
+    position: absolute; left: 8%; right: 8%; top: 41px; height: 3px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(111,155,255,0) 0%, #6f9bff 18%, #f5c63f 50%, #6f9bff 82%, rgba(111,155,255,0) 100%);
+    background-size: 220% 100%;
+    box-shadow: 0 0 16px rgba(111,155,255,0.45);
+    animation: wfFlow 3s linear infinite;
+  }
+  @keyframes wfFlow { 0% { background-position: 110% 0; } 100% { background-position: -110% 0; } }
+  .wf-particle {
+    position: absolute; top: 41px; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 12px 3px #f5c63f, 0 0 5px #fff;
+    animation: wfTravel 6s linear infinite;
+  }
+  .wf-particle:nth-of-type(2) { animation-delay: 2s; }
+  .wf-particle:nth-of-type(3) { animation-delay: 4s; }
+  @keyframes wfTravel {
+    0% { left: 8%; opacity: 0; transform: scale(.6); }
+    8% { opacity: 1; transform: scale(1); }
+    92% { opacity: 1; transform: scale(1); }
+    100% { left: 92%; opacity: 0; transform: scale(.6); }
+  }
+  .wf-node {
+    position: relative; z-index: 2;
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .wf-orb {
+    position: relative; width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 36%, #6f93ff 0%, #2d4cc4 46%, #14245f 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 6px rgba(45,76,196,0.16), 0 8px 24px rgba(0,0,0,0.4);
+    animation: wfGlow 3.4s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  .wf-orb svg { width: 34px; height: 34px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .wf-orb::before {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid #f5c63f; opacity: 0;
+    animation: wfPulse 3.4s ease-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes wfGlow {
+    0%,100% { box-shadow: 0 0 0 6px rgba(45,76,196,0.16), 0 8px 24px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(245,198,63,0.32), 0 0 32px rgba(111,155,255,0.7); }
+  }
+  @keyframes wfPulse {
+    0% { transform: scale(.82); opacity: 0; }
+    12% { opacity: .85; }
+    70% { transform: scale(1.55); opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .wf-name { margin-top: 14px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13.5px; color: #fff; line-height: 1.3; }
+  .wf-benefit { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: #f5c63f; letter-spacing: .2px; }
+  .wf-benefits { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 46px; }
+  .wf-chip {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #e3eaff;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+    padding: 9px 18px; border-radius: 30px;
+  }
+  .wf-chip b { color: #f5c63f; font-weight: 700; }
+  @media (max-width: 760px) {
+    .wf-pipeline { flex-direction: column; gap: 0; max-width: 320px; }
+    .wf-line, .wf-particle { display: none; }
+    .wf-node { width: 100%; padding: 12px 0; }
+    .wf-node:not(:last-child)::after {
+      content: ''; width: 3px; height: 30px; margin-top: 14px; border-radius: 3px;
+      background: linear-gradient(#6f9bff, #f5c63f); background-size: 100% 200%;
+      animation: wfFlowV 2s linear infinite;
+    }
+    @keyframes wfFlowV { 0% { background-position: 0 200%; } 100% { background-position: 0 0; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .wf-section *, .wf-section *::before, .wf-section *::after { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -806,6 +919,7 @@
   <nav>
     <ul class="header-nav" id="navMenu">
       <li><a href="#ecosistema" data-es="Ecosistema" data-en="Ecosystem">Ecosistema</a></li>
+      <li><a href="#flujo" data-es="Flujo" data-en="Flow">Flujo</a></li>
       <li><a href="#modulos" data-es="Módulos" data-en="Modules">Módulos</a></li>
       <li><a href="#como-funciona" data-es="Cómo Funciona" data-en="How It Works">Cómo Funciona</a></li>
       <li><a href="#tecnología" data-es="Tecnología" data-en="Technology">Tecnología</a></li>
@@ -977,6 +1091,80 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ ECOSISTEMA EN MOVIMIENTO ═══════ -->
+<section class="section section-full wf-section" id="flujo">
+  <div class="section-inner">
+    <div class="gold-line" style="margin:0 auto 20px;"></div>
+    <h2 class="section-title" style="text-align:center;color:#fff;" data-es="El Ecosistema en Movimiento" data-en="The Ecosystem in Motion">El Ecosistema en Movimiento</h2>
+    <p class="section-subtitle" style="margin:0 auto 8px;text-align:center;color:rgba(255,255,255,0.72);" data-es="Mira cómo un proyecto fluye por la red: de la idea al acuerdo, en tiempo récord." data-en="Watch a project flow through the network: from idea to deal, in record time.">Mira cómo un proyecto fluye por la red: de la idea al acuerdo, en tiempo récord.</p>
+
+    <div class="wf-banner" data-es="Lo que antes tomaba semanas, el ecosistema lo coordina en minutos." data-en="What used to take weeks, the ecosystem coordinates in minutes.">
+      <svg class="wf-bolt" viewBox="0 0 24 24" aria-hidden="true"><polyline points="13 2 4 14 11 14 11 22 20 10 13 10 13 2"/></svg>
+      <span>Lo que antes tomaba semanas, el ecosistema lo coordina en minutos.</span>
+    </div>
+
+    <div class="wf-pipeline">
+      <div class="wf-line"></div>
+      <span class="wf-particle"></span><span class="wf-particle"></span><span class="wf-particle"></span>
+
+      <div class="wf-node" style="--d:0s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="wf-name" data-es="Miembros y Empresas" data-en="Members &amp; Companies">Miembros y Empresas</div>
+        <div class="wf-benefit" data-es="Perfil verificado" data-en="Verified profile">Perfil verificado</div>
+      </div>
+
+      <div class="wf-node" style="--d:.45s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        </div>
+        <div class="wf-name" data-es="Match con IA" data-en="AI Match">Match con IA</div>
+        <div class="wf-benefit" data-es="Conexión en segundos" data-en="Connected in seconds">Conexión en segundos</div>
+      </div>
+
+      <div class="wf-node" style="--d:.9s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="wf-name" data-es="Proyecto" data-en="Project">Proyecto</div>
+        <div class="wf-benefit" data-es="Equipo por roles" data-en="Role-based team">Equipo por roles</div>
+      </div>
+
+      <div class="wf-node" style="--d:1.35s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="wf-name" data-es="Validación Monte Carlo" data-en="Monte Carlo Validation">Validación Monte Carlo</div>
+        <div class="wf-benefit" data-es="Riesgo validado" data-en="Risk validated">Riesgo validado</div>
+      </div>
+
+      <div class="wf-node" style="--d:1.8s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+        </div>
+        <div class="wf-name" data-es="Intercambio" data-en="Exchange">Intercambio</div>
+        <div class="wf-benefit" data-es="Cotización al instante" data-en="Instant quote">Cotización al instante</div>
+      </div>
+
+      <div class="wf-node" style="--d:2.25s">
+        <div class="wf-orb">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="wf-name" data-es="Negocio en marcha" data-en="Deal in motion">Negocio en marcha</div>
+        <div class="wf-benefit" data-es="Acuerdo cerrado" data-en="Deal closed">Acuerdo cerrado</div>
+      </div>
+    </div>
+
+    <div class="wf-benefits">
+      <span class="wf-chip" data-es="<b>Menos</b> intermediarios" data-en="<b>Fewer</b> middlemen"><b>Menos</b> intermediarios</span>
+      <span class="wf-chip" data-es="Decisiones con <b>datos</b>" data-en="<b>Data-driven</b> decisions">Decisiones con <b>datos</b></span>
+      <span class="wf-chip" data-es="Confianza <b>verificable</b>" data-en="<b>Verifiable</b> trust">Confianza <b>verificable</b></span>
+      <span class="wf-chip" data-es="<b>Más</b> negocios cerrados" data-en="<b>More</b> closed deals"><b>Más</b> negocios cerrados</span>
     </div>
   </div>
 </section>
