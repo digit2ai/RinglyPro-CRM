@@ -196,7 +196,9 @@ async function fetchAccount(account, limit) {
             from: (from && from.address) || '',
             from_name: (from && from.name) || '',
             subject: (msg.envelope && msg.envelope.subject) || '(no subject)',
-            ts: (dt instanceof Date ? dt : new Date(dt)).toISOString()
+            ts: (dt instanceof Date ? dt : new Date(dt)).toISOString(),
+            message_id: msg.uid,   // IMAP UID — used to open + mark read
+            provider: 'imap'
           });
         }
       }
@@ -366,14 +368,40 @@ async function getMessageBody(clientId, accountId, messageId) {
     { bind: [parseInt(accountId, 10), clientId], type: QueryTypes.SELECT }
   );
   if (!acc) throw new Error('Account not found');
-  if (acc.provider === 'gmail') {
-    const body = await getGmailMessageBody(acc, messageId);
-    // Opening = reading: drop it from the unread inbox + count on the next load.
-    _cache.delete(clientId);
-    return body;
+  const body = acc.provider === 'gmail'
+    ? await getGmailMessageBody(acc, messageId)
+    : await getImapMessageBody(acc, messageId);
+  // Opening = reading: drop it from the unread inbox + count on the next load.
+  _cache.delete(clientId);
+  return body;
+}
+
+// Fetch + parse one IMAP message by UID, and mark it \Seen (read).
+async function getImapMessageBody(account, uid) {
+  const { simpleParser } = require('mailparser');
+  const client = new ImapFlow(imapConfig(account));
+  await client.connect();
+  let parsed;
+  try {
+    const lock = await client.getMailboxLock('INBOX');
+    try {
+      const msg = await client.fetchOne(String(uid), { source: true }, { uid: true });
+      if (!msg || !msg.source) throw new Error('Message not found');
+      parsed = await simpleParser(msg.source);
+      try { await client.messageFlagsAdd(String(uid), ['\\Seen'], { uid: true }); } catch (e) { /* non-fatal */ }
+    } finally { lock.release(); }
+  } finally {
+    await client.logout().catch(() => {});
   }
-  // IMAP body rendering needs MIME parsing — deferred; open in webmail for now.
-  return { from: '', from_name: '', subject: '', date: '', html: '', text: 'In-app preview for IMAP accounts is coming soon — open this in your mail app for now.' };
+  const fromObj = parsed.from && parsed.from.value && parsed.from.value[0];
+  return {
+    from: (fromObj && fromObj.address) || '',
+    from_name: (fromObj && fromObj.name) || '',
+    subject: parsed.subject || '(no subject)',
+    date: parsed.date ? parsed.date.toUTCString() : '',
+    html: parsed.html || '',
+    text: parsed.text || parsed.textAsHtml || ''
+  };
 }
 
 async function getGmailMessageBody(account, messageId) {
