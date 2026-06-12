@@ -21,6 +21,15 @@ const emailReconcile = require('../services/emailReconcile');
 // in routes/elevenlabs-tools.js (Lina's Projects-calendar carve-out).
 const D2AI_CLIENT_ID = 15;
 
+// Deploy marker — returns the live git commit (Render sets RENDER_GIT_COMMIT),
+// so we can confirm which build is actually serving.
+router.get('/version', (req, res) => {
+  res.json({
+    commit: (process.env.RENDER_GIT_COMMIT || 'unknown').slice(0, 12),
+    imap_read: true
+  });
+});
+
 // User-driven follow-up flags: a call/message the owner marked "follow up" from
 // the Calls & Messages window. THIS drives the "Calls To Follow Up" KPI now —
 // not Lina's auto lead-detection.
