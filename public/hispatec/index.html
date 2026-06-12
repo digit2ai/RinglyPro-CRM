@@ -797,6 +797,43 @@
   .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
   @media (prefers-reduced-motion: reduce) { .orb-btn * { animation: none !important; } }
 
+  /* ── LINA NARRATED-TOUR PLAYER (fixed bar) ── */
+  .lina-bar {
+    position: fixed; left: 50%; bottom: 18px;
+    transform: translateX(-50%) translateY(150%);
+    z-index: 1200;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(16,27,73,0.96);
+    border: 1px solid rgba(245,198,63,0.4);
+    border-radius: 14px;
+    padding: 11px 16px;
+    box-shadow: 0 12px 38px rgba(0,0,0,0.45);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    max-width: 94vw;
+    transition: transform .38s cubic-bezier(.2,.8,.2,1);
+  }
+  .lina-bar.show { transform: translateX(-50%) translateY(0); }
+  .lina-bar-eq { display: flex; align-items: flex-end; gap: 3px; height: 22px; flex: 0 0 auto; }
+  .lina-bar-eq span { width: 3px; height: 6px; background: var(--gold); border-radius: 2px; animation: linaEq 1s ease-in-out infinite; }
+  .lina-bar-eq span:nth-child(2) { animation-delay: .2s; }
+  .lina-bar-eq span:nth-child(3) { animation-delay: .4s; }
+  .lina-bar-eq span:nth-child(4) { animation-delay: .15s; }
+  @keyframes linaEq { 0%,100% { height: 6px; } 50% { height: 20px; } }
+  .lina-bar.paused .lina-bar-eq span { animation-play-state: paused; }
+  .lina-bar-info { min-width: 190px; }
+  .lina-bar-sec { font-family: 'Inter', sans-serif; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .lina-bar-title { font-family: 'Inter', sans-serif; font-size: 13.5px; color: #fff; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .lina-bar-prog { margin-top: 7px; height: 4px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }
+  .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#6f9bff,#f5c63f); border-radius: 3px; }
+  .lina-bar-btn { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .2s; }
+  .lina-bar-btn:hover { background: rgba(255,255,255,0.18); }
+  .lina-bar-btn.stop { background: #c0392b; border-color: #c0392b; }
+  .lina-bar-btn.stop:hover { background: #a93226; }
+  .lina-active { animation: linaHi 1.3s ease; }
+  @keyframes linaHi { 0% { box-shadow: inset 0 0 0 0 rgba(245,198,63,0); } 28% { box-shadow: inset 0 0 0 3px rgba(245,198,63,0.5); } 100% { box-shadow: inset 0 0 0 0 rgba(245,198,63,0); } }
+  @media (max-width: 560px) { .lina-bar-title { max-width: 150px; } .lina-bar-info { min-width: 130px; } .lina-bar-btn { padding: 8px 11px; } }
+  @media (prefers-reduced-motion: reduce) { .lina-bar-eq span { animation: none !important; } .lina-active { animation: none !important; } }
+
   /* ── ECOSISTEMA EN MOVIMIENTO (animated workflow) ── */
   .wf-section {
     position: relative;
@@ -967,85 +1004,140 @@
           <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a1840" fill-opacity=".85"/>
         </svg>
       </button>
-      <div class="orb-cap" id="orbCap">Hablar con Lina</div>
-      <div class="orb-hint" id="orbHint">Asistente de voz con IA. Pulse el orbe y pregúntele a Lina cómo funciona el ecosistema digital CamaraVirtual, qué hace cada módulo y cómo unirse a la red.</div>
+      <div class="orb-cap" id="orbCap">Escuchar a Lina</div>
+      <div class="orb-hint" id="orbHint">Pulse el orbe y Lina le presentará el ecosistema sección por sección, mientras la página avanza con su voz.</div>
       <div class="orb-transcript" id="orbTranscript" aria-live="polite"></div>
-      <button class="orb-stop" id="orbStop" type="button">Detener conversación</button>
+      <button class="orb-stop" id="orbStop" type="button">Detener presentación</button>
     </div>
   </div>
 </section>
 
-<!-- ElevenLabs SDK lazy-loader (loaded on first orb click) -->
-<script>
-  window.__htLoadEleven = function () {
-    if (window.__htConv) return Promise.resolve(window.__htConv);
-    if (window.__htConvP) return window.__htConvP;
-    window.__htConvP = import('https://esm.sh/@elevenlabs/client@1.9.0')
-      .then(function (m) { var C = m.Conversation || (m.default && m.default.Conversation); window.__htConv = C; return C; })
-      .catch(function (e) { console.warn('[ht-orb] SDK load failed', e); return null; });
-    return window.__htConvP;
-  };
-</script>
-<!-- Interactive voice controller (Lina ES — ElevenLabs convai) -->
+<!-- Lina narrated guided-tour player (pre-recorded MP3 — one-time ElevenLabs generation, then permanent) -->
+<div class="lina-bar" id="linaBar" role="region" aria-label="Reproductor de la presentación de Lina">
+  <div class="lina-bar-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  <div class="lina-bar-info">
+    <div class="lina-bar-sec" id="linaBarSec">Secci&oacute;n 1 de 7</div>
+    <div class="lina-bar-title" id="linaBarTitle">Bienvenida</div>
+    <div class="lina-bar-prog"><span id="linaBarProg"></span></div>
+  </div>
+  <button class="lina-bar-btn" id="linaBarPause" type="button">Pausa</button>
+  <button class="lina-bar-btn stop" id="linaBarStop" type="button">Detener</button>
+</div>
 <script>
   (function () {
-    var AGENT_ID = 'agent_4801ktyq36h5ezgrwv8b9hqn9eda'; // Lina ES — HISPANOTEC
-    var stage = document.getElementById('orbStage');
+    var SEGS = [
+      { f: '/hispatec/audio/lina-1.mp3', sec: 'hero',          es: 'Bienvenida',                  en: 'Welcome' },
+      { f: '/hispatec/audio/lina-2.mp3', sec: 'ecosistema',    es: 'El Ecosistema Digital',       en: 'The Digital Ecosystem' },
+      { f: '/hispatec/audio/lina-3.mp3', sec: 'flujo',         es: 'El Ecosistema en Movimiento', en: 'The Ecosystem in Motion' },
+      { f: '/hispatec/audio/lina-4.mp3', sec: 'modulos',       es: 'El Panel de Miembros',        en: 'The Member Dashboard' },
+      { f: '/hispatec/audio/lina-5.mp3', sec: 'como-funciona', es: 'C\u00f3mo Funciona',           en: 'How It Works' },
+      { f: '/hispatec/audio/lina-6.mp3', sec: 'tecnolog\u00eda',    es: 'Plataforma Tecnol\u00f3gica',  en: 'Technology Platform' },
+      { f: '/hispatec/audio/lina-7.mp3', sec: 'acceder',       es: 'Entra al Ecosistema',         en: 'Enter the Ecosystem' }
+    ];
     var orb = document.getElementById('orbBtn');
+    var stage = document.getElementById('orbStage');
     var cap = document.getElementById('orbCap');
     var hint = document.getElementById('orbHint');
-    var tx = document.getElementById('orbTranscript');
-    var stopBtn = document.getElementById('orbStop');
+    var orbStop = document.getElementById('orbStop');
+    var bar = document.getElementById('linaBar');
+    var barSec = document.getElementById('linaBarSec');
+    var barTitle = document.getElementById('linaBarTitle');
+    var barProg = document.getElementById('linaBarProg');
+    var barPause = document.getElementById('linaBarPause');
+    var barStop = document.getElementById('linaBarStop');
     if (!orb) return;
-    var convo = null, connecting = false;
-    var CAP = { idle: 'Hablar con Lina', connecting: 'Conectando…', listening: 'Escuchando', thinking: 'Analizando', speaking: 'Lina hablando' };
 
-    function setState(s) { orb.dataset.state = s; stage.dataset.state = s; cap.textContent = CAP[s] || CAP.idle; }
-    function addMsg(role, text) {
-      if (!text) return;
-      tx.classList.add('show');
-      var d = document.createElement('div');
-      d.className = 'orb-msg ' + (role === 'user' ? 'user' : 'agent');
-      var w = document.createElement('span'); w.className = 'who';
-      w.textContent = role === 'user' ? 'Usted' : 'Lina';
-      var p = document.createElement('span'); p.textContent = text;
-      d.appendChild(w); d.appendChild(p); tx.appendChild(d); tx.scrollTop = tx.scrollHeight;
+    var audio = new Audio();
+    audio.preload = 'none';
+    var idx = 0, started = false, lastActive = null;
+
+    function isEn() { return (document.documentElement.lang || 'es') === 'en'; }
+    function t(es, en) { return isEn() ? en : es; }
+    function setOrb(s) { orb.dataset.state = s; stage.dataset.state = s; }
+
+    function scrollToSec(secId) {
+      var el = document.getElementById(secId);
+      if (!el) return;
+      var y = secId === 'hero' ? 0 : Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - 76);
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      if (lastActive) lastActive.classList.remove('lina-active');
+      void el.offsetWidth;
+      el.classList.add('lina-active');
+      lastActive = el;
     }
-    function fallback(msg) {
-      connecting = false; stage.dataset.active = '0'; setState('idle');
-      hint.textContent = msg || 'Modo de voz no disponible en este momento. Puede escribirnos a info@fundacionraiceshispanas.org.';
+
+    function updateBar() {
+      var s = SEGS[idx];
+      barSec.textContent = t('Secci\u00f3n ' + (idx + 1) + ' de ' + SEGS.length, 'Section ' + (idx + 1) + ' of ' + SEGS.length);
+      barTitle.textContent = t(s.es, s.en);
     }
-    async function start() {
-      if (connecting || convo) return;
-      connecting = true; setState('connecting');
-      hint.textContent = 'Permita el acceso al micrófono para hablar con Lina…';
-      try { await navigator.mediaDevices.getUserMedia({ audio: true }); }
-      catch (e) { fallback('Para usar el modo de voz, active el permiso del micrófono y vuelva a pulsar el orbe.'); return; }
-      var Conversation = await window.__htLoadEleven();
-      if (!Conversation) { fallback(); return; }
-      try {
-        convo = await Conversation.startSession({
-          agentId: AGENT_ID,
-          connectionType: 'webrtc',
-          onConnect: function () { connecting = false; stage.dataset.active = '1'; setState('listening'); hint.textContent = 'Conectado. Hágale a Lina cualquier pregunta sobre HISPANOTEC.'; },
-          onDisconnect: function () { convo = null; stage.dataset.active = '0'; setState('idle'); hint.textContent = 'Conversación finalizada. Pulse el orbe para hablar de nuevo.'; },
-          onError: function (err) { console.warn('[ht-orb]', err); fallback(); },
-          onModeChange: function (m) { var mode = m && m.mode; if (mode === 'speaking') setState('speaking'); else if (mode === 'listening') setState('listening'); },
-          onMessage: function (msg) {
-            if (!msg) return;
-            var role = msg.source === 'user' ? 'user' : 'agent';
-            var text = msg.message || msg.text || '';
-            addMsg(role, text);
-          }
-        });
-      } catch (e) { console.warn('[ht-orb] startSession failed', e); fallback(); }
+
+    function playIdx(i) {
+      idx = i;
+      var s = SEGS[i];
+      updateBar();
+      scrollToSec(s.sec);
+      audio.src = s.f;
+      audio.play().then(function () {
+        setOrb('speaking'); stage.dataset.active = '1';
+        cap.textContent = t('Lina presentando\u2026', 'Lina presenting\u2026');
+        bar.classList.remove('paused');
+        barPause.textContent = t('Pausa', 'Pause');
+      }).catch(function (e) {
+        console.warn('[lina] play failed', e);
+        hint.textContent = t('No se pudo reproducir el audio. Intente de nuevo.', 'Audio could not play. Please try again.');
+        stop();
+      });
     }
-    async function stop() {
-      try { if (convo) await convo.endSession(); } catch (e) {}
-      convo = null; stage.dataset.active = '0'; setState('idle');
+
+    function start() { started = true; bar.classList.add('show'); playIdx(0); }
+
+    function finish() {
+      setOrb('idle'); stage.dataset.active = '0';
+      cap.textContent = t('Escuchar a Lina', 'Listen to Lina');
+      bar.classList.add('paused');
+      hint.textContent = t('Presentaci\u00f3n finalizada. Pulse el orbe para repetirla.', 'Presentation finished. Tap the orb to replay.');
+      setTimeout(function () { if (audio.paused && audio.ended) bar.classList.remove('show'); }, 1600);
+      started = false;
     }
-    orb.addEventListener('click', function () { if (convo) { stop(); } else { start(); } });
-    stopBtn.addEventListener('click', stop);
+
+    function togglePause() {
+      if (audio.paused) {
+        audio.play();
+        setOrb('speaking'); bar.classList.remove('paused');
+        cap.textContent = t('Lina presentando\u2026', 'Lina presenting\u2026');
+        barPause.textContent = t('Pausa', 'Pause');
+      } else {
+        audio.pause();
+        setOrb('idle'); bar.classList.add('paused');
+        cap.textContent = t('En pausa', 'Paused');
+        barPause.textContent = t('Reanudar', 'Resume');
+      }
+    }
+
+    function stop() {
+      audio.pause();
+      try { audio.currentTime = 0; } catch (e) {}
+      started = false; idx = 0;
+      setOrb('idle'); stage.dataset.active = '0';
+      cap.textContent = t('Escuchar a Lina', 'Listen to Lina');
+      bar.classList.remove('show'); bar.classList.remove('paused');
+      barProg.style.width = '0%';
+      if (lastActive) { lastActive.classList.remove('lina-active'); lastActive = null; }
+    }
+
+    audio.addEventListener('ended', function () {
+      if (idx < SEGS.length - 1) playIdx(idx + 1);
+      else { barProg.style.width = '100%'; finish(); }
+    });
+    audio.addEventListener('timeupdate', function () {
+      if (audio.duration) barProg.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(1) + '%';
+    });
+
+    orb.addEventListener('click', function () { if (!started && audio.paused) start(); else togglePause(); });
+    barPause.addEventListener('click', togglePause);
+    barStop.addEventListener('click', stop);
+    if (orbStop) orbStop.addEventListener('click', stop);
   })();
 </script>
 
