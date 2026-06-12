@@ -1119,16 +1119,6 @@
     </div>
     <p data-es="Nuestra plataforma integra modelos de inteligencia artificial con algoritmos de teoria de juegos para optimizar la asignación de recursos, calcular índices de confianza y simular escenarios de impacto antes de comprometer recursos reales." data-en="Our platform integrates artificial intelligence models with game theory algorithms to optimize resource allocation, calculate trust índices, and simulate impact scenarios before committing real resources.">Nuestra plataforma integra modelos de inteligencia artificial con algoritmos de teoria de juegos para optimizar la asignación de recursos, calcular índices de confianza y simular escenarios de impacto antes de comprometer recursos reales.</p>
 
-    <div class="hci-display">
-      <div>
-        <div class="hci-label">HCI -- Hispanic Cooperation Index</div>
-        <div class="hci-value" id="hciValue">--</div>
-      </div>
-      <div>
-        <p class="hci-desc" data-es="Índice compuesto en tiempo real que mide la salud de la cooperación hispana global. Calculado a partir de participación activa, proyectos en ejecución y flujo de recursos entre regiones." data-en="Real-time composite index that measures the health of global Hispanic cooperation. Calculated from active participation, projects in execution, and resource flow between regions.">Índice compuesto en tiempo real que mide la salud de la cooperación hispana global. Calculado a partir de participación activa, proyectos en ejecución y flujo de recursos entre regiones.</p>
-      </div>
-    </div>
-
   </div>
 </section>
 
@@ -1229,23 +1219,6 @@
       document.getElementById('mobileMenuBtn').classList.remove('active');
     });
   });
-
-  /* ── HCI SCORE FETCH ── */
-  (function fetchHCI() {
-    fetch('/hispatec/api/metrics/hci')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var val = data.hci || data.score || data.value;
-        if (val !== undefined) {
-          document.getElementById('hciValue').textContent = parseFloat(val).toFixed(2);
-        } else {
-          document.getElementById('hciValue').textContent = '0.72';
-        }
-      })
-      .catch(function() {
-        document.getElementById('hciValue').textContent = '0.72';
-      });
-  })();
 
   /* ── REGISTRATION FORM ── */
   window.handleRegister = function(e) {
