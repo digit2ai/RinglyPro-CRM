@@ -27,7 +27,8 @@ router.get('/version', (req, res) => {
   res.json({
     commit: (process.env.RENDER_GIT_COMMIT || 'unknown').slice(0, 12),
     imap_read: true,
-    reply_agent: true
+    reply_agent: true,
+    triage: true
   });
 });
 
@@ -355,6 +356,30 @@ router.get('/email-message', requireClient15, async (req, res) => {
     res.json({ success: true, message: msg });
   } catch (error) {
     console.error('[ProjectsBridge] email-message error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// AI: triage the unread inbox across all accounts.
+router.post('/email-triage', requireClient15, async (req, res) => {
+  try {
+    const data = await emailReconcile.triageInbox(D2AI_CLIENT_ID);
+    res.json({ success: true, ...data });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-triage error:', error.message);
+    res.json({ success: false, items: [], error: error.message });
+  }
+});
+
+// Mark an email read without opening it.
+router.post('/email-read', requireClient15, async (req, res) => {
+  try {
+    const { account_id, id } = req.body || {};
+    if (!account_id || !id) return res.json({ success: false, error: 'account_id and id are required' });
+    await emailReconcile.markEmailRead(D2AI_CLIENT_ID, account_id, id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-read error:', error.message);
     res.json({ success: false, error: error.message });
   }
 });

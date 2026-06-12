@@ -337,6 +337,7 @@ async function fetchGmail(account, limit) {
         ts: new Date(tsMs).toISOString(),
         message_id: m.id,
         provider: 'gmail',
+        snippet: (full.data.snippet || '').slice(0, 220),
         // Fallback deep-link to this message in Gmail web, in the right account.
         open_url: `https://mail.google.com/mail/?authuser=${encodeURIComponent(account.email_address)}#all/${m.id}`
       });
@@ -562,7 +563,78 @@ async function sendSmtpReply(account, { to, subject, body, original_id }) {
   return { sent: true };
 }
 
+// AI inbox triage — classify + prioritize every unread email across accounts.
+async function triageInbox(clientId) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  if (!apiKey) throw new Error('AI is not configured (ANTHROPIC_API_KEY missing).');
+  const data = await getSummary(clientId, { force: true });
+  const items = (data.items || []).slice(0, 30);
+  if (!items.length) return { items: [], total_unread: data.total_unread || 0 };
+
+  const Anthropic = require('@anthropic-ai/sdk');
+  const anthropic = new Anthropic({ apiKey });
+  const forLlm = items.map((it, i) => ({
+    i,
+    from: ((it.from_name ? it.from_name + ' ' : '') + '<' + (it.from || it.email_address) + '>').trim(),
+    subject: it.subject || '(no subject)',
+    snippet: (it.snippet || '').slice(0, 200)
+  }));
+  const system = `You are an executive assistant triaging an inbox. For EACH email return a classification so the user knows what needs them.
+Categories: "needs_reply" (a person expects a response), "action" (the user must DO something — pay, sign, schedule, decide), "fyi" (informational, no action), "newsletter" (marketing/automated/bulk), "spam".
+Priority: "high" (time-sensitive, money, or important relationship), "medium", "low".
+Respond with ONLY a JSON array — one object per email, no markdown, no prose:
+[{"i":<index>,"category":"...","priority":"...","summary":"<=14 words: what it is + why it matters","action":"<=10 words next step, or '' for fyi/newsletter/spam"}]`;
+  const resp = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6', max_tokens: 2048, system,
+    messages: [{ role: 'user', content: 'Triage these emails:\n' + JSON.stringify(forLlm) }]
+  });
+  let text = (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+  text = text.replace(/^```(json)?/i, '').replace(/```$/i, '').trim();
+  let triage = [];
+  try { triage = JSON.parse(text); }
+  catch (e) { const mm = text.match(/\[[\s\S]*\]/); if (mm) { try { triage = JSON.parse(mm[0]); } catch (_) {} } }
+  const byIdx = {};
+  triage.forEach(t => { if (typeof t.i === 'number') byIdx[t.i] = t; });
+
+  const out = items.map((it, i) => {
+    const t = byIdx[i] || {};
+    return {
+      account_id: it.account_id, message_id: it.message_id, provider: it.provider,
+      account: it.account, from: it.from, from_name: it.from_name, subject: it.subject, ts: it.ts,
+      category: t.category || 'fyi', priority: t.priority || 'low',
+      summary: t.summary || '', action: t.action || ''
+    };
+  });
+  const order = { high: 0, medium: 1, low: 2 };
+  out.sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3) || new Date(b.ts) - new Date(a.ts));
+  return { items: out, total_unread: data.total_unread || items.length };
+}
+
+// Mark an email read without opening it (Gmail label / IMAP \Seen).
+async function markEmailRead(clientId, accountId, messageId) {
+  await ensureTable();
+  const [acc] = await sequelize.query(
+    `SELECT * FROM email_accounts WHERE id = $1 AND client_id = $2 LIMIT 1`,
+    { bind: [parseInt(accountId, 10), clientId], type: QueryTypes.SELECT }
+  );
+  if (!acc) throw new Error('Account not found');
+  if (acc.provider === 'gmail') {
+    const gmail = google.gmail({ version: 'v1', auth: gmailClientFor(acc) });
+    await gmail.users.messages.modify({ userId: 'me', id: messageId, requestBody: { removeLabelIds: ['UNREAD'] } });
+  } else {
+    const ic = new ImapFlow(imapConfig(acc));
+    await ic.connect();
+    const lock = await ic.getMailboxLock('INBOX');
+    try { await ic.messageFlagsAdd(String(messageId), ['\\Seen'], { uid: true }); }
+    finally { lock.release(); }
+    await ic.logout().catch(() => {});
+  }
+  _cache.delete(clientId);
+  return { ok: true };
+}
+
 module.exports = {
   listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
-  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody, draftReply, sendReply
+  getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody, draftReply, sendReply,
+  triageInbox, markEmailRead
 };

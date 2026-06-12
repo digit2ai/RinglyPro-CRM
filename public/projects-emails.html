@@ -74,6 +74,7 @@
   <div class="head">
     <h1>Email — Unified Inbox</h1>
     <div class="head-btns">
+      <button class="btn btn-primary" id="triage-btn" style="background:linear-gradient(135deg,#7c5cff,#2563eb)">&#10024; Triage with AI</button>
       <button class="btn btn-ghost" id="add-btn">+ Add account</button>
       <button class="btn btn-primary" id="refresh-btn">&#8635; Refresh</button>
     </div>
@@ -108,6 +109,7 @@
   <script>
     const ORIGIN = location.origin;
     let LAST_ITEMS = [];
+    let TRIAGE_ITEMS = [];
     function token() { return localStorage.getItem('token') || ''; }
     function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -191,6 +193,9 @@
     // ---- in-app message reader (Apple Mail-style, no new window) ----
     async function openMessage(index) {
       const item = LAST_ITEMS[index];
+      if (item) openMessageItem(item);
+    }
+    async function openMessageItem(item, opts) {
       if (!item || item.message_id == null) return;
       const list = document.getElementById('list');
       list.innerHTML = '<div class="spinner"></div>';
@@ -202,10 +207,72 @@
         const data = await parseJsonSafe(res);
         if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Could not open message')}</div>`; return; }
         renderReader(data.message, item);
+        notifyParent(); // opening marks read → refresh the badge
+        if (opts && opts.autoReply) { const b = document.getElementById('reply-ai-btn'); if (b) b.click(); }
       } catch (e) {
         list.innerHTML = `<div class="err">Failed to open: ${esc(e.message)}</div>`;
       }
     }
+    window.openMessageItem = openMessageItem;
+
+    // ---- AI inbox triage ----
+    async function runTriage() {
+      const list = document.getElementById('list');
+      if (!token()) { list.innerHTML = '<div class="err">Please sign in to the Hub first.</div>'; return; }
+      list.innerHTML = '<div class="spinner"></div><div style="text-align:center;color:var(--muted);font-size:13px;margin-top:-30px">Reading your inbox and prioritizing…</div>';
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-triage`, { method: 'POST', headers: authHeaders() });
+        const data = await parseJsonSafe(res);
+        if (!data.success) { list.innerHTML = `<div class="err">${esc(data.error || 'Triage failed')}</div>`; return; }
+        renderTriage(data.items || []);
+      } catch (e) { list.innerHTML = `<div class="err">Failed: ${esc(e.message)}</div>`; }
+    }
+
+    function renderTriage(items) {
+      const list = document.getElementById('list');
+      TRIAGE_ITEMS = items;
+      const back = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h2 style="margin:0;font-size:17px">AI Triage — ${items.length} unread</h2><button class="btn btn-ghost" onclick="load()">&#8592; Back to inbox</button></div>`;
+      if (!items.length) { list.innerHTML = back + '<div class="empty">Nothing to triage — your inboxes are clear.</div>'; return; }
+      const PRI = { high: '#ef4444', medium: '#f59e0b', low: '#64748b' };
+      const CAT = { needs_reply: ['Needs reply', '#22d3ee'], action: ['Action', '#a78bfa'], fyi: ['FYI', '#94a3b8'], newsletter: ['Newsletter', '#64748b'], spam: ['Spam', '#ef4444'] };
+      list.innerHTML = back + items.map((it, i) => {
+        const pc = PRI[it.priority] || PRI.low;
+        const c = CAT[it.category] || CAT.fyi;
+        const showReply = it.category === 'needs_reply' || it.category === 'action';
+        return `<div class="mail" style="border-left-color:${pc}">
+            <div class="top">
+              <span style="width:9px;height:9px;border-radius:50%;background:${pc};display:inline-block;flex:0 0 auto"></span>
+              <span class="acct" style="background:${c[1]}22;color:${c[1]}">${c[0]}</span>
+              <span class="from">${esc(it.from_name || it.from || 'Unknown')}</span>
+              <span class="acct">${esc(it.account || '')}</span>
+              <span class="ts">${fmtTs(it.ts)}</span>
+            </div>
+            <div class="subject" style="font-weight:600">${esc(it.subject)}</div>
+            ${it.summary ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px">${esc(it.summary)}</div>` : ''}
+            ${it.action ? `<div style="font-size:12.5px;color:#93c5fd;margin-top:3px">&rarr; ${esc(it.action)}</div>` : ''}
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn btn-ghost" onclick="triageOpen(${i})">Open</button>
+              ${showReply ? `<button class="btn btn-primary" onclick="triageReply(${i})">&#10024; Reply with AI</button>` : ''}
+              <button class="btn btn-ghost" onclick="triageDismiss(${i}, this)">Mark read</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    window.triageOpen = (i) => openMessageItem(TRIAGE_ITEMS[i]);
+    window.triageReply = (i) => openMessageItem(TRIAGE_ITEMS[i], { autoReply: true });
+    window.triageDismiss = async (i, btn) => {
+      const it = TRIAGE_ITEMS[i]; if (!it) return;
+      if (btn) { btn.disabled = true; btn.textContent = '✓ Read'; }
+      try {
+        await fetch(`${ORIGIN}/api/projects-bridge/email-read`, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ account_id: it.account_id, id: it.message_id })
+        });
+      } catch (e) {}
+      notifyParent();
+      const card = btn ? btn.closest('.mail') : null;
+      if (card) { card.style.transition = 'opacity .2s'; card.style.opacity = '.45'; }
+    };
 
     function renderReader(m, item) {
       const list = document.getElementById('list');
@@ -375,6 +442,7 @@
     document.getElementById('cancel-btn').addEventListener('click', closeModal);
     document.getElementById('save-btn').addEventListener('click', saveAccount);
     document.getElementById('refresh-btn').addEventListener('click', () => load(true));
+    document.getElementById('triage-btn').addEventListener('click', runTriage);
     document.getElementById('gmail-oauth-btn').addEventListener('click', () => {
       if (!token()) { document.getElementById('form-err').textContent = 'Please sign in to the Hub first.'; return; }
       window._oauthPending = true;
