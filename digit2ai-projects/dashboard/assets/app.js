@@ -2637,12 +2637,16 @@ function renderProjectsTable(list) {
   const tbody = document.getElementById('projects-tbody');
   if (!tbody) return;
 
-  const rowHtml = (p) => {
+  const backlogCollapsed = localStorage.getItem('d2ai_backlog_collapsed') !== '0'; // default collapsed
+
+  const rowHtml = (p, isBacklog) => {
     const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !inactiveStatuses.has(p.status);
     const isDormant = !isOverdue && !inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff;
     const badgeClass = isOverdue ? 'overdue' : (isDormant ? 'dormant' : p.status);
     const badgeLabel = isOverdue ? 'OVERDUE' : (isDormant ? 'DORMANT' : p.status);
-    return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
+    const cls = isBacklog ? 'clickable backlog-row' : 'clickable';
+    const hide = isBacklog && backlogCollapsed ? 'display:none' : '';
+    return `<tr class="${cls}" style="${hide}" onclick="showProjectDetail(${p.id})">
       <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
       <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
       <td><span class="status-badge status-${badgeClass}" ${isDormant ? `title="No update in ${DORMANT_DAYS}+ days"` : ''}>${badgeLabel}</span></td>
@@ -2660,20 +2664,39 @@ function renderProjectsTable(list) {
   // Agile split: Active Sprint = critical priority, Backlog = everything else.
   const sprint = sorted.filter(p => p.priority === 'critical');
   const backlog = sorted.filter(p => p.priority !== 'critical');
-  const sectionRow = (label, n, color, hint) =>
+  const sprintHeader = (label, n, color, hint) =>
     `<tr><td colspan="6" style="background:rgba(148,163,184,0.06);border-left:3px solid ${color};padding:11px 14px">
        <span style="font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:${color}">${label}</span>
        <span style="background:${color}22;color:${color};border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:8px">${n}</span>
        <span style="color:var(--text-muted);font-size:11.5px;margin-left:10px">${hint}</span>
      </td></tr>`;
-  const emptyRow = (msg) => `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${msg}</td></tr>`;
+  const backlogHeader = (n, color, hint) =>
+    `<tr><td colspan="6" onclick="toggleBacklog()" style="cursor:pointer;background:rgba(148,163,184,0.06);border-left:3px solid ${color};padding:11px 14px;user-select:none">
+       <span id="backlog-caret" style="color:${color};font-size:11px;margin-right:6px">${backlogCollapsed ? '&#9656;' : '&#9662;'}</span>
+       <span style="font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:${color}">Backlog</span>
+       <span style="background:${color}22;color:${color};border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:8px">${n}</span>
+       <span style="color:var(--text-muted);font-size:11.5px;margin-left:10px">${hint}</span>
+     </td></tr>`;
+  const emptyRow = (msg, isBacklog) => `<tr class="${isBacklog ? 'backlog-row' : ''}" style="${isBacklog && backlogCollapsed ? 'display:none' : ''}"><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${msg}</td></tr>`;
 
   tbody.innerHTML =
-    sectionRow('Active Sprint', sprint.length, '#f87171', 'Critical — what you are working on now') +
-    (sprint.length ? sprint.map(rowHtml).join('') : emptyRow('No critical projects in the sprint.')) +
-    sectionRow('Backlog', backlog.length, '#94a3b8', 'Everything else, by priority') +
-    (backlog.length ? backlog.map(rowHtml).join('') : emptyRow('Backlog is empty.'));
+    sprintHeader('Active Sprint', sprint.length, '#f87171', 'Critical — what you are working on now') +
+    (sprint.length ? sprint.map(p => rowHtml(p, false)).join('') : emptyRow('No critical projects in the sprint.', false)) +
+    backlogHeader(backlog.length, '#94a3b8', 'Everything else, by priority — tap to expand') +
+    (backlog.length ? backlog.map(p => rowHtml(p, true)).join('') : emptyRow('Backlog is empty.', true));
 }
+
+// Collapse / expand the Backlog section (Active Sprint stays open). Persisted.
+function toggleBacklog() {
+  const rows = document.querySelectorAll('#projects-tbody .backlog-row');
+  const caret = document.getElementById('backlog-caret');
+  const isCollapsed = rows.length && rows[0].style.display === 'none';
+  const willCollapse = !isCollapsed;
+  rows.forEach(r => { r.style.display = willCollapse ? 'none' : ''; });
+  if (caret) caret.innerHTML = willCollapse ? '&#9656;' : '&#9662;';
+  localStorage.setItem('d2ai_backlog_collapsed', willCollapse ? '1' : '0');
+}
+window.toggleBacklog = toggleBacklog;
 
 // Set the status filter from a KPI card click and re-run the table filter.
 function projectsKpiFilter(value) {
