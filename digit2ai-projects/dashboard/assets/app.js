@@ -179,6 +179,8 @@ async function refreshEmailBadge() {
       const unread = d.total_unread ?? 0;
       setEmailBadge(unread);                  // left-pane nav badge
       paintQaBadge('qa-email-badge', unread, '#ef4444'); // Home quick-action badge
+      const ef = document.getElementById('kpi-email-followups'); // Home "Emails to Follow Up" card
+      if (ef) ef.textContent = d.emails_followup ?? 0;
     }
   } catch (e) { /* silent */ }
 }
@@ -304,7 +306,7 @@ function navigateTo(view, opts) {
     li.classList.toggle('active', li.dataset.view === view);
   });
   const titles = {
-    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', followups: 'Calls To Follow Up', contacts: 'People & Pipeline', projects: 'My Projects',
+    overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', followups: 'Calls To Follow Up', emailfollowups: 'Emails to Follow Up', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
     notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
   };
@@ -320,6 +322,7 @@ async function renderView(view) {
       case 'overview': await renderOverview(container); break;
       case 'messages': renderMessages(container); break;
       case 'email': renderEmails(container); break;
+      case 'emailfollowups': renderEmailFollowups(container); break;
       case 'followups': await renderFollowups(container); break;
       case 'inbox': await renderInbox(container); break;
       case 'contacts': await renderContacts(container); break;
@@ -390,6 +393,16 @@ function renderEmails(container) {
       <iframe src="${location.origin}/projects-emails.html?v=${v}"
               style="width:100%;height:100%;border:0;display:block;background:transparent"
               title="Email"></iframe>
+    </div>`;
+}
+
+function renderEmailFollowups(container) {
+  const v = (window.BUILD_VERSION || Date.now());
+  container.innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden;height:calc(100vh - 160px);min-height:520px">
+      <iframe src="${location.origin}/projects-emails.html?mode=followups&v=${v}"
+              style="width:100%;height:100%;border:0;display:block;background:transparent"
+              title="Emails to Follow Up"></iframe>
     </div>`;
 }
 
@@ -473,11 +486,11 @@ async function renderOverview(container) {
     </div>
 
     <div class="card-grid" style="margin-bottom:24px">
-      <div class="card card-stat card-accent-purple card-clickable" onclick="drillDown('active_projects')" data-tooltip="Click to see all active projects">
-        <div class="stat-label">Your Active Projects</div>
-        <div class="stat-value">${s.active_projects}</div>
-        <div class="stat-change stat-neutral">${s.total_projects} total projects</div>
-        <div class="kpi-hint">Click to view details</div>
+      <div class="card card-stat card-accent-cyan card-clickable" onclick="navigateTo('emailfollowups')" data-tooltip="Open emails you flagged to follow up">
+        <div class="stat-label">Emails to Follow Up</div>
+        <div class="stat-value" id="kpi-email-followups">&middot;</div>
+        <div class="stat-change stat-neutral">Emails you flagged to follow up</div>
+        <div class="kpi-hint">Click to view</div>
       </div>
       <div class="card card-stat card-accent-blue card-clickable ${s.overdue_tasks > 0 ? 'card-needs-attention' : ''}" onclick="navigateTo('tasks', {due:'overdue_today'})" data-tooltip="Open overdue + due today">
         <div class="stat-label">To-Do Items Due Today</div>

@@ -471,6 +471,18 @@ async function getSummary(clientId, { force = false } = {}) {
   }));
 
   items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+  // Mark which inbox emails are flagged for follow-up.
+  try {
+    await ensureEmailFlagsTable();
+    const flags = await sequelize.query(
+      `SELECT account_id, message_id FROM email_followup_flags WHERE client_id = $1`,
+      { bind: [clientId], type: QueryTypes.SELECT }
+    );
+    const set = new Set(flags.map(f => f.account_id + ':' + f.message_id));
+    items.forEach(it => { if (set.has(it.account_id + ':' + String(it.message_id))) it.email_flagged = true; });
+  } catch (e) { /* non-fatal */ }
+
   const data = { total_unread: totalUnread, accounts: perAccount, items };
   _cache.set(clientId, { at: Date.now(), data });
   return data;
@@ -563,6 +575,64 @@ async function sendSmtpReply(account, { to, subject, body, original_id }) {
   return { sent: true };
 }
 
+// ===== Email follow-up flags (snapshot so read emails still show) ==========
+let _emailFlagsReady = false;
+async function ensureEmailFlagsTable() {
+  if (_emailFlagsReady) return;
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS email_followup_flags (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL,
+      message_id TEXT NOT NULL,
+      from_name TEXT, from_addr TEXT, subject TEXT, snippet TEXT,
+      ts TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (client_id, account_id, message_id)
+    )
+  `);
+  _emailFlagsReady = true;
+}
+
+async function flagEmail(clientId, e) {
+  await ensureEmailFlagsTable();
+  await sequelize.query(
+    `INSERT INTO email_followup_flags (client_id, account_id, message_id, from_name, from_addr, subject, snippet, ts)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     ON CONFLICT (client_id, account_id, message_id)
+     DO UPDATE SET subject = EXCLUDED.subject, snippet = EXCLUDED.snippet, from_name = EXCLUDED.from_name, from_addr = EXCLUDED.from_addr`,
+    { bind: [clientId, parseInt(e.account_id, 10), String(e.message_id), e.from_name || '', e.from || '', e.subject || '', (e.snippet || '').slice(0, 300), e.ts ? new Date(e.ts) : null] }
+  );
+  _cache.delete(clientId);
+}
+
+async function unflagEmail(clientId, accountId, messageId) {
+  await ensureEmailFlagsTable();
+  await sequelize.query(
+    `DELETE FROM email_followup_flags WHERE client_id = $1 AND account_id = $2 AND message_id = $3`,
+    { bind: [clientId, parseInt(accountId, 10), String(messageId)] }
+  );
+  _cache.delete(clientId);
+}
+
+async function listEmailFollowups(clientId) {
+  await ensureEmailFlagsTable();
+  const rows = await sequelize.query(
+    `SELECT f.account_id, f.message_id, f.from_name, f.from_addr AS from, f.subject, f.snippet, f.ts, a.label AS account
+       FROM email_followup_flags f
+       LEFT JOIN email_accounts a ON a.id = f.account_id
+      WHERE f.client_id = $1 ORDER BY f.created_at DESC`,
+    { bind: [clientId], type: QueryTypes.SELECT }
+  );
+  return rows.map(r => ({ ...r, email_flagged: true }));
+}
+
+async function countEmailFollowups(clientId) {
+  await ensureEmailFlagsTable();
+  const [r] = await sequelize.query(`SELECT COUNT(*)::int n FROM email_followup_flags WHERE client_id = $1`, { bind: [clientId], type: QueryTypes.SELECT });
+  return r ? r.n : 0;
+}
+
 // AI inbox triage — classify + prioritize every unread email across accounts.
 async function triageInbox(clientId) {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
@@ -636,5 +706,5 @@ async function markEmailRead(clientId, accountId, messageId) {
 module.exports = {
   listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
   getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody, draftReply, sendReply,
-  triageInbox, markEmailRead
+  triageInbox, markEmailRead, flagEmail, unflagEmail, listEmailFollowups, countEmailFollowups
 };

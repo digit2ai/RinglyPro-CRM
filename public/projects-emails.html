@@ -108,8 +108,13 @@
 
   <script>
     const ORIGIN = location.origin;
+    const EMAIL_FOLLOWUPS = new URLSearchParams(location.search).get('mode') === 'followups';
     let LAST_ITEMS = [];
     let TRIAGE_ITEMS = [];
+    if (EMAIL_FOLLOWUPS) {
+      const h1 = document.querySelector('.head h1'); if (h1) h1.textContent = 'Emails to Follow Up';
+      ['triage-btn', 'add-btn'].forEach(id => { const b = document.getElementById(id); if (b) b.style.display = 'none'; });
+    }
     function token() { return localStorage.getItem('token') || ''; }
     function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + token() }, extra || {}); }
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -145,7 +150,26 @@
       el.querySelectorAll('.rm').forEach(x => x.addEventListener('click', () => removeAccount(x.getAttribute('data-id'))));
     }
 
+    // One email card (used by inbox + follow-up list). Includes the ☆/★ flag toggle.
+    function emailCardHtml(m, i, flaggedView) {
+      const canOpen = m.message_id != null && m.account_id != null;
+      const flagged = flaggedView || m.email_flagged === true;
+      const flagBtn = `<button onclick="event.stopPropagation();toggleEmailFlag(${i}, this)" title="${flagged ? 'Remove from follow-up' : 'Flag for follow-up'}" style="background:transparent;border:0;cursor:pointer;font-size:17px;line-height:1;color:${flagged ? '#f59e0b' : '#64748b'};padding:0 2px">${flagged ? '★' : '☆'}</button>`;
+      return `
+        <div class="mail" data-i="${i}" ${canOpen ? `onclick="openMessage(${i})" style="cursor:pointer"` : ''}>
+          <div class="top">
+            <span class="from">${esc(m.from_name || m.from || 'Unknown')}</span>
+            <span class="acct">${esc(m.account || '')}</span>
+            <span class="ts">${fmtTs(m.ts)}</span>
+            <span style="flex:0 0 auto">${flagBtn}</span>
+          </div>
+          <div class="subject">${esc(m.subject)}</div>
+          ${flaggedView && m.snippet ? `<div style="font-size:12.5px;color:var(--muted);margin-top:3px">${esc(m.snippet)}</div>` : ''}
+        </div>`;
+    }
+
     async function load(force){
+      if (EMAIL_FOLLOWUPS) return loadFollowups();
       const list = document.getElementById('list');
       list.innerHTML = '<div class="spinner"></div>';
       if (!token()){ list.innerHTML = '<div class="err">Please sign in to the Projects Hub first.</div>'; return; }
@@ -174,21 +198,51 @@
           return;
         }
         LAST_ITEMS = items;
-        list.innerHTML = items.map((m, i) => {
-          const canOpen = m.message_id != null && m.account_id != null;
-          const attrs = canOpen ? `onclick="openMessage(${i})" style="cursor:pointer"` : '';
-          return `
-          <div class="mail" ${attrs} title="${canOpen ? 'Open' : ''}">
-            <div class="top">
-              <span class="from">${esc(m.from_name || m.from || 'Unknown')}</span>
-              <span class="acct">${esc(m.account)}</span>
-              <span class="ts">${fmtTs(m.ts)}</span>
-            </div>
-            <div class="subject">${esc(m.subject)}</div>
-          </div>`;
-        }).join('');
+        list.innerHTML = items.map((m, i) => emailCardHtml(m, i, false)).join('');
       } catch (err){ list.innerHTML = `<div class="err">Failed to load: ${esc(err.message)}</div>`; }
     }
+
+    // Follow-up view — the emails you flagged (read or unread).
+    async function loadFollowups(){
+      const list = document.getElementById('list');
+      const acc = document.getElementById('accounts'); if (acc) acc.innerHTML = '';
+      list.innerHTML = '<div class="spinner"></div>';
+      if (!token()){ list.innerHTML = '<div class="err">Please sign in first.</div>'; return; }
+      try {
+        const res = await fetch(`${ORIGIN}/api/projects-bridge/email-followups`, { headers: authHeaders() });
+        const data = await parseJsonSafe(res);
+        if (!data.success){ list.innerHTML = `<div class="err">${esc(data.error||'Failed to load')}</div>`; return; }
+        const items = data.items || [];
+        LAST_ITEMS = items;
+        notifyParent();
+        if (!items.length){ list.innerHTML = '<div class="empty">No emails flagged for follow-up yet. Open an email and tap &#9734; Flag for follow-up.</div>'; return; }
+        list.innerHTML = items.map((m, i) => emailCardHtml(m, i, true)).join('');
+      } catch (e){ list.innerHTML = `<div class="err">Failed: ${esc(e.message)}</div>`; }
+    }
+
+    // Flag / unflag an email for follow-up (drives the Home KPI).
+    async function toggleEmailFlag(i, btn){
+      const m = LAST_ITEMS[i]; if (!m) return;
+      const isFlagged = btn.textContent === '★';
+      btn.disabled = true;
+      try {
+        if (isFlagged) {
+          await fetch(`${ORIGIN}/api/projects-bridge/email-flag`, { method:'DELETE', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ account_id: m.account_id, message_id: m.message_id }) });
+        } else {
+          await fetch(`${ORIGIN}/api/projects-bridge/email-flag`, { method:'POST', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ account_id: m.account_id, message_id: m.message_id, from: m.from, from_name: m.from_name, subject: m.subject, snippet: m.snippet || '', ts: m.ts }) });
+        }
+      } catch (e) {}
+      notifyParent();
+      btn.disabled = false;
+      if (EMAIL_FOLLOWUPS) {
+        const card = btn.closest('.mail');
+        if (card){ card.style.transition='opacity .2s'; card.style.opacity='0'; setTimeout(()=>{ card.remove(); const l=document.getElementById('list'); if (l && !l.querySelector('.mail')) l.innerHTML='<div class="empty">No emails flagged for follow-up.</div>'; }, 200); }
+      } else {
+        if (isFlagged){ btn.textContent='☆'; btn.style.color='#64748b'; m.email_flagged=false; }
+        else { btn.textContent='★'; btn.style.color='#f59e0b'; m.email_flagged=true; }
+      }
+    }
+    window.toggleEmailFlag = toggleEmailFlag;
 
     // ---- in-app message reader (Apple Mail-style, no new window) ----
     async function openMessage(index) {
@@ -289,6 +343,7 @@
           <div class="r-head">
             <button class="back" id="reader-back">&#8592; Inbox</button>
             <span style="display:flex;gap:8px;align-items:center">
+              <button id="reader-flag-btn" style="cursor:pointer;border:1px solid var(--border);background:transparent;border-radius:8px;padding:7px 12px;font-weight:600;font-size:12.5px"></button>
               <button id="reply-ai-btn" style="cursor:pointer;border:1px solid var(--accent);color:#dbeafe;background:linear-gradient(135deg,#7c5cff,#2563eb);border-radius:8px;padding:7px 14px;font-weight:600;font-size:12.5px">&#10024; Reply with AI</button>
               ${openLink}
             </span>
@@ -332,6 +387,23 @@
         const p = document.getElementById('reply-panel');
         p.style.display = p.style.display === 'none' ? 'block' : 'none';
         if (p.style.display === 'block') document.getElementById('reply-instruction').focus();
+      });
+
+      // ---- flag-for-follow-up in the reader ----
+      const flagBtnR = document.getElementById('reader-flag-btn');
+      let rFlagged = item.email_flagged === true;
+      const paintRFlag = () => { flagBtnR.innerHTML = rFlagged ? '&#9733; Flagged' : '&#9734; Flag for follow-up'; flagBtnR.style.color = rFlagged ? '#f59e0b' : '#cbd5e1'; flagBtnR.style.borderColor = rFlagged ? '#f59e0b' : 'var(--border)'; };
+      paintRFlag();
+      flagBtnR.addEventListener('click', async () => {
+        flagBtnR.disabled = true;
+        try {
+          if (rFlagged) {
+            await fetch(`${ORIGIN}/api/projects-bridge/email-flag`, { method:'DELETE', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ account_id: item.account_id, message_id: item.message_id }) });
+          } else {
+            await fetch(`${ORIGIN}/api/projects-bridge/email-flag`, { method:'POST', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify({ account_id: item.account_id, message_id: item.message_id, from: m.from || item.from, from_name: m.from_name || item.from_name, subject: m.subject || item.subject, snippet: item.snippet || '', ts: item.ts }) });
+          }
+          rFlagged = !rFlagged; item.email_flagged = rFlagged; paintRFlag(); notifyParent();
+        } catch (e) {} finally { flagBtnR.disabled = false; }
       });
 
       async function doDraft() {

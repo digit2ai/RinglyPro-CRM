@@ -28,7 +28,8 @@ router.get('/version', (req, res) => {
     commit: (process.env.RENDER_GIT_COMMIT || 'unknown').slice(0, 12),
     imap_read: true,
     reply_agent: true,
-    triage: true
+    triage: true,
+    email_followups: true
   });
 });
 
@@ -328,7 +329,8 @@ function requireClient15(req, res, next) {
 router.get('/email-stats', requireClient15, async (req, res) => {
   try {
     const data = await emailReconcile.getSummary(D2AI_CLIENT_ID);
-    res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts });
+    const emails_followup = await emailReconcile.countEmailFollowups(D2AI_CLIENT_ID);
+    res.json({ success: true, total_unread: data.total_unread, accounts: data.accounts, emails_followup });
   } catch (error) {
     console.error('[ProjectsBridge] email-stats error:', error.message);
     res.json({ success: false, total_unread: 0, accounts: [], error: error.message });
@@ -357,6 +359,39 @@ router.get('/email-message', requireClient15, async (req, res) => {
   } catch (error) {
     console.error('[ProjectsBridge] email-message error:', error.message);
     res.json({ success: false, error: error.message });
+  }
+});
+
+// Flag an email for follow-up (stores a snapshot so it shows even after read).
+router.post('/email-flag', requireClient15, async (req, res) => {
+  try {
+    const e = req.body || {};
+    if (!e.account_id || !e.message_id) return res.json({ success: false, error: 'account_id and message_id required' });
+    await emailReconcile.flagEmail(D2AI_CLIENT_ID, e);
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/email-flag', requireClient15, async (req, res) => {
+  try {
+    const { account_id, message_id } = req.body || {};
+    if (!account_id || !message_id) return res.json({ success: false, error: 'account_id and message_id required' });
+    await emailReconcile.unflagEmail(D2AI_CLIENT_ID, account_id, message_id);
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// The flagged-for-follow-up emails (regardless of read state).
+router.get('/email-followups', requireClient15, async (req, res) => {
+  try {
+    const items = await emailReconcile.listEmailFollowups(D2AI_CLIENT_ID);
+    res.json({ success: true, items });
+  } catch (error) {
+    res.json({ success: false, items: [], error: error.message });
   }
 });
 
