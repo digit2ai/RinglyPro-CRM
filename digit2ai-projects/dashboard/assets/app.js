@@ -505,10 +505,6 @@ async function renderOverview(container) {
       </div>
     </div>
 
-    <div id="neural-kpi-panel" style="margin-bottom:24px">
-      <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Loading Neural Intelligence...</div>
-    </div>
-
     <div id="neural-findings-panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:12px">
@@ -530,9 +526,6 @@ async function renderOverview(container) {
 
   // CRM call/message stats (client 15) — fills the two KPI cards + Messages badge
   loadCrmCallStats();
-
-  // Neural Intelligence KPIs (client 15) — overall score + the 5 health panels
-  loadNeuralKpis();
 
   // Email unread (paints the Email quick-action badge)
   refreshEmailBadge();
