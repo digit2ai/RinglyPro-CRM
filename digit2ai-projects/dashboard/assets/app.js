@@ -484,12 +484,6 @@ async function renderOverview(container) {
         <div class="stat-value">${s.tasks_due_today ?? 0}</div>
         <div class="stat-change ${s.overdue_tasks > 0 ? 'stat-down' : 'stat-up'}">${s.overdue_tasks > 0 ? s.overdue_tasks + ' overdue from prior days' : ((s.tasks_due_today ?? 0) > 0 ? 'Due today' : 'Nothing due today')}</div>
       </div>
-      <div class="card card-stat card-accent-cyan card-clickable" onclick="navigateTo('messages')" data-tooltip="Open calls & messages">
-        <div class="stat-label">Calls Received Today</div>
-        <div class="stat-value" id="kpi-calls-today">&middot;</div>
-        <div class="stat-change stat-neutral">Inbound to your business line</div>
-        <div class="kpi-hint">Click to view messages</div>
-      </div>
       <div class="card card-stat card-accent-purple card-clickable" onclick="navigateTo('followups')" data-tooltip="Open the leads waiting on a callback">
         <div class="stat-label">Calls To Follow Up</div>
         <div class="stat-value" id="kpi-followups">&middot;</div>
