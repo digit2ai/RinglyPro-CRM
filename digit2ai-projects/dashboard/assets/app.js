@@ -2636,22 +2636,43 @@ function renderProjectsTable(list) {
   });
   const tbody = document.getElementById('projects-tbody');
   if (!tbody) return;
-  tbody.innerHTML = sorted.length > 0
-    ? sorted.map(p => {
-        const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !inactiveStatuses.has(p.status);
-        const isDormant = !isOverdue && !inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff;
-        const badgeClass = isOverdue ? 'overdue' : (isDormant ? 'dormant' : p.status);
-        const badgeLabel = isOverdue ? 'OVERDUE' : (isDormant ? 'DORMANT' : p.status);
-        return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
-          <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
-          <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
-          <td><span class="status-badge status-${badgeClass}" ${isDormant ? `title="No update in ${DORMANT_DAYS}+ days"` : ''}>${badgeLabel}</span></td>
-          <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
-          <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
-          <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No matching projects.</td></tr>';
+
+  const rowHtml = (p) => {
+    const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !inactiveStatuses.has(p.status);
+    const isDormant = !isOverdue && !inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff;
+    const badgeClass = isOverdue ? 'overdue' : (isDormant ? 'dormant' : p.status);
+    const badgeLabel = isOverdue ? 'OVERDUE' : (isDormant ? 'DORMANT' : p.status);
+    return `<tr class="clickable" onclick="showProjectDetail(${p.id})">
+      <td><strong>${p.name}</strong>${p.code ? '<br><span style="font-size:11px;color:var(--text-muted)">'+p.code+'</span>' : ''}</td>
+      <td>${p.vertical ? '<span class="vertical-dot" style="background:'+p.vertical.color+'"></span>'+p.vertical.name : '-'}</td>
+      <td><span class="status-badge status-${badgeClass}" ${isDormant ? `title="No update in ${DORMANT_DAYS}+ days"` : ''}>${badgeLabel}</span></td>
+      <td><span class="priority-badge priority-${p.priority}">${p.priority}</span></td>
+      <td>${p.due_date ? fmtDate(p.due_date) : '-'}</td>
+      <td><div class="progress-bar" style="width:100px"><div class="progress-fill" style="width:${p.progress}%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:8px">${p.progress}%</span></td>
+    </tr>`;
+  };
+
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">No matching projects.</td></tr>';
+    return;
+  }
+
+  // Agile split: Active Sprint = critical priority, Backlog = everything else.
+  const sprint = sorted.filter(p => p.priority === 'critical');
+  const backlog = sorted.filter(p => p.priority !== 'critical');
+  const sectionRow = (label, n, color, hint) =>
+    `<tr><td colspan="6" style="background:rgba(148,163,184,0.06);border-left:3px solid ${color};padding:11px 14px">
+       <span style="font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:${color}">${label}</span>
+       <span style="background:${color}22;color:${color};border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:8px">${n}</span>
+       <span style="color:var(--text-muted);font-size:11.5px;margin-left:10px">${hint}</span>
+     </td></tr>`;
+  const emptyRow = (msg) => `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${msg}</td></tr>`;
+
+  tbody.innerHTML =
+    sectionRow('Active Sprint', sprint.length, '#f87171', 'Critical — what you are working on now') +
+    (sprint.length ? sprint.map(rowHtml).join('') : emptyRow('No critical projects in the sprint.')) +
+    sectionRow('Backlog', backlog.length, '#94a3b8', 'Everything else, by priority') +
+    (backlog.length ? backlog.map(rowHtml).join('') : emptyRow('Backlog is empty.'));
 }
 
 // Set the status filter from a KPI card click and re-run the table filter.
