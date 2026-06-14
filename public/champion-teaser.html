@@ -4672,10 +4672,19 @@
               delivery_window: (d.technical_solution && d.technical_solution.delivery_window) || ''
             };
           }
+          // Triage failed server-side — re-enable the trail save so the
+          // gathered requirements are not lost. If the session already
+          // ended (timeout path), persist immediately.
+          triageFiredThisSession = false;
+          autoSavedThisSession = false;
+          if (!session && window.__autoSaveTrail) window.__autoSaveTrail('triage_failed');
           return { ok: false, error: (res && res.error) || 'triage_failed' };
         })
         .catch(function (err) {
           setState('idle');
+          triageFiredThisSession = false;
+          autoSavedThisSession = false;
+          if (!session && window.__autoSaveTrail) window.__autoSaveTrail('triage_error');
           return { ok: false, error: err.message };
         });
     }
@@ -4688,6 +4697,7 @@
       if (connecting || session) return;
       connecting = true;
       triageFiredThisSession = false; // T2.3 — reset per session
+      autoSavedThisSession = false;   // reset auto-save guard per session
       if (window.__emitFunnelEvent) window.__emitFunnelEvent('orb_clicked');
       caption.style.opacity = '0.7';
 
@@ -4747,7 +4757,17 @@
                 }
               },
               onConnect: function () { setState('listening'); },
-              onDisconnect: function () { setState('idle'); stopWaveform(); session = null; releaseMic(); },
+              onDisconnect: function () {
+                // The SDK can disconnect on its own (network drop, tab
+                // backgrounded, or the ElevenLabs plan-level duration cap
+                // firing BEFORE our 10-min timer). Salvage + auto-save so
+                // a server-side cutoff never loses the requirements.
+                clearSessionTimer();
+                if (!triageFiredThisSession) maybeAutoTriageFromTranscript('disconnect');
+                if (window.__autoSaveTrail) window.__autoSaveTrail('disconnect');
+                setState('idle'); stopWaveform(); session = null; releaseMic();
+                setTimeout(maybeShowAbandonModal, 400);
+              },
               onError: function (e) {
                 console.error('[orb] convai error', e);
                 setState('idle');
@@ -4906,8 +4926,13 @@
       sessionTimerId = setTimeout(function () {
         var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
         var msg = lang === 'es'
-          ? 'Tiempo máximo alcanzado (10 minutos). La conversación terminó.'
-          : 'Time limit reached (10 minutes). Conversation ended.';
+          ? 'Tiempo máximo alcanzado. Resumo lo que captamos y te muestro una recomendación.'
+          : 'Time limit reached. Let me wrap up with a recommendation from what we covered.';
+        // AUTO-SEND: salvage the requirements gathered so far into a real
+        // triage before tearing the session down. If there isn't enough
+        // substance, __autoSaveTrail (inside endVoiceSession) still keeps
+        // the raw transcript for follow-up.
+        maybeAutoTriageFromTranscript('timeout');
         endVoiceSession();
         // Surface in the SR status + transcript so the user knows why it ended.
         if (srStatus) srStatus.textContent = msg;
@@ -4970,6 +4995,92 @@
     var triageFiredThisSession = false;
     window.__markTriageFired = function () { triageFiredThisSession = true; };
 
+    // ---------------- Auto-save trail + auto-send triage ----------------
+    // The convai call can end three ways: the user clicks stop / says a
+    // stop phrase, the hard timer cuts it off, or the SDK disconnects
+    // (network, tab backgrounded, plan-level duration cap). In ALL of
+    // these, if the agent never fired run_partnership_triage, everything
+    // the prospect described used to live ONLY in their browser. We now:
+    //   1. AUTO-SAVE the transcript server-side on every ending (no email
+    //      required) so there is always a trail to follow up on.
+    //   2. AUTO-SEND: if the transcript is substantial, fire the triage
+    //      from the transcript itself so the gathered requirements turn
+    //      into a real recommendation instead of being lost.
+    var autoSavedThisSession = false;
+
+    function harvestField(id) {
+      var el = document.getElementById(id);
+      var v = el && (el.value || '').trim();
+      return v || undefined;
+    }
+
+    // Persist the transcript trail. Uses sendBeacon so it survives a tab
+    // close (the most common way a timed-out demo is abandoned); falls
+    // back to fetch(keepalive) when sendBeacon is unavailable.
+    window.__autoSaveTrail = function (reason) {
+      try {
+        if (autoSavedThisSession) return;
+        if (triageFiredThisSession) return; // a real triage already captured it
+        var transcript = (typeof transcriptStore !== 'undefined' && Array.isArray(transcriptStore))
+          ? transcriptStore.slice() : [];
+        if (!transcript.length) return; // nothing meaningful to save
+        autoSavedThisSession = true;
+        var lang = document.body.classList.contains('lang-es') ? 'es' : 'en';
+        var payload = (window.attachPartnerAttribution
+          ? window.attachPartnerAttribution({})
+          : {});
+        payload.auto = true;
+        payload.reason = reason || 'session_end';
+        payload.transcript = transcript;
+        payload.language = lang;
+        payload.email = harvestField('d-email');     // optional — may be undefined
+        payload.name = harvestField('d-name');
+        payload.company = harvestField('d-company');
+        payload.country = harvestField('d-country');
+        payload.referrer_url = document.referrer || undefined;
+        var url = '/projects/api/v1/intake/abandoned-conversation';
+        var body = JSON.stringify(payload);
+        var sent = false;
+        if (navigator.sendBeacon) {
+          try {
+            sent = navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+          } catch (_) { sent = false; }
+        }
+        if (!sent) {
+          fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+        }
+      } catch (_) { /* never block teardown on a save error */ }
+    };
+
+    // Salvage the requirements into a real triage when the call ends with
+    // enough substance but the agent never triaged (e.g. timer cut it off
+    // mid-conversation). Reuses the same runTriageFromAgent pipeline.
+    function maybeAutoTriageFromTranscript(reason) {
+      if (triageFiredThisSession) return false;
+      if (typeof transcriptStore === 'undefined' || transcriptStore.length < 4) return false;
+      var userText = transcriptStore
+        .filter(function (m) { return m.role === 'user'; })
+        .map(function (m) { return m.text; })
+        .join(' ')
+        .trim();
+      // Need real substance — a couple of "yeah"s shouldn't trigger a triage.
+      if (userText.replace(/\s+/g, '').length < 40) return false;
+      var summary = transcriptStore
+        .map(function (m) { return '[' + m.role + '] ' + m.text; })
+        .join('\n')
+        .slice(0, 6000);
+      runTriageFromAgent({
+        description: userText.slice(0, 5000),
+        conversation_summary: summary,
+        name: harvestField('d-name'),
+        email: harvestField('d-email'),
+        company: harvestField('d-company'),
+        country: harvestField('d-country')
+      });
+      return true; // runTriageFromAgent sets triageFiredThisSession = true
+    }
+    window.__maybeAutoTriage = maybeAutoTriageFromTranscript;
+
     function maybeShowAbandonModal() {
       // Only show if: meaningful transcript (>=2 lines) AND triage
       // did not fire AND the user does not already have a result panel.
@@ -4995,6 +5106,10 @@
       releaseWakeLock();          // T4.1
       exitFullscreen();           // T4.1 — leave fullscreen on session end
       if (wasActive) {
+        // Auto-save the trail first so it persists even if the user
+        // dismisses the modal or closes the tab. No-ops when a triage
+        // already captured the conversation.
+        if (window.__autoSaveTrail) window.__autoSaveTrail('session_end');
         // Defer modal a hair so the SR status announces "Conversation
         // ended" before the modal grabs focus.
         setTimeout(maybeShowAbandonModal, 400);

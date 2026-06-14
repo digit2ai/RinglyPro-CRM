@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2AI vs. Glem AI — Competitive Investor Brief</title>
+<style>
+  :root {
+    --ink: #1a2332;
+    --muted: #5b6878;
+    --accent: #0b5fff;
+    --accent-soft: #eaf1ff;
+    --win: #0a8f5b;
+    --line: #d7dde6;
+    --bg: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    line-height: 1.55;
+    margin: 0;
+    background: #f4f6f9;
+    font-size: 15px;
+  }
+  .page {
+    max-width: 860px;
+    margin: 32px auto;
+    background: var(--bg);
+    padding: 56px 64px;
+    box-shadow: 0 4px 24px rgba(20,35,60,.08);
+    border-radius: 8px;
+  }
+  .cover {
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-size: 30px;
+    line-height: 1.18;
+    margin: 0 0 18px;
+    letter-spacing: -.01em;
+  }
+  .meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .meta strong { color: var(--ink); }
+  h2 {
+    font-size: 19px;
+    margin: 38px 0 14px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--line);
+    letter-spacing: -.01em;
+  }
+  h3 {
+    font-size: 15.5px;
+    margin: 22px 0 8px;
+    color: var(--ink);
+  }
+  p { margin: 0 0 13px; }
+  ul, ol { margin: 0 0 13px; padding-left: 20px; }
+  li { margin-bottom: 7px; }
+  strong { color: var(--ink); }
+  .lead {
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 6px 6px 0;
+    margin: 18px 0;
+    font-size: 15px;
+  }
+  .callout.win {
+    background: #e9f8f1;
+    border-left-color: var(--win);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 22px;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  thead th {
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: .02em;
+  }
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+  tbody tr:nth-child(even) { background: #f7f9fc; }
+  td:first-child { font-weight: 600; width: 22%; }
+  .d2 { color: var(--win); font-weight: 600; }
+  .footer {
+    margin-top: 44px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .thesis {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 24px 0 8px;
+  }
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .page { box-shadow: none; margin: 0; max-width: none; padding: 0 12mm; border-radius: 0; }
+    h2 { page-break-after: avoid; }
+    table, .callout { page-break-inside: avoid; }
+    h3 { page-break-after: avoid; }
+  }
+  @page { margin: 16mm; size: A4; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="cover">
+    <p class="eyebrow">Competitive Investor Brief — Confidential</p>
+    <h1>Digit2AI vs. Glem AI</h1>
+    <p class="meta">
+      <strong>Prepared for:</strong> Digit2AI Investors &nbsp;&middot;&nbsp;
+      <strong>Date:</strong> June 14, 2026<br>
+      <strong>Subject:</strong> Competitive positioning of Digit2AI (RinglyPro Neural Intelligence) against Glem AI, the multi-model orchestration platform.<br>
+      <strong>Reference:</strong> aiagent.ringlypro.com/champion-teaser.html
+    </p>
+  </div>
+
+  <h2>1. Executive Summary</h2>
+  <p>The enterprise AI market is splitting into two camps:</p>
+  <ol>
+    <li><strong>Orchestration layers</strong> that decide <em>which</em> AI model should answer a request (Glem AI's category).</li>
+    <li><strong>Outcome platforms</strong> that actually <em>do the work</em> and ship finished deliverables (Digit2AI's category).</li>
+  </ol>
+  <p>Glem AI tells a clean story about routing requests to the best model based on sensitivity, task type, and model strength. It is a compelling demo. But it stops at the moment of routing — it explains <em>which engine runs</em>, not <em>what gets built, shipped, and supported</em>.</p>
+  <div class="callout win">
+    <strong>Digit2AI already does everything Glem AI describes — and then completes the job.</strong> It coordinates multiple frontier models (Claude, GPT-4) through the open Model Context Protocol (MCP), routes sensitive workloads to on-premise and local models, and detects domain context. The difference: Digit2AI does not stop at routing. It delivers production software, board-ready business artifacts, 24/7 voice agents, and 22 live vertical platforms — with a human accountable for every output and a 99.9% SLA.
+  </div>
+  <p class="lead"><strong>The thesis in one line:</strong> Glem AI is a feature; Digit2AI is the company that turns that feature into revenue-generating outcomes, with live customers, transparent pricing, and proof of delivery today.</p>
+
+  <h2>2. Market Context</h2>
+  <p>The proliferation of AI models — ChatGPT, Claude, Gemini, Grok, Llama, DeepSeek, Midjourney, and hundreds more each month — has created genuine buyer confusion. Both companies correctly identify this pain. The strategic question is what you sell on top of it.</p>
+  <ul>
+    <li><strong>Routing alone is increasingly commoditized.</strong> Model-selection logic is being absorbed into the frontier labs themselves (OpenAI, Anthropic, and Google all ship internal routing and model tiers). A company whose entire value proposition is "we pick the model for you" is exposed to platform risk from the very labs it depends on.</li>
+    <li><strong>Outcomes are durable.</strong> Shipped software, an answered phone line, a closed compliance gap, and a delivered board deck are not commoditized. They are the work the customer was trying to get done in the first place.</li>
+  </ul>
+  <p>Digit2AI is positioned on the durable side of this line.</p>
+
+  <h2>3. Side-by-Side Positioning</h2>
+  <table>
+    <thead>
+      <tr><th>Dimension</th><th>Digit2AI (RinglyPro Neural Intelligence)</th><th>Glem AI</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Core product</td><td class="d2">Custom AI software and finished business outcomes, built by a 60-agent workforce</td><td>A multi-model orchestration layer that routes requests to the best model</td></tr>
+      <tr><td>Value delivered</td><td class="d2">Working software, decks, plans, drafted emails, opened tickets, answered calls</td><td>A correctly routed model response</td></tr>
+      <tr><td>Central metaphor</td><td>Doctor — diagnoses and treats on live data</td><td>Switchboard — routes to the right model</td></tr>
+      <tr><td>Agent model</td><td>Job-role agents (Business Analyst, Architect, Inbox Triage, Voice)</td><td>Underlying models (Whisper, Gemini, GPT-4, DALL-E, Llama)</td></tr>
+      <tr><td>Coordination standard</td><td class="d2">Open standard: Model Context Protocol (MCP)</td><td>Proprietary, unnamed orchestration logic</td></tr>
+      <tr><td>Proof of delivery</td><td class="d2">21 live platforms, 22 verticals, named customers</td><td>Demo scenarios; no named customers cited</td></tr>
+      <tr><td>Pricing transparency</td><td class="d2">Published: $35K–$75K MVP / $100K–$250K platform</td><td>None stated</td></tr>
+      <tr><td>Human accountability</td><td class="d2">Human review within 48 hours; AI never auto-commits</td><td>Not addressed</td></tr>
+      <tr><td>Voice AI</td><td class="d2">24/7 phone agents (Rachel EN, Ana &amp; Lina ES), bilingual</td><td>None</td></tr>
+      <tr><td>Reliability commitment</td><td class="d2">99.9% SLA</td><td>Not stated</td></tr>
+      <tr><td>Compliance posture</td><td class="d2">HIPAA, GDPR, PCI, habeas data, BAA/DPA, mutual NDA</td><td>Implied via on-prem routing; no frameworks named</td></tr>
+      <tr><td>Go-to-market proof</td><td class="d2">Partner-enablement engine: live triage, ROI calculator, scripts</td><td>Product walkthrough video</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Where Digit2AI Wins</h2>
+
+  <h3>4.1 Digit2AI already does what Glem AI sells — and keeps going</h3>
+  <p>Glem AI's three headline capabilities are all present inside Digit2AI today:</p>
+  <ul>
+    <li><strong>Multi-model orchestration.</strong> Digit2AI coordinates Claude and GPT-4 (and specialized models) through MCP. Glem's "route to the best model" is Digit2AI's baseline, not its ceiling.</li>
+    <li><strong>Sensitivity-based routing to local models.</strong> Digit2AI deploys on the customer's own domain where possible and supports on-premise and local execution for regulated scopes — the exact privacy story Glem leads with.</li>
+    <li><strong>Domain detection.</strong> Digit2AI's intake and triage agents detect domain and regulatory context (for example flagging HIPAA or habeas data) before routing work.</li>
+  </ul>
+  <p>The difference is what happens next. Glem's demo ends at the routed answer. Digit2AI continues to <strong>build, ship, support, and stand behind the result.</strong></p>
+
+  <h3>4.2 Proof, not promise</h3>
+  <p>Digit2AI operates 21 live platforms across 22 verticals with named, referenceable customers (CamaraVirtual, PLANEA, Pinaxis, Cali CityLab, and more). Glem AI's pitch is a capabilities walkthrough with illustrative scenarios and no disclosed production deployments. For an investor, this is the difference between traction and a roadmap.</p>
+
+  <h3>4.3 A complete delivery system, not a single feature</h3>
+  <p>Digit2AI spans the entire customer journey: intake, AI triage, human review, kickoff, build, system integration testing, user acceptance testing, production deployment, and ongoing support under a 99.9% SLA. Glem AI addresses the first inch of that journey — deciding which model answers.</p>
+
+  <h3>4.4 Revenue model is explicit and defensible</h3>
+  <p>Digit2AI publishes its pricing ($35K–$75K for a focused MVP in 4–6 weeks; $100K–$250K for a multi-system platform) and never quotes without a triage-grounded scope. This signals commercial maturity and predictable unit economics. Glem AI shows no pricing, leaving monetization and margin structure unproven.</p>
+
+  <h3>4.5 Trust and accountability as a product feature</h3>
+  <p>Every Digit2AI output passes human review within 48 hours, and the system never auto-commits to production. In regulated and enterprise buying, a named human standing behind the AI is a decisive procurement advantage. Glem AI's materials do not address accountability or oversight.</p>
+
+  <h3>4.6 Voice is a category Glem AI does not occupy</h3>
+  <p>Digit2AI's RinglyPro voice agents answer phones 24/7, book appointments, qualify leads, and log to CRM in English and Spanish. This is a live, revenue-generating product line with no equivalent in Glem AI's offering and a natural expansion surface.</p>
+
+  <h3>4.7 Built for bilingual and cross-border markets</h3>
+  <p>Native English and Spanish UX, plus demonstrated handling of US (HIPAA) and Latin American (Colombian habeas data) regulatory regimes, gives Digit2AI an immediate beachhead in US and LATAM markets. Glem AI signals a single-region enterprise focus without the same cross-border compliance depth on display.</p>
+
+  <h2>5. Honest Acknowledgment of Glem AI's Strengths</h2>
+  <p>A credible brief names the competitor's real advantages so we can neutralize them:</p>
+  <ul>
+    <li><strong>Clean orchestration narrative.</strong> "Right model, right task, every time" is simple and memorable.</li>
+    <li><strong>On-prem and sensitivity routing as a headline.</strong> Glem foregrounds data-never-leaves-your-infrastructure more prominently than Digit2AI's current marketing does.</li>
+    <li><strong>Domain detection demo.</strong> The X-ray-to-clinical-model example is a vivid illustration of specialization.</li>
+    <li><strong>Enterprise governance framing.</strong> Glem's "Spaces" (per-function workspaces) and plug-in marketplace present a tidy enterprise-management story.</li>
+  </ul>
+  <div class="callout">
+    <strong>The key point:</strong> these are messaging advantages, not capability gaps. Digit2AI performs the underlying functions today; it simply has not foregrounded them the same way. Closing the narrative gap is a copywriting exercise, not an engineering roadmap.
+  </div>
+
+  <h2>6. Strategic Recommendations</h2>
+  <ol>
+    <li><strong>Adopt the routing narrative.</strong> Add explicit language to the champion page: "We route sensitive workloads to on-premise and local models, and auto-detect your domain and regulatory context." This neutralizes Glem's two sharpest differentiators while retaining Digit2AI's delivery advantage.</li>
+    <li><strong>Lead with proof.</strong> Keep named customers, live platform count, and the 99.9% SLA at the top of every investor and partner conversation — the asset Glem cannot match.</li>
+    <li><strong>Productize governance.</strong> Package the existing human-review, NDA, and BAA/DPA workflow as a named "Trust Layer" to compete directly with Glem's "Spaces" framing.</li>
+    <li><strong>Defend on outcomes.</strong> In every comparison, redirect from "which model" to "what got shipped." That is the terrain where Digit2AI is unbeatable and routing-only competitors cannot follow.</li>
+  </ol>
+
+  <h2>7. Investment Thesis</h2>
+  <p>Glem AI is a well-told story about a single layer of the stack — model selection — that the frontier labs are actively commoditizing. Digit2AI owns that layer as table stakes and builds the durable, revenue-generating business on top of it: shipped software, live vertical platforms, 24/7 voice, transparent pricing, human accountability, and an SLA.</p>
+  <p class="thesis">Routing is a feature. Outcomes are a company. Digit2AI is the company.</p>
+
+  <div class="footer">
+    This document is prepared for investor discussion. Figures and capabilities for Digit2AI are drawn from the published champion brief at aiagent.ringlypro.com/champion-teaser.html. Glem AI characterizations are drawn from its publicly presented product walkthrough.
+  </div>
+
+</div>
+</body>
+</html>

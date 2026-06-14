@@ -930,9 +930,19 @@ router.post('/abandoned-conversation', async (req, res) => {
       return res.status(429).json({ success: false, error: `Too many submissions. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
     }
     const b = req.body || {};
-    const email = String(b.email || '').trim().toLowerCase();
-    if (!email || email.indexOf('@') < 0) return res.status(400).json({ success: false, error: 'Valid email required.' });
+    // Email is now OPTIONAL. Auto-saved trails (10-min timeout, click-stop,
+    // tab-close via sendBeacon) often have no email yet — we still persist
+    // the transcript so requirements gathered in the call are never lost.
+    // If an email IS provided it must look valid; otherwise we store null.
+    const rawEmail = String(b.email || '').trim().toLowerCase();
+    if (rawEmail && rawEmail.indexOf('@') < 0) return res.status(400).json({ success: false, error: 'Invalid email.' });
+    const email = rawEmail || null;
+    const autoSaved = !!b.auto; // true when the client saved this silently
     const transcript = Array.isArray(b.transcript) ? b.transcript.slice(0, 200) : [];
+    // Don't persist truly empty auto-saves (orb clicked then instantly closed).
+    if (autoSaved && transcript.length < 1 && !email) {
+      return res.json({ success: true, skipped: 'empty' });
+    }
     const lang = b.language === 'es' ? 'es' : 'en';
     const ua = String(req.headers['user-agent'] || '').slice(0, 500);
     const crypto = require('crypto');
@@ -943,14 +953,15 @@ router.post('/abandoned-conversation', async (req, res) => {
       `INSERT INTO d2_abandoned_conversations
          (email, name, company, country, transcript, transcript_len, language,
           partner_slug, utm_source, utm_campaign, utm_medium, utm_content, utm_term,
-          referrer_url, user_agent, ip_hash)
+          referrer_url, user_agent, ip_hash, status)
        VALUES (:email, :name, :company, :country, :transcript::jsonb, :tlen, :lang,
                :partner_slug, :utm_source, :utm_campaign, :utm_medium, :utm_content, :utm_term,
-               :referrer_url, :user_agent, :ip_hash)
+               :referrer_url, :user_agent, :ip_hash, :status)
        RETURNING id, created_at`,
       {
         replacements: {
           email,
+          status:       autoSaved ? 'auto_saved' : 'new',
           name:         _str(b.name, 255),
           company:      _str(b.company, 255),
           country:      _str(b.country, 120),

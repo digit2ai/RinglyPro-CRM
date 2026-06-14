@@ -37,3 +37,9 @@ CREATE INDEX IF NOT EXISTS idx_d2_abandoned_email ON d2_abandoned_conversations 
 CREATE INDEX IF NOT EXISTS idx_d2_abandoned_status ON d2_abandoned_conversations (status);
 CREATE INDEX IF NOT EXISTS idx_d2_abandoned_partner ON d2_abandoned_conversations (partner_slug) WHERE partner_slug IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_d2_abandoned_created ON d2_abandoned_conversations (created_at DESC);
+
+-- 2026-06-14: email is now OPTIONAL. Auto-saved trails (10-min timeout /
+-- click-stop / tab-close via sendBeacon) persist the transcript even when
+-- the prospect never typed an email, so requirements are never lost.
+-- status 'auto_saved' marks silently-captured trails vs. 'new' (modal opt-in).
+ALTER TABLE d2_abandoned_conversations ALTER COLUMN email DROP NOT NULL;
