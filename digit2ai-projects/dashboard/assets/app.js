@@ -2523,6 +2523,13 @@ async function renderProjects(container) {
     if (counts[p.status] !== undefined) counts[p.status]++;
     if (p.status !== 'active') counts.backlog++;
   }
+  // Distinct project leads for the filter dropdown.
+  const leadsMap = new Map();
+  res.data.forEach(p => { if (p.lead) leadsMap.set(p.lead.id, ((p.lead.first_name || '') + ' ' + (p.lead.last_name || '')).trim()); });
+  const leadOptions = '<option value="">All Leads</option>' +
+    Array.from(leadsMap.entries()).sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name || '(unnamed)'}</option>`).join('') +
+    '<option value="__none__">Unassigned</option>';
+
   const statusCardsHtml = STATUS_CARDS.map(c => {
     const n = counts[c.key] || 0;
     return `
@@ -2560,6 +2567,7 @@ async function renderProjects(container) {
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
+        <select id="project-lead-filter">${leadOptions}</select>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openZoomMeeting()" title="Open Zoom (info@digit2ai.com) in a new tab" style="color:#2D8CFF;border-color:#2D8CFF">&#127909; Zoom Meeting</button>
       <button class="btn btn-ghost btn-sm" onclick="printProjectsPDF()" title="Print / Export PDF">Print PDF</button>
@@ -2584,6 +2592,7 @@ async function renderProjects(container) {
     const q = (document.getElementById('project-search').value || '').trim().toLowerCase();
     const st = document.getElementById('project-status-filter').value;
     const pr = document.getElementById('project-priority-filter').value;
+    const ld = document.getElementById('project-lead-filter').value;
     let list = container._projectsAll.slice();
     // Archived rows are loaded for the "Archived" view but hidden everywhere
     // else — they would otherwise pollute "All Status" with completed-and-
@@ -2602,11 +2611,14 @@ async function renderProjects(container) {
       list = list.filter(p => p.status === st);
     }
     if (pr) list = list.filter(p => p.priority === pr);
+    if (ld === '__none__') list = list.filter(p => !p.lead);
+    else if (ld) list = list.filter(p => p.lead && String(p.lead.id) === ld);
     renderProjectsTable(list);
   };
   document.getElementById('project-search').addEventListener('input', applyFilters);
   document.getElementById('project-status-filter').addEventListener('change', applyFilters);
   document.getElementById('project-priority-filter').addEventListener('change', applyFilters);
+  document.getElementById('project-lead-filter').addEventListener('change', applyFilters);
   // Stash for the KPI click handler so it can re-apply.
   window._projectsApplyFilters = applyFilters;
 
@@ -2714,10 +2726,13 @@ async function printProjectsPDF() {
   const listRes = await api('/projects');
   if (!listRes.success || !listRes.data.length) { alert('No projects to print.'); return; }
 
-  // Respect the Priority filter selected on the dashboard. Empty = All Priority.
+  // Respect the Priority + Project Lead filters selected on the dashboard.
   const prFilter = (document.getElementById('project-priority-filter')?.value) || '';
-  const filteredList = prFilter ? listRes.data.filter(p => p.priority === prFilter) : listRes.data;
-  if (!filteredList.length) { alert('No ' + prFilter.toUpperCase() + ' projects to print.'); return; }
+  const ldFilter = (document.getElementById('project-lead-filter')?.value) || '';
+  let filteredList = prFilter ? listRes.data.filter(p => p.priority === prFilter) : listRes.data;
+  if (ldFilter === '__none__') filteredList = filteredList.filter(p => !p.lead);
+  else if (ldFilter) filteredList = filteredList.filter(p => p.lead && String(p.lead.id) === ldFilter);
+  if (!filteredList.length) { alert('No projects to print for the current filters.'); return; }
 
   const now = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
 
