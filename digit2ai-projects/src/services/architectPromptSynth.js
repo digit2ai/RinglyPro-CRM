@@ -22,7 +22,8 @@
 let Anthropic;
 try { Anthropic = require('@anthropic-ai/sdk'); } catch (e) { /* optional */ }
 
-const MODEL = 'claude-sonnet-4-5-20250929';
+// ringlypro-architect always runs on the most capable + latest Claude model.
+const MODEL = process.env.ARCHITECT_MODEL || 'claude-opus-4-8';
 
 const SENIOR_PROMPT_ENGINEER_SYSTEM_PROMPT = `You are a Senior Prompt Engineer at Digit2AI — an autonomous AI engineering firm that ships production software from natural-language briefs. Your job is to take raw project intake data (intake Q&A, AI-generated business plan, milestones, contract terms, stakeholders, target URL) and synthesize it into a **single, tight, executable build brief** for the next agent in the pipeline: Claude Code running the /ringlypro-architect slash command in a fresh session with full repo access.
 
