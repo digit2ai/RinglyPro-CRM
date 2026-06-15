@@ -2644,7 +2644,7 @@ function renderProjectsTable(list) {
   const tbody = document.getElementById('projects-tbody');
   if (!tbody) return;
 
-  const backlogCollapsed = localStorage.getItem('d2ai_backlog_collapsed') !== '0'; // default collapsed
+  const backlogCollapsed = _backlogCollapsed; // collapsed by default each page load
 
   const rowHtml = (p, isBacklog) => {
     const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !inactiveStatuses.has(p.status);
@@ -2693,7 +2693,9 @@ function renderProjectsTable(list) {
     (backlog.length ? backlog.map(p => rowHtml(p, true)).join('') : emptyRow('Backlog is empty.', true));
 }
 
-// Collapse / expand the Backlog section (Active Sprint stays open). Persisted.
+// Backlog collapse state — collapsed by default on each page load; remembered
+// in memory so filter re-renders within the session keep the user's choice.
+let _backlogCollapsed = true;
 function toggleBacklog() {
   const rows = document.querySelectorAll('#projects-tbody .backlog-row');
   const caret = document.getElementById('backlog-caret');
@@ -2701,7 +2703,7 @@ function toggleBacklog() {
   const willCollapse = !isCollapsed;
   rows.forEach(r => { r.style.display = willCollapse ? 'none' : ''; });
   if (caret) caret.innerHTML = willCollapse ? '&#9656;' : '&#9662;';
-  localStorage.setItem('d2ai_backlog_collapsed', willCollapse ? '1' : '0');
+  _backlogCollapsed = willCollapse;
 }
 window.toggleBacklog = toggleBacklog;
 
