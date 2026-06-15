@@ -10,14 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --teal: #2f50c8;
-    --teal-dark: #1d36a3;
-    --teal-light: #e8edfc;
-    --navy: #14245f;
-    --navy-light: #273a86;
-    --gold: #e3a51c;
-    --gold-light: #f7e6bb;
-    --gold-dark: #b9831a;
+    --teal: #3e8fbf;
+    --teal-dark: #0a223a;
+    --teal-light: #eaf2f8;
+    --navy: #0e2f4f;
+    --navy-light: #1a4a73;
+    --gold: #5fa8d3;
+    --gold-light: #d6e9f4;
+    --gold-dark: #3e8fbf;
     --white: #ffffff;
     --gray-50: #f8f9fa;
     --gray-100: #f1f3f5;
@@ -57,13 +57,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #c60b1e;
+    background: #0e2f4f;
     border-bottom: 3px solid var(--gold);
     box-shadow: 0 2px 18px rgba(0,0,0,0.22);
     transition: background 0.3s, box-shadow 0.3s;
   }
   .header.scrolled {
-    background: #aa151b;
+    background: #0a223a;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 2px 24px rgba(0,0,0,0.28);
@@ -129,7 +129,7 @@
   /* ── HERO ── */
   .hero {
     min-height: 100vh;
-    background: linear-gradient(165deg, #14245f 0%, #21379b 45%, #2d4cc4 100%);
+    background: linear-gradient(165deg, #0a223a 0%, #0e2f4f 45%, #2a6f9c 100%);
     color: var(--white);
     display: flex;
     flex-direction: column;
@@ -186,16 +186,16 @@
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 15px;
-    background: #f5c63f;
-    color: var(--navy);
+    background: #3e8fbf;
+    color: #ffffff;
     padding: 14px 32px;
     border-radius: 8px;
-    border: 2px solid #f5c63f;
+    border: 2px solid #3e8fbf;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
     display: inline-block;
   }
-  .btn-gold:hover { background: #ecb820; border-color: #ecb820; transform: translateY(-1px); }
+  .btn-gold:hover { background: #0e2f4f; border-color: #0e2f4f; transform: translateY(-1px); }
   .btn-outline {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -502,9 +502,9 @@
     font-weight: 600;
     padding: 10px 20px;
     border-radius: 30px;
-    background: rgba(47,80,200,0.12);
+    background: rgba(62,143,191,0.12);
     color: var(--teal);
-    border: 1px solid rgba(47,80,200,0.22);
+    border: 1px solid rgba(62,143,191,0.22);
   }
   .hci-display {
     background: var(--navy);
@@ -711,7 +711,7 @@
       position: absolute;
       top: 64px;
       left: 0; right: 0;
-      background: #aa151b;
+      background: #0a223a;
       backdrop-filter: blur(12px);
       padding: 24px 32px;
       gap: 18px;
@@ -783,15 +783,15 @@
   .orb-btn[data-state="speaking"] .o-core { animation: orbBreath 1.6s ease-in-out infinite; }
   .orb-btn:hover { filter: brightness(1.08); }
   .orb-cap { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 600; color: var(--gold); transition: color .2s; }
-  .orb-stage[data-state="listening"] .orb-cap { color: #6f9bff; }
-  .orb-stage[data-state="speaking"] .orb-cap { color: #7fd9ff; }
+  .orb-stage[data-state="listening"] .orb-cap { color: #3e8fbf; }
+  .orb-stage[data-state="speaking"] .orb-cap { color: #8ed1fc; }
   .orb-hint { font-family: 'Inter', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.72); max-width: 460px; text-align: center; line-height: 1.55; }
   .orb-transcript { display: none; width: 100%; max-width: 560px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 16px; margin-top: 2px; max-height: 230px; overflow-y: auto; backdrop-filter: blur(4px); }
   .orb-transcript.show { display: block; animation: orbFade .3s ease; }
   @keyframes orbFade { from { opacity: 0; } to { opacity: 1; } }
   .orb-msg { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.55; margin-bottom: 9px; padding-left: 12px; border-left: 2px solid transparent; text-align: left; }
   .orb-msg.user { border-left-color: var(--gold); color: rgba(255,255,255,0.92); }
-  .orb-msg.agent { border-left-color: #6f9bff; color: rgba(255,255,255,0.86); }
+  .orb-msg.agent { border-left-color: #3e8fbf; color: rgba(255,255,255,0.86); }
   .orb-msg .who { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; opacity: .6; margin-bottom: 2px; }
   .orb-stop { display: none; background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 10px 22px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: .3px; }
   .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
@@ -803,8 +803,8 @@
     transform: translateX(-50%) translateY(150%);
     z-index: 1200;
     display: flex; align-items: center; gap: 14px;
-    background: rgba(16,27,73,0.96);
-    border: 1px solid rgba(245,198,63,0.4);
+    background: rgba(14,47,79,0.96);
+    border: 1px solid rgba(95,168,211,0.4);
     border-radius: 14px;
     padding: 11px 16px;
     box-shadow: 0 12px 38px rgba(0,0,0,0.45);
@@ -824,13 +824,13 @@
   .lina-bar-sec { font-family: 'Inter', sans-serif; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
   .lina-bar-title { font-family: 'Inter', sans-serif; font-size: 13.5px; color: #fff; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .lina-bar-prog { margin-top: 7px; height: 4px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }
-  .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#6f9bff,#f5c63f); border-radius: 3px; }
+  .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#3e8fbf,#5fa8d3); border-radius: 3px; }
   .lina-bar-btn { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .2s; }
   .lina-bar-btn:hover { background: rgba(255,255,255,0.18); }
   .lina-bar-btn.stop { background: #c0392b; border-color: #c0392b; }
   .lina-bar-btn.stop:hover { background: #a93226; }
   .lina-active { animation: linaHi 1.3s ease; }
-  @keyframes linaHi { 0% { box-shadow: inset 0 0 0 0 rgba(245,198,63,0); } 28% { box-shadow: inset 0 0 0 3px rgba(245,198,63,0.5); } 100% { box-shadow: inset 0 0 0 0 rgba(245,198,63,0); } }
+  @keyframes linaHi { 0% { box-shadow: inset 0 0 0 0 rgba(95,168,211,0); } 28% { box-shadow: inset 0 0 0 3px rgba(95,168,211,0.5); } 100% { box-shadow: inset 0 0 0 0 rgba(95,168,211,0); } }
   @media (max-width: 560px) { .lina-bar-title { max-width: 150px; } .lina-bar-info { min-width: 130px; } .lina-bar-btn { padding: 8px 11px; } }
   @media (prefers-reduced-motion: reduce) { .lina-bar-eq span { animation: none !important; } .lina-active { animation: none !important; } }
 
@@ -838,7 +838,7 @@
   .wf-section {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(120% 90% at 50% 0%, #1d317e 0%, #14245f 45%, #0c1740 100%);
+    background: radial-gradient(120% 90% at 50% 0%, #163a5c 0%, #0e2f4f 45%, #08192e 100%);
     color: #fff;
   }
   .wf-section::before {
@@ -875,7 +875,7 @@
   }
   .wf-line {
     position: absolute; left: 8%; right: 8%; top: 41px; height: 3px; border-radius: 3px;
-    background: linear-gradient(90deg, rgba(111,155,255,0) 0%, #6f9bff 18%, #f5c63f 50%, #6f9bff 82%, rgba(111,155,255,0) 100%);
+    background: linear-gradient(90deg, rgba(111,155,255,0) 0%, #3e8fbf 18%, #5fa8d3 50%, #3e8fbf 82%, rgba(111,155,255,0) 100%);
     background-size: 220% 100%;
     box-shadow: 0 0 16px rgba(111,155,255,0.45);
     animation: wfFlow 3s linear infinite;
@@ -884,7 +884,7 @@
   .wf-particle {
     position: absolute; top: 41px; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%;
     background: #fff;
-    box-shadow: 0 0 12px 3px #f5c63f, 0 0 5px #fff;
+    box-shadow: 0 0 12px 3px #5fa8d3, 0 0 5px #fff;
     animation: wfTravel 6s linear infinite;
   }
   .wf-particle:nth-of-type(2) { animation-delay: 2s; }
@@ -902,22 +902,22 @@
   }
   .wf-orb {
     position: relative; width: 84px; height: 84px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 36%, #6f93ff 0%, #2d4cc4 46%, #14245f 100%);
+    background: radial-gradient(circle at 50% 36%, #5fa8d3 0%, #3e8fbf 46%, #0e2f4f 100%);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 0 6px rgba(45,76,196,0.16), 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 6px rgba(62,143,191,0.16), 0 8px 24px rgba(0,0,0,0.4);
     animation: wfGlow 3.4s ease-in-out infinite;
     animation-delay: var(--d, 0s);
   }
   .wf-orb svg { width: 34px; height: 34px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .wf-orb::before {
     content: ''; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid #f5c63f; opacity: 0;
+    border: 2px solid #3e8fbf; opacity: 0;
     animation: wfPulse 3.4s ease-out infinite;
     animation-delay: var(--d, 0s);
   }
   @keyframes wfGlow {
-    0%,100% { box-shadow: 0 0 0 6px rgba(45,76,196,0.16), 0 8px 24px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(245,198,63,0.32), 0 0 32px rgba(111,155,255,0.7); }
+    0%,100% { box-shadow: 0 0 0 6px rgba(62,143,191,0.16), 0 8px 24px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(95,168,211,0.32), 0 0 32px rgba(111,155,255,0.7); }
   }
   @keyframes wfPulse {
     0% { transform: scale(.82); opacity: 0; }
@@ -926,21 +926,21 @@
     100% { opacity: 0; }
   }
   .wf-name { margin-top: 14px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13.5px; color: #fff; line-height: 1.3; }
-  .wf-benefit { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: #f5c63f; letter-spacing: .2px; }
+  .wf-benefit { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: #5fa8d3; letter-spacing: .2px; }
   .wf-benefits { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 46px; }
   .wf-chip {
     font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #e3eaff;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
     padding: 9px 18px; border-radius: 30px;
   }
-  .wf-chip b { color: #f5c63f; font-weight: 700; }
+  .wf-chip b { color: #5fa8d3; font-weight: 700; }
   @media (max-width: 760px) {
     .wf-pipeline { flex-direction: column; gap: 0; max-width: 320px; }
     .wf-line, .wf-particle { display: none; }
     .wf-node { width: 100%; padding: 12px 0; }
     .wf-node:not(:last-child)::after {
       content: ''; width: 3px; height: 30px; margin-top: 14px; border-radius: 3px;
-      background: linear-gradient(#6f9bff, #f5c63f); background-size: 100% 200%;
+      background: linear-gradient(#3e8fbf, #5fa8d3); background-size: 100% 200%;
       animation: wfFlowV 2s linear infinite;
     }
     @keyframes wfFlowV { 0% { background-position: 0 200%; } 100% { background-position: 0 0; } }
@@ -952,7 +952,7 @@
 
 <!-- ═══════ HEADER ═══════ -->
 <header class="header" id="header">
-  <a href="#hero" class="header-logo">HISPANOTEC <span>DIGITAL</span></a>
+  <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:11px;"><img src="/hispatec/logo-hispanotec.svg" alt="HISPANOTEC" style="height:42px;width:auto;display:block;background:#fff;border-radius:8px;padding:3px;"><span style="font-weight:800;letter-spacing:2px;font-size:18px;color:#fff;">HISPANOTEC <span style="color:var(--gold);">DIGITAL</span></span></a>
   <nav>
     <ul class="header-nav" id="navMenu">
       <li><a href="#ecosistema" data-es="Ecosistema" data-en="Ecosystem">Ecosistema</a></li>
@@ -981,28 +981,28 @@
         <svg viewBox="0 0 168 168" role="img" aria-hidden="true">
           <defs>
             <radialGradient id="htCoreGrad" cx="50%" cy="42%" r="60%">
-              <stop offset="0%" stop-color="#bcd0ff"/>
-              <stop offset="45%" stop-color="#3a5fe0"/>
-              <stop offset="100%" stop-color="#16245f"/>
+              <stop offset="0%" stop-color="#cfe6f3"/>
+              <stop offset="45%" stop-color="#3e8fbf"/>
+              <stop offset="100%" stop-color="#0e2f4f"/>
             </radialGradient>
             <radialGradient id="htGlowGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#5a82ff" stop-opacity=".65"/>
-              <stop offset="100%" stop-color="#5a82ff" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#5fa8d3" stop-opacity=".65"/>
+              <stop offset="100%" stop-color="#5fa8d3" stop-opacity="0"/>
             </radialGradient>
           </defs>
           <circle class="o-glow" cx="84" cy="84" r="80" fill="url(#htGlowGrad)"/>
-          <g class="o-ring o-r1" fill="none" stroke="#f5c63f" stroke-opacity=".6" stroke-width="1.3">
+          <g class="o-ring o-r1" fill="none" stroke="#5fa8d3" stroke-opacity=".6" stroke-width="1.3">
             <circle cx="84" cy="84" r="72" stroke-dasharray="6 10"/>
           </g>
-          <g class="o-ring o-r2" fill="none" stroke="#6f9bff" stroke-opacity=".5" stroke-width="1.1">
+          <g class="o-ring o-r2" fill="none" stroke="#3e8fbf" stroke-opacity=".5" stroke-width="1.1">
             <circle cx="84" cy="84" r="61" stroke-dasharray="3 14"/>
           </g>
-          <g class="o-ring o-r3" fill="none" stroke="#acc4ff" stroke-opacity=".4" stroke-width="1">
+          <g class="o-ring o-r3" fill="none" stroke="#9cc7e0" stroke-opacity=".4" stroke-width="1">
             <circle cx="84" cy="84" r="51" stroke-dasharray="2 8"/>
           </g>
           <circle class="o-core" cx="84" cy="84" r="39" fill="url(#htCoreGrad)"/>
           <circle cx="84" cy="84" r="39" fill="none" stroke="#eafffa" stroke-opacity=".25" stroke-width="1"/>
-          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a1840" fill-opacity=".85"/>
+          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a223a" fill-opacity=".85"/>
         </svg>
       </button>
       <div class="orb-cap" id="orbCap">Escuchar a Lina</div>
@@ -1487,7 +1487,7 @@
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-brand">
-      <h3>HISPANOTEC <span>DIGITAL</span></h3>
+      <h3 style="display:flex;align-items:center;gap:10px;"><img src="/hispatec/logo-hispanotec.svg" alt="HISPANOTEC" style="height:34px;width:auto;background:#fff;border-radius:6px;padding:2px;">HISPANOTEC <span>DIGITAL</span></h3>
       <p data-es="Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform. Connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano.</p>
     </div>
     <div class="footer-col">
