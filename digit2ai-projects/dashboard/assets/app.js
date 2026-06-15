@@ -2756,10 +2756,6 @@ async function printProjectsPDF() {
 
   const cards = details.map(p => {
     const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
-    const milestones = (p.milestones||[]).map(m => {
-      const mOver = m.due_date && new Date(m.due_date) < new Date() && m.status !== 'completed';
-      return `<li style="margin-bottom:4px;color:${m.status==='completed'?'#16a34a':mOver?'#dc2626':'#333'}">${esc(m.title)} <span style="color:#888">[${m.status}${m.due_date ? ' - '+fmtD(m.due_date):''}]</span></li>`;
-    }).join('');
     const tasks = (p.tasks||[]).map(t => {
       const tOver = t.due_date && new Date(t.due_date) < new Date() && t.status === 'pending';
       return `<li style="margin-bottom:4px;color:${t.status==='completed'?'#16a34a':tOver?'#dc2626':'#333'}">${esc(t.title)} <span style="color:#888">[${t.status}${t.priority?' - '+t.priority:''}${t.due_date?' - '+fmtD(t.due_date):''}${t.assignee?' - '+t.assignee.first_name+' '+(t.assignee.last_name||''):''}]</span></li>`;
@@ -2796,10 +2792,7 @@ async function printProjectsPDF() {
 
         ${p.description ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Description</strong><p style="font-size:12px;margin:4px 0;line-height:1.5;color:#333">'+esc(p.description)+'</p></div>' : ''}
         ${p.next_step ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#16a34a">Next Step</strong><p style="font-size:12px;margin:4px 0;color:#333">'+esc(p.next_step)+'</p></div>' : ''}
-        ${p.blockers ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#dc2626">Blockers</strong><p style="font-size:12px;margin:4px 0;color:#333">'+esc(p.blockers)+'</p></div>' : ''}
-        ${p.notes ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Notes</strong><p style="font-size:12px;margin:4px 0;color:#333;white-space:pre-wrap">'+esc(p.notes)+'</p></div>' : ''}
 
-        ${milestones ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Milestones ('+p.milestones.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+milestones+'</ul></div>' : ''}
         ${tasks ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Tasks ('+p.tasks.length+')</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+tasks+'</ul></div>' : ''}
         ${contacts ? '<div style="margin-bottom:10px"><strong style="font-size:12px;color:#555">Linked Contacts</strong><ul style="font-size:12px;margin:4px 0;padding-left:18px">'+contacts+'</ul></div>' : ''}
       </div>`;
