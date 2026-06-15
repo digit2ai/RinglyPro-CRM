@@ -2513,11 +2513,10 @@ async function renderProjects(container) {
   const STATUS_CARDS = [
     { key: 'planning', label: 'Planning', accent: 'purple', hint: 'In scoping' },
     { key: 'active',   label: 'Active',   accent: 'green',  hint: 'Active sprint' },
-    { key: 'backlog',  label: 'Backlog',  accent: 'blue',   hint: 'Everything not active' },
-    { key: 'on_hold',  label: 'On Hold',  accent: 'yellow', hint: 'Paused' }
+    { key: 'backlog',  label: 'Backlog',  accent: 'blue',   hint: 'Everything not active' }
   ];
   // Backlog = every non-archived project that isn't status "active".
-  const counts = { planning: 0, active: 0, on_hold: 0, backlog: 0 };
+  const counts = { planning: 0, active: 0, backlog: 0 };
   for (const p of res.data) {
     if (p.archived_at) continue;
     if (counts[p.status] !== undefined) counts[p.status]++;
