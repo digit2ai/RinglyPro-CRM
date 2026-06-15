@@ -2661,9 +2661,9 @@ function renderProjectsTable(list) {
     return;
   }
 
-  // Agile split: Active Sprint = critical priority, Backlog = everything else.
-  const sprint = sorted.filter(p => p.priority === 'critical');
-  const backlog = sorted.filter(p => p.priority !== 'critical');
+  // Agile split: Active Sprint = status "active", Backlog = everything else.
+  const sprint = sorted.filter(p => p.status === 'active');
+  const backlog = sorted.filter(p => p.status !== 'active');
   const sprintHeader = (label, n, color, hint) =>
     `<tr><td colspan="6" style="background:rgba(148,163,184,0.06);border-left:3px solid ${color};padding:11px 14px">
        <span style="font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:${color}">${label}</span>
@@ -2680,7 +2680,7 @@ function renderProjectsTable(list) {
   const emptyRow = (msg, isBacklog) => `<tr class="${isBacklog ? 'backlog-row' : ''}" style="${isBacklog && backlogCollapsed ? 'display:none' : ''}"><td colspan="6" style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">${msg}</td></tr>`;
 
   tbody.innerHTML =
-    sprintHeader('Active Sprint', sprint.length, '#f87171', 'Critical — what you are working on now') +
+    sprintHeader('Active Sprint', sprint.length, '#f87171', 'Status: Active — what you are working on now') +
     (sprint.length ? sprint.map(p => rowHtml(p, false)).join('') : emptyRow('No critical projects in the sprint.', false)) +
     backlogHeader(backlog.length, '#94a3b8', 'Everything else, by priority — tap to expand') +
     (backlog.length ? backlog.map(p => rowHtml(p, true)).join('') : emptyRow('Backlog is empty.', true));
