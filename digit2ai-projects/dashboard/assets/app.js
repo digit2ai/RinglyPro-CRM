@@ -2511,23 +2511,20 @@ async function renderProjects(container) {
   const dormantCutoff = Date.now() - DORMANT_DAYS * 86400000;
   const inactiveStatuses = new Set(['completed', 'cancelled']);
   const STATUS_CARDS = [
-    { key: 'planning',    label: 'Planning',    accent: 'purple', hint: 'In scoping' },
-    { key: 'active',      label: 'Active',      accent: 'green',  hint: 'Greenlit' },
-    { key: 'in_progress', label: 'In Progress', accent: 'blue',   hint: 'Active work' },
-    { key: 'on_hold',     label: 'On Hold',     accent: 'yellow', hint: 'Paused' },
-    { key: 'review',      label: 'Review',      accent: 'purple', hint: 'Awaiting review' },
-    { key: 'completed',   label: 'Completed',   accent: 'green',  hint: 'Shipped' }
+    { key: 'planning', label: 'Planning', accent: 'purple', hint: 'In scoping' },
+    { key: 'active',   label: 'Active',   accent: 'green',  hint: 'Active sprint' },
+    { key: 'backlog',  label: 'Backlog',  accent: 'blue',   hint: 'Everything not active' },
+    { key: 'on_hold',  label: 'On Hold',  accent: 'yellow', hint: 'Paused' }
   ];
-  const counts = Object.fromEntries(STATUS_CARDS.map(c => [c.key, 0]));
-  let kpiDormant = 0;
+  // Backlog = every non-archived project that isn't status "active".
+  const counts = { planning: 0, active: 0, on_hold: 0, backlog: 0 };
   for (const p of res.data) {
+    if (p.archived_at) continue;
     if (counts[p.status] !== undefined) counts[p.status]++;
-    if (!inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < dormantCutoff) {
-      kpiDormant++;
-    }
+    if (p.status !== 'active') counts.backlog++;
   }
   const statusCardsHtml = STATUS_CARDS.map(c => {
-    const n = counts[c.key];
+    const n = counts[c.key] || 0;
     return `
       <div class="card card-stat card-stat-compact card-accent-${c.accent} card-clickable" onclick="projectsKpiFilter('${c.key}')" data-tooltip="Click to filter the table to ${c.label} projects">
         <div class="stat-label">${c.label}</div>
@@ -2540,11 +2537,6 @@ async function renderProjects(container) {
   container.innerHTML = `
     <div class="card-grid" style="margin-bottom:20px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
       ${statusCardsHtml}
-      <div class="card card-stat card-stat-compact card-accent-yellow card-clickable ${kpiDormant > 0 ? 'card-needs-attention' : ''}" onclick="projectsKpiFilter('dormant')" data-tooltip="Projects with no activity in the last ${DORMANT_DAYS} days (excludes completed/cancelled)">
-        <div class="stat-label">Dormant</div>
-        <div class="stat-value">${kpiDormant}</div>
-        <div class="stat-change ${kpiDormant > 0 ? 'stat-down' : 'stat-up'}">No update ${DORMANT_DAYS}d+</div>
-      </div>
     </div>
     <div class="section-header">
       <div class="filter-bar">
@@ -2553,6 +2545,7 @@ async function renderProjects(container) {
           <option value="">All Status</option>
           <option value="planning">Planning</option>
           <option value="active">Active</option>
+          <option value="backlog">Backlog (not active)</option>
           <option value="in_progress">In Progress</option>
           <option value="on_hold">On Hold</option>
           <option value="review">Review</option>
@@ -2601,6 +2594,8 @@ async function renderProjects(container) {
     if (q) list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q));
     if (st === 'archived') {
       list = list.filter(p => !!p.archived_at);
+    } else if (st === 'backlog') {
+      list = list.filter(p => p.status !== 'active');
     } else if (st === 'dormant') {
       list = list.filter(p => !container._inactiveStatuses.has(p.status) && p.updated_at && new Date(p.updated_at).getTime() < container._dormantCutoff);
     } else if (st) {
