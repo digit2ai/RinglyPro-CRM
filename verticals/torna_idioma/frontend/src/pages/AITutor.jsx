@@ -29,6 +29,20 @@ function renderMarkdown(text) {
   });
 }
 
+// Flatten markdown + drop emoji/tables so speech synthesis reads naturally.
+function stripForSpeech(md) {
+  return String(md || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\|/g, ' ')
+    .replace(/^\s*-{3,}\s*$/gm, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#*`_>~]/g, '')
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{FE0F}]/gu, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export default function AITutor() {
   const lang = getLang();
   const L = T[lang] || T.en;
@@ -39,14 +53,47 @@ export default function AITutor() {
   const [starters, setStarters] = useState({});
   const chatEnd = useRef(null);
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const [listening, setListening] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
+  const [micLang, setMicLang] = useState('es-MX');
+  const speechSupported = typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   useEffect(() => {
     api.get('/tutor/starters').then(r => setStarters(r.data.starters || {})).catch(() => {});
   }, []);
 
+  // Preload TTS voices (they populate asynchronously in most browsers) and
+  // stop any mic/speech on unmount.
+  useEffect(() => {
+    if (ttsSupported) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+    return () => {
+      try { recognitionRef.current?.stop(); } catch (e) { /* noop */ }
+      if (ttsSupported) window.speechSynthesis.cancel();
+    };
+  }, [ttsSupported]);
+
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const speak = (text) => {
+    if (!voiceOn || !ttsSupported || !text) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(stripForSpeech(text));
+      const voices = window.speechSynthesis.getVoices();
+      const esVoice = voices.find(v => /es[-_](MX|US|419|LA)/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
+      if (esVoice) u.voice = esVoice;
+      u.lang = (esVoice && esVoice.lang) || 'es-MX';
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* TTS unavailable — silent */ }
+  };
 
   const sendMessage = async (text) => {
     if (!text.trim() || loading) return;
@@ -61,12 +108,43 @@ export default function AITutor() {
       const chatHistory = newMessages.filter(m => m.role !== 'system').slice(-20);
       const r = await api.post('/tutor/chat', { messages: chatHistory, level });
       setMessages(prev => [...prev, { role: 'assistant', content: r.data.reply }]);
+      speak(r.data.reply);
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: '¡Disculpa! I encountered an error. Please try again. 🙏' }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
     }
+  };
+
+  // Browser speech-to-text. Final transcript auto-sends to Isabel.
+  const toggleListen = () => {
+    if (!speechSupported) return;
+    if (listening) { recognitionRef.current?.stop(); return; }
+    if (ttsSupported) window.speechSynthesis.cancel(); // don't let Isabel's voice feed the mic
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = micLang;
+    rec.interimResults = true;
+    rec.continuous = false;
+    recognitionRef.current = rec;
+    let finalText = '';
+    rec.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const tr = e.results[i];
+        if (tr.isFinal) finalText += tr[0].transcript; else interim += tr[0].transcript;
+      }
+      setInput((finalText + interim).trim());
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+      const t = finalText.trim();
+      if (t) sendMessage(t);
+    };
+    setListening(true);
+    rec.start();
   };
 
   const handleKeyDown = (e) => {
@@ -139,16 +217,43 @@ export default function AITutor() {
 
           {/* Input */}
           <div style={s.inputRow}>
+            {speechSupported && (
+              <button
+                onClick={() => setMicLang(l => (l === 'es-MX' ? 'en-US' : 'es-MX'))}
+                title="Microphone language"
+                style={s.micLangBtn}
+              >
+                {micLang === 'es-MX' ? 'ES' : 'EN'}
+              </button>
+            )}
+            {speechSupported && (
+              <button
+                onClick={toggleListen}
+                title={listening ? 'Stop listening' : `Speak (${micLang === 'es-MX' ? 'Español' : 'English'})`}
+                style={{ ...s.micBtn, ...(listening ? s.micActive : {}) }}
+              >
+                {listening ? '⏹' : '\u{1F3A4}'}
+              </button>
+            )}
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={L.placeholder}
+              placeholder={listening ? 'Listening…' : L.placeholder}
               style={s.input}
               rows={1}
               disabled={loading}
             />
+            {ttsSupported && (
+              <button
+                onClick={() => setVoiceOn(v => { if (v) window.speechSynthesis.cancel(); return !v; })}
+                title={voiceOn ? "Isabel's voice: on" : "Isabel's voice: off"}
+                style={{ ...s.voiceToggle, opacity: voiceOn ? 1 : 0.45 }}
+              >
+                {voiceOn ? '\u{1F50A}' : '\u{1F507}'}
+              </button>
+            )}
             <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} style={{ ...s.sendBtn, opacity: loading || !input.trim() ? 0.5 : 1 }}>
               {L.send}
             </button>
@@ -200,7 +305,11 @@ const s = {
   starterBtn: { textAlign: 'left', padding: '10px 14px', background: '#fff', border: '1px solid #F5E6C8', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: 2 },
   starterBtnLabel: { fontSize: 13, fontWeight: 600, color: '#1B2A4A' },
   starterBtnEs: { fontSize: 11, color: '#8B6914', fontStyle: 'italic' },
-  inputRow: { display: 'flex', gap: 8, padding: '16px 32px', borderTop: '2px solid #F5E6C8', background: '#fff' },
+  inputRow: { display: 'flex', gap: 8, padding: '16px 32px', borderTop: '2px solid #F5E6C8', background: '#fff', alignItems: 'stretch' },
+  micLangBtn: { padding: '0 10px', background: '#FFFDF5', border: '1px solid #F5E6C8', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#1B2A4A', cursor: 'pointer', letterSpacing: 1 },
+  micBtn: { padding: '0 14px', minWidth: 48, background: '#fff', border: '1px solid #C9A84C', borderRadius: 8, fontSize: 20, cursor: 'pointer', color: '#8B6914' },
+  micActive: { background: '#C41E3A', borderColor: '#C41E3A', color: '#fff' },
+  voiceToggle: { padding: '0 12px', background: '#fff', border: '1px solid #F5E6C8', borderRadius: 8, fontSize: 18, cursor: 'pointer' },
   input: { flex: 1, padding: '12px 16px', border: '1px solid #ddd', borderRadius: 8, fontSize: 15, fontFamily: "'Inter',sans-serif", resize: 'none', outline: 'none', lineHeight: 1.5 },
   sendBtn: { padding: '12px 24px', background: 'linear-gradient(135deg, #C9A84C, #8B6914)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Playfair Display',serif", letterSpacing: 1, whiteSpace: 'nowrap' },
   tipsCol: { width: 260, padding: '24px 20px', borderLeft: '1px solid #F5E6C8', background: '#FFFDF5', flexShrink: 0 },
