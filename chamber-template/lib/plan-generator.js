@@ -53,7 +53,7 @@ Output schema (strict JSON, no prose, no markdown fences):
 
 Generate a realistic, concise plan -- short and scannable, not exhaustive. team_roles_required must specify 3-5 distinct roles with clear required_skills and preferred_sectors so AI matching can identify candidates. Keep all string lengths within the limits above. Output ONLY valid JSON, no prose, no markdown fences.`;
 
-const MODEL = 'claude-sonnet-4-5-20250929';
+const MODEL = 'claude-sonnet-4-6';
 
 function buildUserMessage({ vision, sector, countries, budget_tier, target_delivery_weeks, target_total_usd }) {
   const countryStr = Array.isArray(countries) ? countries.join(', ') : (countries || 'global');

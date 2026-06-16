@@ -72,7 +72,7 @@ function getAnthropic() {
   return _anthropic;
 }
 
-const OPUS_MODEL = 'claude-opus-4-20250514';
+const OPUS_MODEL = 'claude-opus-4-8';
 
 // ── Research Cache (7-day TTL) ────────────────────────────────────────
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days

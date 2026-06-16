@@ -13,7 +13,7 @@ agentBus.setMaxListeners(20);
 class FreightMindAgent {
   constructor(config) {
     this.name = config.name;           // e.g. 'freight_finder', 'rate_engine'
-    this.model = config.model || 'claude-sonnet-4-5-20250514';
+    this.model = config.model || 'claude-sonnet-4-6';
     this.systemPrompt = config.systemPrompt || '';
     this.tools = config.tools || [];   // MCP tool definitions
     this.tenantId = config.tenantId || 'logistics';

@@ -4,7 +4,7 @@ class MedicalDocumentAI {
   constructor() {
     this.apiKey = process.env.ANTHROPIC_API_KEY;
     this.apiUrl = 'https://api.anthropic.com/v1/messages';
-    this.model = 'claude-sonnet-4-20250514';
+    this.model = 'claude-sonnet-4-6';
   }
 
   async extractFromImage(base64Image, mimeType, existingContext) {

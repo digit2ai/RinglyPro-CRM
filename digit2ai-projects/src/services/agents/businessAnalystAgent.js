@@ -29,10 +29,7 @@ const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 12000;
 // Sonnet fallback rates if user overrides SENIOR_BA_MODEL to a sonnet variant.
 const COST_RATES = {
   'claude-opus-4-8':            { in: 15 / 1e6, out: 75 / 1e6 },
-  'claude-opus-4-7':            { in: 15 / 1e6, out: 75 / 1e6 },
-  'claude-opus-4-6':            { in: 15 / 1e6, out: 75 / 1e6 },
-  'claude-sonnet-4-6':          { in:  3 / 1e6, out: 15 / 1e6 },
-  'claude-sonnet-4-5-20250929': { in:  3 / 1e6, out: 15 / 1e6 }
+  'claude-sonnet-4-6':          { in:  3 / 1e6, out: 15 / 1e6 }
 };
 function rateFor(model) {
   return COST_RATES[model] || COST_RATES['claude-opus-4-8'];

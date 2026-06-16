@@ -47,7 +47,7 @@ Be conservative — when in doubt between "research" and "none", or between "dra
 
 - Output ONLY valid JSON. No prose. No markdown fences. No leading/trailing whitespace outside the JSON.`;
 
-const MODEL = 'claude-sonnet-4-5-20250929';
+const MODEL = 'claude-sonnet-4-6';
 
 function safeParse(text) {
   let raw = String(text || '').trim();

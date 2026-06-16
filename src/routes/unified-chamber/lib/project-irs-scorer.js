@@ -274,7 +274,7 @@ async function maybeAiAdjust(plan, project, team, components, baseScore) {
       base_irs: Math.round(baseScore * 100) / 100
     };
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 350,
       system: `You audit project Investment Readiness Scores (IRS) for a chamber-of-commerce platform. Given dimension scores and the underlying plan summary, decide whether the base score should be adjusted up or down by no more than 0.10 (10 percentage points) based on cohesion / realism / quality.
 

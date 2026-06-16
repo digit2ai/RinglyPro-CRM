@@ -23,7 +23,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const surgeonTargetingService = require('../services/surgeon-targeting-service');
 
-const SONNET_MODEL = 'claude-sonnet-4-20250514';
+const SONNET_MODEL = 'claude-sonnet-4-6';
 let _anthropic = null;
 function getAnthropic() {
   if (!_anthropic) {

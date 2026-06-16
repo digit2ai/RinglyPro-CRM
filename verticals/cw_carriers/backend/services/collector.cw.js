@@ -68,7 +68,7 @@ async function scoreProspect(prospect) {
 async function enrichProspect(companyName, basicInfo = {}) {
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: `You are a freight logistics business analyst. Given a company name, provide a JSON estimate of their shipping profile for a freight broker. Return ONLY valid JSON.`,
       messages: [{
@@ -224,7 +224,7 @@ async function suggestProspects(count = 10) {
     );
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system: `You are a freight logistics business development AI. Generate realistic prospect company suggestions for a US freight broker based on their existing client and lane profile. Return ONLY a JSON array.`,
       messages: [{

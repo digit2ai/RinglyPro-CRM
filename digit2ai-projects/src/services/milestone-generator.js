@@ -39,7 +39,7 @@ Rules:
 - kickoff_recommendation is one paragraph (3-5 sentences) suggesting how to start.
 - Output ONLY valid JSON. No prose. No markdown fences.`;
 
-const MODEL = 'claude-sonnet-4-5-20250929';
+const MODEL = 'claude-sonnet-4-6';
 
 function buildUserMessage({ project_name, description, intake_answers, timeline, budget_range, ai_category }) {
   const today = new Date().toISOString().slice(0, 10);

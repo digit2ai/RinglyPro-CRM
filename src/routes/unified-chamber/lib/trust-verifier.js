@@ -273,7 +273,7 @@ async function maybeAiAdjust(member, evidence, components, baseScore) {
       base_score: Math.round(baseScore * 100) / 100
     };
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       system: `You audit chamber-member trust scores. Given component scores and underlying evidence, decide whether the base score should be adjusted up or down by no more than 0.10 (10 percentage points) to reflect cohesion / quality / legitimacy of evidence.
 

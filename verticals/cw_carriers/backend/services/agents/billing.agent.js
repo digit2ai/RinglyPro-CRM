@@ -596,7 +596,7 @@ async function trackDisputeResolution(input) {
 
 const billingAgent = new FreightMindAgent({
   name: 'billing',
-  model: 'claude-sonnet-4-5-20250514',
+  model: 'claude-sonnet-4-6',
   systemPrompt: `You are the Billing & Settlement agent for FreightMind. You automate invoicing on POD receipt, calculate driver settlements, manage collections, audit invoices, and maximize cash flow. Every dollar counts.`,
   tools: [
     {

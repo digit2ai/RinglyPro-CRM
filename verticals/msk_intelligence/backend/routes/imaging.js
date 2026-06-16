@@ -27,7 +27,7 @@ async function analyzeImageWithClaude(filePath, mimeType, caseContext) {
     const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: `You are a board-certified musculoskeletal radiologist performing an initial read of a medical image.
 You MUST output ONLY valid JSON with these exact fields:

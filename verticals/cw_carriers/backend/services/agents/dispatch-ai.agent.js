@@ -637,7 +637,7 @@ async function bookDockAppointment(input) {
 
 const dispatchAI = new FreightMindAgent({
   name: 'dispatch_ai',
-  model: 'claude-sonnet-4-5-20250514',
+  model: 'claude-sonnet-4-6',
   systemPrompt: `You are the Dispatch AI agent for FreightMind. Your job is to assign the right driver to the right load at the right time, optimizing for minimal deadhead, maximum utilization, HOS compliance, and driver preferences. You make autonomous dispatch decisions.`,
   tools: [
     {

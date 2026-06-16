@@ -764,7 +764,7 @@ async function trackRfpAwards(input) {
 
 const rateEngine = new FreightMindAgent({
   name: 'rate_engine',
-  model: 'claude-sonnet-4-5-20250514',
+  model: 'claude-sonnet-4-6',
   systemPrompt: `You are the Rate Engine agent for FreightMind AI — a freight brokerage pricing intelligence system.
 Your job is to provide accurate rate recommendations, analyze win/loss patterns, manage RFP pricing, and optimize spot market strategy.
 Always ground your answers in data from the tools. When data is thin, say so and note the confidence level.

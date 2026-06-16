@@ -7,7 +7,7 @@
  * Spanish-speaking household in Manila. She teaches Latin American Spanish
  * with deep awareness of Filipino cultural context and cognates.
  *
- * Primary model:   Claude (claude-opus-4-6)   via Anthropic API
+ * Primary model:   Claude (claude-sonnet-4-6)   via Anthropic API
  * Fallback model:  GPT-4o                     via OpenAI API
  *
  * If TI_V2_ANTHROPIC_KEY is missing: falls back to GPT-4o.
@@ -25,7 +25,7 @@ const sequelize = require('../../services/db.ti');
 
 const ANTHROPIC_KEY = process.env.TI_V2_ANTHROPIC_KEY || process.env.ANTHROPIC_API_KEY;
 const OPENAI_KEY = process.env.TI_V2_OPENAI_KEY || process.env.OPENAI_API_KEY;
-const CLAUDE_MODEL = process.env.TI_V2_CLAUDE_MODEL || 'claude-opus-4-20250514';
+const CLAUDE_MODEL = process.env.TI_V2_CLAUDE_MODEL || 'claude-sonnet-4-6';
 const OPENAI_MODEL = process.env.TI_V2_OPENAI_MODEL || 'gpt-4o';
 
 // Step 12: Proprietary fine-tuned model endpoint (optional).
