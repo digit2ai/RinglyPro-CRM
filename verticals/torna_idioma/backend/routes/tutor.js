@@ -58,37 +58,49 @@ router.post('/chat', auth.any, async (req, res) => {
       return res.status(400).json({ error: 'messages array required' });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.TI_V2_ANTHROPIC_KEY;
     if (!apiKey) {
       return res.status(503).json({ error: 'AI tutor service not configured' });
     }
 
     const levelHint = level ? `\n\nThe student's current Spanish level is: ${level}. Adapt your teaching accordingly.` : '';
 
-    const openaiMessages = [
-      { role: 'system', content: SYSTEM_PROMPT + levelHint },
-      ...messages.map(m => ({ role: m.role, content: m.content }))
-    ];
+    // Claude takes the system prompt as a top-level field and requires the
+    // message list to be user/assistant only, starting with a user turn.
+    // Strip system entries and drop any leading assistant messages (e.g. the UI welcome).
+    const claudeMessages = messages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => ({ role: m.role, content: String(m.content || '') }));
+    while (claudeMessages.length && claudeMessages[0].role !== 'user') {
+      claudeMessages.shift();
+    }
+    if (claudeMessages.length === 0) {
+      return res.status(400).json({ error: 'no user message to respond to' });
+    }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: openaiMessages,
+        model: 'claude-sonnet-4-6',
         max_tokens: 800,
-        temperature: 0.8,
+        system: SYSTEM_PROMPT + levelHint,
+        messages: claudeMessages,
       })
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('OpenAI error:', err);
+      console.error('Claude error:', err);
       return res.status(502).json({ error: 'AI tutor temporarily unavailable' });
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || 'Lo siento, no pude generar una respuesta. ¡Inténtalo de nuevo!';
+    const reply = data.content?.[0]?.text || 'Lo siento, no pude generar una respuesta. ¡Inténtalo de nuevo!';
 
     // Log conversation for analytics (optional)
     const sequelize = require('../services/db.ti');
