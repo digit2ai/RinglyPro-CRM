@@ -8,9 +8,19 @@ const T = {
   fil: { title: 'AI Spanish Tutor', sub: 'Mag-practice ng conversational Spanish kasama si Profesora Isabel — ang iyong personal na AI teacher gamit ang Don Quijote immersion method.', placeholder: 'I-type ang iyong mensahe sa Espanyol o Ingles...', send: 'Ipadala', thinking: 'Nag-iisip si Profesora Isabel...', level: 'Ang Antas Mo', beginner: 'Baguhan (A1-A2)', intermediate: 'Katamtaman (B1-B2)', advanced: 'Advanced (C1-C2)', starters: 'Mga Panimulang Paksa', tipTitle: 'Mga Tip', tip1: 'Subukang magsulat sa Espanyol — tutulungan ka ni Isabel', tip2: 'Magtanong tungkol sa koneksyon ng Filipino-Espanyol', tip3: 'Mag-practice ng BPO phone scripts', tip4: 'Maghanda para sa DELE certification exams', welcome: '¡Hola! 🇪🇸🇵🇭 Ako si **Profesora Isabel**, ang iyong AI Spanish tutor.\n\nGinagamit ko ang **Don Quijote immersion method** — matututo tayo sa pamamagitan ng pag-uusap, kultura, at real-life situations.\n\nAlam mo ba? Bilang Pilipino, alam mo na ang **daan-daang** salitang Espanyol! Mga salitang tulad ng *kumusta*, *mesa*, *silya*, *kutsara* — lahat galing sa Espanyol.\n\nPumili ng panimulang paksa sa ibaba, o sabihin lang **"¡Hola!"** para magsimula. ¿Estás listo/a?' },
 };
 
+// Escape HTML so LLM/user content can never inject markup via dangerouslySetInnerHTML.
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderMarkdown(text) {
   return text.split('\n').map((line, i) => {
-    let html = line
+    let html = escapeHtml(line)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code style="background:#F5E6C8;padding:1px 4px;border-radius:3px;font-size:13px">$1</code>');

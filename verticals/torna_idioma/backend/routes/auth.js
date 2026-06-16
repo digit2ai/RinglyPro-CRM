@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sequelize = require('../services/db.ti');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ringlypro-jwt-secret';
+const JWT_SECRET = require('../services/jwt-secret');
 const TENANT_ID = 'torna_idioma';
 
 router.post('/login', async (req, res) => {

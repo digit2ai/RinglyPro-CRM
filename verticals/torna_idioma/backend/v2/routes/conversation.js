@@ -125,8 +125,8 @@ router.post('/exchange', v2Auth.learner, upload.single('audio'), async (req, res
 
     // Persist user turn
     const [[turnCountRow]] = await sequelize.query(
-      `SELECT COALESCE(MAX(turn_number), -1)::int AS n FROM ti_v2_conversation_logs WHERE session_id = $1`,
-      { bind: [sessionId] }
+      `SELECT COALESCE(MAX(turn_number), -1)::int AS n FROM ti_v2_conversation_logs WHERE session_id = $1 AND learner_id = $2`,
+      { bind: [sessionId, learnerId] }
     );
     const nextTurn = (turnCountRow.n || -1) + 1;
 
@@ -276,13 +276,14 @@ router.post('/end', v2Auth.learner, async (req, res) => {
   try {
     const { session_id } = req.body;
     if (!session_id) return res.status(400).json({ error: 'session_id required' });
+    const learnerId = await getLearnerId(req.user.id);
     const [[stats]] = await sequelize.query(
       `SELECT COUNT(*)::int AS turns,
               SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END)::int AS user_turns,
               MIN(created_at) AS started_at,
               MAX(created_at) AS ended_at
-       FROM ti_v2_conversation_logs WHERE session_id = $1`,
-      { bind: [session_id] }
+       FROM ti_v2_conversation_logs WHERE session_id = $1 AND learner_id = $2`,
+      { bind: [session_id, learnerId] }
     );
     res.json({ success: true, session_id, stats });
   } catch (err) {

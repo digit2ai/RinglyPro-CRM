@@ -61,25 +61,40 @@ async function initialize() {
       console.error('  ⚠ v2 init skipped:', e.message);
     }
 
-    const users = [
-      { email: 'admin@tornaidioma.ph', password: 'TornaIdioma2026!', role: 'admin', full_name: 'Torna Idioma Admin' },
-      { email: 'mstagg@digit2ai.com', password: 'Palindrome@7', role: 'admin', full_name: 'Manuel Stagg', organization: 'Digit2AI' },
-      { email: 'teacher@tornaidioma.ph', password: 'TeacherDemo2026!', role: 'teacher', full_name: 'María García', organization: 'Instituto Cervantes' },
-      { email: 'student@tornaidioma.ph', password: 'StudentDemo2026!', role: 'student', full_name: 'Juan dela Cruz' },
-      { email: 'official@makati.gov.ph', password: 'MakatiOfficial2026!', role: 'official', full_name: 'City Official', organization: 'Makati City Government' },
-      { email: 'bpo@tornaidioma.ph', password: 'BPODemo2026!', role: 'bpo_worker', full_name: 'Ana Santos', organization: 'Teleperformance Philippines' },
-      { email: 'partner@tornaidioma.ph', password: 'PartnerDemo2026!', role: 'partner', full_name: 'Carlos Méndez', organization: 'Instituto Cervantes Manila' },
-    ];
-    for (const u of users) {
+    // Account provisioning.
+    // SECURITY: never overwrite an existing account's password_hash on boot
+    // (would silently revert real password changes), and never ship plaintext
+    // credentials in source. Demo accounts are only seeded when TI_SEED_DEMO=1.
+    // A real admin can be provisioned from env (TI_ADMIN_EMAIL/TI_ADMIN_PASSWORD)
+    // without exposing credentials in the repo.
+    async function provisionUser(u) {
+      const email = u.email.toLowerCase();
+      const [[existing]] = await sequelize.query(`SELECT id FROM ti_users WHERE email = $1`, { bind: [email] });
+      if (existing) return; // never touch an existing account's password
       const hash = await bcrypt.hash(u.password, 12);
-      const [[existing]] = await sequelize.query(`SELECT id FROM ti_users WHERE email = $1`, { bind: [u.email] });
-      if (existing) {
-        await sequelize.query(`UPDATE ti_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`, { bind: [hash, u.email] });
-      } else {
-        await sequelize.query(`INSERT INTO ti_users (email, password_hash, tenant_id, role, full_name, organization, status, created_at, updated_at) VALUES ($1, $2, 'torna_idioma', $3, $4, $5, 'active', NOW(), NOW())`, { bind: [u.email, hash, u.role, u.full_name, u.organization || null] });
-      }
+      await sequelize.query(
+        `INSERT INTO ti_users (email, password_hash, tenant_id, role, full_name, organization, status, created_at, updated_at) VALUES ($1, $2, 'torna_idioma', $3, $4, $5, 'active', NOW(), NOW())`,
+        { bind: [email, hash, u.role, u.full_name, u.organization || null] }
+      );
     }
-    console.log('  ✅ Torna Idioma users initialized');
+
+    if (process.env.TI_ADMIN_EMAIL && process.env.TI_ADMIN_PASSWORD) {
+      await provisionUser({ email: process.env.TI_ADMIN_EMAIL, password: process.env.TI_ADMIN_PASSWORD, role: 'admin', full_name: process.env.TI_ADMIN_NAME || 'Torna Idioma Admin', organization: 'Digit2AI' });
+      console.log('  ✅ Torna Idioma admin provisioned from env');
+    }
+
+    if (process.env.TI_SEED_DEMO === '1') {
+      const demoUsers = [
+        { email: 'admin@tornaidioma.ph', password: process.env.TI_ADMIN_PASSWORD || 'TornaIdioma2026!', role: 'admin', full_name: 'Torna Idioma Admin' },
+        { email: 'teacher@tornaidioma.ph', password: 'TeacherDemo2026!', role: 'teacher', full_name: 'María García', organization: 'Instituto Cervantes' },
+        { email: 'student@tornaidioma.ph', password: 'StudentDemo2026!', role: 'student', full_name: 'Juan dela Cruz' },
+        { email: 'official@makati.gov.ph', password: 'MakatiOfficial2026!', role: 'official', full_name: 'City Official', organization: 'Makati City Government' },
+        { email: 'bpo@tornaidioma.ph', password: 'BPODemo2026!', role: 'bpo_worker', full_name: 'Ana Santos', organization: 'Teleperformance Philippines' },
+        { email: 'partner@tornaidioma.ph', password: 'PartnerDemo2026!', role: 'partner', full_name: 'Carlos Méndez', organization: 'Instituto Cervantes Manila' },
+      ];
+      for (const u of demoUsers) await provisionUser(u);
+      console.log('  ✅ Torna Idioma demo users seeded (TI_SEED_DEMO=1)');
+    }
 
     // Seed UVEG SFL courses (12 modules × 6 lessons = 72 lessons)
     // If old demo courses exist but UVEG Module 1 doesn't, migrate to UVEG curriculum

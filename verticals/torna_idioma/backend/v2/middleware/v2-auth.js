@@ -21,7 +21,7 @@
 
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ringlypro-jwt-secret';
+const JWT_SECRET = require('../../services/jwt-secret');
 const TENANT_ID = 'torna_idioma';
 
 function v2Auth(roles = []) {

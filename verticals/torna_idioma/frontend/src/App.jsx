@@ -161,7 +161,7 @@ export default function App() {
         <Route path={`${BASE}/ai-tutor`} element={<ProtectedRoute><Layout><AITutor /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/partner-network`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><PartnerNetwork /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/collaboration`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><InternationalCollaboration /></Layout></ProtectedRoute>} />
-        <Route path={`${BASE}/learn/*`} element={<LearnerV2App />} />
+        <Route path={`${BASE}/learn/*`} element={<ProtectedRoute><LearnerV2App /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to={`${BASE}/`} replace />} />
       </Routes>
     </BrowserRouter>
