@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guion — Presentación y Cierre · HISPANOTEC Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0e2f4f; --navy-deep:#0a223a; --sky:#3e8fbf; --sky-light:#5fa8d3;
+    --tint:#eaf2f8; --ink:#1a2733; --muted:#5b6b78; --line:#dbe6ef; --white:#fff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Source Serif 4',Georgia,serif;
+    color:var(--ink); background:#f4f7fa; line-height:1.75; font-size:20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:40px 24px 90px;}
+  .head{
+    background:linear-gradient(160deg,var(--navy-deep),var(--navy) 60%,#1b4a73);
+    color:#fff;border-radius:16px;padding:34px 32px;margin-bottom:34px;
+  }
+  .head .kick{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--sky-light);font-weight:700;}
+  .head h1{font-family:'Inter',sans-serif;font-size:30px;font-weight:800;
+    line-height:1.2;margin:10px 0 6px;}
+  .head h1 span{color:var(--sky-light);}
+  .head p{font-size:16px;color:#cfe0ee;max-width:560px;}
+  .seg{background:var(--white);border:1px solid var(--line);border-radius:16px;
+    padding:30px 34px;margin-bottom:26px;box-shadow:0 4px 18px rgba(14,47,79,.05);}
+  .seg-head{display:flex;align-items:center;justify-content:space-between;
+    gap:14px;border-bottom:2px solid var(--tint);padding-bottom:14px;margin-bottom:20px;flex-wrap:wrap;}
+  .seg-head h2{font-family:'Inter',sans-serif;font-size:21px;font-weight:800;color:var(--navy);}
+  .time{font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;color:var(--sky);
+    background:var(--tint);border:1px solid #cfe2f0;border-radius:30px;padding:6px 14px;white-space:nowrap;}
+  .seg p{margin-bottom:16px;}
+  .seg p:last-child{margin-bottom:0;}
+  .lead{color:var(--navy);font-weight:600;}
+  .em{color:var(--sky);font-weight:700;font-family:'Inter',sans-serif;}
+  .pause{display:inline-block;color:var(--muted);font-family:'Inter',sans-serif;
+    font-size:13px;font-style:italic;}
+  .steps{margin:6px 0 16px;padding-left:4px;list-style:none;}
+  .steps li{position:relative;padding-left:30px;margin-bottom:8px;}
+  .steps li b{color:var(--navy);font-family:'Inter',sans-serif;}
+  .steps li::before{content:counter(s);counter-increment:s;position:absolute;left:0;top:3px;
+    width:22px;height:22px;border-radius:50%;background:var(--sky);color:#fff;
+    font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;}
+  .steps{counter-reset:s;}
+  .foot{text-align:center;font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);margin-top:14px;}
+  .print-tip{text-align:center;font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);margin-bottom:22px;}
+  @media print{
+    body{background:#fff;font-size:13.5pt;}
+    .wrap{padding:0;max-width:100%;}
+    .head{background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .seg{box-shadow:none;border-color:#ccc;page-break-inside:avoid;}
+    .print-tip{display:none;}
+  }
+  @media(max-width:560px){ body{font-size:18px;} .wrap{padding:24px 16px 70px;} .seg{padding:22px 20px;} .head{padding:26px 22px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="kick">Guion de presentación</div>
+    <h1>HISPANOTEC <span>DIGITAL</span></h1>
+    <p>Para decir después de la presentación de voz de Lina: primero quién soy, luego el cierre persuasivo y la invitación.</p>
+  </div>
+
+  <div class="print-tip">Consejo: pulsa Cmd/Ctrl + P para imprimirlo o guardarlo en PDF.</div>
+
+  <!-- BLOQUE 1 -->
+  <section class="seg">
+    <div class="seg-head">
+      <h2>1 · Quién soy</h2>
+      <span class="time">~40 segundos</span>
+    </div>
+    <p>Permítanme presentarme en pocas palabras. Mi nombre es <span class="em">Manuel Stagg</span>, soy fundador y director de <b>Digit2AI</b> y arquitecto de soluciones de inteligencia artificial.</p>
+    <p>Tengo más de veinte años en tecnología empresarial, y más de veinticinco años en <b>Citigroup</b>, liderando programas globales de cumplimiento, riesgo e inteligencia artificial.</p>
+    <p>Creé Digit2AI con una idea simple: llevar la misma inteligencia artificial que usa Wall Street a las empresas que de verdad mueven nuestras comunidades — las pequeñas y medianas empresas, los profesionales, la salud, la logística, el comercio y, por supuesto, las cámaras y redes como esta.</p>
+    <p>Hoy esa tecnología ya entrega resultados reales: hasta un setenta por ciento de tareas automatizadas y una reducción importante de costos. Y es la misma inteligencia que está detrás de HISPANOTEC Digital.</p>
+  </section>
+
+  <!-- BLOQUE 2 -->
+  <section class="seg">
+    <div class="seg-head">
+      <h2>2 · Cierre e invitación</h2>
+      <span class="time">~3 minutos</span>
+    </div>
+    <p class="lead">Muchas gracias. Acaban de escuchar a Lina presentar, sección por sección, lo que es HISPANOTEC Digital. Permítanme cerrar con lo más importante, en pocas palabras.</p>
+    <p>Lo primero: HISPANOTEC Digital no es un directorio, ni una simple lista de contactos, ni una asociación más. Es una <span class="em">red viva</span>. Un ecosistema digital que toma los contactos, las empresas y las instituciones del mundo hispano, y los convierte en negocios y proyectos reales.</p>
+    <p>¿Por qué nace esto? Porque todos lo sabemos: en el mundo hispano sobra talento y sobran oportunidades, pero están dispersos. Cada uno por su lado. Lo que hacía falta era un lugar que los conectara y los pusiera a trabajar juntos. Eso es exactamente lo que hace esta plataforma.</p>
+    <p>Ahora, ¿qué significa esto para cada uno de ustedes? <b>Tres cosas muy concretas.</b></p>
+    <p><b>Primera:</b> encuentran al socio correcto en minutos, no en semanas. Ustedes dicen qué necesitan, y la inteligencia artificial los conecta con la persona o la empresa indicada, ordenada por afinidad.</p>
+    <p><b>Segunda:</b> cada proyecto se revisa antes de que arriesguen un solo recurso. La plataforma analiza la oportunidad y la viabilidad, y hasta simula los escenarios. Así ustedes deciden con datos, no con corazonadas.</p>
+    <p><b>Y tercera, muy importante:</b> la última palabra siempre la tienen ustedes. La inteligencia artificial asiste, analiza y recomienda, pero nunca decide por ustedes. El control siempre es humano.</p>
+    <p>¿Y cómo funciona en la práctica? Es sencillo, en cinco pasos. <span class="pause">(de la idea a la realidad)</span></p>
+    <ul class="steps">
+      <li><b>Un socio presenta una idea</b> — técnica, cultural o empresarial.</li>
+      <li><b>Analizamos</b> su oportunidad y su viabilidad.</li>
+      <li><b>Armamos el equipo</b>, conectando expertos de distintos países.</li>
+      <li><b>Gestionamos los recursos</b>: la financiación y las alianzas.</li>
+      <li><b>Ejecutamos el proyecto</b>, con resultados que se pueden medir y que benefician a la comunidad.</li>
+    </ul>
+    <p>Lo que antes tomaba semanas, aquí se coordina en minutos.</p>
+    <p>Y entrar es muy fácil. Crean su perfil verificado en <span class="em">menos de cinco minutos</span>, y desde el primer día empiezan a recibir conexiones y oportunidades. Sin complicaciones.</p>
+    <p>Quiero que se lleven una idea clara: esto no es una promesa para el futuro. <b>Ya está funcionando, ya está en línea, y lo pueden usar hoy mismo.</b></p>
+    <p>Así que mi invitación es sencilla y directa. Únanse a la red. Traigan una idea, un proyecto o una necesidad. Dejen que el ecosistema haga el resto, y nosotros los acompañamos en el camino.</p>
+    <p class="lead">Porque al final, de eso se trata HISPANOTEC Digital: de pasar de las palabras a la acción. Muchas gracias, y bienvenidos a la red.</p>
+  </section>
+
+  <div class="foot">HISPANOTEC Digital · Digit2AI &nbsp;·&nbsp; Guion para la presentación</div>
+
+</div>
+</body>
+</html>
