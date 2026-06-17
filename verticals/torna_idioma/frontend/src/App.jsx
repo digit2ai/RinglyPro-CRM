@@ -18,7 +18,12 @@ import EconomicImpact from './pages/EconomicImpact';
 import PartnerNetwork from './pages/PartnerNetwork';
 import AITutor from './pages/AITutor';
 import InternationalCollaboration from './pages/InternationalCollaboration';
+import CincoRaices from './pages/CincoRaices';
+import Emperador from './pages/Emperador';
+import TranslationAtelier from './pages/TranslationAtelier';
+import RizalModule from './pages/RizalModule';
 import LearnerV2App from './v2/LearnerV2App';
+import { tr } from './i18n';
 
 const BASE = '/Torna_Idioma';
 
@@ -39,7 +44,7 @@ function LangSwitcher() {
   const handleLang = (l) => { setLang(l); setL(l); window.location.reload(); };
   return (
     <div style={S.langSwitcher}>
-      {['en','es','fil'].map(l => (
+      {['en','fil'].map(l => (
         <button key={l} onClick={() => handleLang(l)} style={{ ...S.langBtn, ...(lang === l ? S.langBtnActive : {}) }}>{l.toUpperCase()}</button>
       ))}
     </div>
@@ -54,9 +59,14 @@ function Sidebar({ open, onClose }) {
 
   const allNav = [
     { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','official','teacher'] },
+    { section: 'MÉTODO RIZAL' },
+    { path: `${BASE}/cinco-raices`, label: tr('nav.cincoRaices'), roles: ['admin','teacher','student','bpo_worker'] },
+    { path: `${BASE}/ai-tutor`, label: 'AI Spanish Tutor', roles: ['admin','teacher','student','bpo_worker'] },
+    { path: `${BASE}/atelier`, label: tr('nav.atelier'), roles: ['admin','teacher','student','bpo_worker'] },
+    { path: `${BASE}/rizal-studies`, label: tr('nav.rizal'), roles: ['admin','teacher','student','bpo_worker','official'] },
+    { path: `${BASE}/emperador`, label: tr('nav.emperador'), roles: ['admin','teacher','student','bpo_worker'] },
     { section: 'EDUCATION' },
     { path: `${BASE}/courses`, label: 'Course Catalog', roles: ['admin','teacher','student','bpo_worker'] },
-    { path: `${BASE}/ai-tutor`, label: 'AI Spanish Tutor', roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/progress`, label: 'My Progress', roles: ['admin','student','bpo_worker'] },
     { path: `${BASE}/certifications`, label: 'Certifications', roles: ['admin','teacher','student','bpo_worker','official'] },
     { section: 'BPO PROGRAM' },
@@ -159,6 +169,10 @@ export default function App() {
         <Route path={`${BASE}/schools`} element={<ProtectedRoute roles={['admin','official']}><Layout><Schools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><EconomicImpact /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/ai-tutor`} element={<ProtectedRoute><Layout><AITutor /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/cinco-raices`} element={<ProtectedRoute><Layout><CincoRaices /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/emperador`} element={<ProtectedRoute><Layout><Emperador /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/atelier`} element={<ProtectedRoute><Layout><TranslationAtelier /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/rizal-studies`} element={<ProtectedRoute><Layout><RizalModule /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/partner-network`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><PartnerNetwork /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/collaboration`} element={<ProtectedRoute roles={['admin','official','partner']}><Layout><InternationalCollaboration /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/learn/*`} element={<ProtectedRoute><LearnerV2App /></ProtectedRoute>} />

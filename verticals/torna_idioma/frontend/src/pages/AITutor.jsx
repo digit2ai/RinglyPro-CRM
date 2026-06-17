@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getLang } from '../services/auth';
+import { tr, uiLang } from '../i18n';
 import api from '../services/api';
 
 const T = {
-  en: { title: 'AI Spanish Tutor', sub: 'Practice conversational Spanish with Profesora Isabel — your personal AI teacher using the Don Quijote immersion method.', placeholder: 'Type your message in Spanish or English...', send: 'Send', thinking: 'Profesora Isabel is thinking...', level: 'Your Level', beginner: 'Beginner (A1-A2)', intermediate: 'Intermediate (B1-B2)', advanced: 'Advanced (C1-C2)', starters: 'Conversation Starters', tipTitle: 'Tips', tip1: 'Try writing in Spanish — Isabel will help with corrections', tip2: 'Ask about Filipino-Spanish word connections', tip3: 'Practice BPO phone scripts and customer service', tip4: 'Prepare for DELE certification exams', welcome: '¡Hola! 🇪🇸🇵🇭 I\'m **Profesora Isabel**, your AI Spanish tutor.\n\nI use the **Don Quijote immersion method** — we\'ll learn through conversation, culture, and real-life situations.\n\nDid you know? As a Filipino, you already know **hundreds** of Spanish words! Words like *kumusta*, *mesa*, *silya*, *kutsara* — all come from Spanish.\n\nChoose a conversation starter below, or just say **"¡Hola!"** to begin. ¿Estás listo/a? (Are you ready?)' },
+  en: { title: 'AI Spanish Tutor', sub: 'Practice conversational Spanish with Profesora Isabel — your personal AI teacher using the Método Rizal (five roots a night).', placeholder: 'Type your message in Spanish or English...', send: 'Send', thinking: 'Profesora Isabel is thinking...', level: 'Your Level', beginner: 'Beginner (A1-A2)', intermediate: 'Intermediate (B1-B2)', advanced: 'Advanced (C1-C2)', starters: 'Conversation Starters', tipTitle: 'Tips', tip1: 'Try writing in Spanish — Isabel will help with corrections', tip2: 'Ask about Filipino-Spanish word connections', tip3: 'Practice BPO phone scripts and customer service', tip4: 'Prepare for DELE certification exams', welcome: '¡Hola! 🇪🇸🇵🇭 I\'m **Profesora Isabel**, your AI Spanish tutor.\n\nI use the **Método Rizal** — five new root words a night, the way José Rizal learned languages, through conversation, culture, and real texts.\n\nDid you know? As a Filipino, you already know **hundreds** of Spanish words! Words like *kumusta*, *mesa*, *silya*, *kutsara* — all come from Spanish.\n\nChoose a conversation starter below, or just say **"¡Hola!"** to begin. ¿Estás listo/a? (Are you ready?)' },
   es: { title: 'Tutor de Español IA', sub: 'Practica español conversacional con la Profesora Isabel — tu profesora personal de IA con el método Don Quijote.', placeholder: 'Escribe tu mensaje en español o inglés...', send: 'Enviar', thinking: 'La Profesora Isabel está pensando...', level: 'Tu Nivel', beginner: 'Principiante (A1-A2)', intermediate: 'Intermedio (B1-B2)', advanced: 'Avanzado (C1-C2)', starters: 'Temas de Conversación', tipTitle: 'Consejos', tip1: 'Intenta escribir en español — Isabel te ayudará con correcciones', tip2: 'Pregunta sobre las conexiones Filipino-Español', tip3: 'Practica guiones telefónicos de BPO', tip4: 'Prepárate para los exámenes DELE', welcome: '¡Hola! 🇪🇸🇵🇭 Soy la **Profesora Isabel**, tu tutora de español con IA.\n\nUso el **método de inmersión Don Quijote** — aprenderemos a través de conversación, cultura y situaciones reales.\n\n¿Sabías que los filipinos ya conocen **cientos** de palabras en español? Palabras como *kumusta*, *mesa*, *silya*, *kutsara* — todas vienen del español.\n\nElige un tema de conversación abajo, o simplemente di **"¡Hola!"** para comenzar. ¿Estás listo/a?' },
-  fil: { title: 'AI Spanish Tutor', sub: 'Mag-practice ng conversational Spanish kasama si Profesora Isabel — ang iyong personal na AI teacher gamit ang Don Quijote immersion method.', placeholder: 'I-type ang iyong mensahe sa Espanyol o Ingles...', send: 'Ipadala', thinking: 'Nag-iisip si Profesora Isabel...', level: 'Ang Antas Mo', beginner: 'Baguhan (A1-A2)', intermediate: 'Katamtaman (B1-B2)', advanced: 'Advanced (C1-C2)', starters: 'Mga Panimulang Paksa', tipTitle: 'Mga Tip', tip1: 'Subukang magsulat sa Espanyol — tutulungan ka ni Isabel', tip2: 'Magtanong tungkol sa koneksyon ng Filipino-Espanyol', tip3: 'Mag-practice ng BPO phone scripts', tip4: 'Maghanda para sa DELE certification exams', welcome: '¡Hola! 🇪🇸🇵🇭 Ako si **Profesora Isabel**, ang iyong AI Spanish tutor.\n\nGinagamit ko ang **Don Quijote immersion method** — matututo tayo sa pamamagitan ng pag-uusap, kultura, at real-life situations.\n\nAlam mo ba? Bilang Pilipino, alam mo na ang **daan-daang** salitang Espanyol! Mga salitang tulad ng *kumusta*, *mesa*, *silya*, *kutsara* — lahat galing sa Espanyol.\n\nPumili ng panimulang paksa sa ibaba, o sabihin lang **"¡Hola!"** para magsimula. ¿Estás listo/a?' },
+  fil: { title: 'AI Spanish Tutor', sub: 'Mag-practice ng conversational Spanish kasama si Profesora Isabel — gamit ang Método Rizal (limang ugat bawat gabi).', placeholder: 'I-type ang iyong mensahe sa Espanyol o Ingles...', send: 'Ipadala', thinking: 'Nag-iisip si Profesora Isabel...', level: 'Ang Antas Mo', beginner: 'Baguhan (A1-A2)', intermediate: 'Katamtaman (B1-B2)', advanced: 'Advanced (C1-C2)', starters: 'Mga Panimulang Paksa', tipTitle: 'Mga Tip', tip1: 'Subukang magsulat sa Espanyol — tutulungan ka ni Isabel', tip2: 'Magtanong tungkol sa koneksyon ng Filipino-Espanyol', tip3: 'Mag-practice ng BPO phone scripts', tip4: 'Maghanda para sa DELE certification exams', welcome: '¡Hola! 🇪🇸🇵🇭 Ako si **Profesora Isabel**, ang iyong AI Spanish tutor.\n\nGinagamit ko ang **Método Rizal** — limang bagong salitang-ugat bawat gabi, ang paraan ng pagkatuto ng wika ni José Rizal, sa pamamagitan ng pag-uusap, kultura, at totoong teksto.\n\nAlam mo ba? Bilang Pilipino, alam mo na ang **daan-daang** salitang Espanyol! Mga salitang tulad ng *kumusta*, *mesa*, *silya*, *kutsara* — lahat galing sa Espanyol.\n\nPumili ng panimulang paksa sa ibaba, o sabihin lang **"¡Hola!"** para magsimula. ¿Estás listo/a?' },
 };
 
 // Escape HTML so LLM/user content can never inject markup via dangerouslySetInnerHTML.
@@ -18,8 +19,13 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+// Remove the ⟦es⟧ Spanish-voice markers before display (kept only for TTS).
+function stripMarkers(s) {
+  return String(s || '').replace(/⟦es⟧/g, '');
+}
+
 function renderMarkdown(text) {
-  return text.split('\n').map((line, i) => {
+  return stripMarkers(text).split('\n').map((line, i) => {
     let html = escapeHtml(line)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -44,12 +50,15 @@ function stripForSpeech(md) {
 }
 
 export default function AITutor() {
-  const lang = getLang();
+  const lang = uiLang();
   const L = T[lang] || T.en;
   const [messages, setMessages] = useState([{ role: 'assistant', content: L.welcome }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [level, setLevel] = useState('beginner');
+  const [immersion, setImmersion] = useState(1);
+  const [diaEspanol, setDiaEspanol] = useState(false);
+  const [meta, setMeta] = useState({ streak: 0, module: 1 });
   const [starters, setStarters] = useState({});
   const chatEnd = useRef(null);
   const inputRef = useRef(null);
@@ -64,6 +73,11 @@ export default function AITutor() {
 
   useEffect(() => {
     api.get('/tutor/starters').then(r => setStarters(r.data.starters || {})).catch(() => {});
+    // Pull streak + current module so Isabel can honor the streak and stay on-module.
+    api.get('/vocab/progress').then(r => {
+      const d = r.data || {};
+      setMeta({ streak: d.streak?.current || 0, module: d.current_module || 1 });
+    }).catch(() => {});
   }, []);
 
   // Preload TTS voices (they populate asynchronously in most browsers) and
@@ -110,7 +124,8 @@ export default function AITutor() {
     if (!voiceOn || !text) return;
     stopAudio();
     try {
-      const r = await api.post('/tutor/tts', { text: stripForSpeech(text) }, { responseType: 'blob' });
+      // Keep ⟦es⟧ markers so the backend smart-splits Spanish vs explanation voices.
+      const r = await api.post('/tutor/tts', { text: stripForSpeech(text), interface_lang: lang }, { responseType: 'blob' });
       const url = URL.createObjectURL(r.data);
       const audio = new Audio(url);
       audioRef.current = audio;
@@ -132,7 +147,15 @@ export default function AITutor() {
     try {
       // Only send last 20 messages for context window
       const chatHistory = newMessages.filter(m => m.role !== 'system').slice(-20);
-      const r = await api.post('/tutor/chat', { messages: chatHistory, level });
+      const r = await api.post('/tutor/chat', {
+        messages: chatHistory,
+        level,
+        interface_lang: lang,
+        immersion_level: immersion,
+        mode: diaEspanol ? 'dia_de_espanol' : 'tutor',
+        streak_days: meta.streak,
+        current_module: meta.module,
+      });
       setMessages(prev => [...prev, { role: 'assistant', content: r.data.reply }]);
       speak(r.data.reply);
     } catch (err) {
@@ -192,13 +215,30 @@ export default function AITutor() {
             <p style={s.headerSub}>{L.sub}</p>
           </div>
         </div>
-        <div style={s.levelSelect}>
-          <label style={s.levelLabel}>{L.level}</label>
-          <select value={level} onChange={e => setLevel(e.target.value)} style={s.select}>
-            <option value="beginner">{L.beginner}</option>
-            <option value="intermediate">{L.intermediate}</option>
-            <option value="advanced">{L.advanced}</option>
-          </select>
+        <div style={s.controls}>
+          <div style={s.levelSelect}>
+            <label style={s.levelLabel}>{L.level}</label>
+            <select value={level} onChange={e => setLevel(e.target.value)} style={s.select}>
+              <option value="beginner">{L.beginner}</option>
+              <option value="intermediate">{L.intermediate}</option>
+              <option value="advanced">{L.advanced}</option>
+            </select>
+          </div>
+          <div style={s.levelSelect}>
+            <label style={s.levelLabel} title={tr('tutor.immersionHint')}>{tr('tutor.immersion')} · L{immersion}</label>
+            <input
+              type="range" min={1} max={5} step={1} value={immersion}
+              onChange={e => setImmersion(Number(e.target.value))}
+              style={{ width: 120, accentColor: '#C9A84C' }}
+            />
+          </div>
+          <button
+            onClick={() => setDiaEspanol(v => !v)}
+            title={tr('tutor.diaEspanol')}
+            style={{ ...s.diaBtn, ...(diaEspanol ? s.diaBtnActive : {}) }}
+          >
+            {tr('tutor.diaEspanol')}
+          </button>
         </div>
       </div>
 
@@ -234,7 +274,6 @@ export default function AITutor() {
                 {currentStarters.map((st, i) => (
                   <button key={i} onClick={() => sendMessage(st.prompt)} style={s.starterBtn}>
                     <span style={s.starterBtnLabel}>{st[`label_${lang}`] || st.label_en}</span>
-                    <span style={s.starterBtnEs}>{st.label_es}</span>
                   </button>
                 ))}
               </div>
@@ -296,8 +335,8 @@ export default function AITutor() {
             </div>
           ))}
           <div style={s.methodCard}>
-            <div style={s.methodBadge}>DON QUIJOTE METHOD</div>
-            <p style={s.methodText}>Immersion-based communicative teaching inspired by Spain's leading language schools. Learn by doing, not memorizing.</p>
+            <div style={s.methodBadge}>{tr('tutor.method')}</div>
+            <p style={s.methodText}>{tr('tutor.methodDesc')}</p>
           </div>
         </div>
       </div>
@@ -312,6 +351,9 @@ const s = {
   avatar: { width: 52, height: 52, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '2px solid #C9A84C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 },
   headerTitle: { fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 800, color: '#fff', marginBottom: 4 },
   headerSub: { fontSize: 13, color: '#E8D48B', fontStyle: 'italic', maxWidth: 500 },
+  controls: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
+  diaBtn: { padding: '8px 14px', borderRadius: 6, border: '1px solid #C9A84C', background: 'rgba(255,255,255,0.1)', color: '#E8D48B', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' },
+  diaBtnActive: { background: '#C9A84C', color: '#0F1A2E' },
   levelSelect: { display: 'flex', alignItems: 'center', gap: 10 },
   levelLabel: { fontSize: 11, fontWeight: 700, color: '#E8D48B', letterSpacing: 1, textTransform: 'uppercase' },
   select: { padding: '8px 12px', borderRadius: 6, border: '1px solid #C9A84C', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' },

@@ -33,8 +33,13 @@ const HEADERS = {
 };
 
 const DEFAULT_VOICE = 'es-MX-DaliaNeural'; // warm Latin-American female — Profesora Isabel
+const EXPL_VOICE_EN = 'en-US-AriaNeural';  // explanation voice when interface_lang = en
+const EXPL_VOICE_FIL = 'fil-PH-BlessicaNeural'; // explanation voice when interface_lang = fil
 const DEFAULT_RATE = '-4%'; // slightly slowed for learners
 const SYNTH_TIMEOUT_MS = 15000;
+
+// Marker Profesora Isabel uses to wrap Spanish target words for the voice layer.
+const ES_MARKER = '⟦es⟧'; // ⟦es⟧
 
 // Sec-MS-GEC token: SHA256 of (Windows-file-time ticks rounded to 5 min) + token.
 // Ticks exceed Number.MAX_SAFE_INTEGER, so compute with BigInt.
@@ -131,4 +136,47 @@ function synthesize(text, opts = {}) {
   });
 }
 
-module.exports = { synthesize, DEFAULT_VOICE };
+/**
+ * Smart-split synthesis: split `text` on ⟦es⟧ markers and speak Spanish spans in
+ * a Spanish voice and the surrounding explanation in the interface-language voice,
+ * concatenating the MP3 segments into ONE buffer. Edge returns a fixed bitrate so
+ * naive Buffer concatenation plays back cleanly.
+ *
+ * @param {string} text  may contain ⟦es⟧ … ⟦es⟧ spans
+ * @param {{interfaceLang?:'en'|'fil', esVoice?:string, rate?:string}} [opts]
+ * @returns {Promise<Buffer>}
+ */
+async function synthesizeMarked(text, opts = {}) {
+  const esVoice = opts.esVoice || DEFAULT_VOICE;
+  const explVoice = opts.interfaceLang === 'fil' ? EXPL_VOICE_FIL : EXPL_VOICE_EN;
+  const rate = opts.rate || DEFAULT_RATE;
+
+  const raw = String(text || '');
+  if (!raw.includes(ES_MARKER)) {
+    // No markers → speak the whole thing in the explanation voice.
+    return synthesize(raw, { voice: explVoice, rate });
+  }
+
+  // Toggle Spanish on every marker. Parts at odd indices are Spanish.
+  const parts = raw.split(ES_MARKER);
+  const segments = [];
+  for (let i = 0; i < parts.length; i++) {
+    const seg = parts[i].trim();
+    if (!seg) continue;
+    segments.push({ text: parts[i], voice: i % 2 === 1 ? esVoice : explVoice });
+  }
+  if (segments.length === 0) return synthesize(raw.replace(/⟦es⟧/g, ' '), { voice: explVoice, rate });
+
+  const buffers = [];
+  for (const s of segments) {
+    try {
+      buffers.push(await synthesize(s.text, { voice: s.voice, rate }));
+    } catch (e) {
+      // Skip a failed segment rather than aborting the whole utterance.
+    }
+  }
+  if (buffers.length === 0) throw new Error('Edge TTS produced no audio');
+  return Buffer.concat(buffers);
+}
+
+module.exports = { synthesize, synthesizeMarked, DEFAULT_VOICE, ES_MARKER };
