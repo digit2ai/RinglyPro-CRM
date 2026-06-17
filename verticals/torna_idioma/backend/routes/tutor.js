@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth.ti');
+const edgeTts = require('../services/edge-tts');
 
 // The Don Quijote method system prompt — immersion-based communicative teaching
 const SYSTEM_PROMPT = `You are Profesora Isabel, an expert Spanish teacher at the Torna Idioma program in Makati City, Philippines. You use the Don Quijote immersion method — a communicative, student-centered approach inspired by Spain's best language schools.
@@ -117,6 +118,26 @@ router.post('/chat', auth.any, async (req, res) => {
   } catch (err) {
     console.error('Tutor chat error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Neural text-to-speech (Microsoft Edge voices — free, no key).
+// Returns MP3 audio so Isabel can speak her replies aloud.
+router.post('/tts', auth.any, async (req, res) => {
+  try {
+    const { text, voice } = req.body;
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'text required' });
+    }
+    const clean = text.trim().slice(0, 1500); // cap to keep latency/usage bounded
+    const audio = await edgeTts.synthesize(clean, voice ? { voice } : {});
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Cache-Control', 'no-store');
+    return res.send(audio);
+  } catch (err) {
+    console.error('Edge TTS error:', err.message);
+    // Client falls back to the browser voice on a non-200.
+    return res.status(502).json({ error: 'tts_unavailable' });
   }
 });
 

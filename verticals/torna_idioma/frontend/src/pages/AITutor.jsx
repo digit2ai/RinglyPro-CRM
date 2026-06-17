@@ -54,11 +54,13 @@ export default function AITutor() {
   const chatEnd = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
+  const audioRef = useRef(null);
   const [listening, setListening] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [micLang, setMicLang] = useState('es-MX');
   const speechSupported = typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const audioOutSupported = typeof window !== 'undefined' && typeof window.Audio !== 'undefined';
 
   useEffect(() => {
     api.get('/tutor/starters').then(r => setStarters(r.data.starters || {})).catch(() => {});
@@ -73,6 +75,7 @@ export default function AITutor() {
     }
     return () => {
       try { recognitionRef.current?.stop(); } catch (e) { /* noop */ }
+      try { audioRef.current?.pause(); } catch (e) { /* noop */ }
       if (ttsSupported) window.speechSynthesis.cancel();
     };
   }, [ttsSupported]);
@@ -81,8 +84,14 @@ export default function AITutor() {
     chatEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const speak = (text) => {
-    if (!voiceOn || !ttsSupported || !text) return;
+  const stopAudio = () => {
+    try { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } } catch (e) { /* noop */ }
+    if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch (e) { /* noop */ } }
+  };
+
+  // Fallback only: robotic browser voice, used if the neural endpoint fails.
+  const browserSpeak = (text) => {
+    if (!ttsSupported || !text) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(stripForSpeech(text));
@@ -92,7 +101,24 @@ export default function AITutor() {
       u.lang = (esVoice && esVoice.lang) || 'es-MX';
       u.rate = 0.95;
       window.speechSynthesis.speak(u);
-    } catch (e) { /* TTS unavailable — silent */ }
+    } catch (e) { /* silent */ }
+  };
+
+  // Primary: Microsoft Edge neural voice (MP3 from the backend). Falls back to
+  // the browser voice if the endpoint is unreachable or autoplay is blocked.
+  const speak = async (text) => {
+    if (!voiceOn || !text) return;
+    stopAudio();
+    try {
+      const r = await api.post('/tutor/tts', { text: stripForSpeech(text) }, { responseType: 'blob' });
+      const url = URL.createObjectURL(r.data);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { try { URL.revokeObjectURL(url); } catch (e) { /* noop */ } };
+      await audio.play();
+    } catch (e) {
+      browserSpeak(text);
+    }
   };
 
   const sendMessage = async (text) => {
@@ -121,7 +147,7 @@ export default function AITutor() {
   const toggleListen = () => {
     if (!speechSupported) return;
     if (listening) { recognitionRef.current?.stop(); return; }
-    if (ttsSupported) window.speechSynthesis.cancel(); // don't let Isabel's voice feed the mic
+    stopAudio(); // don't let Isabel's voice feed the mic
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SR();
     rec.lang = micLang;
@@ -245,9 +271,9 @@ export default function AITutor() {
               rows={1}
               disabled={loading}
             />
-            {ttsSupported && (
+            {audioOutSupported && (
               <button
-                onClick={() => setVoiceOn(v => { if (v) window.speechSynthesis.cancel(); return !v; })}
+                onClick={() => setVoiceOn(v => { if (v) stopAudio(); return !v; })}
                 title={voiceOn ? "Isabel's voice: on" : "Isabel's voice: off"}
                 style={{ ...s.voiceToggle, opacity: voiceOn ? 1 : 0.45 }}
               >
