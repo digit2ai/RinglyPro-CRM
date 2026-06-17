@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS ti_users (
   full_name VARCHAR(255) NOT NULL,
   phone VARCHAR(50),
   organization VARCHAR(255),
-  language_pref VARCHAR(5) DEFAULT 'en',
+  language_pref VARCHAR(5) DEFAULT 'fil',
   avatar_url TEXT,
   status VARCHAR(20) DEFAULT 'active',
   last_login TIMESTAMPTZ,

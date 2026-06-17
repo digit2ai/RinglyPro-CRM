@@ -40,6 +40,13 @@ async function initialize() {
     }
     console.log('  ✅ Torna Idioma schema initialized (' + migrationFiles.length + ' migrations)');
 
+    // Default new accounts to Filipino (Tagalog) — primary audience is Filipinos
+    // learning Spanish. English/Spanish stay available via the language toggle.
+    // (CREATE TABLE IF NOT EXISTS won't change an existing column default, so set it here.)
+    try {
+      await sequelize.query(`ALTER TABLE ti_users ALTER COLUMN language_pref SET DEFAULT 'fil'`);
+    } catch (e) { /* already defaults to fil */ }
+
     // v2 migrations (additive, isolated — ti_v2_* tables only)
     const v2MigrationsDir = path.join(__dirname, 'v2', 'migrations');
     if (fs.existsSync(v2MigrationsDir)) {

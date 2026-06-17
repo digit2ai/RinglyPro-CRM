@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
     const [[newUser]] = await sequelize.query(
       `INSERT INTO ti_users (email, password_hash, tenant_id, role, full_name, organization, phone, language_pref, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', NOW(), NOW()) RETURNING id, email, role, full_name, organization, language_pref`,
-      { bind: [email.toLowerCase(), hash, TENANT_ID, role, full_name, organization || null, phone || null, language_pref || 'en'] }
+      { bind: [email.toLowerCase(), hash, TENANT_ID, role, full_name, organization || null, phone || null, language_pref || 'fil'] }
     );
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role, tenant_id: TENANT_ID, full_name: newUser.full_name, organization: newUser.organization, language_pref: newUser.language_pref },

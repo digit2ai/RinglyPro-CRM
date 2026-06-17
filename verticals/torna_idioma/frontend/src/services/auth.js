@@ -24,7 +24,9 @@ export function hasRole(...roles) {
 
 export function getLang() {
   const user = getUser();
-  return user?.language_pref || localStorage.getItem('ti_lang') || 'en';
+  // Default to Filipino (Tagalog) — primary audience is Filipinos learning
+  // Spanish. English/Spanish remain selectable via the language toggle.
+  return user?.language_pref || localStorage.getItem('ti_lang') || 'fil';
 }
 
 export function setLang(lang) {
