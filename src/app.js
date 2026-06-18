@@ -104,6 +104,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: tornaidioma.com → Torna Idioma app (served under /Torna_Idioma).
+// The Torna Idioma frontend is a React SPA built with base '/Torna_Idioma/', so we
+// keep that mount and send the bare domain there. Host-gated: zero effect on any
+// other domain. ACME challenges pass through so Render can issue/renew TLS.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'tornaidioma.com' || host === 'www.tornaidioma.com') {
+    const p = req.path;
+    if (p.startsWith('/.well-known/')) return next(); // let Render issue SSL certs
+    if (p === '/Torna_Idioma' || p.startsWith('/Torna_Idioma/')) return next(); // app + SPA assets
+    return res.redirect(302, '/Torna_Idioma/'); // everything else → the app
+  }
+  next();
+});
+
 // Custom domain: virtualchamber.app
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
