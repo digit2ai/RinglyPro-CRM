@@ -14,13 +14,47 @@ const { webSearch } = require('./webSearch');
 const SONNET_MODEL = 'claude-sonnet-4-6';
 const SONNET_IN = 3 / 1e6, SONNET_OUT = 15 / 1e6;
 
+// Attempt to repair a truncated JSON object: strip a dangling partial token,
+// drop trailing commas, then close any still-open strings/arrays/objects.
+// Lets us salvage a usable triage even when the model hits max_tokens.
+function repairTruncatedJson(src) {
+  let s = src;
+  // Cut anything after the last "complete-looking" value boundary so we don't
+  // try to close in the middle of a half-written key or value.
+  const lastClean = Math.max(s.lastIndexOf('"'), s.lastIndexOf('}'), s.lastIndexOf(']'));
+  if (lastClean > 0) s = s.slice(0, lastClean + 1);
+
+  // Walk the string tracking structure + whether we're inside a string literal.
+  const stack = [];
+  let inStr = false, esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) { esc = false; }
+      else if (c === '\\') { esc = true; }
+      else if (c === '"') { inStr = false; }
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{' || c === '[') stack.push(c);
+    else if (c === '}' || c === ']') stack.pop();
+  }
+  if (inStr) s += '"';                       // close a dangling string
+  s = s.replace(/,\s*$/, '');                // drop a trailing comma
+  while (stack.length) s += stack.pop() === '{' ? '}' : ']';
+  try { return JSON.parse(s); } catch (_) { return null; }
+}
+
 function safeParseJson(text) {
   if (!text) return null;
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
   try { return JSON.parse(cleaned); } catch (_) {}
   const m = cleaned.match(/\{[\s\S]*\}/);
-  if (!m) return null;
-  try { return JSON.parse(m[0]); } catch (_) { return null; }
+  if (m) { try { return JSON.parse(m[0]); } catch (_) {} }
+  // Last resort: the object never closed (truncated at max_tokens) — repair it.
+  const start = cleaned.indexOf('{');
+  if (start >= 0) return repairTruncatedJson(cleaned.slice(start));
+  return null;
 }
 
 async function loadIntakeQA(projectId) {
@@ -166,13 +200,15 @@ Provide 10-15 stakeholder questions in EACH language, organized by feasibility /
   try {
     const resp = await client.messages.create({
       model: SONNET_MODEL,
-      max_tokens: 5000,
+      max_tokens: 12000,
       messages: [{ role: 'user', content: prompt }]
     });
     const text = resp?.content?.[0]?.text || '';
     const cost = (resp?.usage?.input_tokens || 0) * SONNET_IN + (resp?.usage?.output_tokens || 0) * SONNET_OUT;
     const parsed = safeParseJson(text);
     if (!parsed || typeof parsed.fit_score === 'undefined') {
+      console.error('[inboxTriageAgent] parse_failed — stop_reason=%s, output_tokens=%s, text_len=%s, head=%j',
+        resp?.stop_reason, resp?.usage?.output_tokens, text.length, text.slice(0, 300));
       return { ok: false, error: 'parse_failed', output_md: '', structured: { raw: text.slice(0, 2000) }, cost_estimate_usd: Number(cost.toFixed(4)), model: SONNET_MODEL };
     }
     const output_md = renderMarkdown(project, parsed);
