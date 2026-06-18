@@ -153,25 +153,33 @@
   <p class="muted">Suma de mano de obra de las 4 fases = $40.350 USD. Más gestión de proyecto, QA e infraestructura de build ($7.650) = <strong>$48.000 USD</strong> de costo total de desarrollo.</p>
 
   <h2>4. Costo Operativo Anual (OPEX)</h2>
-  <p>Costo recurrente real de operar la plataforma con disponibilidad 99.9%, integraciones inteligentes y soporte 24/7.</p>
+  <p>Costo recurrente real de operar la plataforma con disponibilidad 99.9%, calculado sobre las herramientas y servicios que efectivamente pagamos. Escenario de lanzamiento (volumen inicial). Las líneas marcadas con (*) son variables: escalan con el número de usuarios activos y transacciones.</p>
   <table class="fin">
-    <tr><th>Concepto</th><th class="num">Costo (USD/año)</th></tr>
-    <tr><td>Infraestructura Cloud &amp; BD (PostgreSQL, réplicas, backups)</td><td class="num">$5.400</td></tr>
-    <tr><td>Ciberseguridad, SSL, WAF y mitigación DDoS</td><td class="num">$1.800</td></tr>
-    <tr><td>APIs de Inteligencia Artificial (análisis, fraude, Core)</td><td class="num">$3.600</td></tr>
-    <tr><td>Procesamiento de Voz (Speech-to-Text / Text-to-Speech)</td><td class="num">$2.400</td></tr>
-    <tr><td>Servicios de terceros (KYC biométrico / Mapas)</td><td class="num">$3.200</td></tr>
-    <tr><td>Soporte e ingeniería SLA (DevOps, monitoreo 24/7)</td><td class="num">$7.600</td></tr>
-    <tr class="total"><td>COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$24.000 USD</td></tr>
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">Costo (USD/año)</th></tr>
+    <tr><td>Render — servicios web + workers</td><td>Cómputo de microservicios</td><td class="num">$2.400</td></tr>
+    <tr><td>Render — PostgreSQL (alta disponibilidad + backups)</td><td>Base de datos transaccional</td><td class="num">$3.000</td></tr>
+    <tr><td>AWS — S3 + CloudFront</td><td>Almacenamiento de documentos, backups, CDN</td><td class="num">$1.200</td></tr>
+    <tr><td>Anthropic Claude — consumo de IA (*)</td><td>CEO Bot + scoring + detección de fraude</td><td class="num">$4.800</td></tr>
+    <tr><td>ElevenLabs — voz premium (plan Scale)</td><td>Voz del CEO Bot (multilingüe)</td><td class="num">$3.960</td></tr>
+    <tr><td>Twilio — WhatsApp + SMS (*)</td><td>Alertas de morosidad y notificaciones</td><td class="num">$3.000</td></tr>
+    <tr><td>Proveedor KYC / biométrico (*)</td><td>Verificación de identidad</td><td class="num">$2.400</td></tr>
+    <tr><td>Google Maps Platform (*)</td><td>GPS de flotas + mapa de fincas</td><td class="num">$2.400</td></tr>
+    <tr><td>SendGrid — email</td><td>Notificaciones por correo</td><td class="num">$480</td></tr>
+    <tr><td>GitHub — Team</td><td>Repositorios + CI/CD</td><td class="num">$480</td></tr>
+    <tr><td>Cloudflare — WAF / DNS / SSL / CDN</td><td>Seguridad y borde</td><td class="num">$960</td></tr>
+    <tr><td>Monitoreo (Sentry / logging)</td><td>Observabilidad</td><td class="num">$720</td></tr>
+    <tr class="sub"><td colspan="2">Subtotal herramientas y servicios</td><td class="num">$25.800</td></tr>
+    <tr><td colspan="2">Soporte e ingeniería SLA (DevOps, monitoreo 24/7) — personal</td><td class="num">$7.600</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$33.400 USD</td></tr>
   </table>
-  <p class="muted">Equivalente a <strong>$2.000 USD/mes</strong> de costo operativo, a partir de la puesta en producción.</p>
+  <p class="muted">Equivalente a <strong>$2.783 USD/mes</strong> de costo operativo en el escenario de lanzamiento. (*) El consumo de IA equivale a ~$0,80–1,00 por usuario activo/mes; IA, mensajería, KYC y mapas escalan con el volumen. A 5–10&times; el volumen inicial, el OPEX se aproxima a <strong>$70.000 USD/año</strong>.</p>
 
   <h2>5. Resumen de Costo</h2>
   <table class="fin">
     <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
     <tr><td>Desarrollo (CAPEX)</td><td class="num">$48.000</td></tr>
-    <tr><td>Operación anual (OPEX)</td><td class="num">$24.000</td></tr>
-    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$72.000 USD</td></tr>
+    <tr><td>Operación anual (OPEX) — escenario de lanzamiento</td><td class="num">$33.400</td></tr>
+    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$81.400 USD</td></tr>
     <tr><td>Plazo de entrega</td><td class="num">&asymp; 1 mes (4 fases)</td></tr>
   </table>
   <p>El costo refleja la aceleración AI-native: 1.345 horas efectivas de ingeniería con scaffolding generado por agentes, y la capa de IA (CEO Bot, scoring, detección de fraude y alertas proactivas) incorporada de forma nativa desde la Fase 1.</p>
