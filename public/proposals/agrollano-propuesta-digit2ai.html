@@ -155,22 +155,22 @@
   <h2>4. Costo Operativo Anual (OPEX)</h2>
   <p>Costo recurrente real de operar la plataforma con disponibilidad 99.9%, calculado sobre las herramientas y servicios que efectivamente pagamos. Escenario de lanzamiento (volumen inicial). Las líneas marcadas con (*) son variables: escalan con el número de usuarios activos y transacciones.</p>
   <table class="fin">
-    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">Costo (USD/año)</th></tr>
-    <tr><td>Render — servicios web + workers</td><td>Cómputo de microservicios</td><td class="num">$2.400</td></tr>
-    <tr><td>Render — PostgreSQL (alta disponibilidad + backups)</td><td>Base de datos transaccional</td><td class="num">$3.000</td></tr>
-    <tr><td>AWS — S3 + CloudFront</td><td>Almacenamiento de documentos, backups, CDN</td><td class="num">$1.200</td></tr>
-    <tr><td>Anthropic Claude — consumo de IA (*)</td><td>CEO Bot + scoring + detección de fraude</td><td class="num">$4.800</td></tr>
-    <tr><td>ElevenLabs — voz premium (plan Scale)</td><td>Voz del CEO Bot (multilingüe)</td><td class="num">$3.960</td></tr>
-    <tr><td>Twilio — WhatsApp + SMS (*)</td><td>Alertas de morosidad y notificaciones</td><td class="num">$3.000</td></tr>
-    <tr><td>Proveedor KYC / biométrico (*)</td><td>Verificación de identidad</td><td class="num">$2.400</td></tr>
-    <tr><td>Google Maps Platform (*)</td><td>GPS de flotas + mapa de fincas</td><td class="num">$2.400</td></tr>
-    <tr><td>SendGrid — email</td><td>Notificaciones por correo</td><td class="num">$480</td></tr>
-    <tr><td>GitHub — Team</td><td>Repositorios + CI/CD</td><td class="num">$480</td></tr>
-    <tr><td>Cloudflare — WAF / DNS / SSL / CDN</td><td>Seguridad y borde</td><td class="num">$960</td></tr>
-    <tr><td>Monitoreo (Sentry / logging)</td><td>Observabilidad</td><td class="num">$720</td></tr>
-    <tr class="sub"><td colspan="2">Subtotal herramientas y servicios</td><td class="num">$25.800</td></tr>
-    <tr><td colspan="2">Soporte e ingeniería SLA (DevOps, monitoreo 24/7) — personal</td><td class="num">$7.600</td></tr>
-    <tr class="total"><td colspan="2">COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$33.400 USD</td></tr>
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">USD/mes</th><th class="num">USD/año</th></tr>
+    <tr><td>Render — servicios web + workers</td><td>Cómputo de microservicios</td><td class="num">$200</td><td class="num">$2.400</td></tr>
+    <tr><td>Render — PostgreSQL (alta disponibilidad + backups)</td><td>Base de datos transaccional</td><td class="num">$250</td><td class="num">$3.000</td></tr>
+    <tr><td>AWS — S3 + CloudFront</td><td>Almacenamiento de documentos, backups, CDN</td><td class="num">$100</td><td class="num">$1.200</td></tr>
+    <tr><td>Anthropic Claude — consumo de IA (*)</td><td>CEO Bot + scoring + detección de fraude</td><td class="num">$400</td><td class="num">$4.800</td></tr>
+    <tr><td>ElevenLabs — voz premium (plan Scale)</td><td>Voz del CEO Bot (multilingüe)</td><td class="num">$330</td><td class="num">$3.960</td></tr>
+    <tr><td>Twilio — WhatsApp + SMS (*)</td><td>Alertas de morosidad y notificaciones</td><td class="num">$250</td><td class="num">$3.000</td></tr>
+    <tr><td>Proveedor KYC / biométrico (*)</td><td>Verificación de identidad</td><td class="num">$200</td><td class="num">$2.400</td></tr>
+    <tr><td>Google Maps Platform (*)</td><td>GPS de flotas + mapa de fincas</td><td class="num">$200</td><td class="num">$2.400</td></tr>
+    <tr><td>SendGrid — email</td><td>Notificaciones por correo</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>GitHub — Team</td><td>Repositorios + CI/CD</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>Cloudflare — WAF / DNS / SSL / CDN</td><td>Seguridad y borde</td><td class="num">$80</td><td class="num">$960</td></tr>
+    <tr><td>Monitoreo (Sentry / logging)</td><td>Observabilidad</td><td class="num">$60</td><td class="num">$720</td></tr>
+    <tr class="sub"><td colspan="2">Subtotal herramientas y servicios</td><td class="num">$2.150</td><td class="num">$25.800</td></tr>
+    <tr><td colspan="2">Soporte e ingeniería SLA (DevOps, monitoreo 24/7) — personal</td><td class="num">$633</td><td class="num">$7.600</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$2.783</td><td class="num">$33.400</td></tr>
   </table>
   <p class="muted">Equivalente a <strong>$2.783 USD/mes</strong> de costo operativo en el escenario de lanzamiento. (*) El consumo de IA equivale a ~$0,80–1,00 por usuario activo/mes; IA, mensajería, KYC y mapas escalan con el volumen. A 5–10&times; el volumen inicial, el OPEX se aproxima a <strong>$70.000 USD/año</strong>.</p>
 
