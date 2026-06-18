@@ -116,13 +116,14 @@ export default function Emperador() {
   }
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="emp-page">
+      <style>{RESPONSIVE_CSS}</style>
       <Header />
 
-      <div style={s.body}>
+      <div style={s.body} className="emp-body">
         {/* My standing card */}
         <div style={s.card}>
-          <div style={s.myGrid}>
+          <div style={s.myGrid} className="emp-mygrid">
             <div style={s.statBlock}>
               <div style={s.statLabel}>{tr('emp.rank')}</div>
               <div style={s.statValue}>#{rank}</div>
@@ -267,7 +268,7 @@ export default function Emperador() {
 
 function Header() {
   return (
-    <div style={s.header}>
+    <div style={s.header} className="emp-header">
       <div style={s.headerLeft}>
         <div style={s.crest}>E</div>
         <div>
@@ -278,6 +279,19 @@ function Header() {
     </div>
   );
 }
+
+// Mobile/tablet responsiveness: shrink padding, stack the 3 standing stats to a
+// single column on phones, no horizontal scroll. Visual-only.
+const RESPONSIVE_CSS = `
+@media (max-width: 768px) {
+  .emp-page { overflow-x: hidden; }
+  .emp-header { padding: 16px 16px !important; }
+  .emp-body { padding: 18px 16px !important; }
+}
+@media (max-width: 480px) {
+  .emp-mygrid { grid-template-columns: 1fr !important; }
+}
+`;
 
 const s = {
   page: { fontFamily: "'Inter',sans-serif", color: '#2C2C2C', background: CREAM, minHeight: '100vh', display: 'flex', flexDirection: 'column' },

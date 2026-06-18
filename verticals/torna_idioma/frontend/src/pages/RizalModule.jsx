@@ -133,10 +133,11 @@ export default function RizalModule() {
   const passThreshold = config && config.pass_threshold != null ? config.pass_threshold : null;
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="rz-page">
       <style>{PRINT_CSS}</style>
+      <style>{RESPONSIVE_CSS}</style>
 
-      <div style={s.header}>
+      <div style={s.header} className="rz-header">
         <div style={s.headerLeft}>
           <div style={s.avatar}>R</div>
           <div>
@@ -147,7 +148,7 @@ export default function RizalModule() {
         <button onClick={openRecord} style={s.recordBtn}>{tr('rizal.viewRecord')}</button>
       </div>
 
-      <div style={s.body}>
+      <div style={s.body} className="rz-body">
         <div style={s.sectionLabel}>{tr('rizal.sections')}</div>
 
         {sections.map((sec, i) => {
@@ -223,7 +224,7 @@ export default function RizalModule() {
 
       {showRecord && (
         <div style={s.modalOverlay} onClick={closeRecord}>
-          <div style={s.modalCard} onClick={e => e.stopPropagation()}>
+          <div style={s.modalCard} className="rz-modalcard" onClick={e => e.stopPropagation()}>
             {recordLoading && <div style={s.centerMsg}>{tr('common.loading')}</div>}
 
             {!recordLoading && !record && <div style={s.centerMsg}>{tr('common.error')}</div>}
@@ -286,7 +287,7 @@ export default function RizalModule() {
                   <div style={s.disclaimer}>{record.disclaimer || config?.disclaimer}</div>
                 )}
 
-                <div style={s.recordActions}>
+                <div style={s.recordActions} className="rz-record-actions">
                   <button onClick={() => window.print()} style={s.printBtn}>{tr('rizal.print')}</button>
                   <button onClick={closeRecord} style={s.closeBtn}>{tr('common.close')}</button>
                 </div>
@@ -294,7 +295,7 @@ export default function RizalModule() {
             )}
 
             {!recordLoading && !record && (
-              <div style={s.recordActions}>
+              <div style={s.recordActions} className="rz-record-actions">
                 <button onClick={closeRecord} style={s.closeBtn}>{tr('common.close')}</button>
               </div>
             )}
@@ -312,6 +313,21 @@ const PRINT_CSS = `
   .rizal-record, .rizal-record * { visibility: visible; }
   .rizal-record { position: absolute; left: 0; top: 0; width: 100%; }
   .rizal-record button { display: none; }
+}
+`;
+
+// Mobile/tablet responsiveness: shrink padding, make the completion-record modal
+// ~94vw with tighter padding + scrollable table, no horizontal scroll. Visual-only.
+const RESPONSIVE_CSS = `
+@media (max-width: 768px) {
+  .rz-page { overflow-x: hidden; }
+  .rz-header { padding: 16px 16px !important; }
+  .rz-body { padding: 20px 16px !important; }
+  .rz-modalcard { width: 94vw !important; }
+  .rz-modalcard .rizal-record { padding: 22px 18px !important; }
+  .rz-modalcard table { font-size: 13px; }
+  .rz-modalcard .rz-record-actions { flex-wrap: wrap; }
+  .rz-modalcard .rz-record-actions button { flex: 1; min-height: 44px; }
 }
 `;
 

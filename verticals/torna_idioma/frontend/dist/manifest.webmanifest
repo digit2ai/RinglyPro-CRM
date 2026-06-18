@@ -1,0 +1,17 @@
+{
+  "name": "Torna Idioma — Método Rizal",
+  "short_name": "Torna Idioma",
+  "description": "Learn Spanish the Método Rizal way — five root words a night, with Profesora Isabel.",
+  "lang": "en",
+  "start_url": "/Torna_Idioma/login",
+  "scope": "/Torna_Idioma/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1A2E",
+  "theme_color": "#0F1A2E",
+  "icons": [
+    { "src": "/Torna_Idioma/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/Torna_Idioma/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/Torna_Idioma/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

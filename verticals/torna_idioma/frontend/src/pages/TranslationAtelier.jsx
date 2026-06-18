@@ -115,8 +115,9 @@ export default function TranslationAtelier() {
   };
 
   return (
-    <div style={s.page}>
-      <div style={s.header}>
+    <div style={s.page} className="ta-page">
+      <style>{RESPONSIVE_CSS}</style>
+      <div style={s.header} className="ta-header">
         <div style={s.headerLeft}>
           <div style={s.avatar}>TA</div>
           <div>
@@ -126,8 +127,8 @@ export default function TranslationAtelier() {
         </div>
       </div>
 
-      <div style={s.body}>
-        <div style={s.mainCol}>
+      <div style={s.body} className="ta-body">
+        <div style={s.mainCol} className="ta-maincol">
           {/* Direction selector */}
           <div style={s.sectionLabel}>{tr('atelier.direction')}</div>
           <div style={s.dirRow}>
@@ -167,10 +168,11 @@ export default function TranslationAtelier() {
             disabled={loading}
           />
 
-          <div style={s.actionRow}>
+          <div style={s.actionRow} data-action-row>
             <button
               onClick={grade}
               disabled={loading || !userText.trim()}
+              data-grade
               style={{ ...s.gradeBtn, opacity: loading || !userText.trim() ? 0.5 : 1 }}
             >
               {loading ? tr('atelier.grading') : tr('atelier.grade')}
@@ -197,7 +199,7 @@ export default function TranslationAtelier() {
         </div>
 
         {/* Side note */}
-        <div style={s.sideCol}>
+        <div style={s.sideCol} className="ta-sidecol">
           <div style={s.methodCard}>
             <div style={s.methodBadge}>MÉTODO RIZAL</div>
             <p style={s.methodText}>{tr('atelier.subtitle')}</p>
@@ -219,6 +221,21 @@ export default function TranslationAtelier() {
     </div>
   );
 }
+
+// Mobile/tablet responsiveness: stack the main + side columns, shrink padding,
+// full-width direction buttons + grade action, no horizontal scroll. Visual-only.
+const RESPONSIVE_CSS = `
+@media (max-width: 768px) {
+  .ta-page { overflow-x: hidden; }
+  .ta-header { padding: 16px 16px !important; }
+  .ta-body { flex-direction: column; }
+  .ta-maincol { padding: 18px 16px !important; }
+  .ta-sidecol { width: 100% !important; border-left: none !important; border-top: 1px solid #F5E6C8; box-sizing: border-box; }
+  .ta-maincol [data-grade] { min-height: 48px; }
+  .ta-maincol [data-action-row] { justify-content: stretch; }
+  .ta-maincol [data-action-row] button { width: 100%; }
+}
+`;
 
 const s = {
   page: { fontFamily: "'Inter',sans-serif", color: '#2C2C2C', background: '#FFF8E7', minHeight: '100vh', display: 'flex', flexDirection: 'column' },

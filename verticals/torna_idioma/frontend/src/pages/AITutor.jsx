@@ -206,8 +206,9 @@ export default function AITutor() {
   const currentStarters = starters[level] || [];
 
   return (
-    <div style={s.page}>
-      <div style={s.header}>
+    <div style={s.page} className="ait-page">
+      <style>{RESPONSIVE_CSS}</style>
+      <div style={s.header} className="ait-header">
         <div style={s.headerLeft}>
           <div style={s.avatar}>🇪🇸</div>
           <div>
@@ -242,14 +243,14 @@ export default function AITutor() {
         </div>
       </div>
 
-      <div style={s.body}>
-        <div style={s.chatCol}>
+      <div style={s.body} className="ait-body">
+        <div style={s.chatCol} className="ait-chatcol">
           {/* Messages */}
-          <div style={s.chatArea}>
+          <div style={s.chatArea} data-chat-area>
             {messages.map((m, i) => (
               <div key={i} style={{ ...s.msgRow, justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 {m.role === 'assistant' && <div style={s.botAvatar}>👩‍🏫</div>}
-                <div style={m.role === 'user' ? s.userBubble : s.botBubble}>
+                <div style={m.role === 'user' ? s.userBubble : s.botBubble} data-bot-bubble={m.role !== 'user' ? '' : undefined} data-user-bubble={m.role === 'user' ? '' : undefined}>
                   {m.role === 'assistant' ? renderMarkdown(m.content) : <p style={{ margin: 0, lineHeight: 1.7 }}>{m.content}</p>}
                 </div>
               </div>
@@ -268,7 +269,7 @@ export default function AITutor() {
 
           {/* Starters */}
           {messages.length <= 1 && currentStarters.length > 0 && (
-            <div style={s.starterSection}>
+            <div style={s.starterSection} data-starter-section>
               <div style={s.starterLabel}>{L.starters}</div>
               <div style={s.starterGrid}>
                 {currentStarters.map((st, i) => (
@@ -281,7 +282,7 @@ export default function AITutor() {
           )}
 
           {/* Input */}
-          <div style={s.inputRow}>
+          <div style={s.inputRow} className="ait-inputrow">
             {speechSupported && (
               <button
                 onClick={() => setMicLang(l => (l === 'es-MX' ? 'en-US' : 'es-MX'))}
@@ -319,14 +320,14 @@ export default function AITutor() {
                 {voiceOn ? '\u{1F50A}' : '\u{1F507}'}
               </button>
             )}
-            <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} style={{ ...s.sendBtn, opacity: loading || !input.trim() ? 0.5 : 1 }}>
+            <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()} data-send style={{ ...s.sendBtn, opacity: loading || !input.trim() ? 0.5 : 1 }}>
               {L.send}
             </button>
           </div>
         </div>
 
         {/* Tips sidebar */}
-        <div style={s.tipsCol}>
+        <div style={s.tipsCol} className="ait-tipscol">
           <h3 style={s.tipsTitle}>{L.tipTitle}</h3>
           {[L.tip1, L.tip2, L.tip3, L.tip4].map((tip, i) => (
             <div key={i} style={s.tipItem}>
@@ -343,6 +344,25 @@ export default function AITutor() {
     </div>
   );
 }
+
+// Mobile/tablet responsiveness: stack the chat + tips columns, shrink padding,
+// keep tap targets >=44px, no horizontal scroll. Visual-only.
+const RESPONSIVE_CSS = `
+@media (max-width: 768px) {
+  .ait-page { overflow-x: hidden; }
+  .ait-header { padding: 16px 16px; }
+  .ait-body { flex-direction: column; }
+  .ait-chatcol { width: 100%; }
+  .ait-tipscol { width: 100% !important; border-left: none !important; border-top: 1px solid #F5E6C8; box-sizing: border-box; }
+  .ait-chatcol [data-chat-area] { padding: 16px !important; }
+  .ait-chatcol [data-starter-section] { padding: 0 16px 16px !important; }
+  .ait-inputrow { padding: 12px 16px !important; flex-wrap: wrap; }
+  .ait-inputrow textarea { min-height: 44px; }
+  .ait-inputrow button { min-height: 44px; }
+  .ait-inputrow [data-send] { flex: 1; }
+  .ait-chatcol [data-bot-bubble], .ait-chatcol [data-user-bubble] { max-width: 85% !important; }
+}
+`;
 
 const s = {
   page: { fontFamily: "'Inter',sans-serif", color: '#2C2C2C', background: '#FFF8E7', minHeight: '100vh', display: 'flex', flexDirection: 'column' },

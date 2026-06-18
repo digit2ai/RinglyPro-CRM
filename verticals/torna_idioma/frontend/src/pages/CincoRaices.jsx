@@ -155,10 +155,11 @@ export default function CincoRaices() {
   const dueCount = Array.isArray(session?.due_reviews) ? session.due_reviews.length : 0;
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="cr-page">
+      <style>{RESPONSIVE_CSS}</style>
       <Header />
 
-      <div style={s.body}>
+      <div style={s.body} className="cr-body">
         {/* Progress meter */}
         <div style={s.meterRow}>
           <Stat
@@ -222,7 +223,7 @@ export default function CincoRaices() {
 
 function Header() {
   return (
-    <div style={s.header}>
+    <div style={s.header} className="cr-header">
       <div>
         <h1 style={s.headerTitle}>{tr('cinco.title')}</h1>
         <p style={s.headerSub}>{tr('cinco.subtitle')}</p>
@@ -293,7 +294,7 @@ function StudyCard({ card, index, total, revealed, grading, onReveal, onGrade })
       {!revealed ? (
         <button style={s.revealBtn} onClick={onReveal}>{tr('cinco.showAnswer')}</button>
       ) : (
-        <div style={s.gradeRow}>
+        <div style={s.gradeRow} className="cr-graderow">
           {GRADES.map(gr => (
             <button
               key={gr.key}
@@ -352,6 +353,20 @@ function CompletionCard({ session, newCount, revCount, streak, onAgain }) {
     </div>
   );
 }
+
+// Mobile/tablet responsiveness: shrink padding, keep the 4 grade buttons in a
+// 2x2 grid on phones with >=44px tap height, no horizontal scroll. Visual-only.
+const RESPONSIVE_CSS = `
+@media (max-width: 768px) {
+  .cr-page { overflow-x: hidden; }
+  .cr-header { padding: 16px 16px !important; }
+  .cr-body { padding: 20px 16px !important; }
+}
+@media (max-width: 480px) {
+  .cr-graderow { grid-template-columns: repeat(2, 1fr) !important; }
+  .cr-graderow button { min-height: 48px; }
+}
+`;
 
 // ---------- Styles (Heritage theme — matches AITutor.jsx) ----------
 const s = {
