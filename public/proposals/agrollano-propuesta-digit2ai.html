@@ -66,17 +66,17 @@
 
   <table class="meta">
     <tr><td class="lbl">Proyecto:</td><td>AGROLLANO (AgrollanoDigital)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
-    <tr><td class="lbl">Atención:</td><td>Bernardo Olivares</td><td class="lbl">Asunto:</td><td>Estructura de costos de desarrollo y operación</td></tr>
+    <tr><td class="lbl">Atención:</td><td>Carlos Alvarado</td><td class="lbl">Asunto:</td><td>Estructura de costos de desarrollo y operación</td></tr>
     <tr><td class="lbl">Alianza:</td><td>ISTC &times; Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$30 USD/hora (costo cargado)</td></tr>
     <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
   </table>
 
   <h2>1. Contexto</h2>
-  <p>Este informe responde al <strong>Informe de Valoración Técnico-Financiera</strong> previo, que estimó el desarrollo del ecosistema en <strong>$153.000 USD de CAPEX</strong> (2.950 horas hombre) más <strong>$34.400 USD anuales de OPEX</strong>, bajo un esquema de ingeniería tradicional de 6 a 9 meses.</p>
-  <p>La alianza <strong>ISTC &times; Digit2AI</strong> entrega el mismo alcance funcional mediante un modelo <strong>AI-Native</strong>: ISTC aporta la plataforma base y la ingeniería de despliegue; Digit2AI aporta la capa de Inteligencia Artificial y la aceleración por agentes (scaffolding generado y probado iterativamente), que colapsa la carga repetitiva de desarrollo de 2.950 a 1.345 horas efectivas. El resultado es el mismo producto, entregado en <strong>105 a 150 días</strong> en tres fases, conservando la calidad empresarial (microservicios, PostgreSQL, seguridad WAF, KYC y alta disponibilidad 99.9%). Las cifras a continuación reflejan únicamente el <strong>costo directo</strong> de esa entrega.</p>
+  <p>Este informe presenta la <strong>estructura de costo directo</strong> para construir y operar el Ecosistema Digital AgrollanoDigital bajo el modelo <strong>AI-Native</strong> de la alianza <strong>ISTC &times; Digit2AI</strong>: ISTC aporta la plataforma base y la ingeniería de despliegue; Digit2AI aporta la capa de Inteligencia Artificial y la aceleración por agentes (scaffolding generado y probado iterativamente), que reduce la carga de desarrollo a <strong>1.345 horas efectivas</strong> de ingeniería.</p>
+  <p>El producto se entrega en aproximadamente <strong>1,5 meses</strong> en tres fases, conservando la calidad empresarial (microservicios, PostgreSQL, seguridad WAF, KYC y alta disponibilidad 99.9%). Todas las cifras de este documento reflejan únicamente el <strong>costo directo</strong> de entrega y operación, sin margen de utilidad ni IVA.</p>
 
   <h2>2. Costo de Desarrollo (CAPEX)</h2>
-  <p>Alcance idéntico al informe de mercado, reorganizado en módulos sobre nuestra arquitectura AI-Native. Costo por módulo al costo interno cargado de $30 USD/hora (sin margen ni IVA):</p>
+  <p>Alcance funcional completo, organizado en módulos sobre nuestra arquitectura AI-Native. Costo por módulo al costo interno cargado de $30 USD/hora (sin margen ni IVA):</p>
 
   <div class="card"><h3>Módulo 1: Core Marketplace (Catálogo, Carrito y Perfiles)</h3>
     Base de datos PostgreSQL en la nube, microservicios, registro multi-rol (compradores, vendedores, administradores), catálogo avanzado y lógica de carrito.
@@ -120,25 +120,25 @@
     <tr><td>Gestión de proyecto, QA, infraestructura de build, sandboxes de APIs y aliados (ISTC)</td><td class="num">—</td><td class="num">$7.650</td></tr>
     <tr class="total"><td>COSTO TOTAL DE DESARROLLO (CAPEX)</td><td class="num">1.345</td><td class="num">$48.000 USD</td></tr>
   </table>
-  <p class="muted">Costo mensual equivalente, si se prorratea el build en 12 meses: <strong>$4.000 USD/mes</strong>. Plazo de entrega: <span class="pill">105 – 150 días</span> en 3 fases.</p>
+  <p class="muted">Plazo de entrega: <span class="pill">&asymp; 1,5 meses</span> en 3 fases.</p>
 
   <h2>3. Fases de Entrega (costo)</h2>
   <div class="twocol">
-    <div class="card"><h3>Fase 1 — MVP Core (30–45 días)</h3>
+    <div class="card"><h3>Fase 1 — MVP Core (~2 semanas)</h3>
       <ul class="tight">
         <li>Módulo 1 (Marketplace multi-rol)</li>
         <li>Módulo 4 (Cobranza + alertas WhatsApp/SMS)</li>
         <li>Módulo 8 (CEO Bot v1 sobre KPIs en vivo)</li>
       </ul>
       <div class="price">Costo: $16.050 USD</div></div>
-    <div class="card"><h3>Fase 2 — Build (45–60 días)</h3>
+    <div class="card"><h3>Fase 2 — Build (~2 semanas)</h3>
       <ul class="tight">
         <li>Módulo 2 (Subastas en tiempo real)</li>
         <li>Módulo 3 (Pagos + Split + facturación)</li>
         <li>Módulo 6 (Inventario multi-almacén)</li>
       </ul>
       <div class="price">Costo: $13.950 USD</div></div>
-    <div class="card"><h3>Fase 3 — Integración (30–45 días)</h3>
+    <div class="card"><h3>Fase 3 — Integración (~2 semanas)</h3>
       <ul class="tight">
         <li>Módulo 7 (GPS + logística 23 estados)</li>
         <li>Módulo 5 (Financiamiento + scoring)</li>
@@ -162,15 +162,15 @@
   </table>
   <p class="muted">Equivalente a <strong>$2.000 USD/mes</strong> de costo operativo, a partir de la puesta en producción.</p>
 
-  <h2>5. Resumen de Costo y Comparativo</h2>
+  <h2>5. Resumen de Costo</h2>
   <table class="fin">
-    <tr><th>Concepto</th><th class="num">Mercado (informe previo)</th><th class="num">Nuestro costo real</th><th class="num">Ahorro</th></tr>
-    <tr><td>Desarrollo (CAPEX)</td><td class="num">$153.000</td><td class="num">$48.000</td><td class="num save">$105.000</td></tr>
-    <tr><td>Operación anual (OPEX)</td><td class="num">$34.400</td><td class="num">$24.000</td><td class="num save">$10.400</td></tr>
-    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$187.400</td><td class="num">$72.000</td><td class="num">$115.400</td></tr>
-    <tr><td>Plazo de entrega</td><td class="num">6 – 9 meses</td><td class="num" colspan="2">105 – 150 días (3 fases)</td></tr>
+    <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Desarrollo (CAPEX)</td><td class="num">$48.000</td></tr>
+    <tr><td>Operación anual (OPEX)</td><td class="num">$24.000</td></tr>
+    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$72.000 USD</td></tr>
+    <tr><td>Plazo de entrega</td><td class="num">&asymp; 1,5 meses (3 fases)</td></tr>
   </table>
-  <p>El menor costo de desarrollo refleja la aceleración AI-native (scaffolding generado por agentes que colapsa 2.950 horas de mercado a 1.345 horas efectivas), con la capa de IA (CEO Bot, scoring, detección de fraude y alertas proactivas) incorporada de forma nativa desde la Fase 1.</p>
+  <p>El costo refleja la aceleración AI-native: 1.345 horas efectivas de ingeniería con scaffolding generado por agentes, y la capa de IA (CEO Bot, scoring, detección de fraude y alertas proactivas) incorporada de forma nativa desde la Fase 1.</p>
 
   <div class="note">
     <strong>Nota:</strong> Este documento refleja exclusivamente el <strong>costo directo</strong> de entrega y operación. El margen de utilidad y el IVA (16%) se aplican por separado en la propuesta técnico-comercial dirigida al cliente; no forman parte de este informe.
