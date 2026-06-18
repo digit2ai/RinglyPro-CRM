@@ -3,182 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Propuesta Tecnico-Comercial — Ecosistema Digital AgrollanoDigital</title>
+<title>Estructura de Costos de Entrega (Interno) — Ecosistema Digital AgrollanoDigital</title>
 <style>
   :root{
     --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
     --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
-    --verde:#0f766e; --verde-bg:#ecfdf5;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2;
   }
   *{box-sizing:border-box}
   body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
     line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
   .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
     box-shadow:0 1px 8px rgba(0,0,0,.08)}
-  h1{font-size:28px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
-  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 22px}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
   hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
-  .meta{width:100%;border-collapse:collapse;margin:0 0 26px;font-size:13.5px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
   .meta td{padding:4px 8px;vertical-align:top}
-  .meta .lbl{font-weight:700;color:#0f3a66;width:110px}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:130px}
   h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
     border-left:5px solid var(--azul);font-weight:800}
-  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
   p{margin:0 0 12px}
-  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
-    border-radius:8px;padding:14px 16px;margin:10px 0}
-  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
   table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
   table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
   table.fin th.num,table.fin td.num{text-align:right}
   table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
   table.fin tr:nth-child(even) td{background:#f8fafc}
-  table.fin tr.total td{background:var(--azul-claro);font-weight:800;color:#0f3a66;border-top:2px solid var(--azul)}
-  table.fin tr.grand td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
-  .pill{display:inline-block;background:var(--verde-bg);color:var(--verde);
-    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
-  .big{font-size:26px;font-weight:800;color:#0f3a66}
+  table.fin tr.sub td{background:#eef4fb;font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
   .muted{color:var(--gris-claro);font-size:12.5px}
-  .twocol{display:flex;gap:18px;flex-wrap:wrap}
-  .twocol>div{flex:1;min-width:240px}
-  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
-  ul.tight{margin:6px 0 12px;padding-left:20px}
-  ul.tight li{margin:3px 0}
   .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
   @media print{
     body{background:#fff}
     .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
     h2{break-after:avoid}
-    table.fin,.card{break-inside:avoid}
+    table.fin{break-inside:avoid}
   }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <h1>PROPUESTA TÉCNICO-COMERCIAL</h1>
-  <p class="sub">Ecosistema Digital AgrollanoDigital — Modelo de Entrega AI-Native</p>
+  <h1>ESTRUCTURA DE COSTOS DE ENTREGA</h1>
+  <p class="sub">Ecosistema Digital AgrollanoDigital — Costo Real (sin margen ni impuestos)</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL</span>
   <hr class="rule">
 
   <table class="meta">
-    <tr><td class="lbl">Destinatario:</td><td>AGROLLANO</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
-    <tr><td class="lbl">Atención:</td><td>Bernardo Olivares</td><td class="lbl">Asunto:</td><td>Propuesta de desarrollo y operación (precio Digit2AI)</td></tr>
-    <tr><td class="lbl">Oferente:</td><td>Alianza tecnológica ISTC &times; Digit2AI</td><td class="lbl">Validez:</td><td>30 días</td></tr>
+    <tr><td class="lbl">Proyecto:</td><td>AgrollanoDigital (AGROLLANO)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">Modelo:</td><td>Entrega AI-Native (ISTC &times; Digit2AI)</td><td class="lbl">Tarifa interna:</td><td>$30 USD/hora (costo cargado)</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega. No incluye margen de utilidad ni IVA.</td></tr>
   </table>
 
-  <h2>1. Contexto</h2>
-  <p>Esta propuesta responde al <strong>Informe de Valoración Técnico-Financiera</strong> previo, que estimó el desarrollo del ecosistema en <strong>$153.000 USD de CAPEX</strong> (2.950 horas hombre) más <strong>$34.400 USD anuales de OPEX</strong>, bajo un esquema de ingeniería tradicional de 6 a 9 meses.</p>
-  <p>La alianza <strong>ISTC &times; Digit2AI</strong> entrega el mismo alcance funcional mediante un modelo <strong>AI-Native</strong>: ISTC aporta la plataforma base y la ingeniería de despliegue; Digit2AI aporta la capa de Inteligencia Artificial y la aceleración por agentes (scaffolding generado y probado iterativamente), que colapsa la carga repetitiva de desarrollo. El resultado es el mismo producto, entregado en <strong>105 a 150 días</strong> en tres fases, conservando la calidad empresarial (microservicios, PostgreSQL, seguridad WAF, KYC y alta disponibilidad 99.9%).</p>
-
-  <h2>2. Inversión de Desarrollo (CAPEX)</h2>
-  <p>Alcance idéntico al informe de mercado, reorganizado en módulos sobre nuestra arquitectura AI-Native. Precios netos por módulo (sin IVA):</p>
-
-  <div class="card"><h3>Módulo 1: Core Marketplace (Catálogo, Carrito y Perfiles)</h3>
-    Base de datos PostgreSQL en la nube, microservicios, registro multi-rol (compradores, vendedores, administradores), catálogo avanzado y lógica de carrito.
-    <div class="price">Precio neto: $16.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 2: Ventas y Subastas</h3>
-    Motor de subastas agrícolas en tiempo real, ofertas concurrentes de baja latencia, notificaciones push y venta directa de maquinaria e insumos.
-    <div class="price">Precio neto: $15.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 3: Pasarela de Pagos Completa</h3>
-    Integración de pasarelas locales e internacionales, lógica de Split de Pagos (comisiones y pagos a proveedores) y facturación electrónica automatizada.
-    <div class="price">Precio neto: $15.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 4: Gestión de Cobranza y Conciliación</h3>
-    Panel de cuentas por cobrar, alertas automáticas de morosidad vía SMS/Email/WhatsApp, conciliación bancaria automatizada y reportes de flujo de caja.
-    <div class="price">Precio neto: $14.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 5: Financiamiento y Motor de Scoring</h3>
-    Simuladores de crédito agrícola, flujos de aprobación de cuotas, integración con entidades financieras o motor de scoring analítico propio de riesgo del productor.
-    <div class="price">Precio neto: $16.500 USD</div></div>
-
-  <div class="card"><h3>Módulo 6: Inventario en Tiempo Real</h3>
-    Control de stock multi-almacén con actualización síncrona, alertas por niveles críticos y trazabilidad de lotes de agroinsumos.
-    <div class="price">Precio neto: $8.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 7: Transporte, Logística y Geolocalización</h3>
-    Cotización de envíos por peso, volumen y distancia; cartografía del mapa de fincas en los 23 estados de cobertura y tracking GPS de flotas en tiempo real.
-    <div class="price">Precio neto: $20.000 USD</div></div>
-
-  <div class="card"><h3>Módulo 8: Control de Gestión con IA (CEO Bot)</h3>
-    Agente experto con Procesamiento de Lenguaje Natural que informa a la Junta Directiva/CEO sobre KPIs, estatus de operaciones y modelos predictivos de precios.
-    <div class="price">Precio neto: $15.000 USD</div></div>
-
-  <div class="card"><h3>Seguridad, KYC e Infraestructura de Redes</h3>
-    Verificación biométrica y documental (KYC), cortafuegos de aplicación (WAF), cifrado de datos en reposo y tránsito, y entornos espejo (Staging) para pruebas de carga.
-    <div class="price">Precio neto: $15.000 USD</div></div>
-
+  <h2>1. Costo de Desarrollo (CAPEX)</h2>
+  <p>Esfuerzo AI-native por componente, valorado al costo interno cargado de $30 USD/hora.</p>
   <table class="fin">
-    <tr><th>Concepto</th><th class="num">Precio neto (USD)</th></tr>
-    <tr><td>Subtotal de los 9 componentes funcionales</td><td class="num">$134.500</td></tr>
-    <tr><td>Gestión de proyecto, QA, infraestructura de build y aliados tecnológicos (ISTC)</td><td class="num">$25.500</td></tr>
-    <tr class="total"><td>Subtotal Desarrollo (neto)</td><td class="num">$160.000</td></tr>
-    <tr><td>IVA 16%</td><td class="num">$25.600</td></tr>
-    <tr class="grand"><td>TOTAL DESARROLLO (CAPEX, con IVA)</td><td class="num">$185.600 USD</td></tr>
+    <tr><th>Componente</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Módulo 1 — Core Marketplace (catálogo, carrito, perfiles)</td><td class="num">160</td><td class="num">$4.800</td></tr>
+    <tr><td>Módulo 2 — Ventas y Subastas</td><td class="num">150</td><td class="num">$4.500</td></tr>
+    <tr><td>Módulo 3 — Pasarela de Pagos (Split + facturación)</td><td class="num">150</td><td class="num">$4.500</td></tr>
+    <tr><td>Módulo 4 — Cobranza y Conciliación</td><td class="num">140</td><td class="num">$4.200</td></tr>
+    <tr><td>Módulo 5 — Financiamiento y Motor de Scoring</td><td class="num">165</td><td class="num">$4.950</td></tr>
+    <tr><td>Módulo 6 — Inventario en Tiempo Real</td><td class="num">80</td><td class="num">$2.400</td></tr>
+    <tr><td>Módulo 7 — Transporte, Logística y Geolocalización</td><td class="num">200</td><td class="num">$6.000</td></tr>
+    <tr><td>Módulo 8 — Control de Gestión con IA (CEO Bot)</td><td class="num">150</td><td class="num">$4.500</td></tr>
+    <tr><td>Seguridad, KYC e Infraestructura de Redes</td><td class="num">150</td><td class="num">$4.500</td></tr>
+    <tr class="sub"><td>Subtotal mano de obra de ingeniería</td><td class="num">1.345</td><td class="num">$40.350</td></tr>
+    <tr><td>Infraestructura de build, sandboxes de APIs de terceros y cómputo LLM/agentes</td><td class="num">—</td><td class="num">$7.650</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO</td><td class="num">1.345</td><td class="num">$48.000 USD</td></tr>
   </table>
-  <p class="muted">Facturable como contrato de servicio a 12 meses: <strong>$15.467 USD/mes</strong> (IVA incluido). Plazo de entrega: <span class="pill">105 – 150 días</span> en 3 fases.</p>
 
-  <h2>3. Fases de Entrega</h2>
-  <div class="twocol">
-    <div class="card"><h3>Fase 1 — MVP Core (30–45 días)</h3>
-      <ul class="tight">
-        <li>Módulo 1 (Marketplace multi-rol)</li>
-        <li>Módulo 4 (Cobranza + alertas WhatsApp/SMS)</li>
-        <li>Módulo 8 (CEO Bot v1 sobre KPIs en vivo)</li>
-      </ul>
-      <div class="price">$53.500 neto · $62.060 con IVA</div></div>
-    <div class="card"><h3>Fase 2 — Build (45–60 días)</h3>
-      <ul class="tight">
-        <li>Módulo 2 (Subastas en tiempo real)</li>
-        <li>Módulo 3 (Pagos + Split + facturación)</li>
-        <li>Módulo 6 (Inventario multi-almacén)</li>
-      </ul>
-      <div class="price">$46.500 neto · $53.940 con IVA</div></div>
-    <div class="card"><h3>Fase 3 — Integración (30–45 días)</h3>
-      <ul class="tight">
-        <li>Módulo 7 (GPS + logística 23 estados)</li>
-        <li>Módulo 5 (Financiamiento + scoring)</li>
-        <li>Seguridad, KYC y WAF</li>
-      </ul>
-      <div class="price">$60.000 neto · $69.600 con IVA</div></div>
-  </div>
-
-  <h2>4. Costo Operativo Anual (OPEX)</h2>
-  <p>Operación gestionada con disponibilidad 99.9%, integraciones inteligentes y soporte 24/7. Se muestra el costo operativo real y el precio del servicio gestionado.</p>
+  <h2>2. Costo Operativo Anual (OPEX)</h2>
+  <p>Costo recurrente real de operar la plataforma con disponibilidad 99.9%, integraciones inteligentes y soporte 24/7.</p>
   <table class="fin">
-    <tr><th>Concepto</th><th class="num">Costo operativo (USD/año)</th></tr>
+    <tr><th>Concepto</th><th class="num">Costo (USD/año)</th></tr>
     <tr><td>Infraestructura Cloud &amp; BD (PostgreSQL, réplicas, backups)</td><td class="num">$5.400</td></tr>
     <tr><td>Ciberseguridad, SSL, WAF y mitigación DDoS</td><td class="num">$1.800</td></tr>
     <tr><td>APIs de Inteligencia Artificial (análisis, fraude, Core)</td><td class="num">$3.600</td></tr>
     <tr><td>Procesamiento de Voz (Speech-to-Text / Text-to-Speech)</td><td class="num">$2.400</td></tr>
     <tr><td>Servicios de terceros (KYC biométrico / Mapas)</td><td class="num">$3.200</td></tr>
     <tr><td>Soporte e ingeniería SLA (DevOps, monitoreo 24/7)</td><td class="num">$7.600</td></tr>
-    <tr class="total"><td>Costo operativo real</td><td class="num">$24.000</td></tr>
+    <tr class="total"><td>COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$24.000 USD</td></tr>
   </table>
-  <table class="fin">
-    <tr><th>Servicio Gestionado AgrollanoDigital</th><th class="num">USD/año</th></tr>
-    <tr><td>Servicio gestionado (operación + soporte + IA)</td><td class="num">$80.000</td></tr>
-    <tr><td>IVA 16%</td><td class="num">$12.800</td></tr>
-    <tr class="grand"><td>TOTAL OPERACIÓN ANUAL (con IVA)</td><td class="num">$92.800 USD</td></tr>
-  </table>
-  <p class="muted">Equivalente a <strong>$7.733 USD/mes</strong> (IVA incluido), facturable mensualmente a partir de la puesta en producción.</p>
 
-  <h2>5. Resumen de Inversión y Comparativo</h2>
+  <h2>3. Resumen y Comparativo de Costo</h2>
   <table class="fin">
-    <tr><th>Concepto</th><th class="num">Mercado (informe previo)</th><th class="num">Digit2AI (neto)</th><th class="num">Digit2AI (con IVA)</th></tr>
-    <tr><td>Desarrollo (CAPEX)</td><td class="num">$153.000</td><td class="num">$160.000</td><td class="num">$185.600</td></tr>
-    <tr><td>Operación anual (OPEX)</td><td class="num">$34.400</td><td class="num">$80.000</td><td class="num">$92.800</td></tr>
-    <tr><td>Plazo de entrega</td><td class="num">6 – 9 meses</td><td class="num" colspan="2">105 – 150 días (3 fases)</td></tr>
+    <tr><th>Concepto</th><th class="num">Costo de mercado (informe previo)</th><th class="num">Nuestro costo real</th><th class="num">Ahorro</th></tr>
+    <tr><td>Desarrollo (CAPEX)</td><td class="num">$153.000</td><td class="num">$48.000</td><td class="num">$105.000</td></tr>
+    <tr><td>Operación anual (OPEX)</td><td class="num">$34.400</td><td class="num">$24.000</td><td class="num">$10.400</td></tr>
+    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$187.400</td><td class="num">$72.000</td><td class="num">$115.400</td></tr>
   </table>
-  <p>Frente a la valoración de mercado, la alianza ISTC &times; Digit2AI entrega el <strong>mismo alcance al mismo nivel de inversión inicial</strong>, pero en <strong>un tercio del tiempo</strong>, con la capa de IA (CEO Bot, scoring, detección de fraude y alertas proactivas) incorporada de forma nativa desde la Fase 1.</p>
-
-  <div class="note">
-    <strong>Modelo comercial alternativo (SaaS / White-Label):</strong> de preferirse reducir la barrera de entrada, el ecosistema puede contratarse bajo el esquema SaaS planteado en el informe previo —cuota inicial de Setup más un porcentaje variable sobre el incremento de ventas mensuales— trasladando los riesgos de infraestructura y desarrollo continuo a la consultora y sus aliados. Disponible bajo solicitud con condiciones a la medida.
-  </div>
+  <p class="muted">El menor costo de desarrollo refleja la aceleración AI-native (scaffolding generado por agentes que colapsa 2.950 horas de mercado a 1.345 horas efectivas). Sobre esta base de costo se aplican posteriormente el margen de utilidad y el IVA en la propuesta comercial al cliente.</p>
 
   <div class="foot">
-    Propuesta emitida por la alianza tecnológica ISTC &times; Digit2AI. Cifras en dólares estadounidenses (USD). IVA calculado al 16%. Los precios netos incluyen un margen operativo del 70%. Documento de carácter comercial; no constituye contrato hasta su firma. AgrollanoDigital es un producto white-label construido sobre la plataforma AgroMercado de ISTC con capa de Inteligencia Artificial de Digit2AI.
+    Documento interno de la alianza ISTC &times; Digit2AI. Cifras en dólares estadounidenses (USD), a costo directo, sin margen de utilidad ni IVA. Tarifa interna cargada de referencia: $30 USD/hora. No distribuir al cliente.
   </div>
 
 </div>
