@@ -8643,7 +8643,11 @@ async function renderMeetingMinutes(container) {
   ]);
   if (projectsRes.success) _minutesProjectsCache = projectsRes.data;
   const minutes = (minutesRes.success && minutesRes.data) || [];
-  const projects = (projectsRes.success && projectsRes.data) || [];
+  // Sort projects A→Z by name so the dropdown is alphabetical (case-insensitive,
+  // locale-aware so accented Spanish names sort correctly).
+  const projects = ((projectsRes.success && projectsRes.data) || [])
+    .slice()
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
 
   container.innerHTML = `
     <div class="section-header">
@@ -8668,6 +8672,11 @@ function renderMinutesList(minutes) {
   let html = '<table class="data-table"><thead><tr><th style="width:110px">Date</th><th>Subject</th><th>Project</th><th style="width:140px">Notes</th><th style="width:130px">Sent</th><th style="width:230px">Actions</th></tr></thead><tbody>';
   minutes.forEach(m => {
     const proj = m.project ? `<span class="status-badge status-planning">${escapeHtml(m.project.name)}</span>` : '<span style="color:var(--text-muted)">—</span>';
+    // Small AI indicator so it's obvious the extractor ran and how many tasks it spun off.
+    const hasNotes = m.notes && String(m.notes).trim();
+    const aiBadge = m.ai_processed_at
+      ? `<span title="AI processed — ${m.auto_tasks_created || 0} task(s) auto-created" style="margin-left:8px;font-size:10px;font-weight:600;color:#6366f1;border:1px solid #6366f1;border-radius:8px;padding:1px 7px">🤖 ${m.auto_tasks_created || 0} task${(m.auto_tasks_created || 0) === 1 ? '' : 's'}</span>`
+      : (hasNotes ? `<span title="AI extraction pending — reopen shortly" style="margin-left:8px;font-size:10px;color:var(--text-muted)">⏳ AI…</span>` : '');
     const notesPreview = m.notes ? (m.notes.length > 40 ? m.notes.substring(0, 40) + '…' : m.notes) : '<span style="color:var(--text-muted)">empty</span>';
     const sentTo = Array.isArray(m.sent_to) ? m.sent_to : [];
     const sentCell = m.sent_at
@@ -8686,7 +8695,7 @@ function renderMinutesList(minutes) {
       : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();sendMinuteToStakeholders(${m.id})" id="send-mm-${m.id}" title="Send via SendGrid (server-side). Auto-send is OFF — this is a manual fallback.">${m.sent_at ? 'Resend' : 'SendGrid'}</button>`;
     html += `<tr class="clickable" onclick="openMinutesModal(${m.id})">
       <td>${fmtDate(m.meeting_date)}</td>
-      <td><strong>${escapeHtml(m.subject)}</strong></td>
+      <td><strong>${escapeHtml(m.subject)}</strong>${aiBadge}</td>
       <td>${proj}</td>
       <td><span style="color:var(--text-muted);font-size:12px">${escapeHtml(notesPreview)}</span></td>
       <td>${sentCell}</td>
@@ -8815,10 +8824,62 @@ async function openMinutesModal(id) {
     const r = await api('/meeting-minutes/' + id);
     if (r.success) row = r.data;
   }
-  const projects = window._minutesProjects || [];
+  const projects = (window._minutesProjects || [])
+    .slice()
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
   const projectOptions = ['<option value="">— No project (general note) —</option>']
     .concat(projects.map(p => `<option value="${p.id}" ${row.project_id == p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`))
     .join('');
+
+  // AI results panel — shows the summary + action items the extractor produced
+  // and how many tasks were auto-created in the linked project. Without this,
+  // the AI work is invisible and looks like "the agent isn't running".
+  const aiItems = Array.isArray(row.action_items_json) ? row.action_items_json : [];
+  const agentBadge = (t) => {
+    const map = {
+      research: ['🔎 Research agent', '#6366f1'],
+      draft:    ['✍️ Draft agent', '#0ea5e9'],
+      none:     ['Manual', 'var(--text-muted)']
+    };
+    const [label, color] = map[t] || map.none;
+    return `<span style="font-size:10px;font-weight:600;color:${color};border:1px solid ${color};border-radius:8px;padding:1px 7px">${label}</span>`;
+  };
+  const prioBadge = (p) => {
+    const colors = { critical: '#ef4444', high: '#f59e0b', medium: '#10b981', low: '#94a3b8' };
+    const c = colors[p] || colors.medium;
+    return `<span style="font-size:10px;font-weight:600;color:${c};text-transform:uppercase">${escapeHtml(p || 'medium')}</span>`;
+  };
+  let aiPanelInner;
+  if (row.ai_processed_at) {
+    const itemsHtml = aiItems.length
+      ? aiItems.map(it => `<li style="margin-bottom:8px;list-style:none;padding-left:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <strong style="font-size:13px">${escapeHtml(it.title || '')}</strong>
+              ${prioBadge(it.priority)} ${agentBadge(it.agent_type)}
+            </div>
+            ${it.description ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(it.description)}</div>` : ''}
+            ${it.assignee_hint ? `<div style="font-size:11px;color:var(--text-muted)">Owner: ${escapeHtml(it.assignee_hint)}</div>` : ''}
+          </li>`).join('')
+      : '<li style="list-style:none;color:var(--text-muted);font-size:12px">No action items were extracted from these notes.</li>';
+    aiPanelInner = `
+      ${row.ai_summary ? `<div style="font-size:13px;line-height:1.55;margin-bottom:10px">${escapeHtml(row.ai_summary)}</div>` : ''}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        ${row.auto_tasks_created || 0} task${(row.auto_tasks_created || 0) === 1 ? '' : 's'} auto-created${row.project_id ? ' in the linked project' : ''} · processed ${fmtDateTime(row.ai_processed_at)}
+      </div>
+      <ul style="margin:0;padding:0">${itemsHtml}</ul>`;
+  } else if (id && row.notes && String(row.notes).trim()) {
+    aiPanelInner = `<div style="font-size:12px;color:var(--text-muted)">⏳ AI is reading these notes and extracting action items. Reopen this minute in a few seconds, or click <strong>Reprocess with AI</strong>.</div>`;
+  } else {
+    aiPanelInner = `<div style="font-size:12px;color:var(--text-muted)">Add notes and save — AI will extract a summary plus action items and auto-create tasks under the linked project.</div>`;
+  }
+  const aiPanel = id ? `
+    <div class="form-group" style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <label style="margin:0">🤖 AI Summary &amp; Action Items</label>
+        <button class="btn btn-sm btn-ghost" onclick="reprocessMinute(${id})" title="Re-run the AI extractor on the current notes (re-creates tasks)">Reprocess with AI</button>
+      </div>
+      ${aiPanelInner}
+    </div>` : '';
 
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
@@ -8848,6 +8909,7 @@ async function openMinutesModal(id) {
           <label>Notes</label>
           <textarea id="mm-notes" rows="18" placeholder="Paste your Zoom transcript or meeting notes here..." style="width:100%;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical">${escapeHtml(row.notes || '')}</textarea>
         </div>
+        ${aiPanel}
         <div class="form-group" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
           <input type="checkbox" id="mm-auto-send" ${row.sent_at ? '' : 'checked'} style="width:auto;margin:0">
           <label for="mm-auto-send" style="margin:0;cursor:pointer;font-size:13px">
@@ -8896,3 +8958,21 @@ async function deleteMinute(id) {
   if (!res.success) { alert('Delete failed: ' + (res.error || 'unknown')); return; }
   navigateTo('minutes');
 }
+
+// Re-run the AI extractor on an existing minute's notes. Processing is async
+// on the server (~few seconds for extraction + agent dispatch), so we close
+// the modal, toast, and refresh the list so the user can reopen to see the
+// refreshed summary + action items once it lands.
+async function reprocessMinute(id) {
+  if (!confirm('Re-run the AI extractor on the current notes? This re-creates action-item tasks in the linked project.')) return;
+  try {
+    const res = await api('/meeting-minutes/' + id + '/reprocess', { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) { alert('Could not reprocess: ' + (res.error || 'unknown')); return; }
+    document.querySelector('.modal-overlay')?.remove();
+    if (typeof showCopyToast === 'function') showCopyToast('AI is reprocessing — reopen this minute in a few seconds to see the refreshed summary.');
+    navigateTo('minutes');
+  } catch (err) {
+    alert('Reprocess failed: ' + err.message);
+  }
+}
+window.reprocessMinute = reprocessMinute;
