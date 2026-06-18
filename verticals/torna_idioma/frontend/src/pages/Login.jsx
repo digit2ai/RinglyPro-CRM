@@ -47,6 +47,13 @@ export default function Login() {
             <div style={s.pillar}><div style={s.pillarNum}>II</div><div style={s.pillarLabel}>Orgullo</div></div>
             <div style={s.pillar}><div style={s.pillarNum}>III</div><div style={s.pillarLabel}>Premio</div></div>
           </div>
+          <a
+            href={`${BASE}/demo-guide.html`}
+            target="_blank"
+            rel="noopener"
+            onClick={(e) => { e.preventDefault(); window.open(`${BASE}/demo-guide.html`, 'tornaDemoGuide', 'noopener,width=900,height=1000,scrollbars=yes,resizable=yes'); }}
+            style={s.guideBtn}
+          >Demo Guide — How to Test (1·2·3)</a>
         </div>
       </div>
       <div style={s.right}>
@@ -90,13 +97,6 @@ export default function Login() {
             <div style={s.demoItem}><strong>BPO Worker:</strong> bpo@tornaidioma.ph / BPODemo2026!</div>
             <div style={s.demoItem}><strong>Partner:</strong> partner@tornaidioma.ph / PartnerDemo2026!</div>
           </div>
-          <a
-            href={`${BASE}/demo-guide.html`}
-            target="_blank"
-            rel="noopener"
-            onClick={(e) => { e.preventDefault(); window.open(`${BASE}/demo-guide.html`, 'tornaDemoGuide', 'noopener,width=900,height=1000,scrollbars=yes,resizable=yes'); }}
-            style={s.guideBtn}
-          >Demo Guide — How to Test (1·2·3)</a>
           <a href={`${BASE}/`} style={s.backLink}>&larr; Back to Landing Page</a>
         </div>
       </div>
@@ -130,7 +130,7 @@ const s = {
   demo: { marginTop: 24, padding: '16px', background: '#FFF8E7', borderRadius: 6, border: '1px solid #F5E6C8' },
   demoTitle: { fontSize: 11, fontWeight: 700, color: '#8B6914', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 },
   demoItem: { fontSize: 11, color: '#6B6B6B', marginBottom: 4, wordBreak: 'break-all' },
-  guideBtn: { display: 'inline-block', marginTop: 16, textAlign: 'left', fontSize: 13, color: '#0F1A2E', textDecoration: 'none', fontWeight: 700, padding: '10px 18px', background: 'linear-gradient(135deg, #E8D48B, #C9A84C)', borderRadius: 6, letterSpacing: 0.5 },
+  guideBtn: { display: 'inline-block', marginTop: 36, textAlign: 'center', fontSize: 13, color: '#0F1A2E', textDecoration: 'none', fontWeight: 700, padding: '12px 24px', background: 'linear-gradient(135deg, #E8D48B, #C9A84C)', borderRadius: 8, letterSpacing: 0.5, boxShadow: '0 4px 16px rgba(0,0,0,0.25)' },
   backLink: { display: 'block', marginTop: 12, textAlign: 'center', fontSize: 13, color: '#C9A84C', textDecoration: 'none', fontWeight: 500 },
 };
 
