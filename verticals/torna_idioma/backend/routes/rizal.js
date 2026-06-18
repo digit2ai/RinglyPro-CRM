@@ -73,8 +73,8 @@ router.post('/section/:section/complete', auth.any, async (req, res) => {
   }
 });
 
-// GET /completion-record — the Rizal Studies Completion Record (config-driven).
-router.get('/completion-record', auth.any, async (req, res) => {
+// GET /completion-record (alias /record) — the Rizal Studies Completion Record.
+router.get(['/completion-record', '/record'], auth.any, async (req, res) => {
   try {
     const [rows] = await sequelize.query(
       `SELECT section, status, score, completed_at FROM ti_rizal_module_progress WHERE user_id = $1`,

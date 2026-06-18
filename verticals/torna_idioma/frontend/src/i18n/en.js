@@ -1,10 +1,34 @@
 // English interface strings for Método Rizal surfaces.
 export default {
-  // nav
+  // nav — Método Rizal
   'nav.cincoRaices': 'Cinco Raíces',
   'nav.emperador': 'Emperador',
   'nav.atelier': 'Translation Atelier',
   'nav.rizal': 'Rizal Studies',
+  // nav — sections
+  'section.metodoRizal': 'MÉTODO RIZAL',
+  'section.education': 'EDUCATION',
+  'section.bpo': 'BPO PROGRAM',
+  'section.advocacy': 'ADVOCACY',
+  'section.government': 'GOVERNMENT',
+  'section.external': 'EXTERNAL',
+  // nav — items
+  'nav.commandCenter': 'Command Center',
+  'nav.aiTutor': 'AI Spanish Tutor',
+  'nav.courses': 'Course Catalog',
+  'nav.progress': 'My Progress',
+  'nav.certifications': 'Certifications',
+  'nav.bpoTraining': 'BPO Training',
+  'nav.jobBoard': 'Job Board',
+  'nav.events': 'Events',
+  'nav.supporters': 'Supporters',
+  'nav.programMetrics': 'Program Metrics',
+  'nav.schools': 'Schools',
+  'nav.economicImpact': 'Economic Impact',
+  'nav.partnerNetwork': 'Partner Network',
+  'nav.collaboration': "Int'l Collaboration",
+  'nav.publicWebsite': 'Public Website',
+  'nav.logout': 'Log Out',
 
   // common
   'common.loading': 'Loading…',

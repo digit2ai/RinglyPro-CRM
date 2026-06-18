@@ -58,31 +58,31 @@ function Sidebar({ open, onClose }) {
   const role = user?.role || 'admin';
 
   const allNav = [
-    { path: `${BASE}/dashboard`, label: 'Command Center', roles: ['admin','official','teacher'] },
-    { section: 'MÉTODO RIZAL' },
+    { path: `${BASE}/dashboard`, label: tr('nav.commandCenter'), roles: ['admin','official','teacher'] },
+    { section: tr('section.metodoRizal') },
     { path: `${BASE}/cinco-raices`, label: tr('nav.cincoRaices'), roles: ['admin','teacher','student','bpo_worker'] },
-    { path: `${BASE}/ai-tutor`, label: 'AI Spanish Tutor', roles: ['admin','teacher','student','bpo_worker'] },
+    { path: `${BASE}/ai-tutor`, label: tr('nav.aiTutor'), roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/atelier`, label: tr('nav.atelier'), roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/rizal-studies`, label: tr('nav.rizal'), roles: ['admin','teacher','student','bpo_worker','official'] },
     { path: `${BASE}/emperador`, label: tr('nav.emperador'), roles: ['admin','teacher','student','bpo_worker'] },
-    { section: 'EDUCATION' },
-    { path: `${BASE}/courses`, label: 'Course Catalog', roles: ['admin','teacher','student','bpo_worker'] },
-    { path: `${BASE}/progress`, label: 'My Progress', roles: ['admin','student','bpo_worker'] },
-    { path: `${BASE}/certifications`, label: 'Certifications', roles: ['admin','teacher','student','bpo_worker','official'] },
-    { section: 'BPO PROGRAM' },
-    { path: `${BASE}/bpo-program`, label: 'BPO Training', roles: ['admin','official','bpo_worker'] },
-    { path: `${BASE}/job-board`, label: 'Job Board', roles: ['admin','bpo_worker'] },
-    { section: 'ADVOCACY' },
-    { path: `${BASE}/events`, label: 'Events', roles: ['admin','official','teacher','partner'] },
-    { path: `${BASE}/supporters`, label: 'Supporters', roles: ['admin','official'] },
-    { section: 'GOVERNMENT' },
-    { path: `${BASE}/program-metrics`, label: 'Program Metrics', roles: ['admin','official'] },
-    { path: `${BASE}/schools`, label: 'Schools', roles: ['admin','official'] },
-    { path: `${BASE}/economic-impact`, label: 'Economic Impact', roles: ['admin','official'] },
-    { path: `${BASE}/partner-network`, label: 'Partner Network', roles: ['admin','official','partner'] },
-    { path: `${BASE}/collaboration`, label: 'Int\'l Collaboration', roles: ['admin','official','partner'] },
-    { section: 'EXTERNAL' },
-    { path: '/Torna_Idioma/', label: 'Public Website', roles: ['admin','official'], ext: true },
+    { section: tr('section.education') },
+    { path: `${BASE}/courses`, label: tr('nav.courses'), roles: ['admin','teacher','student','bpo_worker'] },
+    { path: `${BASE}/progress`, label: tr('nav.progress'), roles: ['admin','student','bpo_worker'] },
+    { path: `${BASE}/certifications`, label: tr('nav.certifications'), roles: ['admin','teacher','student','bpo_worker','official'] },
+    { section: tr('section.bpo') },
+    { path: `${BASE}/bpo-program`, label: tr('nav.bpoTraining'), roles: ['admin','official','bpo_worker'] },
+    { path: `${BASE}/job-board`, label: tr('nav.jobBoard'), roles: ['admin','bpo_worker'] },
+    { section: tr('section.advocacy') },
+    { path: `${BASE}/events`, label: tr('nav.events'), roles: ['admin','official','teacher','partner'] },
+    { path: `${BASE}/supporters`, label: tr('nav.supporters'), roles: ['admin','official'] },
+    { section: tr('section.government') },
+    { path: `${BASE}/program-metrics`, label: tr('nav.programMetrics'), roles: ['admin','official'] },
+    { path: `${BASE}/schools`, label: tr('nav.schools'), roles: ['admin','official'] },
+    { path: `${BASE}/economic-impact`, label: tr('nav.economicImpact'), roles: ['admin','official'] },
+    { path: `${BASE}/partner-network`, label: tr('nav.partnerNetwork'), roles: ['admin','official','partner'] },
+    { path: `${BASE}/collaboration`, label: tr('nav.collaboration'), roles: ['admin','official','partner'] },
+    { section: tr('section.external') },
+    { path: '/Torna_Idioma/', label: tr('nav.publicWebsite'), roles: ['admin','official'], ext: true },
   ];
 
   const nav = allNav.filter(n => n.section || n.roles.includes(role));
@@ -110,7 +110,7 @@ function Sidebar({ open, onClose }) {
         <div style={S.footer}>
           <div style={S.userRole}>{role.replace('_',' ').toUpperCase()}</div>
           <div style={S.userInfo}>{user?.full_name || user?.email}</div>
-          <button onClick={() => { logout(); window.location.href = `${BASE}/login`; }} style={S.logoutBtn}>Cerrar Sesión</button>
+          <button onClick={() => { logout(); window.location.href = `${BASE}/login`; }} style={S.logoutBtn}>{tr('nav.logout')}</button>
         </div>
       </div>
     </>

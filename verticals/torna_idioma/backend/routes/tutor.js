@@ -1,8 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth.ti');
+const rateLimit = require('../middleware/rate-limit.ti');
 const edgeTts = require('../services/edge-tts');
 const emperador = require('../services/emperador');
+
+// Cost-sensitive endpoints: throttle per learner (LLM + TTS calls).
+const chatLimiter = rateLimit({ windowMs: 60000, max: 20, key: 'chat' });
+const ttsLimiter = rateLimit({ windowMs: 60000, max: 40, key: 'tts' });
 
 // ============================================================================
 // PROFESORA ISABEL — MÉTODO RIZAL system prompt (PART B, installed verbatim).
@@ -138,7 +143,7 @@ function renderPrompt(vars) {
 const VALID_MODES = ['tutor', 'dia_de_espanol', 'rizal_module', 'translation'];
 
 // Chat with Profesora Isabel (Método Rizal).
-router.post('/chat', auth.any, async (req, res) => {
+router.post('/chat', auth.any, chatLimiter, async (req, res) => {
   try {
     const { messages } = req.body;
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -222,7 +227,7 @@ router.post('/chat', auth.any, async (req, res) => {
 
 // Neural TTS with ⟦es⟧ smart-split: Spanish voice for Spanish spans, interface-
 // language voice for explanation. One MP3 back. Body: { text, interface_lang? }
-router.post('/tts', auth.any, async (req, res) => {
+router.post('/tts', auth.any, ttsLimiter, async (req, res) => {
   try {
     const { text } = req.body;
     if (!text || typeof text !== 'string' || !text.trim()) {

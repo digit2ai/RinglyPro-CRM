@@ -33,7 +33,7 @@ const HEADERS = {
 };
 
 const DEFAULT_VOICE = 'es-MX-DaliaNeural'; // warm Latin-American female — Profesora Isabel
-const EXPL_VOICE_EN = 'en-US-AriaNeural';  // explanation voice when interface_lang = en
+const EXPL_VOICE_EN = 'en-US-AvaNeural';  // explanation voice when interface_lang = en
 const EXPL_VOICE_FIL = 'fil-PH-BlessicaNeural'; // explanation voice when interface_lang = fil
 const DEFAULT_RATE = '-4%'; // slightly slowed for learners
 const SYNTH_TIMEOUT_MS = 15000;

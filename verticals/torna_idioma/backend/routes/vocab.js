@@ -22,8 +22,8 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// GET /daily-session — today's 5 new roots (current module) + roots due for review.
-router.get('/daily-session', auth.any, async (req, res) => {
+// GET /daily-session (alias /session) — today's 5 new roots + roots due for review.
+router.get(['/daily-session', '/session'], auth.any, async (req, res) => {
   try {
     const userId = req.user.id;
     const [[u]] = await sequelize.query(

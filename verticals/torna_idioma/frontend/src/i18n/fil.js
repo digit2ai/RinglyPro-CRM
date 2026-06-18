@@ -1,10 +1,34 @@
 // Filipino (Tagalog) interface strings for Método Rizal surfaces.
 export default {
-  // nav
+  // nav — Método Rizal
   'nav.cincoRaices': 'Cinco Raíces',
   'nav.emperador': 'Emperador',
   'nav.atelier': 'Translation Atelier',
   'nav.rizal': 'Pag-aaral kay Rizal',
+  // nav — sections
+  'section.metodoRizal': 'MÉTODO RIZAL',
+  'section.education': 'EDUKASYON',
+  'section.bpo': 'PROGRAMANG BPO',
+  'section.advocacy': 'ADBOKASYA',
+  'section.government': 'PAMAHALAAN',
+  'section.external': 'PANLABAS',
+  // nav — items
+  'nav.commandCenter': 'Command Center',
+  'nav.aiTutor': 'AI Spanish Tutor',
+  'nav.courses': 'Katalogo ng Kurso',
+  'nav.progress': 'Aking Progreso',
+  'nav.certifications': 'Mga Sertipikasyon',
+  'nav.bpoTraining': 'Pagsasanay sa BPO',
+  'nav.jobBoard': 'Job Board',
+  'nav.events': 'Mga Kaganapan',
+  'nav.supporters': 'Mga Tagasuporta',
+  'nav.programMetrics': 'Mga Sukatan ng Programa',
+  'nav.schools': 'Mga Paaralan',
+  'nav.economicImpact': 'Epektong Pang-ekonomiya',
+  'nav.partnerNetwork': 'Network ng Partner',
+  'nav.collaboration': 'Internasyonal na Kolaborasyon',
+  'nav.publicWebsite': 'Pampublikong Website',
+  'nav.logout': 'Mag-log Out',
 
   // common
   'common.loading': 'Naglo-load…',
