@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Torna Idioma — Método Rizal · Demo Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+    :root{ --gold:#C9A84C; --gold-dark:#8B6914; --navy:#1B2A4A; --navy-deep:#0F1A2E; --cream:#FFF8E7; --cream-dark:#F5E6C8; --text:#2C2C2C; --muted:#6B6B6B; }
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    body{ font-family:'Inter',sans-serif; color:var(--text); background:var(--cream); line-height:1.65; padding:0 0 60px; }
+    .hero{ background:linear-gradient(135deg,#0F1A2E,#1B2A4A 55%,#2A3F6A); color:#fff; padding:40px 24px; text-align:center; border-bottom:4px solid var(--gold); }
+    .hero h1{ font-family:'Playfair Display',serif; font-size:30px; font-weight:800; margin-bottom:6px; }
+    .hero .sub{ color:#E8D48B; font-style:italic; font-size:15px; letter-spacing:.5px; }
+    .wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
+    .login{ margin:-26px auto 28px; max-width:720px; background:#fff; border:1px solid var(--cream-dark); border-top:4px solid var(--gold); border-radius:10px; box-shadow:0 6px 22px rgba(0,0,0,.08); padding:18px 22px; display:flex; flex-wrap:wrap; gap:10px 28px; align-items:center; justify-content:center; }
+    .login .k{ font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-dark); }
+    .login .v{ font-family:'Inter',monospace; font-size:16px; font-weight:700; color:var(--navy); background:var(--cream); padding:4px 12px; border-radius:6px; border:1px solid var(--cream-dark); }
+    .steps{ counter-reset:step; margin-top:8px; }
+    .step{ position:relative; background:#fff; border:1px solid var(--cream-dark); border-radius:10px; padding:18px 20px 18px 70px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+    .step::before{ counter-increment:step; content:counter(step); position:absolute; left:16px; top:16px; width:38px; height:38px; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#fff; font-family:'Playfair Display',serif; font-weight:800; font-size:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    .step h3{ font-family:'Playfair Display',serif; font-size:17px; color:var(--navy); margin-bottom:4px; }
+    .step p{ font-size:14.5px; color:#3a3a3a; }
+    .step b{ color:var(--navy-deep); }
+    .pill{ display:inline-block; background:var(--cream); border:1px solid var(--cream-dark); color:var(--gold-dark); font-weight:700; font-size:13px; padding:1px 8px; border-radius:5px; }
+    .tips{ margin-top:22px; background:#0F1A2E; color:#E8D48B; border-radius:10px; padding:18px 22px; }
+    .tips h3{ color:var(--gold); font-family:'Playfair Display',serif; font-size:16px; margin-bottom:8px; letter-spacing:.5px; }
+    .tips li{ margin:6px 0 6px 18px; font-size:14px; color:#f3e7c4; }
+    .foot{ text-align:center; margin-top:26px; font-size:13px; color:var(--muted); }
+    .foot a{ color:var(--gold-dark); font-weight:600; text-decoration:none; }
+    @media print{ .hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } .step::before,.tips,.hero{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Método Rizal — Demo Guide</h1>
+    <div class="sub">Torna Idioma · Vida · Cultura · Legado</div>
+  </div>
+
+  <div class="wrap">
+    <div class="login">
+      <div><span class="k">Login</span><br><span class="v">demo@tornaidioma.ph</span></div>
+      <div><span class="k">Password</span><br><span class="v">TornaDemo2026</span></div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <h3>Sign in</h3>
+        <p>Open <b>aiagent.ringlypro.com/Torna_Idioma/login</b> and sign in with the account above.</p>
+      </div>
+      <div class="step">
+        <h3>Cinco Raíces — five words a night</h3>
+        <p>In the left menu open <b>Cinco Raíces</b>. Show today's 5 Spanish words, flip a card to reveal the meaning, and tap <span class="pill">Good</span> on a couple. Point to the <b>streak</b> and the <b>words-per-year</b> projection.</p>
+      </div>
+      <div class="step">
+        <h3>AI Spanish Tutor — Profesora Isabel</h3>
+        <p>Open <b>AI Spanish Tutor</b>. Type <b>"Hola, teach me my first word"</b> and send. Press the <span class="pill">play</span> button to hear Isabel's voice. Slide <b>Immersion</b> up for more Spanish, then tap <b>Día de Español</b>.</p>
+      </div>
+      <div class="step">
+        <h3>Translation Atelier</h3>
+        <p>Open <b>Translation Atelier</b>. Pick a sample line, type a quick Spanish translation, and press <span class="pill">Grade my translation</span> to show the instant feedback.</p>
+      </div>
+      <div class="step">
+        <h3>Rizal Studies + Completion Record</h3>
+        <p>Open <b>Rizal Studies</b>. Open a section (e.g. <i>Noli Me Tángere</i>), show the original Spanish + the simplified version, press <b>Mark section complete</b>, then <b>View Completion Record</b> and <b>Print</b>.</p>
+      </div>
+      <div class="step">
+        <h3>Emperador — leaderboard</h3>
+        <p>Open <b>Emperador</b> to show the leaderboard, the rotating <b>Emperador</b> title, and the badges.</p>
+      </div>
+      <div class="step">
+        <h3>The bilingual flip</h3>
+        <p>Top-left, switch the language toggle <b>EN → FIL</b> to show the whole interface turn to Filipino instantly.</p>
+      </div>
+    </div>
+
+    <div class="tips">
+      <h3>Two quick tips</h3>
+      <ul>
+        <li>Press <b>play voice</b> once (step 3) before the meeting so the browser allows audio.</li>
+        <li>Start in <b>EN</b>; save the <b>FIL</b> flip (step 7) as your closing "wow."</li>
+      </ul>
+    </div>
+
+    <div class="foot">
+      <a href="/Torna_Idioma/login">&larr; Back to Login</a> &nbsp;·&nbsp; <a href="#" onclick="window.print();return false;">Print this guide</a>
+    </div>
+  </div>
+</body>
+</html>
