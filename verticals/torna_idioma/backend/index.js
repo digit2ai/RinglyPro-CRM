@@ -21,6 +21,9 @@ router.use('/api/rizal', require('./routes/rizal'));
 // --- Speaking-first engine (Phase 1: daily speaking loop, browser voice) ---
 router.use('/api/speaking', require('./routes/speaking'));
 
+// --- Placement (Phase 2: adaptive + oral CEFR placement) ---
+router.use('/api/placement', require('./routes/placement'));
+
 // --- Learner Platform v2 (additive, isolated subsystem) ---
 // See backend/v2/README.md and LEARNER_V2_BUILD_PLAN.md
 router.use('/api/v2', require('./v2/index'));

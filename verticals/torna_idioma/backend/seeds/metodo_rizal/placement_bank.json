@@ -1,0 +1,19 @@
+{
+  "stage_a_mcq": [
+    { "id": "p1", "band": "A1", "q": "___ Ana. ¿Y tú?", "prompt_fil": "Piliin ang tama:", "options": ["Me llamo", "Te llamas", "Se llaman"], "answer": 0 },
+    { "id": "p2", "band": "A1", "q": "Yo ___ de Filipinas.", "prompt_fil": "Piliin ang tama:", "options": ["es", "soy", "estoy"], "answer": 1 },
+    { "id": "p3", "band": "A1", "q": "¿Cómo ___? — Estoy bien, gracias.", "prompt_fil": "Piliin ang tama:", "options": ["eres", "estás", "es"], "answer": 1 },
+    { "id": "p4", "band": "A2", "q": "Ayer yo ___ a la tienda.", "prompt_fil": "Piliin ang tama:", "options": ["voy", "fui", "iré"], "answer": 1 },
+    { "id": "p5", "band": "A2", "q": "Todos los días ___ a las siete.", "prompt_fil": "Piliin ang tama:", "options": ["me levanto", "me levanté", "me levantaré"], "answer": 0 },
+    { "id": "p6", "band": "A2", "q": "Este café es ___ que el otro.", "prompt_fil": "Piliin ang tama:", "options": ["tan", "más", "mucho"], "answer": 1 },
+    { "id": "p7", "band": "B1", "q": "Cuando era niño, ___ en Cebú.", "prompt_fil": "Piliin ang tama:", "options": ["viví", "vivía", "viviré"], "answer": 1 },
+    { "id": "p8", "band": "B1", "q": "Espero que ___ un buen día.", "prompt_fil": "Piliin ang tama:", "options": ["tienes", "tengas", "tendrás"], "answer": 1 },
+    { "id": "p9", "band": "B1", "q": "Si tuviera tiempo, ___ más.", "prompt_fil": "Piliin ang tama:", "options": ["estudiaría", "estudio", "estudiaré"], "answer": 0 },
+    { "id": "p10", "band": "B1", "q": "El libro ___ leí ayer es interesante.", "prompt_fil": "Piliin ang tama:", "options": ["que", "cual", "quien"], "answer": 0 }
+  ],
+  "stage_b_oral": [
+    { "id": "o1", "band": "A1", "es": "¿Cómo te llamas y de dónde eres?", "fil": "Ano ang pangalan mo at taga-saan ka?" },
+    { "id": "o2", "band": "A2", "es": "Cuéntame sobre tu familia.", "fil": "Ikuwento mo ang iyong pamilya." },
+    { "id": "o3", "band": "B1", "es": "¿Qué hiciste el fin de semana pasado?", "fil": "Ano ang ginawa mo noong nakaraang katapusan ng linggo?" }
+  ]
+}

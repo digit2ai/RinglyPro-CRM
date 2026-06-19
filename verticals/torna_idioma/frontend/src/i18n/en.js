@@ -137,6 +137,23 @@ export default {
   'rizal.provenancePublic': 'Public-domain original',
   'rizal.provenanceGraded': 'App-generated graded adaptation',
 
+  // Placement test
+  'nav.placement': 'Placement Test',
+  'place.title': 'Placement Test',
+  'place.subtitle': 'A quick check so we start you at the right level.',
+  'place.intro': 'Two short parts: a few questions, then you speak a little. About 5 minutes.',
+  'place.begin': 'Begin placement',
+  'place.stageA': 'Part 1 — Choose the correct word',
+  'place.stageB': 'Part 2 — Speak a little',
+  'place.oralHint': 'Answer out loud in Spanish (or type). Just do your best.',
+  'place.submit': 'See my level',
+  'place.scoring': 'Finding your level…',
+  'place.yourLevel': 'Your level',
+  'place.recommended': 'Recommended first lesson',
+  'place.startLesson': 'Start this lesson',
+  'place.retake': 'Retake placement',
+  'place.next': 'Next',
+
   // Speaking lesson (daily speaking loop)
   'nav.speak': 'Speak Now',
   'speak.title': 'Speaking Lesson',

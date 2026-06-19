@@ -19,6 +19,7 @@ import PartnerNetwork from './pages/PartnerNetwork';
 import AITutor from './pages/AITutor';
 import InternationalCollaboration from './pages/InternationalCollaboration';
 import SpeakingLesson from './pages/SpeakingLesson';
+import Placement from './pages/Placement';
 import CincoRaices from './pages/CincoRaices';
 import Emperador from './pages/Emperador';
 import TranslationAtelier from './pages/TranslationAtelier';
@@ -61,6 +62,7 @@ function Sidebar({ open, onClose }) {
   const allNav = [
     { path: `${BASE}/dashboard`, label: tr('nav.commandCenter'), roles: ['admin','official','teacher'] },
     { section: tr('section.metodoRizal') },
+    { path: `${BASE}/placement`, label: tr('nav.placement'), roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/speak`, label: tr('nav.speak'), roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/cinco-raices`, label: tr('nav.cincoRaices'), roles: ['admin','teacher','student','bpo_worker'] },
     { path: `${BASE}/ai-tutor`, label: tr('nav.aiTutor'), roles: ['admin','teacher','student','bpo_worker'] },
@@ -171,6 +173,7 @@ export default function App() {
         <Route path={`${BASE}/schools`} element={<ProtectedRoute roles={['admin','official']}><Layout><Schools /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/economic-impact`} element={<ProtectedRoute roles={['admin','official']}><Layout><EconomicImpact /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/ai-tutor`} element={<ProtectedRoute><Layout><AITutor /></Layout></ProtectedRoute>} />
+        <Route path={`${BASE}/placement`} element={<ProtectedRoute><Layout><Placement /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/speak`} element={<ProtectedRoute><Layout><SpeakingLesson /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/cinco-raices`} element={<ProtectedRoute><Layout><CincoRaices /></Layout></ProtectedRoute>} />
         <Route path={`${BASE}/emperador`} element={<ProtectedRoute><Layout><Emperador /></Layout></ProtectedRoute>} />

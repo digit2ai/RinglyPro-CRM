@@ -137,6 +137,23 @@ export default {
   'rizal.provenancePublic': 'Orihinal na public domain',
   'rizal.provenanceGraded': 'Gradadong adaptasyong gawa ng app',
 
+  // Placement test
+  'nav.placement': 'Pagsusulit sa Antas',
+  'place.title': 'Pagsusulit sa Antas',
+  'place.subtitle': 'Mabilis na tseke para magsimula ka sa tamang antas.',
+  'place.intro': 'Dalawang maikling bahagi: ilang tanong, tapos magsasalita ka nang kaunti. Mga 5 minuto.',
+  'place.begin': 'Simulan ang pagsusulit',
+  'place.stageA': 'Bahagi 1 — Piliin ang tamang salita',
+  'place.stageB': 'Bahagi 2 — Magsalita nang kaunti',
+  'place.oralHint': 'Sagutin nang malakas sa Espanyol (o i-type). Gawin lang ang iyong makakaya.',
+  'place.submit': 'Tingnan ang aking antas',
+  'place.scoring': 'Hinahanap ang iyong antas…',
+  'place.yourLevel': 'Ang iyong antas',
+  'place.recommended': 'Inirerekomendang unang aralin',
+  'place.startLesson': 'Simulan ang araling ito',
+  'place.retake': 'Ulitin ang pagsusulit',
+  'place.next': 'Susunod',
+
   // Speaking lesson (daily speaking loop)
   'nav.speak': 'Magsalita Ngayon',
   'speak.title': 'Aralin sa Pagsasalita',
