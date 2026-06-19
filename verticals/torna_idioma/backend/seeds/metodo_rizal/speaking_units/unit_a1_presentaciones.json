@@ -1,0 +1,83 @@
+{
+  "unit_id": "a1-presentaciones",
+  "module": 1,
+  "element": "1.1",
+  "cefr": "A1",
+  "theme": "Presentaciones",
+  "title": { "es": "Presentaciones", "en": "Greetings & Introductions", "fil": "Mga Pagpapakilala" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can greet someone and say goodbye in Spanish.", "fil": "Kaya kong bumati at magpaalam sa Espanyol." },
+    { "en": "I can introduce myself — name, where I'm from, my job.", "fil": "Kaya kong magpakilala — pangalan, taga-saan, trabaho." },
+    { "en": "I can ask someone's name and how they are.", "fil": "Kaya kong magtanong ng pangalan at kumustahin ang iba." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "ser vs. estar",
+      "en": "ser (identity: who/what you are) vs. estar (state: how/where you are)",
+      "fil": "ser (pagkakakilanlan: sino/ano ka) vs. estar (kalagayan: kumusta/nasaan ka)"
+    },
+    "pronunciation_focus": {
+      "en": "Spanish vowels are pure and short (a-e-i-o-u) — never glided like English. Practice: hola, estas, llamo.",
+      "fil": "Ang patinig ng Espanyol ay malinaw at maikli (a-e-i-o-u) — hindi pinapahaba tulad sa Ingles. Subukan: hola, estas, llamo."
+    },
+    "cognates": [
+      { "es": "presentar", "fil": "presenta / presentasyon", "note_fil": "Pamilyar na sa Filipino: 'presentasyon'." },
+      { "es": "favor", "fil": "pabor", "note_fil": "'Por favor' = pakiusap." },
+      { "es": "gracias", "fil": "grasya", "note_fil": "Ang 'grasya' ay galing dito." },
+      { "es": "como esta", "fil": "kumusta", "note_fil": "Ang 'kumusta' AY ang Espanyol na '¿cómo está?' — alam mo na ito!" }
+    ],
+    "false_friends": [
+      { "es": "embarazada", "looks_like": "embarrassed", "actually_en": "pregnant", "actually_fil": "buntis", "use_instead": "avergonzado/a" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan si Ana at si Pedro na nagkikilala sa unang pagkakataon.",
+    "lines": [
+      { "es": "¡Hola! Buenos días. Me llamo Ana. ¿Y tú, cómo te llamas?", "en": "Hi! Good morning. My name is Ana. And you, what's your name?", "fil": "Hello! Magandang umaga. Ang pangalan ko ay Ana. Ikaw, ano ang pangalan mo?" },
+      { "es": "Hola, Ana. Me llamo Pedro. Mucho gusto.", "en": "Hi, Ana. My name is Pedro. Nice to meet you.", "fil": "Hello, Ana. Ang pangalan ko ay Pedro. Ikinagagalak kong makilala ka." },
+      { "es": "Mucho gusto, Pedro. ¿De dónde eres?", "en": "Nice to meet you, Pedro. Where are you from?", "fil": "Ikinagagalak ko rin, Pedro. Taga-saan ka?" },
+      { "es": "Soy de Manila. ¿Y tú?", "en": "I'm from Manila. And you?", "fil": "Taga-Maynila ako. Ikaw?" },
+      { "es": "Yo soy de México. ¿Cómo estás hoy?", "en": "I'm from Mexico. How are you today?", "fil": "Taga-Mexico ako. Kumusta ka ngayon?" },
+      { "es": "Estoy muy bien, gracias.", "en": "I'm very well, thank you.", "fil": "Mabuti naman ako, salamat." }
+    ],
+    "gist_question": { "es": "¿De dónde es Pedro?", "fil": "Taga-saan si Pedro?", "answer_es": "Pedro es de Manila." }
+  },
+  "shadow_lines": [
+    "¡Hola! Buenos días.",
+    "Me llamo Pedro. Mucho gusto.",
+    "¿De dónde eres?",
+    "Soy de Manila.",
+    "¿Cómo estás hoy?",
+    "Estoy muy bien, gracias."
+  ],
+  "vocab_root_ids": ["m1-saludar", "m1-llamarse", "m1-ser", "m1-estar", "m1-presentar"],
+  "guided_prompts": [
+    { "instruction_fil": "Sabihin ang iyong pangalan.", "say_es": "Me llamo ___.", "expect_contains": ["me llamo"] },
+    { "instruction_fil": "Sabihin kung taga-saan ka (gamitin ang 'ser').", "say_es": "Soy de ___.", "expect_contains": ["soy de"] },
+    { "instruction_fil": "Sabihin kung kumusta ka (gamitin ang 'estar').", "say_es": "Estoy ___.", "expect_contains": ["estoy"] },
+    { "instruction_fil": "Magtanong ng pangalan ng iba.", "say_es": "¿Cómo te llamas?", "expect_contains": ["como te llamas", "cómo te llamas"] }
+  ],
+  "roleplay": {
+    "setup_fil": "Nasa isang networking event ka sa Makati. Kausapin ang isang estranghero: bumati, magpakilala (pangalan + taga-saan + trabaho), itanong ang pangalan niya, at magpaalam nang magalang.",
+    "setup_es": "Estás en un evento de networking en Makati. Habla con un desconocido.",
+    "isabel_persona": "You are a friendly stranger named Carmen at a networking event in Makati. Speak simple A1 Spanish. Greet back, answer the learner's questions, ask them one or two simple questions (name, origin, job), and keep the exchange short and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Greeted appropriately", "fil": "Bumati nang maayos" },
+      { "en": "Introduced name", "fil": "Nagpakilala ng pangalan" },
+      { "en": "Said where they're from", "fil": "Sinabi kung taga-saan" },
+      { "en": "Asked the stranger's name", "fil": "Nagtanong ng pangalan" },
+      { "en": "Closed politely", "fil": "Nagpaalam nang magalang" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Preséntate: tu nombre, de dónde eres, y cómo estás hoy.", "fil": "Magpakilala: pangalan mo, taga-saan ka, at kumusta ka ngayon." },
+    "qa_turns": [
+      { "es": "¿Cómo te llamas?" },
+      { "es": "¿De dónde eres?" },
+      { "es": "¿Cómo estás hoy?" },
+      { "es": "¿En qué trabajas?" }
+    ],
+    "pass_threshold": 70
+  }
+}

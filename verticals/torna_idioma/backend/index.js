@@ -18,6 +18,9 @@ router.use('/api/vocab', require('./routes/vocab'));
 router.use('/api/emperador', require('./routes/emperador'));
 router.use('/api/rizal', require('./routes/rizal'));
 
+// --- Speaking-first engine (Phase 1: daily speaking loop, browser voice) ---
+router.use('/api/speaking', require('./routes/speaking'));
+
 // --- Learner Platform v2 (additive, isolated subsystem) ---
 // See backend/v2/README.md and LEARNER_V2_BUILD_PLAN.md
 router.use('/api/v2', require('./v2/index'));
