@@ -44,6 +44,54 @@ app.get('/health', (req, res) => {
 });
 
 
+// Dev Workspaces — scans the monorepo for openable folders (repo root + each
+// verticals/* subfolder) and returns RELATIVE paths + a short description.
+// The client rebuilds the absolute LOCAL path from its own ROOT constant, since
+// the server's filesystem path (Render/Linux) differs from the dev's Mac path.
+// Public + read-only: it only exposes folder names, no contents.
+app.get('/api/v1/dev-workspaces', (req, res) => {
+  const repoRoot = path.join(__dirname, '..', '..'); // .../RinglyPro-CRM
+  // Pull the first line under "## What this is" from a folder's CLAUDE.md, if present.
+  const descFromClaudeMd = (absDir) => {
+    try {
+      const md = fs.readFileSync(path.join(absDir, 'CLAUDE.md'), 'utf8');
+      const lines = md.split('\n');
+      const i = lines.findIndex(l => /^##\s+What this is/i.test(l.trim()));
+      if (i >= 0) {
+        for (let j = i + 1; j < lines.length; j++) {
+          const t = lines[j].trim();
+          if (t) return t.replace(/\s+/g, ' ').slice(0, 180);
+        }
+      }
+    } catch (_) {}
+    return null;
+  };
+  // Pinned top-level workspaces (only included if the folder actually exists).
+  const pinned = [
+    { name: 'Main CRM (repo root)', rel: '', desc: 'Express app, all routes, models, public assets. The full monorepo.' },
+    { name: 'Pinaxis', rel: 'pinaxis', desc: 'Warehouse analytics.' },
+    { name: 'Projects Hub', rel: 'digit2ai-projects', desc: 'This dashboard — Contacts & Projects command center (/projects).' },
+  ];
+  const list = [];
+  for (const p of pinned) {
+    const abs = p.rel ? path.join(repoRoot, p.rel) : repoRoot;
+    if (fs.existsSync(abs)) list.push({ name: p.name, rel: p.rel, desc: descFromClaudeMd(abs) || p.desc });
+  }
+  // Auto-scan verticals/* — every subfolder shows up with zero edits.
+  try {
+    const vDir = path.join(repoRoot, 'verticals');
+    const entries = fs.readdirSync(vDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    for (const d of entries) {
+      const abs = path.join(vDir, d.name);
+      const pretty = d.name.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      list.push({ name: pretty, rel: 'verticals/' + d.name, desc: descFromClaudeMd(abs) || `Vertical: ${d.name}` });
+    }
+  } catch (_) {}
+  res.set('Cache-Control', 'no-store').json({ success: true, workspaces: list });
+});
+
 // Serve dashboard static files
 const dashboardPath = path.join(__dirname, '..', 'dashboard');
 app.use('/assets', express.static(path.join(dashboardPath, 'assets')));

@@ -95,7 +95,27 @@ function card(w) {
   return el;
 }
 const grid = document.getElementById('grid');
-WORKSPACES.forEach(w => grid.appendChild(card(w)));
+
+function render(list) {
+  grid.innerHTML = '';
+  list.forEach(w => grid.appendChild(card(w)));
+}
+
+// Auto-detect: ask the server to scan the monorepo. It returns folder NAMES +
+// relative paths; we rebuild the absolute LOCAL path from ROOT (the server's own
+// path is a Render/Linux path and would not open on this Mac). Falls back to the
+// hardcoded WORKSPACES list if the endpoint is unreachable.
+fetch('/projects/api/v1/dev-workspaces')
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(data => {
+    if (!data || !data.success || !Array.isArray(data.workspaces) || !data.workspaces.length) throw 0;
+    render(data.workspaces.map(w => ({
+      name: w.name,
+      path: w.rel ? ROOT + '/' + w.rel : ROOT,
+      desc: w.desc || ''
+    })));
+  })
+  .catch(() => render(WORKSPACES));
 </script>
 </body>
 </html>
