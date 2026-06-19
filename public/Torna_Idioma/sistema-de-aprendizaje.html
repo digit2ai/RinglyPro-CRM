@@ -3,168 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torna Idioma — Sistema de Aprendizaje (Explicado)</title>
+  <title>Torna Idioma — Learning System / Sistema de Aprendizaje</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700&display=swap');
-    :root{ --gold:#C9A84C; --gold-l:#E8D48B; --gold-d:#8B6914; --navy:#1B2A4A; --navy-d:#0F1A2E; --cream:#FFF8E7; --cream-d:#F5E6C8; --text:#2C2C2C; --muted:#6B6B6B; --green:#2E7D32; --red:#C41E3A; }
+    :root{ --gold:#C9A84C; --gold-l:#E8D48B; --gold-d:#8B6914; --navy:#1B2A4A; --navy-d:#0F1A2E; --cream:#FFF8E7; --cream-d:#F5E6C8; --text:#2C2C2C; --muted:#6B6B6B; --green:#2E7D32; }
     *{ margin:0; padding:0; box-sizing:border-box; }
     body{ font-family:'Inter',sans-serif; color:var(--text); background:var(--cream); line-height:1.7; }
-    a{ color:var(--gold-d); }
-    .hero{ background:linear-gradient(135deg,#0F1A2E,#1B2A4A 55%,#2A3F6A); color:#fff; padding:54px 24px; text-align:center; border-bottom:4px solid var(--gold); }
-    .crest{ width:88px; height:88px; border:2px solid var(--gold); border-radius:50%; margin:0 auto 18px; display:flex; align-items:center; justify-content:center; background:rgba(201,168,76,.08); }
+    .langbar{ position:sticky; top:0; z-index:50; background:var(--navy-d); border-bottom:1px solid rgba(201,168,76,.3); display:flex; justify-content:flex-end; gap:6px; padding:8px 16px; }
+    .langbar button{ background:transparent; border:1px solid rgba(201,168,76,.4); color:#cbb56a; font-weight:700; font-size:12px; letter-spacing:1px; padding:5px 12px; border-radius:6px; cursor:pointer; }
+    .langbar button.active{ background:var(--gold); color:var(--navy-d); border-color:var(--gold); }
+    .hero{ background:linear-gradient(135deg,#0F1A2E,#1B2A4A 55%,#2A3F6A); color:#fff; padding:48px 24px; text-align:center; border-bottom:4px solid var(--gold); }
+    .crest{ width:84px; height:84px; border:2px solid var(--gold); border-radius:50%; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; background:rgba(201,168,76,.08); }
     .crest span{ font-family:'Playfair Display',serif; font-size:13px; font-weight:700; color:var(--gold); letter-spacing:2px; line-height:1.2; }
-    .hero h1{ font-family:'Playfair Display',serif; font-size:34px; font-weight:800; margin-bottom:8px; }
+    .hero h1{ font-family:'Playfair Display',serif; font-size:32px; font-weight:800; margin-bottom:8px; }
     .hero .sub{ color:var(--gold-l); font-style:italic; font-size:16px; }
-    .hero .tag{ display:inline-block; margin-top:16px; background:rgba(201,168,76,.18); border:1px solid var(--gold); color:var(--gold-l); font-size:13px; font-weight:700; letter-spacing:1px; padding:6px 16px; border-radius:18px; }
-    .wrap{ max-width:880px; margin:0 auto; padding:36px 20px 70px; }
-    section{ margin-bottom:38px; }
+    .hero .tag{ display:inline-block; margin-top:14px; background:rgba(201,168,76,.18); border:1px solid var(--gold); color:var(--gold-l); font-size:13px; font-weight:700; letter-spacing:1px; padding:6px 16px; border-radius:18px; }
+    .wrap{ max-width:880px; margin:0 auto; padding:34px 20px 70px; }
+    section{ margin-bottom:36px; }
     .kick{ font-family:'Playfair Display',serif; font-size:13px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--gold-d); }
-    h2{ font-family:'Playfair Display',serif; font-size:27px; color:var(--navy); margin:4px 0 14px; }
-    h3{ font-family:'Playfair Display',serif; font-size:19px; color:var(--navy); margin-bottom:6px; }
+    h2{ font-family:'Playfair Display',serif; font-size:26px; color:var(--navy); margin:4px 0 14px; }
     p{ margin-bottom:12px; font-size:16px; }
-    .lead{ font-size:18px; color:#3a3a3a; }
-    .card{ background:#fff; border:1px solid var(--cream-d); border-top:4px solid var(--gold); border-radius:12px; padding:22px 24px; box-shadow:0 2px 12px rgba(0,0,0,.05); margin-bottom:14px; }
+    .lead{ font-size:18px; }
+    .card{ background:#fff; border:1px solid var(--cream-d); border-top:4px solid var(--gold); border-radius:12px; padding:20px 22px; box-shadow:0 2px 12px rgba(0,0,0,.05); margin-bottom:14px; }
+    .card h3{ font-family:'Playfair Display',serif; font-size:18px; color:var(--navy); margin-bottom:6px; }
     .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
     .tool{ background:#fff; border:1px solid var(--cream-d); border-radius:12px; padding:18px 20px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
     .tool .b{ font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold-d); background:rgba(201,168,76,.15); padding:3px 10px; border-radius:12px; display:inline-block; margin-bottom:8px; }
-    .tool h3{ font-size:17px; }
+    .tool h3{ font-family:'Playfair Display',serif; font-size:17px; color:var(--navy); margin-bottom:5px; }
     .tool p{ font-size:14.5px; color:#444; margin-bottom:0; }
     .loop{ counter-reset:lp; }
     .loop .row{ display:flex; gap:14px; align-items:flex-start; background:#fff; border:1px solid var(--cream-d); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
     .loop .row::before{ counter-increment:lp; content:counter(lp); flex:0 0 34px; width:34px; height:34px; background:linear-gradient(135deg,var(--gold),var(--gold-d)); color:#fff; font-family:'Playfair Display',serif; font-weight:800; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-    .loop .row b{ color:var(--navy-d); }
     .nums{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; text-align:center; }
     .num{ background:#0F1A2E; border-radius:12px; padding:20px; }
-    .num .big{ font-family:'Playfair Display',serif; font-size:40px; font-weight:800; color:var(--gold); }
+    .num .big{ font-family:'Playfair Display',serif; font-size:38px; font-weight:800; color:var(--gold); }
     .num .lab{ font-size:12px; color:var(--gold-l); letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
-    .rubric{ width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; border:1px solid var(--cream-d); }
-    .rubric th,.rubric td{ text-align:left; padding:10px 14px; border-bottom:1px solid var(--cream-d); font-size:15px; }
-    .rubric th{ background:var(--navy); color:#fff; font-weight:600; }
+    table.rubric{ width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; border:1px solid var(--cream-d); }
+    table.rubric th,table.rubric td{ text-align:left; padding:10px 14px; border-bottom:1px solid var(--cream-d); font-size:15px; }
+    table.rubric th{ background:var(--navy); color:#fff; font-weight:600; }
     .note{ background:#fff; border-left:4px solid var(--green); padding:12px 16px; border-radius:8px; font-size:15px; }
     .road li{ margin:8px 0 8px 22px; font-size:16px; }
-    .road .done{ color:var(--green); font-weight:700; }
-    .road .next{ color:var(--gold-d); font-weight:700; }
+    .road .tag2{ font-weight:700; }
     .foot{ text-align:center; padding:24px; color:var(--muted); font-size:14px; border-top:1px solid var(--cream-d); }
-    @media print{ .hero,.num,.rubric th,.loop .row::before{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+    .foot a{ color:var(--gold-d); font-weight:600; text-decoration:none; }
+    @media print{ .langbar{ display:none; } .hero,.num,table.rubric th,.loop .row::before{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   </style>
 </head>
 <body>
+  <div class="langbar">
+    <button data-l="en">EN</button><button data-l="es">ES</button><button data-l="fil">FIL</button>
+  </div>
   <div class="hero">
     <div class="crest"><span>TORNA<br>IDIOMA</span></div>
-    <h1>El Sistema de Aprendizaje</h1>
+    <h1 id="h-title"></h1>
     <div class="sub">Método Rizal · Vida · Cultura · Legado</div>
-    <div class="tag">Una IA que te enseña a HABLAR español</div>
+    <div class="tag" id="h-tag"></div>
   </div>
+  <div class="wrap" id="content"></div>
+  <div class="foot" id="foot"></div>
 
-  <div class="wrap">
+<script>
+const DATA = {
+  es: {
+    title: "El Sistema de Aprendizaje",
+    tag: "Una IA que te enseña a HABLAR español",
+    vision_k: "La Visión", vision_t: "¿Qué es Torna Idioma?",
+    vision_p1: "Torna Idioma es una plataforma de aprendizaje con inteligencia artificial que enseña a los filipinos a <strong>hablar español</strong> — no solo a leerlo. La mayoría de las aplicaciones te hacen leer y tocar la pantalla. Aquí, desde el primer día, <strong>escuchas, hablas y conversas con una tutora de IA que te corrige.</strong>",
+    vision_p2: "Las instrucciones se dan en <strong>tagalo e inglés</strong> (el idioma del estudiante); el español es la materia que se enseña, no el idioma del menú. Aprovechamos un puente único: el filipino ya tiene <strong>~4,000 palabras de origen español</strong>.",
+    metodo_k: "El Corazón", metodo_t: "El Método Rizal",
+    metodo_p1: "Inspirado en cómo José Rizal aprendió idiomas: <strong>cinco palabras raíz cada noche</strong> — alrededor de <strong>1,800 palabras al año</strong> — y en cómo enseñó en Dapitan: inmersión, traducción de textos reales y una competencia amistosa que motivaba a todos.",
+    metodo_pt: "Los tres principios",
+    metodo_pp: "<strong>1. Producir, no solo reconocer.</strong> El estudiante habla todos los días.<br><strong>2. Entrada comprensible primero.</strong> Cada lección empieza con audio un poco por encima de tu nivel.<br><strong>3. Evaluación creíble.</strong> Las notas se ganan — y se pueden reprobar.",
+    loop_k: "El Ciclo Diario", loop_t: "Cómo se aprende a hablar — 5 pasos",
+    loop_intro: "En cada paso, el estudiante <strong>oye y dice algo</strong>. Dura unos 10–15 minutos.",
+    loop_steps: [
+      "<strong>Escuchar.</strong> Oye una conversación real en español con subtítulos; toca cualquier línea para repetirla.",
+      "<strong>Repetir (Shadowing).</strong> Reproduce cada frase y la repite en voz alta de inmediato, imitando el ritmo.",
+      "<strong>Hablar.</strong> Dice frases guiadas; la Profesora Isabel le da una nota y un consejo.",
+      "<strong>Conversar.</strong> Una conversación de verdad por voz con la Profesora Isabel, que responde y se adapta.",
+      "<strong>Evaluación.</strong> Se presenta y responde preguntas; recibe una nota real según una rúbrica."
+    ],
+    tools_k: "Las Herramientas", tools_t: "Lo que hay dentro de la plataforma",
+    tools: [
+      ["Nivelación","Prueba de Nivel","Examen adaptativo + una parte oral que ubica al estudiante en su nivel MCER. La parte oral solo puede bajar una nota inflada, nunca subirla."],
+      ["Conversación","Speak Now","Las lecciones de conversación con el ciclo de 5 pasos. Módulo 1 (A1): 6 lecciones listas."],
+      ["Vocabulario","Cinco Raíces","Cinco raíces por noche con repetición espaciada (SM-2) y proyección hacia ~1,800 palabras al año."],
+      ["Tutora IA","Profesora Isabel","Conversación por voz con corrección; modo de inmersión “Día de Español”. Explica en tagalo/inglés, enseña en español."],
+      ["Práctica","Atelier de Traducción","Traduce frases reales hacia y desde el español con retroalimentación instantánea de la IA."],
+      ["Cultura","Estudios sobre Rizal","Aprende con las obras en español de Rizal (Noli Me Tángere, El Filibusterismo) y obtén un Registro de Finalización."],
+      ["Motivación","Emperador","Rachas, insignias y una tabla de líderes por escuela; el #1 lleva el título rotativo de Emperador/Emperatriz."],
+      ["Repaso","Mis Errores","Cada corrección queda registrada para repasarla después, con la versión correcta y un consejo."]
+    ],
+    assess_k: "Evaluación", assess_t: "Una nota creíble — alineada al MCER",
+    assess_intro: "No hay “100 automático”. Cada respuesta hablada se evalúa con una rúbrica de cinco criterios, con evidencia citada. Se puede aprobar… y reprobar.",
+    rubric_h: ["Criterio","Qué mide"],
+    rubric: [["Fluidez","Ritmo, pausas, naturalidad"],["Precisión","Gramática y vocabulario correctos"],["Pronunciación","Claridad e inteligibilidad"],["Rango","Variedad de palabras y estructuras"],["Interacción","Iniciar, sostener y reparar la conversación"]],
+    assess_cert: "Al superar el examen oral de cada nivel se emite un <strong>certificado MCER</strong> con el desglose de la rúbrica — un título que vale porque se puede perder.",
+    nums_k: "Los Números", nums_t: "El alcance del programa",
+    nums: [["425","palabras raíz"],["12","módulos (A1→B2)"],["~1,800","palabras / año"],["2","idiomas de interfaz (FIL/EN)"]],
+    nums_fam: "Cada raíz se enseña como <strong>familia de palabras</strong> (2–4 formas derivadas), así que el vocabulario real ronda las <strong>1,200–1,700 formas</strong>.",
+    nums_honesty: "<strong>Con honestidad:</strong> el Módulo 1 (40 raíces) ya está en vivo. Los Módulos 2–12 (385 raíces) están escritos y esperan la <strong>revisión de un hablante nativo de tagalo</strong> antes de publicarse.",
+    tech_k: "La Tecnología", tech_t: "Tecnología de última generación",
+    tech: [["IA conversacional (Claude)","Impulsa a la Profesora Isabel: conversación, corrección y la evaluación con rúbrica."],["Voz neuronal","Voz natural en español para escuchar y repetir; voz en inglés/tagalo para las explicaciones."],["Reconocimiento de voz","El estudiante habla por el micrófono; siempre hay opción de escribir (funciona en iPad y móvil)."],["Aplicación instalable (PWA)","Se instala en el teléfono o iPad y se abre a pantalla completa, como una app nativa."]],
+    bridge_k: "La Ventaja Filipina", bridge_t: "El puente filipino–español",
+    bridge_p: "El filipino comparte ~4,000 palabras con el español. Lo usamos como punto de partida: <strong>kumusta ← ¿cómo está?, mesa, silya ← silla, kabayo ← caballo, pamilya ← familia, grasya ← gracias.</strong> También avisamos de los <strong>falsos amigos</strong> (p. ej., <em>embarazada</em> no significa “avergonzada”).",
+    road_k: "Hoja de Ruta", road_t: "Qué sigue",
+    road: [["Listo:","nivelación, ciclo de conversación, Módulo 1 (A1) completo, registro de errores, evaluación con rúbrica."],["En construcción:","lecciones de conversación de los Módulos 2–12 (A2 → B2)."],["Próximo:","examen oral final + certificado MCER por nivel."],["Después:","evaluación de pronunciación fonema por fonema."]],
+    foot: 'Torna Idioma — Método Rizal · <a href="/Torna_Idioma/login">Entrar a la plataforma</a> · <a href="#" onclick="window.print();return false;">Imprimir</a>'
+  },
+  en: {
+    title: "The Learning System",
+    tag: "An AI that teaches you to SPEAK Spanish",
+    vision_k: "The Vision", vision_t: "What is Torna Idioma?",
+    vision_p1: "Torna Idioma is an AI-powered learning platform that teaches Filipinos to <strong>speak Spanish</strong> — not just read it. Most apps make you read and tap the screen. Here, from day one, <strong>you listen, speak, and converse with an AI tutor that corrects you.</strong>",
+    vision_p2: "Instructions are given in <strong>Tagalog and English</strong> (the learner's language); Spanish is the subject taught, not the menu language. We leverage a unique bridge: Filipino already has <strong>~4,000 words of Spanish origin</strong>.",
+    metodo_k: "The Heart", metodo_t: "The Rizal Method",
+    metodo_p1: "Inspired by how José Rizal learned languages: <strong>five root words a night</strong> — about <strong>1,800 words a year</strong> — and how he taught in Dapitan: immersion, translating real texts, and friendly competition that motivated everyone.",
+    metodo_pt: "The three principles",
+    metodo_pp: "<strong>1. Produce, don't just recognize.</strong> The learner speaks every day.<br><strong>2. Comprehensible input first.</strong> Each lesson opens with audio just above your level.<br><strong>3. Credible assessment.</strong> Scores are earned — and can be failed.",
+    loop_k: "The Daily Loop", loop_t: "How you learn to speak — 5 steps",
+    loop_intro: "At every step, the learner <strong>hears and says something</strong>. It takes about 10–15 minutes.",
+    loop_steps: [
+      "<strong>Listen.</strong> Hear a real Spanish conversation with subtitles; tap any line to replay it.",
+      "<strong>Shadow.</strong> Play each phrase and repeat it out loud immediately, matching the rhythm.",
+      "<strong>Speak.</strong> Say guided phrases; Profesora Isabel gives a score and a tip.",
+      "<strong>Converse.</strong> A real voice conversation with Profesora Isabel, who responds and adapts.",
+      "<strong>Assessment.</strong> Introduce yourself and answer questions; get a real score from a rubric."
+    ],
+    tools_k: "The Tools", tools_t: "What's inside the platform",
+    tools: [
+      ["Placement","Placement Test","Adaptive quiz + a spoken part that places the learner at their CEFR level. The oral part can only lower an inflated score, never raise it."],
+      ["Conversation","Speak Now","The conversation lessons with the 5-step loop. Module 1 (A1): 6 lessons ready."],
+      ["Vocabulary","Cinco Raíces","Five roots a night with spaced repetition (SM-2) and a projection toward ~1,800 words a year."],
+      ["AI Tutor","Profesora Isabel","Voice conversation with correction; “Día de Español” immersion mode. Explains in Tagalog/English, teaches in Spanish."],
+      ["Practice","Translation Atelier","Translate real lines to and from Spanish with instant AI feedback."],
+      ["Culture","Rizal Studies","Learn through Rizal's own Spanish works (Noli Me Tángere, El Filibusterismo) and earn a Completion Record."],
+      ["Motivation","Emperador","Streaks, badges and a per-school leaderboard; #1 holds the rotating Emperador/Emperatriz title."],
+      ["Review","My Mistakes","Every correction is logged for later review, with the correct version and a tip."]
+    ],
+    assess_k: "Assessment", assess_t: "A credible score — aligned to CEFR",
+    assess_intro: "No “automatic 100.” Every spoken answer is graded against a five-criterion rubric, with cited evidence. You can pass… and fail.",
+    rubric_h: ["Criterion","What it measures"],
+    rubric: [["Fluency","Pace, pauses, naturalness"],["Accuracy","Correct grammar and vocabulary"],["Pronunciation","Clarity and intelligibility"],["Range","Variety of words and structures"],["Interaction","Starting, sustaining and repairing the conversation"]],
+    assess_cert: "Passing each level's oral exam issues a <strong>CEFR certificate</strong> with the full rubric breakdown — a credential that means something because it can be lost.",
+    nums_k: "The Numbers", nums_t: "The scope of the program",
+    nums: [["425","root words"],["12","modules (A1→B2)"],["~1,800","words / year"],["2","interface languages (FIL/EN)"]],
+    nums_fam: "Each root is taught as a <strong>word family</strong> (2–4 derived forms), so the real vocabulary is around <strong>1,200–1,700 forms</strong>.",
+    nums_honesty: "<strong>Honestly:</strong> Module 1 (40 roots) is already live. Modules 2–12 (385 roots) are written and awaiting <strong>native Tagalog review</strong> before going live.",
+    tech_k: "The Technology", tech_t: "Latest-generation technology",
+    tech: [["Conversational AI (Claude)","Powers Profesora Isabel: conversation, correction, and the rubric-based assessment."],["Neural voice","Natural Spanish voice to listen and repeat; English/Tagalog voice for the explanations."],["Speech recognition","The learner speaks via the microphone; there's always a typed option (works on iPad and mobile)."],["Installable app (PWA)","Installs on a phone or iPad and opens full-screen, like a native app."]],
+    bridge_k: "The Filipino Advantage", bridge_t: "The Filipino–Spanish bridge",
+    bridge_p: "Filipino shares ~4,000 words with Spanish. We use it as a starting point: <strong>kumusta ← ¿cómo está?, mesa, silya ← silla, kabayo ← caballo, pamilya ← familia, grasya ← gracias.</strong> We also warn about <strong>false friends</strong> (e.g., <em>embarazada</em> does not mean “embarrassed”).",
+    road_k: "Roadmap", road_t: "What's next",
+    road: [["Done:","placement, the conversation loop, Module 1 (A1) complete, error log, rubric assessment."],["In progress:","conversation lessons for Modules 2–12 (A2 → B2)."],["Next:","final oral exam + CEFR certificate per level."],["Later:","phoneme-by-phoneme pronunciation feedback."]],
+    foot: 'Torna Idioma — Rizal Method · <a href="/Torna_Idioma/login">Enter the platform</a> · <a href="#" onclick="window.print();return false;">Print</a>'
+  },
+  fil: {
+    title: "Ang Sistema ng Pagkatuto",
+    tag: "Isang AI na nagtuturo sa iyong MAGSALITA ng Espanyol",
+    vision_k: "Ang Bisyon", vision_t: "Ano ang Torna Idioma?",
+    vision_p1: "Ang Torna Idioma ay isang learning platform na pinapagana ng artificial intelligence na nagtuturo sa mga Pilipino na <strong>magsalita ng Espanyol</strong> — hindi lang basahin ito. Karamihan sa mga app ay pabasa at pa-tap lang. Dito, mula sa unang araw, <strong>nakikinig ka, nagsasalita, at nakikipag-usap sa isang AI tutor na nagtatama sa iyo.</strong>",
+    vision_p2: "Ang mga tagubilin ay nasa <strong>Tagalog at Ingles</strong> (ang wika ng mag-aaral); ang Espanyol ang itinuturong paksa, hindi ang wika ng menu. Ginagamit natin ang isang natatanging tulay: ang Filipino ay mayroon nang <strong>~4,000 salitang mula sa Espanyol</strong>.",
+    metodo_k: "Ang Puso", metodo_t: "Ang Paraang Rizal",
+    metodo_p1: "Hango sa kung paano natuto ng wika si José Rizal: <strong>limang salitang-ugat bawat gabi</strong> — humigit-kumulang <strong>1,800 salita bawat taon</strong> — at kung paano siya nagturo sa Dapitan: immersion, pagsasalin ng totoong teksto, at masayang kompetisyon.",
+    metodo_pt: "Ang tatlong prinsipyo",
+    metodo_pp: "<strong>1. Gumawa, hindi lang kilalanin.</strong> Nagsasalita ang mag-aaral araw-araw.<br><strong>2. Naiintindihang input muna.</strong> Bawat aralin ay nagbubukas ng audio na bahagyang mas mataas sa iyong antas.<br><strong>3. Kapani-paniwalang pagtatasa.</strong> Pinagtatrabahuhan ang marka — at maaaring mabagsak.",
+    loop_k: "Ang Pang-araw-araw na Siklo", loop_t: "Paano matuto magsalita — 5 hakbang",
+    loop_intro: "Sa bawat hakbang, ang mag-aaral ay <strong>nakikinig at nagsasalita</strong>. Tumatagal ito ng mga 10–15 minuto.",
+    loop_steps: [
+      "<strong>Makinig.</strong> Pakinggan ang totoong usapan sa Espanyol na may subtitle; pindutin ang anumang linya para ulitin.",
+      "<strong>Gayahin (Shadowing).</strong> I-play ang bawat parirala at ulitin agad nang malakas, sundan ang ritmo.",
+      "<strong>Magsalita.</strong> Sabihin ang mga ginabayang parirala; bibigyan ka ni Profesora Isabel ng marka at payo.",
+      "<strong>Mag-usap.</strong> Isang tunay na pag-uusap sa boses kasama si Profesora Isabel, na sumasagot at umaangkop.",
+      "<strong>Pagtatasa.</strong> Magpakilala at sumagot ng mga tanong; makakakuha ng tunay na marka mula sa rubric."
+    ],
+    tools_k: "Ang mga Kasangkapan", tools_t: "Ano ang nasa loob ng plataporma",
+    tools: [
+      ["Antas","Pagsusulit sa Antas","Adaptibong pagsusulit + oral na bahagi na naglalagay sa mag-aaral sa antas CEFR. Ang oral na bahagi ay makakababa lang ng sobrang taas na marka, hindi makakataas."],
+      ["Usapan","Speak Now","Ang mga aralin sa pag-uusap gamit ang 5-hakbang na siklo. Module 1 (A1): 6 aralin handa na."],
+      ["Bokabularyo","Cinco Raíces","Limang ugat bawat gabi na may spaced repetition (SM-2) at proyeksyon patungo sa ~1,800 salita kada taon."],
+      ["AI Tutor","Profesora Isabel","Pag-uusap sa boses na may pagtatama; “Día de Español” immersion mode. Nagpapaliwanag sa Tagalog/Ingles, nagtuturo sa Espanyol."],
+      ["Praktis","Translation Atelier","Magsalin ng totoong pangungusap papunta at mula sa Espanyol na may agarang puna ng AI."],
+      ["Kultura","Pag-aaral kay Rizal","Matuto sa mga akdang Espanyol ni Rizal (Noli Me Tángere, El Filibusterismo) at kumita ng Completion Record."],
+      ["Motibasyon","Emperador","Mga streak, badge, at leaderboard kada paaralan; ang #1 ay may umiikot na titulong Emperador/Emperatriz."],
+      ["Repaso","Aking mga Pagkakamali","Bawat pagtatama ay naitatala para repasuhin, kasama ang tamang bersyon at isang payo."]
+    ],
+    assess_k: "Pagtatasa", assess_t: "Isang kapani-paniwalang marka — naka-align sa CEFR",
+    assess_intro: "Walang “automatic 100.” Bawat sinasalitang sagot ay minamarkahan gamit ang rubric na may limang kraytirya, na may ebidensiyang sinipi. Maaaring pumasa… at mabagsak.",
+    rubric_h: ["Kraytirya","Ano ang sinusukat"],
+    rubric: [["Katatasan","Bilis, paghinto, natural na daloy"],["Kawastuhan","Tamang gramatika at bokabularyo"],["Bigkas","Linaw at maintindihan"],["Saklaw","Pagkakaiba-iba ng salita at istruktura"],["Interaksyon","Pagsisimula, pagpapanatili, at pag-aayos ng usapan"]],
+    assess_cert: "Sa pagpasa sa oral exam ng bawat antas, mag-iisyu ng <strong>sertipikong CEFR</strong> na may buong rubric — isang titulong may halaga dahil maaari itong mawala.",
+    nums_k: "Ang mga Numero", nums_t: "Ang saklaw ng programa",
+    nums: [["425","salitang-ugat"],["12","module (A1→B2)"],["~1,800","salita / taon"],["2","wika ng interface (FIL/EN)"]],
+    nums_fam: "Bawat ugat ay itinuturo bilang <strong>pamilya ng salita</strong> (2–4 hinangong anyo), kaya ang tunay na bokabularyo ay umaabot sa <strong>1,200–1,700 anyo</strong>.",
+    nums_honesty: "<strong>Tapat na pagsasabi:</strong> ang Module 1 (40 ugat) ay live na. Ang Modules 2–12 (385 ugat) ay naisulat na at naghihintay ng <strong>pagsusuri ng katutubong nagsasalita ng Tagalog</strong> bago i-publish.",
+    tech_k: "Ang Teknolohiya", tech_t: "Pinakabagong teknolohiya",
+    tech: [["Conversational AI (Claude)","Pinapagana si Profesora Isabel: usapan, pagtatama, at ang pagtatasa gamit ang rubric."],["Neural na boses","Natural na boses sa Espanyol para makinig at gayahin; boses sa Ingles/Tagalog para sa paliwanag."],["Speech recognition","Nagsasalita ang mag-aaral sa mikropono; laging may opsyon na mag-type (gumagana sa iPad at mobile)."],["Naka-install na app (PWA)","Nai-install sa telepono o iPad at bumubukas nang full-screen, parang native app."]],
+    bridge_k: "Ang Kalamangan ng Pilipino", bridge_t: "Ang tulay na Filipino–Espanyol",
+    bridge_p: "Ang Filipino ay may ~4,000 salitang kapareho ng Espanyol. Ginagamit natin ito bilang panimula: <strong>kumusta ← ¿cómo está?, mesa, silya ← silla, kabayo ← caballo, pamilya ← familia, grasya ← gracias.</strong> Nagbabala rin tayo tungkol sa mga <strong>false friend</strong> (hal., ang <em>embarazada</em> ay hindi nangangahulugang “napahiya” — ibig sabihin ay buntis).",
+    road_k: "Mapa ng Daan", road_t: "Ano ang susunod",
+    road: [["Tapos na:","antas, siklo ng usapan, kumpletong Module 1 (A1), error log, rubric assessment."],["Ginagawa:","mga aralin sa usapan para sa Modules 2–12 (A2 → B2)."],["Susunod:","huling oral exam + sertipikong CEFR kada antas."],["Mamaya:","pagtatasa ng bigkas fonema bawat fonema."]],
+    foot: 'Torna Idioma — Paraang Rizal · <a href="/Torna_Idioma/login">Pumasok sa plataporma</a> · <a href="#" onclick="window.print();return false;">I-print</a>'
+  }
+};
 
-    <section>
-      <div class="kick">La Visión</div>
-      <h2>¿Qué es Torna Idioma?</h2>
-      <p class="lead">Torna Idioma es una plataforma de aprendizaje con inteligencia artificial que enseña a los filipinos a <strong>hablar español</strong> — no solo a leerlo. La mayoría de las aplicaciones te hacen leer y tocar la pantalla. Aquí, desde el primer día, <strong>escuchas, hablas y conversas con una tutora de IA que te corrige.</strong></p>
-      <p>Las instrucciones se dan en <strong>tagalo e inglés</strong> (el idioma del estudiante); el español es la materia que se enseña, no el idioma del menú. Aprovechamos un puente único: el filipino ya tiene <strong>~4,000 palabras de origen español</strong>.</p>
-    </section>
-
-    <section>
-      <div class="kick">El Corazón</div>
-      <h2>El Método Rizal</h2>
-      <p>Inspirado en cómo José Rizal aprendió idiomas: <strong>cinco palabras raíz cada noche</strong> — alrededor de <strong>1,800 palabras al año</strong> — y en cómo enseñó en Dapitan: inmersión, traducción de textos reales y una competencia amistosa que motivaba a todos.</p>
-      <div class="card">
-        <h3>Los tres principios</h3>
-        <p><strong>1. Producir, no solo reconocer.</strong> El estudiante habla todos los días.<br>
-        <strong>2. Entrada comprensible primero.</strong> Cada lección empieza con audio un poco por encima de tu nivel.<br>
-        <strong>3. Evaluación creíble.</strong> Las notas se ganan — y se pueden reprobar.</p>
-      </div>
-    </section>
-
-    <section>
-      <div class="kick">El Ciclo Diario</div>
-      <h2>Cómo se aprende a hablar — 5 pasos</h2>
-      <p>En cada paso, el estudiante <strong>oye y dice algo</strong>. Dura unos 10–15 minutos.</p>
-      <div class="loop">
-        <div class="row"><div><b>Escuchar.</b> Oye una conversación real en español con subtítulos; toca cualquier línea para repetirla.</div></div>
-        <div class="row"><div><b>Repetir (Shadowing).</b> Reproduce cada frase y la repite en voz alta de inmediato, imitando el ritmo.</div></div>
-        <div class="row"><div><b>Hablar.</b> Dice frases guiadas; la Profesora Isabel le da una nota y un consejo.</div></div>
-        <div class="row"><div><b>Conversar.</b> Una conversación de verdad por voz con la Profesora Isabel, que responde y se adapta.</div></div>
-        <div class="row"><div><b>Evaluación.</b> Se presenta y responde preguntas; recibe una nota real según una rúbrica.</div></div>
-      </div>
-    </section>
-
-    <section>
-      <div class="kick">Las Herramientas</div>
-      <h2>Lo que hay dentro de la plataforma</h2>
-      <div class="grid">
-        <div class="tool"><div class="b">Nivelación</div><h3>Prueba de Nivel</h3><p>Examen adaptativo + una parte oral que ubica al estudiante en su nivel MCER (A1, A2, B1…). La parte oral solo puede bajar una nota inflada, nunca subirla.</p></div>
-        <div class="tool"><div class="b">Conversación</div><h3>Speak Now</h3><p>Las lecciones de conversación con el ciclo de 5 pasos. Módulo 1 (A1): 6 lecciones listas.</p></div>
-        <div class="tool"><div class="b">Vocabulario</div><h3>Cinco Raíces</h3><p>Cinco raíces por noche con repetición espaciada (algoritmo SM-2) y proyección hacia ~1,800 palabras al año.</p></div>
-        <div class="tool"><div class="b">Tutora IA</div><h3>Profesora Isabel</h3><p>Conversación por voz con corrección; modo de inmersión “Día de Español”. Explica en tagalo/inglés, enseña en español.</p></div>
-        <div class="tool"><div class="b">Práctica</div><h3>Atelier de Traducción</h3><p>Traduce frases reales hacia y desde el español con retroalimentación instantánea de la IA.</p></div>
-        <div class="tool"><div class="b">Cultura</div><h3>Estudios sobre Rizal</h3><p>Aprende con las obras en español de Rizal (Noli Me Tángere, El Filibusterismo) y obtén un Registro de Finalización.</p></div>
-        <div class="tool"><div class="b">Motivación</div><h3>Emperador</h3><p>Rachas, insignias y una tabla de líderes por escuela; el #1 lleva el título rotativo de Emperador/Emperatriz.</p></div>
-        <div class="tool"><div class="b">Repaso</div><h3>Mis Errores</h3><p>Cada corrección queda registrada para repasarla después, con la versión correcta y un consejo.</p></div>
-      </div>
-    </section>
-
-    <section>
-      <div class="kick">Evaluación</div>
-      <h2>Una nota creíble — alineada al MCER</h2>
-      <p>No hay “100 automático”. Cada respuesta hablada se evalúa con una rúbrica de cinco criterios, con evidencia citada de lo que dijo el estudiante. Se puede aprobar… y reprobar.</p>
-      <table class="rubric">
-        <tr><th>Criterio</th><th>Qué mide</th></tr>
-        <tr><td>Fluidez</td><td>Ritmo, pausas, naturalidad</td></tr>
-        <tr><td>Precisión</td><td>Gramática y vocabulario correctos</td></tr>
-        <tr><td>Pronunciación</td><td>Claridad e inteligibilidad</td></tr>
-        <tr><td>Rango</td><td>Variedad de palabras y estructuras</td></tr>
-        <tr><td>Interacción</td><td>Iniciar, sostener y reparar la conversación</td></tr>
-      </table>
-      <p style="margin-top:12px">Al superar el examen oral de cada nivel se emite un <strong>certificado MCER</strong> con el desglose de la rúbrica — un título que vale porque se puede perder.</p>
-    </section>
-
-    <section>
-      <div class="kick">Los Números</div>
-      <h2>El alcance del programa</h2>
-      <div class="nums">
-        <div class="num"><div class="big">425</div><div class="lab">palabras raíz</div></div>
-        <div class="num"><div class="big">12</div><div class="lab">módulos (A1→B2)</div></div>
-        <div class="num"><div class="big">~1,800</div><div class="lab">palabras / año</div></div>
-        <div class="num"><div class="big">2</div><div class="lab">idiomas de interfaz (FIL/EN)</div></div>
-      </div>
-      <p style="margin-top:14px">Cada raíz se enseña como <strong>familia de palabras</strong> (2–4 formas derivadas), así que el vocabulario real ronda las <strong>1,200–1,700 formas</strong>.</p>
-      <div class="note"><strong>Con honestidad:</strong> el Módulo 1 (40 raíces) ya está en vivo para los estudiantes. Los Módulos 2–12 (385 raíces) están escritos y esperan la <strong>revisión de un hablante nativo de tagalo</strong> antes de publicarse — un control de calidad incorporado.</div>
-    </section>
-
-    <section>
-      <div class="kick">La Tecnología</div>
-      <h2>Tecnología de última generación</h2>
-      <div class="grid">
-        <div class="tool"><h3>IA conversacional (Claude)</h3><p>Impulsa a la Profesora Isabel: conversación, corrección de gramática y vocabulario, y la evaluación con rúbrica.</p></div>
-        <div class="tool"><h3>Voz neuronal</h3><p>Voz natural en español para escuchar y repetir; voz en inglés/tagalo para las explicaciones.</p></div>
-        <div class="tool"><h3>Reconocimiento de voz</h3><p>El estudiante habla por el micrófono; siempre hay opción de escribir (funciona en iPad y móvil).</p></div>
-        <div class="tool"><h3>Aplicación instalable (PWA)</h3><p>Se instala en el teléfono o iPad y se abre a pantalla completa, como una app nativa.</p></div>
-      </div>
-    </section>
-
-    <section>
-      <div class="kick">La Ventaja Filipina</div>
-      <h2>El puente filipino–español</h2>
-      <p>El filipino comparte ~4,000 palabras con el español. Lo usamos como punto de partida: <strong>kumusta ← ¿cómo está?, mesa, silya ← silla, kabayo ← caballo, pamilya ← familia, grasya ← gracias.</strong> También avisamos de los <strong>falsos amigos</strong> (p. ej., <em>embarazada</em> no significa “avergonzada”).</p>
-    </section>
-
-    <section>
-      <div class="kick">Hoja de Ruta</div>
-      <h2>Qué sigue</h2>
-      <ul class="road">
-        <li><span class="done">Listo:</span> nivelación, ciclo de conversación, Módulo 1 (A1) completo, registro de errores, evaluación con rúbrica.</li>
-        <li><span class="next">En construcción:</span> lecciones de conversación de los Módulos 2–12 (A2 → B2).</li>
-        <li><span class="next">Próximo:</span> examen oral final + certificado MCER por nivel.</li>
-        <li><span class="next">Después:</span> evaluación de pronunciación fonema por fonema (“tu /r/ se desvió”).</li>
-      </ul>
-    </section>
-
-  </div>
-
-  <div class="foot">
-    Torna Idioma — Método Rizal · <a href="/Torna_Idioma/login">Entrar a la plataforma</a> · <a href="#" onclick="window.print();return false;">Imprimir</a>
-  </div>
+function esc(s){ return s; }
+function render(lang){
+  const d = DATA[lang] || DATA.es;
+  document.documentElement.lang = lang === 'fil' ? 'tl' : lang;
+  document.getElementById('h-title').textContent = d.title;
+  document.getElementById('h-tag').textContent = d.tag;
+  const toolCards = d.tools.map(t => `<div class="tool"><div class="b">${t[0]}</div><h3>${t[1]}</h3><p>${t[2]}</p></div>`).join('');
+  const loopRows = d.loop_steps.map(x => `<div class="row"><div>${x}</div></div>`).join('');
+  const numCards = d.nums.map(n => `<div class="num"><div class="big">${n[0]}</div><div class="lab">${n[1]}</div></div>`).join('');
+  const rubricRows = d.rubric.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  const techCards = d.tech.map(t => `<div class="tool"><h3>${t[0]}</h3><p>${t[1]}</p></div>`).join('');
+  const roadItems = d.road.map(r => `<li><span class="tag2">${r[0]}</span> ${r[1]}</li>`).join('');
+  document.getElementById('content').innerHTML = `
+    <section><div class="kick">${d.vision_k}</div><h2>${d.vision_t}</h2><p class="lead">${d.vision_p1}</p><p>${d.vision_p2}</p></section>
+    <section><div class="kick">${d.metodo_k}</div><h2>${d.metodo_t}</h2><p>${d.metodo_p1}</p><div class="card"><h3>${d.metodo_pt}</h3><p>${d.metodo_pp}</p></div></section>
+    <section><div class="kick">${d.loop_k}</div><h2>${d.loop_t}</h2><p>${d.loop_intro}</p><div class="loop">${loopRows}</div></section>
+    <section><div class="kick">${d.tools_k}</div><h2>${d.tools_t}</h2><div class="grid">${toolCards}</div></section>
+    <section><div class="kick">${d.assess_k}</div><h2>${d.assess_t}</h2><p>${d.assess_intro}</p><table class="rubric"><tr><th>${d.rubric_h[0]}</th><th>${d.rubric_h[1]}</th></tr>${rubricRows}</table><p style="margin-top:12px">${d.assess_cert}</p></section>
+    <section><div class="kick">${d.nums_k}</div><h2>${d.nums_t}</h2><div class="nums">${numCards}</div><p style="margin-top:14px">${d.nums_fam}</p><div class="note">${d.nums_honesty}</div></section>
+    <section><div class="kick">${d.tech_k}</div><h2>${d.tech_t}</h2><div class="grid">${techCards}</div></section>
+    <section><div class="kick">${d.bridge_k}</div><h2>${d.bridge_t}</h2><p>${d.bridge_p}</p></section>
+    <section><div class="kick">${d.road_k}</div><h2>${d.road_t}</h2><ul class="road">${roadItems}</ul></section>`;
+  document.getElementById('foot').innerHTML = d.foot;
+  document.querySelectorAll('.langbar button').forEach(b => b.classList.toggle('active', b.dataset.l === lang));
+  try { localStorage.setItem('torna-lang', lang); } catch(e){}
+}
+document.querySelectorAll('.langbar button').forEach(b => b.addEventListener('click', () => render(b.dataset.l)));
+let start = 'fil';
+try { const s = localStorage.getItem('torna-lang'); if (s === 'en' || s === 'es' || s === 'fil') start = s; } catch(e){}
+render(start);
+</script>
 </body>
 </html>
