@@ -1,6 +1,15 @@
+// Interface language is en|fil only (Spanish is the subject taught, not a UI lang).
+function coerceLang(l) {
+  return l === 'fil' ? 'fil' : (l === 'en' ? 'en' : null);
+}
+
 export function login(token, user) {
   sessionStorage.setItem('ti_token', token);
   sessionStorage.setItem('ti_user', JSON.stringify(user));
+  // Seed the active UI language from the account preference (legacy 'es' → 'en').
+  // The toggle can still override this per-device afterwards.
+  const seed = coerceLang(user && user.language_pref) || 'fil';
+  localStorage.setItem('ti_lang', seed);
 }
 
 export function logout() {
@@ -23,12 +32,14 @@ export function hasRole(...roles) {
 }
 
 export function getLang() {
-  const user = getUser();
-  // Default to Filipino (Tagalog) — primary audience is Filipinos learning
-  // Spanish. English/Spanish remain selectable via the language toggle.
-  return user?.language_pref || localStorage.getItem('ti_lang') || 'fil';
+  // The explicit toggle wins (so EN/FIL actually switches for logged-in users),
+  // then the account preference, then default to Filipino (Tagalog) — the primary
+  // audience. Only en|fil are valid UI languages.
+  return coerceLang(localStorage.getItem('ti_lang'))
+      || coerceLang(getUser()?.language_pref)
+      || 'fil';
 }
 
 export function setLang(lang) {
-  localStorage.setItem('ti_lang', lang);
+  localStorage.setItem('ti_lang', coerceLang(lang) || 'fil');
 }
