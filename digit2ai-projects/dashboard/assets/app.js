@@ -475,9 +475,38 @@ async function renderOverview(container) {
       <button class="quick-action-btn" style="position:relative" onclick="navigateTo('email')"><span class="qa-label">Email</span><span id="qa-email-badge"></span></button>
     </div>`;
 
+  // Lina voice orb — zero-key Edge neural TTS (reuses /api/tts/edge). Non-conversational
+  // scripted narration that greets the owner and summarizes the Hub. Wired by initLinaOrb().
+  const linaOrbHtml = `
+    <div class="lina" id="lina-orb">
+      <div class="orb" id="linaOrb"></div>
+      <div class="lina-meta">
+        <div class="lina-name">Lina &middot; Voz AI de Digit2AI</div>
+        <div class="lina-role">Tu asistente del Centro de Proyectos</div>
+        <div class="controls">
+          <button class="primary" id="linaPlayAll">&#9654; Que Lina te d&eacute; el resumen</button>
+          <button id="linaPause" disabled>&#10074;&#10074; Pausar</button>
+          <button id="linaStop" disabled>&#9632; Detener</button>
+        </div>
+        <div class="status" id="linaStatus">Pulsa el bot&oacute;n para escuchar el resumen de tu centro de proyectos.</div>
+        <div class="voicepick">
+          <label><input type="checkbox" id="linaNeuralToggle" checked> Voz neural HD</label>
+          &nbsp;&middot;&nbsp; Acento:
+          <select id="linaVoiceSel">
+            <option value="lina" selected>M&eacute;xico (Dalia)</option>
+            <option value="paloma">EE. UU. (Paloma)</option>
+            <option value="salome">Colombia (Salom&eacute;)</option>
+            <option value="elvira">Espa&ntilde;a (Elvira)</option>
+          </select>
+          <span id="linaVoiceMode" style="margin-left:8px;color:#10b981"></span>
+        </div>
+      </div>
+    </div>`;
+
   container.innerHTML = `
     ${welcomeHtml}
     ${quickActionsHtml}
+    ${linaOrbHtml}
 
     <div class="card card-accent-blue" style="margin-bottom:24px">
       <div class="section-header"><h3>Coming Up — Today &amp; Tomorrow</h3></div>
@@ -529,7 +558,125 @@ async function renderOverview(container) {
 
   // Email unread (paints the Email quick-action badge)
   refreshEmailBadge();
+
+  // Lina voice orb playback engine
+  initLinaOrb();
 }
+
+// =====================================================
+// LINA VOICE ORB — zero-key Edge neural TTS narration
+// Neural-first via /api/tts/edge, automatic browser-speech fallback.
+// Non-conversational scripted segments (canonical "Lina" pattern).
+// =====================================================
+function initLinaOrb() {
+  const orb = document.getElementById('linaOrb');
+  if (!orb) return;
+
+  const segments = [
+    'Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te doy la bienvenida a tu Centro de Proyectos.',
+    'Este es tu centro de mando. Desde aquí ves de un vistazo tus reuniones de hoy y de mañana, las tareas pendientes, los correos que marcaste para seguimiento y las llamadas y mensajes que esperan respuesta.',
+    'Más abajo encontrarás los Hallazgos Neurales: nuestra red de agentes vigila cada proyecto y te avisa cuando algo se atrasa, le falta un responsable o un hito está por vencer, antes de que se convierta en un problema.',
+    'En la barra lateral tienes Proyectos, Personas, Calendario, la lista de tareas, las minutas de reunión y el grupo de RinglyPro, con Inteligencia Neural, llamadas, prospectos y tus campañas.',
+    '¿No sabes por dónde empezar? Pulsa el botón de inteligencia artificial, abajo a la derecha, y pídeme lo que necesites en lenguaje natural. Estoy aquí para ayudarte a que nada se te escape.'
+  ];
+
+  const synth = window.speechSynthesis;
+  const status = document.getElementById('linaStatus');
+  const playAll = document.getElementById('linaPlayAll');
+  const pauseBtn = document.getElementById('linaPause');
+  const stopBtn = document.getElementById('linaStop');
+  const voiceSel = document.getElementById('linaVoiceSel');
+  const neuralToggle = document.getElementById('linaNeuralToggle');
+  const voiceMode = document.getElementById('linaVoiceMode');
+
+  const NEURAL_URL = '/api/tts/edge';
+  let queue = [], qi = 0, runToken = 0, paused = false;
+  let playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  let browserVoice = null, voiceName = 'lina';
+
+  function pickBrowserVoice() {
+    if (!synth) return;
+    const vs = synth.getVoices();
+    const pref = vs.filter(v => v.lang && v.lang.toLowerCase().indexOf('es') === 0);
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if (synth) { pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  const useNeural = () => neuralToggle.checked && neuralOK;
+  const setMode = () => { voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; };
+  setMode();
+
+  function clearCache() { Object.keys(audioCache).forEach(k => { try { URL.revokeObjectURL(audioCache[k]); } catch (e) {} }); audioCache = {}; }
+  voiceSel.addEventListener('change', function () { voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+
+  function fetchNeural(idx) {
+    const key = voiceName + '|' + idx;
+    if (audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: segments[idx], voice: voiceName }) })
+      .then(r => { if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(b => { if (!b || b.size < 200) throw new Error('empty'); const u = URL.createObjectURL(b); audioCache[key] = u; return u; });
+  }
+
+  function statusSpeaking() { status.textContent = 'Lina está hablando… (' + (qi + 1) + ' de ' + queue.length + ')'; }
+
+  function runQueue(token) {
+    if (token !== runToken) return;
+    if (qi >= queue.length) { finish(); return; }
+    const idx = queue[qi];
+    function advance() { if (token !== runToken) return; qi++; runQueue(token); }
+    if (useNeural()) {
+      status.textContent = 'Preparando voz neural…';
+      if (qi + 1 < queue.length) fetchNeural(queue[qi + 1]).catch(() => {});
+      fetchNeural(idx).then(url => {
+        if (token !== runToken) return;
+        playbackMode = 'neural'; currentAudio = new Audio(url);
+        currentAudio.onended = advance;
+        currentAudio.onerror = function () { neuralOK = false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(() => { neuralOK = false; setMode(); browserSpeak(idx, advance); });
+      }).catch(() => { if (token !== runToken) return; neuralOK = false; setMode(); browserSpeak(idx, advance); });
+    } else { browserSpeak(idx, advance); }
+  }
+
+  function browserSpeak(idx, onEnd) {
+    if (!synth) { onEnd(); return; }
+    playbackMode = 'browser';
+    const u = new SpeechSynthesisUtterance(segments[idx]);
+    if (browserVoice) u.voice = browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-MX';
+    u.rate = 0.98; u.pitch = 1.05;
+    u.onstart = function () { orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend = onEnd; u.onerror = onEnd;
+    synth.speak(u);
+  }
+
+  function start(q) {
+    if (synth) synth.cancel();
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+    queue = q; qi = 0; paused = false; runToken++;
+    pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true; pauseBtn.innerHTML = '&#10074;&#10074; Pausar';
+    runQueue(runToken);
+  }
+
+  function finish() {
+    runToken++; orb.classList.remove('speaking');
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+    pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+    status.textContent = 'Resumen terminado. Pulsa de nuevo para repetir.';
+  }
+
+  playAll.addEventListener('click', () => start(segments.map((_, i) => i)));
+  pauseBtn.addEventListener('click', function () {
+    if (!paused) { paused = true; this.innerHTML = '&#9654; Reanudar'; orb.classList.remove('speaking'); status.textContent = 'En pausa.';
+      if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause(); }
+    else { paused = false; this.innerHTML = '&#10074;&#10074; Pausar'; orb.classList.add('speaking'); statusSpeaking();
+      if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+}
+window.initLinaOrb = initLinaOrb;
 
 // Renders the RinglyPro Neural Intelligence health score + KPI panels on the
 // Hub home, sourced from /api/projects-bridge/neural (proxies the CRM neural API).
