@@ -1,0 +1,84 @@
+{
+  "unit_id": "a1-origen",
+  "module": 1,
+  "element": "1.3",
+  "cefr": "A1",
+  "theme": "¿De dónde eres?",
+  "title": { "es": "¿De dónde eres?", "en": "Countries, Nationalities & Origin", "fil": "Taga-saan ka?" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can say which country I'm from using 'ser de'.", "fil": "Kaya kong sabihin kung anong bansa ang pinanggalingan ko gamit ang 'ser de'." },
+    { "en": "I can state my nationality and ask someone else's.", "fil": "Kaya kong sabihin ang aking nasyonalidad at itanong ang sa iba." },
+    { "en": "I can say where I live using 'vivir en'.", "fil": "Kaya kong sabihin kung saan ako nakatira gamit ang 'vivir en'." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "ser de (origen) + nacionalidades + vivir en (residencia)",
+      "en": "'ser de' for origin (Soy de Manila) vs. 'vivir en' for where you live now (Vivo en Cebú). Nationalities agree in gender: filipino/filipina, mexicano/mexicana.",
+      "fil": "'ser de' para sa pinanggalingan (Soy de Manila) kumpara sa 'vivir en' para sa kasalukuyang tirahan (Vivo en Cebú). Ang nasyonalidad ay nagbabago ayon sa kasarian: filipino/filipina, mexicano/mexicana."
+    },
+    "pronunciation_focus": {
+      "en": "The 'ñ' in 'España' is pronounced like 'ny' — España = es-PAH-nya. The same sound exists in Filipino: niyog, Iniwan. Practice: España, español, mañana.",
+      "fil": "Ang 'ñ' sa 'España' ay binibigkas na parang 'ny' — España = es-PAH-nya. Pareho ito sa tunog ng 'ny' sa Filipino. Subukan: España, español, mañana."
+    },
+    "cognates": [
+      { "es": "país", "fil": "país / bansa", "note_fil": "Ang 'país' ay halos pareho ng baybay sa Ingles na 'country' kapag isinalin, ngunit ang tunog ay 'pa-IS'." },
+      { "es": "nación", "fil": "nasyon", "note_fil": "Ang 'nasyon' sa Filipino AY galing sa Espanyol na 'nación' — alam mo na ito!" },
+      { "es": "nacionalidad", "fil": "nasyonalidad", "note_fil": "Halos pareho: 'nacionalidad' ≈ 'nasyonalidad'." },
+      { "es": "vivir", "fil": "bibo / mabuhay", "note_fil": "Ang ugat na 'vivir' (mabuhay/manirahan) ay nasa salitang 'bibo' (buhay na buhay)." },
+      { "es": "español", "fil": "Espanyol", "note_fil": "Ang 'Espanyol' AY ang Espanyol na 'español' — pareho ang ñ at ny." }
+    ],
+    "false_friends": [
+      { "es": "éxito", "looks_like": "exit", "actually_en": "success", "actually_fil": "tagumpay", "use_instead": "salida (exit)" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan si Lucía at si Tomás na nag-uusap tungkol sa kung taga-saan sila at kung saan sila nakatira.",
+    "lines": [
+      { "es": "Hola, soy Lucía. ¿De dónde eres?", "en": "Hi, I'm Lucía. Where are you from?", "fil": "Hello, ako si Lucía. Taga-saan ka?" },
+      { "es": "Soy de México, pero ahora vivo en Manila.", "en": "I'm from Mexico, but now I live in Manila.", "fil": "Taga-Mexico ako, pero ngayon nakatira ako sa Maynila." },
+      { "es": "¡Qué bien! Entonces eres mexicano. Yo soy de España, soy española.", "en": "How nice! So you're Mexican. I'm from Spain, I'm Spanish.", "fil": "Ang galing! Kaya Mexicano ka pala. Ako ay taga-España, Espanyola ako." },
+      { "es": "¿Y dónde vives ahora, Lucía?", "en": "And where do you live now, Lucía?", "fil": "At saan ka nakatira ngayon, Lucía?" },
+      { "es": "Vivo en Cebú. Es un país muy bonito, Filipinas.", "en": "I live in Cebu. The Philippines is a very beautiful country.", "fil": "Nakatira ako sa Cebu. Napakaganda ng bansang Pilipinas." },
+      { "es": "Sí, somos de países diferentes, pero vivimos en la misma nación.", "en": "Yes, we're from different countries, but we live in the same nation.", "fil": "Oo, magkaiba ang ating pinanggalingang bansa, pero nakatira tayo sa iisang nasyon." }
+    ],
+    "gist_question": { "es": "¿De dónde es Tomás y dónde vive?", "fil": "Taga-saan si Tomás at saan siya nakatira?", "answer_es": "Tomás es de México y vive en Manila." }
+  },
+  "shadow_lines": [
+    "¿De dónde eres?",
+    "Soy de México.",
+    "Soy mexicano. / Soy española.",
+    "¿Dónde vives ahora?",
+    "Vivo en Cebú.",
+    "Filipinas es un país muy bonito."
+  ],
+  "vocab_root_ids": ["m1-ser", "m1-pais", "m1-nacion", "m1-vivir", "m1-uno"],
+  "guided_prompts": [
+    { "instruction_fil": "Sabihin kung anong bansa ang pinanggalingan mo (gamitin ang 'ser de').", "say_es": "Soy de ___.", "expect_contains": ["soy de"] },
+    { "instruction_fil": "Sabihin ang iyong nasyonalidad.", "say_es": "Soy filipino. / Soy filipina.", "expect_contains": ["soy filipino", "soy filipina"] },
+    { "instruction_fil": "Sabihin kung saan ka nakatira ngayon (gamitin ang 'vivir en').", "say_es": "Vivo en ___.", "expect_contains": ["vivo en"] },
+    { "instruction_fil": "Magtanong kung taga-saan ang kausap mo.", "say_es": "¿De dónde eres?", "expect_contains": ["de donde eres", "de dónde eres"] }
+  ],
+  "roleplay": {
+    "setup_fil": "May bago kang kaklase na galing sa ibang bansa. Kausapin siya: itanong kung taga-saan siya, ano ang kanyang nasyonalidad, at kung saan siya nakatira ngayon. Sagutin din ang tungkol sa iyong sarili.",
+    "setup_es": "Tienes un nuevo compañero de clase de otro país. Habla con él: pregúntale de dónde es, su nacionalidad y dónde vive ahora.",
+    "isabel_persona": "You are a friendly international exchange student named Rafael at a university in Makati. You are from España (you are 'español'), but you now live in Manila. Speak simple A1 Spanish. Answer the learner's questions about your country, nationality, and where you live, and ask them the same simple questions back (¿De dónde eres? ¿Cuál es tu nacionalidad? ¿Dónde vives?). Keep it short, warm, and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Asked where the classmate is from", "fil": "Nagtanong kung taga-saan ang kaklase" },
+      { "en": "Stated own origin with 'ser de'", "fil": "Sinabi ang sariling pinanggalingan gamit ang 'ser de'" },
+      { "en": "Stated own nationality", "fil": "Sinabi ang sariling nasyonalidad" },
+      { "en": "Asked where the classmate lives", "fil": "Nagtanong kung saan nakatira ang kaklase" },
+      { "en": "Said where they live with 'vivir en'", "fil": "Sinabi kung saan nakatira gamit ang 'vivir en'" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Habla de ti: de qué país eres, cuál es tu nacionalidad, y en qué ciudad vives.", "fil": "Magkuwento tungkol sa iyo: anong bansa ang pinanggalingan mo, ano ang iyong nasyonalidad, at saang lungsod ka nakatira." },
+    "qa_turns": [
+      { "es": "¿De dónde eres?" },
+      { "es": "¿Cuál es tu nacionalidad?" },
+      { "es": "¿En qué ciudad vives?" },
+      { "es": "¿Filipinas es un país grande o pequeño?" }
+    ],
+    "pass_threshold": 70
+  }
+}

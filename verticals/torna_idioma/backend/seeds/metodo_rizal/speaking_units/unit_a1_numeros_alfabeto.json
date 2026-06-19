@@ -1,0 +1,83 @@
+{
+  "unit_id": "a1-numeros-alfabeto",
+  "module": 1,
+  "element": "1.2",
+  "cefr": "A1",
+  "theme": "Números y el Alfabeto",
+  "title": { "es": "Números y el Alfabeto", "en": "Numbers & the Alphabet", "fil": "Mga Numero at ang Alpabeto" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can spell my name aloud and ask how a word is spelled.", "fil": "Kaya kong baybayin nang malakas ang aking pangalan at magtanong kung paano binabaybay ang isang salita." },
+    { "en": "I can count from 0 to 20 in Spanish.", "fil": "Kaya kong bumilang mula 0 hanggang 20 sa Espanyol." },
+    { "en": "I can ask for and give a phone number.", "fil": "Kaya kong humingi at magbigay ng numero ng telepono." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "los números 0–20 y el verbo 'contar'; deletrear en voz alta",
+      "en": "numbers 0–20 and the verb 'contar' (to count); spelling aloud letter by letter",
+      "fil": "ang mga numero 0–20 at ang pandiwang 'contar' (bumilang); pagbaybay nang malakas, titik por titik"
+    },
+    "pronunciation_focus": {
+      "en": "Spanish letter names: 'j' = jota (like English 'h'), 'h' is silent, 'll' = elle, 'ñ' = eñe, 'rr' = doble erre. When you spell, name each letter clearly: a-na = a, ene, a.",
+      "fil": "Mga pangalan ng titik sa Espanyol: 'j' = jota (parang Ingles na 'h'), tahimik ang 'h', 'll' = elle, 'ñ' = eñe, 'rr' = doble erre. Kapag nagbaybay, sabihin nang malinaw ang bawat titik: a-na = a, ene, a."
+    },
+    "cognates": [
+      { "es": "número", "fil": "numero", "note_fil": "Halos pareho — 'numero' ay galing sa Espanyol na 'número'." },
+      { "es": "letra", "fil": "letra", "note_fil": "Pareho — 'letra' sa Filipino ay ang Espanyol na 'letra' (titik)." },
+      { "es": "teléfono", "fil": "telepono", "note_fil": "Pamilyar na — 'telepono' ay galing sa 'teléfono'." },
+      { "es": "alfabeto", "fil": "alpabeto", "note_fil": "Halos pareho — 'alpabeto' ay galing sa 'alfabeto'." }
+    ],
+    "false_friends": [
+      { "es": "letra", "looks_like": "letter (mail / correspondence)", "actually_en": "letter of the alphabet (a, b, c…)", "actually_fil": "titik ng alpabeto (hindi sulat o liham)", "use_instead": "carta (para sa sulat / liham)" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan si Carlos na nagrerehistro para sa isang klase sa Makati. Itinatanong ng kawani ang kanyang pangalan at numero ng telepono.",
+    "lines": [
+      { "es": "Buenos días. ¿Cuál es su nombre, por favor?", "en": "Good morning. What is your name, please?", "fil": "Magandang umaga. Ano po ang pangalan ninyo, pakiusap?" },
+      { "es": "Me llamo Carlos Reyes.", "en": "My name is Carlos Reyes.", "fil": "Ang pangalan ko ay Carlos Reyes." },
+      { "es": "¿Cómo se deletrea su apellido?", "en": "How do you spell your surname?", "fil": "Paano po binabaybay ang inyong apelyido?" },
+      { "es": "Reyes: erre, e, i griega, e, ese.", "en": "Reyes: R, E, Y, E, S.", "fil": "Reyes: erre, e, i griega, e, ese." },
+      { "es": "Gracias. ¿Y su número de teléfono?", "en": "Thank you. And your phone number?", "fil": "Salamat. At ang inyong numero ng telepono?" },
+      { "es": "Es el cero nueve, uno siete, dos, cinco, ocho.", "en": "It's zero nine, one seven, two, five, eight.", "fil": "Ito ay zero siyam, isa pito, dalawa, lima, walo." }
+    ],
+    "gist_question": { "es": "¿Cómo se deletrea el apellido de Carlos?", "fil": "Paano binabaybay ang apelyido ni Carlos?", "answer_es": "Se deletrea erre, e, i griega, e, ese — Reyes." }
+  },
+  "shadow_lines": [
+    "¿Cómo se deletrea tu nombre?",
+    "Erre, e, i griega, e, ese.",
+    "¿Cuál es tu número de teléfono?",
+    "Cuento del cero al veinte.",
+    "Uno, dos, tres, cuatro, cinco.",
+    "Mi número es el cero nueve, uno siete."
+  ],
+  "vocab_root_ids": ["m1-nombre", "m1-deletrear", "m1-letra", "m1-numero", "m1-contar", "m1-uno"],
+  "guided_prompts": [
+    { "instruction_fil": "Magtanong kung paano binabaybay ang isang pangalan.", "say_es": "¿Cómo se deletrea ___?", "expect_contains": ["como se deletrea", "cómo se deletrea"] },
+    { "instruction_fil": "Bumilang mula isa hanggang lima (gamitin ang 'contar').", "say_es": "Uno, dos, tres, cuatro, cinco.", "expect_contains": ["uno", "dos", "tres"] },
+    { "instruction_fil": "Magtanong ng numero ng telepono ng iba.", "say_es": "¿Cuál es tu número de teléfono?", "expect_contains": ["numero de telefono", "número de teléfono"] },
+    { "instruction_fil": "Sabihin ang iyong numero ng telepono.", "say_es": "Mi número es el ___.", "expect_contains": ["mi numero", "mi número"] }
+  ],
+  "roleplay": {
+    "setup_fil": "Nasa registration desk ka ng isang language center sa Makati. Kausapin ang kawani: ibigay ang iyong pangalan, baybayin ang iyong apelyido, at ibigay ang iyong numero ng telepono. Itanong din ang pangalan niya.",
+    "setup_es": "Estás en la mesa de registro de un centro de idiomas en Makati. Habla con el recepcionista: da tu nombre, deletrea tu apellido y da tu número de teléfono.",
+    "isabel_persona": "You are a friendly receptionist named Sofía at the registration desk of a language center in Makati. Speak simple A1 Spanish. Greet the learner, ask for their name, ask how to spell their surname (¿cómo se deletrea?), ask for their phone number, and confirm the details back to them by reading numbers and letters aloud. Keep it short and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Gave their name", "fil": "Ibinigay ang pangalan" },
+      { "en": "Spelled their surname aloud", "fil": "Binaybay nang malakas ang apelyido" },
+      { "en": "Gave a phone number using numbers 0–20", "fil": "Nagbigay ng numero ng telepono gamit ang 0–20" },
+      { "en": "Asked the receptionist's name", "fil": "Nagtanong ng pangalan ng kawani" },
+      { "en": "Closed politely", "fil": "Nagpaalam nang magalang" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Di tu nombre, deletrea tu apellido en voz alta, y cuenta del cero al diez.", "fil": "Sabihin ang iyong pangalan, baybayin nang malakas ang iyong apelyido, at bumilang mula sero hanggang sampu." },
+    "qa_turns": [
+      { "es": "¿Cómo se deletrea tu nombre?" },
+      { "es": "¿Cuál es tu número de teléfono?" },
+      { "es": "¿Puedes contar del uno al diez?" },
+      { "es": "¿Cuántas letras tiene tu apellido?" }
+    ],
+    "pass_threshold": 70
+  }
+}

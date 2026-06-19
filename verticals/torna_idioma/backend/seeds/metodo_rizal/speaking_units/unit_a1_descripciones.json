@@ -1,0 +1,83 @@
+{
+  "unit_id": "a1-descripciones",
+  "module": 1,
+  "element": "1.5",
+  "cefr": "A1",
+  "theme": "Descripciones",
+  "title": { "es": "Descripciones", "en": "Physical Descriptions & Colors", "fil": "Mga Paglalarawan at Kulay" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can describe my hair and eyes using 'tener'.", "fil": "Kaya kong ilarawan ang aking buhok at mga mata gamit ang 'tener'." },
+    { "en": "I can say if someone is tall or short using 'ser' + adjective.", "fil": "Kaya kong sabihin kung ang isang tao ay matangkad o maliit gamit ang 'ser' + pang-uri." },
+    { "en": "I can name basic colors and match them to features.", "fil": "Kaya kong pangalanan ang mga pangunahing kulay at itugma ang mga ito sa mga katangian." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "tener + rasgos físicos; ser + adjetivo; concordancia de color/adjetivo",
+      "en": "'tener' for body features ('Tengo el pelo negro'), 'ser' + adjective for build ('Es alto'), and color/adjective agreement (azul/azules, alto/alta).",
+      "fil": "'tener' para sa mga katangian ng katawan ('Tengo el pelo negro'), 'ser' + pang-uri para sa pangangatawan ('Es alto'), at pagtutugma ng kulay/pang-uri (azul/azules, alto/alta)."
+    },
+    "pronunciation_focus": {
+      "en": "The Spanish 'j' (as in 'ojo', 'rojo') is a soft throaty 'h' sound — not the English 'j'. And 'll' in 'amarillo' sounds like a 'y'. Practice: ojo, rojo, amarillo, pelo.",
+      "fil": "Ang Espanyol na 'j' (tulad sa 'ojo', 'rojo') ay malambot na 'h' na galing sa lalamunan — hindi tulad ng Ingles na 'j'. At ang 'll' sa 'amarillo' ay parang 'y'. Subukan: ojo, rojo, amarillo, pelo."
+    },
+    "cognates": [
+      { "es": "color", "fil": "kulay", "note_fil": "Ang Filipino na 'kulay' at ang Espanyol na 'color' ay magkapamilya — parehong galing sa salitang 'color'." },
+      { "es": "azul", "fil": "asul", "note_fil": "Ang 'asul' ay diretsong galing sa Espanyol na 'azul' — alam mo na ito!" },
+      { "es": "verde", "fil": "berde", "note_fil": "Ang 'berde' ay hiram sa Espanyol na 'verde'." },
+      { "es": "describir", "fil": "deskripsyon", "note_fil": "Pamilyar na sa Filipino: 'deskripsyon'." }
+    ],
+    "false_friends": [
+      { "es": "largo", "looks_like": "large", "actually_en": "long (not large)", "actually_fil": "mahaba (hindi malaki)", "use_instead": "grande (para sa 'large/big')" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan sina Lucía at Marco na inilalarawan ang isang kaibigan nilang nagngangalang Diego.",
+    "lines": [
+      { "es": "Marco, ¿cómo es tu amigo Diego? No lo conozco.", "en": "Marco, what does your friend Diego look like? I don't know him.", "fil": "Marco, ano ang itsura ng kaibigan mong si Diego? Hindi ko siya kilala." },
+      { "es": "Diego es alto y tiene el pelo negro.", "en": "Diego is tall and has black hair.", "fil": "Si Diego ay matangkad at may itim na buhok." },
+      { "es": "¿Y de qué color son sus ojos?", "en": "And what color are his eyes?", "fil": "At anong kulay ang kanyang mga mata?" },
+      { "es": "Tiene los ojos cafés. Su color favorito es el azul.", "en": "He has brown eyes. His favorite color is blue.", "fil": "May kayumangging mga mata siya. Ang paborito niyang kulay ay asul." },
+      { "es": "Ah, ya entiendo. Mi hermana es alta también, pero tiene el pelo rojo.", "en": "Ah, I understand now. My sister is tall too, but she has red hair.", "fil": "Ah, naiintindihan ko na. Matangkad din ang kapatid kong babae, pero may pulang buhok siya." },
+      { "es": "¡Qué bien! Los dos son altos.", "en": "How nice! They're both tall.", "fil": "Ang galing! Pareho silang matangkad." }
+    ],
+    "gist_question": { "es": "¿De qué color son los ojos de Diego?", "fil": "Anong kulay ang mga mata ni Diego?", "answer_es": "Diego tiene los ojos cafés." }
+  },
+  "shadow_lines": [
+    "Diego es alto.",
+    "Tiene el pelo negro.",
+    "¿De qué color son sus ojos?",
+    "Tiene los ojos cafés.",
+    "Mi color favorito es el azul.",
+    "Los dos son altos."
+  ],
+  "vocab_root_ids": ["m1-tener", "m1-pelo", "m1-ojo", "m1-alto", "m1-color", "m1-azul"],
+  "guided_prompts": [
+    { "instruction_fil": "Sabihin ang kulay ng iyong buhok (gamitin ang 'tener').", "say_es": "Tengo el pelo ___.", "expect_contains": ["tengo el pelo"] },
+    { "instruction_fil": "Sabihin ang kulay ng iyong mga mata.", "say_es": "Tengo los ojos ___.", "expect_contains": ["tengo los ojos"] },
+    { "instruction_fil": "Sabihin kung matangkad o maliit ka (gamitin ang 'ser' + pagtutugma alto/alta).", "say_es": "Soy alto. / Soy alta.", "expect_contains": ["soy alto", "soy alta"] },
+    { "instruction_fil": "Sabihin ang paborito mong kulay.", "say_es": "Mi color favorito es el ___.", "expect_contains": ["mi color favorito es", "color favorito"] }
+  ],
+  "roleplay": {
+    "setup_fil": "Maglaro ng 'hulaan kung sino'. Ilarawan ang isang kaibigan o kamag-aaral (matangkad/maliit, kulay ng buhok, kulay ng mga mata) nang HINDI sinasabi ang pangalan — hayaang hulaan ng iyong kausap. Pagkatapos, ilarawan ang iyong sarili.",
+    "setup_es": "Juega a '¿quién es?'. Describe a un amigo (alto/bajo, color de pelo, color de ojos) sin decir su nombre, y deja que el otro adivine. Después, descríbete a ti mismo.",
+    "isabel_persona": "You are a friendly classmate named Sofía playing a guessing game with the learner. Speak simple A1 Spanish. When the learner describes someone, ask one or two clarifying questions ('¿Tiene el pelo largo?', '¿Es alto o bajo?') and then make a guess ('¿Es Diego?'). Then ask the learner to describe themselves. Keep it short, warm, and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Used 'ser' + adjective for build (alto/baja)", "fil": "Ginamit ang 'ser' + pang-uri para sa pangangatawan (alto/baja)" },
+      { "en": "Used 'tener' for hair", "fil": "Ginamit ang 'tener' para sa buhok" },
+      { "en": "Named the eye color", "fil": "Pinangalanan ang kulay ng mga mata" },
+      { "en": "Used a color correctly", "fil": "Tama ang paggamit ng isang kulay" },
+      { "en": "Described themselves at the end", "fil": "Inilarawan ang sarili sa dulo" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Descríbete físicamente: tu estatura (alto/a o bajo/a), el color de tu pelo y el color de tus ojos.", "fil": "Ilarawan ang iyong sarili: iyong tangkad (matangkad o maliit), kulay ng iyong buhok, at kulay ng iyong mga mata." },
+    "qa_turns": [
+      { "es": "¿De qué color tienes el pelo?" },
+      { "es": "¿De qué color tienes los ojos?" },
+      { "es": "¿Eres alto o alta?" },
+      { "es": "¿Cuál es tu color favorito?" }
+    ],
+    "pass_threshold": 70
+  }
+}

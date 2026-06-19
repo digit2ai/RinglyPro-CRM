@@ -79,37 +79,42 @@ function ScorePill({ ok, score }) {
 
 export default function SpeakingLesson() {
   const lang = uiLang();
-  const [unit, setUnit] = useState(null);
+  const [list, setList] = useState(null);   // unit summaries for the picker
+  const [unit, setUnit] = useState(null);   // selected full unit
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    api.get('/speaking/units').then(r => {
-      const id = r.data.units?.[0]?.unit_id;
-      if (!id) { setErr(tr('common.error')); return; }
-      return api.get(`/speaking/units/${id}`).then(u => setUnit(u.data.unit));
-    }).catch(() => setErr(tr('common.error')));
+    api.get('/speaking/units')
+      .then(r => setList(r.data.units || []))
+      .catch(() => setErr(tr('common.error')));
   }, []);
 
-  if (err) return <div style={s.page}><div style={s.center}>{err}</div></div>;
-  if (!unit) return <div style={s.page}><div style={s.center}>{tr('common.loading')}</div></div>;
+  const openUnit = (id) => {
+    setUnit(null); setStarted(false); setStep(0);
+    api.get(`/speaking/units/${id}`).then(u => setUnit(u.data.unit)).catch(() => setErr(tr('common.error')));
+  };
+  const backToList = () => { setUnit(null); setStarted(false); setStep(0); };
 
-  const title = unit.title?.[lang] || unit.title?.en;
+  if (err) return <div style={s.page}><div style={s.center}>{err}</div></div>;
+  if (!list) return <div style={s.page}><div style={s.center}>{tr('common.loading')}</div></div>;
+
   const steps = [Step1Listen, Step2Shadow, Step3Speak, Step4Converse, Step5Assess];
   const StepComp = steps[step];
+  const title = unit ? (unit.title?.[lang] || unit.title?.en) : null;
 
   return (
     <div style={s.page}>
       <div style={s.header}>
         <div style={s.headerRow}>
-          <div style={s.avatar}>{unit.cefr}</div>
+          <div style={s.avatar}>{unit ? unit.cefr : '🗣'}</div>
           <div>
-            <h1 style={s.h1}>{tr('speak.title')}: {title}</h1>
+            <h1 style={s.h1}>{unit ? `${tr('speak.title')}: ${title}` : tr('speak.title')}</h1>
             <p style={s.sub}>{tr('speak.subtitle')}</p>
           </div>
         </div>
-        {started && (
+        {unit && started && (
           <div style={s.progressWrap}>
             <div style={s.progressTrack}><div style={{ ...s.progressFill, width: `${((step + 1) / steps.length) * 100}%` }} /></div>
             <div style={s.progressLabel}>{tr('speak.step')} {step + 1} {tr('speak.of')} {steps.length}</div>
@@ -117,19 +122,42 @@ export default function SpeakingLesson() {
         )}
       </div>
 
-      <div style={s.body}>
-        {!started ? (
-          <Intro unit={unit} lang={lang} onStart={() => setStarted(true)} />
+      <div style={s.body} id="ti-speak-body">
+        {!unit ? (
+          <Picker list={list} lang={lang} loading={false} onOpen={openUnit} />
         ) : (
           <>
-            <StepComp unit={unit} lang={lang} />
-            <div style={s.navRow}>
-              {step > 0 && <button onClick={() => setStep(step - 1)} style={s.ghostBtn}>{tr('speak.back')}</button>}
-              {step < steps.length - 1 && <button onClick={() => setStep(step + 1)} style={s.primaryBtn}>{tr('speak.next')} →</button>}
-            </div>
+            <button onClick={backToList} style={s.lessonsLink}>← {tr('nav.speak')}</button>
+            {!started ? (
+              <Intro unit={unit} lang={lang} onStart={() => setStarted(true)} />
+            ) : (
+              <>
+                <StepComp unit={unit} lang={lang} />
+                <div style={s.navRow}>
+                  {step > 0 && <button onClick={() => setStep(step - 1)} style={s.ghostBtn}>{tr('speak.back')}</button>}
+                  {step < steps.length - 1 && <button onClick={() => setStep(step + 1)} style={s.primaryBtn}>{tr('speak.next')} →</button>}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function Picker({ list, lang, onOpen }) {
+  if (!list.length) return <div style={s.center}>{tr('common.loading')}</div>;
+  return (
+    <div style={s.pickGrid}>
+      {list.map((u, i) => (
+        <button key={u.unit_id} onClick={() => onOpen(u.unit_id)} style={s.pickCard}>
+          <div style={s.pickTop}><span style={s.pickNum}>{i + 1}</span><span style={s.pickCefr}>{u.cefr}</span></div>
+          <div style={s.pickTitle}>{u.title?.[lang] || u.title?.en}</div>
+          {u.objectives?.[0] && <div style={s.pickObj}>{u.objectives[0][lang] || u.objectives[0].en}</div>}
+          <div style={s.pickGo}>{tr('speak.start')} →</div>
+        </button>
+      ))}
     </div>
   );
 }
@@ -425,6 +453,15 @@ const s = {
   rubricBars: { display: 'flex', gap: 4 },
   rbar: { width: 28, height: 10, borderRadius: 3 },
   summary: { fontSize: 15, color: '#2C2C2C', lineHeight: 1.6, background: CREAM_L, padding: 14, borderRadius: 8, border: `1px solid ${BORDER}` },
+  lessonsLink: { background: 'none', border: 'none', color: GOLD_D, fontWeight: 700, cursor: 'pointer', padding: '2px 0 12px', fontSize: 14 },
+  pickGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 },
+  pickCard: { textAlign: 'left', background: '#fff', border: `1px solid ${BORDER}`, borderTop: `4px solid ${GOLD}`, borderRadius: 12, padding: 18, cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: 8 },
+  pickTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  pickNum: { width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD}, ${GOLD_D})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, fontFamily: "'Playfair Display',serif" },
+  pickCefr: { fontSize: 11, fontWeight: 700, color: GOLD_D, background: 'rgba(201,168,76,0.15)', padding: '3px 10px', borderRadius: 12, letterSpacing: 1 },
+  pickTitle: { fontFamily: "'Playfair Display',serif", fontSize: 18, color: NAVY, fontWeight: 700 },
+  pickObj: { fontSize: 13, color: '#6B6B6B', lineHeight: 1.5, flex: 1 },
+  pickGo: { fontSize: 13, fontWeight: 700, color: GOLD_D, marginTop: 4 },
   navRow: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
   primaryBtn: { background: `linear-gradient(135deg, ${GOLD}, ${GOLD_D})`, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontWeight: 700, fontFamily: "'Playfair Display',serif", letterSpacing: 1, cursor: 'pointer' },
   ghostBtn: { background: 'none', border: `1px solid ${GOLD}`, color: GOLD_D, borderRadius: 8, padding: '12px 22px', fontWeight: 600, cursor: 'pointer' },

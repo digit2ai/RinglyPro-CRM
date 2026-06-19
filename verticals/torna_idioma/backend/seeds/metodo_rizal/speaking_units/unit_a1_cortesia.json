@@ -1,0 +1,83 @@
+{
+  "unit_id": "a1-cortesia",
+  "module": 1,
+  "element": "1.6",
+  "cefr": "A1",
+  "theme": "Cortesía",
+  "title": { "es": "Cortesía", "en": "Courtesy & Polite Expressions", "fil": "Mga Magagalang na Pananalita" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can use the core polite formulas: please, thank you, you're welcome, sorry, excuse me.", "fil": "Kaya kong gamitin ang mga pangunahing magalang na pananalita: pakiusap, salamat, walang anuman, paumanhin, makikiraan." },
+    { "en": "I can politely order something or ask for a favor.", "fil": "Kaya kong magalang na mag-order o humingi ng pabor." },
+    { "en": "I can tell apart the formal 'usted' and the informal 'tú' register.", "fil": "Kaya kong pag-ibahin ang pormal na 'usted' at impormal na 'tú'." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "fórmulas de cortesía + usted vs. tú",
+      "en": "polite formulas (por favor, gracias, de nada, perdón, con permiso, mucho gusto) + formal 'usted' vs. informal 'tú'",
+      "fil": "mga magalang na pormula (por favor, gracias, de nada, perdón, con permiso, mucho gusto) + pormal na 'usted' vs. impormal na 'tú'"
+    },
+    "pronunciation_focus": {
+      "en": "The soft 'c' before e/i and the 'z' sound like 's' in Latin America: gra-cias, per-mi-so. Roll a light single 'r' in 'perdón' and 'gracias'.",
+      "fil": "Ang malambot na 'c' bago ang e/i at ang 'z' ay parang 's' sa Latin America: gra-cias, per-mi-so. Gawing magaan ang 'r' sa 'perdón' at 'gracias'."
+    },
+    "cognates": [
+      { "es": "gracias", "fil": "grasya", "note_fil": "Ang Filipino na 'grasya' ay galing sa 'gracias' — biyaya/pasasalamat." },
+      { "es": "favor", "fil": "pabor", "note_fil": "'Por favor' = pakiusap; 'pabor' ay hiram na rin sa Filipino." },
+      { "es": "permiso", "fil": "permiso", "note_fil": "Halos pareho — 'con permiso' = makikiraan po." },
+      { "es": "gusto", "fil": "gusto", "note_fil": "'Mucho gusto' = ikinagagalak; 'gusto' sa Filipino = naisin." }
+    ],
+    "false_friends": [
+      { "es": "embarazada", "looks_like": "embarrassed", "actually_en": "pregnant", "actually_fil": "buntis", "use_instead": "avergonzado/a (nahihiya)" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan si Liza na umoorder sa isang café sa Makati at magalang na kumakausap sa serbidor.",
+    "lines": [
+      { "es": "Buenos días, señor. ¿Me puede traer el menú, por favor?", "en": "Good morning, sir. Could you bring me the menu, please?", "fil": "Magandang umaga po, ginoo. Maaari po ba ninyong dalhin ang menu, pakiusap?" },
+      { "es": "Claro que sí. Aquí tiene. ¿Qué desea ordenar?", "en": "Of course. Here you are. What would you like to order?", "fil": "Oo naman po. Heto po. Ano po ang gusto ninyong i-order?" },
+      { "es": "Un café con leche y una mesa para dos, por favor.", "en": "A coffee with milk and a table for two, please.", "fil": "Isang kape na may gatas at isang mesa para sa dalawa, pakiusap." },
+      { "es": "Perdón, ¿puede repetir, por favor?", "en": "Sorry, can you repeat that, please?", "fil": "Paumanhin po, maaari po bang ulitin, pakiusap?" },
+      { "es": "Un café con leche. Muchas gracias.", "en": "A coffee with milk. Thank you very much.", "fil": "Isang kape na may gatas. Maraming salamat po." },
+      { "es": "De nada. Con permiso, ya regreso.", "en": "You're welcome. Excuse me, I'll be right back.", "fil": "Walang anuman po. Makikiraan po, babalik agad ako." }
+    ],
+    "gist_question": { "es": "¿Qué pide Liza para tomar?", "fil": "Ano ang in-order ni Liza para inumin?", "answer_es": "Liza pide un café con leche." }
+  },
+  "shadow_lines": [
+    "Buenos días, señor. ¿Me puede traer el menú, por favor?",
+    "Un café con leche, por favor.",
+    "Perdón, ¿puede repetir, por favor?",
+    "Muchas gracias.",
+    "De nada.",
+    "Con permiso, ya regreso."
+  ],
+  "vocab_root_ids": ["m1-gracias", "m1-favor", "m1-perdon", "m1-permiso", "m1-gusto"],
+  "guided_prompts": [
+    { "instruction_fil": "Magalang na humingi ng mesa para sa dalawa (gamitin ang 'por favor').", "say_es": "Una mesa para dos, por favor.", "expect_contains": ["por favor", "mesa para dos"] },
+    { "instruction_fil": "Magpasalamat nang taos-puso.", "say_es": "Muchas gracias.", "expect_contains": ["muchas gracias", "gracias"] },
+    { "instruction_fil": "Sabihin ang 'walang anuman' kapag pinasalamatan ka.", "say_es": "De nada.", "expect_contains": ["de nada"] },
+    { "instruction_fil": "Magalang na humingi ng paumanhin at hilingin na ulitin.", "say_es": "Perdón, ¿puede repetir, por favor?", "expect_contains": ["perdón", "perdon", "por favor"] }
+  ],
+  "roleplay": {
+    "setup_fil": "Pumasok ka sa isang café sa Makati. Magalang na batiin ang serbidor, mag-order gamit ang 'por favor', magpasalamat ng 'gracias', at magpaalam gamit ang 'con permiso'. Gamitin ang pormal na 'usted' sa serbidor.",
+    "setup_es": "Entras en un café en Makati. Saluda con cortesía al camarero, pide algo usando 'por favor', da las gracias y despídete con 'con permiso'. Usa el trato formal 'usted'.",
+    "isabel_persona": "You are a courteous waiter named Mateo at a café in Makati. Speak simple A1 Spanish and always use the formal 'usted' with the customer. Greet politely, take the learner's order, respond warmly to their courtesy formulas (gracias → de nada), and gently prompt them if they forget to say 'por favor' or 'gracias'. Keep the exchange short and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Greeted the waiter politely", "fil": "Magalang na binati ang serbidor" },
+      { "en": "Ordered using 'por favor'", "fil": "Nag-order gamit ang 'por favor'" },
+      { "en": "Said 'gracias' to thank", "fil": "Nagsabi ng 'gracias' bilang pasasalamat" },
+      { "en": "Used 'perdón' or asked to repeat politely", "fil": "Gumamit ng 'perdón' o magalang na nagpaulit" },
+      { "en": "Excused themselves with 'con permiso'", "fil": "Nagpaalam gamit ang 'con permiso'" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Preséntate con cortesía y pide algo en un café: saluda, di tu nombre, pide un café o una mesa con 'por favor', y da las gracias.", "fil": "Magpakilala nang magalang at mag-order sa isang café: bumati, sabihin ang pangalan mo, humingi ng kape o mesa gamit ang 'por favor', at magpasalamat." },
+    "qa_turns": [
+      { "es": "¿Cómo pides una mesa con cortesía?" },
+      { "es": "¿Qué dices para dar las gracias?" },
+      { "es": "¿Qué respondes cuando alguien te da las gracias?" },
+      { "es": "¿Qué dices para pasar entre la gente con cortesía?" }
+    ],
+    "pass_threshold": 70
+  }
+}

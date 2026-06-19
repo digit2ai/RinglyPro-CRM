@@ -27,7 +27,11 @@ function loadUnits() {
     return fs.readdirSync(UNITS_DIR)
       .filter(f => f.endsWith('.json'))
       .map(f => JSON.parse(fs.readFileSync(path.join(UNITS_DIR, f), 'utf8')))
-      .sort((a, b) => (a.cefr || '').localeCompare(b.cefr || '') || (a.unit_id || '').localeCompare(b.unit_id || ''));
+      // Order by CEFR then syllabus element (1.1, 1.2 …) so lessons run in teaching order.
+      .sort((a, b) =>
+        (a.cefr || '').localeCompare(b.cefr || '') ||
+        String(a.element || '').localeCompare(String(b.element || ''), undefined, { numeric: true }) ||
+        (a.unit_id || '').localeCompare(b.unit_id || ''));
   } catch (e) {
     return [];
   }

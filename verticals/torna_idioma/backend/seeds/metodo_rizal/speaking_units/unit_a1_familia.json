@@ -1,0 +1,83 @@
+{
+  "unit_id": "a1-familia",
+  "module": 1,
+  "element": "1.4",
+  "cefr": "A1",
+  "theme": "La Familia",
+  "title": { "es": "La Familia", "en": "The Family", "fil": "Ang Pamilya" },
+  "estimated_minutes": 12,
+  "objectives": [
+    { "en": "I can name the members of my immediate family.", "fil": "Kaya kong pangalanan ang mga miyembro ng aking malapit na pamilya." },
+    { "en": "I can use 'tener' to say how many siblings or children I have.", "fil": "Kaya kong gamitin ang 'tener' para sabihin kung ilan ang kapatid o anak ko." },
+    { "en": "I can use possessives (mi/mis) and ask and tell ages with 'tener'.", "fil": "Kaya kong gamitin ang mga panghalip na pag-aari (mi/mis) at magtanong at magsabi ng edad gamit ang 'tener'." }
+  ],
+  "target": {
+    "grammar_focus": {
+      "es": "'tener' para la familia + posesivos (mi/mis) + la edad",
+      "en": "'tener' for family (Tengo dos hermanos) + possessives mi (singular) / mis (plural) + age (¿Cuántos años tiene? Tiene treinta años)",
+      "fil": "'tener' para sa pamilya (Tengo dos hermanos) + mga panghalip na pag-aari mi (isahan) / mis (maramihan) + edad (¿Cuántos años tiene? Tiene treinta años)"
+    },
+    "pronunciation_focus": {
+      "en": "The Spanish 'll' in 'me llamo' and 'familia' sounds like the English 'y' in 'yes' (Latin American). Practice: familia, llamo, ella.",
+      "fil": "Ang Espanyol na 'll' sa 'me llamo' at 'familia' ay parang 'y' sa Ingles na 'yes' (Latin American). Subukan: familia, llamo, ella."
+    },
+    "cognates": [
+      { "es": "familia", "fil": "pamilya", "note_fil": "Halos pareho — 'familia' ≈ 'pamilya'. Alam mo na ito!" },
+      { "es": "padre", "fil": "padre / pader (sa simbahan)", "note_fil": "Pamilyar sa Filipino bilang 'padre' (pari); dito ay 'ama / tatay'." },
+      { "es": "hijo", "fil": "iho / iho", "note_fil": "Ang 'iho' sa Filipino ('anak na lalaki') ay galing sa Espanyol na 'hijo'." },
+      { "es": "edad", "fil": "edad", "note_fil": "Ginagamit na sa Filipino ang 'edad' para sa 'gulang' — eksaktong parehong salita!" }
+    ],
+    "false_friends": [
+      { "es": "pariente", "looks_like": "parent", "actually_en": "relative (any family member)", "actually_fil": "kamag-anak", "use_instead": "padre / madre (para sa 'parent')" }
+    ]
+  },
+  "input_scene": {
+    "audio_intro_fil": "Pakinggan si Maria na inilalarawan ang kanyang pamilya — gaya ng karamihan sa mga Pilipino, malapit at magkakasama sila.",
+    "lines": [
+      { "es": "Mi familia es grande y muy unida. Vivimos todos juntos.", "en": "My family is big and very close. We all live together.", "fil": "Ang aking pamilya ay malaki at napakalapit. Magkakasama kaming naninirahan." },
+      { "es": "Mi padre se llama José y mi madre se llama Rosa.", "en": "My father's name is José and my mother's name is Rosa.", "fil": "Ang pangalan ng aking ama ay José at ang aking ina ay Rosa." },
+      { "es": "Tengo dos hermanos y una hermana.", "en": "I have two brothers and one sister.", "fil": "May dalawa akong kapatid na lalaki at isang babae." },
+      { "es": "Mi hermano mayor tiene treinta años y trabaja en Manila.", "en": "My older brother is thirty years old and works in Manila.", "fil": "Ang aking kuya ay tatlumpung taong gulang at nagtatrabaho sa Maynila." },
+      { "es": "Mis abuelos también viven con nosotros. Son muy importantes para mí.", "en": "My grandparents also live with us. They are very important to me.", "fil": "Naninirahan din sa amin ang aking mga lolo't lola. Napakahalaga nila para sa akin." },
+      { "es": "Yo no tengo hijos todavía, pero quiero una familia grande.", "en": "I don't have children yet, but I want a big family.", "fil": "Wala pa akong mga anak, ngunit gusto ko ng malaking pamilya." }
+    ],
+    "gist_question": { "es": "¿Cuántos hermanos tiene Maria?", "fil": "Ilang kapatid mayroon si Maria?", "answer_es": "Maria tiene tres hermanos: dos hermanos y una hermana." }
+  },
+  "shadow_lines": [
+    "Mi familia es grande y muy unida.",
+    "Mi padre se llama José.",
+    "Mi madre se llama Rosa.",
+    "Tengo dos hermanos y una hermana.",
+    "Mi hermano mayor tiene treinta años.",
+    "No tengo hijos todavía."
+  ],
+  "vocab_root_ids": ["m1-familia", "m1-padre", "m1-madre", "m1-hermano", "m1-hijo", "m1-tener", "m1-edad"],
+  "guided_prompts": [
+    { "instruction_fil": "Sabihin kung ilang kapatid na lalaki ang mayroon ka (gamitin ang 'tener').", "say_es": "Tengo ___ hermanos.", "expect_contains": ["tengo", "hermanos"] },
+    { "instruction_fil": "Sabihin ang pangalan ng iyong ina (gamitin ang 'mi').", "say_es": "Mi madre se llama ___.", "expect_contains": ["mi madre", "se llama"] },
+    { "instruction_fil": "Sabihin ang edad ng iyong ama (gamitin ang 'tener' + años).", "say_es": "Mi padre tiene ___ años.", "expect_contains": ["mi padre", "tiene", "años", "anos"] },
+    { "instruction_fil": "Magtanong ng edad ng kapatid ng kausap mo.", "say_es": "¿Cuántos años tiene tu hermano?", "expect_contains": ["cuantos años", "cuántos años", "cuantos anos", "tiene"] }
+  ],
+  "roleplay": {
+    "setup_fil": "Nagpapakita ka ng larawan ng iyong pamilya sa isang bagong kaibigan. Ilarawan ang bawat miyembro (pangalan + edad + relasyon gamit ang 'mi/mis' at 'tener'), at magtanong tungkol sa pamilya niya.",
+    "setup_es": "Le muestras una foto de tu familia a un nuevo amigo. Describe a cada persona y pregunta por su familia.",
+    "isabel_persona": "You are a warm new friend named Lucía looking at the learner's family photo. Speak simple A1 Spanish. React kindly ('¡Qué linda familia!'), ask the learner about specific people in the photo (their names, ages, who they are), then share a little about your own family and ask the learner one or two questions back. Use 'tener' for family and ages, and 'mi/mis' possessives. Keep it short and encouraging. Stay in character.",
+    "goal_checklist": [
+      { "en": "Named at least two family members with 'mi/mis'", "fil": "Pinangalanan ang hindi bababa sa dalawang miyembro gamit ang 'mi/mis'" },
+      { "en": "Used 'tener' to say how many siblings or children", "fil": "Ginamit ang 'tener' para sabihin kung ilan ang kapatid o anak" },
+      { "en": "Said someone's age with 'tener ... años'", "fil": "Sinabi ang edad ng isang tao gamit ang 'tener ... años'" },
+      { "en": "Asked about the other person's family", "fil": "Nagtanong tungkol sa pamilya ng kausap" },
+      { "en": "Reacted or responded politely", "fil": "Tumugon nang magalang" }
+    ]
+  },
+  "assessment": {
+    "monologue_prompt": { "es": "Describe a tu familia: quiénes son, cuántos hermanos tienes, cómo se llaman tus padres y cuántos años tienen.", "fil": "Ilarawan ang iyong pamilya: sino sila, ilan ang kapatid mo, ano ang pangalan ng iyong mga magulang at ilang taong gulang sila." },
+    "qa_turns": [
+      { "es": "¿Cuántos hermanos tienes?" },
+      { "es": "¿Cómo se llama tu madre?" },
+      { "es": "¿Cuántos años tiene tu padre?" },
+      { "es": "¿Tienes hijos?" }
+    ],
+    "pass_threshold": 70
+  }
+}
