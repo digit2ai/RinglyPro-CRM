@@ -2440,6 +2440,113 @@ async function openShareProjectModal(projectId) {
 }
 window.openShareProjectModal = openShareProjectModal;
 
+// =====================================================
+// VOICE POC TEASER — one-click AI teaser + voice, send to client
+// =====================================================
+async function generateVoiceTeaser(projectId) {
+  let p = null;
+  try {
+    const projRes = await api('/projects/' + projectId);
+    if (!projRes.success) { alert('Could not load project'); return; }
+    p = projRes.data;
+  } catch (e) { alert('Could not load project: ' + e.message); return; }
+
+  const lang = (typeof detectLangFromCountry === 'function') ? detectLangFromCountry(p.country) : 'en';
+
+  openModal('Generating Voice Teaser…', `
+    <div style="text-align:center;padding:30px 10px">
+      <div style="font-size:40px;line-height:1">&#127908;</div>
+      <p style="margin:14px 0 4px;font-weight:600">Lina is building the POC teaser for <strong>${escHtml(p.name)}</strong>…</p>
+      <p style="font-size:13px;color:var(--text-muted)">Generating the simulated product, the walkthrough copy, and the voice narration. ~20-40s.</p>
+      <div class="spinner" style="margin:18px auto"></div>
+    </div>
+  `, () => {});
+  const sb0 = document.getElementById('modal-save'); if (sb0) sb0.style.display = 'none';
+
+  try {
+    const res = await api('/teaser-admin/projects/' + projectId + '/generate', {
+      method: 'POST', body: JSON.stringify({ lang })
+    });
+    if (!res.success) {
+      document.getElementById('modal-body').innerHTML = '<p style="color:#f87171">Error: ' + escHtml(res.error || 'generation failed') + '</p>';
+      return;
+    }
+    renderTeaserModal(p, res.token, res.url, res.teaser);
+  } catch (e) {
+    document.getElementById('modal-body').innerHTML = '<p style="color:#f87171">Error: ' + escHtml(e.message) + '</p>';
+  }
+}
+window.generateVoiceTeaser = generateVoiceTeaser;
+
+function renderTeaserModal(p, token, url, teaser) {
+  const escA = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const es = teaser.lang === 'es';
+  document.getElementById('modal-title').textContent = 'Voice Teaser — ' + (teaser.title || p.name);
+  document.getElementById('modal-body').innerHTML = `
+    <p style="margin:0 0 10px;font-size:13px;color:var(--text-muted)">
+      <strong>${escHtml(teaser.title || p.name)}</strong> — ${es ? 'adelanto en español, narrado por Lina' : 'English teaser, narrated by Lina'}.
+      Preview it below, then send to the client.
+    </p>
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;background:#070b16">
+      <iframe src="${escA(url)}" style="width:100%;height:380px;border:0" title="Teaser preview"></iframe>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-sm btn-ghost" onclick="window.open('${escA(url)}','_blank','noopener')">&#8599; Open full page</button>
+      <button class="btn btn-sm btn-ghost" onclick="navigator.clipboard.writeText('${escA(url)}').then(()=>showCopyToast&&showCopyToast('Link copied'))">&#128203; Copy link</button>
+      <button class="btn btn-sm btn-ghost" onclick="generateVoiceTeaser(${p.id})" title="Generate a fresh version">&#8635; Regenerate</button>
+    </div>
+    <div class="form-group">
+      <label>Recipient email</label>
+      <input type="email" id="teaser-email" value="${escA(p.submitter_email || '')}" placeholder="client@example.com">
+    </div>
+    <div class="form-group">
+      <label>WhatsApp / SMS phone</label>
+      <input type="tel" id="teaser-phone" value="${escA(p.submitter_phone || '')}" placeholder="+1 305 555 0142">
+      <small style="color:var(--text-muted)">Include country code. Spaces and dashes are fine.</small>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sm" style="background:#25D366;color:#fff;border-color:#25D366" onclick="sendTeaserVia('${token}','whatsapp')">&#128241; WhatsApp</button>
+      <button class="btn btn-sm" style="background:#3b82f6;color:#fff;border-color:#3b82f6" onclick="sendTeaserVia('${token}','sms')">&#128172; SMS</button>
+      <button class="btn btn-sm" style="background:#0066CC;color:#fff;border-color:#0066CC" onclick="sendTeaserVia('${token}','email')">&#9993; Email</button>
+    </div>
+    <div id="teaser-send-status" style="margin-top:12px;font-size:13px;color:var(--text-muted);min-height:18px"></div>
+  `;
+  const sb = document.getElementById('modal-save'); if (sb) sb.style.display = 'none';
+}
+
+async function sendTeaserVia(token, channel) {
+  const email = (document.getElementById('teaser-email') || {}).value;
+  const phone = (document.getElementById('teaser-phone') || {}).value;
+  const to = (channel === 'email' ? email : phone || '').trim();
+  const statusEl = document.getElementById('teaser-send-status');
+  if (!to) { statusEl.style.color = '#f87171'; statusEl.textContent = channel === 'email' ? 'Enter a recipient email.' : 'Enter a phone with country code.'; return; }
+  statusEl.style.color = 'var(--text-muted)';
+  statusEl.textContent = 'Sending via ' + channel + '…';
+  try {
+    const res = await api('/teaser-admin/' + token + '/send', { method: 'POST', body: JSON.stringify({ channel, to }) });
+    if (!res.success) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Error: ' + escHtml(res.error || 'failed'); return; }
+    const r = res.result || {};
+    if (r.sent) {
+      statusEl.style.color = '#34d399';
+      statusEl.textContent = '✓ Sent via ' + channel + (r.status ? ' (' + r.status + ')' : r.sid ? ' (' + r.sid + ')' : '');
+    } else {
+      const link = r.mailto || r.sms_link || r.wa_link;
+      if (link) {
+        window.open(link, '_blank');
+        statusEl.style.color = 'var(--text-muted)';
+        statusEl.textContent = 'Opened your ' + channel + ' app to send manually (server auto-send ' + (r.reason || 'unavailable') + ').';
+      } else {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = 'Could not send: ' + (r.reason || 'unknown');
+      }
+    }
+  } catch (e) {
+    statusEl.style.color = '#f87171';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+window.sendTeaserVia = sendTeaserVia;
+
 function setShareLang(lang) {
   const langInput = document.getElementById('m-share-lang');
   if (langInput) langInput.value = lang;
@@ -5738,6 +5845,7 @@ async function showProjectDetail(id) {
           <button class="btn btn-ghost btn-sm" onclick="chooseScheduleMeetingLanguage(${p.id})" title="Schedule an on-demand meeting with selected stakeholders. Creates a Zoom + calendar event and sends a styled HTML email." style="color:#2D8CFF;border-color:#2D8CFF">Schedule Meeting</button>
           <button class="btn btn-sm" onclick="runProjectTriage(${p.id})" title="${p.triage_brief ? 'Re-run AI Triage to refresh the fit score, stakeholder questions, and recommendation.' : 'Run AI Triage on this project: fit score, regulatory flags, portfolio synergies, bilingual stakeholder questions, and go/no-go recommendation. Takes 15-25s.'}" style="background:linear-gradient(90deg,#7c5cff,#a78bfa);border:none;color:#fff">&#129302; ${p.triage_brief ? 'Re-run AI Triage' : 'Run AI Triage'}</button>
           <button class="btn btn-sm" onclick="openShareProjectModal(${p.id})" title="Send the project summary + open-access magic link via WhatsApp, SMS, or Mail. Anyone you forward the link to can view it (no login required)." style="background:#10b981;color:#fff;border-color:#10b981">&#128229; Share Project</button>
+          <button class="btn btn-sm" onclick="generateVoiceTeaser(${p.id})" title="AI-generate a sophisticated POC teaser: a branded simulation of the finished product plus Lina narrating it in voice. Then send to the client by Email, SMS, or WhatsApp. Takes 20-40s." style="background:linear-gradient(90deg,#22d3ee,#7c5cff);border:none;color:#06122b;font-weight:700">&#127908; Voice Teaser</button>
           <button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/"/g,"&quot;").replace(/'/g,"&#39;")})'>Edit</button>
           ${p.archived_at
             ? `<button class="btn btn-sm" onclick="unarchiveProject(${p.id})" title="Restore this project to active status" style="background:#10b981;color:#fff;border-color:#10b981">&#8634; Unarchive</button>`

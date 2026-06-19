@@ -155,6 +155,11 @@ app.use('/nda', express.static(path.join(dashboardPath, 'nda')));
 // hijacked by index.html.
 app.use('/artifact', require('./routes/agentArtifactShare'));
 
+// Public voice-teaser viewer — client opens /projects/teaser/<token> and sees
+// the branded POC walkthrough + hears Lina narrate it. Token-gated, no auth.
+// Mounted BEFORE the authenticated routers so the path isn't hijacked.
+app.use('/teaser', require('./routes/teasers').publicRouter);
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/findings', authenticateToken, findingsRoutes);
@@ -173,6 +178,8 @@ const ndaRoutes = require('./routes/projectNda');
 app.use('/api/v1/projects/nda', express.json({ limit: '4mb' }), ndaRoutes.publicRouter);
 app.use('/api/v1/projects', authenticateToken, ndaRoutes.adminRouter); // admin NDA mgmt
 app.use('/api/v1/projects', authenticateToken, projectsRoutes);
+// Voice POC teaser admin API (generate / list / send) — admin auth.
+app.use('/api/v1/teaser-admin', authenticateToken, require('./routes/teasers').adminRouter);
 app.use('/api/v1/calendar', authenticateToken, calendarRoutes);
 app.use('/api/v1/tasks', authenticateToken, tasksRoutes);
 app.use('/api/v1/notifications', authenticateToken, notificationsRoutes);
@@ -671,6 +678,32 @@ app.get('*', (req, res) => {
       }
     }
     console.log('[D2AI-Projects] Pipeline & workflow tables ready');
+
+    // Voice POC teasers (one-click AI teaser per project request)
+    const teaserMigrations = [
+      `CREATE TABLE IF NOT EXISTS d2_project_teasers (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        project_id INTEGER NOT NULL,
+        token UUID NOT NULL UNIQUE,
+        title TEXT,
+        lang VARCHAR(8) DEFAULT 'en',
+        voice VARCHAR(20) DEFAULT 'lina',
+        content_json JSONB NOT NULL DEFAULT '{}',
+        status VARCHAR(20) DEFAULT 'ready',
+        model VARCHAR(60),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_teasers_project ON d2_project_teasers(project_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_teasers_token ON d2_project_teasers(token)`
+    ];
+    for (const sql of teaserMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!e.message.includes('already exists')) console.log('[D2AI-Projects] Teaser migration notice:', e.message.substring(0, 100));
+      }
+    }
+    console.log('[D2AI-Projects] Voice teaser table ready');
 
     // Calendar: recurrence_group_id column for linked-recurring-events support
     try {
