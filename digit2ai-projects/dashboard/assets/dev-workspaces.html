@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Workspaces</title>
+<style>
+  :root { --bg:#0f172a; --card:#172033; --border:#2a3852; --text:#e2e8f0; --muted:#94a3b8;
+          --blue:#2563eb; --blue2:#3b82f6; --green:#10b981; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg); color:var(--text); padding:20px; }
+  .intro { background:var(--card); border:1px solid var(--border); border-radius:12px;
+           padding:16px 18px; margin-bottom:18px; font-size:13px; line-height:1.6; color:var(--muted); }
+  .intro b { color:var(--text); }
+  .intro code { background:#0b1220; padding:2px 6px; border-radius:5px; color:#7dd3fc; font-size:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .card h3 { margin:0 0 4px; font-size:15px; }
+  .card .path { font-size:11px; color:var(--muted); font-family:ui-monospace,Menlo,monospace;
+                word-break:break-all; margin-bottom:6px; }
+  .card .desc { font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:12px; min-height:34px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { border:0; border-radius:8px; padding:8px 12px; font-size:12.5px; font-weight:600;
+         cursor:pointer; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+  .btn-vscode { background:var(--blue); color:#fff; }
+  .btn-vscode:hover { background:var(--blue2); }
+  .btn-copy { background:#0b1220; color:var(--muted); border:1px solid var(--border); }
+  .btn-copy:hover { color:var(--text); border-color:#3b5378; }
+  .btn-copy.done { color:var(--green); border-color:var(--green); }
+  h2.section { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+               margin:22px 0 10px; }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <b>How this works.</b> Click <b>Open in VS Code</b> to launch VS Code focused on that exact folder
+    (uses the <code>vscode://</code> handler — works on this Mac only). Once open, start Claude there:
+    your conversation history is stored <b>per-folder</b>, so use <code>/resume</code> in the extension
+    (or click <b>Copy resume cmd</b> for the terminal <code>claude --continue</code>) to pick up where you left off.
+    Each folder also has its own <code>CLAUDE.md</code>, so Claude auto-loads that project's context — no need to remind it to read the repo.
+  </div>
+
+  <h2 class="section">Workspaces</h2>
+  <div class="grid" id="grid"></div>
+
+<script>
+const ROOT = "/Users/manuelstagg/Documents/GitHub/RinglyPro-CRM";
+const WORKSPACES = [
+  { name:"Main CRM (repo root)", path: ROOT,
+    desc:"Express app, all routes, models, public assets. The full monorepo." },
+  { name:"Pinaxis", path: ROOT+"/pinaxis",
+    desc:"Warehouse analytics. Primary working directory." },
+  { name:"Projects Hub", path: ROOT+"/digit2ai-projects",
+    desc:"This dashboard — Contacts & Projects command center (/projects)." },
+  { name:"Torna Idioma", path: ROOT+"/verticals/torna_idioma",
+    desc:"Neural Spanish-language acquisition engine. React SPA + backend. UVEG SFL curriculum." },
+  { name:"Veritas", path: ROOT+"/verticals/veritas",
+    desc:"AI deepfake detection & takedown. Self-contained Express router (/veritas)." },
+  { name:"AgroMercado / Agrollano", path: ROOT+"/verticals/agromercado",
+    desc:"Venezuela agro marketplace (ISTC x Digit2AI). Subastas, divisas BCV, KYC." },
+  { name:"Intuitive / SurgicalMind", path: ROOT+"/verticals/intuitive",
+    desc:"da Vinci surgical sales ops — surveys, dollarization, business plans." },
+  { name:"MSK Intelligence", path: ROOT+"/verticals/msk_intelligence",
+    desc:"Musculoskeletal AI image analysis. backend + frontend." },
+  { name:"ImprintIQ", path: ROOT+"/verticals/imprint_iq",
+    desc:"Promotional products AI ecosystem. backend + frontend." },
+  { name:"CW Carriers", path: ROOT+"/verticals/cw_carriers",
+    desc:"Freight broker platform (CW). backend + frontend + sample data." },
+  { name:"Freight Broker", path: ROOT+"/verticals/freight_broker",
+    desc:"Freight broker vertical. backend + frontend." },
+  { name:"Logistics", path: ROOT+"/verticals/logistics",
+    desc:"Logistics vertical. backend + frontend." },
+];
+
+function card(w) {
+  const resumeCmd = `cd "${w.path}" && claude --continue`;
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <h3>${w.name}</h3>
+    <div class="path">${w.path}</div>
+    <div class="desc">${w.desc}</div>
+    <div class="actions">
+      <a class="btn btn-vscode" href="vscode://file${w.path}">Open in VS Code</a>
+      <button class="btn btn-copy" data-cmd='${resumeCmd.replace(/'/g,"&#39;")}'>Copy resume cmd</button>
+    </div>`;
+  el.querySelector('.btn-copy').addEventListener('click', function(){
+    const cmd = this.getAttribute('data-cmd');
+    navigator.clipboard.writeText(cmd).then(()=>{
+      const o=this.textContent; this.textContent='Copied'; this.classList.add('done');
+      setTimeout(()=>{this.textContent=o; this.classList.remove('done');},1400);
+    });
+  });
+  return el;
+}
+const grid = document.getElementById('grid');
+WORKSPACES.forEach(w => grid.appendChild(card(w)));
+</script>
+</body>
+</html>
