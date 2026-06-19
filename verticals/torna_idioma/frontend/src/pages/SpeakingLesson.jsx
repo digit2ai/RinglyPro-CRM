@@ -80,22 +80,30 @@ function ScorePill({ ok, score }) {
 export default function SpeakingLesson() {
   const lang = uiLang();
   const [list, setList] = useState(null);   // unit summaries for the picker
+  const [progress, setProgress] = useState({}); // unit_id -> {passed,best_score}
+  const [errors, setErrors] = useState([]);  // reviewable mistakes
   const [unit, setUnit] = useState(null);   // selected full unit
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [err, setErr] = useState('');
 
+  const loadMeta = () => {
+    api.get('/speaking/progress').then(r => {
+      const m = {}; (r.data.progress || []).forEach(p => { m[p.unit_id] = p; }); setProgress(m);
+    }).catch(() => {});
+    api.get('/speaking/errors').then(r => setErrors(r.data.errors || [])).catch(() => {});
+  };
   useEffect(() => {
-    api.get('/speaking/units')
-      .then(r => setList(r.data.units || []))
-      .catch(() => setErr(tr('common.error')));
+    api.get('/speaking/units').then(r => setList(r.data.units || [])).catch(() => setErr(tr('common.error')));
+    loadMeta();
   }, []);
 
   const openUnit = (id) => {
     setUnit(null); setStarted(false); setStep(0);
     api.get(`/speaking/units/${id}`).then(u => setUnit(u.data.unit)).catch(() => setErr(tr('common.error')));
   };
-  const backToList = () => { setUnit(null); setStarted(false); setStep(0); };
+  const backToList = () => { setUnit(null); setStarted(false); setStep(0); loadMeta(); };
+  const resolveError = (id) => { api.post(`/speaking/errors/${id}/resolve`).catch(() => {}); setErrors(e => e.filter(x => x.id !== id)); };
 
   if (err) return <div style={s.page}><div style={s.center}>{err}</div></div>;
   if (!list) return <div style={s.page}><div style={s.center}>{tr('common.loading')}</div></div>;
@@ -124,7 +132,10 @@ export default function SpeakingLesson() {
 
       <div style={s.body} id="ti-speak-body">
         {!unit ? (
-          <Picker list={list} lang={lang} loading={false} onOpen={openUnit} />
+          <>
+            <Mistakes errors={errors} onResolve={resolveError} />
+            <Picker list={list} lang={lang} progress={progress} onOpen={openUnit} />
+          </>
         ) : (
           <>
             <button onClick={backToList} style={s.lessonsLink}>← {tr('nav.speak')}</button>
@@ -146,17 +157,47 @@ export default function SpeakingLesson() {
   );
 }
 
-function Picker({ list, lang, onOpen }) {
+function Picker({ list, lang, progress = {}, onOpen }) {
   if (!list.length) return <div style={s.center}>{tr('common.loading')}</div>;
   return (
     <div style={s.pickGrid}>
-      {list.map((u, i) => (
-        <button key={u.unit_id} onClick={() => onOpen(u.unit_id)} style={s.pickCard}>
-          <div style={s.pickTop}><span style={s.pickNum}>{i + 1}</span><span style={s.pickCefr}>{u.cefr}</span></div>
-          <div style={s.pickTitle}>{u.title?.[lang] || u.title?.en}</div>
-          {u.objectives?.[0] && <div style={s.pickObj}>{u.objectives[0][lang] || u.objectives[0].en}</div>}
-          <div style={s.pickGo}>{tr('speak.start')} →</div>
-        </button>
+      {list.map((u, i) => {
+        const p = progress[u.unit_id];
+        return (
+          <button key={u.unit_id} onClick={() => onOpen(u.unit_id)} style={s.pickCard}>
+            <div style={s.pickTop}>
+              <span style={s.pickNum}>{i + 1}</span>
+              {p?.passed
+                ? <span style={s.pickPassed}>✓ {p.best_score}</span>
+                : <span style={s.pickCefr}>{u.cefr}</span>}
+            </div>
+            <div style={s.pickTitle}>{u.title?.[lang] || u.title?.en}</div>
+            {u.objectives?.[0] && <div style={s.pickObj}>{u.objectives[0][lang] || u.objectives[0].en}</div>}
+            <div style={s.pickGo}>{p?.passed ? tr('speak.passed') : tr('speak.start')} →</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Mistakes({ errors, onResolve }) {
+  if (!errors || !errors.length) return null;
+  return (
+    <div style={s.mistakeBox}>
+      <div style={s.mistakeHead}>{tr('speak.mistakes')} ({errors.length})</div>
+      {errors.slice(0, 6).map((e) => (
+        <div key={e.id} style={s.mistakeRow}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={s.mistakeBad}>{e.learner_said}</div>
+            <div style={s.mistakeGood}>→ {e.correct_form}</div>
+            {e.tip && <div style={s.mistakeTip}>{e.tip}</div>}
+          </div>
+          <div style={s.mistakeBtns}>
+            <button onClick={() => playEs(e.correct_form)} style={s.linePlaySm} title={tr('speak.play')}>▶</button>
+            <button onClick={() => onResolve(e.id)} style={s.gotItBtn}>{tr('speak.gotIt')}</button>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -190,7 +231,7 @@ function Step1Listen({ unit, lang }) {
   const playAll = async () => { for (const ln of scene.lines || []) { await playEs(ln.es); await new Promise(r => setTimeout(r, 350)); } };
   const checkGist = async (said) => {
     setBusy(true);
-    try { const r = await api.post('/speaking/feedback', { target_es: scene.gist_question?.answer_es || scene.gist_question?.es, said_text: said, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
+    try { const r = await api.post('/speaking/feedback', { target_es: scene.gist_question?.answer_es || scene.gist_question?.es, said_text: said, unit_id: unit.unit_id, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
   };
   return (
     <div style={s.card}>
@@ -227,7 +268,7 @@ function Step2Shadow({ unit, lang }) {
   const line = lines[idx];
   const check = async (said) => {
     setBusy(true);
-    try { const r = await api.post('/speaking/feedback', { target_es: line, said_text: said, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
+    try { const r = await api.post('/speaking/feedback', { target_es: line, said_text: said, unit_id: unit.unit_id, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
   };
   return (
     <div style={s.card}>
@@ -253,7 +294,7 @@ function Step3Speak({ unit, lang }) {
   const p = prompts[idx];
   const check = async (said) => {
     setBusy(true);
-    try { const r = await api.post('/speaking/feedback', { target_es: p.say_es, said_text: said, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
+    try { const r = await api.post('/speaking/feedback', { target_es: p.say_es, said_text: said, unit_id: unit.unit_id, interface_lang: lang }); setFb(r.data); } catch (e) { setFb({ ok: false, tip: tr('common.error') }); } finally { setBusy(false); }
   };
   return (
     <div style={s.card}>
@@ -462,6 +503,15 @@ const s = {
   pickTitle: { fontFamily: "'Playfair Display',serif", fontSize: 18, color: NAVY, fontWeight: 700 },
   pickObj: { fontSize: 13, color: '#6B6B6B', lineHeight: 1.5, flex: 1 },
   pickGo: { fontSize: 13, fontWeight: 700, color: GOLD_D, marginTop: 4 },
+  pickPassed: { fontSize: 12, fontWeight: 700, color: '#2E7D32', background: 'rgba(46,125,50,0.12)', padding: '3px 10px', borderRadius: 12 },
+  mistakeBox: { background: '#fff', border: `1px solid ${BORDER}`, borderTop: `4px solid ${RED}`, borderRadius: 12, padding: 18, marginBottom: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' },
+  mistakeHead: { fontFamily: "'Playfair Display',serif", fontSize: 16, color: NAVY, fontWeight: 700, marginBottom: 12 },
+  mistakeRow: { display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: `1px solid ${BORDER}` },
+  mistakeBad: { fontSize: 14, color: RED, textDecoration: 'line-through' },
+  mistakeGood: { fontSize: 15, color: NAVY, fontWeight: 600 },
+  mistakeTip: { fontSize: 12, color: '#6B6B6B', marginTop: 2 },
+  mistakeBtns: { display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 },
+  gotItBtn: { background: 'rgba(46,125,50,0.1)', border: '1px solid rgba(46,125,50,0.3)', color: '#2E7D32', borderRadius: 8, padding: '6px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' },
   navRow: { display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
   primaryBtn: { background: `linear-gradient(135deg, ${GOLD}, ${GOLD_D})`, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', fontWeight: 700, fontFamily: "'Playfair Display',serif", letterSpacing: 1, cursor: 'pointer' },
   ghostBtn: { background: 'none', border: `1px solid ${GOLD}`, color: GOLD_D, borderRadius: 8, padding: '12px 22px', fontWeight: 600, cursor: 'pointer' },

@@ -202,6 +202,8 @@ export default {
   'speak.retry': 'Try the lesson again',
   'speak.cognateBridge': 'You already know these',
   'speak.send': 'Send',
+  'speak.mistakes': 'Mistakes to review',
+  'speak.gotIt': 'Got it',
 
   // AI Tutor additions
   'tutor.immersion': 'Immersion',

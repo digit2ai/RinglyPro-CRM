@@ -201,6 +201,8 @@ export default {
   'speak.retry': 'Ulitin ang aralin',
   'speak.cognateBridge': 'Alam mo na ang mga ito',
   'speak.send': 'Ipadala',
+  'speak.mistakes': 'Mga pagkakamaling rerepasuhin',
+  'speak.gotIt': 'Naintindihan ko',
 
   // AI Tutor additions
   'tutor.immersion': 'Immersion',

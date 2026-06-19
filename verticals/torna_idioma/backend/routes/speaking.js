@@ -18,6 +18,7 @@ const router = express.Router();
 const auth = require('../middleware/auth.ti');
 const rateLimit = require('../middleware/rate-limit.ti');
 const emperador = require('../services/emperador');
+const sequelize = require('../services/db.ti');
 
 const UNITS_DIR = path.join(__dirname, '../seeds/metodo_rizal/speaking_units');
 const MODEL = 'claude-sonnet-4-6';
@@ -105,6 +106,16 @@ Score the attempt.`;
     out.score = Math.max(0, Math.min(100, Number(out.score) || 0));
     out.ok = !!out.ok;
     if (out.ok) { try { await emperador.award(req.user.id, 'translation_done'); } catch (e) { /* noop */ } }
+    // Log a reviewable error when the attempt missed and we have a correction.
+    if (!out.ok && out.corrected) {
+      try {
+        await sequelize.query(
+          `INSERT INTO ti_speaking_errors (user_id, unit_id, learner_said, correct_form, tip, created_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())`,
+          { bind: [req.user.id, req.body.unit_id || null, said, out.corrected, out.tip || null] }
+        );
+      } catch (e) { /* table may lag a migration; non-critical */ }
+    }
     res.json({ success: true, ...out });
   } catch (err) {
     console.error('speaking/feedback error:', err.message);
@@ -177,11 +188,59 @@ Return ONLY JSON:
         await emperador.award(req.user.id, 'rizal_milestone'); // milestone-weight points for passing an oral assessment
       } catch (e) { /* noop */ }
     }
+    // Record formative progress for this unit (best score + passed gate).
+    try {
+      await sequelize.query(
+        `INSERT INTO ti_speaking_progress (user_id, unit_id, best_score, passed, attempts, completed_at, updated_at)
+         VALUES ($1, $2, $3, $4, 1, ${out.pass ? 'NOW()' : 'NULL'}, NOW())
+         ON CONFLICT (user_id, unit_id) DO UPDATE SET
+           best_score = GREATEST(ti_speaking_progress.best_score, $3),
+           passed = ti_speaking_progress.passed OR $4,
+           attempts = ti_speaking_progress.attempts + 1,
+           completed_at = COALESCE(ti_speaking_progress.completed_at, ${out.pass ? 'NOW()' : 'NULL'}),
+           updated_at = NOW()`,
+        { bind: [req.user.id, unit.unit_id, out.weighted_percent, out.pass] }
+      );
+    } catch (e) { /* non-critical */ }
     res.json({ success: true, ...out });
   } catch (err) {
     console.error('speaking/assess error:', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// --- Progress (formative gating) --------------------------------------------
+router.get('/progress', auth.any, async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      `SELECT unit_id, best_score, passed, attempts, completed_at FROM ti_speaking_progress WHERE user_id = $1`,
+      { bind: [req.user.id] }
+    );
+    res.json({ success: true, progress: rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- Error log (review your mistakes) ---------------------------------------
+router.get('/errors', auth.any, async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      `SELECT id, unit_id, learner_said, correct_form, tip, created_at
+       FROM ti_speaking_errors WHERE user_id = $1 AND resolved = false
+       ORDER BY created_at DESC LIMIT 20`,
+      { bind: [req.user.id] }
+    );
+    res.json({ success: true, errors: rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/errors/:id/resolve', auth.any, async (req, res) => {
+  try {
+    await sequelize.query(
+      `UPDATE ti_speaking_errors SET resolved = true WHERE id = $1 AND user_id = $2`,
+      { bind: [Number(req.params.id), req.user.id] }
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;
