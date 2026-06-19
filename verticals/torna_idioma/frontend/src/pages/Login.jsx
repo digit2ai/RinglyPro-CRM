@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login as storeLogin } from '../services/auth';
 import api from '../services/api';
 
 const BASE = '/Torna_Idioma';
 
+function useIsMobile() {
+  const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth <= 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return m;
+}
+
 export default function Login() {
   const nav = useNavigate();
+  const mob = useIsMobile();
   const [tab, setTab] = useState('login');
   const [form, setForm] = useState({ email: '', password: '', full_name: '', role: 'student', organization: '', language_pref: 'en' });
   const [error, setError] = useState('');
@@ -34,15 +45,15 @@ export default function Login() {
   ];
 
   return (
-    <div style={s.page}>
-      <div style={s.left}>
+    <div style={{ ...s.page, ...(mob ? s.pageMob : {}) }}>
+      <div style={{ ...s.left, ...(mob ? s.leftMob : {}) }}>
         <div style={s.leftContent}>
-          <div style={s.crest}>
+          <div style={{ ...s.crest, ...(mob ? s.crestMob : {}) }}>
             <div style={s.crestInner}>TORNA<br/>IDIOMA<span style={s.crestSub}>Vida · Cultura · Legado</span></div>
           </div>
-          <h1 style={s.leftTitle}>The Return of the<br/><span style={s.accent}>Cultural Language</span></h1>
-          <p style={s.leftDesc}>Makati — Asia's First Spanish-Enabled City. A movement of dignity, pride, and economic opportunity.</p>
-          <div style={s.pillars}>
+          <h1 style={{ ...s.leftTitle, ...(mob ? s.leftTitleMob : {}) }}>The Return of the<br/><span style={s.accent}>Cultural Language</span></h1>
+          {!mob && <p style={s.leftDesc}>Makati — Asia's First Spanish-Enabled City. A movement of dignity, pride, and economic opportunity.</p>}
+          <div style={{ ...s.pillars, ...(mob ? s.pillarsMob : {}) }}>
             <div style={s.pillar}><div style={s.pillarNum}>I</div><div style={s.pillarLabel}>Dignidad</div></div>
             <div style={s.pillar}><div style={s.pillarNum}>II</div><div style={s.pillarLabel}>Orgullo</div></div>
             <div style={s.pillar}><div style={s.pillarNum}>III</div><div style={s.pillarLabel}>Premio</div></div>
@@ -56,8 +67,8 @@ export default function Login() {
           >Demo Guide — How to Test (1·2·3)</a>
         </div>
       </div>
-      <div style={s.right}>
-        <div style={s.formBox}>
+      <div style={{ ...s.right, ...(mob ? s.rightMob : {}) }}>
+        <div style={{ ...s.formBox, ...(mob ? s.formBoxMob : {}) }}>
           <div style={s.tabs}>
             <button onClick={() => setTab('login')} style={{ ...s.tab, ...(tab === 'login' ? s.tabActive : {}) }}>Sign In</button>
             <button onClick={() => setTab('register')} style={{ ...s.tab, ...(tab === 'register' ? s.tabActive : {}) }}>Register</button>
@@ -132,9 +143,13 @@ const s = {
   demoItem: { fontSize: 11, color: '#6B6B6B', marginBottom: 4, wordBreak: 'break-all' },
   guideBtn: { display: 'inline-block', marginTop: 36, textAlign: 'center', fontSize: 13, color: '#0F1A2E', textDecoration: 'none', fontWeight: 700, padding: '12px 24px', background: 'linear-gradient(135deg, #E8D48B, #C9A84C)', borderRadius: 8, letterSpacing: 0.5, boxShadow: '0 4px 16px rgba(0,0,0,0.25)' },
   backLink: { display: 'block', marginTop: 12, textAlign: 'center', fontSize: 13, color: '#C9A84C', textDecoration: 'none', fontWeight: 500 },
-};
 
-// Responsive
-const style = document.createElement('style');
-style.textContent = `@media(max-width:768px){[style*="minHeight: 100vh"][style*="display: flex"]{flex-direction:column!important;}}`;
-if (typeof document !== 'undefined' && !document.getElementById('ti-login-resp')) { style.id = 'ti-login-resp'; document.head.appendChild(style); }
+  // --- Mobile / tablet (<=768px): stack the panes, compact the hero ---
+  pageMob: { flexDirection: 'column', minHeight: '100vh' },
+  leftMob: { flex: 'none', width: '100%', padding: '28px 20px 24px', boxSizing: 'border-box' },
+  crestMob: { width: 84, height: 84, margin: '0 auto 16px' },
+  leftTitleMob: { fontSize: 26, marginBottom: 12 },
+  pillarsMob: { gap: 24 },
+  rightMob: { flex: 'none', width: '100%', padding: '20px 16px 40px', boxSizing: 'border-box' },
+  formBoxMob: { maxWidth: 480, padding: 22 },
+};
