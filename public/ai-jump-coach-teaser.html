@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Jump Coach — Presentado por Lina</title>
+<style>
+  :root{
+    --bg:#0a0e14;
+    --bg2:#0f1622;
+    --card:#141d2b;
+    --line:#22304a;
+    --txt:#e8eef7;
+    --mut:#93a4bd;
+    --cyan:#34d3ff;
+    --violet:#9b7bff;
+    --gold:#f0c674;
+    --green:#3ddc97;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 80% -10%,rgba(155,123,255,.12),transparent 60%),
+               radial-gradient(1000px 700px at -10% 20%,rgba(52,211,255,.10),transparent 55%),
+               var(--bg);
+    color:var(--txt);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+
+  /* HERO */
+  .hero{text-align:center;padding:28px 0 10px}
+  .badge{
+    display:inline-block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--cyan);border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:18px;
+    background:rgba(52,211,255,.06)
+  }
+  h1{font-size:clamp(28px,5vw,46px);line-height:1.15;font-weight:800;letter-spacing:-.02em}
+  h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--mut);max-width:640px;margin:14px auto 0;font-size:17px}
+
+  /* LINA PANEL */
+  .lina{
+    margin:34px auto 10px;max-width:640px;background:linear-gradient(180deg,var(--card),var(--bg2));
+    border:1px solid var(--line);border-radius:20px;padding:26px;display:flex;gap:20px;align-items:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.45)
+  }
+  .orb{
+    position:relative;width:92px;height:92px;flex:0 0 92px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);
+    box-shadow:0 0 0 0 rgba(155,123,255,.5);
+  }
+  .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(155,123,255,.35)}
+  .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(155,123,255,.45)}
+    70%{box-shadow:0 0 0 22px rgba(155,123,255,0)}
+    100%{box-shadow:0 0 0 0 rgba(155,123,255,0)}
+  }
+  .lina-meta{flex:1;min-width:0}
+  .lina-name{font-weight:700;font-size:18px}
+  .lina-role{color:var(--mut);font-size:14px;margin-bottom:14px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  button{
+    font:inherit;cursor:pointer;border:1px solid var(--line);background:#1b2536;color:var(--txt);
+    padding:10px 16px;border-radius:11px;font-weight:600;font-size:14px;transition:.15s;display:inline-flex;align-items:center;gap:8px
+  }
+  button:hover{border-color:var(--violet);background:#22304a}
+  button.primary{background:linear-gradient(90deg,var(--cyan),var(--violet));border:none;color:#0a0e14}
+  button.primary:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .status{font-size:13px;color:var(--mut);margin-top:12px;min-height:18px}
+  .voicepick{margin-top:12px;font-size:13px;color:var(--mut)}
+  select{font:inherit;background:#1b2536;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-left:6px}
+
+  /* SECTIONS */
+  .grid{display:grid;gap:16px;margin-top:36px}
+  .sec{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;transition:.2s
+  }
+  .sec.active{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet),0 14px 40px rgba(155,123,255,.18)}
+  .sec h2{font-size:19px;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .num{
+    flex:0 0 28px;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    font-size:13px;font-weight:700;background:rgba(52,211,255,.12);color:var(--cyan);border:1px solid var(--line)
+  }
+  .sec p{color:#cdd8e8}
+  .sec ul{margin:10px 0 0 4px;list-style:none}
+  .sec li{padding-left:22px;position:relative;margin:7px 0;color:#cdd8e8}
+  .sec li::before{content:"";position:absolute;left:4px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--cyan)}
+  .play-sec{margin-top:14px;font-size:13px;padding:7px 12px}
+
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;margin-left:auto}
+  .pill.poc{background:rgba(240,198,116,.14);color:var(--gold);border:1px solid rgba(240,198,116,.3)}
+  .pill.ok{background:rgba(61,220,151,.14);color:var(--green);border:1px solid rgba(61,220,151,.3)}
+
+  .highlight{background:rgba(240,198,116,.08);border-left:3px solid var(--gold);padding:14px 16px;border-radius:8px;margin-top:14px;color:#e9ddc2}
+
+  .footer{margin-top:40px;text-align:center;color:var(--mut);font-size:13px}
+  .nocache{font-size:12px;color:var(--mut);text-align:center;margin-top:20px}
+
+  @media(max-width:560px){
+    .lina{flex-direction:column;text-align:center}
+    .controls{justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="badge">Digit2AI · Neural AI · Visión por Computador</span>
+    <h1>AI Jump Coach<br><span class="grad">El entrenador de salto en tu bolsillo</span></h1>
+    <p class="sub">Una app de inteligencia artificial que analiza la técnica del <strong>jinete</strong> — no la del caballo — y te marca el error exacto en el segundo en que ocurre.</p>
+  </div>
+
+  <!-- LINA VOICE -->
+  <div class="lina">
+    <div class="orb" id="orb"></div>
+    <div class="lina-meta">
+      <div class="lina-name">Lina · Voz AI de Digit2AI</div>
+      <div class="lina-role">Te explico el proyecto en menos de dos minutos</div>
+      <div class="controls">
+        <button class="primary" id="playAll">▶ Que Lina lo explique todo</button>
+        <button id="pause" disabled>❚❚ Pausar</button>
+        <button id="stop" disabled>■ Detener</button>
+      </div>
+      <div class="status" id="status">Pulsa el botón para que Lina comience la presentación.</div>
+      <div class="voicepick">Voz:
+        <select id="voiceSel"><option>Cargando voces…</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTIONS -->
+  <div class="grid" id="grid">
+
+    <div class="sec" data-i="0">
+      <h2><span class="num">1</span> Qué es el proyecto</h2>
+      <p>Grabas un video de tu entrenamiento o tu round de competencia con un celular normal. La inteligencia artificial sigue tu cuerpo en cada salto y te devuelve <strong>clips marcados en el segundo exacto</strong> donde cometiste un error de posición, como si un entrenador revisara el video contigo.</p>
+      <button class="play-sec" data-play="0">▶ Escuchar esta parte</button>
+    </div>
+
+    <div class="sec" data-i="1">
+      <h2><span class="num">2</span> Qué problema resuelve</h2>
+      <p>Las apps que existen hoy (Equilab, Equisense) miden al <strong>caballo</strong>. Otras solo memorizan el recorrido. Nadie corrige la posición del <strong>jinete</strong> con IA. Ese es el hueco que llenamos.</p>
+      <ul>
+        <li>Quedarte atrás en el aire</li>
+        <li>La mano que no acompaña la boca del caballo</li>
+        <li>Bajar la mirada antes de tiempo</li>
+        <li>Aterrizar con el peso muy adelantado</li>
+      </ul>
+      <button class="play-sec" data-play="1">▶ Escuchar esta parte</button>
+    </div>
+
+    <div class="sec" data-i="2">
+      <h2><span class="num">3</span> Cómo se cobra</h2>
+      <p>Se siente como tener un entrenador personal en el bolsillo, y eso justifica una suscripción premium.</p>
+      <ul>
+        <li>Pago por análisis individual: 4 a 9 USD por video</li>
+        <li>Plan mensual ilimitado: 19 a 39 USD al mes</li>
+        <li>Licencia para academias y entrenadores: 99 a 299 USD al mes</li>
+      </ul>
+      <button class="play-sec" data-play="2">▶ Escuchar esta parte</button>
+    </div>
+
+    <div class="sec" data-i="3">
+      <h2><span class="num">4</span> El reto técnico</h2>
+      <p>El riesgo principal es técnico: lograr que la IA siga bien el cuerpo del jinete sobre un caballo en movimiento rápido es difícil — por la luz, los ángulos y porque el caballo a veces tapa partes del cuerpo. Por eso <strong>no construimos todo de una vez.</strong></p>
+      <button class="play-sec" data-play="3">▶ Escuchar esta parte</button>
+    </div>
+
+    <div class="sec" data-i="4">
+      <h2><span class="num">5</span> ¿Hace falta un traje especial?</h2>
+      <p><strong>No.</strong> El jinete no usa ningún traje ni sensores. Solo graba con su celular y sube el video. Esa es justamente la ventaja del producto.</p>
+      <p style="margin-top:10px">La tecnología se llama <strong>pose estimation sin marcadores</strong>: la IA reconoce el cuerpo (hombros, codos, manos, cadera) directamente desde la imagen, igual que el reconocimiento facial reconoce una cara sin que te pongas nada.</p>
+      <div class="highlight">Sí existen trajes con sensores, pero son de laboratorio: caros e incómodos. Si obligamos al jinete a ponerse algo, perdemos el producto. El valor es: graba con tu teléfono y listo.</div>
+      <p style="margin-top:14px">El riesgo no se resuelve con equipo, sino con ingeniería:</p>
+      <ul>
+        <li>Entrenar el modelo con videos de salto reales</li>
+        <li>Enfocarnos en la parte de arriba del cuerpo, que el caballo no tapa</li>
+        <li>Recomendar un buen ángulo de cámara (lateral, con trípode)</li>
+        <li>Reducir el borrón de movimiento analizando varios cuadros seguidos</li>
+        <li>Validar primero UNA sola falla: quedarse atrás en el aire</li>
+      </ul>
+      <button class="play-sec" data-play="4">▶ Escuchar esta parte</button>
+    </div>
+
+    <div class="sec" data-i="5">
+      <h2><span class="num">6</span> El plan en dos pasos <span class="pill poc">PoC primero</span></h2>
+      <p><strong>Paso 1 — Prueba de concepto (14 a 21 días):</strong> validamos con 20 a 30 videos reales si la IA puede seguir al jinete con precisión. Entregamos un informe claro con recomendación de seguir o no seguir.</p>
+      <p style="margin-top:10px"><strong>Paso 2 — MVP (45 a 60 días), solo si la prueba pasa:</strong> la app completa con subida de video, clips analizados con etiquetas, historial de sesiones y cobro con Stripe.</p>
+      <div class="highlight">Primero validamos en dos o tres semanas que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos la app completa. Así proteges tu presupuesto y no apostamos a ciegas.</div>
+      <button class="play-sec" data-play="5">▶ Escuchar esta parte</button>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    AI Jump Coach Rider Pose Analyzer · Estado: activo, fase de inicio · Digit2AI Neural Intelligence
+  </div>
+  <div class="nocache">Lina usa la voz del navegador. Para mejor calidad, usa Google Chrome y elige una voz en español en el selector de arriba.</div>
+
+</div>
+
+<script>
+(function(){
+  // ----- Narration script (plain Spanish, segment per section) -----
+  var segments = [
+    "Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te voy a explicar el proyecto AI Jump Coach en menos de dos minutos.",
+    "Primero, qué es. Es una app de inteligencia artificial que analiza la técnica del jinete, no la del caballo. Grabas un video de tu entrenamiento o tu competencia con un celular normal, y la inteligencia artificial sigue tu cuerpo en cada salto. Te devuelve clips marcados en el segundo exacto donde cometiste un error, como si un entrenador revisara el video contigo.",
+    "El problema que resuelve. Las apps que existen hoy, como Equilab o Equisense, miden al caballo. Otras solo te ayudan a memorizar el recorrido. Nadie corrige la posición del jinete con inteligencia artificial. Ese es el hueco que llenamos. Detectamos fallas concretas, como quedarte atrás en el aire, la mano que no acompaña la boca del caballo, bajar la mirada antes de tiempo, o aterrizar con el peso muy adelantado.",
+    "Cómo se cobra. Se siente como tener un entrenador personal en el bolsillo, y eso justifica una suscripción premium. Puede ser pago por análisis individual, entre cuatro y nueve dólares por video; un plan mensual ilimitado, entre diecinueve y treinta y nueve dólares al mes; o una licencia para academias y entrenadores, entre noventa y nueve y doscientos noventa y nueve dólares al mes.",
+    "Ahora, el reto técnico. El riesgo principal es lograr que la inteligencia artificial siga bien el cuerpo del jinete sobre un caballo en movimiento rápido. Es difícil por la luz, los ángulos, y porque el caballo a veces tapa partes del cuerpo. Por eso no construimos todo de una vez.",
+    "Una pregunta muy común: ¿hace falta un traje especial? La respuesta es no. El jinete no usa ningún traje ni sensores. Solo graba con su celular y sube el video. Esa es justamente la ventaja del producto. La tecnología se llama estimación de pose sin marcadores: la inteligencia artificial reconoce el cuerpo directamente desde la imagen, igual que el reconocimiento facial reconoce una cara sin que te pongas nada. Sí existen trajes con sensores, pero son de laboratorio, caros e incómodos. Si obligamos al jinete a ponerse algo, perdemos el producto. El riesgo no se resuelve con equipo, sino con ingeniería: entrenamos el modelo con videos de salto reales, nos enfocamos en la parte de arriba del cuerpo que el caballo no tapa, recomendamos un buen ángulo de cámara, reducimos el borrón de movimiento, y validamos primero una sola falla.",
+    "Por último, el plan en dos pasos. Paso uno: una prueba de concepto de catorce a veintiún días, donde validamos con veinte a treinta videos reales si la inteligencia artificial puede seguir al jinete con precisión, y entregamos un informe claro de seguir o no seguir. Paso dos, solo si la prueba pasa: construimos la app completa en cuarenta y cinco a sesenta días. Primero validamos que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos todo. Así proteges tu presupuesto y no apostamos a ciegas. Eso es AI Jump Coach. Gracias."
+  ];
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+  var voices = [], chosen = null, queue = [], qi = 0, mode = null;
+
+  if(!synth){
+    status.textContent = "Tu navegador no soporta voz. Abre esta página en Chrome o Safari.";
+    playAll.disabled = true;
+  }
+
+  function loadVoices(){
+    voices = synth.getVoices().filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;});
+    if(!voices.length){ voices = synth.getVoices(); }
+    voiceSel.innerHTML = '';
+    voices.forEach(function(v,i){
+      var o=document.createElement('option');
+      o.value=i; o.textContent=v.name+' ('+v.lang+')';
+      voiceSel.appendChild(o);
+    });
+    // prefer a female-ish Spanish voice
+    var pref = voices.findIndex(function(v){return /es/i.test(v.lang) && /(mónica|monica|paulina|helena|google español|sabina|female|mujer|lucia|lucía)/i.test(v.name);});
+    if(pref<0) pref = voices.findIndex(function(v){return /es/i.test(v.lang);});
+    if(pref<0) pref = 0;
+    voiceSel.value = pref;
+    chosen = voices[pref];
+  }
+  if(synth){
+    loadVoices();
+    synth.onvoiceschanged = loadVoices;
+  }
+  voiceSel.addEventListener('change',function(){ chosen = voices[this.value]; });
+
+  function setActive(i){
+    secs.forEach(function(s){s.classList.remove('active');});
+    if(i!=null && secs[i-1]) { secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
+  }
+
+  function speakNext(){
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    var u = new SpeechSynthesisUtterance(segments[idx]);
+    if(chosen) u.voice = chosen;
+    u.lang = chosen ? chosen.lang : 'es-ES';
+    u.rate = 0.98; u.pitch = 1.05;
+    u.onstart = function(){
+      orb.classList.add('speaking');
+      if(mode==='all'){ setActive(idx); status.textContent = 'Lina está hablando… ('+(qi+1)+' de '+queue.length+')'; }
+      else { status.textContent = 'Reproduciendo sección…'; if(idx>0) setActive(idx); }
+    };
+    u.onend = function(){ qi++; speakNext(); };
+    u.onerror = function(){ qi++; speakNext(); };
+    synth.speak(u);
+  }
+
+  function start(q,m){
+    synth.cancel();
+    queue = q; qi = 0; mode = m;
+    pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true;
+    pauseBtn.textContent = '❚❚ Pausar';
+    speakNext();
+  }
+
+  function finish(){
+    orb.classList.remove('speaking');
+    setActive(null);
+    pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+    status.textContent = 'Presentación terminada. Pulsa de nuevo para repetir.';
+  }
+
+  playAll.addEventListener('click',function(){
+    start(segments.map(function(_,i){return i;}),'all');
+    status.textContent = 'Lina está hablando…';
+  });
+
+  document.querySelectorAll('[data-play]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var i = parseInt(this.getAttribute('data-play'),10);
+      // section play uses narration index i+1 (0 is the intro)
+      start([i+1],'one');
+    });
+  });
+
+  pauseBtn.addEventListener('click',function(){
+    if(synth.paused){ synth.resume(); pauseBtn.textContent='❚❚ Pausar'; orb.classList.add('speaking'); status.textContent='Lina está hablando…'; }
+    else { synth.pause(); pauseBtn.textContent='▶ Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.'; }
+  });
+
+  stopBtn.addEventListener('click',function(){ synth.cancel(); finish(); });
+
+  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); });
+})();
+</script>
+</body>
+</html>
