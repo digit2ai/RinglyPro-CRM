@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LinaOrb from './LinaOrb';
 
 const BASE = '/Torna_Idioma';
 
@@ -195,6 +196,9 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Lina — neural voice orb (narrates the page in the active language) */}
+      <LinaOrb lang={lang} />
+
       {/* Mission */}
       <section id="mission" style={s.missionSection}>
         <div style={s.container}>
@@ -217,7 +221,7 @@ export default function Landing() {
       </section>
 
       {/* Why Spanish */}
-      <section style={s.whySection}>
+      <section id="why" style={s.whySection}>
         <div style={s.container}>
           <div style={s.overline}>{L.whyOverline}</div>
           <h2 style={s.sectionTitle}>{L.whyTitle}</h2>
