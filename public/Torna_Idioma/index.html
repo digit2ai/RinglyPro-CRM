@@ -1216,6 +1216,14 @@
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.setLang === lang);
     });
+    // Show the active-language elements and hide the others by setting inline
+    // display directly. Many variants carry a hard-coded style="display:none"
+    // (a no-JS fallback) that CSS alone can't override — so without this, ES/FIL
+    // variants stayed hidden and the menu/content vanished. This makes the toggle
+    // authoritative for every [data-lang-*] element.
+    document.querySelectorAll('[data-lang-en],[data-lang-es],[data-lang-fil]').forEach(el => {
+      el.style.display = el.hasAttribute('data-lang-' + lang) ? '' : 'none';
+    });
     document.documentElement.lang = lang === 'fil' ? 'tl' : lang;
     localStorage.setItem('torna-lang', lang);
   }
