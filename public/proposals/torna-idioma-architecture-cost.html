@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Architecture & Delivery Cost — Torna Idioma (Neural AI Spanish Language Acquisition Engine)</title>
+<style>
+  :root{
+    --navy:#1B2A4A; --navy-d:#0F1A2E; --gold:#C9A84C; --gold-d:#8B6914;
+    --azul-claro:#FFF8E7; --azul-borde:#F5E6C8;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:26px;color:var(--navy-d);margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--gold);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:var(--navy-d);width:130px}
+  h2{font-size:18px;color:var(--navy-d);margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--gold);font-weight:800}
+  h3{font-size:14.5px;color:var(--navy-d);margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--gold-d);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--navy);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:var(--navy-d)}
+  table.fin tr.total td{background:var(--navy-d);color:#fff;font-weight:800;font-size:15px}
+  td.free{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .arch{background:var(--navy-d);color:#e8eef7;border-radius:10px;padding:18px 20px;margin:12px 0;font-size:13px}
+  .arch .layer{padding:8px 0;border-bottom:1px solid rgba(201,168,76,.2)}
+  .arch .layer:last-child{border-bottom:none}
+  .arch b{color:var(--gold)}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{ body{background:#fff} .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px} h2{break-after:avoid} table.fin,.card{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>TECHNICAL ARCHITECTURE &amp; DELIVERY COST</h1>
+  <p class="sub">Torna Idioma — Neural AI Spanish Language Acquisition Engine (Método Rizal)</p>
+  <span class="conf">INTERNAL DOCUMENT · CONFIDENTIAL · COST ONLY</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Project:</td><td>Torna Idioma</td><td class="lbl">Date:</td><td>June 2026</td></tr>
+    <tr><td class="lbl">Built by:</td><td>Digit2AI (AI-Native delivery)</td><td class="lbl">Subject:</td><td>Development &amp; operating cost structure</td></tr>
+    <tr><td class="lbl">Internal rate:</td><td>$30 USD/hour (loaded cost)</td><td class="lbl">Live at:</td><td>tornaidioma.com</td></tr>
+    <tr><td class="lbl">Basis:</td><td colspan="3">Direct delivery cost. <strong>Margin and VAT are not included.</strong></td></tr>
+  </table>
+
+  <h2>1. Context</h2>
+  <p>This report presents the <strong>direct-cost structure</strong> to build and operate <strong>Torna Idioma</strong> — a university-grade, speaking-first AI program that teaches Filipinos to speak Spanish (Método Rizal). It is delivered under Digit2AI's <strong>AI-Native</strong> model: a multi-agent engineering workforce generates and iteratively tests the scaffolding, compressing the build to <strong>~1,350 effective engineering hours</strong> while preserving enterprise quality (JWT auth, PostgreSQL, additive migrations, rate limiting, 99.9% target availability).</p>
+  <p>A distinctive cost advantage: the speaking experience runs on <strong>free voice infrastructure</strong> — Microsoft Edge neural TTS (speech output) and the browser's speech recognition (speech input) — so recurring AI spend is essentially <strong>Claude-only</strong>, a fraction of typical voice-AI products. All figures reflect <strong>direct cost</strong> with no margin or VAT.</p>
+
+  <h2>2. Technical Architecture</h2>
+  <div class="arch">
+    <div class="layer"><b>Frontend</b> — React 18 + Vite single-page app; shared EN/FIL i18n; installable PWA (manifest + service worker + icons); built to static <code>dist</code> and served from the edge.</div>
+    <div class="layer"><b>Backend</b> — Node.js + Express vertical mounted at <code>/Torna_Idioma</code>; JWT auth; modular routes: speaking, vocab/SRS, placement, emperador, rizal, tutor/TTS; per-user rate limiting.</div>
+    <div class="layer"><b>AI layer</b> — Anthropic <b>Claude</b> (tutor, spoken-attempt feedback, 5-criterion oral rubric, placement); Microsoft <b>Edge neural TTS</b> (free) with ⟦es⟧ smart-split voice; <b>browser speech recognition</b> (free); SM-2 spaced-repetition engine; (future) Azure per-phoneme Pronunciation Assessment.</div>
+    <div class="layer"><b>Data</b> — PostgreSQL (Render); multi-tenant <code>ti_*</code> tables; additive, reversible migrations.</div>
+    <div class="layer"><b>Infrastructure</b> — Render web service with auto-deploy on push to main; custom domain <b>tornaidioma.com</b> + SSL; static/CDN delivery.</div>
+    <div class="layer"><b>Content</b> — CEFR A1→B2 curriculum (12 modules, 425 root words / ~1,200–1,700 word forms), 6 A1 speaking units, TESDA evidence guides, adaptive placement bank, QA gates G1–G5.</div>
+  </div>
+
+  <h2>3. Development Cost by Component (CAPEX)</h2>
+  <p>Every functional component of the ecosystem, at the internal loaded rate of $30 USD/hour (no margin, no VAT):</p>
+
+  <div class="card"><h3>1. Foundation &amp; Bilingual Interface (EN/FIL)</h3>
+    React/Vite SPA, JWT auth, login/landing/dashboard, shared i18n layer, role-based navigation, responsive shell.
+    <div class="price">120 hrs · $3,600 USD</div></div>
+
+  <div class="card"><h3>2. Cinco Raíces — Vocabulary SRS Engine</h3>
+    SM-2 spaced repetition, nightly five-root session, mastery + streak tracking, ~1,800-words/year projection, 425-root corpus loader.
+    <div class="price">110 hrs · $3,300 USD</div></div>
+
+  <div class="card"><h3>3. Speak Now — Speaking-First Daily Loop</h3>
+    Five-step loop (Listen → Shadow → Speak → Converse → Assessment), lesson player + picker, browser speech-to-text + neural TTS playback, typed fallback for iPad/Safari.
+    <div class="price">170 hrs · $5,100 USD</div></div>
+
+  <div class="card"><h3>4. Profesora Isabel — Conversational AI Tutor (voice)</h3>
+    Claude integration with the Método Rizal system prompt, ⟦es⟧ multi-voice smart-split TTS, immersion ladder (1–5) and "Día de Español", in-persona scenario roleplay.
+    <div class="price">150 hrs · $4,500 USD</div></div>
+
+  <div class="card"><h3>5. Oral Assessment &amp; CEFR Rubric Engine</h3>
+    Five-criterion rubric judge (fluency, accuracy, pronunciation, range, interaction), evidence-cited scoring, no auto-100, pass/fail gating.
+    <div class="price">120 hrs · $3,600 USD</div></div>
+
+  <div class="card"><h3>6. Adaptive + Oral Placement Test</h3>
+    Graded MCQ bank + spoken elicitation, deterministic banding combined with an AI oral judge, CEFR level + recommended starting lesson saved to the learner.
+    <div class="price">80 hrs · $2,400 USD</div></div>
+
+  <div class="card"><h3>7. Error Log &amp; Targeted Review</h3>
+    Per-learner capture of every correction, "Mistakes to review" surface with audio playback and resolve flow.
+    <div class="price">60 hrs · $1,800 USD</div></div>
+
+  <div class="card"><h3>8. Emperador — Gamification &amp; Leaderboard</h3>
+    Honor-based points, badges, streaks, tenant/school-scoped leaderboard, rotating Emperador/Emperatriz title, anonymous mode.
+    <div class="price">70 hrs · $2,100 USD</div></div>
+
+  <div class="card"><h3>9. Translation Atelier</h3>
+    EN/FIL ↔ Spanish translation workspace graded by Isabel with targeted feedback.
+    <div class="price">50 hrs · $1,500 USD</div></div>
+
+  <div class="card"><h3>10. Rizal Studies &amp; Completion Record</h3>
+    Graded public-domain Spanish texts (Noli Me Tángere, El Filibusterismo), config-driven sections + threshold, printable "Rizal Studies — Completion Record".
+    <div class="price">80 hrs · $2,400 USD</div></div>
+
+  <div class="card"><h3>11. Content Engineering — 12-Module Curriculum</h3>
+    425 root words across 12 CEFR modules (word families + EN/FIL/ES glosses &amp; examples), 6 fully-authored A1 speaking units, TESDA evidence guides, placement bank, QA gates G1–G5.
+    <div class="price">180 hrs · $5,400 USD</div></div>
+
+  <div class="card"><h3>12. PWA, Mobile &amp; Custom Domain</h3>
+    Installable PWA (manifest, service worker, icon set), mobile/tablet-responsive layouts, tornaidioma.com domain routing + SSL.
+    <div class="price">70 hrs · $2,100 USD</div></div>
+
+  <div class="card"><h3>13. Security, QA &amp; Deployment Infrastructure</h3>
+    Auth hardening, per-user rate limiting, additive/reversible migrations, CI/CD to Render, staging + production verification, build pipeline.
+    <div class="price">90 hrs · $2,700 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concept</th><th class="num">Hours</th><th class="num">Cost (USD)</th></tr>
+    <tr><td>Subtotal — 13 functional components (engineering labor)</td><td class="num">1,350</td><td class="num">$40,500</td></tr>
+    <tr><td>Research, instructional design (CEFR blueprint), project management, QA &amp; build infrastructure</td><td class="num">—</td><td class="num">$7,500</td></tr>
+    <tr class="total"><td>TOTAL DEVELOPMENT COST (CAPEX)</td><td class="num">1,350</td><td class="num">$48,000 USD</td></tr>
+  </table>
+
+  <h2>4. Delivery Phases (cost)</h2>
+  <div class="twocol">
+    <div class="card"><h3>Phase 1 — Speaking Core</h3>
+      <ul class="tight"><li>Foundation &amp; bilingual interface</li><li>Speak Now loop</li><li>Profesora Isabel (voice)</li><li>Oral assessment rubric</li></ul>
+      <div class="price">Labor cost: $16,800 USD</div></div>
+    <div class="card"><h3>Phase 2 — Vocabulary &amp; Credibility</h3>
+      <ul class="tight"><li>Cinco Raíces SRS</li><li>Placement test</li><li>Error log + gating</li></ul>
+      <div class="price">Labor cost: $7,500 USD</div></div>
+    <div class="card"><h3>Phase 3 — Culture &amp; Motivation</h3>
+      <ul class="tight"><li>Emperador</li><li>Translation Atelier</li><li>Rizal Studies + Completion Record</li></ul>
+      <div class="price">Labor cost: $6,000 USD</div></div>
+    <div class="card"><h3>Phase 4 — Content, PWA &amp; Infrastructure</h3>
+      <ul class="tight"><li>12-module content engineering</li><li>PWA, mobile &amp; domain</li><li>Security, QA &amp; deployment</li></ul>
+      <div class="price">Labor cost: $10,200 USD</div></div>
+  </div>
+  <p class="muted">Sum of the 4 phases of labor = $40,500 USD. Plus research, instructional design, PM, QA &amp; build infrastructure ($7,500) = <strong>$48,000 USD</strong> total development cost.</p>
+
+  <h2>5. Annual Operating Cost (OPEX)</h2>
+  <p>Real recurring cost to operate the platform at launch volume. Lines marked (*) are variable — they scale with active learners. Note that voice output and speech recognition are <strong>$0</strong> in the current architecture.</p>
+  <table class="fin">
+    <tr><th>Tool / Service</th><th>Use</th><th class="num">USD/mo</th><th class="num">USD/yr</th></tr>
+    <tr><td>Render — web service</td><td>Node API + static SPA</td><td class="num">$85</td><td class="num">$1,020</td></tr>
+    <tr><td>Render — PostgreSQL (HA + backups)</td><td>Learner data, progress, errors</td><td class="num">$90</td><td class="num">$1,080</td></tr>
+    <tr><td>Anthropic Claude — AI consumption (*)</td><td>Tutor, feedback, oral rubric, placement</td><td class="num">$250</td><td class="num">$3,000</td></tr>
+    <tr><td>Microsoft Edge Neural TTS</td><td>Spanish + EN/FIL voice output</td><td class="num free">$0</td><td class="num free">$0</td></tr>
+    <tr><td>Browser Speech Recognition</td><td>Speech-to-text input</td><td class="num free">$0</td><td class="num free">$0</td></tr>
+    <tr><td>Domain tornaidioma.com</td><td>Custom domain (annual)</td><td class="num">$2</td><td class="num">$25</td></tr>
+    <tr><td>GitHub — Team</td><td>Repositories + CI/CD</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>Monitoring (Sentry / logging)</td><td>Observability</td><td class="num">$26</td><td class="num">$312</td></tr>
+    <tr class="sub"><td colspan="2">Subtotal — tools &amp; services</td><td class="num">$493</td><td class="num">$5,917</td></tr>
+    <tr><td colspan="2">Support &amp; SLA — DevOps + content updates (personnel)</td><td class="num">$1,000</td><td class="num">$12,000</td></tr>
+    <tr class="total"><td colspan="2">TOTAL ANNUAL OPERATING COST</td><td class="num">$1,493</td><td class="num">$17,917</td></tr>
+  </table>
+  <p class="muted">Equivalent to <strong>$1,493 USD/mo</strong> at launch. (*) Claude consumption is roughly <strong>$0.30–0.60 per active learner / month</strong>; it scales with usage. At 5–10&times; launch volume the OPEX approaches <strong>~$45,000 USD/year</strong>.</p>
+
+  <h2>6. Optional Premium Add-Ons (not in totals)</h2>
+  <table class="fin">
+    <tr><th>Add-on</th><th>Benefit</th><th class="num">~USD/mo</th></tr>
+    <tr><td>Azure Pronunciation Assessment (*)</td><td>True per-phoneme "your /r/ drifted" scoring (es-MX)</td><td class="num">$150–300</td></tr>
+    <tr><td>Cloud ASR — Whisper / Deepgram (*)</td><td>Higher-accuracy speech recognition for accented speech &amp; iOS</td><td class="num">$100–250</td></tr>
+    <tr><td>ElevenLabs — premium voice</td><td>Studio-grade tutor voice</td><td class="num">$99–330</td></tr>
+  </table>
+  <p class="muted">These upgrade the free voice/STT layer to studio quality and add pronunciation diagnostics. They are deferred by design — the platform is fully functional without them.</p>
+
+  <h2>7. Cost Summary</h2>
+  <table class="fin">
+    <tr><th>Concept</th><th class="num">Cost (USD)</th></tr>
+    <tr><td>Development (CAPEX)</td><td class="num">$48,000</td></tr>
+    <tr><td>Operation, year 1 (OPEX) — with dedicated support</td><td class="num">$17,917</td></tr>
+    <tr class="total"><td>YEAR-1 COST (CAPEX + OPEX)</td><td class="num">$65,917 USD</td></tr>
+  </table>
+  <p>The cost reflects AI-native acceleration — ~1,350 effective engineering hours with agent-generated scaffolding — and an unusually lean OPEX, because the speaking experience uses free voice (Edge TTS) and free speech recognition (browser), leaving Claude as the only material AI cost.</p>
+
+  <div class="note">
+    <strong>Note:</strong> This document reflects exclusively the <strong>direct cost</strong> of delivery and operation. Profit margin and VAT are applied separately in the client-facing commercial proposal; they are not part of this report.
+  </div>
+
+  <div class="foot">
+    Internal Digit2AI document. Figures in US dollars (USD), at direct cost, with no margin or VAT. Reference internal loaded rate: $30 USD/hour. Not for client distribution. Torna Idioma — Neural AI Spanish Language Acquisition Engine, live at tornaidioma.com.
+  </div>
+
+</div>
+</body>
+</html>
