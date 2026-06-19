@@ -72,6 +72,22 @@
     .hero-description { font-size:1.05rem; color:rgba(255,255,255,.75); max-width:650px; margin:0 auto 40px; font-weight:300; line-height:1.8; }
     .hero-cta { display:inline-flex; align-items:center; gap:10px; padding:16px 40px; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep); font-weight:700; font-size:.9rem; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:4px; transition:all .3s; }
     .hero-cta:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(201,168,76,.4); }
+    .hero-cta-group { display:flex; flex-wrap:wrap; gap:16px; justify-content:center; align-items:center; }
+    .hero-cta-ghost { display:inline-flex; align-items:center; gap:10px; padding:16px 40px; background:transparent; color:var(--gold-light); font-weight:700; font-size:.9rem; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border:1px solid rgba(201,168,76,.5); border-radius:4px; transition:all .3s; }
+    .hero-cta-ghost:hover { border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }
+
+    /* Platform */
+    .platform-section { background:var(--white); }
+    .platform-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:48px; }
+    .platform-card { background:var(--cream); padding:36px 28px; border-radius:10px; border-top:4px solid var(--gold); box-shadow:0 2px 14px rgba(0,0,0,.05); transition:all .3s; }
+    .platform-card:hover { transform:translateY(-4px); box-shadow:0 10px 30px rgba(0,0,0,.1); }
+    .platform-card h4 { font-family:'Playfair Display',serif; font-size:1.25rem; color:var(--navy); margin-bottom:10px; }
+    .platform-card p { color:var(--text-light); font-size:.92rem; line-height:1.7; }
+    .platform-card .pf-badge { display:inline-block; font-size:.65rem; letter-spacing:2px; text-transform:uppercase; color:var(--gold-dark); background:rgba(201,168,76,.15); padding:4px 12px; border-radius:20px; margin-bottom:14px; font-weight:700; }
+    .platform-note { text-align:center; color:var(--text-light); font-size:.95rem; margin-top:40px; font-style:italic; }
+    .platform-cta-wrap { text-align:center; margin-top:32px; }
+    .platform-cta { display:inline-flex; align-items:center; gap:10px; padding:16px 44px; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep); font-weight:700; font-size:.9rem; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:4px; transition:all .3s; }
+    .platform-cta:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(201,168,76,.4); }
 
     /* Sections */
     section { padding:100px 24px; }
@@ -230,7 +246,7 @@
     /* Responsive */
     @media(max-width:1024px) {
       .stats-grid,.makati-stats { grid-template-columns:repeat(2,1fr); }
-      .pillars-grid,.why-grid,.partners-provide,.people-grid { grid-template-columns:1fr 1fr; }
+      .pillars-grid,.why-grid,.partners-provide,.people-grid,.platform-grid { grid-template-columns:1fr 1fr; }
     }
     @media(max-width:768px) {
       .nav-links { display:none; position:absolute; top:70px; left:0; right:0; background:var(--navy-deep); flex-direction:column; padding:24px; gap:16px; border-bottom:1px solid rgba(201,168,76,.2); }
@@ -238,7 +254,7 @@
       .nav-toggle { display:flex; }
       .lang-switcher { margin-left:0; margin-top:8px; }
       .hero-pillars { gap:24px; }
-      .mission-grid,.pillars-grid,.why-grid,.economics-details,.policy-grid,.heritage-grid,.partners-provide,.people-grid,.stats-grid,.makati-stats { grid-template-columns:1fr; }
+      .mission-grid,.pillars-grid,.why-grid,.economics-details,.policy-grid,.heritage-grid,.partners-provide,.people-grid,.stats-grid,.makati-stats,.platform-grid { grid-template-columns:1fr; }
       .timeline::before { left:20px; }
       .timeline-dot { left:20px; }
       .timeline-content { width:calc(100% - 50px); margin-left:50px!important; }
@@ -266,6 +282,7 @@
       <li class="nav-dropdown">
         <a data-lang-en>Explore</a><a data-lang-es style="display:none">Explorar</a><a data-lang-fil style="display:none">Galugarin</a>
         <div class="nav-dropdown-menu">
+          <a href="#platform" data-lang-en>The Platform</a><a href="#platform" data-lang-es style="display:none">La Plataforma</a><a href="#platform" data-lang-fil style="display:none">Ang Plataporma</a>
           <a href="#mission" data-lang-en>Mission</a><a href="#mission" data-lang-es style="display:none">Misi&oacute;n</a><a href="#mission" data-lang-fil style="display:none">Misyon</a>
           <a href="#pillars" data-lang-en>Three Pillars</a><a href="#pillars" data-lang-es style="display:none">Tres Pilares</a><a href="#pillars" data-lang-fil style="display:none">Tatlong Haligi</a>
           <a href="#economics" data-lang-en>Economic Impact</a><a href="#economics" data-lang-es style="display:none">Impacto Econ&oacute;mico</a><a href="#economics" data-lang-fil style="display:none">Epektong Pang-ekonomiya</a>
@@ -337,9 +354,80 @@
     <p class="hero-description" data-lang-es>Una iniciativa audaz y visionaria que reconecta a Makati, Zamboanga, Cavite &mdash; y a Filipinas &mdash; con una herencia que forj&oacute; nuestra identidad, nuestra historia y nuestro lugar en el mundo.</p>
     <p class="hero-description" data-lang-fil>Isang matapang at mapanindalang inisyatiba na muling ikinokonekta ang Makati, Zamboanga, Cavite &mdash; at ang Pilipinas &mdash; sa pamanang humubog sa ating pagkakakilanlan, kasaysayan, at lugar sa mundo.</p>
 
-    <a href="#mission" class="hero-cta" data-lang-en>Explore the Vision &darr;</a>
-    <a href="#mission" class="hero-cta" data-lang-es>Explorar la Visi&oacute;n &darr;</a>
-    <a href="#mission" class="hero-cta" data-lang-fil>Tuklasin ang Bisyon &darr;</a>
+    <div class="hero-cta-group">
+      <a href="/Torna_Idioma/login" class="hero-cta" data-lang-en>Experience the Platform</a>
+      <a href="/Torna_Idioma/login" class="hero-cta" data-lang-es>Explora la Plataforma</a>
+      <a href="/Torna_Idioma/login" class="hero-cta" data-lang-fil>Subukan ang Plataporma</a>
+
+      <a href="#mission" class="hero-cta-ghost" data-lang-en>Explore the Vision &darr;</a>
+      <a href="#mission" class="hero-cta-ghost" data-lang-es>Explorar la Visi&oacute;n &darr;</a>
+      <a href="#mission" class="hero-cta-ghost" data-lang-fil>Tuklasin ang Bisyon &darr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- The Platform -->
+<section class="platform-section" id="platform">
+  <div class="container">
+    <div class="section-overline" data-lang-en>Now Live</div>
+    <div class="section-overline" data-lang-es>Ya Disponible</div>
+    <div class="section-overline" data-lang-fil>Live Na</div>
+
+    <div class="section-title" data-lang-en>The Platform &mdash; M&eacute;todo Rizal</div>
+    <div class="section-title" data-lang-es>La Plataforma &mdash; M&eacute;todo Rizal</div>
+    <div class="section-title" data-lang-fil>Ang Plataporma &mdash; M&eacute;todo Rizal</div>
+
+    <div class="section-subtitle" data-lang-en>The learning app is here. Built on Jos&eacute; Rizal&rsquo;s own method of mastering a language &mdash; now powered by AI, voice, and a community of learners.</div>
+    <div class="section-subtitle" data-lang-es>La aplicaci&oacute;n de aprendizaje ya est&aacute; aqu&iacute;. Construida sobre el propio m&eacute;todo de Jos&eacute; Rizal para dominar un idioma &mdash; ahora impulsada por IA, voz y una comunidad de estudiantes.</div>
+    <div class="section-subtitle" data-lang-fil>Narito na ang learning app. Binuo batay sa sariling pamamaraan ni Jos&eacute; Rizal sa pag-master ng wika &mdash; pinalalakas na ngayon ng AI, boses, at isang komunidad ng mga mag-aaral.</div>
+
+    <div class="platform-grid">
+      <div class="platform-card">
+        <span class="pf-badge" data-lang-en>Daily Method</span><span class="pf-badge" data-lang-es>M&eacute;todo Diario</span><span class="pf-badge" data-lang-fil>Pang-araw-araw</span>
+        <h4>Cinco Ra&iacute;ces</h4>
+        <p data-lang-en>Five Spanish root words a night &mdash; Jos&eacute; Rizal&rsquo;s own method (~1,800 words a year), reinforced with spaced repetition.</p>
+        <p data-lang-es>Cinco palabras ra&iacute;z en espa&ntilde;ol cada noche &mdash; el propio m&eacute;todo de Jos&eacute; Rizal (~1,800 palabras al a&ntilde;o), reforzado con repetici&oacute;n espaciada.</p>
+        <p data-lang-fil>Limang salitang-ugat na Espanyol bawat gabi &mdash; ang sariling pamamaraan ni Jos&eacute; Rizal (~1,800 salita bawat taon), pinatatatag sa pamamagitan ng spaced repetition.</p>
+      </div>
+      <div class="platform-card">
+        <span class="pf-badge" data-lang-en>AI Tutor</span><span class="pf-badge" data-lang-es>Tutora IA</span><span class="pf-badge" data-lang-fil>AI Tutor</span>
+        <h4>Profesora Isabel &mdash; <span data-lang-en>AI Tutor</span><span data-lang-es>Tutora IA</span><span data-lang-fil>AI Tutor</span></h4>
+        <p data-lang-en>A voice-enabled AI Spanish tutor that explains in English or Filipino &mdash; and teaches in Spanish.</p>
+        <p data-lang-es>Una tutora de espa&ntilde;ol con IA y voz que explica en ingl&eacute;s o filipino &mdash; y ense&ntilde;a en espa&ntilde;ol.</p>
+        <p data-lang-fil>Isang AI tutor sa Espanyol na may boses na nagpapaliwanag sa Ingles o Filipino &mdash; at nagtuturo sa Espanyol.</p>
+      </div>
+      <div class="platform-card">
+        <span class="pf-badge" data-lang-en>Practice</span><span class="pf-badge" data-lang-es>Pr&aacute;ctica</span><span class="pf-badge" data-lang-fil>Pagsasanay</span>
+        <h4>Translation Atelier</h4>
+        <p data-lang-en>Practice translating real lines to and from Spanish, with instant AI feedback.</p>
+        <p data-lang-es>Practica la traducci&oacute;n de frases reales hacia y desde el espa&ntilde;ol, con retroalimentaci&oacute;n instant&aacute;nea de IA.</p>
+        <p data-lang-fil>Magsanay sa pagsasalin ng totoong mga pangungusap papunta at mula sa Espanyol, na may instant na feedback mula sa AI.</p>
+      </div>
+      <div class="platform-card">
+        <span class="pf-badge" data-lang-en>Literature</span><span class="pf-badge" data-lang-es>Literatura</span><span class="pf-badge" data-lang-fil>Panitikan</span>
+        <h4>Rizal Studies</h4>
+        <p data-lang-en>Learn through Rizal&rsquo;s own Spanish works &mdash; <em>Noli Me T&aacute;ngere</em> and <em>El Filibusterismo</em> &mdash; and earn a Completion Record.</p>
+        <p data-lang-es>Aprende a trav&eacute;s de las propias obras en espa&ntilde;ol de Rizal &mdash; <em>Noli Me T&aacute;ngere</em> y <em>El Filibusterismo</em> &mdash; y obt&eacute;n un Registro de Finalizaci&oacute;n.</p>
+        <p data-lang-fil>Matuto sa pamamagitan ng mga sariling akdang Espanyol ni Rizal &mdash; <em>Noli Me T&aacute;ngere</em> at <em>El Filibusterismo</em> &mdash; at magkamit ng Completion Record.</p>
+      </div>
+      <div class="platform-card">
+        <span class="pf-badge" data-lang-en>Community</span><span class="pf-badge" data-lang-es>Comunidad</span><span class="pf-badge" data-lang-fil>Komunidad</span>
+        <h4>Emperador</h4>
+        <p data-lang-en>A friendly cohort leaderboard with streaks, badges, and a rotating Emperador title.</p>
+        <p data-lang-es>Una tabla de clasificaci&oacute;n amistosa por cohorte con rachas, insignias y un t&iacute;tulo rotativo de Emperador.</p>
+        <p data-lang-fil>Isang palakaibigang leaderboard ng cohort na may mga streak, badge, at umiikot na titulong Emperador.</p>
+      </div>
+    </div>
+
+    <p class="platform-note" data-lang-en>Install it on your phone or iPad &mdash; add to home screen and learn anywhere.</p>
+    <p class="platform-note" data-lang-es>Inst&aacute;lala en tu tel&eacute;fono o iPad &mdash; agr&eacute;gala a la pantalla de inicio y aprende donde sea.</p>
+    <p class="platform-note" data-lang-fil>I-install ito sa iyong telepono o iPad &mdash; idagdag sa home screen at matuto kahit saan.</p>
+
+    <div class="platform-cta-wrap">
+      <a href="/Torna_Idioma/login" class="platform-cta" data-lang-en>Start Learning</a>
+      <a href="/Torna_Idioma/login" class="platform-cta" data-lang-es>Empieza a Aprender</a>
+      <a href="/Torna_Idioma/login" class="platform-cta" data-lang-fil>Magsimulang Matuto</a>
+    </div>
   </div>
 </section>
 
@@ -1165,7 +1253,7 @@
     });
   }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-  document.querySelectorAll('.mission-card,.why-card,.pillar-card,.stat-card,.econ-card,.policy-card,.heritage-item,.partner-flag,.person-card,.timeline-content,.provide-item,.makati-stat').forEach(el => {
+  document.querySelectorAll('.mission-card,.why-card,.pillar-card,.stat-card,.econ-card,.policy-card,.heritage-item,.partner-flag,.person-card,.timeline-content,.provide-item,.makati-stat,.platform-card').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(24px)';
     el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
