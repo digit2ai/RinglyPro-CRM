@@ -2478,6 +2478,25 @@ async function generateVoiceTeaser(projectId) {
 }
 window.generateVoiceTeaser = generateVoiceTeaser;
 
+async function regenerateVoiceTeaser(token, projectId) {
+  const statusEl = document.getElementById('teaser-send-status');
+  if (statusEl) { statusEl.style.color = 'var(--text-muted)'; statusEl.textContent = 'Regenerating (same link)…'; }
+  try {
+    let p = null;
+    const projRes = await api('/projects/' + projectId);
+    p = projRes.success ? projRes.data : { id: projectId, name: '' };
+    const res = await api('/teaser-admin/' + token + '/regenerate', { method: 'POST', body: JSON.stringify({}) });
+    if (!res.success) { if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Error: ' + escHtml(res.error || 'failed'); } return; }
+    renderTeaserModal(p, res.token, res.url, res.teaser);
+    // bust the iframe cache so the refreshed page shows immediately
+    const fr = document.querySelector('#modal-body iframe');
+    if (fr) fr.src = res.url + '?r=' + Date.now();
+  } catch (e) {
+    if (statusEl) { statusEl.style.color = '#f87171'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+}
+window.regenerateVoiceTeaser = regenerateVoiceTeaser;
+
 function renderTeaserModal(p, token, url, teaser) {
   const escA = (s) => String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const es = teaser.lang === 'es';
@@ -2493,7 +2512,7 @@ function renderTeaserModal(p, token, url, teaser) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <button class="btn btn-sm btn-ghost" onclick="window.open('${escA(url)}','_blank','noopener')">&#8599; Open full page</button>
       <button class="btn btn-sm btn-ghost" onclick="navigator.clipboard.writeText('${escA(url)}').then(()=>showCopyToast&&showCopyToast('Link copied'))">&#128203; Copy link</button>
-      <button class="btn btn-sm btn-ghost" onclick="generateVoiceTeaser(${p.id})" title="Generate a fresh version">&#8635; Regenerate</button>
+      <button class="btn btn-sm btn-ghost" onclick="regenerateVoiceTeaser('${token}', ${p.id})" title="Refresh this teaser's content — keeps the same link you may have already shared">&#8635; Regenerate (same link)</button>
     </div>
     <div class="form-group">
       <label>Recipient email</label>

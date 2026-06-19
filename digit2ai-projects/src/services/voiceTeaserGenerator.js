@@ -76,6 +76,7 @@ OUTPUT: a SINGLE JSON object, no markdown fences, no prose around it. It MUST ma
 }
 
 RULES:
+- TIMELINE IS ALWAYS IN WEEKS, NEVER IN MONTHS. The POC/MVP must fit in a MAXIMUM of 4 weeks. Phase names use weeks only ("Week 1", "Week 1-2", up to "Week 4"). Never say "month", "months", "8 weeks", or anything longer than 4 weeks — anywhere (plan, segments, CTA, body copy). If the input suggests a longer timeline, compress the scope to a focused POC that ships within 4 weeks.
 - Write everything in {{LANG_NAME}} ({{LANG}}).
 - In "segments", spell numbers out as words for natural text-to-speech, use correct {{LANG_NAME}} orthography (accents/tildes/ñ when Spanish), and NEVER use emojis or symbols.
 - Be specific to THIS project. Use the client's company name, domain vocabulary, and stated problem. Invent believable sample data for the POC (names, metrics, records) clearly in their context.
@@ -98,7 +99,8 @@ function buildUserMessage(project, lang) {
     `Existing stack: ${project.existing_stack || '(unspecified)'}`,
     `Success metrics: ${project.success_metrics || '(unspecified)'}`,
     `Desired timeline: ${project.timeline || '(unspecified)'}`,
-    project.target_delivery_weeks ? `Target delivery: ${project.target_delivery_weeks} weeks` : null,
+    // Teaser timeline is always a focused POC capped at 4 weeks — never feed a longer number.
+    project.target_delivery_weeks ? `Target delivery: ${Math.min(4, Number(project.target_delivery_weeks) || 4)} weeks (POC capped at 4 weeks)` : 'Target delivery: a focused POC within 4 weeks',
     project.target_total_usd ? `Target investment: ${fmt(project.target_total_usd)}` : null,
     plan.executive_summary ? `\nExisting business-plan executive summary:\n${plan.executive_summary}` : null,
     plan.solution ? `\nPlanned solution notes:\n${typeof plan.solution === 'string' ? plan.solution : JSON.stringify(plan.solution)}` : null
@@ -118,7 +120,9 @@ function extractJson(text) {
 
 async function generate(project, options = {}) {
   const lang = pickLang(project, options.lang);
-  const voice = lang === 'es' ? 'lina' : 'ava';
+  // Brand voice: always default to México (Dalia) = Lina, regardless of narration
+  // language. Listeners can still switch accent in the teaser's voice picker.
+  const voice = 'lina';
 
   if (Anthropic && (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)) {
     try {
@@ -210,7 +214,7 @@ function fallbackTeaser(project, lang) {
     poc: { heading: es ? 'Simulación del POC en vivo' : 'Live POC simulation', intro: es ? 'Esto es una simulación de tu producto con datos de ejemplo.' : 'This is a simulation of your product with sample data.', html: pocHtml },
     value: { heading: es ? 'El valor' : 'The value', bullets: es ? ['Respuesta inmediata, sin esperas', 'Disponible 24/7 en español e inglés', 'Menor costo operativo', 'Cada interacción registrada y medible'] : ['Instant response, no waiting', 'Available 24/7 in English and Spanish', 'Lower operating cost', 'Every interaction logged and measurable'] },
     deliverables: { heading: es ? 'Lo que recibes' : 'What you get', items: es ? ['Un POC funcional desplegado', 'Agente de IA configurado', 'Panel de métricas', 'Sesión de revisión'] : ['A working deployed POC', 'A configured AI agent', 'A metrics dashboard', 'A review session'] },
-    plan: { heading: es ? 'Cronograma e inversión' : 'Timeline & investment', summary: project.target_delivery_weeks ? (es ? `Entrega en ${project.target_delivery_weeks} semanas.` : `Delivered in ${project.target_delivery_weeks} weeks.`) : (es ? 'POC en dos semanas.' : 'POC in two weeks.'), phases: [ { name: es ? 'Semana 1: Diseño y datos' : 'Week 1: Design & data', detail: es ? 'Configuramos el agente y conectamos tus datos.' : 'We configure the agent and connect your data.' }, { name: es ? 'Semana 2: POC en vivo' : 'Week 2: Live POC', detail: es ? 'Desplegamos y revisamos juntos.' : 'We deploy and review together.' } ] },
+    plan: { heading: es ? 'Cronograma e inversión' : 'Timeline & investment', summary: (function(){ var w = Math.min(4, Number(project.target_delivery_weeks) || 2); return es ? `POC funcional en ${w === 1 ? 'una semana' : w + ' semanas'} (máximo cuatro).` : `Working POC in ${w} week${w === 1 ? '' : 's'} (four weeks max).`; })(), phases: [ { name: es ? 'Semana 1: Diseño y datos' : 'Week 1: Design & data', detail: es ? 'Configuramos el agente y conectamos tus datos.' : 'We configure the agent and connect your data.' }, { name: es ? 'Semanas 2-4: POC en vivo' : 'Weeks 2-4: Live POC', detail: es ? 'Desplegamos, iteramos y revisamos juntos.' : 'We deploy, iterate, and review together.' } ] },
     cta: { heading: es ? '¿Comenzamos?' : 'Ready to start?', body: es ? 'Aprueba el POC y lo tendrás funcionando en dos semanas.' : 'Greenlight the POC and you will have it running in two weeks.' },
     segments: [
       es ? `Hola ${who}, soy Lina, la voz de inteligencia artificial de Digit2AI. En menos de dos minutos te voy a mostrar cómo se vería tu producto: ${name}.`
