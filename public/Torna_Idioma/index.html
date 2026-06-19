@@ -46,6 +46,28 @@
     .lang-btn.active { background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
     .lang-btn:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
 
+    /* Lina voice orb */
+    .lina-section { background:linear-gradient(135deg,#0F1A2E,#1B2A4A); padding:56px 24px; display:flex; justify-content:center; }
+    .lina-card { max-width:680px; width:100%; display:flex; gap:22px; align-items:center; background:rgba(255,255,255,.04); border:1px solid rgba(201,168,76,.3); border-radius:20px; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+    .lina-orb { position:relative; width:92px; height:92px; flex:0 0 92px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#F4E3A6,#C9A84C 45%,#6B4E0F 100%); box-shadow:0 0 0 0 rgba(201,168,76,.5); }
+    .lina-orb::after { content:""; position:absolute; inset:-8px; border-radius:50%; border:2px solid rgba(201,168,76,.35); }
+    .lina-orb.speaking { animation:lina-pulse 1.2s ease-in-out infinite; }
+    @keyframes lina-pulse { 0%{box-shadow:0 0 0 0 rgba(201,168,76,.5);} 70%{box-shadow:0 0 0 22px rgba(201,168,76,0);} 100%{box-shadow:0 0 0 0 rgba(201,168,76,0);} }
+    .lina-meta { flex:1; min-width:0; }
+    .lina-name { font-family:'Playfair Display',serif; font-weight:700; font-size:19px; color:var(--gold); letter-spacing:.5px; }
+    .lina-role { color:rgba(255,255,255,.6); font-size:13.5px; margin-bottom:14px; }
+    .lina-controls { display:flex; gap:10px; flex-wrap:wrap; }
+    .lina-btn { padding:9px 16px; border-radius:8px; border:1px solid rgba(201,168,76,.4); background:rgba(255,255,255,.06); color:var(--gold-light); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .lina-btn:disabled { opacity:.45; cursor:default; }
+    .lina-primary { background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:var(--navy-deep); border:none; font-weight:700; }
+    .lina-status { font-size:12.5px; color:rgba(255,255,255,.6); margin-top:12px; min-height:18px; }
+    .lina-voicepick { margin-top:12px; font-size:12.5px; color:rgba(255,255,255,.55); display:flex; align-items:center; flex-wrap:wrap; gap:4px; }
+    .lina-lbl { display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .lina-mode { margin-left:8px; color:#7CCF8E; }
+    .lina-accent { display:inline-flex; align-items:center; }
+    .lina-accent select { font-family:inherit; background:#1b2536; color:#E9EEF7; border:1px solid rgba(201,168,76,.3); border-radius:8px; padding:5px 8px; margin-left:6px; }
+    @media(max-width:560px){ .lina-card-flex { flex-direction:column; text-align:center; } .lina-controls { justify-content:center; } .lina-voicepick { justify-content:center; } }
+
     /* Language visibility via body class */
     body.lang-en [data-lang-es], body.lang-en [data-lang-fil] { display:none !important; }
     body.lang-es [data-lang-en], body.lang-es [data-lang-fil] { display:none !important; }
@@ -346,6 +368,40 @@
       <a href="#mission" class="hero-cta-ghost" data-lang-en>Explore the Vision &darr;</a>
       <a href="#mission" class="hero-cta-ghost" data-lang-es>Explorar la Visi&oacute;n &darr;</a>
       <a href="#mission" class="hero-cta-ghost" data-lang-fil>Tuklasin ang Bisyon &darr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Lina — zero-key neural voice orb (Edge "Read Aloud" via /api/tts/edge) ===== -->
+<section class="lina-section" id="lina">
+  <div class="lina-card lina-card-flex">
+    <div class="lina-orb" id="linaOrb"></div>
+    <div class="lina-meta">
+      <div class="lina-name">Lina &middot; Digit2AI AI Voice</div>
+      <div class="lina-role">
+        <span data-lang-en>Your guide to the Torna Idioma vision</span>
+        <span data-lang-es>Tu gu&iacute;a de la visi&oacute;n Torna Idioma</span>
+        <span data-lang-fil>Ang iyong gabay sa bisyon ng Torna Idioma</span>
+      </div>
+      <div class="lina-controls">
+        <button class="lina-btn lina-primary" id="linaPlayAll"></button>
+        <button class="lina-btn" id="linaPause" disabled></button>
+        <button class="lina-btn" id="linaStop" disabled></button>
+      </div>
+      <div class="lina-status" id="linaStatus"></div>
+      <div class="lina-voicepick">
+        <label class="lina-lbl"><input type="checkbox" id="linaNeural" checked> <span id="linaNeuralLbl"></span></label>
+        <span class="lina-mode" id="linaMode"></span>
+        <span class="lina-accent" id="linaAccentWrap">
+          &nbsp;&middot;&nbsp;<span id="linaAccentLbl"></span>:
+          <select id="linaAccent">
+            <option value="lina">M&eacute;xico (Dalia)</option>
+            <option value="paloma">EE. UU. (Paloma)</option>
+            <option value="salome">Colombia (Salom&eacute;)</option>
+            <option value="elvira">Espa&ntilde;a (Elvira)</option>
+          </select>
+        </span>
+      </div>
     </div>
   </div>
 </section>
@@ -1251,6 +1307,167 @@
     el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
     observer.observe(el);
   });
+
+  // ===== Lina — neural voice orb (zero-key Edge TTS via /api/tts/edge) =====
+  (function(){
+    var NEURAL_URL = '/api/tts/edge';
+    var VOICE = { es:'lina', en:'ava', fil:'fil-PH-BlessicaNeural' };       // active lang -> Edge voice
+    var FALLBACK = { es:'es-MX', en:'en-US', fil:'fil-PH' };                 // browser-speech fallback lang
+    var SECTION_IDS = [null, 'mission', 'why', 'pillars', 'economics', 'partners'];
+    var SEG = {
+      es: [
+        'Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. En pocos minutos te voy a explicar qué es Torna Idioma y por qué Makati está a punto de convertirse en la primera ciudad hispanohablante de Asia.',
+        'Nuestra misión es empoderar a la juventud filipina a través del dominio del español, restaurando dignidad, orgullo y legado. Nuestra visión es establecer a Filipinas como la primera nación hispanohablante de Asia, donde la herencia se convierte en fortaleza.',
+        '¿Por qué español y por qué ahora? El español no es ajeno a Filipinas: es el idioma de Rizal, de Bonifacio y de la Constitución de Malolos. Hoy lo hablan más de seiscientos cincuenta millones de personas, y abre carreras globales con salarios mucho más altos.',
+        'Torna Idioma se levanta sobre tres pilares. Dignidad: recuperar un idioma que pertenece al alma filipina. Orgullo: reconectar con una comunidad de seiscientos cincuenta millones de hispanohablantes. Y premio: desbloquear carreras internacionales y nuevas oportunidades económicas.',
+        'El impacto para Makati es transformador. Si tan solo el diez por ciento de su fuerza laboral domina el español, hablamos de cientos de millones de pesos en ingresos para los residentes, mayor recaudación fiscal e inversión extranjera de miles de millones en cinco años. Un retorno estimado de diez a veinte veces la inversión.',
+        'Esto es más que un programa: es un movimiento. Ya seas estudiante, profesor, profesional de un centro de servicios o funcionario del gobierno, en Torna Idioma hay un lugar para ti. Sé parte de la historia.'
+      ],
+      en: [
+        "Hi, I'm Lina, the artificial intelligence voice of Digit2AI. In just a few minutes I'll walk you through what Torna Idioma is, and why Makati is about to become the first Spanish-enabled city in Asia.",
+        "Our mission is to empower Filipino youth through Spanish proficiency, restoring dignity, pride, and legacy. Our vision is to establish the Philippines as Asia's first Spanish-enabled nation, where heritage becomes strength.",
+        'Why Spanish, and why now? Spanish is not foreign to the Philippines. It is the language of Rizal, of Bonifacio, and of the Malolos Constitution. Today more than six hundred fifty million people speak it, and it opens global careers with significantly higher salaries.',
+        'Torna Idioma stands on three pillars. Dignity: reclaiming a language that belongs to the Filipino soul. Pride: reconnecting with a community of six hundred fifty million Spanish speakers. And prize: unlocking international careers and new economic opportunity.',
+        "The impact for Makati is transformative. If just ten percent of its outsourcing workforce becomes proficient in Spanish, we're talking about hundreds of millions of pesos in resident income, higher tax revenue, and billions in foreign investment over five years — an estimated return of ten to twenty times the investment.",
+        "This is more than a program; it's a movement. Whether you're a student, a teacher, an outsourcing professional, or a government official, Torna Idioma has a place for you. Be part of history."
+      ],
+      fil: [
+        'Kumusta, ako si Lina, ang artificial intelligence na boses ng Digit2AI. Sa loob ng ilang minuto, ipapaliwanag ko kung ano ang Torna Idioma at kung bakit malapit nang maging unang lungsod na may Espanyol sa Asya ang Makati.',
+        'Layunin naming palakasin ang kabataang Pilipino sa pamamagitan ng kahusayan sa Espanyol, ibinabalik ang dignidad, pagmamalaki, at pamana. Ang aming bisyon ay gawing unang bansang may Espanyol sa Asya ang Pilipinas, kung saan ang pamana ay nagiging lakas.',
+        'Bakit Espanyol, at bakit ngayon? Hindi dayuhan ang Espanyol sa Pilipinas. Ito ang wika ni Rizal, ni Bonifacio, at ng Konstitusyong Malolos. Ngayon, mahigit anim na raan at limampung milyong tao ang nagsasalita nito, at nagbubukas ito ng pandaigdigang karera na may mas mataas na sahod.',
+        'Nakatayo ang Torna Idioma sa tatlong haligi. Dignidad: pagbawi ng wikang pag-aari ng kaluluwa ng Pilipino. Pagmamalaki: muling pakikipag-ugnay sa anim na raan at limampung milyong nagsasalita ng Espanyol. At gantimpala: pagbubukas ng pandaigdigang karera at bagong oportunidad pang-ekonomiya.',
+        'Transformatibo ang epekto para sa Makati. Kung sampung porsiyento lamang ng manggagawa nito ay magkaroon ng kahusayan sa Espanyol, pinag-uusapan natin ang daan-daang milyong piso na kita para sa mga residente, mas mataas na buwis, at bilyun-bilyong dayuhang pamumuhunan sa loob ng limang taon — isang tinatayang balik na sampu hanggang dalawampung beses ng pamumuhunan.',
+        'Higit pa ito sa isang programa; ito ay isang kilusan. Estudyante ka man, guro, propesyonal sa BPO, o opisyal ng gobyerno, may lugar para sa iyo ang Torna Idioma. Maging bahagi ng kasaysayan.'
+      ]
+    };
+    var UI = {
+      es: { playAll:'▶ Que Lina lo explique todo', pause:'❚❚ Pausar', resume:'▶ Reanudar', stop:'■ Detener', idle:'Pulsa el botón para que Lina te presente la visión.', paused:'En pausa.', prep:'Preparando voz neural…', done:'Presentación terminada. Pulsa de nuevo para repetir.', neural:'Voz neural HD', accent:'Acento', hd:'● HD', browser:'○ navegador', speaking:function(i,n){return 'Lina está hablando… ('+i+' de '+n+')';} },
+      en: { playAll:'▶ Let Lina explain it all', pause:'❚❚ Pause', resume:'▶ Resume', stop:'■ Stop', idle:'Tap the button and let Lina walk you through the vision.', paused:'Paused.', prep:'Preparing neural voice…', done:'Presentation finished. Tap again to replay.', neural:'HD neural voice', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Lina is speaking… ('+i+' of '+n+')';} },
+      fil:{ playAll:'▶ Ipaliwanag ni Lina ang lahat', pause:'❚❚ I-pause', resume:'▶ Ituloy', stop:'■ Itigil', idle:'Pindutin ang button para ipakilala ni Lina ang bisyon.', paused:'Naka-pause.', prep:'Inihahanda ang neural na boses…', done:'Tapos na ang presentasyon. Pindutin muli upang ulitin.', neural:'HD neural na boses', accent:'Accent', hd:'● HD', browser:'○ browser', speaking:function(i,n){return 'Nagsasalita si Lina… ('+i+' ng '+n+')';} }
+    };
+
+    var orb = document.getElementById('linaOrb');
+    var status = document.getElementById('linaStatus');
+    var playAll = document.getElementById('linaPlayAll');
+    var pauseBtn = document.getElementById('linaPause');
+    var stopBtn = document.getElementById('linaStop');
+    var neuralToggle = document.getElementById('linaNeural');
+    var modeEl = document.getElementById('linaMode');
+    var neuralLbl = document.getElementById('linaNeuralLbl');
+    var accentWrap = document.getElementById('linaAccentWrap');
+    var accentLbl = document.getElementById('linaAccentLbl');
+    var accentSel = document.getElementById('linaAccent');
+    if (!orb) return;
+
+    var synth = window.speechSynthesis;
+    var queue = [], qi = 0, runToken = 0, paused = false, playing = false;
+    var currentAudio = null, playbackMode = null, neuralOK = true, cache = {}, browserVoice = null;
+
+    function curLang(){ var m = document.body.className.match(/lang-(en|es|fil)/); return m ? m[1] : 'fil'; }
+    function L(){ return UI[curLang()] || UI.es; }
+    function resolvedVoice(){ var l = curLang(); return l === 'es' ? accentSel.value : VOICE[l]; }
+    function useNeural(){ return neuralToggle.checked && neuralOK; }
+
+    function pickBrowserVoice(){
+      if (!synth) return;
+      var l = curLang(); var vs = synth.getVoices();
+      var pref = vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf(l === 'fil' ? 'fil' : l) === 0; });
+      browserVoice = pref[0] || vs.filter(function(v){ return v.lang && v.lang.toLowerCase().indexOf('es') === 0; })[0] || vs[0] || null;
+    }
+    if (synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+    function clearCache(){ Object.keys(cache).forEach(function(k){ try{ URL.revokeObjectURL(cache[k]); }catch(e){} }); cache = {}; }
+
+    function applyLang(){
+      var u = L();
+      playAll.textContent = u.playAll;
+      pauseBtn.textContent = paused ? u.resume : u.pause;
+      stopBtn.textContent = u.stop;
+      neuralLbl.textContent = u.neural;
+      accentLbl.textContent = u.accent;
+      modeEl.textContent = useNeural() ? u.hd : u.browser;
+      accentWrap.style.display = (curLang() === 'es') ? '' : 'none';
+      if (!playing) status.textContent = u.idle;
+    }
+
+    function fetchNeural(idx, voice){
+      var key = voice + '|' + curLang() + '|' + idx;
+      if (cache[key]) return Promise.resolve(cache[key]);
+      return fetch(NEURAL_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: SEG[curLang()][idx], voice: voice }) })
+        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+        .then(function(b){ if(!b || b.size < 200) throw new Error('empty'); var x = URL.createObjectURL(b); cache[key] = x; return x; });
+    }
+    function scrollTo(idx){ var id = SECTION_IDS[idx]; if(!id) return; var el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    function statusSpeaking(){ status.textContent = queue.length > 1 ? L().speaking(qi+1, queue.length) : '…'; }
+
+    function browserSpeak(idx, onEnd){
+      if (!synth){ onEnd(); return; }
+      playbackMode = 'browser';
+      var u = new SpeechSynthesisUtterance(SEG[curLang()][idx]);
+      if (browserVoice) u.voice = browserVoice;
+      u.lang = browserVoice ? browserVoice.lang : (FALLBACK[curLang()] || 'es-MX');
+      u.rate = 0.98; u.pitch = 1.04;
+      u.onstart = function(){ orb.classList.add('speaking'); statusSpeaking(); };
+      u.onend = onEnd; u.onerror = onEnd;
+      synth.speak(u);
+    }
+    function runQueue(token, voice){
+      if (token !== runToken) return;
+      if (qi >= queue.length){ finishDone(); return; }
+      var idx = queue[qi];
+      scrollTo(idx);
+      function advance(){ if(token !== runToken) return; qi++; runQueue(token, voice); }
+      if (useNeural()){
+        status.textContent = L().prep;
+        if (qi+1 < queue.length) fetchNeural(queue[qi+1], voice).catch(function(){});
+        fetchNeural(idx, voice).then(function(url){
+          if (token !== runToken) return;
+          playbackMode = 'neural'; currentAudio = new Audio(url);
+          currentAudio.onended = advance;
+          currentAudio.onerror = function(){ neuralOK = false; modeEl.textContent = L().browser; advance(); };
+          orb.classList.add('speaking'); statusSpeaking();
+          currentAudio.play().catch(function(){ neuralOK = false; modeEl.textContent = L().browser; browserSpeak(idx, advance); });
+        }).catch(function(){ if(token !== runToken) return; neuralOK = false; modeEl.textContent = L().browser; browserSpeak(idx, advance); });
+      } else { browserSpeak(idx, advance); }
+    }
+    function start(q){
+      if (synth) synth.cancel();
+      if (currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+      queue = q; qi = 0; paused = false; playing = true; runToken++;
+      pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true; pauseBtn.textContent = L().pause;
+      runQueue(runToken, resolvedVoice());
+    }
+    function finishDone(){
+      runToken++; playing = false; orb.classList.remove('speaking');
+      if (currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+      pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+      status.textContent = L().done;
+    }
+    function stopLina(){
+      runToken++; playing = false; paused = false; orb.classList.remove('speaking');
+      if (synth) synth.cancel();
+      if (currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+      pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+    }
+
+    playAll.addEventListener('click', function(){ start(SEG[curLang()].map(function(_,i){ return i; })); });
+    pauseBtn.addEventListener('click', function(){
+      if (!paused){ paused = true; pauseBtn.textContent = L().resume; orb.classList.remove('speaking'); status.textContent = L().paused;
+        if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause(); }
+      else { paused = false; pauseBtn.textContent = L().pause; orb.classList.add('speaking'); statusSpeaking();
+        if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume(); }
+    });
+    stopBtn.addEventListener('click', finishDone);
+    neuralToggle.addEventListener('change', function(){ neuralOK = true; modeEl.textContent = useNeural() ? L().hd : L().browser; });
+    accentSel.addEventListener('change', clearCache);
+    // Re-language the orb + stop playback when the page language changes.
+    document.querySelectorAll('.lang-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){ stopLina(); pickBrowserVoice(); clearCache(); applyLang(); });
+    });
+    window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{ currentAudio.pause(); }catch(e){} } });
+
+    applyLang();
+  })();
 </script>
 
 </body>
