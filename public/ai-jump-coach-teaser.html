@@ -127,8 +127,16 @@
         <button id="stop" disabled>■ Detener</button>
       </div>
       <div class="status" id="status">Pulsa el botón para que Lina comience la presentación.</div>
-      <div class="voicepick">Voz:
-        <select id="voiceSel"><option>Cargando voces…</option></select>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
+        &nbsp;·&nbsp; Acento:
+        <select id="voiceSel">
+          <option value="lina">México (Dalia)</option>
+          <option value="paloma">EE. UU. (Paloma)</option>
+          <option value="salome">Colombia (Salomé)</option>
+          <option value="elvira">España (Elvira)</option>
+        </select>
+        <span id="voiceMode" style="margin-left:8px;color:var(--green)"></span>
       </div>
     </div>
   </div>
@@ -189,9 +197,9 @@
 
     <div class="sec" data-i="5">
       <h2><span class="num">6</span> El plan en dos pasos <span class="pill poc">PoC primero</span></h2>
-      <p><strong>Paso 1 — Prueba de concepto (14 a 21 días):</strong> validamos con 20 a 30 videos reales si la IA puede seguir al jinete con precisión. Entregamos un informe claro con recomendación de seguir o no seguir.</p>
-      <p style="margin-top:10px"><strong>Paso 2 — MVP (45 a 60 días), solo si la prueba pasa:</strong> la app completa con subida de video, clips analizados con etiquetas, historial de sesiones y cobro con Stripe.</p>
-      <div class="highlight">Primero validamos en dos o tres semanas que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos la app completa. Así proteges tu presupuesto y no apostamos a ciegas.</div>
+      <p><strong>Paso 1 — Prueba de concepto (2 semanas):</strong> validamos con 20 a 30 videos reales si la IA puede seguir al jinete con precisión. Entregamos un informe claro con recomendación de seguir o no seguir.</p>
+      <p style="margin-top:10px"><strong>Paso 2 — MVP (2 semanas), solo si la prueba pasa:</strong> la app completa con subida de video, clips analizados con etiquetas, historial de sesiones y cobro con Stripe.</p>
+      <div class="highlight">Primero validamos en dos semanas que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos la app completa en otras dos semanas. Así proteges tu presupuesto y no apostamos a ciegas.</div>
       <button class="play-sec" data-play="5">▶ Escuchar esta parte</button>
     </div>
 
@@ -214,7 +222,7 @@
     "Cómo se cobra. Se siente como tener un entrenador personal en el bolsillo, y eso justifica una suscripción premium. Puede ser pago por análisis individual, entre cuatro y nueve dólares por video; un plan mensual ilimitado, entre diecinueve y treinta y nueve dólares al mes; o una licencia para academias y entrenadores, entre noventa y nueve y doscientos noventa y nueve dólares al mes.",
     "Ahora, el reto técnico. El riesgo principal es lograr que la inteligencia artificial siga bien el cuerpo del jinete sobre un caballo en movimiento rápido. Es difícil por la luz, los ángulos, y porque el caballo a veces tapa partes del cuerpo. Por eso no construimos todo de una vez.",
     "Una pregunta muy común: ¿hace falta un traje especial? La respuesta es no. El jinete no usa ningún traje ni sensores. Solo graba con su celular y sube el video. Esa es justamente la ventaja del producto. La tecnología se llama estimación de pose sin marcadores: la inteligencia artificial reconoce el cuerpo directamente desde la imagen, igual que el reconocimiento facial reconoce una cara sin que te pongas nada. Sí existen trajes con sensores, pero son de laboratorio, caros e incómodos. Si obligamos al jinete a ponerse algo, perdemos el producto. El riesgo no se resuelve con equipo, sino con ingeniería: entrenamos el modelo con videos de salto reales, nos enfocamos en la parte de arriba del cuerpo que el caballo no tapa, recomendamos un buen ángulo de cámara, reducimos el borrón de movimiento, y validamos primero una sola falla.",
-    "Por último, el plan en dos pasos. Paso uno: una prueba de concepto de catorce a veintiún días, donde validamos con veinte a treinta videos reales si la inteligencia artificial puede seguir al jinete con precisión, y entregamos un informe claro de seguir o no seguir. Paso dos, solo si la prueba pasa: construimos la app completa en cuarenta y cinco a sesenta días. Primero validamos que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos todo. Así proteges tu presupuesto y no apostamos a ciegas. Eso es AI Jump Coach. Gracias."
+    "Por último, el plan en dos pasos. Paso uno: una prueba de concepto de dos semanas, donde validamos con veinte a treinta videos reales si la inteligencia artificial puede seguir al jinete con precisión, y entregamos un informe claro de seguir o no seguir. Paso dos, solo si la prueba pasa: construimos la app completa en otras dos semanas. Primero validamos que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos todo. Así proteges tu presupuesto y no apostamos a ciegas. Eso es AI Jump Coach. Gracias."
   ];
 
   var synth = window.speechSynthesis;
@@ -224,94 +232,157 @@
   var pauseBtn = document.getElementById('pause');
   var stopBtn = document.getElementById('stop');
   var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
   var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
-  var voices = [], chosen = null, queue = [], qi = 0, mode = null;
 
-  if(!synth){
-    status.textContent = "Tu navegador no soporta voz. Abre esta página en Chrome o Safari.";
-    playAll.disabled = true;
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null;            // 'neural' | 'browser'
+  var currentAudio = null;            // HTMLAudioElement for neural playback
+  var neuralOK = true;                // flips false after a neural failure this session
+  var audioCache = {};                // "voice|idx" -> objectURL
+  var browserVoice = null;
+  var voiceName = 'lina';
+
+  // ----- browser fallback voice (used only when neural is off/unavailable) -----
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    var es = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;});
+    var pref = es.find(function(v){return /(mónica|monica|paulina|helena|google español|sabina|lucia|lucía)/i.test(v.name);});
+    browserVoice = pref || es[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
+  setMode();
+
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+
+  function clearCache(){
+    Object.keys(audioCache).forEach(function(k){ try{ URL.revokeObjectURL(audioCache[k]); }catch(e){} });
+    audioCache = {};
   }
 
-  function loadVoices(){
-    voices = synth.getVoices().filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;});
-    if(!voices.length){ voices = synth.getVoices(); }
-    voiceSel.innerHTML = '';
-    voices.forEach(function(v,i){
-      var o=document.createElement('option');
-      o.value=i; o.textContent=v.name+' ('+v.lang+')';
-      voiceSel.appendChild(o);
+  // ----- neural fetch (disk-cached server-side; object-URL cached client-side) -----
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ text: segments[idx], voice: voiceName })
+    }).then(function(r){
+      if(!r.ok) throw new Error('http '+r.status);
+      return r.blob();
+    }).then(function(b){
+      if(!b || b.size < 200) throw new Error('empty audio');
+      var url = URL.createObjectURL(b);
+      audioCache[key] = url;
+      return url;
     });
-    // prefer a female-ish Spanish voice
-    var pref = voices.findIndex(function(v){return /es/i.test(v.lang) && /(mónica|monica|paulina|helena|google español|sabina|female|mujer|lucia|lucía)/i.test(v.name);});
-    if(pref<0) pref = voices.findIndex(function(v){return /es/i.test(v.lang);});
-    if(pref<0) pref = 0;
-    voiceSel.value = pref;
-    chosen = voices[pref];
   }
-  if(synth){
-    loadVoices();
-    synth.onvoiceschanged = loadVoices;
-  }
-  voiceSel.addEventListener('change',function(){ chosen = voices[this.value]; });
 
   function setActive(i){
     secs.forEach(function(s){s.classList.remove('active');});
     if(i!=null && secs[i-1]) { secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); }
   }
 
-  function speakNext(){
+  function statusSpeaking(){
+    if(mode==='all') status.textContent = 'Lina está hablando… ('+(qi+1)+' de '+queue.length+')';
+    else status.textContent = 'Reproduciendo sección…';
+  }
+
+  function runQueue(token){
+    if(token!==runToken) return;
     if(qi>=queue.length){ finish(); return; }
     var idx = queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+
+    if(useNeural()){
+      status.textContent = 'Preparando voz neural…';
+      // prefetch the next segment while this one plays
+      if(qi+1 < queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode = 'neural';
+        currentAudio = new Audio(url);
+        currentAudio.onended = advance;
+        currentAudio.onerror = function(){ neuralOK = false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK = false; setMode(); browserSpeak(idx, advance); });
+      }).catch(function(){
+        if(token!==runToken) return;
+        neuralOK = false; setMode();
+        browserSpeak(idx, advance);
+      });
+    } else {
+      browserSpeak(idx, advance);
+    }
+  }
+
+  function browserSpeak(idx, onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode = 'browser';
     var u = new SpeechSynthesisUtterance(segments[idx]);
-    if(chosen) u.voice = chosen;
-    u.lang = chosen ? chosen.lang : 'es-ES';
+    if(browserVoice) u.voice = browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-ES';
     u.rate = 0.98; u.pitch = 1.05;
-    u.onstart = function(){
-      orb.classList.add('speaking');
-      if(mode==='all'){ setActive(idx); status.textContent = 'Lina está hablando… ('+(qi+1)+' de '+queue.length+')'; }
-      else { status.textContent = 'Reproduciendo sección…'; if(idx>0) setActive(idx); }
-    };
-    u.onend = function(){ qi++; speakNext(); };
-    u.onerror = function(){ qi++; speakNext(); };
+    u.onstart = function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend = onEnd;
+    u.onerror = onEnd;
     synth.speak(u);
   }
 
   function start(q,m){
-    synth.cancel();
-    queue = q; qi = 0; mode = m;
+    if(synth) synth.cancel();
+    if(currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+    queue = q; qi = 0; mode = m; paused = false; runToken++;
     pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true;
     pauseBtn.textContent = '❚❚ Pausar';
-    speakNext();
+    runQueue(runToken);
   }
 
   function finish(){
+    runToken++;
     orb.classList.remove('speaking');
     setActive(null);
+    if(currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
     pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
     status.textContent = 'Presentación terminada. Pulsa de nuevo para repetir.';
   }
 
-  playAll.addEventListener('click',function(){
-    start(segments.map(function(_,i){return i;}),'all');
-    status.textContent = 'Lina está hablando…';
+  playAll.addEventListener('click', function(){
+    start(segments.map(function(_,i){return i;}), 'all');
   });
 
   document.querySelectorAll('[data-play]').forEach(function(b){
-    b.addEventListener('click',function(){
+    b.addEventListener('click', function(){
       var i = parseInt(this.getAttribute('data-play'),10);
-      // section play uses narration index i+1 (0 is the intro)
-      start([i+1],'one');
+      start([i+1], 'one'); // narration index i+1 (0 is the intro)
     });
   });
 
-  pauseBtn.addEventListener('click',function(){
-    if(synth.paused){ synth.resume(); pauseBtn.textContent='❚❚ Pausar'; orb.classList.add('speaking'); status.textContent='Lina está hablando…'; }
-    else { synth.pause(); pauseBtn.textContent='▶ Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.'; }
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){
+      paused = true; pauseBtn.textContent = '▶ Reanudar'; orb.classList.remove('speaking'); status.textContent = 'En pausa.';
+      if(playbackMode==='neural' && currentAudio) currentAudio.pause();
+      else if(synth) synth.pause();
+    } else {
+      paused = false; pauseBtn.textContent = '❚❚ Pausar'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural' && currentAudio) currentAudio.play();
+      else if(synth) synth.resume();
+    }
   });
 
-  stopBtn.addEventListener('click',function(){ synth.cancel(); finish(); });
+  stopBtn.addEventListener('click', finish);
 
-  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); });
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{ currentAudio.pause(); }catch(e){} } });
 })();
 </script>
 </body>
