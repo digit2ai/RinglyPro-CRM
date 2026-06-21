@@ -15,11 +15,9 @@ const LANG_VOICE = { es: 'lina', en: 'ava', fil: 'fil-PH-BlessicaNeural' };
 const FALLBACK_LANG = { es: 'es-MX', en: 'en-US', fil: 'fil-PH' };
 
 // Spanish accent picker (only shown when the page is in Spanish).
+// México (Dalia) is the default and only AI voice.
 const ES_ACCENTS = [
   { value: 'lina',   label: 'México (Dalia)' },
-  { value: 'paloma', label: 'EE. UU. (Paloma)' },
-  { value: 'salome', label: 'Colombia (Salomé)' },
-  { value: 'elvira', label: 'España (Elvira)' },
 ];
 
 // Narration: index 0 = intro; 1..5 map to mission / why / pillars / impact / join.
