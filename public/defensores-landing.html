@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#06102f" />
 
-<title>Defensores de la Patria — Abelardo de la Espriella · Presidente 2026</title>
-<meta name="description" content="Movimiento Defensores de la Patria. Campaña presidencial de Abelardo de la Espriella. Este 21 de junio, de nuevo, póngale la raya al Tigre." />
-<meta name="keywords" content="Abelardo de la Espriella, Defensores de la Patria, Presidente Colombia 2026, El Tigre, País Milagro" />
-<meta name="author" content="Movimiento Defensores de la Patria" />
+<title>Primeros 100 Días — Plan Tecnológico del País Milagro · Abelardo de la Espriella, Presidente de Colombia</title>
+<meta name="description" content="El plan tecnológico de los primeros 100 días del gobierno de Abelardo de la Espriella: Blockchain 2030, Universidad Virtual en Casa, conectividad nacional gratuita, Estado Digital e inteligencia artificial al servicio de la gente." />
+<meta name="keywords" content="Abelardo de la Espriella, Presidente Colombia 2026, Primeros 100 días, Plan tecnológico, Blockchain 2030, Universidad Virtual en Casa, Estado Digital, País Milagro" />
+<meta name="author" content="Gobierno del País Milagro" />
 
 <link rel="canonical" href="https://defensoresdelapatria.app/" />
 
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://defensoresdelapatria.app/" />
-<meta property="og:title" content="Ruge la Patria Milagro · Abelardo de la Espriella Presidente" />
-<meta property="og:description" content="Este 21 de junio, de nuevo, póngale la raya al Tigre. Conoce las propuestas del País Milagro." />
+<meta property="og:title" content="Primeros 100 Días — Plan Tecnológico del País Milagro" />
+<meta property="og:description" content="Blockchain 2030, Universidad Virtual en Casa, conectividad gratuita y Estado Digital. Los primeros 100 días del gobierno de Abelardo de la Espriella." />
 <meta property="og:image" content="https://defensoresdelapatria.app/og-image.jpg" />
 <meta property="og:locale" content="es_CO" />
-<meta property="og:site_name" content="Defensores de la Patria" />
+<meta property="og:site_name" content="País Milagro" />
 
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Ruge la Patria Milagro · Abelardo de la Espriella Presidente" />
-<meta name="twitter:description" content="Este 21 de junio, de nuevo, póngale la raya al Tigre." />
+<meta name="twitter:title" content="Primeros 100 Días — Plan Tecnológico del País Milagro" />
+<meta name="twitter:description" content="Los primeros 100 días digitales del gobierno de Abelardo de la Espriella." />
 <meta name="twitter:image" content="https://defensoresdelapatria.app/og-image.jpg" />
 <meta name="twitter:site" content="@ABDELAESPRIELLA" />
 
@@ -47,6 +47,7 @@
   --flame-1: #ff3b1f;
   --flame-2: #ff7a00;
   --flame-3: #ffb800;
+  --green: #22c55e;
   --text-on-dark: #f6f8ff;
   --text-muted: #a9b4d6;
 }
@@ -121,10 +122,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .logo-mark .l-bot  { color: #fff; font-size: 18px; }
 
 .nav-links {
-  display: flex; align-items: center; gap: 0;
+  display: flex; align-items: center; gap: 28px;
   flex: 1; justify-content: center;
-  font-size: 15px; font-weight: 600;
+  font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
 }
+.nav-links a { color: var(--text-muted); transition: color 0.18s ease; }
+.nav-links a:hover { color: var(--yellow); }
+.nav-cta {
+  flex-shrink: 0; background: var(--yellow); color: var(--navy-900) !important;
+  padding: 10px 20px; border-radius: 99px; font-weight: 800; font-size: 13px;
+  text-transform: uppercase; letter-spacing: 0.04em; transition: background 0.18s ease, transform 0.18s ease;
+}
+.nav-cta:hover { background: var(--yellow-deep); transform: translateY(-1px); }
 
 .hero {
   position: relative; margin-top: 72px; min-height: 720px;
@@ -156,16 +165,24 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .hero-grid {
   position: relative; z-index: 3; max-width: 1480px; margin: 0 auto;
   display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
-  padding: 80px 32px 120px; min-height: 720px;
+  padding: 64px 32px 110px; min-height: 720px;
 }
 .hero-text { display: flex; flex-direction: column; justify-content: center; padding-right: 20px; }
-.hero-headline { font-size: clamp(72px, 11vw, 168px); text-shadow: 0 4px 24px rgba(0,0,0,0.5); text-transform: uppercase; }
+.hero-kicker {
+  display: inline-flex; align-items: center; gap: 10px; align-self: flex-start;
+  background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4);
+  color: var(--green); padding: 8px 18px; border-radius: 99px;
+  font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 22px;
+}
+.hero-kicker .dot { width: 9px; height: 9px; background: var(--green); border-radius: 50%; animation: ana-pulse 1.8s ease-in-out infinite; }
+.hero-headline { font-size: clamp(64px, 9.5vw, 150px); text-shadow: 0 4px 24px rgba(0,0,0,0.5); text-transform: uppercase; }
 .hero-headline span { display: block; }
 .h-ruge   { color: #fff; }
 .h-patria { color: var(--yellow); }
 .h-milagro { color: var(--blue-400); }
-.hero-tagline { margin-top: 28px; font-size: 19px; font-weight: 600; color: var(--text-on-dark); max-width: 460px; line-height: 1.35; }
-.hero-ctas { display: flex; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
+.hero-tagline { margin-top: 26px; font-size: 18px; font-weight: 600; color: var(--text-on-dark); max-width: 480px; line-height: 1.45; }
+.hero-tagline strong { color: var(--yellow); }
+.hero-ctas { display: flex; gap: 16px; margin-top: 34px; flex-wrap: wrap; }
 .btn {
   display: inline-flex; align-items: center; gap: 10px; padding: 18px 32px;
   font-weight: 800; font-size: 16px; border-radius: 6px;
@@ -235,21 +252,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .ana-powered strong { color: #fff; font-weight: 800; }
 @media (max-width: 900px) { .ana-embed { max-width: 100%; } }
 
-.action-panel {
-  position: absolute; bottom: 28px; right: 32px; z-index: 5;
-  background: rgba(11,26,71,0.92); backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
-  padding: 18px 28px; display: flex; gap: 36px; align-items: center;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-}
-.action-item { display: flex; align-items: center; gap: 12px; cursor: pointer; transition: color 0.18s ease, transform 0.18s ease; }
-.action-item:hover { color: var(--yellow); transform: translateY(-2px); }
-.action-icon { width: 38px; height: 38px; background: var(--navy-700); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; display: grid; place-items: center; color: var(--yellow); }
-.action-icon svg { width: 20px; height: 20px; }
-.action-text { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.15; }
-.action-text small { display: block; font-size: 11px; opacity: 0.7; font-weight: 600; }
-.action-tigre .action-icon { background: linear-gradient(135deg, var(--flame-1), var(--flame-2)); color: #fff; border-color: var(--flame-3); box-shadow: 0 0 20px rgba(255,122,0,0.4); }
-
 .countdown-strip {
   background: linear-gradient(90deg, var(--yellow) 0%, var(--yellow-deep) 100%);
   color: var(--navy-900); padding: 16px 0; font-weight: 800; text-align: center;
@@ -272,25 +274,70 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .patria-inner { position: relative; max-width: 1200px; margin: 0 auto; }
 .patria-badge { display: inline-block; background: var(--yellow); color: var(--navy-900); padding: 10px 28px; border-radius: 99px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 28px; }
-.patria-headline { font-size: clamp(48px, 7vw, 96px); text-transform: uppercase; }
+.patria-headline { font-size: clamp(44px, 6.5vw, 88px); text-transform: uppercase; }
 .patria-headline .word-1 { color: #fff; }
 .patria-headline .word-2 { color: var(--yellow); display: inline-block; }
 .patria-headline .word-3 { background: linear-gradient(180deg, var(--blue-400) 0%, var(--blue-500) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block; }
-.patria-sub { margin-top: 28px; font-size: 19px; color: var(--text-muted); max-width: 720px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.patria-sub { margin-top: 28px; font-size: 19px; color: var(--text-muted); max-width: 760px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.patria-sub strong { color: var(--text-on-dark); }
 
-.propuestas { padding: 80px 32px 120px; background: var(--navy-900); }
+/* ===== Pilares / metas rápidas ===== */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; max-width: 1100px; margin: 56px auto 0; }
+.metric { background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 26px 18px; }
+.metric-num { font-family: 'Anton', sans-serif; font-size: clamp(34px, 4vw, 48px); color: var(--yellow); line-height: 0.95; }
+.metric-label { margin-top: 8px; font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+@media (max-width: 760px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+
+/* ===== Proyectos tecnológicos ===== */
+.propuestas { padding: 90px 32px 70px; background: var(--navy-900); }
 .propuestas-inner { max-width: 1400px; margin: 0 auto; }
 .section-title { font-family: 'Anton', sans-serif; font-size: clamp(40px, 5vw, 64px); text-transform: uppercase; text-align: center; margin-bottom: 12px; color: #fff; }
 .section-kicker { text-align: center; color: var(--yellow); font-weight: 800; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 14px; }
-.section-sub { text-align: center; color: var(--text-muted); max-width: 640px; margin: 0 auto 56px; font-size: 16px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
-.card { background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 28px 26px; position: relative; overflow: hidden; transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
+.section-sub { text-align: center; color: var(--text-muted); max-width: 680px; margin: 0 auto 56px; font-size: 16px; line-height: 1.6; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+.card { background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 30px 28px; position: relative; overflow: hidden; transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--yellow), var(--flame-2)); opacity: 0; transition: opacity 0.25s ease; }
 .card:hover { transform: translateY(-6px); border-color: rgba(255,203,5,0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
 .card:hover::before { opacity: 1; }
-.card-num { font-family: 'Anton', sans-serif; font-size: 56px; line-height: 0.9; color: var(--yellow); opacity: 0.85; margin-bottom: 12px; }
-.card-title { font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; color: #fff; }
-.card-desc { color: var(--text-muted); font-size: 14px; line-height: 1.55; }
+.card-icon { width: 54px; height: 54px; border-radius: 12px; background: rgba(255,203,5,0.1); border: 1px solid rgba(255,203,5,0.25); display: grid; place-items: center; color: var(--yellow); margin-bottom: 18px; }
+.card-icon svg { width: 28px; height: 28px; }
+.card-num { font-family: 'Anton', sans-serif; font-size: 14px; letter-spacing: 0.18em; color: var(--text-muted); opacity: 0.85; margin-bottom: 6px; text-transform: uppercase; }
+.card-title { font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 12px; color: #fff; line-height: 1.15; }
+.card-desc { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.card-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-on-dark); background: rgba(43,85,217,0.18); border: 1px solid rgba(43,85,217,0.4); padding: 5px 11px; border-radius: 99px; }
+.card-promesa { display: block; margin-top: 14px; font-size: 11px; color: var(--yellow); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.9; }
+
+/* ===== Cronograma 100 días ===== */
+.timeline-section { padding: 80px 32px 90px; background: linear-gradient(180deg, var(--navy-900) 0%, #050d26 100%); }
+.timeline-inner { max-width: 1280px; margin: 0 auto; }
+.phases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 12px; }
+.phase { background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 30px 26px; position: relative; }
+.phase-tag { display: inline-block; font-family: 'Anton', sans-serif; font-size: 13px; letter-spacing: 0.12em; color: var(--navy-900); background: var(--yellow); padding: 6px 16px; border-radius: 99px; margin-bottom: 16px; }
+.phase-2 .phase-tag { background: var(--flame-2); color: #fff; }
+.phase-3 .phase-tag { background: var(--green); color: var(--navy-900); }
+.phase-title { font-weight: 800; font-size: 18px; color: #fff; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 18px; }
+.phase ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.phase li { position: relative; padding-left: 26px; font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+.phase li::before { content: ''; position: absolute; left: 0; top: 6px; width: 12px; height: 12px; border-radius: 3px; background: var(--yellow); }
+.phase-2 li::before { background: var(--flame-2); }
+.phase-3 li::before { background: var(--green); }
+.phase li strong { color: var(--text-on-dark); font-weight: 700; }
+@media (max-width: 880px) { .phases { grid-template-columns: 1fr; } }
+
+/* ===== Comunicaciones ===== */
+.comms { padding: 80px 32px 100px; background: #050d26; }
+.comms-inner { max-width: 1280px; margin: 0 auto; }
+.comms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.comm-card { display: flex; gap: 18px; align-items: flex-start; background: linear-gradient(160deg, var(--navy-700) 0%, var(--navy-800) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 26px 24px; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.comm-card:hover { transform: translateY(-4px); border-color: rgba(255,203,5,0.3); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+.comm-icon { width: 46px; height: 46px; border-radius: 10px; background: linear-gradient(135deg, var(--flame-1), var(--flame-2)); display: grid; place-items: center; color: #fff; flex-shrink: 0; box-shadow: 0 0 18px rgba(255,122,0,0.35); }
+.comm-icon svg { width: 22px; height: 22px; }
+.comm-body h4 { font-size: 16px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 8px; }
+.comm-body p { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 12px; }
+.comm-link { font-size: 12px; font-weight: 800; color: var(--yellow); text-transform: uppercase; letter-spacing: 0.06em; display: inline-flex; align-items: center; gap: 6px; }
+.comm-link .arrow { transition: transform 0.18s ease; }
+.comm-card:hover .comm-link .arrow { transform: translateX(4px); }
 
 .footer { background: #03081e; padding: 48px 32px 28px; border-top: 1px solid rgba(255,255,255,0.06); color: var(--text-muted); font-size: 13px; }
 .footer-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
@@ -303,19 +350,15 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 @media (max-width: 1100px) { .nav-links { display: none; } }
 @media (max-width: 900px) {
-  .hero-grid { grid-template-columns: 1fr; padding: 60px 24px 100px; gap: 60px; }
+  .hero-grid { grid-template-columns: 1fr; padding: 56px 24px 90px; gap: 56px; }
   .right-scene { width: 100%; opacity: 0.4; clip-path: none; }
-  .action-panel { position: relative; bottom: auto; right: auto; margin: 32px auto 0; flex-wrap: wrap; gap: 22px; justify-content: center; }
-  .hero-headline { font-size: clamp(64px, 16vw, 110px); }
+  .hero-headline { font-size: clamp(56px, 15vw, 100px); }
   .cathedral { width: 240px; height: 320px; right: 6%; top: 18%; }
 }
 @media (max-width: 600px) {
   .nav-inner { padding: 12px 18px; gap: 14px; }
   .logo { font-size: 20px; }
   .hero-ctas .btn { padding: 14px 22px; font-size: 14px; flex: 1; justify-content: center; }
-  .action-panel { padding: 16px; gap: 14px; }
-  .action-item { flex-direction: column; text-align: center; gap: 6px; }
-  .action-text { font-size: 11px; }
   .countdown-strip { font-size: 13px; padding: 12px 16px; }
 }
 
@@ -333,14 +376,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="#" class="logo" aria-label="Defensores de la Patria">
+    <a href="#" class="logo" aria-label="País Milagro">
       <span class="logo-mark">
-        <span class="l-top">DEFENSORES</span>
-        <span class="l-mid">DE LA</span>
-        <span class="l-bot">PATRIA</span>
+        <span class="l-top">PAÍS</span>
+        <span class="l-mid">GOBIERNO</span>
+        <span class="l-bot">MILAGRO</span>
       </span>
     </a>
-    <div class="nav-links"></div>
+    <div class="nav-links">
+      <a href="#proyectos">Proyectos</a>
+      <a href="#cronograma">100 Días</a>
+      <a href="#comunicaciones">Comunicaciones</a>
+    </div>
+    <a href="#comunicaciones" class="nav-cta">Sala de prensa</a>
   </div>
 </nav>
 
@@ -374,18 +422,20 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
   <div class="hero-grid">
     <div class="hero-text">
+      <span class="hero-kicker reveal reveal-1"><span class="dot"></span>Presidente electo · Abelardo de la Espriella</span>
       <h1 class="hero-headline display reveal reveal-1">
-        <span class="h-ruge">Ruge la</span>
-        <span class="h-patria">Patria</span>
-        <span class="h-milagro">Milagro</span>
+        <span class="h-ruge">Primeros</span>
+        <span class="h-patria">100 Días</span>
+        <span class="h-milagro">Digitales</span>
       </h1>
       <p class="hero-tagline reveal reveal-2">
-        Este 21 de junio, de nuevo,<br />
-        póngale la raya al Tigre.
+        De la campaña al gobierno. El plan tecnológico del <strong>País Milagro</strong>:
+        resultados tangibles y verificables desde el primer día. No somos mercaderes de ilusiones,
+        somos empresarios de realidades.
       </p>
       <div class="hero-ctas reveal reveal-3">
-        <a href="https://defensoresdelapatria.com/abelardo-de-la-espriella-wikipedia-biografia/como-votar-por-abelardo-de-la-espriella-y-jose-manuel-restrepo/" class="btn btn-yellow">Cómo votar por El Tigre <span class="arrow">→</span></a>
-        <a href="https://defensoresdelapatria.com/colombia-patria-milagro/" class="btn btn-outline">Propuestas <span class="arrow">→</span></a>
+        <a href="#proyectos" class="btn btn-yellow">Ver el plan tecnológico <span class="arrow">→</span></a>
+        <a href="#comunicaciones" class="btn btn-outline">Comunicaciones <span class="arrow">→</span></a>
       </div>
     </div>
 
@@ -396,14 +446,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
           <div class="ana-avatar">A</div>
           <div>
             <div class="ana-title">Habla con Ana</div>
-            <div class="ana-sub">Asistente IA · En vivo</div>
+            <div class="ana-sub">Asistente IA del Gobierno · En vivo</div>
           </div>
         </div>
 
         <p class="ana-prompt">
-          Soy <strong>Ana</strong>, la asistente virtual del doctor Abelardo de la Espriella.
-          Toca la imagen para conversar conmigo sobre las propuestas, la trayectoria del Tigre
-          o cómo votar el 21 de junio.
+          Soy <strong>Ana</strong>, la asistente de inteligencia artificial del Gobierno del País Milagro.
+          Toca la imagen para preguntarme por el plan de los <strong>primeros 100 días</strong>,
+          los proyectos tecnológicos o cómo te benefician.
         </p>
 
         <div class="ana-photo-wrap" role="button" tabindex="0"
@@ -413,7 +463,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
           <img
             class="ana-photo"
             src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a148dae069d64aa5d326c80.jpg"
-            alt="Ana, asistente virtual de la campaña de Abelardo de la Espriella"
+            alt="Ana, asistente de inteligencia artificial del Gobierno del País Milagro"
             loading="eager" />
           <div class="ana-photo-cta">
             <span class="ana-cta-dot"></span>
@@ -422,76 +472,196 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
         </div>
 
         <p class="ana-foot">
-          Conversación con inteligencia artificial. Tus preguntas ayudan a la campaña.
+          Conversación con inteligencia artificial. Atención ciudadana 24/7.
         </p>
         <a class="ana-powered" href="https://digit2ai.com" target="_blank" rel="noopener">Powered by <strong>DIGIT2AI</strong></a>
       </div>
     </div>
   </div>
-
-  <div class="action-panel reveal reveal-5">
-    <div class="action-item action-tigre">
-      <div class="action-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg></div>
-      <div class="action-text">La voz<br/>del Tigre<small>Audios oficiales</small></div>
-    </div>
-    <div class="action-item">
-      <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8m0 0v8m0-8h8m-8 0H4"/><circle cx="12" cy="20" r="2" fill="currentColor"/></svg></div>
-      <div class="action-text">Discursos<small>En vivo</small></div>
-    </div>
-    <div class="action-item">
-      <div class="action-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div>
-      <div class="action-text">Nuestros<br/>Valores<small>Manifiesto</small></div>
-    </div>
-    <div class="action-item">
-      <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="4"/><path d="M2 22c0-4 3-7 7-7s7 3 7 7"/><circle cx="17" cy="6" r="3"/><path d="M14 22c0-3 2-5 5-5s5 2 5 5"/></svg></div>
-      <div class="action-text">Únete<small>Sé Defensor</small></div>
-    </div>
-  </div>
 </section>
 
 <div class="countdown-strip">
-  Faltan <span id="days">18</span> días — Segunda vuelta presidencial: domingo 21 de junio de 2026
+  Faltan <span id="days">46</span> días para la posesión presidencial — viernes 7 de agosto de 2026
 </div>
 
 <section class="patria-section">
   <div class="patria-inner">
     <span class="patria-badge">Colombia Patria Milagro</span>
     <h2 class="patria-headline display">
-      <span class="word-1">Colombia</span>
-      <span class="word-2">Patria</span>
-      <span class="word-3">Milagro</span>
+      <span class="word-1">Del Plan</span>
+      <span class="word-2">a los</span>
+      <span class="word-3">Hechos</span>
     </h2>
     <p class="patria-sub">
-      No somos mercaderes de ilusiones. Somos empresarios de realidades.
-      El 7 de agosto comienza la reconstrucción de la patria: seguridad sin concesiones,
-      austeridad republicana y un Estado al servicio de la gente que trabaja, madruga y cumple.
+      El 7 de agosto comienza la reconstrucción de la patria. La tecnología deja de ser promesa y se vuelve
+      gestión: <strong>un Estado transparente, conectado y al servicio de la gente que trabaja, madruga y cumple.</strong>
+      Estas son las metas tecnológicas que mediremos en público, día a día, durante los primeros 100 días.
     </p>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-num">100%</div><div class="metric-label">Contratos en Blockchain 2030</div></div>
+      <div class="metric"><div class="metric-num">50</div><div class="metric-label">Trámites en línea sin papel</div></div>
+      <div class="metric"><div class="metric-num">1.000</div><div class="metric-label">Veredas con conectividad gratuita</div></div>
+      <div class="metric"><div class="metric-num">24/7</div><div class="metric-label">Atención ciudadana con IA</div></div>
+    </div>
   </div>
 </section>
 
-<section id="propuestas" class="propuestas">
+<section id="proyectos" class="propuestas">
   <div class="propuestas-inner">
-    <div class="section-kicker">Trece propuestas del Tigre</div>
-    <h3 class="section-title">El Plan País Milagro</h3>
+    <div class="section-kicker">Proyectos tecnológicos del País Milagro</div>
+    <h3 class="section-title">El Plan Tecnológico</h3>
     <p class="section-sub">
-      El gran camino de los nunca. Seguridad, economía y salud como ejes;
-      familia, propiedad, trabajo, fe y patria como pilares. Sentido común aplicado a la nación.
+      Seis iniciativas nacen de las propuestas de campaña y arrancan en los primeros 100 días.
+      Tecnología con sentido común: transparencia, educación, conectividad y un Estado que responde.
     </p>
 
     <div class="cards">
-      <article class="card"><div class="card-num">01</div><h4 class="card-title">Salvación nacional</h4><p class="card-desc">Convertir la elección en una decisión histórica de defensa de la patria frente al autoritarismo, la violencia criminal, la corrupción y el narcotráfico.</p></article>
-      <article class="card"><div class="card-num">02</div><h4 class="card-title">Reconstrucción institucional</h4><p class="card-desc">Limpieza inmediata en las cabezas de las instituciones públicas, empezando por Ecopetrol, para erradicar narcotráfico y corrupción.</p></article>
-      <article class="card"><div class="card-num">03</div><h4 class="card-title">Los nunca vistos</h4><p class="card-desc">Centrar la mirada del Estado en los colombianos olvidados y darles prioridad en las políticas públicas.</p></article>
-      <article class="card"><div class="card-num">04</div><h4 class="card-title">100 días de resultados</h4><p class="card-desc">Cambios tangibles y verificables desde los primeros cien días de gobierno. Resultados, no excusas.</p></article>
-      <article class="card"><div class="card-num">05</div><h4 class="card-title">Patriotismo constitucional</h4><p class="card-desc">Que la Constitución vuelva a ser el límite del poder: no a la constituyente y defensa de las instituciones independientes.</p></article>
-      <article class="card"><div class="card-num">06</div><h4 class="card-title">Seguridad sin concesiones</h4><p class="card-desc">Con los criminales no habrá negociación. Destruir la coca, recuperar el territorio, 10 megacárceles, fuerza de tarea contra la extorsión y reservistas en la seguridad ciudadana.</p></article>
-      <article class="card"><div class="card-num">07</div><h4 class="card-title">Anticorrupción radical</h4><p class="card-desc">Bloque de Búsqueda contra la corrupción, extinción de dominio exprés y blockchain en la contratación pública (Blockchain 2030).</p></article>
-      <article class="card"><div class="card-num">08</div><h4 class="card-title">Plan de choque en salud</h4><p class="card-desc">Inyectar $10 billones, auditar la deuda del sector, ajustar la UPC, proteger a pacientes crónicos y recuperar el acceso a medicamentos.</p></article>
-      <article class="card"><div class="card-num">09</div><h4 class="card-title">Crecimiento económico</h4><p class="card-desc">Pasar del 3% al 7% de crecimiento con desregulación, reducción de impuestos, orden fiscal y 200 mil nuevos empleos.</p></article>
-      <article class="card"><div class="card-num">10</div><h4 class="card-title">Energía y minería</h4><p class="card-desc">Reactivar la exploración petrolera, asegurar la autosuficiencia energética, diferenciar la minería legal de la criminal y defender a Ecopetrol.</p></article>
-      <article class="card"><div class="card-num">11</div><h4 class="card-title">Educación transformadora</h4><p class="card-desc">Universidad Virtual en Casa, ciclos cortos en tecnología, evaluación docente, créditos blandos para talentos y conectividad gratuita.</p></article>
-      <article class="card"><div class="card-num">12</div><h4 class="card-title">Mujeres: protección y autonomía</h4><p class="card-desc">Reducir la violencia contra las mujeres en 30% y los feminicidios en 40%, con subsidios maternales y $500 mil millones para su autonomía económica.</p></article>
-      <article class="card"><div class="card-num">13</div><h4 class="card-title">Desarrollo rural integral</h4><p class="card-desc">Ampliar la frontera productiva en 2 millones de hectáreas, crear 600 mil empleos rurales y fundar la Escuela de Emprendedores Rurales.</p></article>
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7.5h4M7.5 11v2M16.5 11v2"/></svg></div>
+        <div class="card-num">Proyecto 01</div>
+        <h4 class="card-title">Blockchain 2030</h4>
+        <p class="card-desc">Toda la contratación pública en una cadena de bloques inmutable y auditable por cualquier ciudadano. Cada peso del Estado, trazable en tiempo real. Piloto en Ecopetrol desde el día uno.</p>
+        <div class="card-tags"><span class="card-tag">Anticorrupción</span><span class="card-tag">Transparencia</span></div>
+        <span class="card-promesa">Propuesta 07 · Anticorrupción radical</span>
+      </article>
+
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></svg></div>
+        <div class="card-num">Proyecto 02</div>
+        <h4 class="card-title">Universidad Virtual en Casa</h4>
+        <p class="card-desc">Plataforma nacional de educación a distancia con ciclos cortos en tecnología, gratis para todos. Formación que llega a quien nunca tuvo acceso a un aula universitaria.</p>
+        <div class="card-tags"><span class="card-tag">Educación</span><span class="card-tag">Empleo digital</span></div>
+        <span class="card-promesa">Propuesta 11 · Educación transformadora</span>
+      </article>
+
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg></div>
+        <div class="card-num">Proyecto 03</div>
+        <h4 class="card-title">Conectividad Nacional Gratuita</h4>
+        <p class="card-desc">Internet libre para las veredas y los municipios olvidados. Conectividad como derecho, no como privilegio, para que los nunca vistos entren a la economía digital.</p>
+        <div class="card-tags"><span class="card-tag">Conectividad</span><span class="card-tag">Ruralidad</span></div>
+        <span class="card-promesa">Propuestas 03 y 11 · Los nunca vistos</span>
+      </article>
+
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+        <div class="card-num">Proyecto 04</div>
+        <h4 class="card-title">Estado Digital</h4>
+        <p class="card-desc">Trámites del ciudadano 100% en línea, sin filas ni papel. Una ventanilla única digital que ahorra tiempo, cierra puertas a la corrupción y entrega resultados verificables.</p>
+        <div class="card-tags"><span class="card-tag">Gobierno en línea</span><span class="card-tag">Eficiencia</span></div>
+        <span class="card-promesa">Propuesta 04 · 100 días de resultados</span>
+      </article>
+
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1 0 8v1a4 4 0 0 1-8 0v-1a4 4 0 0 1 0-8V6a4 4 0 0 1 4-4z"/><path d="M12 7v10M8.5 11h7"/></svg></div>
+        <div class="card-num">Proyecto 05</div>
+        <h4 class="card-title">Ana · IA Ciudadana</h4>
+        <p class="card-desc">Asistente de inteligencia artificial del Estado, disponible 24/7 para resolver dudas, orientar trámites y acercar el gobierno a cada colombiano en lenguaje claro.</p>
+        <div class="card-tags"><span class="card-tag">Inteligencia artificial</span><span class="card-tag">Atención 24/7</span></div>
+        <span class="card-promesa">Atención ciudadana digital</span>
+      </article>
+
+      <article class="card">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></div>
+        <div class="card-num">Proyecto 06</div>
+        <h4 class="card-title">Bloque de Búsqueda Digital</h4>
+        <p class="card-desc">Analítica de datos e inteligencia artificial contra la corrupción, la extorsión y los dineros del narcotráfico. Cruces de información para detectar y perseguir el delito en tiempo real.</p>
+        <div class="card-tags"><span class="card-tag">Seguridad</span><span class="card-tag">Datos</span></div>
+        <span class="card-promesa">Propuestas 06 y 07 · Seguridad sin concesiones</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="cronograma" class="timeline-section">
+  <div class="timeline-inner">
+    <div class="section-kicker">Cronograma de gobierno</div>
+    <h3 class="section-title">Los Primeros 100 Días</h3>
+    <p class="section-sub">
+      Tres fases, metas medibles y un tablero público de resultados. Lo que prometimos en campaña,
+      en marcha desde el 7 de agosto.
+    </p>
+
+    <div class="phases">
+      <div class="phase phase-1">
+        <span class="phase-tag">Días 1 — 30</span>
+        <h4 class="phase-title">Encender el motor</h4>
+        <ul>
+          <li><strong>Decreto de Transparencia Digital</strong> y apertura del tablero público de resultados.</li>
+          <li><strong>Blockchain 2030</strong>: piloto de contratación en Ecopetrol con trazabilidad pública.</li>
+          <li><strong>Ana IA Ciudadana</strong> activada para atención 24/7 en línea.</li>
+          <li>Inventario nacional de conectividad: dónde está el internet y dónde falta.</li>
+        </ul>
+      </div>
+      <div class="phase phase-2">
+        <span class="phase-tag">Días 31 — 60</span>
+        <h4 class="phase-title">Conectar y formar</h4>
+        <ul>
+          <li><strong>Universidad Virtual en Casa</strong>: lanzamiento beta con los primeros ciclos cortos en tecnología.</li>
+          <li>Primeras <strong>veredas con conectividad gratuita</strong> encendidas.</li>
+          <li>Ampliación de Blockchain 2030 a nuevas entidades del Estado.</li>
+          <li>Arranca el <strong>Bloque de Búsqueda Digital</strong> contra corrupción y extorsión.</li>
+        </ul>
+      </div>
+      <div class="phase phase-3">
+        <span class="phase-tag">Días 61 — 100</span>
+        <h4 class="phase-title">Entregar resultados</h4>
+        <ul>
+          <li><strong>Estado Digital</strong>: primeros 50 trámites ciudadanos 100% en línea, sin papel.</li>
+          <li>Meta de <strong>1.000 veredas</strong> conectadas y en ruta de expansión.</li>
+          <li>Primer informe público de resultados verificables de los 100 días.</li>
+          <li>Hoja de ruta tecnológica del cuatrienio presentada al país.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="comunicaciones" class="comms">
+  <div class="comms-inner">
+    <div class="section-kicker">Sala de prensa del País Milagro</div>
+    <h3 class="section-title">Comunicaciones</h3>
+    <p class="section-sub">
+      Información oficial, directa y sin intermediarios. Todo lo que el gobierno comunica, en un solo lugar.
+    </p>
+
+    <div class="comms-grid">
+      <div class="comm-card">
+        <div class="comm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 0 1-5.8-1.6"/></svg></div>
+        <div class="comm-body">
+          <h4>Boletines oficiales</h4>
+          <p>Comunicados y decretos del gobierno publicados en tiempo real, con lenguaje claro para todos.</p>
+          <a class="comm-link" href="https://defensoresdelapatria.com/" target="_blank" rel="noopener">Ver boletines <span class="arrow">→</span></a>
+        </div>
+      </div>
+
+      <div class="comm-card">
+        <div class="comm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></div>
+        <div class="comm-body">
+          <h4>La voz del Tigre</h4>
+          <p>Discursos, audios oficiales y mensajes del Presidente directamente a los colombianos.</p>
+          <a class="comm-link" href="#" onclick="openAna();return false;">Escuchar <span class="arrow">→</span></a>
+        </div>
+      </div>
+
+      <div class="comm-card">
+        <div class="comm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+        <div class="comm-body">
+          <h4>Tablero de resultados</h4>
+          <p>Seguimiento público y verificable del avance de los primeros 100 días, proyecto por proyecto.</p>
+          <a class="comm-link" href="#cronograma">Ver avance <span class="arrow">→</span></a>
+        </div>
+      </div>
+
+      <div class="comm-card">
+        <div class="comm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="4"/><path d="M2 22c0-4 3-7 7-7s7 3 7 7"/><circle cx="17" cy="6" r="3"/><path d="M14 22c0-3 2-5 5-5s5 2 5 5"/></svg></div>
+        <div class="comm-body">
+          <h4>Pregúntale a Ana</h4>
+          <p>Resuelve cualquier duda sobre el plan, los proyectos o tus trámites con la asistente de IA del gobierno.</p>
+          <a class="comm-link" href="#" onclick="openAna();return false;">Hablar con Ana <span class="arrow">→</span></a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -499,10 +669,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 <footer class="footer">
   <div class="footer-inner">
     <div>
-      © 2026 Movimiento Defensores de la Patria · Todos los derechos reservados<br/>
+      © 2026 Gobierno del País Milagro · Presidencia de la República de Colombia<br/>
       <span style="opacity:0.7;">defensoresdelapatria.app · Bogotá, Colombia</span>
     </div>
-    <a href="https://unete.defensoresdelapatria.com/" class="footer-cta">Únete al Movimiento →</a>
+    <a href="https://unete.defensoresdelapatria.com/" class="footer-cta">Súmate a la reconstrucción →</a>
   </div>
   <div class="footer-powered">
     <a href="https://digit2ai.com" target="_blank" rel="noopener">Powered by <strong>DIGIT2AI</strong></a>
@@ -513,11 +683,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 <script>
   (function () {
-    const electionDate = new Date('2026-06-21T00:00:00-05:00');
+    // Cuenta regresiva hacia la posesión presidencial
+    const inaugurationDate = new Date('2026-08-07T00:00:00-05:00');
     const daysEl = document.getElementById('days');
     if (daysEl) {
       const now = new Date();
-      const diff = Math.max(0, Math.ceil((electionDate - now) / (1000 * 60 * 60 * 24)));
+      const diff = Math.max(0, Math.ceil((inaugurationDate - now) / (1000 * 60 * 60 * 24)));
       daysEl.textContent = diff;
     }
   })();
