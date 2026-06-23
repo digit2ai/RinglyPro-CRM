@@ -1077,6 +1077,17 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     return h;
   }
 
+  // Multi-seleccion (sin opcion vacia) para campos que aceptan varios paises,
+  // p.ej. la lista de paises objetivo de un proyecto P2B.
+  function countryOptionsMulti(selected) {
+    var sel = Array.isArray(selected) ? selected.map(String) : [];
+    var h = '';
+    CHAMBER_COUNTRIES.forEach(function(c) {
+      h += '<option value="'+esc(c)+'"'+(sel.indexOf(c)!==-1?' selected':'')+'>'+esc(c)+'</option>';
+    });
+    return h;
+  }
+
   // Idiomas restringidos a English / Spanish. Multi-seleccion via checkboxes.
   var CHAMBER_LANGUAGES = ['English', 'Spanish'];
 
@@ -1780,7 +1791,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group full"><label>Describe what you need</label><textarea id="matchQuery" rows="3" placeholder="E.g.: I need a healthcare partner in Orlando with insurance billing experience"></textarea></div>';
     html += '<div class="form-group"><label>Sector</label><select id="matchSector">'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Region</label><select id="matchRegion">'+regionOptions()+'</select></div>';
-    html += '<div class="form-group"><label>Pais</label><input id="matchCountry" placeholder="e.g. United States"></div>';
+    html += '<div class="form-group"><label>Pais</label><select id="matchCountry">'+countryOptions(null,'Todos los paises')+'</select></div>';
     html += '<div class="form-group" style="display:flex;gap:8px;align-items:flex-end">';
     html += '<button class="btn btn-primary" id="matchBtn" style="margin-top:20px">Buscar</button>';
     html += '<button class="btn btn-outline" id="saveSearchBtn" style="margin-top:20px" title="Guardar esta busqueda">Guardar busqueda</button>';
@@ -2800,7 +2811,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<option value="small">Pequeno ($50k-$200k)</option>';
     html += '<option value="medium" selected>Mediano ($200k-$1M)</option>';
     html += '<option value="large">Grande ($1M+)</option></select></div>';
-    html += '<div class="form-group full"><label>Paises (separados por coma)</label><input name="countries" placeholder="USA, Mexico, Espana, Argentina"></div>';
+    html += '<div class="form-group full"><label>Paises (manten Ctrl/Cmd para elegir varios)</label><select name="countries" multiple size="6" required>'+countryOptionsMulti()+'</select></div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generar Plan de Negocio con IA</button></div>';
     html += '</form>';
     openModal(html);
@@ -2812,17 +2823,25 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         vision: fd.get('vision'),
         sector: fd.get('sector'),
         budget_tier: fd.get('budget_tier'),
-        countries: fd.get('countries') ? fd.get('countries').split(',').map(function(c){return c.trim();}).filter(Boolean) : []
+        countries: fd.getAll('countries').filter(Boolean)
       };
       var stopDrafting = showDraftingOverlay('Generando tu plan');
 
       try {
         var res = await apiFetch('/projects/draft', { method:'POST', body:JSON.stringify(body) });
-        stopDrafting(res.success);
         if (res.success) {
+          // Cadena: tras redactar el plan, corre el agente AI Score (IRS) sobre el
+          // proyecto recien creado para que el plan nazca ya calificado.
+          var st = document.getElementById('draftStatus');
+          if (st) st.textContent = 'Calculando AI Score de inversion...';
+          try {
+            await apiFetch('/projects/'+res.data.project_id+'/compute-irs', { method:'POST', body: JSON.stringify({ useAi: true }) });
+          } catch (scoreErr) { /* el plan ya existe; el AI Score puede recalcularse desde el detalle */ }
+          stopDrafting(true);
           loadProjects();
           showPlanEditor(res.data.project_id, res.data.plan_json);
         } else {
+          stopDrafting(false);
           openModal('<div class="error-msg">'+(res.error||'Error al generar el plan')+'</div>'
             + '<div style="margin-top:12px"><button class="btn btn-outline" id="draftBackBtn">Volver</button></div>');
           var bk = document.getElementById('draftBackBtn');
