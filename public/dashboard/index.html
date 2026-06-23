@@ -888,8 +888,22 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     if (await handleStripeReturn()) {
       // Token now stored; fall through to normal flow
     }
+    // Magic-link invitation: ?invite=<token>. Handled after auth below; if the
+    // visitor is not logged in, send them to login with a contextual message
+    // (the token survives the post-login reload and is picked up below).
+    var inviteTok = new URLSearchParams(location.search).get('invite');
     var token = getToken();
-    if (!token) { showLoginScreen(); return; }
+    if (!token) {
+      if (inviteTok) {
+        try {
+          var pv = await (await fetch(API + '/projects/invite/' + encodeURIComponent(inviteTok))).json();
+          var ptitle = (pv && pv.success && pv.data) ? pv.data.title : null;
+          showLoginScreen(ptitle ? ('Inicia sesion o registrate para unirte al proyecto: ' + ptitle) : null);
+          return;
+        } catch(e) { /* fall through to plain login */ }
+      }
+      showLoginScreen(); return;
+    }
 
     var decoded = decodeJWT(token);
     if (!decoded) { logout(); return; }
@@ -923,6 +937,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     loadInboxBadge();
     setInterval(loadInvBadge, 60000); // refresh badge every minute
     setInterval(loadInboxBadge, 60000); // refresh unread DMs every minute
+
+    // Authenticated visitor arriving via a magic invite link -> show the
+    // join prompt for the invited project.
+    if (inviteTok) { showInvitePreview(inviteTok, true); }
   }
 
   // -- Navigation --
@@ -2959,9 +2977,30 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           triage: t
         }) });
         if (res.success) {
-          closeModal();
+          // Crea de inmediato el enlace magico (magic link) para que la junta
+          // pueda invitar participantes al proyecto recien triado.
+          var pid = res.data.project_id;
+          var linkHtml = '';
+          try {
+            var lk = await apiFetch('/projects/'+pid+'/invite-link');
+            if (lk.success) {
+              var url = inviteUrl(lk.data.token);
+              linkHtml = '<div style="border:1px dashed var(--gray-300);border-radius:8px;padding:12px;margin:12px 0">'
+                + '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Enlace de invitacion (magic link)</div>'
+                + '<div class="text-sm text-muted" style="margin-bottom:8px">Comparte este enlace con la junta o con los candidatos: al abrirlo e iniciar sesion se unen como participantes.</div>'
+                + '<input id="savedInviteField" readonly value="'+esc(url)+'" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--gray-300);border-radius:6px;margin-bottom:8px;box-sizing:border-box">'
+                + '<button class="btn btn-primary btn-sm" id="savedCopyBtn" data-url="'+esc(url)+'">Copiar enlace</button></div>';
+            }
+          } catch(e) { /* el enlace puede generarse luego desde el detalle */ }
+          var okHtml = '<h2 style="margin-bottom:6px">Proyecto creado</h2>';
+          okHtml += '<div class="text-muted text-sm mb-16">El triage se guardo como proyecto.</div>';
+          okHtml += linkHtml;
+          okHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="viewSavedProjBtn">Ver proyecto</button></div>';
+          openModal(okHtml);
           loadProjects();
-          showProjectDetail(res.data.project_id);
+          var cpy = document.getElementById('savedCopyBtn');
+          if (cpy) cpy.addEventListener('click', function(){ copyInviteUrl(this.getAttribute('data-url'), this); });
+          document.getElementById('viewSavedProjBtn').addEventListener('click', function(){ showProjectDetail(pid); });
         } else {
           this.disabled = false; this.textContent = orig;
           msg.innerHTML = '<div class="error-msg">'+esc(res.error||'Error al guardar')+'</div>';
@@ -2972,6 +3011,95 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       }
     });
   }
+
+  // ================================================================
+  // Project invite "magic link" -- the board shares this so candidates
+  // can open it, log in (or sign up), and join the project as participants.
+  // ================================================================
+  function inviteUrl(token) {
+    return location.origin + (BASE || '') + '/dashboard/?invite=' + encodeURIComponent(token);
+  }
+
+  function copyInviteUrl(url, btn) {
+    function done(){ if (btn) { var t = btn.textContent; btn.textContent = 'Copiado!'; setTimeout(function(){ btn.textContent = t; }, 1800); } }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done).catch(function(){
+        var f = document.getElementById('savedInviteField') || document.getElementById('inviteUrlField');
+        if (f) { f.select(); try { document.execCommand('copy'); } catch(e){} }
+        done();
+      });
+    } else {
+      var f2 = document.getElementById('savedInviteField') || document.getElementById('inviteUrlField');
+      if (f2) { f2.select(); try { document.execCommand('copy'); } catch(e){} }
+      done();
+    }
+  }
+
+  // Render the invite-link generator UI into #inviteLinkBox (used in the
+  // project detail for the proposer / board).
+  async function generateInviteLink(pid) {
+    var box = document.getElementById('inviteLinkBox');
+    if (!box) return;
+    box.innerHTML = '<span class="text-muted text-sm">Generando enlace...</span>';
+    try {
+      var r = await apiFetch('/projects/'+pid+'/invite-link');
+      if (!r.success) { box.innerHTML = '<div class="error-msg">'+esc(r.error||'Error')+'</div>'; return; }
+      var url = inviteUrl(r.data.token);
+      var subj = encodeURIComponent('Invitacion a participar en un proyecto - Camara Virtual');
+      var bodyM = encodeURIComponent('Hola,\n\nTe invito a unirte a este proyecto en Camara Virtual:\n'+url+'\n\nAbre el enlace e inicia sesion (o registrate) para unirte como participante.\n\nSaludos.');
+      box.innerHTML = ''
+        + '<input id="inviteUrlField" readonly value="'+esc(url)+'" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--gray-300);border-radius:6px;margin-bottom:8px;box-sizing:border-box">'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        + '<button class="btn btn-primary btn-sm" id="copyInviteBtn" data-url="'+esc(url)+'">Copiar enlace</button>'
+        + '<a class="btn btn-outline btn-sm" href="mailto:?subject='+subj+'&body='+bodyM+'">Compartir por correo</a>'
+        + '</div>';
+      document.getElementById('copyInviteBtn').addEventListener('click', function(){ copyInviteUrl(this.getAttribute('data-url'), this); });
+    } catch(e) { box.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+  }
+
+  // Show the invitation landing when a member opens a magic link
+  // (?invite=<token>). authed=true -> can join now; false -> must log in.
+  async function showInvitePreview(token, authed) {
+    try {
+      var res = await fetch(API + '/projects/invite/' + encodeURIComponent(token));
+      var data = await res.json();
+      if (!data.success) return;
+      var d = data.data;
+      var html = '<h2 style="margin-bottom:6px">Invitacion a proyecto</h2>';
+      html += '<div class="text-muted text-sm mb-16">'+esc(d.proposer_name||'La junta')+' te invita a unirte como participante.</div>';
+      html += '<div style="font-weight:700;font-size:16px;margin-bottom:4px">'+esc(d.title)+'</div>';
+      var subline = esc(d.sector||'');
+      if (d.countries && d.countries.length) subline += (subline?' &middot; ':'') + esc(d.countries.join(', '));
+      if (subline) html += '<div class="text-sm text-muted" style="margin-bottom:12px">'+subline+'</div>';
+      if (d.triage) html += renderTriageVerdict(d.triage);
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">';
+      if (authed) {
+        html += '<button class="btn btn-primary" id="acceptInviteBtn" data-token="'+esc(token)+'">Unirme al proyecto</button>';
+        html += '<button class="btn btn-outline" id="declineInviteBtn">Ahora no</button>';
+      } else {
+        html += '<button class="btn btn-primary" id="loginToJoinBtn">Inicia sesion para unirme</button>';
+      }
+      html += '</div><div id="inviteMsg" style="margin-top:10px"></div>';
+      openModal(html);
+
+      if (authed) {
+        document.getElementById('acceptInviteBtn').addEventListener('click', async function() {
+          this.disabled = true; this.textContent = 'Uniendo...';
+          var m = document.getElementById('inviteMsg');
+          try {
+            var r = await apiFetch('/projects/invite/'+encodeURIComponent(this.getAttribute('data-token'))+'/accept', { method:'POST' });
+            if (r.success) { clearInviteParam(); closeModal(); loadProjects(); showProjectDetail(r.data.project_id); }
+            else { this.disabled = false; this.textContent = 'Unirme al proyecto'; m.innerHTML = '<div class="error-msg">'+esc(r.error||'Error')+'</div>'; }
+          } catch(e) { this.disabled = false; this.textContent = 'Unirme al proyecto'; m.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>'; }
+        });
+        document.getElementById('declineInviteBtn').addEventListener('click', function(){ clearInviteParam(); closeModal(); });
+      } else {
+        document.getElementById('loginToJoinBtn').addEventListener('click', function(){ closeModal(); showLoginScreen(); });
+      }
+    } catch(e) { /* enlace invalido -> se ignora silenciosamente */ }
+  }
+
+  function clearInviteParam() { try { history.replaceState({}, '', location.pathname); } catch(e){} }
 
   // Overlay con barra de progreso mientras la IA redacta el plan.
   function showDraftingOverlay(title) {
@@ -4490,7 +4618,18 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         if (p.countries && p.countries.length) th += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Paises</td><td style="font-size:13px">'+esc((p.countries||[]).join(', '))+'</td></tr>';
         th += '</table>';
         th += renderTriageVerdict(p.plan_json.triage || {});
+        var vrT = p.viewer_role || {};
+        if (vrT.is_proposer || vrT.is_superadmin) {
+          th += '<div style="border:1px dashed var(--gray-300);border-radius:8px;padding:12px;margin-top:14px">';
+          th += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Invitar participantes</div>';
+          th += '<div class="text-sm text-muted" style="margin-bottom:8px">Genera un enlace magico y compartelo con la junta o con los candidatos para que se unan al proyecto.</div>';
+          th += '<button class="btn btn-outline btn-sm" id="genInviteLinkBtn" data-pid="'+p.id+'">Generar enlace de invitacion</button>';
+          th += '<div id="inviteLinkBox" style="margin-top:10px"></div>';
+          th += '</div>';
+        }
         openModal(th);
+        var gib = document.getElementById('genInviteLinkBtn');
+        if (gib) gib.addEventListener('click', function(){ generateInviteLink(this.dataset.pid); });
         return;
       }
 

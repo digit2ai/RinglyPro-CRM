@@ -8,7 +8,7 @@
  */
 const express = require('express');
 const crypto = require('crypto');
-const { sequelize, QueryTypes, authMiddleware, isSuperadmin } = require('./lib/shared');
+const { sequelize, QueryTypes, jwt, JWT_SECRET, authMiddleware, isSuperadmin } = require('./lib/shared');
 const { scoreMember } = require('./lib/scoring');
 const { runCascade, maybeAutoClose } = require('./lib/p2b-cascade');
 const { autoInitWorkspaceFromPlan } = require('./lib/workspace-init');
@@ -17,6 +17,27 @@ const ical = require('../../../chamber-template/lib/ical');
 
 const router = express.Router();
 const LIFECYCLE_PHASES = ['proposal', 'analysis', 'team', 'resources', 'execution', 'completed'];
+
+// ---------------------------------------------------------------------
+// Project invite "magic link" tokens (stateless, signed JWT -- no table).
+// The board/proposer generates a link; any chamber member who opens it can
+// join the project as a participant. Mirrors the self-contained token
+// pattern used for member password-reset links.
+// ---------------------------------------------------------------------
+const INVITE_TOKEN_EXPIRY = '45d';
+function signInviteToken(chamberId, projectId) {
+  return jwt.sign(
+    { chamber_id: chamberId, project_id: projectId, type: 'project_invite' },
+    JWT_SECRET,
+    { expiresIn: INVITE_TOKEN_EXPIRY }
+  );
+}
+function verifyInviteToken(token, chamberId) {
+  const d = jwt.verify(token, JWT_SECRET);
+  if (d.type !== 'project_invite') throw new Error('Not a project invite token');
+  if (chamberId != null && d.chamber_id !== chamberId) throw new Error('Token does not match this chamber');
+  return d;
+}
 
 // =====================================================================
 // LIST (with scope filter: mine | invited | open_rfq | all)
@@ -284,6 +305,100 @@ router.post('/triage', authMiddleware, async (req, res) => {
     return res.status(201).json({ success: true, data: { project_id: result[0].id, plan_json: planJson } });
   } catch (err) {
     console.error('[unified triage-draft]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// Magic-link invite: PUBLIC preview (no auth). Chamber-resolver still sets
+// req.chamber_id. Returns just enough to render an invitation landing.
+// Placed BEFORE /:id so the literal "invite" segment wins.
+// =====================================================================
+router.get('/invite/:token', async (req, res) => {
+  try {
+    let decoded;
+    try { decoded = verifyInviteToken(req.params.token, req.chamber_id); }
+    catch (e) { return res.status(400).json({ success: false, error: 'Enlace de invitacion invalido o expirado' }); }
+
+    const [proj] = await sequelize.query(
+      `SELECT p.id, p.title, p.sector, p.countries, p.description, p.plan_json, p.plan_status, p.status,
+              m.first_name || ' ' || m.last_name AS proposer_name
+       FROM projects p LEFT JOIN members m ON m.id = p.proposer_member_id
+       WHERE p.chamber_id = :c AND p.id = :id`,
+      { replacements: { c: req.chamber_id, id: decoded.project_id }, type: QueryTypes.SELECT }
+    );
+    if (!proj) return res.status(404).json({ success: false, error: 'Proyecto no encontrado' });
+
+    let triage = null;
+    if (proj.plan_json && proj.plan_json.__kind === 'triage') triage = proj.plan_json.triage;
+    return res.json({
+      success: true,
+      data: {
+        project_id: proj.id, title: proj.title, sector: proj.sector, countries: proj.countries,
+        description: proj.description, proposer_name: proj.proposer_name,
+        plan_status: proj.plan_status, status: proj.status, triage
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// Magic-link invite: ACCEPT (auth required). The logged-in member joins
+// the project as a participant. Idempotent (owner / existing member -> ok).
+// =====================================================================
+router.post('/invite/:token/accept', authMiddleware, async (req, res) => {
+  try {
+    let decoded;
+    try { decoded = verifyInviteToken(req.params.token, req.chamber_id); }
+    catch (e) { return res.status(400).json({ success: false, error: 'Enlace de invitacion invalido o expirado' }); }
+    const projectId = decoded.project_id;
+
+    const [proj] = await sequelize.query(
+      `SELECT id, proposer_member_id FROM projects WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: projectId }, type: QueryTypes.SELECT }
+    );
+    if (!proj) return res.status(404).json({ success: false, error: 'Proyecto no encontrado' });
+    if (proj.proposer_member_id === req.member.id) {
+      return res.json({ success: true, data: { project_id: projectId, already: 'owner' } });
+    }
+    const existing = await sequelize.query(
+      `SELECT id FROM project_members WHERE chamber_id = :c AND project_id = :p AND member_id = :m`,
+      { replacements: { c: req.chamber_id, p: projectId, m: req.member.id }, type: QueryTypes.SELECT }
+    );
+    if (existing.length > 0) return res.json({ success: true, data: { project_id: projectId, already: 'member' } });
+
+    await sequelize.query(
+      `INSERT INTO project_members (chamber_id, project_id, member_id, role, joined_at)
+       VALUES (:c, :p, :m, 'collaborator', NOW())`,
+      { replacements: { c: req.chamber_id, p: projectId, m: req.member.id } }
+    );
+    return res.status(201).json({ success: true, data: { project_id: projectId, joined: true } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
+// Generate (or re-issue) a project invite magic-link token. Proposer or
+// admin only. Returns the raw token; the frontend builds the full URL.
+// =====================================================================
+router.get('/:id/invite-link', authMiddleware, async (req, res) => {
+  try {
+    const [proj] = await sequelize.query(
+      `SELECT id, proposer_member_id, title FROM projects WHERE chamber_id = :c AND id = :id`,
+      { replacements: { c: req.chamber_id, id: req.params.id }, type: QueryTypes.SELECT }
+    );
+    if (!proj) return res.status(404).json({ success: false, error: 'Proyecto no encontrado' });
+    const isProposer = proj.proposer_member_id === req.member.id;
+    const isAdmin = ['superadmin', 'admin_global', 'admin_regional'].includes(req.member.access_level);
+    if (!isProposer && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'Solo el proponente o un administrador puede generar el enlace de invitacion' });
+    }
+    const token = signInviteToken(req.chamber_id, proj.id);
+    return res.json({ success: true, data: { token, project_id: proj.id, title: proj.title } });
+  } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
