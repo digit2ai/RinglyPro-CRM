@@ -225,6 +225,70 @@ router.post('/draft', authMiddleware, async (req, res) => {
 });
 
 // =====================================================================
+// Persist a pre-computed AI Triage as a project (P2B Stage 0 -- triage flow)
+//
+// The triage verdict itself is produced by the SHARED agent at
+//   POST /projects/api/v1/intake/public-triage-preview
+// (the same TRIAGE_SYSTEM_PROMPT + claude-sonnet-4-6 engine that powers the
+// "Run AI Triage" button on champion-teaser.html). The frontend runs that
+// agent, shows the verdict, then POSTs the verdict here to save it. This
+// endpoint does NOT call any LLM -- it only stores the result as a
+// triage-kind plan_json so the project list + detail can render it.
+// =====================================================================
+router.post('/triage', authMiddleware, async (req, res) => {
+  try {
+    const { vision, sector, countries, budget_tier, triage } = req.body || {};
+    if (!triage || typeof triage !== 'object' || !triage.verdict) {
+      return res.status(400).json({ success: false, error: 'triage object (with verdict) is required' });
+    }
+
+    const countriesArray = Array.isArray(countries) ? countries.filter(Boolean) : [];
+    const countriesSql = countriesArray.length > 0
+      ? `ARRAY[${countriesArray.map((_, i) => `:cc${i}`).join(',')}]::TEXT[]`
+      : "ARRAY[]::TEXT[]";
+    const cr = {}; countriesArray.forEach((c, i) => { cr[`cc${i}`] = c; });
+
+    const planJson = {
+      __kind: 'triage',
+      triage,
+      source: {
+        vision: vision || '',
+        sector: sector || null,
+        countries: countriesArray,
+        budget_tier: budget_tier || null
+      }
+    };
+    const title = String(triage.project_title_suggested || 'Proyecto sin titulo').slice(0, 200);
+    const description = String(triage.problem_in_our_words || '').slice(0, 2000);
+
+    const result = await sequelize.query(
+      `INSERT INTO projects
+       (chamber_id, title, description, sector, countries, plan_json, plan_status, visibility,
+        status, proposer_member_id, created_at, updated_at)
+       VALUES (:c, :title, :description, :sector, ${countriesSql},
+               :plan_json, 'draft', 'public_plan', 'proposal', :proposer, NOW(), NOW())
+       RETURNING *`,
+      {
+        replacements: {
+          c: req.chamber_id,
+          title,
+          description,
+          sector: sector || null,
+          plan_json: JSON.stringify(planJson),
+          proposer: req.member.id,
+          ...cr
+        },
+        type: QueryTypes.SELECT
+      }
+    );
+    return res.status(201).json({ success: true, data: { project_id: result[0].id, plan_json: planJson } });
+  } catch (err) {
+    console.error('[unified triage-draft]', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================================
 // LIST invitations inbox (must be BEFORE /:id so /invitations doesn't match)
 // =====================================================================
 router.get('/invitations/inbox', authMiddleware, async (req, res) => {

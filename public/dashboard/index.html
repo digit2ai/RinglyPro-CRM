@@ -2800,7 +2800,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   function showNewProjectForm() {
     // P2B Stage 0 Wizard - Step 1: Vision input
     var html = '<h2 style="margin-bottom:8px">Nuevo Proyecto P2B</h2>';
-    html += '<p class="text-muted text-sm mb-16">Paso 1 de 2 -- Cuentanos tu vision. Claude redactara un plan de negocios completo que podras editar.</p>';
+    html += '<p class="text-muted text-sm mb-16">Cuentanos tu proyecto. Nuestro agente de IA hace un triage: evalua el encaje, da un veredicto (adelante / prueba de concepto / fuera de alcance) y propone una solucion tecnica concreta -- el mismo motor del intake de Digit2AI.</p>';
     html += '<div id="newProjMsg"></div>';
     html += '<form id="newProjForm" class="form-grid">';
     html += '<div class="form-group full"><label>Vision (50-1500 caracteres, ~2 parrafos)</label>';
@@ -2812,37 +2812,46 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<option value="medium" selected>Mediano ($200k-$1M)</option>';
     html += '<option value="large">Grande ($1M+)</option></select></div>';
     html += '<div class="form-group full"><label>Paises (manten Ctrl/Cmd para elegir varios)</label><select name="countries" multiple size="6" required>'+countryOptionsMulti()+'</select></div>';
-    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generar Plan de Negocio con IA</button></div>';
+    html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Ejecutar Triage de IA</button></div>';
     html += '</form>';
     openModal(html);
 
     document.getElementById('newProjForm').addEventListener('submit', async function(ev) {
       ev.preventDefault();
       var fd = new FormData(this);
-      var body = {
-        vision: fd.get('vision'),
-        sector: fd.get('sector'),
-        budget_tier: fd.get('budget_tier'),
-        countries: fd.getAll('countries').filter(Boolean)
-      };
-      var stopDrafting = showDraftingOverlay('Generando tu plan');
+      var vision = (fd.get('vision') || '').trim();
+      var sector = fd.get('sector') || '';
+      var budget_tier = fd.get('budget_tier') || '';
+      var countries = fd.getAll('countries').filter(Boolean);
 
+      // Construye la descripcion para el agente de triage (mismo motor que el
+      // boton "Run AI Triage" de champion-teaser): la vision + el contexto del
+      // formulario (sector / paises / presupuesto).
+      var ctx = [];
+      if (sector) ctx.push('Sector: ' + sector);
+      if (countries.length) ctx.push('Paises objetivo: ' + countries.join(', '));
+      if (budget_tier) ctx.push('Nivel de presupuesto: ' + budget_tier);
+      var description = vision + (ctx.length ? ('\n\n' + ctx.join('\n')) : '');
+
+      var stopDrafting = showDraftingOverlay('Ejecutando triage de IA');
       try {
-        var res = await apiFetch('/projects/draft', { method:'POST', body:JSON.stringify(body) });
-        if (res.success) {
-          // Cadena: tras redactar el plan, corre el agente AI Score (IRS) sobre el
-          // proyecto recien creado para que el plan nazca ya calificado.
-          var st = document.getElementById('draftStatus');
-          if (st) st.textContent = 'Calculando AI Score de inversion...';
-          try {
-            await apiFetch('/projects/'+res.data.project_id+'/compute-irs', { method:'POST', body: JSON.stringify({ useAi: true }) });
-          } catch (scoreErr) { /* el plan ya existe; el AI Score puede recalcularse desde el detalle */ }
+        // Llama DIRECTO al agente de triage compartido -- el MISMO endpoint y
+        // system prompt (TRIAGE_SYSTEM_PROMPT, claude-sonnet-4-6) que usa el
+        // boton "Run AI Triage" en champion-teaser. No pasa por apiFetch porque
+        // es un endpoint publico de otra subapp (/projects), sin token de camara.
+        var tRes = await fetch('/projects/api/v1/intake/public-triage-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: description, language: 'es', country: countries[0] || undefined })
+        });
+        var tData = await tRes.json();
+        if (tRes.ok && tData.success && tData.data) {
           stopDrafting(true);
-          loadProjects();
-          showPlanEditor(res.data.project_id, res.data.plan_json);
+          showTriageResult(tData.data, { vision: vision, sector: sector, countries: countries, budget_tier: budget_tier });
         } else {
           stopDrafting(false);
-          openModal('<div class="error-msg">'+(res.error||'Error al generar el plan')+'</div>'
+          var emsg = (tData && tData.error) ? tData.error : 'No se pudo ejecutar el triage. Intenta de nuevo.';
+          openModal('<div class="error-msg">'+esc(emsg)+'</div>'
             + '<div style="margin-top:12px"><button class="btn btn-outline" id="draftBackBtn">Volver</button></div>');
           var bk = document.getElementById('draftBackBtn');
           if (bk) bk.addEventListener('click', showNewProjectForm);
@@ -2853,6 +2862,113 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           + '<div style="margin-top:12px"><button class="btn btn-outline" id="draftBackBtn">Volver</button></div>');
         var bk2 = document.getElementById('draftBackBtn');
         if (bk2) bk2.addEventListener('click', showNewProjectForm);
+      }
+    });
+  }
+
+  // ================================================================
+  // AI Triage verdict -- shared render for the modal result + the
+  // project-detail view of a triage-kind project. Mirrors the
+  // champion-teaser triage output shape exactly.
+  // ================================================================
+  function triageVerdictMeta(v) {
+    if (v === 'go') return { label: 'ADELANTE', color: '#28a745', sub: 'Encaje claro' };
+    if (v === 'stop') return { label: 'FUERA DE ALCANCE', color: '#c62828', sub: 'No es para nosotros (todavia)' };
+    return { label: 'PRUEBA DE CONCEPTO', color: '#e65100', sub: 'Prometedor, requiere validacion' };
+  }
+
+  function renderTriageVerdict(t) {
+    t = t || {};
+    var ts = t.technical_solution || {};
+    var meta = triageVerdictMeta(t.verdict);
+    var score = Math.max(0, Math.min(10, Number(t.fit_score) || 0));
+    var h = '';
+    h += '<div style="border:2px solid '+meta.color+';border-radius:10px;padding:16px;margin-bottom:16px;background:#f8f9fa">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
+    h += '<div><span style="background:'+meta.color+';color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:800;letter-spacing:0.5px">'+meta.label+'</span>';
+    h += '<div class="text-muted text-sm" style="margin-top:6px">'+esc(meta.sub)+'</div></div>';
+    h += '<div style="text-align:right"><div style="font-size:30px;font-weight:900;color:'+meta.color+';line-height:1">'+score+'<span style="font-size:15px;opacity:0.6">/10</span></div>';
+    h += '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:'+meta.color+';font-weight:700">Encaje</div></div>';
+    h += '</div>';
+    if (t.fit_reasoning) h += '<div class="text-sm" style="margin-top:10px;color:var(--gray-700)">'+esc(t.fit_reasoning)+'</div>';
+    h += '</div>';
+
+    if (t.problem_in_our_words) {
+      h += '<div style="margin-bottom:14px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">Como lo entendemos</div>';
+      h += '<div class="text-sm" style="color:var(--gray-700)">'+esc(t.problem_in_our_words)+'</div></div>';
+    }
+
+    if (ts.summary || (ts.what_we_build && ts.what_we_build.length) || ts.delivery_window) {
+      h += '<div style="border:1px solid var(--gray-200);border-radius:8px;padding:14px;margin-bottom:14px">';
+      h += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Solucion tecnica</div>';
+      if (ts.summary) h += '<div class="text-sm" style="color:var(--gray-700);margin-bottom:10px">'+esc(ts.summary)+'</div>';
+      if (ts.what_we_build && ts.what_we_build.length) {
+        h += '<div style="font-weight:600;font-size:12px;margin:8px 0 4px">Que construimos</div><ul style="margin:0 0 8px 18px;padding:0;font-size:13px;color:var(--gray-700)">';
+        ts.what_we_build.forEach(function(x){ h += '<li>'+esc(x)+'</li>'; });
+        h += '</ul>';
+      }
+      if (ts.agents_involved && ts.agents_involved.length) {
+        h += '<div style="margin:8px 0"><span style="font-weight:600;font-size:12px">Agentes: </span>';
+        h += '<span class="text-sm text-muted">'+ts.agents_involved.map(esc).join(' &middot; ')+'</span></div>';
+      }
+      if (ts.data_sources_via_mcp && ts.data_sources_via_mcp.length) {
+        h += '<div style="margin:8px 0"><span style="font-weight:600;font-size:12px">Fuentes de datos (MCP): </span>';
+        h += '<span class="text-sm text-muted">'+ts.data_sources_via_mcp.map(esc).join(' &middot; ')+'</span></div>';
+      }
+      if (ts.delivery_window) {
+        h += '<div style="margin-top:8px"><span style="background:#1a3d8f;color:white;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700">Entrega: '+esc(ts.delivery_window)+'</span></div>';
+      }
+      h += '</div>';
+    }
+
+    if (t.week_1_deliverables && t.week_1_deliverables.length) {
+      h += '<div style="margin-bottom:14px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">Entregables de la primera semana</div><ul style="margin:0 0 0 18px;padding:0;font-size:13px;color:var(--gray-700)">';
+      t.week_1_deliverables.forEach(function(x){ h += '<li>'+esc(x)+'</li>'; });
+      h += '</ul></div>';
+    }
+
+    if (t.verify_flags && t.verify_flags.length) {
+      h += '<div style="border-left:3px solid #e65100;background:#fff8f0;padding:10px 12px;margin-bottom:8px"><div style="font-weight:700;font-size:13px;margin-bottom:4px;color:#e65100">A verificar</div><ul style="margin:0 0 0 18px;padding:0;font-size:13px;color:var(--gray-700)">';
+      t.verify_flags.forEach(function(x){ h += '<li>'+esc(x)+'</li>'; });
+      h += '</ul></div>';
+    }
+    return h;
+  }
+
+  function showTriageResult(t, source) {
+    var html = '<h2 style="margin-bottom:4px">Triage de IA</h2>';
+    if (t.project_title_suggested) html += '<div class="text-muted text-sm mb-16">Proyecto sugerido: <strong>'+esc(t.project_title_suggested)+'</strong></div>';
+    html += renderTriageVerdict(t);
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">';
+    html += '<button class="btn btn-primary" id="saveTriageBtn">Guardar como Proyecto</button>';
+    html += '<button class="btn btn-outline" id="triageBackBtn">Volver</button>';
+    html += '<button class="btn btn-outline" id="triageCloseBtn">Cerrar</button>';
+    html += '</div>';
+    html += '<div id="saveTriageMsg" style="margin-top:10px"></div>';
+    openModal(html);
+
+    document.getElementById('triageBackBtn').addEventListener('click', showNewProjectForm);
+    document.getElementById('triageCloseBtn').addEventListener('click', closeModal);
+    document.getElementById('saveTriageBtn').addEventListener('click', async function() {
+      this.disabled = true; var orig = this.textContent; this.textContent = 'Guardando...';
+      var msg = document.getElementById('saveTriageMsg');
+      try {
+        var res = await apiFetch('/projects/triage', { method:'POST', body: JSON.stringify({
+          vision: source && source.vision, sector: source && source.sector,
+          countries: (source && source.countries) || [], budget_tier: source && source.budget_tier,
+          triage: t
+        }) });
+        if (res.success) {
+          closeModal();
+          loadProjects();
+          showProjectDetail(res.data.project_id);
+        } else {
+          this.disabled = false; this.textContent = orig;
+          msg.innerHTML = '<div class="error-msg">'+esc(res.error||'Error al guardar')+'</div>';
+        }
+      } catch(e) {
+        this.disabled = false; this.textContent = orig;
+        msg.innerHTML = '<div class="error-msg">'+esc(e.message)+'</div>';
       }
     });
   }
@@ -4361,6 +4477,20 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         stubHtml += '<p class="text-muted text-sm" style="margin-top:12px">This project has been signed off and is now in private execution. Only participants can see the full plan and workspace.</p>';
         stubHtml += '</div>';
         openModal(stubHtml);
+        return;
+      }
+
+      // Triage-kind project: render the AI Triage verdict (same engine as
+      // champion-teaser) instead of the full business-plan layout.
+      if (p.plan_json && p.plan_json.__kind === 'triage') {
+        var th = '<h2 style="margin-bottom:8px">'+esc(p.title)+'</h2>';
+        th += '<div style="margin-bottom:12px">'+statusBadge(p.status)+' <span class="text-muted text-sm"> | Propuesto por '+esc(p.proposer_name||'--')+'</span></div>';
+        th += '<table style="width:100%;margin-bottom:16px">';
+        th += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Sector</td><td style="font-size:13px">'+esc(p.sector||'--')+'</td></tr>';
+        if (p.countries && p.countries.length) th += '<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:var(--gray-500);font-size:13px">Paises</td><td style="font-size:13px">'+esc((p.countries||[]).join(', '))+'</td></tr>';
+        th += '</table>';
+        th += renderTriageVerdict(p.plan_json.triage || {});
+        openModal(th);
         return;
       }
 
