@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitectura Técnica e Informe de Costos de Entrega — Planea (Copiloto Financiero IA)</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-d:#0f3a66; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:26px;color:var(--azul-d);margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:var(--azul-d);width:130px}
+  h2{font-size:18px;color:var(--azul-d);margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:var(--azul-d);margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:var(--azul-d)}
+  table.fin tr.total td{background:var(--azul-d);color:#fff;font-weight:800;font-size:15px}
+  td.free{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .arch{background:var(--azul-d);color:#e8eef7;border-radius:10px;padding:18px 20px;margin:12px 0;font-size:13px}
+  .arch .layer{padding:8px 0;border-bottom:1px solid rgba(31,95,168,.35)}
+  .arch .layer:last-child{border-bottom:none}
+  .arch b{color:#7fb3ef}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{ body{background:#fff} .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px} h2{break-after:avoid} table.fin,.card{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>ARQUITECTURA TÉCNICA E INFORME DE COSTOS DE ENTREGA</h1>
+  <p class="sub">Planea — Copiloto Financiero con IA (réplica funcional · ingeniería inversa)</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>Réplica de Planea (Copiloto Financiero IA)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">Construye:</td><td>Digit2AI (modelo de entrega AI-Native)</td><td class="lbl">Asunto:</td><td>Estructura de costo de desarrollo y operación</td></tr>
+    <tr><td class="lbl">Tarifa interna:</td><td>$30 USD/hora (costo cargado)</td><td class="lbl">Referencia:</td><td>app.planea.co</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
+  </table>
+
+  <h2>1. Contexto y Hallazgos de Ingeniería Inversa</h2>
+  <p>Este informe presenta la <strong>estructura de costo directo</strong> para construir y operar una <strong>réplica funcional de Planea</strong> — un copiloto financiero personal para el mercado colombiano que entrega un diagnóstico financiero gratuito en 60 segundos, un puntaje de salud financiera de 0&ndash;100 y un asistente de IA conversacional ("Maya") que guía al usuario semana a semana. La réplica se entrega bajo el modelo <strong>AI-Native</strong> de Digit2AI: una fuerza de trabajo de agentes de ingeniería genera y prueba iterativamente el andamiaje, comprimiendo la construcción a <strong>~1.550 horas efectivas</strong> de ingeniería conservando calidad empresarial (autenticación, aislamiento de datos por usuario con RLS, migraciones reversibles, cifrado, disponibilidad objetivo 99.9%).</p>
+  <p>El alcance y la pila tecnológica se derivaron por <strong>ingeniería inversa</strong> del producto en vivo (superficie pública y bundle del cliente, sin acceder a datos privados). Hallazgos clave del stack original:</p>
+  <ul class="tight">
+    <li><strong>Frontend:</strong> React + Vite empaquetado con <strong>Ionic + Capacitor</strong> — una sola base de código que se publica como PWA web y como apps nativas iOS/Android.</li>
+    <li><strong>Backend / BaaS:</strong> <strong>Supabase</strong> (PostgreSQL gestionado + autenticación + Edge Functions + almacenamiento), con el aislamiento entre usuarios apoyado en políticas de <strong>Row-Level Security</strong>.</li>
+    <li><strong>Capa de IA ("Maya"):</strong> el proveedor del modelo de lenguaje se ejecuta <strong>del lado del servidor</strong> (Edge Function) — sin exposición de llaves en el navegador. Buena higiene de seguridad.</li>
+    <li><strong>Datos financieros:</strong> marco de <strong>Open Finance / banca abierta</strong> de Colombia, acceso de solo lectura, sin ejecutar transacciones.</li>
+    <li><strong>Infraestructura:</strong> hosting en <strong>Vercel</strong>; analítica con <strong>Segment + Google Analytics</strong>.</li>
+    <li><strong>Metodología:</strong> puntaje financiero ponderado sobre 4 pilares (fondo de emergencia, flujo de caja, salud de deudas, estabilidad de ingresos) que se expande a 7 áreas de planeación, alineado a la metodología CFP Board&reg; adaptada al mercado colombiano.</li>
+  </ul>
+  <p>Todas las cifras de este documento reflejan únicamente el <strong>costo directo</strong> de entrega y operación, sin margen de utilidad ni IVA.</p>
+
+  <h2>2. Arquitectura Técnica de la Réplica</h2>
+  <div class="arch">
+    <div class="layer"><b>Frontend</b> — React 18 + Vite sobre <b>Ionic + Capacitor</b>: una base de código → PWA instalable + apps nativas iOS/Android. Tema claro/oscuro, i18n (es-CO), navegación móvil-primero.</div>
+    <div class="layer"><b>Backend / BaaS</b> — <b>Supabase</b>: PostgreSQL gestionado, Auth (email/contraseña + recuperación), Edge Functions (lógica de Maya, scoring y conectores), Storage. Sin servidor propio que mantener.</div>
+    <div class="layer"><b>Capa de IA — Maya</b> — Anthropic <b>Claude</b> tras Edge Function (llave del lado servidor), con RAG sobre los datos financieros del usuario, guía semanal y respuestas a preguntas; rúbrica de recomendaciones por las 7 áreas de planeación.</div>
+    <div class="layer"><b>Motor de Scoring</b> — cálculo determinístico 0&ndash;100 ponderado por los 4 pilares, parametrizado al mercado colombiano (metodología CFP adaptada); histórico de puntaje versionado.</div>
+    <div class="layer"><b>Open Finance</b> — conector a agregador de banca abierta (p. ej. Belvo / Finerio), solo lectura, normalización de movimientos, consentimiento explícito y revocable.</div>
+    <div class="layer"><b>Datos</b> — PostgreSQL multi-usuario con <b>Row-Level Security</b> estricta; migraciones aditivas y reversibles; cifrado en reposo y en tránsito.</div>
+    <div class="layer"><b>Privacidad y cumplimiento</b> — Ley 1581 (habeas data), acceso de solo lectura, borrado de datos a solicitud, registro de consentimiento; la app nunca ejecuta transacciones.</div>
+    <div class="layer"><b>Infraestructura</b> — Vercel (frontend + edge) con auto-deploy; Supabase gestionado; dominio + SSL; analítica Segment + Google Analytics; observabilidad con Sentry.</div>
+  </div>
+
+  <h2>3. Costo de Desarrollo por Componente (CAPEX)</h2>
+  <p>Alcance funcional completo organizado en componentes sobre la arquitectura AI-Native. Costo por componente al costo interno cargado de $30 USD/hora (sin margen ni IVA):</p>
+
+  <div class="card"><h3>1. Base y Shell Multiplataforma (web + iOS + Android)</h3>
+    SPA React/Vite sobre Ionic + Capacitor, tema claro/oscuro, i18n es-CO, navegación móvil-primero, shell responsivo y configuración de build única para PWA y nativo.
+    <div class="price">130 hrs · $3.900 USD</div></div>
+
+  <div class="card"><h3>2. Autenticación y Gestión de Usuarios</h3>
+    Supabase Auth (email/contraseña), recuperación y cambio de contraseña, sesiones, perfil de usuario, eliminación de cuenta.
+    <div class="price">80 hrs · $2.400 USD</div></div>
+
+  <div class="card"><h3>3. Onboarding y Diagnóstico Financiero de 60 Segundos</h3>
+    Flujo guiado de levantamiento de los 4 pilares (fondo de emergencia, flujo de caja, salud de deudas, estabilidad de ingresos), captura progresiva y validaciones.
+    <div class="price">120 hrs · $3.600 USD</div></div>
+
+  <div class="card"><h3>4. Motor de Scoring Financiero (0&ndash;100)</h3>
+    Cálculo ponderado determinístico parametrizado al mercado colombiano (metodología CFP adaptada), desglose por pilar, histórico y tendencia del puntaje.
+    <div class="price">130 hrs · $3.900 USD</div></div>
+
+  <div class="card"><h3>5. Maya — Copiloto Financiero Conversacional (IA)</h3>
+    Integración Claude vía Edge Function (llave del lado servidor), RAG sobre datos del usuario, guía semanal personalizada, Q&amp;A, memoria de contexto y barandas (sin asesoría que ejecute transacciones).
+    <div class="price">200 hrs · $6.000 USD</div></div>
+
+  <div class="card"><h3>6. Siete Áreas de Planeación Financiera</h3>
+    Flujo de caja/deuda, fondo de emergencia, gestión de riesgo, inversiones, planeación tributaria, jubilación y patrimonio: contenido, motor de recomendaciones y seguimiento por área.
+    <div class="price">150 hrs · $4.500 USD</div></div>
+
+  <div class="card"><h3>7. Integración Open Finance (Banca Abierta)</h3>
+    Conector a agregador (Belvo/Finerio), enlace de cuentas de solo lectura, normalización y categorización de movimientos, consentimiento explícito y revocable, caché y reintentos.
+    <div class="price">180 hrs · $5.400 USD</div></div>
+
+  <div class="card"><h3>8. Dashboards y Visualización de Datos</h3>
+    Panel de puntaje y pilares, tendencias, desglose de flujo de caja y deudas, gráficos interactivos y estados vacíos/onboarding.
+    <div class="price">110 hrs · $3.300 USD</div></div>
+
+  <div class="card"><h3>9. Capa de Datos y Row-Level Security</h3>
+    Esquema PostgreSQL en Supabase, políticas RLS por usuario auditadas, migraciones aditivas y reversibles, índices y semillas de parámetros de mercado.
+    <div class="price">90 hrs · $2.700 USD</div></div>
+
+  <div class="card"><h3>10. Privacidad y Cumplimiento (Ley 1581)</h3>
+    Registro de consentimiento, flujo de borrado de datos, exportación, aplicación de solo lectura, política de privacidad y términos, trazabilidad de accesos.
+    <div class="price">90 hrs · $2.700 USD</div></div>
+
+  <div class="card"><h3>11. Apps Nativas iOS/Android + PWA</h3>
+    Empaquetado Capacitor, push nativo, splash/íconos, PWA instalable (manifest + service worker), publicación en App Store y Google Play.
+    <div class="price">110 hrs · $3.300 USD</div></div>
+
+  <div class="card"><h3>12. Notificaciones y Engagement Semanal</h3>
+    Entrega de la guía semanal de Maya, push + email, recordatorios y reactivación, preferencias de notificación por usuario.
+    <div class="price">70 hrs · $2.100 USD</div></div>
+
+  <div class="card"><h3>13. Seguridad, QA e Infraestructura de Despliegue</h3>
+    Endurecimiento de Auth, rate limiting, CI/CD a Vercel + Supabase, entornos de staging y producción, analítica (Segment/GA), monitoreo (Sentry) y verificación de despliegue.
+    <div class="price">90 hrs · $2.700 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Subtotal — 13 componentes funcionales (mano de obra de ingeniería)</td><td class="num">1.550</td><td class="num">$46.500</td></tr>
+    <tr><td>Investigación, ingeniería inversa, diseño de producto, gestión de proyecto, QA e infraestructura de build</td><td class="num">—</td><td class="num">$7.500</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO (CAPEX)</td><td class="num">1.550</td><td class="num">$54.000 USD</td></tr>
+  </table>
+  <p class="muted">Plazo de entrega: <span class="pill">&asymp; 4&ndash;5 semanas</span> en 4 fases.</p>
+
+  <h2>4. Fases de Entrega (costo)</h2>
+  <div class="twocol">
+    <div class="card"><h3>Fase 1 — Núcleo y Diagnóstico (~1&ndash;2 sem.)</h3>
+      <ul class="tight">
+        <li>Base y shell multiplataforma</li>
+        <li>Autenticación y usuarios</li>
+        <li>Onboarding + diagnóstico 60s</li>
+        <li>Motor de scoring 0&ndash;100</li>
+        <li>Capa de datos + RLS</li>
+      </ul>
+      <div class="price">Costo mano de obra: $16.500 USD</div></div>
+    <div class="card"><h3>Fase 2 — Maya y Planeación (~1 sem.)</h3>
+      <ul class="tight">
+        <li>Maya — copiloto financiero IA</li>
+        <li>Siete áreas de planeación</li>
+      </ul>
+      <div class="price">Costo mano de obra: $10.500 USD</div></div>
+    <div class="card"><h3>Fase 3 — Open Finance y Dashboards (~1 sem.)</h3>
+      <ul class="tight">
+        <li>Integración Open Finance</li>
+        <li>Dashboards y visualización</li>
+        <li>Notificaciones + engagement semanal</li>
+      </ul>
+      <div class="price">Costo mano de obra: $10.800 USD</div></div>
+    <div class="card"><h3>Fase 4 — Nativo, Privacidad y Seguridad (~1 sem.)</h3>
+      <ul class="tight">
+        <li>Apps nativas iOS/Android + PWA</li>
+        <li>Privacidad y cumplimiento (Ley 1581)</li>
+        <li>Seguridad, QA y despliegue</li>
+      </ul>
+      <div class="price">Costo mano de obra: $8.700 USD</div></div>
+  </div>
+  <p class="muted">Suma de mano de obra de las 4 fases = $46.500 USD. Más investigación, ingeniería inversa, diseño, PM, QA e infraestructura de build ($7.500) = <strong>$54.000 USD</strong> de costo total de desarrollo.</p>
+
+  <h2>5. Costo Operativo Anual (OPEX)</h2>
+  <p>Costo recurrente real de operar la plataforma en escenario de lanzamiento (volumen inicial), calculado sobre las herramientas y servicios que efectivamente se pagan. Las líneas marcadas con (*) son variables: escalan con el número de usuarios activos y conexiones bancarias.</p>
+  <table class="fin">
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">USD/mes</th><th class="num">USD/año</th></tr>
+    <tr><td>Vercel — Pro</td><td>Hosting frontend + edge</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>Supabase — Pro</td><td>PostgreSQL + Auth + Edge Functions + Storage</td><td class="num">$100</td><td class="num">$1.200</td></tr>
+    <tr><td>Anthropic Claude — consumo de IA (*)</td><td>Copiloto Maya (guía, Q&amp;A, recomendaciones)</td><td class="num">$300</td><td class="num">$3.600</td></tr>
+    <tr><td>Agregador Open Finance — Belvo/Finerio (*)</td><td>Enlace de cuentas bancarias (solo lectura)</td><td class="num">$250</td><td class="num">$3.000</td></tr>
+    <tr><td>Tiendas de apps (Apple + Google)</td><td>Cuentas de desarrollador (anual)</td><td class="num">$11</td><td class="num">$124</td></tr>
+    <tr><td>Push + Email (OneSignal / SendGrid)</td><td>Guía semanal y notificaciones</td><td class="num">$30</td><td class="num">$360</td></tr>
+    <tr><td>Analítica (Segment + Google Analytics)</td><td>Eventos de producto y embudo</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>Dominio planea.* </td><td>Dominio personalizado (anual)</td><td class="num">$2</td><td class="num">$25</td></tr>
+    <tr><td>GitHub — Team</td><td>Repositorios + CI/CD</td><td class="num">$40</td><td class="num">$480</td></tr>
+    <tr><td>Monitoreo (Sentry / logging)</td><td>Observabilidad</td><td class="num">$26</td><td class="num">$312</td></tr>
+    <tr class="sub"><td colspan="2">Subtotal herramientas y servicios</td><td class="num">$838</td><td class="num">$10.061</td></tr>
+    <tr><td colspan="2">Soporte e ingeniería SLA — DevOps + actualizaciones (personal)</td><td class="num">$1.200</td><td class="num">$14.400</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO ANUAL TOTAL</td><td class="num">$2.038</td><td class="num">$24.461</td></tr>
+  </table>
+  <p class="muted">Equivalente a <strong>$2.038 USD/mes</strong> en el escenario de lanzamiento. (*) El consumo de IA equivale a ~$0,30&ndash;0,60 por usuario activo/mes y el agregador Open Finance escala por conexión bancaria; a 5&ndash;10&times; el volumen inicial, el OPEX se aproxima a <strong>~$60.000 USD/año</strong>.</p>
+
+  <h2>6. Add-Ons Premium Opcionales (no incluidos en los totales)</h2>
+  <table class="fin">
+    <tr><th>Add-on</th><th>Beneficio</th><th class="num">~USD/mes</th></tr>
+    <tr><td>Maya con voz — ElevenLabs / orbe neural Digit2AI</td><td>Maya habla en español (es-CO); copiloto conversacional por voz</td><td class="num">$99&ndash;330</td></tr>
+    <tr><td>WhatsApp Business (Twilio) (*)</td><td>Guía semanal y alertas por WhatsApp</td><td class="num">$80&ndash;250</td></tr>
+    <tr><td>Detección de anomalías / antifraude (*)</td><td>Alertas proactivas sobre movimientos atípicos</td><td class="num">$100&ndash;250</td></tr>
+    <tr><td>Data warehouse + BI (analítica avanzada)</td><td>Cohortes, retención y modelos de comportamiento</td><td class="num">$80&ndash;200</td></tr>
+  </table>
+  <p class="muted">Estos elevan la experiencia (voz, mensajería, antifraude, BI) y se difieren por diseño: la plataforma es plenamente funcional sin ellos. La capa de voz es una fortaleza diferencial de Digit2AI frente al producto original (Maya hoy es solo texto).</p>
+
+  <h2>7. Resumen de Costo</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Desarrollo (CAPEX)</td><td class="num">$54.000</td></tr>
+    <tr><td>Operación año 1 (OPEX) — con soporte dedicado</td><td class="num">$24.461</td></tr>
+    <tr class="total"><td>COSTO AÑO 1 (CAPEX + OPEX)</td><td class="num">$78.461 USD</td></tr>
+    <tr><td>Plazo de entrega</td><td class="num">&asymp; 4&ndash;5 semanas (4 fases)</td></tr>
+  </table>
+  <p>El costo refleja la aceleración AI-native — ~1.550 horas efectivas de ingeniería con scaffolding generado por agentes — sobre una pila moderna y de bajo costo operativo (Ionic+Capacitor → web e iOS/Android desde una sola base de código; Supabase como BaaS sin servidor propio que mantener), dejando a Claude y al agregador Open Finance como los únicos costos materiales que escalan con el uso.</p>
+
+  <div class="note">
+    <strong>Nota:</strong> Este documento refleja exclusivamente el <strong>costo directo</strong> de entrega y operación. El margen de utilidad y el IVA se aplican por separado en la propuesta técnico-comercial dirigida al cliente; no forman parte de este informe. El alcance es una <strong>réplica funcional</strong> derivada por ingeniería inversa de la superficie pública de Planea; no incluye acceso, código ni datos propietarios del producto original.
+  </div>
+
+  <div class="foot">
+    Documento interno de Digit2AI. Cifras en dólares estadounidenses (USD), a costo directo, sin margen de utilidad ni IVA. Tarifa interna cargada de referencia: $30 USD/hora. No distribuir al cliente. Réplica funcional de Planea (Copiloto Financiero IA) — arquitectura derivada por ingeniería inversa de app.planea.co.
+  </div>
+
+</div>
+</body>
+</html>
