@@ -178,7 +178,37 @@
     .scope{grid-template-columns:1fr}
     .layer{grid-template-columns:1fr}.tl .row{grid-template-columns:1fr}
   }
+  /* ===== Maya voice orb (Layer 3) ===== */
+  .mayaband{padding:46px 56px;background:
+    radial-gradient(800px 400px at 50% -40%,rgba(109,108,246,.22),transparent 60%),#070d1c}
+  .lina{margin:0 auto;max-width:680px;background:linear-gradient(180deg,#121d3a,#0d1424);
+    border:1px solid var(--line-d);border-radius:22px;padding:26px;display:flex;gap:22px;align-items:center;
+    box-shadow:0 24px 70px rgba(0,0,0,.5)}
+  .orb{position:relative;width:96px;height:96px;flex:0 0 96px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#7ff0dc,#6d6cf6 52%,#1a1f5b 100%);
+    box-shadow:0 0 0 0 rgba(95,230,207,.5)}
+  .orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid rgba(95,230,207,.32)}
+  .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,230,207,.45)}70%{box-shadow:0 0 0 24px rgba(95,230,207,0)}100%{box-shadow:0 0 0 0 rgba(95,230,207,0)}}
+  .lina-meta{flex:1;min-width:0;color:#eaf0fb}
+  .lina-name{font-family:'Sora';font-weight:700;font-size:19px;color:#fff}
+  .lina-role{color:var(--mut-d);font-size:14px;margin-bottom:15px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  .controls button{font:600 14px 'Inter',sans-serif;border-radius:11px;padding:11px 17px;cursor:pointer;
+    border:1px solid var(--line-d);background:rgba(255,255,255,.06);color:#eaf0fb;transition:filter .15s}
+  .controls button:hover{filter:brightness(1.15)}
+  .controls button:disabled{opacity:.4;cursor:not-allowed}
+  .controls button.primary{border:none;background:var(--grad);color:#06121f;font-weight:700;
+    box-shadow:0 12px 32px rgba(19,184,160,.32)}
+  .status{font-size:13px;color:var(--mut-d);margin-top:13px;min-height:18px}
+  .voicepick{margin-top:12px;font-size:13px;color:var(--mut-d);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .voicepick select{font:inherit;background:#1b2536;color:#e9eef7;border:1px solid var(--line-d);border-radius:8px;padding:6px 8px;margin-left:6px}
+  .voicepick .green{color:#5fe6cf;font-weight:700}
+  .slide.sec.active{box-shadow:inset 4px 0 0 var(--teal)}
+  @media(max-width:620px){.mayaband{padding:34px 18px}.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
+
   @media print{
+    .mayaband{display:none}
     body{background:#fff}
     section.slide,.hero,.cta{page-break-inside:avoid;break-inside:avoid}
     .dark{background:#0a1020 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -210,8 +240,36 @@
     </div>
   </section>
 
+  <!-- ============ MAYA VOICE ORB (Layer 3) ============ -->
+  <section class="mayaband">
+    <div class="lina">
+      <div class="orb" id="orb"></div>
+      <div class="lina-meta">
+        <div class="lina-name">Maya · Voz AI de Digit2AI</div>
+        <div class="lina-role">Copiloto financiero de Planea — narra esta propuesta</div>
+        <div class="controls">
+          <button class="primary" id="playAll">▶ Que Maya lo explique todo</button>
+          <button id="pause" disabled>❚❚ Pausar</button>
+          <button id="stop" disabled>■ Detener</button>
+        </div>
+        <div class="status" id="status">Pulsa el botón para que Maya recorra la propuesta contigo.</div>
+        <div class="voicepick">
+          <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
+          &nbsp;·&nbsp; Acento:
+          <select id="voiceSel">
+            <option value="salome" selected>Colombia (Salomé)</option>
+            <option value="lina">México (Dalia)</option>
+            <option value="paloma">EE. UU. (Paloma)</option>
+            <option value="elvira">España (Elvira)</option>
+          </select>
+          <span id="voiceMode" class="green"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 00 · QUIÉNES SOMOS ============ -->
-  <section class="slide light">
+  <section class="slide light sec">
     <span class="eyebrow"><span class="dot"></span> Quiénes lo construyen</span>
     <h2 class="t">Digit2AI convierte la promesa de la IA en producto real y operativo.</h2>
     <p class="lead">No entregamos diapositivas ni pruebas de concepto que mueren en el laboratorio. Entregamos software en producción: ecosistemas de IA conversacional, dashboards en vivo y agentes de voz que ya operan para empresas en múltiples industrias y dos idiomas.</p>
@@ -235,7 +293,7 @@
   </section>
 
   <!-- ============ 01 · DECISIÓN EJECUTIVA ============ -->
-  <section class="slide dark">
+  <section class="slide dark sec">
     <span class="eyebrow"><span class="dot"></span> 01 · Decisión ejecutiva</span>
     <h2 class="t">Activar la versión <span class="grad-text">AI-First conversacional</span> de Planea.</h2>
     <p class="lead">Planea ya tiene cimientos valiosos: sitio comercial, app base, autenticación, diagnóstico financiero y el Puntaje Planea. Esta propuesta no busca rehacer lo existente — lo respeta y lo potencia, convirtiéndolo en un MVP comercial con inteligencia artificial conversacional.</p>
@@ -256,7 +314,7 @@
   </section>
 
   <!-- ============ 02 · OPORTUNIDAD ============ -->
-  <section class="slide light">
+  <section class="slide light sec">
     <span class="eyebrow"><span class="dot"></span> 02 · Oportunidad comercial</span>
     <h2 class="t">Planea ya tiene la puerta de entrada. El asistente debe volverse la <span class="grad-text">experiencia recurrente</span>.</h2>
     <p class="lead">El diagnóstico es valioso porque revela la situación del usuario. Pero la recurrencia — y con ella el valor comercial — aparece cuando Planea explica qué significa ese diagnóstico, qué hacer primero y cómo avanzar con un plan concreto.</p>
@@ -281,7 +339,7 @@
   </section>
 
   <!-- ============ 03 · ALCANCE ============ -->
-  <section class="slide tint">
+  <section class="slide tint sec">
     <span class="eyebrow"><span class="dot"></span> 03 · Alcance del MVP</span>
     <h2 class="t">Qué se construye en esta primera versión.</h2>
     <p class="lead">El alcance se concentra en una versión comercial funcional y enfocada. La arquitectura detallada, el modelo de datos, las APIs, los prompts, las políticas RLS y el checklist técnico quedan en el anexo técnico.</p>
@@ -331,7 +389,7 @@
   </section>
 
   <!-- ============ 04 · ARQUITECTURA / DIFERENCIAL ============ -->
-  <section class="slide dark">
+  <section class="slide dark sec">
     <span class="eyebrow"><span class="dot"></span> 04 · Arquitectura AI-First</span>
     <h2 class="t">Una base moderna, segura y lista para escalar — sin sobre-ingeniería.</h2>
     <p class="lead">El MVP se construye sobre una pila deliberadamente simple y económica, que ya es estándar en productos financieros de alto crecimiento. Cada capa está pensada para validar rápido hoy y crecer mañana sin reescribir.</p>
@@ -352,7 +410,7 @@
   </section>
 
   <!-- ============ 05 · CASO DE NEGOCIO ============ -->
-  <section class="slide light">
+  <section class="slide light sec">
     <span class="eyebrow"><span class="dot"></span> 05 · Caso de negocio</span>
     <h2 class="t">Qué decisión podrá tomar Planea después de este MVP.</h2>
     <p class="lead">Esta etapa debe evaluarse como una prueba rápida y de bajo riesgo para saber si Planea puede convertir sus avances actuales en un producto financiero AI-First con tracción comercial real.</p>
@@ -376,7 +434,7 @@
   </section>
 
   <!-- ============ 06 · CRONOGRAMA ============ -->
-  <section class="slide dark">
+  <section class="slide dark sec">
     <span class="eyebrow"><span class="dot"></span> 06 · Cronograma ejecutivo</span>
     <h2 class="t">Un MVP de 4 semanas, con una quinta de <span class="grad-text">estabilización</span>.</h2>
     <p class="lead">Cada semana cierra con algo funcional y demostrable. No hay "fase de integración" sorpresa al final: lo que se construye, se prueba y se muestra.</p>
@@ -406,7 +464,7 @@
   </section>
 
   <!-- ============ CTA ============ -->
-  <section class="cta dark">
+  <section class="cta dark sec">
     <span class="eyebrow" style="justify-content:center"><span class="dot"></span> Próximos pasos</span>
     <h2>Pasemos del diagnóstico al <span class="grad-text">acompañamiento</span>. En semanas.</h2>
     <p>Acordamos el alcance final, alineamos accesos y arrancamos la Semana 1. El primer entregable funcional llega en días, no en meses.</p>
@@ -424,5 +482,122 @@
   </footer>
 
 </div>
+
+<script>
+(function(){
+  // index 0 = intro; index 1..8 = una sección de la propuesta, en orden.
+  var segments = [
+    "Hola, soy Maya, la voz de inteligencia artificial de Digit2AI. Te voy a explicar, en pocos minutos, cómo convertimos a Planea en un copiloto financiero conversacional.",
+    "En Digit2AI no entregamos diapositivas que mueren en el laboratorio: entregamos software en producción. Asistentes conversacionales, paneles en vivo y agentes de voz que ya operan para empresas en varias industrias y en dos idiomas, gracias a un modelo de trabajo asistido por agentes que comprime meses de ingeniería en semanas.",
+    "La decisión es activar la versión AI-First de Planea. No rehacemos lo que ya existe: el sitio, la aplicación, la autenticación, el diagnóstico y el Puntaje Planea se respetan y se potencian. El resultado es un producto mínimo viable, comercial y demostrable, en cuatro a cinco semanas, con ocho módulos funcionales y sin la complejidad prematura del open banking.",
+    "Planea ya tiene la puerta de entrada con el diagnóstico. La recurrencia aparece cuando el asistente explica qué significa ese diagnóstico, qué hacer primero y cómo avanzar. El recorrido es claro: el diagnóstico mide el punto de partida, el asistente explica y acompaña, y el plan simple convierte el dato en acción.",
+    "En esta primera versión construimos la fundación técnica, la autenticación y el perfil, el Puntaje Planea explicable, el asistente con contexto del usuario, el plan financiero simple, el panel inicial, la carga y el análisis básico de documentos, y la operación administrativa. Quedan fuera, por ahora, el open banking, el movimiento de dinero y la asesoría regulada.",
+    "Todo se apoya en una base moderna y económica: Next.js sobre Vercel, y Supabase para datos, autenticación y seguridad por usuario. El asistente usa un modelo de lenguaje líder, con las llaves siempre del lado del servidor. Y un diferencial de Digit2AI: podemos darle voz al asistente, como esta que escuchas en este momento.",
+    "Esta etapa es una prueba rápida y de bajo riesgo. Mide cuatro cosas: si el usuario entiende mejor su situación, si conversa con Planea, si el plan genera acción y si los archivos agregan valor. Cada señal habilita una decisión de inversión respaldada por evidencia, y no por suposiciones.",
+    "El cronograma es de cuatro semanas, con una quinta de estabilización. Cada semana cierra con algo funcional y demostrable: primero la fundación y el perfil, luego el puntaje y el panel, después el asistente y el plan, y finalmente los documentos, la administración y el control de calidad.",
+    "El siguiente paso es sencillo: alineamos el alcance, preparamos los accesos y arrancamos la primera semana. El primer entregable funcional llega en días. Cuando quieras, agendamos el inicio."
+  ];
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'salome';
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    var pref = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;});
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
+  setMode();
+
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){ secs.forEach(function(s){s.classList.remove('active');});
+    if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); } }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Maya está hablando… ('+(qi+1)+' de '+queue.length+')' : 'Reproduciendo sección…'; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent='Preparando voz neural…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-CO';
+    u.rate=0.98; u.pitch=1.05;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.textContent='❚❚ Pausar';
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); setActive(null);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='Presentación terminada. Pulsa de nuevo para repetir.';
+  }
+  playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  document.querySelectorAll('[data-play]').forEach(function(b){
+    b.addEventListener('click', function(){ start([parseInt(this.getAttribute('data-play'),10)+1],'one'); });
+  });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.textContent='▶ Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent='❚❚ Pausar'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+})();
+</script>
 </body>
 </html>
