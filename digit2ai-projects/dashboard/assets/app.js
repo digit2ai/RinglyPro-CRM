@@ -2802,6 +2802,13 @@ async function renderProjects(container) {
     Array.from(leadsMap.entries()).sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name || '(unnamed)'}</option>`).join('') +
     '<option value="__none__">Unassigned</option>';
 
+  // Distinct verticals for the filter dropdown.
+  const verticalsMap = new Map();
+  res.data.forEach(p => { if (p.vertical) verticalsMap.set(p.vertical.id, p.vertical.name || ''); });
+  const verticalFilterOptions = '<option value="">All Verticals</option>' +
+    Array.from(verticalsMap.entries()).sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name || '(unnamed)'}</option>`).join('') +
+    '<option value="__none__">No Vertical</option>';
+
   const statusCardsHtml = STATUS_CARDS.map(c => {
     const n = counts[c.key] || 0;
     return `
@@ -2840,6 +2847,7 @@ async function renderProjects(container) {
           <option value="low">Low</option>
         </select>
         <select id="project-lead-filter">${leadOptions}</select>
+        <select id="project-vertical-filter">${verticalFilterOptions}</select>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openZoomMeeting()" title="Open Zoom (info@digit2ai.com) in a new tab" style="color:#2D8CFF;border-color:#2D8CFF">&#127909; Zoom Meeting</button>
       <button class="btn btn-ghost btn-sm" onclick="printProjectsPDF()" title="Print / Export PDF">Print PDF</button>
@@ -2865,6 +2873,7 @@ async function renderProjects(container) {
     const st = document.getElementById('project-status-filter').value;
     const pr = document.getElementById('project-priority-filter').value;
     const ld = document.getElementById('project-lead-filter').value;
+    const vt = document.getElementById('project-vertical-filter').value;
     let list = container._projectsAll.slice();
     // Archived rows are loaded for the "Archived" view but hidden everywhere
     // else — they would otherwise pollute "All Status" with completed-and-
@@ -2885,12 +2894,15 @@ async function renderProjects(container) {
     if (pr) list = list.filter(p => p.priority === pr);
     if (ld === '__none__') list = list.filter(p => !p.lead);
     else if (ld) list = list.filter(p => p.lead && String(p.lead.id) === ld);
+    if (vt === '__none__') list = list.filter(p => !p.vertical);
+    else if (vt) list = list.filter(p => p.vertical && String(p.vertical.id) === vt);
     renderProjectsTable(list);
   };
   document.getElementById('project-search').addEventListener('input', applyFilters);
   document.getElementById('project-status-filter').addEventListener('change', applyFilters);
   document.getElementById('project-priority-filter').addEventListener('change', applyFilters);
   document.getElementById('project-lead-filter').addEventListener('change', applyFilters);
+  document.getElementById('project-vertical-filter').addEventListener('change', applyFilters);
   // Stash for the KPI click handler so it can re-apply.
   window._projectsApplyFilters = applyFilters;
 
