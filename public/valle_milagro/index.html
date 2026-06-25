@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visionarium Valle Milagro — Inteligencia Regional del Valle del Cauca</title>
+<meta name="description" content="Visionarium Valle Milagro: economía regional, brechas educativas en municipios con presencia de grupos armados y una ruta de acción mediante Obras por Impuestos. Valle del Cauca.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#16323f;        /* deep slate teal (document primary) */
+    --navy-2:#1e3a4c;
+    --ink:#1c2733;
+    --slate:#3f5a6b;
+    --mut:#6a7c88;
+    --mut-d:#9fb2bd;
+    --line:#e4ebef;
+    --line-d:#2a4150;
+    --green:#2d5a3d;       /* Valle Milagro badge green */
+    --green-2:#3f7a52;
+    --rust:#b5532e;        /* security accent */
+    --paper:#ffffff;
+    --panel:#eef3f5;
+    --panel-2:#f6f9fa;
+    --grad:linear-gradient(120deg,#2d5a3d,#2a8c9e 60%,#1e3a4c);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:'Playfair Display',Georgia,serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  a{color:inherit}
+
+  /* ===== Top bar ===== */
+  .topbar{position:sticky;top:0;z-index:40;background:rgba(10,22,28,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line-d)}
+  .topbar .wrap{display:flex;align-items:center;gap:14px;height:64px}
+  .brand{display:flex;align-items:center;gap:11px;color:#fff;font-family:'Sora';font-weight:700;font-size:16px}
+  .brand .vm{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 35% 30%,#7fe0b5,#2d5a3d 60%,#16323f);color:#06121f;font-weight:800;font-size:13px;font-family:'Sora'}
+  .brand small{display:block;font-family:'Inter';font-weight:500;font-size:11px;color:var(--mut-d);letter-spacing:.12em;text-transform:uppercase}
+  .nav-links{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .nav-links a{color:#cfe0e6;text-decoration:none;font-size:13.5px;font-weight:500;padding:8px 12px;border-radius:9px;transition:background .15s}
+  .nav-links a:hover{background:rgba(255,255,255,.08)}
+  .btn-login{background:var(--grad);color:#06121f !important;font-weight:700 !important;
+    box-shadow:0 8px 22px rgba(45,90,61,.4)}
+  @media(max-width:760px){.nav-links a.hide-sm{display:none}}
+
+  /* ===== Hero ===== */
+  .hero{background:
+    radial-gradient(900px 460px at 80% -20%,rgba(45,140,158,.22),transparent 60%),
+    radial-gradient(700px 360px at 8% 0%,rgba(45,90,61,.26),transparent 55%),
+    #0a161c;color:#eef4f6;padding:78px 0 70px}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:#8fd6c0;font-weight:600;margin-bottom:22px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:#7fe0b5;box-shadow:0 0 12px #7fe0b5}
+  .hero h1{font-size:clamp(34px,5.2vw,58px);line-height:1.05;margin:0 0 22px;font-weight:800;color:#fff;max-width:14ch}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{font-size:clamp(16px,2vw,20px);color:#c4d6dd;max-width:62ch;margin:0 0 30px}
+  .hero .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px}
+  .chip{background:rgba(255,255,255,.07);border:1px solid var(--line-d);border-radius:999px;padding:8px 15px;font-size:13.5px;color:#dceaef}
+  .chip b{color:#fff}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:14px}
+  .cta-btn{display:inline-flex;align-items:center;gap:9px;font:700 15px 'Inter',sans-serif;border-radius:13px;
+    padding:14px 24px;cursor:pointer;text-decoration:none;transition:filter .15s,transform .15s;border:none}
+  .cta-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .cta-primary{background:var(--grad);color:#06121f;box-shadow:0 14px 34px rgba(45,140,158,.35)}
+  .cta-ghost{background:rgba(255,255,255,.06);color:#eef4f6;border:1px solid var(--line-d)}
+  .hero-foot{margin-top:40px;padding-top:22px;border-top:1px solid var(--line-d);display:flex;flex-wrap:wrap;gap:14px;
+    justify-content:space-between;color:var(--mut-d);font-size:13px}
+
+  /* ===== Voice orb band ===== */
+  .mayaband{padding:46px 0;background:
+    radial-gradient(800px 400px at 50% -40%,rgba(45,140,158,.18),transparent 60%),#070f13}
+  .lina{margin:0 auto;max-width:720px;background:linear-gradient(180deg,#122731,#0c181e);
+    border:1px solid var(--line-d);border-radius:22px;padding:26px;display:flex;gap:22px;align-items:center;
+    box-shadow:0 24px 70px rgba(0,0,0,.5)}
+  .orb{position:relative;width:96px;height:96px;flex:0 0 96px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#7fe0b5,#2a8c9e 52%,#16323f 100%);
+    box-shadow:0 0 0 0 rgba(127,224,181,.5)}
+  .orb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid rgba(127,224,181,.32)}
+  .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(127,224,181,.45)}70%{box-shadow:0 0 0 24px rgba(127,224,181,0)}100%{box-shadow:0 0 0 0 rgba(127,224,181,0)}}
+  .lina-meta{flex:1;min-width:0;color:#eaf2f4}
+  .lina-name{font-family:'Sora';font-weight:700;font-size:19px;color:#fff}
+  .lina-role{color:var(--mut-d);font-size:14px;margin-bottom:15px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  .controls button{font:600 14px 'Inter',sans-serif;border-radius:11px;padding:11px 17px;cursor:pointer;
+    border:1px solid var(--line-d);background:rgba(255,255,255,.06);color:#eaf2f4;transition:filter .15s}
+  .controls button:hover{filter:brightness(1.15)}
+  .controls button:disabled{opacity:.4;cursor:not-allowed}
+  .controls button.primary{border:none;background:var(--grad);color:#06121f;font-weight:700;box-shadow:0 12px 32px rgba(45,140,158,.3)}
+  .status{font-size:13px;color:var(--mut-d);margin-top:13px;min-height:18px}
+  .voicepick{margin-top:12px;font-size:13px;color:var(--mut-d);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .voicepick select{font:inherit;background:#16252e;color:#e9f1f3;border:1px solid var(--line-d);border-radius:8px;padding:6px 8px;margin-left:6px}
+  .voicepick .green{color:#7fe0b5;font-weight:700}
+  @media(max-width:620px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
+
+  /* ===== Sections ===== */
+  section.sec{padding:64px 0;border-bottom:1px solid var(--line);scroll-margin-top:80px;transition:box-shadow .3s}
+  section.sec.active{box-shadow:inset 5px 0 0 var(--green-2)}
+  .kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--green-2);font-weight:700;margin-bottom:14px}
+  section.sec h2{font-size:clamp(26px,3.6vw,40px);line-height:1.12;margin:0 0 18px;color:var(--navy)}
+  .lead{font-size:18px;color:var(--slate);max-width:64ch;margin:0 0 26px}
+  p.body{color:var(--slate);max-width:66ch}
+  .sec-head{display:flex;align-items:flex-start;gap:18px;justify-content:space-between}
+  .play-one{flex:0 0 auto;margin-top:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:9px 14px;font:600 13px 'Inter',sans-serif;color:var(--green);cursor:pointer;white-space:nowrap;transition:background .15s}
+  .play-one:hover{background:#e2ece6}
+
+  /* ===== Stat cards ===== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:8px 0 30px}
+  .stat{padding:26px 20px;text-align:center;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:none}
+  .stat .n{font-family:'Playfair Display';font-weight:800;font-size:clamp(28px,3.4vw,40px);color:var(--navy);line-height:1}
+  .stat .l{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-top:10px;font-weight:600}
+  .stats.rust .n{color:var(--rust)}
+  @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:none}.stat{border-bottom:1px solid var(--line)}}
+
+  /* ===== Synthesis / callout panel ===== */
+  .panel{background:var(--panel);border-left:4px solid var(--navy);border-radius:0 12px 12px 0;padding:24px 26px;margin:6px 0 0;color:var(--slate)}
+  .panel.green{border-left-color:var(--green-2)}
+  .panel.rust{border-left-color:var(--rust)}
+  .panel strong{color:var(--ink)}
+  .panel .pk{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700;margin-bottom:10px}
+
+  /* ===== Bar chart (economy) ===== */
+  .bars{display:flex;flex-direction:column;gap:14px;margin:8px 0 0}
+  .bar-row{display:grid;grid-template-columns:180px 1fr;align-items:center;gap:14px}
+  .bar-lbl{font-size:14px;color:var(--slate);text-align:right;font-weight:500}
+  .bar-track{background:var(--panel);border-radius:8px;height:30px;position:relative;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,#2a8c9e,#1e3a4c);border-radius:8px;display:flex;align-items:center;
+    justify-content:flex-end;padding-right:12px;color:#fff;font-weight:700;font-size:13.5px;min-width:42px}
+  @media(max-width:600px){.bar-row{grid-template-columns:120px 1fr}.bar-lbl{font-size:12.5px}}
+
+  /* ===== Polos / list ===== */
+  .polos{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:8px}
+  .polo{background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+  .polo h4{margin:0 0 6px;font-family:'Sora';font-size:15.5px;color:var(--navy)}
+  .polo p{margin:0;font-size:14px;color:var(--mut)}
+  @media(max-width:680px){.polos{grid-template-columns:1fr}}
+
+  /* ===== 3-up cards ===== */
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px}
+  .card3{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .card3 h3{font-family:'Sora';font-size:17px;margin:0 0 12px;color:var(--navy)}
+  .card3 p{margin:0;font-size:14.5px;color:var(--slate)}
+  @media(max-width:780px){.three{grid-template-columns:1fr}}
+
+  /* ICFES scale */
+  .scale{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .scale .s{width:64px;height:54px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-family:'Sora';font-size:18px}
+
+  /* ===== Cross-analysis flow ===== */
+  .flow{display:grid;grid-template-columns:1fr 1fr auto 1fr;gap:16px;align-items:stretch;margin-top:8px}
+  .flow .box{border-radius:14px;padding:22px}
+  .flow .edu{background:var(--panel);border:1px solid var(--line)}
+  .flow .seg{background:#f7ece6;border:1px solid #eed8cb}
+  .flow .res{background:var(--navy);color:#eef4f6}
+  .flow .arrow{display:grid;place-items:center;color:var(--green-2);font-size:30px;font-weight:700}
+  .flow .bk{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+  .flow .edu .bk{color:var(--slate)}.flow .seg .bk{color:var(--rust)}.flow .res .bk{color:#8fd6c0}
+  .flow .box p{margin:0;font-size:14px}
+  .flow .res p{color:#cfe0e6}
+  @media(max-width:820px){.flow{grid-template-columns:1fr}.flow .arrow{transform:rotate(90deg)}}
+
+  /* ===== Conclusions ===== */
+  .concl{display:flex;gap:22px;align-items:flex-start;padding:22px 0;border-bottom:1px solid var(--line)}
+  .concl:last-child{border-bottom:none}
+  .concl .num{font-family:'Playfair Display';font-weight:800;font-size:48px;color:var(--green-2);line-height:.9;flex:0 0 auto;width:54px}
+  .concl h3{margin:0 0 6px;font-family:'Sora';font-size:17px;color:var(--navy)}
+  .concl p{margin:0;color:var(--slate);font-size:15px}
+
+  /* ===== Mechanism grid ===== */
+  .mech{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .mcell{padding:24px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .mcell:nth-child(3n){border-right:none}
+  .mcell:nth-last-child(-n+3){border-bottom:none}
+  .mcell .mk{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green-2);font-weight:700;margin-bottom:12px}
+  .mcell p{margin:0;font-size:14.5px;color:var(--slate)}
+  @media(max-width:780px){.mech{grid-template-columns:1fr}.mcell{border-right:none}.mcell:nth-last-child(-n+3){border-bottom:1px solid var(--line)}.mcell:last-child{border-bottom:none}}
+
+  /* ===== CTA band ===== */
+  .ctaband{background:
+    radial-gradient(700px 360px at 80% 0%,rgba(45,140,158,.2),transparent 55%),#0a161c;color:#eef4f6;padding:70px 0;text-align:center}
+  .ctaband h2{font-size:clamp(28px,4vw,44px);margin:0 0 16px;color:#fff}
+  .ctaband p{max-width:60ch;margin:0 auto 30px;color:#c4d6dd;font-size:18px}
+
+  /* ===== Sources ===== */
+  .sources{padding:56px 0;background:var(--panel-2)}
+  .src-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px}
+  .src-grid h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--green-2);margin:0 0 16px}
+  .src-grid ul{list-style:none;margin:0;padding:0}
+  .src-grid li{font-size:14px;color:var(--slate);padding:7px 0;border-bottom:1px solid var(--line)}
+  .src-note{margin-top:28px;font-size:12.5px;color:var(--mut);font-style:italic}
+  @media(max-width:680px){.src-grid{grid-template-columns:1fr;gap:24px}}
+
+  .fineprint{font-size:12px;color:var(--mut);font-style:italic;margin-top:18px}
+
+  footer.site{background:#070f13;color:var(--mut-d);padding:30px 0;font-size:13px}
+  footer.site .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+
+  @media print{
+    .topbar,.mayaband,.hero-cta,.play-one,.ctaband{display:none}
+    body{background:#fff}
+    section.sec{page-break-inside:avoid;break-inside:avoid;padding:24px 0}
+    .hero{background:#0a161c !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="vm">VM</span>
+      <span>Visionarium Valle Milagro<small>Inteligencia Regional · Valle del Cauca</small></span>
+    </div>
+    <nav class="nav-links">
+      <a href="#economia" class="hide-sm">Economía</a>
+      <a href="#educacion" class="hide-sm">Educación</a>
+      <a href="#seguridad" class="hide-sm">Seguridad</a>
+      <a href="#propuesta" class="hide-sm">Propuesta</a>
+      <a href="https://www.camaravirtual.app/cv-103" class="btn-login" id="loginBtn" target="_top">Acceder a la plataforma</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Documento de trabajo · Cali, Valle del Cauca · Junio de 2026</span>
+    <h1>Visionarium <span class="grad-text">Valle Milagro</span></h1>
+    <p class="sub">Economía regional, brechas educativas en municipios con presencia de grupos armados y una ruta de acción para el sector privado mediante el mecanismo de Obras por Impuestos.</p>
+    <div class="chips">
+      <span class="chip"><b>42</b> municipios analizados</span>
+      <span class="chip"><b>3.ª</b> economía del país</span>
+      <span class="chip"><b>23/42</b> municipios con presencia armada</span>
+      <span class="chip"><b>$1,14 B</b> cupo Obras por Impuestos 2026</span>
+    </div>
+    <div class="hero-cta">
+      <a href="#informe" class="cta-btn cta-primary">Recorrer el informe</a>
+      <a href="https://www.camaravirtual.app/cv-103" class="cta-btn cta-ghost" id="loginBtn2" target="_top">Acceder a la plataforma &rarr;</a>
+    </div>
+    <div class="hero-foot">
+      <span>Inteligencia regional construida por Digit2AI · 21 plataformas en vivo · 22 verticales · SLA 99.9%</span>
+      <span>Fuentes oficiales: DANE · ICFES · MinEducación · Defensoría del Pueblo · ART</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== VOICE ORB ===== -->
+<section class="mayaband">
+  <div class="wrap">
+    <div class="lina">
+      <div class="orb" id="orb"></div>
+      <div class="lina-meta">
+        <div class="lina-name">Salomé · Voz AI de Visionarium</div>
+        <div class="lina-role">Inteligencia regional colombiana — narra este informe</div>
+        <div class="controls">
+          <button class="primary" id="playAll">&#9654; Que Salomé lo explique todo</button>
+          <button id="pause" disabled>&#10073;&#10073; Pausar</button>
+          <button id="stop" disabled>&#9632; Detener</button>
+        </div>
+        <div class="status" id="status">Pulsa el botón para que Salomé recorra el informe contigo.</div>
+        <div class="voicepick">
+          <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
+          &nbsp;&middot;&nbsp; Acento:
+          <select id="voiceSel">
+            <option value="salome" selected>Colombia (Salomé)</option>
+            <option value="lina">México (Dalia)</option>
+            <option value="paloma">EE. UU. (Paloma)</option>
+            <option value="elvira">España (Elvira)</option>
+          </select>
+          <span id="voiceMode" class="green"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<a id="informe"></a>
+
+<!-- ===== 01 · CONTEXTO TERRITORIAL ===== -->
+<section class="sec" id="contexto">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección primera · Contexto territorial</div>
+        <h2>El Valle del Cauca en cifras</h2>
+      </div>
+      <button class="play-one" data-play="0">&#9654; Escuchar</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">42</div><div class="l">Municipios</div></div>
+      <div class="stat"><div class="n">4,65 M</div><div class="l">Habitantes · proyección 2024</div></div>
+      <div class="stat"><div class="n">3.ª</div><div class="l">Economía del país · ~10% del PIB</div></div>
+      <div class="stat"><div class="n">48 %</div><div class="l">De la población reside en Cali (2,27 M)</div></div>
+    </div>
+    <div class="panel">
+      <div class="pk">Síntesis</div>
+      <strong>El Valle del Cauca es la tercera economía nacional y la primera del litoral Pacífico.</strong> Su población es marcadamente urbana: Cali concentra el 48% del total departamental, y junto con Yumbo, Palmira, Jamundí y Candelaria conforma el principal centro económico y demográfico del suroccidente.
+    </div>
+    <p class="fineprint">Fuente: DANE — Cuentas Nacionales Departamentales (2024pr) y proyecciones de población (2024).</p>
+  </div>
+</section>
+
+<!-- ===== 02 · ECONOMÍA ===== -->
+<section class="sec" id="economia">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección segunda · Economía</div>
+        <h2>Estructura y tamaño de la economía</h2>
+      </div>
+      <button class="play-one" data-play="1">&#9654; Escuchar</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">3.ª</div><div class="l">Economía nacional</div></div>
+      <div class="stat"><div class="n">72 %</div><div class="l">Del PIB del Pacífico</div></div>
+      <div class="stat"><div class="n">+2,8 %</div><div class="l">Crecimiento 2024</div></div>
+      <div class="stat"><div class="n">US$2.385 M</div><div class="l">Exportaciones 2024</div></div>
+    </div>
+    <h3 style="font-family:'Sora';font-size:15px;color:var(--slate);margin:0 0 18px">Participación del Valle en el valor agregado nacional, por sector</h3>
+    <div class="bars">
+      <div class="bar-row"><div class="bar-lbl">Alimentos y bebidas</div><div class="bar-track"><div class="bar-fill" style="width:100%">16%</div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Industria manufacturera</div><div class="bar-track"><div class="bar-fill" style="width:87%">14%</div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Transporte</div><div class="bar-track"><div class="bar-fill" style="width:81%">13%</div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Comercio</div><div class="bar-track"><div class="bar-fill" style="width:69%">11%</div></div></div>
+      <div class="bar-row"><div class="bar-lbl">Servicios financieros</div><div class="bar-track"><div class="bar-fill" style="width:62%">10%</div></div></div>
+    </div>
+    <div class="panel green" style="margin-top:26px">
+      <strong>36% de la pesca del Pacífico nacional se origina en el Valle.</strong> La base productiva es agroindustrial e industrial: caña, manufactura, comercio, servicios y actividad portuaria sobre un mismo corredor.
+    </div>
+    <p class="fineprint">Fuente: DANE — Cuentas Nacionales Departamentales (2024pr); MinCIT — Perfil económico del Valle del Cauca; participación sectorial: Gobernación del Valle con base en cuentas del DANE.</p>
+  </div>
+</section>
+
+<!-- ===== 03 · GEOGRAFÍA ECONÓMICA ===== -->
+<section class="sec" id="geografia">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección segunda · Geografía económica</div>
+        <h2>Concentración territorial de la economía</h2>
+      </div>
+      <button class="play-one" data-play="2">&#9654; Escuchar</button>
+    </div>
+    <p class="lead">El peso productivo se reparte de manera muy desigual. Seis polos concentran la mayor parte de la actividad:</p>
+    <div class="polos">
+      <div class="polo"><h4>Cali y área metropolitana</h4><p>Servicios, comercio, salud y tecnología (48% de la población).</p></div>
+      <div class="polo"><h4>Yumbo</h4><p>Capital industrial del país: papel, química, cemento y energía.</p></div>
+      <div class="polo"><h4>Buenaventura</h4><p>Principal puerto del Pacífico y del comercio exterior.</p></div>
+      <div class="polo"><h4>Palmira · Tuluá · Buga</h4><p>Corredor agroindustrial: caña, alimentos y logística.</p></div>
+      <div class="polo"><h4>Cartago · Zarzal</h4><p>Agroindustria y comercio del norte (Eje Cafetero).</p></div>
+      <div class="polo"><h4>Sevilla · Caicedonia</h4><p>Café y fruta del norte cordillerano, de vocación rural.</p></div>
+    </div>
+    <p class="fineprint">Fuente: Cartografía: DANE — Marco Geoestadístico Nacional (2018). Descripción sectorial: Cámara de Comercio de Cali; Gobernación del Valle del Cauca.</p>
+  </div>
+</section>
+
+<!-- ===== 04 · EDUCACIÓN ===== -->
+<section class="sec" id="educacion">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección tercera · Educación</div>
+        <h2>Cómo se mide el sistema educativo</h2>
+      </div>
+      <button class="play-one" data-play="3">&#9654; Escuchar</button>
+    </div>
+    <p class="lead">El sistema cuenta con instrumentos públicos que permiten medirlo y compararlo con precisión:</p>
+    <div class="three">
+      <div class="card3"><h3>Clasificación ICFES</h3><p>Cada colegio se clasifica en cinco categorías —de A+ a D— según los resultados acumulados de tres años en la prueba Saber 11.</p></div>
+      <div class="card3"><h3>Conteo de cobertura</h3><p>El Sistema Integrado de Matrícula (SIMAT) y el Directorio Único de Establecimientos (DUE) reportan sedes y matrícula por municipio.</p></div>
+      <div class="card3"><h3>El cruce decisivo</h3><p>El código DANE único de cada sede permite cruzar el colegio con su municipio y con el mapa del conflicto armado.</p></div>
+    </div>
+    <h3 style="font-family:'Sora';font-size:14px;color:var(--slate);margin:30px 0 0">Escala oficial de clasificación, del desempeño más alto al más bajo</h3>
+    <div class="scale">
+      <div class="s" style="background:#2f8f4e">A+</div>
+      <div class="s" style="background:#5aa85f">A</div>
+      <div class="s" style="background:#d6a93a">B</div>
+      <div class="s" style="background:#d97a35">C</div>
+      <div class="s" style="background:#c33f3f">D</div>
+    </div>
+    <p class="fineprint">Fuente: ICFES — Clasificación de planteles, prueba Saber 11. MinEducación — SIMAT y Directorio Único de Establecimientos (DUE).</p>
+  </div>
+</section>
+
+<!-- ===== 05 · SEGURIDAD ===== -->
+<section class="sec" id="seguridad">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección cuarta · Seguridad</div>
+        <h2>Presencia de grupos armados por municipio</h2>
+      </div>
+      <button class="play-one" data-play="4">&#9654; Escuchar</button>
+    </div>
+    <div class="stats rust">
+      <div class="stat"><div class="n">23 / 42</div><div class="l">Municipios con presencia de disidencias de las FARC</div></div>
+      <div class="stat"><div class="n">620</div><div class="l">Ataques · Cauca y Valle, ene 2022 – abr 2026</div></div>
+      <div class="stat"><div class="n">16</div><div class="l">Reportes en Buenaventura</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">Estructuras distintas asociadas a Cali</div></div>
+    </div>
+    <div class="panel rust">
+      <strong>Buenaventura registra 16 reportes; Cali nueve, asociados a siete estructuras distintas; Tuluá cinco.</strong> La presencia armada no es solo rural: alcanza la capital y el corredor central.
+    </div>
+    <p class="fineprint">Fuente: Observatorio para la Paz (Gobernación del Valle), reportes 2023–2024; Defensoría del Pueblo (SAT, Decreto 2124 de 2017); Fundación Ideas para la Paz. Cartografía: DANE (MGN 2018).</p>
+  </div>
+</section>
+
+<!-- ===== 06 · CRUCE / ANÁLISIS ===== -->
+<section class="sec" id="analisis">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección quinta · Análisis</div>
+        <h2>Cruce entre brechas educativas y presencia armada</h2>
+      </div>
+      <button class="play-one" data-play="5">&#9654; Escuchar</button>
+    </div>
+    <div class="flow">
+      <div class="box edu"><div class="bk">Educación</div><p>Clasificación ICFES de cada sede (A+ a D), identificada por su código DANE.</p></div>
+      <div class="box seg"><div class="bk">Seguridad</div><p>Municipios con alerta temprana de la Defensoría y presencia de grupos armados del Observatorio para la Paz.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="box res"><div class="bk">Resultado</div><p>Municipios donde el derecho a estudiar está en mayor riesgo.</p></div>
+    </div>
+    <div class="panel" style="margin-top:26px">
+      <strong>Interpretación.</strong> Donde el rezago educativo coincide con la presencia armada se concentra la prioridad de intervención. Es una hipótesis de trabajo que debe probarse con datos: una correlación, de existir, no implica causalidad.
+    </div>
+    <p class="fineprint">Fuente: Elaboración propia con base en ICFES (clasificación de planteles), MinEducación (DUE, código DANE) y Defensoría del Pueblo (SAT).</p>
+  </div>
+</section>
+
+<!-- ===== 07 · CONCLUSIONES ===== -->
+<section class="sec" id="conclusiones">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección sexta · Conclusiones del diagnóstico</div>
+        <h2>Conclusiones</h2>
+      </div>
+      <button class="play-one" data-play="6">&#9654; Escuchar</button>
+    </div>
+    <div class="concl">
+      <div class="num">1</div>
+      <div><h3>La fortaleza económica es industrial y agroalimentaria, pero está concentrada.</h3><p>Descansa en pocos municipios; el mayor margen de impacto está en cerrar la brecha de la costa Pacífica y el norte.</p></div>
+    </div>
+    <div class="concl">
+      <div class="num">2</div>
+      <div><h3>Donde el conflicto se intensifica, la educación se deteriora.</h3><p>Cruzar las sedes educativas con las alertas tempranas permite ubicar dónde el derecho a estudiar está en riesgo.</p></div>
+    </div>
+    <div class="concl">
+      <div class="num">3</div>
+      <div><h3>La violencia se concentra en el Pacífico y el corredor central.</h3><p>Buenaventura, Cali y Tuluá: allí economía, educación y seguridad se entrecruzan y definen las prioridades.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 08 · PROPUESTA ===== -->
+<section class="sec" id="propuesta">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Sección séptima · Propuesta</div>
+        <h2>Propuesta: Obras por Impuestos</h2>
+      </div>
+      <button class="play-one" data-play="7">&#9654; Escuchar</button>
+    </div>
+    <p class="lead">El mecanismo permite a los contribuyentes del impuesto de renta destinar hasta el 50% de ese impuesto a financiar y ejecutar obras públicas —vías, escuelas, puestos de salud, acueductos, energía— en los municipios más afectados, en lugar de pagarlo en efectivo.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">50 %</div><div class="l">Máximo del impuesto de renta</div></div>
+      <div class="stat"><div class="n">$1,14 B</div><div class="l">Cupo nacional · vigencia 2026</div></div>
+      <div class="stat"><div class="n">15</div><div class="l">Municipios ZOMAC en el Valle</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">PDET: Buenaventura, Florida, Pradera</div></div>
+    </div>
+    <p class="fineprint">Fuente: Marco legal: Ley 1819 de 2016, art. 238; Ley 2277 de 2022, art. 86 (PDET y Buenaventura); Decreto Ley 893 de 2017 (PDET). Cupo 2026: CONFIS / ART. Cartografía: DANE (MGN 2018).</p>
+  </div>
+</section>
+
+<!-- ===== 09 · MECANISMO ===== -->
+<section class="sec" id="mecanismo">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Propuesta · Mecanismo</div>
+        <h2>El mecanismo, en detalle</h2>
+      </div>
+      <button class="play-one" data-play="8">&#9654; Escuchar</button>
+    </div>
+    <div class="mech">
+      <div class="mcell"><div class="mk">Quién</div><p>Personas y empresas contribuyentes del impuesto de renta con ingresos brutos ≥ 33.610 UVT (Ley 1819/2016, art. 238).</p></div>
+      <div class="mcell"><div class="mk">Qué</div><p>Hasta el 50% del impuesto a cargo, pagado como obra pública ejecutada.</p></div>
+      <div class="mcell"><div class="mk">Dónde</div><p>Municipios ZOMAC (Decreto 1650 de 2017) y con PDET (Decreto Ley 893 de 2017) — quince y tres en el Valle.</p></div>
+      <div class="mcell"><div class="mk">Sectores</div><p>Agua potable y saneamiento, energía, salud, educación e infraestructura vial.</p></div>
+      <div class="mcell"><div class="mk">Cómo</div><p>Banco de Proyectos de la ART, con visto bueno del DNP y la DIAN; estructurado con las alcaldías.</p></div>
+      <div class="mcell"><div class="mk">Vigencia 2026</div><p>Cupo nacional aprobado por el CONFIS cercano a $1,14 billones de pesos.</p></div>
+    </div>
+    <p class="fineprint">Fuente: Ley 1819 de 2016 (art. 238); Ley 2010 de 2019 (art. 79, opción convenio); Ley 2277 de 2022; Agencia de Renovación del Territorio (ART) — Manual Operativo y Banco de Proyectos.</p>
+  </div>
+</section>
+
+<!-- ===== CTA BAND ===== -->
+<section class="ctaband">
+  <div class="wrap">
+    <h2>Del diagnóstico a la acción</h2>
+    <p>Visionarium Valle Milagro convierte datos oficiales en decisiones. Accede a la plataforma para coordinar proyectos de Obras por Impuestos, conectar al sector privado con los municipios prioritarios y dar seguimiento al impacto.</p>
+    <a href="https://www.camaravirtual.app/cv-103" class="cta-btn cta-primary" id="loginBtn3" target="_top">Acceder a la plataforma &rarr;</a>
+  </div>
+</section>
+
+<!-- ===== SOURCES / ANEXO ===== -->
+<section class="sources" id="fuentes">
+  <div class="wrap">
+    <div class="kicker">Anexo</div>
+    <h2 class="serif" style="font-size:30px;color:var(--navy);margin:6px 0 28px">Marco normativo y fuentes</h2>
+    <div class="src-grid">
+      <div>
+        <h4>Marco normativo</h4>
+        <ul>
+          <li>Ley 1819 de 2016 — Reforma tributaria; arts. 236–238 (ZOMAC y Obras por Impuestos).</li>
+          <li>Decreto 1650 de 2017 — Listado de municipios ZOMAC (MinHacienda, DNP, ART).</li>
+          <li>Decreto 1915 de 2017 — Reglamentación del art. 238 (modalidad fiducia).</li>
+          <li>Ley 2010 de 2019 — Art. 79: opción convenio (art. 800-1 del E.T.).</li>
+          <li>Ley 2277 de 2022 — Arts. 26 y 86: extensión a territorios PDET y Buenaventura.</li>
+          <li>Decreto Ley 893 de 2017 — Creación de los PDET.</li>
+          <li>Decreto 2124 de 2017 — Sistema de Alertas Tempranas (Defensoría del Pueblo).</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Fuentes de datos</h4>
+        <ul>
+          <li>DANE — Cuentas Nacionales Departamentales y proyecciones de población.</li>
+          <li>MinCIT — Perfil económico del Valle del Cauca.</li>
+          <li>Cámara de Comercio de Cali — Balance económico regional.</li>
+          <li>DNP — Portal de datos territoriales TerriData.</li>
+          <li>ICFES — Clasificación de planteles, prueba Saber 11.</li>
+          <li>MinEducación — SIMAT y Directorio Único de Establecimientos.</li>
+          <li>Gobernación del Valle — Observatorio para la Paz.</li>
+          <li>Defensoría del Pueblo — Sistema de Alertas Tempranas.</li>
+          <li>OCHA Colombia · Fundación Ideas para la Paz.</li>
+          <li>Agencia de Renovación del Territorio — Obras por Impuestos.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="src-note">Documento de trabajo · circulación interna. Las cifras pueden corroborarse en las fuentes citadas; algunas series son estructurales y conviene actualizarlas con la medición más reciente disponible. Las relaciones observadas son hipótesis de trabajo: una correlación no implica causalidad.</p>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Visionarium Valle Milagro · Inteligencia Regional del Valle del Cauca</span>
+    <span>Construido por Digit2AI · Cali, Valle del Cauca · Junio de 2026</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // index 0..8 = una sección del informe, en orden (el botón data-play usa el mismo índice)
+  var segments = [
+    "Bienvenido a Visionarium Valle Milagro. Soy Salomé, la voz de inteligencia artificial de este informe. El Valle del Cauca es la tercera economía del país y la primera del litoral Pacífico. Reúne cuarenta y dos municipios y cerca de cuatro punto sesenta y cinco millones de habitantes, pero su población es marcadamente urbana: solo Cali concentra el cuarenta y ocho por ciento del total departamental.",
+    "La economía del Valle es la tercera del país y representa el setenta y dos por ciento del Producto Interno Bruto del Pacífico, con un crecimiento del dos punto ocho por ciento en dos mil veinticuatro y exportaciones por dos mil trescientos ochenta y cinco millones de dólares. Su base es agroindustrial e industrial: alimentos y bebidas, manufactura, transporte, comercio y servicios financieros. Además, el treinta y seis por ciento de la pesca del Pacífico nacional se origina aquí.",
+    "Ese peso productivo se reparte de manera muy desigual. Seis polos concentran la mayor parte de la actividad: Cali y su área metropolitana en servicios y tecnología; Yumbo como capital industrial; Buenaventura como principal puerto del Pacífico; el corredor agroindustrial de Palmira, Tuluá y Buga; Cartago y Zarzal en el norte; y Sevilla y Caicedonia, de vocación cafetera y rural.",
+    "Para medir la educación, el país tiene instrumentos públicos precisos. El ICFES clasifica cada colegio en cinco categorías, de A más a D, según los resultados de tres años en la prueba Saber once. El Sistema Integrado de Matrícula y el Directorio Único de Establecimientos reportan sedes y cobertura por municipio. Y el código DANE de cada sede permite cruzar el colegio con su municipio y con el mapa del conflicto armado.",
+    "La seguridad es el factor crítico. Veintitrés de los cuarenta y dos municipios registran presencia de disidencias de las FARC, y se contabilizan seiscientos veinte ataques de grupos armados en Cauca y Valle entre enero de dos mil veintidós y abril de dos mil veintiséis. Buenaventura registra dieciséis reportes; Cali nueve, asociados a siete estructuras distintas; y Tuluá cinco. La presencia armada no es solo rural: alcanza la capital y el corredor central.",
+    "El análisis decisivo es el cruce. Al combinar la clasificación educativa de cada sede con las alertas tempranas de la Defensoría y la presencia de grupos armados, obtenemos los municipios donde el derecho a estudiar está en mayor riesgo. Donde el rezago educativo coincide con la presencia armada, allí se concentra la prioridad de intervención. Es una hipótesis de trabajo que debe probarse con datos: una correlación, de existir, no implica causalidad.",
+    "De aquí salen tres conclusiones. Primera: la fortaleza económica es industrial y agroalimentaria, pero está concentrada en pocos municipios; el mayor margen de impacto está en cerrar la brecha de la costa Pacífica y el norte. Segunda: donde el conflicto se intensifica, la educación se deteriora. Y tercera: la violencia se concentra en el Pacífico y el corredor central, en Buenaventura, Cali y Tuluá, donde economía, educación y seguridad se entrecruzan.",
+    "Frente a este diagnóstico proponemos una ruta de acción para el sector privado: Obras por Impuestos. El mecanismo permite a los contribuyentes del impuesto de renta destinar hasta el cincuenta por ciento de ese impuesto a financiar y ejecutar obras públicas en los municipios más afectados, en lugar de pagarlo en efectivo. Para dos mil veintiséis hay un cupo nacional cercano a un punto catorce billones de pesos, y el Valle cuenta con quince municipios ZOMAC y tres con PDET: Buenaventura, Florida y Pradera.",
+    "En detalle: pueden participar personas y empresas contribuyentes de renta con ingresos brutos iguales o superiores a treinta y tres mil seiscientos diez UVT. Aportan hasta el cincuenta por ciento del impuesto a cargo, pagado como obra pública ejecutada en agua, energía, salud, educación o vías. Todo se canaliza a través del Banco de Proyectos de la Agencia de Renovación del Territorio, con visto bueno del DNP y la DIAN, y se estructura con las alcaldías. El siguiente paso es acceder a la plataforma y empezar a coordinar proyectos."
+  ];
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'salome';
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    var pref = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;});
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
+  setMode();
+
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+  neuralToggle.addEventListener('change', setMode);
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){ secs.forEach(function(s){s.classList.remove('active');});
+    if(i!=null && secs[i]){ secs[i].classList.add('active'); secs[i].scrollIntoView({behavior:'smooth',block:'start'}); } }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Salomé está hablando… ('+(qi+1)+' de '+queue.length+')' : 'Reproduciendo sección…'; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent='Preparando voz neural…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : 'es-CO';
+    u.rate=0.98; u.pitch=1.04;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.textContent='❙❙ Pausar';
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); setActive(null);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='Recorrido terminado. Pulsa de nuevo para repetir.';
+  }
+  playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  document.querySelectorAll('[data-play]').forEach(function(b){
+    b.addEventListener('click', function(){ start([parseInt(this.getAttribute('data-play'),10)],'one'); });
+  });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.textContent='▶ Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent='❙❙ Pausar'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+})();
+</script>
+</body>
+</html>

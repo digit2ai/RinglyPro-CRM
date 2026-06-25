@@ -2317,6 +2317,16 @@ app.get('/presto', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/presto.html'));
 });
 
+// Visionarium Valle Milagro — regional intelligence report for Valle del Cauca
+// (economy, education gaps, armed-group presence, Obras por Impuestos). Served
+// both direct and embedded via iframe from digit2ai.com (GHL), like /digit2ai.
+// Login button points to the camaravirtual chamber cv-103.
+app.get(['/valle_milagro', '/valle-milagro'], (req, res) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  res.sendFile(path.join(__dirname, '../public/valle_milagro/index.html'));
+});
+
 // Unsubscribe API endpoint
 app.post('/api/unsubscribe', async (req, res) => {
   try {
