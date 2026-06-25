@@ -280,9 +280,9 @@
           <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
           &nbsp;&middot;&nbsp; Acento:
           <select id="voiceSel">
-            <option value="salome" selected>Colombia (Ana)</option>
+            <option value="paloma" selected>EE. UU. (Ana)</option>
+            <option value="salome">Colombia (Salomé)</option>
             <option value="lina">México (Dalia)</option>
-            <option value="paloma">EE. UU. (Paloma)</option>
             <option value="elvira">España (Elvira)</option>
           </select>
           <span id="voiceMode" class="green"></span>
@@ -615,7 +615,7 @@
   var NEURAL_URL = '/api/tts/edge';
   var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
   var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
-  var browserVoice = null, voiceName = 'salome';
+  var browserVoice = null, voiceName = 'paloma';
 
   function pickBrowserVoice(){
     if(!synth) return;
@@ -669,7 +669,7 @@
     playbackMode='browser';
     var u=new SpeechSynthesisUtterance(segments[idx]);
     if(browserVoice) u.voice=browserVoice;
-    u.lang = browserVoice ? browserVoice.lang : 'es-CO';
+    u.lang = browserVoice ? browserVoice.lang : 'es-US';
     u.rate=0.98; u.pitch=1.04;
     u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
     u.onend=onEnd; u.onerror=onEnd;
