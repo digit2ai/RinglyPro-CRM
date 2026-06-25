@@ -53,9 +53,9 @@
   .topbar{position:sticky;top:0;z-index:40;background:rgba(3,8,20,.85);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line)}
   .topbar .wrap{display:flex;align-items:center;gap:14px;height:64px}
-  .brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:700;font-size:16px;font-family:'Source Serif 4',serif}
-  .brand .vm{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-family:var(--mono);
-    background:var(--grad);color:#04121a;font-weight:700;font-size:13px;box-shadow:0 0 18px rgba(45,232,230,.4)}
+  .brand{display:flex;align-items:center;gap:12px;color:#fff;font-weight:700;font-size:16px;font-family:'Source Serif 4',serif}
+  .brand .brand-logo{width:40px;height:40px;border-radius:50%;object-fit:cover;display:block;
+    border:1px solid var(--line);box-shadow:0 0 16px rgba(45,232,230,.25)}
   .brand small{display:block;font-family:var(--mono);font-weight:500;font-size:10.5px;color:var(--teal);letter-spacing:.16em;text-transform:uppercase}
   .nav-links{margin-left:auto;display:flex;gap:6px;align-items:center}
   .nav-links a{color:var(--slate);text-decoration:none;font-size:13.5px;font-weight:500;padding:8px 12px;border-radius:9px;transition:background .15s,color .15s}
@@ -70,6 +70,8 @@
     radial-gradient(700px 360px at 8% 0%,rgba(239,108,87,.12),transparent 55%),
     linear-gradient(135deg,var(--navy-blk) 0%,var(--navy) 58%,var(--navy-light) 120%);
     color:var(--text);padding:78px 0 70px;border-bottom:1px solid var(--line)}
+  .hero-badge{display:block;width:138px;height:138px;border-radius:50%;object-fit:cover;margin:0 0 28px;
+    border:2px solid rgba(61,203,202,.4);box-shadow:0 0 40px rgba(45,232,230,.22)}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--teal);font-weight:500;margin-bottom:22px}
   .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--teal-neon);box-shadow:0 0 12px var(--teal-neon)}
@@ -238,7 +240,7 @@
 <header class="topbar">
   <div class="wrap">
     <div class="brand">
-      <span class="vm">VM</span>
+      <img class="brand-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3d62fef8473fa2ae00f814.jpg" alt="Valle Milagro">
       <span>Valle Milagro<small>Inteligencia Regional · Valle del Cauca</small></span>
     </div>
     <nav class="nav-links">
@@ -254,6 +256,7 @@
 <!-- ===== HERO ===== -->
 <section class="hero">
   <div class="wrap">
+    <img class="hero-badge" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3d62fef8473fa2ae00f814.jpg" alt="Valle Milagro">
     <span class="eyebrow"><span class="dot"></span> Documento de trabajo · Cali, Valle del Cauca · Junio de 2026</span>
     <h1>Valle <span class="grad-text">Milagro</span></h1>
     <p class="sub">Economía regional, brechas educativas en municipios con presencia de grupos armados y una ruta de acción para el sector privado mediante el mecanismo de Obras por Impuestos.</p>
