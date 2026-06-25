@@ -2472,6 +2472,9 @@ async function generateVoiceTeaser(projectId) {
       return;
     }
     renderTeaserModal(p, res.token, res.url, res.teaser);
+    // Refresh the underlying detail panel so the new teaser link shows under
+    // Requestor Link once the modal is dismissed (no manual reload needed).
+    if (typeof showProjectDetail === 'function') { showProjectDetail(projectId); }
   } catch (e) {
     document.getElementById('modal-body').innerHTML = '<p style="color:#f87171">Error: ' + escHtml(e.message) + '</p>';
   }
@@ -5855,10 +5858,12 @@ function renderProjectTimeline(p) {
 async function showProjectDetail(id) {
   const container = document.getElementById('view-container');
   container.innerHTML = '<div class="spinner"></div>';
-  const [res, tasksRes] = await Promise.all([api(`/projects/${id}`), api(`/tasks?project_id=${id}`)]);
+  const [res, tasksRes, teasersRes] = await Promise.all([api(`/projects/${id}`), api(`/tasks?project_id=${id}`), api(`/teaser-admin/projects/${id}/list`)]);
   if (!res.success) return;
   const p = res.data;
   const projectTasks = tasksRes.success ? tasksRes.data : [];
+  // Most recent voice teaser (if any) — its magic link is surfaced under the Requestor Link section.
+  const latestTeaser = (teasersRes && teasersRes.success && Array.isArray(teasersRes.data) && teasersRes.data.length) ? teasersRes.data[0] : null;
   const isOverdue = p.due_date && new Date(p.due_date) < new Date() && !['completed','cancelled'].includes(p.status);
 
   const pBackAction = _lastDrilldown ? `drillDown('${_lastDrilldown.metric}'${_lastDrilldown.filterValue ? ",'" + _lastDrilldown.filterValue + "'" : ''})` : "navigateTo('projects')";
@@ -5909,6 +5914,28 @@ async function showProjectDetail(id) {
                 <a class="btn btn-ghost btn-sm" href="${reqUrl}" target="_blank" rel="noopener">Open</a>
               </div>
               <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Magic link sent to the requestor after approve/reject. Use it to see what they see.</p>
+              ${latestTeaser ? (() => {
+                const tUrl = latestTeaser.url || `${location.origin}/projects/teaser/${latestTeaser.token}`;
+                return `<div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.35);border-radius:var(--radius);padding:10px 12px">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#a78bfa;flex-basis:100%">&#127908; Voice Teaser Link</span>
+                  <a href="${tUrl}" target="_blank" rel="noopener" style="flex:1;min-width:200px;font-size:12px;color:#a78bfa;word-break:break-all;text-decoration:none">${tUrl}</a>
+                  <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${tUrl}').then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+                  <a class="btn btn-ghost btn-sm" href="${tUrl}" target="_blank" rel="noopener">Open</a>
+                </div>
+                <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Lina-narrated POC teaser link. Share it with the client by Email, SMS, or WhatsApp from the Voice Teaser button.</p>` ;
+              })() : ''}
+            </div>`;
+          })() : ''}
+          ${(!p.share_token && latestTeaser) ? (() => {
+            const tUrl = latestTeaser.url || `${location.origin}/projects/teaser/${latestTeaser.token}`;
+            return `<div class="detail-section">
+              <h4>Voice Teaser Link</h4>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.35);border-radius:var(--radius);padding:10px 12px">
+                <a href="${tUrl}" target="_blank" rel="noopener" style="flex:1;min-width:200px;font-size:12px;color:#a78bfa;word-break:break-all;text-decoration:none">${tUrl}</a>
+                <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${tUrl}').then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button>
+                <a class="btn btn-ghost btn-sm" href="${tUrl}" target="_blank" rel="noopener">Open</a>
+              </div>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Lina-narrated POC teaser link. Share it with the client by Email, SMS, or WhatsApp from the Voice Teaser button.</p>
             </div>`;
           })() : ''}
           ${(p.submitter_name || p.submitter_email || p.submitter_phone) ? `
