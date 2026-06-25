@@ -285,19 +285,19 @@
     <div class="lina">
       <div class="orb" id="orb"></div>
       <div class="lina-meta">
-        <div class="lina-name">Salomé · Voz AI de Visionarium</div>
+        <div class="lina-name">Ana Isabel · Voz AI de Visionarium</div>
         <div class="lina-role">Inteligencia regional colombiana — narra este informe</div>
         <div class="controls">
-          <button class="primary" id="playAll">&#9654; Que Salomé lo explique todo</button>
+          <button class="primary" id="playAll">&#9654; Que Ana Isabel lo explique todo</button>
           <button id="pause" disabled>&#10073;&#10073; Pausar</button>
           <button id="stop" disabled>&#9632; Detener</button>
         </div>
-        <div class="status" id="status">Pulsa el botón para que Salomé recorra el informe contigo.</div>
+        <div class="status" id="status">Pulsa el botón para que Ana Isabel recorra el informe contigo.</div>
         <div class="voicepick">
           <label><input type="checkbox" id="neuralToggle" checked> Voz neural HD</label>
           &nbsp;&middot;&nbsp; Acento:
           <select id="voiceSel">
-            <option value="salome" selected>Colombia (Salomé)</option>
+            <option value="salome" selected>Colombia (Ana Isabel)</option>
             <option value="lina">México (Dalia)</option>
             <option value="paloma">EE. UU. (Paloma)</option>
             <option value="elvira">España (Elvira)</option>
@@ -589,7 +589,7 @@
 (function(){
   // index 0..8 = una sección del informe, en orden (el botón data-play usa el mismo índice)
   var segments = [
-    "Bienvenido a Visionarium Valle Milagro. Soy Salomé, la voz de inteligencia artificial de este informe. El Valle del Cauca es la tercera economía del país y la primera del litoral Pacífico. Reúne cuarenta y dos municipios y cerca de cuatro punto sesenta y cinco millones de habitantes, pero su población es marcadamente urbana: solo Cali concentra el cuarenta y ocho por ciento del total departamental.",
+    "Bienvenido a Visionarium Valle Milagro. Soy Ana Isabel, la voz de inteligencia artificial de este informe. El Valle del Cauca es la tercera economía del país y la primera del litoral Pacífico. Reúne cuarenta y dos municipios y cerca de cuatro punto sesenta y cinco millones de habitantes, pero su población es marcadamente urbana: solo Cali concentra el cuarenta y ocho por ciento del total departamental.",
     "La economía del Valle es la tercera del país y representa el setenta y dos por ciento del Producto Interno Bruto del Pacífico, con un crecimiento del dos punto ocho por ciento en dos mil veinticuatro y exportaciones por dos mil trescientos ochenta y cinco millones de dólares. Su base es agroindustrial e industrial: alimentos y bebidas, manufactura, transporte, comercio y servicios financieros. Además, el treinta y seis por ciento de la pesca del Pacífico nacional se origina aquí.",
     "Ese peso productivo se reparte de manera muy desigual. Seis polos concentran la mayor parte de la actividad: Cali y su área metropolitana en servicios y tecnología; Yumbo como capital industrial; Buenaventura como principal puerto del Pacífico; el corredor agroindustrial de Palmira, Tuluá y Buga; Cartago y Zarzal en el norte; y Sevilla y Caicedonia, de vocación cafetera y rural.",
     "Para medir la educación, el país tiene instrumentos públicos precisos. El ICFES clasifica cada colegio en cinco categorías, de A más a D, según los resultados de tres años en la prueba Saber once. El Sistema Integrado de Matrícula y el Directorio Único de Establecimientos reportan sedes y cobertura por municipio. Y el código DANE de cada sede permite cruzar el colegio con su municipio y con el mapa del conflicto armado.",
@@ -642,7 +642,7 @@
   }
   function setActive(i){ secs.forEach(function(s){s.classList.remove('active');});
     if(i!=null && secs[i]){ secs[i].classList.add('active'); secs[i].scrollIntoView({behavior:'smooth',block:'start'}); } }
-  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Salomé está hablando… ('+(qi+1)+' de '+queue.length+')' : 'Reproduciendo sección…'; }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Ana Isabel está hablando… ('+(qi+1)+' de '+queue.length+')' : 'Reproduciendo sección…'; }
 
   function runQueue(token){
     if(token!==runToken) return;
