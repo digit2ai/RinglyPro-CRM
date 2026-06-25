@@ -293,6 +293,18 @@ app.get(['/signup', '/signup/'], (req, res) => {
   });
 });
 
+// Visionarium Valle Milagro — regional intelligence report for Valle del Cauca
+// (economy, education gaps, armed-group presence, Obras por Impuestos). Served
+// both direct and embedded via iframe from digit2ai.com (GHL), like /digit2ai.
+// Registered BEFORE express.static so the explicit frame-ancestors CSP applies
+// (static would otherwise 301 /valle_milagro -> /valle_milagro/ with no headers).
+// Login CTAs point to the camaravirtual chamber cv-103.
+app.get(['/valle_milagro', '/valle_milagro/', '/valle-milagro', '/valle-milagro/'], (req, res) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  res.sendFile(path.join(__dirname, '../public/valle_milagro/index.html'));
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)
@@ -2315,16 +2327,6 @@ ${content}
 // Presto — 5-minute executive mini-demo (EN/ES toggle in-page)
 app.get('/presto', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/presto.html'));
-});
-
-// Visionarium Valle Milagro — regional intelligence report for Valle del Cauca
-// (economy, education gaps, armed-group presence, Obras por Impuestos). Served
-// both direct and embedded via iframe from digit2ai.com (GHL), like /digit2ai.
-// Login button points to the camaravirtual chamber cv-103.
-app.get(['/valle_milagro', '/valle-milagro'], (req, res) => {
-  res.removeHeader('X-Frame-Options');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
-  res.sendFile(path.join(__dirname, '../public/valle_milagro/index.html'));
 });
 
 // Unsubscribe API endpoint
