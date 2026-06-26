@@ -37,7 +37,7 @@ Digit2AI is positioned on the durable side of this line.
 
 | Dimension | Digit2AI (RinglyPro Neural Intelligence) | Glem AI |
 |---|---|---|
-| **Core product** | Custom AI software and finished business outcomes, built by a 60-agent workforce | A multi-model orchestration layer that routes requests to the best model |
+| **Core product** | Custom AI software and finished business outcomes, built by an 83-agent workforce | A multi-model orchestration layer that routes requests to the best model |
 | **Value delivered** | Working software, decks, plans, drafted emails, opened tickets, answered calls | A correctly routed model response |
 | **Central metaphor** | Doctor — diagnoses and treats on live data | Switchboard — routes to the right model |
 | **Agent model** | Job-role agents (Business Analyst, Architect, Inbox Triage, Voice, etc.) | Underlying models (Whisper, Gemini, GPT-4, DALL-E, Llama) |

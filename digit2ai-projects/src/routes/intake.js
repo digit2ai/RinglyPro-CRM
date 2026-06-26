@@ -1143,13 +1143,18 @@ Digit2AI construye software personalizado impulsado por IA para cualquier negoci
 7. Voice AI Agents (Rachel EN, Ana y Lina ES) — contestan teléfonos 24/7
 8. Neural Findings — vigila cada proyecto buscando estancamientos, dueños faltantes, hitos vencidos
 
-## 52 ESPECIALISTAS A DISPOSICIÓN (detrás de los 8 principales)
+## 75 ESPECIALISTAS A DISPOSICIÓN (detrás de los 8 principales)
 Ingeniería: Senior Full Stack Developer, Frontend, Backend, DevOps/SRE, Database Architect, API Designer, Mobile Engineer, SIT Tester, UAT Coordinator, Production Release Manager, Security Engineer, Performance Engineer.
 Datos/ML/Matemáticas: Data Engineer, Data Analyst, Data Scientist, Mathematics SME, ML/AI Engineer, Forecasting Analyst, BI/Dashboard Builder, Statistician.
 Negocios/Estrategia: Project Manager, Product Manager, Strategy Consultant, Operations Analyst, Process Improvement, M&A Analyst, Pricing Analyst, Change Management.
 Ventas/Marketing/Cliente: Sales Engineer, Lead Qualifier, Content Marketer, SEO Specialist, Brand Strategist, CRM Hygiene Specialist, Customer Success Manager, Churn Prevention Analyst, Onboarding Specialist.
 Finanzas/Riesgo: Accountant, FP&A Analyst, Treasury Analyst, Tax Strategist, Auditor, Risk Modeler, Invoice Reconciler.
 Legal/Cumplimiento/RRHH: Contract Drafter, NDA/IP Reviewer, Compliance Officer, Regulatory Researcher, Privacy Officer (GDPR/HIPAA), Recruiter, Performance Reviewer, Training Designer.
+IA Nativa/LLM: Prompt & Eval Engineer, LLMOps/Model Router, RAG/Retrieval Engineer, AI Safety/Red-Team Engineer, Conversation & Voice UX Designer, MCP/Integration Engineer.
+Confiabilidad/Confianza: Observability Engineer, FinOps/Cloud-Cost Analyst, Data Governance/MDM Specialist, Responsible-AI/Ethics Officer, Fraud & Anomaly Detection Specialist.
+Expertos de Dominio (SME): Clinical/Healthcare Informatics, Logistics & Supply-Chain, Agriculture & Commodities, Fintech/Payments.
+Diseño/Contenido/Localización: UX/UI & Design-System Designer, Localization Engineer, Accessibility Specialist, Technical Writer, Conversion-Rate Optimizer.
+Crecimiento/Alianzas: Partnerships/Channel Manager, Solutions Architect/Pre-Sales, Demand-Gen/Paid-Ads Specialist.
 
 ## ANALOGÍA DEL MÉDICO VS TERMÓMETRO (frase clave)
 "La mayoría de la IA es un termómetro — te dice un número. Digit2AI es el médico: **detecta** la fuga, **diagnostica** la causa raíz, **trata** el problema entregando la solución ya en marcha."
@@ -1241,13 +1246,18 @@ Digit2AI builds custom AI-powered software for any business that needs to act fa
 7. Voice AI Agents (Rachel EN, Ana & Lina ES) — answer phones 24/7
 8. Neural Findings — watches every project for stalls, missing owners, overdue milestones
 
-## 52 SPECIALISTS ON CALL (behind the 8 core)
+## 75 SPECIALISTS ON CALL (behind the 8 core)
 Engineering: Senior Full Stack Developer, Frontend, Backend, DevOps/SRE, Database Architect, API Designer, Mobile Engineer, SIT Tester, UAT Coordinator, Production Release Manager, Security Engineer, Performance Engineer.
 Data/ML/Math: Data Engineer, Data Analyst, Data Scientist, Mathematics SME, ML/AI Engineer, Forecasting Analyst, BI/Dashboard Builder, Statistician.
 Business/Strategy: Project Manager, Product Manager, Strategy Consultant, Operations Analyst, Process Improvement, M&A Analyst, Pricing Analyst, Change Management.
 Sales/Marketing/Customer: Sales Engineer, Lead Qualifier, Content Marketer, SEO Specialist, Brand Strategist, CRM Hygiene Specialist, Customer Success Manager, Churn Prevention Analyst, Onboarding Specialist.
 Finance/Risk: Accountant, FP&A Analyst, Treasury Analyst, Tax Strategist, Auditor, Risk Modeler, Invoice Reconciler.
 Legal/Compliance/HR: Contract Drafter, NDA/IP Reviewer, Compliance Officer, Regulatory Researcher, Privacy Officer (GDPR/HIPAA), Recruiter, Performance Reviewer, Training Designer.
+AI-Native/LLM: Prompt & Eval Engineer, LLMOps/Model Router, RAG/Retrieval Engineer, AI Safety/Red-Team Engineer, Conversation & Voice UX Designer, MCP/Integration Engineer.
+Reliability/Trust: Observability Engineer, FinOps/Cloud-Cost Analyst, Data Governance/MDM Specialist, Responsible-AI/Ethics Officer, Fraud & Anomaly Detection Specialist.
+Vertical SMEs: Clinical/Healthcare Informatics, Logistics & Supply-Chain, Agriculture & Commodities, Fintech/Payments.
+Design/Content/Localization: UX/UI & Design-System Designer, Localization Engineer, Accessibility Specialist, Technical Writer, Conversion-Rate Optimizer.
+Growth/Partnerships: Partnerships/Channel Manager, Solutions Architect/Pre-Sales, Demand-Gen/Paid-Ads Specialist.
 
 ## THE DOCTOR VS THERMOMETER FRAMING (signature line)
 "Most AI is a thermometer — it tells you a number. Digit2AI is the doctor: **detects** the leak, **diagnoses** the root cause, **treats** the problem by shipping the fix already in motion."
