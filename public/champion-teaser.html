@@ -1507,6 +1507,18 @@
   .voicenote-status { font-size: 12px; color: var(--ink-mute); }
   .voicenote-status.ok { color: var(--accent-lime); }
   .voicenote-status.err { color: var(--accent-magenta); }
+  .dictate-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .dictate-btn { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; font-weight: 700; letter-spacing: 0.3px; color: var(--ink); padding: 8px 14px; border-radius: 9px; background: rgba(34,211,238,0.10); border: 1px solid rgba(34,211,238,0.45); transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+  .dictate-btn:hover { background: rgba(34,211,238,0.18); transform: translateY(-1px); }
+  .dictate-btn .mic-glyph { font-size: 15px; line-height: 1; }
+  .dictate-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-lime); flex: 0 0 auto; display: none; }
+  .dictate-btn.is-recording { background: rgba(236,72,153,0.16); border-color: var(--accent-magenta); color: #fff; }
+  .dictate-btn.is-recording .dictate-dot { display: inline-block; background: var(--accent-magenta); animation: dictatePulse 1.1s ease-in-out infinite; }
+  .dictate-btn.is-busy { opacity: 0.65; pointer-events: none; }
+  @keyframes dictatePulse { 0% { box-shadow: 0 0 0 0 rgba(236,72,153,0.6); } 70% { box-shadow: 0 0 0 8px rgba(236,72,153,0); } 100% { box-shadow: 0 0 0 0 rgba(236,72,153,0); } }
+  .dictate-status { font-size: 12px; color: var(--ink-mute); }
+  .dictate-status.ok { color: var(--accent-lime); }
+  .dictate-status.err { color: var(--accent-magenta); }
   .demo-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
   .demo-btn-primary {
     background: var(--grad);
@@ -1971,6 +1983,16 @@
       <div class="demo-form-row">
         <label for="d-desc"><span class="i18n-en">Describe the problem · in your prospect's own words</span><span class="i18n-es">Describe el problema · con las palabras del prospecto</span></label>
         <textarea id="d-desc" required></textarea>
+        <div class="dictate-row" id="d-dictate" hidden>
+          <button type="button" class="dictate-btn" id="d-mic" aria-pressed="false">
+            <span class="dictate-dot" aria-hidden="true"></span>
+            <span class="mic-glyph" aria-hidden="true">&#127908;</span>
+            <span class="dictate-label">
+              <span class="i18n-en">Speak &amp; transcribe</span><span class="i18n-es">Hablar y transcribir</span>
+            </span>
+          </button>
+          <span class="dictate-status" id="d-mic-status"></span>
+        </div>
         <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
         <div class="voicenote-box" id="d-voicenote">
           <div class="voicenote-head">
@@ -3978,6 +4000,157 @@
             audioInput.value = '';
             vnStatus(es() ? 'Error de red al transcribir.' : 'Network error while transcribing.', 'err');
           });
+      });
+    })();
+
+    // ── Live microphone dictation (speak → transcribe into #d-desc) ──
+    // Primary path: the browser's SpeechRecognition API transcribes in real
+    // time while the Champion speaks, appending to the textarea until they
+    // click Stop. Fallback (Safari/Firefox without SpeechRecognition):
+    // MediaRecorder captures the mic and, on Stop, sends the clip to the
+    // ElevenLabs Scribe endpoint — not live, but still hands-free capture.
+    (function () {
+      var micBtn = document.getElementById('d-mic');
+      var micRow = document.getElementById('d-dictate');
+      var micStatus = document.getElementById('d-mic-status');
+      var descEl = document.getElementById('d-desc');
+      if (!micBtn || !descEl) return;
+
+      var es = function () { return getLang() === 'es'; };
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var hasMediaRec = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+
+      // Only reveal the mic if the device can actually capture speech somehow.
+      if (!SR && !hasMediaRec) return;
+      if (micRow) micRow.hidden = false;
+
+      function mStatus(msg, cls) {
+        if (!micStatus) return;
+        micStatus.textContent = msg || '';
+        micStatus.className = 'dictate-status' + (cls ? ' ' + cls : '');
+      }
+      function setRecordingUI(on) {
+        micBtn.classList.toggle('is-recording', on);
+        micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        var label = micBtn.querySelector('.dictate-label');
+        if (label) {
+          label.innerHTML = on
+            ? '<span class="i18n-en">Stop</span><span class="i18n-es">Detener</span>'
+            : '<span class="i18n-en">Speak &amp; transcribe</span><span class="i18n-es">Hablar y transcribir</span>';
+        }
+      }
+      function appendFinal(text) {
+        if (!text) return;
+        var t = text.trim();
+        if (!t) return;
+        var cur = descEl.value || '';
+        var sep = (cur && !/\s$/.test(cur)) ? ' ' : '';
+        descEl.value = cur + sep + t;
+        descEl.scrollTop = descEl.scrollHeight;
+      }
+
+      // ---- Path A: live SpeechRecognition ----
+      if (SR) {
+        var rec = new SR();
+        rec.continuous = true;
+        rec.interimResults = true;
+        var recording = false, baseText = '', finalChunk = '', stopRequested = false;
+
+        function syncLive(interim) {
+          var cur = baseText;
+          var joined = (finalChunk + (interim || '')).trim();
+          if (joined) cur = baseText + (baseText && !/\s$/.test(baseText) ? ' ' : '') + joined;
+          descEl.value = cur;
+          descEl.scrollTop = descEl.scrollHeight;
+        }
+        rec.onresult = function (e) {
+          var interim = '';
+          for (var i = e.resultIndex; i < e.results.length; i++) {
+            var seg = e.results[i][0].transcript;
+            if (e.results[i].isFinal) finalChunk += seg + ' ';
+            else interim += seg;
+          }
+          syncLive(interim);
+        };
+        rec.onerror = function (ev) {
+          if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
+            stopRequested = true;
+            mStatus(es() ? 'Permiso de micrófono denegado.' : 'Microphone permission denied.', 'err');
+          } else if (ev && ev.error === 'no-speech') {
+            mStatus(es() ? 'No se detectó voz, sigue hablando…' : 'No speech detected, keep talking…');
+          }
+        };
+        rec.onend = function () {
+          // Commit the finalized text into the textarea baseline.
+          if (finalChunk.trim()) { descEl.value = descEl.value.replace(/\s+$/, ''); }
+          // Continuous recognition can auto-end on a pause — restart unless the
+          // user pressed Stop (or permission was denied).
+          if (recording && !stopRequested) {
+            try { rec.start(); return; } catch (_) {}
+          }
+          recording = false;
+          setRecordingUI(false);
+          mStatus(descEl.value.trim() ? (es() ? 'Listo — revísalo y ejecuta el triage.' : 'Done — review it, then run triage.') : '', descEl.value.trim() ? 'ok' : '');
+        };
+
+        micBtn.addEventListener('click', function () {
+          if (recording) { stopRequested = true; recording = false; try { rec.stop(); } catch (_) {} return; }
+          stopRequested = false; recording = true;
+          baseText = (descEl.value || '').replace(/\s+$/, '');
+          finalChunk = '';
+          rec.lang = es() ? 'es-MX' : 'en-US';
+          try { rec.start(); } catch (_) {}
+          setRecordingUI(true);
+          mStatus(es() ? 'Escuchando… habla con naturalidad. Pulsa Detener cuando termines.' : 'Listening… speak naturally. Click Stop when done.');
+        });
+        return;
+      }
+
+      // ---- Path B: MediaRecorder fallback (record → Scribe on stop) ----
+      var mediaRec = null, chunks = [], stream = null, recordingB = false;
+      micBtn.addEventListener('click', function () {
+        if (recordingB) {
+          recordingB = false;
+          try { mediaRec && mediaRec.stop(); } catch (_) {}
+          return;
+        }
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+          stream = s; chunks = [];
+          mediaRec = new MediaRecorder(s);
+          mediaRec.ondataavailable = function (ev) { if (ev.data && ev.data.size) chunks.push(ev.data); };
+          mediaRec.onstop = function () {
+            try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+            setRecordingUI(false);
+            micBtn.classList.add('is-busy');
+            mStatus(es() ? 'Transcribiendo…' : 'Transcribing…');
+            var blob = new Blob(chunks, { type: (mediaRec && mediaRec.mimeType) || 'audio/webm' });
+            var fd = new FormData();
+            fd.append('audio', blob, 'dictation.webm');
+            fd.append('language', getLang());
+            fetch(API_BASE + '/public/transcribe-voice-note', { method: 'POST', body: fd })
+              .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+              .then(function (res) {
+                micBtn.classList.remove('is-busy');
+                if (!res.ok || !res.json || !res.json.success || !res.json.transcript) {
+                  mStatus((res.json && res.json.error) || (es() ? 'No se pudo transcribir.' : 'Could not transcribe.'), 'err');
+                  return;
+                }
+                appendFinal(res.json.transcript);
+                descEl.focus();
+                if (res.json.language && (res.json.language === 'en' || res.json.language === 'es') && res.json.language !== getLang() && window.__setLang) {
+                  window.__setLang(res.json.language);
+                }
+                mStatus(es() ? 'Listo — revísalo y ejecuta el triage.' : 'Done — review it, then run triage.', 'ok');
+              })
+              .catch(function () { micBtn.classList.remove('is-busy'); mStatus(es() ? 'Error de red.' : 'Network error.', 'err'); });
+          };
+          mediaRec.start();
+          recordingB = true;
+          setRecordingUI(true);
+          mStatus(es() ? 'Grabando… pulsa Detener para transcribir.' : 'Recording… click Stop to transcribe.');
+        }).catch(function () {
+          mStatus(es() ? 'Permiso de micrófono denegado.' : 'Microphone permission denied.', 'err');
+        });
       });
     })();
 
