@@ -249,6 +249,13 @@ app.use((req, res, next) => {
     const p = req.path;
     // Pass through /visionarium API and dashboard routes
     if (p.startsWith('/visionarium')) return next();
+    // Route visionarium.app/valle_milagro -> the dedicated Valle Milagro site.
+    // Scoped to this host only, so the /valle_milagro iframe embed on
+    // digit2ai.com (GHL) and other hosts keep serving the static report page.
+    if (p === '/valle_milagro' || p === '/valle_milagro/' ||
+        p === '/valle-milagro' || p === '/valle-milagro/') {
+      return res.redirect(302, 'https://vallemilagro.com.co/');
+    }
     // Whitepaper routes
     if (p === '/whitepaper.html' || p === '/en' || p === '/en/') {
       req.url = '/youth-talent-global/whitepaper.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
