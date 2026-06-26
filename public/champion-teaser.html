@@ -1497,6 +1497,16 @@
   .demo-form input:focus, .demo-form textarea:focus, .demo-form select:focus { outline: none; border-color: var(--violet); }
   .demo-form textarea { resize: vertical; min-height: 140px; font-family: inherit; }
   .demo-form .hint { font-size: 11px; color: var(--ink-mute); margin-top: 4px; }
+  .voicenote-box { margin-top: 10px; padding: 12px 14px; border: 1px dashed rgba(139,92,246,0.45); border-radius: 12px; background: linear-gradient(120deg, rgba(34,211,238,0.05), rgba(139,92,246,0.07)); }
+  .voicenote-head { font-size: 12.5px; color: var(--ink); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+  .voicenote-ico { font-size: 16px; line-height: 1.2; flex: 0 0 auto; }
+  .voicenote-actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .voicenote-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: none; color: #fff; padding: 8px 14px; border-radius: 9px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet)); border: none; box-shadow: 0 6px 16px rgba(124,92,255,0.3); transition: transform 0.15s, box-shadow 0.15s; margin: 0; }
+  .voicenote-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(124,92,255,0.42); }
+  .voicenote-btn.is-busy { opacity: 0.65; pointer-events: none; }
+  .voicenote-status { font-size: 12px; color: var(--ink-mute); }
+  .voicenote-status.ok { color: var(--accent-lime); }
+  .voicenote-status.err { color: var(--accent-magenta); }
   .demo-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
   .demo-btn-primary {
     background: var(--grad);
@@ -2990,6 +3000,24 @@
         <label for="d-desc"><span class="i18n-en">Describe the problem · in your prospect's own words</span><span class="i18n-es">Describe el problema · con las palabras del prospecto</span></label>
         <textarea id="d-desc" required></textarea>
         <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
+        <div class="voicenote-box" id="d-voicenote">
+          <div class="voicenote-head">
+            <span class="voicenote-ico" aria-hidden="true">&#127908;</span>
+            <span class="i18n-en">Got it as a WhatsApp voice note? Upload it &mdash; we'll transcribe it into the box above.</span>
+            <span class="i18n-es">¿Lo tienes como nota de voz de WhatsApp? Súbela &mdash; la transcribimos en el recuadro de arriba.</span>
+          </div>
+          <div class="voicenote-actions">
+            <label class="voicenote-btn" for="d-audio">
+              <span class="i18n-en">Upload a voice note</span><span class="i18n-es">Subir nota de voz</span>
+            </label>
+            <input id="d-audio" type="file" accept="audio/*,.m4a,.ogg,.opus,.mp3,.wav,.aac,.webm" style="display:none">
+            <span class="voicenote-status" id="d-audio-status"></span>
+          </div>
+          <div class="hint">
+            <span class="i18n-en">Ask Champions to send voice notes by WhatsApp to <strong>813-641-4177</strong>. Save the audio (ogg/opus, m4a, mp3, wav) and drop it here. Max 25&nbsp;MB. You can edit the transcript before running triage.</span>
+            <span class="i18n-es">Pide a los Champions que envíen notas de voz por WhatsApp al <strong>813-641-4177</strong>. Guarda el audio (ogg/opus, m4a, mp3, wav) y súbelo aquí. Máx. 25&nbsp;MB. Puedes editar la transcripción antes de ejecutar el triage.</span>
+          </div>
+        </div>
       </div>
       <div>
         <label for="d-name"><span class="i18n-en">Prospect name</span><span class="i18n-es">Nombre del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
@@ -3888,6 +3916,68 @@
     if (!runBtn) return;
 
     var state = { triage: null, lang: 'en' };
+
+    // ── Voice-note upload → ElevenLabs Scribe transcription ──
+    // Champions send project requests as WhatsApp voice notes (813-641-4177).
+    // The user saves the audio and drops it here; we transcribe it and load the
+    // text into #d-desc so it flows through the exact same triage + submit path.
+    (function () {
+      var audioInput = document.getElementById('d-audio');
+      var audioBtn = document.querySelector('.voicenote-btn');
+      var audioStatus = document.getElementById('d-audio-status');
+      if (!audioInput) return;
+      var es = function () { return getLang() === 'es'; };
+      function vnStatus(msg, cls) {
+        if (!audioStatus) return;
+        audioStatus.textContent = msg || '';
+        audioStatus.className = 'voicenote-status' + (cls ? ' ' + cls : '');
+      }
+      audioInput.addEventListener('change', function () {
+        var file = audioInput.files && audioInput.files[0];
+        if (!file) return;
+        if (file.size > 25 * 1024 * 1024) {
+          vnStatus(es() ? 'El archivo supera 25 MB.' : 'File is larger than 25 MB.', 'err');
+          audioInput.value = '';
+          return;
+        }
+        if (audioBtn) audioBtn.classList.add('is-busy');
+        vnStatus(es() ? 'Transcribiendo nota de voz…' : 'Transcribing voice note…');
+
+        var fd = new FormData();
+        fd.append('audio', file, file.name || 'voice-note');
+        fd.append('language', getLang());
+
+        fetch(API_BASE + '/public/transcribe-voice-note', { method: 'POST', body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+          .then(function (res) {
+            if (audioBtn) audioBtn.classList.remove('is-busy');
+            audioInput.value = '';
+            if (!res.ok || !res.json || !res.json.success || !res.json.transcript) {
+              var msg = (res.json && res.json.error) || (es() ? 'No se pudo transcribir el audio.' : 'Could not transcribe the audio.');
+              vnStatus(msg, 'err');
+              return;
+            }
+            var transcript = res.json.transcript;
+            var descEl = document.getElementById('d-desc');
+            if (descEl) {
+              var existing = (descEl.value || '').trim();
+              descEl.value = existing ? (existing + '\n\n' + transcript) : transcript;
+              descEl.focus();
+              descEl.scrollTop = descEl.scrollHeight;
+            }
+            // If Scribe detected a language different from the toggle, switch the page.
+            if (res.json.language && (res.json.language === 'en' || res.json.language === 'es') && res.json.language !== getLang() && window.__setLang) {
+              window.__setLang(res.json.language);
+            }
+            vnStatus(es() ? 'Transcripción lista — revísala y ejecuta el triage.' : 'Transcript ready — review it, then run triage.', 'ok');
+          })
+          .catch(function () {
+            if (audioBtn) audioBtn.classList.remove('is-busy');
+            audioInput.value = '';
+            vnStatus(es() ? 'Error de red al transcribir.' : 'Network error while transcribing.', 'err');
+          });
+      });
+    })();
 
     function setStatus(msg) { if (statusEl) statusEl.textContent = msg || ''; }
     function setError(msg) {

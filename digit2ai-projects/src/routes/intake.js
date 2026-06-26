@@ -1520,6 +1520,110 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 });
 
 // =====================================================
+// VOICE-NOTE UPLOAD -> TRANSCRIPTION (ElevenLabs Scribe STT)
+// =====================================================
+// Champions collect project requests by WhatsApp voice note (to 813-641-4177).
+// They save the audio and drop it into the "Upload a voice note" box on the
+// champion teaser. We transcribe it with ElevenLabs Scribe and hand the text
+// straight back so it can populate the same #d-desc textarea that the typed
+// demo and the live orb already feed into /public-triage-preview.
+//
+// POST /public/transcribe-voice-note  (multipart/form-data)
+//   field "audio": the voice note (ogg/opus, m4a, mp3, wav, webm) <= 25 MB
+//   field "language" (optional): "en" | "es" hint passed to Scribe
+//   -> { success, transcript, language, duration_seconds? }
+const _multer = require('multer');
+const _voiceUpload = _multer({
+  storage: _multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 } // 25 MB — well above any WhatsApp voice note
+});
+// ElevenLabs Scribe accepts a broad set; we additionally allow common WhatsApp/phone formats.
+const _ALLOWED_AUDIO = new Set([
+  'audio/ogg', 'audio/opus', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a',
+  'audio/x-m4a', 'audio/aac', 'audio/wav', 'audio/x-wav', 'audio/webm', 'video/mp4',
+  'application/octet-stream'
+]);
+
+router.post('/public/transcribe-voice-note', (req, res) => {
+  _voiceUpload.single('audio')(req, res, async (uploadErr) => {
+    try {
+      if (uploadErr) {
+        const tooBig = uploadErr.code === 'LIMIT_FILE_SIZE';
+        return res.status(tooBig ? 413 : 400).json({
+          success: false,
+          error: tooBig ? 'Audio file is larger than 25 MB. Trim or re-record the voice note.' : 'Could not read the uploaded audio.'
+        });
+      }
+
+      const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+      const rl = _triageRateLimit(ip);
+      if (!rl.allowed) {
+        return res.status(429).json({ success: false, error: `Too many requests. Try again in ${rl.retryInSec}s.` });
+      }
+
+      if (!req.file || !req.file.buffer || !req.file.buffer.length) {
+        return res.status(400).json({ success: false, error: 'No audio file received. Attach a voice note and try again.' });
+      }
+
+      const mime = (req.file.mimetype || '').toLowerCase();
+      if (!_ALLOWED_AUDIO.has(mime)) {
+        return res.status(415).json({ success: false, error: `Unsupported audio type "${mime || 'unknown'}". Send a WhatsApp voice note (ogg/opus), m4a, mp3, or wav.` });
+      }
+
+      const apiKey = process.env.ELEVENLABS_API_KEY;
+      if (!apiKey) {
+        return res.status(503).json({ success: false, error: 'Transcription service is not configured.' });
+      }
+
+      // ElevenLabs Scribe STT — multipart upload. Node 18+ provides global
+      // fetch / FormData / Blob, matching the xi-api-key pattern already used
+      // for ElevenLabs TTS elsewhere in the app.
+      const langHint = (req.body && String(req.body.language || '').toLowerCase()) || '';
+      const form = new FormData();
+      form.append('file', new Blob([req.file.buffer], { type: mime }), req.file.originalname || 'voice-note');
+      form.append('model_id', 'scribe_v1');
+      if (langHint === 'es') form.append('language_code', 'spa');
+      else if (langHint === 'en') form.append('language_code', 'eng');
+
+      const r = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey },
+        body: form
+      });
+
+      if (!r.ok) {
+        const detail = await r.text().catch(() => '');
+        console.error('[D2AI-Intake] Scribe STT failed:', r.status, detail.slice(0, 500));
+        return res.status(502).json({ success: false, error: 'Transcription failed. Please try the file again or paste the text manually.' });
+      }
+
+      const out = await r.json();
+      const transcript = (out && typeof out.text === 'string') ? out.text.trim() : '';
+      if (!transcript) {
+        return res.status(422).json({ success: false, error: 'No speech detected in that audio. Re-record the voice note and try again.' });
+      }
+
+      // Map Scribe's ISO-639-3 code back to the page's en/es toggle when possible.
+      let language = langHint || '';
+      if (!language && out.language_code) {
+        language = (out.language_code === 'spa' || out.language_code === 'es') ? 'es'
+          : (out.language_code === 'eng' || out.language_code === 'en') ? 'en' : '';
+      }
+
+      return res.json({
+        success: true,
+        transcript,
+        language: language || undefined,
+        duration_seconds: (out && typeof out.audio_duration_secs === 'number') ? out.audio_duration_secs : undefined
+      });
+    } catch (err) {
+      console.error('[D2AI-Intake] transcribe-voice-note error:', err);
+      res.status(500).json({ success: false, error: 'Unexpected error while transcribing. Please try again.' });
+    }
+  });
+});
+
+// =====================================================
 // MAGIC-LINK IDENTIFY
 // =====================================================
 // GET /share/:token/discussion — no auth. Returns a single project (and its
