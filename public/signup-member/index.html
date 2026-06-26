@@ -226,6 +226,16 @@
         }
         var btn = document.getElementById('submitBtn');
         if (btn) btn.textContent = 'Crear mi cuenta gratis';
+      } else {
+        // Per-chamber pricing from /public/info (cents). Falls back to the
+        // hardcoded banner text if the API didn't return amounts.
+        var usd = function (c) { return '$' + (c % 100 === 0 ? (c / 100).toFixed(0) : (c / 100).toFixed(2)) + ' USD'; };
+        var banner = document.getElementById('feeBanner');
+        if (banner && j.data.setup_cents != null && j.data.monthly_cents != null) {
+          banner.innerHTML = '<strong>' + usd(j.data.setup_cents) + '</strong> registro inicial + '
+            + '<strong>' + usd(j.data.monthly_cents) + '/mes</strong> de membresia.<br>'
+            + 'Pago seguro procesado por Stripe.';
+        }
       }
     })
     .catch(() => {});

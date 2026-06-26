@@ -38,6 +38,23 @@ function signupFeesWaived(chamberSlug) {
   return WAIVED_FEE_SLUGS.includes(String(chamberSlug || '').toLowerCase());
 }
 
+// Per-chamber member signup pricing. Defaults to the platform standard
+// ($25 one-time setup + $10/mo). A chamber can override either amount via its
+// theme_config JSON (member_setup_cents / member_monthly_cents) -- e.g. cv-103
+// (Valle Milagro) charges $50 setup + $25/mo. Returns cents.
+const DEFAULT_SETUP_CENTS = 2500;
+const DEFAULT_MONTHLY_CENTS = 1000;
+function memberFees(chamber) {
+  let tc = chamber && chamber.theme_config;
+  if (typeof tc === 'string') { try { tc = JSON.parse(tc); } catch (e) { tc = {}; } }
+  tc = tc || {};
+  const setup = Number.isFinite(+tc.member_setup_cents) && +tc.member_setup_cents >= 0
+    ? Math.round(+tc.member_setup_cents) : DEFAULT_SETUP_CENTS;
+  const monthly = Number.isFinite(+tc.member_monthly_cents) && +tc.member_monthly_cents >= 0
+    ? Math.round(+tc.member_monthly_cents) : DEFAULT_MONTHLY_CENTS;
+  return { setup_cents: setup, monthly_cents: monthly };
+}
+
 const router = express.Router();
 
 // =====================================================================
@@ -76,7 +93,8 @@ router.get('/public/info', async (req, res) => {
         logo_url: chamber.logo_url, contact_email: chamber.contact_email,
         contact_phone: chamber.contact_phone, member_count: parseInt(memberCount),
         recent_projects: projects, open_rfqs: rfqs, top_sectors: sectors,
-        payment_waived: signupFeesWaived(chamber.slug)
+        payment_waived: signupFeesWaived(chamber.slug),
+        ...memberFees(chamber)
       }
     });
   } catch (err) {
@@ -135,6 +153,7 @@ router.post('/auth/login', async (req, res) => {
           const baseUrl = `${req.protocol}://${req.get('host')}`;
           const slug = req.chamber.slug;
           const chamberName = req.chamber.name;
+          const fees = memberFees(req.chamber);
           const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             customer_email: member.email,
@@ -160,7 +179,7 @@ router.post('/auth/login', async (req, res) => {
                     name: `${chamberName} -- One-Time Setup Fee`,
                     description: 'Account provisioning, onboarding, and platform activation'
                   },
-                  unit_amount: 2500
+                  unit_amount: fees.setup_cents
                 },
                 quantity: 1
               },
@@ -171,7 +190,7 @@ router.post('/auth/login', async (req, res) => {
                     name: `${chamberName} -- Monthly Membership`,
                     description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
                   },
-                  unit_amount: 1000,
+                  unit_amount: fees.monthly_cents,
                   recurring: { interval: 'month' }
                 },
                 quantity: 1
@@ -515,6 +534,7 @@ router.post('/auth/signup-member', async (req, res) => {
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const slug = req.chamber.slug;
     const chamberName = req.chamber.name;
+    const fees = memberFees(req.chamber);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -541,7 +561,7 @@ router.post('/auth/signup-member', async (req, res) => {
               name: `${chamberName} -- One-Time Setup Fee`,
               description: 'Account provisioning, onboarding, and platform activation'
             },
-            unit_amount: 2500
+            unit_amount: fees.setup_cents
           },
           quantity: 1
         },
@@ -552,7 +572,7 @@ router.post('/auth/signup-member', async (req, res) => {
               name: `${chamberName} -- Monthly Membership`,
               description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
             },
-            unit_amount: 1000,
+            unit_amount: fees.monthly_cents,
             recurring: { interval: 'month' }
           },
           quantity: 1
