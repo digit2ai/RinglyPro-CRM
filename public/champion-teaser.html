@@ -1519,6 +1519,9 @@
   .dictate-status { font-size: 12px; color: var(--ink-mute); }
   .dictate-status.ok { color: var(--accent-lime); }
   .dictate-status.err { color: var(--accent-magenta); }
+  .dictate-lang-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; color: var(--ink-mute); text-transform: uppercase; margin: 0 0 0 4px; }
+  .dictate-lang { font-size: 12.5px; font-weight: 600; color: var(--ink); background: rgba(34,211,238,0.10); border: 1px solid rgba(34,211,238,0.45); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+  .dictate-lang:focus { outline: none; border-color: var(--accent-cyan); }
   .demo-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
   .demo-btn-primary {
     background: var(--grad);
@@ -1991,6 +1994,11 @@
               <span class="i18n-en">Speak &amp; transcribe</span><span class="i18n-es">Hablar y transcribir</span>
             </span>
           </button>
+          <label class="dictate-lang-lbl" for="d-mic-lang"><span class="i18n-en">Spoken language</span><span class="i18n-es">Idioma hablado</span></label>
+          <select id="d-mic-lang" class="dictate-lang">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
           <span class="dictate-status" id="d-mic-status"></span>
         </div>
         <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
@@ -4013,10 +4021,16 @@
       var micBtn = document.getElementById('d-mic');
       var micRow = document.getElementById('d-dictate');
       var micStatus = document.getElementById('d-mic-status');
+      var micLangSel = document.getElementById('d-mic-lang');
       var descEl = document.getElementById('d-desc');
       if (!micBtn || !descEl) return;
 
       var es = function () { return getLang() === 'es'; };
+      // The Champion may speak a different language than the page UI, so the
+      // recognizer language comes from this dedicated picker (defaults to the
+      // page language but is independently switchable).
+      var micLang = function () { return (micLangSel && micLangSel.value === 'es') ? 'es' : 'en'; };
+      if (micLangSel) micLangSel.value = getLang();
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       var hasMediaRec = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
 
@@ -4098,7 +4112,7 @@
           stopRequested = false; recording = true;
           baseText = (descEl.value || '').replace(/\s+$/, '');
           finalChunk = '';
-          rec.lang = es() ? 'es-MX' : 'en-US';
+          rec.lang = micLang() === 'es' ? 'es-MX' : 'en-US';
           try { rec.start(); } catch (_) {}
           setRecordingUI(true);
           mStatus(es() ? 'Escuchando… habla con naturalidad. Pulsa Detener cuando termines.' : 'Listening… speak naturally. Click Stop when done.');
@@ -4126,7 +4140,7 @@
             var blob = new Blob(chunks, { type: (mediaRec && mediaRec.mimeType) || 'audio/webm' });
             var fd = new FormData();
             fd.append('audio', blob, 'dictation.webm');
-            fd.append('language', getLang());
+            fd.append('language', micLang());
             fetch(API_BASE + '/public/transcribe-voice-note', { method: 'POST', body: fd })
               .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
               .then(function (res) {
