@@ -1953,6 +1953,72 @@
     </div>
   </div>
 
+  <!-- ============================================================ -->
+  <!-- LIVE DEMO: Try the AI Triage right here -->
+  <section class="demo" id="demo">
+    <div class="demo-head">
+      <h2>
+        <span class="i18n-en">Try it <em>right now</em> — live AI Triage</span>
+        <span class="i18n-es">Pruébalo <em>ahora mismo</em> — Triage de IA en vivo</span>
+      </h2>
+      <p>
+        <span class="i18n-en">Paste a prospect's problem (or your own). Our Neural Intelligence stack reads it, scores fit, sketches the technical solution, and shows you what we'd build. You can edit anything before sending it to the real intake.</span>
+        <span class="i18n-es">Pega el problema de un prospecto (o el tuyo). Nuestra pila Neural Intelligence lo lee, califica el ajuste, esboza la solución técnica y te muestra qué construiríamos. Puedes editar cualquier cosa antes de enviarlo al intake real.</span>
+      </p>
+    </div>
+
+    <div class="demo-form">
+      <div class="demo-form-row">
+        <label for="d-desc"><span class="i18n-en">Describe the problem · in your prospect's own words</span><span class="i18n-es">Describe el problema · con las palabras del prospecto</span></label>
+        <textarea id="d-desc" required></textarea>
+        <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
+        <div class="voicenote-box" id="d-voicenote">
+          <div class="voicenote-head">
+            <span class="voicenote-ico" aria-hidden="true">&#127908;</span>
+            <span class="i18n-en">Got it as a WhatsApp voice note? Upload it &mdash; we'll transcribe it into the box above.</span>
+            <span class="i18n-es">¿Lo tienes como nota de voz de WhatsApp? Súbela &mdash; la transcribimos en el recuadro de arriba.</span>
+          </div>
+          <div class="voicenote-actions">
+            <label class="voicenote-btn" for="d-audio">
+              <span class="i18n-en">Upload a voice note</span><span class="i18n-es">Subir nota de voz</span>
+            </label>
+            <input id="d-audio" type="file" accept="audio/*,.m4a,.ogg,.opus,.mp3,.wav,.aac,.webm" style="display:none">
+            <span class="voicenote-status" id="d-audio-status"></span>
+          </div>
+          <div class="hint">
+            <span class="i18n-en">Ask Champions to send voice notes by WhatsApp to <strong>813-641-4177</strong>. Save the audio (ogg/opus, m4a, mp3, wav) and drop it here. Max 25&nbsp;MB. You can edit the transcript before running triage.</span>
+            <span class="i18n-es">Pide a los Champions que envíen notas de voz por WhatsApp al <strong>813-641-4177</strong>. Guarda el audio (ogg/opus, m4a, mp3, wav) y súbelo aquí. Máx. 25&nbsp;MB. Puedes editar la transcripción antes de ejecutar el triage.</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label for="d-name"><span class="i18n-en">Prospect name</span><span class="i18n-es">Nombre del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
+        <input id="d-name" type="text" placeholder="Jane Doe">
+      </div>
+      <div>
+        <label for="d-email"><span class="i18n-en">Prospect email</span><span class="i18n-es">Email del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional, required to submit</span><span class="i18n-es">opcional, requerido para enviar</span>)</span></label>
+        <input id="d-email" type="email" placeholder="jane@company.com">
+      </div>
+      <div>
+        <label for="d-company"><span class="i18n-en">Company</span><span class="i18n-es">Empresa</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
+        <input id="d-company" type="text" placeholder="Company name">
+      </div>
+      <div>
+        <label for="d-country"><span class="i18n-en">Country</span><span class="i18n-es">País</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
+        <input id="d-country" type="text" placeholder="Colombia, USA, Philippines…">
+      </div>
+    </div>
+
+    <div class="demo-actions">
+      <button type="button" class="demo-btn-primary" id="d-run"><span class="i18n-en">Run AI Triage</span><span class="i18n-es">Ejecutar Triage de IA</span></button>
+      <span class="demo-status" id="d-status"></span>
+    </div>
+
+    <div id="d-result"></div>
+    <div id="d-error"></div>
+    <div id="d-submitted"></div>
+  </section>
+
   <!-- T4.3 Sample prompt cards — three one-tap example projects below
        the orb. Tap a card to pre-fill the keyboard demo textarea +
        scroll + auto-focus the Run AI Triage button. Doesn't auto-run.
@@ -2981,71 +3047,7 @@
     </div>
   </section>
 
-  <!-- ============================================================ -->
-  <!-- LIVE DEMO: Try the AI Triage right here -->
-  <section class="demo" id="demo">
-    <div class="demo-head">
-      <h2>
-        <span class="i18n-en">Try it <em>right now</em> — live AI Triage</span>
-        <span class="i18n-es">Pruébalo <em>ahora mismo</em> — Triage de IA en vivo</span>
-      </h2>
-      <p>
-        <span class="i18n-en">Paste a prospect's problem (or your own). Our Neural Intelligence stack reads it, scores fit, sketches the technical solution, and shows you what we'd build. You can edit anything before sending it to the real intake.</span>
-        <span class="i18n-es">Pega el problema de un prospecto (o el tuyo). Nuestra pila Neural Intelligence lo lee, califica el ajuste, esboza la solución técnica y te muestra qué construiríamos. Puedes editar cualquier cosa antes de enviarlo al intake real.</span>
-      </p>
-    </div>
 
-    <div class="demo-form">
-      <div class="demo-form-row">
-        <label for="d-desc"><span class="i18n-en">Describe the problem · in your prospect's own words</span><span class="i18n-es">Describe el problema · con las palabras del prospecto</span></label>
-        <textarea id="d-desc" required></textarea>
-        <div class="hint"><span class="i18n-en">30-5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18n-es">30-5000 caracteres. Mientras más específico seas sobre la audiencia, las restricciones y el resultado deseado, más preciso será el triage.</span></div>
-        <div class="voicenote-box" id="d-voicenote">
-          <div class="voicenote-head">
-            <span class="voicenote-ico" aria-hidden="true">&#127908;</span>
-            <span class="i18n-en">Got it as a WhatsApp voice note? Upload it &mdash; we'll transcribe it into the box above.</span>
-            <span class="i18n-es">¿Lo tienes como nota de voz de WhatsApp? Súbela &mdash; la transcribimos en el recuadro de arriba.</span>
-          </div>
-          <div class="voicenote-actions">
-            <label class="voicenote-btn" for="d-audio">
-              <span class="i18n-en">Upload a voice note</span><span class="i18n-es">Subir nota de voz</span>
-            </label>
-            <input id="d-audio" type="file" accept="audio/*,.m4a,.ogg,.opus,.mp3,.wav,.aac,.webm" style="display:none">
-            <span class="voicenote-status" id="d-audio-status"></span>
-          </div>
-          <div class="hint">
-            <span class="i18n-en">Ask Champions to send voice notes by WhatsApp to <strong>813-641-4177</strong>. Save the audio (ogg/opus, m4a, mp3, wav) and drop it here. Max 25&nbsp;MB. You can edit the transcript before running triage.</span>
-            <span class="i18n-es">Pide a los Champions que envíen notas de voz por WhatsApp al <strong>813-641-4177</strong>. Guarda el audio (ogg/opus, m4a, mp3, wav) y súbelo aquí. Máx. 25&nbsp;MB. Puedes editar la transcripción antes de ejecutar el triage.</span>
-          </div>
-        </div>
-      </div>
-      <div>
-        <label for="d-name"><span class="i18n-en">Prospect name</span><span class="i18n-es">Nombre del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
-        <input id="d-name" type="text" placeholder="Jane Doe">
-      </div>
-      <div>
-        <label for="d-email"><span class="i18n-en">Prospect email</span><span class="i18n-es">Email del prospecto</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional, required to submit</span><span class="i18n-es">opcional, requerido para enviar</span>)</span></label>
-        <input id="d-email" type="email" placeholder="jane@company.com">
-      </div>
-      <div>
-        <label for="d-company"><span class="i18n-en">Company</span><span class="i18n-es">Empresa</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
-        <input id="d-company" type="text" placeholder="Company name">
-      </div>
-      <div>
-        <label for="d-country"><span class="i18n-en">Country</span><span class="i18n-es">País</span> <span style="font-weight:400;color:var(--ink-mute)">(<span class="i18n-en">optional</span><span class="i18n-es">opcional</span>)</span></label>
-        <input id="d-country" type="text" placeholder="Colombia, USA, Philippines…">
-      </div>
-    </div>
-
-    <div class="demo-actions">
-      <button type="button" class="demo-btn-primary" id="d-run"><span class="i18n-en">Run AI Triage</span><span class="i18n-es">Ejecutar Triage de IA</span></button>
-      <span class="demo-status" id="d-status"></span>
-    </div>
-
-    <div id="d-result"></div>
-    <div id="d-error"></div>
-    <div id="d-submitted"></div>
-  </section>
 
   <!-- =================================================================
        T2.4 — FAQ / objection handler.
@@ -4177,7 +4179,12 @@
         runBtn.textContent = t('run_label');
         runBtn.click();
       });
-      document.getElementById('d-result-inner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Move the page to the score + results once triage completes. Defer to
+      // the next frame so the freshly-injected panel is laid out before we scroll.
+      requestAnimationFrame(function () {
+        var inner = document.getElementById('d-result-inner');
+        if (inner) inner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
     // ---------------- T2.2 — Email me / Download PDF ----------------
