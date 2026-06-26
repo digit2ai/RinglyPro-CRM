@@ -362,7 +362,7 @@ function renderArchitectPrompt(project, ctx) {
     `1. Create directory \`client-builds/${project.short_name}/\` with subdirs as needed (\`routes/\`, \`models/\`, \`migrations/\`, \`public/\`).`,
     `2. Implement an Express sub-app exported from \`client-builds/${project.short_name}/index.js\`. The main \`src/app.js\` already auto-mounts every \`client-builds/*/index.js\` at \`/<short_name>\` on boot — no edit to the main app required.`,
     `3. The sub-app MUST expose a \`GET /health\` endpoint that returns 200 + a small JSON payload. The orchestrator hits \`${PUBLIC_BASE}/${project.short_name}/health\` to verify the build.`,
-    `4. Use Sequelize against the existing Postgres (\`process.env.DATABASE_URL\`). Every table prefix: \`${project.short_name.replace(/-/g, '_')}_*\`. Every table includes \`tenant_id INTEGER NOT NULL\`.`,
+    `4. Use Sequelize against the existing Postgres (\`process.env.DATABASE_URL\`). Every table prefix: \`${String(project.short_name || project.code || ('project_' + project.id)).replace(/-/g, '_')}_*\`. Every table includes \`tenant_id INTEGER NOT NULL\`.`,
     `5. Match the existing dashboard styling pattern from \`digit2ai-projects/dashboard/\` (dark theme, monospace where appropriate).`,
     `6. Multi-language ready (EN/ES) when the project's country/audience suggests Spanish.`,
     `7. Write a SIT harness at \`client-builds/${project.short_name}/sit.js\` that exits 0 on success, non-zero with a markdown summary on failure. Cover at minimum: health endpoint, primary CRUD, auth, any third-party integration mock.`,

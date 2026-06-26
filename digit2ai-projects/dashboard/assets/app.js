@@ -5959,6 +5959,7 @@ async function showProjectDetail(id) {
             </div>
           </div>
           ${renderBuildAndUatCard(p)}
+          ${renderArchitectPromptCard(p)}
           <div class="detail-section" style="border:1px solid rgba(167,139,250,0.3);background:linear-gradient(120deg,rgba(56,189,248,0.04),rgba(167,139,250,0.04));border-radius:var(--radius);padding:14px">
             <h4 style="display:flex;justify-content:space-between;align-items:center;margin-top:0">Project Targets
               <button class="btn btn-ghost btn-sm" onclick="editProjectTargets(${p.id})">${(p.target_delivery_weeks || p.target_total_usd) ? 'Edit' : '+ Set'}</button>
@@ -6302,6 +6303,118 @@ function hexToRgba(hex, a) {
   const m = String(hex).replace('#','').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
   if (!m) return `rgba(56,189,248,${a})`;
   return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+}
+
+// =====================================================
+// AI ARCHITECT PROMPT — streamlined fast-path card
+// =====================================================
+// Appears on the project detail right after the project is approved (and
+// before the formal build pipeline takes over). Lets Manuel: (1) Generate
+// the ringlypro-architect build prompt with one click, (2) review/edit it
+// inline, (3) save, and (4) hand it off to a local Claude Code session via
+// the "Open in VS Code + Claude" button (copies the prompt + opens the
+// workspace; /architect-run then reads it from the clipboard and runs the
+// architect loop until production is live).
+const _ARCH_BUILD_PHASES = ['build_authorized', 'awaiting_human_greenlight', 'queued', 'manual_build', 'sit_running', 'uat_ready', 'uat_revision', 'shipped', 'build_stuck'];
+function renderArchitectPromptCard(p) {
+  // The formal Build & UAT card owns the pipeline phases — don't double up.
+  if (_ARCH_BUILD_PHASES.includes(p.workflow_phase)) return '';
+  // Only show once there's something to act on: an approved intake, an
+  // already-generated prompt, or an active/planning project.
+  const eligible = !!p.architect_prompt || p.intake_status === 'approved' || ['active', 'planning'].includes(p.status);
+  if (!eligible) return '';
+
+  const hasPrompt = !!(p.architect_prompt && p.architect_prompt.trim());
+  const genAt = p.architect_prompt_generated_at || p.ai_milestone_generation_at;
+
+  const body = hasPrompt
+    ? `<p style="font-size:12px;color:var(--text-muted);margin:0 0 8px">Review and edit the build brief below, then hand it to ringlypro-architect. Edits are saved to the project.</p>
+       <textarea id="arch-prompt-edit-${p.id}" style="width:100%;min-height:240px;padding:12px;background:#0f172a;color:#e2e8f0;border:1px solid var(--border);border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.5;white-space:pre;overflow:auto">${escHtml(p.architect_prompt)}</textarea>
+       <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.architect_prompt.length.toLocaleString()} chars${genAt ? ' · generated ' + fmtDateTime(genAt) : ''}</div>
+       <div style="margin-top:14px">
+         <button onclick="handoffArchitectPrompt(${p.id})" style="display:block;width:100%;padding:16px 24px;font-size:15px;font-weight:700;background:linear-gradient(90deg,#22d3ee,#7c5cff);border:none;border-radius:10px;color:#020617;cursor:pointer;box-shadow:0 4px 14px rgba(124,92,255,0.4);letter-spacing:0.4px">&#128187; OPEN IN VS CODE + CLAUDE</button>
+       </div>
+       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+         <button class="btn btn-ghost btn-sm" onclick="saveArchitectPrompt(${p.id})">Save edits</button>
+         <button class="btn btn-ghost btn-sm" onclick="regenerateArchitectPrompt(${p.id})" title="Re-run the Senior Prompt Engineer synthesizer from the current project context">Regenerate</button>
+         <button class="btn btn-ghost btn-sm" onclick="copyArchitectPrompt(${p.id})">Copy</button>
+       </div>`
+    : `<p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">Turn this project's intake, triage, plan, and targets into a complete, executable build brief for <strong>ringlypro-architect</strong>. You can review and edit it before handing it off.</p>
+       <button onclick="generateArchitectPrompt(${p.id})" style="display:block;width:100%;padding:18px 24px;font-size:16px;font-weight:700;background:linear-gradient(90deg,#38bdf8,#a78bfa);border:none;border-radius:10px;color:#020617;cursor:pointer;box-shadow:0 4px 14px rgba(56,189,248,0.4);letter-spacing:0.5px">&#10024; GENERATE PROMPT</button>`;
+
+  return `<div class="detail-section" style="border:1px solid rgba(124,92,255,0.4);border-radius:var(--radius);padding:14px;background:linear-gradient(120deg,rgba(34,211,238,0.05),rgba(124,92,255,0.07))">
+    <h4 style="margin-top:0;display:flex;align-items:center;gap:8px">AI Architect Prompt
+      <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${hasPrompt ? '#7c5cff' : '#38bdf8'};color:#020617">${hasPrompt ? 'READY TO HAND OFF' : 'NOT GENERATED'}</span>
+    </h4>
+    ${body}
+  </div>`;
+}
+
+// First-time generation (friendly progress; reuses the regenerate-prompt endpoint).
+async function generateArchitectPrompt(projectId) {
+  const progress = showPromptGenProgress();
+  try {
+    const r = await api(`/projects/${projectId}/regenerate-prompt`, { method: 'POST', body: JSON.stringify({}) });
+    progress.close();
+    if (!r.success) { alert('Generate failed: ' + (r.error || 'unknown')); return; }
+    showProjectDetail(projectId);
+  } catch (e) {
+    progress.close();
+    alert('Generate failed: ' + e.message);
+  }
+}
+
+// Persist inline edits to the architect prompt.
+async function saveArchitectPrompt(projectId) {
+  const ta = document.getElementById(`arch-prompt-edit-${projectId}`);
+  if (!ta) return;
+  try {
+    const r = await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ architect_prompt: ta.value }) });
+    if (!r.success) { alert('Save failed: ' + (r.error || 'unknown')); return; }
+    const btn = event && event.target;
+    if (btn) { const old = btn.textContent; btn.textContent = 'Saved'; setTimeout(() => { btn.textContent = old; }, 1500); }
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+function copyArchitectPrompt(projectId) {
+  const ta = document.getElementById(`arch-prompt-edit-${projectId}`);
+  if (!ta) return;
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = event && event.target;
+    if (btn) { const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = old; }, 1500); }
+  });
+}
+
+// Hand off: save any edits, copy the prompt to the clipboard, then show the
+// VS Code + Claude launch instructions. /architect-run reads the clipboard.
+async function handoffArchitectPrompt(projectId) {
+  const ta = document.getElementById(`arch-prompt-edit-${projectId}`);
+  const promptText = ta ? ta.value : '';
+  if (!promptText.trim()) { alert('No prompt to hand off. Generate it first.'); return; }
+  // Persist current (possibly edited) prompt so the dashboard + clipboard agree.
+  try { await api(`/projects/${projectId}`, { method: 'PUT', body: JSON.stringify({ architect_prompt: promptText }) }); } catch (_) {}
+  let copied = false;
+  try { await navigator.clipboard.writeText(promptText); copied = true; } catch (_) {}
+
+  const workspace = 'vscode://file/Users/manuelstagg/Documents/GitHub/RinglyPro-CRM';
+  openModal('Hand off to ringlypro-architect', `
+    <div style="font-size:13px;color:var(--text-secondary);line-height:1.6">
+      <div style="padding:8px 12px;border-radius:8px;background:${copied ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)'};border:1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)'};margin-bottom:14px">
+        ${copied ? '&#10003; Prompt copied to your clipboard and saved to the project.' : '&#9888; Could not auto-copy. Use the <strong>Copy</strong> button on the card, then continue.'}
+      </div>
+      <ol style="margin:0 0 14px 18px;padding:0">
+        <li style="margin-bottom:8px">Click <strong>Open VS Code</strong> below (opens the RinglyPro workspace).</li>
+        <li style="margin-bottom:8px">Open the <strong>Claude Code</strong> panel in VS Code.</li>
+        <li style="margin-bottom:8px">Type <code style="background:#0f172a;color:#e2e8f0;padding:2px 6px;border-radius:4px">/architect-run</code> and press Enter — it reads the prompt from your clipboard and runs ringlypro-architect end-to-end (build &rarr; test &rarr; deploy &rarr; verify).</li>
+        <li>Alternative: start a new chat, type <code style="background:#0f172a;color:#e2e8f0;padding:2px 6px;border-radius:4px">/ringlypro-architect</code>, paste with <strong>Cmd+V</strong>, press Enter.</li>
+      </ol>
+      <a href="${workspace}" class="btn btn-primary btn-sm" style="display:inline-block;text-decoration:none;background:linear-gradient(90deg,#22d3ee,#7c5cff);border:none;color:#020617;font-weight:700">&#128187; Open VS Code</a>
+    </div>
+  `, null);
+  const saveBtn = document.getElementById('modal-save');
+  if (saveBtn) saveBtn.style.display = 'none';
+  const cancelBtn = document.getElementById('modal-cancel');
+  if (cancelBtn) cancelBtn.textContent = 'Close';
 }
 
 async function overridePhase(projectId, currentPhase) {

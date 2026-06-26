@@ -712,6 +712,15 @@ router.post('/:id/regenerate-prompt', async (req, res) => {
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
     const pipeline = require('../services/architectPipeline');
     const synth = require('../services/architectPromptSynth');
+    // The prompt template references short_name (table prefixes, build paths,
+    // health URL). In the streamlined fast-path the operator can generate the
+    // prompt before the formal pipeline ever assigned one — so ensure it exists.
+    if (!project.short_name) {
+      project.short_name = await pipeline.generateUniqueShortName(project);
+      const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
+      project.production_url = `${base}/${project.short_name}`;
+      await project.save();
+    }
     const context = await pipeline.gatherContext(project);
     const rawPrompt = pipeline.renderArchitectPrompt(project, context);
     let finalPrompt = rawPrompt;
