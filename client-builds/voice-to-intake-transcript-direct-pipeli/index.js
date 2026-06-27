@@ -20,10 +20,12 @@ app.use(express.json({ limit: '256kb' }));
 
 // Pre-load the HTML template once; render with the requested language so a raw
 // GET (no JS) already shows the correct h1 + Send button copy (acceptance #7).
+const MOUNT_BASE = '/voice-to-intake-transcript-direct-pipeli/';
 const HTML_TEMPLATE = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
 function renderIndex(lang) {
   const d = I18N[lang === 'es' ? 'es' : 'en'];
   return HTML_TEMPLATE
+    .replace(/{{BASE}}/g, MOUNT_BASE)
     .replace(/{{HTML_LANG}}/g, d.htmlLang)
     .replace(/{{TITLE}}/g, d.title)
     .replace(/{{H1}}/g, d.h1)
@@ -52,6 +54,13 @@ app.use('/api/v1/intake', require('./routes/intake'));
 // static middleware (so the raw HTML reflects ?lang=es), then serve app.js /
 // i18n.js / assets statically with directory index disabled.
 app.get('/', (req, res) => {
+  // Canonicalize to a trailing slash so relative asset URLs + the client BASE
+  // resolve correctly (home-screen shortcuts often open the no-slash URL).
+  const pathOnly = req.originalUrl.split('?')[0];
+  if (!pathOnly.endsWith('/')) {
+    const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    return res.redirect(302, MOUNT_BASE + qs);
+  }
   res.type('html').send(renderIndex(req.query.lang === 'es' ? 'es' : 'en'));
 });
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));

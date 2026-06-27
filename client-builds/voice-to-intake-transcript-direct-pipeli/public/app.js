@@ -7,8 +7,9 @@
 // =====================================================
 (function () {
   var DICT = window.I18N || {};
-  // Mount base = directory this page is served from (handles the sub-app prefix).
-  var BASE = window.location.pathname.replace(/\/[^/]*$/, '/');
+  // Mount base — prefer the server-injected absolute base; fall back to deriving
+  // it from the path (works only when loaded with the trailing slash).
+  var BASE = window.__VTI_BASE || window.location.pathname.replace(/\/[^/]*$/, '/');
   var API = BASE + 'api/v1/intake';
 
   var params = new URLSearchParams(window.location.search);
