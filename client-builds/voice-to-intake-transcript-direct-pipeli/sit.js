@@ -111,6 +111,35 @@ async function run(base) {
     check('8 app.js initializes SpeechRecognition w/ fallback message', appjs.status === 200 && wiresSR && hasFallback,
       `appjsStatus=${appjs.status} wiresSR=${wiresSR} fallback=${hasFallback}`);
   }
+
+  // 10. owner mints a champion link
+  let championCode = null;
+  {
+    const r = await req(base, 'POST', '/api/v1/champion-links', { token: tokenFor(TENANT_A), body: { name: 'SIT Champion', email: 'sit-champion@example.com' } });
+    const ok = r.status === 200 && r.json && typeof r.json.url === 'string' &&
+      r.json.url.indexOf('?c=') !== -1 && typeof r.json.code === 'string' && r.json.code.split('.').length === 3;
+    championCode = r.json && r.json.code;
+    check('10 POST /champion-links (owner) -> 200 w/ magic url + code', ok, `status=${r.status} url=${r.json && r.json.url}`);
+  }
+
+  // 11. a champion code is accepted as a credential (GET /inbox -> 200)
+  {
+    if (!championCode) { check('11 champion code accepted on /inbox', false, 'no code minted'); }
+    else {
+      const r = await req(base, 'GET', '/api/v1/inbox', { token: championCode });
+      check('11 champion code accepted on /inbox -> 200', r.status === 200 && r.json && Array.isArray(r.json.items),
+        `status=${r.status}`);
+    }
+  }
+
+  // 12. a champion code CANNOT mint another link (403)
+  {
+    if (!championCode) { check('12 champion code cannot mint (403)', false, 'no code minted'); }
+    else {
+      const r = await req(base, 'POST', '/api/v1/champion-links', { token: championCode, body: { email: 'x@y.com' } });
+      check('12 champion code cannot mint another link -> 403', r.status === 403, `status=${r.status}`);
+    }
+  }
 }
 
 function report() {

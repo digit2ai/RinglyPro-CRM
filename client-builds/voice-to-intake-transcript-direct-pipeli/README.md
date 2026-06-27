@@ -25,7 +25,8 @@ Run SIT: `node sit.js` (in-process, self-hosted) or
 | Var | Required | Purpose |
 |-----|----------|---------|
 | `DATABASE_URL` | for persistence | Postgres connection. Unset/unreachable → in-memory fallback store (rows lost on restart; persistence TODO). |
-| `JWT_SECRET` | yes (prod) | HMAC secret for verifying the Bearer JWT on write/read endpoints. Tenant context read from `tenant_id`/`clientId`/`client_id` claim. Verify-only — this service never signs tokens. |
+| `JWT_SECRET` | yes (prod) | HMAC secret for verifying the Bearer JWT on write/read endpoints. Tenant context read from `tenant_id`/`clientId`/`client_id`/`userId` claim. |
+| `CHAMPION_LINK_SECRET` | no (falls back to `JWT_SECRET`) | HMAC secret for signing/verifying champion magic-link codes (the `?c=<code>` capability token). Set a dedicated value on prod. Owner mints links at `/voice-to-intake-transcript-direct-pipeli/champion-links.html` (needs a CRM login); champions open `…/?c=<code>` and are recognized with no login. A champion code can never mint another link. |
 | `DIGIT2AI_INTAKE_URL` | no | Real Digit2AI intake webhook. Unset → forward is mocked, row saved with `forward_status='mocked'`. |
 | `DIGIT2AI_INTAKE_TOKEN` | no | Bearer token for the intake webhook. Both URL + token must be set to enable real forwarding. |
 

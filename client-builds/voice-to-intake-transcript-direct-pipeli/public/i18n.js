@@ -45,6 +45,7 @@
       openPoc: 'Open',
       sharedTag: 'Shared',
       fitLabel: 'Fit',
+      championLabel: 'champion link',
       shareMsg: 'Hi! Here is an interactive AI proposal and live proof-of-concept demo built for your project: '
     },
     es: {
@@ -90,6 +91,7 @@
       openPoc: 'Abrir',
       sharedTag: 'Compartido',
       fitLabel: 'Ajuste',
+      championLabel: 'enlace de campeón',
       shareMsg: '¡Hola! Aquí tienes una propuesta de IA interactiva y una demostración de prueba de concepto en vivo creada para tu proyecto: '
     }
   };

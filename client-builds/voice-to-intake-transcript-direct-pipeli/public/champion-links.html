@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Champion Links — Digit2Ai Voice to Intake</title>
+  <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--bg:#0b0f1a;--bg2:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--green:#36d399}
+    body{background:var(--bg);color:var(--txt)} .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  </style>
+</head>
+<body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
+  <main class="w-full max-w-xl">
+    <h1 class="text-2xl font-bold mb-1">Champion Magic Links</h1>
+    <p class="mb-5 text-sm" style="color:var(--mut)">
+      Generate a personal, login-free link for a champion. They open it once, and the Voice-to-Intake
+      app remembers them — no token, no CRM login. Owner-only (you must be signed into the CRM here).
+    </p>
+
+    <div id="authWarn" class="rounded-xl p-3 mb-4 text-sm" style="display:none;background:#3a1620;border:1px solid #6b2436;color:#ffd7de"></div>
+
+    <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
+      <label class="block text-sm mb-1" style="color:var(--mut)">Champion name</label>
+      <input id="name" class="w-full rounded-xl p-2 mb-3 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="Maria López" />
+      <label class="block text-sm mb-1" style="color:var(--mut)">Champion email</label>
+      <input id="email" type="email" class="mono w-full rounded-xl p-2 mb-4 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="maria@partner.com" />
+      <button id="gen" class="w-full rounded-xl py-3 font-semibold" style="background:var(--green);color:#06281c">Generate link</button>
+      <div id="msg" class="text-sm mono mt-3" style="min-height:18px"></div>
+    </div>
+
+    <div id="out" class="rounded-2xl p-5" style="display:none;background:var(--card);border:1px solid var(--line)">
+      <div class="text-sm mb-2" style="color:var(--mut)">Magic link for <span id="outWho" class="font-semibold" style="color:var(--txt)"></span></div>
+      <textarea id="outUrl" rows="3" readonly class="mono w-full rounded-xl p-2 mb-3 text-xs" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"></textarea>
+      <div class="flex flex-wrap gap-2">
+        <button id="copy" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">Copy link</button>
+        <a id="wa" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded-lg font-semibold" style="background:#25D366;color:#06281c">Send via WhatsApp</a>
+        <a id="open" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">Open</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    var API = '/voice-to-intake-transcript-direct-pipeli/api/v1/champion-links';
+    function crmToken(){
+      var keys=['token','authToken','jwt','adminAuthToken'];
+      for(var i=0;i<keys.length;i++){ try{ var v=localStorage.getItem(keys[i]); if(v && v.split('.').length===3) return v; }catch(e){} }
+      return null;
+    }
+    var msg=document.getElementById('msg'), out=document.getElementById('out');
+    if(!crmToken()){
+      var w=document.getElementById('authWarn'); w.style.display='block';
+      w.textContent='You are not signed into the CRM in this browser. Open https://aiagent.ringlypro.com and log in, then reload this page.';
+    }
+    document.getElementById('gen').addEventListener('click', function(){
+      var name=document.getElementById('name').value.trim();
+      var email=document.getElementById('email').value.trim();
+      msg.style.color='#ef4444';
+      if(!email || email.indexOf('@')<1){ msg.textContent='Enter a valid email.'; return; }
+      var tok=crmToken();
+      if(!tok){ msg.textContent='No CRM session found. Log into the CRM first.'; return; }
+      msg.style.color='var(--mut)'; msg.textContent='Generating…';
+      fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({name:name,email:email})})
+        .then(function(r){ return r.json().then(function(b){ return {ok:r.ok,status:r.status,body:b}; }); })
+        .then(function(res){
+          if(!res.ok){ msg.style.color='#ef4444'; msg.textContent=(res.body&&res.body.error)||('Error '+res.status); return; }
+          msg.textContent='';
+          document.getElementById('outWho').textContent=res.body.name+' ('+res.body.email+')';
+          document.getElementById('outUrl').value=res.body.url;
+          var brief='Hi '+(name||'')+', here is your personal Digit2Ai Voice-to-Intake link. Open it once and just dictate your project requests: '+res.body.url;
+          document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(brief);
+          document.getElementById('open').href=res.body.url;
+          out.style.display='block';
+        })
+        .catch(function(){ msg.style.color='#ef4444'; msg.textContent='Network error.'; });
+    });
+    document.getElementById('copy').addEventListener('click', function(){
+      var u=document.getElementById('outUrl').value; var b=this;
+      function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy link'; },1500); }
+      if(navigator.clipboard) navigator.clipboard.writeText(u).then(done,done); else { document.getElementById('outUrl').select(); done(); }
+    });
+  })();
+  </script>
+</body>
+</html>

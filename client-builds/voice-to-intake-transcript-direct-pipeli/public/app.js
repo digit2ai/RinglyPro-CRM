@@ -61,15 +61,36 @@
     }
     return null;
   }
+  // Champion magic link: capture ?c=<code> once, persist it, and use it as the
+  // credential. No CRM login needed — the code carries the champion's identity.
+  function captureChampionCode() {
+    var c = params.get('c');
+    if (c) {
+      try { localStorage.setItem('d2ai_champion_code', c); } catch (e) {}
+      params.delete('c');
+      history.replaceState(null, '', BASE + (lang === 'es' ? '?lang=es' : ''));
+    }
+    try { return localStorage.getItem('d2ai_champion_code') || null; } catch (e) { return null; }
+  }
+  var championCode = captureChampionCode();
   var sessionToken = detectSessionToken();
-  function getToken() { return sessionToken || (el.token.value || '').trim(); }
+  function getToken() { return sessionToken || championCode || (el.token.value || '').trim(); }
+
+  function championName() {
+    if (!championCode) return null;
+    try {
+      var p = JSON.parse(atob(championCode.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return p.name || p.email || null;
+    } catch (e) { return null; }
+  }
 
   function renderAuth() {
     var d = t();
-    if (sessionToken) {
+    if (sessionToken || championCode) {
       el.authStatus.style.display = 'block';
       el.authStatus.style.color = 'var(--green)';
-      el.authStatus.textContent = '● ' + d.signedIn;
+      var who = championCode ? championName() : null;
+      el.authStatus.textContent = who ? ('● ' + who + ' · ' + d.championLabel) : ('● ' + d.signedIn);
       el.tokenWrap.style.display = 'none';
     } else {
       // No session — offer the CRM login and a manual-paste fallback.

@@ -53,6 +53,7 @@ store.init().then((r) => {
 app.use('/health', require('./routes/health'));
 app.use('/api/v1/intake', require('./routes/intake'));
 app.use('/api/v1/inbox', require('./routes/inbox'));
+app.use('/api/v1/champion-links', require('./routes/champion'));
 
 // Single-screen UI — render '/' with server-side language injection BEFORE the
 // static middleware (so the raw HTML reflects ?lang=es), then serve app.js /
