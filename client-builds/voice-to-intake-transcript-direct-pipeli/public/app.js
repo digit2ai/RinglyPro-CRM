@@ -38,9 +38,14 @@
     inboxList: document.getElementById('inboxList'),
     inboxHeading: document.getElementById('inboxHeading'),
     inboxSub: document.getElementById('inboxSub'),
-    inboxRefresh: document.getElementById('inboxRefresh')
+    inboxRefresh: document.getElementById('inboxRefresh'),
+    intercomThread: document.getElementById('intercomThread'),
+    intercomInput: document.getElementById('intercomInput'),
+    intercomSend: document.getElementById('intercomSend'),
+    pocHeading: document.getElementById('pocHeading')
   };
   var API_INBOX = BASE + 'api/v1/inbox';
+  var API_INTERCOM = BASE + 'api/v1/intercom';
 
   // ---- Auth: auto-detect the CRM session token --------------------------
   // Same-origin as the CRM, so the JWT the user already logged in with is in
@@ -160,7 +165,13 @@
     if (el.inboxTabLabel) el.inboxTabLabel.textContent = d.inboxTab;
     if (el.inboxHeading) el.inboxHeading.textContent = d.inboxTitle;
     if (el.inboxSub) el.inboxSub.textContent = d.inboxSub;
-    if (typeof renderInbox === 'function' && el.inboxView && el.inboxView.style.display === 'block') renderInbox(inboxItems);
+    if (el.pocHeading) el.pocHeading.textContent = d.pocHeading;
+    if (el.intercomInput) el.intercomInput.placeholder = d.intercomPlaceholder;
+    if (el.intercomSend) el.intercomSend.textContent = d.intercomSend;
+    if (el.inboxView && el.inboxView.style.display === 'block') {
+      if (typeof renderInbox === 'function') renderInbox(inboxItems);
+      if (typeof fetchIntercom === 'function') fetchIntercom();
+    }
   }
 
   // ---- Web Speech setup -------------------------------------------------
@@ -309,7 +320,6 @@
       .then(function (data) {
         inboxItems = (data && data.items) || [];
         inboxEmail = (data && data.email) || null;
-        setBadge((data && data.badge) || 0);
         if (inboxView) renderInbox(inboxItems);
       }).catch(function () {});
   }
@@ -416,13 +426,78 @@
     }).catch(function () {});
   }
 
-  el.inboxBtn.addEventListener('click', function () { setView(!inboxView); });
-  el.inboxRefresh.addEventListener('click', fetchInbox);
+  // ---- Intercom chat (champion <-> owner) -------------------------------
+  function fmtTime(s) { try { return new Date(s).toLocaleString(); } catch (e) { return ''; } }
 
-  // Prime the badge on load and poll so a teaser that finishes generating shows up.
+  function renderThread(messages) {
+    var d = t();
+    el.intercomThread.innerHTML = '';
+    if (!getToken()) { el.intercomThread.textContent = d.inboxSignIn; return; }
+    if (!messages || !messages.length) {
+      var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = 'var(--mut)';
+      em.textContent = d.intercomEmpty; el.intercomThread.appendChild(em); return;
+    }
+    messages.forEach(function (m) {
+      var mine = m.sender === 'champion';
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;margin-bottom:8px;justify-content:' + (mine ? 'flex-end' : 'flex-start');
+      var bub = document.createElement('div');
+      bub.style.cssText = 'max-width:80%;padding:8px 10px;border-radius:12px;font-size:14px;' +
+        (mine ? 'background:var(--acc);color:#fff' : 'background:#1b2536;color:var(--txt);border:1px solid var(--line)');
+      var who = document.createElement('div');
+      who.style.cssText = 'font-size:11px;opacity:.7;margin-bottom:2px';
+      who.textContent = (mine ? d.youLabel : d.ownerLabel) + ' · ' + fmtTime(m.created_at);
+      var txt = document.createElement('div'); txt.textContent = m.body;
+      bub.appendChild(who); bub.appendChild(txt); wrap.appendChild(bub);
+      el.intercomThread.appendChild(wrap);
+    });
+    el.intercomThread.scrollTop = el.intercomThread.scrollHeight;
+  }
+
+  function fetchIntercom() {
+    var token = getToken();
+    if (!token) { renderThread(null); return; }
+    fetch(API_INTERCOM + '/me', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : { messages: [] }; })
+      .then(function (data) { renderThread((data && data.messages) || []); setBadge(0); })
+      .catch(function () {});
+  }
+
+  function pollUnread() {
+    var token = getToken();
+    if (!token) return;
+    fetch(API_INTERCOM + '/me/unread', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : { unread: 0 }; })
+      .then(function (data) { if (!inboxView) setBadge((data && data.unread) || 0); })
+      .catch(function () {});
+  }
+
+  function sendIntercom() {
+    var token = getToken();
+    var body = (el.intercomInput.value || '').trim();
+    if (!token || !body) return;
+    el.intercomInput.value = '';
+    fetch(API_INTERCOM + '/me', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ body: body })
+    }).then(function () { fetchIntercom(); }).catch(function () {});
+  }
+
+  el.intercomSend.addEventListener('click', sendIntercom);
+  el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendIntercom(); } });
+
+  el.inboxBtn.addEventListener('click', function () { setView(!inboxView); });
+  el.inboxRefresh.addEventListener('click', function () { fetchInbox(); fetchIntercom(); });
+
+  // Opening the Intercom tab loads the chat (marks read) + the PoC links.
+  var _setView = setView;
+  setView = function (showInbox) { _setView(showInbox); if (showInbox) fetchIntercom(); };
+
+  // Prime the unread badge on load and poll for new messages + ready teasers.
   if (getToken()) {
+    pollUnread();
     fetchInbox();
-    setInterval(fetchInbox, 20000);
+    setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 15000);
   }
 
   applyLang();

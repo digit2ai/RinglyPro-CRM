@@ -75,6 +75,7 @@
           <li data-view="overview" class="active"><span class="nav-text">Home</span></li>
           <li data-view="inbox"><span class="nav-text">Inbox</span><span id="inbox-badge" class="badge hidden">0</span></li>
           <li data-view="messages"><span class="nav-text">Messages</span><span id="messages-badge" class="badge hidden">0</span></li>
+          <li onclick="openCrmEmbed('/voice-to-intake-transcript-direct-pipeli/intercom.html','Intercom', this)" style="cursor:pointer"><span class="nav-text">Intercom</span><span id="intercom-badge" class="badge hidden">0</span></li>
           <li data-view="email"><span class="nav-text">Email</span><span id="email-badge" class="badge hidden">0</span></li>
           <li data-view="contacts"><span class="nav-text">People</span></li>
           <li data-view="projects"><span class="nav-text">Projects</span></li>
@@ -175,5 +176,22 @@
     </div>
   </div>
   <script src="/projects/assets/app.js"></script>
+  <script>
+  // Intercom unread badge — polls the voice-to-intake owner endpoint (same origin,
+  // uses the CRM token in localStorage). Additive; never affects other dashboard logic.
+  (function(){
+    var badge=document.getElementById('intercom-badge');
+    if(!badge) return;
+    function tok(){ try{ var v=localStorage.getItem('token'); return (v&&v.split('.').length===3)?v:null; }catch(e){ return null; } }
+    function poll(){
+      var t=tok(); if(!t) return;
+      fetch('/voice-to-intake-transcript-direct-pipeli/api/v1/intercom/threads/unread',{headers:{'Authorization':'Bearer '+t}})
+        .then(function(r){ return r.ok?r.json():{total_unread:0}; })
+        .then(function(d){ var n=(d&&d.total_unread)||0; if(n>0){ badge.textContent=n>99?'99+':n; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } })
+        .catch(function(){});
+    }
+    poll(); setInterval(poll, 15000);
+  })();
+  </script>
 </body>
 </html>

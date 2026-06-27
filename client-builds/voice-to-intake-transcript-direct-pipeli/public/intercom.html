@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intercom — Digit2Ai</title>
+  <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{--bg:#0b0f1a;--bg2:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--green:#36d399}
+    body{background:var(--bg);color:var(--txt);margin:0}
+    .row{display:flex;height:100vh}
+    .list{width:300px;border-right:1px solid var(--line);overflow-y:auto;flex:0 0 300px}
+    .pane{flex:1;display:flex;flex-direction:column;min-width:0}
+    .thread{flex:1;overflow-y:auto;padding:16px}
+    .titem{padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+    .titem:hover{background:var(--bg2)} .titem.active{background:var(--bg2)}
+    .badge{background:#ef4444;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 7px;margin-left:6px}
+    @media(max-width:680px){.list{width:130px;flex:0 0 130px}}
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="list" id="list"><div style="padding:14px;color:var(--mut);font-size:13px">Loading…</div></div>
+    <div class="pane">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700" id="paneTitle">Intercom — select a champion</div>
+      <div class="thread" id="thread"></div>
+      <div style="padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px">
+        <input id="reply" placeholder="Reply…" class="flex-1" style="flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px" disabled />
+        <button id="send" style="background:var(--acc);color:#fff;border-radius:10px;padding:8px 16px;font-weight:600" disabled>Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var API='/voice-to-intake-transcript-direct-pipeli/api/v1/intercom';
+    function token(){ var k=['token','authToken','jwt','adminAuthToken']; for(var i=0;i<k.length;i++){ try{ var v=localStorage.getItem(k[i]); if(v&&v.split('.').length===3) return v; }catch(e){} } return null; }
+    var current=null;
+    var listEl=document.getElementById('list'), threadEl=document.getElementById('thread');
+    var reply=document.getElementById('reply'), send=document.getElementById('send'), paneTitle=document.getElementById('paneTitle');
+
+    function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+    function fmt(s){ try{ return new Date(s).toLocaleString(); }catch(e){ return ''; } }
+    function authHdr(){ return { 'Authorization':'Bearer '+token() }; }
+
+    if(!token()){ listEl.innerHTML='<div style="padding:14px;color:#ffb3c0;font-size:13px">Not signed into the CRM. Open this from the Projects dashboard while logged in.</div>'; return; }
+
+    function loadThreads(){
+      fetch(API+'/threads',{headers:authHdr()})
+        .then(function(r){ return r.ok?r.json():{threads:[]}; })
+        .then(function(d){ renderList((d&&d.threads)||[]); })
+        .catch(function(){});
+    }
+    function renderList(threads){
+      listEl.innerHTML='';
+      if(!threads.length){ listEl.innerHTML='<div style="padding:14px;color:var(--mut);font-size:13px">No champion messages yet.</div>'; return; }
+      threads.forEach(function(t){
+        var d=document.createElement('div'); d.className='titem'+(current===t.email?' active':'');
+        var name=esc(t.name||t.email);
+        var badge=t.unread? '<span class="badge">'+t.unread+'</span>':'';
+        var prev=esc((t.last_sender==='owner'?'You: ':'')+(t.last_body||'')).slice(0,60);
+        d.innerHTML='<div style="font-weight:600;font-size:14px">'+name+badge+'</div>'+
+                    '<div style="font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+prev+'</div>';
+        d.addEventListener('click', function(){ openThread(t.email, t.name||t.email); });
+        listEl.appendChild(d);
+      });
+    }
+    function openThread(email, name){
+      current=email; paneTitle.textContent=name+' · '+email;
+      reply.disabled=false; send.disabled=false;
+      loadMessages(); loadThreads();
+    }
+    function loadMessages(){
+      if(!current) return;
+      fetch(API+'/threads/'+encodeURIComponent(current),{headers:authHdr()})
+        .then(function(r){ return r.ok?r.json():{messages:[]}; })
+        .then(function(d){ renderMessages((d&&d.messages)||[]); })
+        .catch(function(){});
+    }
+    function renderMessages(msgs){
+      threadEl.innerHTML='';
+      msgs.forEach(function(m){
+        var owner=m.sender==='owner';
+        var wrap=document.createElement('div');
+        wrap.style.cssText='display:flex;margin-bottom:8px;justify-content:'+(owner?'flex-end':'flex-start');
+        var b=document.createElement('div');
+        b.style.cssText='max-width:75%;padding:8px 11px;border-radius:12px;font-size:14px;'+(owner?'background:var(--acc);color:#fff':'background:#1b2536;border:1px solid var(--line);color:var(--txt)');
+        b.innerHTML='<div style="font-size:11px;opacity:.7;margin-bottom:2px">'+(owner?'You':'Champion')+' · '+fmt(m.created_at)+'</div>'+esc(m.body);
+        wrap.appendChild(b); threadEl.appendChild(wrap);
+      });
+      threadEl.scrollTop=threadEl.scrollHeight;
+    }
+    function doSend(){
+      var body=(reply.value||'').trim(); if(!body||!current) return;
+      reply.value='';
+      fetch(API+'/threads/'+encodeURIComponent(current),{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHdr()),body:JSON.stringify({body:body})})
+        .then(function(){ loadMessages(); loadThreads(); }).catch(function(){});
+    }
+    send.addEventListener('click', doSend);
+    reply.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
+
+    loadThreads();
+    setInterval(function(){ loadThreads(); if(current) loadMessages(); }, 7000);
+  })();
+  </script>
+</body>
+</html>

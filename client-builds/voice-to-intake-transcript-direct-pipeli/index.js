@@ -39,7 +39,10 @@ function renderIndex(lang) {
     .replace(/{{NOT_SUPPORTED}}/g, d.notSupported)
     .replace(/{{INBOX_TAB}}/g, d.inboxTab)
     .replace(/{{INBOX_TITLE}}/g, d.inboxTitle)
-    .replace(/{{INBOX_SUB}}/g, d.inboxSub);
+    .replace(/{{INBOX_SUB}}/g, d.inboxSub)
+    .replace(/{{INTERCOM_PLACEHOLDER}}/g, d.intercomPlaceholder)
+    .replace(/{{INTERCOM_SEND}}/g, d.intercomSend)
+    .replace(/{{POC_HEADING}}/g, d.pocHeading);
 }
 
 // Kick off DB init (non-blocking; falls back to in-memory on failure).
@@ -54,6 +57,7 @@ app.use('/health', require('./routes/health'));
 app.use('/api/v1/intake', require('./routes/intake'));
 app.use('/api/v1/inbox', require('./routes/inbox'));
 app.use('/api/v1/champion-links', require('./routes/champion'));
+app.use('/api/v1/intercom', require('./routes/intercom'));
 
 // Single-screen UI — render '/' with server-side language injection BEFORE the
 // static middleware (so the raw HTML reflects ?lang=es), then serve app.js /
