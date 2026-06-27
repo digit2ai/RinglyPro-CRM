@@ -15,71 +15,132 @@
   <main class="w-full max-w-xl">
     <h1 class="text-2xl font-bold mb-1">Champion Magic Links</h1>
     <p class="mb-5 text-sm" style="color:var(--mut)">
-      Generate a personal, login-free link for a champion. They open it once, and the Voice-to-Intake
-      app remembers them — no token, no CRM login. Owner-only (you must be signed into the CRM here).
+      One personal, login-free link per champion. They open it once and the Voice-to-Intake app
+      remembers them — no token, no CRM login, works as a home-screen app. Owner-only (you must be
+      signed into the CRM here).
     </p>
 
     <div id="authWarn" class="rounded-xl p-3 mb-4 text-sm" style="display:none;background:#3a1620;border:1px solid #6b2436;color:#ffd7de"></div>
 
+    <!-- One-click team roster -->
     <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
-      <label class="block text-sm mb-1" style="color:var(--mut)">Champion name</label>
-      <input id="name" class="w-full rounded-xl p-2 mb-3 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="Maria López" />
-      <label class="block text-sm mb-1" style="color:var(--mut)">Champion email</label>
-      <input id="email" type="email" class="mono w-full rounded-xl p-2 mb-4 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="maria@partner.com" />
-      <button id="gen" class="w-full rounded-xl py-3 font-semibold" style="background:var(--green);color:#06281c">Generate link</button>
-      <div id="msg" class="text-sm mono mt-3" style="min-height:18px"></div>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold">Team champions</h2>
+        <button id="genAll" class="text-sm px-3 py-1 rounded-lg font-semibold" style="background:var(--green);color:#06281c">Generate all</button>
+      </div>
+      <div id="roster" class="text-sm" style="color:var(--mut)"></div>
     </div>
 
-    <div id="out" class="rounded-2xl p-5" style="display:none;background:var(--card);border:1px solid var(--line)">
-      <div class="text-sm mb-2" style="color:var(--mut)">Magic link for <span id="outWho" class="font-semibold" style="color:var(--txt)"></span></div>
-      <textarea id="outUrl" rows="3" readonly class="mono w-full rounded-xl p-2 mb-3 text-xs" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"></textarea>
-      <div class="flex flex-wrap gap-2">
-        <button id="copy" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">Copy link</button>
-        <a id="wa" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded-lg font-semibold" style="background:#25D366;color:#06281c">Send via WhatsApp</a>
-        <a id="open" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">Open</a>
+    <!-- Manual single add -->
+    <details class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
+      <summary class="cursor-pointer font-semibold">Add another champion</summary>
+      <div class="mt-3">
+        <label class="block text-sm mb-1" style="color:var(--mut)">Champion name</label>
+        <input id="name" class="w-full rounded-xl p-2 mb-3 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="Maria López" />
+        <label class="block text-sm mb-1" style="color:var(--mut)">Champion email</label>
+        <input id="email" type="email" class="mono w-full rounded-xl p-2 mb-4 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="maria@partner.com" />
+        <button id="gen" class="w-full rounded-xl py-3 font-semibold" style="background:var(--acc);color:#fff">Generate link</button>
+        <div id="msg" class="text-sm mono mt-3" style="min-height:18px"></div>
       </div>
-    </div>
+    </details>
+
+    <div id="results"></div>
   </main>
 
   <script>
   (function(){
     var API = '/voice-to-intake-transcript-direct-pipeli/api/v1/champion-links';
+    var ROSTER = [
+      { name: 'Manuel Stagg', email: 'mstagg@digit2ai.com' },
+      { name: 'Lala',         email: 'lala@digit2ai.com' },
+      { name: 'Greg Eriksen', email: 'eriksen.greg@yahoo.com' },
+      { name: 'Ting Bouffard', email: 'nvbouffard@gmail.com' }
+    ];
+
     function crmToken(){
       var keys=['token','authToken','jwt','adminAuthToken'];
       for(var i=0;i<keys.length;i++){ try{ var v=localStorage.getItem(keys[i]); if(v && v.split('.').length===3) return v; }catch(e){} }
       return null;
     }
-    var msg=document.getElementById('msg'), out=document.getElementById('out');
+
+    var results=document.getElementById('results');
     if(!crmToken()){
       var w=document.getElementById('authWarn'); w.style.display='block';
-      w.textContent='You are not signed into the CRM in this browser. Open https://aiagent.ringlypro.com and log in, then reload this page.';
+      w.textContent='You are not signed into the CRM in this browser. Open https://aiagent.ringlypro.com, log in, then reload this page.';
     }
+
+    // Render the roster list with per-row generate buttons.
+    var rosterEl=document.getElementById('roster');
+    ROSTER.forEach(function(c, idx){
+      var row=document.createElement('div');
+      row.className='flex items-center justify-between py-1';
+      var label=document.createElement('span');
+      label.innerHTML='<span style="color:var(--txt)">'+c.name+'</span> · '+c.email;
+      var b=document.createElement('button');
+      b.className='text-xs px-2 py-1 rounded-lg border'; b.style.cssText='border-color:var(--line);color:var(--txt)';
+      b.textContent='Generate'; b.addEventListener('click', function(){ mint(c.name, c.email); });
+      row.appendChild(label); row.appendChild(b); rosterEl.appendChild(row);
+    });
+
+    function mint(name, email){
+      var tok=crmToken();
+      if(!tok){ alert('No CRM session found. Log into the CRM first.'); return; }
+      return fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({name:name,email:email})})
+        .then(function(r){ return r.json().then(function(b){ return {ok:r.ok,status:r.status,body:b}; }); })
+        .then(function(res){
+          if(!res.ok){ renderError(name, (res.body&&res.body.error)||('Error '+res.status)); return; }
+          renderResult(res.body);
+        })
+        .catch(function(){ renderError(name, 'Network error'); });
+    }
+
+    function renderError(name, err){
+      var card=document.createElement('div');
+      card.className='rounded-2xl p-4 mb-3 text-sm'; card.style.cssText='background:#3a1620;border:1px solid #6b2436;color:#ffd7de';
+      card.textContent=name+': '+err; results.prepend(card);
+    }
+
+    function renderResult(data){
+      var card=document.createElement('div');
+      card.className='rounded-2xl p-4 mb-3'; card.style.cssText='background:var(--card);border:1px solid var(--line)';
+      var head=document.createElement('div');
+      head.className='text-sm mb-2'; head.style.color='var(--mut)';
+      head.innerHTML='Magic link for <span class="font-semibold" style="color:var(--txt)">'+data.name+'</span> · '+data.email;
+      card.appendChild(head);
+      var ta=document.createElement('textarea');
+      ta.readOnly=true; ta.rows=3; ta.value=data.url;
+      ta.className='mono w-full rounded-xl p-2 mb-3 text-xs'; ta.style.cssText='background:var(--bg2);border:1px solid var(--line);color:var(--txt)';
+      card.appendChild(ta);
+      var row=document.createElement('div'); row.className='flex flex-wrap gap-2';
+      var copy=document.createElement('button');
+      copy.className='text-sm px-3 py-1 rounded-lg border'; copy.style.cssText='border-color:var(--line);color:var(--txt)'; copy.textContent='Copy link';
+      copy.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy link'; },1500);} if(navigator.clipboard) navigator.clipboard.writeText(data.url).then(done,done); else { ta.select(); done(); } });
+      row.appendChild(copy);
+      var brief='Hi '+(data.name||'')+', here is your personal Digit2Ai Voice-to-Intake link. Open it once and just dictate your project requests: '+data.url;
+      var wa=document.createElement('a');
+      wa.target='_blank'; wa.rel='noopener'; wa.href='https://wa.me/?text='+encodeURIComponent(brief);
+      wa.className='text-sm px-3 py-1 rounded-lg font-semibold'; wa.style.cssText='background:#25D366;color:#06281c'; wa.textContent='Send via WhatsApp';
+      row.appendChild(wa);
+      var open=document.createElement('a');
+      open.target='_blank'; open.rel='noopener'; open.href=data.url;
+      open.className='text-sm px-3 py-1 rounded-lg border'; open.style.cssText='border-color:var(--line);color:var(--txt)'; open.textContent='Open';
+      row.appendChild(open);
+      card.appendChild(row);
+      results.prepend(card);
+    }
+
+    document.getElementById('genAll').addEventListener('click', function(){
+      results.innerHTML='';
+      ROSTER.reduce(function(p, c){ return p.then(function(){ return mint(c.name, c.email); }); }, Promise.resolve());
+    });
+
     document.getElementById('gen').addEventListener('click', function(){
       var name=document.getElementById('name').value.trim();
       var email=document.getElementById('email').value.trim();
-      msg.style.color='#ef4444';
+      var msg=document.getElementById('msg'); msg.style.color='#ef4444';
       if(!email || email.indexOf('@')<1){ msg.textContent='Enter a valid email.'; return; }
-      var tok=crmToken();
-      if(!tok){ msg.textContent='No CRM session found. Log into the CRM first.'; return; }
       msg.style.color='var(--mut)'; msg.textContent='Generating…';
-      fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({name:name,email:email})})
-        .then(function(r){ return r.json().then(function(b){ return {ok:r.ok,status:r.status,body:b}; }); })
-        .then(function(res){
-          if(!res.ok){ msg.style.color='#ef4444'; msg.textContent=(res.body&&res.body.error)||('Error '+res.status); return; }
-          msg.textContent='';
-          document.getElementById('outWho').textContent=res.body.name+' ('+res.body.email+')';
-          document.getElementById('outUrl').value=res.body.url;
-          var brief='Hi '+(name||'')+', here is your personal Digit2Ai Voice-to-Intake link. Open it once and just dictate your project requests: '+res.body.url;
-          document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(brief);
-          document.getElementById('open').href=res.body.url;
-          out.style.display='block';
-        })
-        .catch(function(){ msg.style.color='#ef4444'; msg.textContent='Network error.'; });
-    });
-    document.getElementById('copy').addEventListener('click', function(){
-      var u=document.getElementById('outUrl').value; var b=this;
-      function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy link'; },1500); }
-      if(navigator.clipboard) navigator.clipboard.writeText(u).then(done,done); else { document.getElementById('outUrl').select(); done(); }
+      mint(name||email, email).then(function(){ msg.textContent=''; });
     });
   })();
   </script>
