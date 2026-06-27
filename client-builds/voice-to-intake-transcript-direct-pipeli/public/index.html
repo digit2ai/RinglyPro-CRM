@@ -18,9 +18,11 @@
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
   <main class="w-full max-w-2xl">
-    <div class="flex items-center justify-between mb-4">
-      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="digit2ai" class="h-8 w-8 rounded-lg" />
-      <button id="langBtn" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">{{LANG_TOGGLE}}</button>
+    <div class="relative mb-6">
+      <button id="langBtn" class="absolute right-0 top-0 text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">{{LANG_TOGGLE}}</button>
+      <div class="flex justify-center pt-2">
+        <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="digit2ai" class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl shadow-xl" />
+      </div>
     </div>
 
     <h1 id="h1" class="text-3xl font-bold mb-2">{{H1}}</h1>
@@ -28,8 +30,13 @@
 
     <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
       <div class="flex items-center gap-4 mb-4">
-        <button id="micBtn" class="mic-dot w-14 h-14 rounded-full flex items-center justify-center text-2xl"
-                style="background:var(--acc);color:#fff" aria-label="record">🎙️</button>
+        <button id="micBtn" class="mic-dot w-16 h-16 rounded-full flex items-center justify-center"
+                style="background:var(--acc);color:#fff" aria-label="record">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true">
+            <path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-6a3.5 3.5 0 0 0-7 0v6A3.5 3.5 0 0 0 12 15z"/>
+            <path d="M18 11.5a.9.9 0 0 0-1.8 0 4.2 4.2 0 0 1-8.4 0 .9.9 0 0 0-1.8 0 6 6 0 0 0 5.1 5.94V20H8.6a.9.9 0 0 0 0 1.8h6.8a.9.9 0 0 0 0-1.8H12.9v-2.56A6 6 0 0 0 18 11.5z"/>
+          </svg>
+        </button>
         <div>
           <div id="micLabel" class="font-semibold">{{MIC_START}}</div>
           <div id="status" class="text-sm mono" style="color:var(--mut)">&nbsp;</div>
