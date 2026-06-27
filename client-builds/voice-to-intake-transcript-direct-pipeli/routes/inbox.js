@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
     }
     const items = await projectsBridge.listChampionInbox(email);
     const badge = items.filter((i) => i.teaser_ready && !i.shared).length;
-    return res.json({ items, badge, ready: true });
+    return res.json({ items, badge, ready: true, email });
   } catch (err) {
     console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'inbox_get_error', error: err.message }));
     return res.status(500).json({ error: 'internal error' });

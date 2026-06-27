@@ -46,6 +46,8 @@
       sharedTag: 'Shared',
       fitLabel: 'Fit',
       championLabel: 'champion link',
+      switchChampion: 'not you? switch',
+      inboxOf: 'Inbox of',
       shareMsg: 'Hi! Here is an interactive AI proposal and live proof-of-concept demo built for your project: '
     },
     es: {
@@ -92,6 +94,8 @@
       sharedTag: 'Compartido',
       fitLabel: 'Ajuste',
       championLabel: 'enlace de campeón',
+      switchChampion: '¿no eres tú? cambiar',
+      inboxOf: 'Bandeja de',
       shareMsg: '¡Hola! Aquí tienes una propuesta de IA interactiva y una demostración de prueba de concepto en vivo creada para tu proyecto: '
     }
   };

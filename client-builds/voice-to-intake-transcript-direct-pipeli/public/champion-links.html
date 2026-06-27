@@ -44,6 +44,16 @@
       </div>
     </details>
 
+    <!-- Existing champions + status / revoke -->
+    <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold">Existing links</h2>
+        <button id="reload" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--mut)">↻</button>
+      </div>
+      <p class="text-xs mb-3" style="color:var(--mut)">Links are permanent until you revoke them. Revoking kills only that champion's link; Re-issue makes a fresh one (the old one stops working).</p>
+      <div id="existing" class="text-sm" style="color:var(--mut)">Loading…</div>
+    </div>
+
     <div id="results"></div>
   </main>
 
@@ -140,8 +150,54 @@
       var msg=document.getElementById('msg'); msg.style.color='#ef4444';
       if(!email || email.indexOf('@')<1){ msg.textContent='Enter a valid email.'; return; }
       msg.style.color='var(--mut)'; msg.textContent='Generating…';
-      mint(name||email, email).then(function(){ msg.textContent=''; });
+      mint(name||email, email).then(function(){ msg.textContent=''; loadChampions(); });
     });
+
+    // ---- Existing champions list + revoke ----
+    var existingEl=document.getElementById('existing');
+    function loadChampions(){
+      var tok=crmToken(); if(!tok){ existingEl.textContent=''; return; }
+      fetch(API,{headers:{'Authorization':'Bearer '+tok}})
+        .then(function(r){ return r.ok?r.json():{champions:[]}; })
+        .then(function(d){ renderChampions((d&&d.champions)||[]); })
+        .catch(function(){ existingEl.textContent='Could not load.'; });
+    }
+    function renderChampions(list){
+      existingEl.innerHTML='';
+      if(!list.length){ existingEl.textContent='No links generated yet.'; return; }
+      list.forEach(function(c){
+        var row=document.createElement('div');
+        row.className='flex items-center justify-between py-2'; row.style.borderTop='1px solid var(--line)';
+        var left=document.createElement('div');
+        var status=c.revoked?'<span style="color:#ef4444">revoked</span>':'<span style="color:var(--green)">active</span>';
+        left.innerHTML='<span style="color:var(--txt)">'+(c.name||c.email)+'</span> · '+c.email+' · '+status;
+        var btns=document.createElement('div'); btns.className='flex gap-2';
+        var reissue=document.createElement('button');
+        reissue.className='text-xs px-2 py-1 rounded-lg border'; reissue.style.cssText='border-color:var(--line);color:var(--txt)';
+        reissue.textContent='Re-issue'; reissue.addEventListener('click', function(){ mint(c.name||c.email, c.email).then(loadChampions); });
+        btns.appendChild(reissue);
+        if(!c.revoked){
+          var rev=document.createElement('button');
+          rev.className='text-xs px-2 py-1 rounded-lg border'; rev.style.cssText='border-color:#6b2436;color:#ffb3c0';
+          rev.textContent='Revoke';
+          rev.addEventListener('click', function(){
+            if(!confirm('Revoke '+(c.name||c.email)+'’s link? Their current link stops working.')) return;
+            var tok=crmToken();
+            fetch(API+'/revoke',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({email:c.email})})
+              .then(function(){ loadChampions(); });
+          });
+          btns.appendChild(rev);
+        }
+        row.appendChild(left); row.appendChild(btns); existingEl.appendChild(row);
+      });
+    }
+    document.getElementById('reload').addEventListener('click', loadChampions);
+
+    // After any mint, refresh the list.
+    var _renderResult=renderResult;
+    renderResult=function(data){ _renderResult(data); loadChampions(); };
+
+    loadChampions();
   })();
   </script>
 </body>

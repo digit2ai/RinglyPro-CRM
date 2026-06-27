@@ -13,6 +13,7 @@
 // =====================================================
 
 const jwt = require('jsonwebtoken');
+const registry = require('../services/championRegistry');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 const CHAMPION_SECRET = process.env.CHAMPION_LINK_SECRET || JWT_SECRET;
@@ -27,14 +28,16 @@ function emailToTenant(email) {
   return (h % 800000) + 1000; // 1000 .. 800999
 }
 
-function signChampion({ name, email }) {
+// Permanent (no expiry) but revocable via the jti tracked in championRegistry.
+function signChampion({ name, email, jti }) {
   return jwt.sign({
     purpose: CHAMPION_PURPOSE,
     email,
     name: name || email,
     businessName: name || email,
-    tenant_id: emailToTenant(email)
-  }, CHAMPION_SECRET, { expiresIn: '365d' });
+    tenant_id: emailToTenant(email),
+    jti
+  }, CHAMPION_SECRET);
 }
 
 function extractTenantId(decoded) {
@@ -70,14 +73,20 @@ function verifyAny(token) {
   return null;
 }
 
-// CRM session OR champion code accepted.
-function requireAuth(req, res, next) {
+// CRM session OR champion code accepted. Champion codes are also checked against
+// the registry (revoked / rotated jti -> reject) so links stay revocable.
+async function requireAuth(req, res, next) {
   const token = getCredential(req);
   if (!token) return res.status(401).json({ error: 'Access token required', reason: 'no_token' });
   const decoded = verifyAny(token);
   if (!decoded) return res.status(401).json({ error: 'Invalid or expired token', reason: 'verify_failed' });
   const tenantId = extractTenantId(decoded);
   if (tenantId == null) return res.status(401).json({ error: 'Token missing tenant context', reason: 'no_tenant_claim' });
+  if (decoded.purpose === CHAMPION_PURPOSE && decoded.jti) {
+    let ok = true;
+    try { ok = await registry.isValid(decoded.email, decoded.jti); } catch (e) { ok = true; /* fail-open */ }
+    if (!ok) return res.status(401).json({ error: 'This champion link was revoked. Ask the owner for a new one.', reason: 'revoked' });
+  }
   req.tenantId = tenantId;
   req.jwt = decoded;
   req.isChampion = decoded.purpose === CHAMPION_PURPOSE;

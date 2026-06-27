@@ -74,7 +74,22 @@
   }
   var championCode = captureChampionCode();
   var sessionToken = detectSessionToken();
-  function getToken() { return sessionToken || championCode || (el.token.value || '').trim(); }
+  // Champion code takes PRECEDENCE over any CRM session on this device, so a
+  // champion link always acts as that champion (never leaks another inbox).
+  function getToken() { return championCode || sessionToken || (el.token.value || '').trim(); }
+
+  function championEmail() {
+    if (!championCode) return null;
+    try {
+      var p = JSON.parse(atob(championCode.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return p.email || null;
+    } catch (e) { return null; }
+  }
+  function clearChampion() {
+    try { localStorage.removeItem('d2ai_champion_code'); } catch (e) {}
+    championCode = null;
+    location.href = BASE;
+  }
 
   function championName() {
     if (!championCode) return null;
@@ -86,11 +101,23 @@
 
   function renderAuth() {
     var d = t();
-    if (sessionToken || championCode) {
+    if (championCode) {
+      // Acting as a specific champion — show name + email so it's unambiguous.
       el.authStatus.style.display = 'block';
       el.authStatus.style.color = 'var(--green)';
-      var who = championCode ? championName() : null;
-      el.authStatus.textContent = who ? ('● ' + who + ' · ' + d.championLabel) : ('● ' + d.signedIn);
+      el.authStatus.innerHTML = '';
+      var line = document.createElement('span');
+      line.textContent = '● ' + (championName() || '') + ' · ' + (championEmail() || '') + ' ';
+      var sw = document.createElement('a');
+      sw.href = '#'; sw.textContent = '(' + d.switchChampion + ')';
+      sw.style.cssText = 'color:var(--mut);text-decoration:underline';
+      sw.addEventListener('click', function (ev) { ev.preventDefault(); clearChampion(); });
+      el.authStatus.appendChild(line); el.authStatus.appendChild(sw);
+      el.tokenWrap.style.display = 'none';
+    } else if (sessionToken) {
+      el.authStatus.style.display = 'block';
+      el.authStatus.style.color = 'var(--green)';
+      el.authStatus.textContent = '● ' + d.signedIn;
       el.tokenWrap.style.display = 'none';
     } else {
       // No session — offer the CRM login and a manual-paste fallback.
@@ -259,6 +286,7 @@
 
   // ---- Champion Inbox: PoC teaser magic links ---------------------------
   var inboxItems = [];
+  var inboxEmail = null;
   var inboxView = false;
 
   function setView(showInbox) {
@@ -280,6 +308,7 @@
       .then(function (r) { return r.ok ? r.json() : { items: [], badge: 0 }; })
       .then(function (data) {
         inboxItems = (data && data.items) || [];
+        inboxEmail = (data && data.email) || null;
         setBadge((data && data.badge) || 0);
         if (inboxView) renderInbox(inboxItems);
       }).catch(function () {});
@@ -293,6 +322,12 @@
     if (!getToken()) {
       var si = document.createElement('div'); si.className = 'text-sm'; si.style.color = 'var(--mut)';
       si.textContent = d.inboxSignIn; el.inboxList.appendChild(si); return;
+    }
+    if (inboxEmail) {
+      var scope = document.createElement('div');
+      scope.className = 'text-xs mono mb-3'; scope.style.color = 'var(--mut)';
+      scope.textContent = d.inboxOf + ' ' + inboxEmail;
+      el.inboxList.appendChild(scope);
     }
     if (!items || !items.length) {
       var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = 'var(--mut)';
