@@ -70,8 +70,15 @@ app.get('/', (req, res) => {
     const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
     return res.redirect(302, MOUNT_BASE + qs);
   }
+  // no-cache: always serve the freshest HTML (revalidates via ETag) so champions
+  // never get stuck on a stale build.
+  res.set('Cache-Control', 'no-cache');
   res.type('html').send(renderIndex(req.query.lang === 'es' ? 'es' : 'en'));
 });
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+// no-cache on JS/HTML/assets too — updates take effect on next load, no hard refresh.
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+}));
 
 module.exports = app;

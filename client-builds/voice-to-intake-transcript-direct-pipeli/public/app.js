@@ -497,7 +497,10 @@
   if (getToken()) {
     pollUnread();
     fetchInbox();
-    setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 15000);
+    setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 8000);
+    // Refresh the badge immediately when the champion returns to the app/tab.
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { pollUnread(); if (inboxView) fetchIntercom(); } });
+    window.addEventListener('focus', pollUnread);
   }
 
   applyLang();
