@@ -119,6 +119,8 @@
         else interim += chunk;
       }
       el.transcript.value = (committed + interim).replace(/\s+/g, ' ').trimStart();
+      // Keep the latest dictated words in view as the user speaks.
+      el.transcript.scrollTop = el.transcript.scrollHeight;
     };
     recognition.onerror = function (e) {
       if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
