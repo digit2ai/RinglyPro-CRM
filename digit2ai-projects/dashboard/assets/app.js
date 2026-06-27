@@ -117,6 +117,7 @@ async function showApp() {
   refreshMessagesBadge();
   refreshEmailBadge();
   refreshNotifBadge();
+  refreshIntercomBadge();
   maybeShowIosInstallHint(); // iOS has no install prompt event — show the hint
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
@@ -125,6 +126,7 @@ async function showApp() {
       refreshMessagesBadge();
       refreshEmailBadge();
       refreshNotifBadge();
+      refreshIntercomBadge();
     }, 60000);
   }
   // PWA shortcut deep-links: /projects/?view=email|messages|calendar|...
@@ -182,6 +184,29 @@ async function refreshEmailBadge() {
       const ef = document.getElementById('kpi-email-followups'); // Home "Emails to Follow Up" card
       if (ef) ef.textContent = d.emails_followup ?? 0;
     }
+  } catch (e) { /* silent */ }
+}
+
+// Unread Intercom badge — champion<->owner chat from the Voice-to-Intake app.
+// Paints both the left-pane Intercom nav badge and the Home quick-action badge.
+async function refreshIntercomBadge() {
+  if (!TOKEN) return;
+  try {
+    const res = await fetch('/voice-to-intake-transcript-direct-pipeli/api/v1/intercom/threads/unread', {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const d = res.ok ? await res.json() : { total_unread: 0 };
+    const unread = (d && d.total_unread) || 0;
+    const navBadge = document.getElementById('intercom-badge'); // left-pane nav badge
+    if (navBadge) {
+      if (unread > 0) {
+        navBadge.textContent = unread > 99 ? '99+' : String(unread);
+        navBadge.classList.remove('hidden');
+      } else {
+        navBadge.classList.add('hidden');
+      }
+    }
+    paintQaBadge('qa-intercom-badge', unread, '#ef4444'); // Home quick-action badge
   } catch (e) { /* silent */ }
 }
 
@@ -473,6 +498,7 @@ async function renderOverview(container) {
       <button class="quick-action-btn" style="position:relative" onclick="openOutstandingTasks()"><span class="qa-label">Outstanding</span>${outstandingBadge}</button>
       <button class="quick-action-btn" style="position:relative" onclick="navigateTo('messages')"><span class="qa-label">Messages</span><span id="qa-msg-badge"></span></button>
       <button class="quick-action-btn" style="position:relative" onclick="navigateTo('email')"><span class="qa-label">Email</span><span id="qa-email-badge"></span></button>
+      <button class="quick-action-btn" style="position:relative" onclick="openCrmEmbed('/voice-to-intake-transcript-direct-pipeli/intercom.html','Intercom')"><span class="qa-label">Intercom</span><span id="qa-intercom-badge"></span></button>
     </div>`;
 
   // Lina voice orb — zero-key Edge neural TTS (reuses /api/tts/edge). Non-conversational
@@ -558,6 +584,9 @@ async function renderOverview(container) {
 
   // Email unread (paints the Email quick-action badge)
   refreshEmailBadge();
+
+  // Intercom unread (paints the Intercom quick-action badge)
+  refreshIntercomBadge();
 
   // Lina voice orb playback engine
   initLinaOrb();
