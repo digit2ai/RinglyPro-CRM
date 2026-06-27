@@ -507,9 +507,27 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register(SW_URL, { scope: BASE }).catch(function () {});
   }
+  // VAPID key is fetched on demand (not just once at load) so a stale/early page
+  // that booted before push was enabled can still subscribe on the next tap.
   var vapidKey = null;
-  fetch(API_INTERCOM + '/vapid-public-key').then(function (r) { return r.json(); })
-    .then(function (d) { if (d && d.enabled && d.key) vapidKey = d.key; }).catch(function () {});
+  function getVapidKey() {
+    if (vapidKey) return Promise.resolve(vapidKey);
+    return fetch(API_INTERCOM + '/vapid-public-key', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.enabled && d.key) vapidKey = d.key; return vapidKey; })
+      .catch(function () { return null; });
+  }
+  getVapidKey(); // prime it
+
+  // iOS only exposes Push/Notification inside an installed (standalone) PWA.
+  function isStandalone() {
+    return (window.navigator.standalone === true) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }
+  function isiOS() { return /iP(hone|ad|od)/.test(navigator.userAgent); }
+  function pushSupported() {
+    return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  }
 
   function urlB64ToUint8Array(b64) {
     var pad = '='.repeat((4 - b64.length % 4) % 4);
@@ -520,25 +538,30 @@
   }
   var pushTried = false;
   // Must be called from a user gesture (iOS requires it for Notification permission).
+  // Fetches the VAPID key on demand, so it no longer silently no-ops when the key
+  // wasn't ready at page load. Returns a promise so the button can show status.
   function ensurePush() {
-    if (pushTried || !vapidKey) return;
     var token = getToken();
-    if (!token) return;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
-    if (Notification.permission === 'denied') return;
+    if (!token) return Promise.resolve();
+    if (!pushSupported()) return Promise.resolve();
+    if (Notification.permission === 'denied') return Promise.resolve();
+    if (pushTried && Notification.permission === 'granted') return Promise.resolve();
     pushTried = true;
-    Notification.requestPermission().then(function (perm) {
-      if (perm !== 'granted') { pushTried = false; return; }
-      navigator.serviceWorker.ready.then(function (reg) {
-        return reg.pushManager.getSubscription().then(function (sub) {
-          return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(vapidKey) });
-        }).then(function (sub) {
-          return fetch(API_INTERCOM + '/subscribe', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({ subscription: sub })
+    return getVapidKey().then(function (key) {
+      if (!key) { pushTried = false; return; }
+      return Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') { pushTried = false; return; }
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.getSubscription().then(function (sub) {
+            return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key) });
+          }).then(function (sub) {
+            return fetch(API_INTERCOM + '/subscribe', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+              body: JSON.stringify({ subscription: sub })
+            });
           });
         });
-      }).catch(function () { pushTried = false; });
+      });
     }).catch(function () { pushTried = false; });
   }
 
@@ -546,8 +569,20 @@
   function updateNotifBtn() {
     var d = t();
     if (!el.enableNotif) return;
-    var supported = ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window);
-    if (!supported || !getToken()) { el.enableNotif.style.display = 'none'; return; }
+    if (!getToken()) { el.enableNotif.style.display = 'none'; return; }
+    // iOS: push only works in the installed PWA. If we're in Safari (not standalone)
+    // and Push isn't exposed, guide the user to open from the Home Screen icon.
+    if (!pushSupported()) {
+      if (isiOS() && !isStandalone()) {
+        el.enableNotif.style.display = 'block';
+        el.enableNotif.textContent = d.notifNeedInstall || 'Open from your Home Screen icon to enable alerts';
+        el.enableNotif.style.opacity = '0.85';
+        el.enableNotif.disabled = true;
+      } else {
+        el.enableNotif.style.display = 'none';
+      }
+      return;
+    }
     var perm = Notification.permission;
     if (perm === 'granted') {
       el.enableNotif.style.display = 'block';
@@ -567,7 +602,13 @@
     }
   }
   if (el.enableNotif) {
-    el.enableNotif.addEventListener('click', function () { ensurePush(); setTimeout(updateNotifBtn, 800); });
+    el.enableNotif.addEventListener('click', function () {
+      if (el.enableNotif.disabled) return;
+      var d = t();
+      el.enableNotif.textContent = d.notifEnabling || 'Turning on alerts…';
+      el.enableNotif.style.opacity = '0.7';
+      Promise.resolve(ensurePush()).then(updateNotifBtn).catch(updateNotifBtn);
+    });
   }
 
   el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); updateNotifBtn(); });
