@@ -34,8 +34,18 @@ router.post('/', async (req, res) => {
       created_at: body.created_at || new Date().toISOString()
     });
 
-    // Forward to Digit2AI intake webhook (mocked when env unset). Never throws.
-    const forward_status = await forwardToIntake(intake);
+    // Submitter identity from the verified JWT (used to create the inbox row;
+    // never logged). CRM login tokens carry email + businessName.
+    const j = req.jwt || {};
+    const submitter = {
+      email: j.email || null,
+      full_name: j.businessName || j.business_name ||
+        [j.firstName, j.lastName].filter(Boolean).join(' ').trim() || j.name || j.email || null,
+      company_name: j.businessName || j.business_name || null
+    };
+
+    // Forward into the Digit2AI Project Request Inbox. Never throws.
+    const forward_status = await forwardToIntake(intake, submitter);
     const updated = await store.updateForwardStatus(intake.id, forward_status);
     if (updated) intake = updated;
 
