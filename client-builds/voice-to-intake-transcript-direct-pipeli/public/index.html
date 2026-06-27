@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="{{HTML_LANG}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{TITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg:#0b0f1a; --bg2:#0d1320; --card:#141b29; --line:#243049; --txt:#e9eef7; --mut:#8a98b0; --acc:#6a4bff; --green:#36d399; }
+    body { background:var(--bg); color:var(--txt); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mic-dot { box-shadow: 0 0 0 0 rgba(106,75,255,.5); }
+    .mic-dot.rec { animation: pulse 1.2s ease-in-out infinite; background:#ef4444; }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)} 70%{box-shadow:0 0 0 18px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} }
+  </style>
+</head>
+<body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
+  <main class="w-full max-w-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <span class="mono text-xs" style="color:var(--mut)">digit2ai · voice-to-intake</span>
+      <button id="langBtn" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">{{LANG_TOGGLE}}</button>
+    </div>
+
+    <h1 id="h1" class="text-3xl font-bold mb-2">{{H1}}</h1>
+    <p id="subtitle" class="mb-6" style="color:var(--mut)">{{SUBTITLE}}</p>
+
+    <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
+      <div class="flex items-center gap-4 mb-4">
+        <button id="micBtn" class="mic-dot w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                style="background:var(--acc);color:#fff" aria-label="record">🎙️</button>
+        <div>
+          <div id="micLabel" class="font-semibold">{{MIC_START}}</div>
+          <div id="status" class="text-sm mono" style="color:var(--mut)">&nbsp;</div>
+        </div>
+      </div>
+
+      <label id="transcriptLabel" class="block text-sm mb-1" style="color:var(--mut)">{{TRANSCRIPT_LABEL}}</label>
+      <textarea id="transcript" rows="6" class="mono w-full rounded-xl p-3 mb-4"
+        style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"
+        placeholder="{{TRANSCRIPT_PLACEHOLDER}}"></textarea>
+
+      <input id="token" type="password" autocomplete="off"
+        class="mono w-full rounded-xl p-2 mb-3 text-sm"
+        style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"
+        placeholder="{{TOKEN_PLACEHOLDER}}" />
+
+      <button id="sendBtn" class="w-full rounded-xl py-3 font-semibold"
+        style="background:var(--green);color:#06281c">{{SEND_LABEL}}</button>
+      <div id="result" class="text-sm mono mt-3" style="min-height:18px"></div>
+    </div>
+
+    <p class="text-xs mono" style="color:var(--mut)">
+      <span id="notSupportedHint" style="display:none">{{NOT_SUPPORTED}}</span>
+    </p>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
