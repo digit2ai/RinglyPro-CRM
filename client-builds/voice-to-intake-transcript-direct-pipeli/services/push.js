@@ -11,9 +11,14 @@
 const webpush = require('web-push');
 const { getSequelize } = require('../models');
 
+// Default keypair lets the Intercom badge work out-of-the-box. Override both on
+// Render (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY) to rotate. The private key alone
+// can't push to anyone — a sender also needs the per-device subscription rows in
+// voice_to_intake_transcript_direct_pipeli_push_subs (server-side only).
 const PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY ||
-  'BN1dQRrS8fGMzUb4UEM_4rCjZ0Kej-dGMBoWYBdPZNCLX0OVEGraG9bxRy1bDChozHPgkWK9DbtX2-eF4NmzLEY';
-const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || null;
+  'BG5W98lLvPQDb1lnxlKHifsOR39ql-mUWz_zXJ3Cv4fY8l20TNhe8bJfbrztcMocgjhMi4uruJG3iOErmwOtKzc';
+const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY ||
+  'Vl8M-MSQYeA5UzOFxSQQLghAFY-pvMQY23nNGvTHcCA';
 const SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@digit2ai.com';
 
 let enabled = false;
