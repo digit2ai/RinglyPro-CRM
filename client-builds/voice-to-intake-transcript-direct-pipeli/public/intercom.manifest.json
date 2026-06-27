@@ -1,0 +1,22 @@
+{
+  "name": "Digit2Ai Intercom",
+  "short_name": "Intercom",
+  "start_url": "/voice-to-intake-transcript-direct-pipeli/intercom.html",
+  "scope": "/voice-to-intake-transcript-direct-pipeli/",
+  "display": "standalone",
+  "background_color": "#0b141a",
+  "theme_color": "#111b21",
+  "icons": [
+    {
+      "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

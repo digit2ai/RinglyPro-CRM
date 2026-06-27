@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Intercom — Digit2Ai</title>
   <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
+  <!-- Installable PWA so the owner gets a Home Screen icon that badges with unread champion messages -->
+  <link rel="manifest" href="intercom.manifest.json" />
+  <meta name="theme-color" content="#111b21" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Intercom" />
+  <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <style>
     :root{
       --bg:#0b141a; --panel:#111b21; --header:#202c33; --line:#222d34;
@@ -93,6 +100,10 @@
           <h1>Intercom</h1>
           <div class="sub" id="sideSub">Champion chats</div>
         </div>
+        <button id="alertsBtn" title="Turn on new-message alerts"
+          style="display:none;align-items:center;gap:6px;background:#2a3942;color:#e9edef;border:0;border-radius:18px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer">
+          <span>🔔</span><span id="alertsLbl">Alerts</span>
+        </button>
       </div>
       <div class="search"><input id="search" placeholder="Search chats" autocomplete="off" /></div>
       <div class="list" id="list"><div class="empty">Loading…</div></div>
@@ -181,6 +192,7 @@
         return ((t.name||'')+' '+(t.email||'')+' '+(t.last_body||'')).toLowerCase().indexOf(filter)!==-1;
       });
       var totalUnread=allThreads.reduce(function(s,t){ return s+(t.unread||0); },0);
+      setAppBadge(totalUnread);
       sideSub.textContent=allThreads.length+' chat'+(allThreads.length===1?'':'s')+(totalUnread?' · '+totalUnread+' unread':'');
       listEl.innerHTML='';
       if(!threads.length){ listEl.innerHTML='<div class="empty">'+(filter?'No chats match your search.':'No champion messages yet.')+'</div>'; return; }
@@ -268,6 +280,64 @@
     reply.addEventListener('keydown', function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); doSend(); } });
     document.getElementById('back').addEventListener('click', closeThread);
     searchEl.addEventListener('input', function(){ filter=(searchEl.value||'').trim().toLowerCase(); renderList(); });
+
+    // ---------- Home-screen icon badge + push (owner alerts) ----------
+    function setAppBadge(n){
+      try{
+        if('setAppBadge' in navigator){
+          if(n>0) navigator.setAppBadge(n); else if(navigator.clearAppBadge) navigator.clearAppBadge();
+        }
+      }catch(e){}
+    }
+    var BASE='/voice-to-intake-transcript-direct-pipeli/';
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register(BASE+'sw.js',{scope:BASE}).catch(function(){}); }
+    function pushSupported(){ return ('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window); }
+    function isiOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent); }
+    function isStandalone(){ return (navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches); }
+
+    var vapidKey=null;
+    function getVapidKey(){
+      if(vapidKey) return Promise.resolve(vapidKey);
+      return fetch(API+'/vapid-public-key',{cache:'no-store'}).then(function(r){return r.json();})
+        .then(function(d){ if(d&&d.enabled&&d.key) vapidKey=d.key; return vapidKey; }).catch(function(){return null;});
+    }
+    function b64ToU8(b64){ var pad='='.repeat((4-b64.length%4)%4); var b=(b64+pad).replace(/-/g,'+').replace(/_/g,'/'); var raw=atob(b); var a=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i); return a; }
+
+    var alertsBtn=document.getElementById('alertsBtn'), alertsLbl=document.getElementById('alertsLbl');
+    function refreshAlertsBtn(){
+      if(!alertsBtn) return;
+      if(!pushSupported()){
+        if(isiOS()&&!isStandalone()){ alertsBtn.style.display='inline-flex'; alertsLbl.textContent='Add to Home Screen'; alertsBtn.disabled=true; alertsBtn.style.opacity='.8'; }
+        else { alertsBtn.style.display='none'; }
+        return;
+      }
+      alertsBtn.style.display='inline-flex'; alertsBtn.disabled=false; alertsBtn.style.opacity='1';
+      var p=Notification.permission;
+      if(p==='granted'){ alertsLbl.textContent='Alerts on'; alertsBtn.disabled=true; alertsBtn.style.opacity='.65'; }
+      else if(p==='denied'){ alertsLbl.textContent='Alerts blocked'; alertsBtn.disabled=true; alertsBtn.style.opacity='.65'; }
+      else { alertsLbl.textContent='Turn on alerts'; }
+    }
+    function enableAlerts(){
+      if(!pushSupported()||Notification.permission==='denied') return;
+      alertsLbl.textContent='Turning on…';
+      getVapidKey().then(function(key){
+        if(!key){ refreshAlertsBtn(); return; }
+        Notification.requestPermission().then(function(perm){
+          if(perm!=='granted'){ refreshAlertsBtn(); return; }
+          navigator.serviceWorker.ready.then(function(reg){
+            return reg.pushManager.getSubscription().then(function(sub){
+              return sub || reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(key)});
+            }).then(function(sub){
+              return fetch(API+'/owner/subscribe',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHdr()),body:JSON.stringify({subscription:sub})});
+            });
+          }).then(refreshAlertsBtn).catch(refreshAlertsBtn);
+        }).catch(refreshAlertsBtn);
+      });
+    }
+    if(alertsBtn){ alertsBtn.addEventListener('click', enableAlerts); }
+    refreshAlertsBtn();
+    getVapidKey();
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden){ loadThreads(); if(current) loadMessages(false); } });
 
     loadThreads();
     setInterval(function(){ loadThreads(); if(current) loadMessages(false); }, 7000);
