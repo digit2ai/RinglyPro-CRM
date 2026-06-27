@@ -45,6 +45,26 @@ router.get('/me/unread', requireAuth, async (req, res) => {
   res.json({ unread });
 });
 
+// Tells the client whether the signed-in user is the owner (CRM session, not a
+// champion code). The owner's installed PWA uses this to badge with the owner
+// unread count and subscribe for owner pushes instead of champion ones.
+router.get('/whoami', requireAuth, (req, res) => {
+  res.json({ isOwner: !req.isChampion, email: champEmail(req) });
+});
+
+// Owner registers a push subscription (their installed PWA) — badged when ANY
+// champion sends a message. requireCrmAuth = genuine CRM session only.
+router.post('/owner/subscribe', requireCrmAuth, async (req, res) => {
+  try {
+    const sub = req.body && req.body.subscription;
+    if (!sub) return res.status(400).json({ error: 'bad request' });
+    const ok = await push.saveOwnerSubscription(sub);
+    res.json({ ok });
+  } catch (err) {
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
 // VAPID public key + whether push is enabled (for the champion to subscribe).
 router.get('/vapid-public-key', (req, res) => {
   res.json({ key: push.publicKey(), enabled: push.isEnabled() });
@@ -71,6 +91,15 @@ router.post('/me', requireAuth, async (req, res) => {
     if (!body) return res.status(422).json({ error: 'message is empty' });
     const row = await intercom.postMessage({ email, name: champName(req), sender: 'champion', body });
     res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    // Push to the owner's installed PWA: badge their icon with total unread.
+    intercom.totalUnreadForOwner().then((unread) => {
+      push.sendToOwner({
+        title: 'Digit2Ai Intercom',
+        body: (champName(req) ? champName(req) + ': ' : '') + body.slice(0, 100),
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
   } catch (err) {
     console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_send_error', error: err.message }));
     res.status(500).json({ error: 'internal error' });

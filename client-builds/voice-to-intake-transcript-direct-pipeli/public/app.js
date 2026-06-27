@@ -475,13 +475,26 @@
     } catch (e) {}
   }
 
+  // Is the signed-in user the owner (Digit2Ai team)? Owners badge with the count
+  // of unread CHAMPION messages; champions badge with unread OWNER messages.
+  var isOwner = false;
+  function refreshWhoami() {
+    var token = getToken();
+    if (!token) return Promise.resolve();
+    return fetch(API_INTERCOM + '/whoami', { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (d) { isOwner = !!(d && d.isOwner); })
+      .catch(function () {});
+  }
+
   function pollUnread() {
     var token = getToken();
     if (!token) return;
-    fetch(API_INTERCOM + '/me/unread', { headers: { Authorization: 'Bearer ' + token } })
-      .then(function (r) { return r.ok ? r.json() : { unread: 0 }; })
+    var url = isOwner ? (API_INTERCOM + '/threads/unread') : (API_INTERCOM + '/me/unread');
+    fetch(url, { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : {}; })
       .then(function (data) {
-        var n = (data && data.unread) || 0;
+        var n = (data && (isOwner ? data.total_unread : data.unread)) || 0;
         if (!inboxView) setBadge(n);
         setAppBadge(n);
       })
@@ -555,7 +568,8 @@
           return reg.pushManager.getSubscription().then(function (sub) {
             return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key) });
           }).then(function (sub) {
-            return fetch(API_INTERCOM + '/subscribe', {
+            var subUrl = isOwner ? (API_INTERCOM + '/owner/subscribe') : (API_INTERCOM + '/subscribe');
+            return fetch(subUrl, {
               method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
               body: JSON.stringify({ subscription: sub })
             });
@@ -620,7 +634,7 @@
 
   // Prime the unread badge on load and poll for new messages + ready teasers.
   if (getToken()) {
-    pollUnread();
+    refreshWhoami().then(pollUnread); // know owner-vs-champion before the first badge
     fetchInbox();
     setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 8000);
     // Refresh the badge immediately when the champion returns to the app/tab.

@@ -48,6 +48,13 @@ function norm(email) { return String(email || '').trim().toLowerCase(); }
 function publicKey() { return PUBLIC_KEY; }
 function isEnabled() { return enabled; }
 
+// The owner (Digit2Ai team) has no per-champion email, so their device
+// subscriptions are stored under this sentinel key in the same table. Lets the
+// owner's installed PWA get badged when ANY champion sends a message.
+const OWNER_KEY = '__owner__';
+function saveOwnerSubscription(sub) { return saveSubscription(OWNER_KEY, sub); }
+function sendToOwner(payload) { return sendToChampion(OWNER_KEY, payload); }
+
 async function saveSubscription(email, sub) {
   if (!sub || !sub.endpoint) return false;
   try {
@@ -97,4 +104,4 @@ async function sendToChampion(email, payload) {
   }
 }
 
-module.exports = { publicKey, isEnabled, saveSubscription, sendToChampion, TABLE };
+module.exports = { publicKey, isEnabled, saveSubscription, sendToChampion, saveOwnerSubscription, sendToOwner, TABLE };
