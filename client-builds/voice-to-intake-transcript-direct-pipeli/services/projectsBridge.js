@@ -137,7 +137,10 @@ async function listChampionInbox(email) {
       teaser_ready: r.teaser_status === 'ready' && !!r.teaser_token,
       teaser_url: r.teaser_token ? teaserUrl(r.teaser_token) : null,
       shared: !!r.champion_shared_at
-    }));
+    // "Your PoC links" lists only actual PoC links — projects whose teaser is
+    // ready. Cleared teasers therefore vanish from the section (clean), and the
+    // intake request itself stays in the Project Request Inbox (separate).
+    })).filter((i) => i.teaser_ready);
   } catch (e) {
     console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'inbox_list_failed', error: e.message }));
     return [];
