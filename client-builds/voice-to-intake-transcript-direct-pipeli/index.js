@@ -42,7 +42,8 @@ function renderIndex(lang) {
     .replace(/{{INBOX_SUB}}/g, d.inboxSub)
     .replace(/{{INTERCOM_PLACEHOLDER}}/g, d.intercomPlaceholder)
     .replace(/{{INTERCOM_SEND}}/g, d.intercomSend)
-    .replace(/{{POC_HEADING}}/g, d.pocHeading);
+    .replace(/{{POC_HEADING}}/g, d.pocHeading)
+    .replace(/{{ENABLE_NOTIF}}/g, d.enableNotif);
 }
 
 // Kick off DB init (non-blocking; falls back to in-memory on failure).

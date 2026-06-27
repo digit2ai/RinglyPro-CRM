@@ -82,10 +82,11 @@
 
       <!-- Intercom chat with the owner -->
       <div id="intercomThread" class="rounded-xl p-3 mb-2 overflow-y-auto" style="background:var(--bg2);border:1px solid var(--line);max-height:280px;min-height:90px"></div>
-      <div class="flex gap-2 mb-5">
+      <div class="flex gap-2 mb-2">
         <input id="intercomInput" class="flex-1 rounded-xl p-2 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="{{INTERCOM_PLACEHOLDER}}" />
         <button id="intercomSend" class="px-4 rounded-xl font-semibold" style="background:var(--acc);color:#fff">{{INTERCOM_SEND}}</button>
       </div>
+      <button id="enableNotif" class="text-sm px-3 py-2 rounded-xl border w-full mb-5" style="display:none;border-color:var(--acc);color:var(--acc)">{{ENABLE_NOTIF}}</button>
 
       <h3 id="pocHeading" class="text-sm font-bold mb-2" style="color:var(--mut)">{{POC_HEADING}}</h3>
       <div id="inboxList"></div>

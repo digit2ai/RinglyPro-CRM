@@ -19,7 +19,7 @@ const PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY ||
   'BG5W98lLvPQDb1lnxlKHifsOR39ql-mUWz_zXJ3Cv4fY8l20TNhe8bJfbrztcMocgjhMi4uruJG3iOErmwOtKzc';
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY ||
   'Vl8M-MSQYeA5UzOFxSQQLghAFY-pvMQY23nNGvTHcCA';
-const SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@digit2ai.com';
+const SUBJECT = process.env.VAPID_SUBJECT || 'mailto:info@digit2ai.com';
 
 let enabled = false;
 if (PRIVATE_KEY) {

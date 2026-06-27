@@ -42,7 +42,8 @@
     intercomThread: document.getElementById('intercomThread'),
     intercomInput: document.getElementById('intercomInput'),
     intercomSend: document.getElementById('intercomSend'),
-    pocHeading: document.getElementById('pocHeading')
+    pocHeading: document.getElementById('pocHeading'),
+    enableNotif: document.getElementById('enableNotif')
   };
   var API_INBOX = BASE + 'api/v1/inbox';
   var API_INTERCOM = BASE + 'api/v1/intercom';
@@ -172,6 +173,7 @@
       if (typeof renderInbox === 'function') renderInbox(inboxItems);
       if (typeof fetchIntercom === 'function') fetchIntercom();
     }
+    if (typeof updateNotifBtn === 'function') updateNotifBtn();
   }
 
   // ---- Web Speech setup -------------------------------------------------
@@ -540,7 +542,35 @@
     }).catch(function () { pushTried = false; });
   }
 
-  el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); });
+  // "Enable notifications" button — reflects permission state; one tap subscribes.
+  function updateNotifBtn() {
+    var d = t();
+    if (!el.enableNotif) return;
+    var supported = ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window);
+    if (!supported || !getToken()) { el.enableNotif.style.display = 'none'; return; }
+    var perm = Notification.permission;
+    if (perm === 'granted') {
+      el.enableNotif.style.display = 'block';
+      el.enableNotif.textContent = d.notifOn;
+      el.enableNotif.style.opacity = '0.6';
+      el.enableNotif.disabled = true;
+    } else if (perm === 'denied') {
+      el.enableNotif.style.display = 'block';
+      el.enableNotif.textContent = d.notifBlocked;
+      el.enableNotif.style.opacity = '0.6';
+      el.enableNotif.disabled = true;
+    } else {
+      el.enableNotif.style.display = 'block';
+      el.enableNotif.textContent = d.enableNotif;
+      el.enableNotif.style.opacity = '1';
+      el.enableNotif.disabled = false;
+    }
+  }
+  if (el.enableNotif) {
+    el.enableNotif.addEventListener('click', function () { ensurePush(); setTimeout(updateNotifBtn, 800); });
+  }
+
+  el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); updateNotifBtn(); });
   el.inboxRefresh.addEventListener('click', function () { fetchInbox(); fetchIntercom(); });
 
   // Opening the Intercom tab loads the chat (marks read) + the PoC links.
