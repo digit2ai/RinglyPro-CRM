@@ -172,6 +172,16 @@
         var status=c.revoked?'<span style="color:#ef4444">revoked</span>':'<span style="color:var(--green)">active</span>';
         left.innerHTML='<span style="color:var(--txt)">'+(c.name||c.email)+'</span> · '+c.email+' · '+status;
         var btns=document.createElement('div'); btns.className='flex gap-2';
+        if(!c.revoked && c.url){
+          var open=document.createElement('a');
+          open.href=c.url; open.target='_blank'; open.rel='noopener';
+          open.className='text-xs px-2 py-1 rounded-lg font-semibold'; open.style.cssText='background:var(--green);color:#06281c';
+          open.textContent='Open'; btns.appendChild(open);
+          var copy=document.createElement('button');
+          copy.className='text-xs px-2 py-1 rounded-lg border'; copy.style.cssText='border-color:var(--line);color:var(--txt)';
+          copy.textContent='Copy'; copy.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy'; },1200);} if(navigator.clipboard) navigator.clipboard.writeText(c.url).then(done,done); else done(); });
+          btns.appendChild(copy);
+        }
         var reissue=document.createElement('button');
         reissue.className='text-xs px-2 py-1 rounded-lg border'; reissue.style.cssText='border-color:var(--line);color:var(--txt)';
         reissue.textContent='Re-issue'; reissue.addEventListener('click', function(){ mint(c.name||c.email, c.email).then(loadChampions); });

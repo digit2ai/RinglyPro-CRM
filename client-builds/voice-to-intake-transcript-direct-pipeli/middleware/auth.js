@@ -29,6 +29,8 @@ function emailToTenant(email) {
 }
 
 // Permanent (no expiry) but revocable via the jti tracked in championRegistry.
+// noTimestamp -> deterministic: re-signing the same (email, jti) yields the same
+// link, so we can surface a champion's existing link without rotating it.
 function signChampion({ name, email, jti }) {
   return jwt.sign({
     purpose: CHAMPION_PURPOSE,
@@ -37,7 +39,7 @@ function signChampion({ name, email, jti }) {
     businessName: name || email,
     tenant_id: emailToTenant(email),
     jti
-  }, CHAMPION_SECRET);
+  }, CHAMPION_SECRET, { noTimestamp: true });
 }
 
 function extractTenantId(decoded) {

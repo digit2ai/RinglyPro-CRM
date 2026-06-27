@@ -94,7 +94,7 @@ async function list() {
     const seq = getSequelize();
     await ensureTable(seq);
     const [rows] = await seq.query(
-      `SELECT email, name, revoked, created_at, updated_at FROM ${TABLE} ORDER BY created_at ASC`
+      `SELECT email, name, revoked, jti, created_at, updated_at FROM ${TABLE} ORDER BY created_at ASC`
     );
     return rows;
   } catch (err) {

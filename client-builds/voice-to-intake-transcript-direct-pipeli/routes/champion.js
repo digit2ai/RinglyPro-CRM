@@ -10,6 +10,9 @@
 const express = require('express');
 const router = express.Router();
 const { requireCrmAuth, signChampion } = require('../middleware/auth');
+function linkFor(c) {
+  return `${base()}${MOUNT}/?c=${encodeURIComponent(signChampion({ name: c.name, email: c.email, jti: c.jti }))}`;
+}
 const registry = require('../services/championRegistry');
 
 const MOUNT = '/voice-to-intake-transcript-direct-pipeli';
@@ -39,7 +42,16 @@ router.post('/', requireCrmAuth, async (req, res) => {
 // List champions (status).
 router.get('/', requireCrmAuth, async (req, res) => {
   try {
-    const champions = await registry.list();
+    const rows = await registry.list();
+    // Surface each champion's existing link (re-signed from the stored jti — same
+    // link, no rotation). jti is never exposed to the client.
+    const champions = rows.map((c) => ({
+      email: c.email,
+      name: c.name,
+      revoked: c.revoked,
+      created_at: c.created_at,
+      url: c.revoked ? null : linkFor(c)
+    }));
     return res.json({ champions });
   } catch (err) {
     return res.status(500).json({ error: 'internal error' });
