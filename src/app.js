@@ -1464,6 +1464,15 @@ app.get('/debug/client-builds', (req, res) => {
   res.json({ mounted: clientBuildMounts, root: clientBuildsRoot });
 });
 
+// Short, shareable alias for the Voice-to-Intake app -> the long client-build path.
+// Preserves the query string so champion magic links (?c=) and ?lang=es still work.
+['/digit2ai-intake', '/digit2ai_intake', '/Digit2ai_Intake', '/Digit2Ai_Intake'].forEach((alias) => {
+  app.all(alias, (req, res) => {
+    const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    res.redirect(302, '/voice-to-intake-transcript-direct-pipeli/' + qs);
+  });
+});
+
 // =====================================================
 // CW CARRIERS USA - Freight Logistics CRM
 // =====================================================
