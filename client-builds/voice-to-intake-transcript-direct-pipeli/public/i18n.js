@@ -25,7 +25,12 @@
       errorGeneric: 'Could not send. Please try again.',
       forwarded: 'forwarded',
       mocked: 'queued (mock forward)',
-      micDenied: 'Microphone permission denied — type your transcript instead.'
+      micDenied: 'Microphone permission denied — type your transcript instead.',
+      signedIn: 'Signed in — submitting as your account.',
+      notSignedIn: 'Not signed in.',
+      signInLink: 'Sign in',
+      useTokenInstead: 'paste a token',
+      tokenHint: 'Paste an access token to submit.'
     },
     es: {
       htmlLang: 'es',
@@ -50,7 +55,12 @@
       errorGeneric: 'No se pudo enviar. Inténtelo de nuevo.',
       forwarded: 'enviado',
       mocked: 'en cola (envío simulado)',
-      micDenied: 'Permiso de micrófono denegado — escriba su transcripción.'
+      micDenied: 'Permiso de micrófono denegado — escriba su transcripción.',
+      signedIn: 'Sesión iniciada — se enviará con su cuenta.',
+      notSignedIn: 'Sesión no iniciada.',
+      signInLink: 'Iniciar sesión',
+      useTokenInstead: 'pegar un token',
+      tokenHint: 'Pegue un token de acceso para enviar.'
     }
   };
   if (typeof module !== 'undefined' && module.exports) {

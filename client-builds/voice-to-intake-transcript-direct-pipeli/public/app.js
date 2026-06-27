@@ -23,11 +23,62 @@
     transcript: document.getElementById('transcript'),
     transcriptLabel: document.getElementById('transcriptLabel'),
     token: document.getElementById('token'),
+    tokenWrap: document.getElementById('tokenWrap'),
+    authStatus: document.getElementById('authStatus'),
     sendBtn: document.getElementById('sendBtn'),
     result: document.getElementById('result'),
     langBtn: document.getElementById('langBtn'),
     notSupportedHint: document.getElementById('notSupportedHint')
   };
+
+  // ---- Auth: auto-detect the CRM session token --------------------------
+  // Same-origin as the CRM, so the JWT the user already logged in with is in
+  // localStorage (canonical key 'token') or a cookie. Manual paste is the
+  // fallback only when no session is found.
+  function readCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function detectSessionToken() {
+    var lsKeys = ['token', 'authToken', 'jwt', 'adminAuthToken'];
+    for (var i = 0; i < lsKeys.length; i++) {
+      try { var v = localStorage.getItem(lsKeys[i]); if (v && v.split('.').length === 3) return v; } catch (e) {}
+    }
+    var ckKeys = ['token', 'jwt', 'auth_token'];
+    for (var j = 0; j < ckKeys.length; j++) {
+      var c = readCookie(ckKeys[j]); if (c && c.split('.').length === 3) return c;
+    }
+    return null;
+  }
+  var sessionToken = detectSessionToken();
+  function getToken() { return sessionToken || (el.token.value || '').trim(); }
+
+  function renderAuth() {
+    var d = t();
+    if (sessionToken) {
+      el.authStatus.style.display = 'block';
+      el.authStatus.style.color = 'var(--green)';
+      el.authStatus.textContent = '● ' + d.signedIn;
+      el.tokenWrap.style.display = 'none';
+    } else {
+      // No session — offer the CRM login and a manual-paste fallback.
+      el.authStatus.style.display = 'block';
+      el.authStatus.style.color = 'var(--mut)';
+      el.authStatus.innerHTML = '';
+      var txt = document.createElement('span');
+      txt.textContent = d.notSignedIn + ' ';
+      var login = document.createElement('a');
+      login.href = '/login'; login.textContent = d.signInLink;
+      login.style.color = 'var(--acc)'; login.style.textDecoration = 'underline';
+      var mid = document.createElement('span'); mid.textContent = ' · ';
+      var paste = document.createElement('a');
+      paste.href = '#'; paste.textContent = d.useTokenInstead;
+      paste.style.color = 'var(--acc)'; paste.style.textDecoration = 'underline';
+      paste.addEventListener('click', function (ev) { ev.preventDefault(); el.tokenWrap.style.display = 'block'; el.token.focus(); });
+      el.authStatus.appendChild(txt); el.authStatus.appendChild(login);
+      el.authStatus.appendChild(mid); el.authStatus.appendChild(paste);
+    }
+  }
 
   function t() { return DICT[lang] || DICT.en || {}; }
 
@@ -45,6 +96,7 @@
     el.micLabel.textContent = recognizing ? d.micStop : d.micStart;
     el.notSupportedHint.textContent = d.notSupported;
     if (recognition) recognition.lang = d.speechLang;
+    if (typeof renderAuth === 'function') renderAuth();
   }
 
   // ---- Web Speech setup -------------------------------------------------
@@ -117,10 +169,16 @@
   el.sendBtn.addEventListener('click', function () {
     var d = t();
     var transcript = (el.transcript.value || '').trim();
-    var token = (el.token.value || '').trim();
+    var token = getToken();
     el.result.style.color = '#ef4444';
     if (!transcript) { el.result.textContent = d.emptyTranscript; return; }
-    if (!token) { el.result.textContent = d.needToken; return; }
+    if (!token) {
+      // No session and nothing pasted — reveal the fallback field and prompt.
+      el.tokenWrap.style.display = 'block';
+      el.result.textContent = d.tokenHint;
+      el.token.focus();
+      return;
+    }
 
     if (recognizing) stopRec();
     el.sendBtn.disabled = true;

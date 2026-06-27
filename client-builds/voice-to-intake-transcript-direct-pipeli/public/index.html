@@ -41,10 +41,14 @@
         style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"
         placeholder="{{TRANSCRIPT_PLACEHOLDER}}"></textarea>
 
-      <input id="token" type="password" autocomplete="off"
-        class="mono w-full rounded-xl p-2 mb-3 text-sm"
-        style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"
-        placeholder="{{TOKEN_PLACEHOLDER}}" />
+      <!-- Auth: auto-detected CRM session token; manual paste is the fallback only. -->
+      <div id="authStatus" class="text-sm mono mb-3" style="display:none"></div>
+      <div id="tokenWrap" style="display:none">
+        <input id="token" type="password" autocomplete="off"
+          class="mono w-full rounded-xl p-2 mb-3 text-sm"
+          style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)"
+          placeholder="{{TOKEN_PLACEHOLDER}}" />
+      </div>
 
       <button id="sendBtn" class="w-full rounded-xl py-3 font-semibold"
         style="background:var(--green);color:#06281c">{{SEND_LABEL}}</button>
