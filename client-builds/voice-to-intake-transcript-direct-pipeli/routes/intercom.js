@@ -17,6 +17,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth, requireCrmAuth } = require('../middleware/auth');
 const intercom = require('../services/intercom');
+const push = require('../services/push');
 
 function champEmail(req) { return (req.jwt && req.jwt.email) || null; }
 function champName(req) {
@@ -42,6 +43,24 @@ router.get('/me/unread', requireAuth, async (req, res) => {
   const email = champEmail(req);
   const unread = email ? await intercom.unreadForChampion(email) : 0;
   res.json({ unread });
+});
+
+// VAPID public key + whether push is enabled (for the champion to subscribe).
+router.get('/vapid-public-key', (req, res) => {
+  res.json({ key: push.publicKey(), enabled: push.isEnabled() });
+});
+
+// Champion registers a push subscription (their installed PWA).
+router.post('/subscribe', requireAuth, async (req, res) => {
+  try {
+    const email = champEmail(req);
+    const sub = req.body && req.body.subscription;
+    if (!email || !sub) return res.status(400).json({ error: 'bad request' });
+    const ok = await push.saveSubscription(email, sub);
+    res.json({ ok });
+  } catch (err) {
+    res.status(500).json({ error: 'internal error' });
+  }
 });
 
 router.post('/me', requireAuth, async (req, res) => {
@@ -93,6 +112,15 @@ router.post('/threads/:email', requireCrmAuth, async (req, res) => {
     if (!body) return res.status(422).json({ error: 'message is empty' });
     const row = await intercom.postMessage({ email, name: null, sender: 'owner', body });
     res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    // Push to the champion's installed PWA: badge their icon + show a notification.
+    intercom.unreadForChampion(email).then((unread) => {
+      push.sendToChampion(email, {
+        title: 'Digit2Ai',
+        body: body.slice(0, 120),
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
   } catch (err) {
     res.status(500).json({ error: 'internal error' });
   }

@@ -459,8 +459,18 @@
     if (!token) { renderThread(null); return; }
     fetch(API_INTERCOM + '/me', { headers: { Authorization: 'Bearer ' + token } })
       .then(function (r) { return r.ok ? r.json() : { messages: [] }; })
-      .then(function (data) { renderThread((data && data.messages) || []); setBadge(0); })
+      .then(function (data) { renderThread((data && data.messages) || []); setBadge(0); setAppBadge(0); })
       .catch(function () {});
+  }
+
+  // Home-screen icon badge (installed PWA, iOS 16.4+ / desktop). No-op elsewhere.
+  function setAppBadge(n) {
+    try {
+      if (navigator.setAppBadge) {
+        if (n > 0) navigator.setAppBadge(n);
+        else if (navigator.clearAppBadge) navigator.clearAppBadge();
+      }
+    } catch (e) {}
   }
 
   function pollUnread() {
@@ -468,7 +478,11 @@
     if (!token) return;
     fetch(API_INTERCOM + '/me/unread', { headers: { Authorization: 'Bearer ' + token } })
       .then(function (r) { return r.ok ? r.json() : { unread: 0 }; })
-      .then(function (data) { if (!inboxView) setBadge((data && data.unread) || 0); })
+      .then(function (data) {
+        var n = (data && data.unread) || 0;
+        if (!inboxView) setBadge(n);
+        setAppBadge(n);
+      })
       .catch(function () {});
   }
 
@@ -483,10 +497,50 @@
     }).then(function () { fetchIntercom(); }).catch(function () {});
   }
 
-  el.intercomSend.addEventListener('click', sendIntercom);
-  el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendIntercom(); } });
+  el.intercomSend.addEventListener('click', function () { ensurePush(); sendIntercom(); });
+  el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
 
-  el.inboxBtn.addEventListener('click', function () { setView(!inboxView); });
+  // ---- PWA push: badge the installed home-screen icon for new messages ----
+  var SW_URL = BASE + 'sw.js';
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(SW_URL, { scope: BASE }).catch(function () {});
+  }
+  var vapidKey = null;
+  fetch(API_INTERCOM + '/vapid-public-key').then(function (r) { return r.json(); })
+    .then(function (d) { if (d && d.enabled && d.key) vapidKey = d.key; }).catch(function () {});
+
+  function urlB64ToUint8Array(b64) {
+    var pad = '='.repeat((4 - b64.length % 4) % 4);
+    var base = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base); var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  var pushTried = false;
+  // Must be called from a user gesture (iOS requires it for Notification permission).
+  function ensurePush() {
+    if (pushTried || !vapidKey) return;
+    var token = getToken();
+    if (!token) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+    if (Notification.permission === 'denied') return;
+    pushTried = true;
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== 'granted') { pushTried = false; return; }
+      navigator.serviceWorker.ready.then(function (reg) {
+        return reg.pushManager.getSubscription().then(function (sub) {
+          return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(vapidKey) });
+        }).then(function (sub) {
+          return fetch(API_INTERCOM + '/subscribe', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ subscription: sub })
+          });
+        });
+      }).catch(function () { pushTried = false; });
+    }).catch(function () { pushTried = false; });
+  }
+
+  el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); });
   el.inboxRefresh.addEventListener('click', function () { fetchInbox(); fetchIntercom(); });
 
   // Opening the Intercom tab loads the chat (marks read) + the PoC links.
