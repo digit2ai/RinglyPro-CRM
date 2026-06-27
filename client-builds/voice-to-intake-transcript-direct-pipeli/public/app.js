@@ -634,7 +634,12 @@
 
   // Prime the unread badge on load and poll for new messages + ready teasers.
   if (getToken()) {
-    refreshWhoami().then(pollUnread); // know owner-vs-champion before the first badge
+    refreshWhoami().then(function () {
+      // Owners belong in the WhatsApp-style Intercom console (champion list +
+      // chat + icon badge). Same PWA/origin, so the CRM session carries over.
+      if (isOwner && !/[?&]stay=1/.test(location.search)) { location.replace(BASE + 'intercom.html'); return; }
+      pollUnread();
+    });
     fetchInbox();
     setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 8000);
     // Refresh the badge immediately when the champion returns to the app/tab.
