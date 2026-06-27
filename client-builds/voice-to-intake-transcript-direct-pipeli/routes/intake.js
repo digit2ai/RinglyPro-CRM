@@ -8,6 +8,7 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const store = require('../models/intake');
 const { forwardToIntake } = require('../services/digit2ai');
+const projectsBridge = require('../services/projectsBridge');
 
 // All intake endpoints require a valid JWT with tenant context.
 router.use(requireAuth);
@@ -45,9 +46,15 @@ router.post('/', async (req, res) => {
     };
 
     // Forward into the Digit2AI Project Request Inbox. Never throws.
-    const forward_status = await forwardToIntake(intake, submitter);
+    const { forward_status, project_id } = await forwardToIntake(intake, submitter);
     const updated = await store.updateForwardStatus(intake.id, forward_status);
     if (updated) intake = updated;
+
+    // Auto-generate the PoC Voice Teaser magic link for this request (background;
+    // the champion picks it up in their Inbox once "ready"). Never blocks the 201.
+    if (project_id) {
+      projectsBridge.generateTeaserAsync(project_id, intake.lang);
+    }
 
     return res.status(201).json({
       id: intake.id,

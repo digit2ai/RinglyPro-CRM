@@ -36,7 +36,10 @@ function renderIndex(lang) {
     .replace(/{{TOKEN_PLACEHOLDER}}/g, d.tokenPlaceholder)
     .replace(/{{SEND_LABEL}}/g, d.sendLabel)
     .replace(/{{LANG_TOGGLE}}/g, d.langToggle)
-    .replace(/{{NOT_SUPPORTED}}/g, d.notSupported);
+    .replace(/{{NOT_SUPPORTED}}/g, d.notSupported)
+    .replace(/{{INBOX_TAB}}/g, d.inboxTab)
+    .replace(/{{INBOX_TITLE}}/g, d.inboxTitle)
+    .replace(/{{INBOX_SUB}}/g, d.inboxSub);
 }
 
 // Kick off DB init (non-blocking; falls back to in-memory on failure).
@@ -49,6 +52,7 @@ store.init().then((r) => {
 // Routes
 app.use('/health', require('./routes/health'));
 app.use('/api/v1/intake', require('./routes/intake'));
+app.use('/api/v1/inbox', require('./routes/inbox'));
 
 // Single-screen UI — render '/' with server-side language injection BEFORE the
 // static middleware (so the raw HTML reflects ?lang=es), then serve app.js /

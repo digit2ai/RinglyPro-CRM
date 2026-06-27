@@ -30,7 +30,22 @@
       notSignedIn: 'Not signed in.',
       signInLink: 'Sign in',
       useTokenInstead: 'paste a token',
-      tokenHint: 'Paste an access token to submit.'
+      tokenHint: 'Paste an access token to submit.',
+      inboxTab: 'Inbox',
+      inboxTitle: 'Your PoC links',
+      inboxSub: 'When AI Triage finishes, your proof-of-concept link appears here. Forward it to your client via WhatsApp or SMS.',
+      inboxEmpty: 'No requests yet. Submit one above to get your first PoC link.',
+      inboxSignIn: 'Sign in to see your PoC links.',
+      pocPreparing: 'PoC preparing…',
+      pocReady: 'PoC ready',
+      shareWhatsapp: 'WhatsApp',
+      shareSms: 'SMS',
+      copyLink: 'Copy link',
+      copied: 'Copied',
+      openPoc: 'Open',
+      sharedTag: 'Shared',
+      fitLabel: 'Fit',
+      shareMsg: 'Hi! Here is an interactive AI proposal and live proof-of-concept demo built for your project: '
     },
     es: {
       htmlLang: 'es',
@@ -60,7 +75,22 @@
       notSignedIn: 'Sesión no iniciada.',
       signInLink: 'Iniciar sesión',
       useTokenInstead: 'pegar un token',
-      tokenHint: 'Pegue un token de acceso para enviar.'
+      tokenHint: 'Pegue un token de acceso para enviar.',
+      inboxTab: 'Bandeja',
+      inboxTitle: 'Tus enlaces PoC',
+      inboxSub: 'Cuando el Triage de IA termine, tu enlace de prueba de concepto aparece aquí. Reenvíalo a tu cliente por WhatsApp o SMS.',
+      inboxEmpty: 'Aún no hay solicitudes. Envía una arriba para obtener tu primer enlace PoC.',
+      inboxSignIn: 'Inicia sesión para ver tus enlaces PoC.',
+      pocPreparing: 'PoC en preparación…',
+      pocReady: 'PoC listo',
+      shareWhatsapp: 'WhatsApp',
+      shareSms: 'SMS',
+      copyLink: 'Copiar enlace',
+      copied: 'Copiado',
+      openPoc: 'Abrir',
+      sharedTag: 'Compartido',
+      fitLabel: 'Ajuste',
+      shareMsg: '¡Hola! Aquí tienes una propuesta de IA interactiva y una demostración de prueba de concepto en vivo creada para tu proyecto: '
     }
   };
   if (typeof module !== 'undefined' && module.exports) {

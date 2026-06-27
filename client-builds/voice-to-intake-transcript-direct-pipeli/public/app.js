@@ -29,8 +29,18 @@
     sendBtn: document.getElementById('sendBtn'),
     result: document.getElementById('result'),
     langBtn: document.getElementById('langBtn'),
-    notSupportedHint: document.getElementById('notSupportedHint')
+    notSupportedHint: document.getElementById('notSupportedHint'),
+    inboxBtn: document.getElementById('inboxBtn'),
+    inboxBadge: document.getElementById('inboxBadge'),
+    inboxTabLabel: document.getElementById('inboxTabLabel'),
+    inboxView: document.getElementById('inboxView'),
+    submitView: document.getElementById('submitView'),
+    inboxList: document.getElementById('inboxList'),
+    inboxHeading: document.getElementById('inboxHeading'),
+    inboxSub: document.getElementById('inboxSub'),
+    inboxRefresh: document.getElementById('inboxRefresh')
   };
+  var API_INBOX = BASE + 'api/v1/inbox';
 
   // ---- Auth: auto-detect the CRM session token --------------------------
   // Same-origin as the CRM, so the JWT the user already logged in with is in
@@ -98,6 +108,11 @@
     el.notSupportedHint.textContent = d.notSupported;
     if (recognition) recognition.lang = d.speechLang;
     if (typeof renderAuth === 'function') renderAuth();
+    // Inbox static labels + re-render (localized share buttons).
+    if (el.inboxTabLabel) el.inboxTabLabel.textContent = d.inboxTab;
+    if (el.inboxHeading) el.inboxHeading.textContent = d.inboxTitle;
+    if (el.inboxSub) el.inboxSub.textContent = d.inboxSub;
+    if (typeof renderInbox === 'function' && el.inboxView && el.inboxView.style.display === 'block') renderInbox(inboxItems);
   }
 
   // ---- Web Speech setup -------------------------------------------------
@@ -202,6 +217,13 @@
         el.result.textContent = d.sent + res.body.id + ' · ' + fs;
         el.transcript.value = '';
         committed = '';
+        // New request submitted — refresh the inbox now and again as the PoC
+        // teaser finishes generating in the background.
+        if (typeof fetchInbox === 'function') {
+          fetchInbox();
+          setTimeout(fetchInbox, 8000);
+          setTimeout(fetchInbox, 20000);
+        }
       } else if (res.status === 401) {
         el.result.textContent = d.errorAuth;
       } else {
@@ -213,6 +235,139 @@
       el.result.textContent = d.errorGeneric;
     });
   });
+
+  // ---- Champion Inbox: PoC teaser magic links ---------------------------
+  var inboxItems = [];
+  var inboxView = false;
+
+  function setView(showInbox) {
+    inboxView = showInbox;
+    el.inboxView.style.display = showInbox ? 'block' : 'none';
+    el.submitView.style.display = showInbox ? 'none' : 'block';
+    if (showInbox) fetchInbox();
+  }
+
+  function setBadge(n) {
+    if (n > 0) { el.inboxBadge.textContent = n > 99 ? '99+' : String(n); el.inboxBadge.style.display = 'flex'; }
+    else { el.inboxBadge.style.display = 'none'; }
+  }
+
+  function fetchInbox() {
+    var token = getToken();
+    if (!token) { renderInbox(null); return; }
+    fetch(API_INBOX, { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : { items: [], badge: 0 }; })
+      .then(function (data) {
+        inboxItems = (data && data.items) || [];
+        setBadge((data && data.badge) || 0);
+        if (inboxView) renderInbox(inboxItems);
+      }).catch(function () {});
+  }
+
+  function fmtDate(s) { try { return new Date(s).toLocaleDateString(); } catch (e) { return ''; } }
+
+  function renderInbox(items) {
+    var d = t();
+    el.inboxList.innerHTML = '';
+    if (!getToken()) {
+      var si = document.createElement('div'); si.className = 'text-sm'; si.style.color = 'var(--mut)';
+      si.textContent = d.inboxSignIn; el.inboxList.appendChild(si); return;
+    }
+    if (!items || !items.length) {
+      var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = 'var(--mut)';
+      em.textContent = d.inboxEmpty; el.inboxList.appendChild(em); return;
+    }
+    items.forEach(function (it) {
+      var card = document.createElement('div');
+      card.className = 'rounded-xl p-3 mb-3';
+      card.style.cssText = 'background:var(--bg2);border:1px solid var(--line)';
+
+      var title = document.createElement('div');
+      title.className = 'font-semibold mb-1'; title.textContent = it.title || '—';
+      card.appendChild(title);
+
+      var meta = document.createElement('div');
+      meta.className = 'text-xs mono mb-2'; meta.style.color = 'var(--mut)';
+      var bits = [fmtDate(it.created_at)];
+      if (it.fit_score != null) bits.push(d.fitLabel + ' ' + it.fit_score + '/10');
+      meta.textContent = bits.filter(Boolean).join(' · ');
+      card.appendChild(meta);
+
+      if (!it.teaser_ready) {
+        var prep = document.createElement('div');
+        prep.className = 'text-sm'; prep.style.color = 'var(--mut)';
+        prep.textContent = '⏳ ' + d.pocPreparing;
+        card.appendChild(prep);
+      } else {
+        var ready = document.createElement('div');
+        ready.className = 'text-sm mb-2'; ready.style.color = 'var(--green)';
+        ready.textContent = '● ' + d.pocReady + (it.shared ? ' · ' + d.sharedTag : '');
+        card.appendChild(ready);
+
+        var msg = d.shareMsg + it.teaser_url;
+        var row = document.createElement('div');
+        row.className = 'flex flex-wrap gap-2';
+
+        var wa = document.createElement('a');
+        wa.href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+        wa.target = '_blank'; wa.rel = 'noopener';
+        wa.className = 'text-sm px-3 py-1 rounded-lg font-semibold';
+        wa.style.cssText = 'background:#25D366;color:#06281c';
+        wa.textContent = d.shareWhatsapp;
+        wa.addEventListener('click', function () { markShared(it); });
+        row.appendChild(wa);
+
+        var sms = document.createElement('a');
+        sms.href = 'sms:?&body=' + encodeURIComponent(msg);
+        sms.className = 'text-sm px-3 py-1 rounded-lg font-semibold';
+        sms.style.cssText = 'background:var(--acc);color:#fff';
+        sms.textContent = d.shareSms;
+        sms.addEventListener('click', function () { markShared(it); });
+        row.appendChild(sms);
+
+        var open = document.createElement('a');
+        open.href = it.teaser_url; open.target = '_blank'; open.rel = 'noopener';
+        open.className = 'text-sm px-3 py-1 rounded-lg border';
+        open.style.cssText = 'border-color:var(--line);color:var(--txt)';
+        open.textContent = d.openPoc;
+        row.appendChild(open);
+
+        var copy = document.createElement('button');
+        copy.className = 'text-sm px-3 py-1 rounded-lg border';
+        copy.style.cssText = 'border-color:var(--line);color:var(--txt)';
+        copy.textContent = d.copyLink;
+        copy.addEventListener('click', function () {
+          var done = function () { copy.textContent = d.copied; setTimeout(function () { copy.textContent = d.copyLink; }, 1500); markShared(it); };
+          if (navigator.clipboard) navigator.clipboard.writeText(it.teaser_url).then(done, done); else done();
+        });
+        row.appendChild(copy);
+
+        card.appendChild(row);
+      }
+      el.inboxList.appendChild(card);
+    });
+  }
+
+  function markShared(it) {
+    if (it.shared) return;
+    it.shared = true;
+    var ready = inboxItems.filter(function (x) { return x.teaser_ready && !x.shared; }).length;
+    setBadge(ready);
+    var token = getToken();
+    if (!token) return;
+    fetch(API_INBOX + '/' + it.project_id + '/shared', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + token }
+    }).catch(function () {});
+  }
+
+  el.inboxBtn.addEventListener('click', function () { setView(!inboxView); });
+  el.inboxRefresh.addEventListener('click', fetchInbox);
+
+  // Prime the badge on load and poll so a teaser that finishes generating shows up.
+  if (getToken()) {
+    fetchInbox();
+    setInterval(fetchInbox, 20000);
+  }
 
   applyLang();
 })();

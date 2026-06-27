@@ -46,7 +46,7 @@ async function forwardToIntake(intake, submitter) {
   const TEST_TENANT_MIN = 990000;
   if (intake && intake.tenant_id >= TEST_TENANT_MIN) {
     logSafe(Object.assign({ forward_status: 'mocked', target: 'test-skip' }, logBase));
-    return 'mocked';
+    return { forward_status: 'mocked', project_id: null };
   }
 
   const extUrl = process.env.DIGIT2AI_INTAKE_URL;
@@ -70,7 +70,7 @@ async function forwardToIntake(intake, submitter) {
       });
       const status = resp.ok ? 'forwarded' : 'failed';
       logSafe(Object.assign({ forward_status: status, target: 'external', http: resp.status }, logBase));
-      return status;
+      return { forward_status: status, project_id: null };
     }
 
     // Default: create a real Project Request Inbox row.
@@ -98,10 +98,10 @@ async function forwardToIntake(intake, submitter) {
     try { const j = await resp.json(); projectId = j && j.project_id; } catch (e) {}
     const status = resp.ok ? 'forwarded' : 'failed';
     logSafe(Object.assign({ forward_status: status, target: 'inbox', http: resp.status, project_id: projectId }, logBase));
-    return status;
+    return { forward_status: status, project_id: projectId };
   } catch (err) {
     logSafe(Object.assign({ forward_status: 'failed', error: err.message }, logBase));
-    return 'failed';
+    return { forward_status: 'failed', project_id: null };
   }
 }
 

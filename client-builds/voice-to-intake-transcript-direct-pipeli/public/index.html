@@ -22,7 +22,11 @@
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
   <main class="w-full max-w-2xl">
-    <div class="flex justify-end mb-6">
+    <div class="flex justify-between items-center mb-6">
+      <button id="inboxBtn" class="relative text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">
+        <span id="inboxTabLabel">{{INBOX_TAB}}</span>
+        <span id="inboxBadge" class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center" style="background:#ef4444;color:#fff;display:none">0</span>
+      </button>
       <button id="langBtn" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">{{LANG_TOGGLE}}</button>
     </div>
 
@@ -32,7 +36,7 @@
     <h1 id="h1" class="text-3xl font-bold mb-2 text-center">{{H1}}</h1>
     <p id="subtitle" class="mb-6 text-center" style="color:var(--mut)">{{SUBTITLE}}</p>
 
-    <div class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
+    <div id="submitView" class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
       <div class="flex items-center gap-4 mb-4">
         <button id="micBtn" class="mic-dot w-16 h-16 rounded-full flex items-center justify-center"
                 style="background:var(--acc);color:#fff" aria-label="record">
@@ -64,6 +68,16 @@
       <button id="sendBtn" class="w-full rounded-xl py-3 font-semibold"
         style="background:var(--green);color:#06281c">{{SEND_LABEL}}</button>
       <div id="result" class="text-sm mono mt-3" style="min-height:18px"></div>
+    </div>
+
+    <!-- Champion Inbox: PoC teaser magic links ready to forward to the client -->
+    <div id="inboxView" class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line);display:none">
+      <div class="flex items-center justify-between mb-1">
+        <h2 id="inboxHeading" class="text-xl font-bold">{{INBOX_TITLE}}</h2>
+        <button id="inboxRefresh" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--mut)">↻</button>
+      </div>
+      <p id="inboxSub" class="text-sm mb-4" style="color:var(--mut)">{{INBOX_SUB}}</p>
+      <div id="inboxList"></div>
     </div>
 
     <p class="text-xs mono" style="color:var(--mut)">
