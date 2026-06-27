@@ -5,8 +5,8 @@
     en: {
       htmlLang: 'en',
       speechLang: 'en-US',
-      title: 'Voice to Intake',
-      h1: 'Voice to Intake',
+      title: 'Digit2Ai Voice to Intake',
+      h1: 'Digit2Ai Voice to Intake',
       subtitle: 'Speak your request. We transcribe it and send it straight to intake.',
       micStart: 'Start recording',
       micStop: 'Stop recording',
@@ -35,8 +35,8 @@
     es: {
       htmlLang: 'es',
       speechLang: 'es-US',
-      title: 'Voz a Recepción',
-      h1: 'Voz a Recepción',
+      title: 'Digit2Ai Voz a Recepción',
+      h1: 'Digit2Ai Voz a Recepción',
       subtitle: 'Diga su solicitud. La transcribimos y la enviamos directo a recepción.',
       micStart: 'Comenzar grabación',
       micStop: 'Detener grabación',
