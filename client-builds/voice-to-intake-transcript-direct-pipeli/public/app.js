@@ -377,9 +377,11 @@
     inboxView = showInbox;
     el.inboxView.style.display = showInbox ? 'block' : 'none';
     el.submitView.style.display = showInbox ? 'none' : 'block';
-    // Intercom = full WhatsApp-style window: hide the logo + title + subtitle
-    // header so the chat is the whole view. The intake (Send a request) view
-    // keeps them.
+    // Intercom = full WhatsApp-style window: the chat takes over the whole
+    // viewport (fixed overlay, thread flex-grows to fill the height) and the
+    // page chrome is hidden. The intake (Send a request) view keeps everything.
+    document.body.classList.toggle('inbox-open', !!showInbox);
+    el.inboxView.classList.toggle('wa-full', !!showInbox);
     var brandLogo = document.getElementById('brandLogo');
     if (brandLogo) brandLogo.style.display = showInbox ? 'none' : 'flex';
     if (el.h1) el.h1.style.display = showInbox ? 'none' : 'block';
@@ -748,6 +750,9 @@
 
   el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); updateNotifBtn(); });
   el.inboxRefresh.addEventListener('click', function () { fetchInbox(); fetchIntercom(); });
+  // Back arrow inside the full-window chat returns to the intake view.
+  var inboxBack = document.getElementById('inboxBack');
+  if (inboxBack) inboxBack.addEventListener('click', function () { setView(false); updateNotifBtn(); });
 
   // Opening the Intercom tab loads the chat (marks read) + the PoC links.
   var _setView = setView;

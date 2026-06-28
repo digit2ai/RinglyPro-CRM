@@ -24,11 +24,28 @@
     .wa-thread{background-color:#efeae2;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='%23d8d0c4' fill-opacity='0.4'%3E%3Ccircle cx='9' cy='9' r='1.4'/%3E%3Ccircle cx='31' cy='24' r='1.4'/%3E%3Ccircle cx='18' cy='36' r='1.4'/%3E%3C/g%3E%3C/svg%3E")}
     .wa-thread::-webkit-scrollbar{width:6px}
     .wa-thread::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+    /* Full-window WhatsApp mode: when the Intercom is open it takes over the entire viewport */
+    body.inbox-open{overflow:hidden}
+    body.inbox-open .top-bar,
+    body.inbox-open #champBanner,
+    body.inbox-open #notSupportedHint{display:none !important}
+    #inboxView.wa-full{
+      position:fixed;inset:0;z-index:60;
+      margin:0;border:0;border-radius:0;max-width:none;box-shadow:none;
+      display:flex;flex-direction:column;
+      height:100vh;height:100dvh;
+    }
+    #inboxView.wa-full .wa-head{flex:0 0 auto}
+    #inboxView.wa-full #intercomThread{flex:1 1 auto;max-height:none !important;min-height:0 !important}
+    #inboxView.wa-full .wa-composer{flex:0 0 auto}
+    #inboxView.wa-full #enableNotif{flex:0 0 auto}
+    #inboxBack{display:none;background:none;border:0;color:#fff;font-size:26px;line-height:1;padding:0 6px 0 0;cursor:pointer;flex:0 0 auto}
+    #inboxView.wa-full #inboxBack{display:flex;align-items:center}
   </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
   <main class="w-full max-w-2xl">
-    <div class="flex justify-between items-center mb-6">
+    <div class="top-bar flex justify-between items-center mb-6">
       <button id="inboxBtn" class="relative text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">
         <span id="inboxTabLabel">{{INBOX_TAB}}</span>
         <span id="inboxBadge" class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center" style="background:#ef4444;color:#fff;display:none">0</span>
@@ -102,17 +119,20 @@
     <!-- Champion Intercom — WhatsApp-style chat, visually distinct from the dark intake view -->
     <div id="inboxView" class="rounded-2xl mb-4 overflow-hidden" style="display:none;border:1px solid #1f5c4a;box-shadow:0 10px 30px rgba(0,0,0,.35)">
       <!-- header (WhatsApp green) -->
-      <div class="flex items-center justify-between" style="background:#008069;padding:11px 16px">
-        <div style="min-width:0">
-          <h2 id="inboxHeading" class="text-lg font-bold" style="color:#fff;line-height:1.2">{{INBOX_TITLE}}</h2>
-          <p id="inboxSub" class="text-xs" style="color:rgba(255,255,255,.85)">{{INBOX_SUB}}</p>
+      <div class="wa-head flex items-center justify-between" style="background:#008069;padding:11px 16px">
+        <div class="flex items-center" style="min-width:0;gap:6px">
+          <button id="inboxBack" title="←" aria-label="Back">←</button>
+          <div style="min-width:0">
+            <h2 id="inboxHeading" class="text-lg font-bold" style="color:#fff;line-height:1.2">{{INBOX_TITLE}}</h2>
+            <p id="inboxSub" class="text-xs" style="color:rgba(255,255,255,.85)">{{INBOX_SUB}}</p>
+          </div>
         </div>
         <button id="inboxRefresh" class="rounded-lg" title="↻" style="color:#fff;background:rgba(255,255,255,.18);width:34px;height:34px;flex:0 0 34px">↻</button>
       </div>
       <!-- thread (WhatsApp beige doodle background) -->
       <div id="intercomThread" class="overflow-y-auto wa-thread" style="max-height:300px;min-height:130px;padding:12px"></div>
       <!-- composer (WhatsApp light bar) -->
-      <div class="flex gap-2 items-center" style="background:#f0f2f5;padding:9px 12px">
+      <div class="wa-composer flex gap-2 items-center" style="background:#f0f2f5;padding:9px 12px">
         <input id="intercomInput" class="flex-1 text-sm" style="background:#fff;border:1px solid #d9dde1;color:#111b21;border-radius:21px;padding:10px 15px;outline:none" placeholder="{{INTERCOM_PLACEHOLDER}}" />
         <button id="intercomSend" title="{{INTERCOM_SEND}}" aria-label="{{INTERCOM_SEND}}" style="background:#00a884;color:#fff;border:0;border-radius:50%;width:44px;height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center">
           <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
