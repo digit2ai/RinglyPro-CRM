@@ -375,7 +375,9 @@
 
   function setView(showInbox) {
     inboxView = showInbox;
-    el.inboxView.style.display = showInbox ? 'block' : 'none';
+    // 'flex' (not 'block') so the full-window WhatsApp column layout applies and
+    // the composer stays pinned at the bottom of the viewport (thread flex-grows).
+    el.inboxView.style.display = showInbox ? 'flex' : 'none';
     el.submitView.style.display = showInbox ? 'none' : 'block';
     // Intercom = full WhatsApp-style window: the chat takes over the whole
     // viewport (fixed overlay, thread flex-grows to fill the height) and the

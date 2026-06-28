@@ -32,7 +32,9 @@
     #inboxView.wa-full{
       position:fixed;inset:0;z-index:60;
       margin:0;border:0;border-radius:0;max-width:none;box-shadow:none;
-      display:flex;flex-direction:column;
+      /* !important beats the inline display:block the JS sets on this element,
+         so the flex column actually applies and the composer stays on-screen */
+      display:flex !important;flex-direction:column;
     }
     #inboxView.wa-full .wa-head{flex:0 0 auto}
     #inboxView.wa-full #intercomThread{flex:1 1 auto;max-height:none !important;min-height:0 !important}
