@@ -43,7 +43,10 @@
     intercomInput: document.getElementById('intercomInput'),
     intercomSend: document.getElementById('intercomSend'),
     pocHeading: document.getElementById('pocHeading'),
-    enableNotif: document.getElementById('enableNotif')
+    enableNotif: document.getElementById('enableNotif'),
+    champBanner: document.getElementById('champBanner'),
+    champBannerText: document.getElementById('champBannerText'),
+    champBannerBtn: document.getElementById('champBannerBtn')
   };
   var API_INBOX = BASE + 'api/v1/inbox';
   var API_INTERCOM = BASE + 'api/v1/intercom';
@@ -73,8 +76,11 @@
     var c = params.get('c');
     if (c) {
       try { localStorage.setItem('d2ai_champion_code', c); } catch (e) {}
-      params.delete('c');
-      history.replaceState(null, '', BASE + (lang === 'es' ? '?lang=es' : ''));
+      // Intentionally KEEP ?c= in the URL. Installed PWAs get storage isolated
+      // from Safari, so the code must arrive via the launch URL — the manifest
+      // start_url carries it (server-rendered), and leaving it on the visible
+      // URL also covers older iOS that snapshots the page URL on "Add to Home
+      // Screen". Re-capturing the same code each cold start is idempotent.
     }
     try { return localStorage.getItem('d2ai_champion_code') || null; } catch (e) { return null; }
   }
@@ -174,6 +180,7 @@
       if (typeof fetchIntercom === 'function') fetchIntercom();
     }
     if (typeof updateNotifBtn === 'function') updateNotifBtn();
+    if (typeof updateChampBanner === 'function') updateChampBanner();
   }
 
   // ---- Web Speech setup -------------------------------------------------
@@ -625,6 +632,42 @@
     });
   }
 
+  // Champion home-screen / alerts nudge on the main view. Shows install steps in
+  // Safari, an enable button once installed, nothing once alerts are on.
+  function updateChampBanner() {
+    if (!el.champBanner) return;
+    var d = t();
+    // Only nudge champions (magic-link users); owners are redirected to the console.
+    if (isOwner || !championCode) { el.champBanner.style.display = 'none'; return; }
+    if (!pushSupported()) {
+      if (isiOS() && !isStandalone()) {
+        el.champBanner.style.display = 'block';
+        el.champBannerText.textContent = d.bannerInstall;
+        el.champBannerBtn.style.display = 'none';
+      } else {
+        el.champBanner.style.display = 'none';
+      }
+      return;
+    }
+    var perm = Notification.permission;
+    if (perm === 'granted') { el.champBanner.style.display = 'none'; return; }
+    el.champBanner.style.display = 'block';
+    if (perm === 'denied') {
+      el.champBannerText.textContent = d.bannerBlocked;
+      el.champBannerBtn.style.display = 'none';
+    } else {
+      el.champBannerText.textContent = d.bannerEnable;
+      el.champBannerBtn.style.display = 'block';
+      el.champBannerBtn.textContent = d.bannerEnableBtn;
+    }
+  }
+  if (el.champBannerBtn) {
+    el.champBannerBtn.addEventListener('click', function () {
+      el.champBannerBtn.textContent = (t().notifEnabling || 'Turning on alerts…');
+      Promise.resolve(ensurePush()).then(updateChampBanner).catch(updateChampBanner);
+    });
+  }
+
   el.inboxBtn.addEventListener('click', function () { ensurePush(); setView(!inboxView); updateNotifBtn(); });
   el.inboxRefresh.addEventListener('click', function () { fetchInbox(); fetchIntercom(); });
 
@@ -639,11 +682,12 @@
       // chat + icon badge). Same PWA/origin, so the CRM session carries over.
       if (isOwner && !/[?&]stay=1/.test(location.search)) { location.replace(BASE + 'intercom.html'); return; }
       pollUnread();
+      updateChampBanner();
     });
     fetchInbox();
     setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 8000);
     // Refresh the badge immediately when the champion returns to the app/tab.
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { pollUnread(); if (inboxView) fetchIntercom(); } });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { pollUnread(); updateChampBanner(); if (inboxView) fetchIntercom(); } });
     window.addEventListener('focus', pollUnread);
   }
 

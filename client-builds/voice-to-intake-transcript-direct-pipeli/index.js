@@ -22,10 +22,34 @@ app.use(express.json({ limit: '256kb' }));
 // GET (no JS) already shows the correct h1 + Send button copy (acceptance #7).
 const MOUNT_BASE = '/voice-to-intake-transcript-direct-pipeli/';
 const HTML_TEMPLATE = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-function renderIndex(lang) {
+// A champion's installed PWA gets ISOLATED storage (separate from Safari), so
+// the magic-link code can't ride along in localStorage. Point the manifest at a
+// per-champion start_url (?c=<code>) so "Add to Home Screen" installs a launch
+// URL that carries the code — every cold start re-seeds the PWA's own storage.
+const ICONS = [
+  { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+  { src: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png', sizes: '192x192', type: 'image/png' }
+];
+function buildManifest(championCode) {
+  const c = championCode ? String(championCode) : '';
+  return {
+    name: 'Digit2Ai Voice to Intake',
+    short_name: 'Digit2Ai',
+    start_url: MOUNT_BASE + (c ? ('?c=' + encodeURIComponent(c)) : ''),
+    scope: MOUNT_BASE,
+    display: 'standalone',
+    background_color: '#0b0f1a',
+    theme_color: '#0b0f1a',
+    icons: ICONS
+  };
+}
+
+function renderIndex(lang, championCode) {
   const d = I18N[lang === 'es' ? 'es' : 'en'];
+  const manifestHref = MOUNT_BASE + 'manifest.json' + (championCode ? ('?c=' + encodeURIComponent(String(championCode))) : '');
   return HTML_TEMPLATE
     .replace(/{{BASE}}/g, MOUNT_BASE)
+    .replace(/{{MANIFEST_HREF}}/g, manifestHref)
     .replace(/{{HTML_LANG}}/g, d.htmlLang)
     .replace(/{{TITLE}}/g, d.title)
     .replace(/{{H1}}/g, d.h1)
@@ -74,8 +98,16 @@ app.get('/', (req, res) => {
   // no-cache: always serve the freshest HTML (revalidates via ETag) so champions
   // never get stuck on a stale build.
   res.set('Cache-Control', 'no-cache');
-  res.type('html').send(renderIndex(req.query.lang === 'es' ? 'es' : 'en'));
+  res.type('html').send(renderIndex(req.query.lang === 'es' ? 'es' : 'en', req.query.c));
 });
+
+// Dynamic web app manifest — per-champion start_url when ?c=<code> is present.
+// Registered BEFORE express.static so it overrides the static manifest.json.
+app.get('/manifest.json', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.type('application/manifest+json').send(JSON.stringify(buildManifest(req.query.c)));
+});
+
 // no-cache on JS/HTML/assets too — updates take effect on next load, no hard refresh.
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,

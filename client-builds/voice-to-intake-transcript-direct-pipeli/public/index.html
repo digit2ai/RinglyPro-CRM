@@ -8,7 +8,7 @@
   <meta name="application-name" content="Digit2Ai" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#0b0f1a" />
-  <link rel="manifest" href="{{BASE}}manifest.json" />
+  <link rel="manifest" href="{{MANIFEST_HREF}}" />
   <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <script>window.__VTI_BASE = '{{BASE}}';</script>
@@ -37,6 +37,12 @@
     </div>
     <h1 id="h1" class="text-3xl font-bold mb-2 text-center">{{H1}}</h1>
     <p id="subtitle" class="mb-6 text-center" style="color:var(--mut)">{{SUBTITLE}}</p>
+
+    <!-- Champion install / notifications nudge (shown only when relevant) -->
+    <div id="champBanner" class="rounded-2xl p-4 mb-4" style="display:none;background:rgba(106,75,255,.12);border:1px solid var(--acc)">
+      <div id="champBannerText" class="text-sm mb-3" style="color:var(--txt)"></div>
+      <button id="champBannerBtn" class="w-full rounded-xl py-2.5 font-semibold" style="display:none;background:var(--acc);color:#fff"></button>
+    </div>
 
     <div id="submitView" class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line)">
       <div class="flex items-center gap-4 mb-4">
