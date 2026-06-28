@@ -602,20 +602,9 @@
   el.intercomSend.addEventListener('click', function () { ensurePush(); sendIntercom(); });
   el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
 
-  // Keyboard-aware full-window chat: track the visible viewport so the iOS soft
-  // keyboard never hides the composer (otherwise tapping the input does nothing
-  // usable — "I can't write"). Drives --vvh / --vvt used by #inboxView.wa-full.
-  (function () {
-    var vv = window.visualViewport; if (!vv) return;
-    var root = document.documentElement;
-    function apply() {
-      root.style.setProperty('--vvh', vv.height + 'px');
-      root.style.setProperty('--vvt', vv.offsetTop + 'px');
-    }
-    vv.addEventListener('resize', apply);
-    vv.addEventListener('scroll', apply);
-    apply();
-  })();
+  // Keyboard handling is done via the viewport meta (interactive-widget=
+  // resizes-content) so the fixed full-window composer stays above the soft
+  // keyboard. On focus we still nudge the latest messages + input into view.
   if (el.intercomInput) {
     el.intercomInput.addEventListener('focus', function () {
       setTimeout(function () {

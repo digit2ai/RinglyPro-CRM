@@ -2,7 +2,7 @@
 <html lang="{{HTML_LANG}}">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <title>{{TITLE}}</title>
   <meta name="apple-mobile-web-app-title" content="Digit2Ai" />
   <meta name="application-name" content="Digit2Ai" />
@@ -30,11 +30,9 @@
     body.inbox-open #champBanner,
     body.inbox-open #notSupportedHint{display:none !important}
     #inboxView.wa-full{
-      position:fixed;left:0;right:0;bottom:auto;z-index:60;
-      top:var(--vvt,0);
+      position:fixed;inset:0;z-index:60;
       margin:0;border:0;border-radius:0;max-width:none;box-shadow:none;
       display:flex;flex-direction:column;
-      height:100dvh;height:var(--vvh,100dvh);
     }
     #inboxView.wa-full .wa-head{flex:0 0 auto}
     #inboxView.wa-full #intercomThread{flex:1 1 auto;max-height:none !important;min-height:0 !important}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <title>Intercom — Digit2Ai</title>
   <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <!-- Installable PWA so the owner gets a Home Screen icon that badges with unread champion messages -->
@@ -79,8 +79,7 @@
     /* ---------- Mobile: single pane ---------- */
     @media(max-width:768px){
       .sidebar{width:100%;min-width:0;max-width:none;border-right:0}
-      /* top/height track the visual viewport so the composer stays above the iOS keyboard */
-      .chat{position:fixed;left:0;right:0;top:var(--vvt,0);height:var(--vvh,100dvh);transform:translateX(100%);transition:transform .22s ease;z-index:20}
+      .chat{position:fixed;inset:0;transform:translateX(100%);transition:transform .22s ease;z-index:20}
       body.chat-open .chat{transform:translateX(0)}
       body.chat-open .sidebar{display:none}
       .back{display:block}
@@ -135,21 +134,6 @@
   </div>
 
   <script>
-  // Keep the chat (and its composer) sized to the VISIBLE viewport so the iOS
-  // soft keyboard never covers the input. Without this, position:fixed stays
-  // pinned to the layout viewport and the textarea hides behind the keyboard —
-  // which reads as "I can't write".
-  (function(){
-    var vv=window.visualViewport; if(!vv) return;
-    var root=document.documentElement;
-    function apply(){
-      root.style.setProperty('--vvh', vv.height+'px');
-      root.style.setProperty('--vvt', vv.offsetTop+'px');
-    }
-    vv.addEventListener('resize', apply);
-    vv.addEventListener('scroll', apply);
-    apply();
-  })();
   (function(){
     var API='/voice-to-intake-transcript-direct-pipeli/api/v1/intercom';
     function token(){ var k=['token','authToken','jwt','adminAuthToken']; for(var i=0;i<k.length;i++){ try{ var v=localStorage.getItem(k[i]); if(v&&v.split('.').length===3) return v; }catch(e){} } return null; }
