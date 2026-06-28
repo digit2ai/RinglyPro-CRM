@@ -461,6 +461,30 @@
 
     loadThreads();
     setInterval(function(){ loadThreads(); if(current) loadMessages(false); }, 7000);
+
+    // ---- Auto-update: reload the console when a newer version deploys (idle only) ----
+    (function(){
+      var PAGE_URL = location.href.split('#')[0].split('?')[0];
+      var bootTag=null, pending=false;
+      function safe(){
+        try{
+          if(mediaRec && mediaRec.state==='recording') return false;
+          if(reply && (reply.value||'').trim()) return false;
+          if(currentAudio && !currentAudio.paused) return false;
+        }catch(e){}
+        return true;
+      }
+      function check(){
+        fetch(PAGE_URL,{method:'HEAD',cache:'no-store'}).then(function(r){
+          var tag=r.headers.get('etag')||r.headers.get('last-modified'); if(!tag) return;
+          if(bootTag===null){ bootTag=tag; return; }
+          if(tag!==bootTag){ pending=true; if(safe()) location.reload(); }
+        }).catch(function(){});
+      }
+      setInterval(function(){ if(pending&&safe()) location.reload(); else check(); }, 60000);
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden) check(); });
+      check();
+    })();
   })();
   </script>
 </body>

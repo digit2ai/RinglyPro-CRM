@@ -892,5 +892,32 @@
     window.addEventListener('focus', pollUnread);
   }
 
+  // ---- Auto-update: silently reload when a newer app.js is deployed ----
+  // Champions never need to hard-refresh; the chat reloads itself (only while
+  // idle) so new features (e.g. voice-message rendering) appear automatically.
+  (function () {
+    var APP_URL = BASE + 'app.js';
+    var bootTag = null, pendingReload = false;
+    function safeToReload() {
+      try {
+        if (typeof icRec !== 'undefined' && icRec && icRec.state === 'recording') return false;
+        if (el.intercomInput && (el.intercomInput.value || '').trim()) return false;
+        if (typeof icCurrent !== 'undefined' && icCurrent && !icCurrent.paused) return false;
+      } catch (e) {}
+      return true;
+    }
+    function checkVersion() {
+      fetch(APP_URL, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+        var tag = r.headers.get('etag') || r.headers.get('last-modified');
+        if (!tag) return;
+        if (bootTag === null) { bootTag = tag; return; }       // capture version at load
+        if (tag !== bootTag) { pendingReload = true; if (safeToReload()) location.reload(); }
+      }).catch(function () {});
+    }
+    setInterval(function () { if (pendingReload && safeToReload()) location.reload(); else checkVersion(); }, 60000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkVersion(); });
+    checkVersion();
+  })();
+
   applyLang();
 })();
