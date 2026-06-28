@@ -602,6 +602,32 @@
   el.intercomSend.addEventListener('click', function () { ensurePush(); sendIntercom(); });
   el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
 
+  // Keyboard-aware full-window chat: track the visible viewport so the iOS soft
+  // keyboard never hides the composer (otherwise tapping the input does nothing
+  // usable — "I can't write"). Drives --vvh / --vvt used by #inboxView.wa-full.
+  (function () {
+    var vv = window.visualViewport; if (!vv) return;
+    var root = document.documentElement;
+    function apply() {
+      root.style.setProperty('--vvh', vv.height + 'px');
+      root.style.setProperty('--vvt', vv.offsetTop + 'px');
+    }
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    apply();
+  })();
+  if (el.intercomInput) {
+    el.intercomInput.addEventListener('focus', function () {
+      setTimeout(function () {
+        try {
+          var th = document.getElementById('intercomThread');
+          if (th) th.scrollTop = th.scrollHeight;
+          el.intercomInput.scrollIntoView({ block: 'nearest' });
+        } catch (e) {}
+      }, 250);
+    });
+  }
+
   // ---- PWA push: badge the installed home-screen icon for new messages ----
   var SW_URL = BASE + 'sw.js';
   if ('serviceWorker' in navigator) {
