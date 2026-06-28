@@ -13,7 +13,8 @@
   var API = BASE + 'api/v1/intake';
 
   var params = new URLSearchParams(window.location.search);
-  var lang = params.get('lang') === 'es' ? 'es' : 'en';
+  // Default to Spanish; English only when explicitly requested (?lang=en).
+  var lang = params.get('lang') === 'en' ? 'en' : 'es';
 
   var el = {
     h1: document.getElementById('h1'),
@@ -253,8 +254,11 @@
   // ---- Language toggle --------------------------------------------------
   el.langBtn.addEventListener('click', function () {
     lang = lang === 'es' ? 'en' : 'es';
-    params.set('lang', lang);
-    history.replaceState(null, '', BASE + (lang === 'es' ? '?lang=es' : ''));
+    // Spanish is the default (no param); only English carries ?lang=en.
+    // Preserve any other params (e.g. the champion ?c= code).
+    if (lang === 'en') params.set('lang', 'en'); else params.delete('lang');
+    var qs = params.toString();
+    history.replaceState(null, '', BASE + (qs ? '?' + qs : ''));
     applyLang();
   });
 

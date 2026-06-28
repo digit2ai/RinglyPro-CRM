@@ -106,7 +106,8 @@ app.get('/', (req, res) => {
   // no-cache: always serve the freshest HTML (revalidates via ETag) so champions
   // never get stuck on a stale build.
   res.set('Cache-Control', 'no-cache');
-  res.type('html').send(renderIndex(req.query.lang === 'es' ? 'es' : 'en', req.query.c));
+  // Default to Spanish; English only when explicitly requested (?lang=en).
+  res.type('html').send(renderIndex(req.query.lang === 'en' ? 'en' : 'es', req.query.c));
 });
 
 // Dynamic web app manifest — per-champion start_url when ?c=<code> is present.
