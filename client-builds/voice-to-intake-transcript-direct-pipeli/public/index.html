@@ -87,6 +87,12 @@
       <button id="sendBtn" class="w-full rounded-xl py-3 font-semibold"
         style="background:var(--green);color:#06281c">{{SEND_LABEL}}</button>
       <div id="result" class="text-sm mono mt-3" style="min-height:18px"></div>
+
+      <!-- PoC teaser links (newest first) — the deliverables from submitted requests -->
+      <div id="pocSection" class="mt-5 pt-4" style="border-top:1px solid var(--line)">
+        <h3 id="pocHeading" class="text-sm font-bold mb-2" style="color:var(--mut)">{{POC_HEADING}}</h3>
+        <div id="inboxList"></div>
+      </div>
     </div>
 
     <!-- Champion Inbox: PoC teaser magic links ready to forward to the client -->
@@ -103,10 +109,7 @@
         <input id="intercomInput" class="flex-1 rounded-xl p-2 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="{{INTERCOM_PLACEHOLDER}}" />
         <button id="intercomSend" class="px-4 rounded-xl font-semibold" style="background:var(--acc);color:#fff">{{INTERCOM_SEND}}</button>
       </div>
-      <button id="enableNotif" class="text-sm px-3 py-2 rounded-xl border w-full mb-5" style="display:none;border-color:var(--acc);color:var(--acc)">{{ENABLE_NOTIF}}</button>
-
-      <h3 id="pocHeading" class="text-sm font-bold mb-2" style="color:var(--mut)">{{POC_HEADING}}</h3>
-      <div id="inboxList"></div>
+      <button id="enableNotif" class="text-sm px-3 py-2 rounded-xl border w-full" style="display:none;border-color:var(--acc);color:var(--acc)">{{ENABLE_NOTIF}}</button>
     </div>
 
     <p class="text-xs mono" style="color:var(--mut)">

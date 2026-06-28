@@ -173,7 +173,7 @@
     if (recognition) recognition.lang = d.speechLang;
     if (typeof renderAuth === 'function') renderAuth();
     // Inbox static labels + re-render (localized share buttons).
-    if (el.inboxTabLabel) el.inboxTabLabel.textContent = d.inboxTab;
+    if (el.inboxTabLabel) el.inboxTabLabel.textContent = inboxView ? d.intakeTab : d.inboxTab;
     if (el.inboxHeading) el.inboxHeading.textContent = d.inboxTitle;
     if (el.inboxSub) el.inboxSub.textContent = d.inboxSub;
     if (el.pocHeading) el.pocHeading.textContent = d.pocHeading;
@@ -373,7 +373,10 @@
     inboxView = showInbox;
     el.inboxView.style.display = showInbox ? 'block' : 'none';
     el.submitView.style.display = showInbox ? 'none' : 'block';
-    if (showInbox) fetchInbox();
+    // The toggle button always offers the OTHER page (Intercom <-> Send a request).
+    if (el.inboxTabLabel) el.inboxTabLabel.textContent = showInbox ? t().intakeTab : t().inboxTab;
+    if (showInbox) setBadge(0);   // entering the chat clears the unread count
+    fetchInbox();                 // PoC links live on the intake view — keep them fresh
   }
 
   function setBadge(n) {
@@ -389,7 +392,7 @@
       .then(function (data) {
         inboxItems = (data && data.items) || [];
         inboxEmail = (data && data.email) || null;
-        if (inboxView) renderInbox(inboxItems);
+        renderInbox(inboxItems);
       }).catch(function () {});
   }
 
@@ -412,7 +415,11 @@
       var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = 'var(--mut)';
       em.textContent = d.inboxEmpty; el.inboxList.appendChild(em); return;
     }
-    items.forEach(function (it) {
+    // Newest first — the most recent PoC link always sits on top.
+    var sorted = items.slice().sort(function (a, b) {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+    sorted.forEach(function (it) {
       var card = document.createElement('div');
       card.className = 'rounded-xl p-3 mb-3';
       card.style.cssText = 'background:var(--bg2);border:1px solid var(--line)';
@@ -486,8 +493,7 @@
   function markShared(it) {
     if (it.shared) return;
     it.shared = true;
-    var ready = inboxItems.filter(function (x) { return x.teaser_ready && !x.shared; }).length;
-    setBadge(ready);
+    // (Badge reflects unread Intercom messages, driven by pollUnread.)
     var token = getToken();
     if (!token) return;
     fetch(API_INBOX + '/' + it.project_id + '/shared', {
@@ -743,9 +749,12 @@
       if (isOwner && !/[?&]stay=1/.test(location.search)) { location.replace(BASE + 'intercom.html'); return; }
       pollUnread();
       updateChampBanner();
+      // Champions land on Intercom by default (the chat). They tap "Send a
+      // request" to reach the Voice-to-Intake form + their PoC links.
+      setView(true);
     });
     fetchInbox();
-    setInterval(function () { pollUnread(); if (inboxView) { fetchInbox(); fetchIntercom(); } }, 8000);
+    setInterval(function () { pollUnread(); fetchInbox(); if (inboxView) fetchIntercom(); }, 8000);
     // Refresh the badge immediately when the champion returns to the app/tab.
     document.addEventListener('visibilitychange', function () { if (!document.hidden) { pollUnread(); updateChampBanner(); if (inboxView) fetchIntercom(); } });
     window.addEventListener('focus', pollUnread);
