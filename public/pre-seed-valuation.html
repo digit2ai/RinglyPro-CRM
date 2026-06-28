@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Digit2AI — Confidential Pre-Seed Valuation & Investment Memorandum</title>
+<style>
+  :root{
+    --ink:#0d1b2a; --ink2:#1b263b; --muted:#5a6b82; --line:#e3e8f0;
+    --brand:#1746d6; --brand2:#0bb4c4; --accent:#0f9d58; --warn:#b9740b;
+    --bg:#f5f7fb; --card:#ffffff; --shadow:0 1px 3px rgba(13,27,42,.08),0 8px 28px rgba(13,27,42,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .doc{max-width:920px; margin:0 auto; padding:0 22px 90px;}
+  /* ---- Cover ---- */
+  .cover{
+    background:linear-gradient(150deg,#0a1733 0%,#13264f 55%,#0a2f57 100%);
+    color:#fff; border-radius:0 0 26px 26px; padding:54px 44px 46px;
+    position:relative; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .cover:after{content:"";position:absolute;right:-120px;top:-120px;width:360px;height:360px;
+    background:radial-gradient(circle,rgba(11,180,196,.35),transparent 62%);}
+  .brandrow{display:flex;align-items:center;gap:13px;margin-bottom:30px}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#1746d6,#0bb4c4);
+    display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-1px;box-shadow:0 4px 16px rgba(11,180,196,.4)}
+  .brandrow b{font-size:19px;letter-spacing:.3px}
+  .brandrow span{color:#9fc0ff;font-size:12.5px;display:block;margin-top:2px;letter-spacing:.4px}
+  .conf{position:absolute;top:22px;right:26px;font-size:11px;letter-spacing:2px;
+    border:1px solid rgba(255,255,255,.35);padding:5px 11px;border-radius:20px;color:#cfe0ff}
+  .cover h1{font-size:33px;line-height:1.18;margin:8px 0 6px;font-weight:800;letter-spacing:-.5px}
+  .cover .sub{color:#bcd2ff;font-size:16px;max-width:600px}
+  .coverstats{display:flex;flex-wrap:wrap;gap:26px;margin-top:34px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
+  .coverstats div{min-width:120px}
+  .coverstats b{display:block;font-size:24px;color:#fff;letter-spacing:-.5px}
+  .coverstats small{color:#9fc0ff;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .meta{display:flex;flex-wrap:wrap;gap:22px;margin-top:30px;font-size:12.5px;color:#9fc0ff}
+  .meta b{color:#fff;font-weight:600}
+
+  /* ---- Sections ---- */
+  section{margin-top:40px}
+  h2{font-size:13px;letter-spacing:2.4px;text-transform:uppercase;color:var(--brand);
+    margin:0 0 4px;font-weight:700}
+  .h2sub{font-size:23px;font-weight:800;letter-spacing:-.4px;margin:0 0 18px;color:var(--ink)}
+  p{color:var(--ink2)}
+  .lead{font-size:17px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:640px){.g2,.g3{grid-template-columns:1fr}}
+
+  .headline{
+    background:linear-gradient(135deg,#0f9d58 0%,#0bb4c4 100%);color:#fff;border:none;
+    text-align:center;padding:30px}
+  .headline small{text-transform:uppercase;letter-spacing:2px;font-size:11.5px;opacity:.9}
+  .headline .big{font-size:42px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px}
+  .headline .note{font-size:13.5px;opacity:.92;max-width:560px;margin:8px auto 0}
+
+  .kpi{padding:18px 20px}
+  .kpi .n{font-size:27px;font-weight:800;letter-spacing:-.6px;color:var(--ink)}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .kpi .n.brand{color:var(--brand)}
+  .kpi .n.teal{color:var(--brand2)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  .tbl-wrap{overflow-x:auto}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;letter-spacing:.3px}
+  .tag.live{background:#e3f6ec;color:#0f7a44}
+  .tag.beta{background:#fff4e0;color:#b9740b}
+  .tag.pre{background:#eef1f6;color:#5a6b82}
+
+  /* football field chart */
+  .ff{margin-top:10px}
+  .ffrow{display:flex;align-items:center;gap:14px;margin:13px 0}
+  .ffrow .lbl{width:190px;font-size:13px;color:var(--ink2);flex-shrink:0}
+  .fftrack{flex:1;height:30px;position:relative;background:#eef1f6;border-radius:8px}
+  .ffbar{position:absolute;height:100%;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:11.5px;color:#fff;font-weight:600;white-space:nowrap}
+  .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:6px 0 0 204px}
+  @media(max-width:640px){.ffrow{flex-direction:column;align-items:stretch}.ffrow .lbl{width:auto}.axis{margin-left:0}}
+
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0 9px 26px;position:relative;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink2)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li:before{content:"";position:absolute;left:4px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--brand2)}
+  ul.risk li:before{background:var(--warn)}
+
+  .callout{border-left:4px solid var(--brand);background:#f0f4ff;padding:14px 18px;border-radius:0 12px 12px 0;font-size:14px;color:var(--ink2)}
+
+  .foot{margin-top:46px;border-top:1px solid var(--line);padding-top:20px;font-size:11.5px;color:var(--muted)}
+  .foot p{font-size:11.5px;color:var(--muted);margin:6px 0}
+
+  .toc{font-size:13.5px}
+  .toc a{color:var(--brand);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:3px 10px;display:inline-block}
+
+  @media print{
+    body{background:#fff}
+    .cover{border-radius:0}
+    .card,.cover,.headline{box-shadow:none}
+    section{break-inside:avoid}
+    .noprint{display:none}
+  }
+  .printbar{position:fixed;bottom:18px;right:18px;z-index:20}
+  .printbar button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:11px 18px;
+    font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(23,70,214,.4)}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ============ COVER ============ -->
+  <div class="cover">
+    <div class="conf">CONFIDENTIAL</div>
+    <div class="brandrow">
+      <div class="logo">D2</div>
+      <div><b>DIGIT2AI</b><span>NLP-to-Production AI Platform</span></div>
+    </div>
+    <h1>Confidential Pre-Seed Valuation<br>&amp; Investment Memorandum</h1>
+    <div class="sub">An analysis of enterprise value prepared for prospective investors and financial institutions.</div>
+
+    <div class="coverstats">
+      <div><b>$3M–$8M</b><small>Indicative Valuation</small></div>
+      <div><b>22</b><small>Verticals Built</small></div>
+      <div><b>21</b><small>Live Platforms</small></div>
+      <div><b>99.9%</b><small>Stated SLA</small></div>
+    </div>
+
+    <div class="meta">
+      <span>Prepared: <b>June 28, 2026</b></span>
+      <span>Stage: <b>Pre-Seed</b></span>
+      <span>Basis: <b>Asset &amp; Market-Comparable</b></span>
+      <span>Status: <b>Draft v1.0 — Management Estimate</b></span>
+    </div>
+  </div>
+
+  <!-- ============ TOC / NOTICE ============ -->
+  <section class="card toc">
+    <div class="grid g2">
+      <div>
+        <h2 style="margin-bottom:10px">Contents</h2>
+        1. <a href="#summary">Executive Summary</a><br>
+        2. <a href="#company">Company Overview</a><br>
+        3. <a href="#assets">Platform &amp; Asset Inventory</a><br>
+        4. <a href="#method">Valuation Methodology</a><br>
+        5. <a href="#football">Valuation Summary</a><br>
+        6. <a href="#ask">The Pre-Seed Opportunity</a><br>
+        7. <a href="#risk">Risk Factors &amp; Value Drivers</a><br>
+        8. <a href="#assumptions">Assumptions &amp; Disclaimers</a>
+      </div>
+      <div>
+        <h2 style="margin-bottom:10px">Confidentiality Notice</h2>
+        <p style="font-size:13px;margin:0">This memorandum is confidential and is furnished solely for the recipient's evaluation of a potential investment in Digit2AI. It may not be reproduced or distributed without written consent. It does not constitute an offer to sell securities and contains forward-looking estimates that are inherently uncertain.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 1. EXEC SUMMARY ============ -->
+  <section id="summary">
+    <h2>01 — Executive Summary</h2>
+    <div class="h2sub">A vertical-AI platform with extraordinary build breadth</div>
+
+    <div class="headline card">
+      <small>Indicative Enterprise Value — Current</small>
+      <div class="big">$3M – $8M</div>
+      <div class="note">Asset- and IP-anchored, pre-institutional revenue. Rises to <b>$10M–$30M+</b> on demonstrated $1M+ ARR at prevailing vertical-AI multiples.</div>
+    </div>
+
+    <p class="lead" style="margin-top:22px">Digit2AI is an AI-native software company that converts natural-language business requirements into deployed, multi-tenant production applications. In roughly eleven months it has shipped a core voice-AI CRM, a Model Context Protocol (MCP) server fabric, an 83-agent autonomous build workforce, and a portfolio of 22 industry verticals spanning healthcare/medtech, logistics &amp; freight, agriculture, manufacturing, education, and brand-protection.</p>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card kpi"><div class="n brand">4,136</div><div class="l">Production commits (Aug 2025–Jun 2026)</div></div>
+      <div class="card kpi"><div class="n teal">~11 mo</div><div class="l">From first commit to current scope</div></div>
+      <div class="card kpi"><div class="n">$300B</div><div class="l">Stated aggregate addressable market</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:18px">
+      <b>Valuation thesis.</b> The defensible floor is the cost to replicate the existing software estate (~$2.5M–$6M). The upside is optionality: a diversified portfolio of vertical AI products, any one of which reaching product-market fit re-rates the whole company onto a revenue multiple. The gating variable to the higher range is recurring revenue and retention evidence, which is outside the scope of this asset-based analysis.
+    </div>
+  </section>
+
+  <!-- ============ 2. COMPANY OVERVIEW ============ -->
+  <section id="company">
+    <h2>02 — Company Overview</h2>
+    <div class="h2sub">What Digit2AI is</div>
+    <div class="card">
+      <div class="grid g2">
+        <div>
+          <p style="margin-top:0"><b>Core product.</b> A multi-tenant CRM with conversational voice AI (agents Rachel, Ana, and Lina), telephony (Twilio), billing and token-metering (Stripe), and a 94-module API surface — deployed in production at <span class="pill">aiagent.ringlypro.com</span></p>
+          <p><b>The build engine.</b> "RinglyPro Architect" — an NLP-to-production orchestrator coordinating an <b>83-agent workforce</b> (8 core + 75 specialists) that turns plain-language briefs into code and deploys via an end-to-end CI/CD loop. This is both a product and the company's structural cost advantage.</p>
+        </div>
+        <div>
+          <p style="margin-top:0"><b>Integration fabric.</b> Four Model Context Protocol (MCP) servers (core, GoHighLevel, HISPATEC, OEE) expose tools to AI clients; ElevenLabs conversational agents are provisioned per product.</p>
+          <p><b>Go-to-market.</b> Bilingual (EN/ES) throughout, with a partner/champion attribution system, UTM funnel analytics, A/B headline framework, and a voice-driven intake funnel at <span class="pill">champion-teaser.html</span> that captures and triages prospect projects in real time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. ASSET INVENTORY ============ -->
+  <section id="assets">
+    <h2>03 — Platform &amp; Asset Inventory</h2>
+    <div class="h2sub">The estate being valued</div>
+
+    <div class="grid g3" style="margin-bottom:16px">
+      <div class="card kpi"><div class="n">94</div><div class="l">API route modules (core app)</div></div>
+      <div class="card kpi"><div class="n">111</div><div class="l">Database migrations</div></div>
+      <div class="card kpi"><div class="n">71</div><div class="l">Public web / landing pages</div></div>
+    </div>
+
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr><th>Vertical / Product</th><th>Sector</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><b>RinglyPro CRM</b> — voice-AI CRM core</td><td>SMB / Telephony</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>Intuitive / SurgicalMind</b> — surgeon survey, clinical dollarization, business-plan generator</td><td>Medtech / Hospitals</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>MSK Intelligence</b> — musculoskeletal analytics</td><td>Healthcare</td><td><span class="tag beta">Build</span></td></tr>
+          <tr><td><b>Freight Broker / CW Carriers / Logistics</b> — TMS &amp; carrier ops</td><td>Logistics</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>Pinaxis</b> — warehouse analytics</td><td>Supply Chain</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>Store Health AI</b> — retail monitoring dashboard</td><td>Retail Ops</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>OEE Module</b> — shop-floor / manufacturing monitoring (MCP)</td><td>Manufacturing</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>Torna Idioma</b> — SFL language platform (UVEG curriculum)</td><td>Education</td><td><span class="tag beta">Pre-launch</span></td></tr>
+          <tr><td><b>Veritas</b> — AI deepfake detection &amp; takedown</td><td>Brand Protection</td><td><span class="tag beta">Build</span></td></tr>
+          <tr><td><b>AgroMercado / AgrollanoDigital</b> — agri marketplace (ISTC alliance)</td><td>AgTech</td><td><span class="tag beta">Build</span></td></tr>
+          <tr><td><b>ImprintIQ</b> — promotional-products AI ecosystem</td><td>Print / Promo</td><td><span class="tag beta">Build</span></td></tr>
+          <tr><td><b>Chamber Network</b> — config-driven chamber instances (cookie-cutter)</td><td>Assoc. / GovTech</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>Digit2AI Projects Hub</b> — owner command center + intake</td><td>Internal / Ops</td><td><span class="tag live">Live</span></td></tr>
+          <tr><td><b>+10 additional apps</b> — TunjoRacing, Visionarium, Kancho AI, Spark AI, Ronin, Enruta, QuickTask, Web Call Center, Photo Studio/PixlyPro, HISPATEC</td><td>Mixed</td><td><span class="tag pre">Portfolio</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">Status reflects deployment state in the codebase, not audited commercial traction. "Live" = serving in production; "Build/Pre-launch" = functional but not yet generally available or monetized.</p>
+  </section>
+
+  <!-- ============ 4. METHODOLOGY ============ -->
+  <section id="method">
+    <h2>04 — Valuation Methodology</h2>
+    <div class="h2sub">Three independent lenses</div>
+
+    <div class="grid" style="gap:16px">
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:17px">A. Cost / Asset-Replacement Approach <span class="pill">Floor</span></h3>
+        <p style="margin:0">Values the existing software estate by the cost to rebuild it conventionally. The scope — a multi-tenant CRM + voice AI + billing + 22 verticals + ~13 apps + MCP/agent orchestration — represents an estimated <b>15–30 engineer-years</b>. At a blended fully-loaded cost of $150K–$200K/year, replacement cost is <b>$2.5M–$6.0M</b>. A buyer values the asset, not the discount the AI-native build method achieved.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:17px">B. Market-Comparable (Revenue Multiple) <span class="pill">Primary at scale</span></h3>
+        <p style="margin:0 0 10px">Vertical-AI / SaaS companies transact on forward revenue multiples. Applying current-market ranges to scenario ARR:</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Scenario</th><th class="num">ARR</th><th class="num">Multiple</th><th class="num">Implied EV</th></tr></thead>
+            <tbody>
+              <tr><td>Pre-revenue / pilots</td><td class="num">~$0</td><td class="num">—</td><td class="num">$3M–$8M</td></tr>
+              <tr><td>Early traction</td><td class="num">$0.25M–$0.5M</td><td class="num">4–8×</td><td class="num">$2M–$4M</td></tr>
+              <tr><td>Product-market fit</td><td class="num">$1.0M</td><td class="num">6–10×</td><td class="num">$6M–$10M</td></tr>
+              <tr><td>Scaling (&gt;80% YoY)</td><td class="num">$3.0M</td><td class="num">8–12×</td><td class="num">$25M–$36M</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:17px">C. Strategic / Optionality Approach <span class="pill">Upside</span></h3>
+        <p style="margin:0">Treats the 22-vertical portfolio as a basket of options. Each vertical is a low-cost shot on goal; one reaching PMF re-rates the entire company onto approach B. The AI-native build engine compresses the cost and time of launching each new vertical, raising the expected value of the portfolio relative to a single-product company.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. FOOTBALL FIELD ============ -->
+  <section id="football">
+    <h2>05 — Valuation Summary</h2>
+    <div class="h2sub">Indicative enterprise-value range by method</div>
+
+    <div class="card">
+      <div class="ff">
+        <div class="ffrow">
+          <div class="lbl">Cost / Asset-Replacement</div>
+          <div class="fftrack"><div class="ffbar" style="left:6.25%;width:8.75%;background:#5a6b82">$2.5–6M</div></div>
+        </div>
+        <div class="ffrow">
+          <div class="lbl">Current (asset + optionality)</div>
+          <div class="fftrack"><div class="ffbar" style="left:7.5%;width:12.5%;background:#1746d6">$3–8M</div></div>
+        </div>
+        <div class="ffrow">
+          <div class="lbl">Market comp @ $1M ARR</div>
+          <div class="fftrack"><div class="ffbar" style="left:15%;width:10%;background:#0bb4c4">$6–10M</div></div>
+        </div>
+        <div class="ffrow">
+          <div class="lbl">Market comp @ $3M ARR</div>
+          <div class="fftrack"><div class="ffbar" style="left:62.5%;width:27.5%;background:#0f9d58">$25–36M</div></div>
+        </div>
+        <div class="axis"><span>$0</span><span>$10M</span><span>$20M</span><span>$30M</span><span>$40M</span></div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:18px">
+      <b>Concluded indicative value (current):</b> <b>$3M – $8M</b>, anchored to the replacement cost of the software estate plus a control premium for the build engine and portfolio optionality. The midpoint <b>~$5.5M</b> is a reasonable reference for a pre-seed pre-money discussion, subject to financial due diligence.
+    </div>
+  </section>
+
+  <!-- ============ 6. THE ASK ============ -->
+  <section id="ask">
+    <h2>06 — The Pre-Seed Opportunity</h2>
+    <div class="h2sub">Illustrative structure</div>
+
+    <div class="grid g3">
+      <div class="card kpi"><div class="n brand">$1.0M–$1.5M</div><div class="l">Indicative raise</div></div>
+      <div class="card kpi"><div class="n">~$5.5M–$7M</div><div class="l">Pre-money reference</div></div>
+      <div class="card kpi"><div class="n teal">12–18 mo</div><div class="l">Runway to revenue proof</div></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin:0 0 8px;font-size:16px">Use of proceeds — convert build breadth into revenue depth</h3>
+      <ul class="clean">
+        <li><b>Commercialize 2–3 lead verticals</b> (e.g. SurgicalMind/medtech, Pinaxis/warehouse, a chamber instance) — sales, onboarding, success.</li>
+        <li><b>Reduce key-person risk</b> — hire 2–3 engineers and formalize the agent-build methodology so it is transferable and auditable.</li>
+        <li><b>Stand up revenue instrumentation</b> — ARR, retention, cohort, and unit-economics reporting to support the next round on a revenue multiple.</li>
+        <li><b>Close external dependencies</b> — provider keys (detection, search), legal-reviewed templates, and production hardening on pre-launch verticals.</li>
+      </ul>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">Structure shown is illustrative for discussion only and does not constitute an offer of securities. Final terms are subject to negotiation and definitive documentation.</p>
+  </section>
+
+  <!-- ============ 7. RISK ============ -->
+  <section id="risk">
+    <h2>07 — Risk Factors &amp; Value Drivers</h2>
+    <div class="h2sub">What moves the number</div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:16px;color:var(--warn)">Risks / discounts</h3>
+        <ul class="clean risk">
+          <li><b>Key-person concentration</b> — authorship is highly concentrated; transferability must be demonstrated.</li>
+          <li><b>Revenue &amp; retention not yet evidenced</b> — the single largest gate between the $4M and $30M ranges.</li>
+          <li><b>Breadth-over-depth</b> — 22 verticals can read as a portfolio of POCs rather than one dominant product.</li>
+          <li><b>Pre-launch / partner-owned IP</b> — some verticals are not yet monetized; AgroMercado IP is held by the ISTC alliance partner.</li>
+          <li><b>External dependencies</b> — certain features await third-party provider keys and legal review.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:16px;color:var(--accent)">Value drivers / upside</h3>
+        <ul class="clean">
+          <li><b>AI-native build engine</b> — structural cost &amp; speed advantage launching new verticals.</li>
+          <li><b>Diversified optionality</b> — 22 shots on goal; one PMF re-rates the company.</li>
+          <li><b>Production deployments</b> — real live systems, not slideware.</li>
+          <li><b>Bilingual reach</b> — EN/ES across the stack opens LATAM &amp; US-Hispanic markets.</li>
+          <li><b>Defensible MCP/agent depth</b> — genuine integration fabric, not a thin wrapper.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8. ASSUMPTIONS ============ -->
+  <section id="assumptions">
+    <h2>08 — Assumptions &amp; Disclaimers</h2>
+    <div class="card">
+      <ul class="clean">
+        <li>This memorandum presents a <b>management estimate</b> of value derived from analysis of the company's software estate and prevailing market multiples. It is <b>not an independent, audited, or certified appraisal</b> and was not prepared by a licensed valuation firm.</li>
+        <li>Asset-replacement figures are engineering estimates based on code scope (commit history, route/module counts, migration counts) and assumed blended labor rates. They are directional, not a quote.</li>
+        <li>Market-comparable ranges use illustrative scenario revenue. <b>No financial statements, ARR, customer, churn, or margin figures were independently verified</b> in preparing this document.</li>
+        <li>Platform metrics (21 live platforms, 22 verticals, 99.9% SLA, $300B TAM) are as stated by the company.</li>
+        <li>Forward-looking statements involve significant uncertainty; actual outcomes may differ materially. Nothing herein is an offer to sell or a solicitation to buy securities, nor investment, legal, tax, or accounting advice.</li>
+        <li>A buyer or investor should conduct independent financial, technical, and legal due diligence before any transaction.</li>
+      </ul>
+    </div>
+
+    <div class="foot">
+      <p><b>DIGIT2AI — Confidential Pre-Seed Valuation &amp; Investment Memorandum</b></p>
+      <p>Prepared June 28, 2026 · Draft v1.0 · For the named recipient only · © 2026 Digit2AI. All rights reserved.</p>
+      <p>Indicative enterprise value: $3M–$8M (current) · $10M–$30M+ (on demonstrated $1M+ ARR). Subject to due diligence.</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="printbar noprint">
+  <button onclick="window.print()">Download / Print PDF</button>
+</div>
+
+</body>
+</html>

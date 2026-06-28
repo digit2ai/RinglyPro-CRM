@@ -2143,6 +2143,11 @@ app.get('/admin/projects', (req, res) => {
   });
 });
 
+// Confidential Pre-Seed Valuation & Investment Memorandum
+app.get(['/pre-seed-valuation', '/pre-seed_valuation', '/valuation'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/pre-seed-valuation.html'));
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));
