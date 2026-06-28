@@ -377,6 +377,13 @@
     inboxView = showInbox;
     el.inboxView.style.display = showInbox ? 'block' : 'none';
     el.submitView.style.display = showInbox ? 'none' : 'block';
+    // Intercom = full WhatsApp-style window: hide the logo + title + subtitle
+    // header so the chat is the whole view. The intake (Send a request) view
+    // keeps them.
+    var brandLogo = document.getElementById('brandLogo');
+    if (brandLogo) brandLogo.style.display = showInbox ? 'none' : 'flex';
+    if (el.h1) el.h1.style.display = showInbox ? 'none' : 'block';
+    if (el.subtitle) el.subtitle.style.display = showInbox ? 'none' : 'block';
     // The toggle button always offers the OTHER page (Intercom <-> Send a request).
     if (el.inboxTabLabel) el.inboxTabLabel.textContent = showInbox ? t().intakeTab : t().inboxTab;
     if (showInbox) setBadge(0);   // entering the chat clears the unread count
