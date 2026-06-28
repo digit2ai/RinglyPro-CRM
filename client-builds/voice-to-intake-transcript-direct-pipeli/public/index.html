@@ -20,6 +20,10 @@
     .mic-dot { box-shadow: 0 0 0 0 rgba(106,75,255,.5); }
     .mic-dot.rec { animation: pulse 1.2s ease-in-out infinite; background:#ef4444; }
     @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)} 70%{box-shadow:0 0 0 18px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} }
+    /* WhatsApp-style chat background for the Intercom view only (distinct from the dark intake view) */
+    .wa-thread{background-color:#efeae2;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='%23d8d0c4' fill-opacity='0.4'%3E%3Ccircle cx='9' cy='9' r='1.4'/%3E%3Ccircle cx='31' cy='24' r='1.4'/%3E%3Ccircle cx='18' cy='36' r='1.4'/%3E%3C/g%3E%3C/svg%3E")}
+    .wa-thread::-webkit-scrollbar{width:6px}
+    .wa-thread::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
   </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
@@ -95,21 +99,26 @@
       </div>
     </div>
 
-    <!-- Champion Inbox: PoC teaser magic links ready to forward to the client -->
-    <div id="inboxView" class="rounded-2xl p-5 mb-4" style="background:var(--card);border:1px solid var(--line);display:none">
-      <div class="flex items-center justify-between mb-1">
-        <h2 id="inboxHeading" class="text-xl font-bold">{{INBOX_TITLE}}</h2>
-        <button id="inboxRefresh" class="text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--mut)">↻</button>
+    <!-- Champion Intercom — WhatsApp-style chat, visually distinct from the dark intake view -->
+    <div id="inboxView" class="rounded-2xl mb-4 overflow-hidden" style="display:none;border:1px solid #1f5c4a;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+      <!-- header (WhatsApp green) -->
+      <div class="flex items-center justify-between" style="background:#008069;padding:11px 16px">
+        <div style="min-width:0">
+          <h2 id="inboxHeading" class="text-lg font-bold" style="color:#fff;line-height:1.2">{{INBOX_TITLE}}</h2>
+          <p id="inboxSub" class="text-xs" style="color:rgba(255,255,255,.85)">{{INBOX_SUB}}</p>
+        </div>
+        <button id="inboxRefresh" class="rounded-lg" title="↻" style="color:#fff;background:rgba(255,255,255,.18);width:34px;height:34px;flex:0 0 34px">↻</button>
       </div>
-      <p id="inboxSub" class="text-sm mb-4" style="color:var(--mut)">{{INBOX_SUB}}</p>
-
-      <!-- Intercom chat with the owner -->
-      <div id="intercomThread" class="rounded-xl p-3 mb-2 overflow-y-auto" style="background:var(--bg2);border:1px solid var(--line);max-height:280px;min-height:90px"></div>
-      <div class="flex gap-2 mb-2">
-        <input id="intercomInput" class="flex-1 rounded-xl p-2 text-sm" style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)" placeholder="{{INTERCOM_PLACEHOLDER}}" />
-        <button id="intercomSend" class="px-4 rounded-xl font-semibold" style="background:var(--acc);color:#fff">{{INTERCOM_SEND}}</button>
+      <!-- thread (WhatsApp beige doodle background) -->
+      <div id="intercomThread" class="overflow-y-auto wa-thread" style="max-height:300px;min-height:130px;padding:12px"></div>
+      <!-- composer (WhatsApp light bar) -->
+      <div class="flex gap-2 items-center" style="background:#f0f2f5;padding:9px 12px">
+        <input id="intercomInput" class="flex-1 text-sm" style="background:#fff;border:1px solid #d9dde1;color:#111b21;border-radius:21px;padding:10px 15px;outline:none" placeholder="{{INTERCOM_PLACEHOLDER}}" />
+        <button id="intercomSend" title="{{INTERCOM_SEND}}" aria-label="{{INTERCOM_SEND}}" style="background:#00a884;color:#fff;border:0;border-radius:50%;width:44px;height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
       </div>
-      <button id="enableNotif" class="text-sm px-3 py-2 rounded-xl border w-full" style="display:none;border-color:var(--acc);color:var(--acc)">{{ENABLE_NOTIF}}</button>
+      <button id="enableNotif" class="text-sm px-3 py-2 w-full" style="display:none;background:#fff;border-top:1px solid #e2e5e9;color:#008069;font-weight:600">{{ENABLE_NOTIF}}</button>
     </div>
 
     <p class="text-xs mono" style="color:var(--mut)">

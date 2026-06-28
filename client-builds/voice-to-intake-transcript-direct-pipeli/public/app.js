@@ -179,7 +179,7 @@
     if (el.inboxSub) el.inboxSub.textContent = d.inboxSub;
     if (el.pocHeading) el.pocHeading.textContent = d.pocHeading;
     if (el.intercomInput) el.intercomInput.placeholder = d.intercomPlaceholder;
-    if (el.intercomSend) el.intercomSend.textContent = d.intercomSend;
+    if (el.intercomSend) { el.intercomSend.title = d.intercomSend; el.intercomSend.setAttribute('aria-label', d.intercomSend); }
     if (el.inboxView && el.inboxView.style.display === 'block') {
       if (typeof renderInbox === 'function') renderInbox(inboxItems);
       if (typeof fetchIntercom === 'function') fetchIntercom();
@@ -511,22 +511,23 @@
   function renderThread(messages) {
     var d = t();
     el.intercomThread.innerHTML = '';
-    if (!getToken()) { el.intercomThread.textContent = d.inboxSignIn; return; }
+    if (!getToken()) { var si = document.createElement('div'); si.className = 'text-sm'; si.style.color = '#667781'; si.textContent = d.inboxSignIn; el.intercomThread.appendChild(si); return; }
     if (!messages || !messages.length) {
-      var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = 'var(--mut)';
+      var em = document.createElement('div'); em.className = 'text-sm'; em.style.color = '#667781';
       em.textContent = d.intercomEmpty; el.intercomThread.appendChild(em); return;
     }
     messages.forEach(function (m) {
       var mine = m.sender === 'champion';
       var wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;margin-bottom:8px;justify-content:' + (mine ? 'flex-end' : 'flex-start');
+      wrap.style.cssText = 'display:flex;margin-bottom:6px;justify-content:' + (mine ? 'flex-end' : 'flex-start');
       var bub = document.createElement('div');
-      bub.style.cssText = 'max-width:80%;padding:8px 10px;border-radius:12px;font-size:14px;' +
-        (mine ? 'background:var(--acc);color:#fff' : 'background:#1b2536;color:var(--txt);border:1px solid var(--line)');
+      // WhatsApp light: outgoing = green (#d9fdd3), incoming = white. Dark text on both.
+      bub.style.cssText = 'max-width:80%;padding:6px 9px 7px;border-radius:7.5px;font-size:14px;color:#111b21;box-shadow:0 1px .5px rgba(0,0,0,.13);' +
+        (mine ? 'background:#d9fdd3;border-top-right-radius:2px' : 'background:#fff;border-top-left-radius:2px');
       var who = document.createElement('div');
-      who.style.cssText = 'font-size:11px;opacity:.7;margin-bottom:2px';
+      who.style.cssText = 'font-size:11px;color:#667781;margin-bottom:2px;font-weight:600';
       who.textContent = (mine ? d.youLabel : d.ownerLabel) + ' · ' + fmtTime(m.created_at);
-      var txt = document.createElement('div'); txt.textContent = m.body;
+      var txt = document.createElement('div'); txt.style.cssText = 'white-space:pre-wrap;word-wrap:break-word'; txt.textContent = m.body;
       bub.appendChild(who); bub.appendChild(txt); wrap.appendChild(bub);
       el.intercomThread.appendChild(wrap);
     });
