@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <!-- Installable PWA so the owner gets a Home Screen icon that badges with unread champion messages -->
   <link rel="manifest" href="intercom.manifest.json" />
-  <meta name="theme-color" content="#111b21" />
+  <meta name="theme-color" content="#008069" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Intercom" />
@@ -46,35 +46,35 @@
     .badge{background:var(--acc);color:#04201a;border-radius:999px;font-size:12px;font-weight:700;min-width:20px;height:20px;padding:0 6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
     .empty{padding:24px 16px;color:var(--mut);font-size:13px;text-align:center}
 
-    /* ---------- Chat pane ---------- */
-    .chat{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);
-      background-image:linear-gradient(rgba(11,20,26,.96),rgba(11,20,26,.96)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Cpath d='M30 5l3 8h-6zM5 30l8 3v-6zM55 30l-8 3v-6zM30 55l3-8h-6z' fill='%23ffffff05'/%3E%3C/svg%3E")}
-    .chat-head{display:flex;align-items:center;gap:12px;padding:9px 14px;background:var(--header);min-height:60px}
-    .back{display:none;background:none;border:0;color:var(--txt);font-size:24px;line-height:1;padding:4px 4px;cursor:pointer}
-    .ch-name{font-size:16px;font-weight:500;line-height:1.2}
-    .ch-sub{font-size:12px;color:var(--mut)}
-    .thread{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 7% 10px;display:flex;flex-direction:column;gap:3px}
-    .daysep{align-self:center;background:#182229;color:var(--mut);font-size:12px;font-weight:500;padding:5px 12px;border-radius:8px;margin:10px 0;text-transform:uppercase;letter-spacing:.02em}
-    .bubble{max-width:78%;padding:6px 9px 8px;border-radius:8px;font-size:14.2px;line-height:1.35;position:relative;word-wrap:break-word;white-space:pre-wrap;box-shadow:0 1px .5px rgba(0,0,0,.2)}
-    .bubble .meta{font-size:11px;color:rgba(233,237,239,.5);float:right;margin:6px 0 -2px 10px;position:relative;top:3px}
-    .b-in{align-self:flex-start;background:var(--in);border-top-left-radius:2px}
-    .b-out{align-self:flex-end;background:var(--out);border-top-right-radius:2px}
+    /* ---------- Chat pane (WhatsApp LIGHT — matches the champion view) ---------- */
+    .chat{flex:1;display:flex;flex-direction:column;min-width:0;background:#efeae2}
+    .chat-head{display:flex;align-items:center;gap:12px;padding:9px 14px;background:#008069;min-height:60px}
+    .back{display:none;background:none;border:0;color:#fff;font-size:24px;line-height:1;padding:4px 4px;cursor:pointer}
+    .ch-name{font-size:16px;font-weight:600;line-height:1.2;color:#fff}
+    .ch-sub{font-size:12px;color:rgba(255,255,255,.85)}
+    .thread{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 7% 10px;display:flex;flex-direction:column;gap:3px;
+      background-color:#efeae2;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cg fill='%23d8d0c4' fill-opacity='0.4'%3E%3Ccircle cx='9' cy='9' r='1.4'/%3E%3Ccircle cx='31' cy='24' r='1.4'/%3E%3Ccircle cx='18' cy='36' r='1.4'/%3E%3C/g%3E%3C/svg%3E")}
+    .daysep{align-self:center;background:#fff;color:#54656f;font-size:12px;font-weight:500;padding:5px 12px;border-radius:8px;margin:10px 0;box-shadow:0 1px .5px rgba(11,20,26,.13)}
+    .bubble{max-width:78%;padding:6px 9px 8px;border-radius:8px;font-size:14.2px;line-height:1.35;position:relative;word-wrap:break-word;white-space:pre-wrap;box-shadow:0 1px .5px rgba(11,20,26,.13);color:#111b21}
+    .bubble .meta{font-size:11px;color:rgba(0,0,0,.45);float:right;margin:6px 0 -2px 10px;position:relative;top:3px}
+    .b-in{align-self:flex-start;background:#fff;border-top-left-radius:2px}
+    .b-out{align-self:flex-end;background:#d9fdd3;border-top-right-radius:2px}
     .b-in.grp{border-top-left-radius:8px}
     .b-out.grp{border-top-right-radius:8px}
-    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:14px;text-align:center;padding:20px}
+    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:#54656f;font-size:14px;text-align:center;padding:20px}
 
-    /* composer */
-    .composer{display:flex;align-items:flex-end;gap:8px;padding:8px 12px;background:var(--header);padding-bottom:calc(8px + env(safe-area-inset-bottom))}
-    .composer textarea{flex:1;background:var(--panel);border:0;border-radius:22px;color:var(--txt);padding:11px 16px;font-size:15px;font-family:inherit;outline:none;resize:none;max-height:120px;line-height:1.3}
-    .composer textarea::placeholder{color:var(--mut)}
+    /* composer (WhatsApp light bar) */
+    .composer{display:flex;align-items:flex-end;gap:8px;padding:9px 12px;background:#f0f2f5;padding-bottom:calc(9px + env(safe-area-inset-bottom))}
+    .composer textarea{flex:1;background:#fff;border:1px solid #d9dde1;border-radius:22px;color:#111b21;padding:11px 16px;font-size:15px;font-family:inherit;outline:none;resize:none;max-height:120px;line-height:1.3}
+    .composer textarea::placeholder{color:#8696a0}
     .composer textarea:disabled{opacity:.5}
-    .sendbtn{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:0;background:var(--acc);color:#04201a;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .sendbtn{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:0;background:#00a884;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
     .sendbtn:disabled{opacity:.4;cursor:default}
     .sendbtn svg{width:22px;height:22px}
 
     /* placeholder when no chat selected (desktop) */
-    .nochat{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--mut);text-align:center;padding:30px;background:var(--bg)}
-    .nochat .big{font-size:18px;color:#cfd6db;font-weight:500}
+    .nochat{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#54656f;text-align:center;padding:30px;background:#efeae2}
+    .nochat .big{font-size:18px;color:#3b4a54;font-weight:600}
 
     /* ---------- Mobile: single pane ---------- */
     @media(max-width:768px){
