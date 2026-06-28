@@ -28,6 +28,10 @@
     authStatus: document.getElementById('authStatus'),
     sendBtn: document.getElementById('sendBtn'),
     result: document.getElementById('result'),
+    fileInput: document.getElementById('fileInput'),
+    attachBtn: document.getElementById('attachBtn'),
+    attachHint: document.getElementById('attachHint'),
+    attachList: document.getElementById('attachList'),
     langBtn: document.getElementById('langBtn'),
     notSupportedHint: document.getElementById('notSupportedHint'),
     inboxBtn: document.getElementById('inboxBtn'),
@@ -179,6 +183,9 @@
       if (typeof renderInbox === 'function') renderInbox(inboxItems);
       if (typeof fetchIntercom === 'function') fetchIntercom();
     }
+    if (el.attachBtn) el.attachBtn.textContent = d.attachLabel;
+    if (el.attachHint) el.attachHint.textContent = d.attachHint;
+    if (typeof renderAttachList === 'function') renderAttachList();
     if (typeof updateNotifBtn === 'function') updateNotifBtn();
     if (typeof updateChampBanner === 'function') updateChampBanner();
   }
@@ -252,12 +259,55 @@
   });
 
   // ---- Send to intake ---------------------------------------------------
+  // ---- Attachments (PDF / Word / text …) --------------------------------
+  var ALLOWED_EXT = ['txt', 'md', 'pdf', 'doc', 'docx', 'csv', 'rtf'];
+  var MAX_FILE_BYTES = 10 * 1024 * 1024;
+  var MAX_FILES = 5;
+  var selectedFiles = [];
+  function extOf(name) { var m = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
+  function fmtSize(n) { n = Number(n) || 0; if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(0) + ' KB'; return (n / 1048576).toFixed(1) + ' MB'; }
+  function renderAttachList() {
+    var d = t();
+    if (!el.attachList) return;
+    el.attachList.innerHTML = '';
+    selectedFiles.forEach(function (f, i) {
+      var row = document.createElement('div');
+      row.className = 'flex items-center justify-between rounded-lg px-3 py-2 mb-1 text-sm';
+      row.style.cssText = 'background:var(--bg2);border:1px solid var(--line)';
+      var name = document.createElement('span');
+      name.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px';
+      name.textContent = f.name + '  (' + fmtSize(f.size) + ')';
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.textContent = '✕'; rm.title = d.attachRemove || 'Remove';
+      rm.style.cssText = 'color:var(--mut);flex:0 0 auto;font-weight:700;cursor:pointer';
+      rm.addEventListener('click', function () { selectedFiles.splice(i, 1); renderAttachList(); });
+      row.appendChild(name); row.appendChild(rm); el.attachList.appendChild(row);
+    });
+  }
+  function addFiles(fileList) {
+    var d = t();
+    el.result.style.color = '#ef4444';
+    var msgs = [];
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i];
+      if (selectedFiles.length >= MAX_FILES) { msgs.push(d.attachTooMany || 'Up to 5 files.'); break; }
+      if (ALLOWED_EXT.indexOf(extOf(f.name)) === -1) { msgs.push(f.name + ' ' + (d.attachBadType || 'not supported.')); continue; }
+      if (f.size > MAX_FILE_BYTES) { msgs.push(f.name + ' ' + (d.attachTooBig || 'too large.')); continue; }
+      if (selectedFiles.some(function (x) { return x.name === f.name && x.size === f.size; })) continue; // dedupe
+      selectedFiles.push(f);
+    }
+    renderAttachList();
+    el.result.textContent = msgs.length ? msgs.join(' ') : '';
+  }
+  if (el.attachBtn) el.attachBtn.addEventListener('click', function () { el.fileInput.click(); });
+  if (el.fileInput) el.fileInput.addEventListener('change', function () { addFiles(el.fileInput.files || []); el.fileInput.value = ''; });
+
   el.sendBtn.addEventListener('click', function () {
     var d = t();
     var transcript = (el.transcript.value || '').trim();
     var token = getToken();
     el.result.style.color = '#ef4444';
-    if (!transcript) { el.result.textContent = d.emptyTranscript; return; }
+    if (!transcript && !selectedFiles.length) { el.result.textContent = d.emptyTranscript; return; }
     if (!token) {
       // No session and nothing pasted — reveal the fallback field and prompt.
       el.tokenWrap.style.display = 'block';
@@ -270,10 +320,17 @@
     el.sendBtn.disabled = true;
     el.sendBtn.textContent = d.sending;
 
+    // multipart so files ride along; let the browser set the boundary header.
+    var fd = new FormData();
+    fd.append('transcript', transcript);
+    fd.append('lang', lang);
+    fd.append('created_at', new Date().toISOString());
+    selectedFiles.forEach(function (f) { fd.append('attachments', f, f.name); });
+
     fetch(API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ transcript: transcript, lang: lang, created_at: new Date().toISOString() })
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd
     }).then(function (r) {
       return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
     }).then(function (res) {
@@ -281,10 +338,13 @@
       el.sendBtn.textContent = d.sendLabel;
       if (res.ok) {
         var fs = res.body.forward_status === 'forwarded' ? d.forwarded : d.mocked;
+        var nAtt = (res.body.attachments && res.body.attachments.length) || 0;
         el.result.style.color = 'var(--green)';
-        el.result.textContent = d.sent + res.body.id + ' · ' + fs;
+        el.result.textContent = d.sent + res.body.id + ' · ' + fs + (nAtt ? ' · ' + nAtt + ' ' + (d.attachAdded || 'attached') : '');
         el.transcript.value = '';
         committed = '';
+        selectedFiles = [];
+        renderAttachList();
         // New request submitted — refresh the inbox now and again as the PoC
         // teaser finishes generating in the background.
         if (typeof fetchInbox === 'function') {

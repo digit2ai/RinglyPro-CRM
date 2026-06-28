@@ -30,9 +30,26 @@ function deriveTitle(transcript, lang) {
   return `${prefix} — ${snippet}`;
 }
 
+function fmtSize(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(0) + ' KB';
+  return (n / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Append a human-readable attachments block (filename + clickable signed link)
+// to the project description so the owner can open them from the Inbox.
+function withAttachments(text, lang, attachments) {
+  const atts = Array.isArray(attachments) ? attachments : [];
+  if (!atts.length) return text;
+  const header = lang === 'es' ? 'Archivos adjuntos:' : 'Attachments:';
+  const lines = atts.map((a) => `- ${a.filename} (${fmtSize(a.size_bytes)}): ${a.url}`);
+  return String(text || '') + '\n\n' + header + '\n' + lines.join('\n');
+}
+
 // intake: the persisted row. submitter: { full_name, email } from the JWT.
-// Returns 'forwarded' | 'failed'. Never throws.
-async function forwardToIntake(intake, submitter) {
+// attachments: [{ filename, size_bytes, url }] (optional). Returns status. Never throws.
+async function forwardToIntake(intake, submitter, attachments) {
   const transcript_len = intake && intake.transcript ? String(intake.transcript).length : 0;
   const logBase = {
     intake_id: intake && intake.id,
@@ -65,6 +82,7 @@ async function forwardToIntake(intake, submitter) {
           tenant_id: intake.tenant_id,
           triage_bypass: intake.triage_bypass !== false,
           created_at: intake.created_at,
+          attachments: Array.isArray(attachments) ? attachments : [],
           source: 'voice-to-intake-transcript-direct-pipeli'
         })
       });
@@ -77,13 +95,15 @@ async function forwardToIntake(intake, submitter) {
     const sub = submitter || {};
     const email = sub.email || `tenant-${intake.tenant_id}@voice-intake.digit2ai.local`;
     const fullName = sub.full_name || `Voice Intake (tenant ${intake.tenant_id})`;
+    const description = withAttachments(intake.transcript, intake.lang, attachments);
     const payload = {
       full_name: fullName,
       email,
       company_name: sub.company_name || fullName,
       project_title: deriveTitle(intake.transcript, intake.lang),
-      problem: intake.transcript,
-      project_description: intake.transcript,
+      problem: description,
+      project_description: description,
+      attachments: Array.isArray(attachments) ? attachments : [],
       ai_category: ['Voice agent (inbound / outbound)'],
       timeline: '',
       heard_from: 'Voice-to-Intake app',

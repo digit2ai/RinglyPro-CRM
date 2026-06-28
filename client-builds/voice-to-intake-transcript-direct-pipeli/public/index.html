@@ -73,6 +73,17 @@
           placeholder="{{TOKEN_PLACEHOLDER}}" />
       </div>
 
+      <!-- Attachments: PDF / Word / text etc. uploaded alongside the request -->
+      <div class="mb-3">
+        <input id="fileInput" type="file" multiple
+          accept=".txt,.md,.pdf,.doc,.docx,.csv,.rtf,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/csv,application/rtf"
+          style="display:none" />
+        <button id="attachBtn" type="button" class="w-full rounded-xl py-2.5 text-sm font-semibold"
+          style="background:var(--bg2);border:1px solid var(--line);color:var(--txt)">{{ATTACH_LABEL}}</button>
+        <div id="attachHint" class="text-xs mt-1" style="color:var(--mut)">{{ATTACH_HINT}}</div>
+        <div id="attachList" class="mt-2"></div>
+      </div>
+
       <button id="sendBtn" class="w-full rounded-xl py-3 font-semibold"
         style="background:var(--green);color:#06281c">{{SEND_LABEL}}</button>
       <div id="result" class="text-sm mono mt-3" style="min-height:18px"></div>

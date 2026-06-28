@@ -13,6 +13,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const store = require('./models/intake');
+const attachStore = require('./models/attachment');
 const I18N = require('./public/i18n');
 
 const app = express();
@@ -67,7 +68,9 @@ function renderIndex(lang, championCode) {
     .replace(/{{INTERCOM_PLACEHOLDER}}/g, d.intercomPlaceholder)
     .replace(/{{INTERCOM_SEND}}/g, d.intercomSend)
     .replace(/{{POC_HEADING}}/g, d.pocHeading)
-    .replace(/{{ENABLE_NOTIF}}/g, d.enableNotif);
+    .replace(/{{ENABLE_NOTIF}}/g, d.enableNotif)
+    .replace(/{{ATTACH_LABEL}}/g, d.attachLabel)
+    .replace(/{{ATTACH_HINT}}/g, d.attachHint);
 }
 
 // Kick off DB init (non-blocking; falls back to in-memory on failure).
@@ -75,6 +78,11 @@ store.init().then((r) => {
   console.log('📝 voice-to-intake store mode:', r.mode);
 }).catch((e) => {
   console.error('voice-to-intake store init error:', e.message);
+});
+attachStore.init().then((r) => {
+  console.log('📎 voice-to-intake attachment store mode:', r.mode);
+}).catch((e) => {
+  console.error('voice-to-intake attachment store init error:', e.message);
 });
 
 // Routes

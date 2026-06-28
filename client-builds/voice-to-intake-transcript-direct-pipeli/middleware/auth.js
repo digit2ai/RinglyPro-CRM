@@ -113,4 +113,4 @@ function requireCrmAuth(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireCrmAuth, extractTenantId, signChampion, emailToTenant };
+module.exports = { requireAuth, requireCrmAuth, extractTenantId, signChampion, emailToTenant, getCredential, verifyAny };
