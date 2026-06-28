@@ -17,6 +17,14 @@ const attachStore = require('./models/attachment');
 const I18N = require('./public/i18n');
 
 const app = express();
+// Intercom voice notes arrive as base64 JSON — too big for the 256kb global
+// limit. Parse those specific endpoints first with a larger cap so the global
+// parser below skips them (express.json no-ops once the body is parsed).
+const audioJsonParser = express.json({ limit: '6mb' });
+app.use(function (req, res, next) {
+  if (req.method === 'POST' && /^\/api\/v1\/intercom\/.*\/audio$/.test(req.path)) return audioJsonParser(req, res, next);
+  next();
+});
 app.use(express.json({ limit: '256kb' }));
 
 // Pre-load the HTML template once; render with the requested language so a raw
@@ -67,6 +75,7 @@ function renderIndex(lang, championCode) {
     .replace(/{{INBOX_SUB}}/g, d.inboxSub)
     .replace(/{{INTERCOM_PLACEHOLDER}}/g, d.intercomPlaceholder)
     .replace(/{{INTERCOM_SEND}}/g, d.intercomSend)
+    .replace(/{{INTERCOM_MIC}}/g, d.intercomMic || 'Record voice message')
     .replace(/{{POC_HEADING}}/g, d.pocHeading)
     .replace(/{{ENABLE_NOTIF}}/g, d.enableNotif)
     .replace(/{{ATTACH_LABEL}}/g, d.attachLabel)

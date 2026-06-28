@@ -47,6 +47,10 @@
     intercomThread: document.getElementById('intercomThread'),
     intercomInput: document.getElementById('intercomInput'),
     intercomSend: document.getElementById('intercomSend'),
+    intercomMic: document.getElementById('intercomMic'),
+    intercomRecbar: document.getElementById('intercomRecbar'),
+    intercomRecTime: document.getElementById('intercomRecTime'),
+    intercomRecCancel: document.getElementById('intercomRecCancel'),
     pocHeading: document.getElementById('pocHeading'),
     enableNotif: document.getElementById('enableNotif'),
     champBanner: document.getElementById('champBanner'),
@@ -519,6 +523,34 @@
   // ---- Intercom chat (champion <-> owner) -------------------------------
   function fmtTime(s) { try { return new Date(s).toLocaleString(); } catch (e) { return ''; } }
 
+  // ---- Voice messages (record + play) ----
+  var IC_PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var IC_PAUSE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+  function icFmtDur(s) { s = Math.max(0, Math.round(s || 0)); var m = Math.floor(s / 60); var ss = s % 60; return m + ':' + (ss < 10 ? '0' : '') + ss; }
+  var icPlayers = {}, icCurrent = null;
+  function icTogglePlay(wrap) {
+    var id = wrap.getAttribute('data-id');
+    var playBtn = wrap.querySelector('.ic-vmsg-play'), prog = wrap.querySelector('.ic-vmsg-prog'), durEl = wrap.querySelector('.ic-vmsg-dur');
+    var token = getToken(); if (!token) return;
+    var p = icPlayers[id];
+    if (p && !p.audio.paused) { p.audio.pause(); return; }
+    if (icCurrent && icCurrent !== (p && p.audio)) { try { icCurrent.pause(); } catch (e) {} }
+    if (p) { icCurrent = p.audio; p.audio.play(); return; }
+    playBtn.innerHTML = '…';
+    fetch(API_INTERCOM + '/audio/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { if (!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob); var audio = new Audio(url); var total = durEl.textContent;
+        icPlayers[id] = { audio: audio, url: url };
+        audio.addEventListener('timeupdate', function () { if (audio.duration) { prog.style.width = (audio.currentTime / audio.duration * 100) + '%'; durEl.textContent = icFmtDur(audio.duration - audio.currentTime); } });
+        audio.addEventListener('play', function () { playBtn.innerHTML = IC_PAUSE_SVG; icCurrent = audio; });
+        audio.addEventListener('pause', function () { playBtn.innerHTML = IC_PLAY_SVG; });
+        audio.addEventListener('ended', function () { playBtn.innerHTML = IC_PLAY_SVG; prog.style.width = '0%'; durEl.textContent = total; });
+        icCurrent = audio; audio.play().catch(function () { playBtn.innerHTML = IC_PLAY_SVG; });
+      })
+      .catch(function () { playBtn.innerHTML = IC_PLAY_SVG; });
+  }
+
   function renderThread(messages) {
     var d = t();
     el.intercomThread.innerHTML = '';
@@ -538,8 +570,18 @@
       var who = document.createElement('div');
       who.style.cssText = 'font-size:11px;color:#667781;margin-bottom:2px;font-weight:600';
       who.textContent = (mine ? d.youLabel : d.ownerLabel) + ' · ' + fmtTime(m.created_at);
-      var txt = document.createElement('div'); txt.style.cssText = 'white-space:pre-wrap;word-wrap:break-word'; txt.textContent = m.body;
-      bub.appendChild(who); bub.appendChild(txt); wrap.appendChild(bub);
+      bub.appendChild(who);
+      if (m.msg_type === 'audio') {
+        var vm = document.createElement('div'); vm.className = 'ic-vmsg'; vm.setAttribute('data-id', m.id);
+        vm.innerHTML = '<button class="ic-vmsg-play" aria-label="Play">' + IC_PLAY_SVG + '</button>' +
+          '<div class="ic-vmsg-bar"><div class="ic-vmsg-prog"></div></div>' +
+          '<span class="ic-vmsg-dur">' + icFmtDur(m.audio_duration) + '</span>';
+        bub.appendChild(vm);
+      } else {
+        var txt = document.createElement('div'); txt.style.cssText = 'white-space:pre-wrap;word-wrap:break-word'; txt.textContent = m.body;
+        bub.appendChild(txt);
+      }
+      wrap.appendChild(bub);
       el.intercomThread.appendChild(wrap);
     });
     el.intercomThread.scrollTop = el.intercomThread.scrollHeight;
@@ -595,13 +637,69 @@
     var body = (el.intercomInput.value || '').trim();
     if (!token || !body) return;
     el.intercomInput.value = '';
+    if (typeof icUpdateSendMic === 'function') icUpdateSendMic();
     fetch(API_INTERCOM + '/me', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({ body: body })
     }).then(function () { fetchIntercom(); }).catch(function () {});
   }
 
-  el.intercomSend.addEventListener('click', function () { ensurePush(); sendIntercom(); });
+  // Toggle mic (empty) vs paper-plane send (has text), WhatsApp-style.
+  function icUpdateSendMic() {
+    if (!el.intercomMic || !el.intercomSend) return;
+    if (el.intercomRecbar && el.intercomRecbar.style.display === 'flex') return; // recording: handled separately
+    var hasText = (el.intercomInput.value || '').trim().length > 0;
+    el.intercomSend.style.display = hasText ? 'flex' : 'none';
+    el.intercomMic.style.display = hasText ? 'none' : 'flex';
+  }
+
+  // Recording
+  var icRec = null, icChunks = [], icMime = '', icTimer = null, icStart = 0, icStream = null, icCancelled = false;
+  function icPickMime() { var c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/aac']; for (var i = 0; i < c.length; i++) { try { if (window.MediaRecorder && MediaRecorder.isTypeSupported(c[i])) return c[i]; } catch (e) {} } return ''; }
+  function icShowRec(on) {
+    if (el.intercomRecbar) el.intercomRecbar.style.display = on ? 'flex' : 'none';
+    el.intercomInput.style.display = on ? 'none' : '';
+    if (on) { el.intercomMic.style.display = 'none'; el.intercomSend.style.display = 'flex'; }
+    else { icUpdateSendMic(); }
+  }
+  function icTick() { var s = (Date.now() - icStart) / 1000; if (el.intercomRecTime) el.intercomRecTime.textContent = icFmtDur(s); if (s >= 120) icStop(); }
+  function icStopStream() { if (icStream) { icStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); icStream = null; } if (icTimer) { clearInterval(icTimer); icTimer = null; } }
+  function icStop() { if (icRec && icRec.state !== 'inactive') { try { icRec.stop(); } catch (e) {} } }
+  function icCancel() { icCancelled = true; icStop(); icStopStream(); icShowRec(false); }
+  function icStartRec() {
+    if (!getToken()) return;
+    if (!navigator.mediaDevices || !window.MediaRecorder) { alert('Voice messages are not supported in this browser.'); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      icStream = stream; icCancelled = false; icMime = icPickMime(); icChunks = [];
+      try { icRec = icMime ? new MediaRecorder(stream, { mimeType: icMime }) : new MediaRecorder(stream); } catch (e) { icRec = new MediaRecorder(stream); }
+      icMime = icRec.mimeType || icMime || 'audio/webm';
+      icRec.ondataavailable = function (ev) { if (ev.data && ev.data.size) icChunks.push(ev.data); };
+      icRec.onstop = function () { icStopStream(); if (icCancelled) return; icFinish(); };
+      icRec.start(); icStart = Date.now(); icShowRec(true); icTick(); icTimer = setInterval(icTick, 250);
+    }).catch(function () { alert('Microphone access denied. Enable mic permission to send voice messages.'); });
+  }
+  function icFinish() {
+    var dur = Math.round((Date.now() - icStart) / 1000);
+    icShowRec(false);
+    var token = getToken();
+    if (!icChunks.length || !token) return;
+    var blob = new Blob(icChunks, { type: icMime });
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      var b64 = String(reader.result || ''); var comma = b64.indexOf(','); if (comma !== -1) b64 = b64.slice(comma + 1);
+      fetch(API_INTERCOM + '/me/audio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ audio: b64, mime: icMime, duration: dur })
+      }).then(function () { fetchIntercom(); }).catch(function () { fetchIntercom(); });
+    };
+    reader.readAsDataURL(blob);
+  }
+
+  el.intercomThread.addEventListener('click', function (e) { var w = e.target.closest && e.target.closest('.ic-vmsg'); if (w) icTogglePlay(w); });
+  if (el.intercomMic) el.intercomMic.addEventListener('click', function () { ensurePush(); icStartRec(); });
+  if (el.intercomRecCancel) el.intercomRecCancel.addEventListener('click', icCancel);
+  el.intercomSend.addEventListener('click', function () { if (el.intercomRecbar && el.intercomRecbar.style.display === 'flex') { icStop(); } else { ensurePush(); sendIntercom(); } });
+  el.intercomInput.addEventListener('input', icUpdateSendMic);
   el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
 
   // Keyboard handling is done via the viewport meta (interactive-widget=

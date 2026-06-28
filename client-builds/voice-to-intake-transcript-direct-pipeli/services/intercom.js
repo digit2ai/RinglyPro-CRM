@@ -26,23 +26,39 @@ async function ensureTable(seq) {
      )`
   );
   await seq.query(`CREATE INDEX IF NOT EXISTS idx_${TABLE}_email ON ${TABLE} (champion_email)`);
+  // Voice-message support (added later): text rows keep msg_type='text' + NULL audio.
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS msg_type VARCHAR(16) NOT NULL DEFAULT 'text'`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_data BYTEA`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_mime VARCHAR(64)`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_duration INTEGER`);
   tableReady = true;
 }
 
 function norm(email) { return String(email || '').trim().toLowerCase(); }
 
-async function postMessage({ email, name, sender, body }) {
+async function postMessage({ email, name, sender, body, msgType, audioData, audioMime, audioDuration }) {
   const seq = getSequelize();
   await ensureTable(seq);
   const e = norm(email);
   const readChamp = sender === 'champion';
   const readOwner = sender === 'owner';
+  const type = msgType === 'audio' ? 'audio' : 'text';
+  const text = type === 'audio' ? '[Voice message]' : String(body).slice(0, 4000);
+  // BYTEA must go through real bind params ($1..) so the pg driver sends the
+  // Buffer as binary; Sequelize `replacements` does string interpolation and
+  // would corrupt the audio. So everything here uses `bind`.
   const [rows] = await seq.query(
-    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, read_by_champion, read_by_owner, created_at)
-     VALUES (:email, :name, :sender, :body, :rc, :ro, NOW()) RETURNING id, created_at`,
-    // champion_name stays NULL on owner rows so listThreads' MAX(name) keeps the
-    // real champion name (set by the champion's own messages).
-    { replacements: { email: e, name: name || null, sender, body: String(body).slice(0, 4000), rc: readChamp, ro: readOwner } }
+    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, msg_type, audio_data, audio_mime, audio_duration, read_by_champion, read_by_owner, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id, created_at`,
+    {
+      bind: [
+        e, name || null, sender, text, type,
+        type === 'audio' ? (audioData || null) : null,
+        type === 'audio' ? (audioMime || 'audio/webm') : null,
+        type === 'audio' ? (audioDuration || null) : null,
+        readChamp, readOwner
+      ]
+    }
   );
   return rows[0];
 }
@@ -51,10 +67,22 @@ async function getThread(email) {
   const seq = getSequelize();
   await ensureTable(seq);
   const [rows] = await seq.query(
-    `SELECT id, sender, body, created_at FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
+    `SELECT id, sender, body, created_at, msg_type, audio_mime, audio_duration FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
     { replacements: { email: norm(email) } }
   );
   return rows;
+}
+
+// Returns the raw audio bytes for one message (or null). Includes champion_email
+// so the route can authorize champion access to their own thread only.
+async function getAudio(id) {
+  const seq = getSequelize();
+  await ensureTable(seq);
+  const [rows] = await seq.query(
+    `SELECT id, champion_email, audio_data, audio_mime FROM ${TABLE} WHERE id = :id AND msg_type = 'audio' LIMIT 1`,
+    { replacements: { id: parseInt(id, 10) || 0 } }
+  );
+  return rows[0] || null;
 }
 
 async function markReadByChampion(email) {
@@ -116,6 +144,6 @@ async function listThreads() {
 }
 
 module.exports = {
-  postMessage, getThread, markReadByChampion, markReadByOwner,
+  postMessage, getThread, getAudio, markReadByChampion, markReadByOwner,
   unreadForChampion, totalUnreadForOwner, listThreads, TABLE
 };
