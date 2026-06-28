@@ -207,6 +207,20 @@ async function refreshIntercomBadge() {
       }
     }
     paintQaBadge('qa-intercom-badge', unread, '#ef4444'); // Home quick-action badge
+    setHubAppBadge(unread); // installed-PWA dock/home-screen icon badge
+  } catch (e) { /* silent */ }
+}
+
+// Badge the installed Projects Hub app icon (dock on macOS, taskbar on Windows,
+// home screen on iOS 16.4+) with the unread Intercom count. No-op in browsers
+// that don't support the Badging API or when the app isn't installed.
+function setHubAppBadge(n) {
+  try {
+    if (n > 0) {
+      if (navigator.setAppBadge) navigator.setAppBadge(n);
+    } else {
+      if (navigator.clearAppBadge) navigator.clearAppBadge();
+    }
   } catch (e) { /* silent */ }
 }
 
