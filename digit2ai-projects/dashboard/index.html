@@ -183,8 +183,29 @@
     var badge=document.getElementById('intercom-badge');
     if(!badge) return;
     function tok(){ try{ var v=localStorage.getItem('token'); return (v&&v.split('.').length===3)?v:null; }catch(e){ return null; } }
+
+    // --- TEMP diagnostic chip: shows whether the Badging API is present and
+    // whether setAppBadge succeeds, so we can see why the dock icon isn't badging.
+    var dbg=document.createElement('div');
+    dbg.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99999;background:rgba(0,0,0,.85);color:#9eff9e;font:11px/1.5 ui-monospace,Menlo,monospace;padding:6px 9px;border-radius:8px;max-width:340px;border:1px solid #2b6e2b;white-space:pre-wrap';
+    var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||(navigator.standalone===true);
+    var apiSet=('setAppBadge' in navigator), apiClear=('clearAppBadge' in navigator);
+    var perm=(window.Notification&&Notification.permission)||'n/a';
+    function setBadgeVal(n){
+      var r='skip';
+      try {
+        if(n>0){ if(navigator.setAppBadge){ navigator.setAppBadge(n); r='set('+n+')'; } else r='no-api'; }
+        else { if(navigator.clearAppBadge){ navigator.clearAppBadge(); r='clear'; } else r='no-api'; }
+      } catch(e){ r='ERR:'+(e&&e.message||e); }
+      dbg.textContent='BADGE DIAG\nstandalone(installed): '+standalone+'\nsetAppBadge api: '+apiSet+'\nclearAppBadge api: '+apiClear+'\nnotif perm: '+perm+'\nunread: '+n+'\nresult: '+r+'\n(tap to dismiss)';
+    }
+    dbg.textContent='BADGE DIAG\nstandalone(installed): '+standalone+'\nsetAppBadge api: '+apiSet+'\nnotif perm: '+perm+'\n(waiting for poll…)\n(tap to dismiss)';
+    dbg.addEventListener('click',function(){ dbg.remove(); });
+    document.addEventListener('DOMContentLoaded',function(){ document.body.appendChild(dbg); });
+    if(document.body) document.body.appendChild(dbg);
+
     function poll(){
-      var t=tok(); if(!t) return;
+      var t=tok(); if(!t){ dbg.textContent='BADGE DIAG\nstandalone(installed): '+standalone+'\nsetAppBadge api: '+apiSet+'\nnotif perm: '+perm+'\nNO TOKEN in localStorage[token]\n(tap to dismiss)'; return; }
       fetch('/voice-to-intake-transcript-direct-pipeli/api/v1/intercom/threads/unread',{headers:{'Authorization':'Bearer '+t}})
         .then(function(r){ return r.ok?r.json():{total_unread:0}; })
         .then(function(d){
@@ -193,7 +214,7 @@
           // Badge the installed-PWA dock/taskbar/home-screen icon. Done here (not
           // only in app.js) because this poller uses the SSO-mirrored 'token'
           // key that is actually populated, so it always runs.
-          try { if(n>0){ if(navigator.setAppBadge) navigator.setAppBadge(n); } else { if(navigator.clearAppBadge) navigator.clearAppBadge(); } } catch(e){}
+          setBadgeVal(n);
         })
         .catch(function(){});
     }
