@@ -121,12 +121,14 @@ async function showApp() {
   maybeShowIosInstallHint(); // iOS has no install prompt event — show the hint
   if (!window._inboxBadgePoll) {
     window._inboxBadgePoll = setInterval(() => {
+      // Intercom badge runs even when the window is unfocused/backgrounded —
+      // that's exactly when the dock app-icon badge matters most.
+      refreshIntercomBadge();
       if (document.hidden) return;
       refreshInboxBadge();
       refreshMessagesBadge();
       refreshEmailBadge();
       refreshNotifBadge();
-      refreshIntercomBadge();
     }, 60000);
   }
   // PWA shortcut deep-links: /projects/?view=email|messages|calendar|...
@@ -252,7 +254,13 @@ async function ensureHubPush(askPermission) {
     const keyRes = await fetch(VTI_INTERCOM + '/vapid-public-key', { cache: 'no-store' });
     const keyData = keyRes.ok ? await keyRes.json() : null;
     if (!keyData || !keyData.enabled || !keyData.key) return;
-    const reg = await navigator.serviceWorker.ready;
+    // Use the registration by scope (the page may be at /projects without a
+    // trailing slash, so it isn't "controlled" and serviceWorker.ready can hang).
+    let reg = window._hubSWReg
+      || await navigator.serviceWorker.getRegistration('/projects/')
+      || await navigator.serviceWorker.getRegistration('/projects/sw.js')
+      || await navigator.serviceWorker.ready;
+    if (!reg || !reg.pushManager) return;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(keyData.key) });
     await fetch(VTI_INTERCOM + '/owner/subscribe', {
@@ -9138,7 +9146,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // PWA Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/projects/sw.js')
-      .then(() => { ensureHubPush(false); })   // silent re-subscribe if already granted
+      .then((reg) => { window._hubSWReg = reg; ensureHubPush(false); })   // silent re-subscribe if already granted
       .catch(() => {});
   }
 });
