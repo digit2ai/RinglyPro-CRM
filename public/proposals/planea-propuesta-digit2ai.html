@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Costos de Entrega — PLANEA · Fase 0 (PoC / MVP)</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  td.save{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
+    h2{break-after:avoid}
+    table.fin,.card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>INFORME DE COSTOS DE ENTREGA</h1>
+  <p class="sub">PLANEA — Planeación Financiera Integral (Colombia) · Fase 0 (PoC / MVP) · Modelo de Entrega AI-Native</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>PLANEA (Planeación Financiera Integral)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">Atención:</td><td>Eduardo Delima</td><td class="lbl">Asunto:</td><td>Estructura de costo de la Fase 0 (PoC / MVP)</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$140 USD/hora (costo cargado)</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega de la Fase 0. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
+  </table>
+
+  <h2>1. Contexto y alcance de la Fase 0</h2>
+  <p>Este informe presenta la <strong>estructura de costo directo</strong> de la <strong>Fase 0 (Prueba de Concepto / MVP)</strong> de PLANEA bajo el modelo <strong>AI-Native</strong> de Digit2AI: scaffolding generado y probado iterativamente por la fuerza de agentes, que reduce la carga de ingeniería a <strong>160 horas efectivas</strong>.</p>
+  <p>La Fase 0 construye únicamente la <strong>cuña defendible y monetizable</strong> que el Triage de IA recomendó priorizar: el <strong>motor de matching inversionista–proyecto</strong> y el <strong>módulo de simulación financiera</strong>. Es <strong>grado-demo</strong>, <strong>sin asesoría financiera regulada</strong>, lo que la mantiene fuera del perímetro de habilitación de la SFC mientras se valida el mercado y se define presupuesto.</p>
+  <p><strong>Quedan FUERA de la Fase 0</strong> (se difieren a fases posteriores): módulos de patrimonio, seguros e impuestos (los tres regulados); KYC / SARLAFT y movimiento real de capital; integración con datos bancarios en vivo (Belvo); endurecimiento productivo de autenticación y multi-tenant. Cada pantalla lleva el aviso <em>"información, no asesoría"</em>.</p>
+
+  <h2>2. Costo de Desarrollo de la Fase 0 (CAPEX)</h2>
+  <p>Alcance de la cuña, organizado en componentes sobre nuestra arquitectura AI-Native. Costo por componente al costo interno cargado de $140 USD/hora (sin margen ni IVA):</p>
+
+  <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y despliegue</h3>
+    Esquema de datos (inversionistas, proyectos, matches), microservicio base, entorno desplegado en vivo (Render) desde el día uno para iteración continua.
+    <div class="price">16 hrs · Costo: $2.240 USD</div></div>
+
+  <div class="card"><h3>Componente 2: Intake de Inversionista</h3>
+    Formulario bilingüe ES/EN: capital disponible, tolerancia al riesgo, sectores de interés, ticket y horizonte de inversión.
+    <div class="price">14 hrs · Costo: $1.960 USD</div></div>
+
+  <div class="card"><h3>Componente 3: Intake de Proyecto / Oportunidad</h3>
+    Captura de monto a levantar, sector, etapa, uso de fondos, retorno esperado y región del proyecto.
+    <div class="price">12 hrs · Costo: $1.680 USD</div></div>
+
+  <div class="card"><h3>Componente 4: Motor de Matching con IA</h3>
+    Ranqueo inversionista&harr;proyecto con score transparente y racional explicable en lenguaje natural ("por qué este match") — el diferenciador frente a los comparadores cargados de texto.
+    <div class="price">32 hrs · Costo: $4.480 USD</div></div>
+
+  <div class="card"><h3>Componente 5: Shortlist ranqueada y UI de resultados</h3>
+    Lista corta priorizada por afinidad, fichas de match, navegación y selección para simulación.
+    <div class="price">16 hrs · Costo: $2.240 USD</div></div>
+
+  <div class="card"><h3>Componente 6: Módulo de Simulación Financiera</h3>
+    Escenarios sobre un match seleccionado: retorno proyectado, capital en riesgo, tiempo de recuperación y sliders de sensibilidad (monto / horizonte / tasa). Salida visual, no hoja de cálculo.
+    <div class="price">28 hrs · Costo: $3.920 USD</div></div>
+
+  <div class="card"><h3>Componente 7: Exportación PDF de resumen por match</h3>
+    Resumen de una página por match (perfil, score, racional y escenario) exportable para compartir con inversionistas.
+    <div class="price">10 hrs · Costo: $1.400 USD</div></div>
+
+  <div class="card"><h3>Componente 8: Panel admin y dataset semilla</h3>
+    CRUD de inversionistas y proyectos demo, más un conjunto de datos colombianos sintéticos realistas para que demuestre sin configuración previa.
+    <div class="price">14 hrs · Costo: $1.960 USD</div></div>
+
+  <div class="card"><h3>Componente 9: Pulido bilingüe, disclaimers, QA y UAT</h3>
+    Acabado ES (por defecto) + EN, avisos "información, no asesoría", pruebas, ajuste del dataset y validación de aceptación (UAT) con Eduardo.
+    <div class="price">18 hrs · Costo: $2.520 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Subtotal de los 9 componentes de la cuña (incluye gestión, QA y UAT)</td><td class="num">160</td><td class="num">$22.400</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO — FASE 0 (CAPEX)</td><td class="num">160</td><td class="num">$22.400 USD</td></tr>
+  </table>
+  <p class="muted">Plazo de entrega: <span class="pill">3–4 semanas</span>. Banda de costo según nivel de acabado: <strong>$18.000 USD</strong> (versión lean, ~129 hrs) a <strong>$25.000 USD</strong> (versión pulida para pitch a inversionistas, ~179 hrs). Ancla recomendada: <strong>$22.400 USD</strong>.</p>
+
+  <h2>3. Cronograma de Entrega (costo por semana)</h2>
+  <div class="twocol">
+    <div class="card"><h3>Semana 1 — Cimientos e Intakes</h3>
+      <ul class="tight">
+        <li>Componente 1 (Arquitectura + modelo de datos + deploy)</li>
+        <li>Componente 2 (Intake de inversionista)</li>
+        <li>Componente 3 (Intake de proyecto)</li>
+      </ul>
+      <div class="price">42 hrs · Costo: $5.880 USD</div></div>
+    <div class="card"><h3>Semana 2 — Motor de Matching</h3>
+      <ul class="tight">
+        <li>Componente 4 (Matching IA + explicabilidad)</li>
+        <li>Componente 5 (Shortlist + UI de resultados)</li>
+      </ul>
+      <div class="price">48 hrs · Costo: $6.720 USD</div></div>
+    <div class="card"><h3>Semana 3 — Simulación</h3>
+      <ul class="tight">
+        <li>Componente 6 (Simulación financiera + sliders)</li>
+        <li>Componente 7 (Exportación PDF)</li>
+      </ul>
+      <div class="price">38 hrs · Costo: $5.320 USD</div></div>
+    <div class="card"><h3>Semana 4 — Demo y Entrega</h3>
+      <ul class="tight">
+        <li>Componente 8 (Admin + dataset semilla)</li>
+        <li>Componente 9 (Pulido ES/EN, disclaimers, QA, UAT)</li>
+      </ul>
+      <div class="price">32 hrs · Costo: $4.480 USD</div></div>
+  </div>
+  <p class="muted">Suma de las 4 semanas = 160 horas = <strong>$22.400 USD</strong> de costo total de desarrollo de la Fase 0.</p>
+
+  <h2>4. Costo Operativo del Demo (OPEX)</h2>
+  <p>Costo recurrente real de operar el entorno de demostración durante la Fase 0 y su ventana de validación con inversionistas. Volumen de demo (datos sintéticos). La línea marcada con (*) es variable: escala con el número de simulaciones y matches ejecutados.</p>
+  <table class="fin">
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
+    <tr><td>Render — servicio web + PostgreSQL (demo)</td><td>Cómputo + base de datos del demo</td><td class="num">$50</td></tr>
+    <tr><td>Anthropic Claude — consumo de IA (*)</td><td>Motor de matching + racional explicable</td><td class="num">$80</td></tr>
+    <tr><td>Cloudflare — dominio, SSL y CDN</td><td>Borde y seguridad del demo</td><td class="num">$10</td></tr>
+    <tr><td>Almacenamiento de assets / PDF</td><td>Exportes y archivos del demo</td><td class="num">$10</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO DEL DEMO</td><td class="num">$150</td></tr>
+  </table>
+  <p class="muted">Equivalente a <strong>$150 USD/mes</strong> durante la Fase 0. El OPEX productivo a escala (alta disponibilidad 99.9%, KYC/SARLAFT, soporte SLA) se dimensiona en la propuesta de Fase 1, no en este informe.</p>
+
+  <h2>5. Resumen de Costo — Fase 0</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Desarrollo Fase 0 (CAPEX)</td><td class="num">$22.400</td></tr>
+    <tr><td>Operación del demo (~1 mes)</td><td class="num">$150</td></tr>
+    <tr class="total"><td>COSTO TOTAL — FASE 0</td><td class="num">$22.550 USD</td></tr>
+    <tr><td>Plazo de entrega</td><td class="num">3–4 semanas</td></tr>
+  </table>
+  <p>El costo refleja la aceleración AI-native: 160 horas efectivas de ingeniería con scaffolding generado por agentes, y la capa de IA (matching explicable + simulación) incorporada de forma nativa desde la Semana 1. La Fase 0 entrega un activo en vivo y clickeable que Eduardo puede poner frente a inversionistas o a una institución financiera ancla — el camino más rápido para convertir un presupuesto "no definido" en un compromiso financiado.</p>
+
+  <div class="note">
+    <strong>Nota:</strong> Este documento refleja exclusivamente el <strong>costo directo</strong> de entrega y operación de la Fase 0. El margen de utilidad y el IVA (19% Colombia) se aplican por separado en la propuesta técnico-comercial dirigida al cliente; no forman parte de este informe. Las fases reguladas (patrimonio, seguros, impuestos), el KYC/SARLAFT y el endurecimiento productivo se cotizan aparte, condicionados a la verificación regulatoria con un abogado especializado en SFC.
+  </div>
+
+  <div class="foot">
+    Documento interno de Digit2AI. Cifras en dólares estadounidenses (USD), a costo directo, sin margen de utilidad ni IVA. Tarifa interna cargada de referencia: $140 USD/hora. No distribuir al cliente. PLANEA — Fase 0 (PoC / MVP): motor de matching inversionista–proyecto + simulación financiera, grado-demo, sin asesoría financiera regulada.
+  </div>
+
+</div>
+</body>
+</html>
