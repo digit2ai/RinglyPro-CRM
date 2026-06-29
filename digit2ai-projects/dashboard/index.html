@@ -187,7 +187,14 @@
       var t=tok(); if(!t) return;
       fetch('/voice-to-intake-transcript-direct-pipeli/api/v1/intercom/threads/unread',{headers:{'Authorization':'Bearer '+t}})
         .then(function(r){ return r.ok?r.json():{total_unread:0}; })
-        .then(function(d){ var n=(d&&d.total_unread)||0; if(n>0){ badge.textContent=n>99?'99+':n; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } })
+        .then(function(d){
+          var n=(d&&d.total_unread)||0;
+          if(n>0){ badge.textContent=n>99?'99+':n; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+          // Badge the installed-PWA dock/taskbar/home-screen icon. Done here (not
+          // only in app.js) because this poller uses the SSO-mirrored 'token'
+          // key that is actually populated, so it always runs.
+          try { if(n>0){ if(navigator.setAppBadge) navigator.setAppBadge(n); } else { if(navigator.clearAppBadge) navigator.clearAppBadge(); } } catch(e){}
+        })
         .catch(function(){});
     }
     poll(); setInterval(poll, 15000);

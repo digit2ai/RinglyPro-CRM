@@ -242,7 +242,11 @@ function _b64ToU8(b64) {
 let _hubPushDone = false;
 async function ensureHubPush(askPermission) {
   try {
-    if (_hubPushDone || !TOKEN) return;
+    // Resolve the CRM token robustly: app.js uses 'd2ai_token' but under SSO the
+    // populated key is the mirrored 'token'. Try both so push always subscribes.
+    let tk = TOKEN;
+    if (!tk) { try { tk = localStorage.getItem('token') || ''; } catch (e) { tk = ''; } }
+    if (_hubPushDone || !tk) return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
     let perm = Notification.permission;
     if (perm === 'denied') return;
@@ -265,7 +269,7 @@ async function ensureHubPush(askPermission) {
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(keyData.key) });
     await fetch(VTI_INTERCOM + '/owner/subscribe', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tk}` },
       body: JSON.stringify({ subscription: sub })
     });
     _hubPushDone = true;
