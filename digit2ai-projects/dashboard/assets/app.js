@@ -272,6 +272,20 @@ async function ensureHubPush(askPermission) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tk}` },
       body: JSON.stringify({ subscription: sub })
     });
+    // macOS/Windows only register a PWA as a notification app (creating the
+    // 'Badges' toggle that lets setAppBadge render on the dock) AFTER it posts a
+    // notification. Show one welcome notification the first time alerts are armed.
+    try {
+      if (!localStorage.getItem('hub_alert_registered')) {
+        await reg.showNotification('Digit2Ai Projects Hub', {
+          body: 'Alerts are on. The app icon will now badge unread Intercom messages.',
+          icon: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+          badge: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+          tag: 'hub-alerts-hello'
+        });
+        localStorage.setItem('hub_alert_registered', '1');
+      }
+    } catch (e) { /* silent */ }
     _hubPushDone = true;
   } catch (e) { /* silent */ }
 }
