@@ -208,6 +208,7 @@ async function refreshIntercomBadge() {
     }
     paintQaBadge('qa-intercom-badge', unread, '#ef4444'); // Home quick-action badge
     setHubAppBadge(unread); // installed-PWA dock/home-screen icon badge
+    ensureHubPush(false);   // ensure background-push subscription (no-op if not granted)
   } catch (e) { /* silent */ }
 }
 
@@ -221,6 +222,45 @@ function setHubAppBadge(n) {
     } else {
       if (navigator.clearAppBadge) navigator.clearAppBadge();
     }
+  } catch (e) { /* silent */ }
+}
+
+// ---- Web Push: badge the Hub icon instantly on new Intercom messages, even
+// while the app is closed. Subscribes this PWA as an "owner" device in the
+// voice-to-intake push store (reuses its VAPID keys); push.sendToOwner then
+// pushes here on every champion message, and the Hub SW calls setAppBadge.
+const VTI_INTERCOM = '/voice-to-intake-transcript-direct-pipeli/api/v1/intercom';
+function _b64ToU8(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+let _hubPushDone = false;
+async function ensureHubPush(askPermission) {
+  try {
+    if (_hubPushDone || !TOKEN) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+    let perm = Notification.permission;
+    if (perm === 'denied') return;
+    if (perm !== 'granted') {
+      if (!askPermission) return;            // only prompt on a user gesture
+      perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+    }
+    const keyRes = await fetch(VTI_INTERCOM + '/vapid-public-key', { cache: 'no-store' });
+    const keyData = keyRes.ok ? await keyRes.json() : null;
+    if (!keyData || !keyData.enabled || !keyData.key) return;
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(keyData.key) });
+    await fetch(VTI_INTERCOM + '/owner/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+      body: JSON.stringify({ subscription: sub })
+    });
+    _hubPushDone = true;
   } catch (e) { /* silent */ }
 }
 
@@ -449,6 +489,9 @@ function renderEmailFollowups(container) {
 // Same-origin iframe; SSO token is mirrored to localStorage 'token' at login so
 // these pages don't re-prompt. el = clicked <li> (for active highlight).
 function openCrmEmbed(url, title, el) {
+  // Opening Intercom is a natural user gesture — use it to request notification
+  // permission so the Hub icon can badge on new messages even while closed.
+  if (/intercom/i.test(url)) { try { ensureHubPush(true); } catch (e) {} }
   _lastDrilldown = null;
   currentView = 'crm-embed';
   document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
@@ -9094,7 +9137,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // PWA Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/projects/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/projects/sw.js')
+      .then(() => { ensureHubPush(false); })   // silent re-subscribe if already granted
+      .catch(() => {});
   }
 });
 
