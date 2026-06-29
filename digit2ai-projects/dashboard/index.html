@@ -198,6 +198,72 @@
     }
     poll(); setInterval(poll, 15000);
   })();
+
+  // Explicit "Enable desktop badge" button. macOS only registers a PWA as a
+  // notification app (creating the Badges toggle that lets setAppBadge render on
+  // the dock) AFTER the PWA posts a notification from ITS OWN app context. This
+  // user-clicked flow forces that: subscribe + showNotification + setAppBadge,
+  // with a visible result so we know exactly what happened.
+  (function(){
+    var VTI='/voice-to-intake-transcript-direct-pipeli/api/v1/intercom';
+    function tok(){ try{ var v=localStorage.getItem('token')||localStorage.getItem('d2ai_token'); return (v&&v.split('.').length===3)?v:null; }catch(e){ return null; } }
+    function u8(b64){ var pad='='.repeat((4-b64.length%4)%4); var raw=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/')); var a=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i); return a; }
+
+    var btn=document.createElement('button');
+    btn.textContent='🔔 Enable desktop badge';
+    btn.style.cssText='position:fixed;left:10px;bottom:10px;z-index:99999;background:#2563eb;color:#fff;border:0;border-radius:10px;padding:10px 14px;font:600 13px system-ui;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4)';
+    // Hide once the user has completed it on this machine.
+    if(localStorage.getItem('hub_badge_enabled')==='1') btn.style.display='none';
+    btn.addEventListener('click', async function(){
+      btn.disabled=true; btn.textContent='Enabling…';
+      var log=[];
+      try{
+        if(!('serviceWorker' in navigator)){ alert('No service worker support'); return; }
+        if(!('Notification' in window)){ alert('No Notification support'); return; }
+        var reg = window._hubSWReg
+          || await navigator.serviceWorker.getRegistration('/projects/')
+          || await navigator.serviceWorker.register('/projects/sw.js');
+        log.push('sw:'+(reg?'ok':'none'));
+        var perm = Notification.permission;
+        if(perm!=='granted'){ perm = await Notification.requestPermission(); }
+        log.push('perm:'+perm);
+        if(perm!=='granted'){ alert('Notifications blocked. Result: '+log.join(' · ')); return; }
+        // Post a notification from THIS PWA app context -> registers it with macOS.
+        await reg.showNotification('Digit2Ai Projects Hub', {
+          body:'Desktop alerts enabled. The app icon will now badge unread Intercom messages.',
+          icon:'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+          badge:'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+          tag:'hub-enable'
+        });
+        log.push('notif:shown');
+        // Subscribe for background push (so it badges even when closed).
+        var t=tok();
+        try{
+          var kd = await (await fetch(VTI+'/vapid-public-key',{cache:'no-store'})).json();
+          if(kd&&kd.enabled&&kd.key&&t){
+            var sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(kd.key)});
+            await fetch(VTI+'/owner/subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({subscription:sub})});
+            log.push('push:subscribed');
+          } else { log.push('push:skip'); }
+        }catch(e){ log.push('push:err'); }
+        // Set the badge to the current unread now.
+        try{
+          var n=0;
+          if(t){ var d=await (await fetch(VTI+'/threads/unread',{headers:{'Authorization':'Bearer '+t}})).json(); n=(d&&d.total_unread)||0; }
+          if(navigator.setAppBadge){ if(n>0) navigator.setAppBadge(n); else navigator.clearAppBadge&&navigator.clearAppBadge(); log.push('badge:set('+n+')'); } else log.push('badge:no-api');
+        }catch(e){ log.push('badge:err'); }
+        localStorage.setItem('hub_badge_enabled','1');
+        btn.style.display='none';
+        alert('Done. '+log.join(' · ')+'\n\nIf the dock icon still has no number, open System Settings > Notifications, find "Digit2Ai Projects Hub" (it should appear now), and turn ON Badges.');
+      }catch(e){
+        alert('Error enabling badge: '+(e&&e.message||e)+'\n'+log.join(' · '));
+      }finally{
+        btn.disabled=false; if(btn.style.display!=='none') btn.textContent='🔔 Enable desktop badge';
+      }
+    });
+    function mount(){ if(document.body) document.body.appendChild(btn); else document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(btn);}); }
+    mount();
+  })();
   </script>
 </body>
 </html>
