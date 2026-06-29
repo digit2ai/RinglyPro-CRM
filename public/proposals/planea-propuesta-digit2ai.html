@@ -67,7 +67,7 @@
   <table class="meta">
     <tr><td class="lbl">Proyecto:</td><td>PLANEA (Planeación Financiera Integral)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
     <tr><td class="lbl">Atención:</td><td>Eduardo Delima</td><td class="lbl">Asunto:</td><td>Estructura de costo de la Fase 0 (PoC / MVP)</td></tr>
-    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$45 USD/hora (costo cargado — Colombia)</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$70 USD/hora (tarifa cargada)</td></tr>
     <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega de la Fase 0. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
   </table>
 
@@ -77,50 +77,50 @@
   <p><strong>Quedan FUERA de la Fase 0</strong> (se difieren a fases posteriores): módulos de patrimonio, seguros e impuestos (los tres regulados); KYC / SARLAFT y movimiento real de capital; integración con datos bancarios en vivo (Belvo); endurecimiento productivo de autenticación y multi-tenant. Cada pantalla lleva el aviso <em>"información, no asesoría"</em>.</p>
 
   <h2>2. Costo de Desarrollo de la Fase 0 (CAPEX)</h2>
-  <p>Alcance de la cuña, organizado en componentes sobre nuestra arquitectura AI-Native. Costo por componente al costo interno cargado de $45 USD/hora — tarifa de mercado para ingeniería senior en Colombia con especialización en IA, incluido el recargo de prestaciones y pensión (sin margen ni IVA):</p>
+  <p>Alcance de la cuña, organizado en componentes sobre nuestra arquitectura AI-Native. Costo por componente a la tarifa cargada de $70 USD/hora — ingeniería senior con especialización en IA, incluido prestaciones, pensión, gestión y arquitectura (sin margen ni IVA):</p>
 
   <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y despliegue</h3>
     Esquema de datos (inversionistas, proyectos, matches), microservicio base, entorno desplegado en vivo (Render) desde el día uno para iteración continua.
-    <div class="price">16 hrs · Costo: $720 USD</div></div>
+    <div class="price">16 hrs · Costo: $1.120 USD</div></div>
 
   <div class="card"><h3>Componente 2: Intake de Inversionista</h3>
     Formulario bilingüe ES/EN: capital disponible, tolerancia al riesgo, sectores de interés, ticket y horizonte de inversión.
-    <div class="price">14 hrs · Costo: $630 USD</div></div>
+    <div class="price">14 hrs · Costo: $980 USD</div></div>
 
   <div class="card"><h3>Componente 3: Intake de Proyecto / Oportunidad</h3>
     Captura de monto a levantar, sector, etapa, uso de fondos, retorno esperado y región del proyecto.
-    <div class="price">12 hrs · Costo: $540 USD</div></div>
+    <div class="price">12 hrs · Costo: $840 USD</div></div>
 
   <div class="card"><h3>Componente 4: Motor de Matching con IA</h3>
     Ranqueo inversionista&harr;proyecto con score transparente y racional explicable en lenguaje natural ("por qué este match") — el diferenciador frente a los comparadores cargados de texto.
-    <div class="price">32 hrs · Costo: $1.440 USD</div></div>
+    <div class="price">32 hrs · Costo: $2.240 USD</div></div>
 
   <div class="card"><h3>Componente 5: Shortlist ranqueada y UI de resultados</h3>
     Lista corta priorizada por afinidad, fichas de match, navegación y selección para simulación.
-    <div class="price">16 hrs · Costo: $720 USD</div></div>
+    <div class="price">16 hrs · Costo: $1.120 USD</div></div>
 
   <div class="card"><h3>Componente 6: Módulo de Simulación Financiera</h3>
     Escenarios sobre un match seleccionado: retorno proyectado, capital en riesgo, tiempo de recuperación y sliders de sensibilidad (monto / horizonte / tasa). Salida visual, no hoja de cálculo.
-    <div class="price">28 hrs · Costo: $1.260 USD</div></div>
+    <div class="price">28 hrs · Costo: $1.960 USD</div></div>
 
   <div class="card"><h3>Componente 7: Exportación PDF de resumen por match</h3>
     Resumen de una página por match (perfil, score, racional y escenario) exportable para compartir con inversionistas.
-    <div class="price">10 hrs · Costo: $450 USD</div></div>
+    <div class="price">10 hrs · Costo: $700 USD</div></div>
 
   <div class="card"><h3>Componente 8: Panel admin y dataset semilla</h3>
     CRUD de inversionistas y proyectos demo, más un conjunto de datos colombianos sintéticos realistas para que demuestre sin configuración previa.
-    <div class="price">14 hrs · Costo: $630 USD</div></div>
+    <div class="price">14 hrs · Costo: $980 USD</div></div>
 
   <div class="card"><h3>Componente 9: Pulido bilingüe, disclaimers, QA y UAT</h3>
     Acabado ES (por defecto) + EN, avisos "información, no asesoría", pruebas, ajuste del dataset y validación de aceptación (UAT) con Eduardo.
-    <div class="price">18 hrs · Costo: $810 USD</div></div>
+    <div class="price">18 hrs · Costo: $1.260 USD</div></div>
 
   <table class="fin">
     <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
-    <tr><td>Subtotal de los 9 componentes de la cuña (incluye gestión, QA y UAT)</td><td class="num">160</td><td class="num">$7.200</td></tr>
-    <tr class="total"><td>COSTO TOTAL DE DESARROLLO — FASE 0 (CAPEX)</td><td class="num">160</td><td class="num">$7.200 USD</td></tr>
+    <tr><td>Subtotal de los 9 componentes de la cuña (incluye gestión, QA y UAT)</td><td class="num">160</td><td class="num">$11.200</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO — FASE 0 (CAPEX)</td><td class="num">160</td><td class="num">$11.200 USD</td></tr>
   </table>
-  <p class="muted">Plazo de entrega: <span class="pill">3–4 semanas</span>. Banda de costo según nivel de acabado: <strong>$5.800 USD</strong> (versión lean, ~129 hrs) a <strong>$8.000 USD</strong> (versión pulida para pitch a inversionistas, ~179 hrs). Ancla recomendada: <strong>$7.200 USD</strong>.</p>
+  <p class="muted">Plazo de entrega: <span class="pill">3–4 semanas</span>. Banda de costo según nivel de acabado: <strong>$9.000 USD</strong> (versión lean, ~129 hrs) a <strong>$12.500 USD</strong> (versión pulida para pitch a inversionistas, ~179 hrs). Ancla recomendada: <strong>$11.200 USD</strong>.</p>
 
   <h2>3. Cronograma de Entrega (costo por semana)</h2>
   <div class="twocol">
@@ -130,27 +130,27 @@
         <li>Componente 2 (Intake de inversionista)</li>
         <li>Componente 3 (Intake de proyecto)</li>
       </ul>
-      <div class="price">42 hrs · Costo: $1.890 USD</div></div>
+      <div class="price">42 hrs · Costo: $2.940 USD</div></div>
     <div class="card"><h3>Semana 2 — Motor de Matching</h3>
       <ul class="tight">
         <li>Componente 4 (Matching IA + explicabilidad)</li>
         <li>Componente 5 (Shortlist + UI de resultados)</li>
       </ul>
-      <div class="price">48 hrs · Costo: $2.160 USD</div></div>
+      <div class="price">48 hrs · Costo: $3.360 USD</div></div>
     <div class="card"><h3>Semana 3 — Simulación</h3>
       <ul class="tight">
         <li>Componente 6 (Simulación financiera + sliders)</li>
         <li>Componente 7 (Exportación PDF)</li>
       </ul>
-      <div class="price">38 hrs · Costo: $1.710 USD</div></div>
+      <div class="price">38 hrs · Costo: $2.660 USD</div></div>
     <div class="card"><h3>Semana 4 — Demo y Entrega</h3>
       <ul class="tight">
         <li>Componente 8 (Admin + dataset semilla)</li>
         <li>Componente 9 (Pulido ES/EN, disclaimers, QA, UAT)</li>
       </ul>
-      <div class="price">32 hrs · Costo: $1.440 USD</div></div>
+      <div class="price">32 hrs · Costo: $2.240 USD</div></div>
   </div>
-  <p class="muted">Suma de las 4 semanas = 160 horas = <strong>$7.200 USD</strong> de costo total de desarrollo de la Fase 0.</p>
+  <p class="muted">Suma de las 4 semanas = 160 horas = <strong>$11.200 USD</strong> de costo total de desarrollo de la Fase 0.</p>
 
   <h2>4. Costo Operativo del Demo (OPEX)</h2>
   <p>Costo recurrente real de operar el entorno de demostración durante la Fase 0 y su ventana de validación con inversionistas. Volumen de demo (datos sintéticos). La línea marcada con (*) es variable: escala con el número de simulaciones y matches ejecutados.</p>
@@ -167,9 +167,9 @@
   <h2>5. Resumen de Costo — Fase 0</h2>
   <table class="fin">
     <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
-    <tr><td>Desarrollo Fase 0 (CAPEX)</td><td class="num">$7.200</td></tr>
+    <tr><td>Desarrollo Fase 0 (CAPEX)</td><td class="num">$11.200</td></tr>
     <tr><td>Operación del demo (~1 mes)</td><td class="num">$195</td></tr>
-    <tr class="total"><td>COSTO TOTAL — FASE 0</td><td class="num">$7.395 USD</td></tr>
+    <tr class="total"><td>COSTO TOTAL — FASE 0</td><td class="num">$11.395 USD</td></tr>
     <tr><td>Plazo de entrega</td><td class="num">3–4 semanas</td></tr>
   </table>
   <p>El costo refleja la aceleración AI-native: 160 horas efectivas de ingeniería con scaffolding generado por agentes, y la capa de IA (matching explicable + simulación) incorporada de forma nativa desde la Semana 1. La Fase 0 entrega un activo en vivo y clickeable que Eduardo puede poner frente a inversionistas o a una institución financiera ancla — el camino más rápido para convertir un presupuesto "no definido" en un compromiso financiado.</p>
@@ -179,7 +179,7 @@
   </div>
 
   <div class="foot">
-    Documento interno de Digit2AI. Cifras en dólares estadounidenses (USD), a costo directo, sin margen de utilidad ni IVA. Tarifa interna cargada de referencia: $45 USD/hora (ingeniería senior con especialización en IA, Colombia). No distribuir al cliente. PLANEA — Fase 0 (PoC / MVP): motor de matching inversionista–proyecto + simulación financiera, grado-demo, sin asesoría financiera regulada.
+    Documento interno de Digit2AI. Cifras en dólares estadounidenses (USD), a costo directo, sin margen de utilidad ni IVA. Tarifa interna cargada de referencia: $70 USD/hora (ingeniería senior con especialización en IA). No distribuir al cliente. PLANEA — Fase 0 (PoC / MVP): motor de matching inversionista–proyecto + simulación financiera, grado-demo, sin asesoría financiera regulada.
   </div>
 
 </div>
