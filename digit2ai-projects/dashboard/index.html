@@ -193,6 +193,9 @@
           // Badge the installed-PWA dock/taskbar/home-screen icon. Uses the
           // SSO-mirrored 'token' key (always populated), runs in the top window.
           try { if(n>0){ if(navigator.setAppBadge) navigator.setAppBadge(n); } else { if(navigator.clearAppBadge) navigator.clearAppBadge(); } } catch(e){}
+          // Also badge from the SW context (some macOS Chrome builds only render
+          // the dock badge when set via self.registration.setAppBadge).
+          try { if(navigator.serviceWorker){ navigator.serviceWorker.getRegistration('/projects/').then(function(reg){ var w=(reg&&(reg.active||reg.waiting||reg.installing)); if(w) w.postMessage({type:'setBadge',count:n}); }).catch(function(){}); } } catch(e){}
         })
         .catch(function(){});
     }

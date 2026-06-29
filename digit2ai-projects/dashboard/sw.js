@@ -1,4 +1,4 @@
-const CACHE_NAME = 'd2ai-projects-v30';
+const CACHE_NAME = 'd2ai-projects-v31';
 const STATIC_ASSETS = [
   '/projects/',
   '/projects/assets/styles.css',
@@ -40,6 +40,18 @@ self.addEventListener('fetch', (event) => {
       return response;
     }).catch(() => caches.match(event.request))
   );
+});
+
+// Badge from the SW context — on some macOS Chrome builds the dock only honors
+// the badge when set via self.registration.setAppBadge (not navigator from page).
+self.addEventListener('message', (event) => {
+  const d = event.data || {};
+  if (d.type === 'setBadge') {
+    try {
+      if (d.count > 0) { if (self.registration.setAppBadge) self.registration.setAppBadge(d.count); }
+      else { if (self.registration.clearAppBadge) self.registration.clearAppBadge(); }
+    } catch (e) {}
+  }
 });
 
 // ---- Web Push: badge the Projects Hub icon + notify on new Intercom messages ----
