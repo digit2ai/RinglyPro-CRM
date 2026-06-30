@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    body { background: #060a14; }
+    .bar { transition: width .25s ease; }
+    .timeline { position: relative; height: 38px; background:#0d1320; border:1px solid #243049; border-radius:8px; overflow:hidden; }
+    .mark { position:absolute; top:0; width:2px; height:100%; }
+    .mark.video { background:#38bdf8; } .mark.audio { background:#a78bfa; } .mark.both { background:#34d399; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+  <div class="max-w-4xl mx-auto px-5 py-10">
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="juez_badge"></div>
+        <h1 class="text-2xl sm:text-3xl font-bold mt-1" data-i18n="juez_title"></h1>
+        <p class="text-slate-400 mt-2 text-sm" data-i18n="juez_sub"></p>
+      </div>
+      <div class="text-xs text-slate-500 flex flex-col gap-1 items-end">
+        <a id="langToggle" class="underline hover:text-indigo-300 cursor-pointer">EN / ES</a>
+        <a href="{{BASE}}" class="underline hover:text-indigo-300" data-i18n="nav_audio"></a>
+        <a href="{{BASE}}dashboard" class="underline hover:text-indigo-300" data-i18n="nav_historial"></a>
+        <a href="{{BASE}}privacidad" class="underline hover:text-indigo-300" data-i18n="nav_privacidad"></a>
+      </div>
+    </header>
+
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mb-5">
+      <span id="sessionBadge" class="text-xs text-amber-400 mono" data-i18n="session_loading"></span>
+    </section>
+
+    <!-- Selector previo: evento / categoria / competidor -->
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="sel_title"></h2>
+        <button id="demoSetup" class="text-xs bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5" data-i18n="sel_demo"></button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <select id="eventoSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_evento"></option></select>
+        <select id="categoriaSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_categoria"></option></select>
+        <select id="inscripcionSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_competidor"></option></select>
+      </div>
+    </section>
+
+    <!-- Carga: video + audio + superficie -->
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
+      <h2 class="text-sm font-semibold text-indigo-300 mb-3" data-i18n="up_title"></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="up_video"></label>
+          <input id="video" type="file" accept="video/mp4,video/quicktime,.mp4,.mov" class="w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="up_audio"></label>
+          <input id="audio" type="file" accept=".wav,audio/wav" class="w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="up_superficie"></label>
+          <select id="superficieSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="tablado">Tablado</option><option value="arena">Arena</option><option value="asfalto">Asfalto</option><option value="tierra">Tierra</option><option value="cemento">Cemento</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="up_simular"></label>
+          <select id="demoModSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="">—</option><option value="paso_fino">Paso fino</option><option value="trocha">Trocha</option><option value="trote">Trote / galope</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-2" data-i18n="up_nota"></p>
+      <button id="evaluar" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 rounded-lg px-4 py-3 font-semibold disabled:opacity-50" data-i18n="up_evaluar"></button>
+      <div id="progressWrap" class="hidden mt-4">
+        <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="progressBar" class="bar h-full bg-indigo-500" style="width:0%"></div></div>
+        <p id="progressMsg" class="text-xs text-slate-400 mt-2 mono"></p>
+      </div>
+    </section>
+
+    <!-- Resultado del juez -->
+    <section id="result" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-6 mb-5">
+      <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div>
+          <div class="text-xs text-slate-500" data-i18n="res_modalidad"></div>
+          <div class="flex items-center gap-3">
+            <span id="resModalidad" class="text-2xl font-bold"></span>
+            <span id="resConf" class="text-sm mono text-slate-400"></span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-slate-500" data-i18n="res_puntaje"></div>
+          <div id="resTotal" class="text-4xl font-extrabold mono text-emerald-400"></div>
+        </div>
+      </div>
+      <div id="resFlag" class="hidden mb-4 px-3 py-2 rounded-lg bg-rose-600/20 border border-rose-600 text-rose-300 text-sm"></div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-5">
+        <div class="bg-slate-950 rounded-lg p-3"><div id="mCad" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_cadencia"></div></div>
+        <div class="bg-slate-950 rounded-lg p-3"><div id="mReg" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_regularidad"></div></div>
+        <div class="bg-slate-950 rounded-lg p-3"><div id="mSim" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_simetria"></div></div>
+        <div class="bg-slate-950 rounded-lg p-3"><div id="mClar" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_claridad"></div></div>
+      </div>
+
+      <h3 class="text-sm font-semibold text-indigo-300 mb-2" data-i18n="res_desglose"></h3>
+      <div id="breakdown" class="space-y-2 mb-5"></div>
+
+      <h3 class="text-sm font-semibold text-indigo-300 mb-2" data-i18n="res_timeline"></h3>
+      <div id="timeline" class="timeline mb-1"></div>
+      <div class="text-xs text-slate-500 flex gap-4 mb-5">
+        <span><span class="inline-block w-2 h-2 rounded-full" style="background:#34d399"></span> <span data-i18n="leg_both"></span></span>
+        <span><span class="inline-block w-2 h-2 rounded-full" style="background:#38bdf8"></span> <span data-i18n="leg_video"></span></span>
+        <span><span class="inline-block w-2 h-2 rounded-full" style="background:#a78bfa"></span> <span data-i18n="leg_audio"></span></span>
+      </div>
+      <video id="videoPlayer" class="w-full rounded-lg hidden" controls></video>
+
+      <h3 class="text-sm font-semibold text-indigo-300 mt-5 mb-2" data-i18n="res_dictamen"></h3>
+      <p id="resDictamen" class="text-slate-300 text-sm"></p>
+    </section>
+
+    <footer class="text-center text-xs text-slate-600 mt-10">Digit2AI · {{TITLE}}</footer>
+  </div>
+
+  <script>window.__I18N = {{DICT_JSON}}; window.__BASE = "{{BASE}}"; window.__LANG = "{{LANG}}"; window.__PAGE = "juez";</script>
+  <script src="{{BASE}}juez.js"></script>
+</body>
+</html>

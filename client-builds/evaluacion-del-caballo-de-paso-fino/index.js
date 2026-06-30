@@ -22,10 +22,12 @@ const express = require('express');
 const path = require('path');
 
 const evaluation = require('./models/evaluation');
+const championship = require('./models/championship');
 const healthRouter = require('./routes/health');
 const sessionRouter = require('./routes/session');
 const horsesRouter = require('./routes/horses');
 const evaluationsRouter = require('./routes/evaluations');
+const championshipRouter = require('./routes/championship');
 const pagesRouter = require('./routes/pages');
 
 const app = express();
@@ -40,6 +42,11 @@ evaluation.init()
   .then((s) => console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'store_init', mode: s.mode })))
   .catch((e) => console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'store_init_error', error: e.message })));
 
+// Championship judge data layer (video + audio, modality classification, scoring).
+championship.init()
+  .then((s) => console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'champ_init', mode: s.mode })))
+  .catch((e) => console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'champ_init_error', error: e.message })));
+
 // Health (public).
 app.use('/health', healthRouter);
 
@@ -53,6 +60,7 @@ app.use('/api/v1/session', sessionRouter);
 // JWT-guarded (writes) + public-read API.
 app.use('/api/v1/horses', horsesRouter);
 app.use('/api/v1/evaluations', evaluationsRouter);
+app.use('/api/v1/champ', championshipRouter);
 
 // Server-rendered pages (/, /dashboard, /privacidad). Mounted last.
 app.use('/', pagesRouter);

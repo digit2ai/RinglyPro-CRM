@@ -221,12 +221,55 @@
       .catch(function () { if (empty) empty.classList.remove('hidden'); });
   }
 
+  // ---- Championship ranking (dashboard) ----
+  var CHAMP = BASE + 'api/v1/champ';
+  var MODL = { paso_fino: 'Paso fino', trocha: 'Trocha', trote_galope: LANG === 'en' ? 'Trot / canter' : 'Trote / galope', trocha_galope: LANG === 'en' ? 'Trocha and canter' : 'Trocha y galope' };
+  function bindRanking() {
+    var ev = document.getElementById('rankEventoSel');
+    var cat = document.getElementById('rankCategoriaSel');
+    if (!ev || !cat) return;
+    fetch(CHAMP + '/eventos').then(function (r) { return r.json(); }).then(function (rows) {
+      (rows || []).forEach(function (e) { var o = document.createElement('option'); o.value = e.id; o.textContent = e.nombre + ' (' + (e.anio || '') + ')'; ev.appendChild(o); });
+    }).catch(function () {});
+    ev.addEventListener('change', function () {
+      cat.querySelectorAll('option:not([value=""])').forEach(function (o) { o.remove(); });
+      if (!this.value) return;
+      fetch(CHAMP + '/categorias?evento_id=' + this.value).then(function (r) { return r.json(); }).then(function (rows) {
+        (rows || []).forEach(function (c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre + ' · ' + (MODL[c.modalidad] || c.modalidad); cat.appendChild(o); });
+      }).catch(function () {});
+    });
+    cat.addEventListener('change', function () { if (this.value) loadRanking(this.value); });
+  }
+  function loadRanking(categoria_id) {
+    var tbody = document.getElementById('rankRows');
+    var empty = document.getElementById('rankEmpty');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    fetch(CHAMP + '/results?categoria_id=' + encodeURIComponent(categoria_id)).then(function (r) { return r.json(); }).then(function (rows) {
+      if (!rows || !rows.length) { empty.textContent = I18N.rank_empty; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      rows.forEach(function (r) {
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-800/50' + (r.ranking === 1 ? ' bg-emerald-500/5' : '');
+        tr.innerHTML =
+          '<td class="py-2 pr-4 mono font-bold">' + (r.ranking != null ? r.ranking : '—') + '</td>' +
+          '<td class="py-2 pr-4 mono">' + (r.numero_competidor != null ? r.numero_competidor : '—') + '</td>' +
+          '<td class="py-2 pr-4">' + esc(r.caballo || '—') + '</td>' +
+          '<td class="py-2 pr-4 mono font-bold text-emerald-400">' + (r.puntaje_total != null ? r.puntaje_total.toFixed(1) : '—') + '</td>' +
+          '<td class="py-2 pr-4 text-xs text-slate-400">' + esc(r.observaciones || '') + '</td>';
+        tbody.appendChild(tr);
+      });
+    }).catch(function () { empty.classList.remove('hidden'); });
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
   // ---- Boot ----
   applyI18n();
   langToggle();
   loadHorses();
   if (PAGE === 'dashboard') {
     bindDashboard();
+    bindRanking();
   } else {
     bindCreateHorse();
     bindAnalyze();

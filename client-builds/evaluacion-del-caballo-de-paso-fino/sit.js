@@ -18,6 +18,11 @@ process.env.ECPF_FORCE_MEMORY = process.env.ECPF_FORCE_MEMORY || '1';
 
 const jwt = require('jsonwebtoken');
 const http = require('http');
+const synth = require('./lib/synth');
+const { classify } = require('./lib/classifier');
+const { score, CRITERIOS_PASO_FINO } = require('./lib/scoring');
+const { sequenceAndIntervals } = require('./lib/footfall');
+const { movimiento } = require('./lib/metrics');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 const TENANT_A = 970001;
@@ -109,6 +114,21 @@ async function reqUpload(base, path, { token, wavBuffer, filename, mime, horseId
   const headers = {};
   if (token) headers.Authorization = 'Bearer ' + token;
   const resp = await fetch(base + path, { method: 'POST', headers, body: fd });
+  const text = await resp.text();
+  let json = null; try { json = JSON.parse(text); } catch (e) {}
+  return { status: resp.status, json, text };
+}
+
+// Championship session upload: pose_frames JSON field (+ optional audio WAV).
+async function reqChampSession(base, { token, inscripcion_id, superficie, frames, wavBuffer }) {
+  const fd = new FormData();
+  fd.append('inscripcion_id', String(inscripcion_id));
+  if (superficie) fd.append('superficie', superficie);
+  if (frames) fd.append('pose_frames', JSON.stringify(frames));
+  if (wavBuffer != null) fd.append('audio', new Blob([wavBuffer], { type: 'audio/wav' }), 'gait.wav');
+  const headers = {};
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const resp = await fetch(base + '/api/v1/champ/sessions', { method: 'POST', headers, body: fd });
   const text = await resp.text();
   let json = null; try { json = JSON.parse(text); } catch (e) {}
   return { status: resp.status, json, text };
@@ -220,6 +240,75 @@ async function run(base) {
     check('demo session mints a token + drives a write', sess.status === 200 && !!tok
       && sess.json.tenant_id === 1 && wrote.status === 201,
       `session=${sess.status} write=${wrote.status}`);
+  }
+
+  // ---- Clasificador (sección 4.5): tests deterministas sobre pisadas sintéticas
+  {
+    const pf = classify(synth.syntheticPisadas('paso_fino', { ciclos: 6 }));
+    check('clasifica paso_fino (4 tiempos laterales)', pf.modalidad_detectada === 'paso_fino' && pf.tiempos === 4, JSON.stringify(pf));
+    const tr = classify(synth.syntheticPisadas('trocha', { ciclos: 6 }));
+    check('clasifica trocha (4 tiempos diagonales)', tr.modalidad_detectada === 'trocha' && tr.tiempos === 4, JSON.stringify(tr));
+    const tg = classify(synth.syntheticPisadas('trote', { ciclos: 6 }));
+    check('clasifica trote_galope (2 tiempos diagonales)', tg.modalidad_detectada === 'trote_galope' && tg.tiempos === 2, JSON.stringify(tg));
+
+    const reg = synth.syntheticPisadas('paso_fino', { ciclos: 6, jitter: 0 });
+    const irr = synth.syntheticPisadas('paso_fino', { ciclos: 6, jitter: 0.4, seed: 7 });
+    const movR = movimiento(sequenceAndIntervals(reg), null, 6, classify(reg));
+    const movI = movimiento(sequenceAndIntervals(irr), null, 6, classify(irr));
+    const ritmoR = score(CRITERIOS_PASO_FINO, movR, {}, null).puntuaciones[0].puntaje_normalizado;
+    const ritmoI = score(CRITERIOS_PASO_FINO, movI, {}, null).puntuaciones[0].puntaje_normalizado;
+    check('CV alto baja el puntaje de regularidad', ritmoI < ritmoR, `ritmoReg=${ritmoR} ritmoIrr=${ritmoI}`);
+  }
+
+  // ---- Championship endpoint e2e: setup -> sesión (pose) -> fallo + ranking
+  {
+    const setup = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { token: A, body: {} });
+    const inscripcion = setup.json && setup.json.inscripcion;
+    const categoria = setup.json && setup.json.categoria;
+    check('POST /champ/demo-setup -> 201 + inscripción', setup.status === 201 && inscripcion && inscripcion.id != null, `status=${setup.status}`);
+
+    if (inscripcion) {
+      const frames = synth.syntheticFrames('paso_fino', { ciclos: 6, cycleMs: 1000 });
+      const sess = await reqChampSession(base, { token: A, inscripcion_id: inscripcion.id, superficie: 'tablado', frames });
+      const f = sess.json;
+      check('POST /champ/sessions clasifica paso_fino + puntúa', sess.status === 201 && f && f.clasificacion
+        && f.clasificacion.modalidad_detectada === 'paso_fino' && typeof f.puntaje_total === 'number',
+        `status=${sess.status} body=${sess.text.slice(0, 220)}`);
+      check('es_modalidad_valida = true (detectada == categoría)', f && f.clasificacion && f.clasificacion.es_modalidad_valida === true, JSON.stringify(f && f.clasificacion));
+      check('pipeline genera pisadas + 5 puntuaciones', f && Array.isArray(f.pisadas) && f.pisadas.length >= 12 && Array.isArray(f.puntuaciones) && f.puntuaciones.length === 5, `pisadas=${f && f.pisadas && f.pisadas.length}`);
+
+      const got = await reqJson(base, 'GET', `/api/v1/champ/sessions/${f.sesion_id}`);
+      check('GET /champ/sessions/:id -> fallo completo', got.status === 200 && got.json && got.json.clasificacion
+        && got.json.metricas_movimiento && Array.isArray(got.json.pisadas) && got.json.pisadas.length >= 12, `status=${got.status}`);
+
+      const ranking = await reqJson(base, 'GET', `/api/v1/champ/results?categoria_id=${categoria.id}`);
+      check('GET /champ/results -> ranking de categoría', ranking.status === 200 && Array.isArray(ranking.json)
+        && ranking.json.length >= 1 && ranking.json[0].ranking === 1, `status=${ranking.status} len=${(ranking.json || []).length}`);
+    }
+
+    // Bandera de modalidad: trote en categoría paso_fino -> es_modalidad_valida false
+    const setup2 = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { token: A, body: { numero: 2, caballo: 'Tormenta' } });
+    const ins2 = setup2.json && setup2.json.inscripcion;
+    if (ins2) {
+      const framesT = synth.syntheticFrames('trote', { ciclos: 6, cycleMs: 900 });
+      const sess2 = await reqChampSession(base, { token: A, inscripcion_id: ins2.id, superficie: 'arena', frames: framesT });
+      check('modalidad NO coincide -> es_modalidad_valida false', sess2.json && sess2.json.clasificacion
+        && sess2.json.clasificacion.modalidad_detectada === 'trote_galope' && sess2.json.clasificacion.es_modalidad_valida === false,
+        JSON.stringify(sess2.json && sess2.json.clasificacion));
+    }
+
+    // Modo demostración server-side (demo_modalidad, sin pose_frames del cliente)
+    const setup3 = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { token: A, body: { numero: 3 } });
+    const ins3 = setup3.json && setup3.json.inscripcion;
+    if (ins3) {
+      const fd = new FormData();
+      fd.append('inscripcion_id', String(ins3.id));
+      fd.append('superficie', 'tablado');
+      fd.append('demo_modalidad', 'paso_fino');
+      const resp = await fetch(base + '/api/v1/champ/sessions', { method: 'POST', headers: { Authorization: 'Bearer ' + A }, body: fd });
+      const j = await resp.json().catch(() => null);
+      check('modo demostración server-side (demo_modalidad) corre el pipeline', resp.status === 201 && j && j.clasificacion && j.clasificacion.modalidad_detectada === 'paso_fino', `status=${resp.status}`);
+    }
   }
 }
 

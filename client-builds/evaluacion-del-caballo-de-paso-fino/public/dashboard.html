@@ -19,10 +19,33 @@
       </div>
       <div class="text-xs text-slate-500 flex flex-col gap-1 items-end">
         <a id="langToggle" class="underline hover:text-indigo-300 cursor-pointer">EN / ES</a>
+        <a href="{{BASE}}juez" class="text-indigo-300 font-semibold hover:text-indigo-200" data-i18n="nav_juez"></a>
         <a href="{{BASE}}" class="underline hover:text-indigo-300" data-i18n="nav_evaluar"></a>
         <a href="{{BASE}}privacidad" class="underline hover:text-indigo-300" data-i18n="nav_privacidad"></a>
       </div>
     </header>
+
+    <!-- Championship ranking by category -->
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-8">
+      <h2 class="text-lg font-bold mb-3" data-i18n="rank_title"></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
+        <select id="rankEventoSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_evento"></option></select>
+        <select id="rankCategoriaSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_categoria"></option></select>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-slate-500 border-b border-slate-800">
+            <th class="py-2 pr-4" data-i18n="col_puesto"></th>
+            <th class="py-2 pr-4" data-i18n="col_competidor"></th>
+            <th class="py-2 pr-4" data-i18n="col_caballo"></th>
+            <th class="py-2 pr-4" data-i18n="col_puntaje"></th>
+            <th class="py-2 pr-4" data-i18n="col_obs"></th>
+          </tr></thead>
+          <tbody id="rankRows"></tbody>
+        </table>
+        <p id="rankEmpty" class="text-slate-500 text-sm py-3" data-i18n="rank_pick"></p>
+      </div>
+    </section>
 
     <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
       <select id="horseSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm">
