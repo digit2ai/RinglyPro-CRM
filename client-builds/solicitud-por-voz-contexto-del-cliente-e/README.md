@@ -1,0 +1,3 @@
+# Solicitud por Voz — Comercializadora de Palma
+
+Live financial-visibility slice for a Colombian palm trader. Auto-mounted by `src/app.js` at `/solicitud-por-voz-contexto-del-cliente-e`. Log USD sales/purchases/imports via a Spanish dashboard **or** a voice transcript (`POST /api/v1/voice`, mock NLP), and see real-time P&L: total sold, total bought, gross margin, net USD position. Multi-tenant (`tenant_id`), JWT-guarded reads+writes (reuses RinglyPro `JWT_SECRET`, default tenant 1 for demo), Postgres via Sequelize with in-memory fallback, ES default + `?lang=en`. Run SIT: `node client-builds/solicitud-por-voz-contexto-del-cliente-e/sit.js`. Voice parsing is a deterministic stub — real path would be Twilio Media Streams + Spanish STT (Whisper) + LLM intent extraction.

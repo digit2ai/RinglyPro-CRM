@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>{{title}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--bg:#0b0f1a;--card:#141b29;--bg2:#0d1320;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--cyan:#22d3ee;--green:#84cc16;--rose:#ec4899}
+  body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif}
+  .fig{font-family:'JetBrains Mono','SF Mono',ui-monospace,monospace}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:16px}
+  input,select{background:#0d1320;border:1px solid var(--line);color:var(--txt)}
+  input:focus,select:focus{outline:none;border-color:var(--cyan)}
+</style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-5xl mx-auto px-5 py-8">
+
+    <header class="flex items-start justify-between gap-4 mb-7">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight">{{h1}}</h1>
+        <p class="text-sm mt-2 max-w-xl" style="color:var(--mut)">{{subtitle}}</p>
+      </div>
+      <div class="flex items-center gap-3 text-xs" style="color:var(--mut)">
+        <a id="langToggle" class="px-3 py-1 rounded-lg border" style="border-color:var(--line)">{{toggle}}</a>
+        <a href="privacy?lang={{LANG}}" class="underline">{{privacy}}</a>
+      </div>
+    </header>
+
+    <div id="needToken" class="hidden card p-3 mb-5 text-sm" style="color:var(--mut)">{{need_token}}</div>
+
+    <!-- summary cards -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
+      <div class="card p-4"><div class="text-xs" style="color:var(--mut)">{{lbl_sales}}</div><div id="s_sales" class="fig text-2xl font-bold mt-1" style="color:var(--green)">$0.00</div></div>
+      <div class="card p-4"><div class="text-xs" style="color:var(--mut)">{{lbl_purchases}}</div><div id="s_purchases" class="fig text-2xl font-bold mt-1" style="color:var(--rose)">$0.00</div></div>
+      <div class="card p-4"><div class="text-xs" style="color:var(--mut)">{{lbl_margin}}</div><div id="s_margin" class="fig text-2xl font-bold mt-1">$0.00</div></div>
+      <div class="card p-4"><div class="text-xs" style="color:var(--mut)">{{lbl_net}}</div><div id="s_net" class="fig text-2xl font-bold mt-1" style="color:var(--cyan)">$0.00</div></div>
+    </section>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-7">
+      <!-- manual form -->
+      <section class="card p-5">
+        <h2 class="font-bold mb-3">{{card_form}}</h2>
+        <form id="txForm" class="space-y-3">
+          <div><label class="text-xs" style="color:var(--mut)">{{f_type}}</label>
+            <select id="f_type" class="w-full rounded-lg px-3 py-2 mt-1">
+              <option value="sale">{{opt_sale}}</option>
+              <option value="purchase">{{opt_purchase}}</option>
+              <option value="import">{{opt_import}}</option>
+            </select></div>
+          <div><label class="text-xs" style="color:var(--mut)">{{f_amount}}</label>
+            <input id="f_amount" type="number" step="0.01" min="0" class="w-full rounded-lg px-3 py-2 mt-1 fig" placeholder="0.00"></div>
+          <div><label class="text-xs" style="color:var(--mut)">{{f_counterparty}}</label>
+            <input id="f_party" type="text" class="w-full rounded-lg px-3 py-2 mt-1" placeholder="Acme S.A."></div>
+          <button class="w-full rounded-lg py-2 font-bold" style="background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04121f">{{btn_add}}</button>
+        </form>
+      </section>
+
+      <!-- voice -->
+      <section class="card p-5">
+        <h2 class="font-bold mb-1">{{card_voice}}</h2>
+        <p class="text-xs mb-3" style="color:var(--mut)">{{voice_hint}}</p>
+        <form id="voiceForm" class="space-y-3">
+          <textarea id="v_transcript" rows="4" class="w-full rounded-lg px-3 py-2" placeholder="{{voice_ph}}"></textarea>
+          <button class="w-full rounded-lg py-2 font-bold border" style="border-color:var(--cyan);color:var(--cyan)">{{btn_voice}}</button>
+        </form>
+        <div id="v_parsed" class="text-xs mt-3 fig" style="color:var(--mut)"></div>
+      </section>
+    </div>
+
+    <!-- transactions -->
+    <section class="card p-5">
+      <h2 class="font-bold mb-3">{{card_tx}}</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-xs" style="color:var(--mut)">
+            <th class="py-2">{{th_type}}</th><th class="py-2 text-right">{{th_amount}}</th><th class="py-2">{{th_party}}</th><th class="py-2">{{th_src}}</th>
+          </tr></thead>
+          <tbody id="txBody"></tbody>
+        </table>
+        <div id="txEmpty" class="text-sm py-4" style="color:var(--mut)">{{empty}}</div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    window.__I18N = { empty: "{{empty}}", needToken: "{{need_token}}",
+      sale: "{{opt_sale}}", purchase: "{{opt_purchase}}", import: "{{opt_import}}" };
+    window.__LANG = "{{LANG}}";
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
