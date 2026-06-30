@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--bg:#0b0f1a;--card:#141b29;--card2:#0d1320;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--accent:#9b7bff;--red:#f87171;--amber:#fbbf24}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 60px}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+  .muted{color:var(--mut)}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .btn-ghost{background:#1b2536;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font:inherit;cursor:pointer}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:4px 6px 0 0;background:#0f1626}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--red)}
+  .ts{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+    <h1 style="margin:0;font-size:24px" data-i18n="history">Análisis anteriores</h1>
+    <a href="{{BASE}}?lang={{LANG}}" class="btn-ghost" data-i18n="back_home">Volver al analizador</a>
+  </div>
+  <div id="loginNotice" class="card hidden" style="border-color:var(--amber)">
+    <span data-i18n="need_login">Inicia sesión en RinglyPro para guardar y ver tus análisis.</span>
+  </div>
+  <div id="list"></div>
+  <div id="empty" class="muted hidden" data-i18n="history_empty">Aún no hay análisis guardados.</div>
+</div>
+
+<script>
+  window.__I18N = {{DICT_JSON}};
+  window.__LANG = "{{LANG}}";
+  window.__BASE = "{{BASE}}";
+</script>
+<script>
+(function () {
+  'use strict';
+  var I18N = window.__I18N || {}, BASE = window.__BASE || '/';
+  function t(k){ return I18N[k] || k; }
+  function applyI18n(){ document.querySelectorAll('[data-i18n]').forEach(function(el){ var k=el.getAttribute('data-i18n'); if(I18N[k]) el.textContent=I18N[k]; }); }
+  function getToken(){ try{ var q=new URL(location.href).searchParams.get('token'); if(q) return q; }catch(e){} try{ return localStorage.getItem('token')||''; }catch(e){ return ''; } }
+  function labelFor(type){ var m={left_behind:'fault_left_behind',dropped_rein:'fault_dropped_rein',gaze_drop:'fault_gaze_drop',forward_seat:'fault_forward_seat'}; return t(m[type]||type); }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  applyI18n();
+  var token = getToken();
+  if (!token) { document.getElementById('loginNotice').classList.remove('hidden'); return; }
+
+  fetch(BASE + 'api/v1/analyses', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r){ if(r.status===401){ document.getElementById('loginNotice').classList.remove('hidden'); return {data:[]}; } return r.json(); })
+    .then(function(res){
+      var rows = (res && res.data) || [];
+      var list = document.getElementById('list');
+      if (!rows.length) { document.getElementById('empty').classList.remove('hidden'); return; }
+      rows.forEach(function(a){
+        var faults = a.faults || [];
+        var when = a.created_at ? new Date(a.created_at).toLocaleString() : '';
+        var chips = faults.length
+          ? faults.map(function(f){ return '<span class="chip"><span class="dot"></span>'+esc(labelFor(f.type))+' <span class="ts">'+(f.timestampSec).toFixed(2)+t('second_abbr')+'</span></span>'; }).join('')
+          : '<span class="muted">'+esc(t('no_faults'))+'</span>';
+        var el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML =
+          '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+            '<strong>'+esc(a.filename || ('#'+a.id))+'</strong>'+
+            '<span class="muted" style="font-size:12px">'+esc(when)+'</span>'+
+          '</div>'+
+          '<div class="muted" style="font-size:12px;margin-top:4px">'+esc(t('faults_found'))+': '+faults.length+
+            (a.duration_sec? ' · '+a.duration_sec.toFixed(1)+t('second_abbr'):'')+
+            ' · '+(a.frame_count||0)+' frames</div>'+
+          '<div style="margin-top:8px">'+chips+'</div>';
+        list.appendChild(el);
+      });
+    })
+    .catch(function(){ document.getElementById('empty').classList.remove('hidden'); });
+})();
+</script>
+</body>
+</html>

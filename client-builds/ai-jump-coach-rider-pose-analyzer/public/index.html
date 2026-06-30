@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--bg:#0b0f1a;--card:#141b29;--card2:#0d1320;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--accent:#9b7bff;--green:#34d399;--amber:#fbbf24;--red:#f87171}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 18px 60px}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:24px}
+  .muted{color:var(--mut)}
+  .badge{display:inline-block;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#020617;background:var(--amber);border-radius:999px;padding:3px 10px;font-weight:700}
+  .btn{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:12px 18px;font-weight:700}
+  .btn-primary{background:linear-gradient(90deg,#7c5cff,#22d3ee);color:#04121a}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .btn-ghost{background:#1b2536;color:var(--txt);border:1px solid var(--line)}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .fault{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#0f1626;cursor:pointer;transition:border-color .15s}
+  .fault:hover{border-color:var(--accent)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:var(--red)}
+  .ts{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700}
+  .bar{height:6px;border-radius:6px;background:#243049;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#f87171,#fbbf24)}
+  video{width:100%;border-radius:12px;background:#000}
+  .langsel{font:inherit;background:#1b2536;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px">
+    <div>
+      <span class="badge" data-i18n="poc_badge">{{POC_BADGE}}</span>
+      <h1 style="margin:10px 0 6px;font-size:28px" data-i18n="h1">{{H1}}</h1>
+      <p class="muted" style="margin:0;max-width:620px" data-i18n="tagline">{{TAGLINE}}</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="langSel" class="langsel" aria-label="language">
+        <option value="es">ES</option>
+        <option value="en">EN</option>
+      </select>
+      <a href="{{BASE}}dashboard?lang={{LANG}}" class="btn btn-ghost" data-i18n="open_dashboard">Ver historial</a>
+    </div>
+  </div>
+
+  <div id="loginNotice" class="card hidden" style="border-color:var(--amber);margin-bottom:16px">
+    <span data-i18n="need_login">Inicia sesión en RinglyPro para guardar y ver tus análisis.</span>
+  </div>
+
+  <div class="card" style="margin-bottom:18px">
+    <label class="muted" data-i18n="upload_label" style="display:block;margin-bottom:12px">Sube un video del salto (MP4 o MOV)</label>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <input id="file" type="file" accept="video/mp4,video/quicktime,video/*" style="font:inherit">
+      <button id="analyzeBtn" class="btn btn-primary" disabled data-i18n="analyze">Analizar postura</button>
+    </div>
+    <div id="status" class="muted" style="margin-top:14px;min-height:20px"></div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="card">
+      <h2 style="margin:0 0 14px;font-size:20px" data-i18n="results_title">Resultados</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="resGrid">
+        <div>
+          <div class="muted" style="margin-bottom:8px" data-i18n="video_label">Video original</div>
+          <video id="player" controls playsinline></video>
+          <div class="muted" id="apexLine" style="margin-top:8px;font-size:13px"></div>
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:8px" data-i18n="timeline_label">Línea de tiempo de fallos</div>
+          <div id="faultList" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:22px;text-align:center" class="muted">
+    <a href="{{BASE}}privacy?lang={{LANG}}" data-i18n="privacy_link">Privacidad</a>
+  </div>
+</div>
+
+<script>
+  window.__I18N = {{DICT_JSON}};
+  window.__LANG = "{{LANG}}";
+  window.__BASE = "{{BASE}}";
+</script>
+<script src="{{BASE}}app.js"></script>
+</body>
+</html>
