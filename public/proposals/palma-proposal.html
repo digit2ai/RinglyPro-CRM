@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propuesta — Visibilidad Financiera en Tiempo Real · Comercializadora de Palma</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}.meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;margin:10px 0}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .verdict{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:8px;padding:6px 14px;font-weight:800;font-size:14px;margin:0 0 12px}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}.twocol>div{flex:1;min-width:240px}
+  .cta{display:inline-block;background:#0f3a66;color:#fff;text-decoration:none;border-radius:8px;padding:11px 22px;font-weight:700;font-size:14px;margin:6px 0}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Visibilidad Financiera en Tiempo Real</h1>
+  <p class="sub">Propuesta para Comercializadora de Palma — Digit2AI · Modelo de Entrega AI-Native</p>
+  <span class="conf">PROPUESTA PARA EL CLIENTE</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Atención:</td><td>Lala (lala@digit2ai.com)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">País:</td><td>Colombia</td><td class="lbl">Fase:</td><td>1 — MVP de visibilidad financiera</td></tr>
+  </table>
+
+  <h2>1. El problema, en nuestras palabras</h2>
+  <span class="verdict">Evaluación AI: encaje 9/10 · Recomendación: AVANZAR</span>
+  <p>La comercializadora opera en múltiples frentes (compra, venta, importación, exportación) con exposición cambiaria en dólares, y hoy carece de visibilidad financiera y operativa en tiempo real. Necesita una aplicación centralizada que sistematice su contabilidad, refleje el estado del negocio al instante y, sobre todo, responda la pregunta del dueño: <strong>"¿cuánto estoy vendiendo y cuánto estoy ganando?"</strong></p>
+
+  <h2>2. Por dónde empezamos (la cuña defendible)</h2>
+  <p>En lugar de construir toda la "contabilidad totalmente sistematizada" de una vez, arrancamos por el slice que <strong>demuestra valor real en semanas</strong>: un dashboard de visibilidad financiera donde se registran operaciones en dólares —por formulario o <strong>por voz</strong>— y se ve en vivo el total vendido, el total comprado, la ganancia/pérdida y la posición neta en dólares. Es la base sobre la que crecen las fases siguientes.</p>
+
+  <h2>3. Qué incluye la Fase 1</h2>
+  <div class="twocol">
+    <div class="card"><h3>Lo que recibe</h3><ul class="tight"><li>Dashboard en tiempo real (cifras en USD)</li><li>Registro de operaciones por formulario y por voz</li><li>Ventas, compras, ganancia/pérdida y posición neta USD en vivo</li><li>Español (e inglés opcional)</li><li>Datos protegidos (Ley 1581 de 2012)</li></ul></div>
+    <div class="card"><h3>Fases siguientes (aparte)</h3><ul class="tight"><li>Contabilidad de partida doble / plan de cuentas</li><li>Voz telefónica real (Twilio + transcripción)</li><li>Tasa de cambio en vivo (TRM)</li><li>Research de mercado de palma</li><li>Conocimiento de clientes</li></ul></div>
+  </div>
+
+  <h2>4. Véalo funcionando</h2>
+  <p>La Fase 1 ya está construida y desplegada. Pruébela en vivo:</p>
+  <a class="cta" href="https://aiagent.ringlypro.com/solicitud-por-voz-contexto-del-cliente-e/dashboard">Abrir el dashboard en vivo &rarr;</a>
+  <p class="muted">Las cifras reales se muestran con un acceso de usuario (token); sin él, el dashboard muestra la estructura y el aviso de inicio de sesión.</p>
+
+  <h2>5. Inversión y cronograma</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Precio (USD)</th></tr>
+    <tr><td>Desarrollo Fase 1</td><td class="num">$10.472</td></tr>
+    <tr><td>Operación (primer mes)</td><td class="num">$102</td></tr>
+    <tr class="sub"><td>Subtotal</td><td class="num">$10.574</td></tr>
+    <tr><td>IVA (19% Colombia)</td><td class="num">$2.009</td></tr>
+    <tr class="total"><td>TOTAL FASE 1 (IVA incluido)</td><td class="num">$12.583 USD</td></tr>
+  </table>
+  <p class="muted">Plazo: <span class="pill">~2 semanas</span> · Operación recurrente: $102 USD/mes (IVA incluido). El detalle por componente y semana está en la propuesta técnico-comercial.</p>
+
+  <h2>6. Cómo avanzamos</h2>
+  <ul class="tight">
+    <li>Aprobación de esta propuesta y orden de compra.</li>
+    <li>Acceso de usuario para ver las cifras reales en el dashboard.</li>
+    <li>Confirmar cómo lleva hoy la contabilidad (Excel, Siigo, World Office…) para planear la Fase 2.</li>
+  </ul>
+
+  <div class="note"><strong>Por qué Digit2AI:</strong> entrega AI-Native con un equipo de agentes especializados que reduce el tiempo de meses a semanas, conservando calidad empresarial — multi-empresa, seguridad, y disponibilidad de 99.9%. Validez de la propuesta: 30 días.</div>
+
+  <div class="foot">Digit2AI · Neural Intelligence · digit2ai.com — Propuesta para Comercializadora de Palma. Precios en USD, IVA 19% (Colombia) incluido en el total.</div>
+
+</div>
+</body>
+</html>

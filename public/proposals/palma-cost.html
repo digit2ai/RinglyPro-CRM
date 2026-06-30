@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Costos de Entrega — Visibilidad Financiera Comercializadora de Palma</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>INFORME DE COSTOS DE ENTREGA</h1>
+  <p class="sub">Visibilidad Financiera — Comercializadora de Palma (Colombia) · Fase 1 (MVP) · Modelo de Entrega AI-Native</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO · NO DISTRIBUIR AL CLIENTE</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>Comercializadora de Palma — Solicitud por Voz</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">Atención:</td><td>Lala (lala@digit2ai.com)</td><td class="lbl">Asunto:</td><td>Costo del slice de visibilidad financiera (MVP)</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$70 USD/hora (tarifa cargada)</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega del MVP ya construido y desplegado. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
+  </table>
+
+  <h2>1. Contexto y alcance</h2>
+  <p>Este informe refleja el <strong>costo directo</strong> del slice de <strong>Visibilidad Financiera (Fase 1)</strong> ya construido, probado (9/9 SIT) y desplegado en producción bajo el modelo <strong>AI-Native</strong>: el cliente registra operaciones en dólares (venta, compra, importación) por formulario <strong>o por voz</strong>, y ve en tiempo real total vendido, total comprado, ganancia/pérdida y posición neta USD. Es el slice más pequeño que demuestra valor real de la visión "contabilidad totalmente sistematizada".</p>
+  <p><strong>Quedan FUERA</strong> (fases posteriores): contabilidad de partida doble / plan de cuentas; agente de voz telefónico real (Twilio + STT Whisper); feed de tasa de cambio en vivo (esta fase usa tasa manual); módulos de research de mercado y conocimiento de clientes; logística de import/export; onboarding multi-tenant (el esquema ya es multi-tenant; la UI es single-tenant).</p>
+
+  <h2>2. Costo de Desarrollo (CAPEX)</h2>
+  <p>Componentes del MVP entregado, al costo interno cargado de $70 USD/hora (sin margen ni IVA):</p>
+
+  <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y migración</h3>Sub-app Express auto-montada, modelo Sequelize multi-tenant (<code>tenant_id</code> + índice), migración SQL, fallback en memoria.<div class="price">14 hrs · Costo: $980 USD</div></div>
+  <div class="card"><h3>Componente 2: API de transacciones (CRUD + tenant + JWT)</h3>POST/GET con guarda JWT (reusa el secreto del CRM), filtrado por tenant, validación.<div class="price">12 hrs · Costo: $840 USD</div></div>
+  <div class="card"><h3>Componente 3: Motor de resumen P&amp;L</h3>Cálculo en vivo de ventas, compras, margen (ganancia/pérdida) y posición neta USD.<div class="price">10 hrs · Costo: $700 USD</div></div>
+  <div class="card"><h3>Componente 4: Endpoint de voz + parser de transcripción (NLP determinista)</h3>Acepta transcripción y extrae tipo + monto + contraparte; stub documentado del STT/LLM real.<div class="price">12 hrs · Costo: $840 USD</div></div>
+  <div class="card"><h3>Componente 5: Dashboard dark-theme (cards en vivo, formato USD)</h3>UI Tailwind, tarjetas de resumen, formulario, sección de voz, tabla de operaciones, monospace para cifras.<div class="price">16 hrs · Costo: $1.120 USD</div></div>
+  <div class="card"><h3>Componente 6: i18n ES/EN + páginas</h3>Diccionarios planos ES (por defecto) + EN (<code>?lang=en</code>), render server-side de dashboard y privacidad.<div class="price">8 hrs · Costo: $560 USD</div></div>
+  <div class="card"><h3>Componente 7: Seguridad y cumplimiento</h3>JWT en lecturas+escrituras (dato financiero interno), disciplina PII en logs, aviso Ley 1581 de 2012.<div class="price">6 hrs · Costo: $420 USD</div></div>
+  <div class="card"><h3>Componente 8: SIT + UAT + despliegue y verificación</h3>Harness SIT de 9 checks (exit 0), verificación en producción, deploy a Render.<div class="price">10 hrs · Costo: $700 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Subtotal de los 8 componentes (incluye gestión, QA y UAT)</td><td class="num">88</td><td class="num">$6.160</td></tr>
+    <tr class="total"><td>COSTO TOTAL DE DESARROLLO — FASE 1 (CAPEX)</td><td class="num">88</td><td class="num">$6.160 USD</td></tr>
+  </table>
+  <p class="muted">Plazo de entrega: <span class="pill">~2 semanas</span> (entregado). Banda de costo según acabado: <strong>$5.000</strong> (lean) a <strong>$7.500</strong> (pulido). Ancla: <strong>$6.160 USD</strong>.</p>
+
+  <h2>3. Cronograma de Entrega (costo por semana)</h2>
+  <div class="twocol">
+    <div class="card"><h3>Semana 1 — Cimientos + API + voz</h3><ul class="tight"><li>Componente 1 (Arquitectura + datos)</li><li>Componente 2 (API transacciones)</li><li>Componente 3 (Motor P&amp;L)</li><li>Componente 4 (Voz + parser)</li></ul><div class="price">48 hrs · Costo: $3.360 USD</div></div>
+    <div class="card"><h3>Semana 2 — Dashboard + i18n + seguridad + entrega</h3><ul class="tight"><li>Componente 5 (Dashboard)</li><li>Componente 6 (i18n + páginas)</li><li>Componente 7 (Seguridad + Ley 1581)</li><li>Componente 8 (SIT + deploy)</li></ul><div class="price">40 hrs · Costo: $2.800 USD</div></div>
+  </div>
+  <p class="muted">Suma de las 2 semanas = 88 horas = <strong>$6.160 USD</strong> de costo total de desarrollo.</p>
+
+  <h2>4. Costo Operativo (OPEX)</h2>
+  <p>Costo recurrente del slice en producción, sobre infraestructura compartida del ecosistema RinglyPro. La línea (*) escala con el uso.</p>
+  <table class="fin">
+    <tr><th>Herramienta / Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
+    <tr><td>Render — share de cómputo + PostgreSQL</td><td>Sub-app + base de datos multi-tenant</td><td class="num">$50</td></tr>
+    <tr><td>Almacenamiento / CDN</td><td>Assets del dashboard</td><td class="num">$10</td></tr>
+    <tr class="total"><td colspan="2">COSTO OPERATIVO</td><td class="num">$60</td></tr>
+  </table>
+  <p class="muted">Equivalente a <strong>$60 USD/mes</strong>. (*) El STT/NLP real (Whisper + LLM) y el feed FX en vivo agregan ~$40–80/mes variables cuando se activen en fase posterior.</p>
+
+  <h2>5. Resumen de Costo — Fase 1</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Desarrollo Fase 1 (CAPEX)</td><td class="num">$6.160</td></tr>
+    <tr><td>Operación (~1 mes)</td><td class="num">$60</td></tr>
+    <tr class="total"><td>COSTO TOTAL — FASE 1</td><td class="num">$6.220 USD</td></tr>
+    <tr><td>Plazo de entrega</td><td class="num">~2 semanas (entregado)</td></tr>
+  </table>
+
+  <div class="note"><strong>Nota:</strong> Documento de costo directo. El margen de utilidad y el IVA (19% Colombia) se aplican por separado en la propuesta dirigida al cliente; no forman parte de este informe.</div>
+
+  <div class="foot">Documento interno de Digit2AI. Cifras en USD a costo directo, sin margen ni IVA. Tarifa interna cargada de referencia: $70 USD/hora. No distribuir al cliente. Slice de Visibilidad Financiera ya vivo en <code>/solicitud-por-voz-contexto-del-cliente-e</code>.</div>
+
+</div>
+</body>
+</html>
