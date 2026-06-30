@@ -90,5 +90,12 @@
   "col_competidor": "No.",
   "col_caballo": "Horse",
   "col_puntaje": "Score",
-  "col_obs": "Notes"
+  "col_obs": "Notes",
+  "neural_title": "Neural Intelligence",
+  "neural_sub": "Automatic findings watching the gait and the category, with severity and recommended action.",
+  "neural_total": "findings",
+  "neural_clean": "No alerts",
+  "neural_none": "No findings detected for this gait.",
+  "neural_action": "Recommended action",
+  "res_reco": "Recommendations"
 }

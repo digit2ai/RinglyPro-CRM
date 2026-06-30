@@ -310,6 +310,67 @@ async function run(base) {
       check('modo demostración server-side (demo_modalidad) corre el pipeline', resp.status === 201 && j && j.clasificacion && j.clasificacion.modalidad_detectada === 'paso_fino', `status=${resp.status}`);
     }
   }
+
+  // ---- Dictamen profesional + Neural Intelligence ---------------------------
+  {
+    // Sesión buena -> dictamen extenso + finding de excelencia o sin críticos.
+    const setup = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { token: A, body: { numero: 10, caballo: 'Dictamen' } });
+    const ins = setup.json && setup.json.inscripcion;
+    const cat = setup.json && setup.json.categoria;
+    let faSession = null;
+    if (ins) {
+      const frames = synth.syntheticFrames('paso_fino', { ciclos: 6 });
+      const sess = await reqChampSession(base, { token: A, inscripcion_id: ins.id, superficie: 'tablado', frames });
+      faSession = sess.json;
+      const d = faSession && faSession.dictamen;
+      check('fallo incluye dictamen profesional (titulo + >=5 secciones + recomendaciones)',
+        !!d && typeof d.titulo === 'string' && Array.isArray(d.secciones) && d.secciones.length >= 5
+        && Array.isArray(d.recomendaciones) && d.recomendaciones.length >= 1 && typeof d.texto_plano === 'string' && d.texto_plano.length > 300,
+        `secciones=${d && d.secciones && d.secciones.length} texto=${d && d.texto_plano && d.texto_plano.length}`);
+      check('fallo incluye neural_findings (array)', Array.isArray(faSession && faSession.neural_findings),
+        `findings=${faSession && faSession.neural_findings && faSession.neural_findings.length}`);
+    }
+
+    // Sesión con discordancia -> finding crítico MOD-MISMATCH.
+    const setupM = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { token: A, body: { numero: 11, caballo: 'Discorde' } });
+    const insM = setupM.json && setupM.json.inscripcion;
+    if (insM) {
+      const frames = synth.syntheticFrames('trote', { ciclos: 6 });
+      const sess = await reqChampSession(base, { token: A, inscripcion_id: insM.id, superficie: 'arena', frames });
+      const fnds = (sess.json && sess.json.neural_findings) || [];
+      const mismatch = fnds.find((x) => x.code === 'MOD-MISMATCH');
+      check('Neural emite MOD-MISMATCH crítico cuando la modalidad no coincide',
+        !!mismatch && mismatch.impact === 'critical', `codes=${fnds.map((x) => x.code).join(',')}`);
+    }
+
+    // Endpoints Neural: findings list + dashboard + status update.
+    if (cat) {
+      const list = await reqJson(base, 'GET', `/api/v1/champ/neural/findings?categoria_id=${cat.id}`);
+      check('GET /neural/findings -> array', list.status === 200 && Array.isArray(list.json), `status=${list.status}`);
+
+      const dash = await reqJson(base, 'GET', `/api/v1/champ/neural/dashboard?categoria_id=${cat.id}`);
+      const okDash = dash.status === 200 && dash.json && typeof dash.json.total === 'number'
+        && dash.json.counts && Array.isArray(dash.json.findings);
+      check('GET /neural/dashboard -> counts + findings', okDash, `status=${dash.status} total=${dash.json && dash.json.total}`);
+
+      // Status update on the first finding (if any).
+      if (list.json && list.json.length) {
+        const fid = list.json[0].id;
+        const upd = await reqJson(base, 'PATCH', `/api/v1/champ/neural/findings/${fid}`, { token: A, body: { status: 'acknowledged' } });
+        check('PATCH /neural/findings/:id -> status acknowledged', upd.status === 200 && upd.json && upd.json.status === 'acknowledged', `status=${upd.status}`);
+        const noAuth = await reqJson(base, 'PATCH', `/api/v1/champ/neural/findings/${fid}`, { body: { status: 'resolved' } });
+        check('PATCH /neural/findings/:id without JWT -> 401', noAuth.status === 401, `status=${noAuth.status}`);
+      }
+    }
+
+    // GET session read-back includes regenerated dictamen + persisted findings.
+    if (faSession && faSession.sesion_id) {
+      const rd = await reqJson(base, 'GET', `/api/v1/champ/sessions/${faSession.sesion_id}?lang=en`);
+      check('GET session read-back -> dictamen (EN) + neural_findings',
+        rd.status === 200 && rd.json && rd.json.dictamen && /Paso Fino|gait/i.test(rd.json.dictamen.veredicto || '') && Array.isArray(rd.json.neural_findings),
+        `status=${rd.status}`);
+    }
+  }
 }
 
 // ---- Boot + report ---------------------------------------------------------

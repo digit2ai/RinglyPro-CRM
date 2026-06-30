@@ -29,6 +29,8 @@ const store = require('../models/championship');
 const gait = require('../lib/gaitAnalyzer');
 const synth = require('../lib/synth');
 const { runPipeline, rankingCategoria } = require('../lib/pipeline');
+const dictamen = require('../lib/dictamen');
+const neural = require('../lib/neuralEngine');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 80 * 1024 * 1024 } });
 
@@ -119,7 +121,7 @@ router.post('/sessions', requireAuth, upload.any(), async (req, res) => {
       audio_canales: 1, audio_formato: audioFile ? 'wav' : null, tenant_id: req.tenantId
     });
 
-    const fallo = await runPipeline(store, { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec });
+    const fallo = await runPipeline(store, { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec, lang: body.lang || 'es' });
     console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_judged', sesion_id: sesion.id, modalidad: fallo.clasificacion.modalidad_detectada, puntaje: fallo.puntaje_total }));
     res.status(201).json(fallo);
   } catch (e) {
@@ -145,16 +147,72 @@ router.get('/sessions/:id', resolveTenant, async (req, res) => {
     const categoria = inscripcion ? await store.repo.find('categorias', { id: inscripcion.categoria_id }) : null;
     const caballo = inscripcion ? await store.repo.find('caballos', { id: inscripcion.caballo_id }) : null;
     const resultado = inscripcion ? await store.repo.find('resultados', { inscripcion_id: inscripcion.id }) : null;
+    const findings = neural.ordenarPorImpacto(await store.repo.findAll('findings', { sesion_id, status: 'active' }));
+
+    const puntuaciones = punt.map((p) => ({ nombre: critById[p.criterio_id] ? critById[p.criterio_id].nombre : ('Criterio ' + p.criterio_id), peso_porcentaje: critById[p.criterio_id] ? critById[p.criterio_id].peso_porcentaje : null, valor_medido: p.valor_medido, puntaje_normalizado: p.puntaje_normalizado }));
+
+    // Dictamen regenerado a partir de los datos persistidos (idioma por ?lang).
+    const lang = (req.query.lang === 'en') ? 'en' : 'es';
+    const falloLike = {
+      clasificacion: clas, metricas_movimiento: mov, metricas_sonido: son,
+      puntuaciones, puntaje_total: resultado ? resultado.puntaje_total : null,
+      ranking: resultado ? resultado.ranking : null, pisadas
+    };
+    const dict = (clas && mov) ? dictamen.generar(falloLike, lang) : null;
 
     res.json({
       sesion, caballo, categoria, inscripcion,
       clasificacion: clas,
       metricas_movimiento: mov,
       metricas_sonido: son,
-      puntuaciones: punt.map((p) => ({ nombre: critById[p.criterio_id] ? critById[p.criterio_id].nombre : ('Criterio ' + p.criterio_id), peso_porcentaje: critById[p.criterio_id] ? critById[p.criterio_id].peso_porcentaje : null, valor_medido: p.valor_medido, puntaje_normalizado: p.puntaje_normalizado })),
+      puntuaciones,
       pisadas,
-      resultado
+      resultado,
+      dictamen: dict,
+      neural_findings: findings
     });
+  } catch (e) { err(res, 500, e.message); }
+});
+
+// ---- Neural Intelligence: findings list (public read) ----------------------
+router.get('/neural/findings', resolveTenant, async (req, res) => {
+  try {
+    const where = { tenant_id: req.tenantId };
+    if (req.query.status) where.status = req.query.status; else where.status = 'active';
+    if (req.query.sesion_id) where.sesion_id = parseInt(req.query.sesion_id, 10);
+    if (req.query.categoria_id) where.categoria_id = parseInt(req.query.categoria_id, 10);
+    const rows = await store.repo.findAll('findings', where, ['id', 'DESC']);
+    res.json(neural.ordenarPorImpacto(rows));
+  } catch (e) { err(res, 500, e.message); }
+});
+
+// ---- Neural dashboard: counts by impact + active findings (public) ----------
+router.get('/neural/dashboard', resolveTenant, async (req, res) => {
+  try {
+    const where = { tenant_id: req.tenantId, status: 'active' };
+    if (req.query.categoria_id) where.categoria_id = parseInt(req.query.categoria_id, 10);
+    const rows = neural.ordenarPorImpacto(await store.repo.findAll('findings', where));
+    const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    rows.forEach((r) => { if (counts[r.impact] != null) counts[r.impact] += 1; });
+    res.json({
+      total: rows.length,
+      counts,
+      attention_required: counts.critical + counts.high,
+      findings: rows.slice(0, 50)
+    });
+  } catch (e) { err(res, 500, e.message); }
+});
+
+// ---- Neural: update finding status (JWT write) -----------------------------
+router.patch('/neural/findings/:id', requireAuth, async (req, res) => {
+  try {
+    const status = (req.body && req.body.status) || '';
+    if (!['active', 'acknowledged', 'resolved', 'dismissed'].includes(status)) {
+      return err(res, 400, 'invalid status (active|acknowledged|resolved|dismissed)');
+    }
+    const id = parseInt(req.params.id, 10);
+    await store.repo.update('findings', { id }, { status });
+    res.json({ id, status });
   } catch (e) { err(res, 500, e.message); }
 });
 

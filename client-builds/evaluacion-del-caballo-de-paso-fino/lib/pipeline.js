@@ -15,6 +15,8 @@ const metrics = require('./metrics');
 const { classify, esModalidadValida } = require('./classifier');
 const { score } = require('./scoring');
 const { CASCOS } = require('./anatomy');
+const dictamen = require('./dictamen');
+const neural = require('./neuralEngine');
 
 // store = models/championship (repo + puntoIdByCodigo).
 // ctx = { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec }
@@ -93,7 +95,8 @@ async function runPipeline(store, ctx) {
     miRanking = mio ? mio.ranking : null;
   }
 
-  return {
+  // 7. Fallo base.
+  const fallo = {
     sesion_id: sesion.id,
     superficie,
     clasificacion: Object.assign({ es_modalidad_valida: valida, modalidad_categoria: categoria ? categoria.modalidad : null }, clas),
@@ -104,6 +107,38 @@ async function runPipeline(store, ctx) {
     puntaje_total,
     ranking: miRanking
   };
+
+  // 8. Dictamen profesional (ES+EN) — se persiste el texto en observaciones.
+  const lang = (ctx && ctx.lang) || 'es';
+  const dictES = dictamen.generar(fallo, 'es');
+  const dictEN = dictamen.generar(fallo, 'en');
+  fallo.dictamen = lang === 'en' ? dictEN : dictES;
+  fallo.dictamen_en = dictEN;
+  await repo.update('resultados', { inscripcion_id: inscripcion.id }, { observaciones: dictES.texto_plano });
+
+  // 9. Neural Intelligence — hallazgos que vigilan la sesión + la categoría.
+  let rankingRows = [];
+  if (categoria) { try { rankingRows = await rankingCategoria(store, categoria.id); } catch (e) { rankingRows = []; } }
+  const findings = neural.ordenarPorImpacto(
+    neural.analizarSesion(fallo, { inscripcion, categoria }, lang)
+      .concat(neural.analizarCategoria(rankingRows, lang))
+  );
+  // Persistir (reemplaza los findings activos previos de ESTA sesión).
+  try {
+    await repo.update('findings', { sesion_id: sesion.id, status: 'active' }, { status: 'superseded' });
+    if (findings.length) {
+      await repo.bulk('findings', findings.map((fd) => ({
+        sesion_id: sesion.id, inscripcion_id: inscripcion.id, categoria_id: categoria ? categoria.id : null,
+        code: fd.code, category: fd.category, scope: fd.scope, title: fd.title, summary: fd.summary,
+        evidence: fd.evidence || {}, impact: fd.impact, impact_estimate: fd.impact_estimate,
+        recommended_action: fd.recommended_action, workflow: fd.workflow || null, status: 'active',
+        tenant_id: sesion.tenant_id || 1
+      })));
+    }
+  } catch (e) { /* findings no bloquean el fallo */ }
+  fallo.neural_findings = findings;
+
+  return fallo;
 }
 
 async function upsertResultado(store, inscripcion_id, puntaje_total, clas) {

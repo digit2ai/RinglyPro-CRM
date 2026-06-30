@@ -107,6 +107,18 @@ const TABLES = {
   resultados: {
     table: P + 'resultados',
     attrs: { inscripcion_id: T(DataTypes.BIGINT, false), puntaje_total: DataTypes.FLOAT, ranking: DataTypes.INTEGER, observaciones: DataTypes.TEXT, tenant_id: T(DataTypes.INTEGER, false, 1) }
+  },
+  // Neural Intelligence: hallazgos (findings) que vigilan cada sesión/categoría.
+  findings: {
+    table: P + 'neural_findings',
+    attrs: {
+      sesion_id: DataTypes.BIGINT, inscripcion_id: DataTypes.BIGINT, categoria_id: DataTypes.BIGINT,
+      code: T(DataTypes.STRING(40), false), category: DataTypes.STRING(30), scope: DataTypes.STRING(20),
+      title: T(DataTypes.STRING(255), false), summary: DataTypes.TEXT, evidence: DataTypes.JSONB,
+      impact: T(DataTypes.STRING(20), true, 'info'), impact_estimate: DataTypes.TEXT,
+      recommended_action: DataTypes.TEXT, workflow: DataTypes.STRING(40),
+      status: T(DataTypes.STRING(20), true, 'active'), tenant_id: T(DataTypes.INTEGER, false, 1)
+    }
   }
 };
 

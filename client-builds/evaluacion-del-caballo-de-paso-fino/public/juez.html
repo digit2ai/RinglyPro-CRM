@@ -12,6 +12,14 @@
     .timeline { position: relative; height: 38px; background:#0d1320; border:1px solid #243049; border-radius:8px; overflow:hidden; }
     .mark { position:absolute; top:0; width:2px; height:100%; }
     .mark.video { background:#38bdf8; } .mark.audio { background:#a78bfa; } .mark.both { background:#34d399; }
+    .finding { border:1px solid #243049; border-left-width:4px; border-radius:10px; padding:12px 14px; background:#0d1320; }
+    .finding.critical { border-left-color:#f43f5e; } .finding.high { border-left-color:#fb923c; }
+    .finding.medium { border-left-color:#fbbf24; } .finding.low { border-left-color:#60a5fa; } .finding.info { border-left-color:#34d399; }
+    .chip { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
+    .chip.critical { background:#f43f5e22; color:#fda4af; } .chip.high { background:#fb923c22; color:#fdba74; }
+    .chip.medium { background:#fbbf2422; color:#fde68a; } .chip.low { background:#60a5fa22; color:#bfdbfe; } .chip.info { background:#34d39922; color:#a7f3d0; }
+    .dsec { border-left:2px solid #243049; padding-left:12px; }
+    .dsec.critico { border-left-color:#f43f5e; } .dsec.aviso { border-left-color:#fbbf24; } .dsec.ok { border-left-color:#34d399; } .dsec.info { border-left-color:#334155; }
   </style>
 </head>
 <body class="text-slate-100 min-h-screen">
@@ -118,8 +126,21 @@
       </div>
       <video id="videoPlayer" class="w-full rounded-lg hidden" controls></video>
 
-      <h3 class="text-sm font-semibold text-indigo-300 mt-5 mb-2" data-i18n="res_dictamen"></h3>
-      <p id="resDictamen" class="text-slate-300 text-sm"></p>
+      <!-- Neural Intelligence: hallazgos que vigilan la marcha -->
+      <div class="flex items-center justify-between mt-6 mb-2">
+        <h3 class="text-sm font-semibold text-cyan-300 flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-cyan-400"></span><span data-i18n="neural_title"></span>
+        </h3>
+        <span id="neuralCounts" class="text-xs mono text-slate-500"></span>
+      </div>
+      <p class="text-xs text-slate-500 mb-3" data-i18n="neural_sub"></p>
+      <div id="neuralPanel" class="space-y-2 mb-6"></div>
+
+      <h3 class="text-sm font-semibold text-indigo-300 mt-5 mb-1" data-i18n="res_dictamen"></h3>
+      <p id="resResumen" class="text-slate-200 text-sm font-medium mb-3"></p>
+      <div id="resDictamen" class="space-y-3 mb-3"></div>
+      <div id="resReco" class="mb-2"></div>
+      <p id="resFirma" class="text-xs text-slate-600 italic mt-3"></p>
     </section>
 
     <footer class="text-center text-xs text-slate-600 mt-10">Digit2AI · {{TITLE}}</footer>

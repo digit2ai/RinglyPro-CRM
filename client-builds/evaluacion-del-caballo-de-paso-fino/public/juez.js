@@ -165,10 +165,76 @@
     var vp = $('videoPlayer');
     if (videoFile) { vp.src = URL.createObjectURL(videoFile); vp.classList.remove('hidden'); } else { vp.classList.add('hidden'); }
 
-    // Dictamen narrativo del juez.
-    $('resDictamen').textContent = dictamen(f);
+    // Neural Intelligence: panel de hallazgos.
+    renderNeural(f.neural_findings || []);
+
+    // Dictamen profesional estructurado (server-side).
+    renderDictamen(f.dictamen);
 
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  var IMPACT_LABEL = {
+    critical: { es: 'Crítico', en: 'Critical' }, high: { es: 'Alto', en: 'High' },
+    medium: { es: 'Medio', en: 'Medium' }, low: { es: 'Bajo', en: 'Low' }, info: { es: 'Info', en: 'Info' }
+  };
+  function impactLabel(i) { return (IMPACT_LABEL[i] && IMPACT_LABEL[i][LANG]) || i; }
+
+  function renderNeural(findings) {
+    var panel = $('neuralPanel'); if (!panel) return;
+    panel.innerHTML = '';
+    var counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    findings.forEach(function (f) { if (counts[f.impact] != null) counts[f.impact]++; });
+    var cEl = $('neuralCounts');
+    if (cEl) {
+      if (!findings.length) cEl.textContent = (I18N.neural_clean || 'Sin alertas');
+      else cEl.textContent = (counts.critical ? counts.critical + ' ' + impactLabel('critical') + ' · ' : '') +
+        (counts.high ? counts.high + ' ' + impactLabel('high') + ' · ' : '') + findings.length + ' ' + (I18N.neural_total || 'hallazgos');
+    }
+    if (!findings.length) {
+      panel.innerHTML = '<div class="finding info text-sm text-slate-400">' + esc(I18N.neural_none || 'No se detectaron hallazgos para esta marcha.') + '</div>';
+      return;
+    }
+    findings.forEach(function (fd) {
+      var el = document.createElement('div');
+      el.className = 'finding ' + (fd.impact || 'info');
+      var action = fd.recommended_action ? '<div class="text-xs text-slate-400 mt-2"><span class="text-slate-500">' + esc(I18N.neural_action || 'Acción recomendada') + ':</span> ' + esc(fd.recommended_action) + '</div>' : '';
+      var est = fd.impact_estimate ? '<span class="text-xs text-slate-500 mono">' + esc(fd.impact_estimate) + '</span>' : '';
+      el.innerHTML =
+        '<div class="flex items-center justify-between gap-2 mb-1">' +
+          '<div class="flex items-center gap-2 flex-wrap"><span class="chip ' + (fd.impact || 'info') + '">' + esc(impactLabel(fd.impact)) + '</span>' +
+          '<span class="mono text-xs text-slate-500">' + esc(fd.code) + '</span></div>' + est + '</div>' +
+        '<div class="text-sm font-semibold text-slate-100">' + esc(fd.title) + '</div>' +
+        '<div class="text-xs text-slate-400 mt-1">' + esc(fd.summary) + '</div>' + action;
+      panel.appendChild(el);
+    });
+  }
+
+  function renderDictamen(d) {
+    var box = $('resDictamen'), res = $('resResumen'), reco = $('resReco'), firma = $('resFirma');
+    if (!box) return;
+    box.innerHTML = ''; if (reco) reco.innerHTML = '';
+    if (!d) { if (res) res.textContent = ''; return; }
+    if (res) res.textContent = d.resumen || '';
+    if (d.veredicto) {
+      var lead = document.createElement('div');
+      lead.className = 'text-xs text-slate-300';
+      lead.textContent = d.veredicto;
+      box.appendChild(lead);
+    }
+    (d.secciones || []).forEach(function (s) {
+      var el = document.createElement('div');
+      el.className = 'dsec ' + (s.nivel || 'info');
+      el.innerHTML = '<div class="text-xs font-semibold text-slate-200 mb-0.5">' + esc(s.titulo) + '</div>' +
+        '<div class="text-xs text-slate-400" style="white-space:pre-line">' + esc(s.cuerpo) + '</div>';
+      box.appendChild(el);
+    });
+    if (reco && d.recomendaciones && d.recomendaciones.length) {
+      var h = '<div class="text-xs font-semibold text-indigo-300 mb-1">' + esc(I18N.res_reco || 'Recomendaciones') + '</div><ul class="list-disc list-inside text-xs text-slate-300 space-y-1">';
+      d.recomendaciones.forEach(function (r) { h += '<li>' + esc(r) + '</li>'; });
+      reco.innerHTML = h + '</ul>';
+    }
+    if (firma) firma.textContent = d.firma || '';
   }
 
   function renderTimeline(pisadas) {
@@ -185,23 +251,6 @@
     });
   }
 
-  function dictamen(f) {
-    var c = f.clasificacion || {}, mov = f.metricas_movimiento || {};
-    var L = LANG === 'en';
-    var mod = modLabel(c.modalidad_detectada);
-    var conf = Math.round((c.confianza || 0) * 100);
-    var cv = c.coef_variacion_intervalos != null ? c.coef_variacion_intervalos.toFixed(3) : 'n/d';
-    if (L) {
-      return 'The horse shows a ' + mod + ' gait with ' + c.tiempos + ' beats and a ' + c.patron + ' support pattern (confidence ' + conf + '%). ' +
-        'Rhythm coefficient of variation is ' + cv + ' (lower is steadier); cadence ' + (mov.cadencia_ppm != null ? Math.round(mov.cadencia_ppm) : '?') + ' steps/min, lateral symmetry ' + (mov.simetria_lateral != null ? Math.round(mov.simetria_lateral * 100) + '%' : 'n/a') + '. ' +
-        'Weighted score: ' + (f.puntaje_total != null ? f.puntaje_total.toFixed(1) : '—') + '/100' + (f.ranking ? ', current rank #' + f.ranking + ' in the category.' : '.') +
-        (c.es_modalidad_valida === false ? ' WARNING: detected gait does not match the entered category.' : '');
-    }
-    return 'El caballo presenta una marcha de ' + mod + ' con ' + c.tiempos + ' tiempos y apoyos ' + c.patron + ' (confianza ' + conf + '%). ' +
-      'El coeficiente de variación del ritmo es ' + cv + ' (más bajo = más parejo); cadencia ' + (mov.cadencia_ppm != null ? Math.round(mov.cadencia_ppm) : '?') + ' pisadas/min, simetría lateral ' + (mov.simetria_lateral != null ? Math.round(mov.simetria_lateral * 100) + '%' : 'n/d') + '. ' +
-      'Puntaje ponderado: ' + (f.puntaje_total != null ? f.puntaje_total.toFixed(1) : '—') + '/100' + (f.ranking ? ', puesto actual #' + f.ranking + ' en la categoría.' : '.') +
-      (c.es_modalidad_valida === false ? ' ATENCIÓN: la modalidad detectada no coincide con la categoría inscrita.' : '');
-  }
 
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 

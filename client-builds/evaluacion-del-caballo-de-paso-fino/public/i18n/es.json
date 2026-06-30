@@ -90,5 +90,12 @@
   "col_competidor": "N.º",
   "col_caballo": "Caballo",
   "col_puntaje": "Puntaje",
-  "col_obs": "Observaciones"
+  "col_obs": "Observaciones",
+  "neural_title": "Neural Intelligence",
+  "neural_sub": "Hallazgos automáticos que vigilan la marcha y la categoría, con severidad y acción recomendada.",
+  "neural_total": "hallazgos",
+  "neural_clean": "Sin alertas",
+  "neural_none": "No se detectaron hallazgos para esta marcha.",
+  "neural_action": "Acción recomendada",
+  "res_reco": "Recomendaciones"
 }
