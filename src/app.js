@@ -305,6 +305,28 @@ app.get(['/valle_milagro', '/valle_milagro/', '/valle-milagro', '/valle-milagro/
   res.sendFile(path.join(__dirname, '../public/valle_milagro/index.html'));
 });
 
+// =====================================================
+// Private, token-gated docs (NOT in /public, NOT indexable).
+// Served only when the URL carries a valid ?k=<ARCH_DOC_KEY>.
+// Wrong/missing key -> generic 404 (never reveals the doc exists).
+// Revoke access by changing/clearing the ARCH_DOC_KEY env var.
+// =====================================================
+app.get('/docs/enterprise-architecture', (req, res) => {
+  const supplied = String(req.query.k || '');
+  const valid = process.env.ARCH_DOC_KEY || '';
+  let ok = false;
+  if (valid && supplied.length === valid.length) {
+    try {
+      ok = require('crypto').timingSafeEqual(Buffer.from(supplied), Buffer.from(valid));
+    } catch (e) { ok = false; }
+  }
+  if (!ok) return res.status(404).send('Not found');
+  res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  res.set('Cache-Control', 'private, no-store, max-age=0');
+  res.set('Referrer-Policy', 'no-referrer');
+  return res.sendFile(path.join(__dirname, '..', 'private-docs', 'digit2ai-enterprise-architecture.html'));
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)

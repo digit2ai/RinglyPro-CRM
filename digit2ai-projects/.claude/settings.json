@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/opt/homebrew/bin/node --check client-builds/voice-to-intake-transcript-direct-pipeli/public/i18n.js)",
+      "Bash(/opt/homebrew/bin/node --check client-builds/voice-to-intake-transcript-direct-pipeli/services/push.js)",
+      "Bash(/opt/homebrew/bin/node -e \"const p=require\\('./client-builds/voice-to-intake-transcript-direct-pipeli/services/push'\\); console.log\\('enabled:', p.isEnabled\\(\\), '| subject default applied'\\);\")",
+      "Bash(/opt/homebrew/bin/node -e ' *)",
+      "Bash(/opt/homebrew/bin/node -c public/app.js)",
+      "Bash(/opt/homebrew/bin/node -c public/i18n.js)",
+      "Bash(grep -E \"\\\\.\\(html|js|tsx|ts\\)$\")"
+    ]
+  }
+}
