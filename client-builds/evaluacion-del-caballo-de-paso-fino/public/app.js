@@ -1,0 +1,206 @@
+// =====================================================
+// Frontend — vanilla JS: i18n apply, horse registry, WAV upload + analyze,
+// diagnostic card, history table, language toggle. No React.
+// =====================================================
+(function () {
+  'use strict';
+
+  var I18N = window.__I18N || {};
+  var BASE = window.__BASE || '/';
+  var LANG = window.__LANG || 'es';
+  var PAGE = window.__PAGE || 'index';
+  var API = BASE + 'api/v1';
+
+  // ---- i18n: fill [data-i18n] text + [data-i18n-ph] placeholders ----
+  function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n');
+      if (I18N[k] != null) el.textContent = I18N[k];
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n-ph');
+      if (I18N[k] != null) el.setAttribute('placeholder', I18N[k]);
+    });
+  }
+
+  function langToggle() {
+    var el = document.getElementById('langToggle');
+    if (!el) return;
+    el.addEventListener('click', function () {
+      var next = LANG === 'es' ? 'en' : 'es';
+      var u = new URL(window.location.href);
+      u.searchParams.set('lang', next);
+      window.location.href = u.toString();
+    });
+  }
+
+  function token() {
+    var el = document.getElementById('jwt');
+    return el ? el.value.trim() : '';
+  }
+
+  function authHeaders() {
+    var t = token();
+    return t ? { Authorization: 'Bearer ' + t } : {};
+  }
+
+  function setStatus(msg) {
+    var el = document.getElementById('status');
+    if (el) el.textContent = msg || '';
+  }
+
+  // ---- Horses ----
+  function loadHorses() {
+    return fetch(API + '/horses')
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        var sels = document.querySelectorAll('#horseSel');
+        sels.forEach(function (sel) {
+          var keep = sel.querySelector('option[value=""]');
+          sel.innerHTML = '';
+          if (keep) sel.appendChild(keep);
+          (rows || []).forEach(function (h) {
+            var o = document.createElement('option');
+            o.value = h.id;
+            o.textContent = h.name + (h.breed ? ' (' + h.breed + ')' : '');
+            sel.appendChild(o);
+          });
+        });
+        return rows;
+      })
+      .catch(function () { return []; });
+  }
+
+  function bindCreateHorse() {
+    var btn = document.getElementById('createHorse');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      if (!token()) { setStatus(I18N.err_need_token); return; }
+      var name = (document.getElementById('hName') || {}).value;
+      var breed = (document.getElementById('hBreed') || {}).value;
+      if (!name || !name.trim()) { setStatus(I18N.err_need_horse); return; }
+      setStatus('…');
+      fetch(API + '/horses', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ name: name.trim(), breed: (breed || '').trim() })
+      }).then(function (r) {
+        if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
+        return r.json();
+      }).then(function (row) {
+        if (!row) return;
+        setStatus('');
+        loadHorses().then(function () {
+          var sel = document.getElementById('horseSel');
+          if (sel) sel.value = row.id;
+        });
+      }).catch(function (e) { setStatus(String(e)); });
+    });
+  }
+
+  // ---- Verdict styling ----
+  function verdictStyle(v) {
+    if (v === 'vet_review') return { cls: 'bg-rose-600 text-white', label: I18N.verdict_vet_review };
+    if (v === 'training_adjustment') return { cls: 'bg-amber-500 text-slate-900', label: I18N.verdict_training_adjustment };
+    return { cls: 'bg-emerald-600 text-white', label: I18N.verdict_normal };
+  }
+
+  // ---- Analyze (upload WAV) ----
+  function bindAnalyze() {
+    var btn = document.getElementById('analyze');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      if (!token()) { setStatus(I18N.err_need_token); return; }
+      var sel = document.getElementById('horseSel');
+      var horseId = sel ? sel.value : '';
+      if (!horseId) { setStatus(I18N.err_need_horse); return; }
+      var fileEl = document.getElementById('wav');
+      var file = fileEl && fileEl.files[0];
+      if (!file) { setStatus(I18N.err_need_file); return; }
+
+      setStatus(I18N.analyzing);
+      var fd = new FormData();
+      fd.append('audio', file);
+      fd.append('horse_id', horseId);
+      fd.append('lang', LANG);
+
+      fetch(API + '/evaluations', { method: 'POST', headers: authHeaders(), body: fd })
+        .then(function (r) {
+          if (r.status === 415) { setStatus(I18N.err_415); return null; }
+          if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
+          return r.json();
+        })
+        .then(function (res) {
+          if (!res) return;
+          setStatus('');
+          renderResult(res);
+        })
+        .catch(function (e) { setStatus(String(e)); });
+    });
+  }
+
+  function renderResult(res) {
+    var card = document.getElementById('result');
+    if (!card) return;
+    card.classList.remove('hidden');
+    var vs = verdictStyle(res.verdict);
+    var badge = document.getElementById('verdictBadge');
+    badge.className = 'inline-block px-3 py-1 rounded-full text-sm font-bold mb-4 ' + vs.cls;
+    badge.textContent = vs.label;
+    document.getElementById('recommendation').textContent = res.recommendation || '';
+    document.getElementById('mCadence').textContent = res.cadence_bpm != null ? res.cadence_bpm : '—';
+    document.getElementById('mCv').textContent = res.regularity_cv != null ? res.regularity_cv : '—';
+    document.getElementById('mBeats').textContent = res.beat_count != null ? res.beat_count : '—';
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // ---- Dashboard history ----
+  function bindDashboard() {
+    var sel = document.getElementById('horseSel');
+    if (!sel) return;
+    sel.addEventListener('change', function () { loadHistory(sel.value); });
+  }
+
+  function fmtDate(s) {
+    try { return new Date(s).toLocaleString(LANG === 'en' ? 'en-US' : 'es-CO'); }
+    catch (e) { return s; }
+  }
+
+  function loadHistory(horseId) {
+    var tbody = document.getElementById('rows');
+    var empty = document.getElementById('empty');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!horseId) { if (empty) empty.classList.add('hidden'); return; }
+    fetch(API + '/evaluations?horse_id=' + encodeURIComponent(horseId))
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        if (!rows || !rows.length) { if (empty) empty.classList.remove('hidden'); return; }
+        if (empty) empty.classList.add('hidden');
+        rows.forEach(function (e) {
+          var vs = verdictStyle(e.verdict);
+          var tr = document.createElement('tr');
+          tr.className = 'border-b border-slate-800/50';
+          tr.innerHTML =
+            '<td class="py-2 pr-4 mono text-xs">' + fmtDate(e.created_at) + '</td>' +
+            '<td class="py-2 pr-4 mono">' + (e.cadence_bpm != null ? e.cadence_bpm : '—') + '</td>' +
+            '<td class="py-2 pr-4 mono">' + (e.regularity_cv != null ? e.regularity_cv : '—') + '</td>' +
+            '<td class="py-2 pr-4 mono">' + (e.beat_count != null ? e.beat_count : '—') + '</td>' +
+            '<td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs font-bold ' + vs.cls + '">' + vs.label + '</span></td>';
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(function () { if (empty) empty.classList.remove('hidden'); });
+  }
+
+  // ---- Boot ----
+  applyI18n();
+  langToggle();
+  loadHorses();
+  if (PAGE === 'dashboard') {
+    bindDashboard();
+  } else {
+    bindCreateHorse();
+    bindAnalyze();
+  }
+})();

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    body { background: #060a14; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+  <div class="max-w-4xl mx-auto px-5 py-10">
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="poc_badge"></div>
+        <h1 class="text-2xl sm:text-3xl font-bold mt-1" data-i18n="history_title"></h1>
+      </div>
+      <div class="text-xs text-slate-500 flex flex-col gap-1 items-end">
+        <a id="langToggle" class="underline hover:text-indigo-300 cursor-pointer">EN / ES</a>
+        <a href="{{BASE}}" class="underline hover:text-indigo-300" data-i18n="nav_evaluar"></a>
+        <a href="{{BASE}}privacidad" class="underline hover:text-indigo-300" data-i18n="nav_privacidad"></a>
+      </div>
+    </header>
+
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
+      <select id="horseSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+        <option value="" data-i18n="horse_select"></option>
+      </select>
+    </section>
+
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-500 border-b border-slate-800">
+            <th class="py-2 pr-4" data-i18n="col_date"></th>
+            <th class="py-2 pr-4" data-i18n="col_cadence"></th>
+            <th class="py-2 pr-4" data-i18n="col_cv"></th>
+            <th class="py-2 pr-4" data-i18n="col_beats"></th>
+            <th class="py-2 pr-4" data-i18n="col_verdict"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="text-slate-500 text-sm py-4 hidden" data-i18n="history_empty"></p>
+    </section>
+  </div>
+
+  <script>window.__I18N = {{DICT_JSON}}; window.__BASE = "{{BASE}}"; window.__LANG = "{{LANG}}"; window.__PAGE = "dashboard";</script>
+  <script src="{{BASE}}app.js"></script>
+</body>
+</html>
