@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RinglyPro AI Architect — Mapa de Comandos</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul2:#0f3a66; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --tinta:#1e293b; --gris:#475569; --gris-claro:#64748b; --linea:#e2e8f0;
+    --verde:#0f766e; --verde-bg:#ecfdf5; --verde-bd:#99f6e4;
+    --ambar:#b45309; --ambar-bg:#fffbeb; --ambar-bd:#fde68a;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --rojo-bd:#fecaca;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    background:#f1f5f9;margin:0;line-height:1.5;font-size:14px}
+  .page{max-width:1080px;margin:24px auto;background:#fff;padding:44px 48px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08);border-radius:10px}
+  h1{font-size:26px;color:var(--azul2);margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:14.5px;color:var(--gris);font-weight:600;margin:0 0 4px}
+  .tag{display:inline-block;background:var(--azul-claro);color:var(--azul2);
+    border:1px solid var(--azul-borde);border-radius:6px;padding:3px 12px;
+    font-size:12px;font-weight:800;letter-spacing:.4px;margin:10px 0 0}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:18px 0 28px}
+  h2{font-size:15px;color:var(--azul2);margin:30px 0 14px;padding-left:11px;
+    border-left:5px solid var(--azul);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+
+  /* Brain node */
+  .brain{display:flex;justify-content:center;margin:6px 0 30px}
+  .brain .node{background:linear-gradient(135deg,#0f3a66,#1f5fa8);color:#fff;
+    border-radius:14px;padding:20px 30px;text-align:center;max-width:560px;
+    box-shadow:0 6px 20px rgba(31,95,168,.30)}
+  .brain .node .k{font-size:18px;font-weight:800;letter-spacing:.3px}
+  .brain .node .m{font-size:12.5px;opacity:.9;margin-top:4px}
+  .brain .node .army{display:inline-block;margin-top:10px;background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700}
+
+  /* Funnel pipeline */
+  .pipe{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;justify-content:center}
+  .step{flex:1 1 150px;min-width:140px;background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:10px;padding:12px 12px;text-align:center;position:relative;margin:6px 14px 6px 0}
+  .step:last-child{margin-right:0}
+  .step .cmd{font-family:'SF Mono',Consolas,monospace;font-size:13.5px;font-weight:800;color:var(--azul2)}
+  .step .d{font-size:11.5px;color:var(--gris);margin-top:4px}
+  .step::after{content:"\203A";position:absolute;right:-13px;top:50%;transform:translateY(-50%);
+    font-size:22px;font-weight:900;color:var(--azul);line-height:1}
+  .step:last-child::after{content:""}
+  .step.build{background:var(--verde-bg);border-color:var(--verde-bd)}
+  .step.build .cmd{color:var(--verde)}
+
+  /* Command card groups */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .card{border:1px solid var(--linea);border-radius:10px;padding:14px 16px;background:#fff}
+  .card .h{font-family:'SF Mono',Consolas,monospace;font-size:14px;font-weight:800;color:var(--azul2);
+    display:flex;align-items:center;gap:8px}
+  .card .role{font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px;letter-spacing:.3px}
+  .role.int{background:var(--rojo-bg);color:var(--rojo);border:1px solid var(--rojo-bd)}
+  .role.cli{background:var(--verde-bg);color:var(--verde);border:1px solid var(--verde-bd)}
+  .role.ops{background:var(--ambar-bg);color:var(--ambar);border:1px solid var(--ambar-bd)}
+  .role.bld{background:var(--azul-claro);color:var(--azul2);border:1px solid var(--azul-borde)}
+  .card p{margin:8px 0 0;font-size:12.5px;color:var(--gris)}
+  .card .out{margin-top:8px;font-size:11.5px;color:var(--gris-claro)}
+  .card .out b{color:var(--azul2)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:18px;font-size:12px;color:var(--gris)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .foot{margin-top:30px;border-top:1px solid var(--linea);padding-top:14px;
+    font-size:11.5px;color:var(--gris-claro)}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}.page{padding:28px 22px}
+    .step::after{display:none}}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>RinglyPro AI Architect</h1>
+  <p class="sub">Mapa de comandos — del lenguaje natural a producción</p>
+  <span class="tag">CEREBRO MCP · FUERZA DE 83 AGENTES · AUTO-APROBACIÓN TOTAL</span>
+  <hr class="rule">
+
+  <div class="brain">
+    <div class="node">
+      <div class="k">MCP BRAIN</div>
+      <div class="m">Orquesta el trabajo y despliega — analiza, desarrolla, prueba, despliega, revisa</div>
+      <div class="army">8 agentes core + 75 especialistas senior</div>
+    </div>
+  </div>
+
+  <h2>Embudo de ingresos — intake a cierre</h2>
+  <div class="pipe">
+    <div class="step"><div class="cmd">triage</div><div class="d">Evalúa: fit score, v1 wedge, banderas regulatorias</div></div>
+    <div class="step"><div class="cmd">teaser</div><div class="d">Engancha: POC interactivo + voz Lina (magic link)</div></div>
+    <div class="step"><div class="cmd">cost</div><div class="d">Precio interno (solo costo, sin profit/IVA)</div></div>
+    <div class="step"><div class="cmd">quote</div><div class="d">Precio cliente (+70% profit + IVA)</div></div>
+    <div class="step"><div class="cmd">proposal</div><div class="d">Cierra: triage + quote + cronograma</div></div>
+    <div class="step build"><div class="cmd">loop</div><div class="d">Construye: end-to-end hasta estar vivo</div></div>
+  </div>
+
+  <h2>Comandos en detalle</h2>
+  <div class="grid">
+
+    <div class="card">
+      <div class="h">triage <span class="role bld">EVALÚA</span></div>
+      <p>Corre el AI Triage Brief sobre un project request: fit score 1-10, recomendación go/poc/no, v1 wedge, sinergias de portafolio y preguntas para el stakeholder EN/ES.</p>
+      <div class="out">Salida: <b>brief estructurado + magic link /projects/summary</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">teaser <span class="role cli">CLIENTE</span></div>
+      <p>Genera el POC interactivo de marca con recorrido en voz Lina (México/Dalia por defecto). El cliente lo toca y lo siente.</p>
+      <div class="out">Salida: <b>magic link /projects/teaser/&lt;token&gt;</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">cost <span class="role int">INTERNO</span></div>
+      <p>Documento de costo directo del ecosistema en contexto. Sin profit, sin IVA. Banner rojo "SOLO COSTO — NO DISTRIBUIR".</p>
+      <div class="out">Salida: <b>/proposals/&lt;slug&gt;-cost.html</b> · tarifa $70/hr (ajustable)</div>
+    </div>
+
+    <div class="card">
+      <div class="h">quote <span class="role cli">CLIENTE</span></div>
+      <p>Igual que cost pero con +70% de profit (× 1.70) e IVA por país (Colombia 19%, México/Venezuela 16%).</p>
+      <div class="out">Salida: <b>/proposals/&lt;slug&gt;-quote.html</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">proposal <span class="role cli">CLIENTE</span></div>
+      <p>Paquete comercial completo que une triage + quote + cronograma + CTA del teaser. El artefacto que cierra el trato.</p>
+      <div class="out">Salida: <b>/proposals/&lt;slug&gt;-proposal.html</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">loop / auto <span class="role bld">CONSTRUYE</span></div>
+      <p>Build autónomo de punta a punta: analiza, construye todo, prueba, despliega, revisa y auto-corrige en bucle hasta que el proyecto esté vivo y verde. Cero preguntas.</p>
+      <div class="out">Salida: <b>ecosistema en producción + Build Report</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">voice <span class="role ops">OPERA</span></div>
+      <p>Estampa el orbe de voz neural Lina en una página: TTS de $0, sin API key, proxy en servidor + fallback de navegador.</p>
+      <div class="out">Salida: <b>orbe de voz inyectado en la página destino</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">a2p <span class="role ops">OPERA</span></div>
+      <p>Asigna números Twilio al Trust Product SHAKEN/STIR aprobado para atestación nivel A (que las llamadas no sean bloqueadas). Incluye Batch Mode.</p>
+      <div class="out">Salida: <b>número(s) registrados en Twilio</b></div>
+    </div>
+
+    <div class="card">
+      <div class="h">(default) <span class="role bld">CONSTRUYE</span></div>
+      <p>Sin palabra clave: describe en lenguaje natural lo que quieres y el architect lo lleva de idea a sistema desplegado en una pasada.</p>
+      <div class="out">Salida: <b>modelos + rutas + migraciones + deploy</b></div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--azul)"></span> Construye</span>
+    <span><span class="dot" style="background:var(--verde)"></span> Cliente</span>
+    <span><span class="dot" style="background:var(--rojo)"></span> Interno</span>
+    <span><span class="dot" style="background:var(--ambar)"></span> Opera</span>
+  </div>
+
+  <div class="foot">
+    Digit2AI — RinglyPro AI Architect. Flujo del embudo: triage &rarr; teaser &rarr; cost &rarr; quote &rarr; proposal &rarr; loop. Cualquier comando se invoca solo; proposal corre en silencio las piezas faltantes. Todo bajo auto-aprobación total y auto-deploy a Render.
+  </div>
+
+</div>
+</body>
+</html>
