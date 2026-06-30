@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digit2AI — Enterprise Architecture &amp; Methodology · Tech System Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg0:#05070e; --bg1:#0b0e1a; --bg-elev:#0b0e1a;
+    --bg-card:rgba(255,255,255,0.025); --bg-card-hover:rgba(255,255,255,0.05);
+    --line:rgba(255,255,255,0.08); --line-strong:rgba(255,255,255,0.14);
+    --cyan:#22d3ee; --blue:#3b82f6; --violet:#8b5cf6; --magenta:#ec4899;
+    --green:#84cc16; --amber:#f59e0b; --rose:#ec4899;
+    --txt:#e8ecf4; --dim:#9aa4b8; --dim2:#6b7386;
+    --grad:linear-gradient(135deg,#22d3ee 0%,#3b82f6 40%,#8b5cf6 75%,#ec4899 100%);
+    --grad-soft:linear-gradient(135deg,rgba(34,211,238,0.14),rgba(139,92,246,0.14));
+    --font-sans:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --font-display:'Instrument Serif','Times New Roman',serif;
+    --font-mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg0);color:var(--txt);font-family:var(--font-sans);font-size:14.5px;line-height:1.62}
+  a{color:var(--cyan);text-decoration:none}
+  em,b.sig{font-family:var(--font-display);font-style:italic;font-weight:400;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* layout: sticky TOC + content */
+  .shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:248px 1fr;gap:0}
+  .toc{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:26px 18px 40px;
+    border-right:1px solid var(--line);font-family:var(--font-mono)}
+  .toc .brand{font-family:var(--font-sans);font-weight:900;font-size:15px;letter-spacing:-.3px;color:#fff}
+  .toc .brand span{display:block;font-family:var(--font-mono);font-size:8.5px;letter-spacing:2px;color:var(--dim2);margin-top:3px;font-weight:600}
+  .toc .v{font-size:9.5px;color:var(--dim2);letter-spacing:1px;margin:14px 0 16px;text-transform:uppercase}
+  .toc a{display:block;font-size:11px;color:var(--dim);padding:4px 0;letter-spacing:.2px;border-left:2px solid transparent;padding-left:10px;margin-left:-2px}
+  .toc a:hover{color:var(--cyan)}
+  .toc a .nn{color:var(--dim2);margin-right:7px}
+
+  .doc{padding:40px 48px 90px;min-width:0}
+  .cover{border-bottom:2px solid var(--line-strong);padding-bottom:26px;margin-bottom:10px}
+  .eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--cyan);font-weight:800}
+  h1.title{font-size:clamp(28px,4.5vw,42px);font-weight:900;letter-spacing:-.8px;line-height:1.08;margin:12px 0 8px}
+  .subtitle{font-size:16px;color:var(--dim);max-width:680px;line-height:1.55}
+  .ctrl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:22px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .ctrl div{padding:11px 14px;border-right:1px solid var(--line)}
+  .ctrl div:last-child{border-right:none}
+  .ctrl .k{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim2)}
+  .ctrl .val{font-size:12.5px;color:var(--txt);margin-top:3px;font-weight:600}
+
+  h2{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:52px 0 6px;scroll-margin-top:20px;
+    padding-top:22px;border-top:1px solid var(--line)}
+  h2 .nn{font-family:var(--font-mono);font-size:14px;color:var(--cyan);font-weight:700;margin-right:10px}
+  h3{font-size:15.5px;font-weight:700;color:#fff;margin:26px 0 8px;letter-spacing:.2px}
+  h4{font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--cyan);margin:20px 0 7px;font-weight:800}
+  p{margin:0 0 13px;color:var(--dim);max-width:760px}
+  p.body{color:var(--txt)}
+  strong{color:var(--txt);font-weight:700}
+  code{font-family:var(--font-mono);font-size:12px;background:rgba(34,211,238,.08);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;color:#bff0fb}
+  ul,ol{margin:0 0 14px;padding-left:20px;color:var(--dim);max-width:760px}
+  li{margin:5px 0}
+  .lead{font-size:18px;color:#fff;font-weight:700;letter-spacing:-.2px;line-height:1.4;margin:0 0 16px;max-width:780px}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:12.5px}
+  th{text-align:left;font-family:var(--font-mono);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;
+    color:var(--cyan);font-weight:800;padding:9px 12px;border-bottom:1px solid var(--line-strong)}
+  td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--dim);vertical-align:top}
+  td b{color:var(--txt)}
+  tr:hover td{background:rgba(255,255,255,.015)}
+  td code{font-size:11px}
+
+  .callout{border:1px solid var(--line-strong);border-left:3px solid var(--cyan);border-radius:0 10px 10px 0;
+    background:var(--bg-card);padding:14px 18px;margin:16px 0;font-size:13px;color:var(--dim)}
+  .callout b{color:#fff}
+  .callout.adr{border-left-color:var(--violet)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+  .card{border:1px solid var(--line);border-radius:11px;background:var(--bg-card);padding:15px 17px}
+  .card h4{margin-top:0}
+  .card p{margin:0;font-size:12.5px}
+
+  /* layered architecture diagram */
+  .layers{margin:18px 0 8px;font-family:var(--font-mono)}
+  .layer{display:grid;grid-template-columns:150px 1fr;gap:0;border:1px solid var(--line-strong);
+    border-radius:10px;margin-bottom:8px;overflow:hidden;align-items:stretch}
+  .layer .lhd{padding:13px 14px;background:var(--grad-soft);border-right:1px solid var(--line-strong);display:flex;flex-direction:column;justify-content:center}
+  .layer .lhd .ln{font-size:9px;color:var(--cyan);letter-spacing:1px}
+  .layer .lhd .lt{font-family:var(--font-sans);font-size:13px;font-weight:800;color:#fff;margin-top:3px;line-height:1.2}
+  .layer .lbody{padding:11px 14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .chip{font-size:10.5px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:rgba(255,255,255,.02)}
+  .chip.hot{color:var(--cyan);border-color:var(--cyan)}
+  .chip.grn{color:var(--green);border-color:rgba(132,204,22,.4)}
+
+  /* pipeline flow */
+  .pipe{display:flex;flex-wrap:wrap;gap:0;margin:16px 0;font-family:var(--font-mono)}
+  .pstep{flex:1 1 120px;min-width:118px;border:1px solid var(--line-strong);border-radius:9px;padding:11px 11px;
+    margin:5px 16px 5px 0;position:relative;background:var(--bg-card)}
+  .pstep:last-child{margin-right:0}
+  .pstep::after{content:"\203A";position:absolute;right:-13px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--cyan)}
+  .pstep:last-child::after{content:""}
+  .pstep .pn{font-size:9px;color:var(--cyan);letter-spacing:1px}
+  .pstep .pt{font-family:var(--font-sans);font-size:12px;font-weight:700;color:#fff;margin:3px 0 4px}
+  .pstep .pd{font-size:10px;color:var(--dim);line-height:1.4}
+
+  .foot{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;font-size:11px;color:var(--dim2);line-height:1.7}
+
+  @media(max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .toc{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);
+      display:flex;flex-wrap:wrap;gap:2px 14px}
+    .toc .brand,.toc .v{width:100%}
+    .toc a{border-left:none;padding-left:0;margin-left:0}
+    .doc{padding:28px 18px 70px}
+    .ctrl,.grid2{grid-template-columns:1fr 1fr}
+    .layer{grid-template-columns:1fr}.layer .lhd{border-right:none;border-bottom:1px solid var(--line-strong)}
+    .pstep::after{display:none}
+  }
+  @media(max-width:520px){.ctrl,.grid2{grid-template-columns:1fr}}
+  @media print{.toc{display:none}.shell{grid-template-columns:1fr}body{background:#fff;color:#111}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ===== TOC ===== -->
+  <nav class="toc">
+    <div class="brand">Digit2AI<span>NEURAL INTELLIGENCE · MCP</span></div>
+    <div class="v">EA &amp; Methodology · v1.0</div>
+    <a href="#s1"><span class="nn">1</span>Executive Summary</a>
+    <a href="#s2"><span class="nn">2</span>Architecture Principles</a>
+    <a href="#s3"><span class="nn">3</span>Delivery Methodology</a>
+    <a href="#s4"><span class="nn">4</span>Reference Architecture</a>
+    <a href="#s5"><span class="nn">5</span>MCP Brain &amp; Workforce</a>
+    <a href="#s6"><span class="nn">6</span>Component Architecture</a>
+    <a href="#s7"><span class="nn">7</span>Data Architecture</a>
+    <a href="#s8"><span class="nn">8</span>Integration &amp; MCP</a>
+    <a href="#s9"><span class="nn">9</span>The Factory Pipeline</a>
+    <a href="#s10"><span class="nn">10</span>Voice AI Architecture</a>
+    <a href="#s11"><span class="nn">11</span>Security &amp; Compliance</a>
+    <a href="#s12"><span class="nn">12</span>Deployment &amp; Infra</a>
+    <a href="#s13"><span class="nn">13</span>Observability &amp; SRE</a>
+    <a href="#s14"><span class="nn">14</span>Technology Stack</a>
+    <a href="#s15"><span class="nn">15</span>Decision Records</a>
+    <a href="#s16"><span class="nn">16</span>Quality Attributes</a>
+    <a href="#s17"><span class="nn">17</span>Glossary</a>
+  </nav>
+
+  <!-- ===== DOC ===== -->
+  <main class="doc">
+
+    <div class="cover">
+      <div class="eyebrow">Enterprise Architecture &amp; Methodology</div>
+      <h1 class="title">Tech System Architecture of the <b class="sig">AI Factory</b></h1>
+      <p class="subtitle">The reference architecture, delivery methodology, and technical standards behind Digit2AI Neural Intelligence — one MCP brain, an 83-agent workforce, wired to the customer's live systems and shipping production software in days.</p>
+      <div class="ctrl">
+        <div><div class="k">Document</div><div class="val">EA-MTSA-001</div></div>
+        <div><div class="k">Version</div><div class="val">1.0</div></div>
+        <div><div class="k">Classification</div><div class="val">Internal · Confidential</div></div>
+        <div><div class="k">Owner</div><div class="val">Digit2AI Architecture</div></div>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <h2 id="s1"><span class="nn">01</span>Executive Summary</h2>
+    <p class="lead">Digit2AI is an <b class="sig">AI-Native delivery factory</b> — a coordinated stack of specialized AI agents, orchestrated by a single MCP brain, that converts a natural-language business problem into production software, decks, voice agents, and live operations.</p>
+    <p class="body">The platform is a multi-tenant <strong>Express + PostgreSQL</strong> system on Render. A monolithic core host mounts a set of <strong>self-contained vertical applications</strong> and <strong>auto-mounted client builds</strong>, all sharing a common authentication, billing, and agent-orchestration substrate. The intelligence layer runs on <strong>Anthropic Claude</strong> (Opus 4.8 / Sonnet 4.6 / Haiku 4.5) via the official SDK, with provider-agnostic adapters for voice (ElevenLabs), telephony (Twilio), and specialized detection.</p>
+    <p class="body">The architecture's organizing principle is the <strong>Model Context Protocol (MCP)</strong>: every agent shares context and hands work to the next through a common contract, and every agent is wired to the customer's <em>real</em> systems — CRM, billing, inbox, voice channel, ops dashboards — rather than to pasted snippets. This is what turns observability ("here is a chart") into the full clinical loop: <strong>detect &rarr; diagnose &rarr; treat</strong>.</p>
+    <div class="callout"><b>Scope.</b> This document covers the logical and physical architecture, the AI-Native delivery methodology, data and integration design, the intake-to-production pipeline, security and compliance posture, deployment topology, and the governing architecture decision records.</div>
+
+    <!-- 2 -->
+    <h2 id="s2"><span class="nn">02</span>Architecture Principles</h2>
+    <p>Seven principles constrain every design decision across the factory.</p>
+    <table>
+      <tr><th>#</th><th>Principle</th><th>Implication</th></tr>
+      <tr><td>P1</td><td><b>AI-Native by default</b></td><td>Scaffolding is agent-generated and iteratively verified; human effort concentrates on judgment, review, and integration — compressing delivery to weeks.</td></tr>
+      <tr><td>P2</td><td><b>MCP-first integration</b></td><td>Agents and connectors share context through the open Model Context Protocol; no agent is wired to a single vendor model or a single data silo.</td></tr>
+      <tr><td>P3</td><td><b>Multi-tenant isolation</b></td><td>Every table carries <code>tenant_id</code>; every query is tenant-scoped. One platform serves many customers without data bleed.</td></tr>
+      <tr><td>P4</td><td><b>Bilingual-native</b></td><td>EN + ES are first-class across UI, voice, agents, and generated artifacts — not an afterthought translation pass.</td></tr>
+      <tr><td>P5</td><td><b>Self-contained verticals</b></td><td>Each vertical is an independent Express Router with its own Sequelize instance and migrations — isolation without microservice operational overhead.</td></tr>
+      <tr><td>P6</td><td><b>Provider-agnostic adapters</b></td><td>Detection, TTS, search, and model routing sit behind contracts; swap a provider via env, not a rewrite.</td></tr>
+      <tr><td>P7</td><td><b>Ship-to-verify</b></td><td>Every increment is deployed and health-checked; the build loop auto-fixes against live signals rather than assumptions.</td></tr>
+    </table>
+
+    <!-- 3 -->
+    <h2 id="s3"><span class="nn">03</span>AI-Native Delivery Methodology</h2>
+    <p class="body">The factory runs a continuous five-phase loop. It is the operational backbone of every engagement, executed by the MCP brain routing across the agent workforce.</p>
+    <div class="pipe">
+      <div class="pstep"><div class="pn">PHASE 1</div><div class="pt">Analyze</div><div class="pd">Parse NL · design system · model schema · score fit</div></div>
+      <div class="pstep"><div class="pn">PHASE 2</div><div class="pt">Develop</div><div class="pd">Prompts · code · Sequelize models · migrations</div></div>
+      <div class="pstep"><div class="pn">PHASE 3</div><div class="pt">Test</div><div class="pd">Local · API smoke · SIT · migration check</div></div>
+      <div class="pstep"><div class="pn">PHASE 4</div><div class="pt">Deploy</div><div class="pd">Commit · push main · Render auto-deploy</div></div>
+      <div class="pstep"><div class="pn">PHASE 5</div><div class="pt">Review</div><div class="pd">Health · logs · Findings · auto-fix loop</div></div>
+    </div>
+    <p class="body">Phase 5 closes back into Phase 1: any health failure, missing owner, or unmet acceptance criterion re-enters the loop as a new task. The loop self-terminates when all components are live, green, and verified, or escalates a single explicit blocker (e.g., a missing external credential) without halting the rest of the build.</p>
+    <h4>Engagement modes</h4>
+    <ul>
+      <li><strong>Build Service</strong> — NL &rarr; production web app on the customer's domain.</li>
+      <li><strong>BA-on-Demand</strong> — decks, plans, research, regulatory write-ups; no software.</li>
+      <li><strong>Vertical Platform</strong> — deploy an existing platform to a new tenant; months &rarr; weeks.</li>
+      <li><strong>Voice AI</strong> — a 24/7 inbound voice agent wired to the customer's CRM + calendar.</li>
+    </ul>
+
+    <!-- 4 -->
+    <h2 id="s4"><span class="nn">04</span>Reference Architecture — Layered Model</h2>
+    <p class="body">Seven logical layers, top (edge) to bottom (infrastructure). Each layer depends only on the one below it through a defined contract.</p>
+    <div class="layers">
+      <div class="layer"><div class="lhd"><div class="ln">L1</div><div class="lt">Edge &amp; Presentation</div></div>
+        <div class="lbody"><span class="chip">Static HTML / PWA</span><span class="chip">EJS views</span><span class="chip">React + Vite dashboards</span><span class="chip">Magic-link pages</span><span class="chip">iframe embeds</span><span class="chip">Service Worker + web-push</span><span class="chip hot">Cloudflare WAF / CDN</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L2</div><div class="lt">Application &amp; API</div></div>
+        <div class="lbody"><span class="chip hot">Express monolith</span><span class="chip">REST routers</span><span class="chip">helmet · CORS · rate-limit</span><span class="chip">express-session</span><span class="chip">Webhooks</span><span class="chip">Socket.IO / ws / SSE</span><span class="chip">Multi-tenant resolver</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L3</div><div class="lt">Agent Orchestration</div></div>
+        <div class="lbody"><span class="chip grn">MCP Brain</span><span class="chip">Classifier · Dispatcher</span><span class="chip">8 core agents</span><span class="chip">75 specialists</span><span class="chip">MCP tool-calling</span><span class="chip">convai client-tool bridge</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L4</div><div class="lt">Intelligence &amp; Model</div></div>
+        <div class="lbody"><span class="chip hot">Anthropic Claude (Opus 4.8 / Sonnet 4.6 / Haiku 4.5)</span><span class="chip">OpenAI fallback</span><span class="chip">ElevenLabs TTS / convai</span><span class="chip">RealityDefender</span><span class="chip">Model Router (LLMOps)</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L5</div><div class="lt">Data</div></div>
+        <div class="lbody"><span class="chip hot">PostgreSQL (Render)</span><span class="chip">Sequelize ORM</span><span class="chip">tenant_id isolation</span><span class="chip">per-vertical table prefixes</span><span class="chip">dual-DB (CRM / DATA)</span><span class="chip">AWS S3 blobs</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L6</div><div class="lt">Integration / MCP Connectors</div></div>
+        <div class="lbody"><span class="chip">Twilio</span><span class="chip">SendGrid</span><span class="chip">Google OAuth (Cal/Gmail)</span><span class="chip">IMAP (imapflow)</span><span class="chip">Stripe</span><span class="chip">n8n webhooks</span><span class="chip">Public-source connectors</span></div></div>
+      <div class="layer"><div class="lhd"><div class="ln">L7</div><div class="lt">Infrastructure &amp; DevOps</div></div>
+        <div class="lbody"><span class="chip hot">Render (auto-deploy)</span><span class="chip">Git push-to-main</span><span class="chip">node-cron schedulers</span><span class="chip">winston · morgan</span><span class="chip">/health · /debug endpoints</span><span class="chip">env-driven feature flags</span></div></div>
+    </div>
+
+    <!-- 5 -->
+    <h2 id="s5"><span class="nn">05</span>MCP Brain &amp; the 83-Agent Workforce</h2>
+    <p class="body">The orchestration layer (L3) is the differentiator. A <strong>classifier</strong> reads the inbound request and a <strong>dispatcher</strong> routes it to the right agent(s); each agent's output is the next agent's input. Eight agents are always-on; 75 senior specialists are spun up on demand.</p>
+    <h4>The 8 core agents</h4>
+    <table>
+      <tr><th>Agent</th><th>Function</th><th>Implementation</th></tr>
+      <tr><td><b>Senior Business Analyst</b></td><td>Decks, business plans, strategy memos</td><td><code>businessAnalystAgent.js</code></td></tr>
+      <tr><td><b>Research Brief</b></td><td>Web search + synthesis, competitive/regulatory scans</td><td><code>researchBriefAgent.js</code> + <code>webSearch.js</code></td></tr>
+      <tr><td><b>Outreach Drafter</b></td><td>Emails, WhatsApp, follow-ups (EN/ES)</td><td><code>outreachDrafterAgent.js</code></td></tr>
+      <tr><td><b>Architect &amp; Builder</b></td><td>Scopes, codes, runs UAT, ships</td><td><code>architectPipeline.js</code> + architect command</td></tr>
+      <tr><td><b>Inbox Triage</b></td><td>Scores fit, flags risk, recommends go/no-go</td><td><code>inboxTriageAgent.js</code> (Sonnet 4.6)</td></tr>
+      <tr><td><b>Meeting Minutes</b></td><td>Summary + action items + owner assignment</td><td><code>actionItemExtractor.js</code> + minutes services</td></tr>
+      <tr><td><b>Voice AI</b></td><td>Rachel (EN), Ana &amp; Lina (ES), 24/7 phones</td><td>Twilio + ElevenLabs convai</td></tr>
+      <tr><td><b>Neural Findings</b></td><td>Watches stalls, missing owners, overdue milestones</td><td>Findings service + node-cron</td></tr>
+    </table>
+    <h4>The 75 specialists (on call)</h4>
+    <p class="body">Routed in by domain when a project needs them: Engineering &amp; Build (12), Data/ML/Math (8), Business &amp; Strategy (8), Sales/Marketing/Customer (9), Finance &amp; Risk (7), Legal/Compliance/HR (8), AI-Native/LLM (6), Reliability &amp; Trust (5), Vertical SMEs (4), Design/Content/Localization (5), Growth &amp; Partnerships (3). <strong>8 core + 75 = an 83-agent workforce</strong>, routed by one MCP brain.</p>
+    <h4>Model routing</h4>
+    <p class="body">The LLMOps / Model Router assigns each task to the right Claude tier: <strong>Opus 4.8</strong> for the hardest build, design, and judgment work; <strong>Sonnet 4.6</strong> for triage and high-throughput reasoning (the inbox triage agent pins <code>claude-sonnet-4-6</code>); <strong>Haiku 4.5</strong> for cheap, mechanical, latency-sensitive steps. Token cost is estimated and recorded per call for FinOps.</p>
+
+    <!-- 6 -->
+    <h2 id="s6"><span class="nn">06</span>Component Architecture</h2>
+    <p class="body">A single host process composes four component classes. The host owns shared concerns (auth, billing, sessions, static serving, agent substrate); everything else mounts onto it.</p>
+    <table>
+      <tr><th>Component class</th><th>Pattern</th><th>Examples</th></tr>
+      <tr><td><b>Core CRM host</b></td><td>Express monolith (<code>src/app.js</code>) — auth, billing, neural KPIs, voice tools, OEE, press, projects-bridge</td><td>RinglyPro CRM</td></tr>
+      <tr><td><b>Projects / Intake</b></td><td>The intake &rarr; triage &rarr; teaser &rarr; architect pipeline + agent services</td><td><code>digit2ai-projects/</code></td></tr>
+      <tr><td><b>Vertical apps</b></td><td>Self-contained Express Router, own Sequelize, own migrations, <code>/health</code> + <code>/debug</code></td><td>Veritas, AgroMercado, CW Carriers, Intuitive, Torna Idioma, Logistics, MSK, Freight Broker, ImprintIQ</td></tr>
+      <tr><td><b>Client builds</b></td><td>Auto-mounted micro-apps; any <code>client-builds/&lt;name&gt;/index.js</code> exporting an Express app is picked up at boot</td><td>voice-to-intake-transcript-direct-pipeline</td></tr>
+    </table>
+    <div class="callout"><b>Mount contract.</b> A vertical or client build is a black box exposing an Express Router. The host mounts it at <code>/&lt;slug&gt;</code>, injects nothing but the request, and the module manages its own DB, models, and tables (created on boot via <code>sync({alter:false})</code>). This keeps blast radius per app and lets a new vertical ship without touching the core.</div>
+
+    <!-- 7 -->
+    <h2 id="s7"><span class="nn">07</span>Data Architecture</h2>
+    <p class="body">PostgreSQL on Render, accessed through <strong>Sequelize</strong> with SSL. Two logical databases separate concerns: <code>CRM_DATABASE_URL</code> (CRM + tenant/project data) and <code>DATABASE_URL</code> (legacy/secondary). Bridge endpoints that cross databases instantiate a dedicated Sequelize connection against the correct URL.</p>
+    <h4>Tenancy &amp; naming</h4>
+    <ul>
+      <li><strong>Isolation:</strong> every row carries <code>tenant_id</code>; queries are tenant-scoped at the route layer.</li>
+      <li><strong>Prefixes:</strong> each vertical namespaces its tables — <code>df_*</code> (Veritas), <code>am_*</code> (AgroMercado), <code>d2_*</code> (Projects), <code>tunjo_*</code>, etc.</li>
+      <li><strong>JSONB + GIN</strong> for flexible metadata (product metadata, triage_structured) with indexed search.</li>
+    </ul>
+    <h4>Migration strategy</h4>
+    <p class="body">Models sync with <code>{ alter:false }</code> — schema is never auto-altered in production. New columns/tables ship as <strong>explicit raw-SQL migrations</strong> (canonical <code>.sql</code> files per module) run at startup or manually. This trades convenience for safety: no surprise destructive ALTERs against live tenant data.</p>
+    <h4>Blob &amp; document storage</h4>
+    <p class="body">Binary assets (documents, audio, backups) go to <strong>AWS S3</strong> with presigned URLs; generated documents use <code>pdfkit</code> / <code>pdfmake</code> / <code>docx</code> / <code>html-pdf-node</code> + headless Chromium (<code>@sparticuz/chromium</code> + <code>puppeteer-core</code>).</p>
+
+    <!-- 8 -->
+    <h2 id="s8"><span class="nn">08</span>Integration &amp; MCP Connector Architecture</h2>
+    <p class="body">External systems are reached through adapters that present a stable internal contract, so a provider swap is an env change. Inbound automation arrives via authenticated webhooks (PLCs/n8n &rarr; OEE machine events; external scanners &rarr; Veritas candidates).</p>
+    <table>
+      <tr><th>Domain</th><th>Provider(s)</th><th>Use</th></tr>
+      <tr><td>Telephony &amp; SMS</td><td>Twilio</td><td>Inbound/outbound voice, SMS/WhatsApp, A2P 10DLC + SHAKEN/STIR</td></tr>
+      <tr><td>Voice AI</td><td>ElevenLabs convai · Edge TTS</td><td>Web orb agents + zero-key teaser narration</td></tr>
+      <tr><td>Email</td><td>SendGrid · Nodemailer · IMAP (imapflow)</td><td>Outbound (gated) + unified inbox reconciliation</td></tr>
+      <tr><td>Calendar / Mail</td><td>Google OAuth (googleapis)</td><td>Kickoff scheduling, Gmail read, .ics invites</td></tr>
+      <tr><td>Payments</td><td>Stripe</td><td>Subscriptions, contracts, setup fees</td></tr>
+      <tr><td>Search</td><td>Brave · DuckDuckGo · Google CSE</td><td>Research agent, Veritas image scan</td></tr>
+      <tr><td>Detection</td><td>RealityDefender · Hive · Sensity</td><td>Veritas deepfake detection (provider-agnostic)</td></tr>
+      <tr><td>Public data</td><td>CMS · NPPES · ProPublica · Florida AHCA · Meta Ad Library</td><td>Citation-chain connectors (Intuitive, Veritas)</td></tr>
+      <tr><td>Automation</td><td>n8n</td><td>Inbound machine/event webhooks, orchestration</td></tr>
+    </table>
+
+    <!-- 9 -->
+    <h2 id="s9"><span class="nn">09</span>The Factory Pipeline — Intake to Production</h2>
+    <p class="body">The commercial-to-technical pipeline. A prospect's words enter at the left; live software exits at the right. Each stage has an owning agent and a human checkpoint where judgment is required.</p>
+    <div class="pipe">
+      <div class="pstep"><div class="pn">1 · SUBMIT</div><div class="pt">Intake</div><div class="pd">Form / voice orb / WhatsApp note &rarr; <code>d2_projects</code></div></div>
+      <div class="pstep"><div class="pn">2 · TRIAGE</div><div class="pt">AI Triage</div><div class="pd">Sonnet 4.6 scores fit, flags risk, drafts brief</div></div>
+      <div class="pstep"><div class="pn">3 · REVIEW</div><div class="pt">Human gate</div><div class="pd">Approve / reject within 48h</div></div>
+      <div class="pstep"><div class="pn">4 · KICKOFF</div><div class="pt">Schedule</div><div class="pd">Auto Zoom + .ics, build plan, contract</div></div>
+      <div class="pstep"><div class="pn">5 · BUILD</div><div class="pt">Architect</div><div class="pd">NL &rarr; prompt &rarr; code &rarr; SIT</div></div>
+      <div class="pstep"><div class="pn">6 · UAT</div><div class="pt">Accept</div><div class="pd">User acceptance + sign-off</div></div>
+      <div class="pstep"><div class="pn">7 · SHIP</div><div class="pt">Deploy</div><div class="pd">Push main &rarr; Render &rarr; live + SLA</div></div>
+    </div>
+    <h4>Architect command surface</h4>
+    <p class="body">The Architect &amp; Builder agent exposes a deterministic command set that pipelines the funnel: <code>triage</code> &rarr; <code>teaser</code> &rarr; <code>cost</code> &rarr; <code>quote</code> &rarr; <code>proposal</code> &rarr; <code>loop</code> (autonomous end-to-end build), plus <code>voice</code> (Lina orb) and <code>a2p</code> (SHAKEN/STIR registration). Each is invokable alone; <code>proposal</code> silently runs missing upstream stages.</p>
+    <div class="callout"><b>Transcript-direct intake.</b> A dedicated client build captures spoken project descriptions client-side (Web Speech API), persists the transcript JWT-guarded, and forwards into the project inbox with <code>triage_bypass=true</code> so downstream knows it skipped automated triage.</div>
+
+    <!-- 10 -->
+    <h2 id="s10"><span class="nn">10</span>Voice AI Architecture</h2>
+    <p class="body">Two distinct voice paths share the Rachel/Ana/Lina persona layer.</p>
+    <div class="grid2">
+      <div class="card"><h4>Inbound telephony</h4><p>Twilio number &rarr; webhook &rarr; voice route. STT + LLM + TTS pipeline qualifies the caller, books into the calendar (client-15 carve-out books <code>d2_calendar_events</code>), answers FAQs, hands off to a human, and logs the call + transcript to the CRM.</p></div>
+      <div class="card"><h4>Web conversational orb</h4><p>ElevenLabs convai with a dedicated agent ID per product (never shared). The browser SDK connects directly; <strong>no API key reaches the client</strong> (agent IDs are public by design). A client-tool bridge maps the agent's <code>run_partnership_triage</code> call to a browser handler that POSTs the backend.</p></div>
+    </div>
+    <p class="body">Teaser narration uses a <strong>$0, no-key</strong> path: server-proxied Microsoft Edge "Read Aloud" neural TTS with automatic browser-speech fallback — the canonical "Lina" pattern, stampable into any page via the <code>voice</code> command.</p>
+
+    <!-- 11 -->
+    <h2 id="s11"><span class="nn">11</span>Security &amp; Compliance Architecture</h2>
+    <table>
+      <tr><th>Domain</th><th>Control</th></tr>
+      <tr><td><b>AuthN</b></td><td>JWT (<code>jsonwebtoken</code>) in HttpOnly + Secure cookies; bcrypt password hashing; TOTP 2FA (<code>speakeasy</code>); express-session.</td></tr>
+      <tr><td><b>Capability access</b></td><td>Signed magic links (HMAC capability tokens) + UUID access tokens (<code>d2_company_access_tokens</code>) with expiry + last-used tracking. A champion code can never mint another link.</td></tr>
+      <tr><td><b>Secrets at rest</b></td><td>IMAP app passwords &amp; OAuth tokens encrypted with <strong>AES-256-GCM</strong> (key derived from <code>EMAIL_CRED_SECRET</code>).</td></tr>
+      <tr><td><b>Edge hardening</b></td><td><code>helmet</code>, explicit CSP / frame-ancestors, CORS, <code>express-rate-limit</code>, <code>express-validator</code> / <code>validator</code> input validation.</td></tr>
+      <tr><td><b>Tenant isolation</b></td><td><code>tenant_id</code> enforced on every read/write; verticals run isolated Sequelize instances.</td></tr>
+      <tr><td><b>Telephony trust</b></td><td>A2P 10DLC brand (approved) + SHAKEN/STIR Trust Product for A-level attestation so carriers don't block outbound calls.</td></tr>
+      <tr><td><b>Webhook auth</b></td><td>Shared-secret API keys validated on inbound machine-event &amp; candidate webhooks.</td></tr>
+      <tr><td><b>PII discipline</b></td><td>Transcript bodies &amp; submitter emails are never logged — only <code>{ intake_id, tenant_id, lang, forward_status, len }</code>.</td></tr>
+      <tr><td><b>Deliverability safety</b></td><td>Server-initiated email autosend is OFF by default (<code>EMAIL_AUTOSEND_DISABLED</code>); humans review drafts and send via magic-link / Apple-Mail helpers.</td></tr>
+    </table>
+    <h4>Regulatory coverage</h4>
+    <p class="body">Compliance, Regulatory Researcher, and Privacy Officer specialists scope each regulated build: <strong>GDPR / HIPAA</strong> (US health), <strong>Colombian Habeas Data (Ley 1581/2012) + SFC</strong> (fintech, e.g. PLANEA), SARLAFT/AML, and sector frameworks. The AI never auto-commits the firm to a regulated engagement — every triage is a human-reviewed first read.</p>
+
+    <!-- 12 -->
+    <h2 id="s12"><span class="nn">12</span>Deployment &amp; Infrastructure</h2>
+    <ul>
+      <li><strong>Platform:</strong> Render. <strong>Trigger:</strong> <code>git push origin main</code> &rarr; auto-deploy in ~90–100s.</li>
+      <li><strong>Build:</strong> <code>build.sh</code>; static <code>public/</code> assets need no build step; React/Vite dashboards are pre-built.</li>
+      <li><strong>Config:</strong> 12-factor env vars; feature flags gate optional waves (e.g. <code>INTUITIVE_ENGAGEMENT_GO</code>, <code>VERITAS_*</code>, <code>AGROMERCADO_*</code>).</li>
+      <li><strong>Database:</strong> managed PostgreSQL (HA + backups); SSL required; connection pooling via Sequelize.</li>
+      <li><strong>Ephemerality note:</strong> on-disk dirs (e.g. proposal-audio) are wiped on redeploy — durable artifacts live in S3 or the DB.</li>
+    </ul>
+    <div class="callout adr"><b>Operational caution.</b> Any code push triggers a full redeploy; time pushes around live demos and expensive regen steps (e.g. ElevenLabs narration) accordingly.</div>
+
+    <!-- 13 -->
+    <h2 id="s13"><span class="nn">13</span>Observability &amp; Site Reliability</h2>
+    <ul>
+      <li><strong>Health/Debug:</strong> every app exposes <code>/&lt;app&gt;/health</code> and a <code>/debug/&lt;app&gt;-error</code> endpoint surfacing mount/runtime errors.</li>
+      <li><strong>Logging:</strong> <code>winston</code> (structured) + <code>morgan</code> (HTTP); PII-scrubbed.</li>
+      <li><strong>Schedulers:</strong> <code>node-cron</code> pollers (meeting/RSVP reminders, inbox digest, public-source refresh) — gated by the autosend flag.</li>
+      <li><strong>Active monitoring:</strong> the Neural Findings agent watches every project for stalls, missing owners, and overdue milestones and pings before slippage.</li>
+      <li><strong>Target:</strong> <strong>99.9% SLA</strong> on delivered software, with ongoing AI agent support.</li>
+    </ul>
+
+    <!-- 14 -->
+    <h2 id="s14"><span class="nn">14</span>Technology Stack Reference</h2>
+    <table>
+      <tr><th>Layer</th><th>Technologies</th></tr>
+      <tr><td>Runtime</td><td>Node.js ≥16, Express</td></tr>
+      <tr><td>Data</td><td>PostgreSQL, Sequelize, pg, pg-hstore, sequelize-cli</td></tr>
+      <tr><td>AI / ML</td><td>@anthropic-ai/sdk (Claude Opus 4.8 / Sonnet 4.6 / Haiku 4.5), openai, @realitydefender/realitydefender</td></tr>
+      <tr><td>Voice / Telephony</td><td>twilio, ElevenLabs convai, ffmpeg (fluent-ffmpeg)</td></tr>
+      <tr><td>Comms</td><td>@sendgrid/mail, nodemailer, imapflow, mailparser, web-push</td></tr>
+      <tr><td>Auth / Security</td><td>jsonwebtoken, bcrypt/bcryptjs, helmet, cors, express-rate-limit, express-validator, validator, speakeasy</td></tr>
+      <tr><td>Realtime</td><td>socket.io, ws</td></tr>
+      <tr><td>Docs / Media</td><td>pdfkit, pdfmake, docx, html-pdf-node, puppeteer-core, @sparticuz/chromium, sharp, canvas, qrcode, xlsx</td></tr>
+      <tr><td>Integrations</td><td>googleapis, google-auth-library, stripe, @aws-sdk/client-s3, axios, node-fetch, cheerio, csv-parse</td></tr>
+      <tr><td>Scheduling / Utils</td><td>node-cron, moment-timezone, date-fns(-tz), chrono-node, lodash, uuid, dotenv</td></tr>
+      <tr><td>Frontend</td><td>Static HTML/CSS/JS, EJS, React + Vite (dashboards), PWA service workers</td></tr>
+      <tr><td>Fonts / Brand</td><td>Inter · Instrument Serif · JetBrains Mono · cyan→blue→violet→magenta gradient</td></tr>
+    </table>
+
+    <!-- 15 -->
+    <h2 id="s15"><span class="nn">15</span>Architecture Decision Records</h2>
+    <table>
+      <tr><th>ADR</th><th>Decision</th><th>Rationale</th></tr>
+      <tr><td>ADR-1</td><td>Monolith host + self-contained vertical routers</td><td>App isolation (own Sequelize/migrations) without microservice ops overhead.</td></tr>
+      <tr><td>ADR-2</td><td><code>sync({alter:false})</code> + manual SQL migrations</td><td>No surprise destructive ALTERs on live tenant data.</td></tr>
+      <tr><td>ADR-3</td><td>MCP as the agent-integration standard</td><td>Vendor-neutral context/tool sharing across agents and the customer's systems.</td></tr>
+      <tr><td>ADR-4</td><td>AI-Native acceleration (agent-generated scaffolding)</td><td>Compresses delivery from months to weeks while preserving enterprise quality.</td></tr>
+      <tr><td>ADR-5</td><td>Dual database (CRM vs DATA URL)</td><td>Separates CRM data from secondary/project data; bridges use a dedicated connection.</td></tr>
+      <tr><td>ADR-6</td><td>Email autosend OFF by default</td><td>Deliverability — human-reviewed sends avoid spam-folder placement.</td></tr>
+      <tr><td>ADR-7</td><td>Provider-agnostic adapters (detection/TTS/search/model)</td><td>Swap a provider by env, not a rewrite.</td></tr>
+      <tr><td>ADR-8</td><td>Auto-mounted client builds</td><td>Drop-in micro-apps ship without modifying the core host.</td></tr>
+    </table>
+
+    <!-- 16 -->
+    <h2 id="s16"><span class="nn">16</span>Quality Attributes (NFRs)</h2>
+    <div class="grid2">
+      <div class="card"><h4>Availability</h4><p>99.9% SLA; HA Postgres; health/debug per app; auto-fix loop on live signals.</p></div>
+      <div class="card"><h4>Scalability</h4><p>Stateless app tier behind Render; tenant-partitioned data; variable-load lines marked for connector cost scaling.</p></div>
+      <div class="card"><h4>Security &amp; Privacy</h4><p>JWT + 2FA, AES-256-GCM secrets, tenant isolation, PII-scrubbed logs, regulatory scoping per build.</p></div>
+      <div class="card"><h4>Maintainability</h4><p>Self-contained verticals, provider adapters, explicit migrations, deterministic architect commands.</p></div>
+      <div class="card"><h4>Cost (FinOps)</h4><p>Per-call token estimation, model routing by task tier, $0 voice paths where viable.</p></div>
+      <div class="card"><h4>Internationalization</h4><p>EN/ES native across UI, voice, agents, and generated artifacts; locale-correct orthography.</p></div>
+    </div>
+
+    <!-- 17 -->
+    <h2 id="s17"><span class="nn">17</span>Glossary</h2>
+    <table>
+      <tr><th>Term</th><th>Definition</th></tr>
+      <tr><td><b>MCP</b></td><td>Model Context Protocol — the open standard agents use to share context and hand work between each other and to the customer's live systems.</td></tr>
+      <tr><td><b>MCP Brain</b></td><td>The orchestration layer that classifies a request and routes it across the agent workforce.</td></tr>
+      <tr><td><b>Triage</b></td><td>Automated fit scoring + risk flagging + recommendation produced by the Inbox Triage agent before human review.</td></tr>
+      <tr><td><b>Vertical</b></td><td>A self-contained Express Router application with its own Sequelize instance, models, and migrations.</td></tr>
+      <tr><td><b>Client build</b></td><td>An auto-mounted micro-app under <code>client-builds/</code> picked up at boot.</td></tr>
+      <tr><td><b>SIT / UAT</b></td><td>System Integration Testing / User Acceptance Testing — the two gates before SHIP.</td></tr>
+      <tr><td><b>Magic link</b></td><td>A signed, expiring capability URL granting login-free, scoped access (teasers, summaries, proposals, partner dashboards).</td></tr>
+    </table>
+
+    <div class="foot">
+      Digit2AI — Enterprise Architecture &amp; Methodology · Tech System Architecture (EA-MTSA-001 · v1.0) · Internal &amp; Confidential. One MCP brain, an 83-agent workforce, wired to the customer's live systems via the open Model Context Protocol. This document describes the reference architecture as built on the RinglyPro / Digit2AI platform and supersedes prior informal descriptions.
+    </div>
+
+  </main>
+</div>
+</body>
+</html>
