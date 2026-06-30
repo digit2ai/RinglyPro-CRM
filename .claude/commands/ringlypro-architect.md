@@ -642,7 +642,7 @@ When the user says **"voice"**, **"ringlypro-architect voice"**, **"add a voice 
 
 ### What gets produced (all 3 layers + the orb)
 
-The voice is a 3-part pattern. `create voice` ships all three:
+The voice is a 3-part pattern. `voice` ships all three:
 
 1. **Layer 1 — Backend TTS engine** → `src/services/edge-tts.js`
    Zero-key neural synthesis over the public Edge "Read Aloud" WebSocket (`wss://speech.platform.bing.com/.../readaloud/edge/v1`), the `Sec-MS-GEC` SHA-256 security token, returns MP3 Buffer.
