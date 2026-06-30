@@ -6462,13 +6462,37 @@ function renderArchitectPromptCard(p) {
   </div>`;
 }
 
+// Kick off background generation, then poll /prompt-status until done.
+// The synthesis (Opus) can run 60–150s — longer than the Cloudflare proxy
+// timeout — so the request returns 202 immediately and the real work finishes
+// server-side. We poll a lightweight status endpoint instead of holding one
+// long request open (which used to 524 and surface as a bogus "Generate
+// failed" even though the prompt had actually been saved).
+async function pollPromptGeneration(projectId, { timeoutMs = 240000, intervalMs = 3000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  // Brief initial delay so the job has a chance to register.
+  await new Promise(r => setTimeout(r, 1500));
+  while (Date.now() < deadline) {
+    let s;
+    try { s = await api(`/projects/${projectId}/prompt-status`); }
+    catch (e) { await new Promise(r => setTimeout(r, intervalMs)); continue; }
+    if (s.status === 'done')  return { ok: true, used_synth: s.used_synth, prompt_length: s.prompt_length };
+    if (s.status === 'error') return { ok: false, error: s.error || 'generation failed' };
+    if (s.status === 'idle')  return { ok: true, idle: true }; // server restarted; record already saved
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+  return { ok: false, error: 'timed out waiting for generation (it may still finish — reload the project shortly)' };
+}
+
 // First-time generation (friendly progress; reuses the regenerate-prompt endpoint).
 async function generateArchitectPrompt(projectId) {
   const progress = showPromptGenProgress();
   try {
     const r = await api(`/projects/${projectId}/regenerate-prompt`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success && r.status !== 'generating') { progress.close(); alert('Generate failed: ' + (r.error || 'unknown')); return; }
+    const done = await pollPromptGeneration(projectId);
     progress.close();
-    if (!r.success) { alert('Generate failed: ' + (r.error || 'unknown')); return; }
+    if (!done.ok) { alert('Generate failed: ' + done.error); return; }
     showProjectDetail(projectId);
   } catch (e) {
     progress.close();
@@ -6601,9 +6625,15 @@ async function regenerateArchitectPrompt(projectId) {
   const progress = showPromptGenProgress();
   try {
     const r = await api(`/projects/${projectId}/regenerate-prompt`, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success && r.status !== 'generating') { progress.close(); alert('Regenerate failed: ' + (r.error || 'unknown')); return; }
+    const done = await pollPromptGeneration(projectId);
     progress.close();
-    if (!r.success) { alert('Regenerate failed: ' + (r.error || 'unknown')); return; }
-    alert(`Prompt regenerated (${r.prompt_length} chars).\n\nSource: ${r.used_synth ? 'Senior Prompt Engineer synthesizer (Claude)' : 'raw template (synth unavailable)'}\n\nClick "View Architect Prompt" to see it.`);
+    if (!done.ok) { alert('Regenerate failed: ' + done.error); return; }
+    if (done.idle) {
+      alert('Prompt regenerated.\n\nClick "View Architect Prompt" to see it.');
+    } else {
+      alert(`Prompt regenerated (${done.prompt_length} chars).\n\nSource: ${done.used_synth ? 'Senior Prompt Engineer synthesizer (Claude)' : 'raw template (synth unavailable)'}\n\nClick "View Architect Prompt" to see it.`);
+    }
     showProjectDetail(projectId);
   } catch (e) {
     progress.close();

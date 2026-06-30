@@ -1,8 +1,8 @@
-const CACHE_NAME = 'd2ai-projects-v31';
+const CACHE_NAME = 'd2ai-projects-v32';
 const STATIC_ASSETS = [
   '/projects/',
   '/projects/assets/styles.css',
-  '/projects/assets/app.js'
+  '/projects/assets/app.js?v=32'
 ];
 
 self.addEventListener('install', (event) => {

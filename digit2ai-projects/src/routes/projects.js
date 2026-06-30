@@ -700,50 +700,111 @@ router.post('/:id/set-phase', async (req, res) => {
   }
 });
 
-// POST /api/v1/projects/:id/regenerate-prompt — re-run the Senior Prompt
-// Engineer synthesizer against the current project context. No email is
-// sent, no phase change. Just rebuilds project.architect_prompt so you
-// can iterate on the prompt (tune business plan, tweak targets, edit
-// business requirements, etc.) and immediately see the updated brief
-// without firing the whole pipeline again.
+// -------------------------------------------------------------
+// Architect-prompt generation — runs as a BACKGROUND JOB.
+//
+// The Senior Prompt Engineer synthesis is a single non-streaming Opus call
+// that can take 60–150s. The origin sits behind Cloudflare, which kills any
+// request that doesn't complete within ~100s with a 524. When that happened
+// the browser got an HTML error page (not JSON), the dashboard's res.json()
+// threw, and the UI showed "Generate failed" — even though the backend kept
+// running and saved the prompt seconds later. (That's why finished projects
+// still ended up with a good architect_prompt despite the "failure".)
+//
+// Fix: POST /regenerate-prompt returns 202 immediately and does the work in
+// the background; the dashboard polls GET /:id/prompt-status until done. No
+// single HTTP request stays open long enough to hit the proxy timeout.
+// -------------------------------------------------------------
+const promptJobs = new Map(); // projectId(String) -> { status, startedAt, prompt_length?, used_synth?, error? }
+
+async function runPromptGeneration(projectId, actorEmail) {
+  const pipeline = require('../services/architectPipeline');
+  const synth = require('../services/architectPromptSynth');
+  const project = await Project.findOne({ where: { id: projectId, workspace_id: 1 } });
+  if (!project) throw new Error('Project not found');
+  // The prompt template references short_name (table prefixes, build paths,
+  // health URL). In the streamlined fast-path the operator can generate the
+  // prompt before the formal pipeline ever assigned one — so ensure it exists.
+  if (!project.short_name) {
+    project.short_name = await pipeline.generateUniqueShortName(project);
+    const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
+    project.production_url = `${base}/${project.short_name}`;
+    await project.save();
+  }
+  const context = await pipeline.gatherContext(project);
+  const rawPrompt = pipeline.renderArchitectPrompt(project, context);
+  let finalPrompt = rawPrompt;
+  let usedSynth = false;
+  try {
+    const synthesized = await synth.synthesizePrompt(rawPrompt, {
+      id: project.id, short_name: project.short_name, name: project.name
+    });
+    if (synthesized && synthesized.length > 200) {
+      finalPrompt = synthesized;
+      usedSynth = true;
+    }
+  } catch (e) {
+    console.error('[D2AI] synth failed, using raw template:', e.message);
+  }
+  project.architect_prompt = finalPrompt;
+  await project.save();
+  await logActivity(actorEmail, 'regenerated_architect_prompt', 'project', project.id, project.name, { used_synth: usedSynth });
+  return { used_synth: usedSynth, prompt_length: finalPrompt.length };
+}
+
+// POST /api/v1/projects/:id/regenerate-prompt — kick off (re)generation in the
+// background and return 202 immediately. Idempotent while running: a second
+// POST for the same project returns the in-flight job's status instead of
+// starting a duplicate Opus call.
 router.post('/:id/regenerate-prompt', async (req, res) => {
   try {
-    const project = await Project.findOne({ where: { id: req.params.id, workspace_id: 1 } });
+    const id = String(req.params.id);
+    const project = await Project.findOne({ where: { id, workspace_id: 1 }, attributes: ['id', 'name'] });
     if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
-    const pipeline = require('../services/architectPipeline');
-    const synth = require('../services/architectPromptSynth');
-    // The prompt template references short_name (table prefixes, build paths,
-    // health URL). In the streamlined fast-path the operator can generate the
-    // prompt before the formal pipeline ever assigned one — so ensure it exists.
-    if (!project.short_name) {
-      project.short_name = await pipeline.generateUniqueShortName(project);
-      const base = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
-      project.production_url = `${base}/${project.short_name}`;
-      await project.save();
+
+    const existing = promptJobs.get(id);
+    if (existing && existing.status === 'generating') {
+      return res.status(202).json({ success: true, status: 'generating', already_running: true });
     }
-    const context = await pipeline.gatherContext(project);
-    const rawPrompt = pipeline.renderArchitectPrompt(project, context);
-    let finalPrompt = rawPrompt;
-    let usedSynth = false;
-    try {
-      const synthesized = await synth.synthesizePrompt(rawPrompt, {
-        id: project.id, short_name: project.short_name, name: project.name
+
+    const job = { status: 'generating', startedAt: Date.now() };
+    promptJobs.set(id, job);
+    const actorEmail = req.user?.email;
+
+    // Fire-and-forget — do NOT await; the response goes out now.
+    runPromptGeneration(id, actorEmail)
+      .then(result => { promptJobs.set(id, { status: 'done', startedAt: job.startedAt, finishedAt: Date.now(), ...result }); })
+      .catch(err => {
+        console.error('[D2AI] background prompt generation error:', err);
+        promptJobs.set(id, { status: 'error', startedAt: job.startedAt, finishedAt: Date.now(), error: err.message });
       });
-      if (synthesized && synthesized.length > 200) {
-        finalPrompt = synthesized;
-        usedSynth = true;
-      }
-    } catch (e) {
-      console.error('[D2AI] synth failed, using raw template:', e.message);
-    }
-    project.architect_prompt = finalPrompt;
-    await project.save();
-    await logActivity(req.user?.email, 'regenerated_architect_prompt', 'project', project.id, project.name, { used_synth: usedSynth });
-    res.json({ success: true, data: project, used_synth: usedSynth, prompt_length: finalPrompt.length });
+
+    return res.status(202).json({ success: true, status: 'generating' });
   } catch (e) {
     console.error('[D2AI] regenerate-prompt error:', e);
     res.status(500).json({ success: false, error: e.message });
   }
+});
+
+// GET /api/v1/projects/:id/prompt-status — poll the background generation job.
+// Returns { status: 'generating'|'done'|'error'|'idle' }. The dashboard polls
+// this after POST /regenerate-prompt. A 'done'/'error' result is cleared after
+// it's read so the next generation starts clean.
+router.get('/:id/prompt-status', async (req, res) => {
+  const id = String(req.params.id);
+  const job = promptJobs.get(id);
+  if (!job) {
+    // No tracked job (server may have restarted mid-run). Tell the client to
+    // just refresh — whatever the backend saved is already on the record.
+    return res.json({ success: true, status: 'idle' });
+  }
+  const out = { success: true, status: job.status };
+  if (job.status === 'done') { out.prompt_length = job.prompt_length; out.used_synth = job.used_synth; }
+  if (job.status === 'error') out.error = job.error;
+  if (job.status === 'generating') out.elapsed_ms = Date.now() - job.startedAt;
+  // Clear terminal states once observed so a re-run isn't shadowed by stale state.
+  if (job.status === 'done' || job.status === 'error') promptJobs.delete(id);
+  res.json(out);
 });
 
 // POST /api/v1/projects/:id/recompute-short-name — generate / refresh slug
