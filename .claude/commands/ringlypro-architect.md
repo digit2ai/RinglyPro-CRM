@@ -1121,6 +1121,72 @@ Once the build is green, if the request implies them, also produce — in the sa
 
 ---
 
+## TRIAGE RUNBOOK — `triage`
+
+When the user invokes `ringlypro-architect triage` (also: "triage this", "evaluate this request", "fit score", "evalúa este proyecto", "vale la pena?"), run the **AI Triage Brief** on a project request and return the structured verdict. This is the FRONT of the revenue funnel — its output feeds `cost`, `quote`, `teaser`, and `proposal`.
+
+### Engine (reuse — do not reinvent)
+
+The real engine is `digit2ai-projects/src/services/agents/inboxTriageAgent.js` (`run({project})` / `runById(projectId)`, Sonnet-backed), surfaced as `POST /projects/api/v1/agents/triage/:projectId` (manual rerun). Use it whenever a `d2_projects` row exists.
+
+- **Project row exists** → call `runById(projectId)` (or POST the rerun endpoint). It writes `triage_brief` (markdown) + `triage_structured` and returns `{ fit_score, go_no_go_recommendation, cost_estimate_usd }`.
+- **No row yet (raw text/transcript in context)** → produce the SAME structured brief inline using the agent's own schema, then offer to persist it via the intake pipeline.
+
+### Structured output (always produce all of these)
+
+`fit_score` (1-10), `fit_reasoning`, `problem_in_our_words`, `go_no_go_recommendation` (`go` 8-10 / `poc` 5-7 / `no` 1-4), `wedge_recommendation` (the smallest defensible v1), `regulatory_flags[]` (risk + severity + what_to_check), `portfolio_synergies[]` (RinglyPro/HISPATEC/SurgicalMind/CW Carriers/Visionarium angles), `monetization_options[]`, `competitors_to_watch[]`, `conditions_if_any[]`, and `stakeholder_questions_en[]` + `stakeholder_questions_es[]`.
+
+### Output
+
+Render the brief in chat (fit + recommendation + wedge + top flags), and if a project row exists, point to the live summary magic link `https://aiagent.ringlypro.com/projects/summary/<token>`. Then suggest the natural next step: `teaser` (engage), `cost`/`quote` (price), or `proposal` (close).
+
+---
+
+## TEASER RUNBOOK — `teaser`
+
+When the user invokes `ringlypro-architect teaser` (also: "make a teaser", "demo for this", "genera el teaser", "POC para el cliente"), generate the branded, interactive **POC demo magic link** the client clicks — a simulated working build with the Lina voice walkthrough, per the Voice Teaser pattern.
+
+### Engine (reuse)
+
+`digit2ai-projects/src/services/voiceTeaserGenerator.js` + `src/routes/teasers.js`:
+- Generate: `POST /projects/api/v1/teaser-admin/projects/:id/generate` → AI-generates + stores, returns the share URL.
+- Public magic link: `https://aiagent.ringlypro.com/projects/teaser/<token>`.
+- Send (optional): `POST /projects/api/v1/teaser-admin/:token/send` → email | sms | whatsapp.
+
+### Rules
+
+- Voice **defaults to México (Dalia)** unless the project country dictates otherwise (per the Voice Teaser memory).
+- Bilingual EN/ES, emoji-free, branded as Digit2AI (or the alliance).
+- Needs a `d2_projects` row — if the request is still raw text, run `triage` first (which persists the project), then teaser.
+- Report the magic link + local route; do NOT auto-send unless the user says "send" (respect `EMAIL_AUTOSEND_DISABLED`).
+
+---
+
+## PROPOSAL RUNBOOK — `proposal` / `deck`
+
+When the user invokes `ringlypro-architect proposal` (also: "propuesta completa", "deck", "armar la propuesta", "send a proposal"), assemble the **full client-facing commercial package** as one branded HTML magic link — the artifact that actually closes the deal. It is the union of triage + quote + timeline + next steps.
+
+### What it composes (reuse existing outputs — do not recompute from scratch)
+
+1. **Triage** → `problem_in_our_words`, the recommended **v1 wedge**, fit narrative, and (softened for client tone) the key conditions/risks. Run `triage` first if not already in context.
+2. **Quote** → the `quote` pricing block (cost × 1.70 profit + IVA), CAPEX + OPEX + total, straight from the `quote` runbook math. Generate the `quote` if it does not exist yet.
+3. **Timeline** → the weekly `Cronograma de Entrega` (PoC in weeks, max ~4).
+4. **Teaser link** → embed the live `teaser` magic link as the "ver demo" CTA when one exists.
+5. **Next steps / términos** → scope boundaries, what's needed from the client, and a clear accept path.
+
+### Build
+
+- Clone the canonical template (`public/proposals/planea-propuesta-digit2ai.html` styling). Client-facing banner `PROPUESTA TÉCNICO-COMERCIAL` (blue/neutral), NOT the red internal one.
+- Write `public/proposals/<slug>-proposal.html`. Keep `<slug>` stable so re-runs overwrite cleanly.
+- Bilingual default ES (with EN where the audience needs it), emoji-free, proper Spanish orthography, correct IVA by country (Colombia 19%, México/Venezuela 16%).
+- Commit + push (auto-deploy), then report the magic link `https://aiagent.ringlypro.com/proposals/<slug>-proposal.html` + absolute local path.
+
+### The funnel chain
+
+`triage` → `teaser` → `cost` (internal) → `quote` (client price) → `proposal` (the close) → `loop` (build it). Any of these can be invoked alone; `proposal` will silently run whichever upstream pieces are missing rather than asking.
+
+---
+
 ## Current Task
 
 $ARGUMENTS
