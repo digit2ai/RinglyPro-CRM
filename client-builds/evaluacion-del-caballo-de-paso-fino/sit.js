@@ -209,6 +209,18 @@ async function run(base) {
     const r = await reqJson(base, 'GET', '/privacidad');
     check('GET /privacidad -> 200 + Ley 1581', r.status === 200 && /1581/.test(r.text), `status=${r.status}`);
   }
+
+  // demo session: server-minted token drives a write with no user-pasted JWT.
+  {
+    const sess = await reqJson(base, 'GET', '/api/v1/session/demo');
+    const tok = sess.json && sess.json.token;
+    const wrote = tok
+      ? await reqJson(base, 'POST', '/api/v1/horses', { token: tok, body: { name: 'Demo', breed: 'POC' } })
+      : { status: 0 };
+    check('demo session mints a token + drives a write', sess.status === 200 && !!tok
+      && sess.json.tenant_id === 1 && wrote.status === 201,
+      `session=${sess.status} write=${wrote.status}`);
+  }
 }
 
 // ---- Boot + report ---------------------------------------------------------

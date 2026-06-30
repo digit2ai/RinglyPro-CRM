@@ -23,6 +23,7 @@ const path = require('path');
 
 const evaluation = require('./models/evaluation');
 const healthRouter = require('./routes/health');
+const sessionRouter = require('./routes/session');
 const horsesRouter = require('./routes/horses');
 const evaluationsRouter = require('./routes/evaluations');
 const pagesRouter = require('./routes/pages');
@@ -45,6 +46,9 @@ app.use('/health', healthRouter);
 // Static assets (app.js). Pages are server-rendered, so never serve index.html
 // statically.
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// Demo session minting (server-side token for the live POC).
+app.use('/api/v1/session', sessionRouter);
 
 // JWT-guarded (writes) + public-read API.
 app.use('/api/v1/horses', horsesRouter);

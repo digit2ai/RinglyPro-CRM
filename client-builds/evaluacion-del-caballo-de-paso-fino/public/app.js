@@ -34,13 +34,37 @@
     });
   }
 
-  function token() {
+  // Auto-acquired demo session token (server-minted, scoped to the demo tenant).
+  // A user-pasted token in the "advanced" field overrides it.
+  var demoToken = '';
+
+  function customToken() {
     var el = document.getElementById('jwt');
-    return el ? el.value.trim() : '';
+    return el && el.value ? el.value.trim() : '';
+  }
+
+  function setSessionBadge() {
+    var b = document.getElementById('sessionBadge');
+    if (!b) return;
+    if (customToken()) { b.textContent = I18N.session_custom; b.className = 'text-xs text-emerald-400 mono'; }
+    else if (demoToken) { b.textContent = I18N.session_demo; b.className = 'text-xs text-emerald-400 mono'; }
+    else { b.textContent = I18N.session_loading; b.className = 'text-xs text-amber-400 mono'; }
+  }
+
+  // Resolve a usable token: prefer the pasted one, else the demo token (fetching
+  // it on demand if the boot fetch hasn't landed yet). Never asks the user.
+  function ensureToken() {
+    var c = customToken();
+    if (c) return Promise.resolve(c);
+    if (demoToken) return Promise.resolve(demoToken);
+    return fetch(API + '/session/demo')
+      .then(function (r) { return r.json(); })
+      .then(function (j) { demoToken = (j && j.token) || ''; setSessionBadge(); return demoToken; })
+      .catch(function () { return ''; });
   }
 
   function authHeaders() {
-    var t = token();
+    var t = customToken() || demoToken;
     return t ? { Authorization: 'Bearer ' + t } : {};
   }
 
@@ -75,26 +99,28 @@
     var btn = document.getElementById('createHorse');
     if (!btn) return;
     btn.addEventListener('click', function () {
-      if (!token()) { setStatus(I18N.err_need_token); return; }
       var name = (document.getElementById('hName') || {}).value;
       var breed = (document.getElementById('hBreed') || {}).value;
       if (!name || !name.trim()) { setStatus(I18N.err_need_horse); return; }
       setStatus('…');
-      fetch(API + '/horses', {
-        method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-        body: JSON.stringify({ name: name.trim(), breed: (breed || '').trim() })
-      }).then(function (r) {
-        if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
-        return r.json();
-      }).then(function (row) {
-        if (!row) return;
-        setStatus('');
-        loadHorses().then(function () {
-          var sel = document.getElementById('horseSel');
-          if (sel) sel.value = row.id;
-        });
-      }).catch(function (e) { setStatus(String(e)); });
+      ensureToken().then(function (t) {
+        if (!t) { setStatus(I18N.err_need_token); return; }
+        fetch(API + '/horses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+          body: JSON.stringify({ name: name.trim(), breed: (breed || '').trim() })
+        }).then(function (r) {
+          if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
+          return r.json();
+        }).then(function (row) {
+          if (!row) return;
+          setStatus('');
+          loadHorses().then(function () {
+            var sel = document.getElementById('horseSel');
+            if (sel) sel.value = row.id;
+          });
+        }).catch(function (e) { setStatus(String(e)); });
+      });
     });
   }
 
@@ -110,7 +136,6 @@
     var btn = document.getElementById('analyze');
     if (!btn) return;
     btn.addEventListener('click', function () {
-      if (!token()) { setStatus(I18N.err_need_token); return; }
       var sel = document.getElementById('horseSel');
       var horseId = sel ? sel.value : '';
       if (!horseId) { setStatus(I18N.err_need_horse); return; }
@@ -119,23 +144,26 @@
       if (!file) { setStatus(I18N.err_need_file); return; }
 
       setStatus(I18N.analyzing);
-      var fd = new FormData();
-      fd.append('audio', file);
-      fd.append('horse_id', horseId);
-      fd.append('lang', LANG);
+      ensureToken().then(function (t) {
+        if (!t) { setStatus(I18N.err_need_token); return; }
+        var fd = new FormData();
+        fd.append('audio', file);
+        fd.append('horse_id', horseId);
+        fd.append('lang', LANG);
 
-      fetch(API + '/evaluations', { method: 'POST', headers: authHeaders(), body: fd })
-        .then(function (r) {
-          if (r.status === 415) { setStatus(I18N.err_415); return null; }
-          if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
-          return r.json();
-        })
-        .then(function (res) {
-          if (!res) return;
-          setStatus('');
-          renderResult(res);
-        })
-        .catch(function (e) { setStatus(String(e)); });
+        fetch(API + '/evaluations', { method: 'POST', headers: { Authorization: 'Bearer ' + t }, body: fd })
+          .then(function (r) {
+            if (r.status === 415) { setStatus(I18N.err_415); return null; }
+            if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
+            return r.json();
+          })
+          .then(function (res) {
+            if (!res) return;
+            setStatus('');
+            renderResult(res);
+          })
+          .catch(function (e) { setStatus(String(e)); });
+      });
     });
   }
 
@@ -202,5 +230,10 @@
   } else {
     bindCreateHorse();
     bindAnalyze();
+    // Auto-acquire the demo session so writes "just work" — no token to paste.
+    setSessionBadge();
+    ensureToken().then(setSessionBadge);
+    var jwtEl = document.getElementById('jwt');
+    if (jwtEl) jwtEl.addEventListener('input', setSessionBadge);
   }
 })();
