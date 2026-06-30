@@ -97,5 +97,9 @@
   "neural_clean": "No alerts",
   "neural_none": "No findings detected for this gait.",
   "neural_action": "Recommended action",
-  "res_reco": "Recommendations"
+  "res_reco": "Recommendations",
+  "cta_juez_badge": "Video + Audio · Championship Judge",
+  "cta_juez_title": "Want to upload a VIDEO of the pass?",
+  "cta_juez_sub": "Classify the gait (paso fino / trocha / trot-canter), score it like a judge, and generate the ruling + Neural findings.",
+  "cta_juez_btn": "Open Championship Judge →"
 }

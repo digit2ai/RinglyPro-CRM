@@ -97,5 +97,9 @@
   "neural_clean": "Sin alertas",
   "neural_none": "No se detectaron hallazgos para esta marcha.",
   "neural_action": "Acción recomendada",
-  "res_reco": "Recomendaciones"
+  "res_reco": "Recomendaciones",
+  "cta_juez_badge": "Video + Audio · Juez de Campeonato",
+  "cta_juez_title": "¿Quieres subir un VIDEO de la pasada?",
+  "cta_juez_sub": "Clasifica la modalidad (paso fino / trocha / trote-galope), puntúa como un juez y genera el dictamen + hallazgos Neural.",
+  "cta_juez_btn": "Abrir Juez de Campeonato →"
 }
