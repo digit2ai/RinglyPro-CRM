@@ -83,10 +83,15 @@ async function runPipeline(store, ctx) {
     sesion_id: sesion.id, criterio_id: p.criterio_id, valor_medido: p.valor_medido, puntaje_normalizado: p.puntaje_normalizado
   })));
 
-  // 6. Resultado + ranking de la categoría.
+  // 6. Resultado + ranking de la categoría (puesto calculado dinámicamente).
   await upsertResultado(store, inscripcion.id, puntaje_total, clas);
   if (categoria) await recomputeRanking(store, categoria.id);
-  const resultado = await repo.find('resultados', { inscripcion_id: inscripcion.id });
+  let miRanking = null;
+  if (categoria) {
+    const tabla = await rankingCategoria(store, categoria.id);
+    const mio = tabla.find((r) => String(r.inscripcion_id) === String(inscripcion.id));
+    miRanking = mio ? mio.ranking : null;
+  }
 
   return {
     sesion_id: sesion.id,
@@ -97,7 +102,7 @@ async function runPipeline(store, ctx) {
     pisadas: pisadas.map((p) => ({ timestamp_ms: p.timestamp_ms, extremidad: p.extremidad, orden_secuencia: p.orden_secuencia, intervalo_anterior_ms: p.intervalo_anterior_ms, detectada_por_video: p.detectada_por_video, detectada_por_audio: p.detectada_por_audio })),
     puntuaciones,
     puntaje_total,
-    ranking: resultado ? resultado.ranking : null
+    ranking: miRanking
   };
 }
 
@@ -127,6 +132,12 @@ async function recomputeRanking(store, categoria_id) {
 }
 
 // Ranking de categoría con datos del caballo (para el dashboard).
+//
+// El puesto (ranking) se calcula DINÁMICAMENTE a partir del orden por puntaje,
+// no del valor persistido en ecpf_resultados.ranking. En Postgres los BIGINT
+// vuelven como strings, lo que hace frágil cualquier comparación de ids para
+// reescribir la columna; ordenar aquí es a prueba de tipos y siempre correcto.
+// Las inscripciones SIN resultado (puntaje null) quedan al final, sin puesto.
 async function rankingCategoria(store, categoria_id) {
   const { repo } = store;
   const inscripciones = await repo.findAll('inscripciones', { categoria_id });
@@ -140,13 +151,27 @@ async function rankingCategoria(store, categoria_id) {
       numero_competidor: ins.numero_competidor,
       caballo: cab ? cab.nombre : null,
       jinete: ins.jinete,
-      puntaje_total: res ? res.puntaje_total : null,
-      ranking: res ? res.ranking : null,
+      puntaje_total: res && res.puntaje_total != null ? res.puntaje_total : null,
+      ranking: null,
       observaciones: res ? res.observaciones : null,
       sesion_id: clas ? clas.id : null
     });
   }
-  out.sort((a, b) => (a.ranking || 999) - (b.ranking || 999));
+  // Ordena: con puntaje primero (desc), luego los sin puntaje. Asigna 1..N con
+  // empates compartiendo puesto.
+  out.sort((a, b) => {
+    if (a.puntaje_total == null && b.puntaje_total == null) return 0;
+    if (a.puntaje_total == null) return 1;
+    if (b.puntaje_total == null) return -1;
+    return b.puntaje_total - a.puntaje_total;
+  });
+  let rank = 0, lastScore = null, seen = 0;
+  for (const row of out) {
+    if (row.puntaje_total == null) { row.ranking = null; continue; }
+    seen += 1;
+    if (lastScore === null || row.puntaje_total !== lastScore) { rank = seen; lastScore = row.puntaje_total; }
+    row.ranking = rank;
+  }
   return out;
 }
 
