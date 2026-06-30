@@ -1000,6 +1000,79 @@ Senior Partnerships / Channel Manager (partner_slug attribution, commissions, em
 
 ---
 
+## COST & QUOTE RUNBOOK — `cost` / `quote`
+
+When the user invokes `ringlypro-architect cost` or `ringlypro-architect quote` (also triggers on "propuesta de costo", "cotización", "costo del proyecto", "quote the project"), generate a branded, deployable HTML pricing document (a shareable "magic link") for the **ecosystem currently in context** — the project/vertical the conversation is about (PLANEA, AgroMercado, Veritas, SurgicalMind, HISPATEC, etc.). Do NOT ask which project; infer it from the active conversation, the open files, or the most recent build.
+
+### The two modes
+
+| Command | Audience | Profit | IVA | Banner | Filename suffix |
+|---|---|---|---|---|---|
+| **`cost`** | INTERNAL (Digit2AI only) | NONE — solo costo directo | NONE | `DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO` (red) | `-cost.html` |
+| **`quote`** | CLIENT-facing | **+70% profit** (price = cost × 1.70) | + IVA on the marked-up subtotal | `PROPUESTA TÉCNICO-COMERCIAL` (blue/neutral) | `-quote.html` |
+
+Both are the SAME document structure and the SAME hours/components — `quote` just runs every money figure through the profit + IVA transform. Always generate `cost` first (it is the source of truth); `quote` is derived from it.
+
+### Canonical template
+
+Clone the exact look/feel of `public/proposals/planea-propuesta-digit2ai.html` (itself derived from `agrollano-propuesta-digit2ai.html`). Reuse its `<style>` block verbatim — same CSS variables, `.page`, `table.fin`, `.card`, `.conf`, `.note`, `@media print`. Never invent new styling.
+
+### Document sections (in order)
+
+1. **Header** — `h1` "INFORME DE COSTOS DE ENTREGA" (cost) or "PROPUESTA TÉCNICO-COMERCIAL" (quote); `.sub` = ecosystem name + phase + "Modelo de Entrega AI-Native"; the `.conf` banner per the table above.
+2. **Meta table** — Proyecto, Fecha (use today's real date), Atención (client/stakeholder name from the project request), Equipo (Digit2AI, or the alliance e.g. "ISTC × Digit2AI"), and **Tarifa interna** / **Tarifa** line showing the rate.
+3. **Contexto y alcance** — what the wedge/phase builds, AI-Native acceleration note, and an explicit OUT-of-scope list (de-risks regulated/deferred modules).
+4. **Costo / Inversión de Desarrollo (CAPEX)** — one `.card` per component, each with `N hrs · Costo/Precio: $X USD`, then a `table.fin` subtotal + total row. Always include the delivery-time `.pill` and a band note (lean ↔ pulido).
+5. **Cronograma de Entrega** — weekly `.card`s (Semana 1..N) whose hours sum exactly to the CAPEX hours. Per the POC/MVP-in-weeks rule, scope to **weeks, max ~4 for a PoC** — never months.
+6. **OPEX** — recurring run cost (demo-scale for a PoC; annual 99.9% for a full build). Mark variable lines with `(*)`.
+7. **Resumen** — CAPEX + OPEX → total, plus delivery timeline.
+8. **Nota + foot** — for `cost`: state margin + IVA are applied separately and NOT to be distributed. For `quote`: state profit + IVA are included and it is the client-facing figure.
+
+### The math (deterministic — do it exactly this way)
+
+```
+internalRate   = <loaded $/hr>           // DEFAULT $70/hr. Override if the user passes a number
+                                          //   ("cost 45", "quote rate=60") or the project memory
+                                          //   pins a different rate. $45/hr ≈ Colombia senior+AI loaded cost.
+lineCost       = hours × internalRate
+CAPEX_cost     = Σ lineCost
+total_cost     = CAPEX_cost + OPEX_cost   // cost mode stops here. No profit. No IVA.
+
+// quote mode only — apply on top of the cost figures:
+PROFIT_PCT     = 0.70                      // +70% profit (markup), so:
+linePrice      = lineCost × 1.70
+CAPEX_price    = CAPEX_cost × 1.70
+subtotal_price = CAPEX_price + OPEX_price  // default: mark up everything ×1.70
+IVA            = subtotal_price × ivaRate  // ivaRate by country: Colombia 19%, México/Venezuela 16%.
+                                           //   Infer country from the ecosystem; default 19% (Colombia).
+total_quote    = subtotal_price + IVA
+```
+
+Keep hours identical between `cost` and `quote`. Round displayed dollars to whole USD. Use the European thousands separator (`$11.200`) to match the template. Verify every level reconciles: components sum = weekly sum = CAPEX total.
+
+### Execution steps
+
+1. Determine the ecosystem in context + its phase/wedge scope (from the AI-Triage brief, the project request, or the active build).
+2. Build the component → hours breakdown (reuse the 9-component PLANEA shape as a starting skeleton; adapt components + hours to the real scope).
+3. Resolve `internalRate` (default $70/hr unless overridden) and `ivaRate` (default 19%).
+4. Write `public/proposals/<slug>-cost.html` (always). If mode is `quote`, ALSO write `public/proposals/<slug>-quote.html` with the profit + IVA transform applied and the client-facing banner/notes.
+5. `<slug>` = kebab-case ecosystem name (e.g. `planea`, `agromercado`, `veritas`). Keep it stable so re-runs overwrite cleanly.
+6. Grep the file for stale figures; confirm all totals reconcile.
+7. Commit + push to main (auto-deploy). Per the no-emojis rule, keep the document emoji-free.
+8. Report back the **magic link(s)**:
+   - `https://aiagent.ringlypro.com/proposals/<slug>-cost.html`
+   - `https://aiagent.ringlypro.com/proposals/<slug>-quote.html` (quote mode)
+   and the local path(s) under `public/proposals/`.
+
+### Guardrails
+
+- `cost` is INTERNAL — never includes profit or IVA, always carries the red "SOLO COSTO · NO DISTRIBUIR AL CLIENTE" framing.
+- `quote` is the only client-facing artifact and the ONLY one that shows the +70% profit and IVA.
+- Honor POC/MVP-in-weeks (max 4 weeks for a PoC), no-emojis, proper Spanish orthography (tildes/ñ), and full-absolute-path reporting.
+- If no ecosystem is in context, build the cost for the single most recently discussed project rather than asking.
+
+---
+
 ## Current Task
 
 $ARGUMENTS
