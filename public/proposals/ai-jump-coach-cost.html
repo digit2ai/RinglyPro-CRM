@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Costos de Entrega — AI Jump Coach · PoC (Rider Pose Analyzer)</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  td.save{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
+    h2{break-after:avoid}
+    table.fin,.card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>INFORME DE COSTOS DE ENTREGA</h1>
+  <p class="sub">AI Jump Coach — Rider Pose Analyzer · Prueba de Concepto (PoC) · Modelo de Entrega AI-Native</p>
+  <span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO · NO DISTRIBUIR AL CLIENTE</span>
+  <hr class="rule">
+
+  <table class="meta">
+    <tr><td class="lbl">Proyecto:</td><td>AI Jump Coach (Rider Pose Analyzer)</td><td class="lbl">Fecha:</td><td>Junio 2026</td></tr>
+    <tr><td class="lbl">Asunto:</td><td>Estructura de costo de la PoC</td><td class="lbl">Estado:</td><td>Entregada y en vivo</td></tr>
+    <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$70 USD/hora (tarifa cargada)</td></tr>
+    <tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega de la PoC. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
+  </table>
+
+  <h2>1. Contexto y alcance de la PoC</h2>
+  <p>Este informe presenta la <strong>estructura de costo directo</strong> de la <strong>Prueba de Concepto</strong> de AI Jump Coach bajo el modelo <strong>AI-Native</strong> de Digit2AI: scaffolding generado y probado iterativamente por la fuerza de agentes, que comprime la entrega a <strong>120 horas efectivas</strong> en <strong>2 semanas</strong>.</p>
+  <p>La PoC valida la única <strong>hipótesis de riesgo</strong> que importa: que la IA <strong>pueda ver al jinete sobre un caballo en movimiento</strong> y producir salida visible y falsificable. Construye la rebanada vertical de punta a punta: el jinete sube un video, <strong>MediaPipe Pose corre en el navegador</strong> (CPU, sin GPU ni Python), se envían los keypoints al backend, un <strong>motor de reglas en Node</strong> evalúa cuatro firmas de falla (quedarse atrás, mano de rienda caída, mirada baja anticipada, asiento adelantado en la recepción) y la app devuelve una línea de tiempo de fallas con su segundo exacto, más reproducción lado a lado con el esqueleto sobreimpreso. Está <strong>en vivo</strong> en <em>/ai-jump-coach-rider-pose-analyzer</em>.</p>
+  <p><strong>Quedan FUERA de la PoC</strong> (se difieren al MVP): modelo afinado / ViTPose y validación de precisión &ge;85%; inferencia en GPU en la nube; generación de clips con overlay reincrustado; paywall y cobro con Stripe; historial enriquecido multi-sesión; apps nativas iOS/Android; integraciones (Equilab / Hudl); licenciamiento de dataset etiquetado. La detección usa <strong>MediaPipe stock</strong> con umbrales heurísticos documentados, sin promesa de exactitud.</p>
+
+  <h2>2. Costo de Desarrollo de la PoC (CAPEX)</h2>
+  <p>Alcance de la rebanada entregada, organizado en componentes sobre la arquitectura AI-Native (sub-app Express auto-montada en el monorepo RinglyPro). Costo por componente a la tarifa cargada de $70 USD/hora — ingeniería senior con especialización en IA y visión por computador, sin margen ni IVA:</p>
+
+  <div class="card"><h3>Componente 1: Arquitectura base, modelo de datos y despliegue</h3>
+    Sub-app Express auto-montada en <em>/ai-jump-coach-rider-pose-analyzer</em>, modelo Sequelize multi-tenant (<em>tenant_id</em> + índice), migración canónica con fallback a memoria, salud y despliegue en vivo (Render) desde el día uno.
+    <div class="price">14 hrs · Costo: $980 USD</div></div>
+
+  <div class="card"><h3>Componente 2: Pipeline de visión en el navegador</h3>
+    Carga de MediaPipe Pose (tasks-vision, versión fijada), muestreo de cuadros del video a ~5fps vía &lt;video&gt; + &lt;canvas&gt;, extracción de keypoints por cuadro y generador sintético de respaldo si el modelo no carga (el flujo nunca se bloquea).
+    <div class="price">24 hrs · Costo: $1.680 USD</div></div>
+
+  <div class="card"><h3>Componente 3: Motor de detección de fallas en Node</h3>
+    Función pura, determinista y testeable: reduce los keypoints a métricas por firma y marca cuatro fallas (quedarse atrás, mano de rienda caída, mirada baja anticipada, asiento adelantado) con segundo exacto y nivel de confianza. Umbrales documentados como heurísticas.
+    <div class="price">22 hrs · Costo: $1.540 USD</div></div>
+
+  <div class="card"><h3>Componente 4: API REST con JWT y aislamiento multi-tenant</h3>
+    CRUD de análisis con autenticación JWT reutilizada de RinglyPro; todas las lecturas y escrituras acotadas al <em>tenant_id</em> del token; lecturas cruzadas entre tenants devuelven 404. Solo se persisten metadatos + fallas, nunca el video ni los keypoints (PII).
+    <div class="price">14 hrs · Costo: $980 USD</div></div>
+
+  <div class="card"><h3>Componente 5: UI de carga y reproducción con esqueleto</h3>
+    Pantalla de carga de MP4/MOV, reproducción lado a lado del video original con el esqueleto sobreimpreso sincronizado, y línea de tiempo de fallas en la que cada falla salta al segundo exacto del video.
+    <div class="price">20 hrs · Costo: $1.400 USD</div></div>
+
+  <div class="card"><h3>Componente 6: Internacionalización ES/EN y privacidad</h3>
+    Páginas renderizadas en servidor con idioma (por defecto ES, EN con <em>?lang=en</em>), diccionarios ES/EN, página de privacidad con declaración de manejo de datos (el procesamiento de pose ocurre en el navegador; al servidor solo van keypoints).
+    <div class="price">8 hrs · Costo: $560 USD</div></div>
+
+  <div class="card"><h3>Componente 7: Arnés SIT, fixture y verificación en producción</h3>
+    Suite SIT de 13 verificaciones (salud, gating JWT, motor de fallas contra fixture determinista, scoping por tenant, i18n, privacidad), salida en markdown con código de salida, y verificación de salud en producción tras el despliegue.
+    <div class="price">10 hrs · Costo: $700 USD</div></div>
+
+  <div class="card"><h3>Componente 8: Integración con teaser, pulido bilingüe y UAT</h3>
+    Enlace del teaser de voz (Lina) al demo en vivo, CTA "Probar el demo en vivo", acabado ES/EN y validación de aceptación de la rebanada de punta a punta.
+    <div class="price">8 hrs · Costo: $560 USD</div></div>
+
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+    <tr><td>Subtotal de los 8 componentes de la PoC (incluye SIT, verificación y UAT)</td><td class="num">120</td><td class="num">$8.400</td></tr>
+    <tr class="total"><td>TOTAL CAPEX — PoC (costo directo, sin margen ni IVA)</td><td class="num">120</td><td class="num">$8.400</td></tr>
+  </table>
+  <p class="muted"><span class="pill">Entrega: 2 semanas</span> &nbsp; Banda de esfuerzo: rebanada PoC funcional (no MVP pulido). El modelo afinado, GPU, cobro y apps nativas se difieren al MVP.</p>
+
+  <h2>3. Cronograma de Entrega</h2>
+  <div class="card"><h3>Semana 1 — Núcleo de visión y datos (74 hrs)</h3>
+    Componentes 1 a 4: arquitectura + despliegue, pipeline MediaPipe en el navegador con fallback, motor de detección de fallas y API JWT multi-tenant.
+    <div class="price">74 hrs</div></div>
+  <div class="card"><h3>Semana 2 — Experiencia, calidad y entrega (46 hrs)</h3>
+    Componentes 5 a 8: UI de carga + reproducción con esqueleto, i18n ES/EN + privacidad, arnés SIT + verificación en producción, integración con teaser y UAT.
+    <div class="price">46 hrs</div></div>
+  <p class="muted">Las horas semanales suman exactamente las 120 horas del CAPEX (74 + 46).</p>
+
+  <h2>4. Costo Recurrente (OPEX) — escala demo</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">USD / mes</th></tr>
+    <tr><td>Hosting de la sub-app sobre la infraestructura RinglyPro existente (marginal)</td><td class="num">$0</td></tr>
+    <tr><td>Base de datos PostgreSQL compartida (tabla dedicada, marginal)</td><td class="num">$0</td></tr>
+    <tr><td>Modelo y wasm de MediaPipe vía CDN público (sin clave, gratis) (*)</td><td class="num">$0</td></tr>
+    <tr><td>Margen operativo / monitoreo a escala demo (*)</td><td class="num">$30</td></tr>
+    <tr class="sub"><td>OPEX mensual — escala demo</td><td class="num">$30</td></tr>
+  </table>
+  <p class="muted">(*) Variable. A escala demo el costo de operación es marginal porque reutiliza la infraestructura RinglyPro y MediaPipe corre en el navegador del usuario (sin cómputo de inferencia en el servidor). El cómputo en GPU solo aparece en el MVP si se decide afinar el modelo.</p>
+
+  <h2>5. Resumen</h2>
+  <table class="fin">
+    <tr><th>Concepto</th><th class="num">USD</th></tr>
+    <tr><td>CAPEX — PoC (entrega única, costo directo)</td><td class="num">$8.400</td></tr>
+    <tr><td>OPEX — escala demo (recurrente mensual)</td><td class="num">$30 / mes</td></tr>
+    <tr class="total"><td>Costo de entrega de la PoC</td><td class="num">$8.400 + $30/mes</td></tr>
+  </table>
+  <p class="muted">Tiempo de entrega: <strong>2 semanas</strong>. Estado: <strong>entregada y en vivo</strong>.</p>
+
+  <div class="note"><strong>Nota interna.</strong> Este documento refleja <strong>solo el costo directo</strong> de entrega de la PoC. El <strong>margen de utilidad (+70%)</strong> y el <strong>IVA</strong> se aplican por separado en la versión de cliente (cotización) y <strong>no deben distribuirse</strong> con esta cifra. No compartir este documento con el cliente.</p>
+
+  <div class="foot">
+    Digit2AI · Modelo de Entrega AI-Native · Documento interno de costo · AI Jump Coach (Rider Pose Analyzer) · PoC en vivo: aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer
+  </div>
+
+</div>
+</body>
+</html>

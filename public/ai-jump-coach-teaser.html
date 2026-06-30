@@ -97,6 +97,21 @@
 
   .highlight{background:rgba(240,198,116,.08);border-left:3px solid var(--gold);padding:14px 16px;border-radius:8px;margin-top:14px;color:#e9ddc2}
 
+  /* LIVE DEMO CTA */
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:22px auto 4px}
+  a.cta{
+    text-decoration:none;display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:15px;
+    padding:13px 22px;border-radius:12px;border:none;color:#0a0e14;
+    background:linear-gradient(90deg,var(--green),var(--cyan));box-shadow:0 10px 30px rgba(61,220,151,.25);transition:.15s
+  }
+  a.cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  a.cta.ghost{background:transparent;color:var(--txt);border:1px solid var(--line);box-shadow:none}
+  a.cta.ghost:hover{border-color:var(--violet);background:#1b2536}
+  .livebadge{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--green);
+    border:1px solid rgba(61,220,151,.3);background:rgba(61,220,151,.10);border-radius:999px;padding:4px 12px;font-weight:700}
+  .livedot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:livepulse 1.6s infinite}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(61,220,151,.5)}70%{box-shadow:0 0 0 8px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+
   .footer{margin-top:40px;text-align:center;color:var(--mut);font-size:13px}
   .nocache{font-size:12px;color:var(--mut);text-align:center;margin-top:20px}
 
@@ -113,6 +128,11 @@
     <span class="badge">Digit2AI · Neural AI · Visión por Computador</span>
     <h1>AI Jump Coach<br><span class="grad">El entrenador de salto en tu bolsillo</span></h1>
     <p class="sub">Una app de inteligencia artificial que analiza la técnica del <strong>jinete</strong> — no la del caballo — y te marca el error exacto en el segundo en que ocurre.</p>
+    <div style="margin-top:16px"><span class="livebadge"><span class="livedot"></span>La prueba de concepto ya está en vivo</span></div>
+    <div class="cta-row">
+      <a class="cta" href="/ai-jump-coach-rider-pose-analyzer/" target="_blank" rel="noopener">Probar el demo en vivo</a>
+      <a class="cta ghost" href="/ai-jump-coach-rider-pose-analyzer/?lang=en" target="_blank" rel="noopener">Try the live demo (EN)</a>
+    </div>
   </div>
 
   <!-- LINA VOICE -->
@@ -196,17 +216,22 @@
     </div>
 
     <div class="sec" data-i="5">
-      <h2><span class="num">6</span> El plan en dos pasos <span class="pill poc">PoC primero</span></h2>
-      <p><strong>Paso 1 — Prueba de concepto (2 semanas):</strong> validamos con 20 a 30 videos reales si la IA puede seguir al jinete con precisión. Entregamos un informe claro con recomendación de seguir o no seguir.</p>
-      <p style="margin-top:10px"><strong>Paso 2 — MVP (2 semanas), solo si la prueba pasa:</strong> la app completa con subida de video, clips analizados con etiquetas, historial de sesiones y cobro con Stripe.</p>
-      <div class="highlight">Primero validamos en dos semanas que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos la app completa en otras dos semanas. Así proteges tu presupuesto y no apostamos a ciegas.</div>
+      <h2><span class="num">6</span> El plan en dos pasos <span class="pill ok">Paso 1 en vivo</span></h2>
+      <p><strong>Paso 1 — Prueba de concepto (ya está vivo):</strong> subes tu video de salto y la IA sigue tu cuerpo cuadro por cuadro y te marca cuatro fallas de posición —quedarte atrás, mano de rienda caída, mirada baja anticipada y asiento adelantado en la recepción— con su segundo exacto y un nivel de confianza. Pruébalo ahora mismo con tu propio video.</p>
+      <div class="cta-row" style="justify-content:flex-start;margin:14px 0 4px">
+        <a class="cta" href="/ai-jump-coach-rider-pose-analyzer/" target="_blank" rel="noopener">Abrir el analizador en vivo</a>
+      </div>
+      <p style="margin-top:10px"><strong>Paso 2 — MVP (2 semanas), solo si la prueba convence:</strong> modelo afinado para mayor precisión, clips con el esqueleto sobreimpreso, historial de sesiones y cobro con Stripe.</p>
+      <div class="highlight">El Paso 1 ya está funcionando: validas con tus videos reales en minutos, sin sensores ni traje. Solo si te convence, construimos la app completa en otras dos semanas. Así proteges tu presupuesto y no apuestas a ciegas.</div>
       <button class="play-sec" data-play="5">▶ Escuchar esta parte</button>
     </div>
 
   </div>
 
   <div class="footer">
-    AI Jump Coach Rider Pose Analyzer · Estado: activo, fase de inicio · Digit2AI Neural Intelligence
+    AI Jump Coach Rider Pose Analyzer · Prueba de concepto en vivo:
+    <a href="/ai-jump-coach-rider-pose-analyzer/" style="color:var(--cyan)">aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer</a>
+    · Digit2AI Neural Intelligence
   </div>
   <div class="nocache">Lina usa la voz del navegador. Para mejor calidad, usa Google Chrome y elige una voz en español en el selector de arriba.</div>
 
@@ -222,7 +247,7 @@
     "Cómo se cobra. Se siente como tener un entrenador personal en el bolsillo, y eso justifica una suscripción premium. Puede ser pago por análisis individual, entre cuatro y nueve dólares por video; un plan mensual ilimitado, entre diecinueve y treinta y nueve dólares al mes; o una licencia para academias y entrenadores, entre noventa y nueve y doscientos noventa y nueve dólares al mes.",
     "Ahora, el reto técnico. El riesgo principal es lograr que la inteligencia artificial siga bien el cuerpo del jinete sobre un caballo en movimiento rápido. Es difícil por la luz, los ángulos, y porque el caballo a veces tapa partes del cuerpo. Por eso no construimos todo de una vez.",
     "Una pregunta muy común: ¿hace falta un traje especial? La respuesta es no. El jinete no usa ningún traje ni sensores. Solo graba con su celular y sube el video. Esa es justamente la ventaja del producto. La tecnología se llama estimación de pose sin marcadores: la inteligencia artificial reconoce el cuerpo directamente desde la imagen, igual que el reconocimiento facial reconoce una cara sin que te pongas nada. Sí existen trajes con sensores, pero son de laboratorio, caros e incómodos. Si obligamos al jinete a ponerse algo, perdemos el producto. El riesgo no se resuelve con equipo, sino con ingeniería: entrenamos el modelo con videos de salto reales, nos enfocamos en la parte de arriba del cuerpo que el caballo no tapa, recomendamos un buen ángulo de cámara, reducimos el borrón de movimiento, y validamos primero una sola falla.",
-    "Por último, el plan en dos pasos. Paso uno: una prueba de concepto de dos semanas, donde validamos con veinte a treinta videos reales si la inteligencia artificial puede seguir al jinete con precisión, y entregamos un informe claro de seguir o no seguir. Paso dos, solo si la prueba pasa: construimos la app completa en otras dos semanas. Primero validamos que la tecnología funciona con tus videos reales. Solo si pasa esa prueba, construimos todo. Así proteges tu presupuesto y no apostamos a ciegas. Eso es AI Jump Coach. Gracias."
+    "Por último, el plan en dos pasos. Y aquí está la buena noticia: el paso uno, la prueba de concepto, ya está vivo. Puedes subir tu propio video de salto ahora mismo, y la inteligencia artificial sigue tu cuerpo cuadro por cuadro y te marca cuatro fallas de posición, cada una con su segundo exacto y su nivel de confianza. Solo pulsa el botón Probar el demo en vivo. El paso dos, solo si la prueba te convence, es construir la app completa en otras dos semanas, con el modelo afinado, los clips con el esqueleto sobreimpreso, el historial y el cobro. Primero validas que la tecnología funciona con tus videos reales; solo si te convence, construimos todo. Así proteges tu presupuesto y no apuestas a ciegas. Eso es AI Jump Coach. Gracias."
   ];
 
   var synth = window.speechSynthesis;
