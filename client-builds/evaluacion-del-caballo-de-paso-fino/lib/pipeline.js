@@ -110,11 +110,13 @@ async function upsertResultado(store, inscripcion_id, puntaje_total, clas) {
 }
 
 // Recalcula el ranking de TODOS los resultados de una categoría (mayor puntaje = 1).
+// NOTA: Postgres devuelve columnas BIGINT como STRING, así que normalizamos los
+// ids a Number antes de comparar (un Set de números no encuentra "1").
 async function recomputeRanking(store, categoria_id) {
   const { repo } = store;
   const inscripciones = await repo.findAll('inscripciones', { categoria_id });
-  const ids = new Set(inscripciones.map((i) => i.id));
-  const resultados = (await repo.findAll('resultados', {})).filter((r) => ids.has(r.inscripcion_id));
+  const ids = new Set(inscripciones.map((i) => Number(i.id)));
+  const resultados = (await repo.findAll('resultados', {})).filter((r) => ids.has(Number(r.inscripcion_id)));
   resultados.sort((a, b) => (b.puntaje_total || 0) - (a.puntaje_total || 0));
   let rank = 0, lastScore = null, seen = 0;
   for (const r of resultados) {
