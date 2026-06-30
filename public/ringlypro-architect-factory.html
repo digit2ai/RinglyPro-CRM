@@ -425,20 +425,27 @@
       .catch(function(e){runBtn.disabled=false;runBtn.textContent='Run AI Triage';errEl.textContent='Network error: '+(e.message||'request failed');});
   });
 
+  function listHtml(arr){return '<ul style="margin:0;padding-left:18px">'+arr.map(function(s){
+    return '<li style="margin:4px 0">'+esc(typeof s==='string'?s:(s.name||s.title||JSON.stringify(s)))+'</li>';}).join('')+'</ul>';}
   function render(tr){
     var vmap={go:['v-go','GOOD FIT — GO'],poc:['v-poc','PROMISING — START WITH A POC'],stop:['v-stop','NOT A FIT YET']};
     var v=vmap[tr.verdict]||vmap.poc;
     var ts=tr.technical_solution||{};
-    var agentsArr=ts.agents||tr.agents||[];
+    var agentsArr=ts.agents_involved||ts.agents||tr.agents||[];
     var html='<div class="rhead"><span class="vpill '+v[0]+'">'+v[1]+'</span>'+
       '<span class="fit">'+(tr.fit_score!=null?tr.fit_score:'—')+'<span>/ 10 fit</span></span></div>';
     if(tr.project_title_suggested)html+='<div class="rblock"><h4>What we\'d call it</h4><div class="v">'+esc(tr.project_title_suggested)+'</div></div>';
     if(tr.fit_reasoning)html+='<div class="rblock"><h4>Why it fits</h4><div class="v">'+esc(tr.fit_reasoning)+'</div></div>';
     if(tr.problem_in_our_words)html+='<div class="rblock"><h4>The problem, in our words</h4><div class="v">'+esc(tr.problem_in_our_words)+'</div></div>';
     if(ts.summary)html+='<div class="rblock"><h4>The technical solution we\'d build</h4><div class="v">'+esc(ts.summary)+'</div></div>';
+    if(ts.what_we_build&&ts.what_we_build.length)html+='<div class="rblock"><h4>What we build</h4><div class="v">'+listHtml(ts.what_we_build)+'</div></div>';
     if(agentsArr&&agentsArr.length){html+='<div class="rblock"><h4>Agents on the job</h4><div class="agents">'+
       agentsArr.map(function(a){return '<span>'+esc(typeof a==='string'?a:(a.name||a.role||a))+'</span>';}).join('')+'</div></div>';}
-    if(tr.estimated_timeline||tr.timeline)html+='<div class="rblock"><h4>Delivery window</h4><div class="v">'+esc(tr.estimated_timeline||tr.timeline)+'</div></div>';
+    if(ts.data_sources_via_mcp&&ts.data_sources_via_mcp.length){html+='<div class="rblock"><h4>Wired in via MCP</h4><div class="agents">'+
+      ts.data_sources_via_mcp.map(function(a){return '<span>'+esc(typeof a==='string'?a:(a.name||a))+'</span>';}).join('')+'</div></div>';}
+    if(tr.week_1_deliverables&&tr.week_1_deliverables.length)html+='<div class="rblock"><h4>Week 1 — you see progress immediately</h4><div class="v">'+listHtml(tr.week_1_deliverables)+'</div></div>';
+    var dw=ts.delivery_window||tr.estimated_timeline||tr.timeline;
+    if(dw)html+='<div class="rblock"><h4>Delivery window</h4><div class="v">'+esc(dw)+'</div></div>';
     html+='<div class="runrow"><a class="btn" href="/champion-teaser.html">Edit &amp; send it to the real intake &rarr;</a>'+
       '<span class="muted">This is a first read, not a final verdict — every field is editable before you submit.</span></div>';
     resEl.innerHTML=html;resEl.style.display='block';resEl.scrollIntoView({behavior:'smooth',block:'nearest'});
