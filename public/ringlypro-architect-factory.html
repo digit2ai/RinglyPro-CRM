@@ -175,6 +175,30 @@
   .card p{margin:0;font-size:12px;color:var(--dim);line-height:1.55}
   .card .out{margin-top:9px;font-size:10.5px;color:var(--dim2)}.card .out b{color:var(--cyan)}
 
+  /* army roster */
+  .army{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .acat{border:1px solid var(--line);border-radius:11px;background:var(--bg-card);padding:13px 15px;transition:.25s}
+  .acat:hover{border-color:var(--cyan-bd)}
+  .acat .ct{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:9px}
+  .acat .ct .nm{font-size:12px;font-weight:700;color:#eaf3ff;line-height:1.25}
+  .acat .ct .cn{font-family:var(--font-mono);font-size:12px;font-weight:800;color:var(--cyan);
+    background:var(--grad-soft);border:1px solid rgba(34,211,238,.3);border-radius:7px;padding:1px 8px;flex-shrink:0}
+  .acat ul{margin:0;padding:0;list-style:none}
+  .acat li{font-size:11px;color:var(--dim);line-height:1.65;padding-left:12px;position:relative}
+  .acat li::before{content:"›";position:absolute;left:0;color:var(--cyan-dim)}
+
+  /* full deliverables w/ what ships */
+  .deliv{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .dcard{border:1px solid var(--line-strong);border-radius:13px;background:var(--bg-card);padding:18px 20px;transition:.25s}
+  .dcard:hover{border-color:var(--cyan-bd);background:var(--bg-card-hover)}
+  .dcard .k{font-family:var(--font-mono);font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--cyan);font-weight:800}
+  .dcard .h{font-size:17px;font-weight:700;color:#fff;margin:5px 0 8px;letter-spacing:.2px}
+  .dcard p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.6}
+  .dcard .ships{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}
+  .dcard .ships .l{font-family:var(--font-mono);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--cyan)}
+  .dcard .ships p{margin-top:5px;color:var(--txt);font-size:12.5px}
+
   /* doctor vs thermometer */
   .dv{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
   .dv .col{border:1px solid var(--line-strong);border-radius:12px;padding:16px 18px}
@@ -213,7 +237,8 @@
 
   .foot{margin:30px auto;padding:18px 24px 0;border-top:1px solid var(--line);font-size:11px;color:var(--dim2);letter-spacing:.3px;line-height:1.6;max-width:1200px}
 
-  @media(max-width:820px){.frow{grid-template-columns:1fr 1fr}.grid3,.grid4,.samples,.dv,.trust{grid-template-columns:1fr}
+  @media(max-width:1000px){.army{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:820px){.frow{grid-template-columns:1fr 1fr}.grid3,.grid4,.samples,.dv,.trust,.deliv,.army{grid-template-columns:1fr}
     .fstep::after{display:none}}
 </style>
 </head>
@@ -345,15 +370,72 @@
     <p class="muted" style="margin-top:12px">8 core + 75 specialists = <b style="color:var(--cyan)">83-agent workforce</b>, routed by one MCP brain, wired to the customer's live systems. New specialists added every quarter — every customer gets them automatically.</p>
   </div>
 
+  <!-- ===== the full army ===== -->
+  <div class="wrap">
+    <h2 class="sec"><span class="n">02 ·</span> THE FULL ARMY — 70+ SPECIALIST AGENTS ON CALL</h2>
+    <p class="muted" style="margin-bottom:16px">The 8 core agents above are the always-on stack. Behind them sits a roster of specialists the MCP brain spins up the moment a project needs them. No new contracts. No "let me find a partner who does that." Every customer gets the whole army from day one.</p>
+    <div class="army">
+
+      <div class="acat"><div class="ct"><span class="nm">Engineering &amp; Build</span><span class="cn">12</span></div>
+        <ul><li>Senior Full Stack Developer</li><li>Senior Frontend Engineer</li><li>Senior Backend Engineer</li><li>Senior DevOps / SRE</li><li>Senior Database Architect</li><li>Senior API Designer</li><li>Senior Mobile Engineer</li><li>Senior SIT Tester</li><li>Senior UAT Coordinator</li><li>Senior Production Release Manager</li><li>Senior Security Engineer</li><li>Senior Performance Engineer</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Data, ML &amp; Math</span><span class="cn">8</span></div>
+        <ul><li>Senior Data Engineer</li><li>Senior Data Analyst</li><li>Senior Data Scientist</li><li>Mathematics SME</li><li>Senior ML / AI Engineer</li><li>Senior Forecasting Analyst</li><li>Senior BI / Dashboard Builder</li><li>Senior Statistician</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Business &amp; Strategy</span><span class="cn">8</span></div>
+        <ul><li>Senior Project Manager</li><li>Senior Product Manager</li><li>Senior Strategy Consultant</li><li>Senior Operations Analyst</li><li>Senior Process Improvement</li><li>Senior M&amp;A Analyst</li><li>Senior Pricing Analyst</li><li>Senior Change Management</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Sales, Marketing &amp; Customer</span><span class="cn">9</span></div>
+        <ul><li>Senior Sales Engineer</li><li>Senior Lead Qualifier</li><li>Senior Content Marketer</li><li>Senior SEO Specialist</li><li>Senior Brand Strategist</li><li>Senior CRM Hygiene Specialist</li><li>Senior Customer Success Manager</li><li>Senior Churn Prevention Analyst</li><li>Senior Onboarding Specialist</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Finance &amp; Risk</span><span class="cn">7</span></div>
+        <ul><li>Senior Accountant</li><li>Senior FP&amp;A Analyst</li><li>Senior Treasury Analyst</li><li>Senior Tax Strategist</li><li>Senior Auditor</li><li>Senior Risk Modeler</li><li>Senior Invoice Reconciler</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Legal, Compliance &amp; HR</span><span class="cn">8</span></div>
+        <ul><li>Senior Contract Drafter</li><li>Senior NDA / IP Reviewer</li><li>Senior Compliance Officer</li><li>Senior Regulatory Researcher</li><li>Senior Privacy Officer (GDPR / HIPAA)</li><li>Senior Recruiter</li><li>Senior Performance Reviewer</li><li>Senior Training Designer</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">AI-Native / LLM</span><span class="cn">6</span></div>
+        <ul><li>Senior Prompt &amp; Eval Engineer</li><li>Senior LLMOps / Model Router</li><li>Senior RAG / Retrieval Engineer</li><li>Senior AI Safety / Red-Team Engineer</li><li>Senior Conversation &amp; Voice UX Designer</li><li>Senior MCP / Integration Engineer</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Reliability &amp; Trust</span><span class="cn">5</span></div>
+        <ul><li>Senior Observability Engineer</li><li>Senior FinOps / Cloud-Cost Analyst</li><li>Senior Data Governance / MDM Specialist</li><li>Senior Responsible-AI / Ethics Officer</li><li>Senior Fraud &amp; Anomaly Detection Specialist</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Vertical SMEs</span><span class="cn">4</span></div>
+        <ul><li>Clinical / Healthcare Informatics SME</li><li>Logistics &amp; Supply-Chain SME</li><li>Agriculture &amp; Commodities SME</li><li>Fintech / Payments SME</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Design, Content &amp; Localization</span><span class="cn">5</span></div>
+        <ul><li>Senior UX/UI &amp; Design-System Designer</li><li>Senior Localization Engineer</li><li>Senior Accessibility (a11y) Specialist</li><li>Senior Technical Writer</li><li>Senior Conversion-Rate Optimizer</li></ul></div>
+
+      <div class="acat"><div class="ct"><span class="nm">Growth &amp; Partnerships</span><span class="cn">3</span></div>
+        <ul><li>Senior Partnerships / Channel Manager</li><li>Senior Solutions Architect / Pre-Sales</li><li>Senior Demand-Gen / Paid-Ads Specialist</li></ul></div>
+
+    </div>
+    <p class="muted" style="margin-top:14px">8 core + 75 specialists = <b style="color:var(--cyan)">83-agent workforce</b> · routed by one MCP brain · wired to the customer's live systems via the open Model Context Protocol · new specialists added every quarter, every customer gets them automatically.</p>
+  </div>
+
   <!-- ===== the 4 deliverables ===== -->
   <div class="wrap">
     <h2 class="sec"><span class="n">03</span> THE FOUR THINGS WE DELIVER</h2>
-    <p class="lead">Custom software · BA-on-demand · 22 vertical platforms · Voice AI</p>
-    <div class="grid4">
-      <div class="card"><div class="k">01 · BUILD SERVICE</div><div class="h">AI-Built Custom Software</div><p>Prospect describes the problem; intake AI scores fit and drafts a plan; a human reviews; the Architect writes code, runs SIT &rarr; UAT, ships to production.</p><div class="out">Ships: <b>a live web app on their domain, docs, AI support, 99.9% SLA</b></div></div>
-      <div class="card"><div class="k">02 · BA-ON-DEMAND</div><div class="h">Senior BA on tap</div><p>For prospects who need help thinking, not software: decks, business plans, competitive analyses, regulatory write-ups, roadmaps. Real content.</p><div class="out">Ships: <b>a reviewable artifact per task, EN or ES, with confidence flags</b></div></div>
-      <div class="card"><div class="k">03 · 22 PLATFORMS</div><div class="h">Pre-Built Vertical Platforms</div><p>21 live platforms across 22 verticals — chambers, financial wellness, healthcare matching, mobility, hospitality. A match drops deployment from months to weeks.</p><div class="out">Live: <b>CamaraVirtual, PLANEA, Cali CityLab, Pinaxis, HISPATEC, CW Carriers</b></div></div>
-      <div class="card"><div class="k">04 · VOICE AI</div><div class="h">Voice Agents That Answer Phones</div><p>Rachel (EN), Ana &amp; Lina (ES) answer inbound calls 24/7 — book, qualify, answer FAQs, hand off to humans, log everything to the CRM.</p><div class="out">Ships: <b>a number, branded greeting, knowledge base, transcripts + analytics</b></div></div>
+    <p class="lead">Custom software · AI agents on tap · 22 vertical platforms · Voice AI</p>
+    <p class="muted" style="margin-bottom:16px">When you're talking to a prospect, this is the menu. Most customers buy one or two — the platforms and the build service are the two most common.</p>
+    <div class="deliv">
+
+      <div class="dcard"><div class="k">01 · Build Service</div><div class="h">AI-Built Custom Software</div>
+        <p>Prospect describes their problem. Our intake AI scores fit and drafts a build plan. A human reviews. The Architect agent writes the code, runs SIT (system integration testing), hands off to UAT (user acceptance testing), ships to production.</p>
+        <div class="ships"><div class="l">What ships</div><p>A working web app on their domain, with documentation, ongoing AI agent support, and a 99.9% SLA.</p></div></div>
+
+      <div class="dcard"><div class="k">02 · BA-on-Demand</div><div class="h">Senior Business Analyst on tap</div>
+        <p>For prospects who don't need software — they need help thinking. Our Senior BA agent produces decks, business plans, competitive analyses, regulatory write-ups, partnership briefs, and roadmaps. Real content, not summaries.</p>
+        <div class="ships"><div class="l">What ships</div><p>A reviewable artifact (deck outline, prose document, framework, roadmap) per task, in English or Spanish, with confidence flags and verify-this notes.</p></div></div>
+
+      <div class="dcard"><div class="k">03 · 22 Platforms</div><div class="h">Pre-Built Vertical Platforms</div>
+        <p>21 live platforms across 22 verticals — chambers of commerce, financial wellness, healthcare matching, urban innovation, mobility, hospitality. When a prospect's vertical matches one, deployment drops from months to weeks.</p>
+        <div class="ships"><div class="l">Live examples</div><p>CamaraVirtual (chamber networks), PLANEA (financial wellness), Cali CityLab (urban innovation), Pinaxis (warehouse analytics), HISPATEC (professional networks), Torna Idioma (corporate language training), CW Carriers (logistics).</p></div></div>
+
+      <div class="dcard"><div class="k">04 · Voice AI</div><div class="h">Voice AI Agents That Answer Phones</div>
+        <p>RinglyPro voice agents (Rachel in English, Ana &amp; Lina in Spanish) answer inbound calls 24/7. They book appointments, qualify leads, answer FAQs, hand off to humans when needed, and log everything into the customer's CRM.</p>
+        <div class="ships"><div class="l">What ships</div><p>A dedicated phone number, branded greeting, custom knowledge base, calendar integration, full call transcripts and analytics dashboard.</p></div></div>
+
     </div>
   </div>
 
