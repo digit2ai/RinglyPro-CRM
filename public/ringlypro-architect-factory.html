@@ -240,6 +240,33 @@
 
   .foot{margin:30px auto;padding:18px 24px 0;border-top:1px solid var(--line);font-size:11px;color:var(--dim2);letter-spacing:.3px;line-height:1.6;max-width:1200px}
 
+  /* ===== Rachel voice orb (zero-key Edge neural TTS) ===== */
+  .rv{margin:18px auto 6px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.012));
+    border:1px solid var(--line-strong);border-radius:18px;padding:22px 24px;display:flex;gap:20px;align-items:center}
+  .rv .orb{position:relative;width:84px;height:84px;flex:0 0 84px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#7ee9f7,#22d3ee 38%,#8b5cf6 100%);
+    box-shadow:0 0 0 0 rgba(34,211,238,.5)}
+  .rv .orb::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(34,211,238,.30)}
+  .rv .orb.speaking{animation:rvpulse 1.2s ease-in-out infinite}
+  @keyframes rvpulse{0%{box-shadow:0 0 0 0 rgba(34,211,238,.45)}70%{box-shadow:0 0 0 20px rgba(34,211,238,0)}100%{box-shadow:0 0 0 0 rgba(34,211,238,0)}}
+  .rv-meta{flex:1;min-width:0}
+  .rv-name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
+  .rv-name b{font-family:var(--font-display);font-style:italic;font-weight:400;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .rv-role{color:var(--dim);font-size:12.5px;margin:2px 0 13px}
+  .rv-ctrls{display:flex;gap:9px;flex-wrap:wrap}
+  .rv-btn{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    border:1px solid var(--cyan);color:var(--cyan);background:transparent;border-radius:9px;padding:9px 15px;cursor:pointer;transition:.2s}
+  .rv-btn:hover{background:var(--cyan);color:#020617}
+  .rv-btn.primary{background:var(--grad);border:none;color:#020617}
+  .rv-btn:disabled{opacity:.45;cursor:default;background:transparent;color:var(--dim2);border-color:var(--line)}
+  .rv-status{font-size:12px;color:var(--dim);margin-top:11px;min-height:16px}
+  .rv-pick{margin-top:11px;font-size:11.5px;color:var(--dim);font-family:var(--font-mono)}
+  .rv-pick select{font:inherit;font-size:11px;background:var(--bg-elev);color:var(--txt);border:1px solid var(--line-strong);border-radius:7px;padding:5px 8px;margin-left:5px}
+  .rv-pick #voiceMode{margin-left:8px;color:var(--green)}
+  .sec.active{color:#fff}
+  .sec.active .nn{color:var(--magenta)}
+  @media(max-width:560px){.rv{flex-direction:column;text-align:center}.rv-ctrls{justify-content:center}}
+
   /* mobile stacked diagram (replaces the radial stage on phones) */
   .diagram-mobile{display:none}
   .dm-brain{border:1.6px solid var(--green-bd);background:var(--green-bg);border-radius:14px;
@@ -344,6 +371,34 @@
   </div>
 
   <p class="wrap muted" style="margin-top:12px">MCP CORE — context, routing, orchestrator · 8 specialized agents, each wired to the customer's actual systems via the open Model Context Protocol. Behind them: 75 senior specialists the brain spins up on demand.</p>
+
+  <!-- RACHEL VOICE ORB (zero-key Edge neural TTS via /api/tts/edge) -->
+  <div class="wrap">
+    <div class="rv">
+      <div class="orb" id="orb"></div>
+      <div class="rv-meta">
+        <div class="rv-name"><b>Rachel</b> · Digit2AI AI voice</div>
+        <div class="rv-role">Prefer to listen? Rachel walks you through the whole factory.</div>
+        <div class="rv-ctrls">
+          <button class="rv-btn primary" id="playAll">&#9654; Let Rachel explain it all</button>
+          <button class="rv-btn" id="pause" disabled>&#10074;&#10074; Pause</button>
+          <button class="rv-btn" id="stop" disabled>&#9632; Stop</button>
+        </div>
+        <div class="rv-status" id="status">Tap the button and Rachel will walk you through how the AI Factory works.</div>
+        <div class="rv-pick">
+          <label><input type="checkbox" id="neuralToggle" checked> HD neural voice</label>
+          &nbsp;·&nbsp; Voice:
+          <select id="voiceSel">
+            <option value="ava" selected>English (Ava)</option>
+            <option value="lina">Spanish · México (Dalia)</option>
+            <option value="salome">Spanish · Colombia (Salomé)</option>
+            <option value="elvira">Spanish · Spain (Elvira)</option>
+          </select>
+          <span id="voiceMode"></span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== live triage ===== -->
   <div class="wrap">
@@ -598,6 +653,120 @@
       '<span class="muted">This is a first read, not a final verdict — every field is editable before you submit.</span></div>';
     resEl.innerHTML=html;resEl.style.display='block';resEl.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
+</script>
+
+<!-- Rachel voice orb — playback engine (neural-first via /api/tts/edge, browser-speech fallback) -->
+<script>
+(function(){
+  var segments = [
+    "Hi, I'm Rachel, the AI voice of Digit2AI. Let me walk you through how our AI Factory works — from a prospect's problem to live software, in days, not months.",
+    "Right here you can try the live AI Triage. Paste a prospect's problem in their own words, and our Neural Intelligence stack reads it, scores the fit, sketches the technical solution, and shows you exactly what we would build — before any human is involved.",
+    "Here is why this is the game-changer. Most AI is a thermometer — it shows you a number and walks away. Digit2AI is the doctor. It finds the money leak, diagnoses the root cause with evidence, and ships the fix. Detect, diagnose, treat.",
+    "Under the hood it is not one chatbot. It is a coordinated team of agents sharing context through the open Model Context Protocol. Eight specialists are always on — a business analyst, research, outreach, the architect that builds, inbox triage, meeting minutes, the voice agents, and neural findings.",
+    "Behind those eight sits a roster of seventy-five senior specialists the brain spins up the moment a project needs them — engineering, data, finance, legal, design, and vertical experts. Eight core plus seventy-five equals an eighty-three agent workforce, and every customer gets the whole army from day one.",
+    "There are four things we deliver. Custom software built and shipped to your own domain. A senior business analyst on tap for decks and plans. Twenty-two ready-built vertical platforms. And voice agents that answer your phones around the clock.",
+    "Becoming a customer is simple. You submit the problem, the AI triages it in minutes, a real person reviews within forty-eight hours, we auto-schedule a kickoff, and then we build, test, and ship live software on your domain.",
+    "Twenty-one live platforms, twenty-two verticals, ninety-nine point nine percent uptime, across the Americas in English and Spanish. When you are ready, send your prospect to digit2ai dot com — three minutes of their time, and a real recommendation within forty-eight hours."
+  ];
+
+  var synth = window.speechSynthesis;
+  var orb = document.getElementById('orb');
+  var status = document.getElementById('status');
+  var playAll = document.getElementById('playAll');
+  var pauseBtn = document.getElementById('pause');
+  var stopBtn = document.getElementById('stop');
+  var voiceSel = document.getElementById('voiceSel');
+  var neuralToggle = document.getElementById('neuralToggle');
+  var voiceMode = document.getElementById('voiceMode');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+
+  var NEURAL_URL = '/api/tts/edge';
+  var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+  var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+  var browserVoice = null, voiceName = 'ava';
+
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices();
+    var lang = (voiceName === 'ava') ? 'en' : 'es';
+    var pref = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf(lang)===0;});
+    browserVoice = pref[0] || vs[0] || null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ browser'; }
+  setMode();
+
+  voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); pickBrowserVoice(); });
+  neuralToggle.addEventListener('change', setMode);
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function fetchNeural(idx){
+    var key = voiceName + '|' + idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function setActive(i){ secs.forEach(function(s){s.classList.remove('active');});
+    if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); } }
+  function statusSpeaking(){ status.textContent = (mode==='all') ? 'Rachel is speaking… ('+(qi+1)+' of '+queue.length+')' : 'Playing section…'; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx = queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent='Preparing neural voice…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang = browserVoice ? browserVoice.lang : (voiceName==='ava'?'en-US':'es-MX');
+    u.rate=1.0; u.pitch=1.03;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.innerHTML='❚❚ Pause';
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking'); setActive(null);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent='Walkthrough finished. Tap to replay.';
+  }
+  playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  pauseBtn.addEventListener('click', function(){
+    if(!paused){ paused=true; pauseBtn.innerHTML='▶ Resume'; orb.classList.remove('speaking'); status.textContent='Paused.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.innerHTML='❚❚ Pause'; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click', finish);
+  window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+})();
 </script>
 </body>
 </html>
