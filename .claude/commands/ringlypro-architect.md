@@ -1073,6 +1073,54 @@ Keep hours identical between `cost` and `quote`. Round displayed dollars to whol
 
 ---
 
+## AUTONOMOUS LOOP RUNBOOK — `loop` / `auto`
+
+When the user invokes `ringlypro-architect loop`, `ringlypro-architect auto` (also triggers on "build everything", "end to end", "auto build", "no pares hasta que esté vivo", "hazlo todo"), run the **entire** ecosystem build to completion in one continuous, self-driving pass — ZERO check-ins, ZERO "should I continue?", ZERO mid-flight questions. This is the maximum-autonomy mode: you do not surface to the user until the project is live and green, or until you are genuinely and permanently blocked by something only the user can provide (an external secret/credential that is not in env and cannot be derived).
+
+### What `loop` does differently from the default build
+
+The default build runs one ANALYZE → DEVELOP → TEST → DEPLOY → REVIEW pass. `loop` wraps that whole cycle in a **self-terminating control loop** and keeps going across the *entire* scope — every component, every page, every integration — auto-fixing and re-deploying until the exit condition is met. It also chains the natural follow-on artifacts without being asked.
+
+### The loop
+
+```
+1. ANALYZE   — decompose the full request into a complete task list (every component/feature).
+               Right-size the 83-agent fan-out; record the bench used.
+2. BUILD      — generate ALL components (models, migrations, routes, UI, services, env-var docs).
+3. TEST       — local DB connect, model load, endpoint smoke, migration check.
+4. DEPLOY     — commit + push to main (Render auto-deploy ~90-100s).
+5. REVIEW     — poll health + /debug error endpoints; verify each feature live.
+6. DECIDE:
+     - All green + every task done  → EXIT the loop, write final Build Report.
+     - Issue found / task remaining  → AUTO-FIX and loop back to BUILD.
+   Guard: cap at a sane iteration budget (default ~8 auto-fix cycles per component).
+           If a component still fails after the budget, MOVE ON, ship the rest,
+           and list the blocked item in the report. NEVER stop the whole loop to ask.
+```
+
+### Chain-on completion (still no questions)
+
+Once the build is green, if the request implies them, also produce — in the same pass:
+- `cost` magic link (internal) and, if the user said "quote"/"cotización", the `quote` magic link too.
+- A teaser/landing if the ecosystem pattern uses one (per the Voice/teaser runbooks).
+
+### Hard rules for loop mode
+
+1. **Never ask. Never pause for approval.** Permission prompts are system gates, already pre-authorized — proceed.
+2. **Pick every decision yourself** — architecture, naming, scope trade-offs, library choices. Best judgment, execute.
+3. **Self-terminate** — the loop MUST end on its own via the exit condition or the iteration-budget fallback. Do not loop forever; do not loop on an already-green build.
+4. **Deploy continuously** — every working increment is committed and pushed; don't batch a giant unreviewed push at the very end.
+5. **One report at the end** — surface progress only via the final Build Report (workforce used, components shipped, tests, deploy SHAs, live verification, any blocked items + the exact env/secret needed to unblock).
+6. **Honor all standing prefs** — multi-tenant, bilingual, no-emojis, Spanish orthography, POC-in-weeks, full absolute paths.
+7. **Only legitimate stop** — a required external credential/secret that is absent from env and cannot be derived. Even then: build everything that does NOT need it first, then report the single blocker.
+
+### Relationship to existing tooling
+
+- `/architect-run` already pulls a brief from the clipboard and runs the architect end-to-end — `loop` is the in-skill equivalent for a brief given inline or already in context.
+- For *recurring* autonomous runs on a schedule (not one continuous pass), use the `/loop` skill to re-invoke `ringlypro-architect loop` on an interval. This runbook is the single-pass, run-until-live engine each invocation uses.
+
+---
+
 ## Current Task
 
 $ARGUMENTS
