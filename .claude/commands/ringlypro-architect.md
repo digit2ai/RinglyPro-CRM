@@ -636,9 +636,9 @@ SHAKEN assignment takes effect within minutes on Twilio. Carriers may take **24-
 
 ---
 
-## VOICE AI ORB RUNBOOK — `create voice`
+## VOICE AI ORB RUNBOOK — `voice`
 
-When the user says **"create voice"**, **"ringlypro-architect create voice"**, **"add a voice orb"**, **"add Lina"**, or **"replicate the Lina voice"** — execute this runbook to stamp out the **exact** zero-key neural voice AI used on `/ai-jump-coach-teaser.html` into a target page. This is the canonical "Lina" pattern: a $0, no-API-key, server-proxied **Microsoft Edge "Read Aloud" neural TTS** orb with automatic browser-speech fallback.
+When the user says **"voice"**, **"ringlypro-architect voice"**, **"add a voice orb"**, **"add Lina"**, or **"replicate the Lina voice"** — execute this runbook to stamp out the **exact** zero-key neural voice AI used on `/ai-jump-coach-teaser.html` into a target page. This is the canonical "Lina" pattern: a $0, no-API-key, server-proxied **Microsoft Edge "Read Aloud" neural TTS** orb with automatic browser-speech fallback.
 
 ### What gets produced (all 3 layers + the orb)
 
