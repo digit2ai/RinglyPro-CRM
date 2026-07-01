@@ -58,6 +58,112 @@
   </section>
   </div>
 
+  <!-- Lina voice orb (zero-key Edge neural TTS, brass EquiMind theme) -->
+  <style>
+    .vlina{margin:6px auto 10px;max-width:760px;background:linear-gradient(180deg,#161C18,#12160F);border:1px solid rgba(236,230,218,.12);border-radius:20px;padding:22px;display:flex;gap:20px;align-items:center;box-shadow:0 24px 60px -30px rgba(0,0,0,.7)}
+    .vlina .orb{position:relative;width:84px;height:84px;flex:0 0 84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C572,#C9A24B 45%,#5b4a1e 100%);box-shadow:0 0 0 0 rgba(201,162,75,.5)}
+    .vlina .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(201,162,75,.35)}
+    .vlina .orb.speaking{animation:vpulse 1.15s ease-in-out infinite}
+    @keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(201,162,75,.5)}70%{box-shadow:0 0 0 22px rgba(201,162,75,0)}100%{box-shadow:0 0 0 0 rgba(201,162,75,0)}}
+    .vlina-meta{flex:1;min-width:0}
+    .vlina-name{font-weight:700;font-size:17px}
+    .vlina-role{color:#98A199;font-size:13px;margin-bottom:12px}
+    .vlina .controls{display:flex;gap:10px;flex-wrap:wrap}
+    .vlina .controls button{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px}
+    .vlina .controls .primary{background:linear-gradient(180deg,#E6C572,#C9A24B);color:#1a140a}
+    .vlina .controls .sec{background:#1c2420;color:#ECE6DA;border:1px solid rgba(236,230,218,.14)}
+    .vlina .controls button:disabled{opacity:.5;cursor:not-allowed}
+    .vlina .status{font-size:12.5px;color:#98A199;margin-top:10px;min-height:16px}
+    .vlina .vtoggle{margin-top:10px;font-size:12px;color:#98A199;display:inline-flex;align-items:center;gap:6px}
+    @media(max-width:560px){.vlina{flex-direction:column;text-align:center}.vlina .controls{justify-content:center}}
+  </style>
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="vlina reveal">
+      <div class="orb" id="vorb"></div>
+      <div class="vlina-meta">
+        <div class="vlina-name">Lina · <span style="color:#E6C572">Voz AI de EquiMind</span></div>
+        <div class="vlina-role" id="vrole"></div>
+        <div class="controls">
+          <button class="primary" id="vplay"></button>
+          <button class="sec" id="vpause" disabled></button>
+          <button class="sec" id="vstop" disabled></button>
+        </div>
+        <div class="status" id="vstatus"></div>
+        <label class="vtoggle"><input type="checkbox" id="vneural" checked> <span id="vneurallbl"></span></label>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var LANG = '{{LANG}}' === 'en' ? 'en' : 'es';
+    var NEURAL_URL = 'https://aiagent.ringlypro.com/api/tts/edge';
+    var voiceName = LANG === 'en' ? 'ava' : 'lina';
+    var fallbackLang = LANG === 'en' ? 'en-US' : 'es-MX';
+    var SEG = {
+      es: [
+        'Hola, soy Lina, la voz de inteligencia artificial de EquiMind, de Digit2AI. Te cuento en menos de un minuto qué puede hacer esta plataforma por ti y por tu caballo.',
+        'EquiMind analiza a tu caballo con inteligencia artificial, desde un simple video o audio. Clasifica la modalidad de marcha, la puntúa como un juez de campeonato y detecta hallazgos, todo cuadro por cuadro.',
+        'Con el Juez de Campeonato subes el video y el audio de la pasada. La inteligencia artificial determina si es paso fino, trocha o trote galope, mide el ritmo, la simetría y la claridad de los cuatro tiempos, y entrega un puntaje con su desglose.',
+        'Con el Analizador de Postura del Jinete, nuestro Jump Coach, subes un clip de salto y la inteligencia artificial marca cada fallo de posición contra el ápice del obstáculo, con su nivel de confianza.',
+        'Registrarte es gratis. Recargas desde diez dólares, que son diez análisis. Cada análisis cuesta un crédito. Crea tu cuenta y haz tu primer análisis hoy mismo.'
+      ],
+      en: [
+        'Hi, I am Lina, the artificial intelligence voice of EquiMind, by Digit2AI. In under a minute I will tell you what this platform can do for you and your horse.',
+        'EquiMind analyzes your horse with artificial intelligence, from a simple video or audio. It classifies the gait, scores it like a championship judge, and surfaces findings, frame by frame.',
+        'With the Championship Judge you upload the video and audio of the pass. The AI determines whether it is paso fino, trocha, or trot and canter, measures rhythm, symmetry and four-beat clarity, and delivers a score with its breakdown.',
+        'With the Rider Pose Analyzer, our AI Jump Coach, you upload a jump clip and the AI flags every position fault against the fence apex, with its confidence level.',
+        'Signing up is free. Recharge from ten dollars, which is ten analyses. Each analysis costs one credit. Create your account and run your first analysis today.'
+      ]
+    };
+    var COPY = {
+      es: { role: 'Te explico EquiMind en un minuto.', play: '▶ Que Lina lo explique', pause: '❚❚ Pausar', resume: '▶ Reanudar', stop: '■ Detener', neural: 'Voz neural HD', hint: 'Pulsa para que Lina comience.', speaking: 'Lina está hablando…', prep: 'Preparando voz…', done: 'Listo. Pulsa de nuevo para repetir.', paused: 'En pausa.' },
+      en: { role: 'I explain EquiMind in a minute.', play: '▶ Let Lina explain', pause: '❚❚ Pause', resume: '▶ Resume', stop: '■ Stop', neural: 'HD neural voice', hint: 'Tap to let Lina start.', speaking: 'Lina is speaking…', prep: 'Preparing voice…', done: 'Done. Tap again to replay.', paused: 'Paused.' }
+    };
+    var segments = SEG[LANG], C = COPY[LANG];
+    var synth = window.speechSynthesis;
+    var orb = document.getElementById('vorb'), status = document.getElementById('vstatus');
+    var playAll = document.getElementById('vplay'), pauseBtn = document.getElementById('vpause'), stopBtn = document.getElementById('vstop');
+    var neuralToggle = document.getElementById('vneural');
+    document.getElementById('vrole').textContent = C.role;
+    document.getElementById('vneurallbl').textContent = C.neural;
+    playAll.textContent = C.play; pauseBtn.textContent = C.pause; stopBtn.textContent = C.stop; status.textContent = C.hint;
+    var queue = [], qi = 0, runToken = 0, paused = false, playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {}, browserVoice = null;
+    function pickBrowserVoice(){ if(!synth) return; var vs=synth.getVoices(); var pref=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf(LANG)===0;}); browserVoice=pref[0]||vs[0]||null; }
+    if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+    function useNeural(){ return neuralToggle.checked && neuralOK; }
+    function fetchNeural(idx){ var key=voiceName+'|'+idx; if(audioCache[key]) return Promise.resolve(audioCache[key]);
+      return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segments[idx],voice:voiceName})})
+        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+        .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; }); }
+    function statusSpeaking(){ status.textContent = C.speaking+' ('+(qi+1)+'/'+queue.length+')'; }
+    function runQueue(token){ if(token!==runToken) return; if(qi>=queue.length){ finish(); return; }
+      var idx=queue[qi]; function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+      if(useNeural()){ status.textContent=C.prep; if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+        fetchNeural(idx).then(function(url){ if(token!==runToken) return; playbackMode='neural'; currentAudio=new Audio(url);
+          currentAudio.onended=advance; currentAudio.onerror=function(){ neuralOK=false; advance(); };
+          orb.classList.add('speaking'); statusSpeaking();
+          currentAudio.play().catch(function(){ neuralOK=false; browserSpeak(idx,advance); });
+        }).catch(function(){ if(token!==runToken) return; neuralOK=false; browserSpeak(idx,advance); });
+      } else browserSpeak(idx,advance); }
+    function browserSpeak(idx,onEnd){ if(!synth){ onEnd(); return; } playbackMode='browser';
+      var u=new SpeechSynthesisUtterance(segments[idx]); if(browserVoice) u.voice=browserVoice; u.lang=browserVoice?browserVoice.lang:fallbackLang; u.rate=0.98; u.pitch=1.05;
+      u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); }; u.onend=onEnd; u.onerror=onEnd; synth.speak(u); }
+    function start(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+      queue=segments.map(function(_,i){return i;}); qi=0; paused=false; runToken++;
+      pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true; pauseBtn.textContent=C.pause; runQueue(runToken); }
+    function finish(){ runToken++; orb.classList.remove('speaking'); if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+      pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false; status.textContent=C.done; }
+    playAll.addEventListener('click', start);
+    pauseBtn.addEventListener('click', function(){
+      if(!paused){ paused=true; pauseBtn.textContent=C.resume; orb.classList.remove('speaking'); status.textContent=C.paused;
+        if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+      else { paused=false; pauseBtn.textContent=C.pause; orb.classList.add('speaking'); statusSpeaking();
+        if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); } });
+    stopBtn.addEventListener('click', finish);
+    window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+  })();
+  </script>
+
   <!-- Animated gait-result simulator (Paso Fino) -->
   <style>
     .gs-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
