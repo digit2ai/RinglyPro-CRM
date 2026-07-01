@@ -187,5 +187,11 @@
   "jl_sport3": "Calidad de aproximación",
   "sim_caption": "Simulación · Trayectoria y fallos del salto",
   "gsim_caption": "Simulación · Fallo del juez en vivo",
-  "auth_badge": "EquiMind"
+  "auth_badge": "EquiMind",
+  "share_btn": "Compartir",
+  "share_summary": "Fallo del juez EquiMind",
+  "share_copied": "Enlace copiado ✓",
+  "share_copy_prompt": "Copia el enlace:",
+  "m_elevacion": "Elevación",
+  "res_ranking": "Puesto"
 }

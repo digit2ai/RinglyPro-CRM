@@ -187,5 +187,11 @@
   "jl_sport3": "Approach quality",
   "sim_caption": "Simulation · Jump path & faults",
   "gsim_caption": "Simulation · Live judge ruling",
-  "auth_badge": "EquiMind"
+  "auth_badge": "EquiMind",
+  "share_btn": "Share",
+  "share_summary": "EquiMind judge ruling",
+  "share_copied": "Link copied ✓",
+  "share_copy_prompt": "Copy the link:",
+  "m_elevacion": "Elevation",
+  "res_ranking": "Rank"
 }

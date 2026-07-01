@@ -115,16 +115,19 @@
         <div class="text-right">
           <div class="text-xs text-slate-500" data-i18n="res_puntaje"></div>
           <div id="resTotal" class="text-4xl font-extrabold mono text-emerald-400"></div>
+          <button id="shareBtn" class="mt-2 text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold hidden inline-flex items-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+            <span data-i18n="share_btn"></span>
+          </button>
+          <div id="shareMsg" class="text-xs text-emerald-400 mt-1"></div>
         </div>
       </div>
       <div id="resFlag" class="hidden mb-4 px-3 py-2 rounded-lg bg-rose-600/20 border border-rose-600 text-rose-300 text-sm"></div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-5">
-        <div class="bg-slate-950 rounded-lg p-3"><div id="mCad" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_cadencia"></div></div>
-        <div class="bg-slate-950 rounded-lg p-3"><div id="mReg" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_regularidad"></div></div>
-        <div class="bg-slate-950 rounded-lg p-3"><div id="mSim" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_simetria"></div></div>
-        <div class="bg-slate-950 rounded-lg p-3"><div id="mClar" class="text-xl font-bold mono">—</div><div class="text-xs text-slate-500 mt-1" data-i18n="m_claridad"></div></div>
-      </div>
+      <!-- Infographic dashboard (radial gauges) -->
+      <div id="infographics" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4"></div>
+      <!-- Cadence band meter -->
+      <div id="cadenceMeter" class="mb-5"></div>
 
       <h3 class="text-sm font-semibold text-indigo-300 mb-2" data-i18n="res_desglose"></h3>
       <div id="breakdown" class="space-y-2 mb-5"></div>
