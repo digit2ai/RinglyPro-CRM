@@ -16,12 +16,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
   <style>
-    body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    body{background:#0E120F}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
     .navitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#98A199;font-size:14px;cursor:pointer}
     .navitem:hover{background:#1c2420;color:#ECE6DA}
     .navitem.active{background:linear-gradient(180deg,#E6C572,#C9A24B);color:#1a140a;font-weight:600}
     .navitem .ic{width:18px;text-align:center}
-    #toolFrame{width:100%;height:calc(100vh - 64px);border:0;background:#060a14}
+    #toolFrame{width:100%;height:calc(100vh - 64px);border:0;background:#0E120F}
     @media(max-width:767px){#sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .2s;z-index:50;box-shadow:0 0 40px rgba(0,0,0,.6)}#sidebar.open{left:0}}
     #sbBackdrop{display:none;position:fixed;inset:0;background:rgba(2,6,20,.55);z-index:49}
     #sbBackdrop.on{display:block}
@@ -30,11 +30,13 @@
 <body class="text-slate-100">
   <div class="flex min-h-screen">
     <!-- Left sidebar -->
-    <aside id="sidebar" class="w-[240px] shrink-0 bg-[#0b1220] border-r border-slate-800 flex flex-col">
+    <aside id="sidebar" class="w-[240px] shrink-0 bg-[#0d120d] border-r border-slate-800 flex flex-col">
       <div class="px-4 py-4 border-b border-slate-800">
-        <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="30" height="30" style="width:30px;height:30px;margin-bottom:8px">
-        <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="poc_badge"></div>
-        <div class="font-bold leading-tight mt-1">{{H1}}</div>
+        <div class="flex items-center gap-2">
+          <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="28" height="28" style="width:28px;height:28px">
+          <span class="text-lg font-bold" style="font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.01em">Equi<span style="color:#E6C572">Mind</span></span>
+        </div>
+        <div class="text-[10px] uppercase tracking-widest mono mt-2" style="color:#98A199">Paso Fino · AI Jump Coach</div>
       </div>
       <nav class="p-3 space-y-1 flex-1">
         <div class="navitem active" data-view="inicio"><span class="ic">▣</span><span data-i18n="nav_inicio"></span></div>
@@ -52,7 +54,7 @@
 
     <!-- Main -->
     <main class="flex-1 min-w-0">
-      <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800 bg-[#0b1220]">
+      <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800 bg-[#0d120d]">
         <div class="flex items-center gap-3">
           <button id="menuBtn" class="md:hidden text-slate-400 text-xl">☰</button>
           <h1 id="sectionTitle" class="font-semibold"></h1>
