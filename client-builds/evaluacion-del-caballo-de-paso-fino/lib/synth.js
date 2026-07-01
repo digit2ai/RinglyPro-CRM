@@ -28,7 +28,11 @@ const PATRONES = {
   paso_fino: { tiempos: 4, beats: [['post_izq'], ['ant_izq'], ['post_der'], ['ant_der']] },
   trocha:    { tiempos: 4, beats: [['post_izq'], ['ant_der'], ['post_der'], ['ant_izq']] },
   trote:     { tiempos: 2, beats: [['post_izq', 'ant_der'], ['post_der', 'ant_izq']] },
-  galope:    { tiempos: 3, beats: [['post_izq'], ['post_der', 'ant_izq'], ['ant_der']] }
+  galope:    { tiempos: 3, beats: [['post_izq'], ['post_der', 'ant_izq'], ['ant_der']] },
+  // Modalidad COMBINADA: el caballo ejecuta trocha y galope en la misma prueba.
+  // Se simula alternando ciclos (2 de trocha, 2 de galope) para que el
+  // clasificador vea ambos patrones y la validez trocha_galope se cumpla.
+  trocha_galope: { combo: ['trocha', 'trocha', 'galope', 'galope'] }
 };
 
 function mulberry(seed) {
@@ -46,19 +50,24 @@ function mulberry(seed) {
 // variación relativa al intervalo entre beats (sube el coeficiente de variación).
 //   pisadas: [{ timestamp_ms, extremidad }]
 function syntheticPisadas(modalidad, opts = {}) {
-  const P = PATRONES[modalidad] || PATRONES.paso_fino;
+  const P0 = PATRONES[modalidad] || PATRONES.paso_fino;
   const ciclos = opts.ciclos || 5;
   const cycleMs = opts.cycleMs || 1000;       // 1 s/ciclo
   const jitter = opts.jitter || 0;            // 0 = perfecto; ~0.4 = muy irregular
   const pairMs = opts.pairMs != null ? opts.pairMs : 8; // separación dentro de un par diagonal
   const rnd = mulberry(opts.seed || 12345);
 
-  const nBeats = P.beats.length;
-  const beatGap = cycleMs / nBeats;
+  // Modalidad combinada (p.ej. trocha_galope): cada ciclo usa un patrón distinto,
+  // rotando sobre la lista `combo`. Modalidad simple: el mismo patrón siempre.
+  const combo = P0.combo || null;
+  function patternForCycle(c) { return combo ? (PATRONES[combo[c % combo.length]] || PATRONES.paso_fino) : P0; }
+
   const pisadas = [];
   let t = 200; // arranque
   for (let c = 0; c < ciclos; c++) {
-    for (let b = 0; b < nBeats; b++) {
+    const P = patternForCycle(c);
+    const beatGap = cycleMs / P.beats.length;
+    for (let b = 0; b < P.beats.length; b++) {
       // Jitter simétrico sobre el instante del beat.
       const j = jitter ? (rnd() - 0.5) * 2 * jitter * beatGap : 0;
       const beatT = t + j;

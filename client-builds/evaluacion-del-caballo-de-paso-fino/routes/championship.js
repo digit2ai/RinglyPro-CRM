@@ -93,7 +93,7 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     const demoMod = body.demo_modalidad;
     let isDemo = false;
     if (!frames.length && demoMod) {
-      const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope' };
+      const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope', trocha_galope: 'trocha_galope' };
       const m = map[demoMod] || 'paso_fino';
       const jitter = body.demo_jitter != null ? Math.max(0, Math.min(0.5, parseFloat(body.demo_jitter))) : 0.04;
       frames = synth.syntheticFrames(m, { jitter, ciclos: 6 });
