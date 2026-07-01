@@ -163,15 +163,20 @@ router.get('/config', optionalAccount, (req, res) => {
   });
 });
 
-// Aggregate stats (count only — no PII). Detailed user list requires the admin
-// key (set ECPF_ADMIN_KEY on prod, pass ?key= or x-admin-key).
-router.get('/stats', async (req, res) => {
+// Aggregate stats (count only — no PII by default). The detailed user list is
+// returned only to an ADMIN: either ECPF_ADMIN_KEY (?key=/x-admin-key) matches,
+// or the caller is logged in with an admin email (ECPF_ADMIN_EMAILS, default the
+// owner mstagg@digit2ai.com). Keeps PII owner-only.
+const ADMIN_EMAILS = (process.env.ECPF_ADMIN_EMAILS || 'mstagg@digit2ai.com').toLowerCase().split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+router.get('/stats', optionalAccount, async (req, res) => {
   try {
     const s = await account.stats();
     const adminKey = process.env.ECPF_ADMIN_KEY;
     const provided = req.headers['x-admin-key'] || (req.query && req.query.key);
-    if (adminKey && provided === adminKey) {
-      s.recent = (await account.listRecent(50)).map((u) => ({ id: u.id, email: u.email, nombre: u.nombre, credits: u.credits, created_at: u.created_at }));
+    const isAdmin = (adminKey && provided === adminKey) ||
+      (req.account && ADMIN_EMAILS.indexOf(String(req.account.email || '').toLowerCase()) >= 0);
+    if (isAdmin) {
+      s.recent = (await account.listRecent(100)).map((u) => ({ id: u.id, email: u.email, nombre: u.nombre, credits: u.credits, created_at: u.created_at }));
     }
     res.json(s);
   } catch (e) {
