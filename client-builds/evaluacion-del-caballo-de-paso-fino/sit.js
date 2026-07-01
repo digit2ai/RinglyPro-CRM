@@ -162,7 +162,8 @@ async function run(base) {
   {
     const r = await reqJson(base, 'GET', '/health');
     check('health 200 + shape', r.status === 200 && r.json && r.json.status === 'ok'
-      && r.json.service === 'evaluacion-del-caballo-de-paso-fino' && r.json.version === '1.0.0',
+      && r.json.service === 'evaluacion-del-caballo-de-paso-fino' && r.json.version === '1.1.0'
+      && r.json.db && r.json.payments,
       `status=${r.status} body=${r.text.slice(0, 120)}`);
   }
 

@@ -59,7 +59,10 @@ async function init() {
     return { mode: 'postgres' };
   } catch (err) {
     usingMemory = true; User = null; Tx = null;
-    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'account_db_fallback_memory', error: err.message }));
+    // En producción esto es CRÍTICO: las cuentas y créditos vivirían solo en RAM y
+    // se perderían al reiniciar (incluyendo pagos ya cobrados). Alerta a gritos.
+    const critical = process.env.NODE_ENV === 'production';
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', level: critical ? 'CRITICAL' : 'warn', event: 'account_db_fallback_memory', msg: critical ? 'PRODUCTION serving accounts/credits from MEMORY — data & payments will be LOST on restart. Check DATABASE_URL / CRM_DATABASE_URL.' : 'account store on memory (dev/SIT)', error: err.message }));
     return { mode: 'memory' };
   }
 }

@@ -190,7 +190,8 @@ async function init() {
   } catch (err) {
     usingMemory = true;
     Object.keys(TABLES).forEach((n) => { delete M[n]; });
-    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'champ_db_fallback_memory', error: err.message }));
+    const critical = process.env.NODE_ENV === 'production';
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', level: critical ? 'CRITICAL' : 'warn', event: 'champ_db_fallback_memory', msg: critical ? 'PRODUCTION serving championship data from MEMORY — sessions/results LOST on restart. Check DATABASE_URL / CRM_DATABASE_URL.' : 'championship store on memory (dev/SIT)', error: err.message }));
     await seed();
     return { mode: 'memory' };
   }

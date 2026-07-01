@@ -277,6 +277,15 @@ router.post('/credits/webhook', async (req, res) => {
       const sig = req.headers['stripe-signature'];
       event = stripe.webhooks.constructEvent(req.body, sig, whSecret);
     } else {
+      // SIN secreto de firma NO se puede confiar en el cuerpo del webhook: cualquiera
+      // podría inyectar un payment_intent.succeeded falso y acreditarse créditos.
+      // Solo se permite el modo sin firma en desarrollo explícito; en producción
+      // (o si hay clave secreta de Stripe viva) se rechaza.
+      const liveStripe = /^sk_live/.test(process.env.STRIPE_SECRET_KEY || '');
+      if (process.env.NODE_ENV === 'production' || liveStripe || process.env.ECPF_ALLOW_UNSIGNED_WEBHOOK !== '1') {
+        console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'webhook_unsigned_rejected' }));
+        return res.status(400).json({ error: 'webhook signature required (set STRIPE_WEBHOOK_SECRET)' });
+      }
       event = typeof req.body === 'object' && !Buffer.isBuffer(req.body) ? req.body : JSON.parse(req.body.toString('utf8'));
     }
     if (event.type === 'payment_intent.succeeded') {

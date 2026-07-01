@@ -58,6 +58,32 @@ account.init()
   .then((s) => console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'account_init', mode: s.mode })))
   .catch((e) => console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'account_init_error', error: e.message })));
 
+// ---- Rate limiting (producción: anti brute-force + anti abuso) ----
+// La sub-app va detrás de Cloudflare/Render, así que la IP real llega en
+// CF-Connecting-IP / X-Forwarded-For. validate:false evita que express-rate-limit
+// aborte por la config de trust-proxy del app padre (usamos keyGenerator propio).
+const rateLimit = require('express-rate-limit');
+function clientIp(req) {
+  return req.headers['cf-connecting-ip'] ||
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    req.ip || 'unknown';
+}
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 25, standardHeaders: true, legacyHeaders: false,
+  keyGenerator: clientIp, validate: false,
+  message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' }
+});
+const analysisLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false,
+  keyGenerator: clientIp, validate: false,
+  skip: (req) => req.method === 'GET', // solo POST costosos (análisis/simulación)
+  message: { error: 'Límite de análisis alcanzado. Espera unos minutos.' }
+});
+// Brute-force en credenciales / reset.
+app.use(['/api/v1/account/login', '/api/v1/account/register', '/api/v1/account/reset-password'], authLimiter);
+// Abuso de análisis (real y simulación de referencia).
+app.use(['/api/v1/champ/sessions', '/api/v1/evaluations'], analysisLimiter);
+
 // Health (public).
 app.use('/health', healthRouter);
 
