@@ -200,5 +200,6 @@
   "share_copy_prompt": "Copia el enlace:",
   "m_elevacion": "Elevación",
   "res_ranking": "Puesto",
-  "prog_demo_setup": "Preparando el evento…"
+  "prog_demo_setup": "Preparando el evento…",
+  "sim_banner": "Resultado de referencia (simulación). No analiza tu caballo real y no se te cobró. Para un análisis real, sube el audio de los cascos (.wav)."
 }

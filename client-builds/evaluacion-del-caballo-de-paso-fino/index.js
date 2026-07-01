@@ -34,6 +34,18 @@ const pagesRouter = require('./routes/pages');
 
 const app = express();
 
+// Seguridad: no revelar el stack (x-powered-by) y endurecer sniffing/referrer.
+// NO se fija X-Frame-Options aquí (el app padre lo remueve a propósito para
+// permitir el embed en iframe de equimind.app) ni una CSP estricta (rompería
+// los scripts inline + CDN de Tailwind/Stripe/fuentes).
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.removeHeader('X-Powered-By');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // Stripe webhook needs the RAW body for signature verification — mount it BEFORE
 // express.json so the JSON parser never touches those bytes.
 app.use('/api/v1/account/credits/webhook', express.raw({ type: '*/*' }));

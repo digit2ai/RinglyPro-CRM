@@ -200,5 +200,6 @@
   "share_copy_prompt": "Copy the link:",
   "m_elevacion": "Elevation",
   "res_ranking": "Rank",
-  "prog_demo_setup": "Preparing the event…"
+  "prog_demo_setup": "Preparing the event…",
+  "sim_banner": "Reference result (simulation). It does not analyze your real horse and you were not charged. For a real analysis, upload the hoof audio (.wav)."
 }

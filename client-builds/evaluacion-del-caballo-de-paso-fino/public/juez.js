@@ -213,6 +213,15 @@
     $('resConf').textContent = '· ' + Math.round((clas.confianza || 0) * 100) + '% ' + (I18N.res_confianza || 'confianza') + ' · ' + (clas.tiempos || '?') + ' ' + (I18N.res_tiempos || 'tiempos');
     $('resTotal').textContent = (f.puntaje_total != null ? f.puntaje_total.toFixed(1) : '—');
 
+    // Banner de referencia: resultado simulado (no analiza el caballo real, gratis).
+    var simB = $('simBanner');
+    if (simB) {
+      if (f.simulado) {
+        simB.textContent = I18N.sim_banner || 'Resultado de referencia (simulación). No analiza tu caballo real y no se cobró. Para un análisis real, sube el audio de los cascos (.wav).';
+        simB.classList.remove('hidden');
+      } else { simB.classList.add('hidden'); }
+    }
+
     var flag = $('resFlag');
     if (clas.es_modalidad_valida === false) {
       flag.classList.remove('hidden');

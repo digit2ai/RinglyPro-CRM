@@ -81,26 +81,12 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     // 1 crédito y exige cuenta. La simulación (demo_modalidad) es GRATIS.
     const hadClientFrames = frames.length > 0;
 
-    // Audio (opcional): WAV -> onsets via JS puro.
+    // Audio (opcional): WAV -> onsets via JS puro. Se procesa PRIMERO: la marcha
+    // se mide del audio REAL de los cascos. Saber si hay señal real decide si
+    // cobramos (análisis real) o si sintetizamos una referencia GRATIS.
     let audioOnsets = [];
     let audioMeta = {};
     let audio_raw_url = null;
-
-    // MODO DEMOSTRACIÓN: sin pose estimation equina real en el navegador, el
-    // cliente puede pedir una marcha sintética (demo_modalidad) y el pipeline
-    // REAL corre de punta a punta sobre keypoints generados. Marcado en la
-    // sesión vía modelo_pose='synthetic-demo' para trazabilidad/reproducibilidad.
-    const demoMod = body.demo_modalidad;
-    let isDemo = false;
-    if (!frames.length && demoMod) {
-      const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope', trocha_galope: 'trocha_galope' };
-      const m = map[demoMod] || 'paso_fino';
-      const jitter = body.demo_jitter != null ? Math.max(0, Math.min(0.5, parseFloat(body.demo_jitter))) : 0.04;
-      frames = synth.syntheticFrames(m, { jitter, ciclos: 6 });
-      audioOnsets = synth.syntheticAudioOnsets(m, { jitter, ciclos: 6 });
-      audioMeta = { nivel_db: -12, duracion_contacto_ms: 35 };
-      isDemo = true;
-    }
     const audioFile = (req.files || []).find((f) => /audio|wav/i.test(f.fieldname) || /\.wav$/i.test(f.originalname || '') || /audio\/(wav|x-wav|wave)/i.test(f.mimetype || ''));
     if (audioFile) {
       try {
@@ -110,11 +96,29 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
         audio_raw_url = `stored://audio/${Date.now()}.wav`;
       } catch (e) { /* audio no usable: seguimos solo con video */ }
     }
+    // ¿Hay audio REAL de cascos? (onsets detectados del WAV del cliente)
+    const hasRealAudio = !!(audioFile && audioOnsets.length);
 
-    // Video (opcional): NO se decodifica; solo se guarda una referencia.
+    // Video (opcional): NO se decodifica; se guarda solo como evidencia visual.
+    // Por sí solo NO constituye un análisis (no se puntúa el video).
     let video_raw_url = null;
     const videoFile = (req.files || []).find((f) => /video/i.test(f.fieldname) || /\.(mp4|mov|m4v)$/i.test(f.originalname || '') || /video\//i.test(f.mimetype || ''));
     if (videoFile) video_raw_url = `stored://video/${Date.now()}`;
+
+    // REFERENCIA (simulación): SOLO si no hay señal real (ni pose del cliente ni
+    // audio real). Sintetiza la modalidad elegida para previsualizar el juez.
+    // NUNCA se cobra: no analiza el caballo real del cliente. Se etiqueta.
+    const demoMod = body.demo_modalidad;
+    let isDemo = false;
+    if (!frames.length && !hasRealAudio && demoMod) {
+      const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope', trocha_galope: 'trocha_galope' };
+      const m = map[demoMod] || 'paso_fino';
+      const jitter = body.demo_jitter != null ? Math.max(0, Math.min(0.5, parseFloat(body.demo_jitter))) : 0.04;
+      frames = synth.syntheticFrames(m, { jitter, ciclos: 6 });
+      audioOnsets = synth.syntheticAudioOnsets(m, { jitter, ciclos: 6 });
+      audioMeta = { nivel_db: -12, duracion_contacto_ms: 35 };
+      isDemo = true;
+    }
 
     if (!frames.length && !audioOnsets.length) return err(res, 400, 'provide pose_frames and/or an audio WAV');
 
@@ -124,7 +128,10 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     if (!durSec && audioOnsets.length) durSec = audioOnsets[audioOnsets.length - 1] - audioOnsets[0];
 
     // ---- Cobro de créditos: análisis REAL = cuenta + 1 crédito ---------------
-    const isRealAnalysis = !!(hadClientFrames || audioFile || videoFile);
+    // SOLO cobra si hay señal REAL del caballo del cliente: pose del modelo, o
+    // audio real de cascos. Un video sin audio (que NO se decodifica) o una
+    // simulación de referencia NO se cobran — sería cobrar por datos sintéticos.
+    const isRealAnalysis = !!(hadClientFrames || hasRealAudio);
     let creditDebited = false;
     if (isRealAnalysis) {
       if (req.accountId == null) return err(res, 401, 'Inicia sesión y ten créditos para un análisis real. La simulación es gratis.');
@@ -148,6 +155,9 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     const fallo = await runPipeline(store, { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec, lang: body.lang || 'es' });
     fallo.credits = req.accountId != null ? await account.getBalance(req.accountId) : null;
     fallo.charged = creditDebited;
+    // Marca de referencia: si el resultado viene de una simulación (no del caballo
+    // real), el cliente debe verlo claramente y NO se le cobró.
+    fallo.simulado = isDemo;
     console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_judged', sesion_id: sesion.id, modalidad: fallo.clasificacion.modalidad_detectada, puntaje: fallo.puntaje_total, charged: creditDebited }));
     res.status(201).json(fallo);
   } catch (e) {
@@ -197,7 +207,8 @@ router.get('/sessions/:id', withTenant, async (req, res) => {
       pisadas,
       resultado,
       dictamen: dict,
-      neural_findings: findings
+      neural_findings: findings,
+      simulado: sesion && sesion.modelo_pose === 'synthetic-demo'
     });
   } catch (e) { err(res, 500, e.message); }
 });

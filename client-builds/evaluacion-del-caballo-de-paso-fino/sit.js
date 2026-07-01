@@ -300,6 +300,8 @@ async function run(base) {
     const dj = await dresp.json().catch(() => null);
     check('simulation is FREE -> not charged, credits unchanged (2)', dresp.status === 201 && dj && dj.charged === false && dj.credits === 2,
       `status=${dresp.status} charged=${dj && dj.charged} credits=${dj && dj.credits}`);
+    check('simulation is flagged simulado:true (honesty banner)', dj && dj.simulado === true,
+      `simulado=${dj && dj.simulado}`);
 
     // Balance endpoint.
     const bal = await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok });
