@@ -168,5 +168,21 @@
   "reset_new_password": "New password",
   "reset_btn": "Reset password",
   "reset_done": "Password updated. You can log in now.",
-  "brand_suffix": "Jump Coach"
+  "brand_suffix": "Jump Coach",
+  "jl_eyebrow": "New · Show-jumping analysis",
+  "jl_title": "AI Jump Coach — every jump, frame by frame",
+  "jl_lede": "Upload your jump video and get objective feedback on your position: the AI flags every fault against the fence apex, with severity and confidence.",
+  "jl_benefit": "Retain what you learn and train with clarity between lessons: turn every round into actionable data.",
+  "jl_cta": "Try AI Jump Coach →",
+  "jl_f1_t": "Position faults",
+  "jl_f1_d": "Detects premature gaze drop, dropped rein hand, left behind and forward seat.",
+  "jl_f2_t": "Apex & timeline",
+  "jl_f2_d": "Every fault pinned to its exact second against the jump apex.",
+  "jl_f3_t": "Skeleton over the video",
+  "jl_f3_d": "Pose overlaid frame by frame to see the precise moment of the error.",
+  "jl_f4_t": "Objective progress",
+  "jl_f4_d": "Severity, confidence percentage and history to measure your improvement.",
+  "jl_sport1": "Show Jumping",
+  "jl_sport2": "Rhythm & adjustability",
+  "jl_sport3": "Approach quality"
 }

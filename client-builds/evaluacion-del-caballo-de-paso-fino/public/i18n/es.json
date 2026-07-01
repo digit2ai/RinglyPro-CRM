@@ -168,5 +168,21 @@
   "reset_new_password": "Nueva contraseña",
   "reset_btn": "Restablecer contraseña",
   "reset_done": "Contraseña actualizada. Ya puedes iniciar sesión.",
-  "brand_suffix": "Entrenador de salto"
+  "brand_suffix": "Entrenador de salto",
+  "jl_eyebrow": "Nuevo · Análisis de salto",
+  "jl_title": "AI Jump Coach — cada salto, cuadro por cuadro",
+  "jl_lede": "Sube el video de tu salto y recibe retroalimentación objetiva de tu posición: la IA marca cada fallo contra el ápice del obstáculo, con severidad y nivel de confianza.",
+  "jl_benefit": "Retén lo que aprendes y entrena con claridad entre clases: convierte cada recorrido en datos accionables.",
+  "jl_cta": "Probar AI Jump Coach →",
+  "jl_f1_t": "Fallos de posición",
+  "jl_f1_d": "Detecta mirada baja anticipada, mano de rienda caída, quedarse atrás y asiento adelantado.",
+  "jl_f2_t": "Ápice y línea de tiempo",
+  "jl_f2_d": "Cada fallo marcado con su segundo exacto contra el ápice del salto.",
+  "jl_f3_t": "Esqueleto sobre el video",
+  "jl_f3_d": "Pose sobrepuesta cuadro por cuadro para ver el momento preciso del error.",
+  "jl_f4_t": "Progreso objetivo",
+  "jl_f4_d": "Severidad, porcentaje de confianza e historial para medir tu mejora.",
+  "jl_sport1": "Salto / Show Jumping",
+  "jl_sport2": "Ritmo y ajustabilidad",
+  "jl_sport3": "Calidad de aproximación"
 }
