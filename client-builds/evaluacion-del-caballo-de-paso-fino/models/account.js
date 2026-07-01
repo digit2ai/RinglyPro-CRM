@@ -100,6 +100,18 @@ async function getBalance(userId) {
   return u ? u.credits : 0;
 }
 
+// Update a user's password hash (self-service reset).
+async function setPassword(userId, password_hash) {
+  if (usingMemory || !User) {
+    const u = memUsers.find((x) => String(x.id) === String(userId));
+    if (!u) return false;
+    u.password_hash = password_hash;
+    return true;
+  }
+  const [n] = await User.update({ password_hash }, { where: { id: userId } });
+  return n > 0;
+}
+
 // Suma créditos atómicamente + registra la transacción. Devuelve el nuevo saldo.
 async function addCredits(userId, credits, meta = {}) {
   const n = parseInt(credits, 10);
@@ -165,4 +177,4 @@ async function listTx(userId, limit = 50) {
 
 function mode() { return usingMemory ? 'memory' : (User ? 'postgres' : 'uninitialized'); }
 
-module.exports = { init, mode, findByEmail, findById, createUser, getBalance, addCredits, debitOne, refundOne, paymentAlreadyCredited, listTx };
+module.exports = { init, mode, findByEmail, findById, createUser, getBalance, setPassword, addCredits, debitOne, refundOne, paymentAlreadyCredited, listTx };

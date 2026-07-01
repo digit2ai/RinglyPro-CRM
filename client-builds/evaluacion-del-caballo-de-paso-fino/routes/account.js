@@ -115,6 +115,28 @@ router.post('/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// Self-service password reset (POC convenience). Enabled by default; set
+// ECPF_SELF_RESET=0 to disable and require an admin/email-verified flow instead.
+// Sets a new password for an existing email. Logged for audit.
+const SELF_RESET_ON = process.env.ECPF_SELF_RESET !== '0';
+router.post('/reset-password', async (req, res) => {
+  try {
+    if (!SELF_RESET_ON) return err(res, 403, 'password reset is disabled');
+    const { email, new_password } = req.body || {};
+    if (!email || !EMAIL_RE.test(String(email))) return err(res, 400, 'valid email required');
+    if (!new_password || String(new_password).length < 6) return err(res, 400, 'new password must be at least 6 characters');
+    const u = await account.findByEmail(email);
+    if (!u) return err(res, 404, 'no account with that email');
+    const hash = await bcrypt.hash(String(new_password), 10);
+    await account.setPassword(u.id, hash);
+    console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'password_reset', user_id: u.id }));
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'reset_error', error: e.message }));
+    err(res, 500, 'reset failed');
+  }
+});
+
 router.get('/me', requireAccount, (req, res) => {
   res.json({ id: req.account.id, email: req.account.email, nombre: req.account.nombre, credits: req.account.credits });
 });

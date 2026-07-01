@@ -22,6 +22,20 @@
       <input id="password" type="password" autocomplete="current-password" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-2">
       <div id="msg" class="text-xs text-rose-400 min-h-[16px] mb-2"></div>
       <button id="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 rounded-lg px-4 py-3 font-semibold" data-i18n="login_btn"></button>
+      <p class="text-xs text-right mt-2"><a id="forgotLink" class="text-slate-400 underline cursor-pointer" data-i18n="forgot_link"></a></p>
+
+      <!-- Reset password (self-service) -->
+      <div id="resetBox" class="hidden mt-4 pt-4 border-t border-slate-800">
+        <div class="text-sm font-semibold mb-1" data-i18n="reset_title"></div>
+        <p class="text-xs text-slate-500 mb-3" data-i18n="reset_sub"></p>
+        <label class="block text-xs text-slate-400 mb-1" data-i18n="field_email"></label>
+        <input id="rEmail" type="email" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-3">
+        <label class="block text-xs text-slate-400 mb-1" data-i18n="reset_new_password"></label>
+        <input id="rPass" type="password" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-2">
+        <div id="rMsg" class="text-xs min-h-[16px] mb-2"></div>
+        <button id="rSubmit" class="w-full bg-emerald-600 hover:bg-emerald-500 rounded-lg px-4 py-2.5 font-semibold text-sm" data-i18n="reset_btn"></button>
+      </div>
+
       <p class="text-xs text-slate-500 mt-4 text-center"><span data-i18n="login_no_account"></span> <a id="toSignup" class="text-indigo-300 underline" data-i18n="login_signup_link"></a></p>
       <p class="text-xs text-slate-600 mt-4 text-center"><a href="{{BASE}}" class="underline" data-i18n="back_home"></a></p>
     </div>
@@ -47,6 +61,31 @@
     }
     document.getElementById('submit').addEventListener('click',submit);
     document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
+
+    // Prefill reset email from the login email; toggle the reset box.
+    document.getElementById('forgotLink').addEventListener('click',function(){
+      var box=document.getElementById('resetBox'); box.classList.toggle('hidden');
+      if(!box.classList.contains('hidden')){ document.getElementById('rEmail').value=document.getElementById('email').value.trim(); document.getElementById('rEmail').focus(); }
+    });
+    function doReset(){
+      var email=document.getElementById('rEmail').value.trim();
+      var np=document.getElementById('rPass').value;
+      var m=document.getElementById('rMsg'); m.textContent=''; m.className='text-xs min-h-[16px] mb-2 text-rose-400';
+      if(!email||!np){m.textContent=t('err_fields','Completa email y contraseña.');return;}
+      if(np.length<6){m.textContent=t('err_pass_short','La contraseña debe tener al menos 6 caracteres.');return;}
+      var b=document.getElementById('rSubmit'); b.disabled=true; b.textContent=t('processing','Procesando…');
+      fetch(B+'api/v1/account/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,new_password:np})})
+        .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+        .then(function(o){
+          if(!o.ok)throw new Error(o.j.error||'error');
+          m.className='text-xs min-h-[16px] mb-2 text-emerald-400'; m.textContent=t('reset_done','Contraseña actualizada. Ya puedes iniciar sesión.');
+          document.getElementById('email').value=email; document.getElementById('password').value=np;
+        })
+        .catch(function(e){ m.textContent=String(e.message||e); })
+        .then(function(){ b.disabled=false; b.textContent=t('reset_btn','Restablecer contraseña'); });
+    }
+    document.getElementById('rSubmit').addEventListener('click',doReset);
+    document.getElementById('rPass').addEventListener('keydown',function(e){if(e.key==='Enter')doReset();});
   })();
   </script>
 </body>

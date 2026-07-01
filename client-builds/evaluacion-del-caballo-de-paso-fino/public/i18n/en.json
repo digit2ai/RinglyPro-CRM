@@ -161,5 +161,11 @@
   "panel_hello": "Hello",
   "nav_jump": "Rider Pose Analyzer",
   "tool_jump_t": "Rider Pose Analyzer",
-  "tool_jump_d": "Upload a show-jumping clip: the AI flags rider position faults frame by frame (AI Jump Coach)."
+  "tool_jump_d": "Upload a show-jumping clip: the AI flags rider position faults frame by frame (AI Jump Coach).",
+  "forgot_link": "Forgot your password?",
+  "reset_title": "Reset password",
+  "reset_sub": "Enter your email and a new password for your account.",
+  "reset_new_password": "New password",
+  "reset_btn": "Reset password",
+  "reset_done": "Password updated. You can log in now."
 }
