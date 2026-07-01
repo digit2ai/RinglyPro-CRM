@@ -119,6 +119,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: equimind.app → Evaluación del Caballo de Paso Fino app.
+// The horse app is a self-contained Express sub-app (client-builds/…). For this
+// host we invoke it DIRECTLY at the domain root so URLs stay clean
+// (equimind.app/inicio, /panel, /juez, /login) and its templates compute BASE='/'
+// automatically (req.baseUrl is '' when the sub-app runs unmounted). Host-gated:
+// zero effect on any other domain. ACME challenges pass through for TLS issuance.
+let __equimindApp = null;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host !== 'equimind.app' && host !== 'www.equimind.app') return next();
+  const p = req.path;
+  if (p.startsWith('/.well-known/')) return next(); // let Render issue/renew SSL
+  if (!__equimindApp) {
+    try { __equimindApp = require('../client-builds/evaluacion-del-caballo-de-paso-fino'); }
+    catch (e) { return next(); }
+  }
+  // Bare domain → the landing page.
+  if (p === '/' || p === '') {
+    const qs = req.url.indexOf('?') > -1 ? req.url.slice(req.url.indexOf('?')) : '';
+    req.url = '/inicio' + qs;
+  }
+  return __equimindApp(req, res, next);
+});
+
 // Custom domain: virtualchamber.app
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
