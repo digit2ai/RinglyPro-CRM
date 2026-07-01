@@ -199,5 +199,6 @@
   "share_copied": "Link copied ✓",
   "share_copy_prompt": "Copy the link:",
   "m_elevacion": "Elevation",
-  "res_ranking": "Rank"
+  "res_ranking": "Rank",
+  "prog_demo_setup": "Setting up demo competitor…"
 }

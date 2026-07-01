@@ -95,10 +95,31 @@
   }
   function stopProgress(done) { if (progTimer) clearInterval(progTimer); if (done) progress(100, I18N.prog_listo); }
 
+  // Si el usuario no eligió competidor, auto-creamos datos de demostración
+  // (evento + categoría + inscripción) y devolvemos ese inscripcion_id. Así el
+  // análisis rápido es un solo clic, sin montar el campeonato a mano.
+  function ensureInscripcion() {
+    var existing = $('inscripcionSel').value;
+    if (existing) return Promise.resolve(existing);
+    progress(3, I18N.prog_demo_setup || 'Preparando competidor de demostración…');
+    return fetch(CHAMP + '/demo-setup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.inscripcion) return '';
+        // Reflejar la selección en los dropdowns para que el usuario la vea.
+        loadEventos().then(function () {
+          $('eventoSel').value = d.evento.id;
+          loadCategorias(d.evento.id).then(function () {
+            $('categoriaSel').value = d.categoria.id;
+            loadInscripciones(d.categoria.id).then(function () { $('inscripcionSel').value = d.inscripcion.id; });
+          });
+        });
+        return String(d.inscripcion.id);
+      }).catch(function () { return ''; });
+  }
+
   function bindEvaluar() {
     $('evaluar').addEventListener('click', function () {
-      var inscripcion_id = $('inscripcionSel').value;
-      if (!inscripcion_id) { progress(0, I18N.err_need_inscripcion); $('progressWrap').classList.remove('hidden'); return; }
       var videoFile = $('video').files[0];
       var audioFile = $('audio').files[0];
       var demoMod = $('demoModSel').value;
@@ -111,6 +132,8 @@
       }
       var btn = this; btn.disabled = true;
       fakeProgress();
+      ensureInscripcion().then(function (inscripcion_id) {
+      if (!inscripcion_id) { stopProgress(false); btn.disabled = false; progress(0, I18N.err_need_inscripcion); return; }
       {
         var fd = new FormData();
         fd.append('inscripcion_id', inscripcion_id);
@@ -135,6 +158,7 @@
           })
           .catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
       }
+      });
     });
   }
 
