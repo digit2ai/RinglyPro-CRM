@@ -158,5 +158,8 @@
   "how3_d": "Sube video o audio y recibe el fallo del juez al instante.",
   "panel_intro": "Elige una herramienta en el menú de la izquierda.",
   "panel_open": "Abrir →",
-  "panel_hello": "Hola"
+  "panel_hello": "Hola",
+  "nav_jump": "Analizador de Postura",
+  "tool_jump_t": "Analizador de Postura del Jinete",
+  "tool_jump_d": "Sube un clip de salto: la IA marca fallos de posición del jinete cuadro por cuadro (AI Jump Coach)."
 }

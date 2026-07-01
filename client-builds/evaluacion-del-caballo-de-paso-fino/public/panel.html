@@ -26,6 +26,7 @@
       <nav class="p-3 space-y-1 flex-1">
         <div class="navitem active" data-view="inicio"><span class="ic">▣</span><span data-i18n="nav_inicio"></span></div>
         <div class="navitem" data-view="juez"><span class="ic">▶</span><span data-i18n="nav_juez"></span></div>
+        <div class="navitem" data-view="jump"><span class="ic">⤢</span><span data-i18n="nav_jump"></span></div>
         <div class="navitem" data-view="audio"><span class="ic">♪</span><span data-i18n="nav_audio"></span></div>
         <div class="navitem" data-view="ranking"><span class="ic">≣</span><span data-i18n="nav_historial"></span></div>
         <div class="border-t border-slate-800 my-2"></div>
@@ -63,6 +64,11 @@
             <div class="text-xs text-slate-400 mt-1" data-i18n="tool_juez_d"></div>
             <div class="text-indigo-300 text-sm mt-3" data-i18n="panel_open"></div>
           </div>
+          <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-indigo-500" data-go="jump">
+            <div class="font-semibold" data-i18n="tool_jump_t"></div>
+            <div class="text-xs text-slate-400 mt-1" data-i18n="tool_jump_d"></div>
+            <div class="text-indigo-300 text-sm mt-3" data-i18n="panel_open"></div>
+          </div>
           <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-indigo-500" data-go="audio">
             <div class="font-semibold" data-i18n="tool_audio_t"></div>
             <div class="text-xs text-slate-400 mt-1" data-i18n="tool_audio_d"></div>
@@ -90,7 +96,12 @@
     document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
     document.getElementById('langToggle').addEventListener('click',function(){var u=new URL(location.href);u.searchParams.set('lang',L==='es'?'en':'es');location.href=u.toString();});
 
-    var TOOLS={ juez:{src:'juez',title:'nav_juez'}, audio:{src:'',title:'nav_audio'}, ranking:{src:'dashboard',title:'nav_historial'} };
+    var TOOLS={
+      juez:{src:'juez',title:'nav_juez'},
+      jump:{abs:'https://aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer/',title:'nav_jump'},
+      audio:{src:'',title:'nav_audio'},
+      ranking:{src:'dashboard',title:'nav_historial'}
+    };
     var frame=document.getElementById('toolFrame'), viewInicio=document.getElementById('viewInicio'), title=document.getElementById('sectionTitle');
 
     function setActive(view){
@@ -100,7 +111,8 @@
       if(view==='inicio'){ viewInicio.classList.remove('hidden'); frame.classList.add('hidden'); title.textContent=t('nav_inicio','Inicio'); setActive('inicio'); refreshOverview(); return; }
       var tl=TOOLS[view]; if(!tl) return;
       viewInicio.classList.add('hidden'); frame.classList.remove('hidden');
-      frame.src = B + tl.src + (tl.src.indexOf('?')>-1?'&':'?') + 'embed=1&lang=' + L;
+      var src = tl.abs ? tl.abs : (B + tl.src);
+      frame.src = src + (src.indexOf('?')>-1?'&':'?') + 'embed=1&lang=' + L;
       title.textContent=t(tl.title,view); setActive(view);
     }
     document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.addEventListener('click',function(){ show(n.getAttribute('data-view')); closeSidebar(); }); });

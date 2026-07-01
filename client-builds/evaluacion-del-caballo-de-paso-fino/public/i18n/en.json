@@ -158,5 +158,8 @@
   "how3_d": "Upload video or audio and get the judge ruling instantly.",
   "panel_intro": "Pick a tool from the left menu.",
   "panel_open": "Open →",
-  "panel_hello": "Hello"
+  "panel_hello": "Hello",
+  "nav_jump": "Rider Pose Analyzer",
+  "tool_jump_t": "Rider Pose Analyzer",
+  "tool_jump_d": "Upload a show-jumping clip: the AI flags rider position faults frame by frame (AI Jump Coach)."
 }
