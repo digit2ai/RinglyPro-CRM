@@ -51,6 +51,120 @@
   </section>
   </div>
 
+  <!-- Animated software simulator (separator) -->
+  <style>
+    .sim-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
+    .sim-cap{display:flex;align-items:center;gap:9px;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#98A199;margin-bottom:14px}
+    .sim-cap .rec{width:7px;height:7px;border-radius:50%;background:#CE4C3B;box-shadow:0 0 8px #CE4C3B;animation:sim-blink 1.6s ease-in-out infinite}
+    .sim-panel{position:relative;border:1px solid rgba(236,230,218,.12);border-radius:20px;overflow:hidden;
+      background:radial-gradient(120% 90% at 50% 8%,rgba(62,142,107,.12),transparent 55%),linear-gradient(180deg,#12160F,#0d100c);
+      box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
+    .sim-svg{display:block;width:100%;height:auto}
+    .sim-path{stroke-dasharray:1400;stroke-dashoffset:1400;animation:sim-draw 5.5s var(--e,cubic-bezier(.22,.61,.36,1)) infinite}
+    @keyframes sim-draw{0%{stroke-dashoffset:1400}45%{stroke-dashoffset:0}92%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:1}}
+    .sim-node{transform-box:fill-box;transform-origin:center;animation:sim-pulse 2.2s ease-in-out infinite}
+    @keyframes sim-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.55}}
+    .sim-halo{transform-box:fill-box;transform-origin:center;animation:sim-halo 2.2s ease-in-out infinite}
+    @keyframes sim-halo{0%{transform:scale(.6);opacity:.6}70%{transform:scale(2.4);opacity:0}100%{opacity:0}}
+    .sim-travel{offset-path:path('M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300');offset-rotate:0deg;animation:sim-move 5.5s cubic-bezier(.5,0,.5,1) infinite}
+    @keyframes sim-move{0%{offset-distance:0%;opacity:0}6%{opacity:1}50%{offset-distance:100%;opacity:1}56%{opacity:0}100%{offset-distance:100%;opacity:0}}
+    .sim-pin{transform-box:fill-box;transform-origin:center bottom;opacity:0;animation:sim-pin 5.5s ease-in-out infinite}
+    @keyframes sim-pin{0%,10%{transform:scaleY(0);opacity:0}18%{transform:scaleY(1);opacity:1}92%,100%{opacity:1;transform:scaleY(1)}}
+    .sim-scan{animation:sim-scan 5.5s cubic-bezier(.5,0,.5,1) infinite}
+    @keyframes sim-scan{0%{transform:translateX(-20px);opacity:0}8%{opacity:.9}50%{transform:translateX(1000px);opacity:.9}58%,100%{opacity:0;transform:translateX(1000px)}}
+    .sim-rider{transform-box:fill-box;transform-origin:center;animation:sim-float 3.4s ease-in-out infinite}
+    @keyframes sim-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+    .sim-jt{transform-box:fill-box;transform-origin:center;animation:sim-jt 2.4s ease-in-out infinite}
+    @keyframes sim-jt{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+    .sim-read{animation:sim-blink 3s ease-in-out infinite}
+    @keyframes sim-blink{0%,100%{opacity:.35}50%{opacity:1}}
+    @media (prefers-reduced-motion:reduce){.sim-path,.sim-node,.sim-halo,.sim-travel,.sim-pin,.sim-scan,.sim-rider,.sim-jt,.sim-read{animation:none!important}.sim-path{stroke-dashoffset:0}.sim-travel,.sim-pin,.sim-scan{opacity:1}}
+  </style>
+  <div class="sim-band reveal">
+    <div class="sim-cap"><span class="rec"></span><span data-i18n="sim_caption">Simulación · Motor de análisis en vivo</span></div>
+    <div class="sim-panel">
+      <svg class="sim-svg" viewBox="0 0 1000 360" role="img" aria-label="Simulación del software de análisis">
+        <defs>
+          <linearGradient id="simArc" x1="0" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#A9822F"/><stop offset=".5" stop-color="#E6C572"/><stop offset="1" stop-color="#A9822F"/>
+          </linearGradient>
+          <linearGradient id="simFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(201,162,75,.22)"/><stop offset="1" stop-color="rgba(201,162,75,0)"/></linearGradient>
+          <linearGradient id="simScan" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(95,208,139,0)"/><stop offset=".5" stop-color="rgba(95,208,139,.5)"/><stop offset="1" stop-color="rgba(95,208,139,0)"/></linearGradient>
+          <pattern id="simGrid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(236,230,218,.04)" stroke-width="1"/></pattern>
+        </defs>
+
+        <rect width="1000" height="360" fill="url(#simGrid)"/>
+        <!-- fill under arc -->
+        <path d="M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300 L940 300 L60 300 Z" fill="url(#simFill)"/>
+        <!-- ground axis -->
+        <line x1="60" y1="300" x2="940" y2="300" stroke="rgba(236,230,218,.16)" stroke-width="1.5"/>
+        <text x="60" y="324" fill="#697268" font-family="JetBrains Mono,monospace" font-size="12">0:00</text>
+        <text x="250" y="324" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="11" letter-spacing="1.5">ASCENSO</text>
+        <text x="740" y="324" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="11" letter-spacing="1.5">DESCENSO</text>
+        <text x="940" y="324" text-anchor="end" fill="#697268" font-family="JetBrains Mono,monospace" font-size="12">1:39</text>
+
+        <!-- the drawing arc -->
+        <path class="sim-path" d="M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300" fill="none" stroke="url(#simArc)" stroke-width="2.5" stroke-linecap="round"/>
+
+        <!-- apex guide + node -->
+        <line x1="500" y1="118" x2="500" y2="300" stroke="rgba(201,162,75,.3)" stroke-width="1.2" stroke-dasharray="3 6"/>
+        <circle class="sim-halo" cx="500" cy="118" r="8" fill="none" stroke="#E6C572" stroke-width="1.4"/>
+        <circle class="sim-node" cx="500" cy="118" r="7" fill="#E6C572"/>
+        <text x="500" y="100" text-anchor="middle" fill="#E6C572" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600">ÁPICE</text>
+        <text x="500" y="84" text-anchor="middle" fill="#98A199" font-family="JetBrains Mono,monospace" font-size="11">49.20s</text>
+
+        <!-- detection dots traveling the arc -->
+        <circle class="sim-travel" r="4.5" fill="#5FD08B" style="animation-delay:0s"/>
+        <circle class="sim-travel" r="3.5" fill="#5FD08B" opacity=".7" style="animation-delay:.5s"/>
+        <circle class="sim-travel" r="3" fill="#E6C572" opacity=".8" style="animation-delay:1s"/>
+
+        <!-- fault pins on the ground -->
+        <g class="sim-pin" style="animation-delay:0s">
+          <line x1="250" y1="300" x2="250" y2="252" stroke="#CE4C3B" stroke-width="1.5" opacity=".6"/>
+          <circle cx="250" cy="300" r="6" fill="#CE4C3B"/><circle cx="250" cy="300" r="11" fill="none" stroke="#CE4C3B" stroke-width="1" opacity=".35"/>
+          <text x="250" y="242" text-anchor="middle" fill="#CE4C3B" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">8.40</text>
+        </g>
+        <g class="sim-pin" style="animation-delay:.5s">
+          <line x1="335" y1="300" x2="335" y2="266" stroke="#D98A3E" stroke-width="1.5" opacity=".6"/>
+          <circle cx="335" cy="300" r="6" fill="#D98A3E"/><circle cx="335" cy="300" r="11" fill="none" stroke="#D98A3E" stroke-width="1" opacity=".35"/>
+          <text x="335" y="256" text-anchor="middle" fill="#D98A3E" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">15.60</text>
+        </g>
+        <g class="sim-pin" style="animation-delay:1s">
+          <line x1="690" y1="300" x2="690" y2="252" stroke="#CE4C3B" stroke-width="1.5" opacity=".6"/>
+          <circle cx="690" cy="300" r="6" fill="#CE4C3B"/><circle cx="690" cy="300" r="11" fill="none" stroke="#CE4C3B" stroke-width="1" opacity=".35"/>
+          <text x="690" y="242" text-anchor="middle" fill="#CE4C3B" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">61.00</text>
+        </g>
+
+        <!-- rider skeleton at the apex -->
+        <g class="sim-rider">
+          <g stroke="#C9A24B" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".92">
+            <path d="M500 70 L500 92"/><path d="M490 74 L510 74"/>
+            <path d="M490 74 L482 84 L478 93"/><path d="M510 74 L519 82 L525 88"/>
+            <path d="M500 92 L492 106 L490 120"/><path d="M500 92 L508 106 L510 120"/>
+          </g>
+          <g fill="#5FD08B">
+            <circle class="sim-jt" cx="500" cy="62" r="4.6" style="animation-delay:0s"/>
+            <circle cx="490" cy="74" r="3"/><circle cx="510" cy="74" r="3"/>
+            <circle cx="482" cy="84" r="2.6"/><circle cx="519" cy="82" r="2.6"/>
+            <circle class="sim-jt" cx="478" cy="93" r="3" style="animation-delay:.4s"/><circle class="sim-jt" cx="525" cy="88" r="3" style="animation-delay:.7s"/>
+            <circle cx="500" cy="92" r="3.2"/><circle cx="492" cy="106" r="2.6"/><circle cx="508" cy="106" r="2.6"/>
+            <circle class="sim-jt" cx="490" cy="120" r="3" style="animation-delay:.2s"/><circle class="sim-jt" cx="510" cy="120" r="3" style="animation-delay:.55s"/>
+          </g>
+        </g>
+
+        <!-- sweeping scan line -->
+        <g class="sim-scan"><rect x="0" y="20" width="34" height="290" fill="url(#simScan)"/><line x1="17" y1="20" x2="17" y2="310" stroke="#5FD08B" stroke-width="1" opacity=".7"/></g>
+
+        <!-- readout HUD -->
+        <g class="sim-read" font-family="JetBrains Mono,monospace">
+          <text x="60" y="46" fill="#98A199" font-size="12">cadencia</text><text x="60" y="64" fill="#E6C572" font-size="17" font-weight="600">227 ppm</text>
+          <text x="180" y="46" fill="#98A199" font-size="12">tiempos</text><text x="180" y="64" fill="#E6C572" font-size="17" font-weight="600">4</text>
+          <text x="250" y="46" fill="#98A199" font-size="12">confianza</text><text x="250" y="64" fill="#5FD08B" font-size="17" font-weight="600">96%</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
   <!-- AI Jump Coach spotlight -->
   <section class="max-w-6xl mx-auto px-6 py-16 border-t border-slate-900">
     <div class="grid md:grid-cols-2 gap-10 items-center">
