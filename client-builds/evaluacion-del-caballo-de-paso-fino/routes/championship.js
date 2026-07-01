@@ -164,7 +164,9 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     // Reembolsa el crédito si ya se cobró y el análisis falló.
     if (req._debitedAccount != null) { try { await account.refundOne(req._debitedAccount, { description: 'refund: análisis falló' }); } catch (_) {} }
     console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_pipeline_error', error: e.message, stack: e.stack }));
-    err(res, 500, 'pipeline failed: ' + e.message);
+    // No filtrar el detalle interno al cliente (ya quedó en logs). Mensaje genérico.
+    const detail = process.env.NODE_ENV === 'production' ? '' : (': ' + e.message);
+    err(res, 500, 'No se pudo completar el análisis' + detail);
   }
 });
 
