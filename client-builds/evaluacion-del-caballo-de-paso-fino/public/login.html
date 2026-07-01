@@ -32,7 +32,7 @@
     var I=window.__I18N||{},B=window.__BASE||'/';
     function t(k,f){return I[k]!=null?I[k]:(f||k);}
     document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
-    var next=new URLSearchParams(location.search).get('next')||(B+'juez');
+    var next=new URLSearchParams(location.search).get('next')||(B+'panel');
     document.getElementById('toSignup').href=B+'signup?next='+encodeURIComponent(next);
     function submit(){
       var email=document.getElementById('email').value.trim();
