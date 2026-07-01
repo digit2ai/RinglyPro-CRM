@@ -185,6 +185,35 @@ router.get('/stats', optionalAccount, async (req, res) => {
   }
 });
 
+// Admin: grant credits to an email (creates the account if missing). Gated to an
+// admin caller (ECPF_ADMIN_KEY or an admin-email session).
+router.post('/admin-grant', optionalAccount, async (req, res) => {
+  try {
+    const adminKey = process.env.ECPF_ADMIN_KEY;
+    const provided = req.headers['x-admin-key'] || (req.body && req.body.key);
+    const isAdmin = (adminKey && provided === adminKey) ||
+      (req.account && ADMIN_EMAILS.indexOf(String(req.account.email || '').toLowerCase()) >= 0);
+    if (!isAdmin) return err(res, 403, 'admin only');
+    const b = req.body || {};
+    const n = parseInt(b.credits, 10);
+    if (!b.email || !EMAIL_RE.test(String(b.email))) return err(res, 400, 'valid email required');
+    if (!Number.isInteger(n) || n <= 0) return err(res, 400, 'positive credits required');
+    let u = await account.findByEmail(b.email);
+    let created = false;
+    if (!u) {
+      const hash = await bcrypt.hash(String(b.password || 'EquiMindDemo2026!'), 10);
+      u = await account.createUser({ email: b.email, password_hash: hash, nombre: b.nombre || null, credits: 0 });
+      created = true;
+    }
+    const balance = await account.addCredits(u.id, n, { kind: 'bonus', description: 'admin grant' });
+    console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'admin_grant', user_id: u.id, credits: n, created }));
+    res.json({ email: u.email, credits: balance, added: n, created });
+  } catch (e) {
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'admin_grant_error', error: e.message }));
+    err(res, 500, 'grant failed');
+  }
+});
+
 // ---- Credits --------------------------------------------------------------
 router.get('/credits/balance', requireAccount, async (req, res) => {
   res.json({ credits: await account.getBalance(req.accountId) });
