@@ -2,10 +2,16 @@
 <html lang="{{LANG}}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{{TITLE}}</title>
 <link rel="icon" type="image/svg+xml" href="{{BASE}}equimind-icon.svg">
-<link rel="apple-touch-icon" href="{{BASE}}equimind-icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="{{BASE}}equimind-apple-180.png">
+<link rel="manifest" href="{{BASE}}manifest.webmanifest">
+<meta name="theme-color" content="#0E120F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EquiMind">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
@@ -16,7 +22,9 @@
     .navitem.active{background:linear-gradient(180deg,#E6C572,#C9A24B);color:#1a140a;font-weight:600}
     .navitem .ic{width:18px;text-align:center}
     #toolFrame{width:100%;height:calc(100vh - 64px);border:0;background:#060a14}
-    @media(max-width:820px){#sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .2s;z-index:50}#sidebar.open{left:0}}
+    @media(max-width:767px){#sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .2s;z-index:50;box-shadow:0 0 40px rgba(0,0,0,.6)}#sidebar.open{left:0}}
+    #sbBackdrop{display:none;position:fixed;inset:0;background:rgba(2,6,20,.55);z-index:49}
+    #sbBackdrop.on{display:block}
   </style>
 </head>
 <body class="text-slate-100">
@@ -40,6 +48,7 @@
       </nav>
       <div class="p-3 text-xs text-slate-600 border-t border-slate-800">Digit2AI</div>
     </aside>
+    <div id="sbBackdrop"></div>
 
     <!-- Main -->
     <main class="flex-1 min-w-0">
@@ -140,9 +149,10 @@
     });
 
     // Mobile sidebar toggle.
-    var sb=document.getElementById('sidebar');
-    function closeSidebar(){ sb.classList.remove('open'); }
-    document.getElementById('menuBtn').addEventListener('click',function(){ sb.classList.toggle('open'); });
+    var sb=document.getElementById('sidebar'), bd=document.getElementById('sbBackdrop');
+    function closeSidebar(){ sb.classList.remove('open'); if(bd) bd.classList.remove('on'); }
+    document.getElementById('menuBtn').addEventListener('click',function(){ var open=sb.classList.toggle('open'); if(bd) bd.classList.toggle('on', open); });
+    if(bd) bd.addEventListener('click', closeSidebar);
 
     function refreshOverview(){
       fetch(B+'api/v1/account/config',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
@@ -167,5 +177,6 @@
     }).catch(function(){ location.href=B+'login?next='+encodeURIComponent(location.pathname); });
   })();
   </script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("{{BASE}}sw.js").catch(function(){});});}</script>
 </body>
 </html>

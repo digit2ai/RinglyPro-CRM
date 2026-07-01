@@ -2,10 +2,16 @@
 <html lang="{{LANG}}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{{TITLE}}</title>
 <link rel="icon" type="image/svg+xml" href="{{BASE}}equimind-icon.svg">
-<link rel="apple-touch-icon" href="{{BASE}}equimind-icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="{{BASE}}equimind-apple-180.png">
+<link rel="manifest" href="{{BASE}}manifest.webmanifest">
+<meta name="theme-color" content="#0E120F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EquiMind">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
@@ -77,5 +83,6 @@
 
   <script>window.__I18N = {{DICT_JSON}}; window.__BASE = "{{BASE}}"; window.__LANG = "{{LANG}}"; window.__PAGE = "dashboard";</script>
   <script src="{{BASE}}app.js"></script>
+  <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("{{BASE}}sw.js").catch(function(){});});}</script>
 </body>
 </html>
