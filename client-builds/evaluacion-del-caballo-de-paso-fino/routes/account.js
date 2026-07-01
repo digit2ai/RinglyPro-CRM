@@ -163,6 +163,23 @@ router.get('/config', optionalAccount, (req, res) => {
   });
 });
 
+// Aggregate stats (count only — no PII). Detailed user list requires the admin
+// key (set ECPF_ADMIN_KEY on prod, pass ?key= or x-admin-key).
+router.get('/stats', async (req, res) => {
+  try {
+    const s = await account.stats();
+    const adminKey = process.env.ECPF_ADMIN_KEY;
+    const provided = req.headers['x-admin-key'] || (req.query && req.query.key);
+    if (adminKey && provided === adminKey) {
+      s.recent = (await account.listRecent(50)).map((u) => ({ id: u.id, email: u.email, nombre: u.nombre, credits: u.credits, created_at: u.created_at }));
+    }
+    res.json(s);
+  } catch (e) {
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'stats_error', error: e.message }));
+    err(res, 500, 'stats failed');
+  }
+});
+
 // ---- Credits --------------------------------------------------------------
 router.get('/credits/balance', requireAccount, async (req, res) => {
   res.json({ credits: await account.getBalance(req.accountId) });

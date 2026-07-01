@@ -100,6 +100,17 @@ async function getBalance(userId) {
   return u ? u.credits : 0;
 }
 
+// Aggregate stats for the owner (no PII in the default payload).
+async function stats() {
+  if (usingMemory || !User) {
+    return { users: memUsers.length, with_credits: memUsers.filter((u) => u.credits > 0).length, total_credits: memUsers.reduce((s, u) => s + (u.credits || 0), 0) };
+  }
+  const users = await User.count();
+  const withCredits = await User.count({ where: { credits: { [require('sequelize').Op.gt]: 0 } } });
+  const [rows] = await sequelize.query('SELECT COALESCE(SUM(credits),0)::int AS total FROM ecpf_users');
+  return { users, with_credits: withCredits, total_credits: rows[0].total };
+}
+
 // Update a user's password hash (self-service reset).
 async function setPassword(userId, password_hash) {
   if (usingMemory || !User) {
@@ -175,6 +186,12 @@ async function listTx(userId, limit = 50) {
   return rows.map((r) => r.get({ plain: true }));
 }
 
+async function listRecent(limit = 50) {
+  if (usingMemory || !User) return memUsers.slice().sort((a, b) => b.id - a.id).slice(0, limit).map(plain);
+  const rows = await User.findAll({ order: [['id', 'DESC']], limit });
+  return rows.map((r) => plain(r.get({ plain: true })));
+}
+
 function mode() { return usingMemory ? 'memory' : (User ? 'postgres' : 'uninitialized'); }
 
-module.exports = { init, mode, findByEmail, findById, createUser, getBalance, setPassword, addCredits, debitOne, refundOne, paymentAlreadyCredited, listTx };
+module.exports = { init, mode, findByEmail, findById, createUser, getBalance, setPassword, stats, listRecent, addCredits, debitOne, refundOne, paymentAlreadyCredited, listTx };
