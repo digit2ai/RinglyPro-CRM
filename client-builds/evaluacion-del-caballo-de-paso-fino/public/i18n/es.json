@@ -167,5 +167,6 @@
   "reset_sub": "Ingresa tu correo y una nueva contraseña para tu cuenta.",
   "reset_new_password": "Nueva contraseña",
   "reset_btn": "Restablecer contraseña",
-  "reset_done": "Contraseña actualizada. Ya puedes iniciar sesión."
+  "reset_done": "Contraseña actualizada. Ya puedes iniciar sesión.",
+  "brand_suffix": "Entrenador de salto"
 }

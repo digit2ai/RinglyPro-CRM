@@ -167,5 +167,6 @@
   "reset_sub": "Enter your email and a new password for your account.",
   "reset_new_password": "New password",
   "reset_btn": "Reset password",
-  "reset_done": "Password updated. You can log in now."
+  "reset_done": "Password updated. You can log in now.",
+  "brand_suffix": "Jump Coach"
 }
