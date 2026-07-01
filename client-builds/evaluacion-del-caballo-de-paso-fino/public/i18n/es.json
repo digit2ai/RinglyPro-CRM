@@ -185,5 +185,6 @@
   "jl_sport1": "Salto / Show Jumping",
   "jl_sport2": "Ritmo y ajustabilidad",
   "jl_sport3": "Calidad de aproximación",
-  "sim_caption": "Simulación · Motor de análisis en vivo"
+  "sim_caption": "Simulación · Trayectoria y fallos del salto",
+  "gsim_caption": "Simulación · Fallo del juez en vivo"
 }

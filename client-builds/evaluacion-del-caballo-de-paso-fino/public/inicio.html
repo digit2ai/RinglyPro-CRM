@@ -52,6 +52,135 @@
   </section>
   </div>
 
+  <!-- Animated gait-result simulator (Paso Fino) -->
+  <style>
+    .gs-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
+    .gs-cap{display:flex;align-items:center;gap:9px;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#98A199;margin-bottom:14px}
+    .gs-cap .rec{width:7px;height:7px;border-radius:50%;background:#CE4C3B;box-shadow:0 0 8px #CE4C3B;animation:gs-blink 1.6s ease-in-out infinite}
+    @keyframes gs-blink{0%,100%{opacity:.35}50%{opacity:1}}
+    .gs-panel{position:relative;border:1px solid rgba(236,230,218,.12);border-radius:20px;overflow:hidden;padding:clamp(18px,2.6vw,26px);
+      background:radial-gradient(120% 90% at 50% 6%,rgba(62,142,107,.10),transparent 55%),linear-gradient(180deg,#12160F,#0d100c);box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
+    .gs-k{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#697268}
+    .gs-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid rgba(236,230,218,.09);padding-bottom:16px;margin-bottom:16px}
+    .gs-mod{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(20px,2.6vw,26px);color:#ECE6DA;margin-top:4px}
+    .gs-mod .gs-sub{font-family:"JetBrains Mono",monospace;font-weight:400;font-size:13px;color:#98A199}
+    .gs-scorewrap{text-align:right}
+    .gs-score{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:clamp(34px,5vw,46px);color:#E6C572;line-height:1;animation:gs-glow 2.6s ease-in-out infinite}
+    @keyframes gs-glow{0%,100%{text-shadow:0 0 0 rgba(230,197,114,0)}50%{text-shadow:0 0 22px rgba(230,197,114,.5)}}
+    .gs-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+    @media(max-width:640px){.gs-metrics{grid-template-columns:repeat(2,1fr)}}
+    .gs-m{background:#0e120c;border:1px solid rgba(236,230,218,.08);border-radius:12px;padding:12px;text-align:center}
+    .gs-mv{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:22px;color:#E6C572}
+    .gs-mv.gs-turf{color:#5FD08B}
+    .gs-ml{font-size:11px;color:#98A199;margin-top:3px}
+    .gs-grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(16px,2.4vw,28px)}
+    @media(max-width:760px){.gs-grid2{grid-template-columns:1fr}}
+    .gs-h{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#697268;margin-bottom:12px}
+    .gs-bar{margin-bottom:12px}
+    .gs-brow{display:flex;justify-content:space-between;font-size:12.5px;color:#CDC8BC;margin-bottom:5px}
+    .gs-brow .gs-bn{font-family:"JetBrains Mono",monospace;color:#98A199}
+    .gs-track{position:relative;height:7px;border-radius:99px;background:rgba(236,230,218,.08);overflow:hidden}
+    .gs-f{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;animation:gs-fill 1.4s cubic-bezier(.22,.61,.36,1) forwards}
+    @keyframes gs-fill{to{width:var(--w)}}
+    .gs-good{background:linear-gradient(90deg,#C9A24B,#E6C572)}
+    .gs-turf-f{background:linear-gradient(90deg,#3E8E6B,#5FD08B)}
+    .gs-mid{background:linear-gradient(90deg,#D98A3E,#E6C572)}
+    .gs-low{background:linear-gradient(90deg,#CE4C3B,#D98A3E)}
+    .gs-track::after{content:"";position:absolute;top:0;bottom:0;width:38%;background:linear-gradient(90deg,transparent,rgba(236,230,218,.18),transparent);transform:translateX(-140%);animation:gs-sheen 3.4s ease-in-out infinite}
+    @keyframes gs-sheen{0%{transform:translateX(-140%)}55%,100%{transform:translateX(360%)}}
+    .gs-tl{position:relative;height:78px;border:1px solid rgba(236,230,218,.09);border-radius:12px;background:#0e120c;overflow:hidden}
+    .gs-tl .base{position:absolute;left:12px;right:12px;bottom:26px;height:1px;background:rgba(236,230,218,.14)}
+    .gs-beat{position:absolute;bottom:26px;width:9px;height:9px;border-radius:50%;background:var(--c);transform:translate(-50%,50%) scale(.7);animation:gs-beat 2.6s ease-in-out infinite}
+    @keyframes gs-beat{0%,100%{transform:translate(-50%,50%) scale(.65);opacity:.5}50%{transform:translate(-50%,50%) scale(1.15);opacity:1;box-shadow:0 0 10px 1px var(--c)}}
+    .gs-play{position:absolute;top:10px;bottom:20px;width:2px;background:linear-gradient(180deg,transparent,#5FD08B,transparent);animation:gs-play 2.6s linear infinite}
+    @keyframes gs-play{0%{left:6%}100%{left:94%}}
+    .gs-tlab{position:absolute;left:12px;bottom:7px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#697268}
+    .gs-tlab.r{left:auto;right:12px;color:#E6C572}
+    .gs-scanline{position:absolute;top:0;bottom:0;width:120px;background:linear-gradient(90deg,transparent,rgba(95,208,139,.10),transparent);pointer-events:none;animation:gs-scan 6s cubic-bezier(.5,0,.5,1) infinite}
+    @keyframes gs-scan{0%{transform:translateX(-140px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(1160px);opacity:0}}
+    @media (prefers-reduced-motion:reduce){.gs-f,.gs-beat,.gs-play,.gs-score,.gs-scanline,.gs-track::after,.gs-cap .rec{animation:none!important}.gs-f{width:var(--w)}}
+  </style>
+  <div class="gs-band reveal">
+    <div class="gs-cap"><span class="rec"></span><span data-i18n="gsim_caption">Simulación · Fallo del juez en vivo</span></div>
+    <div class="gs-panel">
+      <div class="gs-scanline"></div>
+      <div class="gs-top">
+        <div>
+          <div class="gs-k">Modalidad detectada</div>
+          <div class="gs-mod">Paso fino <span class="gs-sub">· 94% confianza · 4 tiempos</span></div>
+        </div>
+        <div class="gs-scorewrap">
+          <div class="gs-k">Puntaje total</div>
+          <div class="gs-score">79.6</div>
+        </div>
+      </div>
+      <div class="gs-metrics">
+        <div class="gs-m"><div class="gs-mv">227</div><div class="gs-ml">Cadencia (ppm)</div></div>
+        <div class="gs-m"><div class="gs-mv gs-turf">96%</div><div class="gs-ml">Regularidad</div></div>
+        <div class="gs-m"><div class="gs-mv gs-turf">100%</div><div class="gs-ml">Simetría lateral</div></div>
+        <div class="gs-m"><div class="gs-mv">94%</div><div class="gs-ml">Claridad 4 tiempos</div></div>
+      </div>
+      <div class="gs-grid2">
+        <div>
+          <div class="gs-h">Desglose por criterio</div>
+          <div class="gs-bar"><div class="gs-brow"><span>Ritmo y regularidad (35%)</span><span class="gs-bn">88/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:88%;animation-delay:.0s"></i></div></div>
+        <div class="gs-bar"><div class="gs-brow"><span>Claridad 4 tiempos (25%)</span><span class="gs-bn">94/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:94%;animation-delay:.12s"></i></div></div>
+        <div class="gs-bar"><div class="gs-brow"><span>Simetría lateral (15%)</span><span class="gs-bn">100/100</span></div><div class="gs-track"><i class="gs-f gs-turf-f" style="--w:100%;animation-delay:.24s"></i></div></div>
+        <div class="gs-bar"><div class="gs-brow"><span>Brío / cadencia (15%)</span><span class="gs-bn">53/100</span></div><div class="gs-track"><i class="gs-f gs-mid" style="--w:53%;animation-delay:.36s"></i></div></div>
+        <div class="gs-bar"><div class="gs-brow"><span>Elevación (10%)</span><span class="gs-bn">24/100</span></div><div class="gs-track"><i class="gs-f gs-low" style="--w:24%;animation-delay:.48s"></i></div></div>
+        </div>
+        <div>
+          <div class="gs-h">Línea de tiempo de pisadas</div>
+          <div class="gs-tl">
+            <div class="base"></div>
+            <span class="gs-beat" style="left:7%;--c:#5FD08B;animation-delay:0.00s"></span><span class="gs-beat" style="left:16%;--c:#E6C572;animation-delay:0.13s"></span><span class="gs-beat" style="left:25%;--c:#3E8E6B;animation-delay:0.26s"></span><span class="gs-beat" style="left:34%;--c:#C9A24B;animation-delay:0.39s"></span><span class="gs-beat" style="left:45%;--c:#5FD08B;animation-delay:0.52s"></span><span class="gs-beat" style="left:54%;--c:#E6C572;animation-delay:0.65s"></span><span class="gs-beat" style="left:63%;--c:#3E8E6B;animation-delay:0.78s"></span><span class="gs-beat" style="left:72%;--c:#C9A24B;animation-delay:0.91s"></span><span class="gs-beat" style="left:83%;--c:#5FD08B;animation-delay:1.04s"></span><span class="gs-beat" style="left:92%;--c:#E6C572;animation-delay:1.17s"></span>
+            <div class="gs-play"></div>
+            <div class="gs-tlab">0:00</div>
+            <div class="gs-tlab r">4 tiempos · laterales</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Jump Coach spotlight -->
+  <section id="jump-coach" class="max-w-6xl mx-auto px-6 py-16 border-t border-slate-900" style="scroll-margin-top:80px">
+    <div class="grid md:grid-cols-2 gap-10 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-300 mono mb-4"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span data-i18n="jl_eyebrow"></span></div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold leading-tight" data-i18n="jl_title"></h2>
+        <p class="text-slate-300 mt-4" data-i18n="jl_lede"></p>
+        <p class="text-slate-400 mt-3 text-sm" data-i18n="jl_benefit"></p>
+        <a id="jlCta" class="inline-flex items-center gap-2 mt-6 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold" data-i18n="jl_cta"></a>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+          <div class="text-amber-300 mono text-xs mb-2">01</div>
+          <div class="font-semibold" data-i18n="jl_f1_t"></div>
+          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f1_d"></div>
+        </div>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+          <div class="text-amber-300 mono text-xs mb-2">02</div>
+          <div class="font-semibold" data-i18n="jl_f2_t"></div>
+          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f2_d"></div>
+        </div>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+          <div class="text-amber-300 mono text-xs mb-2">03</div>
+          <div class="font-semibold" data-i18n="jl_f3_t"></div>
+          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f3_d"></div>
+        </div>
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+          <div class="text-amber-300 mono text-xs mb-2">04</div>
+          <div class="font-semibold" data-i18n="jl_f4_t"></div>
+          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f4_d"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs text-slate-500 mono">
+      <span data-i18n="jl_sport1"></span><span data-i18n="jl_sport2"></span><span data-i18n="jl_sport3"></span>
+    </div>
+  </section>
+
   <!-- Animated software simulator (separator) -->
   <style>
     .sim-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
@@ -82,7 +211,7 @@
     @media (prefers-reduced-motion:reduce){.sim-path,.sim-node,.sim-halo,.sim-travel,.sim-pin,.sim-scan,.sim-rider,.sim-jt,.sim-read{animation:none!important}.sim-path{stroke-dashoffset:0}.sim-travel,.sim-pin,.sim-scan{opacity:1}}
   </style>
   <div class="sim-band reveal">
-    <div class="sim-cap"><span class="rec"></span><span data-i18n="sim_caption">Simulación · Motor de análisis en vivo</span></div>
+    <div class="sim-cap"><span class="rec"></span><span data-i18n="sim_caption">Simulación · Trayectoria y fallos del salto</span></div>
     <div class="sim-panel">
       <svg class="sim-svg" viewBox="0 0 1000 360" role="img" aria-label="Simulación del software de análisis">
         <defs>
@@ -165,44 +294,6 @@
       </svg>
     </div>
   </div>
-
-  <!-- AI Jump Coach spotlight -->
-  <section id="jump-coach" class="max-w-6xl mx-auto px-6 py-16 border-t border-slate-900" style="scroll-margin-top:80px">
-    <div class="grid md:grid-cols-2 gap-10 items-center">
-      <div>
-        <div class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-300 mono mb-4"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span data-i18n="jl_eyebrow"></span></div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold leading-tight" data-i18n="jl_title"></h2>
-        <p class="text-slate-300 mt-4" data-i18n="jl_lede"></p>
-        <p class="text-slate-400 mt-3 text-sm" data-i18n="jl_benefit"></p>
-        <a id="jlCta" class="inline-flex items-center gap-2 mt-6 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold" data-i18n="jl_cta"></a>
-      </div>
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">01</div>
-          <div class="font-semibold" data-i18n="jl_f1_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f1_d"></div>
-        </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">02</div>
-          <div class="font-semibold" data-i18n="jl_f2_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f2_d"></div>
-        </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">03</div>
-          <div class="font-semibold" data-i18n="jl_f3_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f3_d"></div>
-        </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">04</div>
-          <div class="font-semibold" data-i18n="jl_f4_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f4_d"></div>
-        </div>
-      </div>
-    </div>
-    <div class="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs text-slate-500 mono">
-      <span data-i18n="jl_sport1"></span><span data-i18n="jl_sport2"></span><span data-i18n="jl_sport3"></span>
-    </div>
-  </section>
 
   <section class="max-w-6xl mx-auto px-6 py-14 border-t border-slate-900">
     <h2 class="text-2xl font-bold text-center mb-10" data-i18n="landing_how_title"></h2>
