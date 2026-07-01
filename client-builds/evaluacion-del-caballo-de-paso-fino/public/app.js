@@ -75,7 +75,7 @@
 
   // ---- Horses ----
   function loadHorses() {
-    return fetch(API + '/horses')
+    return fetch(API + '/horses', { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (rows) {
         var sels = document.querySelectorAll('#horseSel');
@@ -102,25 +102,24 @@
       var name = (document.getElementById('hName') || {}).value;
       var breed = (document.getElementById('hBreed') || {}).value;
       if (!name || !name.trim()) { setStatus(I18N.err_need_horse); return; }
+      if (!isLoggedIn()) { goLogin(); return; }
       setStatus('…');
-      ensureToken().then(function (t) {
-        if (!t) { setStatus(I18N.err_need_token); return; }
-        fetch(API + '/horses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
-          body: JSON.stringify({ name: name.trim(), breed: (breed || '').trim() })
-        }).then(function (r) {
-          if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
-          return r.json();
-        }).then(function (row) {
-          if (!row) return;
-          setStatus('');
-          loadHorses().then(function () {
-            var sel = document.getElementById('horseSel');
-            if (sel) sel.value = row.id;
-          });
-        }).catch(function (e) { setStatus(String(e)); });
-      });
+      fetch(API + '/horses', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), breed: (breed || '').trim() })
+      }).then(function (r) {
+        if (r.status === 401) { goLogin(); return null; }
+        return r.json();
+      }).then(function (row) {
+        if (!row || row.error) { if (row && row.error) setStatus(row.error); return; }
+        setStatus('');
+        loadHorses().then(function () {
+          var sel = document.getElementById('horseSel');
+          if (sel) sel.value = row.id;
+        });
+      }).catch(function (e) { setStatus(String(e)); });
     });
   }
 
@@ -142,30 +141,33 @@
       var fileEl = document.getElementById('wav');
       var file = fileEl && fileEl.files[0];
       if (!file) { setStatus(I18N.err_need_file); return; }
+      if (!isLoggedIn()) { goLogin(); return; }
 
       setStatus(I18N.analyzing);
-      ensureToken().then(function (t) {
-        if (!t) { setStatus(I18N.err_need_token); return; }
-        var fd = new FormData();
-        fd.append('audio', file);
-        fd.append('horse_id', horseId);
-        fd.append('lang', LANG);
+      var fd = new FormData();
+      fd.append('audio', file);
+      fd.append('horse_id', horseId);
+      fd.append('lang', LANG);
 
-        fetch(API + '/evaluations', { method: 'POST', headers: { Authorization: 'Bearer ' + t }, body: fd })
-          .then(function (r) {
-            if (r.status === 415) { setStatus(I18N.err_415); return null; }
-            if (r.status === 401) { setStatus(I18N.err_need_token); return null; }
-            return r.json();
-          })
-          .then(function (res) {
-            if (!res) return;
-            setStatus('');
-            renderResult(res);
-          })
-          .catch(function (e) { setStatus(String(e)); });
-      });
+      fetch(API + '/evaluations', { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function (r) {
+          if (r.status === 415) { setStatus(I18N.err_415); return null; }
+          if (r.status === 401) { goLogin(); return null; }
+          if (r.status === 402) { setStatus(I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return null; }
+          return r.json();
+        })
+        .then(function (res) {
+          if (!res || res.error) { if (res && res.error) setStatus(res.error); return; }
+          setStatus('');
+          if (res.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.credits);
+          renderResult(res);
+        })
+        .catch(function (e) { setStatus(String(e)); });
     });
   }
+
+  function isLoggedIn() { return !!(window.ECPFAccount && window.ECPFAccount.isLoggedIn()); }
+  function goLogin() { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); }
 
   function renderResult(res) {
     var card = document.getElementById('result');
@@ -200,7 +202,7 @@
     if (!tbody) return;
     tbody.innerHTML = '';
     if (!horseId) { if (empty) empty.classList.add('hidden'); return; }
-    fetch(API + '/evaluations?horse_id=' + encodeURIComponent(horseId))
+    fetch(API + '/evaluations?horse_id=' + encodeURIComponent(horseId), { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (rows) {
         if (!rows || !rows.length) { if (empty) empty.classList.remove('hidden'); return; }
@@ -273,10 +275,18 @@
   } else {
     bindCreateHorse();
     bindAnalyze();
-    // Auto-acquire the demo session so writes "just work" — no token to paste.
-    setSessionBadge();
-    ensureToken().then(setSessionBadge);
-    var jwtEl = document.getElementById('jwt');
-    if (jwtEl) jwtEl.addEventListener('input', setSessionBadge);
+    // Account + credits chip is handled by account.js. Reflect login state in the
+    // session badge (audio analysis needs an account + 1 credit).
+    (function reflectAuth() {
+      var b = document.getElementById('sessionBadge');
+      function paint() {
+        if (!b) return;
+        if (isLoggedIn()) { b.textContent = I18N.session_ready || 'Cuenta activa · listo para evaluar'; b.className = 'text-xs text-emerald-400 mono'; }
+        else { b.textContent = I18N.session_need_login || 'Inicia sesión para evaluar (1 crédito por análisis)'; b.className = 'text-xs text-amber-400 mono'; }
+      }
+      paint();
+      // account.js loads config async; re-paint shortly after.
+      setTimeout(paint, 400); setTimeout(paint, 1200);
+    })();
   }
 })();

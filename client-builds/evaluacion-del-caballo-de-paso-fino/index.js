@@ -23,14 +23,20 @@ const path = require('path');
 
 const evaluation = require('./models/evaluation');
 const championship = require('./models/championship');
+const account = require('./models/account');
 const healthRouter = require('./routes/health');
 const sessionRouter = require('./routes/session');
 const horsesRouter = require('./routes/horses');
 const evaluationsRouter = require('./routes/evaluations');
 const championshipRouter = require('./routes/championship');
+const accountRouter = require('./routes/account');
 const pagesRouter = require('./routes/pages');
 
 const app = express();
+
+// Stripe webhook needs the RAW body for signature verification — mount it BEFORE
+// express.json so the JSON parser never touches those bytes.
+app.use('/api/v1/account/credits/webhook', express.raw({ type: '*/*' }));
 
 // Body parsing for JSON routes (horse create). Multipart uploads are handled by
 // multer inside routes/evaluations.js, so this never touches the WAV bytes.
@@ -47,6 +53,11 @@ championship.init()
   .then((s) => console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'champ_init', mode: s.mode })))
   .catch((e) => console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'champ_init_error', error: e.message })));
 
+// Accounts + credits data layer (own users/credit ledger, separate from the CRM).
+account.init()
+  .then((s) => console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'account_init', mode: s.mode })))
+  .catch((e) => console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'account_init_error', error: e.message })));
+
 // Health (public).
 app.use('/health', healthRouter);
 
@@ -56,6 +67,9 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Demo session minting (server-side token for the live POC).
 app.use('/api/v1/session', sessionRouter);
+
+// Accounts + credits (own auth system, separate from the CRM).
+app.use('/api/v1/account', accountRouter);
 
 // JWT-guarded (writes) + public-read API.
 app.use('/api/v1/horses', horsesRouter);

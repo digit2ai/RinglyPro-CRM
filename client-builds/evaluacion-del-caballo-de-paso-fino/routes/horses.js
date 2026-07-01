@@ -11,20 +11,17 @@
 const express = require('express');
 const router = express.Router();
 
-const { requireAuth, getToken, extractTenantId } = require('../lib/auth');
-const { resolveTenant } = require('../lib/tenant');
 const horse = require('../models/horse');
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../lib/auth');
+const { requireAccount, optionalAccount } = require('./account');
 
-// POST — create a horse. Write endpoint => JWT required.
-router.post('/', requireAuth, async (req, res) => {
+// POST — create a horse. Account required (no credit charged).
+router.post('/', requireAccount, async (req, res) => {
   try {
     const { name, breed } = req.body || {};
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'name is required' });
     }
-    const row = await horse.create({ tenant_id: req.tenantId, name: String(name).trim(), breed });
+    const row = await horse.create({ tenant_id: req.accountId, name: String(name).trim(), breed });
     res.status(201).json(row);
   } catch (e) {
     console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'horse_create_error', error: e.message }));
@@ -32,19 +29,10 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// GET — list horses for the tenant. Public read; if a valid JWT is present we
-// prefer its tenant, otherwise fall back to ?tenant_id / default 1.
-router.get('/', (req, res, next) => {
-  const token = getToken(req);
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const t = extractTenantId(decoded);
-      req.tenantId = t != null ? t : 1;
-      return next();
-    } catch (e) { /* fall through to public resolver */ }
-  }
-  resolveTenant(req, res, next);
+// GET — list horses for the logged-in account (own horses only).
+router.get('/', optionalAccount, (req, res, next) => {
+  req.tenantId = req.accountId != null ? req.accountId : 0;
+  next();
 }, async (req, res) => {
   try {
     const rows = await horse.listByTenant(req.tenantId);

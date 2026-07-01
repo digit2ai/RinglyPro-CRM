@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+</head>
+<body class="text-slate-100 min-h-screen flex items-center justify-center px-5 py-10">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="poc_badge"></div>
+      <h1 class="text-2xl font-bold mt-1">{{H1}}</h1>
+      <p class="text-slate-400 text-sm mt-1" data-i18n="signup_sub"></p>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <h2 class="text-lg font-semibold mb-1" data-i18n="signup_title"></h2>
+      <p class="text-xs text-slate-500 mb-4" data-i18n="signup_note"></p>
+      <label class="block text-xs text-slate-400 mb-1" data-i18n="field_name"></label>
+      <input id="nombre" type="text" autocomplete="name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-3">
+      <label class="block text-xs text-slate-400 mb-1" data-i18n="field_email"></label>
+      <input id="email" type="email" autocomplete="email" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-3">
+      <label class="block text-xs text-slate-400 mb-1" data-i18n="field_password"></label>
+      <input id="password" type="password" autocomplete="new-password" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mb-2">
+      <div id="msg" class="text-xs text-rose-400 min-h-[16px] mb-2"></div>
+      <button id="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 rounded-lg px-4 py-3 font-semibold" data-i18n="signup_btn"></button>
+      <p class="text-xs text-slate-500 mt-4 text-center"><span data-i18n="signup_has_account"></span> <a id="toLogin" class="text-indigo-300 underline" data-i18n="signup_login_link"></a></p>
+      <p class="text-xs text-slate-600 mt-4 text-center"><a href="{{BASE}}" class="underline" data-i18n="back_home"></a></p>
+    </div>
+  </div>
+  <script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";window.__LANG="{{LANG}}";</script>
+  <script>
+  (function(){
+    var I=window.__I18N||{},B=window.__BASE||'/';
+    function t(k,f){return I[k]!=null?I[k]:(f||k);}
+    document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
+    var next=new URLSearchParams(location.search).get('next')||(B+'juez');
+    document.getElementById('toLogin').href=B+'login?next='+encodeURIComponent(next);
+    function submit(){
+      var nombre=document.getElementById('nombre').value.trim();
+      var email=document.getElementById('email').value.trim();
+      var password=document.getElementById('password').value;
+      var msg=document.getElementById('msg'); msg.textContent='';
+      if(!email||!password){msg.textContent=t('err_fields','Completa email y contraseña.');return;}
+      if(password.length<6){msg.textContent=t('err_pass_short','La contraseña debe tener al menos 6 caracteres.');return;}
+      var b=document.getElementById('submit'); b.disabled=true; b.textContent=t('processing','Procesando…');
+      fetch(B+'api/v1/account/register',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:nombre,email:email,password:password})})
+        .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+        .then(function(o){ if(!o.ok)throw new Error(o.j.error||'error'); location.href=next; })
+        .catch(function(e){ msg.textContent=String(e.message||e); b.disabled=false; b.textContent=t('signup_btn','Crear cuenta'); });
+    }
+    document.getElementById('submit').addEventListener('click',submit);
+    document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
+  })();
+  </script>
+</body>
+</html>

@@ -21,6 +21,8 @@ const PUB = path.join(__dirname, '..', 'public');
 const INDEX_TPL = fs.readFileSync(path.join(PUB, 'index.html'), 'utf8');
 const DASH_TPL = fs.readFileSync(path.join(PUB, 'dashboard.html'), 'utf8');
 const JUEZ_TPL = fs.readFileSync(path.join(PUB, 'juez.html'), 'utf8');
+const LOGIN_TPL = fs.readFileSync(path.join(PUB, 'login.html'), 'utf8');
+const SIGNUP_TPL = fs.readFileSync(path.join(PUB, 'signup.html'), 'utf8');
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -52,6 +54,14 @@ router.get('/dashboard', (req, res) => {
 // /juez — the championship judge (video + audio -> modality + score + ranking).
 router.get('/juez', (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8').send(render(JUEZ_TPL, req));
+});
+
+// Account pages (own auth system): login + signup.
+router.get('/login', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8').send(render(LOGIN_TPL, req));
+});
+router.get('/signup', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8').send(render(SIGNUP_TPL, req));
 });
 
 // /privacidad — Ley 1581 de 2012 statement: no personal data is processed.

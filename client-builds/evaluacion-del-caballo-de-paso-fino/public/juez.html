@@ -30,7 +30,8 @@
         <h1 class="text-2xl sm:text-3xl font-bold mt-1" data-i18n="juez_title"></h1>
         <p class="text-slate-400 mt-2 text-sm" data-i18n="juez_sub"></p>
       </div>
-      <div class="text-xs text-slate-500 flex flex-col gap-1 items-end">
+      <div class="text-xs text-slate-500 flex flex-col gap-2 items-end">
+        <div id="creditChip"></div>
         <a id="langToggle" class="underline hover:text-indigo-300 cursor-pointer">EN / ES</a>
         <a href="{{BASE}}" class="underline hover:text-indigo-300" data-i18n="nav_audio"></a>
         <a href="{{BASE}}dashboard" class="underline hover:text-indigo-300" data-i18n="nav_historial"></a>
@@ -147,6 +148,7 @@
   </div>
 
   <script>window.__I18N = {{DICT_JSON}}; window.__BASE = "{{BASE}}"; window.__LANG = "{{LANG}}"; window.__PAGE = "juez";</script>
+  <script src="{{BASE}}account.js"></script>
   <script src="{{BASE}}juez.js"></script>
 </body>
 </html>

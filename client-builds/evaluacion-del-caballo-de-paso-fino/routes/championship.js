@@ -23,21 +23,28 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 
-const { requireAuth } = require('../lib/auth');
-const { resolveTenant } = require('../lib/tenant');
 const store = require('../models/championship');
 const gait = require('../lib/gaitAnalyzer');
 const synth = require('../lib/synth');
 const { runPipeline, rankingCategoria } = require('../lib/pipeline');
 const dictamen = require('../lib/dictamen');
 const neural = require('../lib/neuralEngine');
+const account = require('../models/account');
+const { requireAccount, optionalAccount } = require('./account');
+
+// Tenant = account id when logged in, else the shared DEMO tenant (0). Keeps the
+// free simulation flow open while isolating each real user's shows/results.
+const DEMO_TENANT = 0;
+function withTenant(req, res, next) {
+  optionalAccount(req, res, function () { req.tenantId = req.accountId != null ? req.accountId : DEMO_TENANT; next(); });
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 80 * 1024 * 1024 } });
 
 function err(res, code, msg) { return res.status(code).json({ error: msg }); }
 
 // ---- Demo setup: one click -> full event/category/horse/inscription ----------
-router.post('/demo-setup', requireAuth, async (req, res) => {
+router.post('/demo-setup', withTenant, async (req, res) => {
   try {
     const { repo } = store;
     const prop = await repo.create('propietarios', { nombre: 'Criadero Demo', tenant_id: req.tenantId });
@@ -53,7 +60,7 @@ router.post('/demo-setup', requireAuth, async (req, res) => {
 });
 
 // ---- Upload a session + run the full judge pipeline -------------------------
-router.post('/sessions', requireAuth, upload.any(), async (req, res) => {
+router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
   try {
     const body = req.body || {};
     const inscripcion_id = parseInt(body.inscripcion_id, 10);
@@ -70,6 +77,9 @@ router.post('/sessions', requireAuth, upload.any(), async (req, res) => {
       try { frames = JSON.parse(body.pose_frames); } catch (e) { return err(res, 400, 'pose_frames must be valid JSON'); }
     }
     if (!Array.isArray(frames)) frames = [];
+    // ¿El cliente envió datos REALES (pose del modelo o media subida)? Eso cobra
+    // 1 crédito y exige cuenta. La simulación (demo_modalidad) es GRATIS.
+    const hadClientFrames = frames.length > 0;
 
     // Audio (opcional): WAV -> onsets via JS puro.
     let audioOnsets = [];
@@ -113,6 +123,20 @@ router.post('/sessions', requireAuth, upload.any(), async (req, res) => {
     if (!durSec && frames.length) durSec = (frames[frames.length - 1].timestamp_ms - frames[0].timestamp_ms) / 1000;
     if (!durSec && audioOnsets.length) durSec = audioOnsets[audioOnsets.length - 1] - audioOnsets[0];
 
+    // ---- Cobro de créditos: análisis REAL = cuenta + 1 crédito ---------------
+    const isRealAnalysis = !!(hadClientFrames || audioFile || videoFile);
+    let creditDebited = false;
+    if (isRealAnalysis) {
+      if (req.accountId == null) return err(res, 401, 'Inicia sesión y ten créditos para un análisis real. La simulación es gratis.');
+      const debit = await account.debitOne(req.accountId, { analysis_type: 'video', description: 'Juez de campeonato (video)' });
+      if (!debit.ok) return res.status(402).json({ error: 'Sin créditos. Recarga tu cuenta para continuar.', code: 'NO_CREDITS', credits: debit.balance });
+      creditDebited = true;
+      req._debitedAccount = req.accountId;
+      req.tenantId = req.accountId;
+    } else {
+      req.tenantId = req.accountId != null ? req.accountId : DEMO_TENANT; // demo gratis
+    }
+
     const sesion = await store.repo.create('sesiones', {
       inscripcion_id, fecha_hora_inicio: new Date(), duracion_seg: durSec || null, superficie,
       video_raw_url, fps: parseFloat(body.fps) || (frames.length && durSec ? frames.length / durSec : null),
@@ -122,16 +146,20 @@ router.post('/sessions', requireAuth, upload.any(), async (req, res) => {
     });
 
     const fallo = await runPipeline(store, { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec, lang: body.lang || 'es' });
-    console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_judged', sesion_id: sesion.id, modalidad: fallo.clasificacion.modalidad_detectada, puntaje: fallo.puntaje_total }));
+    fallo.credits = req.accountId != null ? await account.getBalance(req.accountId) : null;
+    fallo.charged = creditDebited;
+    console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_judged', sesion_id: sesion.id, modalidad: fallo.clasificacion.modalidad_detectada, puntaje: fallo.puntaje_total, charged: creditDebited }));
     res.status(201).json(fallo);
   } catch (e) {
+    // Reembolsa el crédito si ya se cobró y el análisis falló.
+    if (req._debitedAccount != null) { try { await account.refundOne(req._debitedAccount, { description: 'refund: análisis falló' }); } catch (_) {} }
     console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_pipeline_error', error: e.message, stack: e.stack }));
     err(res, 500, 'pipeline failed: ' + e.message);
   }
 });
 
 // ---- Full judge result for one session (public read) ------------------------
-router.get('/sessions/:id', resolveTenant, async (req, res) => {
+router.get('/sessions/:id', withTenant, async (req, res) => {
   try {
     const sesion_id = parseInt(req.params.id, 10);
     const sesion = await store.repo.find('sesiones', { id: sesion_id });
@@ -175,7 +203,7 @@ router.get('/sessions/:id', resolveTenant, async (req, res) => {
 });
 
 // ---- Neural Intelligence: findings list (public read) ----------------------
-router.get('/neural/findings', resolveTenant, async (req, res) => {
+router.get('/neural/findings', withTenant, async (req, res) => {
   try {
     const where = { tenant_id: req.tenantId };
     if (req.query.status) where.status = req.query.status; else where.status = 'active';
@@ -187,7 +215,7 @@ router.get('/neural/findings', resolveTenant, async (req, res) => {
 });
 
 // ---- Neural dashboard: counts by impact + active findings (public) ----------
-router.get('/neural/dashboard', resolveTenant, async (req, res) => {
+router.get('/neural/dashboard', withTenant, async (req, res) => {
   try {
     const where = { tenant_id: req.tenantId, status: 'active' };
     if (req.query.categoria_id) where.categoria_id = parseInt(req.query.categoria_id, 10);
@@ -204,7 +232,7 @@ router.get('/neural/dashboard', resolveTenant, async (req, res) => {
 });
 
 // ---- Neural: update finding status (JWT write) -----------------------------
-router.patch('/neural/findings/:id', requireAuth, async (req, res) => {
+router.patch('/neural/findings/:id', requireAccount, async (req, res) => {
   try {
     const status = (req.body && req.body.status) || '';
     if (!['active', 'acknowledged', 'resolved', 'dismissed'].includes(status)) {
@@ -217,7 +245,7 @@ router.patch('/neural/findings/:id', requireAuth, async (req, res) => {
 });
 
 // ---- Ranking by category (public) ------------------------------------------
-router.get('/results', resolveTenant, async (req, res) => {
+router.get('/results', withTenant, async (req, res) => {
   try {
     const categoria_id = parseInt(req.query.categoria_id, 10);
     if (!categoria_id) return err(res, 400, 'categoria_id is required');
@@ -227,14 +255,14 @@ router.get('/results', resolveTenant, async (req, res) => {
 });
 
 // ---- Selectors (public reads) ----------------------------------------------
-router.get('/eventos', resolveTenant, async (req, res) => {
+router.get('/eventos', withTenant, async (req, res) => {
   res.json(await store.repo.findAll('eventos', { tenant_id: req.tenantId }, ['id', 'DESC']));
 });
-router.get('/categorias', resolveTenant, async (req, res) => {
+router.get('/categorias', withTenant, async (req, res) => {
   const where = {}; if (req.query.evento_id) where.evento_id = parseInt(req.query.evento_id, 10);
   res.json(await store.repo.findAll('categorias', where, ['id', 'DESC']));
 });
-router.get('/inscripciones', resolveTenant, async (req, res) => {
+router.get('/inscripciones', withTenant, async (req, res) => {
   const where = {}; if (req.query.categoria_id) where.categoria_id = parseInt(req.query.categoria_id, 10);
   const ins = await store.repo.findAll('inscripciones', where, ['id', 'ASC']);
   for (const i of ins) { const c = await store.repo.find('caballos', { id: i.caballo_id }); i.caballo = c ? c.nombre : null; }
@@ -242,19 +270,19 @@ router.get('/inscripciones', resolveTenant, async (req, res) => {
 });
 
 // ---- Manual create (JWT writes) --------------------------------------------
-router.post('/eventos', requireAuth, async (req, res) => {
+router.post('/eventos', requireAccount, async (req, res) => {
   const b = req.body || {}; if (!b.nombre) return err(res, 400, 'nombre required');
   res.status(201).json(await store.repo.create('eventos', { nombre: b.nombre, grado: b.grado || 'A', anio: b.anio || 2026, sede: b.sede || null, tenant_id: req.tenantId }));
 });
-router.post('/categorias', requireAuth, async (req, res) => {
+router.post('/categorias', requireAccount, async (req, res) => {
   const b = req.body || {}; if (!b.evento_id || !b.nombre || !b.modalidad) return err(res, 400, 'evento_id, nombre, modalidad required');
   res.status(201).json(await store.repo.create('categorias', { evento_id: b.evento_id, nombre: b.nombre, modalidad: b.modalidad, tenant_id: req.tenantId }));
 });
-router.post('/caballos', requireAuth, async (req, res) => {
+router.post('/caballos', requireAccount, async (req, res) => {
   const b = req.body || {}; if (!b.nombre || !b.sexo) return err(res, 400, 'nombre, sexo required');
   res.status(201).json(await store.repo.create('caballos', { nombre: b.nombre, sexo: b.sexo, capa: b.capa || null, criadero: b.criadero || null, tenant_id: req.tenantId }));
 });
-router.post('/inscripciones', requireAuth, async (req, res) => {
+router.post('/inscripciones', requireAccount, async (req, res) => {
   const b = req.body || {}; if (!b.caballo_id || !b.categoria_id) return err(res, 400, 'caballo_id, categoria_id required');
   res.status(201).json(await store.repo.create('inscripciones', { caballo_id: b.caballo_id, categoria_id: b.categoria_id, numero_competidor: b.numero_competidor || null, jinete: b.jinete || null, tenant_id: req.tenantId }));
 });

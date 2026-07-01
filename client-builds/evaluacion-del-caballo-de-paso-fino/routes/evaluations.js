@@ -15,14 +15,13 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 
-const { requireAuth, getToken, extractTenantId, JWT_SECRET } = require('../lib/auth');
-const { resolveTenant } = require('../lib/tenant');
-const jwt = require('jsonwebtoken');
 const evaluation = require('../models/evaluation');
 const horse = require('../models/horse');
 const gait = require('../lib/gaitAnalyzer');
 const { diagnose } = require('../lib/diagnosis');
 const { pickLang } = require('../lib/i18n');
+const account = require('../models/account');
+const { requireAccount, optionalAccount } = require('./account');
 
 // In-memory upload — we only need the bytes long enough to run the analyzer.
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -38,8 +37,9 @@ function looksLikeWav(file) {
   return false;
 }
 
-// POST — write endpoint => JWT required.
-router.post('/', requireAuth, upload.any(), async (req, res) => {
+// POST — real AUDIO analysis: account required + costs 1 credit (audio).
+router.post('/', requireAccount, upload.any(), async (req, res) => {
+  req.tenantId = req.accountId;
   const file = (req.files && req.files[0]) || null;
   const horse_id = (req.body && req.body.horse_id) || null;
   const lang = pickLang(req.body && req.body.lang);
@@ -60,11 +60,16 @@ router.post('/', requireAuth, upload.any(), async (req, res) => {
     return res.status(404).json({ error: 'horse not found for this tenant' });
   }
 
+  // Charge 1 credit (audio analysis) BEFORE running. Refund on failure.
+  const debit = await account.debitOne(req.accountId, { analysis_type: 'audio', description: 'Evaluación por audio' });
+  if (!debit.ok) return res.status(402).json({ error: 'Sin créditos. Recarga tu cuenta para continuar.', code: 'NO_CREDITS', credits: debit.balance });
+
   // Analyze. A decode failure means the bytes are not a usable WAV -> 415.
   let metrics;
   try {
     metrics = gait.analyze(file.buffer);
   } catch (e) {
+    await account.refundOne(req.accountId, { description: 'refund: audio no válido' });
     if (e instanceof gait.UnsupportedWavError) {
       return res.status(415).json({ error: 'Unsupported media type: ' + e.message });
     }
@@ -95,27 +100,21 @@ router.post('/', requireAuth, upload.any(), async (req, res) => {
       verdict: row.verdict,
       recommendation: row.recommendation,
       confidence: dx.confidence,
-      created_at: row.created_at
+      created_at: row.created_at,
+      credits: debit.balance,
+      charged: true
     });
   } catch (e) {
+    await account.refundOne(req.accountId, { description: 'refund: fallo al guardar' });
     console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'evaluation_persist_error', error: e.message }));
     res.status(500).json({ error: 'failed to persist evaluation' });
   }
 });
 
-// GET — tenant-scoped history for one horse, newest first. Public read OK; use
-// the JWT tenant if present, else ?tenant_id / default 1.
-router.get('/', (req, res, next) => {
-  const token = getToken(req);
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const t = extractTenantId(decoded);
-      req.tenantId = t != null ? t : 1;
-      return next();
-    } catch (e) { /* fall through */ }
-  }
-  resolveTenant(req, res, next);
+// GET — history for one horse, newest first. Account-scoped (own horses only).
+router.get('/', optionalAccount, (req, res, next) => {
+  req.tenantId = req.accountId != null ? req.accountId : 0;
+  next();
 }, async (req, res) => {
   const horse_id = req.query.horse_id;
   if (!horse_id) return res.status(400).json({ error: 'horse_id query param is required' });

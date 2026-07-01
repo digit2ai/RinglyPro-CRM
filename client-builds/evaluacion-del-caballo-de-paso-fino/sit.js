@@ -15,6 +15,7 @@
 'use strict';
 
 process.env.ECPF_FORCE_MEMORY = process.env.ECPF_FORCE_MEMORY || '1';
+process.env.ECPF_TEST_CREDITS = process.env.ECPF_TEST_CREDITS || '1'; // enables /credits/test-grant for SIT
 
 const jwt = require('jsonwebtoken');
 const http = require('http');
@@ -135,9 +136,27 @@ async function reqChampSession(base, { token, inscripcion_id, superficie, frames
 }
 
 // ---- Suite -----------------------------------------------------------------
+// Register a fresh account and return its bearer token. Unique email per run.
+async function registerAccount(base, tag) {
+  const email = 'sit+' + tag + '.' + TENANT_A + '@digit2ai.com';
+  const r = await reqJson(base, 'POST', '/api/v1/account/register', { body: { email, password: 'sitpass123', nombre: 'SIT ' + tag } });
+  // If already registered (remote re-run), log in instead.
+  if (r.status === 409) {
+    const l = await reqJson(base, 'POST', '/api/v1/account/login', { body: { email, password: 'sitpass123' } });
+    return l.json && l.json.token;
+  }
+  return r.json && r.json.token;
+}
+async function grantCredits(base, token, n) {
+  return reqJson(base, 'POST', '/api/v1/account/credits/test-grant', { token, body: { credits: n } });
+}
+
 async function run(base) {
-  const A = tokenFor(TENANT_A);
-  const B = tokenFor(TENANT_B);
+  // Two OWN accounts (separate from the CRM). A is funded; B is a second tenant.
+  const A = await registerAccount(base, 'a.' + Date.now());
+  const B = await registerAccount(base, 'b.' + Date.now());
+  await grantCredits(base, A, 200);
+  await grantCredits(base, B, 50);
 
   // #1 health
   {
@@ -156,8 +175,8 @@ async function run(base) {
   {
     const r = await reqJson(base, 'POST', '/api/v1/horses', { token: A, body: { name: 'Relámpago', breed: 'Paso Fino Colombiano' } });
     horseA = r.json;
-    check('POST /horses with JWT -> 201 + tenant_id', r.status === 201 && r.json && r.json.id != null
-      && r.json.tenant_id === TENANT_A, `status=${r.status} body=${r.text.slice(0, 160)}`);
+    check('POST /horses with account -> 201 + tenant_id', r.status === 201 && r.json && r.json.id != null
+      && Number.isInteger(r.json.tenant_id) && r.json.tenant_id > 0, `status=${r.status} body=${r.text.slice(0, 160)}`);
   }
 
   // #3 list filtered by tenant
@@ -230,16 +249,64 @@ async function run(base) {
     check('GET /privacidad -> 200 + Ley 1581', r.status === 200 && /1581/.test(r.text), `status=${r.status}`);
   }
 
-  // demo session: server-minted token drives a write with no user-pasted JWT.
+  // ---- Cuentas + créditos (sistema propio) ---------------------------------
   {
-    const sess = await reqJson(base, 'GET', '/api/v1/session/demo');
-    const tok = sess.json && sess.json.token;
-    const wrote = tok
-      ? await reqJson(base, 'POST', '/api/v1/horses', { token: tok, body: { name: 'Demo', breed: 'POC' } })
-      : { status: 0 };
-    check('demo session mints a token + drives a write', sess.status === 200 && !!tok
-      && sess.json.tenant_id === 1 && wrote.status === 201,
-      `session=${sess.status} write=${wrote.status}`);
+    // Registro -> saldo inicial (bono; 0 por defecto).
+    const email = 'sit+credits.' + Date.now() + '@digit2ai.com';
+    const reg = await reqJson(base, 'POST', '/api/v1/account/register', { body: { email, password: 'sitpass123', nombre: 'Créditos' } });
+    const tok = reg.json && reg.json.token;
+    check('POST /account/register -> 201 + token + credits', reg.status === 201 && !!tok && reg.json.user && reg.json.user.credits === 0,
+      `status=${reg.status} credits=${reg.json && reg.json.user && reg.json.user.credits}`);
+
+    // /me refleja la cuenta.
+    const me = await reqJson(base, 'GET', '/api/v1/account/me', { token: tok });
+    check('GET /account/me -> account + 0 credits', me.status === 200 && me.json && me.json.email === email && me.json.credits === 0, `status=${me.status}`);
+
+    // Duplicado -> 409.
+    const dup = await reqJson(base, 'POST', '/api/v1/account/register', { body: { email, password: 'sitpass123' } });
+    check('register duplicate email -> 409', dup.status === 409, `status=${dup.status}`);
+
+    // Login válido / inválido.
+    const badLogin = await reqJson(base, 'POST', '/api/v1/account/login', { body: { email, password: 'wrong' } });
+    check('login wrong password -> 401', badLogin.status === 401, `status=${badLogin.status}`);
+    const okLogin = await reqJson(base, 'POST', '/api/v1/account/login', { body: { email, password: 'sitpass123' } });
+    check('login valid -> 200 + token', okLogin.status === 200 && okLogin.json && !!okLogin.json.token, `status=${okLogin.status}`);
+
+    // Paquetes de recarga: 10,20,40,60,80,100 con créditos 1:1.
+    const pk = await reqJson(base, 'GET', '/api/v1/account/credits/packages');
+    const amounts = (pk.json && pk.json.packages || []).map((p) => p.amount).join(',');
+    const oneToOne = (pk.json && pk.json.packages || []).every((p) => p.credits === p.amount);
+    check('GET /credits/packages -> [10,20,40,60,80,100] @ 1:1', pk.status === 200 && amounts === '10,20,40,60,80,100' && oneToOne, `amounts=${amounts}`);
+
+    // Análisis REAL sin créditos -> 402.
+    const setup = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { body: {} });
+    const ins = setup.json && setup.json.inscripcion;
+    const frames = synth.syntheticFrames('paso_fino', { ciclos: 6 });
+    const noCred = await reqChampSession(base, { token: tok, inscripcion_id: ins.id, superficie: 'tablado', frames });
+    check('real analysis with 0 credits -> 402 NO_CREDITS', noCred.status === 402 && noCred.json && noCred.json.code === 'NO_CREDITS', `status=${noCred.status}`);
+
+    // Concede 3 créditos; análisis real cobra 1 -> saldo 2.
+    await grantCredits(base, tok, 3);
+    const paid = await reqChampSession(base, { token: tok, inscripcion_id: ins.id, superficie: 'tablado', frames });
+    check('real analysis debits 1 credit -> charged + credits 2', paid.status === 201 && paid.json && paid.json.charged === true && paid.json.credits === 2,
+      `status=${paid.status} charged=${paid.json && paid.json.charged} credits=${paid.json && paid.json.credits}`);
+
+    // Simulación (demo_modalidad) es GRATIS -> no cobra.
+    const fd = new FormData();
+    fd.append('inscripcion_id', String(ins.id));
+    fd.append('demo_modalidad', 'paso_fino');
+    const dresp = await fetch(base + '/api/v1/champ/sessions', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fd });
+    const dj = await dresp.json().catch(() => null);
+    check('simulation is FREE -> not charged, credits unchanged (2)', dresp.status === 201 && dj && dj.charged === false && dj.credits === 2,
+      `status=${dresp.status} charged=${dj && dj.charged} credits=${dj && dj.credits}`);
+
+    // Balance endpoint.
+    const bal = await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok });
+    check('GET /credits/balance -> 2', bal.status === 200 && bal.json && bal.json.credits === 2, `credits=${bal.json && bal.json.credits}`);
+
+    // Logout.
+    const lo = await reqJson(base, 'POST', '/api/v1/account/logout', { token: tok });
+    check('POST /account/logout -> ok', lo.status === 200 && lo.json && lo.json.ok === true, `status=${lo.status}`);
   }
 
   // ---- Clasificador (sección 4.5): tests deterministas sobre pisadas sintéticas

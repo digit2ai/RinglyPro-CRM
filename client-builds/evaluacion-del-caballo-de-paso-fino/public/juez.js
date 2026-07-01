@@ -39,19 +39,19 @@
 
   // ---- Selectores ----
   function loadEventos() {
-    return fetch(CHAMP + '/eventos').then(function (r) { return r.json(); }).then(function (rows) {
+    return fetch(CHAMP + '/eventos', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
       fillSelect('eventoSel', rows, 'sel_evento', function (e) { return e.nombre + ' (' + (e.anio || '') + ')'; });
       return rows;
     }).catch(function () { return []; });
   }
   function loadCategorias(evento_id) {
-    return fetch(CHAMP + '/categorias?evento_id=' + evento_id).then(function (r) { return r.json(); }).then(function (rows) {
+    return fetch(CHAMP + '/categorias?evento_id=' + evento_id, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
       fillSelect('categoriaSel', rows, 'sel_categoria', function (c) { return c.nombre + ' · ' + modLabel(c.modalidad); });
       return rows;
     }).catch(function () { return []; });
   }
   function loadInscripciones(categoria_id) {
-    return fetch(CHAMP + '/inscripciones?categoria_id=' + categoria_id).then(function (r) { return r.json(); }).then(function (rows) {
+    return fetch(CHAMP + '/inscripciones?categoria_id=' + categoria_id, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
       fillSelect('inscripcionSel', rows, 'sel_competidor', function (i) { return '#' + (i.numero_competidor || '?') + ' · ' + (i.caballo || ''); });
       return rows;
     }).catch(function () { return []; });
@@ -67,9 +67,8 @@
     $('eventoSel').addEventListener('change', function () { if (this.value) loadCategorias(this.value); });
     $('categoriaSel').addEventListener('change', function () { if (this.value) loadInscripciones(this.value); });
     $('demoSetup').addEventListener('click', function () {
-      ensureToken().then(function (t) {
-        if (!t) return;
-        fetch(CHAMP + '/demo-setup', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t }, body: '{}' })
+      {
+        fetch(CHAMP + '/demo-setup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
           .then(function (r) { return r.json(); })
           .then(function (d) {
             loadEventos().then(function () {
@@ -82,7 +81,7 @@
             // pre-seleccionar la modalidad de la categoría como simulación
             $('demoModSel').value = d.categoria.modalidad === 'trote_galope' ? 'trote' : d.categoria.modalidad;
           });
-      });
+      }
     });
   }
 
@@ -100,31 +99,42 @@
     $('evaluar').addEventListener('click', function () {
       var inscripcion_id = $('inscripcionSel').value;
       if (!inscripcion_id) { progress(0, I18N.err_need_inscripcion); $('progressWrap').classList.remove('hidden'); return; }
+      var videoFile = $('video').files[0];
+      var audioFile = $('audio').files[0];
+      var demoMod = $('demoModSel').value;
+      // Análisis REAL = se subió un AUDIO de la pasada (1 crédito, requiere cuenta).
+      // El video es solo para el reproductor. Sin audio = simulación GRATIS.
+      var isReal = !!audioFile;
+      if (isReal && (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn())) {
+        location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname);
+        return;
+      }
       var btn = this; btn.disabled = true;
       fakeProgress();
-      ensureToken().then(function (t) {
+      {
         var fd = new FormData();
         fd.append('inscripcion_id', inscripcion_id);
         fd.append('superficie', $('superficieSel').value);
-        var demoMod = $('demoModSel').value;
-        var videoFile = $('video').files[0];
-        var audioFile = $('audio').files[0];
-        // Sin pose equina en navegador: simular modalidad (la elegida, o la de la categoría).
-        if (!demoMod) demoMod = 'paso_fino';
-        fd.append('demo_modalidad', demoMod);
-        if (videoFile) fd.append('video', videoFile);
-        if (audioFile) fd.append('audio', audioFile);
-        fetch(CHAMP + '/sessions', { method: 'POST', headers: { Authorization: 'Bearer ' + t }, body: fd })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        if (isReal) {
+          fd.append('audio', audioFile);
+          if (videoFile) fd.append('video', videoFile);
+        } else {
+          fd.append('demo_modalidad', demoMod || 'paso_fino'); // simulación gratis
+        }
+        fetch(CHAMP + '/sessions', { method: 'POST', credentials: 'same-origin', body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
           .then(function (res) {
             stopProgress(true);
             btn.disabled = false;
+            if (res.status === 401) { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); return; }
+            if (res.status === 402) { progress(0, I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return; }
             if (!res.ok) { progress(0, (res.j && res.j.error) || 'error'); return; }
             setTimeout(function () { $('progressWrap').classList.add('hidden'); }, 600);
+            if (res.j.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.j.credits);
             renderFallo(res.j, videoFile);
           })
           .catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
-      });
+      }
     });
   }
 
@@ -256,7 +266,6 @@
 
   // ---- Boot ----
   applyI18n(); langToggle(); setBadge();
-  ensureToken().then(setBadge);
   loadEventos();
   bindSelectors();
   bindEvaluar();
