@@ -15,9 +15,17 @@
 
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../lib/auth');
+const jwtLib = require('jsonwebtoken');
+const { getToken } = require('../lib/auth');
 const store = require('../models/analysis');
 const { analyze } = require('../lib/faultEngine');
+
+// Unified credits: this app now bills against the Evaluación del Caballo de Paso
+// Fino account system (same Node process + DB). A rider-pose analysis costs 1
+// credit, charged to the horse account. The token arrives via ?token= (the panel
+// mints a short-lived embed token) or Authorization: Bearer.
+const horseAccount = require('../../evaluacion-del-caballo-de-paso-fino/models/account');
+const ECPF_SECRET = process.env.ECPF_JWT_SECRET || process.env.JWT_SECRET || 'ecpf-dev-secret';
 
 function maskEmail(e) {
   const s = String(e || '');
@@ -26,8 +34,23 @@ function maskEmail(e) {
   return s[0] + '***' + s.slice(at);
 }
 
-// Every endpoint requires a valid CRM JWT.
-router.use(requireAuth);
+// Identify the horse account from the token (no charge here). Sets req.ecpfUser
+// and req.tenantId so analyses are scoped to that account.
+async function requireHorseAccount(req, res, next) {
+  const token = getToken(req);
+  if (!token) return res.status(401).json({ error: 'Inicia sesión en el panel para analizar.', code: 'NO_ACCOUNT' });
+  let dec;
+  try { dec = jwtLib.verify(token, ECPF_SECRET); } catch (e) { return res.status(401).json({ error: 'Sesión inválida o expirada.', code: 'NO_ACCOUNT' }); }
+  const uid = dec.uid != null ? dec.uid : (dec.user_id != null ? dec.user_id : dec.id);
+  if (uid == null) return res.status(401).json({ error: 'Token no pertenece a una cuenta válida.', code: 'NO_ACCOUNT' });
+  let u = null;
+  try { u = await horseAccount.findById(uid); } catch (e) { /* fallthrough */ }
+  if (!u) return res.status(401).json({ error: 'Cuenta no encontrada.', code: 'NO_ACCOUNT' });
+  req.ecpfUser = u; req.tenantId = u.id; req.jwt = dec;
+  next();
+}
+
+router.use(requireHorseAccount);
 
 // POST /  -> analyze + persist
 router.post('/', async (req, res) => {
@@ -40,23 +63,34 @@ router.post('/', async (req, res) => {
     if (frames.length > 5000) {
       return res.status(422).json({ error: 'too many frames (max 5000)' });
     }
-    const result = analyze(frames);
-    const safeName = typeof filename === 'string' ? filename.slice(0, 255) : null;
-    const row = await store.create({
-      tenant_id: req.tenantId,
-      filename: safeName,
-      duration_sec: typeof durationSec === 'number' ? durationSec : null,
-      frame_count: result.frameCount,
-      apex_sec: result.apexSec,
-      faults: result.faults,
-      lang: lang === 'en' ? 'en' : 'es'
-    });
+
+    // Charge 1 credit (rider-pose analysis) to the horse account. Refund on failure.
+    const debit = await horseAccount.debitOne(req.ecpfUser.id, { analysis_type: 'jump', description: 'Analizador de Postura del Jinete' });
+    if (!debit.ok) return res.status(402).json({ error: 'Sin créditos. Recarga tu cuenta para continuar.', code: 'NO_CREDITS', credits: debit.balance });
+
+    let row;
+    try {
+      const result = analyze(frames);
+      const safeName = typeof filename === 'string' ? filename.slice(0, 255) : null;
+      row = await store.create({
+        tenant_id: req.tenantId,
+        filename: safeName,
+        duration_sec: typeof durationSec === 'number' ? durationSec : null,
+        frame_count: result.frameCount,
+        apex_sec: result.apexSec,
+        faults: result.faults,
+        lang: lang === 'en' ? 'en' : 'es'
+      });
+    } catch (inner) {
+      await horseAccount.refundOne(req.ecpfUser.id, { description: 'refund: análisis de postura falló' });
+      throw inner;
+    }
     console.log(JSON.stringify({
       svc: 'ai-jump-coach', event: 'analysis_created',
       tenant: req.tenantId, user: maskEmail(req.jwt && req.jwt.email),
-      id: row.id, frames: result.frameCount, faults: result.faults.length
+      id: row.id, frames: row.frame_count, faults: (row.faults || []).length, credits: debit.balance
     }));
-    return res.status(201).json(row);
+    return res.status(201).json(Object.assign({}, row, { credits: debit.balance, charged: true }));
   } catch (e) {
     console.error(JSON.stringify({ svc: 'ai-jump-coach', event: 'analysis_error', error: e.message }));
     return res.status(500).json({ error: 'analysis failed' });

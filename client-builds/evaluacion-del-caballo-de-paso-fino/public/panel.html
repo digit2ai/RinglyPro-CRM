@@ -98,7 +98,7 @@
 
     var TOOLS={
       juez:{src:'juez',title:'nav_juez'},
-      jump:{abs:'https://aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer/',title:'nav_jump'},
+      jump:{abs:'https://aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer/',title:'nav_jump',needsToken:true},
       audio:{src:'',title:'nav_audio'},
       ranking:{src:'dashboard',title:'nav_historial'}
     };
@@ -111,9 +111,19 @@
       if(view==='inicio'){ viewInicio.classList.remove('hidden'); frame.classList.add('hidden'); title.textContent=t('nav_inicio','Inicio'); setActive('inicio'); refreshOverview(); return; }
       var tl=TOOLS[view]; if(!tl) return;
       viewInicio.classList.add('hidden'); frame.classList.remove('hidden');
-      var src = tl.abs ? tl.abs : (B + tl.src);
-      frame.src = src + (src.indexOf('?')>-1?'&':'?') + 'embed=1&lang=' + L;
       title.textContent=t(tl.title,view); setActive(view);
+      var src = tl.abs ? tl.abs : (B + tl.src);
+      var base = src + (src.indexOf('?')>-1?'&':'?') + 'embed=1&lang=' + L;
+      if (tl.needsToken) {
+        // Sibling app on another origin: hand it a short-lived account token so
+        // it can bill credits against this account.
+        fetch(B+'api/v1/account/embed-token',{credentials:'same-origin'})
+          .then(function(r){return r.json();})
+          .then(function(j){ frame.src = base + (j && j.token ? ('&token='+encodeURIComponent(j.token)) : ''); })
+          .catch(function(){ frame.src = base; });
+      } else {
+        frame.src = base;
+      }
     }
     document.querySelectorAll('.navitem[data-view]').forEach(function(n){ n.addEventListener('click',function(){ show(n.getAttribute('data-view')); closeSidebar(); }); });
     document.querySelectorAll('[data-go]').forEach(function(c){ c.addEventListener('click',function(){ show(c.getAttribute('data-go')); }); });
@@ -137,6 +147,13 @@
       }).catch(function(){});
     }
     window.__onCreditsChanged=function(c){ var o=document.getElementById('ovCredits'); if(o)o.textContent=c; };
+
+    // Embedded sibling apps (Jump Coach) post credit updates / recharge requests.
+    window.addEventListener('message', function(ev){
+      var d = ev.data || {};
+      if (d.type === 'ecpf-credits' && window.ECPFAccount) { window.ECPFAccount.setCount(d.credits); var o=document.getElementById('ovCredits'); if(o)o.textContent=d.credits; }
+      if (d.type === 'ecpf-recharge' && window.ECPFAccount) { window.ECPFAccount.openRecharge(); }
+    });
 
     // Gate: require login.
     fetch(B+'api/v1/account/config',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){

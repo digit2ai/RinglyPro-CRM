@@ -15,19 +15,24 @@
 'use strict';
 
 process.env.AIJUMP_FORCE_MEMORY = process.env.AIJUMP_FORCE_MEMORY || '1';
+process.env.ECPF_FORCE_MEMORY = process.env.ECPF_FORCE_MEMORY || '1'; // horse account layer (credits)
+// Pin the secret so the token we mint and the route's verify agree (must be set
+// BEFORE requiring the app so the route captures the same value at module load).
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 const jwt = require('jsonwebtoken');
 const http = require('http');
 const { analyze } = require('./lib/faultEngine');
+// Unified credits: analyses now bill against the horse account system.
+const horseAccount = require('../evaluacion-del-caballo-de-paso-fino/models/account');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
-const TENANT_A = 990001;
-const TENANT_B = 990002;
+const ECPF_SECRET = process.env.ECPF_JWT_SECRET || JWT_SECRET;
 const ALLOWED = ['left_behind', 'dropped_rein', 'gaze_drop', 'forward_seat'];
 
-function tokenFor(tenant_id) {
-  return jwt.sign({ tenant_id, clientId: tenant_id, email: 'sit@digit2ai.com' }, JWT_SECRET, { expiresIn: '10m' });
-}
+// Horse-account tokens (set in main() after creating two funded accounts).
+let TA = null, TB = null, AID_A = null, AID_B = null;
+function ecpfToken(uid) { return jwt.sign({ uid, embed: true }, ECPF_SECRET, { expiresIn: '10m' }); }
 
 const results = [];
 function check(name, pass, detail) { results.push({ name, pass: !!pass, detail: detail || '' }); }
@@ -105,15 +110,15 @@ async function run(base) {
 
   // 3. empty frames -> 422
   {
-    const r = await req(base, 'POST', '/api/v1/analyses', { token: tokenFor(TENANT_A), body: { frames: [] } });
+    const r = await req(base, 'POST', '/api/v1/analyses', { token: TA, body: { frames: [] } });
     check('3 POST empty frames -> 422', r.status === 422, `status=${r.status}`);
   }
 
   // 4. valid create -> 201 + faults[] shape + types
   let createdId = null;
   {
-    const r = await req(base, 'POST', '/api/v1/analyses', { token: tokenFor(TENANT_A), body: { filename: 'jump.mp4', durationSec: 1.6, frames: fixture, lang: 'es' } });
-    const ok = r.status === 201 && r.json && r.json.id != null && r.json.tenant_id === TENANT_A &&
+    const r = await req(base, 'POST', '/api/v1/analyses', { token: TA, body: { filename: 'jump.mp4', durationSec: 1.6, frames: fixture, lang: 'es' } });
+    const ok = r.status === 201 && r.json && r.json.id != null && r.json.tenant_id === AID_A &&
       Array.isArray(r.json.faults) && r.json.faults.length >= 1 &&
       r.json.faults.every((f) => ALLOWED.indexOf(f.type) >= 0 && typeof f.timestampSec === 'number' && typeof f.confidence === 'number') &&
       r.json.faults.some((f) => f.type === 'forward_seat');
@@ -123,16 +128,16 @@ async function run(base) {
 
   // 5. GET /:id owner -> 200 ; other tenant -> 404
   {
-    const own = await req(base, 'GET', '/api/v1/analyses/' + createdId, { token: tokenFor(TENANT_A) });
+    const own = await req(base, 'GET', '/api/v1/analyses/' + createdId, { token: TA });
     check('5a GET /:id owner -> 200', own.status === 200 && own.json && own.json.id === createdId, `status=${own.status}`);
-    const other = await req(base, 'GET', '/api/v1/analyses/' + createdId, { token: tokenFor(TENANT_B) });
+    const other = await req(base, 'GET', '/api/v1/analyses/' + createdId, { token: TB });
     check('5b GET /:id cross-tenant -> 404', other.status === 404, `status=${other.status}`);
   }
 
   // 6. list scoped to tenant
   {
-    const a = await req(base, 'GET', '/api/v1/analyses', { token: tokenFor(TENANT_A) });
-    const b = await req(base, 'GET', '/api/v1/analyses', { token: tokenFor(TENANT_B) });
+    const a = await req(base, 'GET', '/api/v1/analyses', { token: TA });
+    const b = await req(base, 'GET', '/api/v1/analyses', { token: TB });
     check('6 GET list tenant-scoped (A>=1, B has not A row)',
       a.status === 200 && a.json && a.json.count >= 1 &&
       b.status === 200 && b.json && !(b.json.data || []).some((x) => x.id === createdId),
@@ -155,9 +160,9 @@ async function run(base) {
 
   // 9. DELETE owner -> ok, cross-tenant -> 404
   {
-    const other = await req(base, 'DELETE', '/api/v1/analyses/' + createdId, { token: tokenFor(TENANT_B) });
+    const other = await req(base, 'DELETE', '/api/v1/analyses/' + createdId, { token: TB });
     check('9a DELETE cross-tenant -> 404', other.status === 404, `status=${other.status}`);
-    const own = await req(base, 'DELETE', '/api/v1/analyses/' + createdId, { token: tokenFor(TENANT_A) });
+    const own = await req(base, 'DELETE', '/api/v1/analyses/' + createdId, { token: TA });
     check('9b DELETE owner -> ok', own.status === 200 && own.json && own.json.ok === true, `status=${own.status}`);
   }
 }
@@ -188,6 +193,12 @@ function report() {
     } else {
       base = base.replace(/\/+$/, '');
     }
+    // Set up two funded horse accounts (credits fund the analyses).
+    await horseAccount.init();
+    const bcrypt = require('bcrypt');
+    const ha = await horseAccount.createUser({ email: 'jumpsit.a.' + Date.now() + '@digit2ai.com', password_hash: await bcrypt.hash('x', 10), credits: 100 });
+    const hb = await horseAccount.createUser({ email: 'jumpsit.b.' + Date.now() + '@digit2ai.com', password_hash: await bcrypt.hash('x', 10), credits: 100 });
+    AID_A = ha.id; AID_B = hb.id; TA = ecpfToken(ha.id); TB = ecpfToken(hb.id);
     await run(base);
   } catch (e) {
     check('harness', false, e && e.stack ? e.stack.split('\n').slice(0, 3).join(' ') : String(e));

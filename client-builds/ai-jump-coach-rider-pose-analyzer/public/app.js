@@ -308,9 +308,16 @@
         body: JSON.stringify({ filename: f.name, durationSec: probe.duration || null, frames: frames, lang: LANG })
       });
       if (resp.status === 401) { if (loginNotice) loginNotice.classList.remove('hidden'); setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
+      if (resp.status === 402) {
+        setStatus(t('no_credits') !== 'no_credits' ? t('no_credits') : (LANG === 'en' ? 'Out of credits. Recharge in the panel to continue.' : 'Sin créditos. Recarga en el panel para continuar.'));
+        try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-recharge' }, '*'); } catch (e) {}
+        analyzeBtn.disabled = false; return;
+      }
       if (!resp.ok) { setStatus(t('save_failed')); analyzeBtn.disabled = false; return; }
       var row = await resp.json();
       setStatus(synthetic ? t('synthetic_notice') : '');
+      // Tell the parent panel to refresh the credit chip.
+      if (row && row.credits != null) { try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-credits', credits: row.credits }, '*'); } catch (e) {} }
       renderResults(row);
       drawOverlay();
     } catch (e) {

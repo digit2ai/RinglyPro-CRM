@@ -119,6 +119,15 @@ router.get('/me', requireAccount, (req, res) => {
   res.json({ id: req.account.id, email: req.account.email, nombre: req.account.nombre, credits: req.account.credits });
 });
 
+// Short-lived token for embedding a sibling app (e.g. the Jump Coach) that runs
+// on a different origin and cannot read the HttpOnly session cookie. The panel
+// fetches this (same-origin, cookie-authed) and passes it to the embedded app,
+// which validates it against THIS account system and debits credits.
+router.get('/embed-token', requireAccount, (req, res) => {
+  const token = jwt.sign({ uid: req.account.id, email: req.account.email, embed: true }, JWT_SECRET, { expiresIn: '2h' });
+  res.json({ token, credits: req.account.credits });
+});
+
 router.get('/config', optionalAccount, (req, res) => {
   res.json({
     publishable_key: process.env.STRIPE_PUBLISHABLE_KEY || null,
