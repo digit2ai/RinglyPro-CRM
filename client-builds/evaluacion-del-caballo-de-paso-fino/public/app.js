@@ -265,6 +265,42 @@
   }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+  // ---- Coach de Salto (Jump Coach) history (dashboard) ----
+  // The Jump Coach is a sibling app on aiagent.ringlypro.com. Its analyses are
+  // billed against THIS EquiMind account, so its history belongs in the Historial
+  // view. We fetch it cross-origin with the short-lived embed token the panel
+  // appends as ?token= (same token the Jump Coach iframe uses to bill credits).
+  var JUMP_BASE = 'https://aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer';
+  function loadJumpHistory() {
+    var tbody = document.getElementById('jumpRows');
+    var empty = document.getElementById('jumpEmpty');
+    if (!tbody || !empty) return;
+    var tok = new URLSearchParams(location.search).get('token');
+    var url = JUMP_BASE + '/api/v1/analyses' + (tok ? ('?token=' + encodeURIComponent(tok)) : '');
+    fetch(url, { credentials: 'omit' }).then(function (r) { return r.json(); }).then(function (resp) {
+      var rows = Array.isArray(resp) ? resp : (resp && resp.data) || [];
+      if (!rows.length) { empty.textContent = I18N.jump_hist_empty || empty.textContent; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      tbody.innerHTML = '';
+      rows.forEach(function (a) {
+        var d = a.created_at ? new Date(a.created_at) : null;
+        var dateStr = d ? (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '—';
+        var faults = Array.isArray(a.faults) ? a.faults.length : (a.faults_count != null ? a.faults_count : 0);
+        var dur = a.duration_sec != null ? (Number(a.duration_sec).toFixed(1) + 's') : '—';
+        var apex = a.apex_sec != null ? (Number(a.apex_sec).toFixed(1) + 's') : '—';
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-800/50';
+        tr.innerHTML =
+          '<td class="py-2 pr-4 mono text-xs">' + esc(dateStr) + '</td>' +
+          '<td class="py-2 pr-4">' + esc(a.filename || '—') + '</td>' +
+          '<td class="py-2 pr-4 mono">' + esc(dur) + '</td>' +
+          '<td class="py-2 pr-4 mono">' + esc(apex) + '</td>' +
+          '<td class="py-2 pr-4 mono ' + (faults ? 'text-amber-400' : 'text-emerald-400') + '">' + faults + '</td>';
+        tbody.appendChild(tr);
+      });
+    }).catch(function () { empty.classList.remove('hidden'); });
+  }
+
   // ---- Boot ----
   applyI18n();
   langToggle();
@@ -272,6 +308,7 @@
   if (PAGE === 'dashboard') {
     bindDashboard();
     bindRanking();
+    loadJumpHistory();
   } else {
     bindCreateHorse();
     bindAnalyze();
