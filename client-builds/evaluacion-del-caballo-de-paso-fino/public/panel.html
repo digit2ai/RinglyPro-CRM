@@ -4,7 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{TITLE}}</title>
+<link rel="icon" type="image/svg+xml" href="{{BASE}}equimind-icon.svg">
+<link rel="apple-touch-icon" href="{{BASE}}equimind-icon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
   <style>
     body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
     .navitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#94a3b8;font-size:14px;cursor:pointer}
@@ -20,6 +24,7 @@
     <!-- Left sidebar -->
     <aside id="sidebar" class="w-[240px] shrink-0 bg-[#0b1220] border-r border-slate-800 flex flex-col">
       <div class="px-4 py-4 border-b border-slate-800">
+        <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="30" height="30" style="width:30px;height:30px;margin-bottom:8px">
         <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="poc_badge"></div>
         <div class="font-bold leading-tight mt-1">{{H1}}</div>
       </div>

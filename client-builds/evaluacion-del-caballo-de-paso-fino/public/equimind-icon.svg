@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="EquiMind app icon">
+  <defs>
+    <linearGradient id="ic_bg" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#181410"/>
+      <stop offset="1" stop-color="#0E0B07"/>
+    </linearGradient>
+    <radialGradient id="ic_glow" cx="50%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#C9A24B" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#C9A24B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ic_brass" x1="150" y1="90" x2="380" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E6C572"/>
+      <stop offset=".55" stop-color="#C9A24B"/>
+      <stop offset="1" stop-color="#A9822F"/>
+    </linearGradient>
+    <clipPath id="ic_clip"><rect width="512" height="512" rx="114"/></clipPath>
+  </defs>
+  <g clip-path="url(#ic_clip)">
+    <rect width="512" height="512" fill="url(#ic_bg)"/>
+    <rect width="512" height="512" fill="url(#ic_glow)"/>
+    <rect width="512" height="512" fill="none" stroke="#ECE6DA" stroke-opacity=".06" stroke-width="2"/>
+  </g>
+  <g transform="translate(157,146) scale(2.2)">
+    <path fill="url(#ic_brass)" fill-rule="evenodd"
+      d="M24 88 C 16 54, 28 32, 45 27 C 48 24, 50 22, 53 22 L 62 12 C 60 19, 58 24, 56 27 C 61 30, 66 42, 71 55 C 74 61, 72 68, 65 67 C 61 66, 56 60, 52 55 C 50 62, 48 74, 45 86 L 24 88 Z M52 42 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 Z"/>
+  </g>
+</svg>

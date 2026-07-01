@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" role="img" aria-label="EquiMind">
+  <defs>
+    <linearGradient id="equimind_brass" x1="18" y1="8" x2="72" y2="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E6C572"/>
+      <stop offset=".55" stop-color="#C9A24B"/>
+      <stop offset="1" stop-color="#A9822F"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#equimind_brass)" fill-rule="evenodd"
+    d="M24 88 C 16 54, 28 32, 45 27 C 48 24, 50 22, 53 22 L 62 12 C 60 19, 58 24, 56 27 C 61 30, 66 42, 71 55 C 74 61, 72 68, 65 67 C 61 66, 56 60, 52 55 C 50 62, 48 74, 45 86 L 24 88 Z M52 42 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 Z"/>
+</svg>
