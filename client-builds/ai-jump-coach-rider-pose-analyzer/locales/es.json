@@ -24,7 +24,7 @@
   "history_empty": "Aún no hay análisis guardados.",
   "open_dashboard": "Ver historial",
   "back_home": "Volver al analizador",
-  "need_login": "Inicia sesión en RinglyPro para guardar y ver tus análisis.",
+  "need_login": "Inicia sesión en el panel para analizar (1 crédito por análisis).",
   "save_failed": "No se pudo guardar el análisis.",
   "privacy_link": "Privacidad",
   "fault_left_behind": "Quedarse atrás (torso retrasado tras el ápice)",
@@ -32,5 +32,17 @@
   "fault_gaze_drop": "Mirada baja anticipada (cabeza cae antes del ápice)",
   "fault_forward_seat": "Asiento adelantado en la recepción (cadera por delante del tobillo)",
   "privacy_title": "Aviso de Privacidad",
-  "privacy_body": "El video que subes se procesa únicamente para analizar la postura del jinete. El procesamiento de pose ocurre en tu navegador; al servidor sólo se envían los puntos de articulación (keypoints) y los metadatos del análisis, nunca el video. No compartimos tu video ni tus datos con terceros. Si más adelante se confirma alcance en Latinoamérica, este servicio se alineará con la Ley 1581 de 2012 (Colombia) y la LGPD (Brasil)."
+  "privacy_body": "El video que subes se procesa únicamente para analizar la postura del jinete. El procesamiento de pose ocurre en tu navegador; al servidor sólo se envían los puntos de articulación (keypoints) y los metadatos del análisis, nunca el video. No compartimos tu video ni tus datos con terceros. Si más adelante se confirma alcance en Latinoamérica, este servicio se alineará con la Ley 1581 de 2012 (Colombia) y la LGPD (Brasil).",
+  "jc_eyebrow": "Análisis fotograma a fotograma",
+  "jc_h1a": "Analizador de Postura",
+  "jc_h1b": "del Jinete",
+  "jc_lede": "Sube un video de tu salto y la IA marca cada fallo de posición contra el ápice del obstáculo, cuadro por cuadro.",
+  "jc_upload_label": "Video del salto · MP4 o MOV",
+  "jc_dz_title": "Arrastra un archivo o haz clic para elegir",
+  "jc_dz_sub": "Se procesa en tu dispositivo. Máx. 500 MB.",
+  "jc_ascent": "ASCENSO",
+  "jc_descent": "DESCENSO",
+  "jc_critical": "Crítico",
+  "jc_moderate": "Moderado",
+  "jc_apex": "Ápice del salto"
 }

@@ -24,7 +24,7 @@
   "history_empty": "No saved analyses yet.",
   "open_dashboard": "View history",
   "back_home": "Back to analyzer",
-  "need_login": "Sign in to RinglyPro to save and view your analyses.",
+  "need_login": "Log in on the panel to analyze (1 credit per analysis).",
   "save_failed": "Could not save the analysis.",
   "privacy_link": "Privacy",
   "fault_left_behind": "Left behind (torso lags after the apex)",
@@ -32,5 +32,17 @@
   "fault_gaze_drop": "Premature gaze drop (head drops before the apex)",
   "fault_forward_seat": "Forward seat at landing (hip ahead of ankle)",
   "privacy_title": "Privacy Notice",
-  "privacy_body": "The video you upload is processed only to analyze rider position. Pose processing happens in your browser; only the joint keypoints and analysis metadata are sent to the server, never the video itself. We do not share your video or data with third parties. If Latin American scope is later confirmed, this service will align with Ley 1581 de 2012 (Colombia) and the LGPD (Brazil)."
+  "privacy_body": "The video you upload is processed only to analyze rider position. Pose processing happens in your browser; only the joint keypoints and analysis metadata are sent to the server, never the video itself. We do not share your video or data with third parties. If Latin American scope is later confirmed, this service will align with Ley 1581 de 2012 (Colombia) and the LGPD (Brazil).",
+  "jc_eyebrow": "Frame-by-frame analysis",
+  "jc_h1a": "Rider Pose",
+  "jc_h1b": "Analyzer",
+  "jc_lede": "Upload a video of your jump and the AI flags every position fault against the fence apex, frame by frame.",
+  "jc_upload_label": "Jump video · MP4 or MOV",
+  "jc_dz_title": "Drag a file or click to choose",
+  "jc_dz_sub": "Processed on your device. Max 500 MB.",
+  "jc_ascent": "ASCENT",
+  "jc_descent": "DESCENT",
+  "jc_critical": "Critical",
+  "jc_moderate": "Moderate",
+  "jc_apex": "Jump apex"
 }
