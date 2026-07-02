@@ -63,8 +63,17 @@ async function runPipeline(store, ctx) {
 
   // 3. Clasificación (sobre las pisadas con extremidad asignada).
   const conLimb = pisadas.filter((p) => p.extremidad);
+  // ¿Hay POSE real del video? Sin ella, distinguir lateral (paso fino) de diagonal
+  // (trocha) NO es confiable: el audio no dice qué pata pisa. En ese caso NO se
+  // descalifica por "modalidad no coincide" y la confianza se limita.
+  const posePresent = Array.isArray(frames) && frames.length > 0;
   const clas = classify(conLimb.length >= 3 ? conLimb : pisadas, umbrales);
-  const valida = esModalidadValida(clas.modalidad_detectada, categoria && categoria.modalidad);
+  let valida = esModalidadValida(clas.modalidad_detectada, categoria && categoria.modalidad);
+  if (!posePresent) {
+    clas.solo_audio = true;
+    clas.confianza = Math.min(clas.confianza != null ? clas.confianza : 0, 0.5);
+    valida = null; // estimada por audio: ni válida ni inválida (no bandera roja)
+  }
   await repo.create('clasificaciones', {
     sesion_id: sesion.id, modalidad_detectada: clas.modalidad_detectada, confianza: clas.confianza,
     modelo_id: activeModel ? activeModel.id : null, es_modalidad_valida: valida
@@ -80,13 +89,14 @@ async function runPipeline(store, ctx) {
   const modalidadPuntuar = (categoria && categoria.modalidad) || clas.modalidad_detectada || 'paso_fino';
   let criterios = await repo.findAll('criterios', { modalidad: modalidadPuntuar });
   if (!criterios.length) criterios = await repo.findAll('criterios', { modalidad: 'paso_fino' });
-  const { puntuaciones, puntaje_total } = score(criterios, mov, son, umbrales);
+  const { puntuaciones, puntaje_total, cobertura } = score(criterios, mov, son, umbrales);
+  const puntajeGuardar = puntaje_total == null ? 0 : puntaje_total;
   await repo.bulk('puntuaciones', puntuaciones.map((p) => ({
     sesion_id: sesion.id, criterio_id: p.criterio_id, valor_medido: p.valor_medido, puntaje_normalizado: p.puntaje_normalizado
   })));
 
   // 6. Resultado + ranking de la categoría (puesto calculado dinámicamente).
-  await upsertResultado(store, inscripcion.id, puntaje_total, clas);
+  await upsertResultado(store, inscripcion.id, puntajeGuardar, clas);
   if (categoria) await recomputeRanking(store, categoria.id);
   let miRanking = null;
   if (categoria) {
@@ -105,6 +115,8 @@ async function runPipeline(store, ctx) {
     pisadas: pisadas.map((p) => ({ timestamp_ms: p.timestamp_ms, extremidad: p.extremidad, orden_secuencia: p.orden_secuencia, intervalo_anterior_ms: p.intervalo_anterior_ms, detectada_por_video: p.detectada_por_video, detectada_por_audio: p.detectada_por_audio })),
     puntuaciones,
     puntaje_total,
+    cobertura,          // fracción del peso que SÍ se pudo medir (parcial < 1)
+    solo_audio: !posePresent,
     ranking: miRanking
   };
 

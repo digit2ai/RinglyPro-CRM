@@ -346,6 +346,8 @@ router.get('/sessions/:id', withTenant, async (req, res) => {
       dictamen: dict,
       neural_findings: findings,
       simulado: sesion && sesion.modelo_pose === 'synthetic-demo',
+      // Solo-audio: sin pose de video (ninguna pisada detectada por video).
+      solo_audio: Array.isArray(pisadas) && pisadas.length > 0 && pisadas.every((p) => !p.detectada_por_video),
       share_token: reportToken(sesion_id),
       share_url: reportUrl(sesion_id)
     });

@@ -87,7 +87,7 @@
   "leg_both": "Video + audio",
   "leg_video": "Solo video",
   "leg_audio": "Solo audio",
-  "flag_mismatch": "La modalidad detectada no coincide con la categoría inscrita",
+  "flag_mismatch": "La modalidad detectada no coincide con la categoría",
   "err_need_inscripcion": "Selecciona un competidor (o crea datos de demostración).",
   "rank_title": "Ranking por categoría",
   "rank_pick": "Elige evento y categoría para ver el ranking",
@@ -247,5 +247,10 @@
   "cs_generic": "Próximamente",
   "analysis_setup_title": "Categoría del análisis",
   "cat_label": "Categoría / disciplina",
-  "horse_opt_label": "Caballo (opcional)"
+  "horse_opt_label": "Caballo (opcional)",
+  "pose_pending": "Requiere pose de video · próximamente",
+  "cadence_unreliable": "no confiable",
+  "cadence_unreliable_note": "Fuera del rango físico (120–280 ppm): no se usó en el puntaje. Sube un audio más limpio de los cascos.",
+  "est_audio": "estimada por audio",
+  "audio_only_note": "Modalidad estimada por audio (baja confianza): el audio no distingue paso fino de trocha con certeza. Simetría y elevación requieren pose de video (próximamente)."
 }

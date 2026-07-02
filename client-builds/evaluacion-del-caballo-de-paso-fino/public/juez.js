@@ -197,32 +197,46 @@
       '<text x="50" y="55" text-anchor="middle" fill="#ECE6DA" font-family="JetBrains Mono,monospace" font-size="19" font-weight="600">' + valueText + '</text></svg>' +
       '<div style="font-size:11px;margin-top:6px;text-align:center;color:#98A199">' + esc(label) + '</div></div>';
   }
+  // Card "pendiente de pose": métrica que hoy requiere pose de video (próximamente).
+  function gaugePending(label) {
+    return '<div style="background:#0e120c;border:1px dashed rgba(236,230,218,.14);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:112px">' +
+      '<svg viewBox="0 0 100 100" style="width:78px;height:78px;opacity:.35"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(236,230,218,.18)" stroke-width="8" stroke-dasharray="6 8"/>' +
+      '<text x="50" y="56" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="22">—</text></svg>' +
+      '<div style="font-size:11px;margin-top:6px;text-align:center;color:#98A199">' + esc(label) + '</div>' +
+      '<div style="font-size:9.5px;margin-top:2px;text-align:center;color:#697268">' + (I18N.pose_pending || 'Requiere pose de video · próximamente') + '</div></div>';
+  }
   function renderInfographics(mov, son) {
     var box = $('infographics'); if (!box) return;
     var clar = (son && son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
     var elev = (mov.elevacion_anterior != null || mov.elevacion_posterior != null) ? Math.round(((mov.elevacion_anterior || 0) + (mov.elevacion_posterior || 0)) / 2 * 100) : null;
+    // Simetría lateral y Elevación se derivan de la POSE del video. Sin ella se
+    // muestran como "pendiente de pose", NO como 0% ni "—" (que parecía roto).
     var items = [
-      { pct: pctOr(mov.regularidad_ritmo), label: I18N.m_regularidad || 'Regularidad' },
-      { pct: pctOr(mov.simetria_lateral), label: I18N.m_simetria || 'Simetría lateral' },
-      { pct: pctOr(clar), label: I18N.m_claridad || 'Claridad 4 tiempos' },
-      { pct: elev, label: I18N.m_elevacion || 'Elevación' }
+      { pct: pctOr(mov.regularidad_ritmo), label: I18N.m_regularidad || 'Regularidad', pose: false },
+      { pct: pctOr(mov.simetria_lateral), label: I18N.m_simetria || 'Simetría lateral', pose: true },
+      { pct: pctOr(clar), label: I18N.m_claridad || 'Claridad 4 tiempos', pose: false },
+      { pct: elev, label: I18N.m_elevacion || 'Elevación', pose: true }
     ];
-    box.innerHTML = items.map(function (it) { var p = it.pct != null ? it.pct : 0; return gaugeSVG(p, it.pct != null ? it.pct + '%' : '—', it.label, scoreColor(p)); }).join('');
+    box.innerHTML = items.map(function (it) {
+      if (it.pct == null) return it.pose ? gaugePending(it.label) : gaugeSVG(0, '—', it.label, EM.muted);
+      return gaugeSVG(it.pct, it.pct + '%', it.label, scoreColor(it.pct));
+    }).join('');
   }
   function renderCadenceMeter(cad) {
     var box = $('cadenceMeter'); if (!box) return;
     if (cad == null) { box.innerHTML = ''; return; }
     var MIN = 120, MAX = 280, ILO = 150, IHI = 210;
+    var confiable = cad >= MIN && cad <= MAX; // fuera de rango físico = no confiable
     var pos = (Math.max(MIN, Math.min(MAX, cad)) - MIN) / (MAX - MIN) * 100;
     var ilo = (ILO - MIN) / (MAX - MIN) * 100, ihi = (IHI - MIN) / (MAX - MIN) * 100;
-    var ok = cad >= MIN && cad <= MAX;
     box.innerHTML =
       '<div class="flex justify-between text-xs mb-1"><span style="color:#98A199">' + (I18N.m_cadencia || 'Cadencia') + ' (ppm)</span>' +
-      '<span class="mono" style="color:' + (ok ? EM.turf : EM.amber) + '">' + Math.round(cad) + ' ppm</span></div>' +
+      '<span class="mono" style="color:' + (confiable ? EM.turf : EM.amber) + '">' + Math.round(cad) + ' ppm' + (confiable ? '' : ' · ' + (I18N.cadence_unreliable || 'no confiable')) + '</span></div>' +
       '<div style="position:relative;height:14px;border-radius:99px;background:rgba(236,230,218,.08)">' +
       '<div style="position:absolute;top:0;bottom:0;left:' + ilo.toFixed(1) + '%;width:' + (ihi - ilo).toFixed(1) + '%;background:rgba(95,208,139,.22);border-radius:99px"></div>' +
-      '<div style="position:absolute;top:-3px;bottom:-3px;left:' + pos.toFixed(1) + '%;transform:translateX(-50%);width:3px;border-radius:2px;background:' + EM.brass + ';box-shadow:0 0 8px ' + EM.brass + '"></div></div>' +
-      '<div class="flex justify-between mono" style="font-size:10px;color:#697268;margin-top:4px"><span>120</span><span>ideal ~180</span><span>280</span></div>';
+      '<div style="position:absolute;top:-3px;bottom:-3px;left:' + pos.toFixed(1) + '%;transform:translateX(-50%);width:3px;border-radius:2px;background:' + (confiable ? EM.brass : EM.amber) + ';box-shadow:0 0 8px ' + (confiable ? EM.brass : EM.amber) + '"></div></div>' +
+      '<div class="flex justify-between mono" style="font-size:10px;color:#697268;margin-top:4px"><span>120</span><span>ideal ~180</span><span>280</span></div>' +
+      (confiable ? '' : '<div style="font-size:10.5px;color:#D98A3E;margin-top:5px">' + (I18N.cadence_unreliable_note || 'Fuera del rango físico (120–280): no se usó en el puntaje. Sube audio más limpio de los cascos.') + '</div>');
   }
 
   var currentSesionId = null, currentSummary = '', currentShareUrl = '';
@@ -231,7 +245,7 @@
     currentSesionId = f.sesion_id || null;
     var clas = f.clasificacion || {};
     $('resModalidad').textContent = modLabel(clas.modalidad_detectada);
-    $('resConf').textContent = '· ' + Math.round((clas.confianza || 0) * 100) + '% ' + (I18N.res_confianza || 'confianza') + ' · ' + (clas.tiempos || '?') + ' ' + (I18N.res_tiempos || 'tiempos');
+    $('resConf').textContent = '· ' + Math.round((clas.confianza || 0) * 100) + '% ' + (I18N.res_confianza || 'confianza') + ' · ' + (clas.tiempos || '?') + ' ' + (I18N.res_tiempos || 'tiempos') + (f.solo_audio ? ' · ' + (I18N.est_audio || 'estimada por audio') : '');
     $('resTotal').textContent = (f.puntaje_total != null ? f.puntaje_total.toFixed(1) : '—');
 
     // Banner de referencia: resultado simulado (no analiza el caballo real, gratis).
@@ -245,8 +259,15 @@
 
     var flag = $('resFlag');
     if (clas.es_modalidad_valida === false) {
+      // Descalificación REAL (con pose de video): rojo.
+      flag.className = 'mb-4 px-3 py-2 rounded-lg bg-rose-600/20 border border-rose-600 text-rose-300 text-sm';
+      flag.textContent = (I18N.flag_mismatch || 'La modalidad detectada no coincide con la categoría') + ' (' + modLabel(clas.modalidad_categoria) + ' → ' + modLabel(clas.modalidad_detectada) + ').';
       flag.classList.remove('hidden');
-      flag.textContent = (I18N.flag_mismatch || 'Modalidad detectada no coincide con la categoría inscrita') + ' (' + modLabel(clas.modalidad_categoria) + ' → ' + modLabel(clas.modalidad_detectada) + ').';
+    } else if (f.solo_audio) {
+      // Solo-audio: no se descalifica. Nota informativa en ámbar.
+      flag.className = 'mb-4 px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/60 text-amber-200 text-sm';
+      flag.textContent = (I18N.audio_only_note || 'Modalidad estimada por audio (baja confianza): el audio no distingue paso fino de trocha con certeza. Simetría y elevación requieren pose de video (próximamente).');
+      flag.classList.remove('hidden');
     } else { flag.classList.add('hidden'); }
 
     var mov = f.metricas_movimiento || {};
@@ -390,6 +411,7 @@
         if (j.categoria) clas.modalidad_categoria = j.categoria.modalidad;
         renderFallo({
           simulado: j.simulado,
+          solo_audio: j.solo_audio,
           share_token: j.share_token, share_url: j.share_url,
           sesion_id: j.sesion.id,
           clasificacion: clas,

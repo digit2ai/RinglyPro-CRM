@@ -87,7 +87,7 @@
   "leg_both": "Video + audio",
   "leg_video": "Video only",
   "leg_audio": "Audio only",
-  "flag_mismatch": "Detected modality does not match the entered category",
+  "flag_mismatch": "Detected modality does not match the category",
   "err_need_inscripcion": "Select a competitor (or create demo data).",
   "rank_title": "Ranking by category",
   "rank_pick": "Pick an event and category to see the ranking",
@@ -247,5 +247,10 @@
   "cs_generic": "Coming soon",
   "analysis_setup_title": "Analysis category",
   "cat_label": "Category / discipline",
-  "horse_opt_label": "Horse (optional)"
+  "horse_opt_label": "Horse (optional)",
+  "pose_pending": "Requires video pose · coming soon",
+  "cadence_unreliable": "unreliable",
+  "cadence_unreliable_note": "Outside the physical range (120–280 spm): not used in the score. Upload cleaner hoof audio.",
+  "est_audio": "estimated from audio",
+  "audio_only_note": "Modality estimated from audio (low confidence): audio cannot reliably tell paso fino from trocha. Lateral symmetry and elevation require video pose (coming soon)."
 }
