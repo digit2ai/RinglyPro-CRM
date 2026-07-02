@@ -43,6 +43,77 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 80 
 
 function err(res, code, msg) { return res.status(code).json({ error: msg }); }
 
+// ---- Horse-centric helpers: cada cuenta tiene un evento/categoría "personales"
+// invisibles para que el cliente solo piense en CABALLOS y ANÁLISIS, no en la
+// maquinaria de campeonato (evento/categoría/inscripción). ----------------------
+const MOD_NOMBRE = { paso_fino: 'Paso Fino', trocha: 'Trocha', trocha_galope: 'Trocha y Galope', trote_galope: 'Trote y Galope' };
+async function ensureDefaultEvento(tenantId) {
+  let ev = (await store.repo.findAll('eventos', { tenant_id: tenantId, nombre: 'Mis Análisis' }))[0];
+  if (!ev) ev = await store.repo.create('eventos', { nombre: 'Mis Análisis', grado: 'A', anio: 2026, sede: 'EquiMind', tenant_id: tenantId });
+  return ev;
+}
+async function ensureCategoria(tenantId, evento_id, modalidad) {
+  const m = modalidad || 'paso_fino';
+  let cat = (await store.repo.findAll('categorias', { tenant_id: tenantId, evento_id, modalidad: m }))[0];
+  if (!cat) cat = await store.repo.create('categorias', { evento_id, nombre: MOD_NOMBRE[m] || m, modalidad: m, tenant_id: tenantId });
+  return cat;
+}
+async function ensureInscripcion(tenantId, caballo_id, categoria_id) {
+  let ins = (await store.repo.findAll('inscripciones', { tenant_id: tenantId, caballo_id, categoria_id }))[0];
+  if (!ins) {
+    const existing = await store.repo.findAll('inscripciones', { tenant_id: tenantId, categoria_id });
+    ins = await store.repo.create('inscripciones', { caballo_id, categoria_id, numero_competidor: existing.length + 1, tenant_id: tenantId });
+  }
+  return ins;
+}
+
+// ---- Caballos del cliente (select o alta) -----------------------------------
+router.get('/horses', requireAccount, async (req, res) => {
+  try {
+    const rows = await store.repo.findAll('caballos', { tenant_id: req.accountId }, ['id', 'DESC']);
+    res.json(rows.map((c) => ({ id: c.id, nombre: c.nombre, sexo: c.sexo, capa: c.capa, criadero: c.criadero, registro_fedequinas: c.registro_fedequinas })));
+  } catch (e) { err(res, 500, 'could not list horses'); }
+});
+router.post('/horses', requireAccount, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const nombre = String(b.nombre || '').trim();
+    if (!nombre) return err(res, 400, 'nombre required');
+    const cab = await store.repo.create('caballos', {
+      nombre: nombre.slice(0, 150), sexo: (b.sexo || null), capa: (b.capa || null),
+      criadero: (b.criadero || null), registro_fedequinas: (b.registro_fedequinas || null),
+      tenant_id: req.accountId
+    });
+    res.status(201).json({ id: cab.id, nombre: cab.nombre, sexo: cab.sexo, capa: cab.capa, criadero: cab.criadero, registro_fedequinas: cab.registro_fedequinas });
+  } catch (e) { err(res, 500, 'could not create horse'); }
+});
+
+// ---- Mis análisis: historial completo del cliente (permalinks) --------------
+router.get('/my-sessions', requireAccount, async (req, res) => {
+  try {
+    const sesiones = await store.repo.findAll('sesiones', { tenant_id: req.accountId }, ['id', 'DESC']);
+    const out = [];
+    for (const s of sesiones) {
+      const ins = s.inscripcion_id ? await store.repo.find('inscripciones', { id: s.inscripcion_id }) : null;
+      const cab = ins ? await store.repo.find('caballos', { id: ins.caballo_id }) : null;
+      const clas = (await store.repo.findAll('clasificaciones', { sesion_id: s.id }))[0] || null;
+      const resu = ins ? await store.repo.find('resultados', { inscripcion_id: ins.id }) : null;
+      out.push({
+        sesion_id: s.id,
+        fecha: s.fecha_hora_inicio || s.created_at || null,
+        caballo: cab ? cab.nombre : null,
+        modalidad: clas ? clas.modalidad_detectada : null,
+        puntaje: resu ? resu.puntaje_total : null,
+        simulado: s.modelo_pose === 'synthetic-demo'
+      });
+    }
+    res.json(out);
+  } catch (e) {
+    console.error(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'my_sessions_error', error: e.message }));
+    err(res, 500, 'could not list analyses');
+  }
+});
+
 // ---- Demo setup: one click -> full event/category/horse/inscription ----------
 router.post('/demo-setup', withTenant, async (req, res) => {
   try {
@@ -63,12 +134,38 @@ router.post('/demo-setup', withTenant, async (req, res) => {
 router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
   try {
     const body = req.body || {};
-    const inscripcion_id = parseInt(body.inscripcion_id, 10);
-    if (!inscripcion_id) return err(res, 400, 'inscripcion_id is required');
     const superficie = body.superficie || 'tablado';
 
-    const inscripcion = await store.repo.find('inscripciones', { id: inscripcion_id });
-    if (!inscripcion) return err(res, 404, 'inscripcion not found');
+    // Resolución del competidor. Flujo NUEVO (horse-centric): el cliente manda un
+    // caballo (existente `caballo_id`, o nuevo `caballo_nombre`) + la disciplina
+    // `modalidad`; auto-armamos evento/categoría/inscripción "personales" (invisibles).
+    // Flujo LEGACY: `inscripcion_id` explícito (campeonato). Se conserva.
+    let inscripcion = null;
+    let inscripcion_id = parseInt(body.inscripcion_id, 10) || null;
+    if (inscripcion_id) {
+      inscripcion = await store.repo.find('inscripciones', { id: inscripcion_id });
+      if (!inscripcion) return err(res, 404, 'inscripcion not found');
+    } else {
+      // Horse-centric: requiere cuenta (los caballos son por-cliente).
+      if (req.accountId == null) return err(res, 401, 'Inicia sesión para analizar tu caballo.');
+      let caballo_id = parseInt(body.caballo_id, 10) || null;
+      if (caballo_id) {
+        const c = await store.repo.find('caballos', { id: caballo_id });
+        if (!c || String(c.tenant_id) !== String(req.accountId)) return err(res, 404, 'caballo not found');
+      } else {
+        const nombre = String(body.caballo_nombre || '').trim();
+        if (!nombre) return err(res, 400, 'Elige un caballo o registra uno nuevo (caballo_id o caballo_nombre).');
+        const nuevo = await store.repo.create('caballos', {
+          nombre: nombre.slice(0, 150), sexo: body.caballo_sexo || null, capa: body.caballo_capa || null,
+          criadero: body.caballo_criadero || null, tenant_id: req.accountId
+        });
+        caballo_id = nuevo.id;
+      }
+      const ev = await ensureDefaultEvento(req.accountId);
+      const cat = await ensureCategoria(req.accountId, ev.id, body.modalidad || 'paso_fino');
+      inscripcion = await ensureInscripcion(req.accountId, caballo_id, cat.id);
+      inscripcion_id = inscripcion.id;
+    }
     const categoria = await store.repo.find('categorias', { id: inscripcion.categoria_id });
 
     // pose_frames: contrato JSON [{numero_frame,timestamp_ms,keypoints:{casco_*:{x,y}}}]
@@ -106,9 +203,9 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     if (videoFile) video_raw_url = `stored://video/${Date.now()}`;
 
     // REFERENCIA (simulación): SOLO si no hay señal real (ni pose del cliente ni
-    // audio real). Sintetiza la modalidad elegida para previsualizar el juez.
-    // NUNCA se cobra: no analiza el caballo real del cliente. Se etiqueta.
-    const demoMod = body.demo_modalidad;
+    // audio real). Sintetiza la disciplina del caballo (body.modalidad) para
+    // previsualizar el juez. NUNCA se cobra: no analiza el caballo real. Se etiqueta.
+    const demoMod = body.demo_modalidad || body.modalidad;
     let isDemo = false;
     if (!frames.length && !hasRealAudio && demoMod) {
       const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope', trocha_galope: 'trocha_galope' };

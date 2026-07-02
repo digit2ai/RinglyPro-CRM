@@ -303,6 +303,24 @@ async function run(base) {
     check('simulation is flagged simulado:true (honesty banner)', dj && dj.simulado === true,
       `simulado=${dj && dj.simulado}`);
 
+    // ---- Horse-centric flow (select/add horse + my-sessions history) --------
+    const newHorse = await reqJson(base, 'POST', '/api/v1/champ/horses', { token: tok, body: { nombre: 'Relámpago SIT', sexo: 'macho', capa: 'castaño' } });
+    check('POST /champ/horses -> 201 + horse id', newHorse.status === 201 && newHorse.json && newHorse.json.id != null, `status=${newHorse.status}`);
+    const horseList = await reqJson(base, 'GET', '/api/v1/champ/horses', { token: tok });
+    check('GET /champ/horses -> includes my horse', horseList.status === 200 && Array.isArray(horseList.json) && horseList.json.some((h) => h.nombre === 'Relámpago SIT'), `n=${horseList.json && horseList.json.length}`);
+    // Analyze by caballo_id (no inscripcion_id) — free reference (no audio) -> simulado, not charged.
+    const balBefore = (await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok })).json.credits;
+    const fdH = new FormData();
+    fdH.append('caballo_id', String(newHorse.json.id));
+    fdH.append('modalidad', 'trocha');
+    const hSess = await fetch(base + '/api/v1/champ/sessions', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fdH });
+    const hj = await hSess.json().catch(() => null);
+    check('horse-centric session (caballo_id) -> 201 + simulado + not charged', hSess.status === 201 && hj && hj.simulado === true && hj.charged === false, `status=${hSess.status} simulado=${hj && hj.simulado}`);
+    const balAfter = (await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok })).json.credits;
+    check('horse-centric reference did NOT charge', balBefore === balAfter, `before=${balBefore} after=${balAfter}`);
+    const mine = await reqJson(base, 'GET', '/api/v1/champ/my-sessions', { token: tok });
+    check('GET /champ/my-sessions -> lists my analyses with caballo', mine.status === 200 && Array.isArray(mine.json) && mine.json.some((s) => s.caballo === 'Relámpago SIT' && s.sesion_id != null), `n=${mine.json && mine.json.length}`);
+
     // Balance endpoint.
     const bal = await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok });
     check('GET /credits/balance -> 2', bal.status === 200 && bal.json && bal.json.credits === 2, `credits=${bal.json && bal.json.credits}`);

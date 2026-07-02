@@ -50,21 +50,29 @@
       </div>
     </header>
 
-    <section class="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mb-5">
-      <span id="sessionBadge" class="text-xs text-amber-400 mono" data-i18n="session_loading"></span>
-    </section>
-
-    <!-- Selector previo: evento / categoria / competidor -->
+    <!-- Caballo: selecciona uno tuyo o registra uno nuevo -->
     <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="sel_title"></h2>
-        <button id="demoSetup" class="text-xs bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5" data-i18n="sel_demo"></button>
+        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="horse_title"></h2>
+        <button id="horseNewToggle" class="text-xs bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5" data-i18n="horse_add_new"></button>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-        <select id="eventoSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_evento"></option></select>
-        <select id="categoriaSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_categoria"></option></select>
-        <select id="inscripcionSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="sel_competidor"></option></select>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <select id="horseSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="horse_pick"></option></select>
+        <select id="disciplinaSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
+          <option value="paso_fino">Paso Fino</option><option value="trocha">Trocha</option><option value="trocha_galope">Trocha y Galope</option><option value="trote_galope">Trote y Galope</option>
+        </select>
       </div>
+      <!-- Alta de caballo nuevo (oculto por defecto) -->
+      <div id="horseNewForm" class="hidden mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-slate-800 pt-3">
+        <input id="hnNombre" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2" data-i18n-ph="horse_f_nombre" placeholder="Nombre del caballo">
+        <select id="hnSexo" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
+          <option value="" data-i18n="horse_f_sexo"></option><option value="macho">Macho</option><option value="hembra">Hembra</option><option value="castrado">Castrado</option>
+        </select>
+        <input id="hnCapa" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2" data-i18n-ph="horse_f_capa" placeholder="Capa (color)">
+        <input id="hnCriadero" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2" data-i18n-ph="horse_f_criadero" placeholder="Criadero">
+        <button id="hnSave" class="sm:col-span-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-2 font-semibold" data-i18n="horse_f_save"></button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2" data-i18n="horse_hint"></p>
     </section>
 
     <!-- Carga: video + audio + superficie -->
@@ -85,12 +93,6 @@
           <label class="block text-xs text-slate-400 mb-1" data-i18n="up_superficie"></label>
           <select id="superficieSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
             <option value="tablado">Tablado</option><option value="arena">Arena</option><option value="asfalto">Asfalto</option><option value="tierra">Tierra</option><option value="cemento">Cemento</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs text-slate-400 mb-1" data-i18n="up_simular"></label>
-          <select id="demoModSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
-            <option value="">—</option><option value="paso_fino">Paso fino</option><option value="trocha">Trocha</option><option value="trocha_galope">Trocha y galope</option><option value="trote">Trote / galope</option>
           </select>
         </div>
       </div>
@@ -157,6 +159,42 @@
       <div id="resDictamen" class="space-y-3 mb-3"></div>
       <div id="resReco" class="mb-2"></div>
       <p id="resFirma" class="text-xs text-slate-600 italic mt-3"></p>
+
+      <!-- Compartir (enlace público al informe completo) + acciones -->
+      <div class="mt-5 pt-4 border-t border-slate-800">
+        <label class="block text-xs text-slate-400 mb-1" data-i18n="share_link_label"></label>
+        <div class="flex gap-2">
+          <input id="shareLink" readonly class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs mono text-slate-300" value="">
+          <button id="shareCopy" class="text-xs px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold whitespace-nowrap" data-i18n="share_copy"></button>
+          <button id="shareOpen" class="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold whitespace-nowrap" data-i18n="share_open"></button>
+        </div>
+        <div id="shareMsg2" class="text-xs text-emerald-400 mt-1"></div>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button id="newAnalysis" class="text-sm px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold" data-i18n="act_new_analysis"></button>
+          <button id="goHistory" class="text-sm px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold" data-i18n="act_view_history"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mis análisis: historial completo del cliente (permalinks -> informe completo) -->
+    <section id="historySection" class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="hist_mine_title"></h2>
+        <button id="histRefresh" class="text-xs bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5" data-i18n="hist_refresh"></button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-slate-500 border-b border-slate-800">
+            <th class="py-2 pr-4" data-i18n="col_date"></th>
+            <th class="py-2 pr-4" data-i18n="col_caballo"></th>
+            <th class="py-2 pr-4" data-i18n="res_modalidad"></th>
+            <th class="py-2 pr-4" data-i18n="col_puntaje"></th>
+            <th class="py-2 pr-4"></th>
+          </tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+        <p id="histEmpty" class="text-slate-500 text-sm py-3" data-i18n="hist_empty"></p>
+      </div>
     </section>
 
     <footer class="text-center text-xs text-slate-600 mt-10">Digit2AI · {{TITLE}} &amp; <span data-i18n="brand_suffix">Entrenador de salto</span></footer>

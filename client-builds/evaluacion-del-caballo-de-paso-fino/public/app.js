@@ -301,6 +301,35 @@
     }).catch(function () { empty.classList.remove('hidden'); });
   }
 
+  // ---- Mis análisis Caballo de Paso (dashboard) ----
+  function loadMyChampSessions() {
+    var tbody = document.getElementById('myChampRows'), empty = document.getElementById('myChampEmpty');
+    if (!tbody || !empty) return;
+    var MODL2 = { paso_fino: 'Paso Fino', trocha: 'Trocha', trocha_galope: (LANG === 'en' ? 'Trocha and canter' : 'Trocha y Galope'), trote_galope: (LANG === 'en' ? 'Trot / canter' : 'Trote / galope') };
+    fetch(CHAMP + '/my-sessions', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        tbody.innerHTML = '';
+        if (!rows || !rows.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        rows.forEach(function (s) {
+          var d = s.fecha ? new Date(s.fecha) : null;
+          var dateStr = d ? (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '—';
+          var url = BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG;
+          var tag = s.simulado ? ' <span class="text-amber-400" title="' + (I18N.sim_tag || 'referencia') + '">◦</span>' : '';
+          var tr = document.createElement('tr');
+          tr.className = 'border-b border-slate-800/50';
+          tr.innerHTML =
+            '<td class="py-2 pr-4 mono text-xs">' + esc(dateStr) + '</td>' +
+            '<td class="py-2 pr-4">' + esc(s.caballo || '—') + tag + '</td>' +
+            '<td class="py-2 pr-4">' + esc(MODL2[s.modalidad] || s.modalidad || '—') + '</td>' +
+            '<td class="py-2 pr-4 mono font-bold text-emerald-400">' + (s.puntaje != null ? Number(s.puntaje).toFixed(1) : '—') + '</td>' +
+            '<td class="py-2 pr-4"><a href="' + url + '" target="_blank" rel="noopener" class="text-indigo-300 hover:text-indigo-200 underline">' + (I18N.hist_open || 'Ver informe') + ' ↗</a></td>';
+          tbody.appendChild(tr);
+        });
+      }).catch(function () {});
+  }
+
   // ---- Boot ----
   applyI18n();
   langToggle();
@@ -308,6 +337,7 @@
   if (PAGE === 'dashboard') {
     bindDashboard();
     bindRanking();
+    loadMyChampSessions();
     loadJumpHistory();
   } else {
     bindCreateHorse();

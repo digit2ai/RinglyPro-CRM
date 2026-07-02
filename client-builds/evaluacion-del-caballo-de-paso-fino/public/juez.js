@@ -11,23 +11,16 @@
   'use strict';
   var I18N = window.__I18N || {}, BASE = window.__BASE || '/', LANG = window.__LANG || 'es';
   var API = BASE + 'api/v1', CHAMP = API + '/champ';
-  var demoToken = '';
 
   function $(id) { return document.getElementById(id); }
   function applyI18n() {
     document.querySelectorAll('[data-i18n]').forEach(function (el) { var k = el.getAttribute('data-i18n'); if (I18N[k] != null) el.textContent = I18N[k]; });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) { var k = el.getAttribute('data-i18n-ph'); if (I18N[k] != null) el.setAttribute('placeholder', I18N[k]); });
   }
   function langToggle() {
     var el = $('langToggle'); if (!el) return;
     el.addEventListener('click', function () { var u = new URL(location.href); u.searchParams.set('lang', LANG === 'es' ? 'en' : 'es'); location.href = u.toString(); });
   }
-  function customToken() { var e = $('jwt'); return e && e.value ? e.value.trim() : ''; }
-  function ensureToken() {
-    if (customToken()) return Promise.resolve(customToken());
-    if (demoToken) return Promise.resolve(demoToken);
-    return fetch(API + '/session/demo').then(function (r) { return r.json(); }).then(function (j) { demoToken = (j && j.token) || ''; setBadge(); return demoToken; }).catch(function () { return ''; });
-  }
-  function setBadge() { var b = $('sessionBadge'); if (!b) return; if (demoToken) { b.textContent = I18N.session_demo; b.className = 'text-xs text-emerald-400 mono'; } }
 
   var MODALIDAD_LABEL = {
     paso_fino: { es: 'Paso fino', en: 'Paso fino' },
@@ -37,51 +30,39 @@
   };
   function modLabel(m) { return (MODALIDAD_LABEL[m] && MODALIDAD_LABEL[m][LANG]) || (m || '—'); }
 
-  // ---- Selectores ----
-  function loadEventos() {
-    return fetch(CHAMP + '/eventos', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
-      fillSelect('eventoSel', rows, 'sel_evento', function (e) { return e.nombre + ' (' + (e.anio || '') + ')'; });
-      return rows;
-    }).catch(function () { return []; });
-  }
-  function loadCategorias(evento_id) {
-    return fetch(CHAMP + '/categorias?evento_id=' + evento_id, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
-      fillSelect('categoriaSel', rows, 'sel_categoria', function (c) { return c.nombre + ' · ' + modLabel(c.modalidad); });
-      return rows;
-    }).catch(function () { return []; });
-  }
-  function loadInscripciones(categoria_id) {
-    return fetch(CHAMP + '/inscripciones?categoria_id=' + categoria_id, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (rows) {
-      fillSelect('inscripcionSel', rows, 'sel_competidor', function (i) { return '#' + (i.numero_competidor || '?') + ' · ' + (i.caballo || ''); });
-      return rows;
-    }).catch(function () { return []; });
-  }
-  function fillSelect(id, rows, placeholderKey, label) {
-    var sel = $(id); if (!sel) return;
-    sel.innerHTML = '';
-    var ph = document.createElement('option'); ph.value = ''; ph.textContent = I18N[placeholderKey] || ''; sel.appendChild(ph);
-    (rows || []).forEach(function (r) { var o = document.createElement('option'); o.value = r.id; o.textContent = label(r); sel.appendChild(o); });
-  }
 
-  function bindSelectors() {
-    $('eventoSel').addEventListener('change', function () { if (this.value) loadCategorias(this.value); });
-    $('categoriaSel').addEventListener('change', function () { if (this.value) loadInscripciones(this.value); });
-    $('demoSetup').addEventListener('click', function () {
-      {
-        fetch(CHAMP + '/demo-setup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-          .then(function (r) { return r.json(); })
-          .then(function (d) {
-            loadEventos().then(function () {
-              $('eventoSel').value = d.evento.id;
-              loadCategorias(d.evento.id).then(function () {
-                $('categoriaSel').value = d.categoria.id;
-                loadInscripciones(d.categoria.id).then(function () { $('inscripcionSel').value = d.inscripcion.id; });
-              });
-            });
-            // pre-seleccionar la modalidad de la categoría como simulación
-            $('demoModSel').value = d.categoria.modalidad === 'trote_galope' ? 'trote' : d.categoria.modalidad;
-          });
-      }
+  // ---- Caballos del cliente (select o alta) ----
+  function loadHorses() {
+    return fetch(CHAMP + '/horses', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        var sel = $('horseSel'); if (!sel) return rows;
+        var cur = sel.value;
+        sel.innerHTML = '';
+        var ph = document.createElement('option'); ph.value = ''; ph.textContent = I18N.horse_pick || 'Elige tu caballo'; sel.appendChild(ph);
+        (rows || []).forEach(function (c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre + (c.criadero ? (' · ' + c.criadero) : ''); sel.appendChild(o); });
+        if (cur) sel.value = cur;
+        return rows;
+      }).catch(function () { return []; });
+  }
+  function bindHorseControls() {
+    var toggle = $('horseNewToggle'), form = $('horseNewForm');
+    if (toggle && form) toggle.addEventListener('click', function () { form.classList.toggle('hidden'); });
+    var save = $('hnSave');
+    if (save) save.addEventListener('click', function () {
+      var nombre = ($('hnNombre').value || '').trim();
+      if (!nombre) { $('hnNombre').focus(); return; }
+      save.disabled = true;
+      fetch(CHAMP + '/horses', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre, sexo: $('hnSexo').value || null, capa: ($('hnCapa').value || '').trim() || null, criadero: ($('hnCriadero').value || '').trim() || null })
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+        save.disabled = false;
+        if (!c) return;
+        $('hnNombre').value = ''; $('hnCapa').value = ''; $('hnCriadero').value = ''; $('hnSexo').value = '';
+        $('horseNewForm').classList.add('hidden');
+        loadHorses().then(function () { $('horseSel').value = String(c.id); });
+      }).catch(function () { save.disabled = false; });
     });
   }
 
@@ -95,70 +76,54 @@
   }
   function stopProgress(done) { if (progTimer) clearInterval(progTimer); if (done) progress(100, I18N.prog_listo); }
 
-  // Si el usuario no eligió competidor, auto-creamos datos de demostración
-  // (evento + categoría + inscripción) y devolvemos ese inscripcion_id. Así el
-  // análisis rápido es un solo clic, sin montar el campeonato a mano.
-  function ensureInscripcion() {
-    var existing = $('inscripcionSel').value;
-    if (existing) return Promise.resolve(existing);
-    progress(3, I18N.prog_demo_setup || 'Preparando competidor de demostración…');
-    return fetch(CHAMP + '/demo-setup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d || !d.inscripcion) return '';
-        // Reflejar la selección en los dropdowns para que el usuario la vea.
-        loadEventos().then(function () {
-          $('eventoSel').value = d.evento.id;
-          loadCategorias(d.evento.id).then(function () {
-            $('categoriaSel').value = d.categoria.id;
-            loadInscripciones(d.categoria.id).then(function () { $('inscripcionSel').value = d.inscripcion.id; });
-          });
-        });
-        return String(d.inscripcion.id);
-      }).catch(function () { return ''; });
-  }
-
   function bindEvaluar() {
     $('evaluar').addEventListener('click', function () {
       var videoFile = $('video').files[0];
       var audioFile = $('audio').files[0];
-      var demoMod = $('demoModSel').value;
-      // Análisis REAL = se subió un AUDIO de la pasada (1 crédito, requiere cuenta).
-      // El video es solo para el reproductor. Sin audio = simulación GRATIS.
+      // Análisis REAL = audio real de cascos (1 crédito, requiere cuenta). Sin
+      // audio = resultado de referencia GRATIS de la disciplina del caballo.
       var isReal = !!audioFile;
-      if (isReal && (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn())) {
+      if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) {
         location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname);
         return;
       }
+      // Caballo: existente (horseSel) o nuevo (nombre del formulario).
+      var caballo_id = $('horseSel') ? $('horseSel').value : '';
+      var nuevoNombre = ($('hnNombre') && $('hnNombre').value ? $('hnNombre').value : '').trim();
+      if (!caballo_id && !nuevoNombre) {
+        progress(0, I18N.err_need_horse_pick || 'Elige un caballo o registra uno nuevo.');
+        $('progressWrap').classList.remove('hidden');
+        return;
+      }
+      var modalidad = $('disciplinaSel') ? $('disciplinaSel').value : 'paso_fino';
       var btn = this; btn.disabled = true;
       fakeProgress();
-      ensureInscripcion().then(function (inscripcion_id) {
-      if (!inscripcion_id) { stopProgress(false); btn.disabled = false; progress(0, I18N.err_need_inscripcion); return; }
-      {
-        var fd = new FormData();
-        fd.append('inscripcion_id', inscripcion_id);
-        fd.append('superficie', $('superficieSel').value);
-        if (isReal) {
-          fd.append('audio', audioFile);
-          if (videoFile) fd.append('video', videoFile);
-        } else {
-          fd.append('demo_modalidad', demoMod || 'paso_fino'); // simulación gratis
-        }
-        fetch(CHAMP + '/sessions', { method: 'POST', credentials: 'same-origin', body: fd })
-          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
-          .then(function (res) {
-            stopProgress(true);
-            btn.disabled = false;
-            if (res.status === 401) { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); return; }
-            if (res.status === 402) { progress(0, I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return; }
-            if (!res.ok) { progress(0, (res.j && res.j.error) || 'error'); return; }
-            setTimeout(function () { $('progressWrap').classList.add('hidden'); }, 600);
-            if (res.j.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.j.credits);
-            renderFallo(res.j, videoFile);
-          })
-          .catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
+      var fd = new FormData();
+      if (caballo_id) fd.append('caballo_id', caballo_id);
+      else {
+        fd.append('caballo_nombre', nuevoNombre);
+        if ($('hnSexo').value) fd.append('caballo_sexo', $('hnSexo').value);
+        if ($('hnCapa').value) fd.append('caballo_capa', $('hnCapa').value.trim());
+        if ($('hnCriadero').value) fd.append('caballo_criadero', $('hnCriadero').value.trim());
       }
-      });
+      fd.append('modalidad', modalidad);
+      fd.append('superficie', $('superficieSel').value);
+      if (audioFile) fd.append('audio', audioFile);
+      if (videoFile) fd.append('video', videoFile);
+      fetch(CHAMP + '/sessions', { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+        .then(function (res) {
+          stopProgress(true);
+          btn.disabled = false;
+          if (res.status === 401) { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); return; }
+          if (res.status === 402) { progress(0, I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return; }
+          if (!res.ok) { progress(0, (res.j && res.j.error) || 'error'); return; }
+          setTimeout(function () { $('progressWrap').classList.add('hidden'); }, 600);
+          if (res.j.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.j.credits);
+          renderFallo(res.j, videoFile);
+          loadHorses(); loadMyHistory();
+        })
+        .catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
     });
   }
 
@@ -257,40 +222,101 @@
     // Dictamen profesional estructurado (server-side).
     renderDictamen(f.dictamen);
 
-    // Share: build the summary + reveal the button + make the result a permalink.
+    // Share: summary + rellenar la caja de enlace + permalink navegable.
     currentSummary = (I18N.share_summary || 'Fallo del juez EquiMind') + ' — ' +
       modLabel(clas.modalidad_detectada) + ' ' + (f.puntaje_total != null ? f.puntaje_total.toFixed(1) + '/100' : '') +
       (f.ranking ? ' · ' + (I18N.res_ranking || 'Puesto') + ' #' + f.ranking : '');
     var sb = $('shareBtn');
     if (sb) { if (currentSesionId != null) sb.classList.remove('hidden'); else sb.classList.add('hidden'); }
+    var link = $('shareLink'); if (link) link.value = currentSesionId != null ? shareUrl() : '';
     if (currentSesionId != null) { try { history.replaceState(null, '', BASE + 'juez?session=' + currentSesionId + '&lang=' + LANG); } catch (e) {} }
 
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function shareUrl() { return location.origin + BASE + 'juez?session=' + currentSesionId + '&lang=' + LANG; }
+  function flashMsg(id) { var m = $(id); if (m) { m.textContent = I18N.share_copied || 'Enlace copiado'; setTimeout(function () { m.textContent = ''; }, 2500); } }
+  // Copia robusta: clipboard API si hay contexto seguro; si no (o iframe sin
+  // permiso), fallback execCommand seleccionando el input visible.
+  function copyText(text, input, msgId) {
+    function legacy() {
+      try {
+        if (input) { input.removeAttribute('readonly'); input.value = text; input.focus(); input.select(); input.setSelectionRange(0, 99999); }
+        var ok = document.execCommand('copy');
+        if (input) input.setAttribute('readonly', 'readonly');
+        if (ok) flashMsg(msgId); else window.prompt(I18N.share_copy_prompt || 'Copia el enlace:', text);
+      } catch (e) { window.prompt(I18N.share_copy_prompt || 'Copia el enlace:', text); }
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { flashMsg(msgId); }).catch(legacy);
+    } else { legacy(); }
+  }
   function bindShare() {
-    var sb = $('shareBtn'); if (!sb) return;
-    sb.addEventListener('click', function () {
+    var sb = $('shareBtn');
+    if (sb) sb.addEventListener('click', function () {
       if (currentSesionId == null) return;
-      var url = shareUrl(), msg = $('shareMsg');
-      var data = { title: 'EquiMind', text: currentSummary, url: url };
-      if (navigator.share) {
-        navigator.share(data).catch(function () {});
-      } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(currentSummary + ' ' + url).then(function () {
-          if (msg) { msg.textContent = I18N.share_copied || 'Enlace copiado'; setTimeout(function () { msg.textContent = ''; }, 2500); }
-        }).catch(function () {});
-      } else {
-        window.prompt(I18N.share_copy_prompt || 'Copia el enlace:', url);
-      }
+      var url = shareUrl();
+      if (navigator.share) { navigator.share({ title: 'EquiMind', text: currentSummary, url: url }).catch(function () { copyText(currentSummary + ' ' + url, $('shareLink'), 'shareMsg'); }); }
+      else { copyText(currentSummary + ' ' + url, $('shareLink'), 'shareMsg'); }
     });
+    var sc = $('shareCopy');
+    if (sc) sc.addEventListener('click', function () { if (currentSesionId != null) copyText(shareUrl(), $('shareLink'), 'shareMsg2'); });
+    var so = $('shareOpen');
+    if (so) so.addEventListener('click', function () { if (currentSesionId != null) window.open(shareUrl(), '_blank', 'noopener'); });
+  }
+
+  // ---- Mis análisis (historial del cliente) ----
+  function loadMyHistory() {
+    var tbody = $('histRows'), empty = $('histEmpty');
+    if (!tbody || !empty) return;
+    fetch(CHAMP + '/my-sessions', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        tbody.innerHTML = '';
+        if (!rows || !rows.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        rows.forEach(function (s) {
+          var d = s.fecha ? new Date(s.fecha) : null;
+          var dateStr = d ? (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '—';
+          var url = location.origin + BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG;
+          var tag = s.simulado ? (' <span class="text-amber-400" title="' + (I18N.sim_tag || 'referencia') + '">◦</span>') : '';
+          var tr = document.createElement('tr');
+          tr.className = 'border-b border-slate-800/50';
+          tr.innerHTML =
+            '<td class="py-2 pr-4 mono text-xs">' + esc(dateStr) + '</td>' +
+            '<td class="py-2 pr-4">' + esc(s.caballo || '—') + tag + '</td>' +
+            '<td class="py-2 pr-4">' + esc(modLabel(s.modalidad)) + '</td>' +
+            '<td class="py-2 pr-4 mono font-bold text-emerald-400">' + (s.puntaje != null ? Number(s.puntaje).toFixed(1) : '—') + '</td>' +
+            '<td class="py-2 pr-4"><a href="' + url + '" target="_blank" rel="noopener" class="text-indigo-300 hover:text-indigo-200 underline">' + (I18N.hist_open || 'Ver informe') + ' ↗</a></td>';
+          tbody.appendChild(tr);
+        });
+      }).catch(function () {});
+  }
+  function bindHistoryActions() {
+    var hr = $('histRefresh'); if (hr) hr.addEventListener('click', loadMyHistory);
+    var na = $('newAnalysis');
+    if (na) na.addEventListener('click', function () {
+      currentSesionId = null;
+      var res = $('result'); if (res) res.classList.add('hidden');
+      var v = $('video'); if (v) v.value = ''; var a = $('audio'); if (a) a.value = '';
+      try { history.replaceState(null, '', BASE + 'juez?lang=' + LANG); } catch (e) {}
+      var up = document.querySelector('[data-i18n="up_title"]'); if (up) up.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    var gh = $('goHistory');
+    if (gh) gh.addEventListener('click', function () { loadMyHistory(); var h = $('historySection'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   }
 
   // Load a persisted session (shareable permalink ?session=ID) read-only.
+  // Oculta los controles de entrada: es un INFORME COMPLETO para revisar/compartir.
   function loadSharedSession() {
     var id = new URLSearchParams(location.search).get('session');
     if (!id) return;
+    // Ocultar secciones de carga y de historial en el informe compartido.
+    document.querySelectorAll('section').forEach(function (sec) {
+      if (sec.querySelector('#horseSel') || sec.querySelector('#evaluar') || sec.id === 'historySection' || sec.querySelector('#sessionBadge')) {
+        if (sec.id !== 'result') sec.classList.add('hidden');
+      }
+    });
     fetch(CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG, { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
@@ -298,6 +324,7 @@
         var clas = j.clasificacion || {};
         if (j.categoria) clas.modalidad_categoria = j.categoria.modalidad;
         renderFallo({
+          simulado: j.simulado,
           sesion_id: j.sesion.id,
           clasificacion: clas,
           metricas_movimiento: j.metricas_movimiento || {},
@@ -393,10 +420,17 @@
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   // ---- Boot ----
-  applyI18n(); langToggle(); setBadge();
-  loadEventos();
-  bindSelectors();
+  applyI18n(); langToggle();
+  bindHorseControls();
   bindEvaluar();
   bindShare();
-  loadSharedSession();
+  bindHistoryActions();
+  // Vista de informe compartido (?session=ID) vs. flujo normal.
+  var sharedId = new URLSearchParams(location.search).get('session');
+  if (sharedId) {
+    loadSharedSession();
+  } else {
+    loadHorses();
+    loadMyHistory();
+  }
 })();

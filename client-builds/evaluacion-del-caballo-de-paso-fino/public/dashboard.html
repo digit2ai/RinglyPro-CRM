@@ -36,6 +36,27 @@
       </div>
     </header>
 
+    <!-- Mis análisis Caballo de Paso (permalinks -> informe completo) -->
+    <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-bold" data-i18n="hist_mine_title"></h2>
+        <a href="{{BASE}}juez" target="_blank" rel="noopener" class="text-xs text-indigo-300 underline" data-i18n="act_new_analysis"></a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-slate-500 border-b border-slate-800">
+            <th class="py-2 pr-4" data-i18n="col_date"></th>
+            <th class="py-2 pr-4" data-i18n="col_caballo"></th>
+            <th class="py-2 pr-4" data-i18n="res_modalidad"></th>
+            <th class="py-2 pr-4" data-i18n="col_puntaje"></th>
+            <th class="py-2 pr-4"></th>
+          </tr></thead>
+          <tbody id="myChampRows"></tbody>
+        </table>
+        <p id="myChampEmpty" class="text-slate-500 text-sm py-3" data-i18n="hist_empty"></p>
+      </div>
+    </section>
+
     <!-- Championship ranking by category -->
     <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-8">
       <h2 class="text-lg font-bold mb-3" data-i18n="rank_title"></h2>
