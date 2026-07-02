@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>{{DOCTITLE}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#0b0f19; color:#e9eef7; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .card { background:linear-gradient(180deg,#141b29,#0d1320); border:1px solid #243049; border-radius:20px; }
+    .stage { position:relative; width:100%; max-width:480px; aspect-ratio:4/3; margin:0 auto; border-radius:16px; overflow:hidden; background:#000; }
+    #cam { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+    .roi { position:absolute; left:50%; top:34%; width:42%; height:34%; transform:translate(-50%,-50%);
+           border:2px solid rgba(74,222,128,.9); border-radius:12px; box-shadow:0 0 0 9999px rgba(0,0,0,.28); pointer-events:none; }
+    .roi.locked { border-color:#22d3ee; }
+    .bpm { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .bar { height:6px; border-radius:6px; background:#22304a; overflow:hidden; }
+    .bar > i { display:block; height:100%; background:linear-gradient(90deg,#4ade80,#22d3ee); width:0%; transition:width .3s; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-2xl mx-auto px-4 py-8">
+
+    <div class="flex items-center justify-between mb-4 text-sm text-slate-400">
+      <span class="font-semibold text-slate-200">Digit2AI</span>
+      <span>
+        <a class="underline hover:text-cyan-300" href="?lang=es">ES</a> ·
+        <a class="underline hover:text-cyan-300" href="?lang=en">EN</a>
+      </span>
+    </div>
+
+    <h1 class="text-3xl font-bold mb-2">{{H1}}</h1>
+    <p class="text-slate-400 mb-3">{{SUBTITLE}}</p>
+
+    <div class="card p-3 mb-5 text-sm text-emerald-300/90 border-emerald-500/30">
+      🔒 {{PRIVACY_BADGE}}
+    </div>
+
+    <div class="card p-5">
+      <div class="stage">
+        <video id="cam" autoplay playsinline muted></video>
+        <div id="roi" class="roi"></div>
+        <canvas id="work" width="64" height="64" class="hidden"></canvas>
+      </div>
+
+      <p id="hint" class="text-slate-400 text-sm mt-4 text-center">{{ALIGN}}</p>
+
+      <div class="bar mt-4"><i id="prog"></i></div>
+
+      <div class="flex flex-wrap gap-3 justify-center mt-5">
+        <button id="start" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold">{{START}}</button>
+        <button id="stop" class="px-5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 font-semibold" disabled>{{STOP}}</button>
+        <button id="sim" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium border border-slate-600">{{SIMULATE}}</button>
+      </div>
+
+      <div id="result" class="hidden mt-6 text-center">
+        <div class="text-slate-400 text-sm">{{RESULT_LABEL}}</div>
+        <div class="bpm text-6xl font-bold my-1"><span id="bpmVal">--</span> <span class="text-2xl text-slate-400">{{BPM_UNIT}}</span></div>
+        <div class="text-slate-400 text-sm">{{CONFIDENCE}}: <span id="confVal">--</span></div>
+        <div id="saveMsg" class="text-sm mt-2"></div>
+      </div>
+    </div>
+
+    <p class="text-xs text-amber-300/80 mt-4 text-center">⚠ {{DISCLAIMER_INLINE}}</p>
+
+    <div class="text-center mt-5 text-sm text-slate-400">
+      <a id="histLink" class="underline hover:text-cyan-300" href="dashboard?lang={{LANG}}">{{HISTORY_LINK}}</a> ·
+      <a class="underline hover:text-cyan-300" href="disclaimer?lang={{LANG}}">{{DISCLAIMER_LINK}}</a>
+    </div>
+  </main>
+
+  <script>
+    // Copy dictionary needed by rppg.js (status strings) — injected from the server dict.
+    window.__I18N = {
+      lang: '{{LANG}}',
+      capturing: '{{CAPTURING}}',
+      saved: '{{SAVED}}',
+      saveErr: '{{SAVE_ERR}}',
+      camErr: '{{CAM_ERR}}',
+      lowConf: '{{LOWCONF}}'
+    };
+  </script>
+  <script src="rppg.js"></script>
+</body>
+</html>

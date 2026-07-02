@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{DASH_H1}} — Digit2AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#0b0f19; color:#e9eef7; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .card { background:linear-gradient(180deg,#141b29,#0d1320); border:1px solid #243049; border-radius:20px; }
+    .bpm { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    th, td { padding:.6rem .8rem; text-align:left; }
+    tbody tr:nth-child(odd) { background:rgba(255,255,255,.02); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-4 text-sm text-slate-400">
+      <span class="font-semibold text-slate-200">Digit2AI</span>
+      <span>
+        <a class="underline hover:text-cyan-300" href="dashboard?lang=es">ES</a> ·
+        <a class="underline hover:text-cyan-300" href="dashboard?lang=en">EN</a>
+      </span>
+    </div>
+
+    <h1 class="text-3xl font-bold mb-1">{{DASH_H1}}</h1>
+    <p class="text-slate-400 mb-6">{{DASH_SUB}}</p>
+
+    <div id="msg" class="text-amber-300/90 text-sm mb-4"></div>
+
+    <div class="card overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-slate-400 border-b border-slate-700">
+          <tr>
+            <th>{{COL_ID}}</th><th>{{COL_BPM}}</th><th>{{COL_CONF}}</th>
+            <th>{{COL_DUR}}</th><th>{{COL_SRC}}</th><th>{{COL_TIME}}</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 text-sm">
+      <a class="underline hover:text-cyan-300" href="./?lang={{LANG}}">&larr; {{BACK}}</a>
+    </div>
+  </main>
+
+  <script>
+    var LANG = '{{LANG}}';
+    var T = { noToken: '{{NO_TOKEN}}', empty: '{{EMPTY}}' };
+    function tok(){ return new URLSearchParams(location.search).get('token'); }
+    function fmt(ts){ try { return new Date(ts).toLocaleString(LANG==='en'?'en-US':'es-ES'); } catch(e){ return ts; } }
+    (async function(){
+      var token = tok();
+      var msg = document.getElementById('msg'), rows = document.getElementById('rows');
+      if (!token) { msg.textContent = T.noToken; return; }
+      try {
+        var r = await fetch('api/v1/readings', { headers: { 'Authorization': 'Bearer ' + token } });
+        var j = await r.json();
+        var data = (j && j.data) || [];
+        if (!data.length) { msg.textContent = T.empty; return; }
+        rows.innerHTML = data.map(function(d){
+          var conf = d.confidence==null ? '—' : Math.round(Number(d.confidence)*100)+'%';
+          return '<tr>'+
+            '<td class="text-slate-500">'+d.id+'</td>'+
+            '<td class="bpm text-cyan-300 font-semibold">'+d.bpm+'</td>'+
+            '<td>'+conf+'</td>'+
+            '<td>'+(d.duration_s==null?'—':d.duration_s)+'</td>'+
+            '<td class="text-slate-400">'+(d.source||'rppg')+'</td>'+
+            '<td class="text-slate-400">'+fmt(d.created_at)+'</td>'+
+          '</tr>';
+        }).join('');
+      } catch(e) { msg.textContent = String(e.message||e); }
+    })();
+  </script>
+</body>
+</html>
