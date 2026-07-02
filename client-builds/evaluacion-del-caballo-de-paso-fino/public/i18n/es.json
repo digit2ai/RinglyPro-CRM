@@ -60,11 +60,11 @@
   "sel_categoria": "Categoría",
   "sel_competidor": "Caballo / competidor",
   "up_title": "Carga de la pasada",
-  "up_video": "Video de la pasada (.mp4 / .mov)",
+  "up_video": "Video de la pasada (con sonido de cascos)",
   "up_audio": "Audio separado (.wav, opcional)",
   "up_superficie": "Superficie",
   "up_simular": "Modalidad de referencia (sin audio)",
-  "up_nota": "Sube el audio de los cascos (.wav) para un análisis real (1 crédito). El video queda como evidencia visual. Sin audio se muestra un resultado de referencia (gratis) según la disciplina.",
+  "up_nota": "Sube un video con sonido CLARO de los cascos (o un .wav aparte): analizamos el audio real de los cascos y puntúa como un juez — 1 crédito. Sin audio se muestra un resultado de referencia (gratis) según la disciplina.",
   "up_evaluar": "Analizar caballo",
   "prog_subiendo": "Subiendo la sesión…",
   "prog_video": "Procesando frames del video…",
@@ -229,5 +229,6 @@
   "mkt_login": "Iniciar sesión",
   "mkt_learn": "Conocer EquiMind",
   "share_invalid": "Enlace no válido o expirado.",
-  "share_notfound": "Informe no encontrado."
+  "share_notfound": "Informe no encontrado.",
+  "prog_extract": "Extrayendo el audio de los cascos del video…"
 }

@@ -60,11 +60,11 @@
   "sel_categoria": "Category",
   "sel_competidor": "Horse / competitor",
   "up_title": "Run upload",
-  "up_video": "Run video (.mp4 / .mov)",
+  "up_video": "Run video (with hoof sound)",
   "up_audio": "Separate audio (.wav, optional)",
   "up_superficie": "Surface",
   "up_simular": "Reference modality (no audio)",
-  "up_nota": "Upload the hoof audio (.wav) for a real analysis (1 credit). The video is kept as visual evidence. Without audio a free reference result is shown based on the discipline.",
+  "up_nota": "Upload a video with CLEAR hoof sound (or a separate .wav): we analyze the real hoof audio and score it like a judge — 1 credit. Without audio a free reference result is shown based on the discipline.",
   "up_evaluar": "Analyze horse",
   "prog_subiendo": "Uploading session…",
   "prog_video": "Processing video frames…",
@@ -229,5 +229,6 @@
   "mkt_login": "Log in",
   "mkt_learn": "Discover EquiMind",
   "share_invalid": "Invalid or expired link.",
-  "share_notfound": "Report not found."
+  "share_notfound": "Report not found.",
+  "prog_extract": "Extracting hoof audio from the video…"
 }

@@ -80,9 +80,8 @@
     $('evaluar').addEventListener('click', function () {
       var videoFile = $('video').files[0];
       var audioFile = $('audio').files[0];
-      // Análisis REAL = audio real de cascos (1 crédito, requiere cuenta). Sin
-      // audio = resultado de referencia GRATIS de la disciplina del caballo.
-      var isReal = !!audioFile;
+      // Análisis REAL = audio real de cascos (del .wav o extraído del video) =
+      // 1 crédito. Requiere cuenta. Sin video ni audio = referencia GRATIS.
       if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) {
         location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname);
         return;
@@ -98,33 +97,93 @@
       var modalidad = $('disciplinaSel') ? $('disciplinaSel').value : 'paso_fino';
       var btn = this; btn.disabled = true;
       fakeProgress();
-      var fd = new FormData();
-      if (caballo_id) fd.append('caballo_id', caballo_id);
-      else {
-        fd.append('caballo_nombre', nuevoNombre);
-        if ($('hnSexo').value) fd.append('caballo_sexo', $('hnSexo').value);
-        if ($('hnCapa').value) fd.append('caballo_capa', $('hnCapa').value.trim());
-        if ($('hnCriadero').value) fd.append('caballo_criadero', $('hnCriadero').value.trim());
-      }
-      fd.append('modalidad', modalidad);
-      fd.append('superficie', $('superficieSel').value);
-      if (audioFile) fd.append('audio', audioFile);
-      if (videoFile) fd.append('video', videoFile);
-      fetch(CHAMP + '/sessions', { method: 'POST', credentials: 'same-origin', body: fd })
-        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
-        .then(function (res) {
-          stopProgress(true);
-          btn.disabled = false;
-          if (res.status === 401) { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); return; }
-          if (res.status === 402) { progress(0, I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return; }
-          if (!res.ok) { progress(0, (res.j && res.j.error) || 'error'); return; }
-          setTimeout(function () { $('progressWrap').classList.add('hidden'); }, 600);
-          if (res.j.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.j.credits);
-          renderFallo(res.j, videoFile);
-          loadHorses(); loadMyHistory();
-        })
-        .catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
+
+      // Si hay VIDEO pero no un .wav aparte, extraemos el audio de los cascos del
+      // propio video en el navegador -> análisis REAL (1 crédito). Si falla
+      // (sin pista de audio / códec no soportado), caemos a referencia gratis.
+      var prep;
+      if (!audioFile && videoFile) {
+        progress(8, I18N.prog_extract || 'Extrayendo el audio de los cascos del video…');
+        prep = extractWavFromVideo(videoFile).catch(function () { return null; });
+      } else { prep = Promise.resolve(null); }
+
+      prep.then(function (extractedWav) {
+        var fd = new FormData();
+        if (caballo_id) fd.append('caballo_id', caballo_id);
+        else {
+          fd.append('caballo_nombre', nuevoNombre);
+          if ($('hnSexo').value) fd.append('caballo_sexo', $('hnSexo').value);
+          if ($('hnCapa').value) fd.append('caballo_capa', $('hnCapa').value.trim());
+          if ($('hnCriadero').value) fd.append('caballo_criadero', $('hnCriadero').value.trim());
+        }
+        fd.append('modalidad', modalidad);
+        fd.append('superficie', $('superficieSel').value);
+        if (audioFile) fd.append('audio', audioFile);
+        else if (extractedWav) fd.append('audio', extractedWav, 'video-audio.wav');
+        if (videoFile) fd.append('video', videoFile);
+        return fetch(CHAMP + '/sessions', { method: 'POST', credentials: 'same-origin', body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+          .then(function (res) {
+            stopProgress(true);
+            btn.disabled = false;
+            if (res.status === 401) { location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname); return; }
+            if (res.status === 402) { progress(0, I18N.err_no_credits || 'Sin créditos.'); if (window.ECPFAccount) window.ECPFAccount.openRecharge(); return; }
+            if (!res.ok) { progress(0, (res.j && res.j.error) || 'error'); return; }
+            setTimeout(function () { $('progressWrap').classList.add('hidden'); }, 600);
+            if (res.j.credits != null && window.ECPFAccount) window.ECPFAccount.setCount(res.j.credits);
+            renderFallo(res.j, videoFile);
+            loadHorses(); loadMyHistory();
+          });
+      }).catch(function (e) { stopProgress(false); btn.disabled = false; progress(0, String(e)); });
     });
+  }
+
+  // ---- Extracción de audio del video en el navegador (Web Audio -> WAV 16-bit) ----
+  // Decodifica la pista de audio del video, la baja a mono ~16 kHz y la codifica
+  // como WAV PCM 16-bit (el formato que acepta el analizador de marcha).
+  function extractWavFromVideo(file) {
+    return new Promise(function (resolve, reject) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { reject(new Error('no AudioContext')); return; }
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('read failed')); };
+      reader.onload = function () {
+        var ctx;
+        try { ctx = new AC(); } catch (e) { reject(e); return; }
+        var done = function () { try { ctx.close && ctx.close(); } catch (e) {} };
+        ctx.decodeAudioData(reader.result.slice(0),
+          function (audioBuffer) {
+            try {
+              var mono = downmixDownsample(audioBuffer, 16000);
+              if (!mono.data.length) { done(); reject(new Error('empty audio')); return; }
+              done(); resolve(encodeWav16Mono(mono.data, mono.rate));
+            } catch (e) { done(); reject(e); }
+          },
+          function (err) { done(); reject(err || new Error('decode failed')); }
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  function downmixDownsample(audioBuffer, targetRate) {
+    var ch = audioBuffer.numberOfChannels || 1, srcRate = audioBuffer.sampleRate, srcLen = audioBuffer.length;
+    var mono = new Float32Array(srcLen);
+    for (var c = 0; c < ch; c++) { var d = audioBuffer.getChannelData(c); for (var i = 0; i < srcLen; i++) mono[i] += d[i] / ch; }
+    if (!targetRate || srcRate <= targetRate) return { data: mono, rate: srcRate };
+    var ratio = srcRate / targetRate, outLen = Math.floor(srcLen / ratio), out = new Float32Array(outLen);
+    for (var j = 0; j < outLen; j++) { var pos = j * ratio, i0 = Math.floor(pos), frac = pos - i0, a = mono[i0] || 0, b = (mono[i0 + 1] != null ? mono[i0 + 1] : a); out[j] = a + (b - a) * frac; }
+    return { data: out, rate: targetRate };
+  }
+  function encodeWav16Mono(float32, sampleRate) {
+    var len = float32.length, buffer = new ArrayBuffer(44 + len * 2), view = new DataView(buffer);
+    function ws(off, s) { for (var i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
+    ws(0, 'RIFF'); view.setUint32(4, 36 + len * 2, true); ws(8, 'WAVE');
+    ws(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    ws(36, 'data'); view.setUint32(40, len * 2, true);
+    var off = 44;
+    for (var i = 0; i < len; i++) { var s = Math.max(-1, Math.min(1, float32[i])); view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2; }
+    return new Blob([view], { type: 'audio/wav' });
   }
 
   // ---- Infographics ----
