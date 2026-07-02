@@ -80,12 +80,30 @@ async function ensureInscripcion(tenantId, caballo_id, categoria_id) {
   }
   return ins;
 }
+// Un caballo es ÚNICO por nombre dentro de la cuenta: reusar si ya existe (evita
+// duplicados en el selector). Un mismo caballo puede tener MÚLTIPLES disciplinas
+// (una inscripción por categoría), así que nunca se ata a una sola modalidad.
+async function ensureCaballo(tenantId, nombre, extra) {
+  const n = String(nombre || '').trim() || 'Sin asignar';
+  const all = await store.repo.findAll('caballos', { tenant_id: tenantId });
+  const existing = all.find((c) => String(c.nombre || '').trim().toLowerCase() === n.toLowerCase());
+  if (existing) return existing;
+  return store.repo.create('caballos', {
+    nombre: n.slice(0, 150), sexo: (extra && extra.sexo) || null, capa: (extra && extra.capa) || null,
+    criadero: (extra && extra.criadero) || null, tenant_id: tenantId
+  });
+}
+function dedupeByName(rows) {
+  const seen = new Set(); const out = [];
+  for (const c of rows) { const k = String(c.nombre || '').trim().toLowerCase(); if (seen.has(k)) continue; seen.add(k); out.push(c); }
+  return out;
+}
 
-// ---- Caballos del cliente (select o alta) -----------------------------------
+// ---- Caballos del cliente (select o alta) — SIEMPRE únicos por nombre --------
 router.get('/horses', requireAccount, async (req, res) => {
   try {
     const rows = await store.repo.findAll('caballos', { tenant_id: req.accountId }, ['id', 'DESC']);
-    res.json(rows.map((c) => ({ id: c.id, nombre: c.nombre, sexo: c.sexo, capa: c.capa, criadero: c.criadero, registro_fedequinas: c.registro_fedequinas })));
+    res.json(dedupeByName(rows).map((c) => ({ id: c.id, nombre: c.nombre, sexo: c.sexo, capa: c.capa, criadero: c.criadero, registro_fedequinas: c.registro_fedequinas })));
   } catch (e) { err(res, 500, 'could not list horses'); }
 });
 router.post('/horses', requireAccount, async (req, res) => {
@@ -93,11 +111,8 @@ router.post('/horses', requireAccount, async (req, res) => {
     const b = req.body || {};
     const nombre = String(b.nombre || '').trim();
     if (!nombre) return err(res, 400, 'nombre required');
-    const cab = await store.repo.create('caballos', {
-      nombre: nombre.slice(0, 150), sexo: (b.sexo || null), capa: (b.capa || null),
-      criadero: (b.criadero || null), registro_fedequinas: (b.registro_fedequinas || null),
-      tenant_id: req.accountId
-    });
+    // Reusar si ya existe un caballo con ese nombre (no duplicar en el selector).
+    const cab = await ensureCaballo(req.accountId, nombre, { sexo: b.sexo, capa: b.capa, criadero: b.criadero });
     res.status(201).json({ id: cab.id, nombre: cab.nombre, sexo: cab.sexo, capa: cab.capa, criadero: cab.criadero, registro_fedequinas: cab.registro_fedequinas });
   } catch (e) { err(res, 500, 'could not create horse'); }
 });
@@ -162,23 +177,22 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
       inscripcion = await store.repo.find('inscripciones', { id: inscripcion_id });
       if (!inscripcion) return err(res, 404, 'inscripcion not found');
     } else {
-      // Horse-centric: requiere cuenta (los caballos son por-cliente).
-      if (req.accountId == null) return err(res, 401, 'Inicia sesión para analizar tu caballo.');
+      // El análisis se define por VIDEO/AUDIO + CATEGORÍA (modalidad). El caballo
+      // es OPCIONAL (solo etiqueta): existente `caballo_id`, nuevo `caballo_nombre`
+      // (reusado si ya existe), o por defecto "Sin asignar". Un caballo puede tener
+      // varias disciplinas: se crea una inscripción por categoría, sin atarlo a una.
+      if (req.accountId == null) return err(res, 401, 'Inicia sesión para analizar.');
       let caballo_id = parseInt(body.caballo_id, 10) || null;
       if (caballo_id) {
         const c = await store.repo.find('caballos', { id: caballo_id });
         if (!c || String(c.tenant_id) !== String(req.accountId)) return err(res, 404, 'caballo not found');
       } else {
-        const nombre = String(body.caballo_nombre || '').trim();
-        if (!nombre) return err(res, 400, 'Elige un caballo o registra uno nuevo (caballo_id o caballo_nombre).');
-        const nuevo = await store.repo.create('caballos', {
-          nombre: nombre.slice(0, 150), sexo: body.caballo_sexo || null, capa: body.caballo_capa || null,
-          criadero: body.caballo_criadero || null, tenant_id: req.accountId
-        });
-        caballo_id = nuevo.id;
+        // Sin caballo elegido: reusar/crear por nombre (o "Sin asignar"). Nunca falla.
+        const cab = await ensureCaballo(req.accountId, body.caballo_nombre, { sexo: body.caballo_sexo, capa: body.caballo_capa, criadero: body.caballo_criadero });
+        caballo_id = cab.id;
       }
       const ev = await ensureDefaultEvento(req.accountId);
-      const cat = await ensureCategoria(req.accountId, ev.id, body.modalidad || 'paso_fino');
+      const cat = await ensureCategoria(req.accountId, ev.id, body.modalidad || 'paso_fino'); // CATEGORÍA = eje del análisis
       inscripcion = await ensureInscripcion(req.accountId, caballo_id, cat.id);
       inscripcion_id = inscripcion.id;
     }

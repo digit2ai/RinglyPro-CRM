@@ -68,17 +68,23 @@
       </div>
     </section>
 
-    <!-- Caballo: selecciona uno tuyo o registra uno nuevo -->
+    <!-- Categoría (eje del análisis) + caballo OPCIONAL -->
     <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="horse_title"></h2>
+        <h2 class="text-sm font-semibold text-indigo-300" data-i18n="analysis_setup_title"></h2>
         <button id="horseNewToggle" class="text-xs bg-slate-800 hover:bg-slate-700 rounded-lg px-3 py-1.5" data-i18n="horse_add_new"></button>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-        <select id="horseSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="horse_pick"></option></select>
-        <select id="disciplinaSel" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
-          <option value="paso_fino">Paso Fino</option><option value="trocha">Trocha</option><option value="trocha_galope">Trocha y Galope</option><option value="trote_galope">Trote y Galope</option>
-        </select>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="cat_label"></label>
+          <select id="disciplinaSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2">
+            <option value="paso_fino">Paso Fino</option><option value="trocha">Trocha</option><option value="trocha_galope">Trocha y Galope</option><option value="trote_galope">Trote y Galope</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="horse_opt_label"></label>
+          <select id="horseSel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2"><option value="" data-i18n="horse_pick"></option></select>
+        </div>
       </div>
       <!-- Alta de caballo nuevo (oculto por defecto) -->
       <div id="horseNewForm" class="hidden mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-t border-slate-800 pt-3">

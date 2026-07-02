@@ -86,15 +86,12 @@
         location.href = BASE + 'login?next=' + encodeURIComponent(location.pathname);
         return;
       }
-      // Caballo: existente (horseSel) o nuevo (nombre del formulario).
+      // El análisis se define por VIDEO/AUDIO + CATEGORÍA (disciplina). El caballo
+      // es OPCIONAL (etiqueta): si eliges uno o registras nombre lo usamos; si no,
+      // el servidor lo archiva como "Sin asignar". No bloquea el análisis.
+      var modalidad = $('disciplinaSel') ? $('disciplinaSel').value : 'paso_fino';
       var caballo_id = $('horseSel') ? $('horseSel').value : '';
       var nuevoNombre = ($('hnNombre') && $('hnNombre').value ? $('hnNombre').value : '').trim();
-      if (!caballo_id && !nuevoNombre) {
-        progress(0, I18N.err_need_horse_pick || 'Elige un caballo o registra uno nuevo.');
-        $('progressWrap').classList.remove('hidden');
-        return;
-      }
-      var modalidad = $('disciplinaSel') ? $('disciplinaSel').value : 'paso_fino';
       var btn = this; btn.disabled = true;
       fakeProgress();
 

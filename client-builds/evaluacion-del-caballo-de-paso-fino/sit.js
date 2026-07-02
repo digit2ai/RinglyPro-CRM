@@ -320,6 +320,18 @@ async function run(base) {
     check('horse-centric reference did NOT charge', balBefore === balAfter, `before=${balBefore} after=${balAfter}`);
     const mine = await reqJson(base, 'GET', '/api/v1/champ/my-sessions', { token: tok });
     check('GET /champ/my-sessions -> lists my analyses with caballo', mine.status === 200 && Array.isArray(mine.json) && mine.json.some((s) => s.caballo === 'Relámpago SIT' && s.sesion_id != null), `n=${mine.json && mine.json.length}`);
+    // Dedup: registering the SAME horse name again reuses the row (no duplicate).
+    const dupHorse = await reqJson(base, 'POST', '/api/v1/champ/horses', { token: tok, body: { nombre: 'Relámpago SIT' } });
+    check('POST /champ/horses same name -> reuses (no duplicate id)', dupHorse.status === 201 && dupHorse.json && dupHorse.json.id === newHorse.json.id, `id=${dupHorse.json && dupHorse.json.id} orig=${newHorse.json.id}`);
+    const list2 = await reqJson(base, 'GET', '/api/v1/champ/horses', { token: tok });
+    const names = (list2.json || []).map((h) => h.nombre);
+    check('GET /champ/horses -> names are unique (no repeats)', names.length === new Set(names.map((n) => n.toLowerCase())).size, `names=${JSON.stringify(names)}`);
+    // Horse is OPTIONAL: analyze with category only (no caballo_id / caballo_nombre) -> 201.
+    const fdNoHorse = new FormData();
+    fdNoHorse.append('modalidad', 'paso_fino');
+    const noHorse = await fetch(base + '/api/v1/champ/sessions', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fdNoHorse });
+    const nhj = await noHorse.json().catch(() => null);
+    check('POST /champ/sessions with NO horse (category only) -> 201', noHorse.status === 201 && nhj && nhj.sesion_id != null, `status=${noHorse.status} err=${nhj && nhj.error}`);
 
     // Balance endpoint.
     const bal = await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok });

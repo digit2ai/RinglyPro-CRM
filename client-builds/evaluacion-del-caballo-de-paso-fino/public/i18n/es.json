@@ -204,8 +204,8 @@
   "sim_banner": "Resultado de referencia (simulación). No analiza tu caballo real y no se te cobró. Para un análisis real, sube el audio de los cascos (.wav).",
   "horse_title": "Tu caballo",
   "horse_add_new": "+ Registrar caballo",
-  "horse_pick": "Elige tu caballo",
-  "horse_hint": "Elige un caballo tuyo o registra uno nuevo. La disciplina indica la marcha esperada para validarla.",
+  "horse_pick": "Sin asignar",
+  "horse_hint": "El análisis se basa en el video/audio y la categoría elegida. El caballo es opcional: elígelo o regístralo para guardarlo en tu historial; un mismo caballo puede evaluarse en varias disciplinas.",
   "horse_f_nombre": "Nombre del caballo",
   "horse_f_sexo": "Sexo",
   "horse_f_capa": "Capa (color)",
@@ -244,5 +244,8 @@
   "cs_body": "Estamos entrenando el análisis por IA para esta disciplina. Regístrate y te avisamos apenas esté lista.",
   "cs_notify": "Regístrate y te avisamos",
   "cs_back": "Volver al inicio",
-  "cs_generic": "Próximamente"
+  "cs_generic": "Próximamente",
+  "analysis_setup_title": "Categoría del análisis",
+  "cat_label": "Categoría / disciplina",
+  "horse_opt_label": "Caballo (opcional)"
 }

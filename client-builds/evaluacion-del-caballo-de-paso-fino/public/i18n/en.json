@@ -204,8 +204,8 @@
   "sim_banner": "Reference result (simulation). It does not analyze your real horse and you were not charged. For a real analysis, upload the hoof audio (.wav).",
   "horse_title": "Your horse",
   "horse_add_new": "+ Add horse",
-  "horse_pick": "Pick your horse",
-  "horse_hint": "Pick one of your horses or register a new one. The discipline is the expected gait, used to validate it.",
+  "horse_pick": "Unassigned",
+  "horse_hint": "The analysis is based on the video/audio and the chosen category. The horse is optional: pick or register one to keep it in your history; the same horse can be evaluated in several disciplines.",
   "horse_f_nombre": "Horse name",
   "horse_f_sexo": "Sex",
   "horse_f_capa": "Coat (color)",
@@ -244,5 +244,8 @@
   "cs_body": "We are training the AI analysis for this discipline. Sign up and we will notify you the moment it is ready.",
   "cs_notify": "Sign up to be notified",
   "cs_back": "Back to home",
-  "cs_generic": "Coming soon"
+  "cs_generic": "Coming soon",
+  "analysis_setup_title": "Analysis category",
+  "cat_label": "Category / discipline",
+  "horse_opt_label": "Horse (optional)"
 }
