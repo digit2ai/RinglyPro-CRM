@@ -73,6 +73,10 @@
   .filechip .rec{width:6px;height:6px;border-radius:50%;background:var(--sev-high);box-shadow:0 0 8px var(--sev-high)}
   .empty-pose{position:absolute;inset:0;z-index:1;opacity:.6}
   .video-controls{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:10px 12px 11px;background:linear-gradient(0deg,rgba(6,8,6,.9),transparent);display:flex;align-items:center;gap:12px}
+  .jbtn{font:inherit;font-weight:600;font-size:13px;cursor:pointer;border:none;border-radius:10px;padding:9px 14px;color:#1a140a;background:linear-gradient(180deg,var(--brass-bright),var(--brass));white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+  .jbtn:hover{filter:brightness(1.05)}
+  .jbtn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--line-2)}
+  #jhRows a{color:var(--brass-bright)}
   .play{flex:none;width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;color:#1a140a;background:var(--brass-bright);transition:transform .15s var(--ease),filter .2s}
   .play:hover{transform:scale(1.06)}
   .time{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text);white-space:nowrap}
@@ -202,7 +206,54 @@
         <div class="faults" id="faultList"></div>
       </div>
     </div>
+
+    <!-- Compartir (magic link público) + acciones -->
+    <section class="panel reveal" style="margin-top:18px;padding:16px">
+      <div class="sub-label" data-i18n="jc_share_label">Enlace público al informe (ábrelo o compártelo):</div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+        <input id="shareLink" readonly value="" style="flex:1;min-width:200px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--faint);font-family:ui-monospace,Menlo,monospace;font-size:12px">
+        <button id="shareCopy" class="jbtn" data-i18n="jc_copy">Copiar</button>
+        <button id="shareOpen" class="jbtn ghost" data-i18n="jc_open">Abrir</button>
+      </div>
+      <div id="shareMsg" class="status" style="color:var(--brass-bright)"></div>
+      <div id="ownerActions" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button id="newJump" class="jbtn" data-i18n="jc_new">Nuevo análisis</button>
+        <button id="goJumpHistory" class="jbtn ghost" data-i18n="jc_view_history">Ver historial</button>
+      </div>
+    </section>
   </div>
+
+  <!-- CTA de marketing en informe compartido (magic link público) -->
+  <section id="jumpCta" class="panel hidden reveal" style="margin-top:18px;padding:18px;border-color:rgba(201,162,75,.45);background:linear-gradient(135deg,rgba(230,197,114,.10),rgba(62,142,107,.10))">
+    <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:18px">Equi<span style="color:var(--brass-bright)">Mind</span> · <span data-i18n="jc_cta_kicker">AI Jump Coach</span></div>
+    <p style="margin:6px 0 2px;color:var(--text);font-size:14px" data-i18n="jc_cta_head">Este informe lo generó EquiMind: análisis de postura del jinete con IA.</p>
+    <p style="margin:0 0 14px;color:var(--faint);font-size:12px" data-i18n="jc_cta_sub">Analiza tus saltos, guarda tu historial y comparte informes como este.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{{BASE}}../evaluacion-del-caballo-de-paso-fino/signup" class="jbtn" data-i18n="jc_cta_signup">Regístrate gratis</a>
+      <a href="{{BASE}}../evaluacion-del-caballo-de-paso-fino/login" class="jbtn ghost" data-i18n="jc_cta_login">Iniciar sesión</a>
+    </div>
+  </section>
+
+  <!-- Mis análisis (historial del cliente, con permalinks) -->
+  <section id="jumpHistory" class="panel reveal" style="margin-top:18px;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h2 style="font-size:16px;margin:0" data-i18n="jc_hist_title">Mis análisis</h2>
+      <button id="jhRefresh" class="jbtn ghost" data-i18n="jc_refresh">Actualizar</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <thead><tr style="text-align:left;color:var(--faint);border-bottom:1px solid var(--line)">
+          <th style="padding:8px 12px 8px 0" data-i18n="jc_col_date">Fecha</th>
+          <th style="padding:8px 12px 8px 0" data-i18n="jc_col_file">Archivo</th>
+          <th style="padding:8px 12px 8px 0" data-i18n="jc_col_apex">Ápice</th>
+          <th style="padding:8px 12px 8px 0" data-i18n="jc_col_faults">Fallos</th>
+          <th style="padding:8px 12px 8px 0"></th>
+        </tr></thead>
+        <tbody id="jhRows"></tbody>
+      </table>
+      <p id="jhEmpty" style="color:var(--faint);font-size:13px;padding:10px 0" data-i18n="jc_hist_empty">Aún no tienes análisis de salto.</p>
+    </div>
+  </section>
 
   <div style="margin-top:22px;text-align:center;color:var(--faint);font-size:13px"><a href="{{BASE}}privacy?lang={{LANG}}" data-i18n="privacy_link">Privacidad</a></div>
 </div>

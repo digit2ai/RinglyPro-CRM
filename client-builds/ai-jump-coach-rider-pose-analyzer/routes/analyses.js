@@ -26,6 +26,19 @@ const { analyze } = require('../lib/faultEngine');
 // mints a short-lived embed token) or Authorization: Bearer.
 const horseAccount = require('../../evaluacion-del-caballo-de-paso-fino/models/account');
 const ECPF_SECRET = process.env.ECPF_JWT_SECRET || process.env.JWT_SECRET || 'ecpf-dev-secret';
+const crypto = require('crypto');
+
+// Magic link público del informe de salto (marketing): token HMAC corto por
+// análisis. Cualquiera con el link abre el informe completo; sin token no es
+// enumerable. Dominio canónico público del Jump Coach.
+function reportToken(id) {
+  return crypto.createHmac('sha256', ECPF_SECRET).update('jump-report:' + String(id)).digest('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 22);
+}
+function reportUrl(id) {
+  return 'https://aiagent.ringlypro.com/ai-jump-coach-rider-pose-analyzer/?analysis=' + id + '&k=' + reportToken(id);
+}
+function withShare(row) { return row ? Object.assign({}, row, { share_token: reportToken(row.id), share_url: reportUrl(row.id) }) : row; }
 
 function maskEmail(e) {
   const s = String(e || '');
@@ -49,6 +62,17 @@ async function requireHorseAccount(req, res, next) {
   req.ecpfUser = u; req.tenantId = u.id; req.jwt = dec;
   next();
 }
+
+// PUBLIC magic-link report (NO account) — must be declared BEFORE the auth gate.
+// Gated by the HMAC token so reports aren't enumerable by id.
+router.get('/:id/report', async (req, res) => {
+  try {
+    if (String((req.query || {}).k || '') !== reportToken(req.params.id)) return res.status(403).json({ error: 'Enlace no válido o expirado.' });
+    const row = await store.findById(req.params.id);
+    if (!row) return res.status(404).json({ error: 'not found' });
+    return res.json(withShare(row));
+  } catch (e) { return res.status(500).json({ error: 'read failed' }); }
+});
 
 router.use(requireHorseAccount);
 
@@ -90,7 +114,7 @@ router.post('/', async (req, res) => {
       tenant: req.tenantId, user: maskEmail(req.jwt && req.jwt.email),
       id: row.id, frames: row.frame_count, faults: (row.faults || []).length, credits: debit.balance
     }));
-    return res.status(201).json(Object.assign({}, row, { credits: debit.balance, charged: true }));
+    return res.status(201).json(Object.assign({}, withShare(row), { credits: debit.balance, charged: true }));
   } catch (e) {
     console.error(JSON.stringify({ svc: 'ai-jump-coach', event: 'analysis_error', error: e.message }));
     return res.status(500).json({ error: 'analysis failed' });
@@ -101,7 +125,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const rows = await store.listByTenant(req.tenantId);
-    return res.json({ data: rows, count: rows.length });
+    return res.json({ data: rows.map(withShare), count: rows.length });
   } catch (e) {
     return res.status(500).json({ error: 'list failed' });
   }
@@ -112,7 +136,7 @@ router.get('/:id', async (req, res) => {
   try {
     const row = await store.findForTenant(req.params.id, req.tenantId);
     if (!row) return res.status(404).json({ error: 'not found' });
-    return res.json(row);
+    return res.json(withShare(row));
   } catch (e) {
     return res.status(500).json({ error: 'read failed' });
   }

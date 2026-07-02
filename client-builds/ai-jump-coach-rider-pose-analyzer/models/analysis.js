@@ -94,6 +94,17 @@ async function findForTenant(id, tenant_id) {
   return r ? r.get({ plain: true }) : null;
 }
 
+// Untenanted read by id — used ONLY by the public magic-link report endpoint,
+// which gates access with an HMAC token (not the account). Never expose this
+// without that token check.
+async function findById(id) {
+  const pid = parseInt(id, 10);
+  if (!Number.isInteger(pid)) return null;
+  if (usingMemory || !Model) return memory.find((m) => m.id === pid) || null;
+  const r = await Model.findOne({ where: { id: pid } });
+  return r ? r.get({ plain: true }) : null;
+}
+
 async function listByTenant(tenant_id) {
   if (usingMemory || !Model) {
     return memory.filter((m) => m.tenant_id === tenant_id).sort((a, b) => b.id - a.id);
@@ -120,4 +131,4 @@ function mode() {
   return usingMemory ? 'memory' : (Model ? 'postgres' : 'uninitialized');
 }
 
-module.exports = { init, create, findForTenant, listByTenant, remove, mode, TABLE };
+module.exports = { init, create, findById, findForTenant, listByTenant, remove, mode, TABLE };

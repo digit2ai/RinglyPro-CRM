@@ -167,6 +167,7 @@
 
   // ---- results render ------------------------------------------------------
   function renderResults(row) {
+    if (row && row.share_url) setShareLink(row.share_url);
     lastFaults = row.faults || [];
     DUR = (row.duration_sec && row.duration_sec > 0) ? row.duration_sec : (player.duration || DUR || 1);
     resultsEl.classList.remove('hidden');
@@ -265,13 +266,94 @@
       // reveal animation
       [].forEach.call(resultsEl.querySelectorAll('.reveal'), function (el, i) { setTimeout(function () { el.classList.add('in'); }, 60 + i * 90); });
       drawOverlay();
+      loadHistory();
     } catch (e) { setStatus(t('save_failed')); }
     analyzeBtn.disabled = false;
   });
 
+  // ---- share (magic link público) -----------------------------------------
+  var currentShareUrl = '';
+  function setShareLink(url) { currentShareUrl = url || ''; var el = $('shareLink'); if (el) el.value = currentShareUrl; }
+  function flashShare() { var m = $('shareMsg'); if (m) { m.textContent = t('jc_copied') || 'Enlace copiado'; setTimeout(function () { m.textContent = ''; }, 2500); } }
+  function copyText(text) {
+    var input = $('shareLink');
+    function legacy() {
+      try { if (input) { input.removeAttribute('readonly'); input.value = text; input.focus(); input.select(); input.setSelectionRange(0, 99999); } var ok = document.execCommand('copy'); if (input) input.setAttribute('readonly', 'readonly'); if (ok) flashShare(); else window.prompt('', text); }
+      catch (e) { window.prompt('', text); }
+    }
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(flashShare).catch(legacy); } else { legacy(); }
+  }
+  function bindShare() {
+    var c = $('shareCopy'); if (c) c.addEventListener('click', function () { if (currentShareUrl) copyText(currentShareUrl); });
+    var o = $('shareOpen'); if (o) o.addEventListener('click', function () { if (currentShareUrl) window.open(currentShareUrl, '_blank', 'noopener'); });
+    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    var g = $('goJumpHistory'); if (g) g.addEventListener('click', function () { loadHistory(); var h = $('jumpHistory'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    var r = $('jhRefresh'); if (r) r.addEventListener('click', loadHistory);
+  }
+
+  // ---- Mis análisis (historial) --------------------------------------------
+  function fmtDate(s) { if (!s) return '—'; var d = new Date(s); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function loadHistory() {
+    var tbody = $('jhRows'), empty = $('jhEmpty'); if (!tbody || !empty) return;
+    var token = getToken(); if (!token) { empty.classList.remove('hidden'); return; }
+    fetch(BASE + 'api/v1/analyses', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var rows = j && j.data ? j.data : [];
+        tbody.innerHTML = '';
+        if (!rows.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        rows.forEach(function (a) {
+          var url = a.share_url || (BASE + '?analysis=' + a.id);
+          var faults = Array.isArray(a.faults) ? a.faults.length : 0;
+          var tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid var(--line)';
+          tr.innerHTML =
+            '<td style="padding:8px 12px 8px 0;font-family:ui-monospace,Menlo,monospace;font-size:12px">' + esc(fmtDate(a.created_at)) + '</td>' +
+            '<td style="padding:8px 12px 8px 0">' + esc(a.filename || '—') + '</td>' +
+            '<td style="padding:8px 12px 8px 0;font-family:ui-monospace,Menlo,monospace">' + (a.apex_sec != null ? Number(a.apex_sec).toFixed(2) + 's' : '—') + '</td>' +
+            '<td style="padding:8px 12px 8px 0;font-family:ui-monospace,Menlo,monospace;color:' + (faults ? 'var(--sev-mid)' : 'var(--turf)') + '">' + faults + '</td>' +
+            '<td style="padding:8px 12px 8px 0"><a href="' + url + '" target="_blank" rel="noopener" style="text-decoration:underline">' + (t('jc_view_report') || 'Ver informe') + ' ↗</a></td>';
+          tbody.appendChild(tr);
+        });
+      }).catch(function () {});
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  // ---- Informe compartido (permalink ?analysis=ID[&k=TOKEN]) ---------------
+  function loadSharedReport() {
+    var q; try { q = new URL(location.href).searchParams; } catch (e) { return false; }
+    var id = q.get('analysis'); if (!id) return false;
+    var k = q.get('k'), token = getToken();
+    // Vista de informe: ocultar carga + historial; mostrar CTA si es anónimo.
+    var up = document.querySelector('.upload'); if (up) up.classList.add('hidden');
+    var jh = $('jumpHistory'); if (jh) jh.classList.add('hidden');
+    var oa = $('ownerActions'); if (oa) oa.classList.add('hidden');
+    if (!token) { var cta = $('jumpCta'); if (cta) cta.classList.remove('hidden'); }
+    var url, opts = {};
+    if (k) { url = BASE + 'api/v1/analyses/' + encodeURIComponent(id) + '/report?k=' + encodeURIComponent(k); }
+    else { url = BASE + 'api/v1/analyses/' + encodeURIComponent(id); opts.headers = { 'Authorization': 'Bearer ' + token }; }
+    fetch(url, opts).then(function (r) {
+      if (!r.ok) { setStatus(t('jc_share_invalid') || 'Enlace no válido.'); return null; }
+      return r.json();
+    }).then(function (row) {
+      if (!row) return;
+      resultsEl.classList.remove('hidden');
+      renderResults(row);
+      setShareLink(row.share_url || currentShareUrl);
+      [].forEach.call(resultsEl.querySelectorAll('.reveal'), function (el, i) { setTimeout(function () { el.classList.add('in'); }, 60 + i * 90); });
+    }).catch(function () {});
+    return true;
+  }
+
   // ---- boot ----------------------------------------------------------------
   applyI18n();
-  if (!getToken() && loginNotice) loginNotice.classList.remove('hidden');
+  bindShare();
+  var isShared = loadSharedReport();
+  if (!isShared) {
+    if (!getToken() && loginNotice) loginNotice.classList.remove('hidden');
+    loadHistory();
+  }
   var rev = [].slice.call(document.querySelectorAll('.wrap > header.reveal, .wrap > .panel.reveal'));
   rev.forEach(function (el, i) { setTimeout(function () { el.classList.add('in'); }, 80 + i * 90); });
 })();

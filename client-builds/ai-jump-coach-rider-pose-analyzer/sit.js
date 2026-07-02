@@ -132,6 +132,15 @@ async function run(base) {
     check('5a GET /:id owner -> 200', own.status === 200 && own.json && own.json.id === createdId, `status=${own.status}`);
     const other = await req(base, 'GET', '/api/v1/analyses/' + createdId, { token: TB });
     check('5b GET /:id cross-tenant -> 404', other.status === 404, `status=${other.status}`);
+    check('5c GET /:id owner -> includes magic share_url', own.json && typeof own.json.share_token === 'string' && /\/ai-jump-coach-rider-pose-analyzer\/\?analysis=.*&k=/.test(own.json.share_url || ''), `url=${own.json && own.json.share_url}`);
+    // Public magic-link report: valid token (no account) -> 200; wrong/no token -> 403.
+    const tok = own.json && own.json.share_token;
+    const pub = await req(base, 'GET', '/api/v1/analyses/' + createdId + '/report?k=' + tok);
+    check('5d public /:id/report with token (no account) -> 200', pub.status === 200 && pub.json && pub.json.id === createdId, `status=${pub.status}`);
+    const badPub = await req(base, 'GET', '/api/v1/analyses/' + createdId + '/report?k=deadbeef');
+    check('5e public /:id/report WRONG token -> 403', badPub.status === 403, `status=${badPub.status}`);
+    const noPub = await req(base, 'GET', '/api/v1/analyses/' + createdId + '/report');
+    check('5f public /:id/report NO token -> 403', noPub.status === 403, `status=${noPub.status}`);
   }
 
   // 6. list scoped to tenant
