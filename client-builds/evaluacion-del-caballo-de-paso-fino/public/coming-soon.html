@@ -10,7 +10,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
-  <style>body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;letter-spacing:-.02em}.hero{background:radial-gradient(1200px 500px at 50% -10%,rgba(201,162,75,.18),transparent),radial-gradient(900px 400px at 90% 0%,rgba(62,142,107,.12),transparent)}</style>
+  <style>
+    html,body{background:#060a14;color:#ECE6DA}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;letter-spacing:-.02em}
+    /* Base oscuro + gradientes encima (la clase .hero sobreescribe body, por eso el color va DENTRO del background) */
+    .hero{min-height:100vh;background:radial-gradient(1200px 500px at 50% -10%,rgba(201,162,75,.18),transparent),radial-gradient(900px 400px at 90% 0%,rgba(62,142,107,.12),transparent),#060a14}
+    #discName{color:#ECE6DA}
+    #discDesc{color:#cbd5e1}
+    .disc-chip{color:#cbd5e1}
+  </style>
 </head>
 <body class="text-slate-100 min-h-screen hero">
   <header class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
