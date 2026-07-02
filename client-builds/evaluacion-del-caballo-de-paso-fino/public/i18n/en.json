@@ -253,5 +253,7 @@
   "cadence_unreliable_note": "Outside the physical range (120–280 spm): not used in the score. Upload cleaner hoof audio.",
   "est_audio": "estimated from audio",
   "audio_only_note": "Modality estimated from audio (low confidence): audio cannot reliably tell paso fino from trocha. Lateral symmetry and elevation require video pose (coming soon).",
-  "pose_pending_note": "require video pose (coming soon)"
+  "pose_pending_note": "require video pose (coming soon)",
+  "report_id_label": "Report",
+  "id_copied": "ID copied"
 }

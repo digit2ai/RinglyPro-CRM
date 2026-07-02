@@ -253,5 +253,7 @@
   "cadence_unreliable_note": "Fuera del rango físico (120–280 ppm): no se usó en el puntaje. Sube un audio más limpio de los cascos.",
   "est_audio": "estimada por audio",
   "audio_only_note": "Modalidad estimada por audio (baja confianza): el audio no distingue paso fino de trocha con certeza. Simetría y elevación requieren pose de video (próximamente).",
-  "pose_pending_note": "requieren pose de video (próximamente)"
+  "pose_pending_note": "requieren pose de video (próximamente)",
+  "report_id_label": "Informe",
+  "id_copied": "ID copiado"
 }

@@ -189,9 +189,16 @@
   }
 
   var currentSesionId = null, currentSummary = '', currentShareUrl = '';
+  function reportCode(id) { return 'EM-' + String(id).padStart(6, '0'); }
   function renderFallo(f, videoFile) {
     var card = $('result'); card.classList.remove('hidden');
     currentSesionId = f.sesion_id || null;
+    // ID del informe (referenciable): EM-000064.
+    var idBar = $('reportIdBar'), idEl = $('reportId');
+    if (idBar && idEl) {
+      if (currentSesionId != null) { idEl.textContent = reportCode(currentSesionId); idBar.classList.remove('hidden'); }
+      else { idBar.classList.add('hidden'); }
+    }
     var clas = f.clasificacion || {};
     $('resModalidad').textContent = modLabel(clas.modalidad_detectada);
     $('resConf').textContent = '· ' + Math.round((clas.confianza || 0) * 100) + '% ' + (I18N.res_confianza || 'confianza') + ' · ' + (clas.tiempos || '?') + ' ' + (I18N.res_tiempos || 'tiempos') + (f.solo_audio ? ' · ' + (I18N.est_audio || 'estimada por audio') : '');
@@ -291,6 +298,14 @@
     if (sc) sc.addEventListener('click', function () { if (currentSesionId != null) copyText(shareUrl(), $('shareLink'), 'shareMsg2'); });
     var so = $('shareOpen');
     if (so) so.addEventListener('click', function () { if (currentSesionId != null) window.open(shareUrl(), '_blank', 'noopener'); });
+    var ic = $('reportIdCopy');
+    if (ic) ic.addEventListener('click', function () {
+      if (currentSesionId == null) return;
+      var code = reportCode(currentSesionId), m = $('reportIdMsg');
+      function ok() { if (m) { m.textContent = I18N.id_copied || 'ID copiado'; setTimeout(function () { m.textContent = ''; }, 2000); } }
+      if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(code).then(ok).catch(function () { window.prompt('', code); }); }
+      else { window.prompt('', code); }
+    });
   }
 
   // ---- Mis análisis (historial del cliente) ----

@@ -130,6 +130,14 @@
 
     <!-- Resultado del juez -->
     <section id="result" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-6 mb-5">
+      <div id="reportIdBar" class="hidden flex items-center gap-2 mb-3 text-[11px] uppercase tracking-widest mono" style="color:#98A199">
+        <span data-i18n="report_id_label"></span>
+        <span id="reportId" class="px-2 py-0.5 rounded-md" style="background:rgba(230,197,114,.12);color:#E6C572"></span>
+        <button id="reportIdCopy" title="Copiar ID" class="text-slate-500 hover:text-amber-300" style="line-height:1">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <span id="reportIdMsg" class="text-emerald-400 normal-case tracking-normal"></span>
+      </div>
       <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div>
           <div class="text-xs text-slate-500" data-i18n="res_modalidad"></div>
