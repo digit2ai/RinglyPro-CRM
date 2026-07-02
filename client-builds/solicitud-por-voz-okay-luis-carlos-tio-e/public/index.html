@@ -10,13 +10,14 @@
     .card { background:linear-gradient(180deg,#141b29,#0d1320); border:1px solid #243049; border-radius:20px; }
     .stage { position:relative; width:100%; max-width:480px; aspect-ratio:4/3; margin:0 auto; border-radius:16px; overflow:hidden; background:#000; }
     #cam { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
-    .roi { position:absolute; left:50%; top:34%; width:42%; height:34%; transform:translate(-50%,-50%);
-           border:2px solid rgba(74,222,128,.9); border-radius:12px; box-shadow:0 0 0 9999px rgba(0,0,0,.28); pointer-events:none; }
-    .roi.locked { border-color:#22d3ee; }
+    #overlay { position:absolute; inset:0; width:100%; height:100%; transform:scaleX(-1); pointer-events:none; }
     .bpm { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .bar { height:6px; border-radius:6px; background:#22304a; overflow:hidden; }
     .bar > i { display:block; height:100%; background:linear-gradient(90deg,#4ade80,#22d3ee); width:0%; transition:width .3s; }
     button:disabled { opacity:.45; cursor:not-allowed; }
+    .metric { background:#0e1524; border:1px solid #243049; border-radius:14px; padding:14px; }
+    .metric .val { font-size:2rem; line-height:1; }
+    .sqi-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -34,14 +35,14 @@
     <p class="text-slate-400 mb-3">{{SUBTITLE}}</p>
 
     <div class="card p-3 mb-5 text-sm text-emerald-300/90 border-emerald-500/30">
-      🔒 {{PRIVACY_BADGE}}
+      {{PRIVACY_BADGE}}
     </div>
 
     <div class="card p-5">
       <div class="stage">
         <video id="cam" autoplay playsinline muted></video>
-        <div id="roi" class="roi"></div>
-        <canvas id="work" width="64" height="64" class="hidden"></canvas>
+        <canvas id="overlay"></canvas>
+        <canvas id="work" width="72" height="48" class="hidden"></canvas>
       </div>
 
       <p id="hint" class="text-slate-400 text-sm mt-4 text-center">{{ALIGN}}</p>
@@ -54,33 +55,60 @@
         <button id="sim" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium border border-slate-600">{{SIMULATE}}</button>
       </div>
 
-      <div id="result" class="hidden mt-6 text-center">
-        <div class="text-slate-400 text-sm">{{RESULT_LABEL}}</div>
-        <div class="bpm text-6xl font-bold my-1"><span id="bpmVal">--</span> <span class="text-2xl text-slate-400">{{BPM_UNIT}}</span></div>
-        <div class="text-slate-400 text-sm">{{CONFIDENCE}}: <span id="confVal">--</span></div>
-        <div id="saveMsg" class="text-sm mt-2"></div>
+      <!-- SQI banner (refuse-to-report when low) -->
+      <div id="sqiBanner" class="hidden mt-4 text-sm rounded-xl px-3 py-2"></div>
+
+      <!-- Tier A -->
+      <div id="result" class="hidden mt-6">
+        <div class="text-xs uppercase tracking-wide text-slate-500 mb-2">{{TIER_A}}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="metric"><div class="text-slate-400 text-xs">{{M_HR}}</div><div class="val bpm text-cyan-300"><span id="hrVal">--</span> <span class="text-sm text-slate-500">{{U_BPM}}</span></div></div>
+          <div class="metric"><div class="text-slate-400 text-xs">{{M_RR}}</div><div class="val bpm text-emerald-300"><span id="rrVal">--</span> <span class="text-sm text-slate-500">{{U_RPM}}</span></div></div>
+        </div>
+        <div class="metric mt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-xs">{{M_SQI}}</span>
+            <span><span id="sqiDot" class="sqi-dot" style="background:#64748b"></span> <span id="sqiTxt" class="text-xs text-slate-400">--</span></span>
+          </div>
+          <div class="bar mt-2"><i id="sqiBar"></i></div>
+        </div>
+
+        <!-- Tier B (experimental) -->
+        <div class="text-xs uppercase tracking-wide text-amber-400/80 mt-5 mb-2">{{TIER_B}}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="metric"><div class="text-slate-400 text-xs">{{M_HRV}}</div><div class="val bpm text-violet-300"><span id="hrvVal">--</span> <span class="text-sm text-slate-500">{{U_MS}}</span></div></div>
+          <div class="metric"><div class="text-slate-400 text-xs">{{M_STRESS}}</div><div class="val bpm text-violet-300"><span id="stressVal">--</span></div></div>
+        </div>
+        <p class="text-xs text-amber-300/70 mt-2">{{TIER_B_NOTE}}</p>
+
+        <div id="saveMsg" class="text-sm mt-3"></div>
+      </div>
+
+      <!-- Tier C (coming soon) -->
+      <div class="text-xs uppercase tracking-wide text-slate-600 mt-6 mb-2">{{TIER_C}}</div>
+      <div class="grid grid-cols-2 gap-3 opacity-60">
+        <div class="metric"><div class="text-slate-400 text-xs">{{M_BP}}</div><div class="text-slate-500 text-sm mt-1">{{COMING_SOON}}</div></div>
+        <div class="metric"><div class="text-slate-400 text-xs">{{M_SPO2}}</div><div class="text-slate-500 text-sm mt-1">{{COMING_SOON}}</div></div>
       </div>
     </div>
 
-    <p class="text-xs text-amber-300/80 mt-4 text-center">⚠ {{DISCLAIMER_INLINE}}</p>
+    <p class="text-xs text-amber-300/80 mt-4 text-center">{{DISCLAIMER_INLINE}}</p>
 
     <div class="text-center mt-5 text-sm text-slate-400">
-      <a id="histLink" class="underline hover:text-cyan-300" href="dashboard?lang={{LANG}}">{{HISTORY_LINK}}</a> ·
+      <a class="underline hover:text-cyan-300" href="dashboard?lang={{LANG}}">{{HISTORY_LINK}}</a> ·
       <a class="underline hover:text-cyan-300" href="disclaimer?lang={{LANG}}">{{DISCLAIMER_LINK}}</a>
     </div>
   </main>
 
   <script>
-    // Copy dictionary needed by rppg.js (status strings) — injected from the server dict.
     window.__I18N = {
       lang: '{{LANG}}',
-      capturing: '{{CAPTURING}}',
-      saved: '{{SAVED}}',
-      saveErr: '{{SAVE_ERR}}',
-      camErr: '{{CAM_ERR}}',
-      lowConf: '{{LOWCONF}}'
+      capturing: '{{CAPTURING}}', early: '{{PROGRESS_EARLY}}', refining: '{{REFINING}}', done: '{{DONE}}',
+      saved: '{{SAVED}}', saveErr: '{{SAVE_ERR}}', camErr: '{{CAM_ERR}}', lowConf: '{{LOWCONF}}',
+      sqiLow: '{{SQI_LOW}}', sqiGood: '{{SQI_GOOD}}', sqiFair: '{{SQI_FAIR}}'
     };
   </script>
+  <script src="rppg-core.js"></script>
   <script src="rppg.js"></script>
 </body>
 </html>

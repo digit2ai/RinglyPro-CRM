@@ -1,14 +1,12 @@
 // =====================================================
-// Reading store — solicitud_por_voz_okay_luis_carlos_tio_e_readings
+// Reading store — solicitud_por_voz_okay_luis_carlos_tio_e_readings  (v2 multi-vital)
 //
-// Sequelize-backed with a graceful in-memory fallback (stuck-loop heuristic:
-// if Postgres is unreachable, switch to an in-memory array keyed by tenant_id
-// and mark the persistence TODO). The route layer only calls init() / create()
-// / listByTenant(), so the interface is identical either way.
+// Sequelize-backed with a graceful in-memory fallback. The route layer calls
+// init() / create() / listByTenant() / getById(), identical either way.
 //
 // Multi-tenant: every row carries tenant_id; every read is tenant-scoped.
-// PRIVACY: only the computed BPM integer + metadata are stored. No raw video,
-// no biometric signal, no PII (name/email/phone) is ever persisted here.
+// PRIVACY: only computed metrics + metadata are stored. No raw video, no
+// biometric signal, no PII (name/email/phone) is ever persisted here.
 // =====================================================
 
 const { DataTypes } = require('sequelize');
@@ -28,6 +26,15 @@ function defineModel(sequelize) {
     bpm: { type: DataTypes.INTEGER, allowNull: false },
     confidence: { type: DataTypes.DECIMAL(4, 3), allowNull: true },
     duration_s: { type: DataTypes.INTEGER, allowNull: true },
+    // v2 multi-vital columns
+    respiratory_bpm: { type: DataTypes.INTEGER, allowNull: true },
+    hrv_sdnn_ms: { type: DataTypes.DECIMAL(7, 2), allowNull: true },
+    hrv_rmssd_ms: { type: DataTypes.DECIMAL(7, 2), allowNull: true },
+    stress_index: { type: DataTypes.INTEGER, allowNull: true },
+    sqi: { type: DataTypes.INTEGER, allowNull: true },
+    is_validation: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+    reference_bpm: { type: DataTypes.INTEGER, allowNull: true },
+    metrics: { type: DataTypes.JSONB, allowNull: true },
     source: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'rppg' }, // rppg | simulated
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
   }, {
@@ -35,6 +42,23 @@ function defineModel(sequelize) {
     timestamps: false,
     indexes: [{ fields: ['tenant_id'] }]
   });
+}
+
+// Additive migration on boot: sync({alter:false}) will NOT add columns to an
+// existing v1 table, so ADD COLUMN IF NOT EXISTS explicitly. Idempotent.
+async function ensureColumns(sequelize) {
+  const stmts = [
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS respiratory_bpm INTEGER",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS hrv_sdnn_ms NUMERIC(7,2)",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS hrv_rmssd_ms NUMERIC(7,2)",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS stress_index INTEGER",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS sqi INTEGER",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS is_validation BOOLEAN NOT NULL DEFAULT false",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS reference_bpm INTEGER",
+    "ALTER TABLE " + TABLE + " ADD COLUMN IF NOT EXISTS metrics JSONB",
+    "CREATE INDEX IF NOT EXISTS idx_" + TABLE + "_metrics ON " + TABLE + " USING GIN (metrics)"
+  ];
+  for (const s of stmts) { try { await sequelize.query(s); } catch (e) { /* non-fatal */ } }
 }
 
 // Bring up Sequelize; on any failure fall back to memory. Never throws.
@@ -45,9 +69,9 @@ async function init() {
     await sequelize.authenticate();
     Model = defineModel(sequelize);
     await Model.sync({ alter: false });
+    await ensureColumns(sequelize);
     return { mode: 'postgres' };
   } catch (err) {
-    // TODO: restore Sequelize persistence — DB unreachable, using in-memory store
     usingMemory = true;
     Model = null;
     console.error(JSON.stringify({ svc: 'solicitud-por-voz-rppg', event: 'db_fallback_memory', error: err.message }));
@@ -55,15 +79,24 @@ async function init() {
   }
 }
 
-async function create({ tenant_id, bpm, confidence, duration_s, source }) {
-  const conf = (confidence == null) ? null : Math.max(0, Math.min(1, Math.round(Number(confidence) * 1000) / 1000));
-  const dur = (duration_s == null) ? null : Math.max(0, Math.min(3600, parseInt(duration_s, 10) || 0));
+function clampInt(v, lo, hi) { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : null; }
+function clampNum(v, lo, hi) { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n * 100) / 100)) : null; }
+
+async function create(p) {
   const row = {
-    tenant_id: parseInt(tenant_id, 10),
-    bpm: parseInt(bpm, 10),
-    confidence: conf,
-    duration_s: dur,
-    source: source === 'simulated' ? 'simulated' : 'rppg',
+    tenant_id: parseInt(p.tenant_id, 10),
+    bpm: parseInt(p.bpm, 10),
+    confidence: (p.confidence == null) ? null : Math.max(0, Math.min(1, Math.round(Number(p.confidence) * 1000) / 1000)),
+    duration_s: (p.duration_s == null) ? null : clampInt(p.duration_s, 0, 3600),
+    respiratory_bpm: (p.respiratory_bpm == null) ? null : clampInt(p.respiratory_bpm, 0, 60),
+    hrv_sdnn_ms: (p.hrv_sdnn_ms == null) ? null : clampNum(p.hrv_sdnn_ms, 0, 1000),
+    hrv_rmssd_ms: (p.hrv_rmssd_ms == null) ? null : clampNum(p.hrv_rmssd_ms, 0, 1000),
+    stress_index: (p.stress_index == null) ? null : clampInt(p.stress_index, 0, 100),
+    sqi: (p.sqi == null) ? null : clampInt(p.sqi, 0, 100),
+    is_validation: !!p.is_validation,
+    reference_bpm: (p.reference_bpm == null) ? null : clampInt(p.reference_bpm, 0, 300),
+    metrics: (p.metrics && typeof p.metrics === 'object') ? p.metrics : null,
+    source: p.source === 'simulated' ? 'simulated' : 'rppg',
     created_at: new Date()
   };
   if (usingMemory || !Model) {
@@ -85,4 +118,16 @@ async function listByTenant(tenant_id, limit) {
   return rows.map((r) => r.toJSON());
 }
 
-module.exports = { init, create, listByTenant };
+// Tenant-scoped single fetch (for FHIR export). Returns null if not owned.
+async function getById(tenant_id, id) {
+  const tid = parseInt(tenant_id, 10), rid = parseInt(id, 10);
+  if (!Number.isInteger(rid)) return null;
+  if (usingMemory || !Model) {
+    const r = memory.find((x) => x.id === rid && x.tenant_id === tid);
+    return r ? Object.assign({}, r) : null;
+  }
+  const r = await Model.findOne({ where: { id: rid, tenant_id: tid } });
+  return r ? r.toJSON() : null;
+}
+
+module.exports = { init, create, listByTenant, getById };

@@ -10,8 +10,11 @@
 //   GET  /                       -> camera capture UI (ES default, ?lang=en)
 //   GET  /dashboard[?lang&token] -> reading history table
 //   GET  /disclaimer[?lang]      -> non-medical wellness disclaimer
-//   POST /api/v1/readings        -> create (JWT + tenant, bpm 30..220)
+//   GET  /embed[?token&lang]     -> chromeless capture widget (for iframe)
+//   GET  /embed-code             -> iframe snippet generator
+//   POST /api/v1/readings        -> create (JWT + tenant, multi-vital)
 //   GET  /api/v1/readings        -> tenant-scoped list (JWT)
+//   GET  /api/v1/readings/:id/fhir -> FHIR R4 Observation bundle (JWT + tenant)
 // =====================================================
 
 const express = require('express');
@@ -30,8 +33,10 @@ store.init().then((r) => {
 // Health (public)
 app.use('/health', require('./routes/health'));
 
-// API (JWT-guarded inside the router)
+// API (JWT-guarded inside the routers). FHIR export shares the base path;
+// its /:id/fhir path does not collide with the readings '/' routes.
 app.use('/api/v1/readings', require('./routes/readings'));
+app.use('/api/v1/readings', require('./routes/fhir'));
 
 // Server-rendered pages (lang-aware): /, /dashboard, /disclaimer
 app.use('/', require('./routes/pages'));

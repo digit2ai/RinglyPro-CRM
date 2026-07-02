@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{EMB_H1}} — Digit2AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background:#0b0f19; color:#e9eef7; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .card { background:linear-gradient(180deg,#141b29,#0d1320); border:1px solid #243049; border-radius:20px; }
+    pre { background:#0e1524; border:1px solid #243049; border-radius:12px; padding:14px; overflow-x:auto; font-size:12px; }
+    input { background:#0e1524; border:1px solid #243049; border-radius:8px; padding:8px 10px; color:#e9eef7; width:100%; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-4 text-sm text-slate-400">
+      <span class="font-semibold text-slate-200">Digit2AI</span>
+      <span><a class="underline hover:text-cyan-300" href="embed-code?lang=es">ES</a> · <a class="underline hover:text-cyan-300" href="embed-code?lang=en">EN</a></span>
+    </div>
+
+    <h1 class="text-3xl font-bold mb-1">{{EMB_H1}}</h1>
+    <p class="text-slate-400 mb-6">{{EMB_SUB}}</p>
+
+    <div class="card p-5 mb-5">
+      <label class="text-sm text-slate-400 block mb-2">{{EMB_TOKEN_LABEL}}</label>
+      <input id="token" placeholder="eyJhbGciOi..." />
+      <div class="flex items-center gap-3 mt-4">
+        <button id="copy" class="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 text-sm font-semibold">{{EMB_COPY}}</button>
+        <span id="copied" class="text-emerald-400 text-sm"></span>
+      </div>
+      <pre id="snippet" class="mt-4"></pre>
+    </div>
+
+    <div class="card p-5">
+      <div class="text-sm text-slate-400 mb-2">{{EMB_PREVIEW}}</div>
+      <iframe id="preview" allow="camera; autoplay" style="width:100%;height:560px;border:0;border-radius:12px;background:#000"></iframe>
+    </div>
+  </main>
+
+  <script>
+    var LANG = '{{LANG}}';
+    var COPIED = '{{EMB_COPIED}}';
+    var origin = location.origin;
+    var base = location.pathname.replace(/\/embed-code.*$/, '');
+    function build(){
+      var tok = document.getElementById('token').value.trim();
+      var q = 'lang=' + LANG + (tok ? '&token=' + encodeURIComponent(tok) : '');
+      var url = origin + base + '/embed?' + q;
+      var snip = '<iframe src="' + url + '"\n        width="420" height="600" style="border:0;border-radius:16px"\n        allow="camera; autoplay"></iframe>';
+      document.getElementById('snippet').textContent = snip;
+      try { document.getElementById('preview').src = url; } catch(e){}
+      return snip;
+    }
+    document.getElementById('token').addEventListener('input', build);
+    document.getElementById('copy').addEventListener('click', function(){
+      var snip = build();
+      navigator.clipboard.writeText(snip).then(function(){
+        var c = document.getElementById('copied'); c.textContent = COPIED; setTimeout(function(){ c.textContent=''; }, 1500);
+      }).catch(function(){});
+    });
+    build();
+  </script>
+</body>
+</html>
