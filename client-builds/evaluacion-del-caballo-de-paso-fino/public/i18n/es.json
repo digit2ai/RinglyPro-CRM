@@ -230,5 +230,19 @@
   "mkt_learn": "Conocer EquiMind",
   "share_invalid": "Enlace no válido o expirado.",
   "share_notfound": "Informe no encontrado.",
-  "prog_extract": "Extrayendo el audio de los cascos del video…"
+  "prog_extract": "Extrayendo el audio de los cascos del video…",
+  "disc_eyebrow": "Más disciplinas",
+  "disc_title": "Próximamente en EquiMind",
+  "disc_sub": "Estamos ampliando el análisis con IA a las disciplinas de salto y equitación.",
+  "disc_soon": "Próximamente",
+  "disc_cta": "Ver más →",
+  "disc_jumper_d": "Salto de obstáculos cronometrado: análisis de recorrido, tiempos y ejecución sobre cada obstáculo.",
+  "disc_hunter_d": "Estilo y forma sobre obstáculos: ritmo, distancias y suavidad del recorrido como lo evalúa un juez.",
+  "disc_ponies_d": "Categorías small, medium y large: análisis adaptado a cada tamaño de pony y su jinete.",
+  "disc_equitation_d": "Posición y efectividad del jinete: asiento, manos, base de apoyo y control sobre el recorrido.",
+  "cs_kicker": "Disciplina",
+  "cs_body": "Estamos entrenando el análisis por IA para esta disciplina. Regístrate y te avisamos apenas esté lista.",
+  "cs_notify": "Regístrate y te avisamos",
+  "cs_back": "Volver al inicio",
+  "cs_generic": "Próximamente"
 }

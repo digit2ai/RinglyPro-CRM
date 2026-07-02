@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{TITLE}}</title>
+  <link rel="icon" type="image/svg+xml" href="{{BASE}}equimind-icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{BASE}}equimind-apple-180.png">
+  <meta name="theme-color" content="#0E120F">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
+  <style>body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;letter-spacing:-.02em}.hero{background:radial-gradient(1200px 500px at 50% -10%,rgba(201,162,75,.18),transparent),radial-gradient(900px 400px at 90% 0%,rgba(62,142,107,.12),transparent)}</style>
+</head>
+<body class="text-slate-100 min-h-screen hero">
+  <header class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="{{BASE}}inicio?lang={{LANG}}" class="flex items-center gap-3">
+      <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="32" height="32" style="width:32px;height:32px">
+      <span class="wordmark text-xl">Equi<span style="color:#E6C572">Mind</span></span>
+    </a>
+    <a id="langToggle" class="text-sm text-slate-400 hover:text-amber-300 cursor-pointer">EN / ES</a>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-16 sm:py-24 text-center">
+    <div class="inline-flex items-center gap-2 text-xs uppercase tracking-widest mono mb-6" style="color:#E6C572">
+      <span class="w-2 h-2 rounded-full" style="background:#C9A24B"></span><span data-i18n="disc_soon"></span>
+    </div>
+    <div class="text-sm font-semibold mono mb-2" style="color:#98A199" data-i18n="cs_kicker"></div>
+    <h1 id="discName" class="text-5xl sm:text-6xl font-extrabold" style="font-family:'Bricolage Grotesque',sans-serif">—</h1>
+    <p id="discDesc" class="text-slate-300 mt-5 text-lg"></p>
+    <p class="text-slate-400 mt-3" data-i18n="cs_body"></p>
+
+    <div class="mt-10 flex flex-wrap justify-center gap-3">
+      <a href="{{BASE}}signup?lang={{LANG}}" class="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold" data-i18n="cs_notify"></a>
+      <a href="{{BASE}}inicio?lang={{LANG}}" class="px-5 py-3 rounded-xl border border-slate-700 hover:border-amber-500/60 text-slate-200 font-semibold" data-i18n="cs_back"></a>
+    </div>
+
+    <div class="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+      <a href="{{BASE}}coming-soon?d=jumper&lang={{LANG}}" class="disc-chip py-2 rounded-lg border border-slate-800 hover:border-amber-500/50" data-d="jumper">Jumper</a>
+      <a href="{{BASE}}coming-soon?d=hunter&lang={{LANG}}" class="disc-chip py-2 rounded-lg border border-slate-800 hover:border-amber-500/50" data-d="hunter">Hunter</a>
+      <a href="{{BASE}}coming-soon?d=ponies&lang={{LANG}}" class="disc-chip py-2 rounded-lg border border-slate-800 hover:border-amber-500/50" data-d="ponies">Ponies</a>
+      <a href="{{BASE}}coming-soon?d=equitation&lang={{LANG}}" class="disc-chip py-2 rounded-lg border border-slate-800 hover:border-amber-500/50" data-d="equitation">Equitation</a>
+    </div>
+  </main>
+
+  <footer class="text-center text-xs text-slate-600 py-10">Digit2AI · EquiMind</footer>
+
+  <script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";window.__LANG="{{LANG}}";</script>
+  <script>
+  (function(){
+    var I=window.__I18N||{},B=window.__BASE||'/',L=window.__LANG||'es';
+    document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
+    var lt=document.getElementById('langToggle');
+    if(lt)lt.addEventListener('click',function(){var u=new URL(location.href);u.searchParams.set('lang',L==='es'?'en':'es');location.href=u.toString();});
+    // Discipline from ?d=
+    var DISC={
+      jumper:{name:'Jumper',key:'disc_jumper_d'},
+      hunter:{name:'Hunter',key:'disc_hunter_d'},
+      ponies:{name:'Ponies',key:'disc_ponies_d'},
+      equitation:{name:'Equitation',key:'disc_equitation_d'}
+    };
+    var d=(new URLSearchParams(location.search).get('d')||'').toLowerCase();
+    var info=DISC[d];
+    if(info){
+      document.getElementById('discName').textContent=info.name;
+      document.getElementById('discDesc').textContent=I[info.key]||'';
+      document.title='EquiMind · '+info.name+' — '+(I.disc_soon||'Coming Soon');
+    } else {
+      document.getElementById('discName').textContent=I.cs_generic||'Próximamente';
+    }
+    // Highlight active chip
+    document.querySelectorAll('.disc-chip').forEach(function(a){ if(a.getAttribute('data-d')===d){a.classList.add('border-amber-500/60');a.style.color='#E6C572';} });
+  })();
+  </script>
+</body>
+</html>

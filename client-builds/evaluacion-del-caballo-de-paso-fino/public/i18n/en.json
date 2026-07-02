@@ -230,5 +230,19 @@
   "mkt_learn": "Discover EquiMind",
   "share_invalid": "Invalid or expired link.",
   "share_notfound": "Report not found.",
-  "prog_extract": "Extracting hoof audio from the video…"
+  "prog_extract": "Extracting hoof audio from the video…",
+  "disc_eyebrow": "More disciplines",
+  "disc_title": "Coming soon to EquiMind",
+  "disc_sub": "We are expanding AI analysis to the jumping and equitation disciplines.",
+  "disc_soon": "Coming soon",
+  "disc_cta": "Learn more →",
+  "disc_jumper_d": "Timed show jumping: course analysis, times and execution over every fence.",
+  "disc_hunter_d": "Style and form over fences: pace, distances and smoothness of the round, judged like a pro.",
+  "disc_ponies_d": "Small, medium and large divisions: analysis tailored to each pony size and its rider.",
+  "disc_equitation_d": "Rider position and effectiveness: seat, hands, base of support and control over the course.",
+  "cs_kicker": "Discipline",
+  "cs_body": "We are training the AI analysis for this discipline. Sign up and we will notify you the moment it is ready.",
+  "cs_notify": "Sign up to be notified",
+  "cs_back": "Back to home",
+  "cs_generic": "Coming soon"
 }

@@ -25,6 +25,7 @@ const LOGIN_TPL = fs.readFileSync(path.join(PUB, 'login.html'), 'utf8');
 const SIGNUP_TPL = fs.readFileSync(path.join(PUB, 'signup.html'), 'utf8');
 const INICIO_TPL = fs.readFileSync(path.join(PUB, 'inicio.html'), 'utf8');
 const PANEL_TPL = fs.readFileSync(path.join(PUB, 'panel.html'), 'utf8');
+const COMING_SOON_TPL = fs.readFileSync(path.join(PUB, 'coming-soon.html'), 'utf8');
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -73,6 +74,10 @@ router.get('/inicio', (req, res) => {
 // Client dashboard shell (left-nav app; gated client-side by login).
 router.get('/panel', (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8').send(render(PANEL_TPL, req));
+});
+// Coming Soon (discipline teasers: Jumper / Hunter / Ponies / Equitation).
+router.get('/coming-soon', (req, res) => {
+  res.set('Content-Type', 'text/html; charset=utf-8').send(render(COMING_SOON_TPL, req));
 });
 
 // /privacidad — Ley 1581 de 2012 statement: no personal data is processed.
