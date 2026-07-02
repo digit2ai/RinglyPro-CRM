@@ -25,11 +25,11 @@
 const OPUS_MODEL = process.env.SENIOR_BA_MODEL || 'claude-opus-4-8';
 const DEFAULT_MAX_TOKENS = Number(process.env.SENIOR_BA_MAX_TOKENS) || 12000;
 
-// Rough $/MTok for Opus 4.x: $15 in / $75 out.
-// Sonnet fallback rates if user overrides SENIOR_BA_MODEL to a sonnet variant.
+// $/MTok list prices. Sonnet/Haiku rates cover SENIOR_BA_MODEL overrides.
 const COST_RATES = {
-  'claude-opus-4-8':            { in: 15 / 1e6, out: 75 / 1e6 },
-  'claude-sonnet-4-6':          { in:  3 / 1e6, out: 15 / 1e6 }
+  'claude-opus-4-8':            { in:  5 / 1e6, out: 25 / 1e6 },
+  'claude-sonnet-4-6':          { in:  3 / 1e6, out: 15 / 1e6 },
+  'claude-haiku-4-5-20251001':  { in:  1 / 1e6, out:  5 / 1e6 }
 };
 function rateFor(model) {
   return COST_RATES[model] || COST_RATES['claude-opus-4-8'];
