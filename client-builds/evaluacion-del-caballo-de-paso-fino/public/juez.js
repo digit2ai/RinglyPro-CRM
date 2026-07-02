@@ -197,30 +197,32 @@
       '<text x="50" y="55" text-anchor="middle" fill="#ECE6DA" font-family="JetBrains Mono,monospace" font-size="19" font-weight="600">' + valueText + '</text></svg>' +
       '<div style="font-size:11px;margin-top:6px;text-align:center;color:#98A199">' + esc(label) + '</div></div>';
   }
-  // Card "pendiente de pose": métrica que hoy requiere pose de video (próximamente).
-  function gaugePending(label) {
-    return '<div style="background:#0e120c;border:1px dashed rgba(236,230,218,.14);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:112px">' +
-      '<svg viewBox="0 0 100 100" style="width:78px;height:78px;opacity:.35"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(236,230,218,.18)" stroke-width="8" stroke-dasharray="6 8"/>' +
-      '<text x="50" y="56" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="22">—</text></svg>' +
-      '<div style="font-size:11px;margin-top:6px;text-align:center;color:#98A199">' + esc(label) + '</div>' +
-      '<div style="font-size:9.5px;margin-top:2px;text-align:center;color:#697268">' + (I18N.pose_pending || 'Requiere pose de video · próximamente') + '</div></div>';
-  }
   function renderInfographics(mov, son) {
     var box = $('infographics'); if (!box) return;
     var clar = (son && son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
     var elev = (mov.elevacion_anterior != null || mov.elevacion_posterior != null) ? Math.round(((mov.elevacion_anterior || 0) + (mov.elevacion_posterior || 0)) / 2 * 100) : null;
-    // Simetría lateral y Elevación se derivan de la POSE del video. Sin ella se
-    // muestran como "pendiente de pose", NO como 0% ni "—" (que parecía roto).
+    // Simetría lateral y Elevación se derivan de la POSE del video. En lugar de
+    // DOS tarjetas gigantes vacías, mostramos los gauges medibles arriba y UN
+    // solo aviso compacto (full-width) que lista las métricas pendientes de pose.
     var items = [
       { pct: pctOr(mov.regularidad_ritmo), label: I18N.m_regularidad || 'Regularidad', pose: false },
       { pct: pctOr(mov.simetria_lateral), label: I18N.m_simetria || 'Simetría lateral', pose: true },
       { pct: pctOr(clar), label: I18N.m_claridad || 'Claridad 4 tiempos', pose: false },
       { pct: elev, label: I18N.m_elevacion || 'Elevación', pose: true }
     ];
-    box.innerHTML = items.map(function (it) {
-      if (it.pct == null) return it.pose ? gaugePending(it.label) : gaugeSVG(0, '—', it.label, EM.muted);
-      return gaugeSVG(it.pct, it.pct + '%', it.label, scoreColor(it.pct));
-    }).join('');
+    var gauges = [], pending = [];
+    items.forEach(function (it) {
+      if (it.pct == null && it.pose) { pending.push(it.label); }
+      else if (it.pct == null) { gauges.push(gaugeSVG(0, '—', it.label, EM.muted)); }
+      else { gauges.push(gaugeSVG(it.pct, it.pct + '%', it.label, scoreColor(it.pct))); }
+    });
+    var html = gauges.join('');
+    if (pending.length) {
+      html += '<div style="grid-column:1 / -1;border:1px dashed rgba(236,230,218,.16);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;color:#98A199;font-size:12.5px;line-height:1.35">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A199" stroke-width="2" style="flex:none"><path d="M15 10l-4 4-2-2"/><circle cx="12" cy="12" r="9"/></svg>' +
+        '<span><strong style="color:#cbd5e1">' + pending.map(esc).join(' · ') + '</strong> — ' + (I18N.pose_pending_note || 'requieren pose de video (próximamente)') + '</span></div>';
+    }
+    box.innerHTML = html;
   }
   function renderCadenceMeter(cad) {
     var box = $('cadenceMeter'); if (!box) return;
