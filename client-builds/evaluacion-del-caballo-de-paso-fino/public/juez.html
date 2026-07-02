@@ -50,6 +50,24 @@
       </div>
     </header>
 
+    <!-- CTA de marketing en informe compartido (magic link público) -->
+    <section id="marketingCta" class="hidden mb-6 rounded-2xl p-5 sm:p-6" style="background:linear-gradient(135deg,rgba(230,197,114,.12),rgba(62,142,107,.12));border:1px solid rgba(201,162,75,.45)">
+      <div class="flex items-center gap-3 mb-2">
+        <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="34" height="34" style="width:34px;height:34px">
+        <div>
+          <div class="text-lg font-bold" style="font-family:'Bricolage Grotesque',sans-serif">Equi<span style="color:#E6C572">Mind</span></div>
+          <div class="text-[11px] uppercase tracking-widest mono" style="color:#98A199" data-i18n="mkt_kicker"></div>
+        </div>
+      </div>
+      <p class="text-sm text-slate-200 mb-1" data-i18n="mkt_headline"></p>
+      <p class="text-xs text-slate-400 mb-4" data-i18n="mkt_sub"></p>
+      <div class="flex flex-wrap gap-2">
+        <a href="{{BASE}}signup" class="text-sm px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold" data-i18n="mkt_signup"></a>
+        <a href="{{BASE}}login" class="text-sm px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold" data-i18n="mkt_login"></a>
+        <a href="{{BASE}}inicio" class="text-sm px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:text-white font-semibold" data-i18n="mkt_learn"></a>
+      </div>
+    </section>
+
     <!-- Caballo: selecciona uno tuyo o registra uno nuevo -->
     <section class="bg-slate-900/60 border border-slate-800 rounded-xl p-5 mb-5">
       <div class="flex items-center justify-between mb-3">

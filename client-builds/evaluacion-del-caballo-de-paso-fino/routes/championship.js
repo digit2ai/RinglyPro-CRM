@@ -31,6 +31,20 @@ const dictamen = require('../lib/dictamen');
 const neural = require('../lib/neuralEngine');
 const account = require('../models/account');
 const { requireAccount, optionalAccount } = require('./account');
+const crypto = require('crypto');
+
+// Magic link: token HMAC corto e inadivinable por sesión. Permite compartir el
+// informe COMPLETO con cualquiera (marketing) sin exponer todos los informes a
+// enumeración por id secuencial. El dueño (misma cuenta) no necesita token.
+const REPORT_SECRET = process.env.ECPF_JWT_SECRET || process.env.JWT_SECRET || 'ecpf-report-secret';
+function reportToken(sesionId) {
+  return crypto.createHmac('sha256', REPORT_SECRET).update('ecpf-report:' + String(sesionId)).digest('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 22);
+}
+function reportUrl(sesionId) {
+  // Dominio público canónico para marketing (equimind.app sirve la app en raíz).
+  return 'https://equimind.app/juez?session=' + sesionId + '&k=' + reportToken(sesionId);
+}
 
 // Tenant = account id when logged in, else the shared DEMO tenant (0). Keeps the
 // free simulation flow open while isolating each real user's shows/results.
@@ -104,7 +118,9 @@ router.get('/my-sessions', requireAccount, async (req, res) => {
         caballo: cab ? cab.nombre : null,
         modalidad: clas ? clas.modalidad_detectada : null,
         puntaje: resu ? resu.puntaje_total : null,
-        simulado: s.modelo_pose === 'synthetic-demo'
+        simulado: s.modelo_pose === 'synthetic-demo',
+        share_token: reportToken(s.id),
+        share_url: reportUrl(s.id)
       });
     }
     res.json(out);
@@ -255,6 +271,9 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
     // Marca de referencia: si el resultado viene de una simulación (no del caballo
     // real), el cliente debe verlo claramente y NO se le cobró.
     fallo.simulado = isDemo;
+    // Magic link público del informe (para compartir + marketing).
+    fallo.share_token = reportToken(sesion.id);
+    fallo.share_url = reportUrl(sesion.id);
     console.log(JSON.stringify({ svc: 'evaluacion-del-caballo-de-paso-fino', event: 'session_judged', sesion_id: sesion.id, modalidad: fallo.clasificacion.modalidad_detectada, puntaje: fallo.puntaje_total, charged: creditDebited }));
     res.status(201).json(fallo);
   } catch (e) {
@@ -267,12 +286,17 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
   }
 });
 
-// ---- Full judge result for one session (public read) ------------------------
+// ---- Full judge result for one session (magic-link read) --------------------
+// Acceso: el DUEÑO (misma cuenta) siempre; cualquiera con el token del magic
+// link (?k=). Sin token y sin ser dueño -> 403 (no enumerable).
 router.get('/sessions/:id', withTenant, async (req, res) => {
   try {
     const sesion_id = parseInt(req.params.id, 10);
     const sesion = await store.repo.find('sesiones', { id: sesion_id });
     if (!sesion) return err(res, 404, 'sesion not found');
+    const isOwner = req.accountId != null && String(sesion.tenant_id) === String(req.accountId);
+    const tokenOk = (req.query && req.query.k) && String(req.query.k) === reportToken(sesion_id);
+    if (!isOwner && !tokenOk) return err(res, 403, 'Este informe requiere un enlace válido.');
     const clas = (await store.repo.findAll('clasificaciones', { sesion_id }))[0] || null;
     const mov = await store.repo.find('metricas_mov', { sesion_id });
     const son = await store.repo.find('metricas_son', { sesion_id });
@@ -307,7 +331,9 @@ router.get('/sessions/:id', withTenant, async (req, res) => {
       resultado,
       dictamen: dict,
       neural_findings: findings,
-      simulado: sesion && sesion.modelo_pose === 'synthetic-demo'
+      simulado: sesion && sesion.modelo_pose === 'synthetic-demo',
+      share_token: reportToken(sesion_id),
+      share_url: reportUrl(sesion_id)
     });
   } catch (e) { err(res, 500, e.message); }
 });

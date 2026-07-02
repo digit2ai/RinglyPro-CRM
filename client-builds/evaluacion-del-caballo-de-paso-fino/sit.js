@@ -365,9 +365,15 @@ async function run(base) {
       check('es_modalidad_valida = true (detectada == categoría)', f && f.clasificacion && f.clasificacion.es_modalidad_valida === true, JSON.stringify(f && f.clasificacion));
       check('pipeline genera pisadas + 5 puntuaciones', f && Array.isArray(f.pisadas) && f.pisadas.length >= 12 && Array.isArray(f.puntuaciones) && f.puntuaciones.length === 5, `pisadas=${f && f.pisadas && f.pisadas.length}`);
 
-      const got = await reqJson(base, 'GET', `/api/v1/champ/sessions/${f.sesion_id}`);
-      check('GET /champ/sessions/:id -> fallo completo', got.status === 200 && got.json && got.json.clasificacion
+      check('POST /champ/sessions returns magic-link share_token + share_url', f && typeof f.share_token === 'string' && f.share_token.length >= 16 && /equimind\.app\/juez\?session=.*&k=/.test(f.share_url || ''), `token=${f && f.share_token}`);
+      // Magic link: sin token y sin ser dueño -> 403 (no enumerable).
+      const noTok = await reqJson(base, 'GET', `/api/v1/champ/sessions/${f.sesion_id}`);
+      check('GET /champ/sessions/:id without token (not owner) -> 403', noTok.status === 403, `status=${noTok.status}`);
+      const got = await reqJson(base, 'GET', `/api/v1/champ/sessions/${f.sesion_id}?k=${f.share_token}`);
+      check('GET /champ/sessions/:id with magic token -> fallo completo', got.status === 200 && got.json && got.json.clasificacion
         && got.json.metricas_movimiento && Array.isArray(got.json.pisadas) && got.json.pisadas.length >= 12, `status=${got.status}`);
+      const badTok = await reqJson(base, 'GET', `/api/v1/champ/sessions/${f.sesion_id}?k=deadbeefdeadbeefdeadbe`);
+      check('GET /champ/sessions/:id with WRONG token -> 403', badTok.status === 403, `status=${badTok.status}`);
 
       const ranking = await reqJson(base, 'GET', `/api/v1/champ/results?categoria_id=${categoria.id}`);
       check('GET /champ/results -> ranking de categoría', ranking.status === 200 && Array.isArray(ranking.json)
@@ -453,7 +459,7 @@ async function run(base) {
 
     // GET session read-back includes regenerated dictamen + persisted findings.
     if (faSession && faSession.sesion_id) {
-      const rd = await reqJson(base, 'GET', `/api/v1/champ/sessions/${faSession.sesion_id}?lang=en`);
+      const rd = await reqJson(base, 'GET', `/api/v1/champ/sessions/${faSession.sesion_id}?lang=en&k=${faSession.share_token}`);
       check('GET session read-back -> dictamen (EN) + neural_findings',
         rd.status === 200 && rd.json && rd.json.dictamen && /Paso Fino|gait/i.test(rd.json.dictamen.veredicto || '') && Array.isArray(rd.json.neural_findings),
         `status=${rd.status}`);

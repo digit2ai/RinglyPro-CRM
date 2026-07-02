@@ -169,7 +169,7 @@
       '<div class="flex justify-between mono" style="font-size:10px;color:#697268;margin-top:4px"><span>120</span><span>ideal ~180</span><span>280</span></div>';
   }
 
-  var currentSesionId = null, currentSummary = '';
+  var currentSesionId = null, currentSummary = '', currentShareUrl = '';
   function renderFallo(f, videoFile) {
     var card = $('result'); card.classList.remove('hidden');
     currentSesionId = f.sesion_id || null;
@@ -226,15 +226,17 @@
     currentSummary = (I18N.share_summary || 'Fallo del juez EquiMind') + ' — ' +
       modLabel(clas.modalidad_detectada) + ' ' + (f.puntaje_total != null ? f.puntaje_total.toFixed(1) + '/100' : '') +
       (f.ranking ? ' · ' + (I18N.res_ranking || 'Puesto') + ' #' + f.ranking : '');
+    // Magic link público (marketing): lo da el servidor (dominio canónico + token).
+    currentShareUrl = f.share_url || (f.share_token ? ('https://equimind.app/juez?session=' + currentSesionId + '&k=' + f.share_token) : '');
     var sb = $('shareBtn');
     if (sb) { if (currentSesionId != null) sb.classList.remove('hidden'); else sb.classList.add('hidden'); }
-    var link = $('shareLink'); if (link) link.value = currentSesionId != null ? shareUrl() : '';
-    if (currentSesionId != null) { try { history.replaceState(null, '', BASE + 'juez?session=' + currentSesionId + '&lang=' + LANG); } catch (e) {} }
+    var link = $('shareLink'); if (link) link.value = currentShareUrl || '';
+    if (currentSesionId != null && f.share_token) { try { history.replaceState(null, '', BASE + 'juez?session=' + currentSesionId + '&k=' + f.share_token + '&lang=' + LANG); } catch (e) {} }
 
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function shareUrl() { return location.origin + BASE + 'juez?session=' + currentSesionId + '&lang=' + LANG; }
+  function shareUrl() { return currentShareUrl || (location.origin + BASE + 'juez?session=' + currentSesionId + '&lang=' + LANG); }
   function flashMsg(id) { var m = $(id); if (m) { m.textContent = I18N.share_copied || 'Enlace copiado'; setTimeout(function () { m.textContent = ''; }, 2500); } }
   // Copia robusta: clipboard API si hay contexto seguro; si no (o iframe sin
   // permiso), fallback execCommand seleccionando el input visible.
@@ -278,7 +280,7 @@
         rows.forEach(function (s) {
           var d = s.fecha ? new Date(s.fecha) : null;
           var dateStr = d ? (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '—';
-          var url = location.origin + BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG;
+          var url = s.share_url || (location.origin + BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG);
           var tag = s.simulado ? (' <span class="text-amber-400" title="' + (I18N.sim_tag || 'referencia') + '">◦</span>') : '';
           var tr = document.createElement('tr');
           tr.className = 'border-b border-slate-800/50';
@@ -309,22 +311,30 @@
   // Load a persisted session (shareable permalink ?session=ID) read-only.
   // Oculta los controles de entrada: es un INFORME COMPLETO para revisar/compartir.
   function loadSharedSession() {
-    var id = new URLSearchParams(location.search).get('session');
+    var qs = new URLSearchParams(location.search);
+    var id = qs.get('session');
     if (!id) return;
+    var k = qs.get('k');
     // Ocultar secciones de carga y de historial en el informe compartido.
     document.querySelectorAll('section').forEach(function (sec) {
       if (sec.querySelector('#horseSel') || sec.querySelector('#evaluar') || sec.id === 'historySection' || sec.querySelector('#sessionBadge')) {
         if (sec.id !== 'result') sec.classList.add('hidden');
       }
     });
-    fetch(CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG, { credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.json() : null; })
+    // Acciones de dueño no aplican a un visitante del informe.
+    ['newAnalysis', 'goHistory'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
+    // Mostrar el CTA de marketing (a menos que el visitante ya tenga sesión).
+    if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) { var cta = $('marketingCta'); if (cta) cta.classList.remove('hidden'); }
+    var url = CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG + (k ? ('&k=' + encodeURIComponent(k)) : '');
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) { showShareError(r.status); return null; } return r.json(); })
       .then(function (j) {
         if (!j || !j.sesion) return;
         var clas = j.clasificacion || {};
         if (j.categoria) clas.modalidad_categoria = j.categoria.modalidad;
         renderFallo({
           simulado: j.simulado,
+          share_token: j.share_token, share_url: j.share_url,
           sesion_id: j.sesion.id,
           clasificacion: clas,
           metricas_movimiento: j.metricas_movimiento || {},
@@ -337,6 +347,13 @@
           neural_findings: j.neural_findings || []
         }, null);
       }).catch(function () {});
+  }
+  function showShareError(status) {
+    var res = $('result'); if (!res) return;
+    res.classList.remove('hidden');
+    res.innerHTML = '<div class="text-center py-8"><div class="text-lg font-bold mb-2">' +
+      (status === 403 ? (I18N.share_invalid || 'Enlace no válido o expirado.') : (I18N.share_notfound || 'Informe no encontrado.')) +
+      '</div><a href="' + BASE + 'inicio" class="text-indigo-300 underline">EquiMind →</a></div>';
   }
 
   var IMPACT_LABEL = {

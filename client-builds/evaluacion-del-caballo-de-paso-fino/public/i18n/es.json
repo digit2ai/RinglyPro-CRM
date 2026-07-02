@@ -221,5 +221,13 @@
   "hist_refresh": "Actualizar",
   "hist_empty": "Aún no tienes análisis. Sube el audio de los cascos (.wav) de tu caballo para empezar.",
   "hist_open": "Ver informe",
-  "sim_tag": "referencia (simulación)"
+  "sim_tag": "referencia (simulación)",
+  "mkt_kicker": "Análisis de Marcha por IA",
+  "mkt_headline": "Este informe lo generó EquiMind: clasifica la marcha, la puntúa como un juez y detecta hallazgos con IA.",
+  "mkt_sub": "¿Tienes caballos de paso fino? Analiza los tuyos, guarda tu historial y comparte informes como este.",
+  "mkt_signup": "Regístrate gratis",
+  "mkt_login": "Iniciar sesión",
+  "mkt_learn": "Conocer EquiMind",
+  "share_invalid": "Enlace no válido o expirado.",
+  "share_notfound": "Informe no encontrado."
 }

@@ -315,7 +315,7 @@
         rows.forEach(function (s) {
           var d = s.fecha ? new Date(s.fecha) : null;
           var dateStr = d ? (d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '—';
-          var url = BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG;
+          var url = s.share_url || (BASE + 'juez?session=' + s.sesion_id + '&lang=' + LANG);
           var tag = s.simulado ? ' <span class="text-amber-400" title="' + (I18N.sim_tag || 'referencia') + '">◦</span>' : '';
           var tr = document.createElement('tr');
           tr.className = 'border-b border-slate-800/50';
