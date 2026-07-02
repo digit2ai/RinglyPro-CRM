@@ -323,10 +323,12 @@ app.get(['/signup', '/signup/'], (req, res) => {
 // Registered BEFORE express.static so the explicit frame-ancestors CSP applies
 // (static would otherwise 301 /valle_milagro -> /valle_milagro/ with no headers).
 // Login CTAs point to the camaravirtual chamber cv-103.
+// Valle Milagro now lives on its own dedicated domain. Redirect every legacy
+// path (visionarium.app/valle_milagro, aiagent.ringlypro.com/valle_milagro, etc.)
+// to https://vallemilagro.com.co, preserving any query string.
 app.get(['/valle_milagro', '/valle_milagro/', '/valle-milagro', '/valle-milagro/'], (req, res) => {
-  res.removeHeader('X-Frame-Options');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
-  res.sendFile(path.join(__dirname, '../public/valle_milagro/index.html'));
+  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, 'https://vallemilagro.com.co' + qs);
 });
 
 // =====================================================
