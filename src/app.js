@@ -286,6 +286,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: vallemilagro.com.co (partner-owned) -> Valle Milagro landing,
+// served IN PLACE so the address bar stays on the custom domain. This block is
+// only exercised once the partner points vallemilagro.com.co DNS AT THIS APP
+// (CNAME/A) and the domain is added on Render + Cloudflare; until then the app
+// never receives this Host header and the block is a harmless no-op. Root and
+// /index.html are rewritten to /valle_milagro so the handler below serves the
+// self-contained landing (with the frame-ancestors CSP for GHL embedding).
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'vallemilagro.com.co' || host === 'www.vallemilagro.com.co') {
+    const p = req.path;
+    // Pass platform / API routes through untouched
+    if (p.startsWith('/visionarium') || p.startsWith('/api')) return next();
+    if (p === '/' || p === '' || p === '/index.html') {
+      req.url = '/valle_milagro';
+    }
+  }
+  next();
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
@@ -323,12 +343,21 @@ app.get(['/signup', '/signup/'], (req, res) => {
 // Registered BEFORE express.static so the explicit frame-ancestors CSP applies
 // (static would otherwise 301 /valle_milagro -> /valle_milagro/ with no headers).
 // Login CTAs point to the camaravirtual chamber cv-103.
-// Valle Milagro now lives on its own dedicated domain. Redirect every legacy
-// path (visionarium.app/valle_milagro, aiagent.ringlypro.com/valle_milagro, etc.)
-// to https://vallemilagro.com.co, preserving any query string.
+//
+// Served IN PLACE on every host — canonical vallemilagro.com.co (partner's
+// domain) AND legacy visionarium.app/valle_milagro, aiagent.ringlypro.com/
+// valle_milagro. We SERVE, never redirect: the old 301 to vallemilagro.com.co
+// bounced against that domain's forward back to /valle_milagro, producing the
+// ERR_TOO_MANY_REDIRECTS loop. Serving is loop-proof no matter how the partner
+// (who controls vallemilagro.com.co) has the domain configured. The page is a
+// single self-contained file (public/valle_milagro/index.html; assets inline /
+// CDN), so it renders correctly served at any path or host. Allow iframe
+// embedding from digit2ai.com (GHL) + the canonical domain.
 app.get(['/valle_milagro', '/valle_milagro/', '/valle-milagro', '/valle-milagro/'], (req, res) => {
-  const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
-  res.redirect(301, 'https://vallemilagro.com.co' + qs);
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy',
+    "frame-ancestors 'self' https://vallemilagro.com.co https://*.vallemilagro.com.co https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  return res.sendFile(path.join(__dirname, '..', 'public', 'valle_milagro', 'index.html'));
 });
 
 // =====================================================
