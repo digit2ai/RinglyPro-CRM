@@ -250,7 +250,7 @@
   "horse_opt_label": "Caballo (opcional)",
   "pose_pending": "Requiere pose de video · próximamente",
   "cadence_unreliable": "no confiable",
-  "cadence_unreliable_note": "Fuera del rango físico (120–280 ppm): no se usó en el puntaje. Sube un audio más limpio de los cascos.",
+  "cadence_unreliable_note": "Fuera del rango físico de la modalidad (según la frecuencia de zancada real): no se usó en el puntaje. Sube un audio más limpio de los cascos.",
   "est_audio": "estimada por audio",
   "audio_only_note": "Modalidad estimada por audio (baja confianza): el audio no distingue paso fino de trocha con certeza. Simetría y elevación requieren pose de video (próximamente).",
   "pose_pending_note": "requieren pose de video (próximamente)",

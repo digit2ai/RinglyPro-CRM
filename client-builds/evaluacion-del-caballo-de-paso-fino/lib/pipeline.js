@@ -89,7 +89,7 @@ async function runPipeline(store, ctx) {
   const modalidadPuntuar = (categoria && categoria.modalidad) || clas.modalidad_detectada || 'paso_fino';
   let criterios = await repo.findAll('criterios', { modalidad: modalidadPuntuar });
   if (!criterios.length) criterios = await repo.findAll('criterios', { modalidad: 'paso_fino' });
-  const { puntuaciones, puntaje_total, cobertura } = score(criterios, mov, son, umbrales);
+  const { puntuaciones, puntaje_total, cobertura, cadencia_band } = score(criterios, mov, son, umbrales, modalidadPuntuar);
   const puntajeGuardar = puntaje_total == null ? 0 : puntaje_total;
   await repo.bulk('puntuaciones', puntuaciones.map((p) => ({
     sesion_id: sesion.id, criterio_id: p.criterio_id, valor_medido: p.valor_medido, puntaje_normalizado: p.puntaje_normalizado
@@ -116,6 +116,7 @@ async function runPipeline(store, ctx) {
     puntuaciones,
     puntaje_total,
     cobertura,          // fracción del peso que SÍ se pudo medir (parcial < 1)
+    cadencia_band,      // banda real usada (min/ideal/max) para el medidor de la UI
     solo_audio: !posePresent,
     ranking: miRanking
   };

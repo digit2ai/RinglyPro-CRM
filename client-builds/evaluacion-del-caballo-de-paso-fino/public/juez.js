@@ -171,21 +171,25 @@
     }
     box.innerHTML = html;
   }
-  function renderCadenceMeter(cad) {
+  function renderCadenceMeter(cad, band) {
     var box = $('cadenceMeter'); if (!box) return;
     if (cad == null) { box.innerHTML = ''; return; }
-    var MIN = 120, MAX = 280, ILO = 150, IHI = 210;
-    var confiable = cad >= MIN && cad <= MAX; // fuera de rango físico = no confiable
+    // Banda REAL por modalidad (del servidor). Fallback a paso fino ~540–760.
+    band = band || { min: 540, ideal: 654, max: 760 };
+    var MIN = band.min, MAX = band.max, IDEAL = band.ideal;
+    // Zona ideal ±5% alrededor del ideal, dentro de la banda.
+    var ILO = Math.max(MIN, IDEAL - (MAX - MIN) * 0.08), IHI = Math.min(MAX, IDEAL + (MAX - MIN) * 0.08);
+    var confiable = cad >= MIN && cad <= MAX;
     var pos = (Math.max(MIN, Math.min(MAX, cad)) - MIN) / (MAX - MIN) * 100;
     var ilo = (ILO - MIN) / (MAX - MIN) * 100, ihi = (IHI - MIN) / (MAX - MIN) * 100;
     box.innerHTML =
       '<div class="flex justify-between text-xs mb-1"><span style="color:#98A199">' + (I18N.m_cadencia || 'Cadencia') + ' (ppm)</span>' +
       '<span class="mono" style="color:' + (confiable ? EM.turf : EM.amber) + '">' + Math.round(cad) + ' ppm' + (confiable ? '' : ' · ' + (I18N.cadence_unreliable || 'no confiable')) + '</span></div>' +
       '<div style="position:relative;height:14px;border-radius:99px;background:rgba(236,230,218,.08)">' +
-      '<div style="position:absolute;top:0;bottom:0;left:' + ilo.toFixed(1) + '%;width:' + (ihi - ilo).toFixed(1) + '%;background:rgba(95,208,139,.22);border-radius:99px"></div>' +
+      '<div style="position:absolute;top:0;bottom:0;left:' + ilo.toFixed(1) + '%;width:' + Math.max(0, ihi - ilo).toFixed(1) + '%;background:rgba(95,208,139,.22);border-radius:99px"></div>' +
       '<div style="position:absolute;top:-3px;bottom:-3px;left:' + pos.toFixed(1) + '%;transform:translateX(-50%);width:3px;border-radius:2px;background:' + (confiable ? EM.brass : EM.amber) + ';box-shadow:0 0 8px ' + (confiable ? EM.brass : EM.amber) + '"></div></div>' +
-      '<div class="flex justify-between mono" style="font-size:10px;color:#697268;margin-top:4px"><span>120</span><span>ideal ~180</span><span>280</span></div>' +
-      (confiable ? '' : '<div style="font-size:10.5px;color:#D98A3E;margin-top:5px">' + (I18N.cadence_unreliable_note || 'Fuera del rango físico (120–280): no se usó en el puntaje. Sube audio más limpio de los cascos.') + '</div>');
+      '<div class="flex justify-between mono" style="font-size:10px;color:#697268;margin-top:4px"><span>' + MIN + '</span><span>ideal ~' + IDEAL + '</span><span>' + MAX + '</span></div>' +
+      (confiable ? '' : '<div style="font-size:10.5px;color:#D98A3E;margin-top:5px">' + (I18N.cadence_unreliable_note || 'Fuera del rango físico de la modalidad: no se usó en el puntaje. Sube audio más limpio de los cascos.') + '</div>');
   }
 
   var currentSesionId = null, currentSummary = '', currentShareUrl = '';
@@ -229,7 +233,7 @@
     var mov = f.metricas_movimiento || {};
     var son = f.metricas_sonido || {};
     renderInfographics(mov, son);
-    renderCadenceMeter(mov.cadencia_ppm);
+    renderCadenceMeter(mov.cadencia_ppm, f.cadencia_band);
 
     // Desglose por criterio (barras) — coloreadas por severidad.
     var bd = $('breakdown'); bd.innerHTML = '';
@@ -376,6 +380,7 @@
         renderFallo({
           simulado: j.simulado,
           solo_audio: j.solo_audio,
+          cadencia_band: j.cadencia_band,
           share_token: j.share_token, share_url: j.share_url,
           sesion_id: j.sesion.id,
           clasificacion: clas,

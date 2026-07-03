@@ -11,7 +11,7 @@
 
 'use strict';
 
-const { DEFAULT_MODEL } = require('./thresholds');
+const { DEFAULT_MODEL, cadenciaBand } = require('./thresholds');
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -28,7 +28,7 @@ const CRITERIOS_PASO_FINO = [
 // `medible:false` = el criterio NO se pudo medir con los datos disponibles (p.ej.
 // métricas de POSE sin video, o cadencia fuera de rango físico). NO se castiga
 // con 0: score() lo EXCLUYE del promedio ponderado (renormaliza). `nota` explica.
-function evalFormula(formula, mov, son, umbrales) {
+function evalFormula(formula, mov, son, umbrales, modalidad) {
   const U = Object.assign({}, DEFAULT_MODEL.umbrales, umbrales || {});
   const f = String(formula || '');
   const NA = (nota) => ({ valor_medido: null, puntaje_normalizado: null, medible: false, nota: nota || null });
@@ -52,8 +52,10 @@ function evalFormula(formula, mov, son, umbrales) {
   if (f.includes('cadencia_ppm')) {
     const c = mov.cadencia_ppm;
     if (c == null) return NA('audio');
-    const { cadencia_paso_fino_min_ppm: lo, cadencia_paso_fino_ideal_ppm: id, cadencia_paso_fino_max_ppm: hi } = U;
-    // Cadencia fuera del rango físico (120–280): NO confiable -> no se puntúa.
+    // Banda de cadencia REAL por modalidad (paso fino ~540–760 ppm, etc.).
+    const band = cadenciaBand(U, modalidad);
+    const lo = band.min, id = band.ideal, hi = band.max;
+    // Cadencia fuera del rango físico de la modalidad: NO confiable -> no se puntúa.
     if (c < lo || c > hi) return { valor_medido: c, puntaje_normalizado: null, medible: false, nota: 'cadencia_no_confiable' };
     const score = c <= id ? 100 * (c - lo) / (id - lo) : 100 * (hi - c) / (hi - id);
     return { valor_medido: c, puntaje_normalizado: Number(clamp(score, 0, 100).toFixed(1)), medible: true };
@@ -67,12 +69,12 @@ function evalFormula(formula, mov, son, umbrales) {
   return NA(null);
 }
 
-// Devuelve { puntuaciones:[{criterio, valor_medido, puntaje_normalizado, peso}], puntaje_total }
-function score(criterios, mov, son, umbrales) {
+// Devuelve { puntuaciones, puntaje_total, cobertura, cadencia_band }
+function score(criterios, mov, son, umbrales, modalidad) {
   const puntuaciones = [];
   let totalPeso = 0, acum = 0;
   for (const c of criterios) {
-    const r = evalFormula(c.formula, mov, son, umbrales);
+    const r = evalFormula(c.formula, mov, son, umbrales, modalidad);
     puntuaciones.push({
       criterio_id: c.id != null ? c.id : null,
       nombre: c.nombre,
@@ -94,7 +96,8 @@ function score(criterios, mov, son, umbrales) {
   // Cobertura: qué fracción del peso total pudo medirse (para la UI: "parcial").
   const pesoDefinido = criterios.reduce((s, c) => s + Number(c.peso_porcentaje), 0) || 1;
   const cobertura = Number((totalPeso / pesoDefinido).toFixed(3));
-  return { puntuaciones, puntaje_total, cobertura };
+  const U = Object.assign({}, DEFAULT_MODEL.umbrales, umbrales || {});
+  return { puntuaciones, puntaje_total, cobertura, cadencia_band: cadenciaBand(U, modalidad) };
 }
 
 module.exports = { score, evalFormula, CRITERIOS_PASO_FINO };

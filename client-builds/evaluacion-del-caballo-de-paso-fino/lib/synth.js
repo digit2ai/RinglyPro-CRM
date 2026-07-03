@@ -35,6 +35,12 @@ const PATRONES = {
   trocha_galope: { combo: ['trocha', 'trocha', 'galope', 'galope'] }
 };
 
+// Duración de zancada (ms) por modalidad, de la frecuencia REAL de zancada
+// (Novoa-Bravo 2018): paso fino 2.72 z/s, trocha 2.83 z/s, trote ~2.3 z/s.
+// Así la SIMULACIÓN de referencia produce cadencias realistas (paso fino ≈654
+// pisadas/min, no 240 de demo).
+const CYCLE_MS = { paso_fino: 368, trocha: 353, trote: 435, galope: 400, trocha_galope: 360 };
+
 function mulberry(seed) {
   let a = seed >>> 0;
   return function () {
@@ -52,6 +58,7 @@ function mulberry(seed) {
 function syntheticPisadas(modalidad, opts = {}) {
   const P0 = PATRONES[modalidad] || PATRONES.paso_fino;
   const ciclos = opts.ciclos || 5;
+  if (opts.cycleMs == null && CYCLE_MS[modalidad] != null) opts = Object.assign({}, opts, { cycleMs: CYCLE_MS[modalidad] });
   const cycleMs = opts.cycleMs || 1000;       // 1 s/ciclo
   const jitter = opts.jitter || 0;            // 0 = perfecto; ~0.4 = muy irregular
   const pairMs = opts.pairMs != null ? opts.pairMs : 8; // separación dentro de un par diagonal

@@ -302,6 +302,14 @@ async function run(base) {
       `status=${dresp.status} charged=${dj && dj.charged} credits=${dj && dj.credits}`);
     check('simulation is flagged simulado:true (honesty banner)', dj && dj.simulado === true,
       `simulado=${dj && dj.simulado}`);
+    // Calibración REAL (Novoa-Bravo 2018): cadencia del paso fino ~540–760 ppm,
+    // ideal 654; el fallo expone la banda usada.
+    check('cadencia_band real paso fino (ideal 654, 540–760)', dj && dj.cadencia_band && dj.cadencia_band.ideal === 654 && dj.cadencia_band.min === 540 && dj.cadencia_band.max === 760,
+      `band=${dj && JSON.stringify(dj.cadencia_band)}`);
+    check('reference cadence lands in real paso fino band', dj && dj.metricas_movimiento && dj.metricas_movimiento.cadencia_ppm >= 540 && dj.metricas_movimiento.cadencia_ppm <= 760,
+      `cadencia=${dj && dj.metricas_movimiento && dj.metricas_movimiento.cadencia_ppm}`);
+    check('brío/cadencia medible y en la banda real (no excluido por rango falso)', dj && Array.isArray(dj.puntuaciones) && (dj.puntuaciones.find((p) => /Br/.test(p.nombre)) || {}).puntaje_normalizado != null,
+      `brio=${dj && (dj.puntuaciones.find((p) => /Br/.test(p.nombre)) || {}).puntaje_normalizado}`);
 
     // ---- Horse-centric flow (select/add horse + my-sessions history) --------
     const newHorse = await reqJson(base, 'POST', '/api/v1/champ/horses', { token: tok, body: { nombre: 'Relámpago SIT', sexo: 'macho', capa: 'castaño' } });

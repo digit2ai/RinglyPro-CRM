@@ -29,6 +29,7 @@ const synth = require('../lib/synth');
 const { runPipeline, rankingCategoria } = require('../lib/pipeline');
 const dictamen = require('../lib/dictamen');
 const neural = require('../lib/neuralEngine');
+const { cadenciaBand } = require('../lib/thresholds');
 const account = require('../models/account');
 const { requireAccount, optionalAccount } = require('./account');
 const crypto = require('crypto');
@@ -241,8 +242,9 @@ router.post('/sessions', upload.any(), optionalAccount, async (req, res) => {
       const map = { paso_fino: 'paso_fino', trocha: 'trocha', trote: 'trote', trote_galope: 'trote', galope: 'galope', trocha_galope: 'trocha_galope' };
       const m = map[demoMod] || 'paso_fino';
       const jitter = body.demo_jitter != null ? Math.max(0, Math.min(0.5, parseFloat(body.demo_jitter))) : 0.04;
-      frames = synth.syntheticFrames(m, { jitter, ciclos: 6 });
-      audioOnsets = synth.syntheticAudioOnsets(m, { jitter, ciclos: 6 });
+      // ciclos 12 ≈ pasada de ~4–5 s con la cadencia real por modalidad (CYCLE_MS).
+      frames = synth.syntheticFrames(m, { jitter, ciclos: 12 });
+      audioOnsets = synth.syntheticAudioOnsets(m, { jitter, ciclos: 12 });
       audioMeta = { nivel_db: -12, duracion_contacto_ms: 35 };
       isDemo = true;
     }
@@ -348,6 +350,7 @@ router.get('/sessions/:id', withTenant, async (req, res) => {
       simulado: sesion && sesion.modelo_pose === 'synthetic-demo',
       // Solo-audio: sin pose de video (ninguna pisada detectada por video).
       solo_audio: Array.isArray(pisadas) && pisadas.length > 0 && pisadas.every((p) => !p.detectada_por_video),
+      cadencia_band: cadenciaBand(null, (categoria && categoria.modalidad) || (clas && clas.modalidad_detectada) || 'paso_fino'),
       share_token: reportToken(sesion_id),
       share_url: reportUrl(sesion_id)
     });

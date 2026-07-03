@@ -105,11 +105,13 @@ function energyEnvelope(samples, sampleRate, winSec = 0.02, hopSec = 0.005) {
 // refractory window AND exceeds an adaptive threshold (a fraction of the global
 // max, floored above the noise mean). minGapSec enforces a refractory period so
 // a single hoof beat isn't counted twice. Returns onset times (seconds).
-// minGapSec = periodo refractario. El rango físico de una marcha equina válida
-// llega a ~280 ppm (IOI 0.214s); un casco puede "resonar" y generar un segundo
-// onset a ~0.15s. Un refractario de 0.20s funde esos dobles SIN perder golpes
-// reales del rango válido (evita cadencias infladas tipo 318 ppm).
-function detectOnsets(env, times, minGapSec = 0.20) {
+// minGapSec = periodo refractario. La marcha del paso fino/trocha real tiene
+// pisadas a ~85–95 ms (≈630–710 pisadas/min, 4 tiempos × 2.6–3.0 zancadas/s,
+// Novoa-Bravo 2018). El refractario DEBE ser menor a eso para resolverlas, pero
+// mayor que la resonancia de un casco (~20–50 ms) para no doblar golpes. 0.06 s
+// cumple ambos. (Antes 0.20 s topaba en 300 ppm y hacía IMPOSIBLE medir un paso
+// fino real.)
+function detectOnsets(env, times, minGapSec = 0.06) {
   const n = env.length;
   if (n === 0) return [];
   let globalMax = 0;
