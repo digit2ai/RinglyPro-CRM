@@ -6,6 +6,8 @@
   <title>MaraMed — Signos Vitales con la Cámara · Digit2AI</title>
   <meta name="description" content="MaraMed mide tus signos vitales usando solo la cámara. Sin aparatos. El video nunca sale de tu navegador." />
   <link rel="preconnect" href="https://aiagent.ringlypro.com" />
+  <link rel="icon" type="image/svg+xml" href="/maramed-icon.svg" />
+  <link rel="apple-touch-icon" href="/maramed-icon.svg" />
   <style>
     :root{--bg:#0b0f19;--bg2:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--green:#4ade80;--cyan:#22d3ee;--violet:#8b7bff}
     *{box-sizing:border-box}
@@ -55,7 +57,10 @@
 <body>
   <div class="wrap">
     <div class="top">
-      <span class="brand">MaraMed <span style="color:var(--mut);font-weight:500">· Digit2AI</span></span>
+      <span class="brand" style="display:inline-flex;align-items:center;gap:8px">
+        <img src="/maramed-logo.svg" alt="MaraMed" height="30" style="height:30px;width:auto;display:block" />
+        <span style="color:var(--mut);font-weight:500">· Digit2AI</span>
+      </span>
       <button class="langbtn" id="langBtn">EN</button>
     </div>
 
