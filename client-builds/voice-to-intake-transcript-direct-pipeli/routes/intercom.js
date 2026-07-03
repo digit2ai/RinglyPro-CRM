@@ -24,6 +24,11 @@ const push = require('../services/push');
 const audioJson = express.json({ limit: '6mb' });
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024; // 4 MB hard cap on decoded audio
 
+// Images (screenshots / photos) arrive as base64 in JSON too — bigger than audio,
+// so they get their own parser. ~12mb JSON ≈ ~8.5mb of image bytes.
+const imageJson = express.json({ limit: '12mb' });
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB hard cap on decoded image
+
 // Decode { audio: <base64>, mime, duration } -> { buf, mime, dur } or null.
 function parseAudioPayload(body) {
   if (!body || typeof body.audio !== 'string') return null;
@@ -38,6 +43,21 @@ function parseAudioPayload(body) {
   let dur = parseInt(body.duration, 10);
   if (!Number.isFinite(dur) || dur < 0 || dur > 600) dur = null;
   return { buf, mime, dur };
+}
+
+// Decode { image: <base64|dataURL>, mime, caption } -> { buf, mime, caption } or null.
+function parseImagePayload(body) {
+  if (!body || typeof body.image !== 'string') return null;
+  let b64 = body.image;
+  const comma = b64.indexOf(',');
+  if (b64.slice(0, 5) === 'data:' && comma !== -1) b64 = b64.slice(comma + 1); // strip data URL prefix
+  let buf;
+  try { buf = Buffer.from(b64, 'base64'); } catch (e) { return null; }
+  if (!buf || !buf.length || buf.length > MAX_IMAGE_BYTES) return null;
+  let mime = String(body.mime || 'image/jpeg').slice(0, 64);
+  if (!/^image\//.test(mime)) mime = 'image/jpeg';
+  const caption = typeof body.caption === 'string' ? body.caption.trim().slice(0, 4000) : '';
+  return { buf, mime, caption };
 }
 
 function champEmail(req) { return (req.jwt && req.jwt.email) || null; }
@@ -153,6 +173,52 @@ router.post('/me/audio', requireAuth, audioJson, async (req, res) => {
   }
 });
 
+// Champion sends an image (screenshot/photo) with optional caption.
+router.post('/me/image', requireAuth, imageJson, async (req, res) => {
+  try {
+    const email = champEmail(req);
+    if (!email) return res.status(400).json({ error: 'no champion identity' });
+    const img = parseImagePayload(req.body);
+    if (!img) return res.status(422).json({ error: 'invalid or too-large image (max 8MB)' });
+    const row = await intercom.postMessage({
+      email, name: champName(req), sender: 'champion', msgType: 'image',
+      imageData: img.buf, imageMime: img.mime, body: img.caption
+    });
+    res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    intercom.totalUnreadForOwner().then((unread) => {
+      push.sendToOwner({
+        title: 'Digit2Ai Intercom',
+        body: (champName(req) ? champName(req) + ': ' : '') + (img.caption || 'Photo'),
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
+  } catch (err) {
+    console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_image_error', error: err.message }));
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Stream an image message's bytes. Owner (CRM token) can fetch any; a champion
+// (champion code) can only fetch images from their own thread.
+router.get('/image/:id', requireAuth, async (req, res) => {
+  try {
+    const row = await intercom.getImage(req.params.id);
+    if (!row || !row.image_data) return res.status(404).end();
+    if (req.isChampion) {
+      const mine = champEmail(req);
+      if (!mine || String(row.champion_email).toLowerCase() !== String(mine).toLowerCase()) {
+        return res.status(403).end();
+      }
+    }
+    res.set('Content-Type', row.image_mime || 'image/jpeg');
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.send(row.image_data);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 // Stream a voice message's bytes. Owner (CRM token) can fetch any; a champion
 // (champion code) can only fetch audio from their own thread.
 router.get('/audio/:id', requireAuth, async (req, res) => {
@@ -245,6 +311,32 @@ router.post('/threads/:email/audio', requireCrmAuth, audioJson, async (req, res)
     }).catch(() => {});
   } catch (err) {
     console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_owner_audio_error', error: err.message }));
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Owner sends an image (screenshot/photo) to a champion thread.
+router.post('/threads/:email/image', requireCrmAuth, imageJson, async (req, res) => {
+  try {
+    const email = String(req.params.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const img = parseImagePayload(req.body);
+    if (!img) return res.status(422).json({ error: 'invalid or too-large image (max 8MB)' });
+    const row = await intercom.postMessage({
+      email, name: null, sender: 'owner', msgType: 'image',
+      imageData: img.buf, imageMime: img.mime, body: img.caption
+    });
+    res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    intercom.unreadForChampion(email).then((unread) => {
+      push.sendToChampion(email, {
+        title: 'Digit2Ai',
+        body: img.caption || 'Photo',
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
+  } catch (err) {
+    console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_owner_image_error', error: err.message }));
     res.status(500).json({ error: 'internal error' });
   }
 });

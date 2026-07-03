@@ -51,6 +51,17 @@
     intercomRecbar: document.getElementById('intercomRecbar'),
     intercomRecTime: document.getElementById('intercomRecTime'),
     intercomRecCancel: document.getElementById('intercomRecCancel'),
+    intercomAttach: document.getElementById('intercomAttach'),
+    intercomFile: document.getElementById('intercomFile'),
+    icDropov: document.getElementById('icDropov'),
+    icImgPrev: document.getElementById('icImgPrev'),
+    icImgPrevImg: document.getElementById('icImgPrevImg'),
+    icImgPrevCap: document.getElementById('icImgPrevCap'),
+    icImgPrevSend: document.getElementById('icImgPrevSend'),
+    icImgPrevX: document.getElementById('icImgPrevX'),
+    icImgPrevTo: document.getElementById('icImgPrevTo'),
+    icLightbox: document.getElementById('icLightbox'),
+    icLightboxImg: document.getElementById('icLightboxImg'),
     pocHeading: document.getElementById('pocHeading'),
     enableNotif: document.getElementById('enableNotif'),
     champBanner: document.getElementById('champBanner'),
@@ -523,6 +534,56 @@
   // ---- Intercom chat (champion <-> owner) -------------------------------
   function fmtTime(s) { try { return new Date(s).toLocaleString(); } catch (e) { return ''; } }
 
+  // ---- Images (attach / paste / drag-drop, WhatsApp-style) ----
+  var icImgCache = {}, icPendingImage = null;
+  function icLoadImageInto(wrap) {
+    if (wrap.getAttribute('data-loaded')) return;
+    var id = wrap.getAttribute('data-imgid');
+    wrap.setAttribute('data-loaded', '1');
+    var token = getToken(); if (!token) return;
+    if (icImgCache[id]) { icSetImg(wrap, icImgCache[id]); return; }
+    fetch(API_INTERCOM + '/image/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { if (!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function (blob) { var url = URL.createObjectURL(blob); icImgCache[id] = url; icSetImg(wrap, url); })
+      .catch(function () { wrap.innerHTML = '<div class="ic-imgmsg-ph">—</div>'; });
+  }
+  function icSetImg(wrap, url) {
+    var img = document.createElement('img'); img.src = url; img.alt = 'Photo'; img.loading = 'lazy';
+    img.addEventListener('load', function () { try { if (el.intercomThread.scrollHeight - el.intercomThread.scrollTop - el.intercomThread.clientHeight < 400) el.intercomThread.scrollTop = el.intercomThread.scrollHeight; } catch (e) {} });
+    wrap.innerHTML = ''; wrap.appendChild(img);
+  }
+  function icOpenLightbox(url) { if (!el.icLightbox) return; el.icLightboxImg.src = url; el.icLightbox.style.display = 'flex'; }
+  if (el.icLightbox) el.icLightbox.addEventListener('click', function () { el.icLightbox.style.display = 'none'; el.icLightboxImg.src = ''; });
+  el.intercomThread.addEventListener('click', function (e) { var im = e.target.closest && e.target.closest('.ic-imgmsg img'); if (im && im.src) icOpenLightbox(im.src); });
+
+  function icHandleImageFile(file) {
+    if (!getToken()) return;
+    if (!file || !/^image\//.test(file.type || '')) return;
+    if (file.size > 8 * 1024 * 1024) { alert('Image too large (max 8 MB).'); return; }
+    var reader = new FileReader();
+    reader.onload = function () { icPendingImage = { dataUrl: String(reader.result || ''), mime: file.type || 'image/jpeg' }; icShowImgPrev(); };
+    reader.readAsDataURL(file);
+  }
+  function icShowImgPrev() {
+    if (!icPendingImage || !el.icImgPrev) return;
+    el.icImgPrevImg.src = icPendingImage.dataUrl; el.icImgPrevCap.value = '';
+    if (el.icImgPrevTo) el.icImgPrevTo.textContent = (t().ownerLabel || 'Photo');
+    el.icImgPrev.style.display = 'flex';
+    setTimeout(function () { try { el.icImgPrevCap.focus(); } catch (e) {} }, 60);
+  }
+  function icHideImgPrev() { if (!el.icImgPrev) return; el.icImgPrev.style.display = 'none'; el.icImgPrevImg.src = ''; icPendingImage = null; }
+  function icSendImage() {
+    var token = getToken();
+    if (!icPendingImage || !token) return;
+    var dataUrl = icPendingImage.dataUrl, mime = icPendingImage.mime, cap = (el.icImgPrevCap.value || '').trim();
+    var b64 = dataUrl; var comma = b64.indexOf(','); if (comma !== -1) b64 = b64.slice(comma + 1);
+    icHideImgPrev();
+    fetch(API_INTERCOM + '/me/image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ image: b64, mime: mime, caption: cap })
+    }).then(function () { fetchIntercom(); }).catch(function () { fetchIntercom(); });
+  }
+
   // ---- Voice messages (record + play) ----
   var IC_PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   var IC_PAUSE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
@@ -577,6 +638,12 @@
           '<div class="ic-vmsg-bar"><div class="ic-vmsg-prog"></div></div>' +
           '<span class="ic-vmsg-dur">' + icFmtDur(m.audio_duration) + '</span>';
         bub.appendChild(vm);
+      } else if (m.msg_type === 'image') {
+        var im = document.createElement('div'); im.className = 'ic-imgmsg'; im.setAttribute('data-imgid', m.id);
+        im.innerHTML = '<div class="ic-imgmsg-ph">…</div>';
+        bub.appendChild(im);
+        var cap = (m.body && m.body !== '[Photo]') ? m.body : '';
+        if (cap) { var cd = document.createElement('div'); cd.className = 'ic-imgcap'; cd.textContent = cap; bub.appendChild(cd); }
       } else {
         var txt = document.createElement('div'); txt.style.cssText = 'white-space:pre-wrap;word-wrap:break-word'; txt.textContent = m.body;
         bub.appendChild(txt);
@@ -584,6 +651,7 @@
       wrap.appendChild(bub);
       el.intercomThread.appendChild(wrap);
     });
+    Array.prototype.forEach.call(el.intercomThread.querySelectorAll('.ic-imgmsg[data-imgid]'), icLoadImageInto);
     el.intercomThread.scrollTop = el.intercomThread.scrollHeight;
   }
 
@@ -701,6 +769,39 @@
   el.intercomSend.addEventListener('click', function () { if (el.intercomRecbar && el.intercomRecbar.style.display === 'flex') { icStop(); } else { ensurePush(); sendIntercom(); } });
   el.intercomInput.addEventListener('input', icUpdateSendMic);
   el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
+
+  // Image: attach button, file picker, preview send, paste, drag-drop, Esc
+  if (el.intercomAttach) el.intercomAttach.addEventListener('click', function () { ensurePush(); if (el.intercomFile) el.intercomFile.click(); });
+  if (el.intercomFile) el.intercomFile.addEventListener('change', function () { if (el.intercomFile.files && el.intercomFile.files[0]) icHandleImageFile(el.intercomFile.files[0]); el.intercomFile.value = ''; });
+  if (el.icImgPrevSend) el.icImgPrevSend.addEventListener('click', icSendImage);
+  if (el.icImgPrevX) el.icImgPrevX.addEventListener('click', icHideImgPrev);
+  if (el.icImgPrevCap) el.icImgPrevCap.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); icSendImage(); } });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (el.icLightbox && el.icLightbox.style.display === 'flex') { el.icLightbox.style.display = 'none'; el.icLightboxImg.src = ''; }
+    else if (el.icImgPrev && el.icImgPrev.style.display === 'flex') { icHideImgPrev(); }
+  });
+  // Paste a screenshot while the inbox/chat is open
+  document.addEventListener('paste', function (e) {
+    if (!inboxView || !getToken()) return;
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && items[i].type && items[i].type.indexOf('image/') === 0) {
+        var f = items[i].getAsFile(); if (f) { e.preventDefault(); icHandleImageFile(f); return; }
+      }
+    }
+  });
+  // Drag-and-drop an image file onto the window (while chat is open)
+  function icDragHasFiles(e) { try { var ty = e.dataTransfer && e.dataTransfer.types; if (!ty) return false; return (ty.indexOf ? ty.indexOf('Files') !== -1 : Array.prototype.indexOf.call(ty, 'Files') !== -1); } catch (err) { return false; } }
+  var icDragDepth = 0;
+  window.addEventListener('dragenter', function (e) { if (inboxView && getToken() && icDragHasFiles(e)) { icDragDepth++; if (el.icDropov) el.icDropov.style.display = 'flex'; } });
+  window.addEventListener('dragover', function (e) { if (inboxView && getToken() && icDragHasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', function () { if (icDragDepth > 0) { icDragDepth--; if (icDragDepth <= 0) { icDragDepth = 0; if (el.icDropov) el.icDropov.style.display = 'none'; } } });
+  window.addEventListener('drop', function (e) {
+    icDragDepth = 0; if (el.icDropov) el.icDropov.style.display = 'none';
+    if (!inboxView || !getToken()) return;
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); icHandleImageFile(e.dataTransfer.files[0]); }
+  });
 
   // Keyboard handling is done via the viewport meta (interactive-widget=
   // resizes-content) so the fixed full-window composer stays above the soft

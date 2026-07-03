@@ -91,6 +91,35 @@
     .vmsg-prog{position:absolute;left:0;top:0;bottom:0;width:0;background:#00a884;border-radius:2px}
     .vmsg-dur{font-size:12px;color:rgba(0,0,0,.5);flex:0 0 auto;font-variant-numeric:tabular-nums}
 
+    /* image message bubble */
+    .imgmsg{border-radius:6px;overflow:hidden;cursor:pointer;max-width:min(300px,68vw);min-width:120px}
+    .imgmsg img{display:block;width:100%;height:auto;border-radius:6px}
+    .imgmsg-ph{display:flex;align-items:center;justify-content:center;min-width:150px;min-height:110px;background:rgba(0,0,0,.06);color:#54656f;font-size:13px;border-radius:6px}
+    .imgcap{margin-top:4px;white-space:pre-wrap;word-wrap:break-word}
+    /* attach (paperclip) button — same footprint as mic/send */
+    .attachbtn{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:0;background:transparent;color:#54656f;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .attachbtn:hover{background:rgba(0,0,0,.06)}
+    .attachbtn:disabled{opacity:.4;cursor:default}
+    .attachbtn svg{width:24px;height:24px}
+    /* drag-and-drop overlay */
+    .dropov{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,128,105,.28);backdrop-filter:blur(2px)}
+    .dropov .box{background:#fff;color:#008069;border:3px dashed #008069;border-radius:16px;padding:34px 46px;font-size:17px;font-weight:600;text-align:center}
+    /* image preview + caption overlay (WhatsApp-style, before send) */
+    .imgprev{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;background:#111b21}
+    .imgprev-head{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#202c33;color:#e9edef;flex:0 0 auto}
+    .imgprev-x{background:none;border:0;color:#e9edef;font-size:24px;line-height:1;cursor:pointer;padding:2px 6px}
+    .imgprev-to{font-size:15px;font-weight:600}
+    .imgprev-body{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}
+    .imgprev-body img{max-width:100%;max-height:100%;border-radius:6px;object-fit:contain}
+    .imgprev-bar{display:flex;align-items:center;gap:10px;padding:12px;background:#0b141a}
+    .imgprev-bar input{flex:1;background:#2a3942;border:0;border-radius:22px;color:#e9edef;padding:12px 16px;font-size:15px;outline:none}
+    .imgprev-bar input::placeholder{color:#8696a0}
+    .imgprev-send{flex:0 0 auto;width:50px;height:50px;border-radius:50%;border:0;background:#00a884;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .imgprev-send svg{width:24px;height:24px}
+    /* full-screen lightbox */
+    .lightbox{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.92);cursor:zoom-out}
+    .lightbox img{max-width:94%;max-height:94%;border-radius:6px}
+
     /* placeholder when no chat selected (desktop) */
     .nochat{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#54656f;text-align:center;padding:30px;background:#efeae2}
     .nochat .big{font-size:18px;color:#3b4a54;font-weight:600}
@@ -140,6 +169,10 @@
       </div>
       <div class="thread" id="thread"></div>
       <div class="composer">
+        <button class="attachbtn" id="attach" aria-label="Attach image" title="Attach photo" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 6.5v9.75a4.25 4.25 0 1 1-8.5 0V6a2.75 2.75 0 0 1 5.5 0v9.75a1.25 1.25 0 0 1-2.5 0V7h-1.5v8.75a2.75 2.75 0 0 0 5.5 0V6a4.25 4.25 0 0 0-8.5 0v10.25a5.75 5.75 0 0 0 11.5 0V6.5h-1.5z"/></svg>
+        </button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" />
         <textarea id="reply" rows="1" placeholder="Type a message" disabled></textarea>
         <!-- recording bar (hidden until recording) -->
         <div class="recbar" id="recbar" style="display:none">
@@ -164,6 +197,27 @@
     </main>
   </div>
 
+  <!-- Drag-and-drop overlay -->
+  <div class="dropov" id="dropov"><div class="box">Drop photo to send</div></div>
+
+  <!-- Image preview + caption (before send) -->
+  <div class="imgprev" id="imgPrev">
+    <div class="imgprev-head">
+      <button class="imgprev-x" id="imgPrevX" aria-label="Cancel">&times;</button>
+      <span class="imgprev-to" id="imgPrevTo">Photo</span>
+    </div>
+    <div class="imgprev-body"><img id="imgPrevImg" alt="Preview" /></div>
+    <div class="imgprev-bar">
+      <input id="imgPrevCap" placeholder="Add a caption…" autocomplete="off" />
+      <button class="imgprev-send" id="imgPrevSend" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Full-screen lightbox -->
+  <div class="lightbox" id="lightbox" style="display:none"><img id="lightboxImg" alt="Photo" /></div>
+
   <script>
   (function(){
     var API='/voice-to-intake-transcript-direct-pipeli/api/v1/intercom';
@@ -176,7 +230,11 @@
     var chatEl=document.getElementById('chat'), searchEl=document.getElementById('search');
     var chName=document.getElementById('chName'), chSub=document.getElementById('chSub'), chAvatar=document.getElementById('chAvatar');
     var sideSub=document.getElementById('sideSub');
-    var current=null, currentName=null, allThreads=[], filter='';
+    var attachBtn=document.getElementById('attach'), fileInput=document.getElementById('fileInput');
+    var dropov=document.getElementById('dropov');
+    var imgPrev=document.getElementById('imgPrev'), imgPrevImg=document.getElementById('imgPrevImg'), imgPrevCap=document.getElementById('imgPrevCap'), imgPrevSend=document.getElementById('imgPrevSend'), imgPrevX=document.getElementById('imgPrevX'), imgPrevTo=document.getElementById('imgPrevTo');
+    var lightbox=document.getElementById('lightbox'), lightboxImg=document.getElementById('lightboxImg');
+    var current=null, currentName=null, allThreads=[], filter='', pendingImage=null, imgCache={};
 
     function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
     function initials(name){ var p=String(name||'?').trim().split(/\s+/); var a=(p[0]||'')[0]||''; var b=p.length>1?(p[p.length-1][0]||''):''; return (a+b).toUpperCase()||'?'; }
@@ -250,7 +308,7 @@
       current=email; currentName=name;
       chName.textContent=name; chSub.textContent=email;
       chAvatar.textContent=initials(name); chAvatar.style.background=avColor(email);
-      reply.disabled=false; send.disabled=false; micBtn.disabled=false; updateSendMic();
+      reply.disabled=false; send.disabled=false; micBtn.disabled=false; attachBtn.disabled=false; updateSendMic();
       chatEl.classList.remove('show-empty');
       document.body.classList.add('chat-open');
       renderList();
@@ -262,7 +320,7 @@
       document.body.classList.remove('chat-open');
       current=null; currentName=null;
       chatEl.classList.add('show-empty');
-      reply.disabled=true; send.disabled=true; micBtn.disabled=true; updateSendMic();
+      reply.disabled=true; send.disabled=true; micBtn.disabled=true; attachBtn.disabled=true; updateSendMic();
       renderList();
     }
 
@@ -289,12 +347,18 @@
         b.className='bubble '+(owner?'b-out':'b-in')+(lastSender===m.sender?' grp':'');
         if(m.msg_type==='audio'){
           b.innerHTML=voicePlayerHTML(m.id, m.audio_duration)+'<span class="meta" style="clear:both;display:block;text-align:right">'+esc(timeOf(m.created_at))+'</span>';
+        } else if(m.msg_type==='image'){
+          var cap=(m.body && m.body!=='[Photo]') ? m.body : '';
+          b.innerHTML='<div class="imgmsg" data-imgid="'+m.id+'"><div class="imgmsg-ph">Loading…</div></div>'+
+            (cap?'<div class="imgcap">'+esc(cap)+'</div>':'')+
+            '<span class="meta" style="clear:both;display:block;text-align:right">'+esc(timeOf(m.created_at))+'</span>';
         } else {
           b.innerHTML=esc(m.body)+'<span class="meta">'+esc(timeOf(m.created_at))+'</span>';
         }
         threadEl.appendChild(b);
         lastSender=m.sender;
       });
+      Array.prototype.forEach.call(threadEl.querySelectorAll('.imgmsg[data-imgid]'), loadImageInto);
       if(scroll || nearBottom) threadEl.scrollTop=threadEl.scrollHeight;
     }
 
@@ -310,6 +374,93 @@
         .then(function(){ loadMessages(true); loadThreads(); }).catch(function(){});
     }
     function autoGrow(){ reply.style.height='auto'; reply.style.height=Math.min(reply.scrollHeight,120)+'px'; }
+
+    // ---------- Images (attach / paste / drag-drop, WhatsApp-style) ----------
+    // Images are fetched with the auth header (a plain <img src> can't send it),
+    // turned into an object URL, and cached by message id.
+    function loadImageInto(wrap){
+      if(wrap.getAttribute('data-loaded')) return;
+      var id=wrap.getAttribute('data-imgid');
+      wrap.setAttribute('data-loaded','1');
+      if(imgCache[id]){ setImg(wrap, imgCache[id]); return; }
+      fetch(API+'/image/'+encodeURIComponent(id),{headers:authHdr()})
+        .then(function(r){ if(!r.ok) throw new Error('http'); return r.blob(); })
+        .then(function(blob){ var url=URL.createObjectURL(blob); imgCache[id]=url; setImg(wrap,url); })
+        .catch(function(){ wrap.innerHTML='<div class="imgmsg-ph">Image unavailable</div>'; });
+    }
+    function setImg(wrap,url){
+      var img=document.createElement('img'); img.src=url; img.alt='Photo'; img.loading='lazy';
+      img.addEventListener('load', function(){ if(threadEl.scrollHeight - threadEl.scrollTop - threadEl.clientHeight < 400) threadEl.scrollTop=threadEl.scrollHeight; });
+      wrap.innerHTML=''; wrap.appendChild(img);
+    }
+    function openLightbox(url){ lightboxImg.src=url; lightbox.style.display='flex'; }
+    lightbox.addEventListener('click', function(){ lightbox.style.display='none'; lightboxImg.src=''; });
+    threadEl.addEventListener('click', function(e){ var im=e.target.closest&&e.target.closest('.imgmsg img'); if(im&&im.src) openLightbox(im.src); });
+
+    function handleImageFile(file){
+      if(!current) return;
+      if(!file || !/^image\//.test(file.type||'')){ return; }
+      if(file.size > 8*1024*1024){ alert('Image too large (max 8 MB).'); return; }
+      var reader=new FileReader();
+      reader.onload=function(){ pendingImage={ dataUrl:String(reader.result||''), mime:file.type||'image/jpeg' }; showImgPrev(); };
+      reader.readAsDataURL(file);
+    }
+    function showImgPrev(){
+      if(!pendingImage) return;
+      imgPrevImg.src=pendingImage.dataUrl; imgPrevCap.value='';
+      imgPrevTo.textContent=currentName?('To '+currentName):'Photo';
+      imgPrev.style.display='flex';
+      setTimeout(function(){ try{ imgPrevCap.focus(); }catch(e){} }, 60);
+    }
+    function hideImgPrev(){ imgPrev.style.display='none'; imgPrevImg.src=''; pendingImage=null; }
+    function sendPendingImage(){
+      if(!pendingImage||!current) return;
+      var dataUrl=pendingImage.dataUrl, mime=pendingImage.mime, cap=(imgPrevCap.value||'').trim();
+      var b64=dataUrl; var comma=b64.indexOf(','); if(comma!==-1) b64=b64.slice(comma+1);
+      hideImgPrev();
+      // optimistic bubble (uses the local dataURL so it shows instantly)
+      var b=document.createElement('div'); b.className='bubble b-out';
+      b.innerHTML='<div class="imgmsg"><img src="'+dataUrl+'"></div>'+
+        (cap?'<div class="imgcap">'+esc(cap)+'</div>':'')+
+        '<span class="meta" style="clear:both;display:block;text-align:right">'+esc(timeOf(new Date().toISOString()))+'</span>';
+      if(threadEl.querySelector('.chat-empty')) threadEl.innerHTML='';
+      threadEl.appendChild(b); threadEl.scrollTop=threadEl.scrollHeight;
+      fetch(API+'/threads/'+encodeURIComponent(current)+'/image',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHdr()),body:JSON.stringify({image:b64,mime:mime,caption:cap})})
+        .then(function(r){ if(!r.ok) throw new Error('http'); return r.json(); })
+        .then(function(){ loadMessages(true); loadThreads(); })
+        .catch(function(){ loadMessages(true); });
+    }
+    imgPrevSend.addEventListener('click', sendPendingImage);
+    imgPrevCap.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); sendPendingImage(); } });
+    imgPrevX.addEventListener('click', hideImgPrev);
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(lightbox.style.display==='flex'){ lightbox.style.display='none'; lightboxImg.src=''; } else if(imgPrev.style.display==='flex'){ hideImgPrev(); } } });
+
+    // Attach button -> native file picker
+    attachBtn.addEventListener('click', function(){ if(!attachBtn.disabled) fileInput.click(); });
+    fileInput.addEventListener('change', function(){ if(fileInput.files&&fileInput.files[0]) handleImageFile(fileInput.files[0]); fileInput.value=''; });
+
+    // Paste an image (screenshot) anywhere while a chat is open
+    document.addEventListener('paste', function(e){
+      if(!current) return;
+      var items=(e.clipboardData&&e.clipboardData.items)||[];
+      for(var i=0;i<items.length;i++){
+        if(items[i].kind==='file' && items[i].type && items[i].type.indexOf('image/')===0){
+          var f=items[i].getAsFile(); if(f){ e.preventDefault(); handleImageFile(f); return; }
+        }
+      }
+    });
+
+    // Drag-and-drop an image file onto the window
+    function dragHasFiles(e){ try{ var t=e.dataTransfer&&e.dataTransfer.types; if(!t) return false; return (t.indexOf?t.indexOf('Files')!==-1:Array.prototype.indexOf.call(t,'Files')!==-1); }catch(err){ return false; } }
+    var dragDepth=0;
+    window.addEventListener('dragenter', function(e){ if(current&&dragHasFiles(e)){ dragDepth++; dropov.style.display='flex'; } });
+    window.addEventListener('dragover', function(e){ if(current&&dragHasFiles(e)){ e.preventDefault(); } });
+    window.addEventListener('dragleave', function(e){ if(dragDepth>0){ dragDepth--; if(dragDepth<=0){ dragDepth=0; dropov.style.display='none'; } } });
+    window.addEventListener('drop', function(e){
+      dragDepth=0; dropov.style.display='none';
+      if(!current) return;
+      if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length){ e.preventDefault(); handleImageFile(e.dataTransfer.files[0]); }
+    });
 
     // ---------- Voice messages ----------
     function fmtDur(s){ s=Math.max(0,Math.round(s||0)); var m=Math.floor(s/60); var ss=s%60; return m+':'+(ss<10?'0':'')+ss; }

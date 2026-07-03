@@ -51,6 +51,28 @@
     .ic-vmsg-bar{flex:1;height:4px;border-radius:2px;background:rgba(0,0,0,.18);position:relative;overflow:hidden}
     .ic-vmsg-prog{position:absolute;left:0;top:0;bottom:0;width:0;background:#00a884;border-radius:2px}
     .ic-vmsg-dur{font-size:12px;color:rgba(0,0,0,.5);flex:0 0 auto;font-variant-numeric:tabular-nums}
+    /* image messages */
+    .ic-imgmsg{border-radius:6px;overflow:hidden;cursor:pointer;max-width:min(240px,60vw);min-width:110px}
+    .ic-imgmsg img{display:block;width:100%;height:auto;border-radius:6px}
+    .ic-imgmsg-ph{display:flex;align-items:center;justify-content:center;min-width:130px;min-height:96px;background:rgba(0,0,0,.06);color:#667781;font-size:12px;border-radius:6px}
+    .ic-imgcap{margin-top:4px;white-space:pre-wrap;word-wrap:break-word}
+    #intercomAttach{background:transparent;color:#54656f;border:0;border-radius:50%;width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    #intercomAttach:hover{background:rgba(0,0,0,.06)}
+    #intercomAttach svg{width:23px;height:23px}
+    .ic-dropov{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,128,105,.28)}
+    .ic-dropov .box{background:#fff;color:#008069;border:3px dashed #008069;border-radius:16px;padding:28px 40px;font-size:16px;font-weight:600}
+    .ic-imgprev{position:fixed;inset:0;z-index:85;display:none;flex-direction:column;background:#111b21}
+    .ic-imgprev-head{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#202c33;color:#e9edef;flex:0 0 auto}
+    .ic-imgprev-x{background:none;border:0;color:#e9edef;font-size:24px;line-height:1;cursor:pointer;padding:2px 6px}
+    .ic-imgprev-body{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+    .ic-imgprev-body img{max-width:100%;max-height:100%;border-radius:6px;object-fit:contain}
+    .ic-imgprev-bar{display:flex;align-items:center;gap:10px;padding:12px;background:#0b141a}
+    .ic-imgprev-bar input{flex:1;background:#2a3942;border:0;border-radius:22px;color:#e9edef;padding:12px 16px;font-size:15px;outline:none}
+    .ic-imgprev-bar input::placeholder{color:#8696a0}
+    .ic-imgprev-send{flex:0 0 auto;width:48px;height:48px;border-radius:50%;border:0;background:#00a884;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .ic-imgprev-send svg{width:23px;height:23px}
+    .ic-lightbox{position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);cursor:zoom-out}
+    .ic-lightbox img{max-width:94%;max-height:94%;border-radius:6px}
   </style>
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
@@ -143,6 +165,10 @@
       <div id="intercomThread" class="overflow-y-auto wa-thread" style="max-height:300px;min-height:130px;padding:12px"></div>
       <!-- composer (WhatsApp light bar) -->
       <div class="wa-composer flex gap-2 items-center" style="background:#f0f2f5;padding:9px 12px">
+        <button id="intercomAttach" title="{{INTERCOM_ATTACH}}" aria-label="{{INTERCOM_ATTACH}}">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 6.5v9.75a4.25 4.25 0 1 1-8.5 0V6a2.75 2.75 0 0 1 5.5 0v9.75a1.25 1.25 0 0 1-2.5 0V7h-1.5v8.75a2.75 2.75 0 0 0 5.5 0V6a4.25 4.25 0 0 0-8.5 0v10.25a5.75 5.75 0 0 0 11.5 0V6.5h-1.5z"/></svg>
+        </button>
+        <input type="file" id="intercomFile" accept="image/*" style="display:none" />
         <input id="intercomInput" class="flex-1 text-sm" style="background:#fff;border:1px solid #d9dde1;color:#111b21;border-radius:21px;padding:10px 15px;outline:none" placeholder="{{INTERCOM_PLACEHOLDER}}" />
         <!-- recording bar (hidden until recording) -->
         <div id="intercomRecbar" class="flex-1 items-center" style="display:none;gap:10px;background:#fff;border-radius:21px;padding:9px 14px">
@@ -167,6 +193,23 @@
       <span id="notSupportedHint" style="display:none">{{NOT_SUPPORTED}}</span>
     </p>
   </main>
+
+  <!-- Intercom image: drag-drop overlay, preview+caption, lightbox -->
+  <div class="ic-dropov" id="icDropov"><div class="box">{{INTERCOM_ATTACH}}</div></div>
+  <div class="ic-imgprev" id="icImgPrev">
+    <div class="ic-imgprev-head">
+      <button class="ic-imgprev-x" id="icImgPrevX" aria-label="Cancel">&times;</button>
+      <span id="icImgPrevTo" style="font-size:15px;font-weight:600">Photo</span>
+    </div>
+    <div class="ic-imgprev-body"><img id="icImgPrevImg" alt="Preview" /></div>
+    <div class="ic-imgprev-bar">
+      <input id="icImgPrevCap" placeholder="{{INTERCOM_CAPTION}}" autocomplete="off" />
+      <button class="ic-imgprev-send" id="icImgPrevSend" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="ic-lightbox" id="icLightbox"><img id="icLightboxImg" alt="Photo" /></div>
 
   <script src="{{BASE}}i18n.js"></script>
   <script src="{{BASE}}app.js"></script>

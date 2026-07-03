@@ -17,12 +17,14 @@ const attachStore = require('./models/attachment');
 const I18N = require('./public/i18n');
 
 const app = express();
-// Intercom voice notes arrive as base64 JSON — too big for the 256kb global
-// limit. Parse those specific endpoints first with a larger cap so the global
-// parser below skips them (express.json no-ops once the body is parsed).
+// Intercom voice notes + images arrive as base64 JSON — too big for the 256kb
+// global limit. Parse those specific endpoints first with a larger cap so the
+// global parser below skips them (express.json no-ops once the body is parsed).
 const audioJsonParser = express.json({ limit: '6mb' });
+const imageJsonParser = express.json({ limit: '12mb' });
 app.use(function (req, res, next) {
   if (req.method === 'POST' && /^\/api\/v1\/intercom\/.*\/audio$/.test(req.path)) return audioJsonParser(req, res, next);
+  if (req.method === 'POST' && /^\/api\/v1\/intercom\/(me|threads\/[^/]+)\/image$/.test(req.path)) return imageJsonParser(req, res, next);
   next();
 });
 app.use(express.json({ limit: '256kb' }));
@@ -76,6 +78,8 @@ function renderIndex(lang, championCode) {
     .replace(/{{INTERCOM_PLACEHOLDER}}/g, d.intercomPlaceholder)
     .replace(/{{INTERCOM_SEND}}/g, d.intercomSend)
     .replace(/{{INTERCOM_MIC}}/g, d.intercomMic || 'Record voice message')
+    .replace(/{{INTERCOM_ATTACH}}/g, d.intercomAttach || 'Attach photo')
+    .replace(/{{INTERCOM_CAPTION}}/g, d.intercomCaption || 'Add a caption…')
     .replace(/{{POC_HEADING}}/g, d.pocHeading)
     .replace(/{{ENABLE_NOTIF}}/g, d.enableNotif)
     .replace(/{{ATTACH_LABEL}}/g, d.attachLabel)

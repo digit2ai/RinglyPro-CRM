@@ -31,31 +31,42 @@ async function ensureTable(seq) {
   await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_data BYTEA`);
   await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_mime VARCHAR(64)`);
   await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS audio_duration INTEGER`);
+  // Image/photo support (WhatsApp-style attach/paste/drop): msg_type='image',
+  // bytes in image_data, optional caption reused in body. text/audio rows keep NULL image.
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS image_data BYTEA`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS image_mime VARCHAR(64)`);
   tableReady = true;
 }
 
 function norm(email) { return String(email || '').trim().toLowerCase(); }
 
-async function postMessage({ email, name, sender, body, msgType, audioData, audioMime, audioDuration }) {
+async function postMessage({ email, name, sender, body, msgType, audioData, audioMime, audioDuration, imageData, imageMime }) {
   const seq = getSequelize();
   await ensureTable(seq);
   const e = norm(email);
   const readChamp = sender === 'champion';
   const readOwner = sender === 'owner';
-  const type = msgType === 'audio' ? 'audio' : 'text';
-  const text = type === 'audio' ? '[Voice message]' : String(body).slice(0, 4000);
+  let type = 'text';
+  if (msgType === 'audio') type = 'audio';
+  else if (msgType === 'image') type = 'image';
+  let text;
+  if (type === 'audio') text = '[Voice message]';
+  else if (type === 'image') text = (body && String(body).trim()) ? String(body).slice(0, 4000) : '[Photo]';
+  else text = String(body).slice(0, 4000);
   // BYTEA must go through real bind params ($1..) so the pg driver sends the
   // Buffer as binary; Sequelize `replacements` does string interpolation and
-  // would corrupt the audio. So everything here uses `bind`.
+  // would corrupt the bytes. So everything here uses `bind`.
   const [rows] = await seq.query(
-    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, msg_type, audio_data, audio_mime, audio_duration, read_by_champion, read_by_owner, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id, created_at`,
+    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, msg_type, audio_data, audio_mime, audio_duration, image_data, image_mime, read_by_champion, read_by_owner, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING id, created_at`,
     {
       bind: [
         e, name || null, sender, text, type,
         type === 'audio' ? (audioData || null) : null,
         type === 'audio' ? (audioMime || 'audio/webm') : null,
         type === 'audio' ? (audioDuration || null) : null,
+        type === 'image' ? (imageData || null) : null,
+        type === 'image' ? (imageMime || 'image/jpeg') : null,
         readChamp, readOwner
       ]
     }
@@ -67,7 +78,7 @@ async function getThread(email) {
   const seq = getSequelize();
   await ensureTable(seq);
   const [rows] = await seq.query(
-    `SELECT id, sender, body, created_at, msg_type, audio_mime, audio_duration FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
+    `SELECT id, sender, body, created_at, msg_type, audio_mime, audio_duration, image_mime FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
     { replacements: { email: norm(email) } }
   );
   return rows;
@@ -80,6 +91,18 @@ async function getAudio(id) {
   await ensureTable(seq);
   const [rows] = await seq.query(
     `SELECT id, champion_email, audio_data, audio_mime FROM ${TABLE} WHERE id = :id AND msg_type = 'audio' LIMIT 1`,
+    { replacements: { id: parseInt(id, 10) || 0 } }
+  );
+  return rows[0] || null;
+}
+
+// Returns the raw image bytes for one message (or null). Includes champion_email
+// so the route can authorize champion access to their own thread only.
+async function getImage(id) {
+  const seq = getSequelize();
+  await ensureTable(seq);
+  const [rows] = await seq.query(
+    `SELECT id, champion_email, image_data, image_mime FROM ${TABLE} WHERE id = :id AND msg_type = 'image' LIMIT 1`,
     { replacements: { id: parseInt(id, 10) || 0 } }
   );
   return rows[0] || null;
@@ -144,6 +167,6 @@ async function listThreads() {
 }
 
 module.exports = {
-  postMessage, getThread, getAudio, markReadByChampion, markReadByOwner,
+  postMessage, getThread, getAudio, getImage, markReadByChampion, markReadByOwner,
   unreadForChampion, totalUnreadForOwner, listThreads, TABLE
 };
