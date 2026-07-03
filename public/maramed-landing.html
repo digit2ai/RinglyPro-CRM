@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MaraMed — Signos Vitales con la Cámara · Digit2AI</title>
+  <meta name="description" content="MaraMed mide tus signos vitales usando solo la cámara. Sin aparatos. El video nunca sale de tu navegador." />
+  <link rel="preconnect" href="https://aiagent.ringlypro.com" />
+  <style>
+    :root{--bg:#0b0f19;--bg2:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--green:#4ade80;--cyan:#22d3ee;--violet:#8b7bff}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+    .wrap{max-width:840px;margin:0 auto;padding:0 20px}
+    a{color:inherit}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:18px 0;font-size:14px;color:var(--mut)}
+    .brand{font-weight:800;color:var(--txt)}
+    .langbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}
+    .hero{text-align:center;padding:44px 0 8px}
+    .hero h1{font-size:2.6rem;line-height:1.1;margin:.2em 0}
+    .hero p{color:var(--mut);font-size:1.15rem;max-width:620px;margin:14px auto 0}
+    .cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:26px 0 6px}
+    .btn{display:inline-block;padding:13px 22px;border-radius:14px;font-weight:700;text-decoration:none;font-size:15px}
+    .btn-primary{background:var(--cyan);color:#06222a}
+    .btn-ghost{background:#0e1524;border:1px solid var(--line);color:var(--txt)}
+    .badge{display:inline-block;margin-top:14px;font-size:13px;color:var(--green);background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:999px;padding:6px 12px}
+    .sec{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:24px;margin:16px 0;transition:box-shadow .3s,border-color .3s}
+    .sec.active{border-color:var(--violet);box-shadow:0 0 0 2px rgba(139,123,255,.25)}
+    .sec h2{margin:0 0 8px;font-size:1.35rem}
+    .sec p{margin:0;color:var(--mut)}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+    .metric{background:#0e1524;border:1px solid var(--line);border-radius:12px;padding:12px}
+    .metric .k{font-size:12px;color:var(--mut)}
+    .metric .v{font-weight:700;margin-top:2px}
+    .tierA{color:var(--cyan)}.tierB{color:var(--violet)}.tierC{color:var(--mut)}
+    .foot{color:var(--mut);font-size:13px;text-align:center;padding:30px 0 50px}
+    .disc{color:#f7c15a;font-size:12.5px;text-align:center;margin-top:10px}
+    @media(max-width:600px){.hero h1{font-size:2rem}.grid{grid-template-columns:1fr}}
+    /* ---- Lina voice orb ---- */
+    .lina{margin:26px auto 6px;max-width:760px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;gap:18px;align-items:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .orb{position:relative;width:82px;height:82px;flex:0 0 82px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);box-shadow:0 0 0 0 rgba(155,123,255,.5)}
+    .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(155,123,255,.35)}
+    .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(155,123,255,.45)}70%{box-shadow:0 0 0 22px rgba(155,123,255,0)}100%{box-shadow:0 0 0 0 rgba(155,123,255,0)}}
+    .lina-meta{flex:1;min-width:0}.lina-name{font-weight:700}.lina-role{color:var(--mut);font-size:13px;margin-bottom:12px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+    .controls button{font:inherit;border-radius:10px;border:1px solid var(--line);background:#0e1524;color:var(--txt);padding:9px 14px;cursor:pointer}
+    .controls button.primary{background:var(--violet);border-color:var(--violet);color:#0b0f19;font-weight:700}
+    .controls button:disabled{opacity:.45;cursor:not-allowed}
+    .status{font-size:13px;color:var(--mut);margin-top:10px;min-height:18px}
+    .voicepick{margin-top:10px;font-size:13px;color:var(--mut)}
+    .voicepick select{font:inherit;background:#1b2536;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-left:6px}
+    @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <span class="brand">MaraMed <span style="color:var(--mut);font-weight:500">· Digit2AI</span></span>
+      <button class="langbtn" id="langBtn">EN</button>
+    </div>
+
+    <header class="hero">
+      <h1 data-es="Tus signos vitales, con solo tu cámara" data-en="Your vital signs, from just your camera">Tus signos vitales, con solo tu cámara</h1>
+      <p data-es="MaraMed estima tu ritmo cardíaco, respiración y más usando la cámara de tu teléfono o computadora. Sin aparatos. Sin sensores. El video nunca sale de tu navegador."
+         data-en="MaraMed estimates your heart rate, breathing and more using your phone or computer camera. No devices. No sensors. Video never leaves your browser.">
+        MaraMed estima tu ritmo cardíaco, respiración y más usando la cámara de tu teléfono o computadora. Sin aparatos. Sin sensores. El video nunca sale de tu navegador.</p>
+      <div class="cta">
+        <a class="btn btn-primary" id="ctaStart" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
+        <a class="btn btn-ghost" id="ctaLogin" href="/maramed/login" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</a>
+      </div>
+      <div class="badge" data-es="El video NUNCA sale de tu navegador — solo se guardan los resultados." data-en="Video NEVER leaves your browser — only the results are stored.">El video NUNCA sale de tu navegador — solo se guardan los resultados.</div>
+    </header>
+
+    <!-- Lina voice orb (Spanish narration) -->
+    <div class="lina">
+      <div class="orb" id="orb"></div>
+      <div class="lina-meta">
+        <div class="lina-name">Lina · Voz AI de Digit2AI</div>
+        <div class="lina-role" data-es="Deja que Lina te explique MaraMed" data-en="Let Lina walk you through MaraMed">Deja que Lina te explique MaraMed</div>
+        <div class="controls">
+          <button class="primary" id="playAll">&#9654; <span data-es="Que Lina lo explique" data-en="Let Lina explain">Que Lina lo explique</span></button>
+          <button id="pause" disabled>&#10074;&#10074; <span data-es="Pausar" data-en="Pause">Pausar</span></button>
+          <button id="stop" disabled>&#9632; <span data-es="Detener" data-en="Stop">Detener</span></button>
+        </div>
+        <div class="status" id="status" data-es="Pulsa el botón para que Lina comience." data-en="Press the button and Lina will begin.">Pulsa el botón para que Lina comience.</div>
+        <div class="voicepick">
+          <label><input type="checkbox" id="neuralToggle" checked> <span data-es="Voz neural HD" data-en="Neural HD voice">Voz neural HD</span></label>
+          &nbsp;·&nbsp; <span data-es="Acento" data-en="Accent">Acento</span>:
+          <select id="voiceSel">
+            <option value="lina" selected>México (Dalia)</option>
+            <option value="paloma">EE. UU. (Paloma)</option>
+            <option value="salome">Colombia (Salomé)</option>
+            <option value="elvira">España (Elvira)</option>
+          </select>
+          <span id="voiceMode" style="margin-left:8px;color:var(--green)"></span>
+        </div>
+      </div>
+    </div>
+
+    <section class="sec" data-i="0">
+      <h2 data-es="Qué es MaraMed" data-en="What MaraMed is">Qué es MaraMed</h2>
+      <p data-es="Una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor."
+         data-en="A web app that uses the camera to estimate your vital signs. Everything happens inside your browser; you install nothing and connect no sensor.">
+        Una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor.</p>
+    </section>
+
+    <section class="sec" data-i="1">
+      <h2 data-es="Qué mide" data-en="What it measures">Qué mide</h2>
+      <p data-es="Signos principales confiables, más estimaciones experimentales, con un indicador de calidad de señal para que sepas cuándo confiar en la lectura."
+         data-en="Reliable core signs, plus experimental estimates, with a signal-quality indicator so you know when to trust the reading.">
+        Signos principales confiables, más estimaciones experimentales, con un indicador de calidad de señal para que sepas cuándo confiar en la lectura.</p>
+      <div class="grid">
+        <div class="metric"><div class="k tierA" data-es="Principal" data-en="Primary">Principal</div><div class="v" data-es="Ritmo cardíaco (BPM)" data-en="Heart rate (BPM)">Ritmo cardíaco (BPM)</div></div>
+        <div class="metric"><div class="k tierA" data-es="Principal" data-en="Primary">Principal</div><div class="v" data-es="Ritmo respiratorio" data-en="Respiratory rate">Ritmo respiratorio</div></div>
+        <div class="metric"><div class="k tierB" data-es="Experimental" data-en="Experimental">Experimental</div><div class="v" data-es="Variabilidad (HRV)" data-en="Variability (HRV)">Variabilidad (HRV)</div></div>
+        <div class="metric"><div class="k tierB" data-es="Experimental" data-en="Experimental">Experimental</div><div class="v" data-es="Nivel de estrés" data-en="Stress level">Nivel de estrés</div></div>
+      </div>
+    </section>
+
+    <section class="sec" data-i="2">
+      <h2 data-es="Cómo funciona" data-en="How it works">Cómo funciona</h2>
+      <p data-es="La técnica se llama rPPG. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos POS y CHROM convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel."
+         data-en="The technique is called rPPG. It detects tiny color changes in your skin caused by each heartbeat from the camera frames. POS and CHROM algorithms turn that signal into your vitals, tracking your face to resist motion and different skin tones.">
+        La técnica se llama rPPG. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos POS y CHROM convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel.</p>
+    </section>
+
+    <section class="sec" data-i="3">
+      <h2 data-es="Tu privacidad, por diseño" data-en="Your privacy, by design">Tu privacidad, por diseño</h2>
+      <p data-es="El video se procesa por completo en tu dispositivo y NUNCA se transmite ni se guarda. Solo se almacenan los resultados numéricos y la fecha, nunca imágenes ni la señal biométrica."
+         data-en="Video is processed entirely on your device and is NEVER transmitted or stored. Only the numeric results and a timestamp are saved — never images or the biometric signal.">
+        El video se procesa por completo en tu dispositivo y NUNCA se transmite ni se guarda. Solo se almacenan los resultados numéricos y la fecha, nunca imágenes ni la señal biométrica.</p>
+    </section>
+
+    <section class="sec" data-i="4">
+      <h2 data-es="Próximamente y aviso" data-en="Coming soon &amp; disclaimer">Próximamente y aviso</h2>
+      <p data-es="Estamos trabajando en más indicadores como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico."
+         data-en="We are working on more indicators like blood pressure and blood oxygen. For now, MaraMed is a wellness demo, not a medical or diagnostic device.">
+        Estamos trabajando en más indicadores como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico.</p>
+      <div class="grid">
+        <div class="metric"><div class="k tierC" data-es="Próximamente" data-en="Coming soon">Próximamente</div><div class="v" data-es="Presión arterial" data-en="Blood pressure">Presión arterial</div></div>
+        <div class="metric"><div class="k tierC" data-es="Próximamente" data-en="Coming soon">Próximamente</div><div class="v" data-es="Oxígeno (SpO2)" data-en="Oxygen (SpO2)">Oxígeno (SpO2)</div></div>
+      </div>
+    </section>
+
+    <section class="sec" data-i="5" style="text-align:center">
+      <h2 data-es="Empieza ahora" data-en="Get started now">Empieza ahora</h2>
+      <p data-es="Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta."
+         data-en="Press start and in about thirty seconds you will see your vitals. To save your history, sign in with your account.">
+        Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
+        <a class="btn btn-ghost" href="/maramed/login" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</a>
+      </div>
+      <div class="disc" data-es="Demostración de bienestar, NO un dispositivo médico ni de diagnóstico. La precisión varía según la luz, el movimiento y el tono de piel."
+           data-en="Wellness demo, NOT a medical or diagnostic device. Accuracy varies with light, movement and skin tone.">
+        Demostración de bienestar, NO un dispositivo médico ni de diagnóstico. La precisión varía según la luz, el movimiento y el tono de piel.</div>
+    </section>
+
+    <div class="foot">
+      <span data-es="Hecho por Digit2AI" data-en="Made by Digit2AI">Hecho por Digit2AI</span> ·
+      <a class="langbtn" style="text-decoration:none;padding:0;border:0;background:none;color:var(--cyan)" href="/maramed/disclaimer" data-es="Aviso legal" data-en="Disclaimer">Aviso legal</a>
+    </div>
+  </div>
+
+  <script>
+  // ---- bilingual toggle (ES default) ----
+  (function(){
+    var lang = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'es';
+    var btn = document.getElementById('langBtn');
+    function apply(l){
+      lang = l; document.documentElement.lang = l;
+      document.querySelectorAll('[data-es]').forEach(function(el){
+        var v = el.getAttribute('data-' + l); if (v != null) el.textContent = v;
+      });
+      btn.textContent = (l === 'es') ? 'EN' : 'ES';
+      // carry language into app + login links
+      document.getElementById('ctaStart').setAttribute('href', '/maramed/?lang=' + l);
+      document.getElementById('ctaLogin').setAttribute('href', '/maramed/login?lang=' + l);
+    }
+    btn.addEventListener('click', function(){ apply(lang === 'es' ? 'en' : 'es'); });
+    apply(lang);
+  })();
+  </script>
+
+  <!-- ---- Lina voice playback engine (neural-first, browser fallback) ---- -->
+  <script>
+  (function(){
+    var segments = [
+      "Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te voy a explicar MaraMed, la aplicación que mide tus signos vitales usando solo la cámara.",
+      "MaraMed es una aplicación web que usa la cámara para estimar tus signos vitales. Todo ocurre dentro de tu navegador; no necesitas instalar nada ni conectar ningún sensor.",
+      "Mide de forma confiable tu ritmo cardíaco y tu ritmo respiratorio. También estima, de manera experimental, tu variabilidad cardíaca y tu nivel de estrés, y te muestra la calidad de la señal para que sepas cuándo confiar en la lectura.",
+      "La técnica se llama erre pe pe ge. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos pos y crom convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel.",
+      "Tu privacidad está protegida por diseño. El video se procesa por completo en tu dispositivo y nunca se transmite ni se guarda. Solo se almacenan los resultados numéricos, nunca imágenes.",
+      "Estamos trabajando en más indicadores, como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico.",
+      "¿Listo para probarlo? Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta."
+    ];
+    var synth = window.speechSynthesis;
+    var orb = document.getElementById('orb');
+    var status = document.getElementById('status');
+    var playAll = document.getElementById('playAll');
+    var pauseBtn = document.getElementById('pause');
+    var stopBtn = document.getElementById('stop');
+    var voiceSel = document.getElementById('voiceSel');
+    var neuralToggle = document.getElementById('neuralToggle');
+    var voiceMode = document.getElementById('voiceMode');
+    var secs = Array.prototype.slice.call(document.querySelectorAll('.sec'));
+    var NEURAL_URL = 'https://aiagent.ringlypro.com/api/tts/edge';
+    var queue = [], qi = 0, mode = null, runToken = 0, paused = false;
+    var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+    var browserVoice = null, voiceName = 'lina';
+
+    function pickBrowserVoice(){ if(!synth) return; var vs = synth.getVoices(); var pref = vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf('es')===0;}); browserVoice = pref[0] || vs[0] || null; }
+    if(synth){ pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+    function useNeural(){ return neuralToggle.checked && neuralOK; }
+    function setMode(){ voiceMode.textContent = useNeural() ? '● HD' : '○ navegador'; }
+    setMode();
+    voiceSel.addEventListener('change', function(){ voiceName = this.value; clearCache(); });
+    neuralToggle.addEventListener('change', setMode);
+    function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+    function fetchNeural(idx){
+      var key = voiceName + '|' + idx;
+      if(audioCache[key]) return Promise.resolve(audioCache[key]);
+      return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:segments[idx],voice:voiceName})})
+        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+        .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+    }
+    function setActive(i){ secs.forEach(function(s){s.classList.remove('active');}); if(i!=null && secs[i-1]){ secs[i-1].classList.add('active'); secs[i-1].scrollIntoView({behavior:'smooth',block:'center'}); } }
+    function statusSpeaking(){ status.textContent = (mode==='all') ? ('Lina esta hablando... ('+(qi+1)+' de '+queue.length+')') : 'Reproduciendo...'; }
+    function runQueue(token){
+      if(token!==runToken) return;
+      if(qi>=queue.length){ finish(); return; }
+      var idx = queue[qi];
+      if(mode==='all' || idx>0) setActive(idx);
+      function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+      if(useNeural()){
+        status.textContent='Preparando voz neural...';
+        if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+        fetchNeural(idx).then(function(url){
+          if(token!==runToken) return;
+          playbackMode='neural'; currentAudio=new Audio(url);
+          currentAudio.onended=advance;
+          currentAudio.onerror=function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); };
+          orb.classList.add('speaking'); statusSpeaking();
+          currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+        }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      } else { browserSpeak(idx,advance); }
+    }
+    function browserSpeak(idx,onEnd){
+      if(!synth){ onEnd(); return; }
+      playbackMode='browser';
+      var u=new SpeechSynthesisUtterance(segments[idx]);
+      if(browserVoice) u.voice=browserVoice;
+      u.lang = browserVoice ? browserVoice.lang : 'es-MX';
+      u.rate=0.98; u.pitch=1.05;
+      u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+      u.onend=onEnd; u.onerror=onEnd;
+      synth.speak(u);
+    }
+    function start(q,m){
+      if(synth) synth.cancel();
+      if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+      queue=q; qi=0; mode=m; paused=false; runToken++;
+      pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true;
+      runQueue(runToken);
+    }
+    function finish(){
+      runToken++; orb.classList.remove('speaking'); setActive(null);
+      if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+      pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+      status.textContent='Presentacion terminada. Pulsa de nuevo para repetir.';
+    }
+    playAll.addEventListener('click', function(){ start(segments.map(function(_,i){return i;}),'all'); });
+    pauseBtn.addEventListener('click', function(){
+      if(!paused){ paused=true; orb.classList.remove('speaking'); status.textContent='En pausa.';
+        if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+      else { paused=false; orb.classList.add('speaking'); statusSpeaking();
+        if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+    });
+    stopBtn.addEventListener('click', finish);
+    window.addEventListener('beforeunload', function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+  })();
+  </script>
+</body>
+</html>

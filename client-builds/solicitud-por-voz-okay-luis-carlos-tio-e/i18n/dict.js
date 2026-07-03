@@ -68,7 +68,17 @@ const es = {
   EMB_COPY: 'Copiar',
   EMB_COPIED: 'Copiado',
   EMB_TOKEN_LABEL: 'Token de acceso (JWT):',
-  EMB_PREVIEW: 'Vista previa'
+  EMB_PREVIEW: 'Vista previa',
+  // login page
+  LOGIN_H1: 'Iniciar sesión',
+  LOGIN_SUB: 'Accede con tu cuenta de RinglyPro para guardar tu historial de mediciones.',
+  LBL_EMAIL: 'Correo electrónico',
+  LBL_PASS: 'Contraseña',
+  BTN_LOGIN: 'Entrar',
+  LOGIN_WAIT: 'Verificando…',
+  LOGIN_ERR: 'Correo o contraseña incorrectos.',
+  LOGIN_GUEST: 'Continuar sin cuenta (solo medir)',
+  LOGIN_BACK: 'Volver'
 };
 
 const en = {
@@ -136,7 +146,17 @@ const en = {
   EMB_COPY: 'Copy',
   EMB_COPIED: 'Copied',
   EMB_TOKEN_LABEL: 'Access token (JWT):',
-  EMB_PREVIEW: 'Preview'
+  EMB_PREVIEW: 'Preview',
+  // login page
+  LOGIN_H1: 'Sign in',
+  LOGIN_SUB: 'Sign in with your RinglyPro account to save your measurement history.',
+  LBL_EMAIL: 'Email',
+  LBL_PASS: 'Password',
+  BTN_LOGIN: 'Sign in',
+  LOGIN_WAIT: 'Verifying…',
+  LOGIN_ERR: 'Incorrect email or password.',
+  LOGIN_GUEST: 'Continue without an account (measure only)',
+  LOGIN_BACK: 'Back'
 };
 
 const DICTS = { es, en };
