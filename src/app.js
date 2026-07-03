@@ -1550,6 +1550,27 @@ app.get('/debug/client-builds', (req, res) => {
   });
 });
 
+// Short, shareable alias for the MaraMed multi-vital rPPG app. Mounts the SAME
+// sub-app at /maramed so the short URL PERSISTS (not just a redirect) and every
+// sub-path works under it: /maramed/, /maramed/dashboard, /maramed/embed,
+// /maramed/api/v1/readings, static assets, etc. Trailing-slash redirect keeps
+// the app's relative fetch()/link paths resolving correctly.
+try {
+  const maramedApp = require('../client-builds/solicitud-por-voz-okay-luis-carlos-tio-e');
+  app.get('/maramed', (req, res, next) => {
+    const pathOnly = req.originalUrl.split('?')[0];
+    if (!pathOnly.endsWith('/')) {
+      const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+      return res.redirect(302, '/maramed/' + qs);
+    }
+    next();
+  });
+  app.use('/maramed', maramedApp);
+  console.log('🩺 MaraMed alias mounted at /maramed -> solicitud-por-voz-okay-luis-carlos-tio-e');
+} catch (maramedErr) {
+  console.log('⚠️ MaraMed alias not mounted:', maramedErr.message);
+}
+
 // =====================================================
 // CW CARRIERS USA - Freight Logistics CRM
 // =====================================================
