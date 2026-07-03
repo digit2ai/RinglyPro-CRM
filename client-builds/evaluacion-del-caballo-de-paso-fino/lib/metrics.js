@@ -29,8 +29,10 @@ function movimiento(pisadas, frames, durSec, clas) {
   const mu = mean(intervalos);
   const cv = mu > 0 ? std(intervalos, mu) / mu : null;
 
-  // Cadencia (pisadas por minuto).
-  const cadencia_ppm = durSec > 0 ? (ps.length / durSec) * 60 : (mu > 0 ? 60000 / mu : null);
+  // Cadencia (pisadas por minuto). Se usa el INTERVALO MEDIO entre pisadas
+  // (60000/mu) — método estándar y robusto: inmune al silencio inicial/final del
+  // clip. Solo si no hay intervalos válidos se cae a conteo/duración.
+  const cadencia_ppm = mu > 0 ? 60000 / mu : (durSec > 0 ? (ps.length / durSec) * 60 : null);
   // Regularidad: 1 - CV (acotado 0..1).
   const regularidad_ritmo = cv != null ? clamp(1 - cv, 0, 1) : null;
 
