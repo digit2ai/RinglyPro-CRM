@@ -16,7 +16,6 @@ const DASH = read('dashboard.html');
 const DISC = read('disclaimer.html');
 const EMBED = read('embed.html');
 const EMBEDCODE = read('embed-code.html');
-const LOGIN = read('login.html');
 
 function render(tpl, lang) {
   const d = selectLang(lang);
@@ -37,6 +36,5 @@ router.get('/embed', (req, res) => {
   send(res, EMBED, langOf(req));
 });
 router.get('/embed-code', (req, res) => send(res, EMBEDCODE, langOf(req)));
-router.get('/login', (req, res) => send(res, LOGIN, langOf(req)));
 
 module.exports = router;

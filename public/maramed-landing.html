@@ -71,7 +71,7 @@
         MaraMed estima tu ritmo cardíaco, respiración y más usando la cámara de tu teléfono o computadora. Sin aparatos. Sin sensores. El video nunca sale de tu navegador.</p>
       <div class="cta">
         <a class="btn btn-primary" id="ctaStart" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
-        <a class="btn btn-ghost" id="ctaLogin" href="/maramed/login" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</a>
+        <a class="btn btn-ghost" id="ctaLogin" href="/maramed" data-es="Abrir la app" data-en="Open the app">Abrir la app</a>
       </div>
       <div class="badge" data-es="El video NUNCA sale de tu navegador — solo se guardan los resultados." data-en="Video NEVER leaves your browser — only the results are stored.">El video NUNCA sale de tu navegador — solo se guardan los resultados.</div>
     </header>
@@ -149,12 +149,11 @@
 
     <section class="sec" data-i="5" style="text-align:center">
       <h2 data-es="Empieza ahora" data-en="Get started now">Empieza ahora</h2>
-      <p data-es="Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta."
-         data-en="Press start and in about thirty seconds you will see your vitals. To save your history, sign in with your account.">
-        Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta.</p>
+      <p data-es="Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador."
+         data-en="Press start and in about thirty seconds you will see your vitals, right in your browser.">
+        Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador.</p>
       <div class="cta">
         <a class="btn btn-primary" href="/maramed" data-es="Iniciar medición" data-en="Start measurement">Iniciar medición</a>
-        <a class="btn btn-ghost" href="/maramed/login" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</a>
       </div>
       <div class="disc" data-es="Demostración de bienestar, NO un dispositivo médico ni de diagnóstico. La precisión varía según la luz, el movimiento y el tono de piel."
            data-en="Wellness demo, NOT a medical or diagnostic device. Accuracy varies with light, movement and skin tone.">
@@ -180,7 +179,7 @@
       btn.textContent = (l === 'es') ? 'EN' : 'ES';
       // carry language into app + login links
       document.getElementById('ctaStart').setAttribute('href', '/maramed/?lang=' + l);
-      document.getElementById('ctaLogin').setAttribute('href', '/maramed/login?lang=' + l);
+      document.getElementById('ctaLogin').setAttribute('href', '/maramed/?lang=' + l);
     }
     btn.addEventListener('click', function(){ apply(lang === 'es' ? 'en' : 'es'); });
     apply(lang);
@@ -197,7 +196,7 @@
       "La técnica se llama erre pe pe ge. Detecta cambios diminutos de color en tu piel, causados por cada latido, a partir de las imágenes de la cámara. Los algoritmos pos y crom convierten esa señal en tus signos vitales, siguiendo tu rostro para resistir el movimiento y los distintos tonos de piel.",
       "Tu privacidad está protegida por diseño. El video se procesa por completo en tu dispositivo y nunca se transmite ni se guarda. Solo se almacenan los resultados numéricos, nunca imágenes.",
       "Estamos trabajando en más indicadores, como la presión arterial y el oxígeno en sangre. Por ahora, MaraMed es una demostración de bienestar, no un dispositivo médico ni de diagnóstico.",
-      "¿Listo para probarlo? Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales. Si quieres guardar tu historial, inicia sesión con tu cuenta."
+      "¿Listo para probarlo? Pulsa iniciar medición y en unos treinta segundos verás tus signos vitales, directamente en tu navegador."
     ];
     var synth = window.speechSynthesis;
     var orb = document.getElementById('orb');
