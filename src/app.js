@@ -119,6 +119,40 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: maramed.app → MaraMed rPPG vital-signs app.
+// Bare domain root serves the MaraMed marketing landing (public/maramed-landing.html);
+// the app itself stays at maramed.app/maramed (existing mount) and static assets
+// (/maramed-icon.svg, /maramed-logo.svg) pass through unchanged. Host-gated: zero
+// effect on any other domain. ACME challenges pass through for TLS issuance.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'maramed.app' || host === 'www.maramed.app') {
+    const p = req.path;
+    if (p.startsWith('/.well-known/')) return next(); // let Render issue SSL certs
+    if (host === 'www.maramed.app') return res.redirect(301, 'https://maramed.app' + req.originalUrl); // www → apex
+    if (p === '/' || p === '' || p === '/index.html') {
+      req.url = '/maramed-landing.html'; // static middleware serves it; browser URL stays maramed.app/
+      return next();
+    }
+    return next(); // /maramed (the app), /maramed-icon.svg, etc. all resolve normally
+  }
+  next();
+});
+
+// Once maramed.app is live, forward the old aiagent URL to the vanity domain.
+// GATED behind MARAMED_VANITY_REDIRECT so it never breaks the live page before
+// DNS/TLS for maramed.app is verified. Set MARAMED_VANITY_REDIRECT=1 in Render
+// after the custom domain resolves. Skips when already on the vanity domain.
+app.get('/maramed-landing.html', (req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'maramed.app' || host === 'www.maramed.app') return next();
+  if (process.env.MARAMED_VANITY_REDIRECT === '1') {
+    const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    return res.redirect(301, 'https://maramed.app/' + qs);
+  }
+  next();
+});
+
 // Custom domain: equimind.app → Evaluación del Caballo de Paso Fino app.
 // The horse app is a self-contained Express sub-app (client-builds/…). For this
 // host we invoke it DIRECTLY at the domain root so URLs stay clean
