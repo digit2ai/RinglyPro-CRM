@@ -2,7 +2,8 @@
 // GET  /api/v1/readings  — list rows for the token's tenant only (JWT)
 //
 // Body: { bpm:int 30..220, respiratory_bpm?:int 5..40, hrv_sdnn_ms?, hrv_rmssd_ms?,
-//         stress_index?:0..100, sqi?:0..100, confidence?:0..1, duration_s?:int,
+//         bp_systolic?:60..260, bp_diastolic?:30..160, spo2?:70..100,
+//         sqi?:0..100, confidence?:0..1, duration_s?:int,
 //         is_validation?:bool, reference_bpm?:int 30..220, metrics?:object,
 //         source?:'rppg'|'simulated' }
 // PRIVACY: only computed metrics + metadata are accepted/stored. No video, no
@@ -36,7 +37,9 @@ router.post('/', async (req, res) => {
     const checks = [
       rangeErr(b.respiratory_bpm, 5, 40, 'respiratory_bpm', true),
       rangeErr(b.sqi, 0, 100, 'sqi', true),
-      rangeErr(b.stress_index, 0, 100, 'stress_index', true),
+      rangeErr(b.bp_systolic, 60, 260, 'bp_systolic', true),
+      rangeErr(b.bp_diastolic, 30, 160, 'bp_diastolic', true),
+      rangeErr(b.spo2, 70, 100, 'spo2', true),
       rangeErr(b.hrv_sdnn_ms, 0, 1000, 'hrv_sdnn_ms', false),
       rangeErr(b.hrv_rmssd_ms, 0, 1000, 'hrv_rmssd_ms', false),
       rangeErr(b.confidence, 0, 1, 'confidence', false),
@@ -51,7 +54,9 @@ router.post('/', async (req, res) => {
       respiratory_bpm: b.respiratory_bpm,
       hrv_sdnn_ms: b.hrv_sdnn_ms,
       hrv_rmssd_ms: b.hrv_rmssd_ms,
-      stress_index: b.stress_index,
+      bp_systolic: b.bp_systolic,
+      bp_diastolic: b.bp_diastolic,
+      spo2: b.spo2,
       sqi: b.sqi,
       confidence: b.confidence,
       duration_s: b.duration_s,

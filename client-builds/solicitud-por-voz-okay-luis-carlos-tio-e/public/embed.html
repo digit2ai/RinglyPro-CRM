@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>{{H1}} — Digit2AI</title>
+  <title>{{H1}} — MaraMed</title>
   <link rel="icon" type="image/svg+xml" href="/maramed-icon.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -17,6 +17,7 @@
     .bar > i { display:block; height:100%; background:linear-gradient(90deg,#4ade80,#22d3ee); width:0%; transition:width .3s; }
     .metric { background:#0e1524; border:1px solid #243049; border-radius:12px; padding:10px; }
     .sqi-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+    .calbtn { font-size:11px; padding:3px 8px; border-radius:8px; border:1px solid #3b3070; background:#1b1640; color:#c9bdff; cursor:pointer; }
     button:disabled { opacity:.45; }
   </style>
 </head>
@@ -28,7 +29,7 @@
         <canvas id="overlay"></canvas>
         <canvas id="work" width="72" height="48" style="display:none"></canvas>
       </div>
-      <p id="hint" class="text-slate-400 text-xs mt-2 text-center">{{ALIGN}}</p>
+      <p id="hint" class="text-slate-300 text-xs mt-2 text-center" style="min-height:16px">{{ALIGN}}</p>
       <div class="bar mt-2"><i id="prog"></i></div>
       <div class="flex gap-2 justify-center mt-3">
         <button id="start" class="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 text-sm font-semibold">{{START}}</button>
@@ -46,10 +47,18 @@
           <div class="bar mt-1"><i id="sqiBar"></i></div>
         </div>
         <div class="grid grid-cols-2 gap-2 mt-2">
-          <div class="metric"><div class="text-slate-400" style="font-size:11px">{{M_HRV}}</div><div class="bpm text-violet-300" style="font-size:1.2rem"><span id="hrvVal">--</span></div></div>
-          <div class="metric"><div class="text-slate-400" style="font-size:11px">{{M_STRESS}}</div><div class="bpm text-violet-300" style="font-size:1.2rem"><span id="stressVal">--</span></div></div>
+          <div class="metric"><div class="text-slate-400" style="font-size:11px">{{M_HRV}}</div><div class="bpm text-violet-300" style="font-size:1.2rem"><span id="hrvVal">--</span> <span class="text-slate-500 text-xs">{{U_MS}}</span></div></div>
+          <div class="metric">
+            <div class="text-slate-400" style="font-size:11px">{{M_BP}}</div>
+            <div class="bpm text-amber-300" style="font-size:1.2rem"><span id="bpVal">--</span></div>
+            <button id="calBp" class="calbtn mt-1">{{CALIBRATE}}</button><span id="bpState" class="text-amber-400/80" style="font-size:10px;margin-left:4px"></span>
+          </div>
         </div>
-        <p class="text-amber-300/70 mt-1" style="font-size:10px">{{TIER_B_NOTE}}</p>
+        <div class="metric mt-2">
+          <div class="flex items-center justify-between"><span class="text-slate-400" style="font-size:11px">{{M_SPO2}}</span><span class="bpm text-amber-300" style="font-size:1.1rem"><span id="spo2Val">--</span> {{U_PCT}}</span></div>
+          <button id="calSpo2" class="calbtn mt-1">{{CALIBRATE}}</button><span id="spo2State" class="text-amber-400/80" style="font-size:10px;margin-left:4px"></span>
+        </div>
+        <p class="text-amber-300/70 mt-1" style="font-size:10px">{{TIER_EXP_NOTE}}</p>
         <div id="saveMsg" class="text-xs mt-1"></div>
       </div>
       <p class="text-amber-300/80 mt-2 text-center" style="font-size:10px">{{DISCLAIMER_INLINE}}</p>
@@ -57,9 +66,11 @@
   </main>
   <script>
     window.__I18N = {
-      lang:'{{LANG}}', capturing:'{{CAPTURING}}', early:'{{PROGRESS_EARLY}}', refining:'{{REFINING}}', done:'{{DONE}}',
+      lang:'{{LANG}}', capturing:'{{CAPTURING}}', early:'{{PROGRESS_EARLY}}', refining:'{{REFINING}}', done:'{{DONE}}', ready:'{{READY}}',
       saved:'{{SAVED}}', saveErr:'{{SAVE_ERR}}', camErr:'{{CAM_ERR}}', lowConf:'{{LOWCONF}}',
-      sqiLow:'{{SQI_LOW}}', sqiGood:'{{SQI_GOOD}}', sqiFair:'{{SQI_FAIR}}'
+      sqiLow:'{{SQI_LOW}}', sqiGood:'{{SQI_GOOD}}', sqiFair:'{{SQI_FAIR}}',
+      coachLight:'{{COACH_LIGHT}}', coachStill:'{{COACH_STILL}}', coachCloser:'{{COACH_CLOSER}}', coachFrame:'{{COACH_FRAME}}', coachRest:'{{COACH_REST}}',
+      calBp:'{{CAL_BP_PROMPT}}', calSpo2:'{{CAL_SPO2_PROMPT}}', calSaved:'{{CAL_SAVED}}', needsCal:'{{NEEDS_CAL}}'
     };
   </script>
   <script src="rppg-core.js"></script>

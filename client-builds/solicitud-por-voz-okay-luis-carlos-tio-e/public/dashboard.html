@@ -34,7 +34,7 @@
         <thead class="text-slate-400 border-b border-slate-700">
           <tr>
             <th>{{COL_ID}}</th><th>{{COL_BPM}}</th><th>{{COL_RR}}</th><th>{{COL_HRV}}</th>
-            <th>{{COL_STRESS}}</th><th>{{COL_SQI}}</th><th>{{COL_DUR}}</th><th>{{COL_SRC}}</th><th>{{COL_TIME}}</th>
+            <th>{{COL_BP}}</th><th>{{COL_SPO2}}</th><th>{{COL_SQI}}</th><th>{{COL_DUR}}</th><th>{{COL_SRC}}</th><th>{{COL_TIME}}</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -63,12 +63,14 @@
         if (!data.length) { msg.textContent = T.empty; return; }
         rows.innerHTML = data.map(function(d){
           var hrv = d.hrv_sdnn_ms==null ? '—' : Math.round(Number(d.hrv_sdnn_ms));
+          var bp = (d.bp_systolic==null||d.bp_diastolic==null) ? '—' : (d.bp_systolic+'/'+d.bp_diastolic);
           return '<tr>'+
             '<td class="text-slate-500">'+d.id+'</td>'+
             '<td class="bpm text-cyan-300 font-semibold">'+cell(d.bpm)+'</td>'+
             '<td class="bpm text-emerald-300">'+cell(d.respiratory_bpm)+'</td>'+
             '<td class="bpm text-violet-300">'+hrv+'</td>'+
-            '<td class="bpm text-violet-300">'+cell(d.stress_index)+'</td>'+
+            '<td class="bpm text-amber-300">'+bp+'</td>'+
+            '<td class="bpm text-amber-300">'+cell(d.spo2)+'</td>'+
             '<td>'+cell(d.sqi)+'</td>'+
             '<td>'+cell(d.duration_s)+'</td>'+
             '<td class="text-slate-400">'+cell(d.source)+'</td>'+

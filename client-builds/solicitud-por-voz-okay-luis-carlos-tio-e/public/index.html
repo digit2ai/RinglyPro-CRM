@@ -20,6 +20,7 @@
     .metric { background:#0e1524; border:1px solid #243049; border-radius:14px; padding:14px; }
     .metric .val { font-size:2rem; line-height:1; }
     .sqi-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .calbtn { font-size:12px; padding:4px 10px; border-radius:8px; border:1px solid #3b3070; background:#1b1640; color:#c9bdff; cursor:pointer; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -49,7 +50,7 @@
         <canvas id="work" width="72" height="48" class="hidden"></canvas>
       </div>
 
-      <p id="hint" class="text-slate-400 text-sm mt-4 text-center">{{ALIGN}}</p>
+      <p id="hint" class="text-slate-300 text-sm mt-4 text-center min-h-[20px]">{{ALIGN}}</p>
 
       <div class="bar mt-4"><i id="prog"></i></div>
 
@@ -59,10 +60,9 @@
         <button id="sim" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium border border-slate-600">{{SIMULATE}}</button>
       </div>
 
-      <!-- SQI banner (refuse-to-report when low) -->
       <div id="sqiBanner" class="hidden mt-4 text-sm rounded-xl px-3 py-2"></div>
 
-      <!-- Tier A -->
+      <!-- Tier A — Principal -->
       <div id="result" class="hidden mt-6">
         <div class="text-xs uppercase tracking-wide text-slate-500 mb-2">{{TIER_A}}</div>
         <div class="grid grid-cols-2 gap-3">
@@ -76,23 +76,33 @@
           </div>
           <div class="bar mt-2"><i id="sqiBar"></i></div>
         </div>
-
-        <!-- Tier B (experimental) -->
-        <div class="text-xs uppercase tracking-wide text-amber-400/80 mt-5 mb-2">{{TIER_B}}</div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="metric"><div class="text-slate-400 text-xs">{{M_HRV}}</div><div class="val bpm text-violet-300"><span id="hrvVal">--</span> <span class="text-sm text-slate-500">{{U_MS}}</span></div></div>
-          <div class="metric"><div class="text-slate-400 text-xs">{{M_STRESS}}</div><div class="val bpm text-violet-300"><span id="stressVal">--</span></div></div>
+        <div class="metric mt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 text-xs">{{M_HRV}}</span>
+            <span class="bpm text-violet-300"><span id="hrvVal">--</span> <span class="text-xs text-slate-500">{{U_MS}}</span></span>
+          </div>
+          <div id="hrvNote" class="text-[11px] text-slate-500 mt-1">{{HRV_RESTING}}</div>
         </div>
-        <p class="text-xs text-amber-300/70 mt-2">{{TIER_B_NOTE}}</p>
+
+        <!-- Experimental — calibration required -->
+        <div class="text-xs uppercase tracking-wide text-amber-400/80 mt-5 mb-2">{{TIER_EXP}}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="metric">
+            <div class="text-slate-400 text-xs">{{M_BP}}</div>
+            <div class="val bpm text-amber-300" style="font-size:1.5rem"><span id="bpVal">--</span> <span class="text-xs text-slate-500">{{U_MMHG}}</span></div>
+            <button id="calBp" class="calbtn mt-2">{{CALIBRATE}}</button>
+            <span id="bpState" class="text-[11px] text-amber-400/80 ml-1"></span>
+          </div>
+          <div class="metric">
+            <div class="text-slate-400 text-xs">{{M_SPO2}}</div>
+            <div class="val bpm text-amber-300" style="font-size:1.5rem"><span id="spo2Val">--</span> <span class="text-xs text-slate-500">{{U_PCT}}</span></div>
+            <button id="calSpo2" class="calbtn mt-2">{{CALIBRATE}}</button>
+            <span id="spo2State" class="text-[11px] text-amber-400/80 ml-1"></span>
+          </div>
+        </div>
+        <p class="text-xs text-amber-300/70 mt-2">{{TIER_EXP_NOTE}}</p>
 
         <div id="saveMsg" class="text-sm mt-3"></div>
-      </div>
-
-      <!-- Tier C (coming soon) -->
-      <div class="text-xs uppercase tracking-wide text-slate-600 mt-6 mb-2">{{TIER_C}}</div>
-      <div class="grid grid-cols-2 gap-3 opacity-60">
-        <div class="metric"><div class="text-slate-400 text-xs">{{M_BP}}</div><div class="text-slate-500 text-sm mt-1">{{COMING_SOON}}</div></div>
-        <div class="metric"><div class="text-slate-400 text-xs">{{M_SPO2}}</div><div class="text-slate-500 text-sm mt-1">{{COMING_SOON}}</div></div>
       </div>
     </div>
 
@@ -107,9 +117,11 @@
   <script>
     window.__I18N = {
       lang: '{{LANG}}',
-      capturing: '{{CAPTURING}}', early: '{{PROGRESS_EARLY}}', refining: '{{REFINING}}', done: '{{DONE}}',
+      capturing: '{{CAPTURING}}', early: '{{PROGRESS_EARLY}}', refining: '{{REFINING}}', done: '{{DONE}}', ready: '{{READY}}',
       saved: '{{SAVED}}', saveErr: '{{SAVE_ERR}}', camErr: '{{CAM_ERR}}', lowConf: '{{LOWCONF}}',
-      sqiLow: '{{SQI_LOW}}', sqiGood: '{{SQI_GOOD}}', sqiFair: '{{SQI_FAIR}}'
+      sqiLow: '{{SQI_LOW}}', sqiGood: '{{SQI_GOOD}}', sqiFair: '{{SQI_FAIR}}',
+      coachLight: '{{COACH_LIGHT}}', coachStill: '{{COACH_STILL}}', coachCloser: '{{COACH_CLOSER}}', coachFrame: '{{COACH_FRAME}}', coachRest: '{{COACH_REST}}',
+      calBp: '{{CAL_BP_PROMPT}}', calSpo2: '{{CAL_SPO2_PROMPT}}', calSaved: '{{CAL_SAVED}}', needsCal: '{{NEEDS_CAL}}'
     };
   </script>
   <script src="rppg-core.js"></script>
