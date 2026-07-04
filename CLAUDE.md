@@ -28,6 +28,20 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 - **Deploy time**: ~2 minutes
 - **Trigger**: `git push origin main`
 
+## Voice: ConversationRelay POC (cheaper ElevenLabs alternative)
+
+A test-number AI phone agent that talks to callers and books appointments at ~half the ElevenLabs cost, by unbundling the stack: **Twilio ConversationRelay** (STT + TTS + turn-taking) + **Claude Haiku** brain + **Amazon Polly Neural** voice, reusing the existing `/api/elevenlabs/tools` booking backend UNCHANGED (appointments land in the same calendar/table).
+
+- **Brain**: `src/services/conversationRelayAgent.js` — `RelaySession` runs a think→tool→speak loop; tools `check_availability` + `book_appointment` called via loopback HTTP to `/api/elevenlabs/tools`; client resolved from the dialed number via `get_business_info`.
+- **TwiML entry**: `src/routes/voice-relay.js` → `POST /voice/relay/incoming` returns `<Connect><ConversationRelay>` (emits raw XML — the 4.x twilio SDK has no `conversationRelay()` builder). Health: `GET /voice/relay/health`.
+- **WebSocket**: `src/server.js` at `/voice-relay/ws`. Both websockets (`/media-stream` + `/voice-relay/ws`) route through ONE `server.on('upgrade')` dispatcher with `noServer:true` — attaching two `ws.Server` via `{server, path}` makes the first abort (400) the other's path.
+- **Wire a number**: `node scripts/setup-voice-relay-number.js` (lists numbers) / `... <+E164>` (points its Voice webhook at the relay). Never repoints a number you didn't name.
+
+**Environment Variables:**
+- `VOICE_RELAY_CLIENT_ID` — fallback RinglyPro client_id when the dialed number doesn't resolve via `get_business_info` (useful when testing from a number not in the `clients` table). Unset = must dial a real RinglyPro number.
+- `VOICE_RELAY_POLLY_VOICE` — Amazon Polly voice for ConversationRelay TTS. Default `Joanna-Neural`.
+- `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
