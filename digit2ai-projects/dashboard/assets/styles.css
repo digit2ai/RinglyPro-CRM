@@ -180,7 +180,7 @@ body {
 .sidebar.collapsed .sidebar-logo-img { width: 36px; height: auto; }
 
 .sidebar-header {
-  padding: 16px; display: flex; align-items: center; gap: 12px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 16px; display: flex; align-items: center; gap: 12px;
   border-bottom: 1px solid var(--border);
 }
 .sidebar-logo-img {
@@ -221,7 +221,8 @@ body {
 
 /* Topbar */
 .topbar {
-  height: var(--topbar-h); padding: 0 24px;
+  height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 24px 0;
   display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--border); flex-shrink: 0;
   background: var(--bg-secondary);
@@ -900,7 +901,7 @@ body {
   /* Close sidebar when a nav item is clicked (handled via JS below) */
 
   /* Topbar */
-  .topbar { padding: 0 12px; height: 48px; }
+  .topbar { padding: env(safe-area-inset-top, 0px) 12px 0; height: calc(48px + env(safe-area-inset-top, 0px)); }
   .topbar-left h2 { font-size: 16px; }
   .topbar-right { gap: 6px; }
   .search-box { display: none; }
