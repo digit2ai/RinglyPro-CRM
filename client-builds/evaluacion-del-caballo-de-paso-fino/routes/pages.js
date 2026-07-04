@@ -89,47 +89,58 @@ router.get('/privacidad', (req, res) => {
   const base = (req.baseUrl || '') + '/';
   const updated = '4 de julio de 2026';
   const body = lang === 'en' ? `
-<h1>Privacy &amp; Data Protection Policy</h1>
-<p><em>Last updated: July 4, 2026. English is a courtesy translation; the Spanish version prevails.</em></p>
-<p>EquiMind is a <strong>live production service</strong>. This policy explains what personal data we process, why, and the rights you have under Colombia's <strong>Ley 1581 de 2012</strong> (Habeas Data) and <strong>Decreto 1074 de 2015</strong>.</p>
+<h1>Privacy Policy</h1>
+<p><em>Last updated: July 4, 2026. This English-language policy applies to users in the United States, including the notices required by the California Consumer Privacy Act, as amended by the CPRA (collectively, "CCPA"), and comparable state privacy laws (e.g., Virginia, Colorado, Connecticut, Utah).</em></p>
+<p>EquiMind is a <strong>live production service</strong> operated by Digit2AI [legal entity, U.S. state of formation, address]. Privacy contact: [privacy@equimind.app].</p>
 
-<h2>1. Data controller (Responsable del Tratamiento)</h2>
-<p>Digit2AI [legal entity, NIT, domicile in Colombia]. Data-protection contact: [privacidad@equimind.app].</p>
-
-<h2>2. What data we process</h2>
+<h2>1. Personal information we collect</h2>
+<p>Over the past 12 months we have collected the following categories of personal information:</p>
 <ul>
-<li><strong>Account data:</strong> email, display name, and a securely hashed password.</li>
-<li><strong>Payment data:</strong> processed by our payment provider (Stripe). We do <strong>not</strong> store full card numbers; we retain only transaction references, amounts, and status.</li>
-<li><strong>Uploaded content:</strong> audio, video, and/or images you submit, plus horse details (name, sex, coat, breeder) and the gait metrics derived from your uploads.</li>
-<li><strong>Technical data:</strong> IP address (for security and rate-limiting), an authentication cookie (<code>ecpf_token</code>), and server logs.</li>
+<li><strong>Identifiers &amp; account data:</strong> email, display name, and a securely hashed password.</li>
+<li><strong>Commercial information:</strong> credits purchased and transaction history. Payments are processed by <strong>Stripe</strong>; we do <strong>not</strong> store full card numbers, only transaction references, amounts, and status.</li>
+<li><strong>User content:</strong> audio, video, and/or images you submit, plus horse details (name, sex, coat, breeder) and the gait metrics derived from your uploads.</li>
+<li><strong>Internet/technical activity:</strong> IP address (for security and rate-limiting), an authentication cookie (<code>ecpf_token</code>), and server logs.</li>
 </ul>
+<p>We collect this information directly from you and automatically as you use the Service.</p>
 
-<h2>3. Purposes</h2>
-<p>To create and secure your account; run the gait analyses you request; process payments and credits; generate and, at your choice, share reports; provide support; ensure security and prevent abuse; and comply with legal obligations.</p>
+<h2>2. How we use it</h2>
+<p>To create and secure your account; run the gait analyses you request; process payments and credits; generate and, at your choice, share reports; provide support; ensure security and prevent fraud/abuse; and comply with legal obligations. We do not use your information for automated decision-making that produces legal or similarly significant effects about you.</p>
 
-<h2>4. Legal basis / authorization</h2>
-<p>We process your data based on your authorization (given when you register and use the Service) and to perform the contract between us. You may withdraw your authorization at any time, subject to legal or contractual retention duties.</p>
+<h2>3. How we disclose it</h2>
+<p>We disclose personal information only to service providers who help us operate the Service under written contracts restricting their use of it — notably <strong>Stripe</strong> (payment processing) and <strong>Render</strong> (cloud hosting) — and when required by law or to protect our rights.</p>
 
-<h2>5. Processors &amp; third parties</h2>
-<p>We share data only with providers who help us operate the Service under confidentiality obligations — notably <strong>Stripe</strong> (payments) and our cloud hosting provider (<strong>Render</strong>). We do not sell your personal data.</p>
+<h2>4. We do NOT sell or "share" your personal information</h2>
+<p>We do <strong>not</strong> sell your personal information, and we do <strong>not</strong> "share" it for cross-context behavioral advertising, as those terms are defined under the CCPA. We have not done so in the preceding 12 months, including for consumers under 16.</p>
 
-<h2>6. International transfers</h2>
-<p>Our providers may store or process data on servers located outside Colombia. We take reasonable measures to ensure an adequate level of protection consistent with Colombian law.</p>
+<h2>5. Your U.S. privacy rights</h2>
+<p>Depending on your state of residence, you may have the right to:</p>
+<ul>
+<li><strong>Know / access</strong> the personal information we have collected about you and how we use and disclose it.</li>
+<li><strong>Delete</strong> personal information we collected from you, subject to legal exceptions.</li>
+<li><strong>Correct</strong> inaccurate personal information.</li>
+<li><strong>Opt out</strong> of any sale or "sharing" of personal information (note: we do not sell or share).</li>
+<li><strong>Limit</strong> the use of sensitive personal information (we do not use sensitive PI beyond permitted purposes).</li>
+<li><strong>Non-discrimination</strong> for exercising your rights.</li>
+</ul>
+<p>To exercise these rights, email [privacy@equimind.app]. We will verify your request using your account information and respond within the time required by law (generally 45 days, extendable). You may use an authorized agent, subject to verification. If we decline a request, you may appeal by replying to our response.</p>
+
+<h2>6. California "Shine the Light" &amp; Do Not Track</h2>
+<p>We do not disclose personal information to third parties for their own direct-marketing purposes (Cal. Civ. Code §1798.83). Because there is no consistent industry standard, we do not respond to browser "Do Not Track" signals; we do treat recognized opt-out preference signals where required by law.</p>
 
 <h2>7. Retention</h2>
-<p>We keep account and analysis data for as long as your account is active and thereafter only as required to meet legal, accounting, or dispute-resolution obligations, after which it is deleted or anonymized. Video is <strong>not</strong> stored on our servers; audio is analyzed and the resulting metrics (not the raw file) are what we retain, together with a limited set of pose keypoints for traceability.</p>
+<p>We keep account and analysis data for as long as your account is active and thereafter only as required to meet legal, accounting, or dispute-resolution obligations, after which it is deleted or de-identified. Video is <strong>not</strong> stored on our servers; audio is analyzed and the resulting metrics (not the raw file) are what we retain, together with a limited set of pose keypoints for traceability.</p>
 
-<h2>8. Your rights (derechos del Titular)</h2>
-<p>You have the right to know, update, and rectify your data; to request proof of the authorization given; to be informed about the use of your data; to file complaints with the Superintendencia de Industria y Comercio (SIC); to access your data free of charge; and to revoke authorization and/or request deletion when there is no legal duty to retain it. To exercise these rights, write to [privacidad@equimind.app]. We respond to consultations within 10 business days and complaints within 15 business days (extendable per law).</p>
+<h2>8. Security</h2>
+<p>We apply reasonable technical and administrative safeguards: password hashing, HTTPS, HttpOnly/Secure authentication cookies, rate limiting, and access controls. No system is completely secure, but we work to protect your information.</p>
 
-<h2>9. Security</h2>
-<p>We apply reasonable technical and administrative measures: password hashing, HTTPS, HttpOnly/Secure authentication cookies, rate limiting, and access controls. No system is completely secure, but we work to protect your information.</p>
+<h2>9. Cookies</h2>
+<p>We use a strictly necessary authentication cookie (<code>ecpf_token</code>) to keep you signed in. It is not used for advertising or cross-site tracking.</p>
 
-<h2>10. Cookies</h2>
-<p>We use a strictly necessary authentication cookie (<code>ecpf_token</code>) to keep you signed in. It is not used for advertising.</p>
+<h2>10. Children's privacy</h2>
+<p>The Service is not directed to children under 13, and we do not knowingly collect personal information from children under 13 (COPPA). If you believe a child provided us information, contact [privacy@equimind.app] and we will delete it.</p>
 
-<h2>11. Minors</h2>
-<p>The Service is not directed to children. We do not knowingly process data of minors without appropriate authorization.</p>
+<h2>11. Data location</h2>
+<p>We and our providers process and store data on servers located in the United States.</p>
 
 <h2>12. Changes</h2>
 <p>We may update this policy; the current version is always published here with its date.</p>
@@ -137,7 +148,7 @@ router.get('/privacidad', (req, res) => {
 <p><a href="${esc(base)}">&larr; Back</a> · <a href="${esc(base)}terminos">Terms</a> · <a href="${esc(base)}reembolsos">Refunds</a></p>
 ` : `
 <h1>Política de Tratamiento de Datos Personales</h1>
-<p><em>Última actualización: ${updated}. Esta versión en español es la autorizada y prevalece sobre cualquier traducción.</em></p>
+<p><em>Última actualización: ${updated}. Esta versión en español aplica a los usuarios en Colombia y se rige por la ley colombiana. Los usuarios en Estados Unidos deben consultar la <a href="${esc(base)}privacidad?lang=en">versión en inglés</a> (CCPA/CPRA).</em></p>
 <p>EquiMind es un <strong>servicio en producción y en operación real</strong>. Esta política explica qué datos personales tratamos, con qué finalidad y qué derechos le asisten conforme a la <strong>Ley 1581 de 2012</strong> (Habeas Data) y el <strong>Decreto 1074 de 2015</strong> de Colombia.</p>
 
 <h2>1. Responsable del Tratamiento</h2>
@@ -211,10 +222,11 @@ router.get('/terminos', (req, res) => {
   const updated = '4 de julio de 2026';
   const body = lang === 'en' ? `
 <h1>Terms of Service</h1>
-<p><em>Last updated: July 4, 2026. English is a courtesy translation; the Spanish version prevails in case of conflict.</em></p>
+<p><em>Last updated: July 4, 2026. This English-language version applies to users in the United States and is governed by U.S. law as set out below.</em></p>
+<p><strong>PLEASE READ SECTION 14 (ARBITRATION &amp; CLASS-ACTION WAIVER) CAREFULLY — IT AFFECTS HOW DISPUTES ARE RESOLVED.</strong></p>
 
 <h2>1. Who we are &amp; acceptance</h2>
-<p>EquiMind ("the Service", "we") is operated by Digit2AI [legal entity, NIT, domicile in Colombia]. By creating an account, purchasing credits, or using the Service you accept these Terms in full. If you do not agree, do not use the Service.</p>
+<p>EquiMind ("the Service", "we", "us") is operated by Digit2AI [legal entity, U.S. state of formation, address]. By creating an account, purchasing credits, or using the Service, you electronically agree to these Terms in full. If you do not agree, do not use the Service.</p>
 
 <h2>2. What the Service is — and is not</h2>
 <p>EquiMind is an <strong>informational and educational software tool</strong> that estimates the gait and characteristics of Paso Fino horses from audio and/or video you upload, using automated algorithms and AI.</p>
@@ -224,47 +236,58 @@ router.get('/terminos', (req, res) => {
 <p>Results depend on recording quality, surface, equipment, and factors outside our control. We do not warrant that any result is accurate, reliable, reproducible, or fit for any purpose. You are solely responsible for how you interpret and use any result. Always consult a licensed veterinarian and/or a certified judge for any decision that matters.</p>
 
 <h2>4. Eligibility &amp; accounts</h2>
-<p>You must be at least 18 years old (or use the Service through a legal representative). You are responsible for the confidentiality of your credentials and for all activity under your account. Provide accurate information and keep it current.</p>
+<p>The Service is intended for users who are at least 18 years old and located in the United States. You are responsible for the confidentiality of your credentials and for all activity under your account. Provide accurate information and keep it current.</p>
 
 <h2>5. Credits &amp; payment</h2>
-<p>Paid features run on credits purchased through our payment processor (Stripe). Prices are shown before purchase and may change prospectively. <strong>A credit is consumed only when a real analysis is performed</strong> (real uploaded audio/video with a detectable signal). When no usable real signal is present, the Service returns a free reference simulation and no credit is charged. Credits have no cash value except as required by law and are non-transferable outside your linked EquiMind account family.</p>
+<p>Paid features run on credits purchased through our payment processor (Stripe). Prices are shown before purchase and may change prospectively. <strong>A credit is consumed only when a real analysis is performed</strong> (real uploaded audio/video with a detectable signal). When no usable real signal is present, the Service returns a free reference simulation and no credit is charged. Credits have no cash value except as required by law and are non-transferable outside your linked EquiMind account family. You authorize us and Stripe to charge your selected payment method for your purchases.</p>
 
 <h2>6. Refunds</h2>
 <p>Refunds are governed by our <a href="${esc(base)}reembolsos">Refund Policy</a>, incorporated into these Terms by reference.</p>
 
 <h2>7. Your content &amp; acceptable use</h2>
-<p>You represent that you own or have the rights to any audio, video, images, and horse information you upload, and that your use does not involve animal cruelty, illegal activity, or the infringement of any third party's rights. You grant us a limited license to process your uploads solely to provide the Service. You must not misuse, reverse-engineer, overload, scrape, or resell the Service.</p>
+<p>You represent that you own or have the rights to any audio, video, images, and horse information you upload, and that your use does not involve animal cruelty, illegal activity, or the infringement of any third party's rights. You grant us a limited, worldwide, royalty-free license to host and process your uploads solely to provide the Service. You must not misuse, reverse-engineer, overload, scrape, or resell the Service.</p>
 
-<h2>8. Shared/public reports</h2>
+<h2>8. Copyright / DMCA</h2>
+<p>We respond to notices of alleged copyright infringement under the Digital Millennium Copyright Act (17 U.S.C. §512). If you believe content on the Service infringes your copyright, send a compliant notice to our designated agent at [dmca@equimind.app]. We may remove content and terminate repeat infringers.</p>
+
+<h2>9. Shared/public reports</h2>
 <p>If you generate a public share link for a report, you accept that anyone with the link can view that report. You choose whether to share; we are not responsible for further distribution by you or recipients.</p>
 
-<h2>9. Intellectual property</h2>
-<p>The Service, its software, models, scoring logic, branding, and design are owned by Digit2AI and protected by law. These Terms grant you a personal, non-exclusive, non-transferable, revocable license to use the Service; no other rights are granted.</p>
+<h2>10. Intellectual property</h2>
+<p>The Service, its software, models, scoring logic, branding, and design are owned by Digit2AI and protected by U.S. and international law. These Terms grant you a personal, non-exclusive, non-transferable, revocable license to use the Service; no other rights are granted.</p>
 
-<h2>10. Assumption of risk &amp; indemnification</h2>
-<p>Activities involving horses are inherently dangerous. You assume all risk arising from your equine activities. You agree to indemnify and hold harmless Digit2AI, its owners, staff, and providers from any claim, loss, or liability arising out of your use of the Service, your uploads, or your reliance on any result.</p>
+<h2>11. Assumption of risk &amp; indemnification</h2>
+<p>Activities involving horses are inherently dangerous. You assume all risk arising from your equine activities. You agree to indemnify, defend, and hold harmless Digit2AI, its owners, staff, and providers from any claim, loss, liability, or expense (including reasonable attorneys' fees) arising out of your use of the Service, your uploads, or your reliance on any result.</p>
 
-<h2>11. "AS IS" — disclaimer of warranties</h2>
-<p>To the maximum extent permitted by law, the Service is provided <strong>"AS IS" and "AS AVAILABLE"</strong>, without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, accuracy, and non-infringement. We do not warrant uninterrupted or error-free operation.</p>
+<h2>12. "AS IS" — disclaimer of warranties</h2>
+<p>To the maximum extent permitted by law, the Service is provided <strong>"AS IS" and "AS AVAILABLE"</strong>, without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, accuracy, title, and non-infringement. We do not warrant uninterrupted or error-free operation. <strong>Some states do not allow the exclusion of certain implied warranties, so some of the above may not apply to you.</strong></p>
 
-<h2>12. Limitation of liability</h2>
-<p>To the maximum extent permitted by law, Digit2AI and its providers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or for lost profits, data, goodwill, animals, or opportunities, arising from the Service. Our total aggregate liability for any and all claims shall not exceed the greater of (a) the amount you paid us in the three (3) months before the event giving rise to the claim, or (b) USD 50. Nothing in these Terms limits liability that cannot be limited under applicable Colombian consumer law.</p>
+<h2>13. Limitation of liability</h2>
+<p>To the maximum extent permitted by law, Digit2AI and its providers shall not be liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for lost profits, data, goodwill, animals, or opportunities, arising from the Service, under any theory of liability. Our total aggregate liability for any and all claims shall not exceed the greater of (a) the amount you paid us in the three (3) months before the event giving rise to the claim, or (b) USD 50. <strong>Some states do not allow the exclusion or limitation of incidental or consequential damages, so the above may not apply to you.</strong></p>
 
-<h2>13. Changes, suspension &amp; termination</h2>
-<p>We may modify the Service or these Terms at any time; material changes take effect when posted here. We may suspend or terminate accounts that violate these Terms. You may stop using the Service at any time.</p>
+<h2>14. Binding arbitration &amp; class-action waiver</h2>
+<p>Please read this section carefully. You and Digit2AI agree that any dispute, claim, or controversy arising out of or relating to the Service or these Terms will be resolved by <strong>binding individual arbitration</strong> administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules, and not in court, except that either party may bring an individual claim in small-claims court. The Federal Arbitration Act governs the interpretation and enforcement of this section.</p>
+<p><strong>Class-action waiver:</strong> disputes will be arbitrated only on an individual basis; you and we waive any right to participate in a class, collective, or representative action.</p>
+<p><strong>30-day opt-out:</strong> you may opt out of this arbitration agreement by emailing [legal@equimind.app] within 30 days of first accepting these Terms, stating your name and intent to opt out. Opting out does not affect the other provisions.</p>
 
-<h2>14. Governing law &amp; disputes</h2>
-<p>These Terms are governed by the laws of the Republic of Colombia. Any dispute shall first be addressed in good faith by writing to us; failing resolution within 30 days, it shall be submitted to the competent courts / arbitration center of [CITY], Colombia. Your mandatory rights under Colombia's Consumer Statute (Ley 1480 de 2011) and Habeas Data (Ley 1581 de 2012) are unaffected.</p>
+<h2>15. Governing law &amp; venue</h2>
+<p>These Terms are governed by the laws of the State of [STATE], USA, and applicable U.S. federal law, without regard to conflict-of-laws rules. For any matter not subject to arbitration, the state and federal courts located in [COUNTY, STATE] shall have exclusive jurisdiction, and you consent to that venue. Nothing in these Terms waives any non-waivable consumer right under the law of your state of residence.</p>
 
-<h2>15. General</h2>
-<p>If any provision is held unenforceable, the rest remains in effect. These Terms are the entire agreement between you and us regarding the Service.</p>
+<h2>16. Electronic communications</h2>
+<p>You consent to receive communications from us electronically (email and in-app notices), and you agree that electronic agreements, notices, and records satisfy any legal requirement that such communications be in writing (E-SIGN Act).</p>
 
-<h2>16. Contact</h2>
-<p>[soporte@equimind.app] · Digit2AI · [address].</p>
+<h2>17. Changes, suspension &amp; termination</h2>
+<p>We may modify the Service or these Terms at any time; material changes take effect when posted here, and your continued use constitutes acceptance. We may suspend or terminate accounts that violate these Terms. You may stop using the Service at any time.</p>
+
+<h2>18. General</h2>
+<p>If any provision is held unenforceable, the rest remains in effect. These Terms are the entire agreement between you and us regarding the Service and supersede prior agreements.</p>
+
+<h2>19. Contact</h2>
+<p>[support@equimind.app] · Digit2AI · [address].</p>
 <p><a href="${esc(base)}">&larr; Back</a> · <a href="${esc(base)}reembolsos">Refund Policy</a> · <a href="${esc(base)}privacidad">Privacy</a></p>
 ` : `
 <h1>Términos de Servicio</h1>
-<p><em>Última actualización: ${updated}. Esta versión en español es la versión autorizada y prevalece sobre cualquier traducción.</em></p>
+<p><em>Última actualización: ${updated}. Esta versión en español aplica a los usuarios en Colombia y se rige por la ley colombiana. Los usuarios en Estados Unidos deben consultar la <a href="${esc(base)}terminos?lang=en">versión en inglés</a>, regida por la ley estadounidense.</em></p>
 
 <h2>1. Quiénes somos y aceptación</h2>
 <p>EquiMind ("el Servicio", "nosotros") es operado por Digit2AI [razón social, NIT, domicilio en Colombia]. Al crear una cuenta, comprar créditos o usar el Servicio, usted acepta íntegramente estos Términos. Si no está de acuerdo, no use el Servicio.</p>
@@ -328,10 +351,10 @@ router.get('/reembolsos', (req, res) => {
   const updated = '4 de julio de 2026';
   const body = lang === 'en' ? `
 <h1>Refund Policy</h1>
-<p><em>Last updated: July 4, 2026. English is a courtesy translation; the Spanish version prevails.</em></p>
+<p><em>Last updated: July 4, 2026. This English-language policy applies to users in the United States and forms part of our <a href="${esc(base)}terminos">Terms of Service</a>.</em></p>
 
 <h2>1. Digital nature of the product</h2>
-<p>Credits and the analyses they unlock are <strong>digital products delivered instantly</strong>. As a general rule, once a credit has been consumed to produce a result, that purchase is <strong>non-refundable</strong>, because the service has been fully rendered.</p>
+<p>Credits and the analyses they unlock are <strong>digital products delivered instantly</strong>. As a general rule, once a credit has been consumed to produce a result, that purchase is <strong>final and non-refundable</strong>, because the service has been fully rendered. By purchasing, you consent to immediate delivery of digital goods.</p>
 
 <h2>2. You only pay for real analyses</h2>
 <p>A credit is charged <strong>only when a real analysis runs</strong> (real audio/video with a detectable signal). If there is no usable signal, EquiMind returns a <strong>free reference simulation</strong> and no credit is charged. This design minimizes billing disputes.</p>
@@ -339,18 +362,18 @@ router.get('/reembolsos', (req, res) => {
 <h2>3. When we DO issue a refund</h2>
 <ul>
 <li><strong>Verifiable technical failure:</strong> a credit was charged but, due to a fault on our side, no result was delivered. We will restore the credit or refund it at our discretion.</li>
-<li><strong>Duplicate/erroneous charge</strong> by the payment processor.</li>
-<li>Any case where a refund is required by applicable Colombian consumer law.</li>
+<li><strong>Duplicate or erroneous charge</strong> by the payment processor.</li>
+<li>Any case where a refund is required by applicable federal or state law.</li>
 </ul>
 
 <h2>4. Unused credits</h2>
 <p>Unused credit balances may be refunded within <strong>fourteen (14) days</strong> of purchase, provided none of the credits in that purchase have been consumed. After 14 days, or once any credit from the purchase has been used, unused credits are non-refundable but remain available in your account.</p>
 
-<h2>5. Colombian right of withdrawal (retracto)</h2>
-<p>Under Article 47 of Colombia's Consumer Statute (Ley 1480 de 2011), consumers generally have five (5) business days to withdraw from certain distance purchases. This right does <strong>not</strong> apply to digital content and services that, with your prior consent, have already begun to be delivered or have been consumed. By running an analysis you request immediate delivery and acknowledge the retracto right is thereby exhausted for consumed credits.</p>
+<h2>5. No general cooling-off period for online digital goods</h2>
+<p>U.S. federal and state "cooling-off" rules generally apply to certain in-person or door-to-door sales and do <strong>not</strong> apply to online digital content that has been accessed or consumed. Except as stated in this policy or required by law, all sales of consumed credits are final. This policy is disclosed to you before purchase, as required by applicable state law (including, for California residents, Cal. Civ. Code §1723).</p>
 
 <h2>6. How to request a refund</h2>
-<p>Email [soporte@equimind.app] within the applicable window with your account email, the date, and the transaction/receipt reference. We aim to respond within 10 business days. Approved refunds are returned to the original payment method via Stripe.</p>
+<p>Email [support@equimind.app] within the applicable window with your account email, the date, and the transaction/receipt reference. We aim to respond within 10 business days. Approved refunds are returned to the original payment method via Stripe.</p>
 
 <h2>7. Chargebacks</h2>
 <p>Please contact us before opening a chargeback so we can resolve the issue directly and quickly.</p>
@@ -358,7 +381,7 @@ router.get('/reembolsos', (req, res) => {
 <p><a href="${esc(base)}">&larr; Back</a> · <a href="${esc(base)}terminos">Terms of Service</a> · <a href="${esc(base)}privacidad">Privacy</a></p>
 ` : `
 <h1>Política de Reembolso</h1>
-<p><em>Última actualización: ${updated}. Esta versión en español es la autorizada y prevalece sobre cualquier traducción.</em></p>
+<p><em>Última actualización: ${updated}. Esta versión en español aplica a los usuarios en Colombia. Los usuarios en Estados Unidos deben consultar la <a href="${esc(base)}reembolsos?lang=en">versión en inglés</a>.</em></p>
 
 <h2>1. Naturaleza digital del producto</h2>
 <p>Los créditos y los análisis que habilitan son <strong>productos digitales de entrega inmediata</strong>. Por regla general, una vez que un crédito se ha consumido para producir un resultado, esa compra <strong>no es reembolsable</strong>, pues el servicio se prestó en su totalidad.</p>
