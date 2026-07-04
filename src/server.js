@@ -480,12 +480,18 @@ async function startServer() {
       }
     });
 
+    // Two websocket endpoints share one HTTP server. They MUST use noServer + a single
+    // upgrade dispatcher — attaching each with { server, path } makes the first one abort
+    // (400) upgrades for the other's path. See the dispatcher below both blocks.
+    let mediaWss = null;
+    let relayWss = null;
+
     // WebSocket relay: Twilio <Stream> ↔ ElevenLabs ConvAI
     try {
       const WebSocket = require('ws');
-      const wss = new WebSocket.Server({ server, path: '/media-stream' });
+      mediaWss = new WebSocket.Server({ noServer: true });
 
-      wss.on('connection', (twilioWs, req) => {
+      mediaWss.on('connection', (twilioWs, req) => {
         const params = new URL(req.url, 'http://localhost').searchParams;
         const agentId = params.get('agentId');
         const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -639,7 +645,7 @@ async function startServer() {
     try {
       const WebSocket = require('ws');
       const { RelaySession, resolveClientContext } = require('./services/conversationRelayAgent');
-      const relayWss = new WebSocket.Server({ server, path: '/voice-relay/ws' });
+      relayWss = new WebSocket.Server({ noServer: true });
 
       relayWss.on('connection', (ws) => {
         console.log('☎️  ConversationRelay socket connected');
@@ -695,6 +701,23 @@ async function startServer() {
       console.log('✅ ConversationRelay WS ready at /voice-relay/ws');
     } catch (error) {
       console.log('⚠️ ConversationRelay WS setup skipped:', error.message);
+    }
+
+    // Single upgrade dispatcher — routes each websocket path to its own noServer wss.
+    if (mediaWss || relayWss) {
+      server.on('upgrade', (req, socket, head) => {
+        let pathname = '/';
+        try { pathname = new URL(req.url, 'http://localhost').pathname; } catch (e) { /* keep default */ }
+
+        if (pathname === '/media-stream' && mediaWss) {
+          mediaWss.handleUpgrade(req, socket, head, (ws) => mediaWss.emit('connection', ws, req));
+        } else if (pathname === '/voice-relay/ws' && relayWss) {
+          relayWss.handleUpgrade(req, socket, head, (ws) => relayWss.emit('connection', ws, req));
+        } else {
+          socket.destroy();
+        }
+      });
+      console.log('✅ WebSocket upgrade dispatcher active (/media-stream, /voice-relay/ws)');
     }
 
     // Graceful shutdown handlers
