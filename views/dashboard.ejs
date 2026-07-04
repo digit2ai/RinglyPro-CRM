@@ -9099,105 +9099,328 @@
         </div>
     </div>
 
-    <!-- ElevenLabs User Training AI Widget - helps clients learn to use RinglyPro -->
+    <!-- RinglyPro Voice Training Assistant - zero-key Microsoft Edge neural TTS (replaces ElevenLabs) -->
+    <!-- Free, $0/call via /api/tts/edge. Guided voice walkthrough that helps clients learn RinglyPro. -->
     <style>
-        #elevenlabs-widget-wrapper {
+        #rp-voice-wrapper {
             position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 9999;
+            width: 320px;
+            max-width: calc(100vw - 32px);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            box-shadow: 0 20px 55px rgba(0,0,0,0.25);
+            overflow: hidden;
+            font-family: inherit;
         }
-        #elevenlabs-widget-wrapper.hidden {
-            display: none;
-        }
-        #widget-close-btn {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 24px;
-            height: 24px;
-            background: #ef4444;
-            border: 2px solid white;
-            border-radius: 50%;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 10000;
-            transition: all 0.2s;
-        }
-        #widget-close-btn:hover {
-            background: #dc2626;
-            transform: scale(1.1);
-        }
-        #widget-reopen-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
+        #rp-voice-wrapper.hidden { display: none; }
+        .rp-voice-head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-            z-index: 9998;
-            transition: all 0.2s;
+            color: #fff;
         }
-        #widget-reopen-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+        .rp-voice-orb {
+            position: relative; width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #d1fae5, #10b981 55%, #065f46 100%);
+            box-shadow: 0 0 0 0 rgba(255,255,255,.5);
         }
-        #widget-reopen-btn.show {
-            display: flex;
+        .rp-voice-orb.speaking { animation: rpPulse 1.2s ease-in-out infinite; }
+        @keyframes rpPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
+            70% { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
+        .rp-voice-title { flex: 1; min-width: 0; }
+        .rp-voice-title strong { display: block; font-size: 14px; line-height: 1.2; }
+        .rp-voice-title span { font-size: 11px; opacity: .9; }
+        #rp-voice-close {
+            background: rgba(255,255,255,.2); border: none; color: #fff; width: 26px; height: 26px;
+            border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex: 0 0 26px;
+        }
+        #rp-voice-close:hover { background: rgba(255,255,255,.35); }
+        .rp-voice-body { padding: 14px 16px 16px; }
+        .rp-voice-status { font-size: 12px; color: #6b7280; min-height: 16px; margin-bottom: 12px; }
+        .rp-topics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .rp-topics button {
+            font: inherit; font-size: 12px; text-align: left;
+            background: #f0fdf4; color: #065f46; border: 1px solid #bbf7d0;
+            border-radius: 10px; padding: 9px 10px; cursor: pointer; transition: all .15s;
+        }
+        .rp-topics button:hover { background: #dcfce7; }
+        .rp-topics button.active { background: #10b981; color: #fff; border-color: #10b981; }
+        .rp-voice-controls { display: flex; gap: 8px; margin-top: 12px; }
+        .rp-voice-controls button {
+            font: inherit; font-size: 12px; font-weight: 600; border-radius: 10px; padding: 9px 10px;
+            cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #374151;
+        }
+        .rp-voice-controls .rp-primary {
+            flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none;
+        }
+        .rp-voice-controls button:disabled { opacity: .45; cursor: default; }
+        .rp-voice-foot {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 12px; font-size: 11px; color: #9ca3af;
+        }
+        .rp-lang { display: flex; gap: 4px; }
+        .rp-lang button {
+            font: inherit; font-size: 11px; border: 1px solid #d1d5db; background: #fff; color: #6b7280;
+            border-radius: 6px; padding: 3px 8px; cursor: pointer;
+        }
+        .rp-lang button.active { background: #111827; color: #fff; border-color: #111827; }
+        #rp-voice-reopen {
+            position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none; border-radius: 50%; color: #fff; cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(16,185,129,.4); z-index: 9998; transition: all .2s;
+        }
+        #rp-voice-reopen:hover { transform: scale(1.05); box-shadow: 0 6px 16px rgba(16,185,129,.5); }
+        #rp-voice-reopen.show { display: flex; }
+        @media (max-width: 420px) { #rp-voice-wrapper { width: calc(100vw - 32px); } }
     </style>
-    <!-- ElevenLabs Voice AI Widget - starts minimized -->
-    <div id="elevenlabs-widget-wrapper" class="hidden">
-        <button id="widget-close-btn" onclick="closeVoiceWidget()" title="Close widget">×</button>
-        <div id="elevenlabs-widget-container">
-            <elevenlabs-convai agent-id="agent_4801kd9a0495frvbjxz6dyrnbz1j"></elevenlabs-convai>
+    <div id="rp-voice-wrapper" class="hidden">
+        <div class="rp-voice-head">
+            <div class="rp-voice-orb" id="rp-voice-orb"></div>
+            <div class="rp-voice-title">
+                <strong id="rp-voice-name">RinglyPro Assistant</strong>
+                <span id="rp-voice-sub">Voice guide &middot; free</span>
+            </div>
+            <button id="rp-voice-close" onclick="closeVoiceWidget()" title="Close">&times;</button>
+        </div>
+        <div class="rp-voice-body">
+            <div class="rp-voice-status" id="rp-voice-status">Pick a topic or play the full tour.</div>
+            <div class="rp-topics" id="rp-topics"></div>
+            <div class="rp-voice-controls">
+                <button class="rp-primary" id="rp-play-all">&#9654; Full tour</button>
+                <button id="rp-pause" disabled>&#10073;&#10073;</button>
+                <button id="rp-stop" disabled>&#9632;</button>
+            </div>
+            <div class="rp-voice-foot">
+                <span id="rp-voice-mode"></span>
+                <div class="rp-lang">
+                    <button data-lang="en" class="active">EN</button>
+                    <button data-lang="es">ES</button>
+                </div>
+            </div>
         </div>
     </div>
-    <button id="widget-reopen-btn" class="show" onclick="reopenVoiceWidget()" title="Open Voice Assistant">
+    <button id="rp-voice-reopen" class="show" onclick="reopenVoiceWidget()" title="Open Voice Assistant">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
         </svg>
     </button>
-    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
     <script>
-        // ElevenLabs User Training AI Widget - available for all clients
-        // Agent: agent_4801kd9a0495frvbjxz6dyrnbz1j (RinglyPro user training assistant)
+        // RinglyPro Voice Training Assistant — zero-key Microsoft Edge neural TTS.
+        // Replaces the ElevenLabs convai widget. $0/call via POST /api/tts/edge, with a
+        // browser-speech fallback. Guided, topic-driven voice walkthrough of the dashboard.
+        (function () {
+            var NEURAL_URL = '/api/tts/edge';
+            // EN uses Ava (en-US-AvaNeural); ES uses Lina/Dalia (es-MX-DaliaNeural).
+            var VOICE = { en: 'ava', es: 'lina' };
+            var UI = {
+                en: { name: 'RinglyPro Assistant', sub: 'Voice guide · free', pick: 'Pick a topic or play the full tour.',
+                      full: '▶ Full tour', speaking: 'Speaking…', prep: 'Preparing voice…',
+                      done: 'Tour finished. Press again to replay.', paused: 'Paused.', hd: '● HD', browser: '○ browser' },
+                es: { name: 'Asistente RinglyPro', sub: 'Guía por voz · gratis', pick: 'Elige un tema o reproduce el recorrido completo.',
+                      full: '▶ Recorrido', speaking: 'Hablando…', prep: 'Preparando la voz…',
+                      done: 'Recorrido terminado. Pulsa de nuevo para repetir.', paused: 'En pausa.', hd: '● HD', browser: '○ navegador' }
+            };
+            // Index 0 is the intro; the rest are one topic each, in button order.
+            var SCRIPT = {
+                en: [
+                    { t: 'Welcome', s: "Hi, I'm your RinglyPro assistant, and I'll walk you through your dashboard so you can get the most out of it. Tap any topic to hear a short explanation, or play the full tour." },
+                    { t: 'Neural Intelligence', s: "The Neural Intelligence panel shows your Business Copilot score, a single number from zero to one hundred that summarizes the health of your account. It also flags revenue at risk and your recovery potential, so you always know where to focus first." },
+                    { t: 'Tokens', s: "Tokens are the credits that power your AI receptionist and outbound calls. When your balance runs low, top it up from the Tokens screen so Rachel and Ana never stop answering your calls." },
+                    { t: 'Appointments', s: "Your calendar shows every appointment in one place. Bookings made by the AI voice receptionist appear in blue. A pending booking shows in red until you confirm it, and turns green once confirmed." },
+                    { t: 'Messages', s: "The Messages panel is your unified inbox. You'll see text messages and voicemails here, with unread items first. Click any voicemail to play the recording right in the browser." },
+                    { t: 'Contacts', s: "Contacts brings your customer list together, whether it comes from your connected Go High Level account or from the local database. From here you can call, text, or edit any contact in a couple of clicks." },
+                    { t: 'AI Receptionist', s: "Your AI receptionist answers calls twenty-four seven, qualifies the caller, and books the appointment straight into your calendar. Use the toggle at the top of the sidebar to turn the Business Copilot on or off anytime." }
+                ],
+                es: [
+                    { t: 'Bienvenida', s: "Hola, soy tu asistente de RinglyPro y te voy a guiar por tu panel para que le saques el máximo provecho. Toca cualquier tema para escuchar una explicación breve, o reproduce el recorrido completo." },
+                    { t: 'Inteligencia Neural', s: "El panel de Inteligencia Neural muestra tu puntaje del Copiloto de Negocio, un solo número del cero al cien que resume la salud de tu cuenta. También señala los ingresos en riesgo y tu potencial de recuperación, para que siempre sepas dónde enfocarte primero." },
+                    { t: 'Tokens', s: "Los tokens son los créditos que impulsan a tu recepcionista de inteligencia artificial y a las llamadas salientes. Cuando tu saldo esté bajo, recárgalo desde la pantalla de Tokens para que Rachel y Ana nunca dejen de contestar tus llamadas." },
+                    { t: 'Citas', s: "Tu calendario muestra todas las citas en un solo lugar. Las reservas hechas por la recepcionista de voz aparecen en azul. Una reserva pendiente se muestra en rojo hasta que la confirmes, y se vuelve verde una vez confirmada." },
+                    { t: 'Mensajes', s: "El panel de Mensajes es tu bandeja unificada. Verás los mensajes de texto y los correos de voz aquí, con los no leídos primero. Haz clic en cualquier correo de voz para reproducir la grabación en el navegador." },
+                    { t: 'Contactos', s: "Contactos reúne tu lista de clientes, ya sea desde tu cuenta conectada de Go High Level o desde la base de datos local. Desde aquí puedes llamar, enviar un mensaje o editar cualquier contacto en un par de clics." },
+                    { t: 'Recepcionista IA', s: "Tu recepcionista de inteligencia artificial contesta las llamadas las veinticuatro horas, califica a quien llama y agenda la cita directamente en tu calendario. Usa el interruptor en la parte superior de la barra lateral para activar o desactivar el Copiloto de Negocio cuando quieras." }
+                ]
+            };
 
-        function openVoiceAssistant() {
-            // Find the ElevenLabs widget and click its call button
-            const widget = document.querySelector('elevenlabs-convai');
-            if (widget && widget.shadowRoot) {
-                const callButton = widget.shadowRoot.querySelector('button');
-                if (callButton) {
-                    callButton.click();
+            var lang = 'en';
+            var synth = window.speechSynthesis;
+            var orb, statusEl, topicsEl, playAll, pauseBtn, stopBtn, modeEl, nameEl, subEl;
+            var queue = [], qi = 0, runToken = 0, paused = false;
+            var playbackMode = null, currentAudio = null, neuralOK = true, audioCache = {};
+            var browserVoice = null, activeIdx = null;
+
+            function seg() { return SCRIPT[lang]; }
+            function t() { return UI[lang]; }
+
+            function pickBrowserVoice() {
+                if (!synth) return;
+                var vs = synth.getVoices();
+                var pref = vs.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf(lang) === 0; });
+                browserVoice = pref[0] || vs[0] || null;
+            }
+
+            function setMode() { if (modeEl) modeEl.textContent = neuralOK ? t().hd : t().browser; }
+            function clearCache() { Object.keys(audioCache).forEach(function (k) { try { URL.revokeObjectURL(audioCache[k]); } catch (e) {} }); audioCache = {}; }
+
+            function renderTopics() {
+                topicsEl.innerHTML = '';
+                seg().forEach(function (item, i) {
+                    if (i === 0) return; // intro plays only inside the full tour
+                    var b = document.createElement('button');
+                    b.textContent = item.t;
+                    b.setAttribute('data-idx', i);
+                    b.onclick = function () { start([i], 'one'); };
+                    topicsEl.appendChild(b);
+                });
+            }
+            function highlight(i) {
+                Array.prototype.forEach.call(topicsEl.children, function (b) {
+                    b.classList.toggle('active', parseInt(b.getAttribute('data-idx'), 10) === i);
+                });
+            }
+
+            function applyLang() {
+                nameEl.textContent = t().name; subEl.textContent = t().sub;
+                statusEl.textContent = t().pick; playAll.innerHTML = t().full;
+                pickBrowserVoice(); renderTopics(); setMode();
+            }
+
+            function fetchNeural(idx) {
+                var key = lang + '|' + idx;
+                if (audioCache[key]) return Promise.resolve(audioCache[key]);
+                return fetch(NEURAL_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: seg()[idx].s, voice: VOICE[lang] })
+                }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+                  .then(function (b) { if (!b || b.size < 200) throw new Error('empty'); var u = URL.createObjectURL(b); audioCache[key] = u; return u; });
+            }
+
+            function statusSpeaking() {
+                statusEl.textContent = (queue.length > 1)
+                    ? t().speaking + ' (' + (qi + 1) + '/' + queue.length + ')'
+                    : t().speaking;
+            }
+
+            function browserSpeak(idx, onEnd) {
+                if (!synth) { onEnd(); return; }
+                playbackMode = 'browser';
+                var u = new SpeechSynthesisUtterance(seg()[idx].s);
+                if (browserVoice) u.voice = browserVoice;
+                u.lang = browserVoice ? browserVoice.lang : (lang === 'es' ? 'es-MX' : 'en-US');
+                u.rate = 0.98; u.pitch = 1.02;
+                u.onstart = function () { orb.classList.add('speaking'); statusSpeaking(); };
+                u.onend = onEnd; u.onerror = onEnd;
+                synth.speak(u);
+            }
+
+            function runQueue(token) {
+                if (token !== runToken) return;
+                if (qi >= queue.length) { finish(); return; }
+                var idx = queue[qi];
+                highlight(idx);
+                function advance() { if (token !== runToken) return; qi++; runQueue(token); }
+                if (neuralOK) {
+                    statusEl.textContent = t().prep;
+                    if (qi + 1 < queue.length) fetchNeural(queue[qi + 1]).catch(function () {});
+                    fetchNeural(idx).then(function (url) {
+                        if (token !== runToken) return;
+                        playbackMode = 'neural'; currentAudio = new Audio(url);
+                        currentAudio.onended = advance;
+                        currentAudio.onerror = function () { neuralOK = false; setMode(); browserSpeak(idx, advance); };
+                        orb.classList.add('speaking'); statusSpeaking();
+                        currentAudio.play().catch(function () { neuralOK = false; setMode(); browserSpeak(idx, advance); });
+                    }).catch(function () { if (token !== runToken) return; neuralOK = false; setMode(); browserSpeak(idx, advance); });
+                } else { browserSpeak(idx, advance); }
+            }
+
+            function start(q, mode) {
+                if (synth) synth.cancel();
+                if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+                queue = q; qi = 0; paused = false; runToken++;
+                pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true;
+                pauseBtn.innerHTML = '&#10073;&#10073;';
+                runQueue(runToken);
+            }
+
+            function finish() {
+                runToken++; orb.classList.remove('speaking'); highlight(null);
+                if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+                pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
+                statusEl.textContent = t().done;
+            }
+
+            function togglePause() {
+                if (!paused) {
+                    paused = true; pauseBtn.innerHTML = '&#9654;'; orb.classList.remove('speaking'); statusEl.textContent = t().paused;
+                    if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause();
+                } else {
+                    paused = false; pauseBtn.innerHTML = '&#10073;&#10073;'; orb.classList.add('speaking'); statusSpeaking();
+                    if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume();
                 }
             }
-        }
+
+            function initVoiceAssistant() {
+                orb = document.getElementById('rp-voice-orb');
+                statusEl = document.getElementById('rp-voice-status');
+                topicsEl = document.getElementById('rp-topics');
+                playAll = document.getElementById('rp-play-all');
+                pauseBtn = document.getElementById('rp-pause');
+                stopBtn = document.getElementById('rp-stop');
+                modeEl = document.getElementById('rp-voice-mode');
+                nameEl = document.getElementById('rp-voice-name');
+                subEl = document.getElementById('rp-voice-sub');
+                if (!orb) return;
+
+                if (synth) { pickBrowserVoice(); synth.onvoiceschanged = pickBrowserVoice; }
+
+                playAll.addEventListener('click', function () { start(seg().map(function (_, i) { return i; }), 'all'); });
+                pauseBtn.addEventListener('click', togglePause);
+                stopBtn.addEventListener('click', finish);
+
+                Array.prototype.forEach.call(document.querySelectorAll('.rp-lang button'), function (b) {
+                    b.addEventListener('click', function () {
+                        var next = this.getAttribute('data-lang');
+                        if (next === lang) return;
+                        finish(); lang = next; clearCache();
+                        Array.prototype.forEach.call(document.querySelectorAll('.rp-lang button'), function (x) {
+                            x.classList.toggle('active', x.getAttribute('data-lang') === lang);
+                        });
+                        applyLang();
+                    });
+                });
+
+                applyLang();
+            }
+
+            window.addEventListener('beforeunload', function () {
+                if (synth) synth.cancel();
+                if (currentAudio) { try { currentAudio.pause(); } catch (e) {} }
+            });
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initVoiceAssistant);
+            else initVoiceAssistant();
+        })();
 
         function closeVoiceWidget() {
-            const wrapper = document.getElementById('elevenlabs-widget-wrapper');
-            const reopenBtn = document.getElementById('widget-reopen-btn');
+            var wrapper = document.getElementById('rp-voice-wrapper');
+            var reopenBtn = document.getElementById('rp-voice-reopen');
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
             wrapper.classList.add('hidden');
             reopenBtn.classList.add('show');
         }
 
         function reopenVoiceWidget() {
-            const wrapper = document.getElementById('elevenlabs-widget-wrapper');
-            const reopenBtn = document.getElementById('widget-reopen-btn');
+            var wrapper = document.getElementById('rp-voice-wrapper');
+            var reopenBtn = document.getElementById('rp-voice-reopen');
             wrapper.classList.remove('hidden');
             reopenBtn.classList.remove('show');
         }
