@@ -732,12 +732,10 @@ function initLinaOrb(d) {
   function buildSegments() {
     const s = (d && d.summary) || {};
     const ev = (d && Array.isArray(d.upcoming_events)) ? d.upcoming_events : [];
-    const hour = new Date().getHours();
-    const saludo = hour < 12 ? 'Buenos días' : (hour < 19 ? 'Buenas tardes' : 'Buenas noches');
     const segs = [];
 
-    // 0 — greeting
-    segs.push(saludo + '. Soy Lina, la voz de inteligencia artificial de Digit2AI. Aquí tienes el resumen de tu Centro de Proyectos.');
+    // 0 — greeting (personal)
+    segs.push('Hola Manuel, este es el resumen de tu dashboard de hoy.');
 
     if (!d || !d.summary) {
       // Generic fallback (no data)
