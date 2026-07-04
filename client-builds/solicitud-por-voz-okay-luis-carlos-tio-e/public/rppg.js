@@ -69,11 +69,16 @@
 
   function computeROIs(ts) {
     var vw = video.videoWidth, vh = video.videoHeight, noseY = null;
+    // Static-fallback ROIs (used when face tracking can't load, e.g. desktop
+    // browsers with no FaceDetector). Positioned over the CENTER of the frame —
+    // where a centered selfie face sits — and generously sized so the skin-pixel
+    // filter has real skin to lock onto (the old boxes sat too high and sampled
+    // the wall above the head).
     var rois = {
-      forehead: [vw * 0.40, vh * 0.18, vw * 0.20, vh * 0.10],
-      lcheek: [vw * 0.30, vh * 0.45, vw * 0.14, vh * 0.14],
-      rcheek: [vw * 0.56, vh * 0.45, vw * 0.14, vh * 0.14],
-      bg: [vw * 0.02, vh * 0.02, vw * 0.10, vh * 0.10] // top-left background patch (illumination ref)
+      forehead: [vw * 0.34, vh * 0.30, vw * 0.32, vh * 0.16],
+      lcheek: [vw * 0.32, vh * 0.50, vw * 0.16, vh * 0.16],
+      rcheek: [vw * 0.52, vh * 0.50, vw * 0.16, vh * 0.16],
+      bg: [vw * 0.02, vh * 0.02, vw * 0.09, vh * 0.09] // top-left background patch (illumination ref)
     };
     faceSeen = (mode === 'static'); // static always "sees"
     try {
@@ -135,6 +140,14 @@
 
   // Guided coaching tied to live signal (Section 7).
   function coach(foreheadSample) {
+    if (mode !== 'facemesh') {
+      // No face mesh available (common on desktop) — the ROI boxes are fixed at
+      // center; guide the user to place their face inside them.
+      hint.textContent = (I.lang === 'en')
+        ? 'Basic tracking — fill the boxes with your face and hold still.'
+        : 'Seguimiento básico — llena los recuadros con tu rostro y quédate quieto.';
+      return;
+    }
     if (!faceSeen) { hint.textContent = I.coachFrame || ''; return; }
     if (foreheadSample && (foreheadSample.r + foreheadSample.g + foreheadSample.b) / 3 < 55) { hint.textContent = I.coachLight || ''; return; }
     var hy = buf.headY; if (hy.length > 15) { var seg = hy.slice(-15), m = seg.reduce(function (a, b) { return a + b; }, 0) / seg.length, v = 0; seg.forEach(function (x) { v += (x - m) * (x - m); }); if (Math.sqrt(v / seg.length) > 6) { hint.textContent = I.coachStill || ''; return; } }
@@ -159,9 +172,10 @@
     lastEstimate = est;
     resultBox.classList.remove('hidden');
     setSQI(est.sqi);
-    // Only refuse when there is genuinely no usable pulse. Otherwise show the
-    // number — with a gentle low-confidence note in the 20..50 band.
-    if (isFinal && (est.bpm == null || est.sqi < SQI_MIN)) { showLowSignal(); return; }
+    // Only fully refuse when there is genuinely NO pulse peak at all. If we found
+    // a heart rate, always show it — with a low-confidence note when SQI is low —
+    // rather than wiping a usable reading.
+    if (isFinal && est.bpm == null) { showLowSignal(); return; }
     if (est.bpm != null && est.sqi < SQI_FAIR) { softNote(); } else { sqiBanner.className = 'hidden'; }
     txt('hrVal', est.bpm != null ? est.bpm : '--');
     txt('rrVal', est.respiratory_bpm != null ? est.respiratory_bpm : '--');
