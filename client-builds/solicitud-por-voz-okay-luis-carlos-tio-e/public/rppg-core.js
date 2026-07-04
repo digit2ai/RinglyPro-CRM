@@ -193,11 +193,12 @@
   // Signal Quality Index 0..100 (M7): fused SNR + peak prominence + motion +
   // rPPG/rBCG agreement + beat regularity. The spine of "robust".
   function computeSQI(inp){
-    // Dominated by actual signal-presence indicators (SNR, peak prominence) so
-    // pure noise scores near zero. Motion is a penalty; agreement/regularity are
-    // small bonuses — never enough on their own to pass the gate.
-    var snr=Math.max(0,Math.min(1,(inp.snr||0)/8));
-    var prom=Math.max(0,Math.min(1,((inp.prominence||0)-1)/40));
+    // Calibrated to REAL webcam signal levels (a good live pulse has SNR ~2-4 and
+    // prominence ~6-15, far below clean synthetic clips). Dominated by SNR + peak
+    // prominence so pure noise still scores low, but a genuine reading in decent
+    // light/stillness lands ~55-85 (not refused). Motion is a penalty.
+    var snr=Math.max(0,Math.min(1,(inp.snr||0)/3));
+    var prom=Math.max(0,Math.min(1,((inp.prominence||0)-1)/12));
     var reg=Math.max(0,Math.min(1,inp.regularity||0));
     var agree=inp.agreement==null?0:(inp.agreement<=3?0.1:(inp.agreement<=6?0.05:0));
     var base=snr*0.55 + prom*0.30 + reg*0.15 + agree;

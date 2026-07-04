@@ -15,7 +15,9 @@
   var startBtn = $('start'), stopBtn = $('stop'), simBtn = $('sim');
   var prog = $('prog'), hint = $('hint'), resultBox = $('result'), sqiBanner = $('sqiBanner'), saveMsg = $('saveMsg');
 
-  var CAPTURE_MS = 30000, PROGRESSIVE_AFTER_MS = 8000, SQI_MIN = 35;
+  var CAPTURE_MS = 30000, PROGRESSIVE_AFTER_MS = 8000;
+  var SQI_MIN = 20;   // below this (or no pulse) we refuse — everything above shows a number
+  var SQI_FAIR = 50;  // 20..50 shows a friendly "low-confidence" note but STILL shows the number
   var stream = null, raf = 0, capturing = false, startedAt = 0, lastCalc = 0;
   var landmarker = null, faceDetector = null, mode = 'static', faceSeen = false;
   var lastEstimate = null;
@@ -95,14 +97,18 @@
   function sampleROI(x, y, w, h) {
     if (w < 4 || h < 4) return null;
     wctx.drawImage(video, x, y, w, h, 0, 0, work.width, work.height);
-    var d = wctx.getImageData(0, 0, work.width, work.height).data, sr = 0, sg = 0, sb = 0, n = 0;
+    var d = wctx.getImageData(0, 0, work.width, work.height).data;
+    var sr = 0, sg = 0, sb = 0, n = 0, asr = 0, asg = 0, asb = 0, an = 0;
     for (var i = 0; i < d.length; i += 4) {
       var r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-      if (mx > 245 || mn < 12) continue;
-      sr += r; sg += g; sb += b; n++;
+      if (mx > 245 || mn < 12) continue; // skip blown/black
+      asr += r; asg += g; asb += b; an++;
+      // lenient skin test (works across tones): reddish, r>=g>=b, some saturation
+      if (r > 55 && r >= g && g >= b && (r - b) > 8) { sr += r; sg += g; sb += b; n++; }
     }
-    if (!n) return null;
-    return { r: sr / n, g: sg / n, b: sb / n };
+    if (n > 20 && n > an * 0.20) return { r: sr / n, g: sg / n, b: sb / n }; // enough skin -> use skin only
+    if (an) return { r: asr / an, g: asg / an, b: asb / an };                // fallback: all valid pixels
+    return null;
   }
   function drawOverlay(rois) {
     octx.clearRect(0, 0, overlay.width, overlay.height);
@@ -153,7 +159,10 @@
     lastEstimate = est;
     resultBox.classList.remove('hidden');
     setSQI(est.sqi);
-    if (isFinal && (est.sqi < SQI_MIN || est.bpm == null)) { showLowSignal(); return; }
+    // Only refuse when there is genuinely no usable pulse. Otherwise show the
+    // number — with a gentle low-confidence note in the 20..50 band.
+    if (isFinal && (est.bpm == null || est.sqi < SQI_MIN)) { showLowSignal(); return; }
+    if (est.bpm != null && est.sqi < SQI_FAIR) { softNote(); } else { sqiBanner.className = 'hidden'; }
     txt('hrVal', est.bpm != null ? est.bpm : '--');
     txt('rrVal', est.respiratory_bpm != null ? est.respiratory_bpm : '--');
     txt('hrvVal', est.hrv_sdnn_ms != null ? Math.round(est.hrv_sdnn_ms) : '--');
@@ -174,9 +183,15 @@
   function setSQI(sqi) {
     $('sqiBar').style.width = Math.max(0, Math.min(100, sqi)) + '%';
     var dot = $('sqiDot'), t = $('sqiTxt');
-    if (sqi >= 60) { dot.style.background = '#4ade80'; t.textContent = (I.sqiGood || 'Good') + ' (' + sqi + ')'; }
+    if (sqi >= 55) { dot.style.background = '#4ade80'; t.textContent = (I.sqiGood || 'Good') + ' (' + sqi + ')'; }
     else if (sqi >= SQI_MIN) { dot.style.background = '#f59e0b'; t.textContent = (I.sqiFair || 'Fair') + ' (' + sqi + ')'; }
     else { dot.style.background = '#ef4444'; t.textContent = sqi + ''; }
+  }
+  function softNote() {
+    sqiBanner.className = 'mt-4 text-sm rounded-xl px-3 py-2 bg-amber-500/10 text-amber-300 border border-amber-500/25';
+    sqiBanner.textContent = (I.lang === 'en')
+      ? 'Reading shown — confidence is a bit low. For more accuracy, add light and hold very still.'
+      : 'Mostramos la lectura — la confianza es un poco baja. Para más precisión, agrega luz y quédate muy quieto.';
   }
   function showLowSignal() {
     sqiBanner.className = 'mt-4 text-sm rounded-xl px-3 py-2 bg-red-500/15 text-red-300 border border-red-500/30';
