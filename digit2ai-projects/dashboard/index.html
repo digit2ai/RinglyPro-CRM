@@ -89,6 +89,8 @@
     .lina-v2 .orb-wrap:not([data-state="idle"]) .orb-cap-active { display: inline; }
     .lina-v2 .orb-wrap[data-state="speaking"] .orb-caption { color: #ec4899; }
     .lina-v2 .orb-wrap[data-state="thinking"] .orb-caption { color: #8b5cf6; }
+    /* Hide the neural/accent picker — defaults stay (Neural HD on, México/Dalia); saves screen space. */
+    .lina-v2 .voicepick { display: none; }
     @media (prefers-reduced-motion: reduce) {
       .lina-v2 .orb-svg animate { display: none; }
       .lina-v2 [class*="orb-ring"], .lina-v2 .orb-scan, .lina-v2 .orb-iris-outer, .lina-v2 .orb-iris-segs, .lina-v2 .orb-particle { animation: none !important; }
