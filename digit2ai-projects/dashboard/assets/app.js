@@ -726,10 +726,54 @@ function initLinaOrb(d) {
   const orb = document.getElementById('linaOrb');
   if (!orb) return;
 
+  // Join a list in Spanish: ['A','B','C'] -> 'A, B y C'.
+  function linaJoinES(arr) {
+    arr = (arr || []).filter(Boolean);
+    if (arr.length === 0) return '';
+    if (arr.length === 1) return arr[0];
+    return arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
+  }
+  function linaEmailSender(it) {
+    const n = (it.from_name || '').trim();
+    if (n) return n;
+    const f = (it.from || '').trim();
+    if (f.indexOf('@') > 0) return f.split('@')[0];
+    return f || 'un remitente';
+  }
+  // Fetch the LIVE unread email + Intercom detail (senders/names) so Lina can
+  // name who wrote. Both reuse the same token the badges use; failures are silent.
+  async function fetchLinaExtras() {
+    const out = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
+    let tok = null;
+    try { tok = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : localStorage.getItem('token'); } catch (e) {}
+    if (!tok) return out;
+    try {
+      const r = await fetch(location.origin + '/api/projects-bridge/emails', { headers: { Authorization: 'Bearer ' + tok } });
+      const ed = await r.json();
+      if (ed && ed.success) {
+        const items = ed.items || [];
+        out.email.count = (typeof ed.total_unread === 'number') ? ed.total_unread : items.length;
+        out.email.senders = items.map(function (it) { return { name: linaEmailSender(it), subject: (it.subject || '').trim() }; });
+      }
+    } catch (e) {}
+    try {
+      const r2 = await fetch('/voice-to-intake-transcript-direct-pipeli/api/v1/intercom/threads', { headers: { Authorization: 'Bearer ' + tok } });
+      const id = r2.ok ? await r2.json() : null;
+      if (id && id.threads) {
+        out.intercom.items = id.threads
+          .filter(function (t) { return (t.unread || 0) > 0; })
+          .map(function (t) { return { name: t.name || t.email || 'alguien', count: t.unread || 0 }; });
+        out.intercom.total = out.intercom.items.reduce(function (a, t) { return a + t.count; }, 0);
+      }
+    } catch (e) {}
+    return out;
+  }
+
   // Build the narration from the LIVE dashboard data every time Play is pressed,
   // so the numbers + meetings are always current. Falls back to a generic intro
   // if no data was passed.
-  function buildSegments() {
+  function buildSegments(extras) {
+    extras = extras || { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
     const s = (d && d.summary) || {};
     const ev = (d && Array.isArray(d.upcoming_events)) ? d.upcoming_events : [];
     const segs = [];
@@ -775,7 +819,36 @@ function initLinaOrb(d) {
       segs.push(up);
     }
 
-    // 3 — projects health
+    // 3 — email inbox (unread, by sender)
+    const em = extras.email || { count: 0, senders: [] };
+    if (!em.count) {
+      segs.push('En tu correo no tienes mensajes sin leer.');
+    } else if (em.count === 1) {
+      const s0 = em.senders[0] || {};
+      let e = 'En tu correo tienes un mensaje sin leer';
+      if (s0.name) e += ', de ' + s0.name;
+      if (s0.subject) e += ', con el asunto: ' + s0.subject;
+      segs.push(e + '.');
+    } else {
+      const names = em.senders.slice(0, 4).map(function (x) { return x.name; }).filter(Boolean);
+      let e = 'En tu correo tienes ' + linaNumES(em.count) + ' mensajes sin leer';
+      if (names.length) e += ': ' + linaJoinES(names);
+      e += (em.count > names.length && names.length) ? ', entre otros.' : '.';
+      segs.push(e);
+    }
+
+    // 4 — Intercom (new messages, by champion)
+    const ic = extras.intercom || { total: 0, items: [] };
+    if (!ic.total) {
+      segs.push('En Intercom no tienes mensajes nuevos.');
+    } else {
+      const parts = ic.items.slice(0, 5).map(function (t) {
+        return (t.count === 1 ? 'un mensaje' : linaNumES(t.count) + ' mensajes') + ' de ' + t.name;
+      });
+      segs.push('En Intercom tienes ' + linaJoinES(parts) + '.');
+    }
+
+    // 5 — projects health
     const active = Number(s.active_projects) || 0;
     const overdueP = Number(s.overdue_projects) || 0;
     const dueWeek = Number(s.projects_due_this_week) || 0;
@@ -787,7 +860,7 @@ function initLinaOrb(d) {
     if (needFollow > 0) proj += (needFollow === 1 ? 'Un contacto espera seguimiento' : linaNumES(needFollow) + ' contactos esperan seguimiento') + '. ';
     if (proj.trim()) segs.push(proj.trim());
 
-    // 4 — closing
+    // 6 — closing
     segs.push('Más abajo están los Hallazgos Neurales, donde mi red de agentes vigila cada proyecto y te avisa antes de que algo se atrase. Si necesitas algo, pulsa el botón de inteligencia artificial, abajo a la derecha, y pídemelo en lenguaje natural.');
     return segs;
   }
@@ -881,7 +954,15 @@ function initLinaOrb(d) {
     status.textContent = 'Resumen terminado. Pulsa de nuevo para repetir.';
   }
 
-  playAll.addEventListener('click', () => { segments = buildSegments(); clearCache(); start(segments.map((_, i) => i)); });
+  playAll.addEventListener('click', async () => {
+    playAll.disabled = true;
+    status.textContent = 'Preparando tu resumen…';
+    let extras = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
+    try { extras = await fetchLinaExtras(); } catch (e) {}
+    segments = buildSegments(extras);
+    clearCache();
+    start(segments.map((_, i) => i));
+  });
   pauseBtn.addEventListener('click', function () {
     if (!paused) { paused = true; this.innerHTML = '&#9654; Reanudar'; orb.classList.remove('speaking'); status.textContent = 'En pausa.';
       if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause(); }
