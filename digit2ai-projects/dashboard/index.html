@@ -90,63 +90,7 @@
     .lina-v2 .orb-wrap[data-state="speaking"] .orb-caption { color: #ec4899; }
     .lina-v2 .orb-wrap[data-state="thinking"] .orb-caption { color: #8b5cf6; }
     /* Hide the neural/accent picker — defaults stay (Neural HD on, México/Dalia); saves screen space. */
-    .lina-v2 .voicepick, .lina-ana .voicepick { display: none; }
-
-    /* ===== Lina as "Ana" — animated, voice-reactive avatar (portrait talking-head) ===== */
-    .lina-ana { flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 20px 20px 18px; }
-    .lina-ana .lina-name { font-weight: 700; font-size: 18px; }
-    .lina-ana .ana-card {
-      position: relative; width: 100%; max-width: 300px; margin: 4px auto 4px;
-      border-radius: 18px; overflow: hidden; cursor: pointer;
-      border: 1px solid var(--border,#243049); background: #0b1220;
-      box-shadow: 0 18px 50px rgba(0,0,0,.42);
-      -webkit-tap-highlight-color: transparent; --orb-amp: 0;
-      transition: transform .18s ease, box-shadow .18s ease; outline: none;
-    }
-    .lina-ana .ana-card:hover { transform: translateY(-3px); box-shadow: 0 22px 60px rgba(0,0,0,.5), 0 0 32px rgba(106,75,255,.28); }
-    .lina-ana .ana-card:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
-    .lina-ana .ana-photo {
-      display: block; width: 100%; height: auto; aspect-ratio: 4/5; object-fit: cover; object-position: center 12%;
-      transform: scale(calc(1.02 + var(--orb-amp) * 0.03)); transform-origin: center 30%;
-      transition: transform 110ms ease, filter 200ms ease; animation: anaBreath 6s ease-in-out infinite; will-change: transform;
-    }
-    @keyframes anaBreath { 0%,100% { transform: scale(1.02); } 50% { transform: scale(1.038); } }
-    .lina-ana .ana-card[data-state="speaking"] .ana-photo { animation: none; filter: brightness(1.06) saturate(1.05); }
-    .lina-ana .ana-card[data-state="thinking"] .ana-photo { animation: anaBreath 3s ease-in-out infinite; filter: brightness(.97) saturate(.98); }
-    .lina-ana .ana-glow {
-      position: absolute; inset: 0; pointer-events: none; border-radius: 18px; opacity: 0; transition: opacity .2s ease;
-      box-shadow: inset 0 0 0 2px rgba(34,211,238, calc(var(--orb-amp) * 0.9)),
-                  inset 0 0 44px rgba(139,92,246, calc(var(--orb-amp) * 0.55)),
-                  inset 0 -60px 60px -30px rgba(236,72,153, calc(var(--orb-amp) * 0.4));
-    }
-    .lina-ana .ana-card[data-state="speaking"] .ana-glow { opacity: 1; }
-    .lina-ana .ana-card[data-state="thinking"] .ana-glow { opacity: .55; animation: anaGlowPulse 1.6s ease-in-out infinite;
-      box-shadow: inset 0 0 0 2px rgba(245,166,35,.5), inset 0 0 40px rgba(245,166,35,.28); }
-    @keyframes anaGlowPulse { 0%,100% { opacity: .3; } 50% { opacity: .65; } }
-    .lina-ana .ana-wave {
-      position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%);
-      width: 76%; height: 38px; opacity: 0; pointer-events: none; transition: opacity .2s ease;
-      filter: drop-shadow(0 2px 10px rgba(0,0,0,.5));
-    }
-    .lina-ana .ana-card[data-state="speaking"] .ana-wave { opacity: .95; }
-    .lina-ana .ana-cta {
-      position: absolute; left: 12px; right: 12px; bottom: 12px;
-      display: flex; align-items: center; justify-content: center; gap: 9px;
-      background: rgba(10,15,25,.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,.09); border-radius: 999px;
-      padding: 12px 14px; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.25;
-    }
-    .lina-ana .ana-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex: 0 0 auto; animation: anaDot 1.8s ease-in-out infinite; }
-    .lina-ana .ana-card[data-state="speaking"] .ana-dot { background: #ec4899; }
-    .lina-ana .ana-card[data-state="thinking"] .ana-dot { background: #f5a623; }
-    @keyframes anaDot { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6); } 70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
-    .lina-ana .orb-cap-idle, .lina-ana .orb-cap-active { display: none; }
-    .lina-ana .ana-card[data-state="idle"] .orb-cap-idle { display: inline; }
-    .lina-ana .ana-card:not([data-state="idle"]) .orb-cap-active { display: inline; }
-    @media (prefers-reduced-motion: reduce) {
-      .lina-ana .ana-photo { animation: none !important; }
-      .lina-ana .ana-dot { animation: none; }
-    }
+    .lina-v2 .voicepick { display: none; }
     @media (prefers-reduced-motion: reduce) {
       .lina-v2 .orb-svg animate { display: none; }
       .lina-v2 [class*="orb-ring"], .lina-v2 .orb-scan, .lina-v2 .orb-iris-outer, .lina-v2 .orb-iris-segs, .lina-v2 .orb-particle { animation: none !important; }
