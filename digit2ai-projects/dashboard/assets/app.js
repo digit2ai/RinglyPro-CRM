@@ -887,10 +887,18 @@ function initLinaOrb(d) {
   // Fetch the LIVE unread email + Intercom detail (senders/names) so Lina can
   // name who wrote. Both reuse the same token the badges use; failures are silent.
   async function fetchLinaExtras() {
-    const out = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
+    const out = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] }, messages: { unread: 0, followups: 0 } };
     let tok = null;
     try { tok = (typeof TOKEN !== 'undefined' && TOKEN) ? TOKEN : localStorage.getItem('token'); } catch (e) {}
     if (!tok) return out;
+    try {
+      const rm = await fetch(location.origin + '/api/projects-bridge/call-stats', { headers: { Authorization: 'Bearer ' + tok } });
+      const md = await rm.json();
+      if (md && md.success) {
+        out.messages.unread = Number(md.unread_messages) || 0;
+        out.messages.followups = Number(md.follow_ups_pending) || 0;
+      }
+    } catch (e) {}
     try {
       const r = await fetch(location.origin + '/api/projects-bridge/emails', { headers: { Authorization: 'Bearer ' + tok } });
       const ed = await r.json();
@@ -917,7 +925,7 @@ function initLinaOrb(d) {
   // so the numbers + meetings are always current. Falls back to a generic intro
   // if no data was passed.
   function buildSegments(extras) {
-    extras = extras || { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
+    extras = extras || { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] }, messages: { unread: 0, followups: 0 } };
     const s = (d && d.summary) || {};
     const ev = (d && Array.isArray(d.upcoming_events)) ? d.upcoming_events : [];
     const segs = [];
@@ -992,7 +1000,15 @@ function initLinaOrb(d) {
       segs.push('En Intercom tienes ' + linaJoinES(parts) + '.');
     }
 
-    // 5 — projects health
+    // 5 — Messages (SMS / voicemails) — unread counter + follow-ups
+    const mg = extras.messages || { unread: 0, followups: 0 };
+    let msg;
+    if (!mg.unread) msg = 'En Mensajes no tienes mensajes sin leer';
+    else msg = 'En Mensajes tienes ' + (mg.unread === 1 ? 'un mensaje sin leer' : linaNumES(mg.unread) + ' mensajes sin leer');
+    if (mg.followups > 0) msg += ', y ' + (mg.followups === 1 ? 'un contacto marcado para seguimiento' : linaNumES(mg.followups) + ' contactos marcados para seguimiento');
+    segs.push(msg + '.');
+
+    // 6 — projects health
     const active = Number(s.active_projects) || 0;
     const overdueP = Number(s.overdue_projects) || 0;
     const dueWeek = Number(s.projects_due_this_week) || 0;
@@ -1004,7 +1020,7 @@ function initLinaOrb(d) {
     if (needFollow > 0) proj += (needFollow === 1 ? 'Un contacto espera seguimiento' : linaNumES(needFollow) + ' contactos esperan seguimiento') + '. ';
     if (proj.trim()) segs.push(proj.trim());
 
-    // 6 — closing
+    // 7 — closing
     segs.push('Más abajo están los Hallazgos Neurales, donde mi red de agentes vigila cada proyecto y te avisa antes de que algo se atrase. Si necesitas algo, pulsa el botón de inteligencia artificial, abajo a la derecha, y pídemelo en lenguaje natural.');
     return segs;
   }
