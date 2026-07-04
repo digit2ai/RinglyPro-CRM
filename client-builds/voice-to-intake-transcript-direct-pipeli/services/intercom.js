@@ -35,12 +35,17 @@ async function ensureTable(seq) {
   // bytes in image_data, optional caption reused in body. text/audio rows keep NULL image.
   await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS image_data BYTEA`);
   await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS image_mime VARCHAR(64)`);
+  // Generic file/document support (CSV, PDF, docs...): msg_type='file',
+  // bytes in file_data, original filename kept for download.
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS file_data BYTEA`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS file_mime VARCHAR(128)`);
+  await seq.query(`ALTER TABLE ${TABLE} ADD COLUMN IF NOT EXISTS file_name VARCHAR(255)`);
   tableReady = true;
 }
 
 function norm(email) { return String(email || '').trim().toLowerCase(); }
 
-async function postMessage({ email, name, sender, body, msgType, audioData, audioMime, audioDuration, imageData, imageMime }) {
+async function postMessage({ email, name, sender, body, msgType, audioData, audioMime, audioDuration, imageData, imageMime, fileData, fileMime, fileName }) {
   const seq = getSequelize();
   await ensureTable(seq);
   const e = norm(email);
@@ -49,16 +54,18 @@ async function postMessage({ email, name, sender, body, msgType, audioData, audi
   let type = 'text';
   if (msgType === 'audio') type = 'audio';
   else if (msgType === 'image') type = 'image';
+  else if (msgType === 'file') type = 'file';
   let text;
   if (type === 'audio') text = '[Voice message]';
   else if (type === 'image') text = (body && String(body).trim()) ? String(body).slice(0, 4000) : '[Photo]';
+  else if (type === 'file') text = (body && String(body).trim()) ? String(body).slice(0, 4000) : (fileName ? String(fileName).slice(0, 255) : '[File]');
   else text = String(body).slice(0, 4000);
   // BYTEA must go through real bind params ($1..) so the pg driver sends the
   // Buffer as binary; Sequelize `replacements` does string interpolation and
   // would corrupt the bytes. So everything here uses `bind`.
   const [rows] = await seq.query(
-    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, msg_type, audio_data, audio_mime, audio_duration, image_data, image_mime, read_by_champion, read_by_owner, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING id, created_at`,
+    `INSERT INTO ${TABLE} (champion_email, champion_name, sender, body, msg_type, audio_data, audio_mime, audio_duration, image_data, image_mime, file_data, file_mime, file_name, read_by_champion, read_by_owner, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW()) RETURNING id, created_at`,
     {
       bind: [
         e, name || null, sender, text, type,
@@ -67,6 +74,9 @@ async function postMessage({ email, name, sender, body, msgType, audioData, audi
         type === 'audio' ? (audioDuration || null) : null,
         type === 'image' ? (imageData || null) : null,
         type === 'image' ? (imageMime || 'image/jpeg') : null,
+        type === 'file' ? (fileData || null) : null,
+        type === 'file' ? (fileMime || 'application/octet-stream') : null,
+        type === 'file' ? (fileName || 'file') : null,
         readChamp, readOwner
       ]
     }
@@ -78,7 +88,7 @@ async function getThread(email) {
   const seq = getSequelize();
   await ensureTable(seq);
   const [rows] = await seq.query(
-    `SELECT id, sender, body, created_at, msg_type, audio_mime, audio_duration, image_mime FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
+    `SELECT id, sender, body, created_at, msg_type, audio_mime, audio_duration, image_mime, file_mime, file_name, octet_length(file_data) AS file_size FROM ${TABLE} WHERE champion_email = :email ORDER BY id ASC LIMIT 500`,
     { replacements: { email: norm(email) } }
   );
   return rows;
@@ -103,6 +113,18 @@ async function getImage(id) {
   await ensureTable(seq);
   const [rows] = await seq.query(
     `SELECT id, champion_email, image_data, image_mime FROM ${TABLE} WHERE id = :id AND msg_type = 'image' LIMIT 1`,
+    { replacements: { id: parseInt(id, 10) || 0 } }
+  );
+  return rows[0] || null;
+}
+
+// Returns the raw file bytes + name for one message (or null). Includes
+// champion_email so the route can authorize champion access to their own thread.
+async function getFile(id) {
+  const seq = getSequelize();
+  await ensureTable(seq);
+  const [rows] = await seq.query(
+    `SELECT id, champion_email, file_data, file_mime, file_name FROM ${TABLE} WHERE id = :id AND msg_type = 'file' LIMIT 1`,
     { replacements: { id: parseInt(id, 10) || 0 } }
   );
   return rows[0] || null;
@@ -167,6 +189,6 @@ async function listThreads() {
 }
 
 module.exports = {
-  postMessage, getThread, getAudio, getImage, markReadByChampion, markReadByOwner,
+  postMessage, getThread, getAudio, getImage, getFile, markReadByChampion, markReadByOwner,
   unreadForChampion, totalUnreadForOwner, listThreads, TABLE
 };

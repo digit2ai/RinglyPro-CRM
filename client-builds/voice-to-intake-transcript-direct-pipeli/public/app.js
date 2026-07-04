@@ -60,6 +60,9 @@
     icImgPrevSend: document.getElementById('icImgPrevSend'),
     icImgPrevX: document.getElementById('icImgPrevX'),
     icImgPrevTo: document.getElementById('icImgPrevTo'),
+    icImgPrevDoc: document.getElementById('icImgPrevDoc'),
+    icImgPrevDocName: document.getElementById('icImgPrevDocName'),
+    icImgPrevDocSize: document.getElementById('icImgPrevDocSize'),
     icLightbox: document.getElementById('icLightbox'),
     icLightboxImg: document.getElementById('icLightboxImg'),
     pocHeading: document.getElementById('pocHeading'),
@@ -534,8 +537,9 @@
   // ---- Intercom chat (champion <-> owner) -------------------------------
   function fmtTime(s) { try { return new Date(s).toLocaleString(); } catch (e) { return ''; } }
 
-  // ---- Images (attach / paste / drag-drop, WhatsApp-style) ----
-  var icImgCache = {}, icPendingImage = null;
+  // ---- Attachments: images + files (attach / paste / drag-drop, WhatsApp-style) ----
+  var icImgCache = {}, icPending = null;
+  function icFmtBytes(n) { n = Number(n) || 0; if (n < 1024) return n + ' B'; if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB'; return (n / 1048576).toFixed(1) + ' MB'; }
   function icLoadImageInto(wrap) {
     if (wrap.getAttribute('data-loaded')) return;
     var id = wrap.getAttribute('data-imgid');
@@ -554,33 +558,68 @@
   }
   function icOpenLightbox(url) { if (!el.icLightbox) return; el.icLightboxImg.src = url; el.icLightbox.style.display = 'flex'; }
   if (el.icLightbox) el.icLightbox.addEventListener('click', function () { el.icLightbox.style.display = 'none'; el.icLightboxImg.src = ''; });
-  el.intercomThread.addEventListener('click', function (e) { var im = e.target.closest && e.target.closest('.ic-imgmsg img'); if (im && im.src) icOpenLightbox(im.src); });
+  el.intercomThread.addEventListener('click', function (e) {
+    var im = e.target.closest && e.target.closest('.ic-imgmsg img'); if (im && im.src) { icOpenLightbox(im.src); return; }
+    var fm = e.target.closest && e.target.closest('.ic-filemsg[data-fileid]'); if (fm) icDownloadFile(fm.getAttribute('data-fileid'), fm.getAttribute('data-fname'));
+  });
+  // Download a file message with auth -> blob -> browser download.
+  function icDownloadFile(id, name) {
+    var token = getToken(); if (!token) return;
+    var sub = null; try { sub = document.querySelector('.ic-filemsg[data-fileid="' + id + '"] .ic-filemsg-sub'); } catch (e) {}
+    if (sub) sub.textContent = 'Downloading…';
+    fetch(API_INTERCOM + '/file/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } })
+      .then(function (r) { if (!r.ok) throw new Error('http'); return r.blob(); })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a'); a.href = url; a.download = name || 'file';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        if (sub) sub.textContent = 'Downloaded';
+      })
+      .catch(function () { if (sub) sub.textContent = 'Download failed — tap to retry'; });
+  }
 
-  function icHandleImageFile(file) {
-    if (!getToken()) return;
-    if (!file || !/^image\//.test(file.type || '')) return;
-    if (file.size > 8 * 1024 * 1024) { alert('Image too large (max 8 MB).'); return; }
+  var IC_IMG_MAX = 8 * 1024 * 1024, IC_FILE_MAX = 16 * 1024 * 1024;
+  function icHandleAttachment(file) {
+    if (!getToken() || !file) return;
+    var isImage = /^image\//.test(file.type || '');
+    if (isImage) { if (file.size > IC_IMG_MAX) { alert('Image too large (max 8 MB).'); return; } }
+    else { if (file.size > IC_FILE_MAX) { alert('File too large (max 16 MB).'); return; } }
     var reader = new FileReader();
-    reader.onload = function () { icPendingImage = { dataUrl: String(reader.result || ''), mime: file.type || 'image/jpeg' }; icShowImgPrev(); };
+    reader.onload = function () {
+      icPending = { dataUrl: String(reader.result || ''), mime: file.type || (isImage ? 'image/jpeg' : 'application/octet-stream'), name: file.name || 'file', size: file.size || 0, kind: isImage ? 'image' : 'file' };
+      icShowPreview();
+    };
     reader.readAsDataURL(file);
   }
-  function icShowImgPrev() {
-    if (!icPendingImage || !el.icImgPrev) return;
-    el.icImgPrevImg.src = icPendingImage.dataUrl; el.icImgPrevCap.value = '';
-    if (el.icImgPrevTo) el.icImgPrevTo.textContent = (t().ownerLabel || 'Photo');
+  function icShowPreview() {
+    if (!icPending || !el.icImgPrev) return;
+    if (icPending.kind === 'image') {
+      el.icImgPrevImg.src = icPending.dataUrl; el.icImgPrevImg.style.display = '';
+      if (el.icImgPrevDoc) el.icImgPrevDoc.style.display = 'none';
+    } else {
+      el.icImgPrevImg.style.display = 'none'; el.icImgPrevImg.src = '';
+      if (el.icImgPrevDoc) el.icImgPrevDoc.style.display = 'flex';
+      if (el.icImgPrevDocName) el.icImgPrevDocName.textContent = icPending.name;
+      if (el.icImgPrevDocSize) el.icImgPrevDocSize.textContent = icFmtBytes(icPending.size);
+    }
+    el.icImgPrevCap.value = '';
+    if (el.icImgPrevTo) el.icImgPrevTo.textContent = (t().ownerLabel || 'Digit2Ai');
     el.icImgPrev.style.display = 'flex';
     setTimeout(function () { try { el.icImgPrevCap.focus(); } catch (e) {} }, 60);
   }
-  function icHideImgPrev() { if (!el.icImgPrev) return; el.icImgPrev.style.display = 'none'; el.icImgPrevImg.src = ''; icPendingImage = null; }
-  function icSendImage() {
+  function icHidePreview() { if (!el.icImgPrev) return; el.icImgPrev.style.display = 'none'; el.icImgPrevImg.src = ''; icPending = null; }
+  function icSendPending() {
     var token = getToken();
-    if (!icPendingImage || !token) return;
-    var dataUrl = icPendingImage.dataUrl, mime = icPendingImage.mime, cap = (el.icImgPrevCap.value || '').trim();
-    var b64 = dataUrl; var comma = b64.indexOf(','); if (comma !== -1) b64 = b64.slice(comma + 1);
-    icHideImgPrev();
-    fetch(API_INTERCOM + '/me/image', {
+    if (!icPending || !token) return;
+    var p = icPending, cap = (el.icImgPrevCap.value || '').trim();
+    var b64 = p.dataUrl; var comma = b64.indexOf(','); if (comma !== -1) b64 = b64.slice(comma + 1);
+    icHidePreview();
+    var url = API_INTERCOM + (p.kind === 'image' ? '/me/image' : '/me/file');
+    var payload = p.kind === 'image' ? { image: b64, mime: p.mime, caption: cap } : { file: b64, mime: p.mime, name: p.name, caption: cap };
+    fetch(url, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ image: b64, mime: mime, caption: cap })
+      body: JSON.stringify(payload)
     }).then(function () { fetchIntercom(); }).catch(function () { fetchIntercom(); });
   }
 
@@ -644,6 +683,15 @@
         bub.appendChild(im);
         var cap = (m.body && m.body !== '[Photo]') ? m.body : '';
         if (cap) { var cd = document.createElement('div'); cd.className = 'ic-imgcap'; cd.textContent = cap; bub.appendChild(cd); }
+      } else if (m.msg_type === 'file') {
+        var fname = m.file_name || 'file';
+        var fm = document.createElement('div'); fm.className = 'ic-filemsg'; fm.setAttribute('data-fileid', m.id); fm.setAttribute('data-fname', fname); fm.title = 'Download';
+        fm.innerHTML = '<div class="ic-filemsg-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5z"/></svg></div>' +
+          '<div style="min-width:0;flex:1"><div class="ic-filemsg-name"></div><div class="ic-filemsg-sub">' + icFmtBytes(m.file_size) + ' · Tap to download</div></div>';
+        fm.querySelector('.ic-filemsg-name').textContent = fname;
+        bub.appendChild(fm);
+        var fcap = (m.body && m.body !== '[File]' && m.body !== fname) ? m.body : '';
+        if (fcap) { var fcd = document.createElement('div'); fcd.className = 'ic-imgcap'; fcd.textContent = fcap; bub.appendChild(fcd); }
       } else {
         var txt = document.createElement('div'); txt.style.cssText = 'white-space:pre-wrap;word-wrap:break-word'; txt.textContent = m.body;
         bub.appendChild(txt);
@@ -770,28 +818,26 @@
   el.intercomInput.addEventListener('input', icUpdateSendMic);
   el.intercomInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); ensurePush(); sendIntercom(); } });
 
-  // Image: attach button, file picker, preview send, paste, drag-drop, Esc
+  // Attachment: attach button, file picker, preview send, paste, drag-drop, Esc
   if (el.intercomAttach) el.intercomAttach.addEventListener('click', function () { ensurePush(); if (el.intercomFile) el.intercomFile.click(); });
-  if (el.intercomFile) el.intercomFile.addEventListener('change', function () { if (el.intercomFile.files && el.intercomFile.files[0]) icHandleImageFile(el.intercomFile.files[0]); el.intercomFile.value = ''; });
-  if (el.icImgPrevSend) el.icImgPrevSend.addEventListener('click', icSendImage);
-  if (el.icImgPrevX) el.icImgPrevX.addEventListener('click', icHideImgPrev);
-  if (el.icImgPrevCap) el.icImgPrevCap.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); icSendImage(); } });
+  if (el.intercomFile) el.intercomFile.addEventListener('change', function () { if (el.intercomFile.files && el.intercomFile.files[0]) icHandleAttachment(el.intercomFile.files[0]); el.intercomFile.value = ''; });
+  if (el.icImgPrevSend) el.icImgPrevSend.addEventListener('click', icSendPending);
+  if (el.icImgPrevX) el.icImgPrevX.addEventListener('click', icHidePreview);
+  if (el.icImgPrevCap) el.icImgPrevCap.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); icSendPending(); } });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     if (el.icLightbox && el.icLightbox.style.display === 'flex') { el.icLightbox.style.display = 'none'; el.icLightboxImg.src = ''; }
-    else if (el.icImgPrev && el.icImgPrev.style.display === 'flex') { icHideImgPrev(); }
+    else if (el.icImgPrev && el.icImgPrev.style.display === 'flex') { icHidePreview(); }
   });
-  // Paste a screenshot while the inbox/chat is open
+  // Paste a screenshot/file while the inbox/chat is open
   document.addEventListener('paste', function (e) {
     if (!inboxView || !getToken()) return;
     var items = (e.clipboardData && e.clipboardData.items) || [];
     for (var i = 0; i < items.length; i++) {
-      if (items[i].kind === 'file' && items[i].type && items[i].type.indexOf('image/') === 0) {
-        var f = items[i].getAsFile(); if (f) { e.preventDefault(); icHandleImageFile(f); return; }
-      }
+      if (items[i].kind === 'file') { var f = items[i].getAsFile(); if (f) { e.preventDefault(); icHandleAttachment(f); return; } }
     }
   });
-  // Drag-and-drop an image file onto the window (while chat is open)
+  // Drag-and-drop any file onto the window (while chat is open)
   function icDragHasFiles(e) { try { var ty = e.dataTransfer && e.dataTransfer.types; if (!ty) return false; return (ty.indexOf ? ty.indexOf('Files') !== -1 : Array.prototype.indexOf.call(ty, 'Files') !== -1); } catch (err) { return false; } }
   var icDragDepth = 0;
   window.addEventListener('dragenter', function (e) { if (inboxView && getToken() && icDragHasFiles(e)) { icDragDepth++; if (el.icDropov) el.icDropov.style.display = 'flex'; } });
@@ -800,7 +846,7 @@
   window.addEventListener('drop', function (e) {
     icDragDepth = 0; if (el.icDropov) el.icDropov.style.display = 'none';
     if (!inboxView || !getToken()) return;
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); icHandleImageFile(e.dataTransfer.files[0]); }
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); icHandleAttachment(e.dataTransfer.files[0]); }
   });
 
   // Keyboard handling is done via the viewport meta (interactive-widget=

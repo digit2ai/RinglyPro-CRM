@@ -60,6 +60,27 @@ function parseImagePayload(body) {
   return { buf, mime, caption };
 }
 
+// Generic file/document attachments (CSV, PDF, docs, zip...). Bigger cap than images.
+const fileJson = express.json({ limit: '24mb' });
+const MAX_FILE_BYTES = 16 * 1024 * 1024; // 16 MB hard cap on decoded file
+
+// Decode { file: <base64|dataURL>, mime, name, caption } -> { buf, mime, name, caption } or null.
+function parseFilePayload(body) {
+  if (!body || typeof body.file !== 'string') return null;
+  let b64 = body.file;
+  const comma = b64.indexOf(',');
+  if (b64.slice(0, 5) === 'data:' && comma !== -1) b64 = b64.slice(comma + 1); // strip data URL prefix
+  let buf;
+  try { buf = Buffer.from(b64, 'base64'); } catch (e) { return null; }
+  if (!buf || !buf.length || buf.length > MAX_FILE_BYTES) return null;
+  let mime = String(body.mime || 'application/octet-stream').slice(0, 128);
+  if (!/^[\w.+-]+\/[\w.+-]+$/.test(mime)) mime = 'application/octet-stream';
+  // Strip path separators, control chars, and double-quotes from the filename; cap at 255.
+  let name = String(body.name || 'file').replace(/[\\/]/g, '_').replace(/[\x00-\x1f\x7f"]/g, '').trim().slice(0, 255) || 'file';
+  const caption = typeof body.caption === 'string' ? body.caption.trim().slice(0, 4000) : '';
+  return { buf, mime, name, caption };
+}
+
 function champEmail(req) { return (req.jwt && req.jwt.email) || null; }
 function champName(req) {
   const j = req.jwt || {};
@@ -219,6 +240,54 @@ router.get('/image/:id', requireAuth, async (req, res) => {
   }
 });
 
+// Champion sends a file/document (CSV, PDF, ...) with optional caption.
+router.post('/me/file', requireAuth, fileJson, async (req, res) => {
+  try {
+    const email = champEmail(req);
+    if (!email) return res.status(400).json({ error: 'no champion identity' });
+    const f = parseFilePayload(req.body);
+    if (!f) return res.status(422).json({ error: 'invalid or too-large file (max 16MB)' });
+    const row = await intercom.postMessage({
+      email, name: champName(req), sender: 'champion', msgType: 'file',
+      fileData: f.buf, fileMime: f.mime, fileName: f.name, body: f.caption
+    });
+    res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    intercom.totalUnreadForOwner().then((unread) => {
+      push.sendToOwner({
+        title: 'Digit2Ai Intercom',
+        body: (champName(req) ? champName(req) + ': ' : '') + (f.caption || f.name),
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
+  } catch (err) {
+    console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_file_error', error: err.message }));
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Download a file message's bytes. Owner (CRM token) can fetch any; a champion
+// (champion code) can only fetch files from their own thread.
+router.get('/file/:id', requireAuth, async (req, res) => {
+  try {
+    const row = await intercom.getFile(req.params.id);
+    if (!row || !row.file_data) return res.status(404).end();
+    if (req.isChampion) {
+      const mine = champEmail(req);
+      if (!mine || String(row.champion_email).toLowerCase() !== String(mine).toLowerCase()) {
+        return res.status(403).end();
+      }
+    }
+    const safeName = String(row.file_name || 'file').replace(/[\x00-\x1f"\\]/g, '');
+    res.set('Content-Type', row.file_mime || 'application/octet-stream');
+    res.set('Content-Disposition', 'attachment; filename="' + safeName + '"; filename*=UTF-8\'\'' + encodeURIComponent(safeName));
+    res.set('Cache-Control', 'private, max-age=86400');
+    res.send(row.file_data);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
 // Stream a voice message's bytes. Owner (CRM token) can fetch any; a champion
 // (champion code) can only fetch audio from their own thread.
 router.get('/audio/:id', requireAuth, async (req, res) => {
@@ -337,6 +406,32 @@ router.post('/threads/:email/image', requireCrmAuth, imageJson, async (req, res)
     }).catch(() => {});
   } catch (err) {
     console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_owner_image_error', error: err.message }));
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+// Owner sends a file/document to a champion thread.
+router.post('/threads/:email/file', requireCrmAuth, fileJson, async (req, res) => {
+  try {
+    const email = String(req.params.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const f = parseFilePayload(req.body);
+    if (!f) return res.status(422).json({ error: 'invalid or too-large file (max 16MB)' });
+    const row = await intercom.postMessage({
+      email, name: null, sender: 'owner', msgType: 'file',
+      fileData: f.buf, fileMime: f.mime, fileName: f.name, body: f.caption
+    });
+    res.status(201).json({ ok: true, id: row.id, created_at: row.created_at });
+    intercom.unreadForChampion(email).then((unread) => {
+      push.sendToChampion(email, {
+        title: 'Digit2Ai',
+        body: f.caption || f.name,
+        unread,
+        url: '/voice-to-intake-transcript-direct-pipeli/'
+      });
+    }).catch(() => {});
+  } catch (err) {
+    console.error(JSON.stringify({ svc: 'voice-to-intake', event: 'intercom_owner_file_error', error: err.message }));
     res.status(500).json({ error: 'internal error' });
   }
 });
