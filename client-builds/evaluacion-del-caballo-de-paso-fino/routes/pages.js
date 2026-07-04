@@ -80,28 +80,111 @@ router.get('/coming-soon', (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8').send(render(COMING_SOON_TPL, req));
 });
 
-// /privacidad — Ley 1581 de 2012 statement: no personal data is processed.
+// /privacidad — Política de Tratamiento de Datos Personales (Ley 1581 de 2012 +
+// Decreto 1074 de 2015). LIVE product: real accounts, payments, uploaded media.
+// Spanish is the authoritative version; [BRACKETS] must be completed by the operator.
 router.get('/privacidad', (req, res) => {
   const lang = pickLang(req.query.lang);
   const d = dict(lang);
   const base = (req.baseUrl || '') + '/';
-  const body = lang === 'en'
-    ? `<h1>Data Protection</h1>
-<p>This proof-of-concept processes <strong>no personal data</strong>. It stores only horse names and gait metrics derived from an uploaded audio clip. No owner identifiers, contact details, or other personal information are collected, stored, or shared.</p>
-<p>Because no personal data is processed, the requirements of Colombia's <strong>Ley 1581 de 2012</strong> (Habeas Data) are met by design. Uploaded audio is analyzed in memory and discarded; it is never persisted.</p>
-<p><a href="${esc(base)}">&larr; Back</a></p>`
-    : `<h1>Protección de Datos</h1>
-<p>Esta prueba de concepto <strong>no procesa datos personales</strong>. Solo almacena nombres de caballos y métricas de marcha derivadas de un audio cargado. No se recopilan, almacenan ni comparten identificadores del propietario, datos de contacto ni ninguna otra información personal.</p>
-<p>Dado que no se procesan datos personales, los requisitos de la <strong>Ley 1581 de 2012</strong> (Habeas Data) de Colombia se cumplen por diseño. El audio cargado se analiza en memoria y se descarta; nunca se persiste.</p>
-<p><a href="${esc(base)}">&larr; Volver</a></p>`;
-  const html = `<!doctype html><html lang="${esc(lang)}"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(d.privacy_title || 'Privacidad')} — ${esc(d.title)}</title>
-<script src="https://cdn.tailwindcss.com"></script>
-</head><body class="bg-slate-950 text-slate-100 min-h-screen">
-<main class="max-w-2xl mx-auto px-6 py-16 prose prose-invert">${body}</main>
-</body></html>`;
-  res.set('Content-Type', 'text/html; charset=utf-8').send(html);
+  const updated = '4 de julio de 2026';
+  const body = lang === 'en' ? `
+<h1>Privacy &amp; Data Protection Policy</h1>
+<p><em>Last updated: July 4, 2026. English is a courtesy translation; the Spanish version prevails.</em></p>
+<p>EquiMind is a <strong>live production service</strong>. This policy explains what personal data we process, why, and the rights you have under Colombia's <strong>Ley 1581 de 2012</strong> (Habeas Data) and <strong>Decreto 1074 de 2015</strong>.</p>
+
+<h2>1. Data controller (Responsable del Tratamiento)</h2>
+<p>Digit2AI [legal entity, NIT, domicile in Colombia]. Data-protection contact: [privacidad@equimind.app].</p>
+
+<h2>2. What data we process</h2>
+<ul>
+<li><strong>Account data:</strong> email, display name, and a securely hashed password.</li>
+<li><strong>Payment data:</strong> processed by our payment provider (Stripe). We do <strong>not</strong> store full card numbers; we retain only transaction references, amounts, and status.</li>
+<li><strong>Uploaded content:</strong> audio, video, and/or images you submit, plus horse details (name, sex, coat, breeder) and the gait metrics derived from your uploads.</li>
+<li><strong>Technical data:</strong> IP address (for security and rate-limiting), an authentication cookie (<code>ecpf_token</code>), and server logs.</li>
+</ul>
+
+<h2>3. Purposes</h2>
+<p>To create and secure your account; run the gait analyses you request; process payments and credits; generate and, at your choice, share reports; provide support; ensure security and prevent abuse; and comply with legal obligations.</p>
+
+<h2>4. Legal basis / authorization</h2>
+<p>We process your data based on your authorization (given when you register and use the Service) and to perform the contract between us. You may withdraw your authorization at any time, subject to legal or contractual retention duties.</p>
+
+<h2>5. Processors &amp; third parties</h2>
+<p>We share data only with providers who help us operate the Service under confidentiality obligations — notably <strong>Stripe</strong> (payments) and our cloud hosting provider (<strong>Render</strong>). We do not sell your personal data.</p>
+
+<h2>6. International transfers</h2>
+<p>Our providers may store or process data on servers located outside Colombia. We take reasonable measures to ensure an adequate level of protection consistent with Colombian law.</p>
+
+<h2>7. Retention</h2>
+<p>We keep account and analysis data for as long as your account is active and thereafter only as required to meet legal, accounting, or dispute-resolution obligations, after which it is deleted or anonymized. Video is <strong>not</strong> stored on our servers; audio is analyzed and the resulting metrics (not the raw file) are what we retain, together with a limited set of pose keypoints for traceability.</p>
+
+<h2>8. Your rights (derechos del Titular)</h2>
+<p>You have the right to know, update, and rectify your data; to request proof of the authorization given; to be informed about the use of your data; to file complaints with the Superintendencia de Industria y Comercio (SIC); to access your data free of charge; and to revoke authorization and/or request deletion when there is no legal duty to retain it. To exercise these rights, write to [privacidad@equimind.app]. We respond to consultations within 10 business days and complaints within 15 business days (extendable per law).</p>
+
+<h2>9. Security</h2>
+<p>We apply reasonable technical and administrative measures: password hashing, HTTPS, HttpOnly/Secure authentication cookies, rate limiting, and access controls. No system is completely secure, but we work to protect your information.</p>
+
+<h2>10. Cookies</h2>
+<p>We use a strictly necessary authentication cookie (<code>ecpf_token</code>) to keep you signed in. It is not used for advertising.</p>
+
+<h2>11. Minors</h2>
+<p>The Service is not directed to children. We do not knowingly process data of minors without appropriate authorization.</p>
+
+<h2>12. Changes</h2>
+<p>We may update this policy; the current version is always published here with its date.</p>
+
+<p><a href="${esc(base)}">&larr; Back</a> · <a href="${esc(base)}terminos">Terms</a> · <a href="${esc(base)}reembolsos">Refunds</a></p>
+` : `
+<h1>Política de Tratamiento de Datos Personales</h1>
+<p><em>Última actualización: ${updated}. Esta versión en español es la autorizada y prevalece sobre cualquier traducción.</em></p>
+<p>EquiMind es un <strong>servicio en producción y en operación real</strong>. Esta política explica qué datos personales tratamos, con qué finalidad y qué derechos le asisten conforme a la <strong>Ley 1581 de 2012</strong> (Habeas Data) y el <strong>Decreto 1074 de 2015</strong> de Colombia.</p>
+
+<h2>1. Responsable del Tratamiento</h2>
+<p>Digit2AI [razón social, NIT, domicilio en Colombia]. Canal de atención en protección de datos: [privacidad@equimind.app].</p>
+
+<h2>2. Qué datos tratamos</h2>
+<ul>
+<li><strong>Datos de cuenta:</strong> correo electrónico, nombre visible y una contraseña almacenada de forma cifrada (hash).</li>
+<li><strong>Datos de pago:</strong> procesados por nuestro proveedor de pagos (Stripe). <strong>No</strong> almacenamos el número completo de la tarjeta; conservamos únicamente referencias de la transacción, montos y estado.</li>
+<li><strong>Contenido cargado:</strong> el audio, video o imágenes que usted envía, junto con los datos del caballo (nombre, sexo, capa, criadero) y las métricas de marcha derivadas de sus cargas.</li>
+<li><strong>Datos técnicos:</strong> dirección IP (para seguridad y control de tasa), una cookie de autenticación (<code>ecpf_token</code>) y registros del servidor (logs).</li>
+</ul>
+
+<h2>3. Finalidades</h2>
+<p>Crear y asegurar su cuenta; ejecutar los análisis de marcha que usted solicita; procesar pagos y créditos; generar y, si usted lo decide, compartir reportes; brindar soporte; garantizar la seguridad y prevenir abusos; y cumplir obligaciones legales.</p>
+
+<h2>4. Base legal / autorización</h2>
+<p>Tratamos sus datos con fundamento en su autorización (otorgada al registrarse y usar el Servicio) y para ejecutar la relación contractual entre las partes. Usted puede revocar su autorización en cualquier momento, sujeto a los deberes legales o contractuales de conservación.</p>
+
+<h2>5. Encargados y terceros</h2>
+<p>Compartimos datos únicamente con proveedores que nos ayudan a operar el Servicio bajo deberes de confidencialidad — en particular <strong>Stripe</strong> (pagos) y nuestro proveedor de alojamiento en la nube (<strong>Render</strong>). No vendemos sus datos personales.</p>
+
+<h2>6. Transferencias internacionales</h2>
+<p>Nuestros proveedores pueden almacenar o procesar datos en servidores ubicados fuera de Colombia. Adoptamos medidas razonables para asegurar un nivel de protección adecuado y conforme con la ley colombiana.</p>
+
+<h2>7. Conservación</h2>
+<p>Conservamos los datos de cuenta y de análisis mientras su cuenta esté activa y, posteriormente, solo por el tiempo requerido para atender obligaciones legales, contables o de resolución de controversias, tras lo cual se eliminan o anonimizan. El video <strong>no</strong> se almacena en nuestros servidores; el audio se analiza y lo que conservamos son las métricas resultantes (no el archivo original), junto con un conjunto limitado de puntos de referencia de pose para trazabilidad.</p>
+
+<h2>8. Derechos del Titular</h2>
+<p>Usted tiene derecho a conocer, actualizar y rectificar sus datos; solicitar prueba de la autorización otorgada; ser informado sobre el uso de sus datos; presentar quejas ante la Superintendencia de Industria y Comercio (SIC); acceder gratuitamente a sus datos; y revocar la autorización o solicitar la supresión cuando no exista un deber legal de conservarlos. Para ejercer estos derechos, escriba a [privacidad@equimind.app]. Atendemos consultas dentro de 10 días hábiles y reclamos dentro de 15 días hábiles (prorrogables según la ley).</p>
+
+<h2>9. Seguridad</h2>
+<p>Aplicamos medidas técnicas y administrativas razonables: cifrado de contraseñas (hash), HTTPS, cookies de autenticación HttpOnly/Secure, control de tasa y controles de acceso. Ningún sistema es completamente seguro, pero trabajamos para proteger su información.</p>
+
+<h2>10. Cookies</h2>
+<p>Usamos una cookie de autenticación estrictamente necesaria (<code>ecpf_token</code>) para mantener su sesión iniciada. No se usa con fines publicitarios.</p>
+
+<h2>11. Menores de edad</h2>
+<p>El Servicio no está dirigido a niños, niñas ni adolescentes. No tratamos conscientemente datos de menores sin la autorización correspondiente.</p>
+
+<h2>12. Cambios</h2>
+<p>Podemos actualizar esta política; la versión vigente se publica siempre aquí con su fecha.</p>
+
+<p><a href="${esc(base)}">&larr; Volver</a> · <a href="${esc(base)}terminos">Términos</a> · <a href="${esc(base)}reembolsos">Reembolsos</a></p>
+`;
+  res.set('Content-Type', 'text/html; charset=utf-8')
+     .send(legalShell(lang, lang === 'en' ? 'Privacy Policy' : 'Política de Privacidad', d.title, body));
 });
 
 // -----------------------------------------------------------------------------
