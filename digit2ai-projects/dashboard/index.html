@@ -42,6 +42,57 @@
     .lina .voicepick select { font: inherit; background: var(--bg-input, #1b2536); color: var(--text, #e9eef7);
       border: 1px solid var(--border, #243049); border-radius: 8px; padding: 5px 8px; margin-left: 6px; }
     @media (max-width: 560px) { .lina { flex-direction: column; text-align: center; } .lina .controls { justify-content: center; } }
+
+    /* ===== Lina v2 — animated arc-reactor orb (ported from champion-teaser) ===== */
+    .lina-v2 { flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 24px 24px 20px; }
+    .lina-v2 .lina-name { font-weight: 700; font-size: 18px; }
+    .lina-v2 .lina-role { margin-bottom: 8px; }
+    .lina-v2 .orb-wrap {
+      position: relative; width: 190px; height: 190px; margin: 8px auto 30px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; --orb-amp: 0; transition: transform 180ms ease;
+    }
+    .lina-v2 .orb-wrap:hover { transform: scale(1.03); }
+    .lina-v2 .orb-wrap:focus-visible { outline: 2px solid #22d3ee; outline-offset: 8px; border-radius: 50%; }
+    .lina-v2 .orb-svg {
+      width: 100%; height: 100%; overflow: visible;
+      transform: scale(calc(1 + var(--orb-amp) * 0.05));
+      filter: drop-shadow(0 8px 30px rgba(34,211,238, calc(0.22 + var(--orb-amp)*0.35)))
+              drop-shadow(0 4px 16px rgba(139,92,246, calc(0.18 + var(--orb-amp)*0.25)));
+      transition: filter 120ms ease;
+    }
+    .lina-v2 .orb-ring-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbSpin 32s linear infinite; }
+    .lina-v2 .orb-ring-mid   { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbSpinRev 22s linear infinite; }
+    .lina-v2 .orb-ring-inner { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbSpin 14s linear infinite; }
+    .lina-v2 .orb-iris-outer { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbSpinRev 18s linear infinite; }
+    .lina-v2 .orb-iris-segs  { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbSpin 9s linear infinite; }
+    @keyframes linaOrbSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    @keyframes linaOrbSpinRev { from { transform: rotate(360deg); } to { transform: rotate(0); } }
+    .lina-v2 .orb-scan { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbScan 6s linear infinite; }
+    @keyframes linaOrbScan { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .lina-v2 .orb-crosshair { animation: linaOrbBlink 2.4s ease-in-out infinite; }
+    @keyframes linaOrbBlink { 0%,100% { opacity: .15; } 50% { opacity: .5; } }
+    .lina-v2 .orb-ring { opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .lina-v2 .orb-wrap[data-state="speaking"] .orb-core,
+    .lina-v2 .orb-wrap[data-state="speaking"] .orb-glow { filter: brightness(1.3) saturate(1.2); }
+    .lina-v2 .orb-particles { opacity: 0; }
+    .lina-v2 .orb-particle { transform-box: fill-box; transform-origin: 120px 120px; animation: linaOrbit 2.6s linear infinite; filter: drop-shadow(0 0 4px currentColor); }
+    .lina-v2 .orb-wrap[data-state="thinking"] .orb-particles { opacity: 1; }
+    .lina-v2 .orb-wrap[data-state="thinking"] .orb-ring { opacity: .7; animation: linaRingTight 2.4s ease-in-out infinite; }
+    @keyframes linaOrbit { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    @keyframes linaRingTight { 0%,100% { transform: scale(1); stroke-opacity: .4; } 50% { transform: scale(.92); stroke-opacity: .7; } }
+    .lina-v2 .orb-wave { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); width: 150px; height: 40px; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
+    .lina-v2 .orb-wrap[data-state="speaking"] .orb-wave { opacity: .9; }
+    .lina-v2 .orb-caption { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); width: max-content; max-width: min(300px,86vw); text-align: center; font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted,#8a98b0); }
+    .lina-v2 .orb-cap-idle, .lina-v2 .orb-cap-active { display: none; }
+    .lina-v2 .orb-wrap[data-state="idle"] .orb-cap-idle { display: inline; }
+    .lina-v2 .orb-wrap:not([data-state="idle"]) .orb-cap-active { display: inline; }
+    .lina-v2 .orb-wrap[data-state="speaking"] .orb-caption { color: #ec4899; }
+    .lina-v2 .orb-wrap[data-state="thinking"] .orb-caption { color: #8b5cf6; }
+    @media (prefers-reduced-motion: reduce) {
+      .lina-v2 .orb-svg animate { display: none; }
+      .lina-v2 [class*="orb-ring"], .lina-v2 .orb-scan, .lina-v2 .orb-iris-outer, .lina-v2 .orb-iris-segs, .lina-v2 .orb-particle { animation: none !important; }
+    }
   </style>
 </head>
 <body>

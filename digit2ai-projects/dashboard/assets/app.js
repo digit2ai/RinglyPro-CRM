@@ -584,31 +584,122 @@ async function renderOverview(container) {
       <button class="quick-action-btn" style="position:relative" onclick="openCrmEmbed('/voice-to-intake-transcript-direct-pipeli/intercom.html','Intercom')"><span class="qa-label">Intercom</span><span id="qa-intercom-badge"></span></button>
     </div>`;
 
-  // Lina voice orb — zero-key Edge neural TTS (reuses /api/tts/edge). Non-conversational
-  // scripted narration that greets the owner and summarizes the Hub. Wired by initLinaOrb().
+  // Lina voice orb — zero-key Edge neural TTS (reuses /api/tts/edge). Animated
+  // arc-reactor orb (ported from champion-teaser.html). Click the orb to hear the
+  // live dashboard summary; it reacts to Lina's voice while speaking. Wired by initLinaOrb().
   const linaOrbHtml = `
-    <div class="lina" id="lina-orb">
-      <div class="orb" id="linaOrb"></div>
-      <div class="lina-meta">
-        <div class="lina-name">Lina &middot; Voz AI de Digit2AI</div>
-        <div class="lina-role">Tu asistente del Centro de Proyectos</div>
-        <div class="controls">
-          <button class="primary" id="linaPlayAll">&#9654; Que Lina te d&eacute; el resumen</button>
-          <button id="linaPause" disabled>&#10074;&#10074; Pausar</button>
-          <button id="linaStop" disabled>&#9632; Detener</button>
+    <div class="lina lina-v2" id="lina-orb">
+      <div class="lina-name">Lina &middot; Voz AI de Digit2AI</div>
+      <div class="lina-role">Tu asistente del Centro de Proyectos</div>
+      <div class="orb-wrap" id="linaOrbWrap" role="button" tabindex="0" data-state="idle"
+           aria-label="Escuchar el resumen de tu Centro de Proyectos">
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="linaOrbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="linaOrbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="linaOrbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="linaOrbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="linaOrbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#linaOrbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#linaOrbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#linaOrbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#linaOrbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#linaOrbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+        <canvas class="orb-wave" id="linaOrbWave" width="240" height="60" aria-hidden="true"></canvas>
+        <div class="orb-caption" id="linaOrbCaption">
+          <span class="orb-cap-idle">Toca el orbe para escuchar tu resumen</span>
+          <span class="orb-cap-active">Toca el orbe para detener</span>
         </div>
-        <div class="status" id="linaStatus">Pulsa el bot&oacute;n para escuchar el resumen de tu centro de proyectos.</div>
-        <div class="voicepick">
-          <label><input type="checkbox" id="linaNeuralToggle" checked> Voz neural HD</label>
-          &nbsp;&middot;&nbsp; Acento:
-          <select id="linaVoiceSel">
-            <option value="lina" selected>M&eacute;xico (Dalia)</option>
-            <option value="paloma">EE. UU. (Paloma)</option>
-            <option value="salome">Colombia (Salom&eacute;)</option>
-            <option value="elvira">Espa&ntilde;a (Elvira)</option>
-          </select>
-          <span id="linaVoiceMode" style="margin-left:8px;color:#10b981"></span>
-        </div>
+      </div>
+      <div class="status" id="linaStatus">Pulsa el orbe para escuchar el resumen de tu centro de proyectos.</div>
+      <div class="controls" style="justify-content:center">
+        <button id="linaPause" disabled>&#10074;&#10074; Pausar</button>
+        <button id="linaStop" disabled>&#9632; Detener</button>
+      </div>
+      <div class="voicepick" style="text-align:center">
+        <label><input type="checkbox" id="linaNeuralToggle" checked> Voz neural HD</label>
+        &nbsp;&middot;&nbsp; Acento:
+        <select id="linaVoiceSel">
+          <option value="lina" selected>M&eacute;xico (Dalia)</option>
+          <option value="paloma">EE. UU. (Paloma)</option>
+          <option value="salome">Colombia (Salom&eacute;)</option>
+          <option value="elvira">Espa&ntilde;a (Elvira)</option>
+        </select>
+        <span id="linaVoiceMode" style="margin-left:8px;color:#10b981"></span>
       </div>
     </div>`;
 
@@ -723,8 +814,61 @@ function linaSpokenDateTime(iso) {
 }
 
 function initLinaOrb(d) {
-  const orb = document.getElementById('linaOrb');
-  if (!orb) return;
+  const orbWrap = document.getElementById('linaOrbWrap');
+  if (!orbWrap) return;
+  const waveCanvas = document.getElementById('linaOrbWave');
+  function setState(st) { try { orbWrap.dataset.state = st; } catch (e) {} }
+
+  // Web-Audio analyser so the orb reacts to Lina's voice while speaking (waveform
+  // bars + reactive glow via --orb-amp). Fully optional — everything degrades if
+  // the AudioContext or MediaElementSource can't be created.
+  let linaAC = null, analyser = null, waveRAF = null;
+  const srcMap = new WeakMap();
+  function ensureAnalyser() {
+    if (!linaAC) {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        linaAC = new AC(); analyser = linaAC.createAnalyser(); analyser.fftSize = 128;
+        analyser.connect(linaAC.destination);
+      } catch (e) { linaAC = null; analyser = null; }
+    }
+    return !!analyser;
+  }
+  function connectAudio(audioEl) {
+    if (!ensureAnalyser()) return;
+    try {
+      if (!srcMap.has(audioEl)) { const src = linaAC.createMediaElementSource(audioEl); src.connect(analyser); srcMap.set(audioEl, src); }
+      if (linaAC.state === 'suspended') linaAC.resume();
+    } catch (e) {}
+  }
+  function startWave() {
+    if (waveRAF) { cancelAnimationFrame(waveRAF); waveRAF = null; } // never stack loops
+    if (!analyser || !waveCanvas || typeof requestAnimationFrame !== 'function') return;
+    const ctx = waveCanvas.getContext('2d'); if (!ctx) return;
+    const bufLen = analyser.frequencyBinCount, data = new Uint8Array(bufLen);
+    const w = waveCanvas.width, h = waveCanvas.height, bars = 22, bw = w / bars;
+    function draw() {
+      waveRAF = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(data);
+      let sum = 0; for (let i = 0; i < bufLen; i++) sum += data[i];
+      orbWrap.style.setProperty('--orb-amp', Math.min(1, (sum / bufLen) / 90).toFixed(3));
+      ctx.clearRect(0, 0, w, h);
+      for (let i = 0; i < bars; i++) {
+        const v = data[Math.floor(i / bars * bufLen)] / 255;
+        const bh = Math.max(2, v * h * 0.95);
+        const g = ctx.createLinearGradient(0, (h - bh) / 2, 0, (h + bh) / 2);
+        g.addColorStop(0, '#22d3ee'); g.addColorStop(1, '#8b5cf6');
+        ctx.fillStyle = g;
+        ctx.fillRect(i * bw + bw * 0.25, (h - bh) / 2, bw * 0.5, bh);
+      }
+    }
+    draw();
+  }
+  function stopWave() {
+    if (waveRAF) { cancelAnimationFrame(waveRAF); waveRAF = null; }
+    orbWrap.style.setProperty('--orb-amp', 0);
+    if (waveCanvas) { const c = waveCanvas.getContext('2d'); if (c) c.clearRect(0, 0, waveCanvas.width, waveCanvas.height); }
+  }
 
   // Join a list in Spanish: ['A','B','C'] -> 'A, B y C'.
   function linaJoinES(arr) {
@@ -869,7 +1013,6 @@ function initLinaOrb(d) {
 
   const synth = window.speechSynthesis;
   const status = document.getElementById('linaStatus');
-  const playAll = document.getElementById('linaPlayAll');
   const pauseBtn = document.getElementById('linaPause');
   const stopBtn = document.getElementById('linaStop');
   const voiceSel = document.getElementById('linaVoiceSel');
@@ -919,9 +1062,10 @@ function initLinaOrb(d) {
       fetchNeural(idx).then(url => {
         if (token !== runToken) return;
         playbackMode = 'neural'; currentAudio = new Audio(url);
+        connectAudio(currentAudio);
         currentAudio.onended = advance;
         currentAudio.onerror = function () { neuralOK = false; setMode(); advance(); };
-        orb.classList.add('speaking'); statusSpeaking();
+        setState('speaking'); startWave(); statusSpeaking();
         currentAudio.play().catch(() => { neuralOK = false; setMode(); browserSpeak(idx, advance); });
       }).catch(() => { if (token !== runToken) return; neuralOK = false; setMode(); browserSpeak(idx, advance); });
     } else { browserSpeak(idx, advance); }
@@ -934,7 +1078,7 @@ function initLinaOrb(d) {
     if (browserVoice) u.voice = browserVoice;
     u.lang = browserVoice ? browserVoice.lang : 'es-MX';
     u.rate = 0.98; u.pitch = 1.05;
-    u.onstart = function () { orb.classList.add('speaking'); statusSpeaking(); };
+    u.onstart = function () { setState('speaking'); statusSpeaking(); };
     u.onend = onEnd; u.onerror = onEnd;
     synth.speak(u);
   }
@@ -943,31 +1087,42 @@ function initLinaOrb(d) {
     if (synth) synth.cancel();
     if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
     queue = q; qi = 0; paused = false; runToken++;
-    pauseBtn.disabled = false; stopBtn.disabled = false; playAll.disabled = true; pauseBtn.innerHTML = '&#10074;&#10074; Pausar';
+    pauseBtn.disabled = false; stopBtn.disabled = false; pauseBtn.innerHTML = '&#10074;&#10074; Pausar';
     runQueue(runToken);
   }
 
   function finish() {
-    runToken++; orb.classList.remove('speaking');
+    runToken++; setState('idle'); stopWave();
     if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
-    pauseBtn.disabled = true; stopBtn.disabled = true; playAll.disabled = false;
-    status.textContent = 'Resumen terminado. Pulsa de nuevo para repetir.';
+    if (synth) { try { synth.cancel(); } catch (e) {} }
+    pauseBtn.disabled = true; stopBtn.disabled = true; paused = false; pauseBtn.innerHTML = '&#10074;&#10074; Pausar';
+    status.textContent = 'Resumen terminado. Pulsa el orbe para repetir.';
   }
 
-  playAll.addEventListener('click', async () => {
-    playAll.disabled = true;
+  // Click (or Enter/Space on) the orb: play the live summary, or stop if already going.
+  async function playSummary() {
+    // Prime the AudioContext inside the user gesture so playback isn't silent.
+    try { if (ensureAnalyser() && linaAC.state === 'suspended') linaAC.resume(); } catch (e) {}
+    setState('thinking');
     status.textContent = 'Preparando tu resumen…';
     let extras = { email: { count: 0, senders: [] }, intercom: { total: 0, items: [] } };
     try { extras = await fetchLinaExtras(); } catch (e) {}
     segments = buildSegments(extras);
     clearCache();
     start(segments.map((_, i) => i));
+  }
+  function isPlaying() { return orbWrap.dataset.state !== 'idle'; }
+  orbWrap.addEventListener('click', function () { if (isPlaying()) finish(); else playSummary(); });
+  orbWrap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); if (isPlaying()) finish(); else playSummary(); }
   });
+
   pauseBtn.addEventListener('click', function () {
-    if (!paused) { paused = true; this.innerHTML = '&#9654; Reanudar'; orb.classList.remove('speaking'); status.textContent = 'En pausa.';
+    if (!isPlaying()) return;
+    if (!paused) { paused = true; this.innerHTML = '&#9654; Reanudar'; stopWave(); status.textContent = 'En pausa.';
       if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause(); }
-    else { paused = false; this.innerHTML = '&#10074;&#10074; Pausar'; orb.classList.add('speaking'); statusSpeaking();
-      if (playbackMode === 'neural' && currentAudio) currentAudio.play(); else if (synth) synth.resume(); }
+    else { paused = false; this.innerHTML = '&#10074;&#10074; Pausar'; setState('speaking'); statusSpeaking();
+      if (playbackMode === 'neural' && currentAudio) { startWave(); currentAudio.play(); } else if (synth) synth.resume(); }
   });
   stopBtn.addEventListener('click', finish);
 }
