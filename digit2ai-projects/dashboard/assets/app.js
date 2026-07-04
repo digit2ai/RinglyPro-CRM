@@ -671,26 +671,130 @@ async function renderOverview(container) {
   // Intercom unread (paints the Intercom quick-action badge)
   refreshIntercomBadge();
 
-  // Lina voice orb playback engine
-  initLinaOrb();
+  // Lina voice orb playback engine — pass the live dashboard data so Lina
+  // narrates the ACTUAL results (KPIs + real upcoming meetings), not a fixed script.
+  initLinaOrb(d);
 }
 
 // =====================================================
 // LINA VOICE ORB — zero-key Edge neural TTS narration
 // Neural-first via /api/tts/edge, automatic browser-speech fallback.
-// Non-conversational scripted segments (canonical "Lina" pattern).
+// Narrates the LIVE dashboard results (KPIs + real upcoming meetings).
 // =====================================================
-function initLinaOrb() {
+// Spanish number-to-words for natural TTS (0..99; larger falls back to digits).
+function linaNumES(n) {
+  n = Math.round(Number(n) || 0);
+  if (n < 0 || n > 99) return String(n);
+  const u = ['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte'];
+  if (n <= 20) return u[n];
+  if (n < 30) { const r = n - 20; return 'veinti' + ({1:'uno',2:'dós',3:'trés',4:'cuatro',5:'cinco',6:'séis',7:'siete',8:'ocho',9:'nueve'})[r]; }
+  const tens = {3:'treinta',4:'cuarenta',5:'cincuenta',6:'sesenta',7:'setenta',8:'ochenta',9:'noventa'};
+  const t = tens[Math.floor(n/10)], r = n % 10;
+  return r ? t + ' y ' + u[r] : t;
+}
+// Turn an ISO datetime into a natural Spanish phrase: "hoy a las nueve de la mañana".
+function linaSpokenDateTime(iso) {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const that = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = Math.round((that - today) / 86400000);
+    let day;
+    if (diff === 0) day = 'hoy';
+    else if (diff === 1) day = 'mañana';
+    else {
+      const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      day = 'el ' + d.getDate() + ' de ' + months[d.getMonth()];
+    }
+    let h = d.getHours(); const m = d.getMinutes();
+    const ampm = h < 12 ? 'de la mañana' : (h < 19 ? 'de la tarde' : 'de la noche');
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    const hourWords = ['','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce'];
+    const artic = (h12 === 1) ? 'la' : 'las';
+    let time = 'a ' + artic + ' ' + (hourWords[h12] || String(h12));
+    if (m === 15) time += ' y cuarto';
+    else if (m === 30) time += ' y media';
+    else if (m !== 0) time += ' y ' + linaNumES(m);
+    time += ' ' + ampm;
+    return day + ' ' + time;
+  } catch (e) { return ''; }
+}
+
+function initLinaOrb(d) {
   const orb = document.getElementById('linaOrb');
   if (!orb) return;
 
-  const segments = [
-    'Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te doy la bienvenida a tu Centro de Proyectos.',
-    'Este es tu centro de mando. Desde aquí ves de un vistazo tus reuniones de hoy y de mañana, las tareas pendientes, los correos que marcaste para seguimiento y las llamadas y mensajes que esperan respuesta.',
-    'Más abajo encontrarás los Hallazgos Neurales: nuestra red de agentes vigila cada proyecto y te avisa cuando algo se atrasa, le falta un responsable o un hito está por vencer, antes de que se convierta en un problema.',
-    'En la barra lateral tienes Proyectos, Personas, Calendario, la lista de tareas, las minutas de reunión y el grupo de RinglyPro, con Inteligencia Neural, llamadas, prospectos y tus campañas.',
-    '¿No sabes por dónde empezar? Pulsa el botón de inteligencia artificial, abajo a la derecha, y pídeme lo que necesites en lenguaje natural. Estoy aquí para ayudarte a que nada se te escape.'
-  ];
+  // Build the narration from the LIVE dashboard data every time Play is pressed,
+  // so the numbers + meetings are always current. Falls back to a generic intro
+  // if no data was passed.
+  function buildSegments() {
+    const s = (d && d.summary) || {};
+    const ev = (d && Array.isArray(d.upcoming_events)) ? d.upcoming_events : [];
+    const hour = new Date().getHours();
+    const saludo = hour < 12 ? 'Buenos días' : (hour < 19 ? 'Buenas tardes' : 'Buenas noches');
+    const segs = [];
+
+    // 0 — greeting
+    segs.push(saludo + '. Soy Lina, la voz de inteligencia artificial de Digit2AI. Aquí tienes el resumen de tu Centro de Proyectos.');
+
+    if (!d || !d.summary) {
+      // Generic fallback (no data)
+      segs.push('Este es tu centro de mando: reuniones, tareas, correos y proyectos, todo en un solo lugar. Pulsa el botón de inteligencia artificial, abajo a la derecha, y pídeme lo que necesites.');
+      return segs;
+    }
+
+    // 1 — today's snapshot (KPIs shown on the cards)
+    const meet = Number(s.meetings_today) || 0;
+    const dueToday = Number(s.tasks_due_today) || 0;
+    const overdue = Number(s.overdue_tasks) || 0;
+    const pending = Number(s.pending_tasks) || 0;
+    let hoy = 'Para hoy, ';
+    hoy += meet === 0 ? 'no tienes reuniones programadas'
+      : (meet === 1 ? 'tienes una reunión programada' : 'tienes ' + linaNumES(meet) + ' reuniones programadas');
+    hoy += '. ';
+    hoy += dueToday === 0 ? 'No hay tareas que venzan hoy'
+      : (dueToday === 1 ? 'Tienes una tarea que vence hoy' : 'Tienes ' + linaNumES(dueToday) + ' tareas que vencen hoy');
+    if (overdue > 0) hoy += ', y ' + (overdue === 1 ? 'una tarea atrasada' : linaNumES(overdue) + ' tareas atrasadas') + ' de días anteriores';
+    hoy += '. ';
+    if (pending > 0) hoy += 'En total hay ' + (pending === 1 ? 'una tarea pendiente' : linaNumES(pending) + ' tareas pendientes') + ' por completar.';
+    segs.push(hoy.trim());
+
+    // 2 — coming up (the REAL meetings, by name + spoken time)
+    if (ev.length === 0) {
+      segs.push('No tienes nada agendado para hoy ni mañana. Es un buen momento para adelantar trabajo pendiente.');
+    } else {
+      const top = ev.slice(0, 6);
+      let up = ev.length === 1 ? 'Lo que viene: ' : 'Esto es lo que viene. ';
+      up += top.map(function (e) {
+        const when = linaSpokenDateTime(e.start_time);
+        return String(e.title || 'Evento') + (when ? ', ' + when : '');
+      }).join('. ');
+      up += '.';
+      const rest = ev.length - top.length;
+      if (rest > 0) up += ' Y ' + linaNumES(rest) + (rest === 1 ? ' evento más.' : ' eventos más.');
+      segs.push(up);
+    }
+
+    // 3 — projects health
+    const active = Number(s.active_projects) || 0;
+    const overdueP = Number(s.overdue_projects) || 0;
+    const dueWeek = Number(s.projects_due_this_week) || 0;
+    const needFollow = Number(s.contacts_need_followup) || 0;
+    let proj = '';
+    if (active > 0) proj += (active === 1 ? 'Tienes un proyecto activo' : 'Tienes ' + linaNumES(active) + ' proyectos activos') + '. ';
+    if (dueWeek > 0) proj += (dueWeek === 1 ? 'Uno vence esta semana' : linaNumES(dueWeek) + ' vencen esta semana') + '. ';
+    if (overdueP > 0) proj += 'Atención: ' + (overdueP === 1 ? 'un proyecto está atrasado' : linaNumES(overdueP) + ' proyectos están atrasados') + '. ';
+    if (needFollow > 0) proj += (needFollow === 1 ? 'Un contacto espera seguimiento' : linaNumES(needFollow) + ' contactos esperan seguimiento') + '. ';
+    if (proj.trim()) segs.push(proj.trim());
+
+    // 4 — closing
+    segs.push('Más abajo están los Hallazgos Neurales, donde mi red de agentes vigila cada proyecto y te avisa antes de que algo se atrase. Si necesitas algo, pulsa el botón de inteligencia artificial, abajo a la derecha, y pídemelo en lenguaje natural.');
+    return segs;
+  }
+
+  let segments = buildSegments();
 
   const synth = window.speechSynthesis;
   const status = document.getElementById('linaStatus');
@@ -779,7 +883,7 @@ function initLinaOrb() {
     status.textContent = 'Resumen terminado. Pulsa de nuevo para repetir.';
   }
 
-  playAll.addEventListener('click', () => start(segments.map((_, i) => i)));
+  playAll.addEventListener('click', () => { segments = buildSegments(); clearCache(); start(segments.map((_, i) => i)); });
   pauseBtn.addEventListener('click', function () {
     if (!paused) { paused = true; this.innerHTML = '&#9654; Reanudar'; orb.classList.remove('speaking'); status.textContent = 'En pausa.';
       if (playbackMode === 'neural' && currentAudio) currentAudio.pause(); else if (synth) synth.pause(); }
