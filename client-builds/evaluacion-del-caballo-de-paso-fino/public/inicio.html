@@ -7,71 +7,144 @@
 <link rel="icon" type="image/svg+xml" href="{{BASE}}equimind-icon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="{{BASE}}equimind-apple-180.png">
 <link rel="manifest" href="{{BASE}}manifest.webmanifest">
-<meta name="theme-color" content="#0E120F">
+<meta name="theme-color" content="#17120E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="EquiMind">
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{BASE}}equimind-theme.css">
-  <style>body{background:#060a14}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.hero{background:radial-gradient(1200px 400px at 20% -10%,rgba(99,102,241,.25),transparent),radial-gradient(900px 400px at 90% 0%,rgba(139,92,246,.18),transparent)}.wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;letter-spacing:-.02em}html{scroll-behavior:smooth}</style>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#17120E;--ink2:#1F1813;--cream:#FAF4EA;--cream2:#F2E7D5;
+      --brass:#C9A24B;--brass2:#E6C572;--rose:#C0604E;--rose2:#DA8472;
+      --tx-d:#F4ECDF;--mut-d:#B7AA99;--tx-l:#2A211A;--mut-l:#786A5C;--line-d:rgba(236,230,218,.11)
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--ink);color:var(--tx-d);font-family:"Archivo",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+    .serif{font-family:"Fraunces","Times New Roman",Georgia,serif;font-optical-sizing:auto}
+    .wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;letter-spacing:-.02em}
+    .mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+    .hero{background:
+      radial-gradient(1100px 520px at 14% -12%,rgba(192,96,78,.20),transparent 60%),
+      radial-gradient(920px 480px at 92% -4%,rgba(201,162,75,.16),transparent 62%),
+      linear-gradient(180deg,#17120E 0%,#140F0B 100%)}
+    .cream{background:var(--cream);color:var(--tx-l)}
+    .cream2{background:linear-gradient(180deg,var(--cream),var(--cream2));color:var(--tx-l)}
+    .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.26em;text-transform:uppercase}
+    .btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-weight:600;transition:transform .12s ease,box-shadow .2s ease,background .2s,border-color .2s}
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(180deg,var(--rose2),var(--rose));color:#fff;box-shadow:0 14px 30px -14px rgba(192,96,78,.7)}
+    .btn-primary:hover{box-shadow:0 18px 36px -14px rgba(192,96,78,.85)}
+    .btn-ghost-d{border:1px solid rgba(236,230,218,.24);color:var(--tx-d)}
+    .btn-ghost-d:hover{border-color:var(--brass2);color:#fff}
+    .btn-ghost-l{border:1px solid rgba(42,33,26,.20);color:var(--tx-l)}
+    .btn-ghost-l:hover{border-color:var(--rose);color:var(--rose)}
+    .btn-brass{background:linear-gradient(180deg,var(--brass2),var(--brass));color:#241a08}
+    .card-l{background:#fff;border:1px solid rgba(42,33,26,.08);border-radius:20px;box-shadow:0 22px 48px -34px rgba(42,33,26,.45)}
+    .card-d{background:rgba(255,255,255,.035);border:1px solid var(--line-d);border-radius:20px}
+    .card-d:hover{border-color:rgba(230,197,114,.4)}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--line-d);background:rgba(255,255,255,.03);font-size:13px;color:var(--mut-d)}
+    .ic{width:20px;height:20px;flex:0 0 20px;color:var(--brass2)}
+    .reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
+    .reveal.in{opacity:1;transform:none}
+    .divider-top{border-top:1px solid var(--line-d)}
+    .accent-rule{width:52px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--rose),var(--brass2))}
+    @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.btn:hover{transform:none}}
+  </style>
 </head>
-<body class="text-slate-100 min-h-screen">
+<body class="min-h-screen">
+
+  <!-- ============ HERO (warm dark) ============ -->
   <div class="hero">
   <header class="max-w-6xl mx-auto px-5 sm:px-6 py-4 sm:py-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div class="flex items-center gap-3 shrink-0">
       <img src="{{BASE}}equimind-mark.svg" alt="EquiMind" width="34" height="34" style="width:34px;height:34px">
-      <span class="wordmark text-xl sm:text-2xl">Equi<span style="color:#E6C572">Mind</span></span>
+      <span class="wordmark text-xl sm:text-2xl">Equi<span style="color:var(--brass2)">Mind</span></span>
     </div>
     <div class="flex items-center gap-2.5 sm:gap-4 text-sm flex-wrap">
-      <a href="#paso-fino" class="hidden sm:inline text-slate-300 hover:text-indigo-300 font-medium">Paso Fino</a>
-      <a href="#jump-coach" class="hidden sm:inline text-slate-300 hover:text-indigo-300 font-medium">AI Jump Coach</a>
-      <a id="langToggle" class="text-slate-400 hover:text-indigo-300 cursor-pointer whitespace-nowrap">EN / ES</a>
-      <a id="loginLink" class="px-3 py-1.5 rounded-lg border border-slate-700 hover:border-indigo-500 whitespace-nowrap" data-i18n="login_cta"></a>
-      <a id="signupLink" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold whitespace-nowrap" data-i18n="landing_cta_signup"></a>
+      <a href="#como" class="hidden sm:inline text-slate-300 hover:text-white font-medium" style="color:var(--mut-d)">Cómo funciona</a>
+      <a href="#jump-coach" class="hidden sm:inline font-medium" style="color:var(--mut-d)">AI Jump Coach</a>
+      <a id="langToggle" class="cursor-pointer whitespace-nowrap" style="color:var(--mut-d)">EN / ES</a>
+      <a id="loginLink" class="btn btn-ghost-d px-4 py-2 whitespace-nowrap" data-i18n="login_cta"></a>
+      <a id="signupLink" class="btn btn-primary px-4 py-2 whitespace-nowrap" data-i18n="landing_cta_signup"></a>
     </div>
   </header>
 
-  <section id="paso-fino" class="max-w-6xl mx-auto px-6 pt-10 pb-16 grid md:grid-cols-2 gap-10 items-center" style="scroll-margin-top:80px">
-    <div>
-      <div class="text-xs uppercase tracking-widest text-indigo-400 mono" data-i18n="poc_badge"></div>
-      <h1 class="text-4xl sm:text-5xl font-extrabold mt-3 leading-tight">{{H1}}</h1>
-      <p class="text-slate-300 mt-4 text-lg" data-i18n="landing_hero_sub"></p>
-      <div class="flex flex-wrap gap-3 mt-7">
-        <a id="ctaStart" class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold" data-i18n="landing_cta_start"></a>
-        <a id="ctaLogin" class="px-5 py-3 rounded-xl border border-slate-700 hover:border-indigo-500" data-i18n="login_cta"></a>
+  <section class="max-w-6xl mx-auto px-6 pt-8 sm:pt-12 pb-14 grid lg:grid-cols-2 gap-12 lg:gap-10 items-center">
+    <div class="reveal">
+      <div class="inline-flex items-center gap-2 eyebrow" style="color:var(--brass2)">
+        <span class="w-1.5 h-1.5 rounded-full" style="background:var(--rose2)"></span>
+        <span data-i18n="landing_hero_kicker"></span>
       </div>
-      <p class="text-xs text-slate-500 mt-4" data-i18n="landing_pricing_line"></p>
+      <h1 class="serif mt-5 leading-[1.05] tracking-tight" style="font-size:clamp(2.6rem,6vw,4.1rem);font-weight:600">
+        <span data-i18n="landing_hero_h1a"></span><br>
+        <span class="italic" style="color:var(--rose2)" data-i18n="landing_hero_h1b"></span>
+      </h1>
+      <p class="mt-6 text-lg leading-relaxed max-w-xl" style="color:var(--mut-d)">{{TAGLINE}}</p>
+      <div class="flex flex-wrap gap-3 mt-8">
+        <a id="ctaStart" class="btn btn-primary px-6 py-3.5" data-i18n="landing_cta_start"></a>
+        <a id="ctaLogin" class="btn btn-ghost-d px-6 py-3.5" data-i18n="login_cta"></a>
+      </div>
+      <p class="text-sm mt-5" style="color:var(--mut-d)" data-i18n="landing_pricing_line"></p>
+
+      <div class="flex flex-wrap gap-2.5 mt-8">
+        <span class="chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9h6v6H9z"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg><span data-i18n="feat_ai_t"></span></span>
+        <span class="chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg><span data-i18n="feat_track_t"></span></span>
+        <span class="chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg><span data-i18n="feat_score_t"></span></span>
+        <span class="chip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><path d="M8.1 10.9l7.8-3.8M8.1 13.1l7.8 3.8"/></svg><span data-i18n="feat_share_t"></span></span>
+      </div>
     </div>
-    <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-      <div class="text-sm font-semibold text-indigo-300 mb-3" data-i18n="landing_tools_title"></div>
-      <div class="space-y-3">
-        <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-600/40 flex items-center justify-center mono text-indigo-300">1</div><div><div class="font-semibold" data-i18n="tool_juez_t"></div><div class="text-xs text-slate-400" data-i18n="tool_juez_d"></div></div></div>
-        <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-600/40 flex items-center justify-center mono text-indigo-300">2</div><div><div class="font-semibold" data-i18n="tool_jump_t"></div><div class="text-xs text-slate-400" data-i18n="tool_jump_d"></div></div></div>
-        <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-600/40 flex items-center justify-center mono text-indigo-300">2</div><div><div class="font-semibold" data-i18n="tool_audio_t"></div><div class="text-xs text-slate-400" data-i18n="tool_audio_d"></div></div></div>
-        <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-600/40 flex items-center justify-center mono text-indigo-300">3</div><div><div class="font-semibold" data-i18n="tool_rank_t"></div><div class="text-xs text-slate-400" data-i18n="tool_rank_d"></div></div></div>
-        <div class="flex items-start gap-3"><div class="w-9 h-9 rounded-lg bg-emerald-600/20 border border-emerald-600/40 flex items-center justify-center mono text-emerald-300">4</div><div><div class="font-semibold" data-i18n="tool_neural_t"></div><div class="text-xs text-slate-400" data-i18n="tool_neural_d"></div></div></div>
+
+    <!-- Live gait-result panel as the product visual -->
+    <div class="reveal">
+      <div class="eyebrow mb-3 flex items-center gap-2" style="color:var(--mut-d)"><span class="rec-dot"></span><span data-i18n="see_eyebrow"></span></div>
+      <div class="gs-panel">
+        <div class="gs-scanline"></div>
+        <div class="gs-top">
+          <div>
+            <div class="gs-k" data-i18n="res_modalidad">Modalidad detectada</div>
+            <div class="gs-mod">Paso fino <span class="gs-sub">· 94% · 4 <span data-i18n="res_tiempos">tiempos</span></span></div>
+          </div>
+          <div class="gs-scorewrap">
+            <div class="gs-k" data-i18n="res_puntaje">Puntaje total</div>
+            <div class="gs-score">79.6</div>
+          </div>
+        </div>
+        <div class="gs-metrics">
+          <div class="gs-m"><div class="gs-mv">227</div><div class="gs-ml" data-i18n="m_cadencia">Cadencia (ppm)</div></div>
+          <div class="gs-m"><div class="gs-mv gs-turf">96%</div><div class="gs-ml" data-i18n="m_regularidad">Regularidad</div></div>
+          <div class="gs-m"><div class="gs-mv gs-turf">100%</div><div class="gs-ml" data-i18n="m_simetria">Simetría lateral</div></div>
+          <div class="gs-m"><div class="gs-mv">94%</div><div class="gs-ml" data-i18n="m_claridad">Claridad 4 tiempos</div></div>
+        </div>
+        <div>
+          <div class="gs-h" data-i18n="res_desglose">Desglose por criterio</div>
+          <div class="gs-bar"><div class="gs-brow"><span>Ritmo y regularidad (35%)</span><span class="gs-bn">88/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:88%;animation-delay:.0s"></i></div></div>
+          <div class="gs-bar"><div class="gs-brow"><span>Claridad 4 tiempos (25%)</span><span class="gs-bn">94/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:94%;animation-delay:.12s"></i></div></div>
+          <div class="gs-bar"><div class="gs-brow"><span>Simetría lateral (15%)</span><span class="gs-bn">100/100</span></div><div class="gs-track"><i class="gs-f gs-turf-f" style="--w:100%;animation-delay:.24s"></i></div></div>
+          <div class="gs-bar"><div class="gs-brow"><span>Brío / cadencia (15%)</span><span class="gs-bn">53/100</span></div><div class="gs-track"><i class="gs-f gs-mid" style="--w:53%;animation-delay:.36s"></i></div></div>
+        </div>
       </div>
     </div>
   </section>
   </div>
 
-  <!-- Lina voice orb (zero-key Edge neural TTS, brass EquiMind theme) -->
+  <!-- ============ Lina voice orb ============ -->
   <style>
-    .vlina{margin:6px auto 10px;max-width:760px;background:linear-gradient(180deg,#161C18,#12160F);border:1px solid rgba(236,230,218,.12);border-radius:20px;padding:22px;display:flex;gap:20px;align-items:center;box-shadow:0 24px 60px -30px rgba(0,0,0,.7)}
-    .vlina .orb{position:relative;width:84px;height:84px;flex:0 0 84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C572,#C9A24B 45%,#5b4a1e 100%);box-shadow:0 0 0 0 rgba(201,162,75,.5)}
+    .rec-dot{width:7px;height:7px;border-radius:50%;background:#CE4C3B;box-shadow:0 0 8px #CE4C3B;display:inline-block;animation:gs-blink 1.6s ease-in-out infinite}
+    .vlina{margin:36px auto 10px;max-width:820px;background:linear-gradient(180deg,#1c1611,#161009);border:1px solid rgba(236,230,218,.12);border-radius:22px;padding:24px;display:flex;gap:22px;align-items:center;box-shadow:0 30px 70px -34px rgba(0,0,0,.8)}
+    .vlina .orb{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E6C572,#C9A24B 45%,#5b4a1e 100%);box-shadow:0 0 0 0 rgba(201,162,75,.5)}
     .vlina .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(201,162,75,.35)}
     .vlina .orb.speaking{animation:vpulse 1.15s ease-in-out infinite}
     @keyframes vpulse{0%{box-shadow:0 0 0 0 rgba(201,162,75,.5)}70%{box-shadow:0 0 0 22px rgba(201,162,75,0)}100%{box-shadow:0 0 0 0 rgba(201,162,75,0)}}
     .vlina-meta{flex:1;min-width:0}
-    .vlina-name{font-weight:700;font-size:17px}
+    .vlina-eye{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#98A199;margin-bottom:8px}
+    .vlina-name{font-weight:700;font-size:18px}
     .vlina-role{color:#98A199;font-size:13px;margin-bottom:12px}
     .vlina .controls{display:flex;gap:10px;flex-wrap:wrap}
-    .vlina .controls button{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px}
+    .vlina .controls button{font:inherit;cursor:pointer;border:none;border-radius:999px;padding:9px 16px;font-weight:600;font-size:13px}
     .vlina .controls .primary{background:linear-gradient(180deg,#E6C572,#C9A24B);color:#1a140a}
-    .vlina .controls .sec{background:#1c2420;color:#ECE6DA;border:1px solid rgba(236,230,218,.14)}
+    .vlina .controls .sec{background:#241a12;color:#ECE6DA;border:1px solid rgba(236,230,218,.14)}
     .vlina .controls button:disabled{opacity:.5;cursor:not-allowed}
     .vlina .status{font-size:12.5px;color:#98A199;margin-top:10px;min-height:16px}
     .vlina .vtoggle{margin-top:10px;font-size:12px;color:#98A199;display:inline-flex;align-items:center;gap:6px}
@@ -81,6 +154,7 @@
     <div class="vlina reveal">
       <div class="orb" id="vorb"></div>
       <div class="vlina-meta">
+        <div class="vlina-eye" data-i18n="lina_eyebrow"></div>
         <div class="vlina-name">Lina · <span style="color:#E6C572">Voz AI de EquiMind</span></div>
         <div class="vlina-role" id="vrole"></div>
         <div class="controls">
@@ -164,30 +238,24 @@
   })();
   </script>
 
-  <!-- Animated gait-result simulator (Paso Fino) -->
+  <!-- gait panel styling (shared with hero visual) -->
   <style>
-    .gs-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
-    .gs-cap{display:flex;align-items:center;gap:9px;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#98A199;margin-bottom:14px}
-    .gs-cap .rec{width:7px;height:7px;border-radius:50%;background:#CE4C3B;box-shadow:0 0 8px #CE4C3B;animation:gs-blink 1.6s ease-in-out infinite}
-    @keyframes gs-blink{0%,100%{opacity:.35}50%{opacity:1}}
-    .gs-panel{position:relative;border:1px solid rgba(236,230,218,.12);border-radius:20px;overflow:hidden;padding:clamp(18px,2.6vw,26px);
+    .gs-k{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8b9488}
+    .gs-panel{position:relative;border:1px solid rgba(236,230,218,.12);border-radius:20px;overflow:hidden;padding:clamp(18px,2.6vw,24px);
       background:radial-gradient(120% 90% at 50% 6%,rgba(62,142,107,.10),transparent 55%),linear-gradient(180deg,#12160F,#0d100c);box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
-    .gs-k{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#697268}
     .gs-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid rgba(236,230,218,.09);padding-bottom:16px;margin-bottom:16px}
-    .gs-mod{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(20px,2.6vw,26px);color:#ECE6DA;margin-top:4px}
+    .gs-mod{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(19px,2.4vw,24px);color:#ECE6DA;margin-top:4px}
     .gs-mod .gs-sub{font-family:"JetBrains Mono",monospace;font-weight:400;font-size:13px;color:#98A199}
     .gs-scorewrap{text-align:right}
-    .gs-score{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:clamp(34px,5vw,46px);color:#E6C572;line-height:1;animation:gs-glow 2.6s ease-in-out infinite}
+    .gs-score{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:clamp(30px,4.4vw,42px);color:#E6C572;line-height:1;animation:gs-glow 2.6s ease-in-out infinite}
     @keyframes gs-glow{0%,100%{text-shadow:0 0 0 rgba(230,197,114,0)}50%{text-shadow:0 0 22px rgba(230,197,114,.5)}}
     .gs-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-    @media(max-width:640px){.gs-metrics{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.gs-metrics{grid-template-columns:repeat(2,1fr)}}
     .gs-m{background:#0e120c;border:1px solid rgba(236,230,218,.08);border-radius:12px;padding:12px;text-align:center}
-    .gs-mv{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:22px;color:#E6C572}
+    .gs-mv{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:20px;color:#E6C572}
     .gs-mv.gs-turf{color:#5FD08B}
     .gs-ml{font-size:11px;color:#98A199;margin-top:3px}
-    .gs-grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(16px,2.4vw,28px)}
-    @media(max-width:760px){.gs-grid2{grid-template-columns:1fr}}
-    .gs-h{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#697268;margin-bottom:12px}
+    .gs-h{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8b9488;margin-bottom:12px}
     .gs-bar{margin-bottom:12px}
     .gs-brow{display:flex;justify-content:space-between;font-size:12.5px;color:#CDC8BC;margin-bottom:5px}
     .gs-brow .gs-bn{font-family:"JetBrains Mono",monospace;color:#98A199}
@@ -200,269 +268,186 @@
     .gs-low{background:linear-gradient(90deg,#CE4C3B,#D98A3E)}
     .gs-track::after{content:"";position:absolute;top:0;bottom:0;width:38%;background:linear-gradient(90deg,transparent,rgba(236,230,218,.18),transparent);transform:translateX(-140%);animation:gs-sheen 3.4s ease-in-out infinite}
     @keyframes gs-sheen{0%{transform:translateX(-140%)}55%,100%{transform:translateX(360%)}}
-    .gs-tl{position:relative;height:78px;border:1px solid rgba(236,230,218,.09);border-radius:12px;background:#0e120c;overflow:hidden}
-    .gs-tl .base{position:absolute;left:12px;right:12px;bottom:26px;height:1px;background:rgba(236,230,218,.14)}
-    .gs-beat{position:absolute;bottom:26px;width:9px;height:9px;border-radius:50%;background:var(--c);transform:translate(-50%,50%) scale(.7);animation:gs-beat 2.6s ease-in-out infinite}
-    @keyframes gs-beat{0%,100%{transform:translate(-50%,50%) scale(.65);opacity:.5}50%{transform:translate(-50%,50%) scale(1.15);opacity:1;box-shadow:0 0 10px 1px var(--c)}}
-    .gs-play{position:absolute;top:10px;bottom:20px;width:2px;background:linear-gradient(180deg,transparent,#5FD08B,transparent);animation:gs-play 2.6s linear infinite}
-    @keyframes gs-play{0%{left:6%}100%{left:94%}}
-    .gs-tlab{position:absolute;left:12px;bottom:7px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#697268}
-    .gs-tlab.r{left:auto;right:12px;color:#E6C572}
     .gs-scanline{position:absolute;top:0;bottom:0;width:120px;background:linear-gradient(90deg,transparent,rgba(95,208,139,.10),transparent);pointer-events:none;animation:gs-scan 6s cubic-bezier(.5,0,.5,1) infinite}
-    @keyframes gs-scan{0%{transform:translateX(-140px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(1160px);opacity:0}}
-    @media (prefers-reduced-motion:reduce){.gs-f,.gs-beat,.gs-play,.gs-score,.gs-scanline,.gs-track::after,.gs-cap .rec{animation:none!important}.gs-f{width:var(--w)}}
+    @keyframes gs-scan{0%{transform:translateX(-140px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(680px);opacity:0}}
+    @keyframes gs-blink{0%,100%{opacity:.35}50%{opacity:1}}
+    @media (prefers-reduced-motion:reduce){.gs-f,.gs-score,.gs-scanline,.gs-track::after,.rec-dot{animation:none!important}.gs-f{width:var(--w)}}
   </style>
-  <div class="gs-band reveal">
-    <div class="gs-cap"><span class="rec"></span><span data-i18n="gsim_caption">Simulación · Fallo del juez en vivo</span></div>
-    <div class="gs-panel">
-      <div class="gs-scanline"></div>
-      <div class="gs-top">
-        <div>
-          <div class="gs-k">Modalidad detectada</div>
-          <div class="gs-mod">Paso fino <span class="gs-sub">· 94% confianza · 4 tiempos</span></div>
+
+  <!-- ============ CÓMO FUNCIONA (cream) ============ -->
+  <section id="como" class="cream" style="scroll-margin-top:70px">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="text-center max-w-2xl mx-auto reveal">
+        <div class="accent-rule mx-auto mb-5"></div>
+        <h2 class="serif" style="font-size:clamp(2rem,4.2vw,2.9rem);font-weight:600" data-i18n="landing_how_title"></h2>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-6 mt-12">
+        <div class="card-l p-7 reveal">
+          <div class="serif text-4xl" style="color:var(--rose)">1</div>
+          <div class="font-semibold text-lg mt-3" data-i18n="how1_t"></div>
+          <div class="mt-1.5" style="color:var(--mut-l)" data-i18n="how1_d"></div>
         </div>
-        <div class="gs-scorewrap">
-          <div class="gs-k">Puntaje total</div>
-          <div class="gs-score">79.6</div>
+        <div class="card-l p-7 reveal">
+          <div class="serif text-4xl" style="color:var(--rose)">2</div>
+          <div class="font-semibold text-lg mt-3" data-i18n="how2_t"></div>
+          <div class="mt-1.5" style="color:var(--mut-l)" data-i18n="how2_d"></div>
+        </div>
+        <div class="card-l p-7 reveal">
+          <div class="serif text-4xl" style="color:var(--rose)">3</div>
+          <div class="font-semibold text-lg mt-3" data-i18n="how3_t"></div>
+          <div class="mt-1.5" style="color:var(--mut-l)" data-i18n="how3_d"></div>
         </div>
       </div>
-      <div class="gs-metrics">
-        <div class="gs-m"><div class="gs-mv">227</div><div class="gs-ml">Cadencia (ppm)</div></div>
-        <div class="gs-m"><div class="gs-mv gs-turf">96%</div><div class="gs-ml">Regularidad</div></div>
-        <div class="gs-m"><div class="gs-mv gs-turf">100%</div><div class="gs-ml">Simetría lateral</div></div>
-        <div class="gs-m"><div class="gs-mv">94%</div><div class="gs-ml">Claridad 4 tiempos</div></div>
+    </div>
+  </section>
+
+  <!-- ============ TODO EN UN PANEL (cream2) ============ -->
+  <section class="cream2">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="max-w-2xl reveal">
+        <div class="accent-rule mb-5"></div>
+        <h2 class="serif" style="font-size:clamp(2rem,4.2vw,2.9rem);font-weight:600" data-i18n="landing_tools_title"></h2>
       </div>
-      <div class="gs-grid2">
-        <div>
-          <div class="gs-h">Desglose por criterio</div>
-          <div class="gs-bar"><div class="gs-brow"><span>Ritmo y regularidad (35%)</span><span class="gs-bn">88/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:88%;animation-delay:.0s"></i></div></div>
-        <div class="gs-bar"><div class="gs-brow"><span>Claridad 4 tiempos (25%)</span><span class="gs-bn">94/100</span></div><div class="gs-track"><i class="gs-f gs-good" style="--w:94%;animation-delay:.12s"></i></div></div>
-        <div class="gs-bar"><div class="gs-brow"><span>Simetría lateral (15%)</span><span class="gs-bn">100/100</span></div><div class="gs-track"><i class="gs-f gs-turf-f" style="--w:100%;animation-delay:.24s"></i></div></div>
-        <div class="gs-bar"><div class="gs-brow"><span>Brío / cadencia (15%)</span><span class="gs-bn">53/100</span></div><div class="gs-track"><i class="gs-f gs-mid" style="--w:53%;animation-delay:.36s"></i></div></div>
-        <div class="gs-bar"><div class="gs-brow"><span>Elevación (10%)</span><span class="gs-bn">24/100</span></div><div class="gs-track"><i class="gs-f gs-low" style="--w:24%;animation-delay:.48s"></i></div></div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+        <div class="card-l p-6 reveal">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(192,96,78,.10)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9h6v6H9z"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
+          </div>
+          <div class="font-semibold" data-i18n="tool_juez_t"></div>
+          <div class="text-sm mt-1.5" style="color:var(--mut-l)" data-i18n="tool_juez_d"></div>
         </div>
-        <div>
-          <div class="gs-h">Línea de tiempo de pisadas</div>
-          <div class="gs-tl">
-            <div class="base"></div>
-            <span class="gs-beat" style="left:7%;--c:#5FD08B;animation-delay:0.00s"></span><span class="gs-beat" style="left:16%;--c:#E6C572;animation-delay:0.13s"></span><span class="gs-beat" style="left:25%;--c:#3E8E6B;animation-delay:0.26s"></span><span class="gs-beat" style="left:34%;--c:#C9A24B;animation-delay:0.39s"></span><span class="gs-beat" style="left:45%;--c:#5FD08B;animation-delay:0.52s"></span><span class="gs-beat" style="left:54%;--c:#E6C572;animation-delay:0.65s"></span><span class="gs-beat" style="left:63%;--c:#3E8E6B;animation-delay:0.78s"></span><span class="gs-beat" style="left:72%;--c:#C9A24B;animation-delay:0.91s"></span><span class="gs-beat" style="left:83%;--c:#5FD08B;animation-delay:1.04s"></span><span class="gs-beat" style="left:92%;--c:#E6C572;animation-delay:1.17s"></span>
-            <div class="gs-play"></div>
-            <div class="gs-tlab">0:00</div>
-            <div class="gs-tlab r">4 tiempos · laterales</div>
+        <div class="card-l p-6 reveal">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(201,162,75,.14)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brass)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-6 4 12 2-6h4"/></svg>
+          </div>
+          <div class="font-semibold" data-i18n="tool_audio_t"></div>
+          <div class="text-sm mt-1.5" style="color:var(--mut-l)" data-i18n="tool_audio_d"></div>
+        </div>
+        <div class="card-l p-6 reveal">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(192,96,78,.10)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>
+          </div>
+          <div class="font-semibold" data-i18n="tool_rank_t"></div>
+          <div class="text-sm mt-1.5" style="color:var(--mut-l)" data-i18n="tool_rank_d"></div>
+        </div>
+        <div class="card-l p-6 reveal">
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(62,142,107,.14)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3E8E6B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><path d="M9.5 10.5l-3-3M14.5 10.5l3-3M9.8 13.6l-2.5 2.7"/></svg>
+          </div>
+          <div class="font-semibold" data-i18n="tool_neural_t"></div>
+          <div class="text-sm mt-1.5" style="color:var(--mut-l)" data-i18n="tool_neural_d"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PARA QUIÉN ES (cream) ============ -->
+  <section class="cream">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="text-center max-w-2xl mx-auto reveal">
+        <div class="eyebrow mb-3" style="color:var(--rose)"><span data-i18n="who_eyebrow"></span></div>
+        <h2 class="serif" style="font-size:clamp(2rem,4.2vw,2.9rem);font-weight:600" data-i18n="who_title"></h2>
+        <p class="mt-4 text-lg" style="color:var(--mut-l)" data-i18n="who_sub"></p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+        <div class="p-6 reveal" style="border-left:3px solid var(--rose)">
+          <div class="serif text-xl font-semibold" data-i18n="who1_t"></div>
+          <div class="mt-2" style="color:var(--mut-l)" data-i18n="who1_d"></div>
+        </div>
+        <div class="p-6 reveal" style="border-left:3px solid var(--brass)">
+          <div class="serif text-xl font-semibold" data-i18n="who2_t"></div>
+          <div class="mt-2" style="color:var(--mut-l)" data-i18n="who2_d"></div>
+        </div>
+        <div class="p-6 reveal" style="border-left:3px solid var(--rose)">
+          <div class="serif text-xl font-semibold" data-i18n="who3_t"></div>
+          <div class="mt-2" style="color:var(--mut-l)" data-i18n="who3_d"></div>
+        </div>
+        <div class="p-6 reveal" style="border-left:3px solid var(--brass)">
+          <div class="serif text-xl font-semibold" data-i18n="who4_t"></div>
+          <div class="mt-2" style="color:var(--mut-l)" data-i18n="who4_d"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AI JUMP COACH (dark) ============ -->
+  <section id="jump-coach" class="hero divider-top" style="scroll-margin-top:70px">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="reveal">
+          <div class="inline-flex items-center gap-2 eyebrow mb-4" style="color:var(--brass2)"><span class="w-1.5 h-1.5 rounded-full" style="background:var(--brass2)"></span><span data-i18n="jl_eyebrow"></span></div>
+          <h2 class="serif leading-tight" style="font-size:clamp(1.9rem,3.8vw,2.7rem);font-weight:600" data-i18n="jl_title"></h2>
+          <p class="mt-4 text-lg" style="color:var(--mut-d)" data-i18n="jl_lede"></p>
+          <p class="mt-3 text-sm" style="color:var(--mut-d)" data-i18n="jl_benefit"></p>
+          <a id="jlCta" class="btn btn-brass px-6 py-3.5 mt-7" data-i18n="jl_cta"></a>
+          <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs mono" style="color:var(--mut-d)">
+            <span data-i18n="jl_sport1"></span><span data-i18n="jl_sport2"></span><span data-i18n="jl_sport3"></span>
           </div>
         </div>
+        <div class="grid sm:grid-cols-2 gap-4 reveal">
+          <div class="card-d p-5"><div class="mono text-xs mb-2" style="color:var(--brass2)">01</div><div class="font-semibold" data-i18n="jl_f1_t"></div><div class="text-xs mt-1" style="color:var(--mut-d)" data-i18n="jl_f1_d"></div></div>
+          <div class="card-d p-5"><div class="mono text-xs mb-2" style="color:var(--brass2)">02</div><div class="font-semibold" data-i18n="jl_f2_t"></div><div class="text-xs mt-1" style="color:var(--mut-d)" data-i18n="jl_f2_d"></div></div>
+          <div class="card-d p-5"><div class="mono text-xs mb-2" style="color:var(--brass2)">03</div><div class="font-semibold" data-i18n="jl_f3_t"></div><div class="text-xs mt-1" style="color:var(--mut-d)" data-i18n="jl_f3_d"></div></div>
+          <div class="card-d p-5"><div class="mono text-xs mb-2" style="color:var(--brass2)">04</div><div class="font-semibold" data-i18n="jl_f4_t"></div><div class="text-xs mt-1" style="color:var(--mut-d)" data-i18n="jl_f4_d"></div></div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- AI Jump Coach spotlight -->
-  <section id="jump-coach" class="max-w-6xl mx-auto px-6 py-16 border-t border-slate-900" style="scroll-margin-top:80px">
-    <div class="grid md:grid-cols-2 gap-10 items-center">
-      <div>
-        <div class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-amber-300 mono mb-4"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span data-i18n="jl_eyebrow"></span></div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold leading-tight" data-i18n="jl_title"></h2>
-        <p class="text-slate-300 mt-4" data-i18n="jl_lede"></p>
-        <p class="text-slate-400 mt-3 text-sm" data-i18n="jl_benefit"></p>
-        <a id="jlCta" class="inline-flex items-center gap-2 mt-6 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold" data-i18n="jl_cta"></a>
-      </div>
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">01</div>
-          <div class="font-semibold" data-i18n="jl_f1_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f1_d"></div>
+      <!-- Disciplinas — próximamente -->
+      <div id="disciplinas" class="mt-20" style="scroll-margin-top:70px">
+        <div class="text-center mb-10 reveal">
+          <div class="inline-flex items-center gap-2 eyebrow mb-3" style="color:var(--brass2)"><span class="w-1.5 h-1.5 rounded-full" style="background:var(--brass)"></span><span data-i18n="disc_eyebrow"></span></div>
+          <h3 class="serif" style="font-size:clamp(1.7rem,3.4vw,2.3rem);font-weight:600" data-i18n="disc_title"></h3>
+          <p class="mt-3" style="color:var(--mut-d)" data-i18n="disc_sub"></p>
         </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">02</div>
-          <div class="font-semibold" data-i18n="jl_f2_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f2_d"></div>
-        </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">03</div>
-          <div class="font-semibold" data-i18n="jl_f3_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f3_d"></div>
-        </div>
-        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-          <div class="text-amber-300 mono text-xs mb-2">04</div>
-          <div class="font-semibold" data-i18n="jl_f4_t"></div>
-          <div class="text-xs text-slate-400 mt-1" data-i18n="jl_f4_d"></div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <a href="{{BASE}}coming-soon?d=jumper&lang={{LANG}}" class="group card-d p-6 transition-colors reveal">
+            <div class="flex items-center justify-between mb-3"><span class="serif text-lg font-semibold">Jumper</span><span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span></div>
+            <p class="text-sm" style="color:var(--mut-d)" data-i18n="disc_jumper_d"></p>
+            <div class="mt-4 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity" style="color:var(--brass2)" data-i18n="disc_cta"></div>
+          </a>
+          <a href="{{BASE}}coming-soon?d=hunter&lang={{LANG}}" class="group card-d p-6 transition-colors reveal">
+            <div class="flex items-center justify-between mb-3"><span class="serif text-lg font-semibold">Hunter</span><span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span></div>
+            <p class="text-sm" style="color:var(--mut-d)" data-i18n="disc_hunter_d"></p>
+            <div class="mt-4 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity" style="color:var(--brass2)" data-i18n="disc_cta"></div>
+          </a>
+          <a href="{{BASE}}coming-soon?d=ponies&lang={{LANG}}" class="group card-d p-6 transition-colors reveal">
+            <div class="flex items-center justify-between mb-3"><span class="serif text-lg font-semibold">Ponies</span><span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span></div>
+            <p class="text-sm" style="color:var(--mut-d)" data-i18n="disc_ponies_d"></p>
+            <div class="mt-4 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity" style="color:var(--brass2)" data-i18n="disc_cta"></div>
+          </a>
+          <a href="{{BASE}}coming-soon?d=equitation&lang={{LANG}}" class="group card-d p-6 transition-colors reveal">
+            <div class="flex items-center justify-between mb-3"><span class="serif text-lg font-semibold">Equitation</span><span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span></div>
+            <p class="text-sm" style="color:var(--mut-d)" data-i18n="disc_equitation_d"></p>
+            <div class="mt-4 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity" style="color:var(--brass2)" data-i18n="disc_cta"></div>
+          </a>
         </div>
       </div>
-    </div>
-    <div class="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs text-slate-500 mono">
-      <span data-i18n="jl_sport1"></span><span data-i18n="jl_sport2"></span><span data-i18n="jl_sport3"></span>
     </div>
   </section>
 
-  <!-- Disciplinas — Próximamente (4 cards -> Coming Soon) -->
-  <section id="disciplinas" class="max-w-6xl mx-auto px-6 py-16 border-t border-slate-900" style="scroll-margin-top:80px">
-    <div class="text-center mb-10">
-      <div class="inline-flex items-center gap-2 text-xs uppercase tracking-widest mono mb-3" style="color:#E6C572"><span class="w-2 h-2 rounded-full" style="background:#C9A24B"></span><span data-i18n="disc_eyebrow"></span></div>
-      <h2 class="text-3xl sm:text-4xl font-extrabold" data-i18n="disc_title"></h2>
-      <p class="text-slate-400 mt-3" data-i18n="disc_sub"></p>
-    </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      <a href="{{BASE}}coming-soon?d=jumper&lang={{LANG}}" class="group block bg-slate-900/50 border border-slate-800 hover:border-amber-500/60 rounded-2xl p-6 transition-colors">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-lg font-bold">Jumper</span>
-          <span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span>
-        </div>
-        <p class="text-sm text-slate-400" data-i18n="disc_jumper_d"></p>
-        <div class="mt-4 text-sm font-semibold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity" data-i18n="disc_cta"></div>
-      </a>
-      <a href="{{BASE}}coming-soon?d=hunter&lang={{LANG}}" class="group block bg-slate-900/50 border border-slate-800 hover:border-amber-500/60 rounded-2xl p-6 transition-colors">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-lg font-bold">Hunter</span>
-          <span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span>
-        </div>
-        <p class="text-sm text-slate-400" data-i18n="disc_hunter_d"></p>
-        <div class="mt-4 text-sm font-semibold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity" data-i18n="disc_cta"></div>
-      </a>
-      <a href="{{BASE}}coming-soon?d=ponies&lang={{LANG}}" class="group block bg-slate-900/50 border border-slate-800 hover:border-amber-500/60 rounded-2xl p-6 transition-colors">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-lg font-bold">Ponies</span>
-          <span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span>
-        </div>
-        <p class="text-sm text-slate-400" data-i18n="disc_ponies_d"></p>
-        <div class="mt-4 text-sm font-semibold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity" data-i18n="disc_cta"></div>
-      </a>
-      <a href="{{BASE}}coming-soon?d=equitation&lang={{LANG}}" class="group block bg-slate-900/50 border border-slate-800 hover:border-amber-500/60 rounded-2xl p-6 transition-colors">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-lg font-bold">Equitation</span>
-          <span class="text-[10px] uppercase tracking-widest mono px-2 py-1 rounded-full" style="background:rgba(230,197,114,.14);color:#E6C572" data-i18n="disc_soon"></span>
-        </div>
-        <p class="text-sm text-slate-400" data-i18n="disc_equitation_d"></p>
-        <div class="mt-4 text-sm font-semibold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity" data-i18n="disc_cta"></div>
-      </a>
+  <!-- ============ FINAL CTA (warm dark) ============ -->
+  <section class="divider-top" style="background:linear-gradient(180deg,#140F0B,#1c1206)">
+    <div class="max-w-4xl mx-auto px-6 py-20 text-center reveal">
+      <div class="eyebrow mb-4" style="color:var(--rose2)"><span data-i18n="final_eyebrow"></span></div>
+      <h2 class="serif leading-tight" style="font-size:clamp(2.1rem,4.6vw,3.2rem);font-weight:600" data-i18n="final_title"></h2>
+      <p class="mt-5 text-lg max-w-xl mx-auto" style="color:var(--mut-d)" data-i18n="final_sub"></p>
+      <div class="mt-8">
+        <a id="ctaBottom" class="btn btn-primary px-8 py-4 text-lg" data-i18n="landing_cta_start"></a>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-5 mt-14 text-left max-w-3xl mx-auto">
+        <div class="card-d p-5"><div class="font-semibold" style="color:var(--brass2)" data-i18n="final_b1_t"></div><div class="text-sm mt-1" style="color:var(--mut-d)" data-i18n="final_b1_d"></div></div>
+        <div class="card-d p-5"><div class="font-semibold" style="color:var(--brass2)" data-i18n="final_b2_t"></div><div class="text-sm mt-1" style="color:var(--mut-d)" data-i18n="final_b2_d"></div></div>
+        <div class="card-d p-5"><div class="font-semibold" style="color:var(--brass2)" data-i18n="final_b3_t"></div><div class="text-sm mt-1" style="color:var(--mut-d)" data-i18n="final_b3_d"></div></div>
+      </div>
     </div>
   </section>
 
-  <!-- Animated software simulator (separator) -->
-  <style>
-    .sim-band{max-width:1160px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 12px}
-    .sim-cap{display:flex;align-items:center;gap:9px;justify-content:center;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#98A199;margin-bottom:14px}
-    .sim-cap .rec{width:7px;height:7px;border-radius:50%;background:#CE4C3B;box-shadow:0 0 8px #CE4C3B;animation:sim-blink 1.6s ease-in-out infinite}
-    .sim-panel{position:relative;border:1px solid rgba(236,230,218,.12);border-radius:20px;overflow:hidden;
-      background:radial-gradient(120% 90% at 50% 8%,rgba(62,142,107,.12),transparent 55%),linear-gradient(180deg,#12160F,#0d100c);
-      box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
-    .sim-svg{display:block;width:100%;height:auto}
-    .sim-path{stroke-dasharray:1400;stroke-dashoffset:1400;animation:sim-draw 5.5s var(--e,cubic-bezier(.22,.61,.36,1)) infinite}
-    @keyframes sim-draw{0%{stroke-dashoffset:1400}45%{stroke-dashoffset:0}92%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:1}}
-    .sim-node{transform-box:fill-box;transform-origin:center;animation:sim-pulse 2.2s ease-in-out infinite}
-    @keyframes sim-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.55}}
-    .sim-halo{transform-box:fill-box;transform-origin:center;animation:sim-halo 2.2s ease-in-out infinite}
-    @keyframes sim-halo{0%{transform:scale(.6);opacity:.6}70%{transform:scale(2.4);opacity:0}100%{opacity:0}}
-    .sim-travel{offset-path:path('M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300');offset-rotate:0deg;animation:sim-move 5.5s cubic-bezier(.5,0,.5,1) infinite}
-    @keyframes sim-move{0%{offset-distance:0%;opacity:0}6%{opacity:1}50%{offset-distance:100%;opacity:1}56%{opacity:0}100%{offset-distance:100%;opacity:0}}
-    .sim-pin{transform-box:fill-box;transform-origin:center bottom;opacity:0;animation:sim-pin 5.5s ease-in-out infinite}
-    @keyframes sim-pin{0%,10%{transform:scaleY(0);opacity:0}18%{transform:scaleY(1);opacity:1}92%,100%{opacity:1;transform:scaleY(1)}}
-    .sim-scan{animation:sim-scan 5.5s cubic-bezier(.5,0,.5,1) infinite}
-    @keyframes sim-scan{0%{transform:translateX(-20px);opacity:0}8%{opacity:.9}50%{transform:translateX(1000px);opacity:.9}58%,100%{opacity:0;transform:translateX(1000px)}}
-    .sim-rider{transform-box:fill-box;transform-origin:center;animation:sim-float 3.4s ease-in-out infinite}
-    @keyframes sim-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-    .sim-jt{transform-box:fill-box;transform-origin:center;animation:sim-jt 2.4s ease-in-out infinite}
-    @keyframes sim-jt{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
-    .sim-read{animation:sim-blink 3s ease-in-out infinite}
-    @keyframes sim-blink{0%,100%{opacity:.35}50%{opacity:1}}
-    @media (prefers-reduced-motion:reduce){.sim-path,.sim-node,.sim-halo,.sim-travel,.sim-pin,.sim-scan,.sim-rider,.sim-jt,.sim-read{animation:none!important}.sim-path{stroke-dashoffset:0}.sim-travel,.sim-pin,.sim-scan{opacity:1}}
-  </style>
-  <div class="sim-band reveal">
-    <div class="sim-cap"><span class="rec"></span><span data-i18n="sim_caption">Simulación · Trayectoria y fallos del salto</span></div>
-    <div class="sim-panel">
-      <svg class="sim-svg" viewBox="0 0 1000 360" role="img" aria-label="Simulación del software de análisis">
-        <defs>
-          <linearGradient id="simArc" x1="0" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#A9822F"/><stop offset=".5" stop-color="#E6C572"/><stop offset="1" stop-color="#A9822F"/>
-          </linearGradient>
-          <linearGradient id="simFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(201,162,75,.22)"/><stop offset="1" stop-color="rgba(201,162,75,0)"/></linearGradient>
-          <linearGradient id="simScan" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgba(95,208,139,0)"/><stop offset=".5" stop-color="rgba(95,208,139,.5)"/><stop offset="1" stop-color="rgba(95,208,139,0)"/></linearGradient>
-          <pattern id="simGrid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(236,230,218,.04)" stroke-width="1"/></pattern>
-        </defs>
-
-        <rect width="1000" height="360" fill="url(#simGrid)"/>
-        <!-- fill under arc -->
-        <path d="M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300 L940 300 L60 300 Z" fill="url(#simFill)"/>
-        <!-- ground axis -->
-        <line x1="60" y1="300" x2="940" y2="300" stroke="rgba(236,230,218,.16)" stroke-width="1.5"/>
-        <text x="60" y="324" fill="#697268" font-family="JetBrains Mono,monospace" font-size="12">0:00</text>
-        <text x="250" y="324" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="11" letter-spacing="1.5">ASCENSO</text>
-        <text x="740" y="324" text-anchor="middle" fill="#697268" font-family="JetBrains Mono,monospace" font-size="11" letter-spacing="1.5">DESCENSO</text>
-        <text x="940" y="324" text-anchor="end" fill="#697268" font-family="JetBrains Mono,monospace" font-size="12">1:39</text>
-
-        <!-- the drawing arc -->
-        <path class="sim-path" d="M60 300 C 250 300, 388 128, 500 118 C 612 128, 750 300, 940 300" fill="none" stroke="url(#simArc)" stroke-width="2.5" stroke-linecap="round"/>
-
-        <!-- apex guide + node -->
-        <line x1="500" y1="118" x2="500" y2="300" stroke="rgba(201,162,75,.3)" stroke-width="1.2" stroke-dasharray="3 6"/>
-        <circle class="sim-halo" cx="500" cy="118" r="8" fill="none" stroke="#E6C572" stroke-width="1.4"/>
-        <circle class="sim-node" cx="500" cy="118" r="7" fill="#E6C572"/>
-        <text x="500" y="100" text-anchor="middle" fill="#E6C572" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600">ÁPICE</text>
-        <text x="500" y="84" text-anchor="middle" fill="#98A199" font-family="JetBrains Mono,monospace" font-size="11">49.20s</text>
-
-        <!-- detection dots traveling the arc -->
-        <circle class="sim-travel" r="4.5" fill="#5FD08B" style="animation-delay:0s"/>
-        <circle class="sim-travel" r="3.5" fill="#5FD08B" opacity=".7" style="animation-delay:.5s"/>
-        <circle class="sim-travel" r="3" fill="#E6C572" opacity=".8" style="animation-delay:1s"/>
-
-        <!-- fault pins on the ground -->
-        <g class="sim-pin" style="animation-delay:0s">
-          <line x1="250" y1="300" x2="250" y2="252" stroke="#CE4C3B" stroke-width="1.5" opacity=".6"/>
-          <circle cx="250" cy="300" r="6" fill="#CE4C3B"/><circle cx="250" cy="300" r="11" fill="none" stroke="#CE4C3B" stroke-width="1" opacity=".35"/>
-          <text x="250" y="242" text-anchor="middle" fill="#CE4C3B" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">8.40</text>
-        </g>
-        <g class="sim-pin" style="animation-delay:.5s">
-          <line x1="335" y1="300" x2="335" y2="266" stroke="#D98A3E" stroke-width="1.5" opacity=".6"/>
-          <circle cx="335" cy="300" r="6" fill="#D98A3E"/><circle cx="335" cy="300" r="11" fill="none" stroke="#D98A3E" stroke-width="1" opacity=".35"/>
-          <text x="335" y="256" text-anchor="middle" fill="#D98A3E" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">15.60</text>
-        </g>
-        <g class="sim-pin" style="animation-delay:1s">
-          <line x1="690" y1="300" x2="690" y2="252" stroke="#CE4C3B" stroke-width="1.5" opacity=".6"/>
-          <circle cx="690" cy="300" r="6" fill="#CE4C3B"/><circle cx="690" cy="300" r="11" fill="none" stroke="#CE4C3B" stroke-width="1" opacity=".35"/>
-          <text x="690" y="242" text-anchor="middle" fill="#CE4C3B" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600">61.00</text>
-        </g>
-
-        <!-- rider skeleton at the apex -->
-        <g class="sim-rider">
-          <g stroke="#C9A24B" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".92">
-            <path d="M500 70 L500 92"/><path d="M490 74 L510 74"/>
-            <path d="M490 74 L482 84 L478 93"/><path d="M510 74 L519 82 L525 88"/>
-            <path d="M500 92 L492 106 L490 120"/><path d="M500 92 L508 106 L510 120"/>
-          </g>
-          <g fill="#5FD08B">
-            <circle class="sim-jt" cx="500" cy="62" r="4.6" style="animation-delay:0s"/>
-            <circle cx="490" cy="74" r="3"/><circle cx="510" cy="74" r="3"/>
-            <circle cx="482" cy="84" r="2.6"/><circle cx="519" cy="82" r="2.6"/>
-            <circle class="sim-jt" cx="478" cy="93" r="3" style="animation-delay:.4s"/><circle class="sim-jt" cx="525" cy="88" r="3" style="animation-delay:.7s"/>
-            <circle cx="500" cy="92" r="3.2"/><circle cx="492" cy="106" r="2.6"/><circle cx="508" cy="106" r="2.6"/>
-            <circle class="sim-jt" cx="490" cy="120" r="3" style="animation-delay:.2s"/><circle class="sim-jt" cx="510" cy="120" r="3" style="animation-delay:.55s"/>
-          </g>
-        </g>
-
-        <!-- sweeping scan line -->
-        <g class="sim-scan"><rect x="0" y="20" width="34" height="290" fill="url(#simScan)"/><line x1="17" y1="20" x2="17" y2="310" stroke="#5FD08B" stroke-width="1" opacity=".7"/></g>
-
-        <!-- readout HUD -->
-        <g class="sim-read" font-family="JetBrains Mono,monospace">
-          <text x="60" y="46" fill="#98A199" font-size="12">cadencia</text><text x="60" y="64" fill="#E6C572" font-size="17" font-weight="600">227 ppm</text>
-          <text x="180" y="46" fill="#98A199" font-size="12">tiempos</text><text x="180" y="64" fill="#E6C572" font-size="17" font-weight="600">4</text>
-          <text x="250" y="46" fill="#98A199" font-size="12">confianza</text><text x="250" y="64" fill="#5FD08B" font-size="17" font-weight="600">96%</text>
-        </g>
-      </svg>
-    </div>
-  </div>
-
-  <section class="max-w-6xl mx-auto px-6 py-14 border-t border-slate-900">
-    <h2 class="text-2xl font-bold text-center mb-10" data-i18n="landing_how_title"></h2>
-    <div class="grid sm:grid-cols-3 gap-6">
-      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 text-center"><div class="text-3xl font-extrabold text-indigo-300 mono">1</div><div class="font-semibold mt-2" data-i18n="how1_t"></div><div class="text-sm text-slate-400 mt-1" data-i18n="how1_d"></div></div>
-      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 text-center"><div class="text-3xl font-extrabold text-indigo-300 mono">2</div><div class="font-semibold mt-2" data-i18n="how2_t"></div><div class="text-sm text-slate-400 mt-1" data-i18n="how2_d"></div></div>
-      <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 text-center"><div class="text-3xl font-extrabold text-indigo-300 mono">3</div><div class="font-semibold mt-2" data-i18n="how3_t"></div><div class="text-sm text-slate-400 mt-1" data-i18n="how3_d"></div></div>
-    </div>
-    <div class="text-center mt-10">
-      <a id="ctaBottom" class="inline-block px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold" data-i18n="landing_cta_start"></a>
-    </div>
-  </section>
-
-  <footer class="text-center text-xs text-slate-600 py-8 border-t border-slate-900">Digit2AI · {{H1}} &amp; <span data-i18n="brand_suffix">Entrenador de salto</span> · <a href="{{BASE}}privacidad" class="underline" data-i18n="nav_privacidad"></a> · <a href="{{BASE}}terminos" class="underline" data-i18n="nav_terminos"></a> · <a href="{{BASE}}reembolsos" class="underline" data-i18n="nav_reembolsos"></a></footer>
+  <footer class="text-center text-xs py-10 divider-top" style="color:var(--mut-d);background:var(--ink)">
+    Digit2AI · {{H1}} &amp; <span data-i18n="brand_suffix">Entrenador de salto</span>
+    · <a href="{{BASE}}privacidad" class="underline" data-i18n="nav_privacidad"></a>
+    · <a href="{{BASE}}terminos" class="underline" data-i18n="nav_terminos"></a>
+    · <a href="{{BASE}}reembolsos" class="underline" data-i18n="nav_reembolsos"></a>
+  </footer>
 
   <script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";window.__LANG="{{LANG}}";</script>
   <script>
@@ -476,9 +461,7 @@
     document.getElementById('ctaStart').href=signup;
     document.getElementById('ctaBottom').href=signup;
     document.getElementById('ctaLogin').href=login;
-    // "Probar AI Jump Coach" opens the panel directly (login-gated).
     var jl=document.getElementById('jlCta'); if(jl) jl.href=panel;
-    // If already logged in, collapse to a single "Ir al panel" and hide login CTAs.
     fetch(B+'api/v1/account/config',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
       if(j&&j.logged_in){
         var goPanel=I.landing_cta_panel||'Ir al panel';
@@ -489,6 +472,11 @@
         var ll=document.getElementById('loginLink'); if(ll) ll.style.display='none';
       }
     }).catch(function(){});
+    // Reveal-on-scroll
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
+      document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+    } else { document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');}); }
   })();
   </script>
   <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("{{BASE}}sw.js").catch(function(){});});}</script>
