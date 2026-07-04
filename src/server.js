@@ -634,6 +634,69 @@ async function startServer() {
       console.log('⚠️ WebSocket relay setup skipped:', error.message);
     }
 
+    // WebSocket: Twilio ConversationRelay ↔ Claude Haiku ↔ existing booking tools (POC).
+    // Cheaper alternative to the ElevenLabs bundle; books into the SAME calendar.
+    try {
+      const WebSocket = require('ws');
+      const { RelaySession, resolveClientContext } = require('./services/conversationRelayAgent');
+      const relayWss = new WebSocket.Server({ server, path: '/voice-relay/ws' });
+
+      relayWss.on('connection', (ws) => {
+        console.log('☎️  ConversationRelay socket connected');
+        let ready = null; // Promise<RelaySession|null>, resolved on setup
+
+        const send = (obj) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); };
+        const speak = (text, last = true) => send({ type: 'text', token: text, last });
+
+        ws.on('message', async (raw) => {
+          let msg;
+          try { msg = JSON.parse(raw); } catch (e) { return; }
+
+          if (msg.type === 'setup') {
+            console.log(`☎️  Relay setup: call ${msg.callSid} from ${msg.from} to ${msg.to}`);
+            ready = resolveClientContext({ to: msg.to, from: msg.from })
+              .then((ctx) => {
+                if (!ctx.clientId) console.warn('[VoiceRelay] no client resolved for', msg.to);
+                return new RelaySession(ctx);
+              })
+              .catch((err) => { console.error('[VoiceRelay] setup failed:', err.message); return null; });
+            return;
+          }
+
+          if (msg.type === 'prompt' && msg.last !== false && msg.voicePrompt) {
+            const session = ready ? await ready : null;
+            if (!session || !session.clientId) {
+              speak("I'm sorry, this line isn't fully set up yet. Please try again shortly.");
+              return;
+            }
+            if (session.busy) return; // ignore overlapping utterances
+            session.busy = true;
+            try {
+              const reply = await session.handlePrompt(msg.voicePrompt);
+              if (reply) speak(reply);
+            } catch (err) {
+              console.error('[VoiceRelay] prompt error:', err.message);
+              speak('Sorry, something went wrong on my end. Could you say that again?');
+            } finally {
+              session.busy = false;
+            }
+            return;
+          }
+
+          if (msg.type === 'error') {
+            console.error('[VoiceRelay] ConversationRelay error:', msg.description || JSON.stringify(msg).slice(0, 200));
+          }
+        });
+
+        ws.on('close', () => console.log('☎️  ConversationRelay socket closed'));
+        ws.on('error', (e) => console.error('☎️  ConversationRelay socket error:', e.message));
+      });
+
+      console.log('✅ ConversationRelay WS ready at /voice-relay/ws');
+    } catch (error) {
+      console.log('⚠️ ConversationRelay WS setup skipped:', error.message);
+    }
+
     // Graceful shutdown handlers
     const gracefulShutdown = async (signal) => {
       console.log(`\n🛑 ${signal} received, shutting down gracefully...`);

@@ -1017,6 +1017,15 @@ if (elevenlabsWebrtcRoutes) {
     console.log('⚠️ ElevenLabs WebRTC routes not available - skipping mount');
 }
 
+// Twilio ConversationRelay POC — cheaper voice agent (Claude Haiku + Polly).
+// TwiML entry point; the websocket handler lives in src/server.js at /voice-relay/ws.
+try {
+    app.use('/voice/relay', require('./routes/voice-relay'));
+    console.log('☎️ ConversationRelay POC routes mounted at /voice/relay');
+} catch (e) {
+    console.log('⚠️ ConversationRelay POC routes not available:', e.message);
+}
+
 // Email Marketing routes (SendGrid integration)
 app.use('/api/email', emailRoutes);
 console.log('📧 Email Marketing routes mounted at /api/email');
