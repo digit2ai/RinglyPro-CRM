@@ -588,104 +588,22 @@ async function renderOverview(container) {
   // arc-reactor orb (ported from champion-teaser.html). Click the orb to hear the
   // live dashboard summary; it reacts to Lina's voice while speaking. Wired by initLinaOrb().
   const linaOrbHtml = `
-    <div class="lina lina-v2" id="lina-orb">
-      <div class="lina-name">Lina &middot; Voz AI de Digit2AI</div>
-      <div class="lina-role">Tu asistente del Centro de Proyectos</div>
-      <div class="orb-wrap" id="linaOrbWrap" role="button" tabindex="0" data-state="idle"
-           aria-label="Escuchar el resumen de tu Centro de Proyectos">
-        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <radialGradient id="linaOrbCore" cx="0.5" cy="0.45">
-              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
-              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
-              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
-              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
-              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
-            </radialGradient>
-            <radialGradient id="linaOrbGlow" cx="0.5" cy="0.5">
-              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
-              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
-              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
-            </radialGradient>
-            <radialGradient id="linaOrbInnerCore" cx="0.5" cy="0.45">
-              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
-              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
-              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
-            </radialGradient>
-            <linearGradient id="linaOrbRingGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#22d3ee"/>
-              <stop offset="0.4" stop-color="#3b82f6"/>
-              <stop offset="0.75" stop-color="#8b5cf6"/>
-              <stop offset="1" stop-color="#ec4899"/>
-            </linearGradient>
-            <linearGradient id="linaOrbScan" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
-              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
-              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#linaOrbGlow)">
-            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
-          </circle>
-          <g class="orb-ring-outer">
-            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
-            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
-            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
-            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
-            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
-          </g>
-          <g class="orb-ring-mid">
-            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
-            <g fill="#a5f3fc">
-              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
-              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
-              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
-              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
-            </g>
-          </g>
-          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
-          <g class="orb-scan">
-            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#linaOrbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-          </g>
-          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
-          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
-          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
-          <g class="orb-particles">
-            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
-            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
-            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
-            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
-          </g>
-          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#linaOrbRingGrad)" stroke-width="1" opacity="0.5">
-            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
-          </circle>
-          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
-          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#linaOrbCore)">
-            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
-          </circle>
-          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#linaOrbCore)" opacity="0.95">
-            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
-          </circle>
-          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#linaOrbInnerCore)">
-            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
-          </circle>
-          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
-            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
-          </ellipse>
-          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
-            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
-            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
-          </g>
-        </svg>
-        <canvas class="orb-wave" id="linaOrbWave" width="240" height="60" aria-hidden="true"></canvas>
-        <div class="orb-caption" id="linaOrbCaption">
-          <span class="orb-cap-idle">Toca el orbe para escuchar tu resumen</span>
-          <span class="orb-cap-active">Toca el orbe para detener</span>
+    <div class="lina lina-ana" id="lina-orb">
+      <div class="ana-card" id="linaOrbWrap" role="button" tabindex="0" data-state="idle"
+           aria-label="Hablar con Ana — escuchar el resumen de tu Centro de Proyectos">
+        <img class="ana-photo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a148dae069d64aa5d326c80.jpg"
+             alt="Ana, asistente de IA de Digit2AI" draggable="false" />
+        <div class="ana-glow"></div>
+        <canvas class="ana-wave" id="linaOrbWave" width="300" height="46" aria-hidden="true"></canvas>
+        <div class="ana-cta" id="linaOrbCaption">
+          <span class="ana-dot"></span>
+          <span class="orb-cap-idle">Toca aqu&iacute; para hablar con Ana</span>
+          <span class="orb-cap-active">Ana est&aacute; hablando &middot; toca para detener</span>
         </div>
       </div>
-      <div class="status" id="linaStatus">Pulsa el orbe para escuchar el resumen de tu centro de proyectos.</div>
+      <div class="lina-name" style="margin-top:14px">Ana &middot; Voz AI de Digit2AI</div>
+      <div class="lina-role">Tu asistente del Centro de Proyectos</div>
+      <div class="status" id="linaStatus">Toca a Ana para escuchar el resumen de tu centro de proyectos.</div>
       <div class="controls" style="justify-content:center">
         <button id="linaPause" disabled>&#10074;&#10074; Pausar</button>
         <button id="linaStop" disabled>&#9632; Detener</button>
