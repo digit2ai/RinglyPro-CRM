@@ -178,7 +178,7 @@
     mounted.forEach(applyContext);
   }
 
-  function autoMount() { ['gsReportTop', 'gsReportBottom'].forEach(function (id) { var el = document.getElementById(id); if (el && !el.querySelector('.gsr-wrap')) mount(el); }); }
+  function autoMount() { ['gsReportBottom'].forEach(function (id) { var el = document.getElementById(id); if (el && !el.querySelector('.gsr-wrap')) mount(el); }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoMount); else autoMount();
 
   window.GSReport = { mount: mount, setContext: setContext };

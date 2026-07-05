@@ -377,7 +377,7 @@
     // El generador de informe 3D es una acción de dueño: se oculta a visitantes anónimos.
     if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) {
       var cta = $('marketingCta'); if (cta) cta.classList.remove('hidden');
-      ['gsReportTop', 'gsReportBottom'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
+      ['gsReportBottom'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
     }
     var url = CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG + (k ? ('&k=' + encodeURIComponent(k)) : '');
     fetch(url, { credentials: 'same-origin' })

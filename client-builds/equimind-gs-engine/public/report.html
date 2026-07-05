@@ -249,23 +249,27 @@ function startCanvasHorse(splatLabel){
 
 async function renderHero(scene){
   const plyUrl=scene.assets&&scene.assets.ply;
-  // Try the real WebGL splat viewer on the .ply (real horse gaussians). If the CDN
-  // is blocked, WebGL is missing, or the .ply is a placeholder, use the canvas horse.
-  if(plyUrl){
+  const label=scene.is_simulated?'MODELO 3D · GENERADO':'ESCANEO 3D · GAUSSIAN SPLAT';
+  // Real photoreal scans (Luma) -> try the WebGL splat viewer on the .ply, NON-
+  // destructively (overlay a host div; on any failure remove it and keep the
+  // canvas). Simulated/procedural scenes -> the reliable canvas horse, which always
+  // renders and looks right for a generated model.
+  if(!scene.is_simulated && plyUrl){
+    let host=null;
     try{
       const mod=await import('https://esm.sh/@mkkellogg/gaussian-splats-3d@0.4.6');
-      // gsplat needs its own element; swap the canvas for a div stage.
-      const cvEl=$('scan'); const stage=document.createElement('div'); stage.id='scan'; stage.style.cssText='display:block;width:100%;height:clamp(360px,52vw,520px)';
-      cvEl.replaceWith(stage);
-      const viewer=new mod.Viewer({rootElement:stage,selfDrivenMode:true,useBuiltInControls:true});
+      const stageEl=document.querySelector('.stage'), cv=$('scan');
+      host=document.createElement('div'); host.style.cssText='display:block;width:100%;height:clamp(360px,52vw,520px)';
+      stageEl.insertBefore(host, cv); cv.style.display='none';
+      const viewer=new mod.Viewer({rootElement:host,selfDrivenMode:true,useBuiltInControls:true});
       await viewer.addSplatScene(plyUrl,{format:0,showLoadingUI:false});
       viewer.start();
-      $('ovlModel').innerHTML=(scene.is_simulated?'MODELO 3D · GENERADO':'ESCANEO 3D · GAUSSIAN SPLAT')+'<br><span class="big">'+Number(scene.splat_count||0).toLocaleString(LANG==='en'?'en':'es')+' splats</span>';
+      $('ovlModel').innerHTML=label+'<br><span class="big">'+Number(scene.splat_count||0).toLocaleString(LANG==='en'?'en':'es')+' splats</span>';
       $('autoBtn').style.display='none'; $('resetBtn').style.display='none';
       return;
-    }catch(e){ /* fall through to canvas horse */ }
+    }catch(e){ if(host&&host.parentNode) host.parentNode.removeChild(host); const cv=$('scan'); if(cv) cv.style.display='block'; }
   }
-  startCanvasHorse(scene.is_simulated?'MODELO 3D · GENERADO':'ESCANEO 3D · GAUSSIAN SPLAT');
+  startCanvasHorse(label);
 }
 
 (async()=>{
@@ -275,7 +279,7 @@ async function renderHero(scene){
   $('repCode').textContent=scene.report_code||('GS-'+sceneId);
   $('repDate').textContent=fmtDate(scene.created_at);
   $('ovlCap').textContent=rep.capture_seconds?('0:'+String(Math.round(rep.capture_seconds)).padStart(2,'0')):'—';
-  if(rep.horse_name){ $('repSub').textContent=(I.rep_sub||'')+' — '+rep.horse_name+(rep.breed?(' · '+rep.breed):'')+'.'; }
+  if(rep.horse_name){ $('repEyebrow').textContent=rep.horse_name+(rep.breed?(' · '+rep.breed):'')+' · '+(I.rep_eyebrow||''); }
   renderMeasurements(rep); renderFindings(rep); renderStudio(scene);
 
   // share + open-in-3D links
