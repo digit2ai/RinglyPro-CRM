@@ -973,12 +973,12 @@ html.lang-es .i18.es{display:inline}
   var pgEn=document.getElementById('pgEn'), pgEs=document.getElementById('pgEs');
   var d=document.documentElement;
   function current(){ return d.classList.contains('lang-en')?'en':'es'; }
-  window.applyLanguage=function(l){
+  window.applyLanguage=function(l,persist){
     if(l!=='en'&&l!=='es') l='es';
     d.classList.remove('lang-en','lang-es'); d.classList.add('lang-'+l); d.setAttribute('lang',l);
     if(pgEn) pgEn.classList.toggle('on',l==='en');
     if(pgEs) pgEs.classList.toggle('on',l==='es');
-    try{ localStorage.setItem('ni_lang',l); }catch(e){}
+    if(persist!==false){ try{ localStorage.setItem('ni_lang',l); }catch(e){} }
     if(window.__setVoiceLang) window.__setVoiceLang(l); // page text and voice stay in lockstep
   };
   if(pgEn) pgEn.addEventListener('click',function(){ window.applyLanguage('en'); });
@@ -988,6 +988,20 @@ html.lang-es .i18.es{display:inline}
   if(pgEn) pgEn.classList.toggle('on',l0==='en');
   if(pgEs) pgEs.classList.toggle('on',l0==='es');
   if(window.__setVoiceLang) window.__setVoiceLang(l0);
+
+  // Real geolocation: Cloudflare tells us the visitor's country (no API key, same-origin).
+  // Spanish-speaking country -> ES, otherwise EN. Only applies if the visitor hasn't picked a language.
+  var SPANISH={MX:1,ES:1,AR:1,CO:1,PE:1,VE:1,CL:1,EC:1,GT:1,CU:1,BO:1,DO:1,HN:1,PY:1,SV:1,NI:1,CR:1,PA:1,UY:1,PR:1,GQ:1};
+  try{
+    if(!localStorage.getItem('ni_lang')){
+      fetch('/cdn-cgi/trace',{cache:'no-store'}).then(function(r){return r.text();}).then(function(txt){
+        if(localStorage.getItem('ni_lang')) return;              // user toggled while we were fetching
+        var m=/(?:^|\n)loc=([A-Z]{2})/.exec(txt); if(!m) return;
+        var geoLang=SPANISH[m[1]]?'es':'en';
+        if(geoLang!==current()) window.applyLanguage(geoLang,false); // apply, but don't lock it in
+      }).catch(function(){});
+    }
+  }catch(e){}
 })();
 </script>
 </body>
