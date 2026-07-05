@@ -281,8 +281,13 @@ function renderGait(rep){
 function renderMeasurements(rep){
   const box=$('measBox');
   const conf = rep&&rep.conformation&&rep.conformation.items;
-  const arr = (conf&&conf.length) ? conf.map(c=>({label:c.label,value:(c.value!=null?(c.value+(c.unit||'')):null),cm:c.value,ideal_lo:c.ideal_lo,ideal_hi:c.ideal_hi,lo:c.ideal_lo!=null?c.ideal_lo*0.85:null,hi:c.ideal_hi!=null?c.ideal_hi*1.15:null,at:c.value,status:c.source,anchor:c.anchor,src:c.source}))
-                : ((rep&&rep.measurements)||[]);
+  // Conformation panel = real conformation only. When a gait payload exists the
+  // generic `measurements` are the gait SCORES (already shown in the dashboard) —
+  // don't re-render them here mislabeled as conformation.
+  let arr;
+  if(conf&&conf.length) arr = conf.map(c=>({label:c.label,value:(c.value!=null?(c.value+(c.unit||'')):null),cm:c.value,ideal_lo:c.ideal_lo,ideal_hi:c.ideal_hi,lo:c.ideal_lo!=null?c.ideal_lo*0.85:null,hi:c.ideal_hi!=null?c.ideal_hi*1.15:null,at:c.value,status:c.source,anchor:c.anchor,src:c.source}));
+  else if(rep&&rep.gait) arr = [];
+  else arr = (rep&&rep.measurements)||[];
   if(!arr.length){ $('confSection').style.display='none'; return; }
   box.innerHTML=arr.map(m=>{
     const st=m.status||m.src||'info';
