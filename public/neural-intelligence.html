@@ -253,6 +253,45 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 }
 /* landscape phones: don't force full height on short viewports */
 @media (max-height:520px){.slide{min-height:auto;padding:80px 22px 40px}}
+
+/* ===== Bilingual Neural Voice orb (Layer 3) ===== */
+.niva{position:fixed;left:clamp(14px,3vw,30px);bottom:clamp(14px,4vh,30px);z-index:60;font-family:var(--font-body)}
+.niva-launch{width:60px;height:60px;border-radius:50%;border:1px solid var(--line2);cursor:pointer;padding:0;position:relative;
+  background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 46%,#0e7490 100%);
+  box-shadow:0 10px 30px rgba(34,211,238,.35);display:flex;align-items:center;justify-content:center}
+.niva-launch:hover{transform:translateY(-1px)}
+.niva-launch:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.niva-launch .ic{color:#062b33;font-size:20px;line-height:1;transform:translateX(1px)}
+.niva-launch.speaking,.niva-mini.speaking{animation:niva-pulse 1.2s ease-in-out infinite}
+@keyframes niva-pulse{
+  0%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 0 rgba(34,211,238,.45)}
+  70%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 18px rgba(34,211,238,0)}
+  100%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 0 rgba(34,211,238,0)}}
+.niva-panel{position:absolute;left:0;bottom:72px;width:min(86vw,322px);
+  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:16px;
+  padding:16px;box-shadow:0 24px 64px rgba(0,0,0,.6);display:none}
+.niva.open .niva-panel{display:block}
+.niva.open .niva-launch .ic::before{content:"\2715"}
+.niva-hd{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding-right:18px}
+.niva-mini{width:34px;height:34px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 46%,#0e7490 100%)}
+.niva-name{font-family:var(--font-display);font-weight:700;color:#fff;font-size:14px;line-height:1.2}
+.niva-role{color:var(--mut);font-size:11.5px;line-height:1.3}
+.niva-lang{display:flex;gap:6px;margin-bottom:12px}
+.niva-lang button{flex:1;padding:8px 0;min-height:40px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:600 12.5px var(--font-display);letter-spacing:.05em;cursor:pointer}
+.niva-lang button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent}
+.niva-ctrls{display:flex;gap:8px;margin-bottom:4px}
+.niva-ctrls button{flex:1;padding:9px 6px;min-height:42px;border-radius:10px;border:1px solid var(--line2);background:rgba(34,211,238,.07);color:var(--txt);font:600 12.5px var(--font-body);cursor:pointer}
+.niva-ctrls button.primary{flex:2.4;background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent;font-weight:700}
+.niva-ctrls button:disabled{opacity:.4;cursor:default}
+.niva-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--mut);margin-top:11px}
+.niva-row label{display:flex;align-items:center;gap:6px}
+.niva-row select{font:inherit;background:#0f1728;color:var(--txt);border:1px solid var(--line2);border-radius:7px;padding:6px 7px;max-width:60%}
+.niva-mode{color:var(--accent);font-weight:600}
+.niva-status{font-size:12px;color:var(--mut);margin-top:11px;min-height:16px;line-height:1.45}
+.niva-close{position:absolute;top:9px;right:12px;background:none;border:0;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px}
+.niva-close:hover{color:var(--txt)}
+@media (max-width:768px){.niva-panel{width:min(90vw,300px)}}
+@media print{.niva{display:none}}
 </style>
 </head>
 <body>
@@ -484,7 +523,8 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   // Keyboard navigation
   window.addEventListener('keydown',function(ev){
     var t=ev.target.tagName;
-    if(t==='INPUT'||t==='TEXTAREA') return;
+    if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||t==='BUTTON') return;
+    if(document.getElementById('niva').classList.contains('open') && ev.key===' ') return;
     switch(ev.key){
       case 'ArrowDown': case 'PageDown': case ' ':
         ev.preventDefault(); goTo(idx+1); break;
@@ -507,6 +547,237 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   });
 
   setIdx(0);
+})();
+</script>
+
+<!-- ===== Bilingual Neural Voice orb — EN + ES narration of the deck ===== -->
+<div class="niva" id="niva">
+  <button class="niva-launch" id="nivaLaunch" aria-label="Voice walkthrough / Recorrido en voz" title="Voice walkthrough / Recorrido en voz">
+    <span class="ic" id="nivaLaunchIc">&#9658;</span>
+  </button>
+  <div class="niva-panel" role="dialog" aria-label="Voice walkthrough">
+    <button class="niva-close" id="nivaClose" aria-label="Close / Cerrar">&times;</button>
+    <div class="niva-hd">
+      <div class="niva-mini" id="nivaMini" aria-hidden="true"></div>
+      <div>
+        <div class="niva-name">DIGIT2AI Voice</div>
+        <div class="niva-role" id="nivaRole">AI narration of this deck</div>
+      </div>
+    </div>
+    <div class="niva-lang" role="group" aria-label="Language">
+      <button id="nivaEn" class="on" type="button">English</button>
+      <button id="nivaEs" type="button">Espa&ntilde;ol</button>
+    </div>
+    <div class="niva-ctrls">
+      <button class="primary" id="nivaPlay" type="button">&#9658;&nbsp;<span id="nivaPlayTxt">Play walkthrough</span></button>
+      <button id="nivaPause" type="button" disabled aria-label="Pause">&#10073;&#10073;</button>
+      <button id="nivaStop" type="button" disabled aria-label="Stop">&#9632;</button>
+    </div>
+    <div class="niva-row">
+      <label id="nivaAccentLbl" for="nivaAccent">Voice</label>
+      <select id="nivaAccent" aria-label="Voice"></select>
+    </div>
+    <div class="niva-row">
+      <label><input type="checkbox" id="nivaNeural" checked> <span id="nivaHdLbl">Neural HD</span></label>
+      <span class="niva-mode" id="nivaMode"></span>
+    </div>
+    <div class="niva-status" id="nivaStatus" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- Narration: index 0 = intro, 1..11 = slides 1..11 (numbers spelled out for natural TTS) ----
+  var SEG={
+    en:[
+      "Hi, I'm the DIGIT2AI voice of artificial intelligence. In the next few minutes I'll walk you through Neural Intelligence, our AI-native operating model. Let me take you slide by slide.",
+      "DIGIT2AI Neural Intelligence is the AI-native operating model: one hundred fifty specialized AI agents, one backbone, and thirty to fifty percent lower operating costs, in weeks, not years.",
+      "Here's the paradox of twenty twenty-six. Everyone adopted AI, but almost no one is winning with it. Eighty-eight percent of organizations now use AI in at least one function, yet only about seven percent have scaled it across the enterprise, and only about six percent capture real company-wide value. Eighty to ninety-five percent of enterprise AI projects fail to deliver the return they promised. The problem is not the AI; it's what the AI is plugged into.",
+      "Roughly nine out of ten enterprises still run on a pre-AI operating model. They bolt AI tools onto siloed departments, legacy systems that don't talk to each other, headcount-based cost structures, and decisions that wait for meetings. AI on top of a traditional operating model produces expensive pilots, not transformation. Gartner expects sixty percent of AI projects without AI-ready architecture to be abandoned through twenty twenty-six.",
+      "The window is twenty twenty-six to twenty twenty-seven. AI budgets are rising at eighty-six percent of enterprises, agentic AI is moving from experiment to production across every industry, and organizations that redesign work around AI are twice as likely to exceed their revenue goals. The gap between AI-native operators and traditional operators widens every quarter, and it will not close later at the same price.",
+      "So here's what we built. Not another AI tool, a new operating model. DIGIT2AI Neural Intelligence replaces manual, siloed operations with an orchestrated network of one hundred fifty specialized AI agents that run business processes end to end, with your leadership in command of strategy and decisions. Humans own the what; the architecture owns the how.",
+      "The engine is our proprietary enterprise architecture methodology, five layers, one backbone. Business requirements captured in plain language; functional design translated automatically into executable specifications; one hundred fifty specialized agents across finance, operations, sales, compliance and support; an MCP orchestration backbone that keeps every agent connected, governed and auditable; and reusable verticals, twenty-three production platforms already built on this factory. Proven, repeatable, and governed. A technical deep-dive is available for your CTO on request.",
+      "The result: thirty to fifty percent operating cost reduction, within weeks, not a multi-year transformation program. The savings come from repetitive knowledge work executed by agents around the clock, handoffs and rework eliminated by orchestration, systems integrated through the backbone instead of manual re-entry, and software built in days by the factory instead of quarters by vendors. Enterprise AI already benchmarks at three point seven times return per dollar invested; Neural Intelligence goes further, structural cost removal, not incremental productivity.",
+      "And this is not theory. Twenty-three production vertical platforms, one methodology, weeks per build. RinglyPro, an AI voice CRM running multi-tenant client operations. EquiMind, an AI sports coaching platform built on computer vision and biomechanics. PLANEA, a financial wellness platform for Latin America. PINAXIS, AI intralogistics optimization for industrial operators. And MaraMed, browser-based contactless vitals measurement. Every vertical is evidence the factory works, the same engine we deploy inside your enterprise.",
+      "Here's how engagement works, from decision to savings in weeks. Weeks one and two: a Neural Assessment, where we map your operating model and identify the thirty to fifty percent cost surface. Weeks three and four: your first agents go live against your highest-cost process. Weeks five through eight: we scale the network across functions on the backbone. And ongoing: human-in-command governance, your leaders direct, the architecture executes. No eighteen-month consulting roadmap; value lands inside the first month.",
+      "Now consider the cost of waiting. Every quarter on the traditional model is margin handed to AI-native competitors. Your cost structure stays thirty to fifty percent heavier than it needs to be, competitors compound the savings into pricing power and speed, and talent and capital flow to AI-native operators. In twenty twenty-seven there will be two kinds of enterprises: those that run on neural intelligence, and those competing against it.",
+      "The next step is simple: a Neural Assessment, two weeks, fixed scope. We map your operating model and deliver a quantified cost-reduction blueprint: where the thirty to fifty percent lives, which agents capture it, and the deployment sequence. DIGIT2AI, Tampa, Florida. Let's talk."
+    ],
+    es:[
+      "Hola, soy la voz de inteligencia artificial de DIGIT2AI. En los próximos minutos te voy a explicar Neural Intelligence, nuestro modelo operativo nativo de inteligencia artificial. Déjame llevarte lámina por lámina.",
+      "DIGIT2AI Neural Intelligence es el modelo operativo nativo de inteligencia artificial: ciento cincuenta agentes de inteligencia artificial especializados, una sola columna vertebral, y entre treinta y cincuenta por ciento menos de costos operativos, en semanas, no en años.",
+      "Esta es la paradoja de dos mil veintiséis. Todos adoptaron la inteligencia artificial, pero casi nadie está ganando con ella. El ochenta y ocho por ciento de las organizaciones ya usa inteligencia artificial en al menos una función, pero solo cerca del siete por ciento la ha escalado en toda la empresa, y apenas alrededor del seis por ciento captura un valor real en toda la compañía. Entre el ochenta y el noventa y cinco por ciento de los proyectos de inteligencia artificial empresarial no entregan el retorno prometido. El problema no es la inteligencia artificial: es a qué está conectada.",
+      "Aproximadamente nueve de cada diez empresas todavía funcionan con un modelo operativo anterior a la inteligencia artificial. Le conectan herramientas de inteligencia artificial a departamentos aislados, a sistemas heredados que no se comunican entre sí, a estructuras de costos basadas en personal, y a decisiones que esperan reuniones. La inteligencia artificial sobre un modelo operativo tradicional produce pilotos costosos, no transformación. Gartner espera que el sesenta por ciento de los proyectos de inteligencia artificial sin una arquitectura preparada sean abandonados hasta dos mil veintiséis.",
+      "La ventana es dos mil veintiséis a dos mil veintisiete. Los presupuestos de inteligencia artificial están creciendo en el ochenta y seis por ciento de las empresas, la inteligencia artificial con agentes está pasando del experimento a la producción en cada industria, y las organizaciones que rediseñan el trabajo en torno a la inteligencia artificial tienen el doble de probabilidad de superar sus metas de ingresos. La brecha entre los operadores nativos de inteligencia artificial y los tradicionales se amplía cada trimestre, y no se cerrará después al mismo precio.",
+      "Esto es lo que construimos. No es otra herramienta de inteligencia artificial: es un nuevo modelo operativo. DIGIT2AI Neural Intelligence reemplaza las operaciones manuales y aisladas con una red orquestada de ciento cincuenta agentes de inteligencia artificial especializados que ejecutan los procesos de negocio de principio a fin, con tu liderazgo al mando de la estrategia y las decisiones. Los humanos son dueños del qué; la arquitectura es dueña del cómo.",
+      "El motor es nuestra metodología propia de arquitectura empresarial: cinco capas, una sola columna vertebral. Requerimientos de negocio capturados en lenguaje sencillo; diseño funcional traducido automáticamente en especificaciones ejecutables; ciento cincuenta agentes especializados en finanzas, operaciones, ventas, cumplimiento y soporte; una columna de orquestación MCP que mantiene a cada agente conectado, gobernado y auditable; y verticales reutilizables, veintitrés plataformas en producción ya construidas sobre esta fábrica. Probado, repetible y gobernado. Hay una explicación técnica a fondo disponible para tu director de tecnología cuando la solicites.",
+      "El resultado: una reducción de costos operativos de entre treinta y cincuenta por ciento, en semanas, no un programa de transformación de varios años. Los ahorros vienen del trabajo repetitivo de conocimiento ejecutado por agentes las veinticuatro horas, de la eliminación de traspasos y retrabajos gracias a la orquestación, de sistemas integrados a través de la columna vertebral en lugar de reingreso manual, y de software construido en días por la fábrica en lugar de trimestres por proveedores. La inteligencia artificial empresarial ya rinde tres punto siete veces de retorno por cada dólar invertido; Neural Intelligence va más allá: eliminación estructural de costos, no productividad incremental.",
+      "Y esto no es teoría. Veintitrés plataformas verticales en producción, una sola metodología, semanas por construcción. RinglyPro, un CRM de voz con inteligencia artificial que opera clientes en modo multiempresa. EquiMind, una plataforma de entrenamiento deportivo con visión por computadora y biomecánica. PLANEA, una plataforma de bienestar financiero para América Latina. PINAXIS, optimización de intralogística con inteligencia artificial para operadores industriales. Y MaraMed, medición de signos vitales sin contacto desde el navegador. Cada vertical es evidencia de que la fábrica funciona: es el mismo motor que desplegamos dentro de tu empresa.",
+      "Así funciona el compromiso, de la decisión a los ahorros en semanas. Semanas uno y dos: una Evaluación Neural, donde mapeamos tu modelo operativo e identificamos la superficie de costos del treinta al cincuenta por ciento. Semanas tres y cuatro: tus primeros agentes entran en vivo contra tu proceso de mayor costo. Semanas cinco a ocho: escalamos la red a través de las funciones sobre la columna vertebral. Y de forma continua: gobernanza con el humano al mando; tus líderes dirigen, la arquitectura ejecuta. Sin una hoja de ruta de consultoría de dieciocho meses; el valor llega dentro del primer mes.",
+      "Ahora considera el costo de esperar. Cada trimestre con el modelo tradicional es margen entregado a los competidores nativos de inteligencia artificial. Tu estructura de costos se mantiene entre treinta y cincuenta por ciento más pesada de lo necesario, los competidores convierten esos ahorros en poder de precio y velocidad, y el talento y el capital fluyen hacia los operadores nativos de inteligencia artificial. En dos mil veintisiete habrá dos tipos de empresas: las que funcionan con inteligencia neural, y las que compiten contra ellas.",
+      "El siguiente paso es simple: una Evaluación Neural, dos semanas, alcance fijo. Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducción de costos: dónde está el treinta al cincuenta por ciento, qué agentes lo capturan y la secuencia de despliegue. DIGIT2AI, Tampa, Florida. Hablemos."
+    ]
+  };
+  var UI={
+    en:{role:'AI narration of this deck',play:'Play walkthrough',accent:'Voice',hd:'Neural HD',
+        idle:"Press play and I'll walk you through all eleven slides.",
+        prep:'Preparing neural voice…',one:'Playing section…',
+        done:'Walkthrough complete. Press play to repeat.',pause:'Paused.',
+        speak:function(a,b){return 'Speaking… ('+a+' of '+b+')';},hdOn:'HD',hdOff:'browser'},
+    es:{role:'Narración con IA de esta presentación',play:'Reproducir recorrido',accent:'Voz',hd:'Voz neural HD',
+        idle:'Pulsa reproducir y te explico las once láminas.',
+        prep:'Preparando voz neural…',one:'Reproduciendo sección…',
+        done:'Recorrido terminado. Pulsa para repetir.',pause:'En pausa.',
+        speak:function(a,b){return 'Hablando… ('+a+' de '+b+')';},hdOn:'HD',hdOff:'navegador'}
+  };
+  var ACCENTS={
+    en:[['ava','Ava (US)'],['guy','Guy (US)'],['sonia','Sonia (UK)']],
+    es:[['lina','México (Dalia)'],['paloma','EE. UU. (Paloma)'],['salome','Colombia (Salomé)'],['elvira','España (Elvira)']]
+  };
+  var DEF={en:'ava',es:'lina'}, FBLANG={en:'en-US',es:'es-MX'};
+
+  // ---- DOM ----
+  var niva=document.getElementById('niva');
+  var launch=document.getElementById('nivaLaunch');
+  var closeBtn=document.getElementById('nivaClose');
+  var miniOrb=document.getElementById('nivaMini');
+  var roleEl=document.getElementById('nivaRole');
+  var enBtn=document.getElementById('nivaEn'), esBtn=document.getElementById('nivaEs');
+  var playBtn=document.getElementById('nivaPlay'), playTxt=document.getElementById('nivaPlayTxt');
+  var pauseBtn=document.getElementById('nivaPause'), stopBtn=document.getElementById('nivaStop');
+  var accentSel=document.getElementById('nivaAccent'), accentLbl=document.getElementById('nivaAccentLbl');
+  var neuralToggle=document.getElementById('nivaNeural'), hdLbl=document.getElementById('nivaHdLbl');
+  var modeEl=document.getElementById('nivaMode'), statusEl=document.getElementById('nivaStatus');
+  var launchIc=document.getElementById('nivaLaunchIc');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('#deck .slide'));
+
+  // ---- State ----
+  var synth=window.speechSynthesis;
+  var lang='en', segments=SEG.en, voiceName=DEF.en;
+  var NEURAL_URL='/api/tts/edge';
+  var queue=[], qi=0, mode=null, runToken=0, paused=false;
+  var playbackMode=null, currentAudio=null, neuralOK=true, audioCache={};
+  var browserVoice=null;
+
+  function t(){ return UI[lang]; }
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf(lang)===0;});
+    browserVoice=pref[0]||vs[0]||null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ modeEl.textContent=useNeural()?('● '+t().hdOn):('○ '+t().hdOff); }
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function buildAccents(){
+    accentSel.innerHTML='';
+    ACCENTS[lang].forEach(function(a){
+      var o=document.createElement('option'); o.value=a[0]; o.textContent=a[1];
+      if(a[0]===voiceName) o.selected=true;
+      accentSel.appendChild(o);
+    });
+  }
+  function applyLangUI(){
+    roleEl.textContent=t().role; playTxt.textContent=t().play;
+    accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
+    enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
+    if(!currentAudio && !(synth&&synth.speaking)) statusEl.textContent=t().idle;
+    setMode();
+  }
+  function setLang(l){
+    if(l===lang) return;
+    finish(); // stop any playback cleanly
+    lang=l; segments=SEG[l]; voiceName=DEF[l];
+    clearCache(); pickBrowserVoice(); buildAccents(); applyLangUI();
+  }
+
+  function setActive(i){
+    var s=slides[i-1]; // i:1..11 -> slide; i=0 intro -> no move
+    if(i>0 && s) s.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function statusSpeaking(){ statusEl.textContent=(mode==='all')?t().speak(qi+1,queue.length):t().one; }
+
+  function fetchNeural(idx){
+    var key=voiceName+'|'+lang+'|'+idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function speaking(on){ launch.classList.toggle('speaking',on); miniOrb.classList.toggle('speaking',on); }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      statusEl.textContent=t().prep;
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        speaking(true); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang=browserVoice?browserVoice.lang:FBLANG[lang];
+    u.rate=1.0; u.pitch=1.03;
+    u.onstart=function(){ speaking(true); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playBtn.disabled=true; pauseBtn.textContent='❙❙';
+    if(m==='all' && slides[0]) slides[0].scrollIntoView({behavior:'smooth',block:'start'});
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; speaking(false);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    if(synth) synth.cancel();
+    pauseBtn.disabled=true; stopBtn.disabled=true; playBtn.disabled=false; paused=false;
+    statusEl.textContent=t().done;
+  }
+
+  // ---- Events ----
+  launch.addEventListener('click',function(){
+    niva.classList.toggle('open');
+    launchIc.innerHTML = niva.classList.contains('open') ? '&#10005;' : '&#9658;';
+  });
+  closeBtn.addEventListener('click',function(){ niva.classList.remove('open'); launchIc.innerHTML='&#9658;'; });
+  enBtn.addEventListener('click',function(){ setLang('en'); });
+  esBtn.addEventListener('click',function(){ setLang('es'); });
+  playBtn.addEventListener('click',function(){ start(segments.map(function(_,i){return i;}),'all'); });
+  accentSel.addEventListener('change',function(){ voiceName=this.value; clearCache(); });
+  neuralToggle.addEventListener('change',setMode);
+  pauseBtn.addEventListener('click',function(){
+    if(!paused){ paused=true; pauseBtn.textContent='▶'; speaking(false); statusEl.textContent=t().pause;
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent='❙❙'; speaking(true); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click',finish);
+  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+
+  // ---- Init ----
+  buildAccents(); applyLangUI();
 })();
 </script>
 </body>

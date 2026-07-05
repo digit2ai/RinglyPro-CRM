@@ -88,7 +88,9 @@ const EDGE_VOICES = {
   paloma: 'es-US-PalomaNeural',
   elvira: 'es-ES-ElviraNeural',
   salome: 'es-CO-SalomeNeural',
-  ava: 'en-US-AvaNeural'
+  ava: 'en-US-AvaNeural',       // warm US-English female — Ava
+  guy: 'en-US-GuyNeural',       // confident US-English male — Guy
+  sonia: 'en-GB-SoniaNeural'    // UK-English female — Sonia
 };
 
 router.post('/edge', async (req, res) => {
