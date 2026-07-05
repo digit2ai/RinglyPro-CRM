@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DIGIT2AI Neural Intelligence — The AI-Native Operating Model</title>
+<meta name="description" content="150 specialized AI agents. One backbone. 30-50% lower operating costs — in weeks, not years. DIGIT2AI LLC 2026.">
+<meta name="theme-color" content="#070b16">
+<meta property="og:title" content="DIGIT2AI Neural Intelligence — The AI-Native Operating Model">
+<meta property="og:description" content="150 specialized AI agents. One backbone. 30-50% lower operating costs — in weeks, not years.">
+<meta property="og:type" content="website">
+<style>
+/* ---------- Reset ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070b16;          /* deep navy/charcoal base */
+  --bg2:#0b1120;
+  --panel:#0f1728;
+  --line:rgba(120,150,200,.16);
+  --line2:rgba(120,150,200,.30);
+  --txt:#eaf0fb;          /* body */
+  --mut:#9db0cc;          /* muted body — AA on dark */
+  --dim:#6f80a0;
+  --accent:#22d3ee;       /* electric teal accent */
+  --accent2:#38bdf8;      /* electric blue */
+  --accent-ink:#062b33;
+  --glow:rgba(34,211,238,.16);
+  --maxw:1120px;
+  --fs-body:clamp(16px,1.05vw + 12px,19px);
+  --fs-lead:clamp(19px,1.2vw + 13px,24px);
+  --fs-h2:clamp(28px,3.4vw + 8px,52px);
+  --fs-hero:clamp(64px,15vw,190px);
+  --font-display:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --font-body:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+}
+/* Fonts are optional progressive enhancement; system stack is the guaranteed fallback */
+@font-face{font-family:'Inter';src:local('Inter');font-display:swap}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--font-body);
+  font-size:var(--fs-body);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+/* ---------- Scroll deck ---------- */
+main{
+  height:100vh;
+  height:100dvh;
+  overflow-y:scroll;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+}
+.slide{
+  min-height:100vh;
+  min-height:100dvh;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:clamp(72px,9vh,120px) clamp(22px,6vw,84px) clamp(64px,8vh,96px);
+  border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(1100px 620px at 82% -8%,rgba(34,211,238,.09),transparent 60%),
+    radial-gradient(900px 560px at -6% 108%,rgba(56,189,248,.07),transparent 62%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+}
+.slide__inner{width:100%;max-width:var(--maxw);margin:0 auto}
+/* ---------- Wordmark + counter (fixed chrome) ---------- */
+.wordmark{
+  position:fixed;top:0;left:0;z-index:40;
+  padding:clamp(18px,2.4vh,26px) clamp(22px,5vw,52px);
+  font-family:var(--font-display);
+  font-weight:700;letter-spacing:.20em;font-size:clamp(13px,1.1vw,15px);
+  color:var(--txt);
+  text-shadow:0 2px 18px rgba(0,0,0,.7);
+  pointer-events:none;
+}
+.wordmark b{color:var(--accent)}
+.counter{
+  position:fixed;top:0;right:0;z-index:40;
+  padding:clamp(18px,2.4vh,26px) clamp(22px,5vw,52px);
+  font-family:var(--font-display);
+  font-weight:600;letter-spacing:.14em;font-size:clamp(12px,1vw,14px);
+  color:var(--mut);
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 18px rgba(0,0,0,.7);
+}
+.counter b{color:var(--txt)}
+/* progress bar */
+.progress{position:fixed;top:0;left:0;height:3px;z-index:41;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .25s ease;box-shadow:0 0 12px var(--glow)}
+/* ---------- Nav arrows ---------- */
+.nav{position:fixed;right:clamp(16px,3vw,34px);bottom:clamp(16px,4vh,34px);z-index:42;display:flex;flex-direction:column;gap:10px}
+.nav button{
+  width:48px;height:48px;border-radius:50%;
+  border:1px solid var(--line2);background:rgba(15,23,40,.82);
+  color:var(--txt);font-size:20px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:border-color .2s,background .2s,transform .15s;
+}
+.nav button:hover{border-color:var(--accent);background:rgba(34,211,238,.14)}
+.nav button:active{transform:scale(.94)}
+.nav button:disabled{opacity:.28;cursor:default}
+.nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ---------- Typography atoms ---------- */
+.kicker{
+  display:inline-block;
+  font-family:var(--font-display);font-weight:600;
+  letter-spacing:.24em;text-transform:uppercase;
+  font-size:clamp(11px,.9vw,13px);color:var(--accent);
+  margin-bottom:clamp(18px,3vh,30px);
+}
+.kicker::before{content:"";display:inline-block;width:26px;height:1px;background:var(--accent);vertical-align:middle;margin-right:12px;opacity:.8}
+h2.title{
+  font-family:var(--font-display);
+  font-weight:700;font-size:var(--fs-h2);line-height:1.05;letter-spacing:-.02em;
+  color:#fff;margin-bottom:clamp(18px,3vh,28px);max-width:20ch;
+}
+.lead{font-size:var(--fs-lead);color:var(--txt);max-width:52ch;margin-bottom:clamp(16px,2.4vh,26px);font-weight:400}
+.lead strong{color:#fff;font-weight:600}
+.close{margin-top:clamp(20px,3vh,32px);padding-top:clamp(16px,2.4vh,24px);border-top:1px solid var(--line);color:var(--accent2);font-size:var(--fs-lead);font-weight:500;max-width:56ch;font-style:italic}
+.close.plain{font-style:normal;color:var(--mut)}
+.close.plain b{color:var(--txt);font-weight:600}
+/* lists */
+ul.pts{list-style:none;margin:clamp(8px,1.5vh,16px) 0;max-width:60ch}
+ul.pts li{position:relative;padding:9px 0 9px 30px;color:var(--txt);font-size:clamp(15px,1.05vw + 8px,19px);border-bottom:1px solid var(--line)}
+ul.pts li:last-child{border-bottom:0}
+ul.pts li::before{content:"";position:absolute;left:2px;top:18px;width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px var(--glow)}
+ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
+.src{color:var(--dim);font-size:.82em;font-weight:400}
+/* ---------- Hero stat ---------- */
+.stat{
+  font-family:var(--font-display);font-weight:700;line-height:.9;letter-spacing:-.03em;
+  font-size:var(--fs-hero);
+  background:linear-gradient(120deg,#fff 0%,var(--accent) 55%,var(--accent2) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;
+  margin:clamp(6px,1.5vh,14px) 0;
+}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.stat{color:var(--accent)}}
+.stat-cap{font-size:var(--fs-lead);color:#fff;font-weight:600;margin-bottom:clamp(20px,3vh,30px)}
+/* ---------- Title slide ---------- */
+.hero-title{text-align:left}
+.hero-title h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(44px,8vw,104px);line-height:.98;letter-spacing:-.03em;color:#fff;
+  margin-bottom:14px;
+}
+.hero-title h1 .b{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.hero-title h1 .b{color:var(--accent)}}
+.hero-sub{font-family:var(--font-display);font-style:italic;font-weight:400;font-size:clamp(19px,2.4vw,30px);color:var(--mut);margin-bottom:clamp(26px,4vh,42px)}
+.hero-claim{font-size:clamp(19px,1.5vw + 10px,30px);line-height:1.35;color:#fff;font-weight:600;max-width:24ch}
+.hero-claim .hl{color:var(--accent)}
+.hero-org{margin-top:clamp(34px,6vh,64px);font-family:var(--font-display);letter-spacing:.16em;font-size:clamp(12px,1vw,14px);color:var(--dim);text-transform:uppercase}
+/* ---------- Big hero line (slides 5,10) ---------- */
+.megaline{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(26px,3.4vw + 10px,54px);line-height:1.08;letter-spacing:-.02em;color:#fff;
+  max-width:22ch;margin-top:clamp(18px,3vh,30px);
+}
+.megaline .hl{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.megaline .hl{color:var(--accent)}}
+.quote-badge{display:inline-block;padding:clamp(20px,3vh,34px);border-left:3px solid var(--accent);background:linear-gradient(90deg,rgba(34,211,238,.07),transparent);border-radius:0 12px 12px 0;margin-top:clamp(20px,3vh,30px)}
+/* ---------- Slide 6: D2AIEAM stacked diagram (pure CSS) ---------- */
+.layers{display:flex;flex-direction:column;gap:12px;margin-top:clamp(14px,2.4vh,24px);max-width:760px}
+.layer{
+  position:relative;display:flex;align-items:center;gap:16px;
+  padding:clamp(13px,1.8vh,18px) clamp(16px,2vw,22px);
+  background:linear-gradient(90deg,var(--panel),rgba(15,23,40,.4));
+  border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;
+}
+.layer .num{flex:0 0 auto;width:34px;height:34px;border-radius:8px;background:rgba(34,211,238,.12);border:1px solid var(--line2);color:var(--accent);font-family:var(--font-display);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.layer .lx{min-width:0}
+.layer .lt{font-family:var(--font-display);font-weight:600;color:#fff;font-size:clamp(15px,1vw + 8px,18px)}
+.layer .ld{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.4}
+.layer-conn{width:2px;height:12px;background:linear-gradient(var(--accent),transparent);margin:-8px 0 -8px 34px;opacity:.6}
+/* stagger the accent bar intensity to imply a stack/backbone */
+.layer:nth-child(1){border-left-color:#67e8f9}
+.layer:nth-child(3){border-left-color:#38bdf8}
+.layer:nth-child(5){border-left-color:#818cf8}
+.layer:nth-child(7){border-left-color:#a78bfa}
+.layer:nth-child(9){border-left-color:#22d3ee}
+/* ---------- Slide 8: card grid ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:clamp(14px,2.4vh,24px)}
+.card{
+  padding:clamp(16px,2vh,22px);border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,var(--panel),rgba(11,17,32,.6));
+  transition:border-color .2s,transform .2s;
+}
+.card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.card .cn{font-family:var(--font-display);font-weight:700;color:#fff;font-size:clamp(16px,1vw + 9px,19px);margin-bottom:6px}
+.card .cn span{color:var(--accent)}
+.card .cd{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.45}
+/* ---------- Slide 9: timeline (pure CSS) ---------- */
+.timeline{position:relative;margin-top:clamp(16px,2.6vh,26px);display:flex;flex-direction:column;gap:0}
+.tl-item{position:relative;padding:0 0 clamp(18px,2.4vh,26px) 34px;border-left:2px solid var(--line2)}
+.tl-item:last-child{border-left-color:transparent;padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-9px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(34,211,238,.10)}
+.tl-when{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:clamp(13px,.9vw + 7px,15px);letter-spacing:.03em;margin-bottom:3px;text-transform:uppercase}
+.tl-what{color:#fff;font-weight:600;font-size:clamp(15px,1vw + 8px,18px);margin-bottom:3px}
+.tl-desc{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.45;max-width:64ch}
+/* ---------- Slide 11: CTA + footer ---------- */
+.cta{
+  display:inline-block;margin-top:clamp(22px,3.4vh,34px);
+  padding:16px 34px;min-height:52px;
+  font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.1vw,18px);letter-spacing:.02em;
+  color:var(--accent-ink);text-decoration:none;border-radius:12px;
+  background:linear-gradient(120deg,var(--accent),var(--accent2));
+  box-shadow:0 12px 40px rgba(34,211,238,.28);
+  transition:transform .15s,box-shadow .2s;
+}
+.cta:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(34,211,238,.4)}
+.cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.footer{margin-top:clamp(30px,5vh,54px);padding-top:clamp(18px,2.6vh,26px);border-top:1px solid var(--line);color:var(--dim);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.7}
+.footer .co{font-family:var(--font-display);color:var(--txt);font-weight:600;letter-spacing:.04em}
+.footer .people{color:var(--mut)}
+.footer a{color:var(--accent2);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+/* ---------- Scroll hint (slide 1) ---------- */
+.scrollhint{position:absolute;left:50%;bottom:clamp(22px,4vh,40px);transform:translateX(-50%);color:var(--dim);font-size:12px;font-family:var(--font-display);letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.scrollhint .arw{display:block;margin:8px auto 0;width:16px;height:16px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:rotate(45deg) translate(0,0);opacity:.5}50%{transform:rotate(45deg) translate(3px,3px);opacity:1}}
+/* ---------- Reveal animation (progressive enhancement) ---------- */
+.reveal{opacity:1;transform:none}
+.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.js .slide.in .reveal{opacity:1;transform:none}
+.js .slide.in .reveal:nth-child(2){transition-delay:.06s}
+.js .slide.in .reveal:nth-child(3){transition-delay:.12s}
+.js .slide.in .reveal:nth-child(4){transition-delay:.18s}
+.js .slide.in .reveal:nth-child(5){transition-delay:.24s}
+.js .slide.in .reveal:nth-child(6){transition-delay:.30s}
+@media (prefers-reduced-motion:reduce){
+  .js .reveal{opacity:1;transform:none;transition:none}
+  html,main{scroll-behavior:auto}
+  .scrollhint .arw{animation:none}
+}
+/* ---------- Responsive ---------- */
+@media (max-width:768px){
+  .slide{padding:88px 22px 96px}
+  ul.pts li{padding-left:26px}
+  .nav{flex-direction:row}
+}
+@media (max-width:420px){
+  .layer{gap:12px;padding:12px 14px}
+  .layer .num{width:30px;height:30px}
+  .cards{grid-template-columns:1fr}
+  .quote-badge{padding:18px}
+}
+/* landscape phones: don't force full height on short viewports */
+@media (max-height:520px){.slide{min-height:auto;padding:80px 22px 40px}}
+</style>
+</head>
+<body>
+<script>document.body.parentElement.classList.add('js');document.documentElement.classList.add('js');</script>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="wordmark">DIGIT<b>2</b>AI</div>
+<div class="counter" aria-hidden="true"><b id="cur">01</b> / 11</div>
+
+<main id="deck">
+
+  <!-- ============ SLIDE 1 — TITLE ============ -->
+  <section class="slide" id="s1" aria-label="Slide 1 of 11">
+    <div class="slide__inner hero-title">
+      <h1 class="reveal">DIGIT<span class="b">2</span>AI<br>Neural Intelligence</h1>
+      <p class="hero-sub reveal">The AI-Native Operating Model</p>
+      <p class="hero-claim reveal"><span class="hl">150</span> specialized AI agents. One backbone. <span class="hl">30&ndash;50%</span> lower operating costs &mdash; in weeks, not years.</p>
+      <p class="hero-org reveal">DIGIT2AI LLC&nbsp;&nbsp;|&nbsp;&nbsp;2026</p>
+    </div>
+    <div class="scrollhint" aria-hidden="true">Scroll<span class="arw"></span></div>
+  </section>
+
+  <!-- ============ SLIDE 2 — THE PARADOX OF 2026 ============ -->
+  <section class="slide" id="s2" aria-label="Slide 2 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Paradox of 2026</span>
+      <h2 class="title reveal">Everyone adopted AI. Almost no one is winning with it.</h2>
+      <ul class="pts reveal">
+        <li><b>88%</b> of organizations now use AI in at least one business function <span class="src">(McKinsey)</span></li>
+        <li>Only <b>~7%</b> have scaled AI across the enterprise</li>
+        <li>Only <b>~6%</b> capture significant, company-wide value from it</li>
+        <li><b>80&ndash;95%</b> of enterprise AI projects fail to deliver their promised ROI <span class="src">(RAND / MIT)</span></li>
+      </ul>
+      <p class="close reveal">&ldquo;The problem is not the AI. It is what the AI is plugged into.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 3 — THE REAL PROBLEM ============ -->
+  <section class="slide" id="s3" aria-label="Slide 3 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Real Problem &middot; The Traditional Operating Model</span>
+      <h2 class="title reveal">Roughly 9 out of 10 enterprises still run on a pre-AI operating model.</h2>
+      <p class="lead reveal">They bolt AI tools onto:</p>
+      <ul class="pts reveal">
+        <li>Siloed departments and manual handoffs</li>
+        <li>Legacy systems that don&rsquo;t talk to each other</li>
+        <li>Headcount-based cost structures</li>
+        <li>Decisions that wait for meetings</li>
+      </ul>
+      <p class="close plain reveal"><b>AI on top of a traditional operating model produces expensive pilots &mdash; not transformation.</b> 60% of AI projects without AI-ready architecture are expected to be abandoned through 2026 <span class="src">(Gartner)</span>.</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 4 — THE WINDOW ============ -->
+  <section class="slide" id="s4" aria-label="Slide 4 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Window &middot; 2026&ndash;2027</span>
+      <h2 class="title reveal">AI adoption is the defining competitive move of 2026&ndash;2027.</h2>
+      <ul class="pts reveal">
+        <li>AI budgets are rising at <b>86%</b> of enterprises</li>
+        <li>Agentic AI is moving from experiment to production across every industry</li>
+        <li>Organizations that redesign work around AI are <b>2x</b> more likely to exceed revenue goals <span class="src">(Gartner)</span></li>
+      </ul>
+      <p class="close reveal">&ldquo;The gap between AI-native operators and traditional operators widens every quarter &mdash; and it will not close later at the same price.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 5 — INTRODUCING NEURAL INTELLIGENCE ============ -->
+  <section class="slide" id="s5" aria-label="Slide 5 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">Introducing Neural Intelligence</span>
+      <h2 class="title reveal">Not another AI tool. A new operating model.</h2>
+      <p class="lead reveal">DIGIT2AI Neural Intelligence replaces manual, siloed operations with an orchestrated network of <strong>150 specialized AI agents</strong> that run business processes end to end &mdash; with your leadership in command of strategy and decisions.</p>
+      <div class="quote-badge reveal">
+        <p class="megaline">Humans own the <span class="hl">WHAT</span>.<br>The architecture owns the <span class="hl">HOW</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 6 — THE ENGINE: D2AIEAM ============ -->
+  <section class="slide" id="s6" aria-label="Slide 6 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Engine &middot; D2AIEAM</span>
+      <h2 class="title reveal">DIGIT2AI&rsquo;s proprietary enterprise architecture methodology &mdash; five layers, one backbone.</h2>
+      <div class="layers" role="list">
+        <div class="layer reveal" role="listitem"><div class="num">1</div><div class="lx"><div class="lt">Business Requirements</div><div class="ld">Your strategy, captured in plain language</div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">2</div><div class="lx"><div class="lt">Functional Design</div><div class="ld">Translated automatically into executable specifications</div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">3</div><div class="lx"><div class="lt">150 Specialized Agents</div><div class="ld">Finance, operations, sales, compliance, customer support</div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">4</div><div class="lx"><div class="lt">MCP Orchestration Backbone</div><div class="ld">Every agent connected, governed, and auditable</div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">5</div><div class="lx"><div class="lt">Reusable Verticals</div><div class="ld">23 production platforms already built on this factory</div></div></div>
+      </div>
+      <p class="close reveal">&ldquo;Proven. Repeatable. Governed. A technical deep-dive is available for your CTO on request.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 7 — THE RESULT: 30-50% ============ -->
+  <section class="slide" id="s7" aria-label="Slide 7 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Result</span>
+      <div class="stat reveal">30&ndash;50%</div>
+      <p class="stat-cap reveal">Operating Cost Reduction &mdash; within weeks. Not a multi-year transformation program.</p>
+      <p class="lead reveal">Where the savings come from:</p>
+      <ul class="pts reveal">
+        <li>Repetitive knowledge work executed by agents, <b>24/7</b></li>
+        <li>Handoffs and rework eliminated by orchestration</li>
+        <li>Systems integrated through the MCP backbone instead of manual re-entry</li>
+        <li>Software built in days by the factory instead of quarters by vendors</li>
+      </ul>
+      <p class="close reveal">&ldquo;Enterprise AI already benchmarks at 3.7x ROI per dollar invested. Neural Intelligence goes further: structural cost removal, not incremental productivity.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 8 — PROOF: THE PROJECT FACTORY ============ -->
+  <section class="slide" id="s8" aria-label="Slide 8 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">Proof &middot; The DIGIT2AI Project Factory</span>
+      <h2 class="title reveal">23 production vertical platforms. One methodology. Weeks per build.</h2>
+      <div class="cards">
+        <div class="card reveal"><div class="cn">RinglyPro</div><div class="cd">AI voice CRM (Rachel AI) running multi-tenant client operations</div></div>
+        <div class="card reveal"><div class="cn">EquiMind</div><div class="cd">AI sports coaching platform (computer vision + biomechanics)</div></div>
+        <div class="card reveal"><div class="cn">PLANEA</div><div class="cd">Financial wellness platform for Latin America</div></div>
+        <div class="card reveal"><div class="cn">PINAXIS</div><div class="cd">AI intralogistics optimization for industrial operators</div></div>
+        <div class="card reveal"><div class="cn">MaraMed</div><div class="cd">Browser-based contactless vitals measurement</div></div>
+      </div>
+      <p class="close reveal">&ldquo;Every vertical is evidence the factory works &mdash; the same engine we deploy inside your enterprise.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 9 — HOW ENGAGEMENT WORKS ============ -->
+  <section class="slide" id="s9" aria-label="Slide 9 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">How Engagement Works</span>
+      <h2 class="title reveal">From decision to savings in weeks.</h2>
+      <div class="timeline">
+        <div class="tl-item reveal"><div class="tl-when">Weeks 1&ndash;2</div><div class="tl-what">Neural Assessment</div><div class="tl-desc">We map your operating model and identify the 30&ndash;50% cost surface</div></div>
+        <div class="tl-item reveal"><div class="tl-when">Weeks 3&ndash;4</div><div class="tl-what">First Agents Live</div><div class="tl-desc">Deployed against your highest-cost process first</div></div>
+        <div class="tl-item reveal"><div class="tl-when">Weeks 5&ndash;8</div><div class="tl-what">Scale the Network</div><div class="tl-desc">Agents expand across functions on the MCP backbone</div></div>
+        <div class="tl-item reveal"><div class="tl-when">Ongoing</div><div class="tl-what">Human-in-Command Governance</div><div class="tl-desc">Your leaders direct; the architecture executes</div></div>
+      </div>
+      <p class="close reveal">&ldquo;No 18-month consulting roadmap. Value lands inside the first month.&rdquo;</p>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 10 — THE COST OF WAITING ============ -->
+  <section class="slide" id="s10" aria-label="Slide 10 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">The Cost of Waiting</span>
+      <h2 class="title reveal">Every quarter on the traditional model is margin handed to AI-native competitors.</h2>
+      <ul class="pts reveal">
+        <li>Your cost structure stays <b>30&ndash;50%</b> heavier than it needs to be</li>
+        <li>Competitors compound the savings into pricing power and speed</li>
+        <li>Talent and capital flow to AI-native operators</li>
+      </ul>
+      <div class="quote-badge reveal">
+        <p class="megaline">In 2027, there will be two kinds of enterprises: those that run on <span class="hl">neural intelligence</span>, and those competing against it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 11 — NEXT STEP ============ -->
+  <section class="slide" id="s11" aria-label="Slide 11 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal">Next Step</span>
+      <h2 class="title reveal">Neural Assessment &mdash; 2 weeks, fixed scope.</h2>
+      <p class="lead reveal">We map your operating model and deliver a quantified cost-reduction blueprint: where the <strong>30&ndash;50%</strong> lives, which agents capture it, and the deployment sequence.</p>
+      <!-- TODO: wire this CTA to the real contact path — email / phone / booking link (currently a placeholder href="#") -->
+      <a class="cta reveal" href="#" id="ctaBtn" role="button">Book the Neural Assessment</a>
+      <div class="footer reveal">
+        <div class="co">DIGIT2AI LLC &mdash; Tampa, FL</div>
+        <div class="people">Lina Stagg, CEO&nbsp;&nbsp;|&nbsp;&nbsp;Manuel Stagg, CTO &amp; Co-Founder</div>
+        <div><a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="nav" aria-label="Slide navigation">
+  <button id="prev" aria-label="Previous slide" title="Previous (Up arrow)">&uarr;</button>
+  <button id="next" aria-label="Next slide" title="Next (Down arrow)">&darr;</button>
+</nav>
+
+<script>
+(function(){
+  var deck=document.getElementById('deck');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var curEl=document.getElementById('cur');
+  var prog=document.getElementById('progress');
+  var prevBtn=document.getElementById('prev');
+  var nextBtn=document.getElementById('next');
+  var total=slides.length, idx=0;
+
+  function pad(n){return (n<10?'0':'')+n;}
+  function setIdx(i){
+    idx=Math.max(0,Math.min(total-1,i));
+    curEl.textContent=pad(idx+1);
+    prog.style.width=((idx)/(total-1)*100)+'%';
+    prevBtn.disabled=(idx===0);
+    nextBtn.disabled=(idx===total-1);
+  }
+  function goTo(i){
+    i=Math.max(0,Math.min(total-1,i));
+    slides[i].scrollIntoView({behavior:'smooth',block:'start'});
+    setIdx(i);
+  }
+
+  // Observe which slide is in view -> counter + reveal
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting && e.intersectionRatio>=0.5){
+          e.target.classList.add('in');
+          setIdx(slides.indexOf(e.target));
+        }
+      });
+    },{root:deck,threshold:[0.5]});
+    slides.forEach(function(s){io.observe(s);});
+  } else {
+    slides.forEach(function(s){s.classList.add('in');});
+  }
+
+  prevBtn.addEventListener('click',function(){goTo(idx-1);});
+  nextBtn.addEventListener('click',function(){goTo(idx+1);});
+
+  // Keyboard navigation
+  window.addEventListener('keydown',function(ev){
+    var t=ev.target.tagName;
+    if(t==='INPUT'||t==='TEXTAREA') return;
+    switch(ev.key){
+      case 'ArrowDown': case 'PageDown': case ' ':
+        ev.preventDefault(); goTo(idx+1); break;
+      case 'ArrowRight':
+        ev.preventDefault(); goTo(idx+1); break;
+      case 'ArrowUp': case 'PageUp':
+        ev.preventDefault(); goTo(idx-1); break;
+      case 'ArrowLeft':
+        ev.preventDefault(); goTo(idx-1); break;
+      case 'Home':
+        ev.preventDefault(); goTo(0); break;
+      case 'End':
+        ev.preventDefault(); goTo(total-1); break;
+    }
+  });
+
+  // CTA placeholder guard
+  document.getElementById('ctaBtn').addEventListener('click',function(e){
+    if(this.getAttribute('href')==='#') e.preventDefault();
+  });
+
+  setIdx(0);
+})();
+</script>
+</body>
+</html>
