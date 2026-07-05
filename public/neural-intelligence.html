@@ -273,6 +273,18 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .gap-lgd{display:flex;gap:clamp(14px,3vw,26px);flex-wrap:wrap;margin-top:10px;font-size:clamp(12px,.85vw + 6px,14px);color:var(--mut)}
 .gap-lgd span{display:inline-flex;align-items:center;gap:8px}
 .gap-lgd i{width:16px;height:3px;border-radius:2px;display:inline-block;flex:0 0 auto}
+/* Slide 4 — rising AI-adoption curve with the 2026-2027 window highlighted */
+.rise-band{fill:rgba(34,211,238,.09);stroke:rgba(34,211,238,.3);stroke-width:1;stroke-dasharray:3 3}
+.rise-band-lbl{fill:var(--accent);font-size:10px;font-family:var(--font-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.rise-area{fill:url(#riseGrad);opacity:0;transition:opacity 1s ease .7s}
+.js .slide.in .rise-area{opacity:1}
+.rise-line{fill:none;stroke:#22d3ee;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(34,211,238,.5));stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1) .2s}
+.js .slide.in .rise-line{stroke-dashoffset:0}
+.rise-axis{fill:var(--dim);font-size:11px;font-family:var(--font-display)}
+.rise-dot{fill:#a5f3fc;opacity:0;transition:opacity .4s ease 1.7s}
+.js .slide.in .rise-dot{opacity:1}
+.js .slide.in .rise-dot{animation:risePulse 2.4s ease-in-out 1.9s infinite}
+@keyframes risePulse{0%,100%{filter:drop-shadow(0 0 3px rgba(165,243,252,.6))}50%{filter:drop-shadow(0 0 9px rgba(165,243,252,1))}}
 /* reduced motion — show final states, no motion */
 @media (prefers-reduced-motion:reduce){
   .vbar-fill{transition:none;width:var(--w)}
@@ -281,6 +293,9 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   .js .slide.in .tl-item::before{animation:none}
   .gap-line{transition:none;stroke-dashoffset:0}
   .gap-area{opacity:1}
+  .rise-line{transition:none;stroke-dashoffset:0}
+  .rise-area{opacity:1}
+  .rise-dot{opacity:1;animation:none}
 }
 /* ---------- Reveal animation (progressive enhancement) ---------- */
 .reveal{opacity:1;transform:none}
@@ -463,6 +478,27 @@ html.lang-es .i18.es{display:inline}
         <li><span class="i18 en">Agentic AI is moving from experiment to production across every industry</span><span class="i18 es">La IA con agentes est&aacute; pasando del experimento a la producci&oacute;n en cada industria</span></li>
         <li><span class="i18 en">Organizations that redesign work around AI are <b>2x</b> more likely to exceed revenue goals <span class="src">(Gartner)</span></span><span class="i18 es">Las organizaciones que redise&ntilde;an el trabajo en torno a la IA tienen <b>2x</b> m&aacute;s probabilidad de superar sus metas de ingresos <span class="src">(Gartner)</span></span></li>
       </ul>
+      <div class="viz-gap-chart reveal" role="img" aria-label="AI adoption and value rising steeply into the 2026-2027 window">
+        <svg viewBox="0 0 400 182" aria-hidden="true">
+          <defs>
+            <linearGradient id="riseGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".34"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></linearGradient>
+          </defs>
+          <line x1="22" y1="152" x2="384" y2="152" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+          <rect class="rise-band" x="262" y="14" width="120" height="138" rx="4"/>
+          <text class="rise-band-lbl" x="322" y="28" text-anchor="middle">2026&ndash;2027</text>
+          <path class="rise-area" d="M22,150 C110,142 178,124 250,92 C312,64 352,34 382,22 L382,152 L22,152 Z"/>
+          <path class="rise-line" d="M22,150 C110,142 178,124 250,92 C312,64 352,34 382,22"/>
+          <circle class="rise-dot" cx="382" cy="22" r="5"/>
+          <text class="rise-axis" x="22"  y="170" text-anchor="middle">2024</text>
+          <text class="rise-axis" x="142" y="170" text-anchor="middle">2025</text>
+          <text class="rise-axis" x="262" y="170" text-anchor="middle">2026</text>
+          <text class="rise-axis" x="382" y="170" text-anchor="middle">2027</text>
+        </svg>
+        <div class="gap-lgd">
+          <span><i style="background:#22d3ee"></i><span class="i18 en">AI adoption &amp; enterprise value &mdash; rising steeply</span><span class="i18 es">Adopci&oacute;n de IA y valor empresarial &mdash; en fuerte ascenso</span></span>
+          <span><i style="background:rgba(34,211,238,.35)"></i><span class="i18 en">The competitive window</span><span class="i18 es">La ventana competitiva</span></span>
+        </div>
+      </div>
       <p class="close reveal"><span class="i18 en">&ldquo;The gap between AI-native operators and traditional operators widens every quarter &mdash; and it will not close later at the same price.&rdquo;</span><span class="i18 es">&ldquo;La brecha entre los operadores nativos de IA y los tradicionales se ampl&iacute;a cada trimestre &mdash; y no se cerrar&aacute; despu&eacute;s al mismo precio.&rdquo;</span></p>
     </div>
   </section>
