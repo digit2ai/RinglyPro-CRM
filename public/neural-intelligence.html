@@ -312,6 +312,15 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .gap-lgd{display:flex;gap:clamp(14px,3vw,26px);flex-wrap:wrap;margin-top:10px;font-size:clamp(12px,.85vw + 6px,14px);color:var(--mut)}
 .gap-lgd span{display:inline-flex;align-items:center;gap:8px}
 .gap-lgd i{width:16px;height:3px;border-radius:2px;display:inline-block;flex:0 0 auto}
+/* Slide 10 — cost-of-waiting urgency callout */
+.cw-urgency{margin:clamp(14px,2.4vh,22px) 0;padding:clamp(15px,2vw,22px) clamp(17px,2.4vw,26px);border-radius:14px;border:1px solid rgba(248,113,113,.38);background:linear-gradient(100deg,rgba(248,113,113,.13),rgba(139,92,246,.06));max-width:760px}
+.cw-big{font-family:var(--font-display);font-weight:800;font-size:clamp(32px,5.4vw,50px);line-height:1;color:#fff;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cw-unit{font-size:.4em;color:#fca5a5;font-weight:700;letter-spacing:.03em;margin-left:8px;text-transform:uppercase}
+.cw-basis{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15.5px);margin-top:10px;line-height:1.55;max-width:66ch}
+.cw-basis b{color:#fca5a5;font-weight:700}
+.cw-today{margin-top:12px;font-size:clamp(13px,.9vw + 7px,15px);color:#fda4af}
+.cw-today b{color:#fff;font-weight:800;font-size:1.2em;font-variant-numeric:tabular-nums}
+.viz-cap-mini{color:var(--mut);font-size:clamp(12px,.85vw + 6px,14px);margin-top:8px;max-width:60ch}
 /* Slide 4 — rising AI-adoption curve with the 2026-2027 window highlighted */
 .rise-band{fill:rgba(34,211,238,.09);stroke:rgba(34,211,238,.3);stroke-width:1;stroke-dasharray:3 3}
 .rise-band-lbl{fill:var(--accent);font-size:10px;font-family:var(--font-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
@@ -645,13 +654,18 @@ html.lang-es .i18.es{display:inline}
   <section class="slide" id="s10" aria-label="Slide 10 of 11">
     <div class="slide__inner">
       <span class="kicker reveal"><span class="i18 en">The Cost of Waiting</span><span class="i18 es">El costo de esperar</span></span>
-      <h2 class="title reveal"><span class="i18 en">Every quarter on the traditional model is margin handed to AI-native competitors.</span><span class="i18 es">Cada trimestre con el modelo tradicional es margen entregado a los competidores nativos de IA.</span></h2>
+      <h2 class="title reveal"><span class="i18 en">Every <em>day</em> on the traditional model is margin handed to AI-native competitors.</span><span class="i18 es">Cada <em>d&iacute;a</em> con el modelo tradicional es margen entregado a los competidores nativos de IA.</span></h2>
       <ul class="pts reveal">
         <li><span class="i18 en">Your cost structure stays <b>30&ndash;50%</b> heavier than it needs to be</span><span class="i18 es">Tu estructura de costos se mantiene <b>30&ndash;50%</b> m&aacute;s pesada de lo necesario</span></li>
         <li><span class="i18 en">Competitors compound the savings into pricing power and speed</span><span class="i18 es">Los competidores convierten esos ahorros en poder de precio y velocidad</span></li>
         <li><span class="i18 en">Talent and capital flow to AI-native operators</span><span class="i18 es">El talento y el capital fluyen hacia los operadores nativos de IA</span></li>
       </ul>
-      <div class="viz-gap-chart reveal" role="img" aria-label="Operating cost over time: the traditional operator stays high while the AI-native operator drops, and the gap widens every quarter">
+      <div class="cw-urgency reveal">
+        <div class="cw-big"><span data-count="10959" data-prefix="$" data-comma="1">$10,959</span><span class="cw-unit"><span class="i18 en">handed over / day</span><span class="i18 es">entregado / d&iacute;a</span></span></div>
+        <div class="cw-basis"><span class="i18 en">Illustrative &mdash; at a <b>$10M</b> operating base, a 40% cost gap is roughly <b>$11K handed to AI-native competitors every single day</b> you stay on the old model. They compound it into pricing power. You don&rsquo;t get that day back.</span><span class="i18 es">Ilustrativo &mdash; con una base operativa de <b>$10M</b>, una brecha de costos del 40% equivale a cerca de <b>$11K entregados a los competidores nativos de IA cada d&iacute;a</b> que sigues con el modelo viejo. Ellos lo convierten en poder de precio. Ese d&iacute;a no lo recuperas.</span></div>
+        <div class="cw-today"><span class="i18 en">Handed over today alone:</span><span class="i18 es">Entregado solo hoy:</span> <b id="cw-today">$0.00</b> <span class="i18 en">and climbing&hellip;</span><span class="i18 es">y subiendo&hellip;</span></div>
+      </div>
+      <div class="viz-gap-chart reveal" role="img" aria-label="Operating cost over time: the traditional operator stays high while the AI-native operator drops, and the gap widens every day">
         <svg viewBox="0 0 400 172" aria-hidden="true">
           <defs>
             <linearGradient id="gapGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f87171" stop-opacity="0"/><stop offset="1" stop-color="#f87171" stop-opacity=".22"/></linearGradient>
@@ -662,9 +676,10 @@ html.lang-es .i18.es{display:inline}
           <path class="gap-line gap-ai" d="M22,52 C150,66 260,132 382,150"/>
         </svg>
         <div class="gap-lgd">
-          <span><i style="background:#f87171"></i><span class="i18 en">Traditional operator &mdash; cost stays high</span><span class="i18 es">Operador tradicional &mdash; el costo sigue alto</span></span>
-          <span><i style="background:#22d3ee"></i><span class="i18 en">AI-native operator &mdash; cost falls</span><span class="i18 es">Operador nativo de IA &mdash; el costo baja</span></span>
+          <span><i style="background:#f87171"></i><span class="i18 en">You &mdash; cost stays high</span><span class="i18 es">T&uacute; &mdash; el costo sigue alto</span></span>
+          <span><i style="background:#22d3ee"></i><span class="i18 en">Your competitor (AI-native) &mdash; cost keeps falling</span><span class="i18 es">Tu competidor (nativo de IA) &mdash; el costo sigue bajando</span></span>
         </div>
+        <p class="viz-cap-mini"><span class="i18 en">The shaded area is margin you hand over &mdash; and it widens <b style="color:#fca5a5">every day</b> you wait.</span><span class="i18 es">El &aacute;rea sombreada es el margen que entregas &mdash; y se ampl&iacute;a <b style="color:#fca5a5">cada d&iacute;a</b> que esperas.</span></p>
       </div>
       <div class="quote-badge reveal">
         <p class="megaline"><span class="i18 en">In 2027, there will be two kinds of enterprises: those that run on <span class="hl">neural intelligence</span>, and those competing against it.</span><span class="i18 es">En 2027 habr&aacute; dos tipos de empresas: las que funcionan con <span class="hl">inteligencia neural</span>, y las que compiten contra ellas.</span></p>
@@ -926,7 +941,7 @@ html.lang-es .i18.es{display:inline}
       "The result: thirty to fifty percent operating cost reduction, within weeks, not a multi-year transformation program. The savings come from repetitive knowledge work executed by agents around the clock, handoffs and rework eliminated by orchestration, systems integrated through the backbone instead of manual re-entry, and software built in days by the factory instead of quarters by vendors. Enterprise AI already benchmarks at three point seven times return per dollar invested; Neural Intelligence goes further, structural cost removal, not incremental productivity. And the cost of the solution itself? It's effectively self-funding: the savings begin in the first week to first month and cover the deployment, so you pay for it out of what you're already saving, not from new budget.",
       "And this is not theory. Twenty-three production vertical platforms, one methodology, weeks per build. RinglyPro, an AI voice CRM running multi-tenant client operations. EquiMind, an AI sports coaching platform built on computer vision and biomechanics. PLANEA, a financial wellness platform for Latin America. PINAXIS, AI intralogistics optimization for industrial operators. And MaraMed, browser-based contactless vitals measurement. Every vertical is evidence the factory works, the same engine we deploy inside your enterprise. Ask to see the platform closest to your own industry.",
       "Here's how engagement works, from decision to savings in weeks. Weeks one and two: a Neural Assessment, where we map your operating model and identify the thirty to fifty percent cost surface. Weeks three and four: your first agents go live against your highest-cost process. Weeks five through eight: we scale the network across functions on the backbone. And ongoing: human-in-command governance, your leaders direct, the architecture executes. What we need from you is a few hours of executive time and system access, not a dedicated project army. And because the savings arrive in the first month, the engagement pays for itself before you commit to scale. No eighteen-month consulting roadmap; value lands inside the first month.",
-      "Now consider the cost of waiting. Every quarter on the traditional model is margin handed to AI-native competitors. Your cost structure stays thirty to fifty percent heavier than it needs to be, competitors compound the savings into pricing power and speed, and talent and capital flow to AI-native operators. In twenty twenty-seven there will be two kinds of enterprises: those that run on neural intelligence, and those competing against it.",
+      "Now consider the cost of waiting. Every day on the traditional model is margin handed to AI-native competitors. At a ten-million-dollar operating base, a forty percent cost gap is roughly eleven thousand dollars handed to your competitors every single day you stay on the old model, and you don't get that day back. Your cost structure stays thirty to fifty percent heavier than it needs to be, competitors compound the savings into pricing power and speed, and talent and capital flow to AI-native operators. In twenty twenty-seven there will be two kinds of enterprises: those that run on neural intelligence, and those competing against it.",
       "The next step is simple: a Neural Assessment, two weeks, fixed scope. We map your operating model and deliver a quantified cost-reduction blueprint: where the thirty to fifty percent lives, which agents capture it, and the deployment sequence. The assessment is the only up-front commitment; everything after it is self-funding, because the savings pay for the deployment from the first month, so you scale on money you're already saving. DIGIT2AI, Tampa, Florida. Let's talk."
     ],
     es:[
@@ -940,7 +955,7 @@ html.lang-es .i18.es{display:inline}
       "El resultado: una reducción de costos operativos de entre treinta y cincuenta por ciento, en semanas, no un programa de transformación de varios años. Los ahorros vienen del trabajo repetitivo de conocimiento ejecutado por agentes las veinticuatro horas, de la eliminación de traspasos y retrabajos gracias a la orquestación, de sistemas integrados a través de la columna vertebral en lugar de reingreso manual, y de software construido en días por la fábrica en lugar de trimestres por proveedores. La inteligencia artificial empresarial ya rinde tres punto siete veces de retorno por cada dólar invertido; Neural Intelligence va más allá: eliminación estructural de costos, no productividad incremental. ¿Y el costo de la solución en sí? Prácticamente se autofinancia: los ahorros comienzan en la primera semana o el primer mes y cubren el despliegue, así que lo pagas con lo que ya estás ahorrando, no con presupuesto nuevo.",
       "Y esto no es teoría. Veintitrés plataformas verticales en producción, una sola metodología, semanas por construcción. RinglyPro, un CRM de voz con inteligencia artificial que opera clientes en modo multiempresa. EquiMind, una plataforma de entrenamiento deportivo con visión por computadora y biomecánica. PLANEA, una plataforma de bienestar financiero para América Latina. PINAXIS, optimización de intralogística con inteligencia artificial para operadores industriales. Y MaraMed, medición de signos vitales sin contacto desde el navegador. Cada vertical es evidencia de que la fábrica funciona: es el mismo motor que desplegamos dentro de tu empresa. Pide ver la plataforma más cercana a tu propia industria.",
       "Así funciona el compromiso, de la decisión a los ahorros en semanas. Semanas uno y dos: una Evaluación Neural, donde mapeamos tu modelo operativo e identificamos la superficie de costos del treinta al cincuenta por ciento. Semanas tres y cuatro: tus primeros agentes entran en vivo contra tu proceso de mayor costo. Semanas cinco a ocho: escalamos la red a través de las funciones sobre la columna vertebral. Y de forma continua: gobernanza con el humano al mando; tus líderes dirigen, la arquitectura ejecuta. Lo que necesitamos de ti son unas pocas horas de tiempo ejecutivo y acceso a los sistemas, no un ejército dedicado al proyecto. Y como los ahorros llegan en el primer mes, el compromiso se paga a sí mismo antes de que decidas escalar. Sin una hoja de ruta de consultoría de dieciocho meses; el valor llega dentro del primer mes.",
-      "Ahora considera el costo de esperar. Cada trimestre con el modelo tradicional es margen entregado a los competidores nativos de inteligencia artificial. Tu estructura de costos se mantiene entre treinta y cincuenta por ciento más pesada de lo necesario, los competidores convierten esos ahorros en poder de precio y velocidad, y el talento y el capital fluyen hacia los operadores nativos de inteligencia artificial. En dos mil veintisiete habrá dos tipos de empresas: las que funcionan con inteligencia neural, y las que compiten contra ellas.",
+      "Ahora considera el costo de esperar. Cada día con el modelo tradicional es margen entregado a los competidores nativos de inteligencia artificial. Con una base operativa de diez millones de dólares, una brecha de costos del cuarenta por ciento equivale a cerca de once mil dólares entregados a tus competidores cada día que sigues con el modelo viejo, y ese día no lo recuperas. Tu estructura de costos se mantiene entre treinta y cincuenta por ciento más pesada de lo necesario, los competidores convierten esos ahorros en poder de precio y velocidad, y el talento y el capital fluyen hacia los operadores nativos de inteligencia artificial. En dos mil veintisiete habrá dos tipos de empresas: las que funcionan con inteligencia neural, y las que compiten contra ellas.",
       "El siguiente paso es simple: una Evaluación Neural, dos semanas, alcance fijo. Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducción de costos: dónde está el treinta al cincuenta por ciento, qué agentes lo capturan y la secuencia de despliegue. La evaluación es el único compromiso inicial; todo lo que viene después se autofinancia, porque los ahorros pagan el despliegue desde el primer mes, así que escalas con dinero que ya estás ahorrando. DIGIT2AI, Tampa, Florida. Hablemos."
     ]
   };
@@ -1166,7 +1181,7 @@ html.lang-es .i18.es{display:inline}
   // ---- Number count-up: animate [data-count] elements when their slide enters view ----
   (function(){
     var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){}
-    function fmt(el,v){ return (el.getAttribute('data-prefix')||'')+v+(el.getAttribute('data-suffix')||''); }
+    function fmt(el,v){ var n=el.getAttribute('data-comma')?v.toLocaleString('en-US'):v; return (el.getAttribute('data-prefix')||'')+n+(el.getAttribute('data-suffix')||''); }
     function run(el){
       var target=parseFloat(el.getAttribute('data-count'))||0;
       if(reduce){ el.textContent=fmt(el,target); return; }
@@ -1273,6 +1288,26 @@ html.lang-es .i18.es{display:inline}
       })
       .catch(function(e){ runBtn.disabled=false; statusEl.textContent=''; errEl.textContent=t.net+(e.message||''); });
   });
+})();
+</script>
+
+<script>
+/* ===== Slide 10 — live "handed over today" ticker (illustrative $10M base, 40% gap) ===== */
+(function(){
+  var el=document.getElementById('cw-today'); if(!el) return;
+  var RATE=10959; // $/day handed to AI-native competitors at the illustrative base
+  var timer=null;
+  function tick(){
+    var now=new Date();
+    var midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
+    var amount=RATE*((now-midnight)/1000/86400);
+    el.textContent='$'+amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function start(){ if(timer) return; tick(); timer=setInterval(tick,150); }
+  var slide=document.getElementById('s10');
+  if('IntersectionObserver' in window && slide){
+    new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) start(); }); },{threshold:.35}).observe(slide);
+  } else { start(); }
 })();
 </script>
 </body>
