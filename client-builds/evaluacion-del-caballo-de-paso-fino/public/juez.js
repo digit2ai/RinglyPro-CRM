@@ -256,8 +256,13 @@
     // Neural Intelligence: panel de hallazgos.
     renderNeural(f.neural_findings || []);
 
-    // Dictamen profesional estructurado (server-side).
-    renderDictamen(f.dictamen);
+    // Dictamen profesional estructurado (server-side) + gráfico por métrica.
+    renderDictamen(f.dictamen, f.puntuaciones || []);
+
+    // Feed the 3D Gaussian Splatting Report generator with THIS analysis:
+    // horse name, the weighted gait scores as measurement bars, and the neural
+    // findings as report findings. The owner clicks "Generate" — no re-entry.
+    try { if (window.GSReport) GSReport.setContext(buildGsContext(f)); } catch (e) {}
 
     // Share: summary + rellenar la caja de enlace + permalink navegable.
     currentSummary = (I18N.share_summary || 'Fallo del juez EquiMind') + ' — ' +
@@ -369,7 +374,11 @@
     // Acciones de dueño no aplican a un visitante del informe.
     ['newAnalysis', 'goHistory'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
     // Mostrar el CTA de marketing (a menos que el visitante ya tenga sesión).
-    if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) { var cta = $('marketingCta'); if (cta) cta.classList.remove('hidden'); }
+    // El generador de informe 3D es una acción de dueño: se oculta a visitantes anónimos.
+    if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) {
+      var cta = $('marketingCta'); if (cta) cta.classList.remove('hidden');
+      ['gsReportTop', 'gsReportBottom'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
+    }
     var url = CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG + (k ? ('&k=' + encodeURIComponent(k)) : '');
     fetch(url, { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) { showShareError(r.status); return null; } return r.json(); })
@@ -439,7 +448,63 @@
     });
   }
 
-  function renderDictamen(d) {
+  // Build the 3D-report context from a gait analysis: horse name, the weighted
+  // scores as measurement bars, and neural findings as report findings.
+  function buildGsContext(f) {
+    var horseName = '';
+    var hsel = $('horseSel');
+    if (hsel && hsel.value && hsel.selectedOptions && hsel.selectedOptions[0]) horseName = hsel.selectedOptions[0].textContent.split(' · ')[0].trim();
+    if (!horseName) horseName = f.caballo_nombre || f.caballo || '';
+    var measurements = (f.puntuaciones || []).map(function (p) {
+      var sc = Math.max(0, Math.min(100, p.puntaje_normalizado || 0));
+      return { key: String(p.nombre || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40), label: p.nombre, value: sc.toFixed(0) + '/100', cm: sc, lo: 0, hi: 100, ideal_lo: 70, ideal_hi: 100, at: sc, status: sc >= 70 ? 'ok' : (sc >= 45 ? 'info' : 'watch') };
+    });
+    var findings = (f.neural_findings || []).map(function (fd) {
+      var kind = (fd.impact === 'critical' || fd.impact === 'high') ? 'watch' : 'info';
+      var detail = fd.summary || ''; if (fd.recommended_action) detail += (detail ? ' — ' : '') + fd.recommended_action;
+      return { kind: kind, title: fd.title || fd.code || '', detail: detail };
+    });
+    if (!findings.length && f.dictamen && f.dictamen.resumen) {
+      findings.push({ kind: 'info', title: modLabel((f.clasificacion || {}).modalidad_detectada) + (f.puntaje_total != null ? (' · ' + f.puntaje_total.toFixed(1) + '/100') : ''), detail: f.dictamen.resumen });
+    }
+    return { horseName: horseName, measurements: measurements, findings: findings, captureSeconds: f.duracion_seg || f.video_seconds || null };
+  }
+
+  // Match a dictamen section to its numeric score: by criterion name first, then
+  // by a uniquely-weighted "(NN%)" tag in the title.
+  function matchScore(titulo, puntuaciones) {
+    var t = String(titulo || '').toLowerCase();
+    for (var i = 0; i < puntuaciones.length; i++) {
+      var n = String(puntuaciones[i].nombre || '').toLowerCase();
+      if (n && t.indexOf(n) >= 0) return puntuaciones[i];
+    }
+    var m = String(titulo || '').match(/\((\d+)\s*%\)/);
+    if (m) { var w = +m[1]; var hits = puntuaciones.filter(function (p) { return +p.peso_porcentaje === w; }); if (hits.length === 1) return hits[0]; }
+    return null;
+  }
+  // A compact score graph: quality-zoned track (red/amber/brass/turf) + a marker
+  // at the score + numeric label. Zones mirror scoreColor() thresholds.
+  function metricGraph(pct, weight) {
+    pct = Math.max(0, Math.min(100, pct));
+    var col = scoreColor(pct);
+    var zones = 'linear-gradient(90deg,' +
+      'rgba(197,106,78,.30) 0%,rgba(197,106,78,.30) 45%,' +
+      'rgba(230,197,114,.24) 45%,rgba(230,197,114,.24) 70%,' +
+      'rgba(201,162,75,.30) 70%,rgba(201,162,75,.30) 85%,' +
+      'rgba(95,167,114,.34) 85%,rgba(95,167,114,.34) 100%)';
+    return '<div class="mt-2 mb-1">' +
+      '<div style="position:relative;height:12px;border-radius:99px;overflow:hidden;background:' + zones + '">' +
+        '<div style="position:absolute;left:calc(' + pct + '% - 1.5px);top:-1px;bottom:-1px;width:3px;background:' + col + ';box-shadow:0 0 6px ' + col + '"></div>' +
+      '</div>' +
+      '<div class="flex justify-between items-center mt-1">' +
+        '<span class="text-[10px] mono" style="color:#697268">0 · 45 · 70 · 85 · 100</span>' +
+        '<span class="text-[11px] mono font-semibold" style="color:' + col + '">' + pct.toFixed(0) + '/100' + (weight != null ? (' · ' + weight + '%') : '') + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderDictamen(d, puntuaciones) {
+    puntuaciones = puntuaciones || [];
     var box = $('resDictamen'), res = $('resResumen'), reco = $('resReco'), firma = $('resFirma');
     if (!box) return;
     box.innerHTML = ''; if (reco) reco.innerHTML = '';
@@ -454,8 +519,11 @@
     (d.secciones || []).forEach(function (s) {
       var el = document.createElement('div');
       el.className = 'dsec ' + (s.nivel || 'info');
+      var graph = '';
+      var sc = matchScore(s.titulo, puntuaciones);
+      if (sc) graph = metricGraph(sc.puntaje_normalizado || 0, sc.peso_porcentaje);
       el.innerHTML = '<div class="text-xs font-semibold text-slate-200 mb-0.5">' + esc(s.titulo) + '</div>' +
-        '<div class="text-xs text-slate-400" style="white-space:pre-line">' + esc(s.cuerpo) + '</div>';
+        '<div class="text-xs text-slate-400" style="white-space:pre-line">' + esc(s.cuerpo) + '</div>' + graph;
       box.appendChild(el);
     });
     if (reco && d.recomendaciones && d.recomendaciones.length) {

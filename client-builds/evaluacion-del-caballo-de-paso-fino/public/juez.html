@@ -161,6 +161,9 @@
       <div id="simBanner" class="hidden mb-4 px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/60 text-amber-200 text-sm" data-i18n="sim_banner"></div>
       <div id="resFlag" class="hidden mb-4 px-3 py-2 rounded-lg bg-rose-600/20 border border-rose-600 text-rose-300 text-sm"></div>
 
+      <!-- 3D Gaussian Splatting Report — quick access at the top -->
+      <div id="gsReportTop" class="mb-5"></div>
+
       <!-- Infographic dashboard (radial gauges) -->
       <div id="infographics" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4"></div>
       <!-- Cadence band meter -->
@@ -193,6 +196,9 @@
       <div id="resDictamen" class="space-y-3 mb-3"></div>
       <div id="resReco" class="mb-2"></div>
       <p id="resFirma" class="text-xs text-slate-600 italic mt-3"></p>
+
+      <!-- 3D Gaussian Splatting Report — primary generator, after recommendations -->
+      <div id="gsReportBottom" class="mt-5"></div>
 
       <!-- Compartir (enlace público al informe completo) + acciones -->
       <div class="mt-5 pt-4 border-t border-slate-800">
@@ -236,6 +242,7 @@
 
   <script>window.__I18N = {{DICT_JSON}}; window.__BASE = "{{BASE}}"; window.__LANG = "{{LANG}}"; window.__PAGE = "juez";</script>
   <script src="{{BASE}}account.js"></script>
+  <script src="{{BASE}}gs-report.js"></script>
   <script src="{{BASE}}juez.js"></script>
   <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("{{BASE}}sw.js").catch(function(){});});}</script>
 </body>
