@@ -78,6 +78,10 @@
   .find.ok{border-left-color:var(--turf)} .find.watch{border-left-color:var(--rust)} .find.info{border-left-color:var(--brass)}
   .find h3{font-size:15px;font-weight:650} .find p{margin:4px 0 0;color:var(--mut);font-size:14px}
   .find .loc{margin-left:auto;flex:none;font-family:var(--mono);font-size:11px;color:var(--brass2);background:rgba(230,197,114,.10);border:1px solid var(--line2);border-radius:999px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+  .find .chip{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px}
+  .find .fcode{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .find .est{font-family:var(--mono);font-size:11px;color:var(--brass2)}
+  .find .action{font-size:13px;color:var(--mut);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px} .find .action b{color:var(--cream);font-weight:600}
   /* history */
   .htable{width:100%;border-collapse:collapse;font-size:14px} .htable th,.htable td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
   .htable th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
@@ -313,13 +317,34 @@ const ANCHOR_KW=[['fore_l',/anterior\s*izq|izquierd\w*\s*(delant|anterior|mano)|
   ['croup',/grupa|croup/i],['withers',/cruz|wither/i],['back',/dorso|espald|línea superior|topline|back/i],['loin',/lomo|loin/i],
   ['shoulder',/hombro|escápula|scapula|shoulder/i],['chest',/pecho|chest/i],['poll',/cabeza|cuello|nuca|head|neck|poll/i],['tail',/cola|tail/i]];
 function inferAnchor(text){ const t=String(text||''); for(const [k,re] of ANCHOR_KW){ if(re.test(t)) return k; } return null; }
+const IMPACT={ critical:['#C0553F',LANG==='en'?'Critical':'Crítico','watch'], high:['#D98A3E',LANG==='en'?'High':'Alto','watch'],
+  medium:['#C9A24B',LANG==='en'?'Medium':'Medio','info'], low:['#5FA772',LANG==='en'?'Low':'Bajo','ok'], info:['#A99A85','Info','info'] };
+function impactMeta(imp){ return IMPACT[imp]||IMPACT.info; }
+function locChip(anchor,label){ return anchor?`<span class="loc noprint" data-anchor="${anchor}" data-label="${esc(label||'')}">◎ ${esc(I.rep_locate||'Locate')}</span>`:''; }
 function renderFindings(rep){
-  const box=$('findBox'); const arr=(rep&&rep.findings)||[];
-  if(!arr.length){ box.innerHTML=`<div class="empty">${esc(I.rep_no_findings||'')}</div>`; $('findHint').textContent=''; return; }
-  box.innerHTML=arr.map((f,i)=>{ const k=['ok','watch','info'].includes(f.kind)?f.kind:'info';
-    const anchor=f.anchor||inferAnchor((f.title||'')+' '+(f.detail||''));
-    const loc=anchor?`<span class="loc noprint" data-anchor="${anchor}" data-label="${esc(f.title||'')}">◎ ${esc(I.rep_locate||'Locate')}</span>`:'';
-    return `<div class="find ${k}"><div><h3>${esc(f.title||'')}</h3><p>${esc(f.detail||'')}</p></div>${loc}</div>`; }).join('');
+  const box=$('findBox');
+  const neural=(rep&&rep.neural_findings)||[]; const manual=(rep&&rep.findings)||[];
+  if(!neural.length && !manual.length){ box.innerHTML=`<div class="empty">${esc(I.rep_no_findings||'')}</div>`; $('findHint').textContent=''; return; }
+  const counts={}; neural.forEach(f=>{counts[f.impact]=(counts[f.impact]||0)+1;});
+  const order=['critical','high','medium','low','info'];
+  const csum=order.filter(k=>counts[k]).map(k=>counts[k]+' '+impactMeta(k)[1]).join(' · ');
+  $('findHint').textContent = neural.length ? ((neural.length+manual.length)+' '+(I.rep_find_n||'')+(csum?(' · '+csum):'')) : (I.rep_map_hint||'');
+  const sev={critical:0,high:1,medium:2,low:3,info:4};
+  const sn=neural.slice().sort((a,b)=>(sev[a.impact]==null?9:sev[a.impact])-(sev[b.impact]==null?9:sev[b.impact]));
+  const actLabel=LANG==='en'?'Recommended action':'Acción recomendada';
+  let html=sn.map(f=>{
+    const meta=impactMeta(f.impact); const col=meta[0], label=meta[1], kind=meta[2];
+    const anchor=f.anchor||inferAnchor((f.title||'')+' '+(f.summary||''));
+    const est=f.estimate?`<span class="est">${esc(f.estimate)}</span>`:'';
+    const action=f.action?`<div class="action"><b>${esc(actLabel)}:</b> ${esc(f.action)}</div>`:'';
+    return `<div class="find ${kind}"><div style="flex:1;min-width:0">`
+      +`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span class="chip" style="background:${col}22;color:${col}">${esc(label)}</span>${f.code?`<span class="fcode">${esc(f.code)}</span>`:''}${est}</div>`
+      +`<h3>${esc(f.title||'')}</h3><p>${esc(f.summary||'')}</p>${action}</div>${locChip(anchor,f.title)}</div>`;
+  }).join('');
+  html+=manual.map(f=>{ const k=['ok','watch','info'].includes(f.kind)?f.kind:'info';
+    const anchor=inferAnchor((f.title||'')+' '+(f.detail||''));
+    return `<div class="find ${k}"><div style="flex:1;min-width:0"><h3>${esc(f.title||'')}</h3><p>${esc(f.detail||'')}</p></div>${locChip(anchor,f.title)}</div>`; }).join('');
+  box.innerHTML=html;
   box.querySelectorAll('.loc').forEach(el=>el.addEventListener('click',()=>{ if(window.HORSE) window.HORSE.focus(el.getAttribute('data-anchor'), el.getAttribute('data-label')); document.querySelector('.stage').scrollIntoView({behavior:'smooth',block:'center'}); }));
 }
 

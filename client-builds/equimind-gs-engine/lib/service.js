@@ -50,14 +50,21 @@ function sanitizeReport(report) {
   const find = Array.isArray(report.findings) ? report.findings.slice(0, 20).map((f) => ({
     kind: ['ok', 'watch', 'info'].includes(f.kind) ? f.kind : 'info', title: str(f.title, 160), detail: str(f.detail, 600)
   })) : [];
+  // Rich Neural Intelligence findings (severity, code, action, estimate) — the
+  // full analysis output, rendered professionally in the report.
+  const neural = Array.isArray(report.neural_findings) ? report.neural_findings.slice(0, 30).map((f) => ({
+    impact: ['critical', 'high', 'medium', 'low', 'info'].includes(f.impact) ? f.impact : 'info',
+    code: str(f.code, 40), title: str(f.title, 200), summary: str(f.summary, 700),
+    action: str(f.action, 400), estimate: str(f.estimate, 140), anchor: str(f.anchor, 24)
+  })).filter((f) => f.title || f.summary) : [];
   const out = {
     horse_name: str(report.horse_name, 80), breed: str(report.breed, 80),
     owner: str(report.owner, 120), report_date: str(report.report_date, 40),
     capture_seconds: num(report.capture_seconds), height_cm: num(report.height_cm), length_cm: num(report.length_cm),
-    measurements: meas, findings: find,
+    measurements: meas, findings: find, neural_findings: neural,
     gait: sanitizeGait(report.gait), conformation: sanitizeConformation(report.conformation)
   };
-  const has = out.horse_name || out.breed || meas.length || find.length || out.height_cm || out.length_cm || out.gait || out.conformation;
+  const has = out.horse_name || out.breed || meas.length || find.length || neural.length || out.height_cm || out.length_cm || out.gait || out.conformation;
   return has ? out : null;
 }
 

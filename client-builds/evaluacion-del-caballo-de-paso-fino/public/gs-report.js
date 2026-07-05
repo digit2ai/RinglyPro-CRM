@@ -38,7 +38,7 @@
     }
   })[LANG];
 
-  var ctx = { horseName: '', measurements: [], findings: [], gait: null, captureSeconds: null };
+  var ctx = { horseName: '', measurements: [], findings: [], neural: null, gait: null, captureSeconds: null };
   var mounted = [];
 
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]); }); }
@@ -56,8 +56,8 @@
           field('gsr-horse', T.horse) + field('gsr-breed', T.breed) +
           field('gsr-height', T.height, 'number') + field('gsr-length', T.length, 'number') + field('gsr-capsec', T.capsec, 'number') +
         '</div>' +
-        head(T.measures, 'gsr-add-measure', T.add_measure) + '<div class="gsr-meas mt-2 grid gap-2"></div>' +
-        head(T.findings, 'gsr-add-finding', T.add_finding) + '<div class="gsr-find mt-2 grid gap-2"></div>' +
+        head(T.measures, 'gsr-add-measure', T.add_measure) + measHead() + '<div class="gsr-meas mt-1 grid gap-2"></div>' +
+        head(T.findings, 'gsr-add-finding', T.add_finding) + findHead() + '<div class="gsr-find mt-1 grid gap-2"></div>' +
         '<label class="block text-[11px] text-slate-400 mb-1 mt-5">' + esc(T.media) + '</label>' +
         '<input type="file" class="gsr-file w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white" accept="video/mp4,video/quicktime,image/*" multiple>' +
         '<button class="gsr-gen mt-5 w-full rounded-lg px-4 py-3 font-semibold" style="background:linear-gradient(180deg,#E6C572,#C9A24B);color:#241a08">' + esc(T.gen) + '</button>' +
@@ -67,13 +67,16 @@
       '</div>';
   }
   function field(cls, label, type) { return '<div><label class="block text-[11px] text-slate-400 mb-1">' + esc(label) + '</label><input class="' + cls + ' w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm" ' + (type === 'number' ? 'type="number" step="0.1"' : '') + '></div>'; }
+  function colH(t) { return '<div class="text-[10px] uppercase tracking-wide text-slate-500 px-1 truncate">' + esc(t) + '</div>'; }
+  function measHead() { return '<div class="gsr-mhead hidden sm:grid gap-1 px-2 pt-1" style="grid-template-columns:1.4fr .9fr .6fr .6fr .6fr .9fr 1.2rem">' + colH(T.c_label) + colH(T.c_value) + colH(T.c_cm) + colH('▼ ' + T.c_min) + colH('▲ ' + T.c_max) + colH(T.c_status) + '<span></span></div>'; }
+  function findHead() { return '<div class="gsr-fhead hidden sm:grid gap-1 px-2 pt-1" style="grid-template-columns:.8fr 1.3fr 2.2fr 1.2rem">' + colH(T.c_status) + colH(T.c_title) + colH(T.c_detail) + '<span></span></div>'; }
   function head(label, addCls, addLabel) { return '<div class="mt-5 flex items-center justify-between"><label class="text-xs font-semibold" style="color:#E6C572">' + esc(label) + '</label><button class="' + addCls + ' text-xs underline" style="color:#98A199">' + esc(addLabel) + '</button></div>'; }
 
   function measRow(root, pre) {
     pre = pre || {};
     var el = document.createElement('div');
     el.className = 'gsr-mrow grid gap-1 border border-slate-800 rounded-lg p-2';
-    el.style.gridTemplateColumns = '1.4fr .9fr .6fr .6fr .6fr .9fr auto';
+    el.style.gridTemplateColumns = '1.4fr .9fr .6fr .6fr .6fr .9fr 1.2rem';
     el.innerHTML =
       inp('m-label', T.c_label, pre.label) + inp('m-value', T.c_value, pre.value) +
       inp('m-cm', T.c_cm, pre.cm, 'number') + inp('m-lo', T.c_min, pre.ideal_lo, 'number') + inp('m-hi', T.c_max, pre.ideal_hi, 'number') +
@@ -86,7 +89,7 @@
     pre = pre || {};
     var el = document.createElement('div');
     el.className = 'gsr-frow grid gap-1 border border-slate-800 rounded-lg p-2';
-    el.style.gridTemplateColumns = '.8fr 1.3fr 2.2fr auto';
+    el.style.gridTemplateColumns = '.8fr 1.3fr 2.2fr 1.2rem';
     el.innerHTML =
       '<select class="f-kind bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs">' + statusOpts(pre.kind || 'info') + '</select>' +
       inp('f-title', T.c_title, pre.title) + inp('f-detail', T.c_detail, pre.detail) +
@@ -114,7 +117,7 @@
     return {
       horse_name: g('gsr-horse').value.trim() || null, breed: g('gsr-breed').value.trim() || null,
       height_cm: num(g('gsr-height').value), length_cm: num(g('gsr-length').value), capture_seconds: num(g('gsr-capsec').value),
-      measurements: measurements, findings: findings,
+      measurements: measurements, findings: findings, neural_findings: ctx.neural || [],
       gait: ctx.gait || null, report_date: new Date().toISOString().slice(0, 10)
     };
   }
@@ -178,6 +181,7 @@
     if (c.horseName != null) ctx.horseName = c.horseName;
     if (c.captureSeconds != null) ctx.captureSeconds = c.captureSeconds;
     if (c.gait !== undefined) ctx.gait = c.gait;
+    if (c.neural !== undefined) ctx.neural = c.neural;
     if (Array.isArray(c.measurements)) ctx.measurements = c.measurements;
     if (Array.isArray(c.findings)) ctx.findings = c.findings;
     mounted.forEach(applyContext);

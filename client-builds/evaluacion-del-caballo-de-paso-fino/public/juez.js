@@ -462,14 +462,13 @@
       var sc = Math.max(0, Math.min(100, p.puntaje_normalizado || 0));
       return { key: String(p.nombre || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40), label: p.nombre, value: sc.toFixed(0) + '/100', cm: sc, lo: 0, hi: 100, ideal_lo: 70, ideal_hi: 100, at: sc, status: sc >= 70 ? 'ok' : (sc >= 45 ? 'info' : 'watch') };
     });
-    var findings = (f.neural_findings || []).map(function (fd) {
-      var kind = (fd.impact === 'critical' || fd.impact === 'high') ? 'watch' : 'info';
-      var detail = fd.summary || ''; if (fd.recommended_action) detail += (detail ? ' — ' : '') + fd.recommended_action;
-      return { kind: kind, title: fd.title || fd.code || '', detail: detail };
+    // Rich Neural findings from the analysis — rendered professionally in the
+    // report (severity, code, action, estimate). NOT flattened into the editable
+    // form; the form's Hallazgos stays for MANUAL additions.
+    var neural = (f.neural_findings || []).map(function (fd) {
+      return { impact: fd.impact || 'info', code: fd.code || null, title: fd.title || '', summary: fd.summary || '', action: fd.recommended_action || null, estimate: fd.impact_estimate || null };
     });
-    if (!findings.length && dic.resumen) {
-      findings.push({ kind: 'info', title: modLabel(clas.modalidad_detectada) + (f.puntaje_total != null ? (' · ' + f.puntaje_total.toFixed(1) + '/100') : ''), detail: dic.resumen });
-    }
+    var findings = [];
     var clar = (son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
     var band = f.cadencia_band || null;
     var gait = {
@@ -483,7 +482,7 @@
       sections: (dic.secciones || []).map(function (s) { return { titulo: s.titulo, cuerpo: s.cuerpo, nivel: s.nivel }; }),
       recomendaciones: dic.recomendaciones || []
     };
-    return { horseName: horseName, measurements: measurements, findings: findings, gait: gait, captureSeconds: f.duracion_seg || f.video_seconds || null };
+    return { horseName: horseName, measurements: measurements, findings: findings, neural: neural, gait: gait, captureSeconds: f.duracion_seg || f.video_seconds || null };
   }
 
   // Match a dictamen section to its numeric score: by criterion name first, then
