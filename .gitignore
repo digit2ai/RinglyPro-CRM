@@ -1,3 +1,4 @@
 node_modules
 .env
 store-health-ai-dashboard-dist/
+client-builds/equimind-gs-engine/.gs-store/

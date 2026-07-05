@@ -32,6 +32,14 @@ LOOP PAUSED on **BLOCKER-1** (real splat GPU credential) — the only thing betw
 - Docs: `DOCS.md` (API ref + capture best-practices).
 - **Acceptance: unit-economics report (margin > 0 at list) ✅ · concurrency/quota guards ✅.**
 
+## P6 — State-of-the-art client report + $0 procedural path ✅ (2026-07-05)
+The deliverable clients generate after an analysis: a shareable 3D report. Cost problem (Luma) solved for the pre-traction phase by generating the horse in-engine instead of on a GPU.
+- **ProceduralHorseProvider** (`lib/provider.js`) — builds a horse-shaped, VALID 3DGS `.ply` (barrel/chest/hindquarter/neck/head/muzzle/ears/4 legs/tail as gaussians) scaled to the report's `height_cm`/`length_cm`. `GS_PROCESSING_PROVIDER=procedural`. **$0/report, no GPU/API**, always `is_simulated:true`. The MockProvider now also renders a horse (not a ring).
+- **Report data** — `session.meta.report` (measurements + findings + horse identity), sanitized/capped in `service.js`. Attach via `PATCH /api/v1/sessions/:id/report` or the `gs.report.attach` MCP tool, or seed at `createSession`. Surfaced on the scene response (public via share token too).
+- **Report page** — `/report?scene=ID[&k=token][&lang=]` (`public/report.html`): hero 3D (real gsplat on the `.ply`, canvas-horse fallback), conformation measurement bars, Neural findings, shareable read-only link, owner-only studio economics panel, bilingual EN/ES. Honesty disclaimer on simulated scenes (3D = generated representation; measurements/findings = real analysis).
+- **Upgrade path** — flip `GS_PROCESSING_PROVIDER=luma` for real photoreal scans; report + viewer unchanged (the whole point of the provider interface).
+- **Acceptance: SIT 21/21** (was 15) — procedural job → horse cloud (>1000 splats), report stored + surfaced, public share shows report without login. PLY validated (body bytes align, brass f_dc, isotropic scale).
+
 ## P5 — Dynamic 4DGS & Avatars (research) ✅
 - `RESEARCH.md`: GO on managed dynamic 4D fast-follow; NO-GO/defer on articulated horse avatars until a managed video→rigged-quadruped API exists. Cost model + v2 architecture documented.
 

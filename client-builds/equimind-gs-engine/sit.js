@@ -90,7 +90,7 @@ function reqJson(server, method, path, { token, body } = {}) {
   const server = app.listen(0);
   const base = { host: '127.0.0.1', port: server.address().port };
   const list = await reqJson(base, 'GET', '/api/v1/mcp/tools/list');
-  check('MCP tools/list -> 7 gs.* tools', list.status === 200 && list.json && Array.isArray(list.json.tools) && list.json.tools.length === 7, `n=${list.json && list.json.tools && list.json.tools.length}`);
+  check('MCP tools/list -> 8 gs.* tools', list.status === 200 && list.json && Array.isArray(list.json.tools) && list.json.tools.length === 8, `n=${list.json && list.json.tools && list.json.tools.length}`);
   const noAuth = await reqJson(base, 'POST', '/api/v1/mcp/tools/call', { body: { tool: 'gs.scene.list' } });
   check('MCP tools/call without JWT -> 401', noAuth.status === 401, `status=${noAuth.status}`);
   const call = await reqJson(base, 'POST', '/api/v1/mcp/tools/call', { token, body: { tool: 'gs.scene.list', arguments: {} } });
@@ -100,6 +100,26 @@ function reqJson(server, method, path, { token, body } = {}) {
   const health = await reqJson(base, 'GET', '/health');
   check('GET /health -> shape (db/storage/provider)', health.status === 200 && health.json && health.json.service === 'equimind-gs-engine' && health.json.db && health.json.provider, `status=${health.status}`);
   server.close();
+
+  // ---- Procedural horse provider + report (the $0 report path) ----
+  process.env.GS_PROCESSING_PROVIDER = 'procedural';
+  const rep = {
+    horse_name: 'Estrella de la Sierra', breed: 'Paso Fino', height_cm: 144, length_cm: 152, capture_seconds: 45,
+    measurements: [{ key: 'withers', label: 'Alzada a la cruz', value: '14.2 manos', cm: 144, lo: 132, hi: 152, ideal_lo: 140, ideal_hi: 150, at: 144, status: 'ok' }],
+    findings: [{ kind: 'watch', title: 'Aplomo anterior izquierdo', detail: 'Rodilla ~3° adelantada; monitorear.' }]
+  };
+  const s3 = await svc.createSession(tenantId, { kind: 'conformation', source_type: 'video', title: 'Report SIT', report: rep });
+  check('createSession stores report on session meta', s3 && s3.meta && s3.meta.report && s3.meta.report.horse_name === 'Estrella de la Sierra', `hn=${s3 && s3.meta && s3.meta.report && s3.meta.report.horse_name}`);
+  await svc.attachSource(tenantId, s3.id, { frame_count: 60, source_bytes: 4 * 1024 * 1024, source_seconds: 45 });
+  const disp3 = await svc.dispatchJob(tenantId, s3.id, { runInline: true });
+  check('procedural job -> done', disp3 && disp3.job && disp3.job.status === 'done', `status=${disp3 && disp3.job && disp3.job.status} err=${disp3 && disp3.error}`);
+  const provScenes = await svc.sceneList(tenantId);
+  const provScene = await svc.sceneGet(tenantId, provScenes[0].id, '/equimind-gs-engine/');
+  check('procedural scene -> horse splat cloud (>1000 splats)', provScene && provScene.splat_count > 1000, `n=${provScene && provScene.splat_count}`);
+  check('procedural scene is_simulated (honest) + report attached', provScene && provScene.is_simulated === true && provScene.report && provScene.report.horse_name === 'Estrella de la Sierra', `sim=${provScene && provScene.is_simulated}`);
+  const pubScene = await svc.scenePublic(provScene.id, provScene.share_token, '/equimind-gs-engine/');
+  check('public share (token) -> report visible without account', pubScene && pubScene.report && pubScene.report.findings.length === 1, `rep=${!!(pubScene && pubScene.report)}`);
+  process.env.GS_PROCESSING_PROVIDER = '';
 
   // ---- report ----
   const failed = results.filter((r) => !r.pass);

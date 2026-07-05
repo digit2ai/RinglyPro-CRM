@@ -11,7 +11,8 @@ const PUB = path.join(__dirname, '..', 'public');
 const TPL = {
   viewer: fs.readFileSync(path.join(PUB, 'viewer.html'), 'utf8'),
   capture: fs.readFileSync(path.join(PUB, 'capture.html'), 'utf8'),
-  admin: fs.readFileSync(path.join(PUB, 'admin.html'), 'utf8')
+  admin: fs.readFileSync(path.join(PUB, 'admin.html'), 'utf8'),
+  report: fs.readFileSync(path.join(PUB, 'report.html'), 'utf8')
 };
 
 function esc(s) { return String(s == null ? '' : s).replace(/</g, '&lt;'); }
@@ -30,6 +31,7 @@ function send(name) { return (req, res) => res.set('Content-Type', 'text/html; c
 router.get('/', send('capture'));
 router.get('/capture', send('capture'));
 router.get('/viewer', send('viewer'));
+router.get('/report', send('report'));
 router.get('/admin', send('admin'));
 
 module.exports = router;

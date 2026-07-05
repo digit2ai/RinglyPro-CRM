@@ -12,13 +12,51 @@ const queue = require('./queue');
 const storage = require('./storage');
 const provider = require('./provider');
 
-async function createSession(tenantId, { kind, source_type, title, horse_id } = {}) {
+async function createSession(tenantId, { kind, source_type, title, horse_id, report } = {}) {
   const k = ['course_walk', 'conformation', 'scene'].includes(kind) ? kind : 'course_walk';
+  const meta = {};
+  const clean = sanitizeReport(report);
+  if (clean) meta.report = clean;
   return store.repo.create('sessions', {
     tenant_id: tenantId, kind: k, source_type: source_type === 'photos' ? 'photos' : 'video',
     status: 'created', title: title ? String(title).slice(0, 180) : null, horse_id: horse_id || null,
-    frame_count: 0, source_bytes: 0, source_seconds: 0, meta: {}
+    frame_count: 0, source_bytes: 0, source_seconds: 0, meta
   });
+}
+
+// Attach/replace the analysis report payload on a session (measurements + findings
+// + horse identity). This is the REAL analysis output the report renders; the 3D
+// shape is generated from it. Callable before dispatch (so the procedural provider
+// can scale the model to the measurements) or after (to enrich an existing report).
+async function attachReport(tenantId, sessionId, report) {
+  const s = await getSession(tenantId, sessionId);
+  if (!s) return { error: 'session not found', code: 404 };
+  const clean = sanitizeReport(report);
+  if (!clean) return { error: 'empty or invalid report', code: 400 };
+  await store.repo.update('sessions', { id: s.id }, { meta: Object.assign({}, s.meta || {}, { report: clean }) });
+  return { ok: true, report: clean };
+}
+
+// Whitelist + cap the report shape so nothing unbounded reaches storage/render.
+function sanitizeReport(report) {
+  if (!report || typeof report !== 'object') return null;
+  const str = (v, n) => (v == null ? null : String(v).slice(0, n));
+  const num = (v) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  const meas = Array.isArray(report.measurements) ? report.measurements.slice(0, 24).map((m) => ({
+    key: str(m.key, 40), label: str(m.label, 80), value: str(m.value, 40), cm: num(m.cm),
+    lo: num(m.lo), hi: num(m.hi), ideal_lo: num(m.ideal_lo), ideal_hi: num(m.ideal_hi),
+    at: num(m.at), status: ['ok', 'watch', 'info'].includes(m.status) ? m.status : 'info'
+  })) : [];
+  const find = Array.isArray(report.findings) ? report.findings.slice(0, 20).map((f) => ({
+    kind: ['ok', 'watch', 'info'].includes(f.kind) ? f.kind : 'info', title: str(f.title, 160), detail: str(f.detail, 600)
+  })) : [];
+  const out = {
+    horse_name: str(report.horse_name, 80), breed: str(report.breed, 80),
+    capture_seconds: num(report.capture_seconds), height_cm: num(report.height_cm), length_cm: num(report.length_cm),
+    measurements: meas, findings: find
+  };
+  const has = out.horse_name || out.breed || meas.length || find.length || out.height_cm || out.length_cm;
+  return has ? out : null;
 }
 
 async function getSession(tenantId, id) {
@@ -79,12 +117,17 @@ async function sceneWithAssets(scene, base) {
   const assets = await store.repo.findAll('assets', { scene_id: scene.id });
   const urls = {};
   for (const a of assets) urls[a.role] = await storage.signedGetUrl(a.object_key, { base, expiresSec: 3600 });
+  // The analysis report lives on the originating session's meta (1:1 with scene);
+  // surface it here so the shareable report page (public via token) can render it.
+  let report = null;
+  try { const s = await store.repo.find('sessions', { id: scene.session_id }); report = (s && s.meta && s.meta.report) || null; } catch (e) { report = null; }
   return {
     id: scene.id, kind: scene.kind, title: scene.title, status: scene.status,
     splat_count: Number(scene.splat_count), storage_bytes: Number(scene.storage_bytes),
     is_simulated: !!scene.is_simulated, waypoints: scene.waypoints || [],
     share_token: scene.share_token, created_at: scene.created_at,
     report_code: 'GS-' + String(scene.id).padStart(6, '0'),
+    report, provider: (scene.is_simulated ? 'procedural' : 'luma'),
     assets: urls
   };
 }
@@ -148,6 +191,6 @@ async function opsSnapshot(tenantId) {
 }
 
 module.exports = {
-  createSession, getSession, attachSource, dispatchJob, jobStatus,
+  createSession, getSession, attachSource, attachReport, dispatchJob, jobStatus,
   sceneGet, scenePublic, sceneList, sceneDelete, setWaypoints, opsSnapshot
 };

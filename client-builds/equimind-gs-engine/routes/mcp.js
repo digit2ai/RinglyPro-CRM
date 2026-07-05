@@ -12,8 +12,10 @@ const { requireAccount } = require('../lib/auth');
 const svc = require('../lib/service');
 
 const TOOLS = [
-  { name: 'gs.capture.createSession', description: 'Create a 3D capture session (course_walk | conformation | scene).',
-    input_schema: { type: 'object', properties: { kind: { type: 'string', enum: ['course_walk', 'conformation', 'scene'] }, source_type: { type: 'string', enum: ['video', 'photos'] }, title: { type: 'string' }, horse_id: { type: 'integer' } } } },
+  { name: 'gs.capture.createSession', description: 'Create a 3D capture session (course_walk | conformation | scene). Optionally seed the analysis report so the 3D model scales to the measurements.',
+    input_schema: { type: 'object', properties: { kind: { type: 'string', enum: ['course_walk', 'conformation', 'scene'] }, source_type: { type: 'string', enum: ['video', 'photos'] }, title: { type: 'string' }, horse_id: { type: 'integer' }, report: { type: 'object' } } } },
+  { name: 'gs.report.attach', description: 'Attach/replace the analysis report (measurements + findings + horse identity) on a session before processing.',
+    input_schema: { type: 'object', required: ['session_id', 'report'], properties: { session_id: { type: 'integer' }, report: { type: 'object' } } } },
   { name: 'gs.capture.uploadFrames', description: 'Register uploaded source coverage for a session and mark it ready.',
     input_schema: { type: 'object', required: ['session_id'], properties: { session_id: { type: 'integer' }, frame_count: { type: 'integer' }, source_bytes: { type: 'integer' }, source_seconds: { type: 'number' } } } },
   { name: 'gs.job.dispatch', description: 'Charge credits and enqueue a processing job for a ready session.',
@@ -39,6 +41,7 @@ router.post('/tools/call', requireAccount, async (req, res) => {
     switch (tool) {
       case 'gs.capture.createSession': result = await svc.createSession(req.tenantId, a); break;
       case 'gs.capture.uploadFrames': result = await svc.attachSource(req.tenantId, a.session_id, a); break;
+      case 'gs.report.attach': result = await svc.attachReport(req.tenantId, a.session_id, a.report); break;
       case 'gs.job.dispatch': result = await svc.dispatchJob(req.tenantId, a.session_id, { runInline: !!a.inline }); break;
       case 'gs.job.status': result = await svc.jobStatus(req.tenantId, a.job_id); break;
       case 'gs.scene.get': result = await svc.sceneGet(req.tenantId, a.scene_id, base); break;

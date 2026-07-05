@@ -47,6 +47,17 @@ router.post('/sessions/:id/upload', requireAccount, upload.any(), async (req, re
   } catch (e) { err(res, 500, 'upload failed: ' + e.message); }
 });
 
+// Attach/replace the analysis report (measurements + findings + horse identity)
+// on a session. Do this BEFORE /process so the procedural provider scales the 3D
+// model to the measurements. Accepts { report: {...} } or a bare report object.
+router.patch('/sessions/:id/report', requireAccount, async (req, res) => {
+  try {
+    const r = await svc.attachReport(req.tenantId, req.params.id, (req.body && req.body.report) || req.body);
+    if (r.error) return err(res, r.code || 400, r.error);
+    res.json(r);
+  } catch (e) { err(res, 500, 'could not attach report'); }
+});
+
 // Dispatch a processing job (charges credits). ?inline=1 runs synchronously.
 router.post('/sessions/:id/process', requireAccount, async (req, res) => {
   try {

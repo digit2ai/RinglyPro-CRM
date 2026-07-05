@@ -42,6 +42,19 @@ A test-number AI phone agent that talks to callers and books appointments at ~ha
 - `VOICE_RELAY_POLLY_VOICE` — Amazon Polly voice for ConversationRelay TTS. Default `Joanna-Neural`.
 - `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
 
+## EquiMind 3D Gaussian Splatting Engine + Client Report
+
+Self-contained sub-app auto-mounted at `/equimind-gs-engine` (from `client-builds/equimind-gs-engine/`). Turns a phone video/photos of a horse into a navigable 3D scene, and generates a shareable **state-of-the-art client report** after an analysis. Reuses the EquiMind account/credit system for multi-tenant auth + billing. Data layer: `gs_sessions/gs_jobs/gs_scenes/gs_assets` (tenant-scoped, S3 storage + Render-disk fallback).
+
+- **Report surface:** `/equimind-gs-engine/report?scene=ID[&k=share_token][&lang=en|es]` — hero 3D horse (real gsplat on the `.ply`, canvas-horse fallback) + conformation measurement bars + Neural findings + read-only shareable link. Owner-only studio economics panel hidden on the public `?k=` view. Simulated scenes carry a "generated representation" disclaimer.
+- **Report data:** `session.meta.report` (measurements + findings + horse identity), sanitized/capped in `lib/service.js`. Attach via `PATCH /api/v1/sessions/:id/report`, the `gs.report.attach` MCP tool, or seed at `createSession`. Honesty rule: measurements/findings = REAL analysis output; the 3D shape = generated (labeled), never passed off as a scan of the specific animal.
+- **Providers** (`lib/provider.js`, swap via `GS_PROCESSING_PROVIDER`): `mock` (default, horse placeholder) · **`procedural`** (the $0 report path — horse-shaped gaussian `.ply` scaled to the measurements, no GPU/API, `is_simulated:true`) · `luma` (real photoreal scan, needs `LUMA_API_KEY`, Enterprise/capture gate — see BLOCKERS.md) · `self_hosted` (COLMAP+gsplat, v2 stub). Upgrading procedural→luma changes NO report/viewer code.
+- **SIT:** `node client-builds/equimind-gs-engine/sit.js` → 21/21 (in-memory, no GPU/DB).
+
+**Environment Variables:**
+- `GS_PROCESSING_PROVIDER` — `mock` (default) | `procedural` (recommended cheap production path, $0/report) | `luma` | `self_hosted`. `procedural` renders a measurement-scaled horse in-engine with zero GPU cost — use this until the app gets traction, then flip to `luma` for real photoreal scans.
+- `LUMA_API_KEY` — activates the real Luma capture provider (video→gaussian). Absent = fall back to mock/procedural. See `client-builds/equimind-gs-engine/BLOCKERS.md`.
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');

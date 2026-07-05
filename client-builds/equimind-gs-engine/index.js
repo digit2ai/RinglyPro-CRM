@@ -2,11 +2,11 @@
 // EquiMind 3DGS Engine — Express sub-app (EQUIMIND-3DGS-001).
 // Auto-mounted by src/app.js at /equimind-gs-engine.
 //   GET  /health                     -> module health (db, storage, provider)
-//   POST /api/v1/mcp/tools/call       -> MCP tool dispatcher (7 gs.* tools)
+//   POST /api/v1/mcp/tools/call       -> MCP tool dispatcher (8 gs.* tools)
 //   GET  /api/v1/mcp/tools/list       -> tool catalog
-//   /api/v1/*                         -> REST (sessions, upload, process, jobs, scenes, ops)
+//   /api/v1/*                         -> REST (sessions, upload, report, process, jobs, scenes, ops)
 //   /files                            -> disk-backed signed asset serving
-//   /viewer /capture /admin           -> product surfaces (bilingual)
+//   /viewer /report /capture /admin   -> product surfaces (bilingual)
 // Reuses the EquiMind account/credit system for multi-tenant auth + billing.
 // =====================================================
 'use strict';
