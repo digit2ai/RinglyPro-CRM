@@ -298,68 +298,28 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .niva .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
 .niva .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
 .orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-/* control panel — opens to the LEFT of the orb */
-.niva-panel{position:absolute;right:calc(100% + 20px);top:50%;transform:translateY(-50%);width:min(80vw,300px);
-  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:16px;
-  padding:16px;box-shadow:0 24px 64px rgba(0,0,0,.6);display:none}
+/* compact control chip — anchored UNDER the orb, right-aligned so it never covers the slide text */
+.niva-panel{position:absolute;top:calc(100% + 12px);right:0;left:auto;bottom:auto;transform:none;width:max-content;max-width:min(78vw,240px);
+  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:14px;
+  padding:11px 12px;box-shadow:0 20px 56px rgba(0,0,0,.6);display:none}
 .niva.open .niva-panel{display:block}
-.niva-hd{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding-right:18px}
-.niva-mini{width:34px;height:34px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 46%,#0e7490 100%)}
-.niva-name{font-family:var(--font-display);font-weight:700;color:#fff;font-size:14px;line-height:1.2}
-.niva-role{color:var(--mut);font-size:11.5px;line-height:1.3}
-.niva-lang{display:flex;gap:6px;margin-bottom:12px}
-.niva-lang button{flex:1;padding:8px 0;min-height:40px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:600 12.5px var(--font-display);letter-spacing:.05em;cursor:pointer}
+/* header, voice picker and HD toggle removed from the chip — minimal by design */
+.niva-hd,.niva-row,#nivaPlay{display:none}
+.niva-lang{display:flex;gap:5px;margin-bottom:8px}
+.niva-lang button{flex:1;padding:5px 12px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:600 12px var(--font-display);letter-spacing:.04em;cursor:pointer}
 .niva-lang button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent}
-.niva-ctrls{display:flex;gap:8px;margin-bottom:4px}
-.niva-ctrls button{flex:1;padding:9px 6px;min-height:42px;border-radius:10px;border:1px solid var(--line2);background:rgba(34,211,238,.07);color:var(--txt);font:600 12.5px var(--font-body);cursor:pointer}
-.niva-ctrls button.primary{flex:2.4;background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent;font-weight:700}
+.niva-ctrls{display:flex;gap:6px;margin-bottom:0}
+.niva-ctrls button{flex:1;padding:8px 12px;min-height:0;border-radius:9px;border:1px solid var(--line2);background:rgba(34,211,238,.07);color:var(--txt);font:600 13px var(--font-body);cursor:pointer}
 .niva-ctrls button:disabled{opacity:.4;cursor:default}
-.niva-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--mut);margin-top:11px}
-.niva-row label{display:flex;align-items:center;gap:6px}
-.niva-row select{font:inherit;background:#0f1728;color:var(--txt);border:1px solid var(--line2);border-radius:7px;padding:6px 7px;max-width:60%}
-.niva-mode{color:var(--accent);font-weight:600}
-.niva-status{font-size:12px;color:var(--mut);margin-top:11px;min-height:16px;line-height:1.45}
-.niva-close{position:absolute;top:9px;right:12px;background:none;border:0;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px}
+.niva-status{font-size:11.5px;color:var(--mut);margin-top:8px;min-height:15px;line-height:1.4;text-align:center}
+.niva-close{position:absolute;top:5px;right:8px;background:none;border:0;color:var(--dim);font-size:16px;cursor:pointer;line-height:1;padding:2px 5px}
 .niva-close:hover{color:var(--txt)}
 @media (max-width:900px){.niva{--orb-size:clamp(122px,24vw,150px)}}
 @media (max-width:640px){
   .niva{right:12px;top:auto;bottom:16px;transform:none}
   .niva .orb-caption{font-size:9px;letter-spacing:1px}
-  /* Minimal mobile panel — tiny language toggle + single play, nothing else */
-  .niva-panel{right:auto;left:auto;right:0;top:auto;bottom:calc(100% + 10px);transform:none;width:auto;min-width:0;padding:8px}
-  .niva-hd,.niva-row,.niva-status{display:none}
-  .niva-lang{gap:4px;margin-bottom:6px}
-  .niva-lang button{flex:0 0 auto;padding:4px 9px;min-height:0;font-size:10.5px;border-radius:7px}
-  .niva-ctrls{gap:5px;margin-bottom:0}
-  .niva-ctrls button{flex:0 0 auto;padding:5px 9px;min-height:0;font-size:11px;border-radius:8px}
-  .niva-ctrls button.primary{flex:0 0 auto}
-  .niva-ctrls button.primary #nivaPlayTxt{display:none}
-  .niva-close{top:4px;right:6px;font-size:15px}
-}
-/* ===== Immersive full-screen "stage" — opens when the orb is tapped ===== */
-.niva-stage{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;
-  background:radial-gradient(120% 90% at 50% 38%,rgba(18,24,42,.9),rgba(4,7,14,.97));
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);padding:24px;text-align:center}
-.niva.staged .niva-stage{display:flex}
-/* neutralize .niva's own transform/offset so the fixed stage anchors to the viewport, not the orb box */
-.niva.staged{position:fixed;inset:0;width:100%;height:100%;transform:none;--orb-size:min(56vw,300px)}
-.niva-stage-close{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--dim);font-size:26px;line-height:1;cursor:pointer;padding:6px 10px}
-.niva-stage-close:hover{color:#fff}
-.niva-stage-lang{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-.niva-stage-lang button{padding:6px 15px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:var(--mut);font:600 12px var(--font-display);letter-spacing:.04em;cursor:pointer}
-.niva-stage-lang button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent}
-.niva-stage-orb{display:flex;align-items:center;justify-content:center;margin-bottom:46px;cursor:pointer}
-.niva.staged .orb-caption{font-size:12px;letter-spacing:2px;bottom:-32px;max-width:80vw}
-.niva.staged .orb-cap-idle{display:none!important}
-.niva.staged .orb-cap-active{display:inline!important}
-.niva-stage-status{font-family:var(--font-mono);font-size:13.5px;letter-spacing:.02em;color:var(--ink-mute);min-height:20px;margin-top:6px}
-.niva-stage-ctrls{display:flex;gap:14px;margin-top:24px}
-.niva-stage-ctrls button{min-width:150px;padding:15px 22px;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.06);color:#fff;font:700 15px var(--font-body);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-.niva-stage-ctrls button:hover{background:rgba(255,255,255,.1)}
-@media (max-width:640px){
-  .niva.staged{--orb-size:min(72vw,300px)}
-  .niva-stage-ctrls{gap:10px;width:100%;max-width:420px}
-  .niva-stage-ctrls button{flex:1;min-width:0;padding:15px 10px}
+  /* orb sits at the bottom on mobile, so the chip opens ABOVE it (still right-aligned) */
+  .niva-panel{top:auto;bottom:calc(100% + 10px);right:0}
 }
 @media print{.niva{display:none}}
 @media (prefers-reduced-motion:reduce){
@@ -756,20 +716,6 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
     </div>
     <div class="niva-status" id="nivaStatus" aria-live="polite"></div>
   </div>
-  <!-- Immersive full-screen playing view (opens on orb click) -->
-  <div class="niva-stage" id="nivaStage" role="dialog" aria-modal="true" aria-label="Neural voice walkthrough" aria-hidden="true">
-    <button class="niva-stage-close" id="nivaStageClose" type="button" aria-label="Close / Cerrar">&times;</button>
-    <div class="niva-stage-lang" role="group" aria-label="Language">
-      <button id="nivaStageEn" class="on" type="button">English</button>
-      <button id="nivaStageEs" type="button">Espa&ntilde;ol</button>
-    </div>
-    <div class="niva-stage-orb" id="nivaStageOrb"><!-- orb is moved here while playing --></div>
-    <div class="niva-stage-status" id="nivaStageStatus" aria-live="polite"></div>
-    <div class="niva-stage-ctrls">
-      <button id="nivaStagePause" type="button">&#10073;&#10073;&nbsp;<span id="nivaStagePauseTxt">Pause</span></button>
-      <button id="nivaStageStop" type="button">&#9632;&nbsp;<span id="nivaStageStopTxt">Stop</span></button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -838,18 +784,8 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   var neuralToggle=document.getElementById('nivaNeural'), hdLbl=document.getElementById('nivaHdLbl');
   var modeEl=document.getElementById('nivaMode'), statusEl=document.getElementById('nivaStatus');
   var slides=Array.prototype.slice.call(document.querySelectorAll('#deck .slide'));
-  // ---- Immersive stage DOM ----
-  var stage=document.getElementById('nivaStage');
-  var stageOrbHost=document.getElementById('nivaStageOrb');
-  var stageStatus=document.getElementById('nivaStageStatus');
-  var stageClose=document.getElementById('nivaStageClose');
-  var stageEn=document.getElementById('nivaStageEn'), stageEs=document.getElementById('nivaStageEs');
-  var stagePause=document.getElementById('nivaStagePause'), stagePauseTxt=document.getElementById('nivaStagePauseTxt');
-  var stageStop=document.getElementById('nivaStageStop'), stageStopTxt=document.getElementById('nivaStageStopTxt');
-  var orbHome=niva; // orbWrap's original parent — restored here on close
   function setState(s){ orbWrap.dataset.state=s; }
-  function isStaged(){ return niva.classList.contains('staged'); }
-  function say(txt){ statusEl.textContent=txt; if(stageStatus) stageStatus.textContent=txt; }
+  function say(txt){ statusEl.textContent=txt; }
   function personaName(){ return voiceName ? voiceName.charAt(0).toUpperCase()+voiceName.slice(1) : (lang==='es'?'La voz':'The voice'); }
 
   // ---- State ----
@@ -885,7 +821,6 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
     roleEl.textContent=t().role; playTxt.textContent=t().play;
     accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
     enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
-    stageEn.classList.toggle('on',lang==='en'); stageEs.classList.toggle('on',lang==='es');
     capIdle.textContent = lang==='en' ? 'Click to speak with the MCP Neural brain' : 'Habla con el cerebro MCP Neural';
     capActive.textContent = lang==='en' ? 'Open controls' : 'Abrir controles';
     if(!currentAudio && !(synth&&synth.speaking)) say(t().idle);
@@ -912,22 +847,11 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
     } else { txt=t().one; }
     say(txt);
   }
-  // ---- Stage (immersive view) helpers ----
+  // orb stays fixed on the right; the deck scrolls to follow the voice (setActive)
   function syncStageUI(){
-    // pause/replay button label + orb caption reflect play state
-    var replay = lang==='es'?'Reproducir':'Play';
-    var resume = lang==='es'?'Reanudar':'Resume';
-    var pause  = lang==='es'?'Pausar':'Pause';
-    var stopL  = lang==='es'?'Detener':'Stop';
-    stageStopTxt.textContent=stopL;
-    if(!playing){ stagePauseTxt.textContent=replay; stagePause.firstChild.textContent='▶ '; }
-    else if(paused){ stagePauseTxt.textContent=resume; stagePause.firstChild.textContent='▶ '; }
-    else { stagePauseTxt.textContent=pause; stagePause.firstChild.textContent='❙❙ '; }
-    if(isStaged()){
-      if(!playing) capActive.textContent = lang==='es'?'Toca el orbe para reproducir':'Tap the orb to play';
-      else if(paused) capActive.textContent = lang==='es'?'Toca el orbe para reanudar':'Tap the orb to resume';
-      else capActive.textContent = lang==='es'?'Toca el orbe para pausar':'Tap the orb to pause';
-    }
+    capActive.textContent = paused
+      ? (lang==='es'?'Toca el orbe para reanudar':'Tap the orb to resume')
+      : (lang==='es'?'Toca el orbe para pausar':'Tap the orb to pause');
   }
   function togglePause(){
     if(!playing) return;
@@ -937,26 +861,11 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
       if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
     syncStageUI();
   }
-  function playAll(){ start(segments.map(function(_,i){return i;}),'all'); }
-  function openStage(){
-    niva.classList.add('staged');
-    stage.setAttribute('aria-hidden','false');
-    stageOrbHost.appendChild(orbWrap);
-    playAll();
-    syncStageUI();
-  }
-  function closeStage(){
-    finish();
-    niva.classList.remove('staged');
-    stage.setAttribute('aria-hidden','true');
-    niva.insertBefore(orbWrap, niva.firstChild); // restore orb to its idle home
-    setState('idle');
-    applyLangUI();
-  }
+  function playAll(){ niva.classList.add('open'); start(segments.map(function(_,i){return i;}),'all'); }
+  function stopAll(){ finish(); niva.classList.remove('open'); }
   function orbTap(){
-    if(!isStaged()){ openStage(); return; }
-    if(!playing){ playAll(); syncStageUI(); }
-    else togglePause();
+    if(!playing) playAll();   // first tap starts narration; the deck follows the voice
+    else togglePause();       // tapping again pauses / resumes
   }
 
   function fetchNeural(idx){
@@ -1020,22 +929,17 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   // ---- Events ----
   orbWrap.addEventListener('click',orbTap);
   orbWrap.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); orbTap(); } });
-  // language: switching in the stage restarts narration in the new language
-  function switchLang(l){ var was=isStaged()&&playing; setLang(l); if(was) playAll(); }
-  enBtn.addEventListener('click',function(){ setLang('en'); });
-  esBtn.addEventListener('click',function(){ setLang('es'); });
-  stageEn.addEventListener('click',function(){ switchLang('en'); });
-  stageEs.addEventListener('click',function(){ switchLang('es'); });
-  stageClose.addEventListener('click',closeStage);
-  stagePause.addEventListener('click',function(){ if(!playing) playAll(); else togglePause(); syncStageUI(); });
-  stageStop.addEventListener('click',closeStage);
+  // language: switching mid-playback restarts narration in the new language
+  function switchLang(l){ var was=playing; setLang(l); if(was) playAll(); }
+  enBtn.addEventListener('click',function(){ switchLang('en'); });
+  esBtn.addEventListener('click',function(){ switchLang('es'); });
   playBtn.addEventListener('click',playAll);
   accentSel.addEventListener('change',function(){ voiceName=this.value; clearCache(); });
   neuralToggle.addEventListener('change',setMode);
   pauseBtn.addEventListener('click',togglePause);
-  stopBtn.addEventListener('click',finish);
-  closeBtn.addEventListener('click',function(){ niva.classList.remove('open'); });
-  window.addEventListener('keydown',function(e){ if(e.key==='Escape'&&isStaged()) closeStage(); });
+  stopBtn.addEventListener('click',stopAll);
+  closeBtn.addEventListener('click',stopAll);
+  window.addEventListener('keydown',function(e){ if(e.key==='Escape'&&playing) stopAll(); });
   window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
 
   // ---- Init ----
