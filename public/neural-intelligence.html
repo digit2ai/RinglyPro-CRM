@@ -473,9 +473,11 @@ html.lang-es .i18.es{display:inline}
   /* nav arrows share the bottom-right corner with the orb -> move them bottom-left, side by side */
   .nav{left:12px;right:auto;bottom:14px;flex-direction:row;gap:8px}
   .nav button{width:44px;height:44px;font-size:18px}
-  /* smaller orb; hide the under-orb caption (it clipped off-screen at the bottom) */
-  .niva{--orb-size:clamp(94px,22vw,118px);right:12px;bottom:14px}
-  .niva .orb-caption{display:none}
+  /* lift the orb off the bottom edge so it reads as a tap-to-play control, keep its hint */
+  .niva{--orb-size:clamp(100px,24vw,126px);right:14px;bottom:clamp(78px,16vh,128px)}
+  .niva .orb-caption{display:block;font-size:9px;letter-spacing:.7px;bottom:-20px;max-width:132px}
+  /* gentle idle nudge to draw the eye to it */
+  .niva .orb-wrap[data-state="idle"]{animation:orbNudge 2.8s ease-in-out infinite}
   /* tighten fixed top chrome so wordmark / EN-ES toggle / counter never collide */
   .wordmark{padding:12px 14px;letter-spacing:.12em;font-size:12px}
   .counter{padding:12px 14px;font-size:11px}
@@ -492,6 +494,8 @@ html.lang-es .i18.es{display:inline}
   .langtoggle button{padding:5px 11px;font-size:10.5px}
   .nav button{width:42px;height:42px}
 }
+@keyframes orbNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.niva .orb-wrap[data-state="idle"]{animation:none}}
 </style>
 </head>
 <body>
