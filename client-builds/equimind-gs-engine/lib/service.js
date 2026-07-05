@@ -55,7 +55,7 @@ function sanitizeReport(report) {
   const neural = Array.isArray(report.neural_findings) ? report.neural_findings.slice(0, 30).map((f) => ({
     impact: ['critical', 'high', 'medium', 'low', 'info'].includes(f.impact) ? f.impact : 'info',
     code: str(f.code, 40), title: str(f.title, 200), summary: str(f.summary, 700),
-    action: str(f.action, 400), estimate: str(f.estimate, 140), anchor: str(f.anchor, 24)
+    action: str(f.action, 400), estimate: str(f.estimate, 140), anchor: str(f.anchor, 24), timestamp_ms: num(f.timestamp_ms)
   })).filter((f) => f.title || f.summary) : [];
   const out = {
     horse_name: str(report.horse_name, 80), breed: str(report.breed, 80),
@@ -83,7 +83,10 @@ function sanitizeGait(g) {
     cv_intervalos: num(g.cv_intervalos), simetria_pct: num(g.simetria_pct), elevacion_ant: num(g.elevacion_ant), elevacion_post: num(g.elevacion_post),
     claridad_pct: num(g.claridad_pct), pisadas_count: num(g.pisadas_count), simulado: !!g.simulado,
     resumen: str(g.resumen, 700), veredicto: str(g.veredicto, 400), firma: str(g.firma, 300),
-    scores: scores, sections: sec, recomendaciones: reco
+    scores: scores, sections: sec, recomendaciones: reco,
+    // Footfall timeline for the gait-replay animation (capped) + clip duration.
+    pisadas: Array.isArray(g.pisadas) ? g.pisadas.slice(0, 600).map((p) => ({ t: num(p.t), limb: ['ant_izq', 'ant_der', 'post_izq', 'post_der'].includes(p.limb) ? p.limb : null })).filter((p) => p.t != null) : null,
+    duration_ms: num(g.duration_ms)
   };
   return (out.modalidad || scores.length || out.puntaje_total != null) ? out : null;
 }
@@ -167,8 +170,15 @@ async function sceneWithAssets(scene, base) {
   for (const a of assets) urls[a.role] = await storage.signedGetUrl(a.object_key, { base, expiresSec: 3600 });
   // The analysis report lives on the originating session's meta (1:1 with scene);
   // surface it here so the shareable report page (public via token) can render it.
+  // Also sign the uploaded source video (Tier-2 real-footage overlay) if present.
   let report = null;
-  try { const s = await store.repo.find('sessions', { id: scene.session_id }); report = (s && s.meta && s.meta.report) || null; } catch (e) { report = null; }
+  try {
+    const s = await store.repo.find('sessions', { id: scene.session_id });
+    report = (s && s.meta && s.meta.report) || null;
+    const keys = (s && s.meta && Array.isArray(s.meta.source_keys)) ? s.meta.source_keys : [];
+    const vidKey = keys.find((k) => /\.(mp4|mov|webm|m4v)$/i.test(k)) || (keys.length ? keys[0] : null);
+    if (vidKey) urls.source_video = await storage.signedGetUrl(vidKey, { base, expiresSec: 3600 });
+  } catch (e) { report = null; }
   return {
     id: scene.id, kind: scene.kind, title: scene.title, status: scene.status,
     splat_count: Number(scene.splat_count), storage_bytes: Number(scene.storage_bytes),

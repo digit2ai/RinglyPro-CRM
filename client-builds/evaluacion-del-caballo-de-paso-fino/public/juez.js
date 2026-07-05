@@ -466,7 +466,7 @@
     // report (severity, code, action, estimate). NOT flattened into the editable
     // form; the form's Hallazgos stays for MANUAL additions.
     var neural = (f.neural_findings || []).map(function (fd) {
-      return { impact: fd.impact || 'info', code: fd.code || null, title: fd.title || '', summary: fd.summary || '', action: fd.recommended_action || null, estimate: fd.impact_estimate || null, anchor: fd.anchor || null };
+      return { impact: fd.impact || 'info', code: fd.code || null, title: fd.title || '', summary: fd.summary || '', action: fd.recommended_action || null, estimate: fd.impact_estimate || null, anchor: fd.anchor || null, timestamp_ms: fd.timestamp_ms != null ? fd.timestamp_ms : null };
     });
     var findings = [];
     var clar = (son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
@@ -480,7 +480,10 @@
       resumen: dic.resumen, veredicto: dic.veredicto, firma: dic.firma,
       scores: (f.puntuaciones || []).map(function (p) { return { label: p.nombre, pct: p.puntaje_normalizado, weight: p.peso_porcentaje }; }),
       sections: (dic.secciones || []).map(function (s) { return { titulo: s.titulo, cuerpo: s.cuerpo, nivel: s.nivel }; }),
-      recomendaciones: dic.recomendaciones || []
+      recomendaciones: dic.recomendaciones || [],
+      // Real footfall timeline (ms + limb) drives the 3D gait-replay animation.
+      pisadas: (f.pisadas || []).map(function (p) { return { t: p.timestamp_ms, limb: p.extremidad }; }),
+      duration_ms: (f.duracion_seg ? Math.round(f.duracion_seg * 1000) : ((f.pisadas && f.pisadas.length) ? f.pisadas[f.pisadas.length - 1].timestamp_ms : null))
     };
     return { horseName: horseName, measurements: measurements, findings: findings, neural: neural, gait: gait, captureSeconds: f.duracion_seg || f.video_seconds || null };
   }

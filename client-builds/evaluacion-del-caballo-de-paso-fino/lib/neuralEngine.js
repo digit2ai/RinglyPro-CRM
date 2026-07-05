@@ -46,6 +46,7 @@ function analizarSesion(fallo, ctx, lang) {
   const total = fallo.puntaje_total;
   const cv = c.coef_variacion_intervalos != null ? c.coef_variacion_intervalos : mov.coef_variacion_intervalos;
   const out = [];
+  const P = fallo.pisadas || [];
 
   // 1. MODALIDAD NO COINCIDE (descalificación potencial) — crítico.
   if (c.es_modalidad_valida === false) {
@@ -314,6 +315,27 @@ function analizarSesion(fallo, ctx, lang) {
       workflow: 'none'
     });
   }
+
+  // ---- Localización TEMPORAL: pinear cada hallazgo al momento (ms) del video
+  // donde ocurre, para el timeline del informe 3D. Deriva de las pisadas reales.
+  const midTs = () => (P.length ? P[Math.floor(P.length / 2)].timestamp_ms : null);
+  const limbTs = (tren) => { const m = P.filter((p) => String(p.extremidad || '').indexOf(tren) === 0); return m.length ? m[Math.floor(m.length / 2)].timestamp_ms : midTs(); };
+  const worstTs = () => {
+    const iv = P.map((p) => p.intervalo_anterior_ms).filter((x) => x != null);
+    if (!iv.length) return midTs();
+    const med = iv.slice().sort((a, b) => a - b)[Math.floor(iv.length / 2)];
+    let best = null, bd = -1;
+    for (const p of P) { if (p.intervalo_anterior_ms == null) continue; const d = Math.abs(p.intervalo_anterior_ms - med); if (d > bd) { bd = d; best = p; } }
+    return best ? best.timestamp_ms : midTs();
+  };
+  const TS = {
+    'GAIT-CV-HIGH': worstTs(), 'GAIT-CV-DRIFT': worstTs(), 'GAIT-RHYTHM-CLEAN': worstTs(),
+    'GAIT-ASYM': midTs(), 'GEO-SYM-EXCELLENT': midTs(),
+    'GEO-ELEV-ANT-LOW': limbTs('ant'), 'GEO-ELEV-POST-LOW': limbTs('post'), 'GEO-ELEV-BALANCE': midTs(),
+    'GAIT-4BEAT-BLUR': midTs(), 'GAIT-4BEAT-SHARP': midTs(),
+    'GAIT-CAD-LOW': midTs(), 'GAIT-CAD-HIGH': midTs(), 'GAIT-CAD-IDEAL': midTs()
+  };
+  out.forEach((f) => { if (TS[f.code] != null) f.timestamp_ms = TS[f.code]; });
 
   // 15. CONFIANZA DE MEDICIÓN baja — info (transparencia).
   if (c.confianza != null && c.confianza < 0.6) {

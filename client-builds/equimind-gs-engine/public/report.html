@@ -44,6 +44,16 @@
   .legend{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;color:var(--mut);background:rgba(20,16,11,.72);border:1px solid var(--line2);border-radius:999px;padding:5px 13px;backdrop-filter:blur(6px);pointer-events:none;white-space:nowrap;max-width:92%}
   .legend .scale{width:110px;height:7px;border-radius:99px;background:linear-gradient(90deg,#C0553F,#D98A3E 45%,#C9A24B 70%,#5FA772 100%);flex:none}
   .legend b{color:var(--cream);font-weight:600}
+  #srcVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
+  .replaybar{display:flex;align-items:center;gap:11px;margin-top:14px}
+  .replaybar .play{flex:none;width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;background:linear-gradient(180deg,var(--brass2),var(--brass));color:#241a08;font-size:15px}
+  .track{position:relative;flex:1;height:12px;border-radius:99px;background:rgba(242,233,218,.10);cursor:pointer}
+  .track .played{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,rgba(201,162,75,.5),rgba(230,197,114,.75));width:0}
+  .track .ph{position:absolute;top:-3px;bottom:-3px;width:3px;border-radius:2px;background:var(--cream);box-shadow:0 0 8px var(--cream);transform:translateX(-50%);left:0}
+  .track .fmark{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--ink);cursor:pointer;transition:transform .1s}
+  .track .fmark:hover{transform:translate(-50%,-50%) scale(1.3)}
+  .tlabel{font-family:var(--mono);font-size:12px;color:var(--mut);flex:none;min-width:78px;text-align:right}
+  .find.fire{box-shadow:0 0 0 2px var(--brass2),0 0 24px -6px var(--brass2)}
   .value{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
   .vcard{border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--ink2)}
   .vcard .t{font-weight:600;font-size:14px} .vcard .d{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.4}
@@ -137,11 +147,18 @@
 
     <div class="stage">
       <canvas id="scan" aria-label="3D horse scan"></canvas>
+      <video id="srcVideo" playsinline muted preload="metadata"></video>
       <div class="ovl tl" id="ovlModel"></div>
       <div class="ovl tr">CAPTURA · <span id="ovlCap">—</span><br><span id="ang">—</span></div>
       <div class="ovl bl" id="ovlHint"></div>
       <div class="legend" id="legend"></div>
-      <div class="scanchip noprint"><span class="pill" id="heatBtn"></span><span class="pill" id="autoBtn"></span><span class="pill" id="resetBtn"></span></div>
+      <div class="scanchip noprint"><span class="pill" id="viewBtn" style="display:none"></span><span class="pill" id="heatBtn"></span><span class="pill" id="autoBtn"></span><span class="pill" id="resetBtn"></span></div>
+    </div>
+
+    <div class="replaybar noprint" id="replaybar" style="display:none">
+      <button class="play" id="playBtn">▶</button>
+      <div class="track" id="track"><div class="played" id="played"></div><div class="ph" id="ph"></div></div>
+      <span class="tlabel" id="tlabel">0:00</span>
     </div>
 
     <div class="value" id="valueStrip"></div>
@@ -341,7 +358,8 @@ function renderFindings(rep){
     const anchor=f.anchor||inferAnchor((f.title||'')+' '+(f.summary||''));
     const est=f.estimate?`<span class="est">${esc(f.estimate)}</span>`:'';
     const action=f.action?`<div class="action"><b>${esc(actLabel)}:</b> ${esc(f.action)}</div>`:'';
-    return `<div class="find ${kind}"><div style="flex:1;min-width:0">`
+    const ts=f.timestamp_ms!=null?` data-ts="${f.timestamp_ms}"`:'';
+    return `<div class="find ${kind}"${ts}><div style="flex:1;min-width:0">`
       +`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span class="chip" style="background:${col}22;color:${col}">${esc(label)}</span>${f.code?`<span class="fcode">${esc(f.code)}</span>`:''}${est}</div>`
       +`<h3>${esc(f.title||'')}</h3><p>${esc(f.summary||'')}</p>${action}</div>${locChip(anchor,f.title)}</div>`;
   }).join('');
@@ -391,7 +409,7 @@ const ANCHORS={ poll:[2.55,1.95,0], withers:[1.15,1.05,0], back:[0,0.95,0], loin
 function hexRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
 function regionOf(x,y){ if(x>2.3) return 'head'; if(x>1.3&&y>0.5) return 'neck'; if(y<-0.4) return x>0?'fore':'hind'; if(x<-0.9) return 'croup'; return 'barrel'; }
 const CENT={ fore:[0.98,-0.95,0.35], hind:[-1.15,-0.95,0.35], barrel:[0,0.55,0.66], neck:[1.85,1.35,0], head:[2.6,1.72,0] };
-function startCanvasHorse(splatLabel, region){
+function startCanvasHorse(splatLabel, region, anim){
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv=$('scan'), ctx=cv.getContext('2d'); const DPR=Math.min(window.devicePixelRatio||1,2); let W=0,H=0;
   function resize(){ const r=cv.getBoundingClientRect(); W=r.width;H=r.height; cv.width=W*DPR;cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
@@ -401,7 +419,7 @@ function startCanvasHorse(splatLabel, region){
     barrel:[rs.barrel, I.rep_reg_sym||'Symmetry'], neck:[rs.rhythm, I.rep_reg_rhythm||'Rhythm'], head:[rs.clarity, I.rep_reg_clarity||'Clarity'] };
   const hasHeat = !!(rs && (rs.fore!=null||rs.barrel!=null||rs.total!=null));
   const pts=[]; const rnd=Math.random;
-  function tag(p){ const reg=regionOf(p.x,p.y); const rm=regMeta[reg]; p.score=(rm&&rm[0]!=null)?rm[0]:(rs.total!=null?rs.total:null); p.rgb=p.score!=null?hexRgb(scoreColor(p.score)):[201,162,75]; return p; }
+  function tag(p){ const reg=regionOf(p.x,p.y); const rm=regMeta[reg]; p.score=(rm&&rm[0]!=null)?rm[0]:(rs.total!=null?rs.total:null); p.rgb=p.score!=null?hexRgb(scoreColor(p.score)):[201,162,75]; if(p.y<-0.4) p.limb=(p.x>0?'ant':'post')+'_'+(p.z>0?'izq':'der'); return p; }
   function ellip(n,cx,cy,cz,rx,ry,rz,t){for(let i=0;i<n;i++){const u=rnd(),v=rnd(),th=Math.acos(2*u-1),ph=2*Math.PI*v,rr=Math.cbrt(rnd())*0.5+0.5;pts.push(tag({x:cx+rx*rr*Math.sin(th)*Math.cos(ph),y:cy+ry*rr*Math.cos(th),z:cz+rz*rr*Math.sin(th)*Math.sin(ph),t}));}}
   function limb(n,x0,y0,z0,x1,y1,z1,r,t){for(let i=0;i<n;i++){const s=rnd(),a=2*Math.PI*rnd(),rr=Math.sqrt(rnd())*r;pts.push(tag({x:x0+(x1-x0)*s+Math.cos(a)*rr,y:y0+(y1-y0)*s,z:z0+(z1-z0)*s+Math.sin(a)*rr,t}));}}
   ellip(900,0,0.15,0,1.55,0.86,0.66,0.0); ellip(360,-1.25,0.25,0,0.7,0.8,0.62,0.05); ellip(240,1.15,0.05,0,0.55,0.7,0.6,0.0);
@@ -411,11 +429,23 @@ function startCanvasHorse(splatLabel, region){
   limb(150,0.95,-0.55,0.42,1.05,-2.25,0.5,0.15,0.08); limb(150,0.95,-0.55,-0.42,1.05,-2.25,-0.5,0.15,0.08);
   limb(150,-1.15,-0.5,0.42,-1.2,-2.25,0.48,0.16,0.08); limb(150,-1.15,-0.5,-0.42,-1.2,-2.25,-0.48,0.16,0.08);
   limb(90,-1.9,0.35,0,-2.35,-1.15,0,0.14,0.12);
+  // Gait-replay schedule: real footfall strike times per limb drive the leg lift.
+  const strikes={ant_izq:[],ant_der:[],post_izq:[],post_der:[]};
+  (anim&&anim.pisadas||[]).forEach(p=>{ if(p.limb&&strikes[p.limb]&&p.t!=null) strikes[p.limb].push(p.t); });
+  Object.keys(strikes).forEach(k=>strikes[k].sort((a,b)=>a-b));
+  const animDur=(anim&&anim.duration)||0;
+  const hasAnim=!!(anim&&anim.pisadas&&anim.pisadas.length>=2);
+  let curT=0;
+  function limbLift(limb){ const S=strikes[limb]; if(!S||!S.length) return 0;
+    let next=null; for(const s of S){ if(s>=curT){ next=s; break; } } if(next==null) return 0;
+    let prev=null; for(let i=S.length-1;i>=0;i--){ if(S[i]<next){ prev=S[i]; break; } }
+    const interval=(prev!=null)?(next-prev):460; const swing=Math.min(230,Math.max(90,interval*0.42));
+    const start=next-swing; if(curT<start||curT>next) return 0; return Math.sin(Math.PI*((curT-start)/swing)); }
   let heat=hasHeat;
   function setModelLabel(){ const base=(splatLabel||'MODELO 3D · GENERADO');
     $('ovlModel').innerHTML = heat ? ((LANG==='en'?'SCORE HEATMAP':'MAPA DE PUNTAJE')+'<br><span class="big">'+(rs.total!=null?(Math.round(rs.total)+'/100 vs 100'):'—')+'</span>') : (base+'<br><span class="big">'+nf(pts.length)+' splats</span>'); }
   function setLegend(){ const lg=$('legend'); if(!lg) return; if(!heat){ lg.style.display='none'; return; } lg.style.display='flex'; lg.innerHTML='0 <span class="scale"></span> 100 · <b>'+esc(I.rep_vs_perfect||'vs perfect (100)')+'</b>'; }
-  let ang=-0.5,tilt=0.06,auto=!reduce,dragging=false,lx=0,ly=0,spin=reduce?0:0.0045,cx=0,cy=0,scl=1,phase=0;
+  let ang=-0.5,tilt=0.06,auto=(!reduce&&!hasAnim),dragging=false,lx=0,ly=0,spin=reduce?0:0.0045,cx=0,cy=0,scl=1,phase=0;
   let activeAnchor=null,activeLabel='';
   const brass=[201,162,75],brass2=[230,197,114]; function mix(a,b,f){return [Math.round(a[0]+(b[0]-a[0])*f),Math.round(a[1]+(b[1]-a[1])*f),Math.round(a[2]+(b[2]-a[2])*f)];}
   function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')';}
@@ -427,7 +457,10 @@ function startCanvasHorse(splatLabel, region){
   function draw(){ ctx.clearRect(0,0,W,H); cx=W*0.5;cy=H*0.60;scl=Math.min(W,H)*0.155; phase+=0.05;
     ctx.save();ctx.translate(cx,cy+scl*2.1);ctx.scale(1,0.26);ctx.beginPath();ctx.arc(0,0,scl*2.0,0,7);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fill();ctx.restore();
     const ca=Math.cos(ang),sa=Math.sin(ang),ct=Math.cos(tilt),st=Math.sin(tilt),proj=[];
-    for(const p of pts){const x=p.x*ca-p.z*sa,z=p.x*sa+p.z*ca,y=p.y*ct-z*st,z2=p.y*st+z*ct,f=3.2/(3.2+z2);proj.push({sx:cx+x*scl*f,sy:cy-y*scl*f,z:z2,t:p.t,f,rgb:p.rgb});}
+    const lift = hasAnim ? {ant_izq:limbLift('ant_izq'),ant_der:limbLift('ant_der'),post_izq:limbLift('post_izq'),post_der:limbLift('post_der')} : null;
+    for(const p of pts){ let px=p.x, py=p.y;
+      if(lift&&p.limb){ const lf=lift[p.limb]; if(lf>0){ const down=Math.max(0,Math.min(1,(-p.y-0.5)/1.75)); py=p.y+lf*0.55*down; px=p.x+lf*0.42*down; } }
+      const x=px*ca-p.z*sa,z=px*sa+p.z*ca,y=py*ct-z*st,z2=py*st+z*ct,f=3.2/(3.2+z2);proj.push({sx:cx+x*scl*f,sy:cy-y*scl*f,z:z2,t:p.t,f,rgb:p.rgb});}
     proj.sort((a,b)=>b.z-a.z);
     for(const qq of proj){let depth=(qq.z+1.6)/3.2;depth=Math.max(0,Math.min(1,depth));const top=1-depth;const lit=Math.min(1,top*0.9+qq.t*0.5);
       const c = heat ? qq.rgb.map(v=>Math.min(255,Math.round(v*(0.5+lit*0.65)))) : mix(brass,brass2,lit*0.7);
@@ -454,7 +487,8 @@ function startCanvasHorse(splatLabel, region){
   else if(hb){ hb.style.display='none'; }
   $('autoBtn').onclick=function(){auto=!auto;this.textContent=auto?'❚❚':'▶';};
   $('resetBtn').onclick=function(){ang=-0.5;tilt=0.06;activeAnchor=null;auto=!reduce;$('autoBtn').textContent=auto?'❚❚':'▶';};
-  window.HORSE={ focus:function(anchor,label){ activeAnchor=anchor; activeLabel=label||''; auto=false; $('autoBtn').textContent='▶'; }, clear:function(){activeAnchor=null;} };
+  window.HORSE={ focus:function(anchor,label){ activeAnchor=anchor; activeLabel=label||''; auto=false; $('autoBtn').textContent='▶'; }, clear:function(){activeAnchor=null;},
+    setTime:function(ms){ curT=ms; }, hasAnim:hasAnim, duration:animDur };
 }
 
 // Map the gait analysis to per-body-region scores for the 3D heatmap.
@@ -472,7 +506,7 @@ function regionScoresFromGait(g){
     total: total
   };
 }
-async function renderHero(scene, region){
+async function renderHero(scene, region, anim){
   const plyUrl=scene.assets&&scene.assets.ply;
   const label=scene.is_simulated?'MODELO 3D · GENERADO':'ESCANEO 3D · GAUSSIAN SPLAT';
   if(!scene.is_simulated && plyUrl){
@@ -490,7 +524,47 @@ async function renderHero(scene, region){
       return;
     }catch(e){ if(host&&host.parentNode) host.parentNode.removeChild(host); const cv=$('scan'); if(cv) cv.style.display='block'; }
   }
-  startCanvasHorse(label, region);
+  startCanvasHorse(label, region, anim);
+}
+
+// ---------- Tier 1 (gait replay) + Tier 2 (real video) — one shared timeline ----------
+function initReplay(scene, rep){
+  const g=rep.gait||{}; const pisadas=g.pisadas||[];
+  const vidUrl=scene.assets&&scene.assets.source_video;
+  const hasAnim=pisadas.length>=2;
+  if(!hasAnim && !vidUrl) return;
+  let realDur = g.duration_ms || (pisadas.length? pisadas[pisadas.length-1].t : 0) || 0;
+  const bar=$('replaybar'); bar.style.display='flex';
+  const vid=$('srcVideo'), track=$('track');
+  let view='3d', curT=0, playing=false, last=null, firedKey=null;
+  const timed=(rep.neural_findings||[]).filter(f=>f.timestamp_ms!=null).map(f=>({ts:f.timestamp_ms, anchor:f.anchor||inferAnchor((f.title||'')+' '+(f.summary||'')), title:f.title, impact:f.impact}));
+  function fmt(ms){ ms=Math.max(0,ms||0); const s=Math.floor(ms/1000); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+  function reposition(){ track.querySelectorAll('.fmark').forEach(m=>{ if(realDur) m.style.left=(+m.dataset.ts/realDur*100)+'%'; }); }
+  function fireFindings(t){ let best=null,bd=220; for(const f of timed){ const d=Math.abs(f.ts-t); if(d<bd){bd=d;best=f;} }
+    const key=best?(best.ts+'|'+(best.anchor||'')):null;
+    if(key!==firedKey){ firedKey=key; document.querySelectorAll('.find.fire').forEach(e=>e.classList.remove('fire'));
+      if(best){ if(best.anchor&&window.HORSE&&window.HORSE.focus) window.HORSE.focus(best.anchor,best.title);
+        const card=document.querySelector('.find[data-ts="'+best.ts+'"]'); if(card) card.classList.add('fire'); } } }
+  function setT(t){ curT=Math.max(0,Math.min(realDur||t,t)); if(window.HORSE&&window.HORSE.setTime) window.HORSE.setTime(curT);
+    const pct=realDur?curT/realDur*100:0; $('ph').style.left=pct+'%'; $('played').style.width=pct+'%'; $('tlabel').textContent=fmt(curT)+' / '+fmt(realDur);
+    if(vidUrl && vid.readyState>=1 && Math.abs(vid.currentTime*1000-curT)>70){ try{vid.currentTime=curT/1000;}catch(e){} }
+    fireFindings(curT); }
+  function setPlay(p){ playing=p; $('playBtn').textContent=playing?'❚❚':'▶'; if(!playing) last=null; }
+  timed.forEach(f=>{ const m=document.createElement('div'); m.className='fmark'; m.style.background=impactMeta(f.impact)[0]; m.title=f.title; m.dataset.ts=f.ts;
+    m.addEventListener('click',e=>{ e.stopPropagation(); setPlay(false); setT(f.ts); }); track.appendChild(m); });
+  reposition();
+  if(vidUrl){ vid.src=vidUrl; const vb=$('viewBtn'); vb.style.display=''; vb.textContent=I.rep_view_video||'Video';
+    vid.addEventListener('loadedmetadata',()=>{ if(vid.duration&&isFinite(vid.duration)) realDur=Math.max(realDur, Math.round(vid.duration*1000)); reposition(); setT(curT); });
+    vb.onclick=function(){ view=(view==='3d')?'video':'3d'; const cv=$('scan');
+      if(view==='video'){ vid.style.display='block'; if(cv) cv.style.display='none'; $('heatBtn').style.display='none'; $('autoBtn').style.display='none'; $('resetBtn').style.display='none'; $('legend').style.display='none'; this.textContent=I.rep_view_3d||'3D'; }
+      else { vid.style.display='none'; if(cv) cv.style.display='block'; $('autoBtn').style.display=''; $('resetBtn').style.display=''; this.textContent=I.rep_view_video||'Video'; }
+      setT(curT); }; }
+  $('playBtn').onclick=function(){ if(realDur<=0) return; if(curT>=realDur) curT=0; setPlay(!playing); };
+  track.addEventListener('click',function(e){ const r=track.getBoundingClientRect(); const p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)); setPlay(false); setT(p*(realDur||0)); });
+  function tick(ts){ if(playing){ if(last!=null){ curT+=(ts-last); if(curT>=realDur){ curT=realDur; setPlay(false); } } last=ts; setT(curT); } requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  if(hasAnim) $('ovlHint').textContent=I.rep_replay_hint||$('ovlHint').textContent;
+  setT(0);
 }
 
 (async()=>{
@@ -501,9 +575,11 @@ async function renderHero(scene, region){
   $('repDate').textContent=fmtDate(rep.report_date||scene.created_at);
   $('ovlCap').textContent=rep.capture_seconds?('0:'+String(Math.round(rep.capture_seconds)).padStart(2,'0')):'—';
   if(rep.horse_name){ $('repEyebrow').textContent=rep.horse_name+(rep.breed?(' · '+rep.breed):'')+' · '+(I.rep_eyebrow||''); document.title='EquiMind-3D-'+String(rep.horse_name).replace(/[^\w-]/g,'_')+'-'+(scene.report_code||''); }
-  renderHero(scene, regionScoresFromGait(rep.gait));
+  const gait=rep.gait||{};
+  renderHero(scene, regionScoresFromGait(rep.gait), {pisadas:gait.pisadas||[], duration:gait.duration_ms||0});
   renderGait(rep); renderMeasurements(rep); renderFindings(rep); renderStudio(scene);
   renderHistory(scene, rep);
+  initReplay(scene, rep);
 
   const viewerLink=location.origin+B+'viewer?scene='+sceneId+(scene.share_token?('&k='+scene.share_token):'');
   const reportLink=location.origin+B+'report?scene='+sceneId+(scene.share_token?('&k='+scene.share_token):'')+'&lang='+LANG;
