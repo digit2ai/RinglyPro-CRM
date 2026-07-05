@@ -38,6 +38,7 @@ LOOP PAUSED on **BLOCKER-1** (real splat GPU credential) — the only thing betw
 ## Tests
 - `node sit.js` → **SIT 15/15** (in-memory, mock): pipeline, credit charge, auto-refund, MCP tools, auth, health.
 - Migration up/down/up verified against prod DB.
+- **LIVE prod E2E (2026-07-05):** MCP createSession → uploadFrames → process → job `done` → scene `GS-000014` (512 splats, is_simulated) with assets in **real S3** (`ringlypro-uploads/gs/…`); `.ply` downloads HTTP 200, 35 KB. Fixed a schema mismatch (gs_assets is write-once, `updatedAt:false`) found only in prod (SIT runs in-memory).
 
 ## Next step (to close DoD)
 Set `LUMA_API_KEY` (or `POSTSHOT_API_KEY`) + `GS_PROCESSING_PROVIDER=luma` on Render → finish `LumaProvider.process` (~1 screen already scaffolded) → run one real phone-video capture end-to-end. See BLOCKERS.md.
