@@ -466,6 +466,32 @@ html.lang-es .i18.es{display:inline}
   .niva .orb-svg animate,.niva .orb-svg animateTransform{display:none}
   .niva .orb-wrap:hover{transform:none}
 }
+/* ============ Mobile pass ============ */
+@media (max-width:640px){
+  /* gentler snapping so tall content slides (8/10/11) scroll naturally on touch */
+  main{scroll-snap-type:y proximity}
+  /* nav arrows share the bottom-right corner with the orb -> move them bottom-left, side by side */
+  .nav{left:12px;right:auto;bottom:14px;flex-direction:row;gap:8px}
+  .nav button{width:44px;height:44px;font-size:18px}
+  /* smaller orb; hide the under-orb caption (it clipped off-screen at the bottom) */
+  .niva{--orb-size:clamp(94px,22vw,118px);right:12px;bottom:14px}
+  .niva .orb-caption{display:none}
+  /* tighten fixed top chrome so wordmark / EN-ES toggle / counter never collide */
+  .wordmark{padding:12px 14px;letter-spacing:.12em;font-size:12px}
+  .counter{padding:12px 14px;font-size:11px}
+  .langtoggle{top:9px}
+  .langtoggle button{padding:6px 14px}
+  .slide{padding:74px 18px 90px}
+  /* full-width, comfortable form controls; 16px stops iOS from zooming on focus */
+  .triage textarea,.triage input{font-size:16px}
+  .triage-run{width:100%;justify-content:center}
+  .cw-urgency,.triage-intro,.cw-basis,.triage-note{max-width:none}
+}
+@media (max-width:400px){
+  .wordmark{font-size:11px;letter-spacing:.08em}
+  .langtoggle button{padding:5px 11px;font-size:10.5px}
+  .nav button{width:42px;height:42px}
+}
 </style>
 </head>
 <body>
