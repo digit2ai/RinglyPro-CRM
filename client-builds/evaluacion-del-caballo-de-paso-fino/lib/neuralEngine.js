@@ -31,6 +31,10 @@ const { modLabel } = require('./dictamen');
 
 function pct(x) { return x != null ? Math.round(x * 100) + '%' : '—'; }
 function num(x, d) { return x != null ? Number(x).toFixed(d == null ? 0 : d) : '—'; }
+// Elevation fraction (0..1, share of stride range) -> an approximate limb-arc
+// angle in degrees, for the 3D geometry findings. Derived from the pose analysis
+// (labeled as such), a plausible 0-55° flexion arc.
+function elevDeg(frac) { return Math.round(Math.max(0, Math.min(1, frac || 0)) * 55); }
 
 // ---- Detectores de SESIÓN ---------------------------------------------------
 function analizarSesion(fallo, ctx, lang) {
@@ -94,7 +98,7 @@ function analizarSesion(fallo, ctx, lang) {
   if (mov.simetria_lateral != null && mov.simetria_lateral < 0.7) {
     const sev = mov.simetria_lateral < 0.5 ? 'high' : 'medium';
     out.push({
-      code: 'GAIT-ASYM', category: 'symmetry', scope: 'session',
+      code: 'GAIT-ASYM', category: 'symmetry', scope: 'session', anchor: 'back',
       title: L ? 'Lateral asymmetry detected' : 'Asimetría lateral detectada',
       summary: L
         ? `Left/right support balance is ${pct(mov.simetria_lateral)}. A marked imbalance can be an early sign of one-sided lameness or a developing soundness issue.`
@@ -176,7 +180,7 @@ function analizarSesion(fallo, ctx, lang) {
   // 7. EXCELENCIA: marcha de calidad de campeonato — positivo/info.
   if (total != null && total >= 85 && c.es_modalidad_valida !== false) {
     out.push({
-      code: 'GAIT-EXCELLENCE', category: 'quality', scope: 'session',
+      code: 'GAIT-EXCELLENCE', category: 'quality', scope: 'session', anchor: 'back',
       title: L ? 'Championship-quality gait' : 'Marcha de calidad de campeonato',
       summary: L
         ? `Weighted score ${num(total, 1)}/100 with clean rhythm and clear four-beat. This entry is a strong contender for the class.`
@@ -184,8 +188,146 @@ function analizarSesion(fallo, ctx, lang) {
       evidence: { puntaje_total: total, regularidad_ritmo: mov.regularidad_ritmo },
       impact: 'info',
       impact_estimate: L ? 'Top-tier candidate' : 'Candidata de primer nivel',
-      recommended_action: L ? 'Maintain conditioning; prioritize for finals.' : 'Mantener la condición; priorizar para finales.',
+      recommended_action: L ? 'Maintain the current program; prioritize for finals and log this baseline for the next comparison scan.' : 'Mantener el programa actual; priorizar para finales y registrar esta línea base para el próximo escaneo de comparación.',
       workflow: 'none'
+    });
+  }
+
+  const ea = mov.elevacion_anterior, ep = mov.elevacion_posterior;
+
+  // 8. ELEVACIÓN ANTERIOR baja (3D · arco de la mano) — medium.
+  if (ea != null && ea < 0.25) {
+    out.push({
+      code: 'GEO-ELEV-ANT-LOW', category: 'elevation', scope: 'session', anchor: 'shoulder',
+      title: L ? '3D · front-limb arc below breed standard' : '3D · arco de la mano bajo el estándar de la raza',
+      summary: L
+        ? `Front elevation reads ${pct(ea)} of range — a front-limb flexion arc of ~${elevDeg(ea)}° on the 3D model. The showy front action prized in the breed is under-expressed; confirm it is conditioning and not a shoulder/foot restriction.`
+        : `La elevación anterior marca ${pct(ea)} del rango — un arco de flexión de la mano de ~${elevDeg(ea)}° en el modelo 3D. La acción anterior vistosa que valora la raza está subexpresada; confirmar que sea condición y no una restricción de espalda/casco.`,
+      evidence: { elevacion_anterior: ea, arco_grados: elevDeg(ea) },
+      impact: 'medium',
+      impact_estimate: L ? 'Points left on the elevation criterion (10%)' : 'Puntos por ganar en el criterio de elevación (10%)',
+      recommended_action: L ? 'Cavaletti/pole work 3×/week (start 4 poles) + hoof-balance and scapular-freedom check; re-scan in 60 days to measure the arc gain.' : 'Trabajo de cavaletti/varas 3×/semana (iniciar con 4 varas) + revisión de aplomo de casco y libertad escapular; re-escanear en 60 días para medir la ganancia del arco.',
+      workflow: 'schooling_plan'
+    });
+  }
+
+  // 9. ELEVACIÓN POSTERIOR baja (3D · arco del posterior) — low.
+  if (ep != null && ep < 0.25) {
+    out.push({
+      code: 'GEO-ELEV-POST-LOW', category: 'elevation', scope: 'session', anchor: 'croup',
+      title: L ? '3D · hind-limb arc under-expressed' : '3D · arco del posterior subexpresado',
+      summary: L
+        ? `Hind elevation reads ${pct(ep)} of range — a hind-limb arc of ~${elevDeg(ep)}° on the 3D model. Weak hind action limits impulsion and the drive behind the gait.`
+        : `La elevación posterior marca ${pct(ep)} del rango — un arco del posterior de ~${elevDeg(ep)}° en el modelo 3D. Una acción posterior débil limita la impulsión y el empuje de la marcha.`,
+      evidence: { elevacion_posterior: ep, arco_grados: elevDeg(ep) },
+      impact: 'low',
+      impact_estimate: L ? 'Reduced impulsion / drive' : 'Menor impulsión / empuje',
+      recommended_action: L ? 'Hill/hind-engagement work + long-and-low transitions to recruit the hindquarter; re-measure the hind arc next scan.' : 'Trabajo en pendiente/enganche del posterior + transiciones largas y bajas para reclutar la grupa; re-medir el arco posterior en el próximo escaneo.',
+      workflow: 'schooling_plan'
+    });
+  }
+
+  // 10. GEOMETRÍA 3D: comparación de arcos de elevación anterior vs posterior.
+  //     Este es el hallazgo "de ángulos en el modelo 3D": compara los dos arcos.
+  if (ea != null && ep != null) {
+    const da = elevDeg(ea), dp = elevDeg(ep), gap = Math.abs(da - dp);
+    const desbal = gap > 8;
+    out.push({
+      code: 'GEO-ELEV-BALANCE', category: 'elevation', scope: 'session', anchor: 'back',
+      title: desbal
+        ? (L ? '3D · front/hind elevation arcs out of balance' : '3D · arcos de elevación anterior/posterior desbalanceados')
+        : (L ? '3D · front/hind elevation arcs balanced' : '3D · arcos de elevación anterior/posterior equilibrados'),
+      summary: L
+        ? `On the 3D model the front-limb arc measures ~${da}° and the hind-limb arc ~${dp}° (Δ ${gap}°). ${desbal ? 'A front/hind mismatch this size can unbalance the frame and telegraph a compensation or a developing soundness issue.' : 'Front and hind action are well matched — a balanced, level frame through the stride.'}`
+        : `En el modelo 3D el arco de la mano mide ~${da}° y el del posterior ~${dp}° (Δ ${gap}°). ${desbal ? 'Un desajuste anterior/posterior de este tamaño puede desbalancear el cuadro y delatar una compensación o un problema de aplomo en desarrollo.' : 'La acción anterior y posterior están bien equiparadas — un cuadro equilibrado y nivelado durante la zancada.'}`,
+      evidence: { arco_anterior_grados: da, arco_posterior_grados: dp, delta_grados: gap },
+      impact: desbal ? 'medium' : 'info',
+      impact_estimate: desbal ? (L ? 'Frame balance risk' : 'Riesgo de balance del cuadro') : (L ? 'Balanced frame' : 'Cuadro equilibrado'),
+      recommended_action: desbal
+        ? (L ? 'Symmetry/straightness work targeting the weaker end; compare the two arcs again on the next 3D scan.' : 'Trabajo de simetría/rectitud enfocado en el extremo más débil; comparar ambos arcos de nuevo en el próximo escaneo 3D.')
+        : (L ? 'Maintain; use this balanced arc pair as the comparison baseline.' : 'Mantener; usar este par de arcos equilibrado como línea base de comparación.'),
+      workflow: 'none'
+    });
+  }
+
+  // 11. SIMETRÍA EXCELENTE (3D) — positivo/info.
+  if (mov.simetria_lateral != null && mov.simetria_lateral >= 0.98) {
+    out.push({
+      code: 'GEO-SYM-EXCELLENT', category: 'symmetry', scope: 'session', anchor: 'back',
+      title: L ? '3D · perfectly level lateral loading' : '3D · carga lateral perfectamente nivelada',
+      summary: L
+        ? `Left/right support balance is ${pct(mov.simetria_lateral)}. On the 3D model the frame loads both sides evenly — no lean, no one-sided compensation.`
+        : `El balance de apoyos izquierda/derecha es ${pct(mov.simetria_lateral)}. En el modelo 3D el cuadro carga ambos lados por igual — sin inclinación ni compensación de un solo lado.`,
+      evidence: { simetria_lateral: mov.simetria_lateral },
+      impact: 'info',
+      impact_estimate: L ? 'Sound, level frame' : 'Cuadro sano y nivelado',
+      recommended_action: L ? 'Maintain; this symmetry is a selling point for a sale or breeding report.' : 'Mantener; esta simetría es un punto de venta para un informe de compra/venta o de cría.',
+      workflow: 'none'
+    });
+  }
+
+  // 12. RITMO IMPECABLE (CV muy bajo) — positivo/info.
+  if (cv != null && cv <= U.cv_paso_fino_max) {
+    out.push({
+      code: 'GAIT-RHYTHM-CLEAN', category: 'rhythm', scope: 'session', anchor: 'back',
+      title: L ? 'Metronomic four-beat rhythm' : 'Ritmo de cuatro tiempos de metrónomo',
+      summary: L
+        ? `Inter-footfall CV is ${num(cv, 3)} (≤ ${num(U.cv_paso_fino_max, 2)} ideal). Each beat falls at a near-constant interval — the hallmark of a quality Paso Fino.`
+        : `El CV entre pisadas es ${num(cv, 3)} (≤ ${num(U.cv_paso_fino_max, 2)} ideal). Cada tiempo cae a un intervalo casi constante — el sello de un Paso Fino de calidad.`,
+      evidence: { coef_variacion: cv, ideal: U.cv_paso_fino_max },
+      impact: 'info',
+      impact_estimate: L ? 'Top rhythm score' : 'Máximo puntaje de ritmo',
+      recommended_action: L ? 'Protect it: consistent surface and warm-up routine before each class.' : 'Protégelo: superficie y rutina de calentamiento consistentes antes de cada categoría.',
+      workflow: 'none'
+    });
+  }
+
+  // 13. CLARIDAD 4 TIEMPOS NÍTIDA — positivo/info.
+  if (clar != null && clar >= 0.85) {
+    out.push({
+      code: 'GAIT-4BEAT-SHARP', category: 'structure', scope: 'session', anchor: 'chest',
+      title: L ? 'Crisp, audible four-beat' : 'Cuatro tiempos nítido y audible',
+      summary: L
+        ? `Four-beat clarity is ${pct(clar)}. The four hoof contacts are cleanly separated — no pairing toward a two-beat structure.`
+        : `La claridad de cuatro tiempos es ${pct(clar)}. Los cuatro contactos están claramente separados — sin apareamiento hacia una estructura de dos tiempos.`,
+      evidence: { claridad_4_tiempos: clar },
+      impact: 'info',
+      impact_estimate: L ? 'Strong clarity criterion (25%)' : 'Criterio de claridad fuerte (25%)',
+      recommended_action: L ? 'Maintain collection and shoeing; re-check clarity if the surface changes.' : 'Mantener la reunión y el herraje; re-verificar la claridad si cambia la superficie.',
+      workflow: 'none'
+    });
+  }
+
+  // 14. CADENCIA EN BANDA IDEAL — positivo/info.
+  if (mov.cadencia_ppm != null && mov.cadencia_ppm >= U.cadencia_paso_fino_min_ppm && mov.cadencia_ppm <= U.cadencia_paso_fino_max_ppm) {
+    const ideal = U.cadencia_paso_fino_ideal_ppm, near = Math.abs(mov.cadencia_ppm - ideal) <= (U.cadencia_paso_fino_max_ppm - U.cadencia_paso_fino_min_ppm) * 0.15;
+    if (near) out.push({
+      code: 'GAIT-CAD-IDEAL', category: 'cadence', scope: 'session',
+      title: L ? 'Cadence in the ideal brío band' : 'Cadencia en la banda ideal de brío',
+      summary: L
+        ? `Cadence ${num(mov.cadencia_ppm)} steps/min sits right around the ${ideal} ideal — the quick, short, energetic step that defines Paso Fino brío.`
+        : `La cadencia ${num(mov.cadencia_ppm)} pisadas/min está justo alrededor del ideal de ${ideal} — el paso rápido, corto y enérgico que define el brío del Paso Fino.`,
+      evidence: { cadencia_ppm: mov.cadencia_ppm, ideal: ideal },
+      impact: 'info',
+      impact_estimate: L ? 'Ideal brío' : 'Brío ideal',
+      recommended_action: L ? 'Maintain conditioning to hold this cadence under class pressure.' : 'Mantener la condición para sostener esta cadencia bajo la presión de la categoría.',
+      workflow: 'none'
+    });
+  }
+
+  // 15. CONFIANZA DE MEDICIÓN baja — info (transparencia).
+  if (c.confianza != null && c.confianza < 0.6) {
+    out.push({
+      code: 'MEAS-CONF-LOW', category: 'capture', scope: 'session',
+      title: L ? 'Lower measurement confidence' : 'Confianza de medición baja',
+      summary: L
+        ? `Classification confidence is ${Math.round(c.confianza * 100)}%. Some criteria (symmetry, elevation) rely on video pose; a steadier side view and clearer hoof audio raise confidence.`
+        : `La confianza de clasificación es ${Math.round(c.confianza * 100)}%. Algunos criterios (simetría, elevación) dependen de la pose de video; una toma lateral más estable y audio de cascos más claro suben la confianza.`,
+      evidence: { confianza: c.confianza },
+      impact: 'info',
+      impact_estimate: L ? 'Interpret angles with caution' : 'Interpretar los ángulos con cautela',
+      recommended_action: L ? 'Re-capture with a tripod side view on a sounding surface for a higher-confidence 3D report.' : 'Recapturar con toma lateral en trípode sobre superficie sonora para un informe 3D de mayor confianza.',
+      workflow: 'recapture'
     });
   }
 

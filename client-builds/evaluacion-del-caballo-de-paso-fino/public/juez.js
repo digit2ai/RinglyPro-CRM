@@ -466,7 +466,7 @@
     // report (severity, code, action, estimate). NOT flattened into the editable
     // form; the form's Hallazgos stays for MANUAL additions.
     var neural = (f.neural_findings || []).map(function (fd) {
-      return { impact: fd.impact || 'info', code: fd.code || null, title: fd.title || '', summary: fd.summary || '', action: fd.recommended_action || null, estimate: fd.impact_estimate || null };
+      return { impact: fd.impact || 'info', code: fd.code || null, title: fd.title || '', summary: fd.summary || '', action: fd.recommended_action || null, estimate: fd.impact_estimate || null, anchor: fd.anchor || null };
     });
     var findings = [];
     var clar = (son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;

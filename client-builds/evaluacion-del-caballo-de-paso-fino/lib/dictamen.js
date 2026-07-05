@@ -176,6 +176,9 @@ function generar(fallo, lang) {
         ? `Forelimb elevation reads ${pct(ea)} and hindlimb ${pct(ep)} of frame-normalized range. Elevation contributes to the showy, lofty action valued in the breed, but must not come at the expense of rhythm. ${(ea != null && ep != null && Math.abs(ea - ep) > 0.25) ? 'A notable front/hind elevation gap was observed.' : 'Front and hind action are reasonably matched.'}`
         : `La elevación anterior es ${pct(ea)} y la posterior ${pct(ep)} del rango normalizado al cuadro. La elevación aporta la acción vistosa y alta valorada en la raza, pero no debe lograrse a costa del ritmo. ${(ea != null && ep != null && Math.abs(ea - ep) > 0.25) ? 'Se observó una brecha notable de elevación entre tren anterior y posterior.' : 'La acción anterior y posterior están razonablemente equiparadas.'}`
     });
+    if (ea != null && ea < 0.25) recomendaciones.push(L ? 'Cavaletti/pole work 3×/week to build the front-limb arc; recheck hoof balance and scapular freedom.' : 'Trabajo de cavaletti/varas 3×/semana para construir el arco de la mano; revisar aplomo de casco y libertad escapular.');
+    if (ep != null && ep < 0.25) recomendaciones.push(L ? 'Hill and hind-engagement work to raise the hind arc and impulsion.' : 'Trabajo en pendiente y de enganche del posterior para subir el arco posterior y la impulsión.');
+    if (ea != null && ep != null && Math.abs(ea - ep) > 0.15) recomendaciones.push(L ? 'Balance front vs. hind action with symmetry/straightness work; compare both elevation arcs on the next 3D scan.' : 'Equilibrar la acción anterior vs. posterior con trabajo de simetría/rectitud; comparar ambos arcos de elevación en el próximo escaneo 3D.');
   }
 
   // ---- Desglose de puntuación ----
@@ -206,6 +209,8 @@ function generar(fallo, lang) {
   if (!recomendaciones.length) {
     recomendaciones.push(L ? 'Maintain current conditioning and schooling; the gait meets class standard.' : 'Mantener la condición y el adiestramiento actuales; la marcha cumple el estándar de la categoría.');
   }
+  // Always close with a comparison-scan prompt so the report drives repeat value.
+  recomendaciones.push(L ? 'Re-scan in 60 days and use this report as the baseline to measure progress side by side.' : 'Re-escanear en 60 días y usar este informe como línea base para medir el progreso lado a lado.');
 
   const titulo = L ? 'JUDGE\'S RULING — Paso Fino Gait Evaluation' : 'DICTAMEN DEL JUEZ — Evaluación de Marcha de Paso Fino';
   const firma = L
