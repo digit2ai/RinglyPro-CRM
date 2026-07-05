@@ -12,6 +12,10 @@ const CFG = {
   credits_per_gb_month: numEnv('GS_CREDITS_PER_GB_MONTH', 1),
   // Minimum charge per job (covers fixed provider overhead).
   min_credits_per_job: numEnv('GS_MIN_CREDITS', 2),
+  // Flat price of a generated 3D report (procedural/mock path — no GPU). The
+  // business model: 1 credit runs the analysis (standard report), 2 credits
+  // generate the sophisticated 3D report. Real Luma scans use duration pricing.
+  report_credits: numEnv('GS_REPORT_CREDITS', 2),
   // Premium tier gate: sharing a Course Walk link requires premium (or per-share credits).
   share_requires_premium: process.env.GS_SHARE_REQUIRES_PREMIUM === '1',
   // Quota guards.

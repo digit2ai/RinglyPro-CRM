@@ -21,22 +21,24 @@
       horse: 'Nombre del caballo', breed: 'Raza', height: 'Alzada a la cruz (cm)', length: 'Largo del cuerpo (cm)', capsec: 'Duración de la captura (s)',
       measures: 'Medidas / métricas', add_measure: '+ Agregar medida', findings: 'Hallazgos', add_finding: '+ Agregar hallazgo',
       c_label: 'Medida', c_value: 'Valor', c_cm: 'cm', c_min: 'mín', c_max: 'máx', c_status: 'Estado', c_title: 'Título', c_detail: 'Detalle',
-      media: 'Video/fotos (opcional — para el escaneo real Luma más adelante)', gen: 'Generar informe 3D', gening: 'Generando informe…',
+      media: 'Video/fotos (opcional — para el escaneo real Luma más adelante)', gen: 'Generar informe 3D · 2 créditos', gening: 'Generando informe…',
       done: 'Informe listo.', open: 'Abrir informe ↗', copy: 'Copiar enlace', copied: 'Copiado ✓', need: 'Ingresa al menos el nombre del caballo o una medida.',
-      st_ok: 'En estándar', st_watch: 'Vigilar', st_info: 'Referencia', nocred: 'Sin créditos suficientes', login: 'Inicia sesión en EquiMind'
+      st_ok: 'En estándar', st_watch: 'Vigilar', st_info: 'Referencia', nocred: 'Sin créditos suficientes', login: 'Inicia sesión en EquiMind',
+      cost_note: 'El informe 3D profesional deduce 2 créditos: modelo 3D navegable, panel de marcha, hallazgos mapeados, historial y PDF compartible con veterinarios, jueces y federaciones.'
     },
     en: {
       title: '3D Gaussian Splatting Report', sub: 'Generate a shareable 3D report from this analysis. No GPU — zero cost.',
       horse: 'Horse name', breed: 'Breed', height: 'Withers height (cm)', length: 'Body length (cm)', capsec: 'Capture length (s)',
       measures: 'Measurements / metrics', add_measure: '+ Add measurement', findings: 'Findings', add_finding: '+ Add finding',
       c_label: 'Measure', c_value: 'Value', c_cm: 'cm', c_min: 'min', c_max: 'max', c_status: 'Status', c_title: 'Title', c_detail: 'Detail',
-      media: 'Video/photos (optional — for the real Luma scan later)', gen: 'Generate 3D report', gening: 'Generating report…',
+      media: 'Video/photos (optional — for the real Luma scan later)', gen: 'Generate 3D report · 2 credits', gening: 'Generating report…',
       done: 'Report ready.', open: 'Open report ↗', copy: 'Copy link', copied: 'Copied ✓', need: 'Enter at least a horse name or one measurement.',
-      st_ok: 'In standard', st_watch: 'Watch', st_info: 'Reference', nocred: 'Out of credits', login: 'Log in to EquiMind'
+      st_ok: 'In standard', st_watch: 'Watch', st_info: 'Reference', nocred: 'Out of credits', login: 'Log in to EquiMind',
+      cost_note: 'The professional 3D report deducts 2 credits: navigable 3D model, gait dashboard, mapped findings, history and a shareable PDF for vets, judges and federations.'
     }
   })[LANG];
 
-  var ctx = { horseName: '', measurements: [], findings: [], captureSeconds: null };
+  var ctx = { horseName: '', measurements: [], findings: [], gait: null, captureSeconds: null };
   var mounted = [];
 
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]); }); }
@@ -59,6 +61,7 @@
         '<label class="block text-[11px] text-slate-400 mb-1 mt-5">' + esc(T.media) + '</label>' +
         '<input type="file" class="gsr-file w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white" accept="video/mp4,video/quicktime,image/*" multiple>' +
         '<button class="gsr-gen mt-5 w-full rounded-lg px-4 py-3 font-semibold" style="background:linear-gradient(180deg,#E6C572,#C9A24B);color:#241a08">' + esc(T.gen) + '</button>' +
+        '<p class="text-[11px] mt-2" style="color:#7C6F5E;line-height:1.4">' + esc(T.cost_note) + '</p>' +
         '<div class="gsr-status text-xs mono mt-3" style="color:#98A199"></div>' +
         '<div class="gsr-result hidden mt-3 flex items-center gap-3 flex-wrap"></div>' +
       '</div>';
@@ -111,7 +114,8 @@
     return {
       horse_name: g('gsr-horse').value.trim() || null, breed: g('gsr-breed').value.trim() || null,
       height_cm: num(g('gsr-height').value), length_cm: num(g('gsr-length').value), capture_seconds: num(g('gsr-capsec').value),
-      measurements: measurements, findings: findings
+      measurements: measurements, findings: findings,
+      gait: ctx.gait || null, report_date: new Date().toISOString().slice(0, 10)
     };
   }
 
@@ -173,6 +177,7 @@
     c = c || {};
     if (c.horseName != null) ctx.horseName = c.horseName;
     if (c.captureSeconds != null) ctx.captureSeconds = c.captureSeconds;
+    if (c.gait !== undefined) ctx.gait = c.gait;
     if (Array.isArray(c.measurements)) ctx.measurements = c.measurements;
     if (Array.isArray(c.findings)) ctx.findings = c.findings;
     mounted.forEach(applyContext);

@@ -52,11 +52,47 @@ function sanitizeReport(report) {
   })) : [];
   const out = {
     horse_name: str(report.horse_name, 80), breed: str(report.breed, 80),
+    owner: str(report.owner, 120), report_date: str(report.report_date, 40),
     capture_seconds: num(report.capture_seconds), height_cm: num(report.height_cm), length_cm: num(report.length_cm),
-    measurements: meas, findings: find
+    measurements: meas, findings: find,
+    gait: sanitizeGait(report.gait), conformation: sanitizeConformation(report.conformation)
   };
-  const has = out.horse_name || out.breed || meas.length || find.length || out.height_cm || out.length_cm;
+  const has = out.horse_name || out.breed || meas.length || find.length || out.height_cm || out.length_cm || out.gait || out.conformation;
   return has ? out : null;
+}
+
+// The real gait analysis (from the juez engine) — the crown-jewel data the report
+// leans on for credibility. Whitelisted + capped; free-text bounded.
+function sanitizeGait(g) {
+  if (!g || typeof g !== 'object') return null;
+  const str = (v, n) => (v == null ? null : String(v).slice(0, n));
+  const num = (v) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  const scores = Array.isArray(g.scores) ? g.scores.slice(0, 12).map((s) => ({ label: str(s.label, 60), pct: num(s.pct), weight: num(s.weight) })) : [];
+  const sec = Array.isArray(g.sections) ? g.sections.slice(0, 12).map((s) => ({ titulo: str(s.titulo, 120), cuerpo: str(s.cuerpo, 700), nivel: ['ok', 'watch', 'info'].includes(s.nivel) ? s.nivel : 'info' })) : [];
+  const reco = Array.isArray(g.recomendaciones) ? g.recomendaciones.slice(0, 12).map((r) => str(r, 300)) : [];
+  const out = {
+    modalidad: str(g.modalidad, 60), puntaje_total: num(g.puntaje_total), confianza: num(g.confianza), tiempos: str(g.tiempos, 20),
+    cadencia_ppm: num(g.cadencia_ppm), cadencia_band: Array.isArray(g.cadencia_band) ? g.cadencia_band.slice(0, 2).map(num) : null,
+    cv_intervalos: num(g.cv_intervalos), simetria_pct: num(g.simetria_pct), elevacion_ant: num(g.elevacion_ant), elevacion_post: num(g.elevacion_post),
+    claridad_pct: num(g.claridad_pct), pisadas_count: num(g.pisadas_count), simulado: !!g.simulado,
+    resumen: str(g.resumen, 700), veredicto: str(g.veredicto, 400), firma: str(g.firma, 300),
+    scores: scores, sections: sec, recomendaciones: reco
+  };
+  return (out.modalidad || scores.length || out.puntaje_total != null) ? out : null;
+}
+
+// Conformation geometry (angles/measures). Every field carries a source so the
+// report can label measured vs estimated vs entered — essential for federations.
+function sanitizeConformation(c) {
+  if (!c || typeof c !== 'object') return null;
+  const num = (v) => { const x = parseFloat(v); return Number.isFinite(x) ? x : null; };
+  const str = (v, n) => (v == null ? null : String(v).slice(0, n));
+  const items = Array.isArray(c.items) ? c.items.slice(0, 16).map((i) => ({
+    key: str(i.key, 40), label: str(i.label, 80), value: num(i.value), unit: str(i.unit, 12),
+    ideal_lo: num(i.ideal_lo), ideal_hi: num(i.ideal_hi), anchor: str(i.anchor, 24),
+    source: ['measured', 'estimated', 'entered'].includes(i.source) ? i.source : 'entered'
+  })) : [];
+  return items.length ? { items: items } : null;
 }
 
 async function getSession(tenantId, id) {
@@ -95,8 +131,13 @@ async function dispatchJob(tenantId, sessionId, { runInline = false } = {}) {
   if (active.length + queued.length >= pricing.CFG.max_concurrent_jobs_per_tenant) {
     return { error: 'max concurrent jobs reached (' + pricing.CFG.max_concurrent_jobs_per_tenant + ')', code: 429 };
   }
-  const cost = pricing.jobCredits({ source_seconds: s.source_seconds, storage_bytes: s.source_bytes });
-  const charge = await credits.charge(tenantId, cost, { label: s.kind });
+  // Flat 2-credit report fee for the procedural/mock path (no GPU); real Luma
+  // scans keep duration-based pricing.
+  const providerName = provider.name();
+  const cost = (providerName === 'luma')
+    ? pricing.jobCredits({ source_seconds: s.source_seconds, storage_bytes: s.source_bytes })
+    : pricing.CFG.report_credits;
+  const charge = await credits.charge(tenantId, cost, { label: '3D report (' + s.kind + ')' });
   if (!charge.ok) return { error: 'Sin créditos suficientes (necesita ' + cost + ').', code: 402, credits: charge.balance, needed: cost };
   const job = await store.repo.create('jobs', {
     tenant_id: tenantId, session_id: s.id, provider: provider.name(), status: 'queued',
@@ -148,11 +189,17 @@ async function scenePublic(sceneId, token, base) {
 
 async function sceneList(tenantId) {
   const rows = await store.repo.findAll('scenes', { tenant_id: tenantId }, ['id', 'DESC']);
-  return rows.map((s) => ({
-    id: s.id, report_code: 'GS-' + String(s.id).padStart(6, '0'), kind: s.kind, title: s.title, status: s.status,
-    splat_count: Number(s.splat_count), storage_bytes: Number(s.storage_bytes), is_simulated: !!s.is_simulated,
-    share_token: s.share_token, created_at: s.created_at
-  }));
+  const out = [];
+  for (const s of rows) {
+    let horse_name = null, puntaje = null;
+    try { const ses = await store.repo.find('sessions', { id: s.session_id }); const rep = ses && ses.meta && ses.meta.report; if (rep) { horse_name = rep.horse_name || null; puntaje = (rep.gait && rep.gait.puntaje_total != null) ? rep.gait.puntaje_total : null; } } catch (e) {}
+    out.push({
+      id: s.id, report_code: 'GS-' + String(s.id).padStart(6, '0'), kind: s.kind, title: s.title, status: s.status,
+      splat_count: Number(s.splat_count), storage_bytes: Number(s.storage_bytes), is_simulated: !!s.is_simulated,
+      share_token: s.share_token, created_at: s.created_at, horse_name: horse_name, puntaje_total: puntaje
+    });
+  }
+  return out;
 }
 
 async function sceneDelete(tenantId, sceneId) {

@@ -448,13 +448,16 @@
     });
   }
 
-  // Build the 3D-report context from a gait analysis: horse name, the weighted
+  // Build the 3D-report context from a gait analysis: horse name, the FULL gait
+  // dashboard payload (scores/cadence/symmetry/elevation/dictamen), the weighted
   // scores as measurement bars, and neural findings as report findings.
+  function pct100(v) { return v == null ? null : (v <= 1 ? Math.round(v * 100) : Math.round(v)); }
   function buildGsContext(f) {
     var horseName = '';
     var hsel = $('horseSel');
     if (hsel && hsel.value && hsel.selectedOptions && hsel.selectedOptions[0]) horseName = hsel.selectedOptions[0].textContent.split(' · ')[0].trim();
     if (!horseName) horseName = f.caballo_nombre || f.caballo || '';
+    var clas = f.clasificacion || {}, mov = f.metricas_movimiento || {}, son = f.metricas_sonido || {}, dic = f.dictamen || {};
     var measurements = (f.puntuaciones || []).map(function (p) {
       var sc = Math.max(0, Math.min(100, p.puntaje_normalizado || 0));
       return { key: String(p.nombre || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40), label: p.nombre, value: sc.toFixed(0) + '/100', cm: sc, lo: 0, hi: 100, ideal_lo: 70, ideal_hi: 100, at: sc, status: sc >= 70 ? 'ok' : (sc >= 45 ? 'info' : 'watch') };
@@ -464,10 +467,23 @@
       var detail = fd.summary || ''; if (fd.recommended_action) detail += (detail ? ' — ' : '') + fd.recommended_action;
       return { kind: kind, title: fd.title || fd.code || '', detail: detail };
     });
-    if (!findings.length && f.dictamen && f.dictamen.resumen) {
-      findings.push({ kind: 'info', title: modLabel((f.clasificacion || {}).modalidad_detectada) + (f.puntaje_total != null ? (' · ' + f.puntaje_total.toFixed(1) + '/100') : ''), detail: f.dictamen.resumen });
+    if (!findings.length && dic.resumen) {
+      findings.push({ kind: 'info', title: modLabel(clas.modalidad_detectada) + (f.puntaje_total != null ? (' · ' + f.puntaje_total.toFixed(1) + '/100') : ''), detail: dic.resumen });
     }
-    return { horseName: horseName, measurements: measurements, findings: findings, captureSeconds: f.duracion_seg || f.video_seconds || null };
+    var clar = (son.claridad_4_tiempos != null) ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
+    var band = f.cadencia_band || null;
+    var gait = {
+      modalidad: modLabel(clas.modalidad_detectada), puntaje_total: f.puntaje_total, confianza: pct100(clas.confianza), tiempos: clas.tiempos,
+      cadencia_ppm: mov.cadencia_ppm, cadencia_band: band ? [band.min, band.max] : null,
+      simetria_pct: pct100(mov.simetria_lateral), claridad_pct: pct100(clar),
+      elevacion_ant: pct100(mov.elevacion_anterior), elevacion_post: pct100(mov.elevacion_posterior),
+      cv_intervalos: mov.cv_intervalos != null ? mov.cv_intervalos : mov.coef_variacion, pisadas_count: (f.pisadas || []).length, simulado: !!f.simulado,
+      resumen: dic.resumen, veredicto: dic.veredicto, firma: dic.firma,
+      scores: (f.puntuaciones || []).map(function (p) { return { label: p.nombre, pct: p.puntaje_normalizado, weight: p.peso_porcentaje }; }),
+      sections: (dic.secciones || []).map(function (s) { return { titulo: s.titulo, cuerpo: s.cuerpo, nivel: s.nivel }; }),
+      recomendaciones: dic.recomendaciones || []
+    };
+    return { horseName: horseName, measurements: measurements, findings: findings, gait: gait, captureSeconds: f.duracion_seg || f.video_seconds || null };
   }
 
   // Match a dictamen section to its numeric score: by criterion name first, then
