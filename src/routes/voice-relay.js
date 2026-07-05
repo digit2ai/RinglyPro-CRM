@@ -16,7 +16,8 @@ const express = require('express');
 const router = express.Router();
 
 const WELCOME_EN = 'Hi, thanks for calling. I can book an appointment for you. What would you like to schedule?';
-const POLLY_VOICE = process.env.VOICE_RELAY_POLLY_VOICE || 'Joanna-Neural';
+// ConversationRelay Amazon voice = VoiceId-Engine, no provider prefix (Twilio's own example is Joanna-Generative).
+const POLLY_VOICE = process.env.VOICE_RELAY_POLLY_VOICE || 'Joanna-Generative';
 
 // Resolve the public wss:// host for ConversationRelay to call back into.
 function wssHost(req) {
