@@ -25,7 +25,12 @@ async function processJob(job) {
   await repo.update('sessions', { id: job.session_id }, { status: 'processing' });
   const session = await repo.find('sessions', { id: job.session_id });
   try {
-    const out = await provider.process({ session });
+    // Load the uploaded source bytes (video/photos) so a real provider (Luma) can
+    // process them. The mock ignores these. Keys are stamped on session.meta at upload.
+    const keys = (session && session.meta && Array.isArray(session.meta.source_keys)) ? session.meta.source_keys : [];
+    let sourceBuffers = [];
+    if (keys.length) { try { sourceBuffers = await Promise.all(keys.map((k) => storage.getBuffer(k))); } catch (e) { sourceBuffers = []; } }
+    const out = await provider.process({ session, sourceBuffers });
     // Persist assets (ply canonical, spz stream, thumbnail).
     const base = 'gs/' + job.tenant_id + '/' + session.id + '/';
     const ply = await storage.put(base + 'scene.ply', out.plyBuffer, 'application/octet-stream');

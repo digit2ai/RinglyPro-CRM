@@ -75,6 +75,15 @@ function reqJson(server, method, path, { token, body } = {}) {
   const balAfterFail = await account.getBalance(tenantId);
   check('failed job (no provider key) -> job failed', disp2 && disp2.job && disp2.job.status === 'failed', `status=${disp2 && disp2.job && disp2.job.status}`);
   check('failed job AUTO-REFUNDS credits', balBeforeFail === balAfterFail, `before=${balBeforeFail} after=${balAfterFail}`);
+
+  // Luma provider wired: with a key but no uploaded source, it fails at the
+  // NO_SOURCE guard BEFORE any network call (proves source is threaded to the provider).
+  process.env.LUMA_API_KEY = 'sit-fake-key';
+  const prov = require('./lib/provider');
+  let lumaErr = null;
+  try { await prov.process({ session: { id: 1, kind: 'course_walk' }, sourceBuffers: [] }); } catch (e) { lumaErr = e; }
+  check('LumaProvider selected + guards missing source (no network)', prov.name() === 'luma' && lumaErr && lumaErr.code === 'NO_SOURCE', `provider=${prov.name()} code=${lumaErr && lumaErr.code}`);
+  delete process.env.LUMA_API_KEY;
   process.env.GS_PROCESSING_PROVIDER = '';
 
   // ---- MCP tool layer (schema-valid JSON, multi-tenant auth) ----

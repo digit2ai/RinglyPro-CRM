@@ -30,13 +30,16 @@ router.post('/sessions/:id/upload', requireAccount, upload.any(), async (req, re
     // Persist raw source to storage (source role) for reprocessing/audit.
     const s = await svc.getSession(req.tenantId, req.params.id);
     if (!s) return err(res, 404, 'session not found');
-    let stored = 0;
+    let stored = 0; const source_keys = [];
     for (let i = 0; i < buffers.length; i++) {
       const key = 'gs/' + req.tenantId + '/' + s.id + '/source/' + i + '_' + (req.files[i].originalname || 'frame').replace(/[^a-zA-Z0-9._-]/g, '');
       const put = await storage.put(key, buffers[i], req.files[i].mimetype || 'application/octet-stream');
       await store.repo.create('assets', { tenant_id: req.tenantId, scene_id: 0, role: 'source', storage: put.storage, bucket: put.bucket, object_key: put.object_key, content_type: req.files[i].mimetype, bytes: put.bytes });
-      stored += put.bytes;
+      source_keys.push(put.object_key); stored += put.bytes;
     }
+    // Stamp source keys on the session so the worker can hand the real bytes to a
+    // provider (Luma) at process time.
+    await store.repo.update('sessions', { id: s.id }, { meta: Object.assign({}, s.meta || {}, { source_keys }) });
     const source_seconds = parseFloat((req.body || {}).source_seconds) || 0;
     const upd = await svc.attachSource(req.tenantId, s.id, { frame_count: buffers.length, source_bytes: stored, source_seconds, buffers });
     if (upd.error) return err(res, upd.code || 400, upd.error);
