@@ -458,10 +458,10 @@
     if (hsel && hsel.value && hsel.selectedOptions && hsel.selectedOptions[0]) horseName = hsel.selectedOptions[0].textContent.split(' · ')[0].trim();
     if (!horseName) horseName = f.caballo_nombre || f.caballo || '';
     var clas = f.clasificacion || {}, mov = f.metricas_movimiento || {}, son = f.metricas_sonido || {}, dic = f.dictamen || {};
-    var measurements = (f.puntuaciones || []).map(function (p) {
-      var sc = Math.max(0, Math.min(100, p.puntaje_normalizado || 0));
-      return { key: String(p.nombre || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40), label: p.nombre, value: sc.toFixed(0) + '/100', cm: sc, lo: 0, hi: 100, ideal_lo: 70, ideal_hi: 100, at: sc, status: sc >= 70 ? 'ok' : (sc >= 45 ? 'info' : 'watch') };
-    });
+    // Gait scores live in the gait dashboard, NOT the measurements/conformation
+    // section. Leave the form's "Medidas / métricas" empty for real conformation
+    // entry (height / length / angles), so owner-entered geometry is never dropped.
+    var measurements = [];
     // Rich Neural findings from the analysis — rendered professionally in the
     // report (severity, code, action, estimate). NOT flattened into the editable
     // form; the form's Hallazgos stays for MANUAL additions.
