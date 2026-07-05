@@ -258,6 +258,13 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .tg-block ul li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:2px;background:var(--accent)}
 .tg-tech{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
 .tg-cell .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;font-weight:600}
+.triage-note{color:var(--dim);font-size:clamp(12px,.8vw + 6px,13.5px);margin-top:10px;line-height:1.55;max-width:70ch}
+.triage-note b{color:var(--mut)}
+.triage-sent:empty{margin:0}
+.triage-sent{margin-top:14px}
+.tg-ok{display:flex;gap:10px;align-items:flex-start;padding:13px 16px;border-radius:12px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.10);color:#bbf7d0;font-size:clamp(13px,.9vw + 7px,15px);line-height:1.5}
+.tg-ok b{color:#4ade80}
+.tg-ok a{color:#67e8f9;word-break:break-all}
 @media (max-width:640px){.triage-grid,.tg-tech{grid-template-columns:1fr}}
 .footer{margin-top:clamp(30px,5vh,54px);padding-top:clamp(18px,2.6vh,26px);border-top:1px solid var(--line);color:var(--dim);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.7}
 .footer .co{font-family:var(--font-display);color:var(--txt);font-weight:600;letter-spacing:.04em}
@@ -706,10 +713,12 @@ html.lang-es .i18.es{display:inline}
           <input id="tg-country" type="text" autocomplete="off">
         </div>
         <div class="triage-actions">
-          <button type="button" class="triage-run" id="tg-run"><span class="i18 en">Run AI Triage</span><span class="i18 es">Ejecutar Triage de IA</span></button>
+          <button type="button" class="triage-run" id="tg-run"><span class="i18 en">Run AI Triage &amp; send to our team</span><span class="i18 es">Ejecutar Triage y enviar a nuestro equipo</span></button>
           <span class="triage-status" id="tg-status" aria-live="polite"></span>
         </div>
+        <p class="triage-note"><span class="i18 en">Running triage <b>saves your request and sends it to the Digit2AI intake team</b> &mdash; a real human follows up within 48 hours. Email is required so we can reach you.</span><span class="i18 es">Al ejecutar el triage <b>se guarda tu solicitud y se env&iacute;a al equipo de intake de Digit2AI</b> &mdash; una persona real te contacta en menos de 48 horas. El correo es obligatorio para poder responderte.</span></p>
         <div class="triage-error" id="tg-error" role="alert"></div>
+        <div class="triage-sent" id="tg-sent" aria-live="polite"></div>
         <div class="triage-result" id="tg-result"></div>
       </div>
       <div class="footer reveal">
@@ -1234,7 +1243,7 @@ html.lang-es .i18.es{display:inline}
         tech:'Technical solution',agents:'Agents involved',build:'What we build',data:'Data via MCP',window:'Delivery window',
         week1:'Week 1 deliverables',flags:'What we verify first',
         ph_desc:"Example: We run a chamber of commerce with 1,200 member businesses. Members can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days…",
-        ph_name:'Your name (optional)',ph_email:'Email (optional)',ph_company:'Company (optional)',ph_country:'Country (optional)'},
+        ph_name:'Your name (optional)',ph_email:'Email (required — we send you the report)',ph_company:'Company (optional)',ph_country:'Country (optional)',need_email:'Add your email so we can send this to our team and follow up.',sending:'Saving & sending to our team…',sent_h:'Saved & sent to the Digit2AI intake team.',sent_p:'A real human reviews it and follows up within 48 hours.',send_retry:'Saved — a network issue stopped the send. It will retry the next time you run triage.'},
     es:{running:'Leyendo el problema…',min:'Describe el problema con al menos 30 caracteres.',
         fail:'El triage no pudo completarse. Intenta de nuevo.',net:'Error de red: ',fit:'de ajuste',
         go:'Buen ajuste — ADELANTE',poc:'Primero una prueba de concepto',stop:'Aún no encaja',
@@ -1242,7 +1251,7 @@ html.lang-es .i18.es{display:inline}
         tech:'Solución técnica',agents:'Agentes involucrados',build:'Qué construimos',data:'Datos vía MCP',window:'Ventana de entrega',
         week1:'Entregables de la semana 1',flags:'Qué verificamos primero',
         ph_desc:'Ejemplo: Operamos una cámara de comercio con 1,200 empresas afiliadas. Los miembros no logran encontrarse para hacer negocios entre los 6 sectores. La junta quiere una plataforma digital pero no sabe qué es realista en 90 días…',
-        ph_name:'Tu nombre (opcional)',ph_email:'Correo (opcional)',ph_company:'Empresa (opcional)',ph_country:'País (opcional)'}
+        ph_name:'Tu nombre (opcional)',ph_email:'Correo (obligatorio — te enviamos el reporte)',ph_company:'Empresa (opcional)',ph_country:'País (opcional)',need_email:'Agrega tu correo para enviarlo a nuestro equipo y darte seguimiento.',sending:'Guardando y enviando a nuestro equipo…',sent_h:'Guardado y enviado al equipo de intake de Digit2AI.',sent_p:'Una persona real lo revisa y te contacta en menos de 48 horas.',send_retry:'Guardado — un problema de red detuvo el envío. Se reintentará la próxima vez que ejecutes el triage.'}
   };
   function applyPh(){ var t=T[lang()]; descEl.placeholder=t.ph_desc; nameEl.placeholder=t.ph_name; emailEl.placeholder=t.ph_email; companyEl.placeholder=t.ph_company; countryEl.placeholder=t.ph_country; }
   applyPh();
@@ -1271,20 +1280,80 @@ html.lang-es .i18.es{display:inline}
       +'</div>';
     requestAnimationFrame(function(){ var r=resEl.querySelector('.tg-res'); if(r) r.scrollIntoView({behavior:'smooth',block:'nearest'}); });
   }
+  // ---- autosave (localStorage) ----
+  var SAVE='ni_triage', sentEl=document.getElementById('tg-sent');
+  function save(extra){
+    try{
+      var rec={ts:Date.now(),lang:lang(),desc:(descEl.value||'').trim(),name:(nameEl.value||'').trim(),
+        email:(emailEl.value||'').trim(),company:(companyEl.value||'').trim(),country:(countryEl.value||'').trim()};
+      if(extra) for(var k in extra) rec[k]=extra[k];
+      localStorage.setItem(SAVE,JSON.stringify(rec));
+    }catch(e){}
+  }
+  try{ var sv=JSON.parse(localStorage.getItem(SAVE)||'null'); if(sv){
+    if(!descEl.value&&sv.desc)descEl.value=sv.desc; if(!nameEl.value&&sv.name)nameEl.value=sv.name;
+    if(!emailEl.value&&sv.email)emailEl.value=sv.email; if(!companyEl.value&&sv.company)companyEl.value=sv.company;
+    if(!countryEl.value&&sv.country)countryEl.value=sv.country;
+  } }catch(e){}
+
+  // ---- build a rich description + auto-submit to the Digit2AI intake ----
+  function richDescription(tr){
+    var ts=tr.technical_solution||{}, L=[];
+    L.push('=== ORIGINAL PROSPECT DESCRIPTION ==='); L.push((descEl.value||'').trim()); L.push('');
+    L.push('=== AI TRIAGE (auto, via /neural-intelligence.html) ===');
+    L.push('Verdict: '+String(tr.verdict||'poc').toUpperCase()+'  ·  Fit score: '+tr.fit_score+'/10');
+    L.push('Fit reasoning: '+(tr.fit_reasoning||'')); L.push('');
+    L.push('Problem in our words: '+(tr.problem_in_our_words||'')); L.push('');
+    L.push('=== PROPOSED TECHNICAL SOLUTION ==='); L.push(ts.summary||''); L.push('');
+    function block(title,arr){ if(arr&&arr.length){ L.push(title+':'); arr.forEach(function(a){L.push('  - '+a);}); L.push(''); } }
+    block('Agents involved',ts.agents_involved); block('What we build',ts.what_we_build);
+    block('Data via MCP',ts.data_sources_via_mcp);
+    if(ts.delivery_window){ L.push('Delivery window: '+ts.delivery_window); L.push(''); }
+    block('Week 1 deliverables',tr.week_1_deliverables); block('Verify-first flags',tr.verify_flags);
+    return L.join('\n');
+  }
+  function submitToIntake(tr){
+    var t=T[lang()], email=(emailEl.value||'').trim();
+    if(!email||email.indexOf('@')<0) return;
+    var name=(nameEl.value||'').trim(), company=(companyEl.value||'').trim();
+    var fullName=name||company||email.split('@')[0]||'Neural Intelligence deck prospect';
+    sentEl.innerHTML='<div class="tg-ok"><span class="tg-spin"></span><span>'+esc(t.sending)+'</span></div>';
+    var payload={ full_name:fullName, email:email, company_name:company||undefined,
+      country:(countryEl.value||'').trim()||undefined,
+      project_title:tr.project_title_suggested||'Neural Intelligence project',
+      project_description:richDescription(tr), problem:(descEl.value||'').trim(),
+      ai_category:'Neural AI (deck triage)',
+      heard_from:'Auto-submitted from the Neural Intelligence deck (/neural-intelligence.html)' };
+    fetch('/projects/api/v1/intake/public/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(!res.ok||!res.j||!res.j.success){ save({submit_error:(res.j&&res.j.error)||'failed'});
+          sentEl.innerHTML='<div class="tg-ok" style="border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1);color:#fde68a">'+esc(t.send_retry)+'</div>'; return; }
+        var data=res.j.data||res.j, url=data.url||(data.token?'/projects/intake/batch.html?token='+data.token:null), batch=data.batch_id||data.batch||'';
+        save({submitted:true,batch_id:batch,submit_error:null});
+        sentEl.innerHTML='<div class="tg-ok"><span>✓</span><div><b>'+esc(t.sent_h)+'</b><br>'+esc(t.sent_p)+(batch?' <span style="opacity:.7">(#'+esc(String(batch))+')</span>':'')+(url?'<br><a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(url)+'</a>':'')+'</div></div>';
+      })
+      .catch(function(e){ save({submit_error:e.message||'network'});
+        sentEl.innerHTML='<div class="tg-ok" style="border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1);color:#fde68a">'+esc(t.send_retry)+'</div>'; });
+  }
+
   runBtn.addEventListener('click',function(){
-    var t=T[lang()], desc=(descEl.value||'').trim();
-    errEl.textContent='';
+    var t=T[lang()], desc=(descEl.value||'').trim(), email=(emailEl.value||'').trim();
+    errEl.textContent=''; sentEl.innerHTML='';
     if(desc.length<30){ errEl.textContent=t.min; descEl.focus(); return; }
+    if(!email||email.indexOf('@')<0){ errEl.textContent=t.need_email; emailEl.focus(); return; }
+    save();
     runBtn.disabled=true; statusEl.innerHTML='<span class="tg-spin"></span>'+esc(t.running);
-    var body={description:desc,language:lang(),
-      name:(nameEl.value||'').trim()||undefined,email:(emailEl.value||'').trim()||undefined,
+    var body={description:desc,language:lang(),name:(nameEl.value||'').trim()||undefined,email:email,
       company:(companyEl.value||'').trim()||undefined,country:(countryEl.value||'').trim()||undefined};
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         runBtn.disabled=false; statusEl.textContent='';
         if(!res.ok||!res.j||!res.j.success){ errEl.textContent=(res.j&&res.j.error)||t.fail; return; }
+        save({triage:res.j.data});
         render(res.j.data);
+        submitToIntake(res.j.data);   // autosave + auto-send to Digit2AI intake — no extra click
       })
       .catch(function(e){ runBtn.disabled=false; statusEl.textContent=''; errEl.textContent=t.net+(e.message||''); });
   });
