@@ -58,13 +58,25 @@ function generar(fallo, lang) {
   const recomendaciones = [];
 
   const mod = modLabel(c.modalidad_detectada, L);
-  const patron = (PATRON_LABEL[c.patron] && PATRON_LABEL[c.patron][L ? 'en' : 'es']) || c.patron;
+  // tiempos + patrón de apoyos son definitorios por modalidad; si no se
+  // persistieron (la tabla clasificaciones solo guarda modalidad+confianza), se
+  // derivan de la modalidad para no mostrar nunca "?" ni "undefined".
+  const PATRON_BY_MOD = { paso_fino: 'lateral', trocha: 'diagonal', trote_galope: 'diagonal', galope: 'diagonal' };
+  const TIEMPOS_ES = { 2: 'dos', 3: 'tres', 4: 'cuatro' };
+  const patronKey = (c.patron && c.patron !== 'indeterminado') ? c.patron : PATRON_BY_MOD[c.modalidad_detectada];
+  const patron = patronKey ? ((PATRON_LABEL[patronKey] && PATRON_LABEL[patronKey][L ? 'en' : 'es']) || patronKey) : null;
+  const nBeats = (c.tiempos != null && c.tiempos > 0) ? c.tiempos : (c.modalidad_detectada === 'trote_galope' ? 2 : (c.modalidad_detectada ? 4 : null));
+  const beatEs = nBeats != null ? (TIEMPOS_ES[nBeats] || nBeats) : null;
+  const seqEs = nBeats != null ? `sobre una secuencia de ${beatEs} tiempos` : 'sobre la secuencia de pisadas';
+  const seqEn = nBeats != null ? `on a ${nBeats}-beat footfall sequence` : 'on the footfall sequence';
+  const suppEs = patron ? ` con apoyos ${patron}` : '';
+  const suppEn = patron ? ` with ${patron} supports` : '';
 
   // ---- Veredicto general ----
   const veredicto = L
-    ? `The animal exhibits a ${mod} gait, classified with ${conf != null ? conf + '%' : 'n/a'} confidence on a ${c.tiempos || '?'}-beat footfall sequence with ${patron} supports. ` +
+    ? `The animal exhibits a ${mod} gait, classified with ${conf != null ? conf + '%' : 'n/a'} confidence ${seqEn}${suppEn}. ` +
       `This determination is grounded in the inter-footfall interval pattern and its uniformity, the biomechanical signature that separates the four-beat lateral gait of the Paso Fino from the diagonal gaits.`
-    : `El ejemplar exhibe una marcha de ${mod}, clasificada con ${conf != null ? conf + '%' : 'n/d'} de confianza sobre una secuencia de ${c.tiempos || '?'} tiempos con apoyos ${patron}. ` +
+    : `El ejemplar exhibe una marcha de ${mod}, clasificada con ${conf != null ? conf + '%' : 'n/d'} de confianza ${seqEs}${suppEs}. ` +
       `Esta determinación se fundamenta en el patrón de intervalos entre pisadas y su uniformidad, la firma biomecánica que separa la marcha lateral de cuatro tiempos del Paso Fino de las marchas diagonales.`;
 
   // ---- Validez de modalidad vs categoría ----
@@ -127,9 +139,9 @@ function generar(fallo, lang) {
     nivel: clar != null && clar >= 0.6 ? 'ok' : 'aviso',
     titulo: L ? 'Four-beat clarity & support structure (25%)' : 'Claridad de 4 tiempos y estructura de apoyos (25%)',
     cuerpo: L
-      ? `The footfall sequence resolves into ${c.tiempos || '?'} beats per cycle with ${patron} supports; four-beat clarity scores ${calidad(clar, L)} (${pct(clar)}). ` +
+      ? `The footfall sequence resolves into ${nBeats != null ? nBeats : 'four'} beats per cycle${suppEn}; four-beat clarity scores ${calidad(clar, L)} (${pct(clar)}). ` +
         `In the Paso Fino each hoof must strike the ground as a distinct, audible beat — the cleaner the separation between the four contacts, the higher the merit. A blurred or paired beat suggests the gait is drifting toward a two-beat (trochy/trot) structure.`
-      : `La secuencia de pisadas resuelve en ${c.tiempos || '?'} tiempos por ciclo con apoyos ${patron}; la claridad de cuatro tiempos es ${calidad(clar, L)} (${pct(clar)}). ` +
+      : `La secuencia de pisadas resuelve en ${beatEs != null ? beatEs : 'cuatro'} tiempos por ciclo${suppEs}; la claridad de cuatro tiempos es ${calidad(clar, L)} (${pct(clar)}). ` +
         `En el Paso Fino cada casco debe golpear el suelo como un tiempo nítido y audible — cuanto más limpia la separación entre los cuatro contactos, mayor el mérito. Un tiempo borroso o apareado sugiere que la marcha se desplaza hacia una estructura de dos tiempos (trocha/trote).`
   });
 
