@@ -325,14 +325,16 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 @media (max-width:640px){
   .niva{right:12px;top:auto;bottom:16px;transform:none}
   .niva .orb-caption{font-size:9px;letter-spacing:1px}
-  /* Minimal mobile panel — just language + transport, no accent/HD/status clutter */
-  .niva-panel{right:auto;left:auto;right:0;top:auto;bottom:calc(100% + 12px);transform:none;width:min(72vw,238px);padding:11px 12px}
-  .niva-hd{display:none}
-  .niva-lang{margin-bottom:9px}
-  .niva-lang button{padding:6px 0;min-height:34px;font-size:11.5px}
-  .niva-ctrls button{min-height:38px;padding:7px 5px}
-  .niva-row,.niva-status{display:none}
-  .niva-close{top:6px;right:9px}
+  /* Minimal mobile panel — tiny language toggle + single play, nothing else */
+  .niva-panel{right:auto;left:auto;right:0;top:auto;bottom:calc(100% + 10px);transform:none;width:auto;min-width:0;padding:8px}
+  .niva-hd,.niva-row,.niva-status{display:none}
+  .niva-lang{gap:4px;margin-bottom:6px}
+  .niva-lang button{flex:0 0 auto;padding:4px 9px;min-height:0;font-size:10.5px;border-radius:7px}
+  .niva-ctrls{gap:5px;margin-bottom:0}
+  .niva-ctrls button{flex:0 0 auto;padding:5px 9px;min-height:0;font-size:11px;border-radius:8px}
+  .niva-ctrls button.primary{flex:0 0 auto}
+  .niva-ctrls button.primary #nivaPlayTxt{display:none}
+  .niva-close{top:4px;right:6px;font-size:15px}
 }
 @media print{.niva{display:none}}
 @media (prefers-reduced-motion:reduce){
