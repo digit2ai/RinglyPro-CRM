@@ -254,24 +254,55 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 /* landscape phones: don't force full height on short viewports */
 @media (max-height:520px){.slide{min-height:auto;padding:80px 22px 40px}}
 
-/* ===== Bilingual Neural Voice orb (Layer 3) ===== */
-.niva{position:fixed;left:clamp(14px,3vw,30px);bottom:clamp(14px,4vh,30px);z-index:60;font-family:var(--font-body)}
-.niva-launch{width:60px;height:60px;border-radius:50%;border:1px solid var(--line2);cursor:pointer;padding:0;position:relative;
-  background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 46%,#0e7490 100%);
-  box-shadow:0 10px 30px rgba(34,211,238,.35);display:flex;align-items:center;justify-content:center}
-.niva-launch:hover{transform:translateY(-1px)}
-.niva-launch:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.niva-launch .ic{color:#062b33;font-size:20px;line-height:1;transform:translateX(1px)}
-.niva-launch.speaking,.niva-mini.speaking{animation:niva-pulse 1.2s ease-in-out infinite}
-@keyframes niva-pulse{
-  0%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 0 rgba(34,211,238,.45)}
-  70%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 18px rgba(34,211,238,0)}
-  100%{box-shadow:0 10px 30px rgba(34,211,238,.35),0 0 0 0 rgba(34,211,238,0)}}
-.niva-panel{position:absolute;left:0;bottom:72px;width:min(86vw,322px);
+/* ===== Bilingual Neural Voice orb (Layer 3) — sophisticated MCP brain, right-center ===== */
+.niva{position:fixed;right:clamp(16px,3.5vw,56px);top:50%;transform:translateY(-50%);z-index:60;font-family:var(--font-body);
+  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#ec4899;--ink-mute:#9db0cc;
+  --font-mono:'Space Grotesk',ui-monospace,monospace;--orb-size:clamp(150px,17vw,210px)}
+.niva .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;--orb-amp:0;outline:none;transition:transform .2s}
+.niva .orb-wrap:hover{transform:scale(1.02)}
+.niva .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
+.niva .orb-svg{width:100%;height:100%;display:block;
+  filter:drop-shadow(0 8px 32px rgba(34,211,238,.28)) drop-shadow(0 4px 18px rgba(139,92,246,.22));transition:filter 120ms linear}
+/* idle rotations (Iron Man / Tron) */
+.niva .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.niva .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.niva .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.niva .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.niva .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.niva .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.niva .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.niva .orb-ring{opacity:0;transform-box:fill-box;transform-origin:center}
+/* thinking — particles orbit while neural audio is fetched */
+.niva .orb-particles{opacity:0}
+.niva .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+.niva .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+.niva .orb-wrap[data-state="thinking"] .orb-core{animation:orbThinkSpin 6s linear infinite}
+.niva .orb-wrap[data-state="thinking"] .orb-ring{opacity:.7;animation:orbRingTight 2.4s ease-in-out infinite}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+/* speaking — saturated halo */
+.niva .orb-wrap[data-state="speaking"] .orb-core,.niva .orb-wrap[data-state="speaking"] .orb-glow{filter:brightness(1.3) saturate(1.2)}
+.niva .orb-wrap[data-state="speaking"] .orb-svg{filter:drop-shadow(0 8px 42px rgba(34,211,238,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+/* caption under the orb */
+.niva .orb-caption{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(300px,52vw);text-align:center;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-mute);line-height:1.4;transition:color .2s}
+.niva .orb-wrap:hover .orb-caption{color:var(--accent-cyan)}
+.niva .orb-wrap[data-state="thinking"] .orb-caption{color:var(--accent-violet)}
+.niva .orb-wrap[data-state="speaking"] .orb-caption{color:var(--accent-magenta)}
+.orb-cap-idle,.orb-cap-active{display:none}
+.niva .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
+.niva .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
+.orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* control panel — opens to the LEFT of the orb */
+.niva-panel{position:absolute;right:calc(100% + 20px);top:50%;transform:translateY(-50%);width:min(80vw,300px);
   background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:16px;
   padding:16px;box-shadow:0 24px 64px rgba(0,0,0,.6);display:none}
 .niva.open .niva-panel{display:block}
-.niva.open .niva-launch .ic::before{content:"\2715"}
 .niva-hd{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding-right:18px}
 .niva-mini{width:34px;height:34px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 35% 30%,#a5f3fc,#22d3ee 46%,#0e7490 100%)}
 .niva-name{font-family:var(--font-display);font-weight:700;color:#fff;font-size:14px;line-height:1.2}
@@ -290,8 +321,19 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .niva-status{font-size:12px;color:var(--mut);margin-top:11px;min-height:16px;line-height:1.45}
 .niva-close{position:absolute;top:9px;right:12px;background:none;border:0;color:var(--dim);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px}
 .niva-close:hover{color:var(--txt)}
-@media (max-width:768px){.niva-panel{width:min(90vw,300px)}}
+@media (max-width:900px){.niva{--orb-size:clamp(122px,24vw,150px)}}
+@media (max-width:640px){
+  .niva{right:12px;top:auto;bottom:16px;transform:none}
+  .niva-panel{right:auto;left:0;top:auto;bottom:calc(100% + 12px);transform:none;width:min(90vw,280px)}
+  .niva .orb-caption{font-size:9px;letter-spacing:1px}
+}
 @media print{.niva{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .niva .orb-ring-outer,.niva .orb-ring-mid,.niva .orb-ring-inner,.niva .orb-iris-outer,.niva .orb-iris-segs,
+  .niva .orb-scan,.niva .orb-crosshair,.niva .orb-particle{animation:none!important}
+  .niva .orb-svg animate,.niva .orb-svg animateTransform{display:none}
+  .niva .orb-wrap:hover{transform:none}
+}
 </style>
 </head>
 <body>
@@ -524,7 +566,7 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   window.addEventListener('keydown',function(ev){
     var t=ev.target.tagName;
     if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||t==='BUTTON') return;
-    if(document.getElementById('niva').classList.contains('open') && ev.key===' ') return;
+    if(ev.target.closest && ev.target.closest('#niva')) return;
     switch(ev.key){
       case 'ArrowDown': case 'PageDown': case ' ':
         ev.preventDefault(); goTo(idx+1); break;
@@ -552,9 +594,101 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 
 <!-- ===== Bilingual Neural Voice orb — EN + ES narration of the deck ===== -->
 <div class="niva" id="niva">
-  <button class="niva-launch" id="nivaLaunch" aria-label="Voice walkthrough / Recorrido en voz" title="Voice walkthrough / Recorrido en voz">
-    <span class="ic" id="nivaLaunchIc">&#9658;</span>
-  </button>
+  <div class="orb-wrap" id="nivaOrb" role="button" tabindex="0" data-state="idle"
+       aria-label="MCP Neural narrator — open voice controls / Narrador neural MCP — abrir controles"
+       aria-describedby="niva-cap">
+    <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
+    <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="orbCore" cx="0.5" cy="0.45">
+          <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+          <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+          <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+          <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+          <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+        </radialGradient>
+        <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+          <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+          <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+          <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+        </radialGradient>
+        <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee"/>
+          <stop offset="0.4" stop-color="#3b82f6"/>
+          <stop offset="0.75" stop-color="#8b5cf6"/>
+          <stop offset="1" stop-color="#ec4899"/>
+        </linearGradient>
+        <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+          <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+        <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+      </circle>
+      <g class="orb-ring-outer">
+        <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+        <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+        <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+        <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+        <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+      </g>
+      <g class="orb-ring-mid">
+        <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+        <g fill="#a5f3fc">
+          <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+          <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+          <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+          <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+        </g>
+      </g>
+      <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+      <g class="orb-scan">
+        <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+      <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+      <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+      <g class="orb-particles">
+        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+      </g>
+      <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+        <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+      <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+        <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+        <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+        <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+        <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+      </ellipse>
+      <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+        <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+        <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+      </g>
+    </svg>
+    <div class="orb-caption" id="niva-cap">
+      <span class="orb-cap-idle" id="nivaCapIdle">Click to speak with the MCP Neural brain</span>
+      <span class="orb-cap-active" id="nivaCapActive">Open controls</span>
+    </div>
+  </div>
   <div class="niva-panel" role="dialog" aria-label="Voice walkthrough">
     <button class="niva-close" id="nivaClose" aria-label="Close / Cerrar">&times;</button>
     <div class="niva-hd">
@@ -638,7 +772,9 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 
   // ---- DOM ----
   var niva=document.getElementById('niva');
-  var launch=document.getElementById('nivaLaunch');
+  var orbWrap=document.getElementById('nivaOrb');
+  var capIdle=document.getElementById('nivaCapIdle');
+  var capActive=document.getElementById('nivaCapActive');
   var closeBtn=document.getElementById('nivaClose');
   var miniOrb=document.getElementById('nivaMini');
   var roleEl=document.getElementById('nivaRole');
@@ -648,8 +784,8 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   var accentSel=document.getElementById('nivaAccent'), accentLbl=document.getElementById('nivaAccentLbl');
   var neuralToggle=document.getElementById('nivaNeural'), hdLbl=document.getElementById('nivaHdLbl');
   var modeEl=document.getElementById('nivaMode'), statusEl=document.getElementById('nivaStatus');
-  var launchIc=document.getElementById('nivaLaunchIc');
   var slides=Array.prototype.slice.call(document.querySelectorAll('#deck .slide'));
+  function setState(s){ orbWrap.dataset.state=s; }
 
   // ---- State ----
   var synth=window.speechSynthesis;
@@ -684,6 +820,8 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
     roleEl.textContent=t().role; playTxt.textContent=t().play;
     accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
     enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
+    capIdle.textContent = lang==='en' ? 'Click to speak with the MCP Neural brain' : 'Habla con el cerebro MCP Neural';
+    capActive.textContent = lang==='en' ? 'Open controls' : 'Abrir controles';
     if(!currentAudio && !(synth&&synth.speaking)) statusEl.textContent=t().idle;
     setMode();
   }
@@ -708,7 +846,7 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
       .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
       .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
   }
-  function speaking(on){ launch.classList.toggle('speaking',on); miniOrb.classList.toggle('speaking',on); }
+  function speaking(on){ setState(on?'speaking':'idle'); }
 
   function runQueue(token){
     if(token!==runToken) return;
@@ -717,7 +855,7 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
     if(mode==='all' || idx>0) setActive(idx);
     function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
     if(useNeural()){
-      statusEl.textContent=t().prep;
+      statusEl.textContent=t().prep; setState('thinking');
       if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
       fetchNeural(idx).then(function(url){
         if(token!==runToken) return;
@@ -757,11 +895,10 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   }
 
   // ---- Events ----
-  launch.addEventListener('click',function(){
-    niva.classList.toggle('open');
-    launchIc.innerHTML = niva.classList.contains('open') ? '&#10005;' : '&#9658;';
-  });
-  closeBtn.addEventListener('click',function(){ niva.classList.remove('open'); launchIc.innerHTML='&#9658;'; });
+  function togglePanel(){ niva.classList.toggle('open'); }
+  orbWrap.addEventListener('click',togglePanel);
+  orbWrap.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); togglePanel(); } });
+  closeBtn.addEventListener('click',function(){ niva.classList.remove('open'); });
   enBtn.addEventListener('click',function(){ setLang('en'); });
   esBtn.addEventListener('click',function(){ setLang('es'); });
   playBtn.addEventListener('click',function(){ start(segments.map(function(_,i){return i;}),'all'); });
