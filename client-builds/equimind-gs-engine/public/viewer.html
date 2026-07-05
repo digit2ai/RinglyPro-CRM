@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:#0E120F;color:#ECE6DA;font-family:system-ui,sans-serif;margin:0}#stage{position:fixed;inset:0}canvas{display:block}.mono{font-family:ui-monospace,Menlo,monospace}</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div class="fixed top-0 inset-x-0 p-3 flex items-center justify-between text-sm" style="background:linear-gradient(180deg,rgba(14,18,15,.85),transparent)">
+    <div class="flex items-center gap-2"><span class="wordmark font-extrabold">Equi<span style="color:#E6C572">Mind</span> 3D</span><span id="sceneCode" class="mono text-xs px-2 py-0.5 rounded" style="background:rgba(230,197,114,.14);color:#E6C572"></span></div>
+    <div class="flex items-center gap-3"><span id="simTag" class="hidden text-xs" style="color:#D98A3E"></span><a id="shareBtn" class="text-xs underline cursor-pointer" style="color:#E6C572"></a></div>
+  </div>
+  <div id="hud" class="fixed bottom-0 inset-x-0 p-3 text-xs mono" style="color:#98A199;background:linear-gradient(0deg,rgba(14,18,15,.85),transparent)"></div>
+  <div id="waypoints" class="fixed left-3 top-16 flex flex-col gap-2"></div>
+
+<script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";window.__LANG="{{LANG}}";</script>
+<script type="module">
+const I=window.__I18N||{}, B=window.__BASE||'/';
+const q=new URLSearchParams(location.search);
+const sceneId=q.get('scene'), token=q.get('k');
+const hud=document.getElementById('hud'), stage=document.getElementById('stage');
+document.getElementById('shareBtn').textContent=I.share||'Share';
+function setHud(t){hud.textContent=t;}
+
+async function loadScene(){
+  if(!sceneId){setHud('No scene');return null;}
+  const url = token ? (B+'api/v1/public/scenes/'+sceneId+'?k='+encodeURIComponent(token))
+                    : (B+'api/v1/scenes/'+sceneId);
+  const r=await fetch(url,{credentials:'same-origin'});
+  if(!r.ok){setHud((I.share||'')+' — '+r.status);return null;}
+  return r.json();
+}
+
+function renderWaypoints(wps){
+  const box=document.getElementById('waypoints'); box.innerHTML='';
+  (wps||[]).forEach((w,i)=>{const d=document.createElement('div');d.className='text-xs px-2 py-1 rounded';d.style.cssText='background:rgba(255,255,255,.06);border:1px solid rgba(236,230,218,.12)';d.textContent=(w.label||('#'+(i+1)))+(w.distance?(' · '+w.distance):'');box.appendChild(d);});
+}
+
+// Splat rendering: try the gsplat CDN library on the scene .ply; on any failure
+// (CDN blocked, WebGL unavailable, placeholder .ply), fall back to the poster.
+async function render(scene){
+  document.getElementById('sceneCode').textContent=scene.report_code||('GS-'+sceneId);
+  if(scene.is_simulated){const s=document.getElementById('simTag');s.textContent=I.sim_note||'reference (simulated)';s.classList.remove('hidden');}
+  renderWaypoints(scene.waypoints);
+  document.getElementById('shareBtn').onclick=()=>{const link=location.origin+B+'viewer?scene='+sceneId+(scene.share_token?('&k='+scene.share_token):''); navigator.clipboard&&navigator.clipboard.writeText(link); setHud('link copied');};
+  const plyUrl=scene.assets&&scene.assets.ply;
+  setHud((I.view_orbit||'')+' · '+scene.splat_count+' splats'+(scene.is_simulated?' · sim':''));
+  try{
+    const mod=await import('https://esm.sh/@mkkellogg/gaussian-splats-3d@0.4.6');
+    const viewer=new mod.Viewer({rootElement:stage,selfDrivenMode:true,useBuiltInControls:true});
+    await viewer.addSplatScene(plyUrl,{format:0,showLoadingUI:false});
+    viewer.start();
+  }catch(e){
+    // Fallback: poster + note (placeholder/mock scenes or no WebGL).
+    stage.innerHTML='<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center">'+
+      '<div><img src="'+(scene.assets&&scene.assets.thumbnail||'')+'" style="width:120px;height:120px;border-radius:16px;opacity:.5"><div style="margin-top:12px;color:#98A199;font-size:13px">'+
+      (scene.is_simulated?(I.sim_note||'Reference (simulated) scene'):'3D viewer unavailable in this browser')+'</div></div></div>';
+    setHud('poster fallback');
+  }
+}
+
+(async()=>{const s=await loadScene(); if(s) render(s);})();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:#0E120F;color:#ECE6DA;font-family:system-ui,sans-serif}.mono{font-family:ui-monospace,Menlo,monospace}</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-xl mx-auto px-5 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div class="text-xl font-extrabold">Equi<span style="color:#E6C572">Mind</span> 3D</div>
+    <a id="langToggle" class="text-xs underline cursor-pointer" style="color:#98A199">EN / ES</a>
+  </div>
+  <h1 class="text-2xl font-bold" data-i18n="cap_title"></h1>
+  <p class="text-sm text-slate-400 mt-1" data-i18n="tagline"></p>
+
+  <section class="mt-6 bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+    <label class="block text-xs text-slate-400 mb-1" data-i18n="cap_kind"></label>
+    <select id="kind" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+      <option value="course_walk" data-i18n="kind_course"></option>
+      <option value="conformation" data-i18n="kind_conf"></option>
+    </select>
+    <label class="block text-xs text-slate-400 mb-1 mt-4" data-i18n="cap_video"></label>
+    <input id="file" type="file" accept="video/mp4,video/quicktime,image/*" multiple class="w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white">
+    <p class="text-xs text-slate-500 mt-2" data-i18n="cap_hint"></p>
+    <button id="go" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 rounded-lg px-4 py-3 font-semibold disabled:opacity-50" data-i18n="cap_process"></button>
+    <div id="status" class="text-xs mono mt-3" style="color:#98A199"></div>
+  </section>
+
+  <section class="mt-6">
+    <h2 class="text-sm font-semibold" style="color:#E6C572" data-i18n="scenes_title"></h2>
+    <div id="scenes" class="mt-3 grid gap-3"></div>
+  </section>
+</div>
+
+<script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";window.__LANG="{{LANG}}";</script>
+<script>
+(function(){
+var I=window.__I18N||{},B=window.__BASE||'/',L=window.__LANG||'es';
+document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
+document.getElementById('langToggle').onclick=function(){var u=new URL(location.href);u.searchParams.set('lang',L==='es'?'en':'es');location.href=u.toString();};
+function token(){try{return localStorage.getItem('token')||new URL(location.href).searchParams.get('token')||'';}catch(e){return '';}}
+function authH(){var t=token();return t?{'Authorization':'Bearer '+t}:{};}
+var st=document.getElementById('status');
+function setS(m){st.textContent=m||'';}
+
+document.getElementById('go').addEventListener('click',function(){
+  var files=document.getElementById('file').files; if(!files.length){setS('Selecciona video o fotos');return;}
+  var kind=document.getElementById('kind').value;
+  var btn=this;btn.disabled=true;setS('1/3 creando sesión…');
+  fetch(B+'api/v1/sessions',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authH()),credentials:'same-origin',body:JSON.stringify({kind:kind,source_type:files.length>1?'photos':'video'})})
+   .then(function(r){if(r.status===401){setS('Inicia sesión en EquiMind');throw new Error('auth');}return r.json();})
+   .then(function(s){setS('2/3 subiendo…');var fd=new FormData();for(var i=0;i<files.length;i++)fd.append('frames',files[i]);
+     return fetch(B+'api/v1/sessions/'+s.id+'/upload',{method:'POST',headers:authH(),credentials:'same-origin',body:fd}).then(function(r){return r.json();}).then(function(){return s;});})
+   .then(function(s){setS('3/3 procesando (cobra créditos)…');
+     return fetch(B+'api/v1/sessions/'+s.id+'/process?inline=1',{method:'POST',headers:authH(),credentials:'same-origin'}).then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});})
+   .then(function(res){btn.disabled=false;
+     if(res.status===402){setS('Sin créditos: necesita '+(res.j.needed||'')+'. Recarga en EquiMind.');return;}
+     if(!res.ok){setS('Error: '+(res.j.error||''));return;}
+     setS('Listo. Escena creada.');loadScenes();})
+   .catch(function(e){btn.disabled=false;if(e.message!=='auth')setS('Error: '+e.message);});
+});
+
+function loadScenes(){
+  fetch(B+'api/v1/scenes',{headers:authH(),credentials:'same-origin'}).then(function(r){return r.ok?r.json():[];}).then(function(rows){
+    var box=document.getElementById('scenes');box.innerHTML='';
+    (rows||[]).forEach(function(s){var d=document.createElement('div');d.className='bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between';
+      d.innerHTML='<div><div class="font-semibold text-sm">'+(s.title||s.kind)+' <span class="mono text-xs" style="color:#98A199">'+s.report_code+'</span></div>'+
+        '<div class="text-xs text-slate-400">'+s.splat_count+' splats · '+(s.is_simulated?(I.sim_note||'sim'):'')+'</div></div>'+
+        '<a href="'+B+'viewer?scene='+s.id+(s.share_token?('&k='+s.share_token):'')+'" target="_blank" rel="noopener" class="text-sm underline" style="color:#E6C572">'+(I.open_viewer||'View 3D')+' ↗</a>';
+      box.appendChild(d);});
+  }).catch(function(){});
+}
+loadScenes();
+})();
+</script>
+</body>
+</html>

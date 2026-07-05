@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:#0E120F;color:#ECE6DA;font-family:system-ui,sans-serif}.mono{font-family:ui-monospace,Menlo,monospace}</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-4xl mx-auto px-5 py-8">
+  <h1 class="text-xl font-bold" data-i18n="admin_title"></h1>
+  <div id="cards" class="grid sm:grid-cols-3 gap-4 mt-6"></div>
+  <div id="econ" class="mt-6 bg-slate-900/50 border border-slate-800 rounded-xl p-5 text-sm mono"></div>
+</div>
+<script>window.__I18N={{DICT_JSON}};window.__BASE="{{BASE}}";</script>
+<script>
+(function(){var I=window.__I18N||{},B=window.__BASE||'/';
+document.querySelectorAll('[data-i18n]').forEach(function(el){var k=el.getAttribute('data-i18n');if(I[k]!=null)el.textContent=I[k];});
+function token(){try{return localStorage.getItem('token')||new URL(location.href).searchParams.get('token')||'';}catch(e){return '';}}
+function card(label,val,sub){return '<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-5"><div class="text-xs text-slate-500">'+label+'</div><div class="text-3xl font-extrabold mono mt-1" style="color:#E6C572">'+val+'</div><div class="text-xs text-slate-400 mt-1">'+(sub||'')+'</div></div>';}
+fetch(B+'api/v1/ops',{headers:{'Authorization':'Bearer '+token()},credentials:'same-origin'}).then(function(r){return r.json();}).then(function(o){
+  document.getElementById('cards').innerHTML=
+    card(I.jobs_flight||'Jobs in flight',o.jobs_in_flight,'done '+o.jobs_done+' · failed '+o.jobs_failed)+
+    card(I.spend||'Credits',o.net_credits,'charged '+o.credits_charged+' · refunded '+o.credits_refunded)+
+    card(I.failrate||'Failure rate',o.failure_rate_pct+'%','provider: '+o.provider+' · '+o.storage_backend);
+}).catch(function(){});
+fetch(B+'api/v1/pricing?seconds=60').then(function(r){return r.json();}).then(function(p){
+  var e=p.example;document.getElementById('econ').innerHTML='Unit economics (60s capture): credits '+e.credits_charged+' · revenue $'+e.revenue_usd+' · provider cost $'+e.provider_cost_usd+' · margin $'+e.margin_usd+' ('+e.margin_pct+'%)';
+}).catch(function(){});
+})();
+</script>
+</body>
+</html>
