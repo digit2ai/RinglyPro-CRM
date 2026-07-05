@@ -46,7 +46,14 @@
   (function injectStyle() {
     if (typeof document === 'undefined' || document.getElementById('gsr-style')) return;
     var st = document.createElement('style'); st.id = 'gsr-style';
-    st.textContent = '@media(max-width:640px){.gsr-meas,.gsr-find{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.gsr-mrow{min-width:540px}.gsr-frow{min-width:470px}}';
+    st.textContent =
+      // Let grid tracks shrink below the inputs' intrinsic width so rows never
+      // overflow the panel frame on desktop.
+      '.gsr-mrow,.gsr-frow{max-width:100%}' +
+      '.gsr-mrow>input,.gsr-mrow>select,.gsr-frow>input,.gsr-frow>select{min-width:0}' +
+      '.gsr-mrow>button,.gsr-frow>button{min-width:0;padding:0;justify-self:center}' +
+      // Mobile: horizontal scroll keeps every column reachable on a phone.
+      '@media(max-width:640px){.gsr-meas,.gsr-find{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.gsr-mrow{min-width:540px}.gsr-frow{min-width:470px}}';
     (document.head || document.documentElement).appendChild(st);
   })();
 
