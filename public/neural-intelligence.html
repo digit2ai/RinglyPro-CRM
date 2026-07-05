@@ -220,6 +220,45 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 }
 .cta:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(34,211,238,.4)}
 .cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+/* ===== Live AI Triage (slide 11) ===== */
+.triage{max-width:860px;margin-top:clamp(16px,2.6vh,26px);text-align:left}
+.triage-intro{color:var(--txt);font-size:clamp(15px,1.05vw + 8px,18px);line-height:1.5;margin-bottom:clamp(12px,2vh,18px);max-width:70ch}
+.triage-lbl{display:block;font-family:var(--font-display);font-weight:700;font-size:clamp(11px,.7vw + 6px,12.5px);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.triage textarea,.triage input{width:100%;background:rgba(10,16,30,.6);border:1px solid var(--line2);border-radius:12px;color:var(--txt);font-family:var(--font-body);font-size:clamp(14px,1vw + 7px,16px);padding:13px 16px;transition:border-color .15s}
+.triage textarea{min-height:128px;resize:vertical;line-height:1.5}
+.triage textarea:focus,.triage input:focus{outline:none;border-color:var(--accent)}
+.triage textarea::placeholder,.triage input::placeholder{color:var(--dim)}
+.triage-hint{color:var(--dim);font-size:clamp(12px,.8vw + 6px,13.5px);margin:8px 0 14px;line-height:1.5}
+.triage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.triage-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.triage-run{display:inline-flex;align-items:center;gap:9px;border:0;cursor:pointer;
+  padding:14px 32px;min-height:52px;font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.1vw,18px);letter-spacing:.02em;
+  color:var(--accent-ink);border-radius:12px;background:linear-gradient(120deg,var(--accent),var(--accent2));box-shadow:0 12px 40px rgba(34,211,238,.28);transition:transform .15s,box-shadow .2s}
+.triage-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 48px rgba(34,211,238,.4)}
+.triage-run:disabled{opacity:.6;cursor:default}
+.triage-status{color:var(--mut);font-size:14px;display:inline-flex;align-items:center}
+.triage-error{color:#fda4af;font-size:14px;margin-top:12px}
+.tg-spin{width:14px;height:14px;border:2px solid rgba(34,211,238,.25);border-top-color:#22d3ee;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:7px;animation:tgspin .7s linear infinite}
+@keyframes tgspin{to{transform:rotate(360deg)}}
+.triage-result{margin-top:clamp(16px,2.6vh,26px)}
+.tg-res{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:16px;padding:clamp(18px,2.4vw,26px);animation:tgIn .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes tgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.tg-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.tg-verdict{font-family:var(--font-display);font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:7px 16px;border-radius:999px}
+.v-go{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.4)}
+.v-poc{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.4)}
+.v-stop{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)}
+.tg-fit{font-family:var(--font-display);font-weight:800;font-size:clamp(24px,3vw,32px);color:#fff;line-height:1}
+.tg-fit span{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-top:2px}
+.tg-block{margin-top:16px}
+.tg-block h4{font-family:var(--font-display);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.tg-block p{color:var(--txt);font-size:clamp(14px,1vw + 7px,16px);line-height:1.55;margin:0}
+.tg-block ul{list-style:none;margin:0;padding:0}
+.tg-block ul li{position:relative;padding-left:18px;margin-bottom:5px;color:var(--txt);font-size:clamp(13.5px,.95vw + 7px,15.5px);line-height:1.5}
+.tg-block ul li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:2px;background:var(--accent)}
+.tg-tech{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.tg-cell .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;font-weight:600}
+@media (max-width:640px){.triage-grid,.tg-tech{grid-template-columns:1fr}}
 .footer{margin-top:clamp(30px,5vh,54px);padding-top:clamp(18px,2.6vh,26px);border-top:1px solid var(--line);color:var(--dim);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.7}
 .footer .co{font-family:var(--font-display);color:var(--txt);font-weight:600;letter-spacing:.04em}
 .footer .people{color:var(--mut)}
@@ -633,8 +672,24 @@ html.lang-es .i18.es{display:inline}
       <h2 class="title reveal"><span class="i18 en">Neural Assessment &mdash; 2 weeks, fixed scope.</span><span class="i18 es">Evaluaci&oacute;n Neural &mdash; 2 semanas, alcance fijo.</span></h2>
       <p class="lead reveal"><span class="i18 en">We map your operating model and deliver a quantified cost-reduction blueprint: where the <strong>30&ndash;50%</strong> lives, which agents capture it, and the deployment sequence.</span><span class="i18 es">Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducci&oacute;n de costos: d&oacute;nde est&aacute; el <strong>30&ndash;50%</strong>, qu&eacute; agentes lo capturan y la secuencia de despliegue.</span></p>
       <p class="lead reveal"><span class="i18 en">The assessment is the only up-front commitment. Everything after it is <span class="hl">self-funding</span> &mdash; the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.</span><span class="i18 es">La evaluaci&oacute;n es el &uacute;nico compromiso inicial. Todo lo que viene despu&eacute;s se <span class="hl">autofinancia</span> &mdash; los ahorros operativos pagan el despliegue desde el primer mes, as&iacute; que escalas con dinero que ya est&aacute;s ahorrando.</span></p>
-      <!-- TODO: wire this CTA to the real contact path — email / phone / booking link (currently a placeholder href="#") -->
-      <a class="cta reveal" href="#" id="ctaBtn" role="button"><span class="i18 en">Book the Neural Assessment</span><span class="i18 es">Agenda la Evaluaci&oacute;n Neural</span></a>
+      <div class="triage reveal" id="triage">
+        <p class="triage-intro"><span class="i18 en">Try it <em>right now</em> &mdash; paste a challenge (yours or a prospect&rsquo;s). Our Neural Intelligence stack reads it, scores the fit, and sketches what we&rsquo;d build.</span><span class="i18 es">Pru&eacute;balo <em>ahora mismo</em> &mdash; pega un reto (tuyo o de un prospecto). Nuestro stack de Neural Intelligence lo lee, eval&uacute;a el ajuste y esboza lo que construir&iacute;amos.</span></p>
+        <label class="triage-lbl" for="tg-desc"><span class="i18 en">Describe the problem &middot; in plain language</span><span class="i18 es">Describe el problema &middot; en lenguaje sencillo</span></label>
+        <textarea id="tg-desc" rows="5"></textarea>
+        <div class="triage-hint"><span class="i18 en">30&ndash;5000 characters. The more specific you are about the audience, the constraints, and the desired outcome, the sharper the triage.</span><span class="i18 es">30&ndash;5000 caracteres. Mientras m&aacute;s espec&iacute;fico seas sobre la audiencia, las restricciones y el resultado deseado, m&aacute;s preciso ser&aacute; el triage.</span></div>
+        <div class="triage-grid">
+          <input id="tg-name" type="text" autocomplete="off">
+          <input id="tg-email" type="email" autocomplete="off">
+          <input id="tg-company" type="text" autocomplete="off">
+          <input id="tg-country" type="text" autocomplete="off">
+        </div>
+        <div class="triage-actions">
+          <button type="button" class="triage-run" id="tg-run"><span class="i18 en">Run AI Triage</span><span class="i18 es">Ejecutar Triage de IA</span></button>
+          <span class="triage-status" id="tg-status" aria-live="polite"></span>
+        </div>
+        <div class="triage-error" id="tg-error" role="alert"></div>
+        <div class="triage-result" id="tg-result"></div>
+      </div>
       <div class="footer reveal">
         <div class="co">DIGIT2AI LLC &mdash; Tampa, FL</div>
         <div class="people">Lina Stagg, CEO&nbsp;&nbsp;|&nbsp;&nbsp;Manuel Stagg, CTO &amp; Co-Founder</div>
@@ -1133,6 +1188,84 @@ html.lang-es .i18.es{display:inline}
       }).catch(function(){});
     }
   }catch(e){}
+})();
+</script>
+
+<script>
+/* ===== Live AI Triage — self-contained; posts to the same backend as champion-teaser ===== */
+(function(){
+  var API='/projects/api/v1/intake/public-triage-preview';
+  var descEl=document.getElementById('tg-desc');
+  if(!descEl) return;
+  var d=document.documentElement;
+  function lang(){ return d.classList.contains('lang-en')?'en':'es'; }
+  var runBtn=document.getElementById('tg-run'), statusEl=document.getElementById('tg-status'),
+      errEl=document.getElementById('tg-error'), resEl=document.getElementById('tg-result'),
+      nameEl=document.getElementById('tg-name'), emailEl=document.getElementById('tg-email'),
+      companyEl=document.getElementById('tg-company'), countryEl=document.getElementById('tg-country');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  var T={
+    en:{running:'Reading the problem…',min:'Please describe the problem in at least 30 characters.',
+        fail:'Triage could not complete. Please try again.',net:'Network error: ',fit:'fit',
+        go:'Strong fit — GO',poc:'Proof of concept first',stop:'Not a fit — yet',
+        title:'Suggested project',reason:'Why it fits',problem:'The problem, in our words',
+        tech:'Technical solution',agents:'Agents involved',build:'What we build',data:'Data via MCP',window:'Delivery window',
+        week1:'Week 1 deliverables',flags:'What we verify first',
+        ph_desc:"Example: We run a chamber of commerce with 1,200 member businesses. Members can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days…",
+        ph_name:'Your name (optional)',ph_email:'Email (optional)',ph_company:'Company (optional)',ph_country:'Country (optional)'},
+    es:{running:'Leyendo el problema…',min:'Describe el problema con al menos 30 caracteres.',
+        fail:'El triage no pudo completarse. Intenta de nuevo.',net:'Error de red: ',fit:'de ajuste',
+        go:'Buen ajuste — ADELANTE',poc:'Primero una prueba de concepto',stop:'Aún no encaja',
+        title:'Proyecto sugerido',reason:'Por qué encaja',problem:'El problema, en nuestras palabras',
+        tech:'Solución técnica',agents:'Agentes involucrados',build:'Qué construimos',data:'Datos vía MCP',window:'Ventana de entrega',
+        week1:'Entregables de la semana 1',flags:'Qué verificamos primero',
+        ph_desc:'Ejemplo: Operamos una cámara de comercio con 1,200 empresas afiliadas. Los miembros no logran encontrarse para hacer negocios entre los 6 sectores. La junta quiere una plataforma digital pero no sabe qué es realista en 90 días…',
+        ph_name:'Tu nombre (opcional)',ph_email:'Correo (opcional)',ph_company:'Empresa (opcional)',ph_country:'País (opcional)'}
+  };
+  function applyPh(){ var t=T[lang()]; descEl.placeholder=t.ph_desc; nameEl.placeholder=t.ph_name; emailEl.placeholder=t.ph_email; companyEl.placeholder=t.ph_company; countryEl.placeholder=t.ph_country; }
+  applyPh();
+  // keep placeholders synced when the page language toggles (top toggle / orb / geo)
+  if(typeof window.applyLanguage==='function'){ var orig=window.applyLanguage; window.applyLanguage=function(l,p){ orig(l,p); applyPh(); }; }
+
+  function li(arr){ if(!arr||!arr.length) return '<li>—</li>'; return arr.map(function(s){return '<li>'+esc(s)+'</li>';}).join(''); }
+  function render(tr){
+    var t=T[lang()];
+    var vmap={go:['v-go',t.go],poc:['v-poc',t.poc],stop:['v-stop',t.stop]};
+    var v=vmap[tr.verdict]||vmap.poc, ts=tr.technical_solution||{};
+    resEl.innerHTML='<div class="tg-res">'
+      +'<div class="tg-head"><span class="tg-verdict '+v[0]+'">'+esc(v[1])+'</span>'
+      +'<span class="tg-fit">'+esc(tr.fit_score)+'<span>'+t.fit+'</span></span></div>'
+      +'<div class="tg-block"><h4>'+t.title+'</h4><p>'+esc(tr.project_title_suggested)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.reason+'</h4><p>'+esc(tr.fit_reasoning)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.problem+'</h4><p>'+esc(tr.problem_in_our_words)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.tech+'</h4><p>'+esc(ts.summary)+'</p><div class="tg-tech">'
+        +'<div class="tg-cell"><div class="lbl">'+t.agents+'</div><ul>'+li(ts.agents_involved)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.build+'</div><ul>'+li(ts.what_we_build)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.data+'</div><ul>'+li(ts.data_sources_via_mcp)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.window+'</div><p>'+esc(ts.delivery_window)+'</p></div>'
+      +'</div></div>'
+      +'<div class="tg-block"><h4>'+t.week1+'</h4><ul>'+li(tr.week_1_deliverables)+'</ul></div>'
+      +'<div class="tg-block"><h4>'+t.flags+'</h4><ul>'+li(tr.verify_flags)+'</ul></div>'
+      +'</div>';
+    requestAnimationFrame(function(){ var r=resEl.querySelector('.tg-res'); if(r) r.scrollIntoView({behavior:'smooth',block:'nearest'}); });
+  }
+  runBtn.addEventListener('click',function(){
+    var t=T[lang()], desc=(descEl.value||'').trim();
+    errEl.textContent='';
+    if(desc.length<30){ errEl.textContent=t.min; descEl.focus(); return; }
+    runBtn.disabled=true; statusEl.innerHTML='<span class="tg-spin"></span>'+esc(t.running);
+    var body={description:desc,language:lang(),
+      name:(nameEl.value||'').trim()||undefined,email:(emailEl.value||'').trim()||undefined,
+      company:(companyEl.value||'').trim()||undefined,country:(countryEl.value||'').trim()||undefined};
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        runBtn.disabled=false; statusEl.textContent='';
+        if(!res.ok||!res.j||!res.j.success){ errEl.textContent=(res.j&&res.j.error)||t.fail; return; }
+        render(res.j.data);
+      })
+      .catch(function(e){ runBtn.disabled=false; statusEl.textContent=''; errEl.textContent=t.net+(e.message||''); });
+  });
 })();
 </script>
 </body>
