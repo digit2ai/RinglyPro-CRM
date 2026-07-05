@@ -111,7 +111,10 @@ const filesRouter = express.Router();
 filesRouter.get('/', async (req, res) => {
   const { k, e, s } = req.query || {};
   if (!storage.verifyDiskSig(k, e, s)) return res.status(403).send('invalid');
-  try { const buf = await storage.getBuffer(k); res.set('Content-Type', k.endsWith('.png') ? 'image/png' : 'application/octet-stream').send(buf); }
-  catch (err2) { res.status(404).send('not found'); }
+  try {
+    const buf = await storage.getBuffer(k);
+    const ct = /\.png$/i.test(k) ? 'image/png' : /\.(mp4|m4v)$/i.test(k) ? 'video/mp4' : /\.mov$/i.test(k) ? 'video/quicktime' : /\.webm$/i.test(k) ? 'video/webm' : /\.(jpg|jpeg)$/i.test(k) ? 'image/jpeg' : 'application/octet-stream';
+    res.set('Content-Type', ct).set('Accept-Ranges', 'bytes').send(buf);
+  } catch (err2) { res.status(404).send('not found'); }
 });
 module.exports.filesRouter = filesRouter;
