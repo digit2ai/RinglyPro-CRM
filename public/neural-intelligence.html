@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es" class="lang-es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>/* language: saved choice > browser language > Spanish default (set before paint to avoid flash) */
+(function(){try{var s=localStorage.getItem('ni_lang');var nl=(navigator.language||navigator.userLanguage||'').toLowerCase();
+var l=(s==='en'||s==='es')?s:(nl.indexOf('en')===0?'en':'es');var d=document.documentElement;
+d.classList.remove('lang-en','lang-es');d.classList.add('lang-'+l);d.setAttribute('lang',l);}catch(e){}})();</script>
 <title>DIGIT2AI Neural Intelligence — The AI-Native Operating Model</title>
 <meta name="description" content="150 specialized AI agents. One backbone. 30-50% lower operating costs — in weeks, not years. DIGIT2AI LLC 2026.">
 <meta name="theme-color" content="#070b16">
@@ -322,6 +326,17 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   .niva-panel{top:auto;bottom:calc(100% + 10px);right:0}
 }
 @media print{.niva{display:none}}
+/* ===== Bilingual page (EN/ES) ===== */
+.i18{display:none}
+html.lang-en .i18.en{display:inline}
+html.lang-es .i18.es{display:inline}
+.langtoggle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;display:flex;gap:4px;
+  background:rgba(10,16,30,.62);border:1px solid var(--line2);border-radius:999px;padding:3px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.langtoggle button{border:0;background:transparent;color:var(--mut);font:700 12px var(--font-display);letter-spacing:.06em;padding:6px 15px;border-radius:999px;cursor:pointer;transition:color .15s}
+.langtoggle button:hover{color:var(--txt)}
+.langtoggle button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33}
+@media (max-width:640px){.langtoggle{top:10px}.langtoggle button{padding:5px 12px;font-size:11px}}
+@media print{.langtoggle{display:none}}
 @media (prefers-reduced-motion:reduce){
   .niva .orb-ring-outer,.niva .orb-ring-mid,.niva .orb-ring-inner,.niva .orb-iris-outer,.niva .orb-iris-segs,
   .niva .orb-scan,.niva .orb-crosshair,.niva .orb-particle{animation:none!important}
@@ -336,161 +351,165 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 <div class="progress" id="progress" aria-hidden="true"></div>
 <div class="wordmark">DIGIT<b>2</b>AI</div>
 <div class="counter" aria-hidden="true"><b id="cur">01</b> / 11</div>
+<div class="langtoggle" id="langtoggle" role="group" aria-label="Language / Idioma">
+  <button id="pgEn" type="button" lang="en">EN</button>
+  <button id="pgEs" type="button" lang="es">ES</button>
+</div>
 
 <main id="deck">
 
   <!-- ============ SLIDE 1 — TITLE ============ -->
   <section class="slide" id="s1" aria-label="Slide 1 of 11">
     <div class="slide__inner hero-title">
-      <h1 class="reveal">DIGIT<span class="b">2</span>AI<br>Neural Intelligence</h1>
-      <p class="hero-sub reveal">The AI-Native Operating Model</p>
-      <p class="hero-claim reveal"><span class="hl">150</span> specialized AI agents. One backbone. <span class="hl">30&ndash;50%</span> lower operating costs &mdash; in weeks, not years.</p>
+      <h1 class="reveal"><span class="i18 en">DIGIT<span class="b">2</span>AI<br>Neural Intelligence</span><span class="i18 es">DIGIT<span class="b">2</span>AI<br>Inteligencia Neural</span></h1>
+      <p class="hero-sub reveal"><span class="i18 en">The AI-Native Operating Model</span><span class="i18 es">El modelo operativo nativo de IA</span></p>
+      <p class="hero-claim reveal"><span class="i18 en"><span class="hl">150</span> specialized AI agents. One backbone. <span class="hl">30&ndash;50%</span> lower operating costs &mdash; in weeks, not years.</span><span class="i18 es"><span class="hl">150</span> agentes de IA especializados. Una sola columna vertebral. <span class="hl">30&ndash;50%</span> menos de costos operativos &mdash; en semanas, no en a&ntilde;os.</span></p>
       <p class="hero-org reveal">DIGIT2AI LLC&nbsp;&nbsp;|&nbsp;&nbsp;2026</p>
     </div>
-    <div class="scrollhint" aria-hidden="true">Scroll<span class="arw"></span></div>
+    <div class="scrollhint" aria-hidden="true"><span class="i18 en">Scroll</span><span class="i18 es">Desliza</span><span class="arw"></span></div>
   </section>
 
   <!-- ============ SLIDE 2 — THE PARADOX OF 2026 ============ -->
   <section class="slide" id="s2" aria-label="Slide 2 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Paradox of 2026</span>
-      <h2 class="title reveal">Everyone adopted AI. Almost no one is winning with it.</h2>
+      <span class="kicker reveal"><span class="i18 en">The Paradox of 2026</span><span class="i18 es">La paradoja de 2026</span></span>
+      <h2 class="title reveal"><span class="i18 en">Everyone adopted AI. Almost no one is winning with it.</span><span class="i18 es">Todos adoptaron la IA. Casi nadie est&aacute; ganando con ella.</span></h2>
       <ul class="pts reveal">
-        <li><b>88%</b> of organizations now use AI in at least one business function <span class="src">(McKinsey)</span></li>
-        <li>Only <b>~7%</b> have scaled AI across the enterprise</li>
-        <li>Only <b>~6%</b> capture significant, company-wide value from it</li>
-        <li><b>80&ndash;95%</b> of enterprise AI projects fail to deliver their promised ROI <span class="src">(RAND / MIT)</span></li>
+        <li><span class="i18 en"><b>88%</b> of organizations now use AI in at least one business function <span class="src">(McKinsey)</span></span><span class="i18 es"><b>88%</b> de las organizaciones ya usa IA en al menos una funci&oacute;n de negocio <span class="src">(McKinsey)</span></span></li>
+        <li><span class="i18 en">Only <b>~7%</b> have scaled AI across the enterprise</span><span class="i18 es">Solo <b>~7%</b> la ha escalado en toda la empresa</span></li>
+        <li><span class="i18 en">Only <b>~6%</b> capture significant, company-wide value from it</span><span class="i18 es">Solo <b>~6%</b> captura un valor significativo en toda la compa&ntilde;&iacute;a</span></li>
+        <li><span class="i18 en"><b>80&ndash;95%</b> of enterprise AI projects fail to deliver their promised ROI <span class="src">(RAND / MIT)</span></span><span class="i18 es"><b>80&ndash;95%</b> de los proyectos de IA empresarial no entregan el ROI prometido <span class="src">(RAND / MIT)</span></span></li>
       </ul>
-      <p class="close reveal">&ldquo;The problem is not the AI. It is what the AI is plugged into.&rdquo;</p>
+      <p class="close reveal"><span class="i18 en">&ldquo;The problem is not the AI. It is what the AI is plugged into.&rdquo;</span><span class="i18 es">&ldquo;El problema no es la IA. Es a qu&eacute; est&aacute; conectada.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 3 — THE REAL PROBLEM ============ -->
   <section class="slide" id="s3" aria-label="Slide 3 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Real Problem &middot; The Traditional Operating Model</span>
-      <h2 class="title reveal">Roughly 9 out of 10 enterprises still run on a pre-AI operating model.</h2>
-      <p class="lead reveal">They bolt AI tools onto:</p>
+      <span class="kicker reveal"><span class="i18 en">The Real Problem &middot; The Traditional Operating Model</span><span class="i18 es">El problema real &middot; El modelo operativo tradicional</span></span>
+      <h2 class="title reveal"><span class="i18 en">Roughly 9 out of 10 enterprises still run on a pre-AI operating model.</span><span class="i18 es">Cerca de 9 de cada 10 empresas todav&iacute;a funcionan con un modelo operativo anterior a la IA.</span></h2>
+      <p class="lead reveal"><span class="i18 en">They bolt AI tools onto:</span><span class="i18 es">Le conectan herramientas de IA a:</span></p>
       <ul class="pts reveal">
-        <li>Siloed departments and manual handoffs</li>
-        <li>Legacy systems that don&rsquo;t talk to each other</li>
-        <li>Headcount-based cost structures</li>
-        <li>Decisions that wait for meetings</li>
+        <li><span class="i18 en">Siloed departments and manual handoffs</span><span class="i18 es">Departamentos aislados y traspasos manuales</span></li>
+        <li><span class="i18 en">Legacy systems that don&rsquo;t talk to each other</span><span class="i18 es">Sistemas heredados que no se comunican entre s&iacute;</span></li>
+        <li><span class="i18 en">Headcount-based cost structures</span><span class="i18 es">Estructuras de costos basadas en personal</span></li>
+        <li><span class="i18 en">Decisions that wait for meetings</span><span class="i18 es">Decisiones que esperan reuniones</span></li>
       </ul>
-      <p class="close plain reveal"><b>AI on top of a traditional operating model produces expensive pilots &mdash; not transformation.</b> 60% of AI projects without AI-ready architecture are expected to be abandoned through 2026 <span class="src">(Gartner)</span>.</p>
+      <p class="close plain reveal"><span class="i18 en"><b>AI on top of a traditional operating model produces expensive pilots &mdash; not transformation.</b> 60% of AI projects without AI-ready architecture are expected to be abandoned through 2026 <span class="src">(Gartner)</span>.</span><span class="i18 es"><b>La IA sobre un modelo operativo tradicional produce pilotos costosos &mdash; no transformaci&oacute;n.</b> Se espera que el 60% de los proyectos de IA sin una arquitectura preparada sean abandonados hasta 2026 <span class="src">(Gartner)</span>.</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 4 — THE WINDOW ============ -->
   <section class="slide" id="s4" aria-label="Slide 4 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Window &middot; 2026&ndash;2027</span>
-      <h2 class="title reveal">AI adoption is the defining competitive move of 2026&ndash;2027.</h2>
+      <span class="kicker reveal"><span class="i18 en">The Window &middot; 2026&ndash;2027</span><span class="i18 es">La ventana &middot; 2026&ndash;2027</span></span>
+      <h2 class="title reveal"><span class="i18 en">AI adoption is the defining competitive move of 2026&ndash;2027.</span><span class="i18 es">La adopci&oacute;n de IA es la jugada competitiva decisiva de 2026&ndash;2027.</span></h2>
       <ul class="pts reveal">
-        <li>AI budgets are rising at <b>86%</b> of enterprises</li>
-        <li>Agentic AI is moving from experiment to production across every industry</li>
-        <li>Organizations that redesign work around AI are <b>2x</b> more likely to exceed revenue goals <span class="src">(Gartner)</span></li>
+        <li><span class="i18 en">AI budgets are rising at <b>86%</b> of enterprises</span><span class="i18 es">Los presupuestos de IA est&aacute;n creciendo en el <b>86%</b> de las empresas</span></li>
+        <li><span class="i18 en">Agentic AI is moving from experiment to production across every industry</span><span class="i18 es">La IA con agentes est&aacute; pasando del experimento a la producci&oacute;n en cada industria</span></li>
+        <li><span class="i18 en">Organizations that redesign work around AI are <b>2x</b> more likely to exceed revenue goals <span class="src">(Gartner)</span></span><span class="i18 es">Las organizaciones que redise&ntilde;an el trabajo en torno a la IA tienen <b>2x</b> m&aacute;s probabilidad de superar sus metas de ingresos <span class="src">(Gartner)</span></span></li>
       </ul>
-      <p class="close reveal">&ldquo;The gap between AI-native operators and traditional operators widens every quarter &mdash; and it will not close later at the same price.&rdquo;</p>
+      <p class="close reveal"><span class="i18 en">&ldquo;The gap between AI-native operators and traditional operators widens every quarter &mdash; and it will not close later at the same price.&rdquo;</span><span class="i18 es">&ldquo;La brecha entre los operadores nativos de IA y los tradicionales se ampl&iacute;a cada trimestre &mdash; y no se cerrar&aacute; despu&eacute;s al mismo precio.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 5 — INTRODUCING NEURAL INTELLIGENCE ============ -->
   <section class="slide" id="s5" aria-label="Slide 5 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">Introducing Neural Intelligence</span>
-      <h2 class="title reveal">Not another AI tool. A new operating model.</h2>
-      <p class="lead reveal">DIGIT2AI Neural Intelligence replaces manual, siloed operations with an orchestrated network of <strong>150 specialized AI agents</strong> that run business processes end to end &mdash; with your leadership in command of strategy and decisions.</p>
+      <span class="kicker reveal"><span class="i18 en">Introducing Neural Intelligence</span><span class="i18 es">Presentamos Neural Intelligence</span></span>
+      <h2 class="title reveal"><span class="i18 en">Not another AI tool. A new operating model.</span><span class="i18 es">No es otra herramienta de IA. Es un nuevo modelo operativo.</span></h2>
+      <p class="lead reveal"><span class="i18 en">DIGIT2AI Neural Intelligence replaces manual, siloed operations with an orchestrated network of <strong>150 specialized AI agents</strong> that run business processes end to end &mdash; with your leadership in command of strategy and decisions.</span><span class="i18 es">DIGIT2AI Neural Intelligence reemplaza las operaciones manuales y aisladas con una red orquestada de <strong>150 agentes de IA especializados</strong> que ejecutan los procesos de negocio de principio a fin &mdash; con tu liderazgo al mando de la estrategia y las decisiones.</span></p>
       <div class="quote-badge reveal">
-        <p class="megaline">Humans own the <span class="hl">WHAT</span>.<br>The architecture owns the <span class="hl">HOW</span>.</p>
+        <p class="megaline"><span class="i18 en">Humans own the <span class="hl">WHAT</span>.<br>The architecture owns the <span class="hl">HOW</span>.</span><span class="i18 es">Los humanos son due&ntilde;os del <span class="hl">QU&Eacute;</span>.<br>La arquitectura es due&ntilde;a del <span class="hl">C&Oacute;MO</span>.</span></p>
       </div>
-      <p class="close plain reveal">Your people don&rsquo;t disappear &mdash; they move up. Repetitive execution shifts to the agents; your team is freed for judgment, strategy, and the customer relationships only humans can own. The architecture absorbs the workload, not the payroll.</p>
+      <p class="close plain reveal"><span class="i18 en">Your people don&rsquo;t disappear &mdash; they move up. Repetitive execution shifts to the agents; your team is freed for judgment, strategy, and the customer relationships only humans can own. The architecture absorbs the workload, not the payroll.</span><span class="i18 es">Tu gente no desaparece &mdash; asciende. La ejecuci&oacute;n repetitiva pasa a los agentes; tu equipo queda libre para el criterio, la estrategia y las relaciones con los clientes que solo los humanos pueden manejar. La arquitectura absorbe la carga de trabajo, no la n&oacute;mina.</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 6 — THE ENGINE: D2AIEAM ============ -->
   <section class="slide" id="s6" aria-label="Slide 6 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Engine &middot; D2AIEAM</span>
-      <h2 class="title reveal">DIGIT2AI&rsquo;s proprietary enterprise architecture methodology &mdash; five layers, one backbone.</h2>
+      <span class="kicker reveal"><span class="i18 en">The Engine &middot; D2AIEAM</span><span class="i18 es">El motor &middot; D2AIEAM</span></span>
+      <h2 class="title reveal"><span class="i18 en">DIGIT2AI&rsquo;s proprietary enterprise architecture methodology &mdash; five layers, one backbone.</span><span class="i18 es">La metodolog&iacute;a propia de arquitectura empresarial de DIGIT2AI &mdash; cinco capas, una sola columna vertebral.</span></h2>
       <div class="layers" role="list">
-        <div class="layer reveal" role="listitem"><div class="num">1</div><div class="lx"><div class="lt">Business Requirements</div><div class="ld">Your strategy, captured in plain language</div></div></div>
+        <div class="layer reveal" role="listitem"><div class="num">1</div><div class="lx"><div class="lt"><span class="i18 en">Business Requirements</span><span class="i18 es">Requerimientos de negocio</span></div><div class="ld"><span class="i18 en">Your strategy, captured in plain language</span><span class="i18 es">Tu estrategia, capturada en lenguaje sencillo</span></div></div></div>
         <div class="layer-conn" aria-hidden="true"></div>
-        <div class="layer reveal" role="listitem"><div class="num">2</div><div class="lx"><div class="lt">Functional Design</div><div class="ld">Translated automatically into executable specifications</div></div></div>
+        <div class="layer reveal" role="listitem"><div class="num">2</div><div class="lx"><div class="lt"><span class="i18 en">Functional Design</span><span class="i18 es">Dise&ntilde;o funcional</span></div><div class="ld"><span class="i18 en">Translated automatically into executable specifications</span><span class="i18 es">Traducido autom&aacute;ticamente en especificaciones ejecutables</span></div></div></div>
         <div class="layer-conn" aria-hidden="true"></div>
-        <div class="layer reveal" role="listitem"><div class="num">3</div><div class="lx"><div class="lt">150 Specialized Agents</div><div class="ld">Finance, operations, sales, compliance, customer support</div></div></div>
+        <div class="layer reveal" role="listitem"><div class="num">3</div><div class="lx"><div class="lt"><span class="i18 en">150 Specialized Agents</span><span class="i18 es">150 agentes especializados</span></div><div class="ld"><span class="i18 en">Finance, operations, sales, compliance, customer support</span><span class="i18 es">Finanzas, operaciones, ventas, cumplimiento y soporte al cliente</span></div></div></div>
         <div class="layer-conn" aria-hidden="true"></div>
-        <div class="layer reveal" role="listitem"><div class="num">4</div><div class="lx"><div class="lt">MCP Orchestration Backbone</div><div class="ld">Every agent connected, governed, and auditable</div></div></div>
+        <div class="layer reveal" role="listitem"><div class="num">4</div><div class="lx"><div class="lt"><span class="i18 en">MCP Orchestration Backbone</span><span class="i18 es">Columna de orquestaci&oacute;n MCP</span></div><div class="ld"><span class="i18 en">Every agent connected, governed, and auditable</span><span class="i18 es">Cada agente conectado, gobernado y auditable</span></div></div></div>
         <div class="layer-conn" aria-hidden="true"></div>
-        <div class="layer reveal" role="listitem"><div class="num">5</div><div class="lx"><div class="lt">Reusable Verticals</div><div class="ld">23 production platforms already built on this factory</div></div></div>
+        <div class="layer reveal" role="listitem"><div class="num">5</div><div class="lx"><div class="lt"><span class="i18 en">Reusable Verticals</span><span class="i18 es">Verticales reutilizables</span></div><div class="ld"><span class="i18 en">23 production platforms already built on this factory</span><span class="i18 es">23 plataformas en producci&oacute;n ya construidas sobre esta f&aacute;brica</span></div></div></div>
       </div>
-      <p class="close plain reveal">It connects to the systems you already run &mdash; ERP, CRM, and legacy &mdash; so there is no rip-and-replace. Your data stays yours: encrypted, isolated to your enterprise, and never used to train outside models. Every agent action is logged, governed, and human-reversible.</p>
-      <p class="close reveal">&ldquo;Proven. Repeatable. Governed. A technical deep-dive is available for your CTO on request.&rdquo;</p>
+      <p class="close plain reveal"><span class="i18 en">It connects to the systems you already run &mdash; ERP, CRM, and legacy &mdash; so there is no rip-and-replace. Your data stays yours: encrypted, isolated to your enterprise, and never used to train outside models. Every agent action is logged, governed, and human-reversible.</span><span class="i18 es">Se conecta a los sistemas que ya usas &mdash; ERP, CRM y heredados &mdash; as&iacute; que no hay que reemplazar nada. Tus datos siguen siendo tuyos: cifrados, aislados dentro de tu empresa y nunca usados para entrenar modelos externos. Cada acci&oacute;n de un agente queda registrada, gobernada y es reversible por un humano.</span></p>
+      <p class="close reveal"><span class="i18 en">&ldquo;Proven. Repeatable. Governed. A technical deep-dive is available for your CTO on request.&rdquo;</span><span class="i18 es">&ldquo;Probado. Repetible. Gobernado. Hay una explicaci&oacute;n t&eacute;cnica a fondo disponible para tu CTO cuando la solicites.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 7 — THE RESULT: 30-50% ============ -->
   <section class="slide" id="s7" aria-label="Slide 7 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Result</span>
+      <span class="kicker reveal"><span class="i18 en">The Result</span><span class="i18 es">El resultado</span></span>
       <div class="stat reveal">30&ndash;50%</div>
-      <p class="stat-cap reveal">Operating Cost Reduction &mdash; within weeks. Not a multi-year transformation program.</p>
-      <p class="lead reveal">Where the savings come from:</p>
+      <p class="stat-cap reveal"><span class="i18 en">Operating Cost Reduction &mdash; within weeks. Not a multi-year transformation program.</span><span class="i18 es">Reducci&oacute;n de costos operativos &mdash; en semanas. No un programa de transformaci&oacute;n de varios a&ntilde;os.</span></p>
+      <p class="lead reveal"><span class="i18 en">Where the savings come from:</span><span class="i18 es">De d&oacute;nde vienen los ahorros:</span></p>
       <ul class="pts reveal">
-        <li>Repetitive knowledge work executed by agents, <b>24/7</b></li>
-        <li>Handoffs and rework eliminated by orchestration</li>
-        <li>Systems integrated through the MCP backbone instead of manual re-entry</li>
-        <li>Software built in days by the factory instead of quarters by vendors</li>
+        <li><span class="i18 en">Repetitive knowledge work executed by agents, <b>24/7</b></span><span class="i18 es">Trabajo repetitivo de conocimiento ejecutado por agentes, <b>24/7</b></span></li>
+        <li><span class="i18 en">Handoffs and rework eliminated by orchestration</span><span class="i18 es">Traspasos y retrabajos eliminados por la orquestaci&oacute;n</span></li>
+        <li><span class="i18 en">Systems integrated through the MCP backbone instead of manual re-entry</span><span class="i18 es">Sistemas integrados a trav&eacute;s de la columna MCP en lugar de reingreso manual</span></li>
+        <li><span class="i18 en">Software built in days by the factory instead of quarters by vendors</span><span class="i18 es">Software construido en d&iacute;as por la f&aacute;brica en lugar de trimestres por proveedores</span></li>
       </ul>
-      <p class="close plain reveal">And the cost of the solution itself? <span class="hl">Effectively self-funding.</span> The savings begin in the first week to first month and cover the deployment &mdash; you pay for it out of what you are already saving, not from new budget.</p>
-      <p class="close reveal">&ldquo;Enterprise AI already benchmarks at 3.7x ROI per dollar invested. Neural Intelligence goes further: structural cost removal, not incremental productivity.&rdquo;</p>
+      <p class="close plain reveal"><span class="i18 en">And the cost of the solution itself? <span class="hl">Effectively self-funding.</span> The savings begin in the first week to first month and cover the deployment &mdash; you pay for it out of what you are already saving, not from new budget.</span><span class="i18 es">&iquest;Y el costo de la soluci&oacute;n en s&iacute;? <span class="hl">Pr&aacute;cticamente se autofinancia.</span> Los ahorros comienzan en la primera semana o el primer mes y cubren el despliegue &mdash; lo pagas con lo que ya est&aacute;s ahorrando, no con presupuesto nuevo.</span></p>
+      <p class="close reveal"><span class="i18 en">&ldquo;Enterprise AI already benchmarks at 3.7x ROI per dollar invested. Neural Intelligence goes further: structural cost removal, not incremental productivity.&rdquo;</span><span class="i18 es">&ldquo;La IA empresarial ya rinde 3.7x de retorno por cada d&oacute;lar invertido. Neural Intelligence va m&aacute;s all&aacute;: eliminaci&oacute;n estructural de costos, no productividad incremental.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 8 — PROOF: THE PROJECT FACTORY ============ -->
   <section class="slide" id="s8" aria-label="Slide 8 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">Proof &middot; The DIGIT2AI Project Factory</span>
-      <h2 class="title reveal">23 production vertical platforms. One methodology. Weeks per build.</h2>
+      <span class="kicker reveal"><span class="i18 en">Proof &middot; The DIGIT2AI Project Factory</span><span class="i18 es">Prueba &middot; La f&aacute;brica de proyectos DIGIT2AI</span></span>
+      <h2 class="title reveal"><span class="i18 en">23 production vertical platforms. One methodology. Weeks per build.</span><span class="i18 es">23 plataformas verticales en producci&oacute;n. Una sola metodolog&iacute;a. Semanas por construcci&oacute;n.</span></h2>
       <div class="cards">
-        <div class="card reveal"><div class="cn">RinglyPro</div><div class="cd">AI voice CRM (Rachel AI) running multi-tenant client operations</div></div>
-        <div class="card reveal"><div class="cn">EquiMind</div><div class="cd">AI sports coaching platform (computer vision + biomechanics)</div></div>
-        <div class="card reveal"><div class="cn">PLANEA</div><div class="cd">Financial wellness platform for Latin America</div></div>
-        <div class="card reveal"><div class="cn">PINAXIS</div><div class="cd">AI intralogistics optimization for industrial operators</div></div>
-        <div class="card reveal"><div class="cn">MaraMed</div><div class="cd">Browser-based contactless vitals measurement</div></div>
+        <div class="card reveal"><div class="cn">RinglyPro</div><div class="cd"><span class="i18 en">AI voice CRM (Rachel AI) running multi-tenant client operations</span><span class="i18 es">CRM de voz con IA (Rachel AI) que opera clientes en modo multiempresa</span></div></div>
+        <div class="card reveal"><div class="cn">EquiMind</div><div class="cd"><span class="i18 en">AI sports coaching platform (computer vision + biomechanics)</span><span class="i18 es">Plataforma de entrenamiento deportivo con IA (visi&oacute;n por computadora + biomec&aacute;nica)</span></div></div>
+        <div class="card reveal"><div class="cn">PLANEA</div><div class="cd"><span class="i18 en">Financial wellness platform for Latin America</span><span class="i18 es">Plataforma de bienestar financiero para Am&eacute;rica Latina</span></div></div>
+        <div class="card reveal"><div class="cn">PINAXIS</div><div class="cd"><span class="i18 en">AI intralogistics optimization for industrial operators</span><span class="i18 es">Optimizaci&oacute;n de intralog&iacute;stica con IA para operadores industriales</span></div></div>
+        <div class="card reveal"><div class="cn">MaraMed</div><div class="cd"><span class="i18 en">Browser-based contactless vitals measurement</span><span class="i18 es">Medici&oacute;n de signos vitales sin contacto desde el navegador</span></div></div>
       </div>
-      <p class="close reveal">&ldquo;Every vertical is evidence the factory works &mdash; the same engine we deploy inside your enterprise. Ask to see the platform closest to your industry.&rdquo;</p>
+      <p class="close reveal"><span class="i18 en">&ldquo;Every vertical is evidence the factory works &mdash; the same engine we deploy inside your enterprise. Ask to see the platform closest to your industry.&rdquo;</span><span class="i18 es">&ldquo;Cada vertical es evidencia de que la f&aacute;brica funciona &mdash; el mismo motor que desplegamos dentro de tu empresa. Pide ver la plataforma m&aacute;s cercana a tu industria.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 9 — HOW ENGAGEMENT WORKS ============ -->
   <section class="slide" id="s9" aria-label="Slide 9 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">How Engagement Works</span>
-      <h2 class="title reveal">From decision to savings in weeks.</h2>
+      <span class="kicker reveal"><span class="i18 en">How Engagement Works</span><span class="i18 es">C&oacute;mo funciona el compromiso</span></span>
+      <h2 class="title reveal"><span class="i18 en">From decision to savings in weeks.</span><span class="i18 es">De la decisi&oacute;n a los ahorros en semanas.</span></h2>
       <div class="timeline">
-        <div class="tl-item reveal"><div class="tl-when">Weeks 1&ndash;2</div><div class="tl-what">Neural Assessment</div><div class="tl-desc">We map your operating model and identify the 30&ndash;50% cost surface</div></div>
-        <div class="tl-item reveal"><div class="tl-when">Weeks 3&ndash;4</div><div class="tl-what">First Agents Live</div><div class="tl-desc">Deployed against your highest-cost process first</div></div>
-        <div class="tl-item reveal"><div class="tl-when">Weeks 5&ndash;8</div><div class="tl-what">Scale the Network</div><div class="tl-desc">Agents expand across functions on the MCP backbone</div></div>
-        <div class="tl-item reveal"><div class="tl-when">Ongoing</div><div class="tl-what">Human-in-Command Governance</div><div class="tl-desc">Your leaders direct; the architecture executes</div></div>
+        <div class="tl-item reveal"><div class="tl-when"><span class="i18 en">Weeks 1&ndash;2</span><span class="i18 es">Semanas 1&ndash;2</span></div><div class="tl-what"><span class="i18 en">Neural Assessment</span><span class="i18 es">Evaluaci&oacute;n Neural</span></div><div class="tl-desc"><span class="i18 en">We map your operating model and identify the 30&ndash;50% cost surface</span><span class="i18 es">Mapeamos tu modelo operativo e identificamos la superficie de costos del 30&ndash;50%</span></div></div>
+        <div class="tl-item reveal"><div class="tl-when"><span class="i18 en">Weeks 3&ndash;4</span><span class="i18 es">Semanas 3&ndash;4</span></div><div class="tl-what"><span class="i18 en">First Agents Live</span><span class="i18 es">Primeros agentes en vivo</span></div><div class="tl-desc"><span class="i18 en">Deployed against your highest-cost process first</span><span class="i18 es">Desplegados primero contra tu proceso de mayor costo</span></div></div>
+        <div class="tl-item reveal"><div class="tl-when"><span class="i18 en">Weeks 5&ndash;8</span><span class="i18 es">Semanas 5&ndash;8</span></div><div class="tl-what"><span class="i18 en">Scale the Network</span><span class="i18 es">Escalar la red</span></div><div class="tl-desc"><span class="i18 en">Agents expand across functions on the MCP backbone</span><span class="i18 es">Los agentes se expanden por las funciones sobre la columna MCP</span></div></div>
+        <div class="tl-item reveal"><div class="tl-when"><span class="i18 en">Ongoing</span><span class="i18 es">Continuo</span></div><div class="tl-what"><span class="i18 en">Human-in-Command Governance</span><span class="i18 es">Gobernanza con el humano al mando</span></div><div class="tl-desc"><span class="i18 en">Your leaders direct; the architecture executes</span><span class="i18 es">Tus l&iacute;deres dirigen; la arquitectura ejecuta</span></div></div>
       </div>
-      <p class="close plain reveal">What we need from you: a few hours of executive time and system access &mdash; not a dedicated project army. Because the savings arrive in the first month, the engagement pays for itself before you commit to scale.</p>
-      <p class="close reveal">&ldquo;No 18-month consulting roadmap. Value lands inside the first month.&rdquo;</p>
+      <p class="close plain reveal"><span class="i18 en">What we need from you: a few hours of executive time and system access &mdash; not a dedicated project army. Because the savings arrive in the first month, the engagement pays for itself before you commit to scale.</span><span class="i18 es">Lo que necesitamos de ti: unas pocas horas de tiempo ejecutivo y acceso a los sistemas &mdash; no un ej&eacute;rcito dedicado al proyecto. Como los ahorros llegan en el primer mes, el compromiso se paga a s&iacute; mismo antes de que decidas escalar.</span></p>
+      <p class="close reveal"><span class="i18 en">&ldquo;No 18-month consulting roadmap. Value lands inside the first month.&rdquo;</span><span class="i18 es">&ldquo;Sin una hoja de ruta de consultor&iacute;a de 18 meses. El valor llega dentro del primer mes.&rdquo;</span></p>
     </div>
   </section>
 
   <!-- ============ SLIDE 10 — THE COST OF WAITING ============ -->
   <section class="slide" id="s10" aria-label="Slide 10 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">The Cost of Waiting</span>
-      <h2 class="title reveal">Every quarter on the traditional model is margin handed to AI-native competitors.</h2>
+      <span class="kicker reveal"><span class="i18 en">The Cost of Waiting</span><span class="i18 es">El costo de esperar</span></span>
+      <h2 class="title reveal"><span class="i18 en">Every quarter on the traditional model is margin handed to AI-native competitors.</span><span class="i18 es">Cada trimestre con el modelo tradicional es margen entregado a los competidores nativos de IA.</span></h2>
       <ul class="pts reveal">
-        <li>Your cost structure stays <b>30&ndash;50%</b> heavier than it needs to be</li>
-        <li>Competitors compound the savings into pricing power and speed</li>
-        <li>Talent and capital flow to AI-native operators</li>
+        <li><span class="i18 en">Your cost structure stays <b>30&ndash;50%</b> heavier than it needs to be</span><span class="i18 es">Tu estructura de costos se mantiene <b>30&ndash;50%</b> m&aacute;s pesada de lo necesario</span></li>
+        <li><span class="i18 en">Competitors compound the savings into pricing power and speed</span><span class="i18 es">Los competidores convierten esos ahorros en poder de precio y velocidad</span></li>
+        <li><span class="i18 en">Talent and capital flow to AI-native operators</span><span class="i18 es">El talento y el capital fluyen hacia los operadores nativos de IA</span></li>
       </ul>
       <div class="quote-badge reveal">
-        <p class="megaline">In 2027, there will be two kinds of enterprises: those that run on <span class="hl">neural intelligence</span>, and those competing against it.</p>
+        <p class="megaline"><span class="i18 en">In 2027, there will be two kinds of enterprises: those that run on <span class="hl">neural intelligence</span>, and those competing against it.</span><span class="i18 es">En 2027 habr&aacute; dos tipos de empresas: las que funcionan con <span class="hl">inteligencia neural</span>, y las que compiten contra ellas.</span></p>
       </div>
     </div>
   </section>
@@ -498,12 +517,12 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   <!-- ============ SLIDE 11 — NEXT STEP ============ -->
   <section class="slide" id="s11" aria-label="Slide 11 of 11">
     <div class="slide__inner">
-      <span class="kicker reveal">Next Step</span>
-      <h2 class="title reveal">Neural Assessment &mdash; 2 weeks, fixed scope.</h2>
-      <p class="lead reveal">We map your operating model and deliver a quantified cost-reduction blueprint: where the <strong>30&ndash;50%</strong> lives, which agents capture it, and the deployment sequence.</p>
-      <p class="lead reveal">The assessment is the only up-front commitment. Everything after it is <span class="hl">self-funding</span> &mdash; the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.</p>
+      <span class="kicker reveal"><span class="i18 en">Next Step</span><span class="i18 es">Siguiente paso</span></span>
+      <h2 class="title reveal"><span class="i18 en">Neural Assessment &mdash; 2 weeks, fixed scope.</span><span class="i18 es">Evaluaci&oacute;n Neural &mdash; 2 semanas, alcance fijo.</span></h2>
+      <p class="lead reveal"><span class="i18 en">We map your operating model and deliver a quantified cost-reduction blueprint: where the <strong>30&ndash;50%</strong> lives, which agents capture it, and the deployment sequence.</span><span class="i18 es">Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducci&oacute;n de costos: d&oacute;nde est&aacute; el <strong>30&ndash;50%</strong>, qu&eacute; agentes lo capturan y la secuencia de despliegue.</span></p>
+      <p class="lead reveal"><span class="i18 en">The assessment is the only up-front commitment. Everything after it is <span class="hl">self-funding</span> &mdash; the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.</span><span class="i18 es">La evaluaci&oacute;n es el &uacute;nico compromiso inicial. Todo lo que viene despu&eacute;s se <span class="hl">autofinancia</span> &mdash; los ahorros operativos pagan el despliegue desde el primer mes, as&iacute; que escalas con dinero que ya est&aacute;s ahorrando.</span></p>
       <!-- TODO: wire this CTA to the real contact path — email / phone / booking link (currently a placeholder href="#") -->
-      <a class="cta reveal" href="#" id="ctaBtn" role="button">Book the Neural Assessment</a>
+      <a class="cta reveal" href="#" id="ctaBtn" role="button"><span class="i18 en">Book the Neural Assessment</span><span class="i18 es">Agenda la Evaluaci&oacute;n Neural</span></a>
       <div class="footer reveal">
         <div class="co">DIGIT2AI LLC &mdash; Tampa, FL</div>
         <div class="people">Lina Stagg, CEO&nbsp;&nbsp;|&nbsp;&nbsp;Manuel Stagg, CTO &amp; Co-Founder</div>
@@ -929,10 +948,13 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
   // ---- Events ----
   orbWrap.addEventListener('click',orbTap);
   orbWrap.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); orbTap(); } });
-  // language: switching mid-playback restarts narration in the new language
+  // language: switching mid-playback restarts narration in the new language (voice only)
   function switchLang(l){ var was=playing; setLang(l); if(was) playAll(); }
-  enBtn.addEventListener('click',function(){ switchLang('en'); });
-  esBtn.addEventListener('click',function(){ switchLang('es'); });
+  // expose the voice-language setter so the top page toggle drives the voice too
+  window.__setVoiceLang=switchLang;
+  // the chip's EN/ES buttons flip the WHOLE page (text + voice) via the shared page toggle
+  enBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('en'); });
+  esBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('es'); });
   playBtn.addEventListener('click',playAll);
   accentSel.addEventListener('change',function(){ voiceName=this.value; clearCache(); });
   neuralToggle.addEventListener('change',setMode);
@@ -944,6 +966,28 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 
   // ---- Init ----
   buildAccents(); applyLangUI();
+})();
+
+// ---- Page language toggle (text + voice), shared by the top toggle and the orb chip ----
+(function(){
+  var pgEn=document.getElementById('pgEn'), pgEs=document.getElementById('pgEs');
+  var d=document.documentElement;
+  function current(){ return d.classList.contains('lang-en')?'en':'es'; }
+  window.applyLanguage=function(l){
+    if(l!=='en'&&l!=='es') l='es';
+    d.classList.remove('lang-en','lang-es'); d.classList.add('lang-'+l); d.setAttribute('lang',l);
+    if(pgEn) pgEn.classList.toggle('on',l==='en');
+    if(pgEs) pgEs.classList.toggle('on',l==='es');
+    try{ localStorage.setItem('ni_lang',l); }catch(e){}
+    if(window.__setVoiceLang) window.__setVoiceLang(l); // page text and voice stay in lockstep
+  };
+  if(pgEn) pgEn.addEventListener('click',function(){ window.applyLanguage('en'); });
+  if(pgEs) pgEs.addEventListener('click',function(){ window.applyLanguage('es'); });
+  // initial sync — respect what the early <head> script decided (saved > browser > Spanish), don't re-persist
+  var l0=current();
+  if(pgEn) pgEn.classList.toggle('on',l0==='en');
+  if(pgEs) pgEs.classList.toggle('on',l0==='es');
+  if(window.__setVoiceLang) window.__setVoiceLang(l0);
 })();
 </script>
 </body>
