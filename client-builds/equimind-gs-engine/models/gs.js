@@ -103,7 +103,12 @@ async function init() {
   try {
     sequelize = getSequelize();
     await sequelize.authenticate();
-    for (const n of Object.keys(TABLES)) M[n] = sequelize.define('GS_' + n, TABLES[n].attrs, { tableName: TABLES[n].table, timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+    for (const n of Object.keys(TABLES)) {
+      // gs_assets is write-once (immutable) — created_at only, no updated_at
+      // (matches the migration). The rest track both.
+      const ts = { tableName: TABLES[n].table, timestamps: true, createdAt: 'created_at', updatedAt: n === 'assets' ? false : 'updated_at' };
+      M[n] = sequelize.define('GS_' + n, TABLES[n].attrs, ts);
+    }
     for (const n of Object.keys(TABLES)) await M[n].sync({ alter: false });
     return { mode: 'postgres' };
   } catch (err) {
