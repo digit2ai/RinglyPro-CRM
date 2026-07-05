@@ -26,7 +26,14 @@ const DICTS = {
     rep_grab: 'Arrastra para orbitar · el modelo gira solo',
     rep_disc: 'El modelo 3D es una representación generada a partir de las medidas del análisis — no es un escaneo fotográfico de este animal. Con la GPU de splatting conectada, sería el escaneo real desde tu video. Las medidas y hallazgos provienen del análisis.',
     rep_no_measures: 'Aún no hay medidas para este informe.', rep_no_findings: 'Sin hallazgos registrados.',
-    rep_studio: 'Vista del estudio · no se muestra al cliente'
+    rep_studio: 'Vista del estudio · no se muestra al cliente',
+    ru_title: 'Informe 3D Gaussian Splatting', ru_sub: 'Genera un informe 3D compartible a partir de las medidas del análisis. Sin GPU — costo cero.',
+    ru_horse: 'Nombre del caballo', ru_breed: 'Raza', ru_height: 'Alzada a la cruz (cm)', ru_length: 'Largo del cuerpo (cm)', ru_capsec: 'Duración de la captura (s)',
+    ru_measures: 'Medidas de conformación', ru_add_measure: '+ Agregar medida', ru_findings: 'Hallazgos', ru_add_finding: '+ Agregar hallazgo',
+    ru_col_label: 'Medida', ru_col_value: 'Valor', ru_col_cm: 'cm', ru_col_ideal: 'Ideal (mín–máx)', ru_col_status: 'Estado',
+    ru_col_title: 'Título', ru_col_detail: 'Detalle', ru_media_opt: 'Video/fotos (opcional — para el escaneo real Luma más adelante)',
+    ru_generate: 'Generar informe 3D', ru_generating: 'Generando informe…', ru_done: 'Informe listo.', ru_open: 'Abrir informe ↗', ru_copy: 'Copiar enlace',
+    ru_need_name: 'Ingresa al menos el nombre del caballo o una medida.', ru_remove: 'Quitar'
   },
   en: {
     lang: 'en', title: 'EquiMind 3D · Gaussian Splatting Engine',
@@ -52,7 +59,14 @@ const DICTS = {
     rep_grab: 'Drag to orbit · the model spins on its own',
     rep_disc: 'The 3D model is a generated representation built from the analysis measurements — not a photographic scan of this animal. With the splatting GPU connected it would be the real scan from your video. Measurements and findings come from the analysis.',
     rep_no_measures: 'No measurements on this report yet.', rep_no_findings: 'No findings recorded.',
-    rep_studio: 'Studio view · not shown to the client'
+    rep_studio: 'Studio view · not shown to the client',
+    ru_title: '3D Gaussian Splatting Report', ru_sub: 'Generate a shareable 3D report from the analysis measurements. No GPU — zero cost.',
+    ru_horse: 'Horse name', ru_breed: 'Breed', ru_height: 'Withers height (cm)', ru_length: 'Body length (cm)', ru_capsec: 'Capture length (s)',
+    ru_measures: 'Conformation measurements', ru_add_measure: '+ Add measurement', ru_findings: 'Findings', ru_add_finding: '+ Add finding',
+    ru_col_label: 'Measure', ru_col_value: 'Value', ru_col_cm: 'cm', ru_col_ideal: 'Ideal (min–max)', ru_col_status: 'Status',
+    ru_col_title: 'Title', ru_col_detail: 'Detail', ru_media_opt: 'Video/photos (optional — for the real Luma scan later)',
+    ru_generate: 'Generate 3D report', ru_generating: 'Generating report…', ru_done: 'Report ready.', ru_open: 'Open report ↗', ru_copy: 'Copy link',
+    ru_need_name: 'Enter at least a horse name or one measurement.', ru_remove: 'Remove'
   }
 };
 
