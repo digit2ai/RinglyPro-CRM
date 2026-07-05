@@ -64,17 +64,25 @@ function buildSystemPrompt(ctx) {
     `You are ${ctx.agentName || 'the AI receptionist'} for ${ctx.businessName || 'this business'}, answering the phone.`,
     `Today is ${ctx.todayHuman} (${ctx.todayISO}), timezone ${ctx.timezone}.`,
     '',
+    'DATE REFERENCE — the caller will name days like "Monday" or "tomorrow". Convert them using ONLY this table.',
+    'NEVER calculate a date yourself; always copy the exact YYYY-MM-DD from the row whose weekday the caller said:',
+    ctx.dateRef,
+    '',
     'Your only job on this call is to help the caller BOOK an appointment.',
     'Rules:',
     '- Keep every reply short and natural — this is spoken out loud. One or two sentences, one question at a time.',
     '- Never read out IDs, URLs, or code. Speak like a person.',
     '- Collect: the caller\'s name, a good phone number, and their preferred day/time.',
     `- The caller is phoning from ${ctx.from || 'an unknown number'} — offer to use that number so they don\'t have to repeat it.`,
-    '- Resolve relative dates ("tomorrow", "next Tuesday") to a real calendar date yourself before calling tools.',
-    '- ALWAYS call check_availability before you offer specific times. Offer at most two or three options.',
-    '- Confirm the final date and time back to the caller BEFORE calling book_appointment.',
-    '- After a successful booking, confirm the day and time in words and ask if there is anything else.',
-    '- If a tool returns an error, apologize briefly and either ask for the missing detail or offer another time. Never invent a confirmation.',
+    '- To turn a spoken day into a date, look it up in the DATE REFERENCE table above. Do not do the math in your head.',
+    '- ALWAYS call check_availability before you offer specific times. Only offer and book times it returned as available, using that slot\'s exact date.',
+    '- Confirm the day, date, and time back to the caller (e.g. "Monday, July sixth, at three PM") BEFORE calling book_appointment.',
+    '',
+    'BOOKING TRUTHFULNESS — this is critical:',
+    '- You are NOT booked until you have CALLED book_appointment AND received a result with success set to true.',
+    '- NEVER tell the caller they are booked, confirmed, or scheduled unless that tool call actually returned success true. Do not assume or pretend.',
+    '- When you do confirm, read back the date and time EXACTLY as they appear in the book_appointment result (its appointment_date and appointment_time), not from memory.',
+    '- If book_appointment returns success false or any error, tell the caller it did NOT go through, then fix the missing detail or offer another available time and try again. Never claim a failed booking succeeded.',
     '- If the caller wants something other than booking, answer briefly and steer back to booking, or offer to take a message.'
   ].join('\n');
 }
@@ -194,6 +202,20 @@ async function resolveClientContext({ to, from }) {
     timeZone: timezone, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
   }).format(now);
 
+  // Precompute a weekday -> date table for the next 14 days so the LLM never does date math.
+  // Anchor on the business-timezone calendar date (todayISO) and increment by whole days,
+  // formatting in UTC to avoid any timezone drift on the weekday labels.
+  const [ty, tm, td] = todayISO.split('-').map(Number);
+  const dateRef = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(Date.UTC(ty, tm - 1, td + i, 12, 0, 0));
+    const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'long' }).format(d);
+    const human = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'long', day: 'numeric' }).format(d);
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(d);
+    const tag = i === 0 ? ' (today)' : i === 1 ? ' (tomorrow)' : '';
+    dateRef.push(`  ${wd}, ${human} = ${iso}${tag}`);
+  }
+
   return {
     clientId,
     businessName: (info && info.business_name) || 'our office',
@@ -202,7 +224,8 @@ async function resolveClientContext({ to, from }) {
     from,
     to,
     todayISO,
-    todayHuman
+    todayHuman,
+    dateRef: dateRef.join('\n')
   };
 }
 
