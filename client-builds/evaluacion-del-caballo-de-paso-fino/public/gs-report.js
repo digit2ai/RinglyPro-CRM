@@ -41,6 +41,15 @@
   var ctx = { horseName: '', measurements: [], findings: [], neural: null, gait: null, captureSeconds: null };
   var mounted = [];
 
+  // Mobile: let the multi-column measurement/finding rows scroll horizontally so
+  // the generator is fully usable on a phone (this was invisible/cramped before).
+  (function injectStyle() {
+    if (typeof document === 'undefined' || document.getElementById('gsr-style')) return;
+    var st = document.createElement('style'); st.id = 'gsr-style';
+    st.textContent = '@media(max-width:640px){.gsr-meas,.gsr-find{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.gsr-mrow{min-width:540px}.gsr-frow{min-width:470px}}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
+
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]); }); }
   function num(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
   function statusOpts(sel) { return STAT.map(function (s) { return '<option value="' + s + '"' + (s === sel ? ' selected' : '') + '>' + T['st_' + s] + '</option>'; }).join(''); }

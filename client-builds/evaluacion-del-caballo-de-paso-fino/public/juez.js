@@ -374,10 +374,10 @@
     // Acciones de dueño no aplican a un visitante del informe.
     ['newAnalysis', 'goHistory'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
     // Mostrar el CTA de marketing (a menos que el visitante ya tenga sesión).
-    // El generador de informe 3D es una acción de dueño: se oculta a visitantes anónimos.
+    // El generador de informe 3D SÍ se muestra en el informe compartido (móvil
+    // incluido); si el visitante no tiene sesión, "Generar" pide iniciar sesión.
     if (!window.ECPFAccount || !window.ECPFAccount.isLoggedIn()) {
       var cta = $('marketingCta'); if (cta) cta.classList.remove('hidden');
-      ['gsReportBottom'].forEach(function (bid) { var b = $(bid); if (b) b.classList.add('hidden'); });
     }
     var url = CHAMP + '/sessions/' + encodeURIComponent(id) + '?lang=' + LANG + (k ? ('&k=' + encodeURIComponent(k)) : '');
     fetch(url, { credentials: 'same-origin' })
