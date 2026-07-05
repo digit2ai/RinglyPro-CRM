@@ -40,6 +40,10 @@
   .ovl .big{color:var(--brass2);font-size:13px} .ovl.bl{bottom:14px;left:16px;color:var(--faint)}
   .scanchip{position:absolute;bottom:14px;right:16px;display:flex;gap:7px;pointer-events:auto}
   .pill{font-family:var(--mono);font-size:11px;color:var(--cream);background:rgba(20,16,11,.7);border:1px solid var(--line2);border-radius:999px;padding:6px 11px;cursor:pointer}
+  .pill.on{color:#241a08;background:linear-gradient(180deg,var(--brass2),var(--brass));border-color:transparent;font-weight:600}
+  .legend{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;color:var(--mut);background:rgba(20,16,11,.72);border:1px solid var(--line2);border-radius:999px;padding:5px 13px;backdrop-filter:blur(6px);pointer-events:none;white-space:nowrap;max-width:92%}
+  .legend .scale{width:110px;height:7px;border-radius:99px;background:linear-gradient(90deg,#C0553F,#D98A3E 45%,#C9A24B 70%,#5FA772 100%);flex:none}
+  .legend b{color:var(--cream);font-weight:600}
   .value{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
   .vcard{border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--ink2)}
   .vcard .t{font-weight:600;font-size:14px} .vcard .d{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.4}
@@ -136,7 +140,8 @@
       <div class="ovl tl" id="ovlModel"></div>
       <div class="ovl tr">CAPTURA · <span id="ovlCap">—</span><br><span id="ang">—</span></div>
       <div class="ovl bl" id="ovlHint"></div>
-      <div class="scanchip noprint"><span class="pill" id="autoBtn"></span><span class="pill" id="resetBtn"></span></div>
+      <div class="legend" id="legend"></div>
+      <div class="scanchip noprint"><span class="pill" id="heatBtn"></span><span class="pill" id="autoBtn"></span><span class="pill" id="resetBtn"></span></div>
     </div>
 
     <div class="value" id="valueStrip"></div>
@@ -383,34 +388,51 @@ function renderStudio(scene){
 const ANCHORS={ poll:[2.55,1.95,0], withers:[1.15,1.05,0], back:[0,0.95,0], loin:[-0.7,0.95,0], croup:[-1.25,0.9,0],
   shoulder:[1.2,0.4,0.45], chest:[1.55,0.1,0], fore_l:[0.98,-1.3,0.45], fore_r:[0.98,-1.3,-0.45],
   hind_l:[-1.15,-1.3,0.45], hind_r:[-1.15,-1.3,-0.45], tail:[-2.1,-0.3,0] };
-function startCanvasHorse(splatLabel){
+function hexRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function regionOf(x,y){ if(x>2.3) return 'head'; if(x>1.3&&y>0.5) return 'neck'; if(y<-0.4) return x>0?'fore':'hind'; if(x<-0.9) return 'croup'; return 'barrel'; }
+const CENT={ fore:[0.98,-0.95,0.35], hind:[-1.15,-0.95,0.35], barrel:[0,0.55,0.66], neck:[1.85,1.35,0], head:[2.6,1.72,0] };
+function startCanvasHorse(splatLabel, region){
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv=$('scan'), ctx=cv.getContext('2d'); const DPR=Math.min(window.devicePixelRatio||1,2); let W=0,H=0;
   function resize(){ const r=cv.getBoundingClientRect(); W=r.width;H=r.height; cv.width=W*DPR;cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
   addEventListener('resize',resize);
+  const rs=region||{};
+  const regMeta={ fore:[rs.fore, I.rep_reg_elev||'Elevation'], hind:[rs.hind, I.rep_reg_brio||'Brío'], croup:[rs.hind, I.rep_reg_brio||'Brío'],
+    barrel:[rs.barrel, I.rep_reg_sym||'Symmetry'], neck:[rs.rhythm, I.rep_reg_rhythm||'Rhythm'], head:[rs.clarity, I.rep_reg_clarity||'Clarity'] };
+  const hasHeat = !!(rs && (rs.fore!=null||rs.barrel!=null||rs.total!=null));
   const pts=[]; const rnd=Math.random;
-  function ellip(n,cx,cy,cz,rx,ry,rz,t){for(let i=0;i<n;i++){const u=rnd(),v=rnd(),th=Math.acos(2*u-1),ph=2*Math.PI*v,rr=Math.cbrt(rnd())*0.5+0.5;pts.push({x:cx+rx*rr*Math.sin(th)*Math.cos(ph),y:cy+ry*rr*Math.cos(th),z:cz+rz*rr*Math.sin(th)*Math.sin(ph),t});}}
-  function limb(n,x0,y0,z0,x1,y1,z1,r,t){for(let i=0;i<n;i++){const s=rnd(),a=2*Math.PI*rnd(),rr=Math.sqrt(rnd())*r;pts.push({x:x0+(x1-x0)*s+Math.cos(a)*rr,y:y0+(y1-y0)*s,z:z0+(z1-z0)*s+Math.sin(a)*rr,t});}}
+  function tag(p){ const reg=regionOf(p.x,p.y); const rm=regMeta[reg]; p.score=(rm&&rm[0]!=null)?rm[0]:(rs.total!=null?rs.total:null); p.rgb=p.score!=null?hexRgb(scoreColor(p.score)):[201,162,75]; return p; }
+  function ellip(n,cx,cy,cz,rx,ry,rz,t){for(let i=0;i<n;i++){const u=rnd(),v=rnd(),th=Math.acos(2*u-1),ph=2*Math.PI*v,rr=Math.cbrt(rnd())*0.5+0.5;pts.push(tag({x:cx+rx*rr*Math.sin(th)*Math.cos(ph),y:cy+ry*rr*Math.cos(th),z:cz+rz*rr*Math.sin(th)*Math.sin(ph),t}));}}
+  function limb(n,x0,y0,z0,x1,y1,z1,r,t){for(let i=0;i<n;i++){const s=rnd(),a=2*Math.PI*rnd(),rr=Math.sqrt(rnd())*r;pts.push(tag({x:x0+(x1-x0)*s+Math.cos(a)*rr,y:y0+(y1-y0)*s,z:z0+(z1-z0)*s+Math.sin(a)*rr,t}));}}
   ellip(900,0,0.15,0,1.55,0.86,0.66,0.0); ellip(360,-1.25,0.25,0,0.7,0.8,0.62,0.05); ellip(240,1.15,0.05,0,0.55,0.7,0.6,0.0);
-  for(let i=0;i<430;i++){const s=rnd(),a=2*Math.PI*rnd(),rr=Math.sqrt(rnd())*(0.42-0.16*s);pts.push({x:1.35+1.0*s+Math.cos(a)*rr,y:0.55+1.15*s,z:Math.sin(a)*rr,t:0.1});}
+  for(let i=0;i<430;i++){const s=rnd(),a=2*Math.PI*rnd(),rr=Math.sqrt(rnd())*(0.42-0.16*s);pts.push(tag({x:1.35+1.0*s+Math.cos(a)*rr,y:0.55+1.15*s,z:Math.sin(a)*rr,t:0.1}));}
   ellip(150,2.5,1.72,0,0.34,0.26,0.24,0.15); ellip(60,2.86,1.5,0,0.16,0.16,0.15,0.2);
   limb(24,2.42,2.0,0.1,2.3,2.35,0.16,0.05,0.25); limb(24,2.42,2.0,-0.1,2.3,2.35,-0.16,0.05,0.25);
   limb(150,0.95,-0.55,0.42,1.05,-2.25,0.5,0.15,0.08); limb(150,0.95,-0.55,-0.42,1.05,-2.25,-0.5,0.15,0.08);
   limb(150,-1.15,-0.5,0.42,-1.2,-2.25,0.48,0.16,0.08); limb(150,-1.15,-0.5,-0.42,-1.2,-2.25,-0.48,0.16,0.08);
   limb(90,-1.9,0.35,0,-2.35,-1.15,0,0.14,0.12);
-  $('ovlModel').innerHTML=(splatLabel||'MODELO 3D · GENERADO')+'<br><span class="big">'+nf(pts.length*1000)+' splats</span>';
+  let heat=hasHeat;
+  function setModelLabel(){ const base=(splatLabel||'MODELO 3D · GENERADO');
+    $('ovlModel').innerHTML = heat ? ((LANG==='en'?'SCORE HEATMAP':'MAPA DE PUNTAJE')+'<br><span class="big">'+(rs.total!=null?(Math.round(rs.total)+'/100 vs 100'):'—')+'</span>') : (base+'<br><span class="big">'+nf(pts.length)+' splats</span>'); }
+  function setLegend(){ const lg=$('legend'); if(!lg) return; if(!heat){ lg.style.display='none'; return; } lg.style.display='flex'; lg.innerHTML='0 <span class="scale"></span> 100 · <b>'+esc(I.rep_vs_perfect||'vs perfect (100)')+'</b>'; }
   let ang=-0.5,tilt=0.06,auto=!reduce,dragging=false,lx=0,ly=0,spin=reduce?0:0.0045,cx=0,cy=0,scl=1,phase=0;
   let activeAnchor=null,activeLabel='';
-  const brass=[201,162,75],brass2=[230,197,114]; function mix(a,b,f){return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';}
+  const brass=[201,162,75],brass2=[230,197,114]; function mix(a,b,f){return [Math.round(a[0]+(b[0]-a[0])*f),Math.round(a[1]+(b[1]-a[1])*f),Math.round(a[2]+(b[2]-a[2])*f)];}
+  function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')';}
   function project(p){ const ca=Math.cos(ang),sa=Math.sin(ang),ct=Math.cos(tilt),st=Math.sin(tilt);
     const x=p[0]*ca-p[2]*sa,z=p[0]*sa+p[2]*ca,y=p[1]*ct-z*st,z2=p[1]*st+z*ct,f=3.2/(3.2+z2);
     return {sx:cx+x*scl*f,sy:cy-y*scl*f,z:z2}; }
+  function chip(c3,text,col){ ctx.font='600 11px -apple-system,sans-serif'; const tw=ctx.measureText(text).width; const x=Math.min(W-tw-22,Math.max(8,c3.sx+12)), y=Math.max(18,Math.min(H-8,c3.sy));
+    ctx.fillStyle='rgba(20,16,11,.82)';ctx.strokeStyle=col;ctx.lineWidth=1.2; roundRect(ctx,x-8,y-13,tw+16,21,7);ctx.fill();ctx.stroke(); ctx.fillStyle=col; ctx.fillText(text,x,y+1); }
   function draw(){ ctx.clearRect(0,0,W,H); cx=W*0.5;cy=H*0.60;scl=Math.min(W,H)*0.155; phase+=0.05;
     ctx.save();ctx.translate(cx,cy+scl*2.1);ctx.scale(1,0.26);ctx.beginPath();ctx.arc(0,0,scl*2.0,0,7);ctx.fillStyle='rgba(0,0,0,.35)';ctx.fill();ctx.restore();
     const ca=Math.cos(ang),sa=Math.sin(ang),ct=Math.cos(tilt),st=Math.sin(tilt),proj=[];
-    for(const p of pts){const x=p.x*ca-p.z*sa,z=p.x*sa+p.z*ca,y=p.y*ct-z*st,z2=p.y*st+z*ct,f=3.2/(3.2+z2);proj.push({sx:cx+x*scl*f,sy:cy-y*scl*f,z:z2,t:p.t,f});}
+    for(const p of pts){const x=p.x*ca-p.z*sa,z=p.x*sa+p.z*ca,y=p.y*ct-z*st,z2=p.y*st+z*ct,f=3.2/(3.2+z2);proj.push({sx:cx+x*scl*f,sy:cy-y*scl*f,z:z2,t:p.t,f,rgb:p.rgb});}
     proj.sort((a,b)=>b.z-a.z);
-    for(const qq of proj){let depth=(qq.z+1.6)/3.2;depth=Math.max(0,Math.min(1,depth));const top=1-depth;const lit=Math.min(1,top*0.9+qq.t*0.5);const c=mix(brass,brass2,lit*0.7);const a=0.85*(1-depth*0.55);const r=(1.7+1.2*qq.f)*(1-depth*0.3);ctx.beginPath();ctx.arc(qq.sx,qq.sy,r,0,6.283);ctx.fillStyle=c.replace('rgb','rgba').replace(')',','+a.toFixed(2)+')');ctx.fill();}
+    for(const qq of proj){let depth=(qq.z+1.6)/3.2;depth=Math.max(0,Math.min(1,depth));const top=1-depth;const lit=Math.min(1,top*0.9+qq.t*0.5);
+      const c = heat ? qq.rgb.map(v=>Math.min(255,Math.round(v*(0.5+lit*0.65)))) : mix(brass,brass2,lit*0.7);
+      const a=0.85*(1-depth*0.55);const r=(1.7+1.2*qq.f)*(1-depth*0.3);ctx.beginPath();ctx.arc(qq.sx,qq.sy,r,0,6.283);ctx.fillStyle=rgba(c,a);ctx.fill();}
+    if(heat){ for(const key of ['fore','hind','barrel','neck']){ const rm=regMeta[key]; if(!rm||rm[0]==null||!CENT[key]) continue; const a=project(CENT[key]); if(a.z>1.4) continue; chip(a, rm[1]+' '+Math.round(rm[0])+'/100', scoreColor(rm[0])); } }
     if(activeAnchor&&ANCHORS[activeAnchor]){ const a=project(ANCHORS[activeAnchor]); const pr=6+Math.sin(phase)*3;
       ctx.beginPath();ctx.arc(a.sx,a.sy,14+pr,0,6.283);ctx.strokeStyle='rgba(230,197,114,.5)';ctx.lineWidth=2;ctx.stroke();
       ctx.beginPath();ctx.arc(a.sx,a.sy,5,0,6.283);ctx.fillStyle='#E6C572';ctx.fill();
@@ -421,18 +443,36 @@ function startCanvasHorse(splatLabel){
   }
   function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
   function loop(){ if(auto&&!dragging) ang+=spin; draw(); requestAnimationFrame(loop); }
-  resize();draw();requestAnimationFrame(loop);
+  setModelLabel(); setLegend(); resize();draw();requestAnimationFrame(loop);
   function down(e){dragging=true;const t=e.touches?e.touches[0]:e;lx=t.clientX;ly=t.clientY;$('ovlHint').style.opacity=.25;}
   function move(e){if(!dragging)return;const t=e.touches?e.touches[0]:e;ang+=(t.clientX-lx)*0.01;tilt=Math.max(-0.5,Math.min(0.5,tilt-(t.clientY-ly)*0.006));lx=t.clientX;ly=t.clientY;if(e.cancelable)e.preventDefault();}
   function up(){dragging=false;}
   cv.addEventListener('mousedown',down);addEventListener('mousemove',move);addEventListener('mouseup',up);
   cv.addEventListener('touchstart',down,{passive:true});cv.addEventListener('touchmove',move,{passive:false});addEventListener('touchend',up);
+  const hb=$('heatBtn');
+  if(hasHeat&&hb){ hb.textContent=I.rep_heatmap||'Heatmap'; hb.classList.add('on'); hb.onclick=function(){ heat=!heat; this.classList.toggle('on',heat); this.textContent=heat?(I.rep_heatmap||'Heatmap'):(I.rep_natural||'Natural'); setModelLabel(); setLegend(); }; }
+  else if(hb){ hb.style.display='none'; }
   $('autoBtn').onclick=function(){auto=!auto;this.textContent=auto?'❚❚':'▶';};
   $('resetBtn').onclick=function(){ang=-0.5;tilt=0.06;activeAnchor=null;auto=!reduce;$('autoBtn').textContent=auto?'❚❚':'▶';};
   window.HORSE={ focus:function(anchor,label){ activeAnchor=anchor; activeLabel=label||''; auto=false; $('autoBtn').textContent='▶'; }, clear:function(){activeAnchor=null;} };
 }
 
-async function renderHero(scene){
+// Map the gait analysis to per-body-region scores for the 3D heatmap.
+function regionScoresFromGait(g){
+  if(!g) return null;
+  const byLabel=(re)=>{ const s=(g.scores||[]).find(x=>re.test(String(x.label||''))); return s? pctv(s.pct) : null; };
+  const total = g.puntaje_total!=null? Math.round(g.puntaje_total) : null;
+  const or=(a,b)=> a!=null?a:(b!=null?b:total);
+  return {
+    fore: or(g.elevacion_ant, byLabel(/elevac|elevation/i)),
+    hind: or(byLabel(/brío|brio|cadenc|brío|drive/i), null),
+    barrel: or(g.simetria_pct, byLabel(/simetr|symmetr/i)),
+    rhythm: or(byLabel(/ritmo|regular|rhythm/i), null),
+    clarity: or(g.claridad_pct, byLabel(/clarid|clarity|4|four/i)),
+    total: total
+  };
+}
+async function renderHero(scene, region){
   const plyUrl=scene.assets&&scene.assets.ply;
   const label=scene.is_simulated?'MODELO 3D · GENERADO':'ESCANEO 3D · GAUSSIAN SPLAT';
   if(!scene.is_simulated && plyUrl){
@@ -450,7 +490,7 @@ async function renderHero(scene){
       return;
     }catch(e){ if(host&&host.parentNode) host.parentNode.removeChild(host); const cv=$('scan'); if(cv) cv.style.display='block'; }
   }
-  startCanvasHorse(label);
+  startCanvasHorse(label, region);
 }
 
 (async()=>{
@@ -461,7 +501,7 @@ async function renderHero(scene){
   $('repDate').textContent=fmtDate(rep.report_date||scene.created_at);
   $('ovlCap').textContent=rep.capture_seconds?('0:'+String(Math.round(rep.capture_seconds)).padStart(2,'0')):'—';
   if(rep.horse_name){ $('repEyebrow').textContent=rep.horse_name+(rep.breed?(' · '+rep.breed):'')+' · '+(I.rep_eyebrow||''); document.title='EquiMind-3D-'+String(rep.horse_name).replace(/[^\w-]/g,'_')+'-'+(scene.report_code||''); }
-  renderHero(scene);
+  renderHero(scene, regionScoresFromGait(rep.gait));
   renderGait(rep); renderMeasurements(rep); renderFindings(rep); renderStudio(scene);
   renderHistory(scene, rep);
 
