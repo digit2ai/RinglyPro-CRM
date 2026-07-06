@@ -93,5 +93,7 @@
   "jc_ins_workload": "Workload",
   "jc_ins_records": "Records by binomio",
   "jc_login_btn": "Log in",
-  "jc_panel_btn": "Go to panel"
+  "jc_panel_btn": "Go to panel",
+  "jc_id_label": "ID",
+  "jc_id_copied": "ID copied"
 }

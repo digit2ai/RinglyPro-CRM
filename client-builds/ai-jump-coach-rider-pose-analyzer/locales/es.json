@@ -93,5 +93,7 @@
   "jc_ins_workload": "Carga de trabajo",
   "jc_ins_records": "Récords por binomio",
   "jc_login_btn": "Iniciar sesión",
-  "jc_panel_btn": "Ir al panel"
+  "jc_panel_btn": "Ir al panel",
+  "jc_id_label": "ID",
+  "jc_id_copied": "ID copiado"
 }

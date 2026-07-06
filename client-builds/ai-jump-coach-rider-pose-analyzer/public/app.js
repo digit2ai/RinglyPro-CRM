@@ -418,8 +418,24 @@
   }
 
   // ---- results render ------------------------------------------------------
+  function renderAnalysisId(row) {
+    var chip = $('analysisIdChip'); if (!chip) return;
+    if (!row || row.id == null) { chip.style.display = 'none'; return; }
+    var label = (I18N.jc_id_label || 'ID');
+    var base = label + ' #' + row.id;
+    chip.textContent = base; chip.style.display = '';
+    chip.title = EN ? 'Copy analysis ID' : 'Copiar ID del análisis';
+    chip.onclick = function () {
+      var txt = String(row.id);
+      var done = function () { chip.textContent = (I18N.jc_id_copied || 'ID copiado'); setTimeout(function () { chip.textContent = base; }, 1500); };
+      if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(txt).then(done).catch(function () { window.prompt('', txt); }); }
+      else { window.prompt('', txt); }
+    };
+  }
+
   function renderResults(row) {
     if (row && row.share_url) setShareLink(row.share_url);
+    try { renderAnalysisId(row); } catch (e) {}
     try { renderScore(row); } catch (e) {}
     try { renderHorse(row); } catch (e) {}
     try { renderJournal(row); } catch (e) {}
