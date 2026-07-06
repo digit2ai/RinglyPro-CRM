@@ -52,7 +52,12 @@ function defineModel(sequelize) {
   }, {
     tableName: TABLE,
     timestamps: false,
-    indexes: [{ fields: ['tenant_id'] }, { fields: ['tenant_id', 'horse_name'] }]
+    // Only index columns guaranteed to exist pre-migration. The composite
+    // (tenant_id, horse_name) index is created by raw SQL in init() AFTER the
+    // ALTER adds horse_name — declaring it here makes sync({alter:false}) try to
+    // create it before the column exists on a pre-existing table (=> throw =>
+    // memory fallback). Keep it out of the model on purpose.
+    indexes: [{ fields: ['tenant_id'] }]
   });
 }
 
