@@ -520,9 +520,16 @@ html.lang-es .i18.es{display:inline}
   html,body{background:#fff !important;color:#141a22 !important}
   /* stop being a scroll deck; flow the sections down the page */
   main{height:auto !important;min-height:0 !important;overflow:visible !important;scroll-snap-type:none !important;display:block !important}
-  .slide{min-height:0 !important;height:auto !important;display:block !important;padding:0 0 9mm !important;margin:0 0 7mm !important;border:0 !important;background:#fff !important;page-break-inside:avoid;break-inside:avoid}
-  .slide + .slide{page-break-before:always}
+  /* flow the proposal continuously (NO forced page-per-slide — that left big blank pages).
+     Sections are separated by a thin rule; small blocks are kept from splitting. */
+  .slide{min-height:0 !important;height:auto !important;display:block !important;padding:0 0 7mm !important;margin:0 !important;border:0 !important;background:#fff !important;page-break-inside:auto}
+  .slide + .slide{border-top:1px solid #e6eaf0 !important;padding-top:7mm !important}
   .slide__inner{max-width:none !important}
+  h1,h2,.title,.kicker,.stat-cap,.lead{page-break-after:avoid}
+  .card,.layer,.tl-item,li,.viz-bars,.viz-gauge,.viz-gap-chart,.cw-urgency,.quote-badge,.tg-res,.megaline{page-break-inside:avoid;break-inside:avoid}
+  /* cap chart sizes so vh-based clamps don't inflate to a full page in print */
+  .viz-gauge{width:180px !important;height:180px !important}
+  .viz-gap-chart{max-width:500px !important}
   /* everything visible (print never scrolls, so the reveal states must be forced open) */
   .reveal,.slide .reveal{opacity:1 !important;transform:none !important;animation:none !important}
   /* hide interactive / decorative chrome */
