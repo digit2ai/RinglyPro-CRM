@@ -429,7 +429,10 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .niva-panel{position:absolute;top:calc(100% + 12px);right:0;left:auto;bottom:auto;transform:none;width:max-content;max-width:min(78vw,240px);
   background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:14px;
   padding:11px 12px;box-shadow:0 20px 56px rgba(0,0,0,.6);display:none}
-.niva.open .niva-panel{display:block}
+.niva-panel{display:none !important}   /* chip removed — controls are: tap orb (play/pause) + top language toggle */
+/* during a session, keep the status caption visible even when the orb dims to 'idle' on pause */
+.niva.session .orb-cap-idle{display:none !important}
+.niva.session .orb-cap-active{display:inline !important}
 /* header, voice picker and HD toggle removed from the chip — minimal by design */
 .niva-hd,.niva-row,#nivaPlay{display:none}
 .niva-lang{display:flex;gap:5px;margin-bottom:8px}
@@ -475,7 +478,7 @@ html.lang-es .i18.es{display:inline}
   .nav button{width:44px;height:44px;font-size:18px}
   /* lift the orb off the bottom edge so it reads as a tap-to-play control, keep its hint */
   .niva{--orb-size:clamp(100px,24vw,126px);right:14px;bottom:clamp(78px,16vh,128px)}
-  .niva .orb-caption{display:block;font-size:9px;letter-spacing:.7px;bottom:-20px;max-width:132px}
+  .niva .orb-caption{display:block;font-size:9px;letter-spacing:.4px;bottom:-18px;left:auto;right:2px;transform:none;text-align:right;max-width:158px;white-space:normal;line-height:1.35}
   /* gentle idle nudge to draw the eye to it */
   .niva .orb-wrap[data-state="idle"]{animation:orbNudge 2.8s ease-in-out infinite}
   /* tighten fixed top chrome so wordmark / EN-ES toggle / counter never collide */
@@ -1163,7 +1166,7 @@ html.lang-es .i18.es{display:inline}
     roleEl.textContent=t().role; playTxt.textContent=t().play;
     accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
     enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
-    capIdle.textContent = lang==='en' ? 'Click to speak with the MCP Neural brain' : 'Habla con el cerebro MCP Neural';
+    capIdle.textContent = lang==='en' ? 'Tap to play the walkthrough' : 'Toca para reproducir el recorrido';
     capActive.textContent = lang==='en' ? 'Open controls' : 'Abrir controles';
     if(!currentAudio && !(synth&&synth.speaking)) say(t().idle);
     setMode();
@@ -1180,20 +1183,13 @@ html.lang-es .i18.es{display:inline}
     var s=slides[i-1]; // i:1..11 -> slide; i=0 intro -> no move
     if(i>0 && s) s.scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function statusSpeaking(){
-    var txt;
-    if(mode==='all'){
-      txt = (lang==='es')
-        ? personaName()+' está hablando… ('+(qi+1)+' de '+queue.length+')'
-        : personaName()+' is speaking… ('+(qi+1)+' of '+queue.length+')';
-    } else { txt=t().one; }
-    say(txt);
-  }
-  // orb stays fixed on the right; the deck scrolls to follow the voice (setActive)
+  function statusSpeaking(){ say(personaName()+' · '+(qi+1)+' / '+queue.length); syncStageUI(); }
+  // The ONLY on-screen control is the orb + its small caption underneath — no chip
+  // overlapping the slide. The top EN/ES toggle handles language.
   function syncStageUI(){
-    capActive.textContent = paused
-      ? (lang==='es'?'Toca el orbe para reanudar':'Tap the orb to resume')
-      : (lang==='es'?'Toca el orbe para pausar':'Tap the orb to pause');
+    if(paused){ capActive.textContent = lang==='es'?'En pausa · toca para reanudar':'Paused · tap to resume'; }
+    else if(playing){ capActive.textContent = personaName()+' · '+(qi+1)+'/'+queue.length+' · '+(lang==='es'?'toca para pausar':'tap to pause'); }
+    else { capActive.textContent = lang==='es'?'Toca para reproducir':'Tap to play'; }
   }
   function togglePause(){
     if(!playing) return;
@@ -1203,8 +1199,8 @@ html.lang-es .i18.es{display:inline}
       if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
     syncStageUI();
   }
-  function playAll(){ niva.classList.add('open'); start(segments.map(function(_,i){return i;}),'all'); }
-  function stopAll(){ finish(); niva.classList.remove('open'); }
+  function playAll(){ start(segments.map(function(_,i){return i;}),'all'); }
+  function stopAll(){ finish(); }
   function orbTap(){
     if(!playing) playAll();   // first tap starts narration; the deck follows the voice
     else togglePause();       // tapping again pauses / resumes
@@ -1254,6 +1250,7 @@ html.lang-es .i18.es{display:inline}
     if(synth) synth.cancel();
     if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
     queue=q; qi=0; mode=m; paused=false; playing=true; runToken++;
+    niva.classList.add('session');   // keep the status caption (not the idle hint) visible while active
     pauseBtn.disabled=false; stopBtn.disabled=false; playBtn.disabled=true; pauseBtn.textContent='❙❙';
     if(m==='all' && slides[0]) slides[0].scrollIntoView({behavior:'smooth',block:'start'});
     syncStageUI();
@@ -1264,6 +1261,7 @@ html.lang-es .i18.es{display:inline}
     if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
     if(synth) synth.cancel();
     pauseBtn.disabled=true; stopBtn.disabled=true; playBtn.disabled=false; paused=false; playing=false;
+    niva.classList.remove('session');
     say(t().done);
     syncStageUI();
   }
