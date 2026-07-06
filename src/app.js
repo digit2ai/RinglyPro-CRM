@@ -2294,6 +2294,11 @@ app.get(['/investor', '/investors', '/investor.html'], (req, res) => {
   res.sendFile(path.join(__dirname, '../public/investor.html'));
 });
 
+// Investor summary — the investor-facing "The Ask" / plan (linked from the deck)
+app.get(['/investor-summary', '/investor-plan', '/the-ask'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/investor-summary.html'));
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));
