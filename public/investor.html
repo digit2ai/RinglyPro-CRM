@@ -486,7 +486,8 @@ html.lang-es .i18.es{display:inline}
   .counter{padding:12px 14px;font-size:11px}
   .langtoggle{top:9px}
   .langtoggle button{padding:6px 14px}
-  .slide{padding:74px 18px 90px}
+  /* top-align on mobile so short slides (esp. the cover) start under the bar instead of floating centered */
+  .slide{padding:66px 18px 84px;justify-content:flex-start}
   /* full-width, comfortable form controls; 16px stops iOS from zooming on focus */
   .triage textarea,.triage input{font-size:16px}
   .triage-run{width:100%;justify-content:center}
