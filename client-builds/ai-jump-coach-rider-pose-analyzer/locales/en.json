@@ -32,7 +32,7 @@
   "fault_gaze_drop": "Premature gaze drop (head drops before the apex)",
   "fault_forward_seat": "Forward seat at landing (hip ahead of ankle)",
   "privacy_title": "Privacy Notice",
-  "privacy_body": "The video you upload is processed only to analyze rider position. Pose processing happens in your browser; only the joint keypoints and analysis metadata are sent to the server, never the video itself. We do not share your video or data with third parties. If Latin American scope is later confirmed, this service will align with Ley 1581 de 2012 (Colombia) and the LGPD (Brazil).",
+  "privacy_body": "The video you upload is processed only to analyze rider position. Pose processing happens in your browser; only the joint keypoints and analysis metadata are sent to the server, never the video itself. For the animated replay we store a compact, downsampled version of those joint keypoints (coordinates only — no faces, no video). We do not share your video or data with third parties. If Latin American scope is later confirmed, this service will align with Ley 1581 de 2012 (Colombia) and the LGPD (Brazil).",
   "jc_eyebrow": "Frame-by-frame analysis",
   "jc_h1a": "Rider Pose",
   "jc_h1b": "Analyzer",
@@ -95,5 +95,8 @@
   "jc_login_btn": "Log in",
   "jc_panel_btn": "Go to panel",
   "jc_id_label": "ID",
-  "jc_id_copied": "ID copied"
+  "jc_id_copied": "ID copied",
+  "jc_replay_title": "Animated replay",
+  "jc_replay_sub": "Slow motion: each fault appears at the exact time and place.",
+  "jc_replay_loop": "Loop"
 }

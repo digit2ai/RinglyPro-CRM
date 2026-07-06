@@ -167,6 +167,19 @@
   .prog-label{display:flex;justify-content:space-between;gap:12px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted)}
   .prog-label .pct{color:var(--brass-bright)}
   .login-cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  /* 2D animated replay */
+  .replay-stage{position:relative;width:100%;border-radius:12px;overflow:hidden;margin-top:10px;
+    background:radial-gradient(120% 90% at 50% 10%,rgba(62,142,107,.14),transparent 60%),linear-gradient(180deg,#12100c,#0c0f0c 62%,#141009);border:1px solid var(--line)}
+  #replayCanvas{display:block;width:100%;height:auto}
+  .replay-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .replay-controls .rp-scrub{flex:1;min-width:140px;accent-color:var(--brass-bright)}
+  .rp-speeds{display:flex;gap:4px}
+  .rp-speeds button{font:inherit;font-size:12px;cursor:pointer;border:1px solid var(--line-2);background:var(--surface-2);color:var(--muted);border-radius:8px;padding:5px 9px}
+  .rp-speeds button.on{background:linear-gradient(180deg,var(--brass-bright),var(--brass));color:#1a140a;border-color:transparent;font-weight:600}
+  .rp-loop{font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .rp-callout{margin-top:12px;min-height:20px;font-size:14px;color:var(--text)}
+  .rp-callout .rp-tip{color:var(--muted)}
+  .rp-callout b{color:var(--brass-bright)}
 </style>
 </head>
 <body>
@@ -307,6 +320,7 @@
               <text x="40" y="278" text-anchor="start" fill="var(--faint)" font-size="12">0:00</text>
               <text id="arcEnd" x="960" y="278" text-anchor="end" fill="var(--faint)" font-size="12">0:00</text>
               <g id="pins"></g>
+              <line id="arcPlayhead" x1="40" y1="70" x2="40" y2="250" stroke="var(--turf)" stroke-width="1.5" opacity="0"/>
             </svg>
           </div>
           <div class="arc-legend">
@@ -318,6 +332,26 @@
         <div class="faults" id="faultList"></div>
       </div>
     </div>
+
+    <!-- Repetición animada 2D (cámara lenta, fallos en tiempo y ubicación) -->
+    <section class="panel reveal hidden" id="replayPanel" style="margin-top:18px;padding:16px">
+      <div class="sub-label" style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
+        <span data-i18n="jc_replay_title">Repetición animada</span>
+        <span class="src-tag" id="replaySrc"></span>
+      </div>
+      <p style="color:var(--faint);font-size:12px;margin:0 0 4px" data-i18n="jc_replay_sub">Cámara lenta: el fallo aparece en el momento y el lugar exactos.</p>
+      <div class="replay-stage"><canvas id="replayCanvas" width="800" height="480"></canvas></div>
+      <div class="replay-controls">
+        <button class="play" id="rpPlay" aria-label="play"><svg id="rpPlayIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <input id="rpScrub" type="range" min="0" max="1000" value="0" class="rp-scrub" aria-label="scrub">
+        <span id="rpTime" class="time mono">0:00 / 0:00</span>
+        <div class="rp-speeds" id="rpSpeeds">
+          <button data-sp="0.25">0.25x</button><button data-sp="0.5" class="on">0.5x</button><button data-sp="1">1x</button>
+        </div>
+        <label class="rp-loop"><input type="checkbox" id="rpLoop" checked> <span data-i18n="jc_replay_loop">Bucle</span></label>
+      </div>
+      <div id="rpCallout" class="rp-callout"></div>
+    </section>
 
     <!-- Compartir (magic link público) + acciones -->
     <section class="panel reveal" style="margin-top:18px;padding:16px">

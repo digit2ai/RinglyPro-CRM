@@ -10,6 +10,8 @@ Auto-mounted Express sub-app at `/ai-jump-coach-rider-pose-analyzer`. A user upl
 
 **UI now surfaces it all:** rider score card + dimension bars, **horse-technique card**, **manual rail/refusal tagging** (builds `manualFaults[]`), **rider journal** (perception vs data), and a **binomio-intelligence** panel (pattern alerts + workload/overload + records) that reads the `insights/*` endpoints.
 
+**v4 — 2D animated slow-motion replay (`lib/replay.js`):** below "Video original" a `<canvas>` replays the jump in slow motion — a **stylized horse** (`buildHorseTrack`, source `stylized`, follows the arc from the rider CoM) + the **real rider skeleton** — where each fault appears at its exact timestamp AND is highlighted on the anchored joint (gaze→head, rein/hand→wrists, left-behind/forward-seat→torso, heel/leg→lower leg, load-left/right→that side, alignment→the balance line), with a "cómo corregirlo" tip. Play/pause/scrub/loop + 0.25/0.5/1x, reduced-motion respected, mobile-safe; two-way seek with the arc playhead + fault cards. Data is a **compact downsampled joint track** persisted server-side from the posted frames — `pose_track` (~13 rider landmarks) + `horse_track` (7 stylized points), rounded to 3 decimals, ≤200 frames — returned by GET `/:id` and `/:id/report` so re-opened reports and public share links replay too. The raw video is never stored. Real horse pose (source `horse_pose`) drops in with no UI change the moment a model supplies `horseFrames[]`.
+
 ## Endpoints
 - `GET /health` → `{status:'ok', service, version, store}`
 - `GET /` · `/dashboard` · `/privacy` — server-rendered, `?lang=es|en` (default **es**)

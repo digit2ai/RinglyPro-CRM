@@ -32,7 +32,7 @@
   "fault_gaze_drop": "Mirada baja anticipada (cabeza cae antes del ápice)",
   "fault_forward_seat": "Asiento adelantado en la recepción (cadera por delante del tobillo)",
   "privacy_title": "Aviso de Privacidad",
-  "privacy_body": "El video que subes se procesa únicamente para analizar la postura del jinete. El procesamiento de pose ocurre en tu navegador; al servidor sólo se envían los puntos de articulación (keypoints) y los metadatos del análisis, nunca el video. No compartimos tu video ni tus datos con terceros. Si más adelante se confirma alcance en Latinoamérica, este servicio se alineará con la Ley 1581 de 2012 (Colombia) y la LGPD (Brasil).",
+  "privacy_body": "El video que subes se procesa únicamente para analizar la postura del jinete. El procesamiento de pose ocurre en tu navegador; al servidor sólo se envían los puntos de articulación (keypoints) y los metadatos del análisis, nunca el video. Para la repetición animada guardamos una versión compacta y reducida de esos puntos de articulación (solo coordenadas, sin rostro y sin video). No compartimos tu video ni tus datos con terceros. Si más adelante se confirma alcance en Latinoamérica, este servicio se alineará con la Ley 1581 de 2012 (Colombia) y la LGPD (Brasil).",
   "jc_eyebrow": "Análisis fotograma a fotograma",
   "jc_h1a": "Analizador de Postura",
   "jc_h1b": "del Jinete",
@@ -95,5 +95,8 @@
   "jc_login_btn": "Iniciar sesión",
   "jc_panel_btn": "Ir al panel",
   "jc_id_label": "ID",
-  "jc_id_copied": "ID copiado"
+  "jc_id_copied": "ID copiado",
+  "jc_replay_title": "Repetición animada",
+  "jc_replay_sub": "Cámara lenta: el fallo aparece en el momento y el lugar exactos.",
+  "jc_replay_loop": "Bucle"
 }

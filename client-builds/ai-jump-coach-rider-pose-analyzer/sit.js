@@ -25,6 +25,7 @@ const http = require('http');
 const { analyze } = require('./lib/faultEngine');
 const rubric = require('./lib/rubric');
 const patterns = require('./lib/patterns');
+const replay = require('./lib/replay');
 // Unified credits: analyses now bill against the horse account system.
 const horseAccount = require('../evaluacion-del-caballo-de-paso-fino/models/account');
 
@@ -110,6 +111,18 @@ async function run(base) {
     check('0b rubric.evaluate -> score+dimensions+category+course+faults+pending',
       dimsOk && scoreOk && catOk && courseOk && faultsOk && manualOk && pendingOk,
       `score=${ev.rider_score} cat=${ev.category} course=${JSON.stringify(ev.course)}`);
+  }
+
+  // 0f. Replay tracks: pose_track (idx+frames) + stylized horse_track from fixture.
+  {
+    const pt = replay.buildPoseTrack(fixture, 200);
+    const ht = replay.buildHorseTrack(fixture, 200);
+    const poseOk = pt && Array.isArray(pt.idx) && pt.idx.length >= 10 && Array.isArray(pt.frames) && pt.frames.length === fixture.length &&
+      pt.frames[0] && Array.isArray(pt.frames[0].xy) && pt.frames[0].xy.length === pt.idx.length;
+    const horseOk = ht && ht.source === 'stylized' && Array.isArray(ht.frames) && ht.frames.length === fixture.length &&
+      ht.frames[0] && ht.frames[0].pts && Array.isArray(ht.frames[0].pts.withers) && Array.isArray(ht.frames[0].pts.fore_l);
+    check('0f replay tracks -> pose_track idx+frames + stylized horse_track pts', poseOk && horseOk,
+      `pose.frames=${pt && pt.frames.length} horse.src=${ht && ht.source}`);
   }
 
   // 0c. Category tolerance ordering (bigger fences -> larger tolerance factor).
@@ -206,6 +219,12 @@ async function run(base) {
     check('5e public /:id/report WRONG token -> 403', badPub.status === 403, `status=${badPub.status}`);
     const noPub = await req(base, 'GET', '/api/v1/analyses/' + createdId + '/report');
     check('5f public /:id/report NO token -> 403', noPub.status === 403, `status=${noPub.status}`);
+    // Replay tracks round-trip: present on owner GET AND on the public report.
+    const ptOk = own.json && own.json.pose_track && Array.isArray(own.json.pose_track.frames) && own.json.pose_track.frames.length > 0 &&
+      own.json.horse_track && own.json.horse_track.source === 'stylized';
+    check('5g owner GET /:id includes pose_track + stylized horse_track', ptOk, `pose=${!!(own.json && own.json.pose_track)}`);
+    const pubTracks = pub.json && pub.json.pose_track && pub.json.horse_track;
+    check('5h public /:id/report includes replay tracks', !!pubTracks, `hasTracks=${!!pubTracks}`);
   }
 
   // 6. list scoped to tenant

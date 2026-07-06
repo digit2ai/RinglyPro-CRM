@@ -21,6 +21,7 @@ const store = require('../models/analysis');
 const { analyze } = require('../lib/faultEngine');
 const rubric = require('../lib/rubric');
 const patterns = require('../lib/patterns');
+const replay = require('../lib/replay');
 
 function cleanName(s) { return typeof s === 'string' && s.trim() ? s.trim().slice(0, 120) : null; }
 
@@ -107,6 +108,10 @@ router.post('/', async (req, res) => {
         manualFaults: b.manualFaults,
         horseFrames: Array.isArray(b.horseFrames) ? b.horseFrames.slice(0, 5000) : null
       });
+      // Compact replay tracks (joint coordinates only; never the video) so the
+      // 2D animated replay works on re-opened reports + public share links.
+      const poseTrack = replay.buildPoseTrack(frames, 200);
+      const horseTrack = replay.buildHorseTrack(frames, 200);
       const safeName = typeof filename === 'string' ? filename.slice(0, 255) : null;
       row = await store.create({
         tenant_id: req.tenantId,
@@ -128,7 +133,9 @@ router.post('/', async (req, res) => {
         manual_faults: evalResult.manual_faults,
         optimal_time_sec: evalResult.course.optimal_time_sec,
         total_time_sec: evalResult.course.total_time_sec,
-        rubric_version: evalResult.version
+        rubric_version: evalResult.version,
+        pose_track: poseTrack,
+        horse_track: horseTrack
       });
       // attach the computed course + horse + pending blocks for the immediate response
       row = Object.assign({}, row, { course: evalResult.course, horse: evalResult.horse, pending: evalResult.pending });

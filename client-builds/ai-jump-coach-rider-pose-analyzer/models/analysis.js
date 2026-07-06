@@ -48,6 +48,8 @@ function defineModel(sequelize) {
     total_time_sec: { type: DataTypes.FLOAT, allowNull: true },
     journal: { type: DataTypes.JSONB, allowNull: false, defaultValue: [] },
     rubric_version: { type: DataTypes.STRING(16), allowNull: true },
+    pose_track: { type: DataTypes.JSONB, allowNull: true },
+    horse_track: { type: DataTypes.JSONB, allowNull: true },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
   }, {
     tableName: TABLE,
@@ -90,7 +92,9 @@ async function init() {
         ADD COLUMN IF NOT EXISTS optimal_time_sec REAL,
         ADD COLUMN IF NOT EXISTS total_time_sec REAL,
         ADD COLUMN IF NOT EXISTS journal JSONB NOT NULL DEFAULT '[]'::jsonb,
-        ADD COLUMN IF NOT EXISTS rubric_version VARCHAR(16)`);
+        ADD COLUMN IF NOT EXISTS rubric_version VARCHAR(16),
+        ADD COLUMN IF NOT EXISTS pose_track JSONB,
+        ADD COLUMN IF NOT EXISTS horse_track JSONB`);
       await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_ai_jump_coach_analyses_horse ON ${TABLE} (tenant_id, horse_name)`);
     } catch (mErr) {
       console.error(JSON.stringify({ svc: 'ai-jump-coach', event: 'automigrate_warn', error: mErr.message }));
@@ -109,7 +113,7 @@ async function create(input) {
     tenant_id, filename, duration_sec, frame_count, apex_sec, faults, lang,
     height_category, height_cm, horse_name, rider_name, discipline, rider_score,
     dimension_scores, phase_metrics, metrics, manual_faults, optimal_time_sec,
-    total_time_sec, journal, rubric_version
+    total_time_sec, journal, rubric_version, pose_track, horse_track
   } = input;
   const row = {
     tenant_id,
@@ -133,6 +137,8 @@ async function create(input) {
     total_time_sec: total_time_sec != null ? Number(total_time_sec) : null,
     journal: Array.isArray(journal) ? journal : [],
     rubric_version: rubric_version || null,
+    pose_track: pose_track || null,
+    horse_track: horse_track || null,
     created_at: new Date()
   };
   if (usingMemory || !Model) {
