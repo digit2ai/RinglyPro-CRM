@@ -91,5 +91,7 @@
   "jc_ins_title": "Inteligencia del binomio",
   "jc_ins_patterns": "Alertas de patrón",
   "jc_ins_workload": "Carga de trabajo",
-  "jc_ins_records": "Récords por binomio"
+  "jc_ins_records": "Récords por binomio",
+  "jc_login_btn": "Iniciar sesión",
+  "jc_panel_btn": "Ir al panel"
 }

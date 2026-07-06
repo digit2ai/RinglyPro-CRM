@@ -159,6 +159,14 @@
   .rec-row .rv{font-family:"JetBrains Mono",monospace;color:var(--brass-bright)}
   .jn-entry{border-left:2px solid var(--turf);padding:6px 0 6px 12px;margin-bottom:8px;font-size:13.5px}
   .jn-entry .jm{color:var(--faint);font-family:"JetBrains Mono",monospace;font-size:11px}
+  /* analysis progress bar */
+  .prog{height:9px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:16px 0 8px;position:relative}
+  .prog-bar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--turf),var(--brass-bright));transition:width .3s var(--ease)}
+  .prog.indet .prog-bar{width:38%;animation:progslide 1.15s ease-in-out infinite}
+  @keyframes progslide{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+  .prog-label{display:flex;justify-content:space-between;gap:12px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted)}
+  .prog-label .pct{color:var(--brass-bright)}
+  .login-cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 </style>
 </head>
 <body>
@@ -177,7 +185,13 @@
     </div>
   </header>
 
-  <div id="loginNotice" class="notice hidden"><span data-i18n="need_login">Inicia sesión en el panel para analizar (1 crédito por análisis).</span></div>
+  <div id="loginNotice" class="notice hidden">
+    <span data-i18n="need_login">Inicia sesión en el panel para analizar (1 crédito por análisis).</span>
+    <div class="login-cta">
+      <a id="loginBtn" class="jbtn" href="{{BASE}}../evaluacion-del-caballo-de-paso-fino/login" data-i18n="jc_login_btn">Iniciar sesión</a>
+      <a id="panelBtn" class="jbtn ghost" href="{{BASE}}../evaluacion-del-caballo-de-paso-fino/panel" data-i18n="jc_panel_btn">Ir al panel</a>
+    </div>
+  </div>
 
   <section class="panel upload reveal" aria-label="upload">
     <div class="upload-label" data-i18n="jc_upload_label">Video del salto · MP4 o MOV</div>
@@ -226,6 +240,8 @@
     </div>
     <div class="mf-chips" id="mfChips"></div>
 
+    <div id="progWrap" class="prog hidden"><div id="progBar" class="prog-bar"></div></div>
+    <div id="progLabel" class="prog-label hidden"><span id="progMsg"></span><span class="pct" id="progPct"></span></div>
     <div id="status" class="status"></div>
   </section>
 

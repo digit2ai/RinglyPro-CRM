@@ -76,6 +76,30 @@
   }
   function setStatus(msg) { if (statusEl) statusEl.textContent = msg || ''; }
 
+  // ---- progress bar --------------------------------------------------------
+  var progWrap = $('progWrap'), progBar = $('progBar'), progLabel = $('progLabel'), progMsg = $('progMsg'), progPct = $('progPct');
+  function showProgress() { if (progWrap) progWrap.classList.remove('hidden'); if (progLabel) progLabel.classList.remove('hidden'); }
+  // pct = null -> indeterminate (sliding); pct = 0..100 -> determinate
+  function setProgress(pct, msg) {
+    showProgress();
+    if (msg != null && progMsg) progMsg.textContent = msg;
+    if (pct == null) {
+      if (progWrap) progWrap.classList.add('indet');
+      if (progBar) progBar.style.width = '';
+      if (progPct) progPct.textContent = '';
+    } else {
+      if (progWrap) progWrap.classList.remove('indet');
+      var p = Math.max(0, Math.min(100, Math.round(pct)));
+      if (progBar) progBar.style.width = p + '%';
+      if (progPct) progPct.textContent = p + '%';
+    }
+  }
+  function hideProgress() {
+    if (progWrap) { progWrap.classList.add('hidden'); progWrap.classList.remove('indet'); }
+    if (progLabel) progLabel.classList.add('hidden');
+    if (progBar) progBar.style.width = '0%';
+  }
+
   // ---- MediaPipe load ------------------------------------------------------
   var landmarkerPromise = null;
   function loadLandmarker() {
@@ -90,7 +114,7 @@
   function seekTo(video, time) {
     return new Promise(function (resolve) { var d = function () { video.removeEventListener('seeked', d); resolve(); }; video.addEventListener('seeked', d); video.currentTime = Math.min(time, Math.max(0, (video.duration || 0) - 0.001)); });
   }
-  async function extractFramesWithModel(video) {
+  async function extractFramesWithModel(video, onProgress) {
     var lm = await loadLandmarker(); var dur = video.duration || 0; var out = []; var step = 1 / SAMPLE_FPS;
     var count = Math.min(MAX_FRAMES, Math.max(1, Math.floor(dur / step)));
     for (var i = 0; i < count; i++) {
@@ -99,6 +123,7 @@
       var lms = (res && res.landmarks && res.landmarks[0]) || null;
       var kps = lms ? lms.map(function (p) { return { x: p.x, y: p.y, z: p.z || 0, visibility: (p.visibility != null ? p.visibility : 1) }; }) : [];
       out.push({ t: Math.round(time * 1000) / 1000, keypoints: kps });
+      if (onProgress) { try { onProgress((i + 1) / count); } catch (e) {} }
     }
     return out;
   }
@@ -383,9 +408,9 @@
   // ---- results render ------------------------------------------------------
   function renderResults(row) {
     if (row && row.share_url) setShareLink(row.share_url);
-    renderScore(row);
-    renderHorse(row);
-    renderJournal(row);
+    try { renderScore(row); } catch (e) {}
+    try { renderHorse(row); } catch (e) {}
+    try { renderJournal(row); } catch (e) {}
     lastFaults = row.faults || [];
     DUR = (row.duration_sec && row.duration_sec > 0) ? row.duration_sec : (player.duration || DUR || 1);
     resultsEl.classList.remove('hidden');
@@ -450,21 +475,29 @@
   analyzeBtn.addEventListener('click', async function () {
     var f = fileInput.files && fileInput.files[0]; if (!f) return;
     var token = getToken();
-    if (!token) { if (loginNotice) loginNotice.classList.remove('hidden'); setStatus(t('need_login')); return; }
+    if (!token) {
+      // Not logged in -> can't bill an analysis. Make it impossible to miss.
+      if (loginNotice) { loginNotice.classList.remove('hidden'); try { loginNotice.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
+      setStatus(t('need_login'));
+      return;
+    }
 
     analyzeBtn.disabled = true;
+    setProgress(3, EN ? 'Preparing…' : 'Preparando…');
     var probe = document.createElement('video'); probe.muted = true; probe.playsInline = true; probe.preload = 'auto'; probe.src = player.src;
     await new Promise(function (res) { if (probe.readyState >= 1) return res(); probe.addEventListener('loadedmetadata', function () { res(); }, { once: true }); });
 
     var synthetic = false;
     try {
-      setStatus(t('loading_model')); await loadLandmarker();
-      setStatus(t('extracting')); frames = await extractFramesWithModel(probe);
+      setProgress(null, t('loading_model')); await loadLandmarker();
+      setProgress(10, t('extracting'));
+      frames = await extractFramesWithModel(probe, function (frac) { setProgress(10 + frac * 65, t('extracting')); });
       var withPose = frames.filter(function (fr) { return fr.keypoints && fr.keypoints.length; }).length;
       if (withPose < 2) { synthetic = true; frames = syntheticFrames(probe); }
     } catch (e) { synthetic = true; frames = syntheticFrames(probe); }
 
-    setStatus(synthetic ? t('synthetic_notice') : t('analyzing'));
+    setProgress(null, synthetic ? t('synthetic_notice') : t('analyzing'));
+    setStatus(synthetic ? t('synthetic_notice') : '');
     try {
       var numOr = function (id) { var el = $(id); var v = el && el.value !== '' ? parseFloat(el.value) : null; return (v != null && isFinite(v)) ? v : null; };
       var strOr = function (id) { var el = $(id); return el && el.value ? el.value.trim().slice(0, 120) : null; };
@@ -479,23 +512,27 @@
           manualFaults: manualFaults.slice()
         })
       });
-      if (resp.status === 401) { if (loginNotice) loginNotice.classList.remove('hidden'); setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
+      if (resp.status === 401) { hideProgress(); if (loginNotice) { loginNotice.classList.remove('hidden'); try { loginNotice.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} } setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
       if (resp.status === 402) {
+        hideProgress();
         setStatus(EN ? 'Out of credits. Recharge in the panel to continue.' : 'Sin créditos. Recarga en el panel para continuar.');
         try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-recharge' }, '*'); } catch (e) {}
         analyzeBtn.disabled = false; return;
       }
-      if (!resp.ok) { setStatus(t('save_failed')); analyzeBtn.disabled = false; return; }
+      if (!resp.ok) { hideProgress(); setStatus(t('save_failed')); analyzeBtn.disabled = false; return; }
       var row = await resp.json();
+      setProgress(100, EN ? 'Done' : 'Listo');
       setStatus(synthetic ? t('synthetic_notice') : '');
       if (row && row.credits != null) { try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-credits', credits: row.credits }, '*'); } catch (e) {} }
-      renderResults(row);
+      try { renderResults(row); } catch (e) { resultsEl.classList.remove('hidden'); setStatus(t('save_failed')); }
       // reveal animation
       [].forEach.call(resultsEl.querySelectorAll('.reveal'), function (el, i) { setTimeout(function () { el.classList.add('in'); }, 60 + i * 90); });
       drawOverlay();
       loadHistory();
       loadInsights();
-    } catch (e) { setStatus(t('save_failed')); }
+      try { resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+      setTimeout(hideProgress, 700);
+    } catch (e) { hideProgress(); setStatus(t('save_failed')); }
     analyzeBtn.disabled = false;
   });
 
