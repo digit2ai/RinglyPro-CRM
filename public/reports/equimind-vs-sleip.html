@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EquiMind vs. Sleip — Competitive Analysis · Digit2AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,600&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#17120E;--ink2:#1F1813;--cream:#FAF4EA;--card:#fff;--brass:#C9A24B;--brass2:#E6C572;--rose:#C0604E;--tx:#2A211A;--mut:#786A5C;--line:rgba(42,33,26,.10);--good:#3E8E6B;--warn:#C08A2E}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--cream);color:var(--tx);font-family:"Archivo",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55}
+  .serif{font-family:"Fraunces",Georgia,serif}
+  .mono{font-family:"JetBrains Mono",monospace}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  header.masthead{background:radial-gradient(900px 380px at 12% -20%,rgba(192,96,78,.22),transparent 60%),radial-gradient(760px 360px at 92% -10%,rgba(201,162,75,.18),transparent 62%),linear-gradient(180deg,#17120E,#140F0B);color:#F4ECDF;padding:44px 0 40px}
+  .ey{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--brass2)}
+  h1{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(2rem,5vw,3rem);line-height:1.05;margin:14px 0 10px}
+  h1 .it{font-style:italic;color:#DA8472}
+  .sub{color:#B7AA99;max-width:640px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:20px;font-size:13px;color:#B7AA99}
+  .meta b{color:#F4ECDF;font-weight:600}
+  .conf{display:inline-block;margin-top:18px;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#E6C572;border:1px solid rgba(230,197,114,.4);border-radius:999px;padding:6px 12px}
+  section{padding:34px 0;border-bottom:1px solid var(--line)}
+  h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(1.4rem,3.4vw,2rem);margin:0 0 6px}
+  h2 .n{color:var(--rose);font-size:.7em;vertical-align:middle;margin-right:10px}
+  h3{font-size:15px;margin:22px 0 6px}
+  p{margin:10px 0}
+  .lead{font-size:18px;color:#3a3128}
+  .rule{width:52px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--rose),var(--brass2));margin-bottom:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:0 18px 40px -34px rgba(42,33,26,.4)}
+  .card.em{border-top:3px solid var(--rose)}
+  .card.sl{border-top:3px solid #3f6ea8}
+  .card h4{margin:0 0 8px;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:18px}
+  .card.em h4 span{color:var(--rose)}
+  .card.sl h4 span{color:#3f6ea8}
+  .card ul{margin:8px 0 0;padding-left:18px}.card li{margin:5px 0;font-size:14px}
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 18px 40px -34px rgba(42,33,26,.4)}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#F3E9D8;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b5d4e}
+  tbody tr:last-child td{border-bottom:none}
+  td.axis{font-weight:600;width:20%}
+  .em-cell{color:#7a2f22}.sl-cell{color:#274a72}
+  .pill{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-right:6px}
+  .pill.win{background:rgba(62,142,107,.14);color:#2c6a4e}
+  .pill.gap{background:rgba(192,96,78,.14);color:#a34433}
+  .callout{background:linear-gradient(135deg,rgba(192,96,78,.08),rgba(201,162,75,.10));border:1px solid rgba(201,162,75,.35);border-radius:16px;padding:18px 20px;margin-top:18px}
+  .callout h3{margin-top:0;color:#7a2f22}
+  ol.reco{padding-left:20px}ol.reco li{margin:10px 0}
+  .src{font-size:12px;color:var(--mut)}
+  footer{padding:30px 0 60px;color:var(--mut);font-size:12.5px}
+  a{color:var(--rose)}
+  @media print{header.masthead{background:#17120E !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff}.card,table{box-shadow:none}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="ey">Digit2AI · Competitive Analysis</div>
+    <h1>EquiMind <span class="it">vs.</span> Sleip</h1>
+    <p class="sub">Where the two equine-AI products actually diverge — signal, science, market, and business model — and what it means for EquiMind's strategy.</p>
+    <div class="meta">
+      <span><b>Prepared for</b> Manuel Stagg · Digit2AI</span>
+      <span><b>Date</b> July 6, 2026</span>
+      <span><b>Subject</b> sleip.com deep-dive + head-to-head</span>
+      <span><b>Author</b> RinglyPro AI Architect (Research Brief + Equine SME)</span>
+    </div>
+    <div class="conf">Internal strategy memo · Sourced &amp; cited</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <div class="rule"></div>
+  <h2>Executive summary</h2>
+  <p class="lead">They look like competitors because both say "AI gait analysis for horses." They are not. <strong>Sleip is a validated veterinary lameness instrument. EquiMind is a breed-and-sport judging and coaching product.</strong> Different signal, different buyer, different price, different geography.</p>
+  <p>Sleip (Stockholm, founded 2020, ~$4.1M raised, Boehringer Ingelheim shareholder) measures <strong>weight-bearing movement asymmetry</strong> in millimeters from smartphone <strong>video pose</strong> (100–115 keypoints), MoCap-validated to ~2&nbsp;mm and peer-reviewed. Its customer is the <strong>veterinarian</strong>; its job is clinical lameness workups and racing-regulator inspections; its model is <strong>$199–219/month per-seat SaaS</strong>.</p>
+  <p>EquiMind (Digit2AI, live 2026) scores <strong>gaited-breed quality like a championship judge</strong> — paso fino / trocha / trote-galope — primarily from <strong>hoof-beat audio</strong> (cadence, regularity, footfall timing), with rider-pose jump coaching alongside. Its customers are <strong>breeders, riders, judges and families in Latin America</strong>; its model is <strong>consumer credits ($10 = 10 analyses)</strong> with free reference simulations and viral share links.</p>
+  <p><strong>Bottom line:</strong> EquiMind owns white space Sleip deliberately ignores (gaited breeds, Spanish-first LATAM, sport/breed scoring, consumer pricing). Sleip owns a scientific-validation moat EquiMind has not yet built. The strategic risk is only if EquiMind drifts toward clinical/lameness claims — that steps onto Sleip's validated turf without the science.</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2>Side-by-side snapshot</h2>
+  <table>
+    <thead><tr><th>Axis</th><th>EquiMind (Digit2AI)</th><th>Sleip (Sleip AI AB)</th></tr></thead>
+    <tbody>
+      <tr><td class="axis">Core job</td><td class="em-cell">Breed &amp; competition gait <b>scoring/judging</b> + rider coaching</td><td class="sl-cell">Clinical <b>lameness / orthopedic asymmetry</b> detection</td></tr>
+      <tr><td class="axis">Primary signal</td><td class="em-cell"><b>Hoof-beat audio</b> (cadence, CV, footfall timing); video pose is future/synthetic today</td><td class="sl-cell"><b>Markerless video pose</b>, 100–115 keypoints; head/withers/pelvis mm asymmetry</td></tr>
+      <tr><td class="axis">Gait scope</td><td class="em-cell"><b>Gaited breeds</b> — paso fino, trocha, trote-galope (4-beat lateral) + jumping</td><td class="sl-cell"><b>Straight-line trot</b>; sport horses, racing, endurance</td></tr>
+      <tr><td class="axis">Buyer / user</td><td class="em-cell">Breeders, riders, judges, families (B2C/prosumer)</td><td class="sl-cell">Vets, clinics, paraprofessionals, racing regulators (B2B)</td></tr>
+      <tr><td class="axis">Scientific validation</td><td class="em-cell">Rule engine + versioned thresholds; <b>no published validation yet</b></td><td class="sl-cell"><b>Peer-reviewed</b> (Animals 2023, EVJ 2025); MoCap-validated ~2&nbsp;mm; SLU + KTH</td></tr>
+      <tr><td class="axis">Pricing</td><td class="em-cell"><b>$10 = 10 analyses</b>, pay-per-credit, free simulation tier</td><td class="sl-cell"><b>$199–219/mo</b> per seat (~$2,200–2,400/yr); trial only, no free tier</td></tr>
+      <tr><td class="axis">Geography / language</td><td class="em-cell"><b>LATAM, Spanish-first</b> (EN too); Colombia origin</td><td class="sl-cell"><b>Sweden/global</b> (English); 50+ countries, racing jurisdictions</td></tr>
+      <tr><td class="axis">Platform</td><td class="em-cell"><b>Web PWA</b> — any phone/browser, zero install; Lina voice orb; public magic-link reports</td><td class="sl-cell"><b>iOS + desktop</b> app; Android unverified/absent</td></tr>
+      <tr><td class="axis">Company stage</td><td class="em-cell">2026 launch, bootstrapped inside Digit2AI 83-agent ecosystem</td><td class="sl-cell">2020, ~$4.1M raised, Boehringer equity, 150k+ horses / 1M+ analyses</td></tr>
+      <tr><td class="axis">Regulatory posture</td><td class="em-cell">Explicitly <b>not veterinary advice</b>; consumer ToS/refund/privacy</td><td class="sl-cell">Welfare/safety; adopted by racing regulators; "asymmetry ≠ lameness" clinical framing</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">01</span>Different problem entirely: judging vs. diagnosis</h2>
+  <p>This is the difference that reframes every other one. Sleip answers a <strong>medical</strong> question — "is this horse subtly lame, and is it getting better after treatment or a nerve block?" It is decision-support for a clinician. EquiMind answers a <strong>quality/sport</strong> question — "how good is this horse's gait as a paso fino, scored like a judge would, and where does it rank?" plus "what should this rider fix over the jump?"</p>
+  <div class="grid2">
+    <div class="card em"><h4>EquiMind — <span>evaluation &amp; coaching</span></h4><ul><li>Championship-judge scoring: rhythm 35%, 4-beat clarity 25%, symmetry 15%, brío/cadence 15%, elevation 10%</li><li>Modality classification: paso fino / trocha / trote-galope</li><li>Ranking within a category; shareable verdict</li><li>AI Jump Coach: rider position faults vs. fence apex</li></ul></div>
+    <div class="card sl"><h4>Sleip — <span>clinical instrument</span></h4><ul><li>Objective mm asymmetry: head, withers/trunk, pelvis</li><li>Diagnostic-block (nerve/joint) tagging for lameness localization</li><li>Treatment-response &amp; longitudinal monitoring</li><li>Racing pre-race regulatory inspections</li></ul></div>
+  </div>
+  <p class="src">Note: EquiMind's audio layer has a "vet_review" nudge, but it is a coarse rule-engine flag — not a clinical measurement. Sleip is careful to state asymmetry is not itself a diagnosis; a vet still interprets.</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">02</span>Sound vs. sight: the signal is not the same</h2>
+  <p>Both call it "gait analysis," but they measure physically different things. Sleip watches the <strong>body</strong> — vertical displacement asymmetry of head and pelvis, the classic weight-bearing lameness markers — from video pose. EquiMind listens to the <strong>feet</strong> — the timing and regularity of hoof-beats — which is exactly the right signal for judging the four-beat lateral rhythm that defines a fine gaited horse.</p>
+  <p>Consequence: Sleip's moat is a validated computer-vision pose pipeline. EquiMind's real, charged signal today is <strong>audio</strong> (from a .wav or extracted from the video's audio track in-browser); true equine <strong>video pose</strong> is still on EquiMind's roadmap (currently a synthetic-demo pipeline for zero-setup). So on the video-pose axis specifically, Sleip is years and one peer-reviewed study ahead — but it is measuring for a different purpose.</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">03</span>The validation gap — Sleip's real moat</h2>
+  <p>Sleip's defensibility is not the app; it is the <strong>science</strong>. Its anchor study (<em>Animals</em> 2023, 13(3):390; lead author and co-founder Dr. Elin Hernlund, with SLU and KTH) validated the markerless smartphone system against multi-camera optical motion capture at ≤2.2&nbsp;mm mean difference, now reinforced by independent 2025 papers (Pfau; Kallerud; de Chiara) and equity from <strong>Boehringer Ingelheim</strong>. That is very hard to out-market.</p>
+  <p>EquiMind has <strong>no published validation</strong> of its scoring against judge consensus or a reference standard. For a consumer/sport product that is survivable — but it is the single biggest credibility gap if EquiMind ever wants institutional buyers (breed associations, show circuits, or anything adjacent to welfare).</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">04</span>Buyer, price, and motion: high-ACV SaaS vs. consumer credits</h2>
+  <div class="grid2">
+    <div class="card em"><h4>EquiMind — <span>consumer credits + growth loop</span></h4><ul><li>$10 = 10 analyses; 1 credit per analysis</li><li>Free reference simulation as the acquisition hook</li><li>Public magic-link reports = built-in virality</li><li>Self-serve, zero install, bilingual, Lina voice guide</li></ul></div>
+    <div class="card sl"><h4>Sleip — <span>per-seat professional SaaS</span></h4><ul><li>$199–219/mo per device (~$2,200–2,400/yr)</li><li>Tiers: Pro Vet / Pro / Remote add-on / Desktop</li><li>14-day trial, no permanent free tier</li><li>Enterprise (10+ seats) &amp; academic packages</li></ul></div>
+  </div>
+  <p>EquiMind monetizes <strong>many low-value transactions</strong> across a broad prosumer base; Sleip monetizes <strong>few high-value seats</strong> among professionals. Neither model is "better" — they fit their respective buyers — but they imply completely different growth engines (viral share vs. clinic sales).</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">05</span>Niche &amp; language: EquiMind's uncontested ground</h2>
+  <p>Sleip is trot-centric and explicitly does <strong>not</strong> serve gaited breeds. The entire Latin-American <strong>Paso Fino / Colombian gaited-horse</strong> world — a passionate, competition-driven, Spanish-speaking market — is white space Sleip has no product for and no obvious incentive to build. EquiMind is Spanish-first, culturally native, and priced for that consumer. This is the most durable differentiator EquiMind has, more than any single feature.</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2><span class="n">06</span>Depth vs. breadth: single instrument vs. ecosystem</h2>
+  <p>Sleip is one deep, focused instrument. EquiMind is a node in the <strong>Digit2AI 83-agent ecosystem</strong> — sharing a credit account with the AI Jump Coach, riding on a multi-tenant CRM backbone, with voice AI (Lina), shareable reports, and the whole build/deploy machine behind it. EquiMind can ship adjacent features fast (new disciplines, coaching, social); Sleip goes deeper on one validated capability. Speed-and-breadth vs. depth-and-proof.</p>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2>Strategic implications for EquiMind</h2>
+  <div class="callout">
+    <h3>They are complements, not rivals — unless EquiMind makes them rivals</h3>
+    <p>A Sleip user (a vet localizing lameness) and an EquiMind user (a breeder scoring a paso fino, a rider fixing a jump) are different people with different jobs. The two could even coexist on the same horse. EquiMind should lean <em>into</em> that distinction, not blur it.</p>
+  </div>
+  <ol class="reco">
+    <li><strong>Stay out of the clinical lane (for now).</strong> Keep "not veterinary advice" front and center — it is both legally safer (already reflected in the new ToS/privacy) and strategically smart: don't invite a validated instrument-maker to benchmark you on its turf. Soften or rename the audio layer's "vet_review" flag toward "recommend a professional check," not a quasi-diagnosis.</li>
+    <li><strong>Close the validation gap on EquiMind's own terms.</strong> You don't need MoCap. You need a study showing your <em>scores correlate with expert judge consensus</em> across N horses/passes. That is EquiMind's equivalent moat, and it unlocks breed associations and show circuits.</li>
+    <li><strong>Ship real video pose — but for scoring, not lameness.</strong> Symmetry and elevation criteria are marked "requires video pose (coming soon)." Landing that completes the judge's rubric and blunts the "it's only audio" critique — while staying in the sport/breed domain.</li>
+    <li><strong>Double down on the moat Sleip can't copy:</strong> gaited breeds, Spanish-first LATAM, consumer pricing, viral share links, and the multi-product ecosystem. That is defensible precisely because it is unattractive for Sleip to chase.</li>
+    <li><strong>Borrow Sleip's credibility playbook, not its market:</strong> testimonials from recognized judges/breeders, a visible "how the score is computed" methodology page, and (eventually) a citable validation note — the consumer-grade version of Sleip's science page.</li>
+  </ol>
+</section>
+
+<section>
+  <div class="rule"></div>
+  <h2>Sources</h2>
+  <p class="src">Sleip primary: sleip.com (home, /technology, /our-story, /pricing, /scientifically-validated, /research-studies). Validation: <em>Animals</em> 2023, 13(3):390 (Hernlund et al., SLU + KTH); <em>Equine Veterinary Journal</em> 2025 (Kallerud et al.; Pfau et al.; de Chiara et al., doi:10.1111/evj.14516); <em>Animals</em> 2025 (Meistro et al.; Calle-González et al. 2024; Resano-Zuazu et al.). Company/funding: CB Insights &amp; Crunchbase (~$4.12M total; Boehringer Ingelheim shareholder Feb 2024). Adoption: Paulick Report (racing regulators — NY/KY/CA, HK, UK, Dubai, Saudi, Australia); Hong Kong Jockey Club. App: Apple App Store id1583194375. EquiMind: internal — README (evaluacion-del-caballo-de-paso-fino), production notes, and live product at equimind.app. Paywalled/press full-text (Wiley EVJ endurance paper; The Horse; Paulick) corroborated via search snippets + Sleip research pages, not full-text reads.</p>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">Digit2AI · RinglyPro AI Architect — Research Brief (#02) + Equine Clinical SME + Product/Strategy. This is an internal strategy memo; competitor facts are third-party and cited above. Not affiliated with or endorsed by Sleip AI AB.</div>
+</footer>
+
+</div>
+</body>
+</html>
