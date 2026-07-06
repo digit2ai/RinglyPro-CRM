@@ -100,6 +100,18 @@
     if (progBar) progBar.style.width = '0%';
   }
 
+  // ---- prominent analysis message (errors / no-credits) --------------------
+  var analysisMsg = $('analysisMsg');
+  var ECPF_BASE = BASE + '../evaluacion-del-caballo-de-paso-fino/';
+  function showMsg(html, kind) {
+    if (!analysisMsg) return;
+    analysisMsg.innerHTML = html;
+    analysisMsg.style.borderColor = kind === 'error' ? 'color-mix(in srgb,var(--sev-high) 50%,transparent)' : 'color-mix(in srgb,var(--sev-mid) 45%,transparent)';
+    analysisMsg.classList.remove('hidden');
+    try { analysisMsg.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+  }
+  function clearMsg() { if (analysisMsg) { analysisMsg.classList.add('hidden'); analysisMsg.innerHTML = ''; } }
+
   // ---- MediaPipe load ------------------------------------------------------
   var landmarkerPromise = null;
   function loadLandmarker() {
@@ -482,6 +494,7 @@
       return;
     }
 
+    clearMsg();
     analyzeBtn.disabled = true;
     setProgress(3, EN ? 'Preparing…' : 'Preparando…');
     var probe = document.createElement('video'); probe.muted = true; probe.playsInline = true; probe.preload = 'auto'; probe.src = player.src;
@@ -512,15 +525,31 @@
           manualFaults: manualFaults.slice()
         })
       });
-      if (resp.status === 401) { hideProgress(); if (loginNotice) { loginNotice.classList.remove('hidden'); try { loginNotice.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} } setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
+      if (resp.status === 401) {
+        hideProgress();
+        showMsg((EN ? 'Your session expired. Log in again to analyze.' : 'Tu sesión expiró. Inicia sesión de nuevo para analizar.') +
+          '<div class="login-cta"><a class="jbtn" href="' + ECPF_BASE + 'login">' + (t('jc_login_btn') || 'Iniciar sesión') + '</a>' +
+          '<a class="jbtn ghost" href="' + ECPF_BASE + 'panel">' + (t('jc_panel_btn') || 'Ir al panel') + '</a></div>', 'error');
+        analyzeBtn.disabled = false; return;
+      }
       if (resp.status === 402) {
         hideProgress();
-        setStatus(EN ? 'Out of credits. Recharge in the panel to continue.' : 'Sin créditos. Recarga en el panel para continuar.');
+        var bal = '';
+        try { var jb = await resp.json(); if (jb && jb.credits != null) bal = ' (' + jb.credits + ' ' + (EN ? 'credits' : 'créditos') + ')'; } catch (e) {}
+        showMsg((EN ? 'You have no analysis credits' : 'No tienes créditos para analizar') + bal + '. ' +
+          (EN ? 'Top up to run the analysis.' : 'Recarga para ejecutar el análisis.') +
+          '<div class="login-cta"><a class="jbtn" href="' + ECPF_BASE + 'panel">' + (EN ? 'Recharge' : 'Recargar') + '</a></div>', 'error');
         try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-recharge' }, '*'); } catch (e) {}
         analyzeBtn.disabled = false; return;
       }
-      if (!resp.ok) { hideProgress(); setStatus(t('save_failed')); analyzeBtn.disabled = false; return; }
+      if (!resp.ok) {
+        hideProgress();
+        var detail = ''; try { var je = await resp.json(); if (je && je.error) detail = ' — ' + je.error; } catch (e) {}
+        showMsg((EN ? 'The analysis could not be completed' : 'No se pudo completar el análisis') + ' (HTTP ' + resp.status + ')' + detail + '.', 'error');
+        analyzeBtn.disabled = false; return;
+      }
       var row = await resp.json();
+      clearMsg();
       setProgress(100, EN ? 'Done' : 'Listo');
       setStatus(synthetic ? t('synthetic_notice') : '');
       if (row && row.credits != null) { try { if (window.parent !== window) window.parent.postMessage({ type: 'ecpf-credits', credits: row.credits }, '*'); } catch (e) {} }
@@ -532,7 +561,10 @@
       loadInsights();
       try { resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
       setTimeout(hideProgress, 700);
-    } catch (e) { hideProgress(); setStatus(t('save_failed')); }
+    } catch (e) {
+      hideProgress();
+      showMsg((EN ? 'Network error while sending the analysis. Check your connection and try again.' : 'Error de red al enviar el análisis. Revisa tu conexión e intenta de nuevo.'), 'error');
+    }
     analyzeBtn.disabled = false;
   });
 
