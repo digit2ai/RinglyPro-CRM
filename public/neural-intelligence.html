@@ -496,6 +496,79 @@ html.lang-es .i18.es{display:inline}
 }
 @keyframes orbNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){.niva .orb-wrap[data-state="idle"]{animation:none}}
+/* Download-PDF button (in the top toggle group) */
+.pdfbtn{margin-left:6px;border:1px solid var(--line2);background:rgba(255,255,255,.04);color:var(--mut);font:700 11.5px var(--font-display);letter-spacing:.05em;padding:6px 13px;border-radius:999px;cursor:pointer;transition:color .15s,border-color .15s}
+.pdfbtn:hover{color:var(--txt);border-color:var(--accent)}
+@media (max-width:400px){.pdfbtn{padding:5px 10px;font-size:10.5px}}
+/* print-only elements are hidden on screen */
+.print-cover,.print-only{display:none}
+
+/* ================= PRINT / PDF — white professional proposal ================= */
+@media print{
+  @page{margin:15mm 14mm}
+  /* flip the whole palette to a light theme via the CSS variables */
+  :root{
+    --bg:#ffffff;--bg2:#ffffff;--panel:#f6f8fb;
+    --line:#e6eaf0;--line2:#d6dce4;
+    --txt:#141a22;--mut:#3c4855;--dim:#6b7683;
+    --accent:#0e7490;--accent2:#1d4ed8;--accent-ink:#ffffff;--glow:transparent;
+  }
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important;color:#141a22 !important}
+  /* stop being a scroll deck; flow the sections down the page */
+  main{height:auto !important;min-height:0 !important;overflow:visible !important;scroll-snap-type:none !important;display:block !important}
+  .slide{min-height:0 !important;height:auto !important;display:block !important;padding:0 0 9mm !important;margin:0 0 7mm !important;border:0 !important;background:#fff !important;page-break-inside:avoid;break-inside:avoid}
+  .slide + .slide{page-break-before:always}
+  .slide__inner{max-width:none !important}
+  /* everything visible (print never scrolls, so the reveal states must be forced open) */
+  .reveal,.slide .reveal{opacity:1 !important;transform:none !important;animation:none !important}
+  /* hide interactive / decorative chrome */
+  .niva,.nav,.langtoggle,.progress,.wordmark,.counter,.scrollhint,#triage,.triage-note,.orb-caption{display:none !important}
+  /* dark ink on white for hardcoded light text */
+  h1,h2,.title,.megaline,.cn,.lt,.tl-what,.cw-big,.hero-org{color:#0f1620 !important}
+  .hero-sub{color:#41505f !important}
+  .lead,.pts li,.tl-desc,.ld,.cd,.close,.cw-basis,.hero-claim,.viz-cap,.gap-lgd,.triage-intro,.stat-cap{color:#33404f !important}
+  .kicker{color:#0e7490 !important}
+  .src{color:#8a96a4 !important}
+  b,strong{color:#0f1620 !important}
+  /* accent/gradient text -> solid teal (background-clip:text is unreliable in print) */
+  .hl,.b,.hero-title h1 .b,.stat,.gg-num,.megaline .hl{-webkit-text-fill-color:#0e7490 !important;color:#0e7490 !important;background:none !important}
+  /* panels / cards on white */
+  .card,.layer,.quote-badge,.viz-cap,.tg-res{background:#f6f8fb !important;border-color:#e0e5ec !important;box-shadow:none !important}
+  ul.pts li{border-color:#e8ebf0 !important}
+  .quote-badge{border-left:3px solid #0e7490 !important}
+  /* infographics recolored for white */
+  .vbar-track{background:#eef1f5 !important;border-color:#dbe1e8 !important}
+  .gg-track{stroke:#e2e7ee !important}
+  .tl-item{border-left-color:#dbe1e8 !important}
+  .tl-item::before{background:#fff !important}
+  .viz-gap-chart svg line{stroke:#d5dbe3 !important}
+  .rise-axis{fill:#5b6673 !important}
+  .cw-urgency{background:#fdf2f2 !important;border-color:#f3c9c9 !important}
+  .cw-big{color:#0f1620 !important}
+  .cw-unit,.cw-basis b,.cw-today{color:#b91c1c !important}
+  .cw-today b{color:#7f1d1d !important}
+  /* force chart animations to their final drawn state */
+  .gap-line,.rise-line{stroke-dashoffset:0 !important}
+  .gap-area,.rise-area{opacity:1 !important}
+  .gg-arc{stroke-dashoffset:196 !important}
+  .vbar-fill{width:var(--w) !important}
+  /* footer + links */
+  .footer{border-top-color:#e0e5ec !important;color:#5b6673 !important}
+  .footer .co{color:#0f1620 !important}
+  .footer a,.pc-cta b{color:#0e7490 !important}
+  /* show the print-only cover + notes */
+  .print-cover{display:flex !important;flex-direction:column;justify-content:center;min-height:58vh;page-break-after:always;border-bottom:3px solid #0e7490;padding-bottom:9mm;margin-bottom:8mm}
+  .pc-brand{font-family:var(--font-display);font-weight:700;letter-spacing:.2em;font-size:15px;color:#0f1620}
+  .pc-brand b{color:#0e7490}
+  .pc-title{font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1.05;color:#0f1620;margin-top:14px}
+  .pc-sub{font-size:17px;color:#41505f;margin-top:10px}
+  .pc-claim{font-size:15px;color:#33404f;margin-top:20px;max-width:70ch;line-height:1.5}
+  .pc-meta{font-size:12.5px;color:#6b7683;margin-top:22px;letter-spacing:.04em}
+  #s1{display:none !important}  /* cover replaces the on-screen title slide */
+  .print-only{display:block !important}
+  .pc-cta{font-size:14px;color:#33404f !important;margin-top:10px;padding:12px 14px;border:1px solid #e0e5ec;border-left:3px solid #0e7490;border-radius:0 8px 8px 0;background:#f6f8fb}
+}
 </style>
 </head>
 <body>
@@ -507,6 +580,16 @@ html.lang-es .i18.es{display:inline}
 <div class="langtoggle" id="langtoggle" role="group" aria-label="Language / Idioma">
   <button id="pgEn" type="button" lang="en">EN</button>
   <button id="pgEs" type="button" lang="es">ES</button>
+  <button id="pdfBtn" class="pdfbtn" type="button" title="Download PDF" aria-label="Download PDF / Descargar PDF"><span aria-hidden="true">&#8595;</span> PDF</button>
+</div>
+
+<!-- Print-only proposal cover (first PDF page) -->
+<div class="print-cover" aria-hidden="true">
+  <div class="pc-brand">DIGIT<b>2</b>AI</div>
+  <div class="pc-title"><span class="i18 en">Neural Intelligence</span><span class="i18 es">Inteligencia Neural</span></div>
+  <div class="pc-sub"><span class="i18 en">The AI-Native Operating Model &mdash; Executive Proposal</span><span class="i18 es">El modelo operativo nativo de IA &mdash; Propuesta ejecutiva</span></div>
+  <div class="pc-claim"><span class="i18 en">150 specialized AI agents. One backbone. 30&ndash;50% lower operating costs &mdash; in weeks, not years.</span><span class="i18 es">150 agentes de IA especializados. Una sola columna vertebral. 30&ndash;50% menos de costos operativos &mdash; en semanas, no en a&ntilde;os.</span></div>
+  <div class="pc-meta">DIGIT2AI LLC &middot; Tampa, FL &middot; digit2ai.com</div>
 </div>
 
 <main id="deck">
@@ -731,6 +814,7 @@ html.lang-es .i18.es{display:inline}
       <h2 class="title reveal"><span class="i18 en">Neural Assessment &mdash; 2 weeks, fixed scope.</span><span class="i18 es">Evaluaci&oacute;n Neural &mdash; 2 semanas, alcance fijo.</span></h2>
       <p class="lead reveal"><span class="i18 en">We map your operating model and deliver a quantified cost-reduction blueprint: where the <strong>30&ndash;50%</strong> lives, which agents capture it, and the deployment sequence.</span><span class="i18 es">Mapeamos tu modelo operativo y entregamos un plano cuantificado de reducci&oacute;n de costos: d&oacute;nde est&aacute; el <strong>30&ndash;50%</strong>, qu&eacute; agentes lo capturan y la secuencia de despliegue.</span></p>
       <p class="lead reveal"><span class="i18 en">The assessment is the only up-front commitment. Everything after it is <span class="hl">self-funding</span> &mdash; the operating-cost savings pay for the deployment from the first month, so you scale on money you are already saving.</span><span class="i18 es">La evaluaci&oacute;n es el &uacute;nico compromiso inicial. Todo lo que viene despu&eacute;s se <span class="hl">autofinancia</span> &mdash; los ahorros operativos pagan el despliegue desde el primer mes, as&iacute; que escalas con dinero que ya est&aacute;s ahorrando.</span></p>
+      <p class="print-only pc-cta"><span class="i18 en">Run a live AI Triage or book your Neural Assessment at <b>digit2ai.com/neural-intelligence</b> &mdash; a real human follows up within 48 hours.</span><span class="i18 es">Ejecuta un Triage de IA en vivo o agenda tu Evaluaci&oacute;n Neural en <b>digit2ai.com/neural-intelligence</b> &mdash; una persona real te contacta en menos de 48 horas.</span></p>
       <div class="triage reveal" id="triage">
         <p class="triage-intro"><span class="i18 en">Try it <em>right now</em> &mdash; paste a challenge (yours or a prospect&rsquo;s). Our Neural Intelligence stack reads it, scores the fit, and sketches what we&rsquo;d build.</span><span class="i18 es">Pru&eacute;balo <em>ahora mismo</em> &mdash; pega un reto (tuyo o de un prospecto). Nuestro stack de Neural Intelligence lo lee, eval&uacute;a el ajuste y esboza lo que construir&iacute;amos.</span></p>
         <label class="triage-lbl" for="tg-desc"><span class="i18 en">Describe the problem &middot; in plain language</span><span class="i18 es">Describe el problema &middot; en lenguaje sencillo</span></label>
@@ -1418,6 +1502,19 @@ html.lang-es .i18.es{display:inline}
   if('IntersectionObserver' in window && slide){
     new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) start(); }); },{threshold:0.01}).observe(slide);
   } else { start(); }
+})();
+</script>
+
+<script>
+/* ===== Download PDF (print to a clean white proposal in the active language) ===== */
+(function(){
+  var b=document.getElementById('pdfBtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    var prev=document.title;
+    document.title='DIGIT2AI-Neural-Intelligence-Proposal';
+    window.addEventListener('afterprint',function restore(){ document.title=prev; window.removeEventListener('afterprint',restore); });
+    setTimeout(function(){ window.print(); },40);
+  });
 })();
 </script>
 </body>
