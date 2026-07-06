@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="es" class="lang-es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>/* language: saved choice > browser language > Spanish default (set before paint to avoid flash) */
+(function(){try{var s=localStorage.getItem('ni_lang');var nl=(navigator.language||navigator.userLanguage||'').toLowerCase();
+var l=(s==='en'||s==='es')?s:(nl.indexOf('en')===0?'en':'es');var d=document.documentElement;
+d.classList.remove('lang-en','lang-es');d.classList.add('lang-'+l);d.setAttribute('lang',l);}catch(e){}})();</script>
+<title>DIGIT2AI — Confidential Pre-Seed Investment Opportunity</title>
+<meta name="description" content="DIGIT2AI confidential pre-seed valuation & investment memorandum. Indicative enterprise value $3M–$8M. 22 verticals, 21 live platforms.">
+<meta name="theme-color" content="#070b16">
+<meta property="og:title" content="DIGIT2AI — Pre-Seed Investment Opportunity (Confidential)">
+<meta property="og:description" content="Confidential pre-seed valuation. Indicative enterprise value $3M–$8M today, rising to $10M–$30M+ on $1M+ ARR.">
+<meta property="og:type" content="website">
+<style>
+/* ---------- Reset ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070b16;          /* deep navy/charcoal base */
+  --bg2:#0b1120;
+  --panel:#0f1728;
+  --line:rgba(120,150,200,.16);
+  --line2:rgba(120,150,200,.30);
+  --txt:#eaf0fb;          /* body */
+  --mut:#9db0cc;          /* muted body — AA on dark */
+  --dim:#6f80a0;
+  --accent:#22d3ee;       /* electric teal accent */
+  --accent2:#38bdf8;      /* electric blue */
+  --accent-ink:#062b33;
+  --glow:rgba(34,211,238,.16);
+  --maxw:1120px;
+  --fs-body:clamp(16px,1.05vw + 12px,19px);
+  --fs-lead:clamp(19px,1.2vw + 13px,24px);
+  --fs-h2:clamp(28px,3.4vw + 8px,52px);
+  --fs-hero:clamp(64px,15vw,190px);
+  --font-display:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --font-body:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+}
+/* Fonts are optional progressive enhancement; system stack is the guaranteed fallback */
+@font-face{font-family:'Inter';src:local('Inter');font-display:swap}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--font-body);
+  font-size:var(--fs-body);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+/* ---------- Scroll deck ---------- */
+main{
+  height:100vh;
+  height:100dvh;
+  overflow-y:scroll;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+}
+.slide{
+  min-height:100vh;
+  min-height:100dvh;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:clamp(72px,9vh,120px) clamp(22px,6vw,84px) clamp(64px,8vh,96px);
+  border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(1100px 620px at 82% -8%,rgba(34,211,238,.09),transparent 60%),
+    radial-gradient(900px 560px at -6% 108%,rgba(56,189,248,.07),transparent 62%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+}
+.slide__inner{width:100%;max-width:var(--maxw);margin:0 auto}
+/* ---------- Wordmark + counter (fixed chrome) ---------- */
+.wordmark{
+  position:fixed;top:0;left:0;z-index:40;
+  padding:clamp(18px,2.4vh,26px) clamp(22px,5vw,52px);
+  font-family:var(--font-display);
+  font-weight:700;letter-spacing:.20em;font-size:clamp(13px,1.1vw,15px);
+  color:var(--txt);
+  text-shadow:0 2px 18px rgba(0,0,0,.7);
+  pointer-events:none;
+}
+.wordmark b{color:var(--accent)}
+.counter{
+  position:fixed;top:0;right:0;z-index:40;
+  padding:clamp(18px,2.4vh,26px) clamp(22px,5vw,52px);
+  font-family:var(--font-display);
+  font-weight:600;letter-spacing:.14em;font-size:clamp(12px,1vw,14px);
+  color:var(--mut);
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 18px rgba(0,0,0,.7);
+}
+.counter b{color:var(--txt)}
+/* progress bar */
+.progress{position:fixed;top:0;left:0;height:3px;z-index:41;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .25s ease;box-shadow:0 0 12px var(--glow)}
+/* ---------- Nav arrows ---------- */
+.nav{position:fixed;right:clamp(16px,3vw,34px);bottom:clamp(16px,4vh,34px);z-index:42;display:flex;flex-direction:column;gap:10px}
+.nav button{
+  width:48px;height:48px;border-radius:50%;
+  border:1px solid var(--line2);background:rgba(15,23,40,.82);
+  color:var(--txt);font-size:20px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:border-color .2s,background .2s,transform .15s;
+}
+.nav button:hover{border-color:var(--accent);background:rgba(34,211,238,.14)}
+.nav button:active{transform:scale(.94)}
+.nav button:disabled{opacity:.28;cursor:default}
+.nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ---------- Typography atoms ---------- */
+.kicker{
+  display:inline-block;
+  font-family:var(--font-display);font-weight:600;
+  letter-spacing:.24em;text-transform:uppercase;
+  font-size:clamp(11px,.9vw,13px);color:var(--accent);
+  margin-bottom:clamp(18px,3vh,30px);
+}
+.kicker::before{content:"";display:inline-block;width:26px;height:1px;background:var(--accent);vertical-align:middle;margin-right:12px;opacity:.8}
+h2.title{
+  font-family:var(--font-display);
+  font-weight:700;font-size:var(--fs-h2);line-height:1.05;letter-spacing:-.02em;
+  color:#fff;margin-bottom:clamp(18px,3vh,28px);max-width:20ch;
+}
+.lead{font-size:var(--fs-lead);color:var(--txt);max-width:52ch;margin-bottom:clamp(16px,2.4vh,26px);font-weight:400}
+.lead strong{color:#fff;font-weight:600}
+.close{margin-top:clamp(20px,3vh,32px);padding-top:clamp(16px,2.4vh,24px);border-top:1px solid var(--line);color:var(--accent2);font-size:var(--fs-lead);font-weight:500;max-width:56ch;font-style:italic}
+.close.plain{font-style:normal;color:var(--mut)}
+.close.plain b{color:var(--txt);font-weight:600}
+/* lists */
+ul.pts{list-style:none;margin:clamp(8px,1.5vh,16px) 0;max-width:60ch}
+ul.pts li{position:relative;padding:9px 0 9px 30px;color:var(--txt);font-size:clamp(15px,1.05vw + 8px,19px);border-bottom:1px solid var(--line)}
+ul.pts li:last-child{border-bottom:0}
+ul.pts li::before{content:"";position:absolute;left:2px;top:18px;width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 10px var(--glow)}
+ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
+.src{color:var(--dim);font-size:.82em;font-weight:400}
+/* ---------- Hero stat ---------- */
+.stat{
+  font-family:var(--font-display);font-weight:700;line-height:.9;letter-spacing:-.03em;
+  font-size:var(--fs-hero);
+  background:linear-gradient(120deg,#fff 0%,var(--accent) 55%,var(--accent2) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;
+  margin:clamp(6px,1.5vh,14px) 0;
+}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.stat{color:var(--accent)}}
+.stat-cap{font-size:var(--fs-lead);color:#fff;font-weight:600;margin-bottom:clamp(20px,3vh,30px)}
+/* ---------- Title slide ---------- */
+.hero-title{text-align:left}
+.hero-title h1{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(44px,8vw,104px);line-height:.98;letter-spacing:-.03em;color:#fff;
+  margin-bottom:14px;
+}
+.hero-title h1 .b{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.hero-title h1 .b{color:var(--accent)}}
+.hero-sub{font-family:var(--font-display);font-style:italic;font-weight:400;font-size:clamp(19px,2.4vw,30px);color:var(--mut);margin-bottom:clamp(26px,4vh,42px)}
+.hero-claim{font-size:clamp(19px,1.5vw + 10px,30px);line-height:1.35;color:#fff;font-weight:600;max-width:24ch}
+.hero-claim .hl{color:var(--accent)}
+.hero-org{margin-top:clamp(34px,6vh,64px);font-family:var(--font-display);letter-spacing:.16em;font-size:clamp(12px,1vw,14px);color:var(--dim);text-transform:uppercase}
+/* ---------- Big hero line (slides 5,10) ---------- */
+.megaline{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(26px,3.4vw + 10px,54px);line-height:1.08;letter-spacing:-.02em;color:#fff;
+  max-width:22ch;margin-top:clamp(18px,3vh,30px);
+}
+.megaline .hl{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.megaline .hl{color:var(--accent)}}
+.quote-badge{display:inline-block;padding:clamp(20px,3vh,34px);border-left:3px solid var(--accent);background:linear-gradient(90deg,rgba(34,211,238,.07),transparent);border-radius:0 12px 12px 0;margin-top:clamp(20px,3vh,30px)}
+/* ---------- Slide 6: D2AIEAM stacked diagram (pure CSS) ---------- */
+.layers{display:flex;flex-direction:column;gap:12px;margin-top:clamp(14px,2.4vh,24px);max-width:760px}
+.layer{
+  position:relative;display:flex;align-items:center;gap:16px;
+  padding:clamp(13px,1.8vh,18px) clamp(16px,2vw,22px);
+  background:linear-gradient(90deg,var(--panel),rgba(15,23,40,.4));
+  border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;
+}
+.layer .num{flex:0 0 auto;width:34px;height:34px;border-radius:8px;background:rgba(34,211,238,.12);border:1px solid var(--line2);color:var(--accent);font-family:var(--font-display);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+.layer .lx{min-width:0}
+.layer .lt{font-family:var(--font-display);font-weight:600;color:#fff;font-size:clamp(15px,1vw + 8px,18px)}
+.layer .ld{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.4}
+.layer-conn{width:2px;height:12px;background:linear-gradient(var(--accent),transparent);margin:-8px 0 -8px 34px;opacity:.6}
+/* stagger the accent bar intensity to imply a stack/backbone */
+.layer:nth-child(1){border-left-color:#67e8f9}
+.layer:nth-child(3){border-left-color:#38bdf8}
+.layer:nth-child(5){border-left-color:#818cf8}
+.layer:nth-child(7){border-left-color:#a78bfa}
+.layer:nth-child(9){border-left-color:#22d3ee}
+/* ---------- Slide 8: card grid ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:clamp(14px,2.4vh,24px)}
+.card{
+  padding:clamp(16px,2vh,22px);border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,var(--panel),rgba(11,17,32,.6));
+  transition:border-color .2s,transform .2s;
+}
+.card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.card .cn{font-family:var(--font-display);font-weight:700;color:#fff;font-size:clamp(16px,1vw + 9px,19px);margin-bottom:6px}
+.card .cn span{color:var(--accent)}
+.card .cd{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.45}
+/* ---------- Slide 9: timeline (pure CSS) ---------- */
+.timeline{position:relative;margin-top:clamp(16px,2.6vh,26px);display:flex;flex-direction:column;gap:0}
+.tl-item{position:relative;padding:0 0 clamp(18px,2.4vh,26px) 34px;border-left:2px solid var(--line2)}
+.tl-item:last-child{border-left-color:transparent;padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-9px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:3px solid var(--accent);box-shadow:0 0 0 4px rgba(34,211,238,.10)}
+.tl-when{font-family:var(--font-display);font-weight:700;color:var(--accent);font-size:clamp(13px,.9vw + 7px,15px);letter-spacing:.03em;margin-bottom:3px;text-transform:uppercase}
+.tl-what{color:#fff;font-weight:600;font-size:clamp(15px,1vw + 8px,18px);margin-bottom:3px}
+.tl-desc{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.45;max-width:64ch}
+/* ---------- Slide 11: CTA + footer ---------- */
+.cta{
+  display:inline-block;margin-top:clamp(22px,3.4vh,34px);
+  padding:16px 34px;min-height:52px;
+  font-family:var(--font-display);font-weight:700;font-size:clamp(16px,1.1vw,18px);letter-spacing:.02em;
+  color:var(--accent-ink);text-decoration:none;border-radius:12px;
+  background:linear-gradient(120deg,var(--accent),var(--accent2));
+  box-shadow:0 12px 40px rgba(34,211,238,.28);
+  transition:transform .15s,box-shadow .2s;
+}
+.cta:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(34,211,238,.4)}
+.cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+/* ===== Live AI Triage (slide 11) ===== */
+.triage{max-width:860px;margin-top:clamp(16px,2.6vh,26px);text-align:left}
+.triage-intro{color:var(--txt);font-size:clamp(15px,1.05vw + 8px,18px);line-height:1.5;margin-bottom:clamp(12px,2vh,18px);max-width:70ch}
+.triage-lbl{display:block;font-family:var(--font-display);font-weight:700;font-size:clamp(11px,.7vw + 6px,12.5px);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.triage textarea,.triage input{width:100%;background:rgba(10,16,30,.6);border:1px solid var(--line2);border-radius:12px;color:var(--txt);font-family:var(--font-body);font-size:clamp(14px,1vw + 7px,16px);padding:13px 16px;transition:border-color .15s}
+.triage textarea{min-height:128px;resize:vertical;line-height:1.5}
+.triage textarea:focus,.triage input:focus{outline:none;border-color:var(--accent)}
+.triage textarea::placeholder,.triage input::placeholder{color:var(--dim)}
+.triage-hint{color:var(--dim);font-size:clamp(12px,.8vw + 6px,13.5px);margin:8px 0 14px;line-height:1.5}
+.triage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.triage-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.triage-run{display:inline-flex;align-items:center;gap:9px;border:0;cursor:pointer;
+  padding:14px 32px;min-height:52px;font-family:var(--font-display);font-weight:700;font-size:clamp(15px,1.1vw,18px);letter-spacing:.02em;
+  color:var(--accent-ink);border-radius:12px;background:linear-gradient(120deg,var(--accent),var(--accent2));box-shadow:0 12px 40px rgba(34,211,238,.28);transition:transform .15s,box-shadow .2s}
+.triage-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 48px rgba(34,211,238,.4)}
+.triage-run:disabled{opacity:.6;cursor:default}
+.triage-status{color:var(--mut);font-size:14px;display:inline-flex;align-items:center}
+.triage-error{color:#fda4af;font-size:14px;margin-top:12px}
+.tg-spin{width:14px;height:14px;border:2px solid rgba(34,211,238,.25);border-top-color:#22d3ee;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:7px;animation:tgspin .7s linear infinite}
+@keyframes tgspin{to{transform:rotate(360deg)}}
+.triage-result{margin-top:clamp(16px,2.6vh,26px)}
+.tg-res{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:16px;padding:clamp(18px,2.4vw,26px);animation:tgIn .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes tgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.tg-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.tg-verdict{font-family:var(--font-display);font-weight:800;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:7px 16px;border-radius:999px}
+.v-go{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.4)}
+.v-poc{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.4)}
+.v-stop{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)}
+.tg-fit{font-family:var(--font-display);font-weight:800;font-size:clamp(24px,3vw,32px);color:#fff;line-height:1}
+.tg-fit span{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600;margin-top:2px}
+.tg-block{margin-top:16px}
+.tg-block h4{font-family:var(--font-display);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.tg-block p{color:var(--txt);font-size:clamp(14px,1vw + 7px,16px);line-height:1.55;margin:0}
+.tg-block ul{list-style:none;margin:0;padding:0}
+.tg-block ul li{position:relative;padding-left:18px;margin-bottom:5px;color:var(--txt);font-size:clamp(13.5px,.95vw + 7px,15.5px);line-height:1.5}
+.tg-block ul li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:2px;background:var(--accent)}
+.tg-tech{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.tg-cell .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;font-weight:600}
+.triage-note{color:var(--dim);font-size:clamp(12px,.8vw + 6px,13.5px);margin-top:10px;line-height:1.55;max-width:70ch}
+.triage-note b{color:var(--mut)}
+.triage-sent:empty{margin:0}
+.triage-sent{margin-top:14px}
+.tg-ok{display:flex;gap:10px;align-items:flex-start;padding:13px 16px;border-radius:12px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.10);color:#bbf7d0;font-size:clamp(13px,.9vw + 7px,15px);line-height:1.5}
+.tg-ok b{color:#4ade80}
+.tg-ok a{color:#67e8f9;word-break:break-all}
+@media (max-width:640px){.triage-grid,.tg-tech{grid-template-columns:1fr}}
+.footer{margin-top:clamp(30px,5vh,54px);padding-top:clamp(18px,2.6vh,26px);border-top:1px solid var(--line);color:var(--dim);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.7}
+.footer .co{font-family:var(--font-display);color:var(--txt);font-weight:600;letter-spacing:.04em}
+.footer .people{color:var(--mut)}
+.footer a{color:var(--accent2);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+/* ---------- Scroll hint (slide 1) ---------- */
+.scrollhint{position:absolute;left:50%;bottom:clamp(22px,4vh,40px);transform:translateX(-50%);color:var(--dim);font-size:12px;font-family:var(--font-display);letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.scrollhint .arw{display:block;margin:8px auto 0;width:16px;height:16px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(45deg);animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:rotate(45deg) translate(0,0);opacity:.5}50%{transform:rotate(45deg) translate(3px,3px);opacity:1}}
+/* ============ Infographics — animate when the slide enters view (.slide.in) ============ */
+/* Slide 2 — adoption-gap bars */
+.viz-bars{margin:clamp(12px,2.4vh,22px) 0 clamp(6px,1.2vh,12px);max-width:640px;display:flex;flex-direction:column;gap:clamp(13px,2.2vh,20px)}
+.vbar{display:grid;grid-template-columns:minmax(92px,30%) 1fr auto;align-items:center;gap:clamp(10px,1.4vw,16px)}
+.vbar-lbl{color:var(--txt);font-size:clamp(13px,.9vw + 7px,16px);font-weight:600}
+.vbar-track{position:relative;height:15px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);overflow:hidden}
+.vbar-fill{position:absolute;top:0;left:0;bottom:0;width:0;border-radius:8px;transition:width 1.25s cubic-bezier(.16,1,.3,1) .12s}
+.js .slide.in .vbar-fill{width:var(--w)}
+.f-hi{background:linear-gradient(90deg,#22d3ee,#38bdf8);box-shadow:0 0 16px rgba(34,211,238,.4)}
+.f-mid{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.f-lo{background:linear-gradient(90deg,#fb7185,#ef4444);box-shadow:0 0 16px rgba(239,68,68,.35)}
+.vbar-val{font-family:var(--font-display);font-weight:800;font-size:clamp(17px,1.1vw + 9px,24px);color:#fff;min-width:2.8ch;text-align:right}
+.viz-cap{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);margin-top:clamp(6px,1.2vh,12px)}
+.viz-cap b{color:#fda4af;font-weight:700}
+/* Slide 7 — radial gauge */
+.viz-gauge{position:relative;width:clamp(190px,30vh,250px);height:clamp(190px,30vh,250px);margin:clamp(4px,1.4vh,14px) 0}
+.viz-gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gg-track{fill:none;stroke:rgba(255,255,255,.08);stroke-width:9}
+.gg-arc{fill:none;stroke:url(#ggGrad);stroke-width:9;stroke-linecap:round;stroke-dasharray:327;stroke-dashoffset:327;transition:stroke-dashoffset 1.7s cubic-bezier(.16,1,.3,1) .15s}
+.js .slide.in .gg-arc{stroke-dashoffset:196}
+.gg-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.gg-num{font-family:var(--font-display);font-weight:800;font-size:clamp(32px,5.4vw,48px);line-height:1;background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.gg-num{color:var(--accent)}}
+.gg-sub{color:var(--mut);font-size:clamp(10px,.7vw + 6px,12px);text-transform:uppercase;letter-spacing:.14em;margin-top:7px}
+/* Slide 9 — timeline spine draw + node pop */
+.tl-spine{position:absolute;left:0;top:4px;bottom:4px;width:2px;transform-origin:top center;transform:scaleY(0);background:linear-gradient(180deg,#67e8f9,#818cf8);box-shadow:0 0 10px rgba(34,211,238,.5);transition:transform 1.5s cubic-bezier(.4,0,.2,1) .1s;pointer-events:none}
+.js .slide.in .tl-spine{transform:scaleY(1)}
+.js .slide.in .tl-item::before{animation:nodePop .55s cubic-bezier(.2,1.4,.4,1) both}
+.js .slide.in .tl-item:nth-of-type(2)::before{animation-delay:.2s}
+.js .slide.in .tl-item:nth-of-type(3)::before{animation-delay:.45s}
+.js .slide.in .tl-item:nth-of-type(4)::before{animation-delay:.7s}
+@keyframes nodePop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
+/* Slide 10 — widening-gap line chart */
+.viz-gap-chart{width:100%;max-width:600px;margin:clamp(12px,2.4vh,22px) 0 clamp(6px,1.2vh,10px)}
+.viz-gap-chart svg{width:100%;height:auto;display:block}
+.gap-area{fill:url(#gapGrad);opacity:0;transition:opacity 1s ease .9s}
+.js .slide.in .gap-area{opacity:1}
+.gap-line{fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.7s cubic-bezier(.16,1,.3,1) .2s}
+.js .slide.in .gap-line{stroke-dashoffset:0}
+.gap-trad{stroke:#f87171}
+.gap-ai{stroke:#22d3ee;filter:drop-shadow(0 0 5px rgba(34,211,238,.5))}
+.gap-lgd{display:flex;gap:clamp(14px,3vw,26px);flex-wrap:wrap;margin-top:10px;font-size:clamp(12px,.85vw + 6px,14px);color:var(--mut)}
+.gap-lgd span{display:inline-flex;align-items:center;gap:8px}
+.gap-lgd i{width:16px;height:3px;border-radius:2px;display:inline-block;flex:0 0 auto}
+/* Slide 10 — cost-of-waiting urgency callout */
+.cw-urgency{margin:clamp(14px,2.4vh,22px) 0;padding:clamp(15px,2vw,22px) clamp(17px,2.4vw,26px);border-radius:14px;border:1px solid rgba(248,113,113,.38);background:linear-gradient(100deg,rgba(248,113,113,.13),rgba(139,92,246,.06));max-width:760px}
+.cw-big{font-family:var(--font-display);font-weight:800;font-size:clamp(32px,5.4vw,50px);line-height:1;color:#fff;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cw-unit{font-size:.4em;color:#fca5a5;font-weight:700;letter-spacing:.03em;margin-left:8px;text-transform:uppercase}
+.cw-basis{color:var(--mut);font-size:clamp(13px,.9vw + 7px,15.5px);margin-top:10px;line-height:1.55;max-width:66ch}
+.cw-basis b{color:#fca5a5;font-weight:700}
+.cw-today{margin-top:12px;font-size:clamp(13px,.9vw + 7px,15px);color:#fda4af}
+.cw-today b{color:#fff;font-weight:800;font-size:1.2em;font-variant-numeric:tabular-nums}
+.viz-cap-mini{color:var(--mut);font-size:clamp(12px,.85vw + 6px,14px);margin-top:8px;max-width:60ch}
+/* Slide 4 — rising AI-adoption curve with the 2026-2027 window highlighted */
+.rise-band{fill:rgba(34,211,238,.09);stroke:rgba(34,211,238,.3);stroke-width:1;stroke-dasharray:3 3}
+.rise-band-lbl{fill:var(--accent);font-size:10px;font-family:var(--font-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.rise-area{fill:url(#riseGrad);opacity:0;transition:opacity 1s ease .7s}
+.js .slide.in .rise-area{opacity:1}
+.rise-line{fill:none;stroke:#22d3ee;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(34,211,238,.5));stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.8s cubic-bezier(.16,1,.3,1) .2s}
+.js .slide.in .rise-line{stroke-dashoffset:0}
+.rise-axis{fill:var(--dim);font-size:11px;font-family:var(--font-display)}
+.rise-dot{fill:#a5f3fc;opacity:0;transition:opacity .4s ease 1.7s}
+.js .slide.in .rise-dot{opacity:1}
+.js .slide.in .rise-dot{animation:risePulse 2.4s ease-in-out 1.9s infinite}
+@keyframes risePulse{0%,100%{filter:drop-shadow(0 0 3px rgba(165,243,252,.6))}50%{filter:drop-shadow(0 0 9px rgba(165,243,252,1))}}
+/* reduced motion — show final states, no motion */
+@media (prefers-reduced-motion:reduce){
+  .vbar-fill{transition:none;width:var(--w)}
+  .gg-arc{transition:none;stroke-dashoffset:196}
+  .tl-spine{transition:none;transform:scaleY(1)}
+  .js .slide.in .tl-item::before{animation:none}
+  .gap-line{transition:none;stroke-dashoffset:0}
+  .gap-area{opacity:1}
+  .rise-line{transition:none;stroke-dashoffset:0}
+  .rise-area{opacity:1}
+  .rise-dot{opacity:1;animation:none}
+}
+/* ---------- Reveal animation (progressive enhancement) ---------- */
+.reveal{opacity:1;transform:none}
+.js .reveal{opacity:0;transform:translateY(22px) scale(.982);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.js .slide.in .reveal{opacity:1;transform:none}
+.js .slide.in .reveal:nth-child(2){transition-delay:.06s}
+.js .slide.in .reveal:nth-child(3){transition-delay:.12s}
+.js .slide.in .reveal:nth-child(4){transition-delay:.18s}
+.js .slide.in .reveal:nth-child(5){transition-delay:.24s}
+.js .slide.in .reveal:nth-child(6){transition-delay:.30s}
+@media (prefers-reduced-motion:reduce){
+  .js .reveal{opacity:1;transform:none;transition:none}
+  html,main{scroll-behavior:auto}
+  .scrollhint .arw{animation:none}
+}
+/* ---------- Responsive ---------- */
+@media (max-width:768px){
+  .slide{padding:88px 22px 96px}
+  ul.pts li{padding-left:26px}
+  .nav{flex-direction:row}
+}
+@media (max-width:420px){
+  .layer{gap:12px;padding:12px 14px}
+  .layer .num{width:30px;height:30px}
+  .cards{grid-template-columns:1fr}
+  .quote-badge{padding:18px}
+}
+/* landscape phones: don't force full height on short viewports */
+@media (max-height:520px){.slide{min-height:auto;padding:80px 22px 40px}}
+
+/* ===== Bilingual Neural Voice orb (Layer 3) — sophisticated MCP brain, right-center ===== */
+.niva{position:fixed;right:clamp(16px,3.5vw,56px);top:50%;transform:translateY(-50%);z-index:60;font-family:var(--font-body);
+  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#ec4899;--ink-mute:#9db0cc;
+  --font-mono:'Space Grotesk',ui-monospace,monospace;--orb-size:clamp(150px,17vw,210px)}
+.niva .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;--orb-amp:0;outline:none;transition:transform .2s}
+.niva .orb-wrap:hover{transform:scale(1.02)}
+.niva .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
+.niva .orb-svg{width:100%;height:100%;display:block;
+  filter:drop-shadow(0 8px 32px rgba(34,211,238,.28)) drop-shadow(0 4px 18px rgba(139,92,246,.22));transition:filter 120ms linear}
+/* idle rotations (Iron Man / Tron) */
+.niva .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.niva .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.niva .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.niva .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.niva .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.niva .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.niva .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.niva .orb-ring{opacity:0;transform-box:fill-box;transform-origin:center}
+/* thinking — particles orbit while neural audio is fetched */
+.niva .orb-particles{opacity:0}
+.niva .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+.niva .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+.niva .orb-wrap[data-state="thinking"] .orb-core{animation:orbThinkSpin 6s linear infinite}
+.niva .orb-wrap[data-state="thinking"] .orb-ring{opacity:.7;animation:orbRingTight 2.4s ease-in-out infinite}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+/* speaking — saturated halo */
+.niva .orb-wrap[data-state="speaking"] .orb-core,.niva .orb-wrap[data-state="speaking"] .orb-glow{filter:brightness(1.3) saturate(1.2)}
+.niva .orb-wrap[data-state="speaking"] .orb-svg{filter:drop-shadow(0 8px 42px rgba(34,211,238,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+/* caption under the orb */
+.niva .orb-caption{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(300px,52vw);text-align:center;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-mute);line-height:1.4;transition:color .2s}
+.niva .orb-wrap:hover .orb-caption{color:var(--accent-cyan)}
+.niva .orb-wrap[data-state="thinking"] .orb-caption{color:var(--accent-violet)}
+.niva .orb-wrap[data-state="speaking"] .orb-caption{color:var(--accent-magenta)}
+.orb-cap-idle,.orb-cap-active{display:none}
+.niva .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
+.niva .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
+.orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* compact control chip — anchored UNDER the orb, right-aligned so it never covers the slide text */
+.niva-panel{position:absolute;top:calc(100% + 12px);right:0;left:auto;bottom:auto;transform:none;width:max-content;max-width:min(78vw,240px);
+  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:14px;
+  padding:11px 12px;box-shadow:0 20px 56px rgba(0,0,0,.6);display:none}
+.niva-panel{display:none !important}   /* chip removed — controls are: tap orb (play/pause) + top language toggle */
+/* during a session, keep the status caption visible even when the orb dims to 'idle' on pause */
+.niva.session .orb-cap-idle{display:none !important}
+.niva.session .orb-cap-active{display:inline !important}
+/* header, voice picker and HD toggle removed from the chip — minimal by design */
+.niva-hd,.niva-row,#nivaPlay{display:none}
+.niva-lang{display:flex;gap:5px;margin-bottom:8px}
+.niva-lang button{flex:1;padding:5px 12px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:600 12px var(--font-display);letter-spacing:.04em;cursor:pointer}
+.niva-lang button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent}
+.niva-ctrls{display:flex;gap:6px;margin-bottom:0}
+.niva-ctrls button{flex:1;padding:8px 12px;min-height:0;border-radius:9px;border:1px solid var(--line2);background:rgba(34,211,238,.07);color:var(--txt);font:600 13px var(--font-body);cursor:pointer}
+.niva-ctrls button:disabled{opacity:.4;cursor:default}
+.niva-status{font-size:11.5px;color:var(--mut);margin-top:8px;min-height:15px;line-height:1.4;text-align:center}
+.niva-close{position:absolute;top:5px;right:8px;background:none;border:0;color:var(--dim);font-size:16px;cursor:pointer;line-height:1;padding:2px 5px}
+.niva-close:hover{color:var(--txt)}
+@media (max-width:900px){.niva{--orb-size:clamp(122px,24vw,150px)}}
+@media (max-width:640px){
+  .niva{right:12px;top:auto;bottom:16px;transform:none}
+  .niva .orb-caption{font-size:9px;letter-spacing:1px}
+  /* orb sits at the bottom on mobile, so the chip opens ABOVE it (still right-aligned) */
+  .niva-panel{top:auto;bottom:calc(100% + 10px);right:0}
+}
+@media print{.niva{display:none}}
+/* ===== Bilingual page (EN/ES) ===== */
+.i18{display:none}
+html.lang-en .i18.en{display:inline}
+html.lang-es .i18.es{display:inline}
+.langtoggle{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;display:flex;gap:4px;
+  background:rgba(10,16,30,.62);border:1px solid var(--line2);border-radius:999px;padding:3px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.langtoggle button{border:0;background:transparent;color:var(--mut);font:700 12px var(--font-display);letter-spacing:.06em;padding:6px 15px;border-radius:999px;cursor:pointer;transition:color .15s}
+.langtoggle button:hover{color:var(--txt)}
+.langtoggle button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33}
+@media (max-width:640px){.langtoggle{top:10px}.langtoggle button{padding:5px 12px;font-size:11px}}
+@media print{.langtoggle{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .niva .orb-ring-outer,.niva .orb-ring-mid,.niva .orb-ring-inner,.niva .orb-iris-outer,.niva .orb-iris-segs,
+  .niva .orb-scan,.niva .orb-crosshair,.niva .orb-particle{animation:none!important}
+  .niva .orb-svg animate,.niva .orb-svg animateTransform{display:none}
+  .niva .orb-wrap:hover{transform:none}
+}
+/* ============ Mobile pass ============ */
+@media (max-width:640px){
+  /* gentler snapping so tall content slides (8/10/11) scroll naturally on touch */
+  main{scroll-snap-type:y proximity}
+  /* nav arrows share the bottom-right corner with the orb -> move them bottom-left, side by side */
+  .nav{left:12px;right:auto;bottom:14px;flex-direction:row;gap:8px}
+  .nav button{width:44px;height:44px;font-size:18px}
+  /* lift the orb off the bottom edge so it reads as a tap-to-play control, keep its hint */
+  .niva{--orb-size:clamp(100px,24vw,126px);right:14px;bottom:clamp(78px,16vh,128px)}
+  .niva .orb-caption{display:block;font-size:9px;letter-spacing:.4px;bottom:-18px;left:auto;right:2px;transform:none;text-align:right;max-width:158px;white-space:normal;line-height:1.35}
+  /* gentle idle nudge to draw the eye to it */
+  .niva .orb-wrap[data-state="idle"]{animation:orbNudge 2.8s ease-in-out infinite}
+  /* tighten fixed top chrome so wordmark / EN-ES toggle / counter never collide */
+  .wordmark{padding:12px 14px;letter-spacing:.12em;font-size:12px}
+  .counter{padding:12px 14px;font-size:11px}
+  .langtoggle{top:9px}
+  .langtoggle button{padding:6px 14px}
+  .slide{padding:74px 18px 90px}
+  /* full-width, comfortable form controls; 16px stops iOS from zooming on focus */
+  .triage textarea,.triage input{font-size:16px}
+  .triage-run{width:100%;justify-content:center}
+  .cw-urgency,.triage-intro,.cw-basis,.triage-note{max-width:none}
+}
+@media (max-width:400px){
+  .wordmark{font-size:11px;letter-spacing:.08em}
+  .langtoggle button{padding:5px 11px;font-size:10.5px}
+  .nav button{width:42px;height:42px}
+}
+@keyframes orbNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.niva .orb-wrap[data-state="idle"]{animation:none}}
+/* Download-PDF button (in the top toggle group) */
+.pdfbtn{margin-left:6px;border:1px solid var(--line2);background:rgba(255,255,255,.04);color:var(--mut);font:700 11.5px var(--font-display);letter-spacing:.05em;padding:6px 13px;border-radius:999px;cursor:pointer;transition:color .15s,border-color .15s}
+.pdfbtn:hover{color:var(--txt);border-color:var(--accent)}
+@media (max-width:400px){.pdfbtn{padding:5px 10px;font-size:10.5px}}
+/* print-only elements are hidden on screen */
+.print-cover,.print-only{display:none}
+
+/* ================= Investor components ================= */
+.conf-badge{display:inline-block;font:700 10.5px var(--font-display);letter-spacing:.18em;color:#fca5a5;border:1px solid rgba(248,113,113,.4);padding:4px 12px;border-radius:20px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:clamp(14px,2.4vh,24px) 0;max-width:840px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:clamp(14px,2vh,20px)}
+.kpi .n{font-family:var(--font-display);font-weight:800;font-size:clamp(23px,3vw,33px);color:#fff;line-height:1;letter-spacing:-.01em}
+.kpi .n.brand{color:var(--accent)}.kpi .n.teal{color:var(--accent2)}
+.kpi .l{color:var(--mut);font-size:clamp(12px,.85vw + 6px,14px);margin-top:8px;line-height:1.4}
+@media(max-width:640px){.kpis{grid-template-columns:1fr}}
+.ffchart{max-width:860px;margin:clamp(12px,2.4vh,22px) 0}
+.ffrow{display:grid;grid-template-columns:210px 1fr;align-items:center;gap:14px;margin:12px 0}
+.ffrow .lbl{color:var(--txt);font-size:clamp(13px,.9vw + 7px,15px);font-weight:600}
+.fftrack{position:relative;height:34px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px}
+.ffbar{position:absolute;top:0;bottom:0;width:0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#062b33;font:800 12px var(--font-display);white-space:nowrap;overflow:hidden;transition:width 1.2s cubic-bezier(.16,1,.3,1) .12s}
+.js .slide.in .ffbar{width:var(--w)}
+.ffaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:8px;margin-left:224px}
+@media(max-width:640px){.ffrow{grid-template-columns:1fr;gap:5px}.ffaxis{margin-left:0}}
+.ivtable-wrap{overflow-x:auto;margin:clamp(12px,2.4vh,20px) 0;max-width:840px;border:1px solid var(--line);border-radius:14px}
+.ivtable{width:100%;border-collapse:collapse;font-size:clamp(13px,.9vw + 7px,15px)}
+.ivtable th,.ivtable td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--txt)}
+.ivtable th{font-family:var(--font-display);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.ivtable td.num,.ivtable th.num{text-align:right;font-variant-numeric:tabular-nums}
+.ivtable tr:last-child td{border-bottom:0}
+.ivtable .em{color:var(--accent);font-weight:700}
+.ivtable tr.hot td{background:rgba(34,211,238,.06)}
+.tag{display:inline-block;font:600 10.5px var(--font-display);padding:2px 9px;border-radius:20px;letter-spacing:.02em;vertical-align:middle}
+.tag.live{background:rgba(34,197,94,.16);color:#4ade80}
+.tag.build{background:rgba(251,191,36,.16);color:#fbbf24}
+.tag.port{background:rgba(120,150,200,.16);color:var(--mut)}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:clamp(12px,2.4vh,20px);max-width:900px}
+.twocol .panel{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:14px;padding:clamp(16px,2vh,22px)}
+.twocol .panel h4{font-family:var(--font-display);font-size:clamp(13px,.9vw + 7px,15px);margin:0 0 10px;letter-spacing:.02em}
+.twocol .panel.risk h4{color:#fbbf24}.twocol .panel.value h4{color:#4ade80}
+.twocol ul{list-style:none;margin:0;padding:0}
+.twocol li{position:relative;padding:7px 0 7px 18px;color:var(--mut);font-size:clamp(13px,.9vw + 7px,15px);line-height:1.5}
+.twocol li::before{content:"";position:absolute;left:0;top:15px;width:6px;height:6px;border-radius:50%}
+.twocol .risk li::before{background:#fbbf24}.twocol .value li::before{background:#4ade80}
+.twocol li b{color:var(--txt)}
+@media(max-width:640px){.twocol{grid-template-columns:1fr}}
+.iv-cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:clamp(18px,3vh,28px)}
+.iv-cta .btn{display:inline-flex;align-items:center;justify-content:center;padding:15px 28px;min-height:52px;border-radius:12px;font:700 clamp(14px,1.1vw,17px) var(--font-display);text-decoration:none;cursor:pointer;border:1px solid var(--line2)}
+.iv-cta .btn.primary{background:linear-gradient(120deg,var(--accent),var(--accent2));color:var(--accent-ink);border-color:transparent;box-shadow:0 12px 40px rgba(34,211,238,.28)}
+.iv-cta .btn.primary:hover{transform:translateY(-2px)}
+.iv-cta .btn.ghost{background:rgba(255,255,255,.04);color:var(--txt)}
+.disclaimer{color:var(--dim);font-size:clamp(11.5px,.8vw + 6px,13px);line-height:1.55;margin-top:clamp(16px,2.6vh,24px);max-width:70ch}
+
+/* ================= PRINT / PDF — white professional proposal ================= */
+@media print{
+  @page{margin:15mm 14mm}
+  /* flip the whole palette to a light theme via the CSS variables */
+  :root{
+    --bg:#ffffff;--bg2:#ffffff;--panel:#f6f8fb;
+    --line:#e6eaf0;--line2:#d6dce4;
+    --txt:#141a22;--mut:#3c4855;--dim:#6b7683;
+    --accent:#0e7490;--accent2:#1d4ed8;--accent-ink:#ffffff;--glow:transparent;
+  }
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  html,body{background:#fff !important;color:#141a22 !important}
+  /* stop being a scroll deck; flow the sections down the page */
+  main{height:auto !important;min-height:0 !important;overflow:visible !important;scroll-snap-type:none !important;display:block !important}
+  /* flow the proposal continuously (NO forced page-per-slide — that left big blank pages).
+     Sections are separated by a thin rule; small blocks are kept from splitting. */
+  .slide{min-height:0 !important;height:auto !important;display:block !important;padding:0 0 7mm !important;margin:0 !important;border:0 !important;background:#fff !important;page-break-inside:auto}
+  .slide + .slide{border-top:1px solid #e6eaf0 !important;padding-top:7mm !important}
+  .slide__inner{max-width:none !important}
+  h1,h2,.title,.kicker,.stat-cap,.lead{page-break-after:avoid}
+  .card,.layer,.tl-item,li,.viz-bars,.viz-gauge,.viz-gap-chart,.cw-urgency,.quote-badge,.tg-res,.megaline{page-break-inside:avoid;break-inside:avoid}
+  /* cap chart sizes so vh-based clamps don't inflate to a full page in print */
+  .viz-gauge{width:180px !important;height:180px !important}
+  .viz-gap-chart{max-width:500px !important}
+  /* everything visible (print never scrolls, so the reveal states must be forced open) */
+  .reveal,.slide .reveal{opacity:1 !important;transform:none !important;animation:none !important}
+  /* hide interactive / decorative chrome */
+  .niva,.nav,.langtoggle,.progress,.wordmark,.counter,.scrollhint,#triage,.triage-note,.orb-caption{display:none !important}
+  /* dark ink on white for hardcoded light text */
+  h1,h2,.title,.megaline,.cn,.lt,.tl-what,.cw-big,.hero-org{color:#0f1620 !important}
+  .hero-sub{color:#41505f !important}
+  .lead,.pts li,.tl-desc,.ld,.cd,.close,.cw-basis,.hero-claim,.viz-cap,.gap-lgd,.triage-intro,.stat-cap{color:#33404f !important}
+  .kicker{color:#0e7490 !important}
+  .src{color:#8a96a4 !important}
+  b,strong{color:#0f1620 !important}
+  /* accent/gradient text -> solid teal (background-clip:text is unreliable in print) */
+  .hl,.b,.hero-title h1 .b,.stat,.gg-num,.megaline .hl{-webkit-text-fill-color:#0e7490 !important;color:#0e7490 !important;background:none !important}
+  /* panels / cards on white */
+  .card,.layer,.quote-badge,.viz-cap,.tg-res{background:#f6f8fb !important;border-color:#e0e5ec !important;box-shadow:none !important}
+  ul.pts li{border-color:#e8ebf0 !important}
+  .quote-badge{border-left:3px solid #0e7490 !important}
+  /* infographics recolored for white */
+  .vbar-track{background:#eef1f5 !important;border-color:#dbe1e8 !important}
+  .gg-track{stroke:#e2e7ee !important}
+  .tl-item{border-left-color:#dbe1e8 !important}
+  .tl-item::before{background:#fff !important}
+  .viz-gap-chart svg line{stroke:#d5dbe3 !important}
+  .rise-axis{fill:#5b6673 !important}
+  .cw-urgency{background:#fdf2f2 !important;border-color:#f3c9c9 !important}
+  .cw-big{color:#0f1620 !important}
+  .cw-unit,.cw-basis b,.cw-today{color:#b91c1c !important}
+  .cw-today b{color:#7f1d1d !important}
+  /* force chart animations to their final drawn state */
+  .gap-line,.rise-line{stroke-dashoffset:0 !important}
+  .gap-area,.rise-area{opacity:1 !important}
+  .gg-arc{stroke-dashoffset:196 !important}
+  .vbar-fill{width:var(--w) !important}
+  /* footer + links */
+  .footer{border-top-color:#e0e5ec !important;color:#5b6673 !important}
+  .footer .co{color:#0f1620 !important}
+  .footer a,.pc-cta b{color:#0e7490 !important}
+  /* show the print-only cover + notes */
+  .print-cover{display:flex !important;flex-direction:column;justify-content:center;min-height:58vh;page-break-after:always;border-bottom:3px solid #0e7490;padding-bottom:9mm;margin-bottom:8mm}
+  .pc-brand{font-family:var(--font-display);font-weight:700;letter-spacing:.2em;font-size:15px;color:#0f1620}
+  .pc-brand b{color:#0e7490}
+  .pc-title{font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1.05;color:#0f1620;margin-top:14px}
+  .pc-sub{font-size:17px;color:#41505f;margin-top:10px}
+  .pc-claim{font-size:15px;color:#33404f;margin-top:20px;max-width:70ch;line-height:1.5}
+  .pc-meta{font-size:12.5px;color:#6b7683;margin-top:22px;letter-spacing:.04em}
+  #s1{display:none !important}  /* cover replaces the on-screen title slide */
+  .print-only{display:block !important}
+  .kpi{background:#f6f8fb !important;border-color:#e0e5ec !important}
+  .kpi .n,.kpi .n.brand,.kpi .n.teal{color:#0f1620 !important}
+  .ffbar{width:var(--w) !important;color:#fff !important}
+  .fftrack{background:#eef1f5 !important;border-color:#dbe1e8 !important}
+  .ivtable-wrap{border-color:#e0e5ec !important}
+  .ivtable th,.ivtable td{color:#33404f !important;border-color:#e8ebf0 !important}
+  .ivtable .em{color:#0e7490 !important}
+  .ivtable tr.hot td{background:#eef6f8 !important}
+  .twocol .panel{background:#f6f8fb !important;border-color:#e0e5ec !important}
+  .twocol li{color:#41505f !important}
+  .twocol li b{color:#0f1620 !important}
+  .conf-badge{color:#b91c1c !important;border-color:#f3c9c9 !important}
+  .iv-cta .btn.ghost{color:#0f1620 !important;border-color:#d5dbe3 !important}
+  .iv-cta .btn.primary{color:#fff !important}
+  .disclaimer{color:#6b7683 !important}
+  .pc-cta{font-size:14px;color:#33404f !important;margin-top:10px;padding:12px 14px;border:1px solid #e0e5ec;border-left:3px solid #0e7490;border-radius:0 8px 8px 0;background:#f6f8fb}
+}
+</style>
+</head>
+<body>
+<script>document.body.parentElement.classList.add('js');document.documentElement.classList.add('js');</script>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="wordmark">DIGIT<b>2</b>AI</div>
+<div class="counter" aria-hidden="true"><b id="cur">01</b> / 11</div>
+<div class="langtoggle" id="langtoggle" role="group" aria-label="Language / Idioma">
+  <button id="pgEn" type="button" lang="en">EN</button>
+  <button id="pgEs" type="button" lang="es">ES</button>
+  <button id="pdfBtn" class="pdfbtn" type="button" title="Download PDF" aria-label="Download PDF / Descargar PDF"><span aria-hidden="true">&#8595;</span> PDF</button>
+</div>
+
+<!-- Print-only proposal cover (first PDF page) -->
+<div class="print-cover" aria-hidden="true">
+  <div class="pc-brand">DIGIT<b>2</b>AI</div>
+  <div class="pc-title"><span class="i18 en">Pre-Seed Opportunity</span><span class="i18 es">Oportunidad Pre-Semilla</span></div>
+  <div class="pc-sub"><span class="i18 en">Confidential Pre-Seed Valuation &amp; Investment Memorandum</span><span class="i18 es">Valoraci&oacute;n confidencial pre-semilla y memorando de inversi&oacute;n</span></div>
+  <div class="pc-claim"><span class="i18 en">Indicative enterprise value $3M&ndash;$8M today &middot; 22 verticals built &middot; 21 live platforms &middot; 99.9% stated SLA.</span><span class="i18 es">Valor empresarial indicativo $3M&ndash;$8M hoy &middot; 22 verticales &middot; 21 plataformas en vivo &middot; 99.9% de SLA declarado.</span></div>
+  <div class="pc-meta">DIGIT2AI LLC &middot; Tampa, FL &middot; digit2ai.com</div>
+</div>
+
+<main id="deck">
+
+  <!-- SLIDE 1 — COVER -->
+  <section class="slide" id="s1" aria-label="Slide 1 of 11">
+    <div class="slide__inner hero-title">
+      <span class="conf-badge">CONFIDENTIAL</span>
+      <h1 class="reveal"><span class="i18 en">DIGIT<span class="b">2</span>AI<br>Pre-Seed Opportunity</span><span class="i18 es">DIGIT<span class="b">2</span>AI<br>Oportunidad Pre-Semilla</span></h1>
+      <p class="hero-sub reveal"><span class="i18 en">Confidential Pre-Seed Valuation &amp; Investment Memorandum</span><span class="i18 es">Valoraci&oacute;n confidencial pre-semilla y memorando de inversi&oacute;n</span></p>
+      <p class="hero-claim reveal"><span class="i18 en">Indicative enterprise value <span class="hl">$3M&ndash;$8M</span> today. <span class="hl">22</span> verticals built. <span class="hl">21</span> live platforms. <span class="hl">99.9%</span> stated SLA.</span><span class="i18 es">Valor empresarial indicativo <span class="hl">$3M&ndash;$8M</span> hoy. <span class="hl">22</span> verticales construidas. <span class="hl">21</span> plataformas en vivo. <span class="hl">99.9%</span> de SLA declarado.</span></p>
+      <p class="hero-org reveal">DIGIT2AI LLC&nbsp;&nbsp;|&nbsp;&nbsp;Tampa, FL&nbsp;&nbsp;|&nbsp;&nbsp;2026</p>
+    </div>
+    <div class="scrollhint" aria-hidden="true"><span class="i18 en">Scroll</span><span class="i18 es">Desliza</span><span class="arw"></span></div>
+  </section>
+
+  <!-- SLIDE 2 — OPPORTUNITY -->
+  <section class="slide" id="s2" aria-label="Slide 2 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">01 &middot; The Opportunity</span><span class="i18 es">01 &middot; La oportunidad</span></span>
+      <h2 class="title reveal"><span class="i18 en">A vertical-AI platform with extraordinary build breadth.</span><span class="i18 es">Una plataforma de IA vertical con una amplitud de construcci&oacute;n extraordinaria.</span></h2>
+      <div class="quote-badge reveal"><p class="megaline"><span class="i18 en">Indicative enterprise value <span class="hl">$3M&ndash;$8M</span> today &mdash; rising to <span class="hl">$10M&ndash;$30M+</span> on demonstrated $1M+ ARR.</span><span class="i18 es">Valor empresarial indicativo <span class="hl">$3M&ndash;$8M</span> hoy &mdash; sube a <span class="hl">$10M&ndash;$30M+</span> al demostrar $1M+ de ingresos recurrentes.</span></p></div>
+      <div class="kpis reveal">
+        <div class="kpi"><div class="n brand" data-count="4136" data-comma="1">4,136</div><div class="l"><span class="i18 en">Production commits (Aug 2025&ndash;Jun 2026)</span><span class="i18 es">Commits de producci&oacute;n (ago 2025&ndash;jun 2026)</span></div></div>
+        <div class="kpi"><div class="n teal">~11 <span class="i18 en">mo</span><span class="i18 es">meses</span></div><div class="l"><span class="i18 en">From first commit to current scope</span><span class="i18 es">Del primer commit al alcance actual</span></div></div>
+        <div class="kpi"><div class="n">$300B</div><div class="l"><span class="i18 en">Stated aggregate addressable market</span><span class="i18 es">Mercado direccionable agregado declarado</span></div></div>
+      </div>
+      <p class="close plain reveal"><span class="i18 en">Asset- and IP-anchored, pre-institutional revenue. Any one vertical reaching product-market fit re-rates the whole company onto a revenue multiple.</span><span class="i18 es">Anclado en activos y propiedad intelectual, antes de ingresos institucionales. Cualquier vertical que alcance el ajuste producto-mercado revaloriza a toda la empresa sobre un m&uacute;ltiplo de ingresos.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — COMPANY -->
+  <section class="slide" id="s3" aria-label="Slide 3 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">02 &middot; Company Overview</span><span class="i18 es">02 &middot; La empresa</span></span>
+      <h2 class="title reveal"><span class="i18 en">An AI-native company that turns language into deployed software.</span><span class="i18 es">Una empresa nativa de IA que convierte lenguaje en software desplegado.</span></h2>
+      <div class="layers" role="list">
+        <div class="layer reveal" role="listitem"><div class="num">1</div><div class="lx"><div class="lt"><span class="i18 en">Core product</span><span class="i18 es">Producto central</span></div><div class="ld"><span class="i18 en">Multi-tenant CRM with conversational voice AI, telephony, billing and a 94-module API surface &mdash; live in production</span><span class="i18 es">CRM multiempresa con IA de voz conversacional, telefon&iacute;a, facturaci&oacute;n y 94 m&oacute;dulos de API &mdash; en producci&oacute;n</span></div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">2</div><div class="lx"><div class="lt"><span class="i18 en">The build engine</span><span class="i18 es">El motor de construcci&oacute;n</span></div><div class="ld"><span class="i18 en">RinglyPro Architect &mdash; an 83-agent workforce turning plain-language briefs into deployed code via end-to-end CI/CD. A product AND the structural cost advantage.</span><span class="i18 es">RinglyPro Architect &mdash; una fuerza de 83 agentes que convierte instrucciones en lenguaje natural en c&oacute;digo desplegado por CI/CD de extremo a extremo. Un producto Y la ventaja de costos.</span></div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">3</div><div class="lx"><div class="lt"><span class="i18 en">Integration fabric</span><span class="i18 es">Tejido de integraci&oacute;n</span></div><div class="ld"><span class="i18 en">Four Model Context Protocol (MCP) servers expose tools to AI clients &mdash; genuine depth, not a thin wrapper</span><span class="i18 es">Cuatro servidores Model Context Protocol (MCP) exponen herramientas a clientes de IA &mdash; profundidad real, no una capa delgada</span></div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">4</div><div class="lx"><div class="lt"><span class="i18 en">Bilingual go-to-market</span><span class="i18 es">Salida al mercado biling&uuml;e</span></div><div class="ld"><span class="i18 en">EN/ES across the stack &mdash; opens LATAM and US-Hispanic markets, with partner attribution and a voice-driven intake funnel</span><span class="i18 es">EN/ES en toda la plataforma &mdash; abre mercados de LATAM y el hispano de EE. UU., con atribuci&oacute;n de socios y un embudo de intake por voz</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — ASSET INVENTORY -->
+  <section class="slide" id="s4" aria-label="Slide 4 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">03 &middot; Platform &amp; Asset Inventory</span><span class="i18 es">03 &middot; Inventario de plataforma y activos</span></span>
+      <h2 class="title reveal"><span class="i18 en">The estate being valued &mdash; live systems, not slideware.</span><span class="i18 es">El patrimonio que se valora &mdash; sistemas en vivo, no diapositivas.</span></h2>
+      <div class="kpis reveal">
+        <div class="kpi"><div class="n brand" data-count="94">94</div><div class="l"><span class="i18 en">API route modules (core app)</span><span class="i18 es">M&oacute;dulos de rutas de API (app central)</span></div></div>
+        <div class="kpi"><div class="n teal" data-count="111">111</div><div class="l"><span class="i18 en">Database migrations</span><span class="i18 es">Migraciones de base de datos</span></div></div>
+        <div class="kpi"><div class="n" data-count="71">71</div><div class="l"><span class="i18 en">Public web / landing pages</span><span class="i18 es">P&aacute;ginas web / landing p&uacute;blicas</span></div></div>
+      </div>
+      <div class="cards">
+        <div class="card reveal"><div class="cn">RinglyPro CRM <span class="tag live">Live</span></div><div class="cd"><span class="i18 en">Voice-AI CRM core &middot; SMB / Telephony</span><span class="i18 es">N&uacute;cleo CRM de voz con IA &middot; PyME / Telefon&iacute;a</span></div></div>
+        <div class="card reveal"><div class="cn">SurgicalMind <span class="tag live">Live</span></div><div class="cd"><span class="i18 en">Surgeon survey &amp; clinical dollarization &middot; Medtech</span><span class="i18 es">Encuesta a cirujanos y dolarizaci&oacute;n cl&iacute;nica &middot; Medtech</span></div></div>
+        <div class="card reveal"><div class="cn">Freight / Logistics <span class="tag live">Live</span></div><div class="cd"><span class="i18 en">TMS &amp; carrier operations &middot; Logistics</span><span class="i18 es">TMS y operaciones de transportistas &middot; Log&iacute;stica</span></div></div>
+        <div class="card reveal"><div class="cn">Pinaxis <span class="tag live">Live</span></div><div class="cd"><span class="i18 en">Warehouse analytics &middot; Supply chain</span><span class="i18 es">Anal&iacute;tica de almac&eacute;n &middot; Cadena de suministro</span></div></div>
+        <div class="card reveal"><div class="cn">OEE Module <span class="tag live">Live</span></div><div class="cd"><span class="i18 en">Shop-floor manufacturing monitoring &middot; MCP</span><span class="i18 es">Monitoreo de planta de manufactura &middot; MCP</span></div></div>
+        <div class="card reveal"><div class="cn">Veritas <span class="tag build">Build</span></div><div class="cd"><span class="i18 en">AI deepfake detection &amp; takedown &middot; Brand protection</span><span class="i18 es">Detecci&oacute;n de deepfakes con IA &middot; Protecci&oacute;n de marca</span></div></div>
+        <div class="card reveal"><div class="cn">Torna Idioma <span class="tag build">Pre-launch</span></div><div class="cd"><span class="i18 en">SFL language platform &middot; Education</span><span class="i18 es">Plataforma de idiomas SFL &middot; Educaci&oacute;n</span></div></div>
+        <div class="card reveal"><div class="cn">AgroMercado <span class="tag build">Build</span></div><div class="cd"><span class="i18 en">Agri marketplace (ISTC alliance) &middot; AgTech</span><span class="i18 es">Mercado agr&iacute;cola (alianza ISTC) &middot; AgTech</span></div></div>
+        <div class="card reveal"><div class="cn"><span class="i18 en">+14 more</span><span class="i18 es">+14 m&aacute;s</span> <span class="tag port">Portfolio</span></div><div class="cd"><span class="i18 en">Chamber Network, Store Health AI, ImprintIQ, TunjoRacing, Visionarium, HISPATEC&hellip;</span><span class="i18 es">Chamber Network, Store Health AI, ImprintIQ, TunjoRacing, Visionarium, HISPATEC&hellip;</span></div></div>
+      </div>
+      <p class="viz-cap reveal"><span class="i18 en">Status = deployment state in the codebase, not audited commercial traction.</span><span class="i18 es">Estado = estado de despliegue en el c&oacute;digo, no tracci&oacute;n comercial auditada.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — METHODOLOGY -->
+  <section class="slide" id="s5" aria-label="Slide 5 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">04 &middot; Valuation Methodology</span><span class="i18 es">04 &middot; Metodolog&iacute;a de valoraci&oacute;n</span></span>
+      <h2 class="title reveal"><span class="i18 en">Three independent lenses.</span><span class="i18 es">Tres lentes independientes.</span></h2>
+      <div class="layers" role="list">
+        <div class="layer reveal" role="listitem"><div class="num">A</div><div class="lx"><div class="lt"><span class="i18 en">Cost / Asset-Replacement &mdash; the floor</span><span class="i18 es">Costo / reemplazo de activos &mdash; el piso</span></div><div class="ld"><span class="i18 en">Rebuilding the estate conventionally is 15&ndash;30 engineer-years &mdash; <b>$2.5M&ndash;$6.0M</b> at blended cost. A buyer values the asset, not the AI-native build discount.</span><span class="i18 es">Reconstruir el patrimonio de forma convencional son 15&ndash;30 a&ntilde;os-ingeniero &mdash; <b>$2.5M&ndash;$6.0M</b>. El comprador valora el activo, no el descuento del m&eacute;todo nativo de IA.</span></div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">B</div><div class="lx"><div class="lt"><span class="i18 en">Market-Comparable &mdash; primary at scale</span><span class="i18 es">Comparables de mercado &mdash; principal a escala</span></div><div class="ld"><span class="i18 en">Vertical-AI companies transact on forward revenue multiples. Applied to scenario ARR (next slide).</span><span class="i18 es">Las empresas de IA vertical se transan sobre m&uacute;ltiplos de ingresos futuros. Aplicado a escenarios de ingresos (siguiente l&aacute;mina).</span></div></div></div>
+        <div class="layer-conn" aria-hidden="true"></div>
+        <div class="layer reveal" role="listitem"><div class="num">C</div><div class="lx"><div class="lt"><span class="i18 en">Strategic / Optionality &mdash; the upside</span><span class="i18 es">Estrat&eacute;gico / opcionalidad &mdash; el potencial</span></div><div class="ld"><span class="i18 en">The 22-vertical portfolio is a basket of options &mdash; each a low-cost shot on goal; one PMF re-rates the whole company.</span><span class="i18 es">El portafolio de 22 verticales es una canasta de opciones &mdash; cada una una apuesta de bajo costo; un ajuste producto-mercado revaloriza a toda la empresa.</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — MULTIPLES TABLE -->
+  <section class="slide" id="s6" aria-label="Slide 6 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">04B &middot; Market-Comparable Scenarios</span><span class="i18 es">04B &middot; Escenarios de comparables</span></span>
+      <h2 class="title reveal"><span class="i18 en">Revenue multiples applied to scenario ARR.</span><span class="i18 es">M&uacute;ltiplos de ingresos aplicados a escenarios de ARR.</span></h2>
+      <div class="ivtable-wrap reveal">
+        <table class="ivtable">
+          <thead><tr><th><span class="i18 en">Scenario</span><span class="i18 es">Escenario</span></th><th class="num">ARR</th><th class="num"><span class="i18 en">Multiple</span><span class="i18 es">M&uacute;ltiplo</span></th><th class="num"><span class="i18 en">Implied EV</span><span class="i18 es">EV impl&iacute;cito</span></th></tr></thead>
+          <tbody>
+            <tr><td><span class="i18 en">Pre-revenue / pilots</span><span class="i18 es">Sin ingresos / pilotos</span></td><td class="num">~$0</td><td class="num">&mdash;</td><td class="num em">$3M&ndash;$8M</td></tr>
+            <tr><td><span class="i18 en">Early traction</span><span class="i18 es">Tracci&oacute;n temprana</span></td><td class="num">$0.25M&ndash;$0.5M</td><td class="num">4&ndash;8&times;</td><td class="num">$2M&ndash;$4M</td></tr>
+            <tr class="hot"><td><span class="i18 en">Product-market fit</span><span class="i18 es">Ajuste producto-mercado</span></td><td class="num">$1.0M</td><td class="num">6&ndash;10&times;</td><td class="num em">$6M&ndash;$10M</td></tr>
+            <tr><td><span class="i18 en">Scaling (&gt;80% YoY)</span><span class="i18 es">Escalando (&gt;80% anual)</span></td><td class="num">$3.0M</td><td class="num">8&ndash;12&times;</td><td class="num em">$25M&ndash;$36M</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="close plain reveal"><span class="i18 en">The gating variable to the higher ranges is recurring revenue &amp; retention evidence &mdash; exactly what this round funds.</span><span class="i18 es">La variable que abre los rangos altos es la evidencia de ingresos recurrentes y retenci&oacute;n &mdash; justo lo que financia esta ronda.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 — FOOTBALL FIELD -->
+  <section class="slide" id="s7" aria-label="Slide 7 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">05 &middot; Valuation Summary</span><span class="i18 es">05 &middot; Resumen de valoraci&oacute;n</span></span>
+      <h2 class="title reveal"><span class="i18 en">Indicative enterprise value by method.</span><span class="i18 es">Valor empresarial indicativo por m&eacute;todo.</span></h2>
+      <div class="ffchart reveal">
+        <div class="ffrow"><div class="lbl"><span class="i18 en">Cost / Asset-Replacement</span><span class="i18 es">Costo / reemplazo</span></div><div class="fftrack"><div class="ffbar" style="left:6.25%;--w:8.75%;background:#64748b;color:#fff">$2.5&ndash;6M</div></div></div>
+        <div class="ffrow"><div class="lbl"><span class="i18 en">Current (asset + optionality)</span><span class="i18 es">Actual (activo + opcionalidad)</span></div><div class="fftrack"><div class="ffbar" style="left:7.5%;--w:12.5%;background:linear-gradient(90deg,#22d3ee,#38bdf8)">$3&ndash;8M</div></div></div>
+        <div class="ffrow"><div class="lbl"><span class="i18 en">Market comp @ $1M ARR</span><span class="i18 es">Comparable @ $1M ARR</span></div><div class="fftrack"><div class="ffbar" style="left:15%;--w:10%;background:#38bdf8">$6&ndash;10M</div></div></div>
+        <div class="ffrow"><div class="lbl"><span class="i18 en">Market comp @ $3M ARR</span><span class="i18 es">Comparable @ $3M ARR</span></div><div class="fftrack"><div class="ffbar" style="left:62.5%;--w:27.5%;background:#22c55e">$25&ndash;36M</div></div></div>
+        <div class="ffaxis"><span>$0</span><span>$10M</span><span>$20M</span><span>$30M</span><span>$40M</span></div>
+      </div>
+      <p class="close plain reveal"><span class="i18 en">Concluded indicative value today: <span class="hl">$3M&ndash;$8M</span>. Midpoint <span class="hl">~$5.5M</span> &mdash; a reasonable pre-seed pre-money reference, subject to due diligence.</span><span class="i18 es">Valor indicativo concluido hoy: <span class="hl">$3M&ndash;$8M</span>. Punto medio <span class="hl">~$5.5M</span> &mdash; una referencia razonable de pre-dinero pre-semilla, sujeta a debida diligencia.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 8 — THE ASK -->
+  <section class="slide" id="s8" aria-label="Slide 8 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">06 &middot; The Pre-Seed Opportunity</span><span class="i18 es">06 &middot; La oportunidad pre-semilla</span></span>
+      <h2 class="title reveal"><span class="i18 en">Convert build breadth into revenue depth.</span><span class="i18 es">Convertir amplitud de construcci&oacute;n en profundidad de ingresos.</span></h2>
+      <div class="kpis reveal">
+        <div class="kpi"><div class="n brand">$1.0M&ndash;$1.5M</div><div class="l"><span class="i18 en">Indicative raise</span><span class="i18 es">Ronda indicativa</span></div></div>
+        <div class="kpi"><div class="n">~$5.5M&ndash;$7M</div><div class="l"><span class="i18 en">Pre-money reference</span><span class="i18 es">Referencia de pre-dinero</span></div></div>
+        <div class="kpi"><div class="n teal">12&ndash;18 <span class="i18 en">mo</span><span class="i18 es">meses</span></div><div class="l"><span class="i18 en">Runway to revenue proof</span><span class="i18 es">Pista hacia la prueba de ingresos</span></div></div>
+      </div>
+      <ul class="pts reveal">
+        <li><span class="i18 en"><b>Commercialize 2&ndash;3 lead verticals</b> &mdash; sales, onboarding, customer success</span><span class="i18 es"><b>Comercializar 2&ndash;3 verticales l&iacute;deres</b> &mdash; ventas, onboarding, &eacute;xito del cliente</span></li>
+        <li><span class="i18 en"><b>Reduce key-person risk</b> &mdash; hire 2&ndash;3 engineers, formalize the agent-build methodology</span><span class="i18 es"><b>Reducir el riesgo de persona clave</b> &mdash; contratar 2&ndash;3 ingenieros, formalizar el m&eacute;todo</span></li>
+        <li><span class="i18 en"><b>Stand up revenue instrumentation</b> &mdash; ARR, retention, cohort &amp; unit economics</span><span class="i18 es"><b>Montar la instrumentaci&oacute;n de ingresos</b> &mdash; ARR, retenci&oacute;n, cohortes y econom&iacute;a unitaria</span></li>
+        <li><span class="i18 en"><b>Close external dependencies</b> &mdash; provider keys, legal-reviewed templates, hardening</span><span class="i18 es"><b>Cerrar dependencias externas</b> &mdash; llaves de proveedores, plantillas legales, endurecimiento</span></li>
+      </ul>
+      <p class="viz-cap reveal"><span class="i18 en">Structure is illustrative for discussion only and is not an offer of securities.</span><span class="i18 es">La estructura es ilustrativa solo para discusi&oacute;n y no es una oferta de valores.</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 — RISK / VALUE -->
+  <section class="slide" id="s9" aria-label="Slide 9 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">07 &middot; Risk Factors &amp; Value Drivers</span><span class="i18 es">07 &middot; Riesgos y generadores de valor</span></span>
+      <h2 class="title reveal"><span class="i18 en">What moves the number.</span><span class="i18 es">Qu&eacute; mueve el n&uacute;mero.</span></h2>
+      <div class="twocol reveal">
+        <div class="panel risk"><h4><span class="i18 en">Risks / discounts</span><span class="i18 es">Riesgos / descuentos</span></h4><ul>
+          <li><span class="i18 en"><b>Key-person concentration</b> &mdash; transferability must be demonstrated</span><span class="i18 es"><b>Concentraci&oacute;n en persona clave</b> &mdash; hay que demostrar la transferibilidad</span></li>
+          <li><span class="i18 en"><b>Revenue &amp; retention not yet evidenced</b> &mdash; the single largest gate</span><span class="i18 es"><b>Ingresos y retenci&oacute;n a&uacute;n sin evidencia</b> &mdash; la mayor barrera</span></li>
+          <li><span class="i18 en"><b>Breadth over depth</b> &mdash; can read as a portfolio of POCs</span><span class="i18 es"><b>Amplitud sobre profundidad</b> &mdash; puede leerse como portafolio de POCs</span></li>
+          <li><span class="i18 en"><b>Pre-launch / partner-owned IP</b> &mdash; some verticals not yet monetized</span><span class="i18 es"><b>Pre-lanzamiento / IP de socios</b> &mdash; algunas verticales sin monetizar</span></li>
+        </ul></div>
+        <div class="panel value"><h4><span class="i18 en">Value drivers / upside</span><span class="i18 es">Generadores de valor / potencial</span></h4><ul>
+          <li><span class="i18 en"><b>AI-native build engine</b> &mdash; structural cost &amp; speed advantage</span><span class="i18 es"><b>Motor de construcci&oacute;n nativo de IA</b> &mdash; ventaja de costo y velocidad</span></li>
+          <li><span class="i18 en"><b>Diversified optionality</b> &mdash; 22 shots on goal; one PMF re-rates</span><span class="i18 es"><b>Opcionalidad diversificada</b> &mdash; 22 apuestas; un PMF revaloriza</span></li>
+          <li><span class="i18 en"><b>Production deployments</b> &mdash; real live systems, not slideware</span><span class="i18 es"><b>Despliegues en producci&oacute;n</b> &mdash; sistemas reales, no diapositivas</span></li>
+          <li><span class="i18 en"><b>Bilingual reach + MCP depth</b> &mdash; LATAM &amp; US-Hispanic; real integration fabric</span><span class="i18 es"><b>Alcance biling&uuml;e + profundidad MCP</b> &mdash; LATAM y EE. UU. hispano; integraci&oacute;n real</span></li>
+        </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 — THESIS -->
+  <section class="slide" id="s10" aria-label="Slide 10 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">The Thesis</span><span class="i18 es">La tesis</span></span>
+      <h2 class="title reveal"><span class="i18 en">Not a single-product bet &mdash; a basket of options with a compounding engine.</span><span class="i18 es">No es una apuesta de un solo producto &mdash; una canasta de opciones con un motor que compone.</span></h2>
+      <div class="quote-badge reveal"><p class="megaline"><span class="i18 en">The gate between the <span class="hl">$4M</span> and <span class="hl">$30M</span> ranges is recurring-revenue evidence &mdash; and that is exactly what this round funds.</span><span class="i18 es">La barrera entre los rangos de <span class="hl">$4M</span> y <span class="hl">$30M</span> es la evidencia de ingresos recurrentes &mdash; y eso es exactamente lo que financia esta ronda.</span></p></div>
+      <p class="close reveal"><span class="i18 en">&ldquo;A diversified portfolio of vertical AI products, built by an engine that launches each one at a fraction of the usual cost and time. One reaching product-market fit re-rates the whole company.&rdquo;</span><span class="i18 es">&ldquo;Un portafolio diversificado de productos de IA vertical, construido por un motor que lanza cada uno a una fracci&oacute;n del costo y el tiempo. Uno que alcance el ajuste producto-mercado revaloriza a toda la empresa.&rdquo;</span></p>
+    </div>
+  </section>
+
+  <!-- SLIDE 11 — NEXT STEP -->
+  <section class="slide" id="s11" aria-label="Slide 11 of 11">
+    <div class="slide__inner">
+      <span class="kicker reveal"><span class="i18 en">08 &middot; Next Step</span><span class="i18 es">08 &middot; Siguiente paso</span></span>
+      <h2 class="title reveal"><span class="i18 en">Review the full memorandum &mdash; and let&rsquo;s talk.</span><span class="i18 es">Revisa el memorando completo &mdash; y conversemos.</span></h2>
+      <p class="lead reveal"><span class="i18 en">The complete confidential valuation &amp; investment memorandum &mdash; methodology, asset inventory, and disclaimers &mdash; is available for review.</span><span class="i18 es">El memorando confidencial completo de valoraci&oacute;n e inversi&oacute;n &mdash; metodolog&iacute;a, inventario de activos y descargos &mdash; est&aacute; disponible para revisi&oacute;n.</span></p>
+      <div class="iv-cta reveal">
+        <a class="btn primary" href="https://aiagent.ringlypro.com/pre-seed-valuation" target="_blank" rel="noopener"><span class="i18 en">View the full memorandum</span><span class="i18 es">Ver el memorando completo</span></a>
+        <a class="btn ghost" href="mailto:invest@digit2ai.com?subject=Digit2AI%20Pre-Seed%20Inquiry"><span class="i18 en">Request a conversation</span><span class="i18 es">Solicitar una conversaci&oacute;n</span></a>
+      </div>
+      <p class="disclaimer reveal"><span class="i18 en">This is a management estimate, not an independent or audited appraisal. Indicative value $3M&ndash;$8M (current) &middot; $10M&ndash;$30M+ on demonstrated $1M+ ARR. Nothing herein is an offer to sell or a solicitation to buy securities. Subject to independent financial, technical and legal due diligence.</span><span class="i18 es">Esta es una estimaci&oacute;n de la gerencia, no una valoraci&oacute;n independiente ni auditada. Valor indicativo $3M&ndash;$8M (actual) &middot; $10M&ndash;$30M+ al demostrar $1M+ de ingresos recurrentes. Nada aqu&iacute; es una oferta de venta ni solicitud de compra de valores. Sujeto a debida diligencia financiera, t&eacute;cnica y legal independiente.</span></p>
+      <div class="footer reveal">
+        <div class="co">DIGIT2AI LLC &mdash; Tampa, FL</div>
+        <div class="people"><span class="i18 en">Confidential &middot; Prepared June 2026 &middot; Draft v1.0 &mdash; Management Estimate</span><span class="i18 es">Confidencial &middot; Preparado en junio de 2026 &middot; Borrador v1.0 &mdash; Estimaci&oacute;n de la gerencia</span></div>
+        <div><a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="nav" aria-label="Slide navigation">
+  <button id="prev" aria-label="Previous slide" title="Previous (Up arrow)">&uarr;</button>
+  <button id="next" aria-label="Next slide" title="Next (Down arrow)">&darr;</button>
+</nav>
+
+<script>
+(function(){
+  var deck=document.getElementById('deck');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var curEl=document.getElementById('cur');
+  var prog=document.getElementById('progress');
+  var prevBtn=document.getElementById('prev');
+  var nextBtn=document.getElementById('next');
+  var total=slides.length, idx=0;
+
+  function pad(n){return (n<10?'0':'')+n;}
+  function setIdx(i){
+    idx=Math.max(0,Math.min(total-1,i));
+    curEl.textContent=pad(idx+1);
+    prog.style.width=((idx)/(total-1)*100)+'%';
+    prevBtn.disabled=(idx===0);
+    nextBtn.disabled=(idx===total-1);
+  }
+  function goTo(i){
+    i=Math.max(0,Math.min(total-1,i));
+    slides[i].scrollIntoView({behavior:'smooth',block:'start'});
+    setIdx(i);
+  }
+
+  // Reveal: mark a slide '.in' as soon as ANY part of it is visible.
+  // (Slides taller than the viewport — 8/10/11 on mobile — could never reach a
+  //  50% ratio, so the old threshold left them stuck at opacity:0 = black screen.)
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); });
+    },{root:deck,threshold:0.01});
+    slides.forEach(function(s){io.observe(s);});
+  } else {
+    slides.forEach(function(s){s.classList.add('in');});
+  }
+  // Counter + progress by scroll position — works no matter how tall a slide is.
+  var _ticking=false;
+  function updateCurrent(){
+    _ticking=false;
+    var deckTop=deck.getBoundingClientRect().top;
+    var probe=deck.clientHeight*0.4, cur=0;
+    for(var i=0;i<slides.length;i++){
+      if(slides[i].getBoundingClientRect().top - deckTop <= probe + 4) cur=i; else break;
+    }
+    setIdx(cur);
+  }
+  deck.addEventListener('scroll',function(){ if(!_ticking){ _ticking=true; requestAnimationFrame(updateCurrent); } },{passive:true});
+  // Safety net: if anything above is delayed, ensure the visible slide reveals.
+  setTimeout(function(){ slides.forEach(function(s){ var r=s.getBoundingClientRect(); if(r.top<window.innerHeight && r.bottom>0) s.classList.add('in'); }); updateCurrent(); },400);
+
+  prevBtn.addEventListener('click',function(){goTo(idx-1);});
+  nextBtn.addEventListener('click',function(){goTo(idx+1);});
+
+  // Keyboard navigation
+  window.addEventListener('keydown',function(ev){
+    var t=ev.target.tagName;
+    if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||t==='BUTTON') return;
+    if(ev.target.closest && ev.target.closest('#niva')) return;
+    switch(ev.key){
+      case 'ArrowDown': case 'PageDown': case ' ':
+        ev.preventDefault(); goTo(idx+1); break;
+      case 'ArrowRight':
+        ev.preventDefault(); goTo(idx+1); break;
+      case 'ArrowUp': case 'PageUp':
+        ev.preventDefault(); goTo(idx-1); break;
+      case 'ArrowLeft':
+        ev.preventDefault(); goTo(idx-1); break;
+      case 'Home':
+        ev.preventDefault(); goTo(0); break;
+      case 'End':
+        ev.preventDefault(); goTo(total-1); break;
+    }
+  });
+
+  // CTA placeholder guard
+  document.getElementById('ctaBtn').addEventListener('click',function(e){
+    if(this.getAttribute('href')==='#') e.preventDefault();
+  });
+
+  setIdx(0);
+})();
+</script>
+
+<!-- ===== Bilingual Neural Voice orb — EN + ES narration of the deck ===== -->
+<div class="niva" id="niva">
+  <div class="orb-wrap" id="nivaOrb" role="button" tabindex="0" data-state="idle"
+       aria-label="MCP Neural narrator — open voice controls / Narrador neural MCP — abrir controles"
+       aria-describedby="niva-cap">
+    <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
+    <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="orbCore" cx="0.5" cy="0.45">
+          <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+          <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+          <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+          <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+          <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+        </radialGradient>
+        <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+          <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+          <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+          <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+        </radialGradient>
+        <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee"/>
+          <stop offset="0.4" stop-color="#3b82f6"/>
+          <stop offset="0.75" stop-color="#8b5cf6"/>
+          <stop offset="1" stop-color="#ec4899"/>
+        </linearGradient>
+        <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+          <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+        <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+      </circle>
+      <g class="orb-ring-outer">
+        <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+        <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+        <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+        <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+        <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+      </g>
+      <g class="orb-ring-mid">
+        <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+        <g fill="#a5f3fc">
+          <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+          <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+          <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+          <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+        </g>
+      </g>
+      <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+      <g class="orb-scan">
+        <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+      <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+      <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+      <g class="orb-particles">
+        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+      </g>
+      <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+        <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+      <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+        <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+        <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+        <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+        <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+      </ellipse>
+      <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+        <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+        <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+      </g>
+    </svg>
+    <div class="orb-caption" id="niva-cap">
+      <span class="orb-cap-idle" id="nivaCapIdle">Click to speak with the MCP Neural brain</span>
+      <span class="orb-cap-active" id="nivaCapActive">Open controls</span>
+    </div>
+  </div>
+  <div class="niva-panel" role="dialog" aria-label="Voice walkthrough">
+    <button class="niva-close" id="nivaClose" aria-label="Close / Cerrar">&times;</button>
+    <div class="niva-hd">
+      <div class="niva-mini" id="nivaMini" aria-hidden="true"></div>
+      <div>
+        <div class="niva-name">DIGIT2AI Voice</div>
+        <div class="niva-role" id="nivaRole">AI narration of this deck</div>
+      </div>
+    </div>
+    <div class="niva-lang" role="group" aria-label="Language">
+      <button id="nivaEn" class="on" type="button">English</button>
+      <button id="nivaEs" type="button">Espa&ntilde;ol</button>
+    </div>
+    <div class="niva-ctrls">
+      <button class="primary" id="nivaPlay" type="button">&#9658;&nbsp;<span id="nivaPlayTxt">Play walkthrough</span></button>
+      <button id="nivaPause" type="button" disabled aria-label="Pause">&#10073;&#10073;</button>
+      <button id="nivaStop" type="button" disabled aria-label="Stop">&#9632;</button>
+    </div>
+    <div class="niva-row">
+      <label id="nivaAccentLbl" for="nivaAccent">Voice</label>
+      <select id="nivaAccent" aria-label="Voice"></select>
+    </div>
+    <div class="niva-row">
+      <label><input type="checkbox" id="nivaNeural" checked> <span id="nivaHdLbl">Neural HD</span></label>
+      <span class="niva-mode" id="nivaMode"></span>
+    </div>
+    <div class="niva-status" id="nivaStatus" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- Narration: index 0 = intro, 1..11 = slides 1..11 (numbers spelled out for natural TTS) ----
+  var SEG={
+    en:[
+      "Hello, I'm the DIGIT2AI voice. In the next few minutes I'll walk you through our confidential pre-seed investment opportunity, slide by slide.",
+      "DIGIT2AI is an AI-native software company. This is a confidential pre-seed valuation and investment memorandum, with an indicative enterprise value of three to eight million dollars today, twenty-two verticals built, twenty-one live platforms, and a stated ninety-nine point nine percent service level.",
+      "Here's the opportunity in one line: a vertical-AI platform with extraordinary build breadth. Indicative enterprise value is three to eight million dollars today, asset and IP anchored, before institutional revenue, rising to ten to thirty million dollars or more on demonstrated one million dollars of recurring revenue at prevailing vertical-AI multiples. In roughly eleven months the company shipped four thousand one hundred thirty-six production commits, into a three-hundred-billion-dollar addressable market.",
+      "What is Digit2AI? At the core, a multi-tenant CRM with conversational voice AI, telephony, billing, and a ninety-four-module API surface, live in production. The build engine is RinglyPro Architect, an eighty-three-agent workforce that turns plain-language briefs into deployed code through an end-to-end CI/CD loop. That engine is both a product and the company's structural cost advantage. Four Model Context Protocol servers form the integration fabric, and everything is bilingual, English and Spanish, across the stack.",
+      "This is the estate being valued. Ninety-four API route modules, one hundred eleven database migrations, and seventy-one public pages, plus a portfolio spanning healthcare and medtech, logistics and freight, agriculture, manufacturing, education, retail operations, and brand protection. Live systems, not slideware.",
+      "We value it through three independent lenses. First, cost or asset-replacement, the floor: rebuilding this estate conventionally is fifteen to thirty engineer-years, or two and a half to six million dollars. Second, market-comparable, the primary lens at scale: vertical-AI companies trade on forward revenue multiples. Third, strategic optionality, the upside: a portfolio of twenty-two verticals, each a low-cost shot on goal, where any one reaching product-market fit re-rates the entire company.",
+      "Here's how the revenue-multiple lens plays out. Pre-revenue, three to eight million dollars. Early traction, at a quarter to a half million of recurring revenue, two to four million. Product-market fit, at one million of recurring revenue, six to ten times, or six to ten million dollars. And scaling above eighty percent year over year, at three million of recurring revenue, eight to twelve times, twenty-five to thirty-six million dollars.",
+      "Across methods, the indicative enterprise value today is three to eight million dollars, anchored to the replacement cost of the software estate plus a premium for the build engine and portfolio optionality. The midpoint, about five and a half million dollars, is a reasonable reference for a pre-seed pre-money discussion, subject to financial due diligence.",
+      "The pre-seed opportunity: an indicative raise of one to one and a half million dollars, at a pre-money reference of five and a half to seven million, for twelve to eighteen months of runway to revenue proof. Use of proceeds: commercialize two to three lead verticals; reduce key-person risk by hiring engineers and formalizing the build method; stand up revenue instrumentation; and close external dependencies. The goal is simple: convert build breadth into revenue depth.",
+      "What moves the number? On the risk side: key-person concentration, revenue and retention not yet evidenced, breadth that can read as a portfolio of proofs of concept, and some external dependencies. On the value-driver side: the AI-native build engine, diversified optionality across twenty-two verticals, real production deployments, bilingual reach into Latin America and US-Hispanic markets, and defensible integration depth.",
+      "Here's the thesis. This is not a single-product bet; it's a basket of options built by an engine that launches each new vertical at a fraction of the usual cost and time. The single largest gate between the four-million and thirty-million ranges is recurring-revenue evidence, and that is exactly what this round funds. One vertical reaching product-market fit re-rates the whole company.",
+      "The next step: review the full confidential memorandum and data room, and let's have a conversation. This is a management estimate, not an audited appraisal, and nothing here is an offer to sell securities. DIGIT2AI, Tampa, Florida. Thank you."
+    ],
+    es:[
+      "Hola, soy la voz de DIGIT2AI. En los próximos minutos te voy a explicar nuestra oportunidad confidencial de inversión pre-semilla, lámina por lámina.",
+      "DIGIT2AI es una empresa de software nativa de inteligencia artificial. Esta es una valoración confidencial pre-semilla y memorando de inversión, con un valor empresarial indicativo de tres a ocho millones de dólares hoy, veintidós verticales construidas, veintiuna plataformas en vivo y un nivel de servicio declarado del noventa y nueve punto nueve por ciento.",
+      "La oportunidad en una línea: una plataforma de inteligencia artificial vertical con una amplitud de construcción extraordinaria. El valor empresarial indicativo es de tres a ocho millones de dólares hoy, anclado en activos y propiedad intelectual, antes de ingresos institucionales, y sube a diez a treinta millones de dólares o más al demostrar un millón de dólares de ingresos recurrentes con los múltiplos vigentes de inteligencia artificial vertical. En aproximadamente once meses la empresa entregó cuatro mil ciento treinta y seis commits de producción, en un mercado direccionable de trescientos mil millones de dólares.",
+      "¿Qué es Digit2AI? En su núcleo, un CRM multiempresa con inteligencia artificial de voz conversacional, telefonía, facturación y una superficie de noventa y cuatro módulos de API, en producción. El motor de construcción es RinglyPro Architect, una fuerza de trabajo de ochenta y tres agentes que convierte instrucciones en lenguaje natural en código desplegado mediante un ciclo completo de integración y entrega continua. Ese motor es a la vez un producto y la ventaja estructural de costos de la empresa. Cuatro servidores de Model Context Protocol forman el tejido de integración, y todo es bilingüe, inglés y español, en toda la plataforma.",
+      "Este es el patrimonio que se está valorando. Noventa y cuatro módulos de rutas de API, ciento once migraciones de base de datos y setenta y una páginas públicas, más un portafolio que abarca salud y tecnología médica, logística y transporte de carga, agricultura, manufactura, educación, operaciones de retail y protección de marca. Sistemas en vivo, no diapositivas.",
+      "Lo valoramos con tres lentes independientes. Primero, costo o reemplazo de activos, el piso: reconstruir este patrimonio de forma convencional son quince a treinta años-ingeniero, o dos y medio a seis millones de dólares. Segundo, comparables de mercado, el lente principal a escala: las empresas de inteligencia artificial vertical se transan sobre múltiplos de ingresos futuros. Tercero, opcionalidad estratégica, el potencial: un portafolio de veintidós verticales, cada una una apuesta de bajo costo, donde cualquiera que alcance el ajuste producto-mercado revaloriza a toda la empresa.",
+      "Así se comporta el lente de múltiplos de ingresos. Sin ingresos, tres a ocho millones de dólares. Tracción temprana, con un cuarto a medio millón de ingresos recurrentes, dos a cuatro millones. Ajuste producto-mercado, con un millón de ingresos recurrentes, seis a diez veces, es decir seis a diez millones. Y en escalamiento por encima del ochenta por ciento anual, con tres millones de ingresos recurrentes, ocho a doce veces, veinticinco a treinta y seis millones.",
+      "Entre métodos, el valor empresarial indicativo hoy es de tres a ocho millones de dólares, anclado al costo de reemplazo del patrimonio de software más una prima por el motor de construcción y la opcionalidad del portafolio. El punto medio, alrededor de cinco y medio millones de dólares, es una referencia razonable para una conversación de pre-dinero pre-semilla, sujeta a debida diligencia financiera.",
+      "La oportunidad pre-semilla: una ronda indicativa de uno a uno y medio millones de dólares, con una referencia de pre-dinero de cinco y medio a siete millones, para doce a dieciocho meses de pista hacia la prueba de ingresos. Uso de los fondos: comercializar dos o tres verticales líderes; reducir el riesgo de persona clave contratando ingenieros y formalizando el método de construcción; montar la instrumentación de ingresos; y cerrar dependencias externas. El objetivo es simple: convertir la amplitud de construcción en profundidad de ingresos.",
+      "¿Qué mueve el número? Del lado del riesgo: concentración en persona clave, ingresos y retención aún no evidenciados, una amplitud que puede leerse como un portafolio de pruebas de concepto, y algunas dependencias externas. Del lado de los generadores de valor: el motor de construcción nativo de IA, la opcionalidad diversificada en veintidós verticales, despliegues reales en producción, alcance bilingüe hacia América Latina y el mercado hispano de Estados Unidos, y una profundidad de integración defendible.",
+      "Esta es la tesis. No es una apuesta de un solo producto; es una canasta de opciones construida por un motor que lanza cada nueva vertical a una fracción del costo y el tiempo habituales. La mayor barrera entre los rangos de cuatro y treinta millones es la evidencia de ingresos recurrentes, y eso es exactamente lo que financia esta ronda. Una vertical que alcance el ajuste producto-mercado revaloriza a toda la empresa.",
+      "El siguiente paso: revisar el memorando confidencial completo y el data room, y conversemos. Esta es una estimación de la gerencia, no una valoración auditada, y nada de esto es una oferta de venta de valores. DIGIT2AI, Tampa, Florida. Gracias."
+    ]
+  };
+  var UI={
+    en:{role:'AI narration of this deck',play:'Play walkthrough',accent:'Voice',hd:'Neural HD',
+        idle:"Press play and I'll walk you through all eleven slides.",
+        prep:'Preparing neural voice…',one:'Playing section…',
+        done:'Walkthrough complete. Press play to repeat.',pause:'Paused.',
+        speak:function(a,b){return 'Speaking… ('+a+' of '+b+')';},hdOn:'HD',hdOff:'browser'},
+    es:{role:'Narración con IA de esta presentación',play:'Reproducir recorrido',accent:'Voz',hd:'Voz neural HD',
+        idle:'Pulsa reproducir y te explico las once láminas.',
+        prep:'Preparando voz neural…',one:'Reproduciendo sección…',
+        done:'Recorrido terminado. Pulsa para repetir.',pause:'En pausa.',
+        speak:function(a,b){return 'Hablando… ('+a+' de '+b+')';},hdOn:'HD',hdOff:'navegador'}
+  };
+  var ACCENTS={
+    en:[['ava','Ava (US)'],['guy','Guy (US)'],['sonia','Sonia (UK)']],
+    es:[['lina','México (Dalia)'],['paloma','EE. UU. (Paloma)'],['salome','Colombia (Salomé)'],['elvira','España (Elvira)']]
+  };
+  var DEF={en:'ava',es:'lina'}, FBLANG={en:'en-US',es:'es-MX'};
+
+  // ---- DOM ----
+  var niva=document.getElementById('niva');
+  var orbWrap=document.getElementById('nivaOrb');
+  var capIdle=document.getElementById('nivaCapIdle');
+  var capActive=document.getElementById('nivaCapActive');
+  var closeBtn=document.getElementById('nivaClose');
+  var miniOrb=document.getElementById('nivaMini');
+  var roleEl=document.getElementById('nivaRole');
+  var enBtn=document.getElementById('nivaEn'), esBtn=document.getElementById('nivaEs');
+  var playBtn=document.getElementById('nivaPlay'), playTxt=document.getElementById('nivaPlayTxt');
+  var pauseBtn=document.getElementById('nivaPause'), stopBtn=document.getElementById('nivaStop');
+  var accentSel=document.getElementById('nivaAccent'), accentLbl=document.getElementById('nivaAccentLbl');
+  var neuralToggle=document.getElementById('nivaNeural'), hdLbl=document.getElementById('nivaHdLbl');
+  var modeEl=document.getElementById('nivaMode'), statusEl=document.getElementById('nivaStatus');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('#deck .slide'));
+  function setState(s){ orbWrap.dataset.state=s; }
+  function say(txt){ statusEl.textContent=txt; }
+  function personaName(){ return voiceName ? voiceName.charAt(0).toUpperCase()+voiceName.slice(1) : (lang==='es'?'La voz':'The voice'); }
+
+  // ---- State ----
+  var synth=window.speechSynthesis;
+  var lang='en', segments=SEG.en, voiceName=DEF.en;
+  var NEURAL_URL='/api/tts/edge';
+  var queue=[], qi=0, mode=null, runToken=0, paused=false, playing=false;
+  var playbackMode=null, currentAudio=null, neuralOK=true, audioCache={};
+  var browserVoice=null;
+
+  function t(){ return UI[lang]; }
+  function pickBrowserVoice(){
+    if(!synth) return;
+    var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf(lang)===0;});
+    browserVoice=pref[0]||vs[0]||null;
+  }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ modeEl.textContent=useNeural()?('● '+t().hdOn):('○ '+t().hdOff); }
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
+
+  function buildAccents(){
+    accentSel.innerHTML='';
+    ACCENTS[lang].forEach(function(a){
+      var o=document.createElement('option'); o.value=a[0]; o.textContent=a[1];
+      if(a[0]===voiceName) o.selected=true;
+      accentSel.appendChild(o);
+    });
+  }
+  function applyLangUI(){
+    roleEl.textContent=t().role; playTxt.textContent=t().play;
+    accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
+    enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
+    capIdle.textContent = lang==='en' ? 'Tap to play the walkthrough' : 'Toca para reproducir el recorrido';
+    capActive.textContent = lang==='en' ? 'Open controls' : 'Abrir controles';
+    if(!currentAudio && !(synth&&synth.speaking)) say(t().idle);
+    setMode();
+    syncStageUI();
+  }
+  function setLang(l){
+    if(l===lang) return;
+    finish(); // stop any playback cleanly
+    lang=l; segments=SEG[l]; voiceName=DEF[l];
+    clearCache(); pickBrowserVoice(); buildAccents(); applyLangUI();
+  }
+
+  function setActive(i){
+    var s=slides[i-1]; // i:1..11 -> slide; i=0 intro -> no move
+    if(i>0 && s) s.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function statusSpeaking(){ say(personaName()+' · '+(qi+1)+' / '+queue.length); syncStageUI(); }
+  // The ONLY on-screen control is the orb + its small caption underneath — no chip
+  // overlapping the slide. The top EN/ES toggle handles language.
+  function syncStageUI(){
+    if(paused){ capActive.textContent = lang==='es'?'En pausa · toca para reanudar':'Paused · tap to resume'; }
+    else if(playing){ capActive.textContent = personaName()+' · '+(qi+1)+'/'+queue.length+' · '+(lang==='es'?'toca para pausar':'tap to pause'); }
+    else { capActive.textContent = lang==='es'?'Toca para reproducir':'Tap to play'; }
+  }
+  function togglePause(){
+    if(!playing) return;
+    if(!paused){ paused=true; pauseBtn.textContent='▶'; speaking(false); say(t().pause);
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; pauseBtn.textContent='❙❙'; speaking(true); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+    syncStageUI();
+  }
+  function playAll(){ start(segments.map(function(_,i){return i;}),'all'); }
+  function stopAll(){ finish(); }
+  function orbTap(){
+    if(!playing) playAll();   // first tap starts narration; the deck follows the voice
+    else togglePause();       // tapping again pauses / resumes
+  }
+
+  function fetchNeural(idx){
+    var key=voiceName+'|'+lang+'|'+idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segments[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function speaking(on){ setState(on?'speaking':'idle'); }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    if(mode==='all' || idx>0) setActive(idx);
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      say(t().prep); setState('thinking');
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
+        speaking(true); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segments[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang=browserVoice?browserVoice.lang:FBLANG[lang];
+    u.rate=1.0; u.pitch=1.03;
+    u.onstart=function(){ speaking(true); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(q,m){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=q; qi=0; mode=m; paused=false; playing=true; runToken++;
+    niva.classList.add('session');   // keep the status caption (not the idle hint) visible while active
+    pauseBtn.disabled=false; stopBtn.disabled=false; playBtn.disabled=true; pauseBtn.textContent='❙❙';
+    if(m==='all' && slides[0]) slides[0].scrollIntoView({behavior:'smooth',block:'start'});
+    syncStageUI();
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; speaking(false);
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    if(synth) synth.cancel();
+    pauseBtn.disabled=true; stopBtn.disabled=true; playBtn.disabled=false; paused=false; playing=false;
+    niva.classList.remove('session');
+    say(t().done);
+    syncStageUI();
+  }
+
+  // ---- Events ----
+  orbWrap.addEventListener('click',orbTap);
+  orbWrap.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); orbTap(); } });
+  // language: switching mid-playback restarts narration in the new language (voice only)
+  function switchLang(l){ var was=playing; setLang(l); if(was) playAll(); }
+  // expose the voice-language setter so the top page toggle drives the voice too
+  window.__setVoiceLang=switchLang;
+  // the chip's EN/ES buttons flip the WHOLE page (text + voice) via the shared page toggle
+  enBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('en'); });
+  esBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('es'); });
+  playBtn.addEventListener('click',playAll);
+  accentSel.addEventListener('change',function(){ voiceName=this.value; clearCache(); });
+  neuralToggle.addEventListener('change',setMode);
+  pauseBtn.addEventListener('click',togglePause);
+  stopBtn.addEventListener('click',stopAll);
+  closeBtn.addEventListener('click',stopAll);
+  window.addEventListener('keydown',function(e){ if(e.key==='Escape'&&playing) stopAll(); });
+  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
+
+  // ---- Init ----
+  buildAccents(); applyLangUI();
+})();
+
+// ---- Page language toggle (text + voice), shared by the top toggle and the orb chip ----
+(function(){
+  var pgEn=document.getElementById('pgEn'), pgEs=document.getElementById('pgEs');
+  var d=document.documentElement;
+  function current(){ return d.classList.contains('lang-en')?'en':'es'; }
+  window.applyLanguage=function(l,persist){
+    if(l!=='en'&&l!=='es') l='es';
+    d.classList.remove('lang-en','lang-es'); d.classList.add('lang-'+l); d.setAttribute('lang',l);
+    if(pgEn) pgEn.classList.toggle('on',l==='en');
+    if(pgEs) pgEs.classList.toggle('on',l==='es');
+    if(persist!==false){ try{ localStorage.setItem('ni_lang',l); }catch(e){} }
+    if(window.__setVoiceLang) window.__setVoiceLang(l); // page text and voice stay in lockstep
+  };
+  if(pgEn) pgEn.addEventListener('click',function(){ window.applyLanguage('en'); });
+  if(pgEs) pgEs.addEventListener('click',function(){ window.applyLanguage('es'); });
+  // initial sync — respect what the early <head> script decided (saved > browser > Spanish), don't re-persist
+  var l0=current();
+  if(pgEn) pgEn.classList.toggle('on',l0==='en');
+  if(pgEs) pgEs.classList.toggle('on',l0==='es');
+  if(window.__setVoiceLang) window.__setVoiceLang(l0);
+
+  // ---- Number count-up: animate [data-count] elements when their slide enters view ----
+  (function(){
+    var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){}
+    function fmt(el,v){ var n=el.getAttribute('data-comma')?v.toLocaleString('en-US'):v; return (el.getAttribute('data-prefix')||'')+n+(el.getAttribute('data-suffix')||''); }
+    function run(el){
+      var target=parseFloat(el.getAttribute('data-count'))||0;
+      if(reduce){ el.textContent=fmt(el,target); return; }
+      var dur=1000,t0=0;
+      function step(ts){ if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur); var v=Math.round(target*(1-Math.pow(1-p,3))); el.textContent=fmt(el,v); if(p<1) requestAnimationFrame(step); }
+      requestAnimationFrame(step);
+    }
+    var done=(typeof WeakSet!=='undefined')?new WeakSet():null;
+    function fire(scope){ Array.prototype.forEach.call(scope.querySelectorAll('[data-count]'),function(el){ if(done){ if(done.has(el))return; done.add(el); } run(el); }); }
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) fire(e.target); }); },{threshold:0.01});
+      Array.prototype.forEach.call(document.querySelectorAll('.slide'),function(s){ io.observe(s); });
+    } else { fire(document); }
+  })();
+
+  // Real geolocation: Cloudflare tells us the visitor's country (no API key, same-origin).
+  // Spanish-speaking country -> ES, otherwise EN. Only applies if the visitor hasn't picked a language.
+  var SPANISH={MX:1,ES:1,AR:1,CO:1,PE:1,VE:1,CL:1,EC:1,GT:1,CU:1,BO:1,DO:1,HN:1,PY:1,SV:1,NI:1,CR:1,PA:1,UY:1,PR:1,GQ:1};
+  try{
+    if(!localStorage.getItem('ni_lang')){
+      fetch('/cdn-cgi/trace',{cache:'no-store'}).then(function(r){return r.text();}).then(function(txt){
+        if(localStorage.getItem('ni_lang')) return;              // user toggled while we were fetching
+        var m=/(?:^|\n)loc=([A-Z]{2})/.exec(txt); if(!m) return;
+        var geoLang=SPANISH[m[1]]?'es':'en';
+        if(geoLang!==current()) window.applyLanguage(geoLang,false); // apply, but don't lock it in
+      }).catch(function(){});
+    }
+  }catch(e){}
+})();
+</script>
+
+<script>
+/* ===== Live AI Triage — self-contained; posts to the same backend as champion-teaser ===== */
+(function(){
+  var API='/projects/api/v1/intake/public-triage-preview';
+  var descEl=document.getElementById('tg-desc');
+  if(!descEl) return;
+  var d=document.documentElement;
+  function lang(){ return d.classList.contains('lang-en')?'en':'es'; }
+  var runBtn=document.getElementById('tg-run'), statusEl=document.getElementById('tg-status'),
+      errEl=document.getElementById('tg-error'), resEl=document.getElementById('tg-result'),
+      nameEl=document.getElementById('tg-name'), emailEl=document.getElementById('tg-email'),
+      companyEl=document.getElementById('tg-company'), countryEl=document.getElementById('tg-country');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  var T={
+    en:{running:'Reading the problem…',min:'Please describe the problem in at least 30 characters.',
+        fail:'Triage could not complete. Please try again.',net:'Network error: ',fit:'fit',
+        go:'Strong fit — GO',poc:'Proof of concept first',stop:'Not a fit — yet',
+        title:'Suggested project',reason:'Why it fits',problem:'The problem, in our words',
+        tech:'Technical solution',agents:'Agents involved',build:'What we build',data:'Data via MCP',window:'Delivery window',
+        week1:'Week 1 deliverables',flags:'What we verify first',
+        ph_desc:"Example: We run a chamber of commerce with 1,200 member businesses. Members can't find each other to do deals across our 6 sectors. Our board wants a digital platform but doesn't know what's realistic in 90 days…",
+        ph_name:'Your name (optional)',ph_email:'Email (required — we send you the report)',ph_company:'Company (optional)',ph_country:'Country (optional)',need_email:'Add your email so we can send this to our team and follow up.',sending:'Saving & sending to our team…',sent_h:'Saved & sent to the Digit2AI intake team.',sent_p:'A real human reviews it and follows up within 48 hours.',send_retry:'Saved — a network issue stopped the send. It will retry the next time you run triage.'},
+    es:{running:'Leyendo el problema…',min:'Describe el problema con al menos 30 caracteres.',
+        fail:'El triage no pudo completarse. Intenta de nuevo.',net:'Error de red: ',fit:'de ajuste',
+        go:'Buen ajuste — ADELANTE',poc:'Primero una prueba de concepto',stop:'Aún no encaja',
+        title:'Proyecto sugerido',reason:'Por qué encaja',problem:'El problema, en nuestras palabras',
+        tech:'Solución técnica',agents:'Agentes involucrados',build:'Qué construimos',data:'Datos vía MCP',window:'Ventana de entrega',
+        week1:'Entregables de la semana 1',flags:'Qué verificamos primero',
+        ph_desc:'Ejemplo: Operamos una cámara de comercio con 1,200 empresas afiliadas. Los miembros no logran encontrarse para hacer negocios entre los 6 sectores. La junta quiere una plataforma digital pero no sabe qué es realista en 90 días…',
+        ph_name:'Tu nombre (opcional)',ph_email:'Correo (obligatorio — te enviamos el reporte)',ph_company:'Empresa (opcional)',ph_country:'País (opcional)',need_email:'Agrega tu correo para enviarlo a nuestro equipo y darte seguimiento.',sending:'Guardando y enviando a nuestro equipo…',sent_h:'Guardado y enviado al equipo de intake de Digit2AI.',sent_p:'Una persona real lo revisa y te contacta en menos de 48 horas.',send_retry:'Guardado — un problema de red detuvo el envío. Se reintentará la próxima vez que ejecutes el triage.'}
+  };
+  function applyPh(){ var t=T[lang()]; descEl.placeholder=t.ph_desc; nameEl.placeholder=t.ph_name; emailEl.placeholder=t.ph_email; companyEl.placeholder=t.ph_company; countryEl.placeholder=t.ph_country; }
+  applyPh();
+  // keep placeholders synced when the page language toggles (top toggle / orb / geo)
+  if(typeof window.applyLanguage==='function'){ var orig=window.applyLanguage; window.applyLanguage=function(l,p){ orig(l,p); applyPh(); }; }
+
+  function li(arr){ if(!arr||!arr.length) return '<li>—</li>'; return arr.map(function(s){return '<li>'+esc(s)+'</li>';}).join(''); }
+  function render(tr){
+    var t=T[lang()];
+    var vmap={go:['v-go',t.go],poc:['v-poc',t.poc],stop:['v-stop',t.stop]};
+    var v=vmap[tr.verdict]||vmap.poc, ts=tr.technical_solution||{};
+    resEl.innerHTML='<div class="tg-res">'
+      +'<div class="tg-head"><span class="tg-verdict '+v[0]+'">'+esc(v[1])+'</span>'
+      +'<span class="tg-fit">'+esc(tr.fit_score)+'<span>'+t.fit+'</span></span></div>'
+      +'<div class="tg-block"><h4>'+t.title+'</h4><p>'+esc(tr.project_title_suggested)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.reason+'</h4><p>'+esc(tr.fit_reasoning)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.problem+'</h4><p>'+esc(tr.problem_in_our_words)+'</p></div>'
+      +'<div class="tg-block"><h4>'+t.tech+'</h4><p>'+esc(ts.summary)+'</p><div class="tg-tech">'
+        +'<div class="tg-cell"><div class="lbl">'+t.agents+'</div><ul>'+li(ts.agents_involved)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.build+'</div><ul>'+li(ts.what_we_build)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.data+'</div><ul>'+li(ts.data_sources_via_mcp)+'</ul></div>'
+        +'<div class="tg-cell"><div class="lbl">'+t.window+'</div><p>'+esc(ts.delivery_window)+'</p></div>'
+      +'</div></div>'
+      +'<div class="tg-block"><h4>'+t.week1+'</h4><ul>'+li(tr.week_1_deliverables)+'</ul></div>'
+      +'<div class="tg-block"><h4>'+t.flags+'</h4><ul>'+li(tr.verify_flags)+'</ul></div>'
+      +'</div>';
+    requestAnimationFrame(function(){ var r=resEl.querySelector('.tg-res'); if(r) r.scrollIntoView({behavior:'smooth',block:'nearest'}); });
+  }
+  // ---- autosave (localStorage) ----
+  var SAVE='ni_triage', sentEl=document.getElementById('tg-sent');
+  function save(extra){
+    try{
+      var rec={ts:Date.now(),lang:lang(),desc:(descEl.value||'').trim(),name:(nameEl.value||'').trim(),
+        email:(emailEl.value||'').trim(),company:(companyEl.value||'').trim(),country:(countryEl.value||'').trim()};
+      if(extra) for(var k in extra) rec[k]=extra[k];
+      localStorage.setItem(SAVE,JSON.stringify(rec));
+    }catch(e){}
+  }
+  try{ var sv=JSON.parse(localStorage.getItem(SAVE)||'null'); if(sv){
+    if(!descEl.value&&sv.desc)descEl.value=sv.desc; if(!nameEl.value&&sv.name)nameEl.value=sv.name;
+    if(!emailEl.value&&sv.email)emailEl.value=sv.email; if(!companyEl.value&&sv.company)companyEl.value=sv.company;
+    if(!countryEl.value&&sv.country)countryEl.value=sv.country;
+  } }catch(e){}
+
+  // ---- build a rich description + auto-submit to the Digit2AI intake ----
+  function richDescription(tr){
+    var ts=tr.technical_solution||{}, L=[];
+    L.push('=== ORIGINAL PROSPECT DESCRIPTION ==='); L.push((descEl.value||'').trim()); L.push('');
+    L.push('=== AI TRIAGE (auto, via /neural-intelligence.html) ===');
+    L.push('Verdict: '+String(tr.verdict||'poc').toUpperCase()+'  ·  Fit score: '+tr.fit_score+'/10');
+    L.push('Fit reasoning: '+(tr.fit_reasoning||'')); L.push('');
+    L.push('Problem in our words: '+(tr.problem_in_our_words||'')); L.push('');
+    L.push('=== PROPOSED TECHNICAL SOLUTION ==='); L.push(ts.summary||''); L.push('');
+    function block(title,arr){ if(arr&&arr.length){ L.push(title+':'); arr.forEach(function(a){L.push('  - '+a);}); L.push(''); } }
+    block('Agents involved',ts.agents_involved); block('What we build',ts.what_we_build);
+    block('Data via MCP',ts.data_sources_via_mcp);
+    if(ts.delivery_window){ L.push('Delivery window: '+ts.delivery_window); L.push(''); }
+    block('Week 1 deliverables',tr.week_1_deliverables); block('Verify-first flags',tr.verify_flags);
+    return L.join('\n');
+  }
+  function submitToIntake(tr){
+    var t=T[lang()], email=(emailEl.value||'').trim();
+    if(!email||email.indexOf('@')<0) return;
+    var name=(nameEl.value||'').trim(), company=(companyEl.value||'').trim();
+    var fullName=name||company||email.split('@')[0]||'Neural Intelligence deck prospect';
+    sentEl.innerHTML='<div class="tg-ok"><span class="tg-spin"></span><span>'+esc(t.sending)+'</span></div>';
+    var payload={ full_name:fullName, email:email, company_name:company||undefined,
+      country:(countryEl.value||'').trim()||undefined,
+      project_title:tr.project_title_suggested||'Neural Intelligence project',
+      project_description:richDescription(tr), problem:(descEl.value||'').trim(),
+      ai_category:'Neural AI (deck triage)',
+      heard_from:'Auto-submitted from the Neural Intelligence deck (/neural-intelligence.html)' };
+    fetch('/projects/api/v1/intake/public/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(!res.ok||!res.j||!res.j.success){ save({submit_error:(res.j&&res.j.error)||'failed'});
+          sentEl.innerHTML='<div class="tg-ok" style="border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1);color:#fde68a">'+esc(t.send_retry)+'</div>'; return; }
+        var data=res.j.data||res.j, url=data.url||(data.token?'/projects/intake/batch.html?token='+data.token:null), batch=data.batch_id||data.batch||'';
+        save({submitted:true,batch_id:batch,submit_error:null});
+        sentEl.innerHTML='<div class="tg-ok"><span>✓</span><div><b>'+esc(t.sent_h)+'</b><br>'+esc(t.sent_p)+(batch?' <span style="opacity:.7">(#'+esc(String(batch))+')</span>':'')+(url?'<br><a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(url)+'</a>':'')+'</div></div>';
+      })
+      .catch(function(e){ save({submit_error:e.message||'network'});
+        sentEl.innerHTML='<div class="tg-ok" style="border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.1);color:#fde68a">'+esc(t.send_retry)+'</div>'; });
+  }
+
+  runBtn.addEventListener('click',function(){
+    var t=T[lang()], desc=(descEl.value||'').trim(), email=(emailEl.value||'').trim();
+    errEl.textContent=''; sentEl.innerHTML='';
+    if(desc.length<30){ errEl.textContent=t.min; descEl.focus(); return; }
+    if(!email||email.indexOf('@')<0){ errEl.textContent=t.need_email; emailEl.focus(); return; }
+    save();
+    runBtn.disabled=true; statusEl.innerHTML='<span class="tg-spin"></span>'+esc(t.running);
+    var body={description:desc,language:lang(),name:(nameEl.value||'').trim()||undefined,email:email,
+      company:(companyEl.value||'').trim()||undefined,country:(countryEl.value||'').trim()||undefined};
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        runBtn.disabled=false; statusEl.textContent='';
+        if(!res.ok||!res.j||!res.j.success){ errEl.textContent=(res.j&&res.j.error)||t.fail; return; }
+        save({triage:res.j.data});
+        render(res.j.data);
+        submitToIntake(res.j.data);   // autosave + auto-send to Digit2AI intake — no extra click
+      })
+      .catch(function(e){ runBtn.disabled=false; statusEl.textContent=''; errEl.textContent=t.net+(e.message||''); });
+  });
+})();
+</script>
+
+<script>
+/* ===== Slide 10 — live "handed over today" ticker (illustrative $10M base, 40% gap) ===== */
+(function(){
+  var el=document.getElementById('cw-today'); if(!el) return;
+  var RATE=10959; // $/day handed to AI-native competitors at the illustrative base
+  var timer=null;
+  function tick(){
+    var now=new Date();
+    var midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
+    var amount=RATE*((now-midnight)/1000/86400);
+    el.textContent='$'+amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function start(){ if(timer) return; tick(); timer=setInterval(tick,150); }
+  var slide=document.getElementById('s10');
+  if('IntersectionObserver' in window && slide){
+    new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) start(); }); },{threshold:0.01}).observe(slide);
+  } else { start(); }
+})();
+</script>
+
+<script>
+/* ===== Download PDF (print to a clean white proposal in the active language) ===== */
+(function(){
+  var b=document.getElementById('pdfBtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    var prev=document.title;
+    document.title='DIGIT2AI-Neural-Intelligence-Proposal';
+    window.addEventListener('afterprint',function restore(){ document.title=prev; window.removeEventListener('afterprint',restore); });
+    setTimeout(function(){ window.print(); },40);
+  });
+})();
+</script>
+</body>
+</html>

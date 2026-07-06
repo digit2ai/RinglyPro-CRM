@@ -2289,6 +2289,11 @@ app.get(['/pre-seed-valuation', '/pre-seed_valuation', '/valuation'], (req, res)
   res.sendFile(path.join(__dirname, '../public/pre-seed-valuation.html'));
 });
 
+// Investor deck (visual pre-seed opportunity — modeled on the neural-intelligence deck)
+app.get(['/investor', '/investors', '/investor.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/investor.html'));
+});
+
 // Privacy Policy page route (required for App Store)
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/privacy.html'));
