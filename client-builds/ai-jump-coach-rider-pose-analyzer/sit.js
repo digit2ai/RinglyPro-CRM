@@ -118,6 +118,36 @@ async function run(base) {
     check('0c category tolerance increases with height', a < b && b < c, `80=${a} 120=${b} 150=${c}`);
   }
 
+  // 0d. Horse-technique: rider-proxy path yields a bascule score + honest pending.
+  {
+    const ev = rubric.evaluate(fixture, { heightCategory: '120' });
+    const h = ev.horse || {};
+    const proxyOk = h.source === 'rider_proxy' && typeof h.bascule_score === 'number' &&
+      typeof h.airtime_sec === 'number' && ['close', 'good', 'long'].indexOf(h.takeoff_distance_label) >= 0 &&
+      h.fore_hind_symmetry == null && Array.isArray(h.pending) && h.pending.indexOf('fore_hind_symmetry') >= 0;
+    check('0d horse-technique rider-proxy -> bascule + takeoff label + pending fore/hind', proxyOk, `horse=${JSON.stringify(h)}`);
+  }
+
+  // 0e. Horse-technique: real horse-pose contract lights up fore/hind symmetry.
+  {
+    var hf = [];
+    for (var i = 0; i < 9; i++) {
+      var ph = i / 8, arc = Math.sin(ph * Math.PI);
+      var wy = 0.60 - 0.20 * arc, cy = 0.62 - 0.18 * arc;
+      var flh = 0.75 - 0.30 * arc, hlh = 0.78 - 0.28 * arc; // fore/hind hoof heights (y)
+      hf.push({ t: i * 0.2, horse: {
+        withers: { x: 0.5, y: wy }, croup: { x: 0.55, y: cy },
+        fore_left_hoof: { x: 0.48, y: flh }, fore_right_hoof: { x: 0.5, y: flh },
+        hind_left_hoof: { x: 0.58, y: hlh }, hind_right_hoof: { x: 0.6, y: hlh }
+      } });
+    }
+    const ev = rubric.evaluate(fixture, { heightCategory: '120', horseFrames: hf });
+    const h = ev.horse || {};
+    const horseOk = h.source === 'horse_pose' && h.fore_hind_symmetry && typeof h.fore_hind_symmetry.score === 'number' &&
+      typeof h.bascule_score === 'number';
+    check('0e horse-technique horse-pose contract -> fore/hind symmetry computed', horseOk, `horse=${JSON.stringify(h)}`);
+  }
+
   // 1. health
   {
     const r = await req(base, 'GET', '/health');

@@ -136,6 +136,29 @@
   .dim .dv{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--brass-bright);text-align:right}
   .dim.nd .dv{color:var(--faint)}
   .catpill{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--brass-bright);border:1px solid rgba(201,162,75,.4);border-radius:99px;padding:3px 10px;margin-left:10px}
+  /* manual fault tagger */
+  .mf-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:14px}
+  .mf-row select,.mf-row input{font:inherit;font-size:13px;background:rgba(0,0,0,.18);color:var(--text);border:1px solid var(--line-2);border-radius:8px;padding:7px 9px}
+  .mf-add{cursor:pointer;border:1px solid var(--line-2);background:var(--surface-2);color:var(--text);border-radius:8px;padding:7px 12px;font-weight:600;font-size:13px}
+  .mf-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .mf-chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;border-radius:99px;padding:4px 6px 4px 11px;border:1px solid var(--line-2);background:rgba(0,0,0,.16)}
+  .mf-chip.rail{border-color:color-mix(in srgb,var(--sev-mid) 45%,transparent)}
+  .mf-chip.refusal{border-color:color-mix(in srgb,var(--sev-high) 45%,transparent)}
+  .mf-chip button{cursor:pointer;border:none;background:rgba(255,255,255,.08);color:var(--muted);border-radius:50%;width:18px;height:18px;line-height:1;font-size:13px}
+  /* horse technique + insights */
+  .htgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:6px}
+  .ht{background:rgba(0,0,0,.16);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .ht .hv{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:19px;color:var(--brass-bright)}
+  .ht .hl{font-size:11px;color:var(--muted);margin-top:3px}
+  .src-tag{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--line-2);color:var(--muted)}
+  .alert{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-left:3px solid var(--sev,#888);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:rgba(0,0,0,.14);font-size:13.5px}
+  .alert .as{font-family:"JetBrains Mono",monospace;font-size:10px;text-transform:uppercase;color:var(--sev);white-space:nowrap;margin-top:2px}
+  .ins-sub{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+  .overload{border:1px solid color-mix(in srgb,var(--sev-high) 45%,transparent);background:color-mix(in srgb,var(--sev-high) 12%,transparent);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:8px}
+  .rec-row{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .rec-row .rv{font-family:"JetBrains Mono",monospace;color:var(--brass-bright)}
+  .jn-entry{border-left:2px solid var(--turf);padding:6px 0 6px 12px;margin-bottom:8px;font-size:13.5px}
+  .jn-entry .jm{color:var(--faint);font-family:"JetBrains Mono",monospace;font-size:11px}
 </style>
 </head>
 <body>
@@ -190,6 +213,19 @@
       <div class="setup-field"><label data-i18n="jc_optimal_label">Tiempo óptimo (s)</label><input id="optimalTime" type="number" min="0" step="0.1" inputmode="decimal" placeholder="—"></div>
       <div class="setup-field"><label data-i18n="jc_total_label">Tiempo total (s)</label><input id="totalTime" type="number" min="0" step="0.1" inputmode="decimal" placeholder="—"></div>
     </div>
+
+    <!-- Manual rail/refusal tagging (binomio penalties) -->
+    <div class="upload-label" style="margin:20px 0 0" data-i18n="jc_mf_label">Errores y penalizaciones (opcional)</div>
+    <div class="mf-row">
+      <div class="setup-field" style="flex:0 0 130px"><label data-i18n="jc_mf_kind">Tipo</label>
+        <select id="mfKind"><option value="rail" data-i18n="jc_mf_rail">Derribo</option><option value="refusal" data-i18n="jc_mf_refusal">Rehúse</option></select></div>
+      <div class="setup-field" style="flex:0 0 140px"><label data-i18n="jc_mf_fence">Obstáculo</label>
+        <select id="mfFence"><option value="vertical" data-i18n="jc_mf_vertical">Vertical</option><option value="oxer" data-i18n="jc_mf_oxer">Oxer</option><option value="combo" data-i18n="jc_mf_combo">Combinación</option><option value="other" data-i18n="jc_mf_other">Otro</option></select></div>
+      <div class="setup-field" style="flex:0 0 110px"><label data-i18n="jc_mf_at">Segundo</label><input id="mfAt" type="number" min="0" step="0.1" inputmode="decimal" placeholder="—"></div>
+      <button type="button" id="mfAdd" class="mf-add" data-i18n="jc_mf_add">+ Agregar</button>
+    </div>
+    <div class="mf-chips" id="mfChips"></div>
+
     <div id="status" class="status"></div>
   </section>
 
@@ -208,6 +244,13 @@
       </div>
       <div id="courseLine" class="mono" style="margin-top:14px;color:var(--muted);font-size:13px"></div>
       <div id="pendingNote" style="margin-top:8px;color:var(--faint);font-size:11.5px"></div>
+    </section>
+
+    <!-- Horse technique (estimated from rider trajectory, or real horse pose) -->
+    <section class="panel reveal hidden" id="horsePanel" style="margin:0 2px 18px;padding:clamp(16px,2.4vw,22px)">
+      <div class="sub-label" style="margin-bottom:6px;display:flex;align-items:center;gap:10px"><span data-i18n="jc_horse_title">Técnica del caballo</span><span class="src-tag" id="horseSrc"></span></div>
+      <div class="htgrid" id="horseGrid"></div>
+      <div id="horseNote" style="margin-top:10px;color:var(--faint);font-size:11.5px"></div>
     </section>
 
     <div class="grid">
@@ -272,6 +315,18 @@
         <button id="goJumpHistory" class="jbtn ghost" data-i18n="jc_view_history">Ver historial</button>
       </div>
     </section>
+
+    <!-- Journal: sensación subjetiva del jinete vs. datos objetivos -->
+    <section class="panel reveal" id="journalPanel" style="margin-top:18px;padding:16px">
+      <div class="sub-label" data-i18n="jc_jn_title">Diario del jinete · percepción vs. datos</div>
+      <div id="jnEntries" style="margin:8px 0"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:6px">
+        <div class="setup-field" style="flex:1 1 240px"><label data-i18n="jc_jn_feeling">¿Cómo sentiste el recorrido?</label><input id="jnFeeling" maxlength="600" placeholder="—"></div>
+        <div class="setup-field" style="flex:0 0 130px"><label data-i18n="jc_jn_self">Tu nota (0–100)</label><input id="jnSelf" type="number" min="0" max="100" step="1" placeholder="—"></div>
+        <button type="button" id="jnSave" class="jbtn" data-i18n="jc_jn_save">Guardar</button>
+      </div>
+      <div id="jnMsg" class="status" style="color:var(--brass-bright)"></div>
+    </section>
   </div>
 
   <!-- CTA de marketing en informe compartido (magic link público) -->
@@ -304,6 +359,20 @@
       </table>
       <p id="jhEmpty" style="color:var(--faint);font-size:13px;padding:10px 0" data-i18n="jc_hist_empty">Aún no tienes análisis de salto.</p>
     </div>
+  </section>
+
+  <!-- Inteligencia entre análisis: patrones, récords, carga de trabajo -->
+  <section id="insightsPanel" class="panel reveal hidden" style="margin-top:18px;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h2 style="font-size:16px;margin:0" data-i18n="jc_ins_title">Inteligencia del binomio</h2>
+      <button id="insRefresh" class="jbtn ghost" data-i18n="jc_refresh">Actualizar</button>
+    </div>
+    <div class="ins-sub" data-i18n="jc_ins_patterns">Alertas de patrón</div>
+    <div id="insAlerts"></div>
+    <div class="ins-sub" data-i18n="jc_ins_workload">Carga de trabajo</div>
+    <div id="insWorkload"></div>
+    <div class="ins-sub" data-i18n="jc_ins_records">Récords por binomio</div>
+    <div id="insRecords"></div>
   </section>
 
   <div style="margin-top:22px;text-align:center;color:var(--faint);font-size:13px"><a href="{{BASE}}privacy?lang={{LANG}}" data-i18n="privacy_link">Privacidad</a></div>

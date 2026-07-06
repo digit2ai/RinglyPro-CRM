@@ -31,6 +31,7 @@
   var dz = $('dz'), dzTitle = $('dzTitle'), dzSub = $('dzSub');
 
   var frames = [], overlayCanvas = null, lastFaults = [], DUR = 0;
+  var manualFaults = [], currentAnalysisId = null;
 
   // ---- fault metadata (self-contained, bilingual) --------------------------
   var FAULT_META = {
@@ -225,10 +226,166 @@
       : 'Las métricas de posición del jinete se calculan desde tu pose (heurísticas documentadas). El bascular del caballo, la distancia de batida y la zancada entre obstáculos requieren pose del caballo y están en el roadmap.';
   }
 
+  // ---- manual rail/refusal tagging -----------------------------------------
+  var MF_KIND = { rail: ['Derribo', 'Rail'], refusal: ['Rehúse', 'Refusal'] };
+  var MF_FENCE = { vertical: ['Vertical', 'Vertical'], oxer: ['Oxer', 'Oxer'], combo: ['Combinación', 'Combination'], other: ['Otro', 'Other'] };
+  function mfLabel(m) { return (MF_KIND[m.kind] ? MF_KIND[m.kind][EN ? 1 : 0] : m.kind) + ' · ' + (MF_FENCE[m.fence_type] ? MF_FENCE[m.fence_type][EN ? 1 : 0] : m.fence_type) + (m.at_sec != null ? ' · ' + m.at_sec + 's' : ''); }
+  function renderMfChips() {
+    var box = $('mfChips'); if (!box) return; box.innerHTML = '';
+    manualFaults.forEach(function (m, i) {
+      var chip = document.createElement('span'); chip.className = 'mf-chip ' + m.kind;
+      chip.innerHTML = '<span>' + esc(mfLabel(m)) + '</span><button type="button" aria-label="x">&times;</button>';
+      chip.querySelector('button').addEventListener('click', function () { manualFaults.splice(i, 1); renderMfChips(); });
+      box.appendChild(chip);
+    });
+  }
+  function bindMf() {
+    var add = $('mfAdd'); if (!add) return;
+    add.addEventListener('click', function () {
+      var k = $('mfKind'), fc = $('mfFence'), at = $('mfAt');
+      if (manualFaults.length >= 60) return;
+      var atv = at && at.value !== '' ? parseFloat(at.value) : null;
+      manualFaults.push({ kind: k ? k.value : 'rail', fence_type: fc ? fc.value : 'other', at_sec: (atv != null && isFinite(atv)) ? atv : null });
+      if (at) at.value = '';
+      renderMfChips();
+    });
+  }
+
+  // ---- horse technique card ------------------------------------------------
+  function renderHorse(row) {
+    var panel = $('horsePanel'); if (!panel) return;
+    var h = (row && row.horse) || (row && row.metrics && row.metrics.horse) || null;
+    if (!h || (h.bascule_score == null && !h.fore_hind_symmetry)) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    var src = $('horseSrc');
+    if (src) src.textContent = h.source === 'horse_pose' ? (EN ? 'horse pose' : 'pose del caballo') : (EN ? 'estimated · rider' : 'estimado · jinete');
+    var grid = $('horseGrid'); if (grid) {
+      grid.innerHTML = '';
+      var tile = function (v, l) { var d = document.createElement('div'); d.className = 'ht'; d.innerHTML = '<div class="hv">' + v + '</div><div class="hl">' + l + '</div>'; grid.appendChild(d); };
+      if (h.bascule_score != null) tile(h.bascule_score, EN ? 'Bascule' : 'Bascular');
+      if (h.arc_symmetry_score != null) tile(h.arc_symmetry_score, EN ? 'Arc symmetry' : 'Simetría del arco');
+      if (h.airtime_sec != null) tile(h.airtime_sec + 's', EN ? 'Air time' : 'Tiempo en el aire');
+      if (h.takeoff_distance_label) {
+        var TL = { close: [EN ? 'Close' : 'Cerca'], good: [EN ? 'Good' : 'Buena'], long: [EN ? 'Long' : 'Larga'] };
+        tile((TL[h.takeoff_distance_label] ? TL[h.takeoff_distance_label][0] : h.takeoff_distance_label), EN ? 'Take-off distance' : 'Distancia de batida');
+      }
+      if (h.fore_hind_symmetry && h.fore_hind_symmetry.score != null) tile(h.fore_hind_symmetry.score, EN ? 'Fore/hind symmetry' : 'Simetría ant./post.');
+    }
+    var note = $('horseNote');
+    if (note) note.textContent = h.source === 'horse_pose'
+      ? (EN ? 'Computed from horse pose keypoints.' : 'Calculado desde los puntos de pose del caballo.')
+      : (EN ? 'Estimated from the rider’s trajectory (proxy). Fore/hind symmetry and exact take-off distance in metres need a horse-pose model / fence detection.' : 'Estimado desde la trayectoria del jinete (proxy). La simetría anterior/posterior y la distancia exacta de batida en metros requieren un modelo de pose del caballo / detección del obstáculo.');
+  }
+
+  // ---- rider journal (perception vs data) ----------------------------------
+  function renderJournal(row) {
+    var panel = $('journalPanel'); if (!panel) return;
+    currentAnalysisId = row && row.id != null ? row.id : null;
+    var entries = (row && Array.isArray(row.journal)) ? row.journal : [];
+    var box = $('jnEntries');
+    if (box) {
+      box.innerHTML = '';
+      entries.forEach(function (e) {
+        var d = document.createElement('div'); d.className = 'jn-entry';
+        var self = e.self_score != null ? (' · ' + (EN ? 'self ' : 'auto ') + e.self_score) : '';
+        var obj = (row.rider_score != null) ? (' · ' + (EN ? 'AI ' : 'IA ') + row.rider_score) : '';
+        d.innerHTML = '<div>' + esc(e.feeling || '') + '</div><div class="jm">' + esc(fmtDate(e.at)) + self + obj + '</div>';
+        box.appendChild(d);
+      });
+    }
+    // Only the owner (has token + a real id) can add entries.
+    var canPost = currentAnalysisId != null && !!getToken();
+    ['jnFeeling', 'jnSelf', 'jnSave'].forEach(function (id) { var el = $(id); if (el) el.style.display = canPost ? '' : 'none'; });
+  }
+  function saveJournal() {
+    if (currentAnalysisId == null) return;
+    var token = getToken(); if (!token) return;
+    var feeling = ($('jnFeeling') && $('jnFeeling').value || '').trim(); if (!feeling) return;
+    var selfEl = $('jnSelf'); var selfScore = selfEl && selfEl.value !== '' ? parseInt(selfEl.value, 10) : null;
+    fetch(BASE + 'api/v1/analyses/' + currentAnalysisId + '/journal', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ feeling: feeling, selfScore: selfScore })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (row) {
+      if (!row) return;
+      if ($('jnFeeling')) $('jnFeeling').value = ''; if (selfEl) selfEl.value = '';
+      var m = $('jnMsg'); if (m) { m.textContent = EN ? 'Saved.' : 'Guardado.'; setTimeout(function () { m.textContent = ''; }, 2000); }
+      renderJournal(row);
+    }).catch(function () {});
+  }
+
+  // ---- cross-analysis insights (patterns / workload / records) -------------
+  function describeAlert(a) {
+    var sig = a.signal;
+    switch (a.code) {
+      case 'recurring_fault': return (EN ? 'Recurring: ' : 'Recurrente: ') + faultName(sig) + ' (' + a.occurrences + '/' + a.of + ')';
+      case 'rail_fence_bias': return (EN ? 'Most rails on ' : 'Más derribos en ') + (MF_FENCE[sig] ? MF_FENCE[sig][EN ? 1 : 0] : sig) + ' (' + a.occurrences + '/' + a.of + ')';
+      case 'refusal_cluster': return (EN ? 'Refusals cluster ' : 'Rehúses agrupados ') + (sig === 'late_course' ? (EN ? 'late in the course' : 'al final del recorrido') : (EN ? 'early in the course' : 'al inicio del recorrido'));
+      case 'lateral_load': return faultName(sig);
+      case 'score_declining': return (EN ? 'Rider score trending down ~' : 'Tu puntaje baja ~') + a.occurrences + ' pts';
+      case 'score_improving': return (EN ? 'Rider score trending up ~' : 'Tu puntaje sube ~') + a.occurrences + ' pts';
+      default: return a.code + ' · ' + sig;
+    }
+  }
+  function sevColorFor(sev) { return sev === 'high' ? SEV_COLOR.high : (sev === 'medium' ? SEV_COLOR.mid : (sev === 'info' ? 'var(--turf)' : SEV_COLOR.low)); }
+  function loadInsights() {
+    var panel = $('insightsPanel'); if (!panel) return;
+    var token = getToken(); if (!token) return;
+    var H = { headers: { 'Authorization': 'Bearer ' + token } };
+    var api = BASE + 'api/v1/analyses/insights/';
+    Promise.all([
+      fetch(api + 'patterns', H).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch(api + 'workload', H).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch(api + 'records', H).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (res) {
+      var pat = res[0], wl = res[1], rec = res[2];
+      var any = (pat && pat.alerts && pat.alerts.length) || (wl && wl.current && wl.current.count) || (rec && rec.records && rec.records.length);
+      if (!any) { panel.classList.add('hidden'); return; }
+      panel.classList.remove('hidden');
+      // patterns
+      var pa = $('insAlerts');
+      if (pa) {
+        pa.innerHTML = '';
+        var alerts = (pat && pat.alerts) || [];
+        if (!alerts.length) pa.innerHTML = '<div style="color:var(--faint);font-size:13px">' + (EN ? 'No repeating patterns yet.' : 'Aún no hay patrones repetidos.') + '</div>';
+        alerts.forEach(function (a) {
+          var d = document.createElement('div'); d.className = 'alert'; d.style.setProperty('--sev', sevColorFor(a.severity));
+          d.innerHTML = '<span class="as">' + (a.severity || '') + '</span><span>' + esc(describeAlert(a)) + '</span>';
+          pa.appendChild(d);
+        });
+      }
+      // workload
+      var wb = $('insWorkload');
+      if (wb) {
+        wb.innerHTML = '';
+        if (wl && wl.overload) { var o = document.createElement('div'); o.className = 'overload'; o.textContent = EN ? 'Overload this week — consider easing the jumping volume.' : 'Sobrecarga esta semana — considera bajar el volumen de saltos.'; wb.appendChild(o); }
+        var cur = wl && wl.current ? wl.current : { count: 0, big: 0 };
+        var line = document.createElement('div'); line.style.fontSize = '13.5px';
+        line.innerHTML = (EN ? 'This week: ' : 'Esta semana: ') + '<b>' + (cur.count || 0) + '</b> ' + (EN ? 'jumps' : 'saltos') + ' · <b>' + (cur.big || 0) + '</b> ' + (EN ? '≥1.30m' : '≥1.30m');
+        wb.appendChild(line);
+      }
+      // records
+      var rb = $('insRecords');
+      if (rb) {
+        rb.innerHTML = '';
+        var records = (rec && rec.records) || [];
+        if (!records.length) rb.innerHTML = '<div style="color:var(--faint);font-size:13px">' + (EN ? 'Add a horse name to build records.' : 'Agrega el nombre del caballo para llevar récords.') + '</div>';
+        records.forEach(function (g) {
+          if (!g.horse_name) return;
+          var d = document.createElement('div'); d.className = 'rec-row';
+          d.innerHTML = '<span>' + esc(g.horse_name) + (g.rider_name ? ' · ' + esc(g.rider_name) : '') + '</span>' +
+            '<span class="rv">' + (EN ? 'best ' : 'récord ') + (g.best_cm || 0) + ' cm · ' + g.count + (EN ? ' jumps' : ' saltos') + '</span>';
+          rb.appendChild(d);
+        });
+      }
+    });
+  }
+
   // ---- results render ------------------------------------------------------
   function renderResults(row) {
     if (row && row.share_url) setShareLink(row.share_url);
     renderScore(row);
+    renderHorse(row);
+    renderJournal(row);
     lastFaults = row.faults || [];
     DUR = (row.duration_sec && row.duration_sec > 0) ? row.duration_sec : (player.duration || DUR || 1);
     resultsEl.classList.remove('hidden');
@@ -318,7 +475,8 @@
           filename: f.name, durationSec: probe.duration || null, frames: frames, lang: LANG,
           heightCategory: catEl ? catEl.value : '110',
           horseName: strOr('horseName'), riderName: strOr('riderName'),
-          optimalTimeSec: numOr('optimalTime'), totalTimeSec: numOr('totalTime')
+          optimalTimeSec: numOr('optimalTime'), totalTimeSec: numOr('totalTime'),
+          manualFaults: manualFaults.slice()
         })
       });
       if (resp.status === 401) { if (loginNotice) loginNotice.classList.remove('hidden'); setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
@@ -336,6 +494,7 @@
       [].forEach.call(resultsEl.querySelectorAll('.reveal'), function (el, i) { setTimeout(function () { el.classList.add('in'); }, 60 + i * 90); });
       drawOverlay();
       loadHistory();
+      loadInsights();
     } catch (e) { setStatus(t('save_failed')); }
     analyzeBtn.disabled = false;
   });
@@ -355,7 +514,7 @@
   function bindShare() {
     var c = $('shareCopy'); if (c) c.addEventListener('click', function () { if (currentShareUrl) copyText(currentShareUrl); });
     var o = $('shareOpen'); if (o) o.addEventListener('click', function () { if (currentShareUrl) window.open(currentShareUrl, '_blank', 'noopener'); });
-    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; manualFaults = []; renderMfChips(); try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
     var g = $('goJumpHistory'); if (g) g.addEventListener('click', function () { loadHistory(); var h = $('jumpHistory'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     var r = $('jhRefresh'); if (r) r.addEventListener('click', loadHistory);
   }
@@ -418,10 +577,16 @@
   // ---- boot ----------------------------------------------------------------
   applyI18n();
   bindShare();
+  bindMf();
+  (function bindExtras() {
+    var js = $('jnSave'); if (js) js.addEventListener('click', saveJournal);
+    var ir = $('insRefresh'); if (ir) ir.addEventListener('click', loadInsights);
+  })();
   var isShared = loadSharedReport();
   if (!isShared) {
     if (!getToken() && loginNotice) loginNotice.classList.remove('hidden');
     loadHistory();
+    loadInsights();
   }
   var rev = [].slice.call(document.querySelectorAll('.wrap > header.reveal, .wrap > .panel.reveal'));
   rev.forEach(function (el, i) { setTimeout(function () { el.classList.add('in'); }, 80 + i * 90); });

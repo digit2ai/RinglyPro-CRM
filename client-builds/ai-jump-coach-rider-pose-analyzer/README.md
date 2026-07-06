@@ -6,6 +6,10 @@ Auto-mounted Express sub-app at `/ai-jump-coach-rider-pose-analyzer`. A user upl
 
 **Cross-analysis intelligence** (`lib/patterns.js`): per-binomio **records** (max height over time), **workload** (jumps/week + overload flag), **pattern alerts** (recurring faults, rail bias by fence type, refusal clustering, lateral load, score trend), horse **comparison**, and a per-analysis **journal** (rider's subjective note vs objective score).
 
+**v3 — horse technique (`lib/horseTechnique.js`):** estimates the HORSE's jump. Two sources, tagged: `rider_proxy` (bascule, arc symmetry, air-time, take-off timing/label derived from the rider's center-of-mass trajectory — a real physical proxy, lower confidence) and `horse_pose` (full metrics incl. **fore/hind symmetry** from an equine-keypoint contract: `{poll, withers, croup, fore_left/right_hoof, hind_left/right_hoof}` per frame, POSTed as optional `horseFrames[]`). Exact take-off distance in metres (needs fence detection) and fore/hind symmetry without horse limbs stay honestly in `pending[]`. Returned as `horse` and stored in `metrics.horse`.
+
+**UI now surfaces it all:** rider score card + dimension bars, **horse-technique card**, **manual rail/refusal tagging** (builds `manualFaults[]`), **rider journal** (perception vs data), and a **binomio-intelligence** panel (pattern alerts + workload/overload + records) that reads the `insights/*` endpoints.
+
 ## Endpoints
 - `GET /health` → `{status:'ok', service, version, store}`
 - `GET /` · `/dashboard` · `/privacy` — server-rendered, `?lang=es|en` (default **es**)

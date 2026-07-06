@@ -104,7 +104,8 @@ router.post('/', async (req, res) => {
         heightCategory: b.heightCategory,
         optimalTimeSec: b.optimalTimeSec,
         totalTimeSec: b.totalTimeSec,
-        manualFaults: b.manualFaults
+        manualFaults: b.manualFaults,
+        horseFrames: Array.isArray(b.horseFrames) ? b.horseFrames.slice(0, 5000) : null
       });
       const safeName = typeof filename === 'string' ? filename.slice(0, 255) : null;
       row = await store.create({
@@ -123,14 +124,14 @@ router.post('/', async (req, res) => {
         rider_score: evalResult.rider_score,
         dimension_scores: evalResult.dimensions,
         phase_metrics: evalResult.phases || {},
-        metrics: evalResult.metrics,
+        metrics: Object.assign({}, evalResult.metrics, { horse: evalResult.horse }),
         manual_faults: evalResult.manual_faults,
         optimal_time_sec: evalResult.course.optimal_time_sec,
         total_time_sec: evalResult.course.total_time_sec,
         rubric_version: evalResult.version
       });
-      // attach the computed course block + pending list for the immediate response
-      row = Object.assign({}, row, { course: evalResult.course, pending: evalResult.pending });
+      // attach the computed course + horse + pending blocks for the immediate response
+      row = Object.assign({}, row, { course: evalResult.course, horse: evalResult.horse, pending: evalResult.pending });
     } catch (inner) {
       await horseAccount.refundOne(req.ecpfUser.id, { description: 'refund: análisis de postura falló' });
       throw inner;

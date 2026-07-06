@@ -24,6 +24,7 @@
 
 const K = require('./keypoints');
 const base = require('./faultEngine');
+const horse = require('./horseTechnique');
 
 const RUBRIC_VERSION = '2.0.0';
 const MIN_VIS = 0.2;
@@ -307,6 +308,7 @@ function evaluate(frames, opts) {
       faults: baseOut.faults, metrics: {}, phases: null,
       dimensions: {}, rider_score: null,
       course: courseMetrics(opts), manual_faults: normalizeManualFaults(opts.manualFaults),
+      horse: horse.compute(frames, { horseFrames: opts.horseFrames, category: cat.code }),
       pending: ['horse_technique', 'course_rhythm']
     };
   }
@@ -332,6 +334,9 @@ function evaluate(frames, opts) {
   const fwdSeat = (baseOut.faults.find((f) => f.type === 'forward_seat') || {}).confidence || 0;
 
   const metrics = { fold, align, sym, heel, legSwing, hand, release, sync, recovery, apexSec };
+
+  // Horse-technique block (estimated from rider trajectory, or real horse pose).
+  const horseTech = horse.compute(frames, { horseFrames: opts.horseFrames, category: cat.code });
 
   const dimensions = {
     // Posición general del jinete: alignment + symmetry + pelvis(via fold sign)
@@ -385,8 +390,13 @@ function evaluate(frames, opts) {
     faults,
     course: courseMetrics(opts),
     manual_faults: normalizeManualFaults(opts.manualFaults),
-    // Declared-but-not-computed (needs horse pose or full-course data). Honest.
-    pending: ['horse_bascule', 'takeoff_distance', 'fore_hind_symmetry', 'stride_between_fences', 'approach_speed']
+    // Horse jumping technique (estimated from rider CoM trajectory, or real horse
+    // pose when a contract is supplied). Most of the old pending[] is now computed.
+    horse: horseTech,
+    // Still genuinely un-derivable from this signal: whatever the horse engine
+    // couldn't produce (e.g. metres-to-fence, fore/hind w/o horse limbs) + the
+    // full-COURSE metrics that need multiple fences.
+    pending: (horseTech.pending || []).concat(['stride_between_fences', 'approach_speed'])
   };
 }
 
