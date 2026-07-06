@@ -133,6 +133,19 @@ router.post('/', async (req, res) => {
       case 'book_appointment_recovery':
         result = await handleBookAppointment(params);
         break;
+      case 'find_appointment':
+      case 'identify_caller':
+        result = await handleFindAppointment(params);
+        break;
+      case 'cancel_appointment':
+        result = await handleCancelAppointment(params);
+        break;
+      case 'reschedule_appointment':
+        result = await handleRescheduleAppointment(params);
+        break;
+      case 'take_message':
+        result = await handleTakeMessage(params);
+        break;
       case 'send_sms':
       case 'send_sms_ringlypro':
       case 'send_sms_corvita':
@@ -244,7 +257,9 @@ async function handleGetBusinessInfo(params) {
         business_days,
         timezone,
         appointment_duration,
-        booking_url
+        booking_url,
+        owner_name,
+        owner_phone
       FROM clients
       WHERE ${whereClause} AND active = true
     `, { replacements, type: QueryTypes.SELECT });
@@ -266,6 +281,8 @@ async function handleGetBusinessInfo(params) {
       appointment_duration: client.appointment_duration || 30,
       booking_url: client.booking_url,
       client_id: client.id,
+      owner_name: client.owner_name || null,
+      transfer_number: client.owner_phone || null,  // where "transfer to a human" dials
       calendar_type: 'ringlypro'  // Indicates we're using RinglyPro calendar
     };
 
@@ -1820,6 +1837,181 @@ async function handleBookAppointmentD2AI(params) {
     };
   } catch (error) {
     logger.error('[ElevenLabs Tools] [D2AI] book_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// =====================================================
+// RECEPTIONIST TOOLS — take message, find/cancel/reschedule appointment.
+// D2AI (client 15) operates on d2_calendar_events; other clients on `appointments`.
+// =====================================================
+
+// take_message — save a caller's message/lead into the business inbox (messages table).
+async function handleTakeMessage(params) {
+  try {
+    let cid = params.client_id;
+    if (!cid && params.called_number) {
+      const c = await sequelize.query(
+        'SELECT id FROM clients WHERE ringlypro_number = :p AND active = true',
+        { replacements: { p: params.called_number }, type: QueryTypes.SELECT });
+      cid = c[0] && c[0].id;
+    }
+    if (!cid) return { success: false, error: 'Missing client_id' };
+
+    const name = params.customer_name || `${params.first_name || ''} ${params.last_name || ''}`.trim() || null;
+    const phone = params.customer_phone || params.phone || null;
+    const reason = params.reason || params.message || params.note || 'Caller left a message';
+
+    const body = [
+      reason,
+      name ? `Name: ${name}` : null,
+      phone ? `Callback: ${phone}` : null
+    ].filter(Boolean).join(' | ');
+
+    const cl = await sequelize.query('SELECT ringlypro_number FROM clients WHERE id = :id',
+      { replacements: { id: cid }, type: QueryTypes.SELECT });
+    const toNum = (cl[0] && cl[0].ringlypro_number) || null;
+
+    const ins = await sequelize.query(
+      `INSERT INTO messages
+         (client_id, direction, from_number, to_number, body, status, message_type, message_source, read, is_admin_message, created_at, updated_at)
+       VALUES
+         (:cid, 'incoming', :from, :to, :body, 'received', 'voice_message', 'rachel_relay', false, false, now(), now())
+       RETURNING id`,
+      { replacements: { cid, from: phone || 'Unknown', to: toNum, body }, type: QueryTypes.INSERT });
+
+    const id = Array.isArray(ins && ins[0]) ? ins[0][0] && ins[0][0].id : (ins && ins[0] && ins[0].id);
+    logger.info(`[ElevenLabs Tools] take_message saved id=${id} for client ${cid}`);
+    return { success: true, saved: true, message_id: id };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] take_message error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// find_appointment / identify_caller — upcoming appointment(s) for a phone number.
+async function handleFindAppointment(params) {
+  const { client_id } = params;
+  const phone = params.customer_phone || params.phone;
+  if (!client_id) return { success: false, error: 'Missing client_id' };
+  if (!phone) return { success: false, error: 'Missing customer_phone' };
+  if (parseInt(client_id, 10) === D2AI_CLIENT_ID) return handleFindAppointmentD2AI(phone);
+
+  try {
+    const last10 = String(phone).replace(/\D/g, '').slice(-10);
+    const rows = await sequelize.query(
+      `SELECT id, customer_name, appointment_date, appointment_time, status
+       FROM appointments
+       WHERE client_id = :cid
+         AND RIGHT(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = :last10
+         AND status NOT IN ('cancelled','completed','no-show')
+         AND (appointment_date > CURRENT_DATE OR (appointment_date = CURRENT_DATE AND appointment_time >= CURRENT_TIME))
+       ORDER BY appointment_date, appointment_time
+       LIMIT 5`,
+      { replacements: { cid: client_id, last10 }, type: QueryTypes.SELECT });
+    return {
+      success: true,
+      found: rows.length > 0,
+      customer_name: rows[0] ? rows[0].customer_name : null,
+      appointments: rows.map(r => ({
+        appointment_id: r.id,
+        date: (r.appointment_date instanceof Date) ? r.appointment_date.toISOString().slice(0, 10) : String(r.appointment_date).slice(0, 10),
+        time: String(r.appointment_time).slice(0, 5),
+        status: r.status
+      }))
+    };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] find_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function handleFindAppointmentD2AI(phone) {
+  try {
+    const db = d2Sequelize || sequelize;
+    const last10 = String(phone).replace(/\D/g, '').slice(-10);
+    if (!last10) return { success: true, found: false, appointments: [] };
+    const rows = await db.query(
+      `SELECT id, title, start_time
+       FROM d2_calendar_events
+       WHERE workspace_id = 1 AND event_type = 'call' AND start_time >= now()
+         AND regexp_replace(description, '[^0-9]', '', 'g') LIKE :like
+       ORDER BY start_time LIMIT 5`,
+      { replacements: { like: `%${last10}` }, type: QueryTypes.SELECT });
+    return {
+      success: true,
+      found: rows.length > 0,
+      customer_name: rows[0] ? String(rows[0].title || '').replace(/^Call:\s*/, '') : null,
+      appointments: rows.map(r => {
+        const dt = new Date(r.start_time);
+        return {
+          appointment_id: r.id,
+          date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(dt),
+          time: new Intl.DateTimeFormat('en-GB', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }).format(dt),
+          status: 'confirmed'
+        };
+      })
+    };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] [D2AI] find_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// cancel_appointment — by appointment_id (scoped to the client).
+async function handleCancelAppointment(params) {
+  const { client_id, appointment_id } = params;
+  if (!client_id || !appointment_id) return { success: false, error: 'Missing client_id or appointment_id' };
+  try {
+    if (parseInt(client_id, 10) === D2AI_CLIENT_ID) {
+      const db = d2Sequelize || sequelize;
+      await db.query('DELETE FROM d2_calendar_events WHERE id = :id AND workspace_id = 1',
+        { replacements: { id: appointment_id }, type: QueryTypes.DELETE });
+      return { success: true, cancelled: true, appointment_id };
+    }
+    await sequelize.query(
+      "UPDATE appointments SET status = 'cancelled', updated_at = now() WHERE id = :id AND client_id = :cid",
+      { replacements: { id: appointment_id, cid: client_id }, type: QueryTypes.UPDATE });
+    return { success: true, cancelled: true, appointment_id };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] cancel_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// reschedule_appointment — move an existing appointment to a new date/time.
+async function handleRescheduleAppointment(params) {
+  const { client_id, appointment_id } = params;
+  const newDate = params.new_date || params.appointment_date || params.date;
+  let newTime = params.new_time || params.appointment_time || params.time;
+  if (!client_id || !appointment_id || !newDate || !newTime) {
+    return { success: false, error: 'Missing client_id, appointment_id, new_date or new_time' };
+  }
+  if (typeof newTime === 'string' && newTime.includes('T')) newTime = newTime.substring(11, 16);
+  newTime = String(newTime).length >= 5 ? String(newTime).substring(0, 5) : newTime;
+
+  try {
+    if (parseInt(client_id, 10) === D2AI_CLIENT_ID) {
+      const db = d2Sequelize || sequelize;
+      const start = new Date(buildEtIso(newDate, newTime));
+      const end = new Date(start.getTime() + 30 * 60000);
+      const conflict = await db.query(
+        `SELECT id FROM d2_calendar_events
+         WHERE workspace_id = 1 AND id <> :id
+           AND start_time < :e AND COALESCE(end_time, start_time + INTERVAL '30 minutes') > :s
+         LIMIT 1`,
+        { replacements: { id: appointment_id, s: start.toISOString(), e: end.toISOString() }, type: QueryTypes.SELECT });
+      if (conflict.length > 0) return { success: false, error: 'That time is already taken. Please pick another.' };
+      await db.query('UPDATE d2_calendar_events SET start_time = :s, end_time = :e WHERE id = :id AND workspace_id = 1',
+        { replacements: { id: appointment_id, s: start.toISOString(), e: end.toISOString() }, type: QueryTypes.UPDATE });
+      return { success: true, rescheduled: true, appointment_id, new_date: newDate, new_time: newTime };
+    }
+    await sequelize.query(
+      "UPDATE appointments SET appointment_date = :d, appointment_time = :t, status = 'confirmed', updated_at = now() WHERE id = :id AND client_id = :cid",
+      { replacements: { d: newDate, t: newTime, id: appointment_id, cid: client_id }, type: QueryTypes.UPDATE });
+    return { success: true, rescheduled: true, appointment_id, new_date: newDate, new_time: newTime };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] reschedule_appointment error:', error);
     return { success: false, error: error.message };
   }
 }

@@ -56,6 +56,63 @@ const TOOL_DEFS = [
       },
       required: ['customer_name', 'appointment_date', 'appointment_time']
     }
+  },
+  {
+    name: 'find_appointment',
+    description: "Look up the caller's existing upcoming appointment(s) by phone number. Call this before rescheduling or cancelling so you have the appointment_id.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        customer_phone: { type: 'string', description: "Phone number to search. Defaults to the caller's own number." }
+      }
+    }
+  },
+  {
+    name: 'reschedule_appointment',
+    description: 'Move an existing appointment to a new date/time. Requires the appointment_id from find_appointment, plus the new date and time (which you should confirm is available with check_availability first).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        appointment_id: { type: 'integer', description: 'The id from find_appointment' },
+        new_date: { type: 'string', description: 'YYYY-MM-DD (from the date reference table)' },
+        new_time: { type: 'string', description: 'HH:MM 24-hour' }
+      },
+      required: ['appointment_id', 'new_date', 'new_time']
+    }
+  },
+  {
+    name: 'cancel_appointment',
+    description: 'Cancel an existing appointment. Requires the appointment_id from find_appointment. Confirm with the caller before cancelling.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        appointment_id: { type: 'integer', description: 'The id from find_appointment' }
+      },
+      required: ['appointment_id']
+    }
+  },
+  {
+    name: 'take_message',
+    description: "Save a message or lead when you cannot fully help — e.g. the caller wants a callback, has a question you can't answer, or asks to leave a message. Saves to the business inbox.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        customer_name: { type: 'string', description: 'Caller name' },
+        customer_phone: { type: 'string', description: "Callback number. Defaults to the caller's own number." },
+        reason: { type: 'string', description: 'What the message/request is about, in one sentence.' }
+      },
+      required: ['reason']
+    }
+  },
+  {
+    name: 'transfer_to_human',
+    description: "Hand the call to a live person. Use when the caller explicitly asks for a human/representative, or when you genuinely cannot help. After you call this the call is transferred and you do not need to say anything else.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        reason: { type: 'string', description: 'Brief reason for the transfer (for logging).' }
+      }
+    }
   }
 ];
 
@@ -68,33 +125,51 @@ function buildSystemPrompt(ctx) {
     'NEVER calculate a date yourself; always copy the exact YYYY-MM-DD from the row whose weekday the caller said:',
     ctx.dateRef,
     '',
-    'Your only job on this call is to help the caller BOOK an appointment.',
+    ctx.callerName
+      ? `The caller is ${ctx.callerName}, a returning customer (number ${ctx.from}). Greet them by name and do NOT ask their name again.`
+      : `The caller is phoning from ${ctx.from || 'an unknown number'} — offer to use that number so they don't have to repeat it.`,
+    ctx.upcomingText ? `Their upcoming appointment(s) on file:\n${ctx.upcomingText}` : '',
+    '',
+    'You are a full receptionist. You can BOOK, RESCHEDULE, and CANCEL appointments, TAKE A MESSAGE, and TRANSFER to a person.',
     'Rules:',
     '- Keep every reply short and natural — this is spoken out loud. One or two sentences, one question at a time.',
     '- Never read out IDs, URLs, or code. Speak like a person.',
-    '- Collect: the caller\'s name, a good phone number, and their preferred day/time.',
-    `- The caller is phoning from ${ctx.from || 'an unknown number'} — offer to use that number so they don\'t have to repeat it.`,
     '- To turn a spoken day into a date, look it up in the DATE REFERENCE table above. Do not do the math in your head.',
-    '- ALWAYS call check_availability before you offer specific times. Only offer and book times it returned as available, using that slot\'s exact date.',
-    '- Confirm the day, date, and time back to the caller (e.g. "Monday, July sixth, at three PM") BEFORE calling book_appointment.',
     '',
-    'BOOKING TRUTHFULNESS — this is critical:',
-    '- You are NOT booked until you have CALLED book_appointment AND received a result with success set to true.',
-    '- NEVER tell the caller they are booked, confirmed, or scheduled unless that tool call actually returned success true. Do not assume or pretend.',
-    '- When you do confirm, read back the date and time EXACTLY as they appear in the book_appointment result (its appointment_date and appointment_time), not from memory.',
-    '- If book_appointment returns success false or any error, tell the caller it did NOT go through, then fix the missing detail or offer another available time and try again. Never claim a failed booking succeeded.',
-    '- If the caller wants something other than booking, answer briefly and steer back to booking, or offer to take a message.'
-  ].join('\n');
+    'BOOK: collect name + phone + preferred day/time. ALWAYS call check_availability first; only offer/book times it returned, using that slot\'s exact date. Confirm the day, date, and time out loud BEFORE calling book_appointment.',
+    'RESCHEDULE / CANCEL: call find_appointment (defaults to the caller\'s number) to pull up their appointment. Read back which appointment you found and confirm before you change it. For a reschedule, check_availability for the new time, then call reschedule_appointment with the appointment_id. For a cancel, confirm, then call cancel_appointment with the appointment_id.',
+    'TAKE A MESSAGE: if you cannot help, or the caller wants a callback or to leave a message, call take_message with their name, callback number, and the reason. Then tell them it has been passed along.',
+    'TRANSFER: if the caller asks for a person/human/representative, or you truly cannot help, call transfer_to_human. After that the call is being handed off — you are done.',
+    '',
+    'TRUTHFULNESS — this is critical for every action:',
+    '- Never tell the caller something is booked, rescheduled, cancelled, transferred, or that a message was taken UNLESS the matching tool call returned success true. Do not assume or pretend.',
+    '- When you confirm a booking or reschedule, read the date and time back EXACTLY as they appear in the tool result, not from memory.',
+    '- If a tool returns success false or an error, tell the caller it did NOT go through, then fix the missing detail or offer another option and try again. Never claim a failed action succeeded.'
+  ].filter(Boolean).join('\n');
 }
 
 class RelaySession {
   constructor(ctx) {
-    this.ctx = ctx;                 // { clientId, businessName, agentName, timezone, from, to, todayISO, todayHuman }
+    this.ctx = ctx;                 // { clientId, businessName, from, to, callSid, transferNumber, callerName, ... }
     this.clientId = ctx.clientId;
     this.from = ctx.from;
     this.system = buildSystemPrompt(ctx);
     this.messages = [];             // Anthropic message history
     this.busy = false;
+    this.transferred = false;
+  }
+
+  /**
+   * First thing the caller hears — personalized if we recognized their number.
+   * Records it as an assistant turn so the model has continuity.
+   */
+  openingGreeting() {
+    const b = this.ctx.businessName || 'our office';
+    const text = this.ctx.callerName
+      ? `Hi ${this.ctx.callerName}, welcome back to ${b}. How can I help you today?`
+      : `Hi, thanks for calling ${b}. I can book, reschedule, or cancel an appointment, take a message, or connect you with someone. How can I help?`;
+    this.messages.push({ role: 'assistant', content: text });
+    return text;
   }
 
   /**
@@ -149,9 +224,12 @@ class RelaySession {
   }
 
   async execTool(name, input) {
+    // Transfer is handled here (needs the live callSid + Twilio REST), not the tools endpoint.
+    if (name === 'transfer_to_human') return this.transferToHuman(input);
+
     const body = { tool_name: name, client_id: this.clientId, ...input };
-    // Default the booking phone to the caller ID if the model didn't capture one.
-    if (name === 'book_appointment' && !body.customer_phone && this.from) {
+    // Default the phone to the caller ID when the model didn't capture one.
+    if (['book_appointment', 'find_appointment', 'take_message'].includes(name) && !body.customer_phone && this.from) {
       body.customer_phone = this.from;
     }
     try {
@@ -168,6 +246,31 @@ class RelaySession {
       return { success: false, error: err.message };
     }
   }
+
+  /**
+   * Live transfer: redirect the in-progress call to <Dial> a human. Twilio ending the
+   * ConversationRelay session is expected. The <Say> covers the caller experience, so we
+   * don't depend on the model's follow-up text (which won't play once the call is redirected).
+   */
+  async transferToHuman(input) {
+    const target = this.ctx.transferNumber;
+    if (!target) return { success: false, error: 'No transfer number is configured. Offer to take a message instead.' };
+    if (!this.ctx.callSid) return { success: false, error: 'Cannot transfer this call right now.' };
+    try {
+      const twilio = require('twilio');
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const twiml = '<?xml version="1.0" encoding="UTF-8"?>' +
+        '<Response><Say>Okay, connecting you to a team member now. Please hold.</Say>' +
+        `<Dial>${target}</Dial></Response>`;
+      await client.calls(this.ctx.callSid).update({ twiml });
+      this.transferred = true;
+      console.log(`[VoiceRelay] transfer_to_human -> dialing ${target} (call ${this.ctx.callSid})`);
+      return { success: true, transferring: true };
+    } catch (err) {
+      console.error('[VoiceRelay] transfer failed:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
 }
 
 /**
@@ -175,7 +278,7 @@ class RelaySession {
  * get_business_info tool (same source of truth ElevenLabs uses).
  * Falls back to VOICE_RELAY_CLIENT_ID env, then null.
  */
-async function resolveClientContext({ to, from }) {
+async function resolveClientContext({ to, from, callSid }) {
   let info = null;
   try {
     const r = await fetch(toolsEndpoint(), {
@@ -191,6 +294,27 @@ async function resolveClientContext({ to, from }) {
   let clientId = info && info.success ? info.client_id : null;
   if (!clientId && process.env.VOICE_RELAY_CLIENT_ID) {
     clientId = parseInt(process.env.VOICE_RELAY_CLIENT_ID, 10);
+  }
+  const transferNumber = (info && info.transfer_number) || process.env.VOICE_RELAY_TRANSFER_NUMBER || null;
+
+  // Caller identity: recognize returning customers by their number + pull their upcoming appts.
+  let callerName = null;
+  let upcoming = [];
+  if (clientId && from) {
+    try {
+      const r2 = await fetch(toolsEndpoint(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool_name: 'find_appointment', client_id: clientId, customer_phone: from })
+      });
+      const found = await r2.json();
+      if (found && found.success) {
+        callerName = found.customer_name || null;
+        upcoming = Array.isArray(found.appointments) ? found.appointments : [];
+      }
+    } catch (err) {
+      console.error('[VoiceRelay] caller lookup failed:', err.message);
+    }
   }
 
   const timezone = (info && info.timezone) || 'America/New_York';
@@ -216,6 +340,10 @@ async function resolveClientContext({ to, from }) {
     dateRef.push(`  ${wd}, ${human} = ${iso}${tag}`);
   }
 
+  const upcomingText = upcoming.length
+    ? upcoming.map(a => `  - id ${a.appointment_id}: ${a.date} at ${a.time}`).join('\n')
+    : '';
+
   return {
     clientId,
     businessName: (info && info.business_name) || 'our office',
@@ -223,6 +351,10 @@ async function resolveClientContext({ to, from }) {
     timezone,
     from,
     to,
+    callSid: callSid || null,
+    transferNumber,
+    callerName,
+    upcomingText,
     todayISO,
     todayHuman,
     dateRef: dateRef.join('\n')

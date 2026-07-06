@@ -15,7 +15,6 @@
 const express = require('express');
 const router = express.Router();
 
-const WELCOME_EN = 'Hi, thanks for calling. I can book an appointment for you. What would you like to schedule?';
 // ConversationRelay Amazon voice = VoiceId-Engine, no provider prefix (Twilio's own example is Joanna-Generative).
 const POLLY_VOICE = process.env.VOICE_RELAY_POLLY_VOICE || 'Joanna-Generative';
 
@@ -36,12 +35,13 @@ function xmlEscape(s) {
 
 function relayTwiml(req) {
   const wss = `wss://${wssHost(req)}/voice-relay/ws`;
+  // No welcomeGreeting: the agent speaks the opening line over the websocket so it can be
+  // personalized (returning callers greeted by name). See openingGreeting() in the agent.
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<Response>',
     '  <Connect>',
     `    <ConversationRelay url="${xmlEscape(wss)}"`,
-    `      welcomeGreeting="${xmlEscape(WELCOME_EN)}"`,
     '      ttsProvider="Amazon"',
     `      voice="${xmlEscape(POLLY_VOICE)}"`,
     '      transcriptionProvider="Google"',

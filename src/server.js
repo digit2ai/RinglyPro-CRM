@@ -660,12 +660,17 @@ async function startServer() {
 
           if (msg.type === 'setup') {
             console.log(`☎️  Relay setup: call ${msg.callSid} from ${msg.from} to ${msg.to}`);
-            ready = resolveClientContext({ to: msg.to, from: msg.from })
+            ready = resolveClientContext({ to: msg.to, from: msg.from, callSid: msg.callSid })
               .then((ctx) => {
                 if (!ctx.clientId) console.warn('[VoiceRelay] no client resolved for', msg.to);
                 return new RelaySession(ctx);
               })
               .catch((err) => { console.error('[VoiceRelay] setup failed:', err.message); return null; });
+            // Speak the opening line ourselves (no static welcomeGreeting), personalized if recognized.
+            ready.then((session) => {
+              if (!session) { speak("Hi, thanks for calling. How can I help you today?"); return; }
+              speak(session.openingGreeting());
+            }).catch(() => {});
             return;
           }
 
