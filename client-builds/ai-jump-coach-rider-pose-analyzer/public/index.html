@@ -115,6 +115,27 @@
   .hidden{display:none!important}
   :focus-visible{outline:2px solid var(--brass-bright);outline-offset:3px;border-radius:6px}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+  /* coach setup inputs */
+  .setup-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+  .setup-field{display:flex;flex-direction:column;gap:5px;min-width:130px;flex:1 1 130px}
+  .setup-field label{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .setup-field input,.setup-field select{font:inherit;font-size:13.5px;background:rgba(0,0,0,.18);color:var(--text);border:1px solid var(--line-2);border-radius:9px;padding:8px 10px}
+  .setup-field input:focus,.setup-field select:focus{border-color:rgba(201,162,75,.6);outline:none}
+  /* rider score card */
+  .score-card{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+  .score-ring{flex:none;width:118px;height:118px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--brass-bright) calc(var(--p,0)*1%),rgba(255,255,255,.07) 0)}
+  .score-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--surface)}
+  .score-ring .sv{position:relative;z-index:1;text-align:center}
+  .score-ring .sv b{font-family:"Bricolage Grotesque",sans-serif;font-size:32px;line-height:1;color:var(--brass-bright)}
+  .score-ring .sv small{display:block;font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+  .dims{flex:1;min-width:250px;display:flex;flex-direction:column;gap:9px}
+  .dim{display:grid;grid-template-columns:150px 1fr 40px;gap:10px;align-items:center;font-size:13px}
+  .dim .dn{color:var(--muted)}
+  .dim .db{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+  .dim .df{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--turf),var(--brass-bright))}
+  .dim .dv{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--brass-bright);text-align:right}
+  .dim.nd .dv{color:var(--faint)}
+  .catpill{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--brass-bright);border:1px solid rgba(201,162,75,.4);border-radius:99px;padding:3px 10px;margin-left:10px}
 </style>
 </head>
 <body>
@@ -151,6 +172,24 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </div>
+    <div class="setup-row">
+      <div class="setup-field">
+        <label data-i18n="jc_cat_label">Categoría (altura)</label>
+        <select id="heightCat">
+          <option value="80">80 cm</option>
+          <option value="100">1.00 m</option>
+          <option value="110" selected>1.10 m</option>
+          <option value="120">1.20 m</option>
+          <option value="130">1.30 m</option>
+          <option value="140">1.40 m</option>
+          <option value="150_160">1.50–1.60 m+</option>
+        </select>
+      </div>
+      <div class="setup-field"><label data-i18n="jc_horse_label">Caballo</label><input id="horseName" maxlength="120" autocomplete="off" placeholder="—"></div>
+      <div class="setup-field"><label data-i18n="jc_rider_label">Jinete</label><input id="riderName" maxlength="120" autocomplete="off" placeholder="—"></div>
+      <div class="setup-field"><label data-i18n="jc_optimal_label">Tiempo óptimo (s)</label><input id="optimalTime" type="number" min="0" step="0.1" inputmode="decimal" placeholder="—"></div>
+      <div class="setup-field"><label data-i18n="jc_total_label">Tiempo total (s)</label><input id="totalTime" type="number" min="0" step="0.1" inputmode="decimal" placeholder="—"></div>
+    </div>
     <div id="status" class="status"></div>
   </section>
 
@@ -159,6 +198,18 @@
       <h2 data-i18n="results_title">Resultados</h2>
       <span class="count mono" id="faultCount"></span>
     </div>
+
+    <!-- Rider score card (v2 rubric) -->
+    <section class="panel reveal" id="scorePanel" style="margin:0 2px 18px;padding:clamp(16px,2.4vw,22px)">
+      <div class="sub-label" style="margin-bottom:14px"><span data-i18n="jc_score_title">Puntaje del jinete</span><span class="catpill" id="catPill"></span></div>
+      <div class="score-card">
+        <div class="score-ring" id="scoreRing"><div class="sv"><b id="scoreNum">—</b><small data-i18n="jc_score_of">de 100</small></div></div>
+        <div class="dims" id="dimBars"></div>
+      </div>
+      <div id="courseLine" class="mono" style="margin-top:14px;color:var(--muted);font-size:13px"></div>
+      <div id="pendingNote" style="margin-top:8px;color:var(--faint);font-size:11.5px"></div>
+    </section>
+
     <div class="grid">
       <div class="reveal">
         <p class="sub-label" data-i18n="video_label">Video original</p>

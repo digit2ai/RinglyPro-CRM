@@ -1,14 +1,18 @@
-# AI Jump Coach — Rider Pose Analyzer (PoC)
+# AI Jump Coach — Rider Pose Analyzer (v2)
 
-Auto-mounted Express sub-app at `/ai-jump-coach-rider-pose-analyzer`. A user uploads a show-jumping clip; **MediaPipe Pose runs in the browser** (CPU, no GPU/Python/ffmpeg) to produce per-frame keypoints sampled at ~5fps; the browser POSTs the keypoint frames to this backend, where a deterministic Node **fault engine** (`lib/faultEngine.js`) flags four position-fault signatures — `left_behind`, `dropped_rein`, `gaze_drop`, `forward_seat` — each with a timestamp and confidence. The UI plays the original video with a skeleton overlay and a clickable fault timeline keyed to video seconds.
+Auto-mounted Express sub-app at `/ai-jump-coach-rider-pose-analyzer`. A user uploads a show-jumping clip; **MediaPipe Pose runs in the browser** (CPU, no GPU/Python/ffmpeg) to produce per-frame keypoints sampled at ~5fps; the browser POSTs the keypoint frames to this backend, where a deterministic Node **rubric engine** (`lib/rubric.js`, layered on `lib/faultEngine.js`) turns them into a full **coaching evaluation**: a 0–100 **rider score** across five dimensions (overall position · hands & contact · legs & seat · synchronization · posture by phase), phase segmentation (approach/suspension/landing/recovery), an expanded set of position-fault signatures, height-category tolerances, and manual course inputs. The UI plays the original video with a skeleton overlay, a clickable fault timeline, and the score card.
 
-This is a **proof of concept** (triage: POC, fit 6/10): it proves "the AI can see the rider on a moving horse" and produces visible, falsifiable output. Fine-tuned models, GPU inference, billing, native apps, and integrations are explicitly deferred.
+**v2 upgrade (rubric):** rider-position metrics computed from pose — balance line (ear–shoulder–hip–heel), left/right symmetry, heel-down %, lower-leg stability, hand independence, release quality, fold angle, fold timing/sync, landing recovery — plus the original 4 faults (`left_behind`, `dropped_rein`, `gaze_drop`, `forward_seat`) and new insight signatures (`heel_up`, `leg_swing`, `hand_dependent`, `load_left/right`, `alignment_off`, `release_short`, `timing_ahead/behind`). **Honest scope:** horse-side biomechanics (bascule, take-off distance, fore/hind symmetry) and full-course rhythm (stride between fences, approach speed) require **horse** pose / course data and are declared in `pending[]` — not faked. Course time (optimal vs total) is **manual** input. Height categories: 80 · 1.00 · 1.10 · 1.20 · 1.30 · 1.40 · 1.50–1.60 m+.
+
+**Cross-analysis intelligence** (`lib/patterns.js`): per-binomio **records** (max height over time), **workload** (jumps/week + overload flag), **pattern alerts** (recurring faults, rail bias by fence type, refusal clustering, lateral load, score trend), horse **comparison**, and a per-analysis **journal** (rider's subjective note vs objective score).
 
 ## Endpoints
 - `GET /health` → `{status:'ok', service, version, store}`
 - `GET /` · `/dashboard` · `/privacy` — server-rendered, `?lang=es|en` (default **es**)
-- `POST /api/v1/analyses` (JWT) — body `{filename, durationSec, frames:[{t,keypoints}], lang?}` → 201 row incl. `faults[]`
+- `POST /api/v1/analyses` (JWT) — body `{filename, durationSec, frames:[{t,keypoints}], lang?, heightCategory?, horseName?, riderName?, optimalTimeSec?, totalTimeSec?, manualFaults?[]}` → 201 row incl. `faults[]`, `rider_score`, `dimension_scores`, `phase_metrics`, `metrics`, `course`, `pending`
 - `GET /api/v1/analyses` · `GET /api/v1/analyses/:id` · `DELETE /api/v1/analyses/:id` (JWT, tenant-scoped; cross-tenant → 404)
+- `GET /api/v1/analyses/insights/records|workload|patterns|compare` (JWT) — cross-analysis intelligence
+- `POST /api/v1/analyses/:id/journal` (JWT) — body `{feeling, selfScore?}` → appends a subjective entry
 
 ## Data
 Postgres via `DATABASE_URL`, table `ai_jump_coach_rider_pose_analyzer_analyses` (multi-tenant, `tenant_id NOT NULL` + index), created on boot via `sync({alter:false})`; canonical DDL in `migrations/001_create_analyses.sql`. Only metadata + computed `faults[]` are stored — **never the video or raw keypoints** (PII + size). If the DB is unreachable, the store falls back to in-memory (set `AIJUMP_FORCE_MEMORY=1` to force it, used by SIT).

@@ -37,7 +37,23 @@
     gaze_drop:    { sev: 'high', es: ['Mirada baja anticipada', 'La cabeza cae antes del ápice'],       en: ['Premature gaze drop', 'Head drops before the apex'] },
     left_behind:  { sev: 'high', es: ['Quedarse atrás', 'El torso se retrasa tras el ápice'],           en: ['Left behind', 'Torso lags after the apex'] },
     dropped_rein: { sev: 'mid',  es: ['Mano de rienda caída', 'Muñeca por debajo del codo en el ascenso'], en: ['Dropped rein hand', 'Wrist below elbow on the ascent'] },
-    forward_seat: { sev: 'mid',  es: ['Asiento adelantado', 'La cadera se adelanta al tobillo al aterrizar'], en: ['Forward seat', 'Hip ahead of ankle at landing'] }
+    forward_seat: { sev: 'mid',  es: ['Asiento adelantado', 'La cadera se adelanta al tobillo al aterrizar'], en: ['Forward seat', 'Hip ahead of ankle at landing'] },
+    heel_up:      { sev: 'mid',  es: ['Talón arriba', 'El talón no baja de forma constante'],            en: ['Heel up', 'Heel not kept down consistently'] },
+    leg_swing:    { sev: 'mid',  es: ['Pierna inestable', 'La pantorrilla se balancea adelante/atrás'],  en: ['Swinging lower leg', 'Calf swings back and forth'] },
+    hand_dependent:{sev: 'mid',  es: ['Mano dependiente', 'La mano sigue el movimiento del cuerpo'],     en: ['Dependent hand', 'Hand follows the body motion'] },
+    load_left:    { sev: 'low',  es: ['Carga el lado izquierdo', 'Asimetría hacia la izquierda'],        en: ['Loads the left side', 'Left-side asymmetry'] },
+    load_right:   { sev: 'low',  es: ['Carga el lado derecho', 'Asimetría hacia la derecha'],            en: ['Loads the right side', 'Right-side asymmetry'] },
+    alignment_off:{ sev: 'mid',  es: ['Línea de equilibrio', 'Oreja-hombro-cadera-talón desalineados'],  en: ['Balance line off', 'Ear–shoulder–hip–heel misaligned'] },
+    release_short:{ sev: 'low',  es: ['Suelta corta', 'Poca entrega de rienda sobre el salto'],          en: ['Short release', 'Little rein release over the jump'] },
+    timing_ahead: { sev: 'mid',  es: ['Se adelanta', 'El jinete se adelanta al despegue'],               en: ['Ahead of the motion', 'Rider anticipates take-off'] },
+    timing_behind:{ sev: 'mid',  es: ['Se atrasa', 'El jinete se atrasa al despegue'],                   en: ['Behind the motion', 'Rider lags the take-off'] }
+  };
+  var DIM_META = {
+    posicion_general: { es: 'Posición general', en: 'Overall position' },
+    manos_contacto:   { es: 'Manos y contacto', en: 'Hands & contact' },
+    piernas_asiento:  { es: 'Piernas y asiento', en: 'Legs & seat' },
+    sincronizacion:   { es: 'Sincronización',   en: 'Synchronization' },
+    postura_fase:     { es: 'Postura por fase',  en: 'Posture by phase' }
   };
   var SEV_COLOR = { high: 'var(--sev-high)', mid: 'var(--sev-mid)', low: 'var(--sev-low)' };
   function sevLabel(sev) { return sev === 'high' ? (EN ? 'Critical' : 'Crítico') : (EN ? 'Moderate' : 'Moderado'); }
@@ -165,9 +181,54 @@
     var pin = pins.children[i]; if (pin) { var d = pin.querySelector('.pin-dot'); if (d) d.setAttribute('r', on ? '9.5' : '7'); }
   }
 
+  // ---- rider score card (v2 rubric) ----------------------------------------
+  var CAT_LABEL = { '80': '80 cm', '100': '1.00 m', '110': '1.10 m', '120': '1.20 m', '130': '1.30 m', '140': '1.40 m', '150_160': '1.50–1.60 m+' };
+  function dimName(k) { var m = DIM_META[k]; return m ? m[LANG] : k; }
+  function renderScore(row) {
+    var panel = $('scorePanel'); if (!panel) return;
+    var dims = row && row.dimension_scores; var score = row ? row.rider_score : null;
+    // Only show the card when this analysis carries v2 rubric data.
+    if (!dims || typeof dims !== 'object' || !Object.keys(dims).length) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    var pill = $('catPill'); if (pill) pill.textContent = CAT_LABEL[row.height_category] || '';
+    var num = $('scoreNum'), ring = $('scoreRing');
+    if (num) num.textContent = (score != null ? score : '—');
+    if (ring) ring.style.setProperty('--p', (score != null ? score : 0));
+    var bars = $('dimBars');
+    if (bars) {
+      bars.innerHTML = '';
+      ['posicion_general', 'manos_contacto', 'piernas_asiento', 'sincronizacion', 'postura_fase'].forEach(function (k) {
+        var d = dims[k] || {}; var s = (d && d.score != null) ? d.score : null;
+        var row2 = document.createElement('div'); row2.className = 'dim' + (s == null ? ' nd' : '');
+        row2.innerHTML = '<span class="dn">' + dimName(k) + '</span>' +
+          '<span class="db"><span class="df" style="width:' + (s == null ? 0 : s) + '%"></span></span>' +
+          '<span class="dv">' + (s == null ? 'n/d' : s) + '</span>';
+        bars.appendChild(row2);
+      });
+    }
+    // Course line (from POST response course, or reconstructed from stored times)
+    var course = row.course || null;
+    if (!course && row.total_time_sec != null && row.optimal_time_sec != null) {
+      course = { total_time_sec: row.total_time_sec, optimal_time_sec: row.optimal_time_sec, delta_sec: Math.round((row.total_time_sec - row.optimal_time_sec) * 100) / 100 };
+    }
+    var cl = $('courseLine');
+    if (cl) {
+      if (course && course.total_time_sec != null && course.optimal_time_sec != null) {
+        var d = course.delta_sec; var sign = d > 0 ? '+' : '';
+        cl.textContent = (EN ? 'Time: ' : 'Tiempo: ') + course.total_time_sec + 's ' + (EN ? 'vs optimal ' : 'vs óptimo ') + course.optimal_time_sec + 's (' + sign + d + 's)';
+        cl.style.color = (Math.abs(d) <= course.optimal_time_sec * 0.03) ? 'var(--turf)' : 'var(--sev-mid)';
+      } else { cl.textContent = ''; }
+    }
+    var pn = $('pendingNote');
+    if (pn) pn.textContent = EN
+      ? 'Rider-position metrics are computed from your pose (documented heuristics). Horse bascule, take-off distance and stride between fences require horse pose and are on the roadmap.'
+      : 'Las métricas de posición del jinete se calculan desde tu pose (heurísticas documentadas). El bascular del caballo, la distancia de batida y la zancada entre obstáculos requieren pose del caballo y están en el roadmap.';
+  }
+
   // ---- results render ------------------------------------------------------
   function renderResults(row) {
     if (row && row.share_url) setShareLink(row.share_url);
+    renderScore(row);
     lastFaults = row.faults || [];
     DUR = (row.duration_sec && row.duration_sec > 0) ? row.duration_sec : (player.duration || DUR || 1);
     resultsEl.classList.remove('hidden');
@@ -248,9 +309,17 @@
 
     setStatus(synthetic ? t('synthetic_notice') : t('analyzing'));
     try {
+      var numOr = function (id) { var el = $(id); var v = el && el.value !== '' ? parseFloat(el.value) : null; return (v != null && isFinite(v)) ? v : null; };
+      var strOr = function (id) { var el = $(id); return el && el.value ? el.value.trim().slice(0, 120) : null; };
+      var catEl = $('heightCat');
       var resp = await fetch(BASE + 'api/v1/analyses', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ filename: f.name, durationSec: probe.duration || null, frames: frames, lang: LANG })
+        body: JSON.stringify({
+          filename: f.name, durationSec: probe.duration || null, frames: frames, lang: LANG,
+          heightCategory: catEl ? catEl.value : '110',
+          horseName: strOr('horseName'), riderName: strOr('riderName'),
+          optimalTimeSec: numOr('optimalTime'), totalTimeSec: numOr('totalTime')
+        })
       });
       if (resp.status === 401) { if (loginNotice) loginNotice.classList.remove('hidden'); setStatus(t('need_login')); analyzeBtn.disabled = false; return; }
       if (resp.status === 402) {

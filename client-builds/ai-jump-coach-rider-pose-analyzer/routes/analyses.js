@@ -19,6 +19,10 @@ const jwtLib = require('jsonwebtoken');
 const { getToken } = require('../lib/auth');
 const store = require('../models/analysis');
 const { analyze } = require('../lib/faultEngine');
+const rubric = require('../lib/rubric');
+const patterns = require('../lib/patterns');
+
+function cleanName(s) { return typeof s === 'string' && s.trim() ? s.trim().slice(0, 120) : null; }
 
 // Unified credits: this app now bills against the Evaluación del Caballo de Paso
 // Fino account system (same Node process + DB). A rider-pose analysis costs 1
@@ -79,7 +83,8 @@ router.use(requireHorseAccount);
 // POST /  -> analyze + persist
 router.post('/', async (req, res) => {
   try {
-    const { filename, durationSec, frames, lang } = req.body || {};
+    const b = req.body || {};
+    const { filename, durationSec, frames, lang } = b;
     if (!Array.isArray(frames) || frames.length === 0) {
       return res.status(422).json({ error: 'frames[] required (array of {t, keypoints})' });
     }
@@ -94,17 +99,38 @@ router.post('/', async (req, res) => {
 
     let row;
     try {
-      const result = analyze(frames);
+      // v2 rubric: full coaching evaluation (score + dimensions + phases + faults).
+      const evalResult = rubric.evaluate(frames, {
+        heightCategory: b.heightCategory,
+        optimalTimeSec: b.optimalTimeSec,
+        totalTimeSec: b.totalTimeSec,
+        manualFaults: b.manualFaults
+      });
       const safeName = typeof filename === 'string' ? filename.slice(0, 255) : null;
       row = await store.create({
         tenant_id: req.tenantId,
         filename: safeName,
         duration_sec: typeof durationSec === 'number' ? durationSec : null,
-        frame_count: result.frameCount,
-        apex_sec: result.apexSec,
-        faults: result.faults,
-        lang: lang === 'en' ? 'en' : 'es'
+        frame_count: evalResult.frameCount,
+        apex_sec: evalResult.apexSec,
+        faults: evalResult.faults,
+        lang: lang === 'en' ? 'en' : 'es',
+        height_category: evalResult.category,
+        height_cm: evalResult.height_cm,
+        horse_name: cleanName(b.horseName),
+        rider_name: cleanName(b.riderName),
+        discipline: 'show_jumping',
+        rider_score: evalResult.rider_score,
+        dimension_scores: evalResult.dimensions,
+        phase_metrics: evalResult.phases || {},
+        metrics: evalResult.metrics,
+        manual_faults: evalResult.manual_faults,
+        optimal_time_sec: evalResult.course.optimal_time_sec,
+        total_time_sec: evalResult.course.total_time_sec,
+        rubric_version: evalResult.version
       });
+      // attach the computed course block + pending list for the immediate response
+      row = Object.assign({}, row, { course: evalResult.course, pending: evalResult.pending });
     } catch (inner) {
       await horseAccount.refundOne(req.ecpfUser.id, { description: 'refund: análisis de postura falló' });
       throw inner;
@@ -112,13 +138,65 @@ router.post('/', async (req, res) => {
     console.log(JSON.stringify({
       svc: 'ai-jump-coach', event: 'analysis_created',
       tenant: req.tenantId, user: maskEmail(req.jwt && req.jwt.email),
-      id: row.id, frames: row.frame_count, faults: (row.faults || []).length, credits: debit.balance
+      id: row.id, frames: row.frame_count, faults: (row.faults || []).length,
+      score: row.rider_score, cat: row.height_category, credits: debit.balance
     }));
     return res.status(201).json(Object.assign({}, withShare(row), { credits: debit.balance, charged: true }));
   } catch (e) {
     console.error(JSON.stringify({ svc: 'ai-jump-coach', event: 'analysis_error', error: e.message }));
     return res.status(500).json({ error: 'analysis failed' });
   }
+});
+
+// ---- v2 coaching intelligence (all tenant-scoped) ---------------------------
+
+// GET /records?horse=  -> per-binomio max height over time + PB timeline
+router.get('/insights/records', async (req, res) => {
+  try {
+    const rows = await store.listByTenant(req.tenantId);
+    return res.json({ records: patterns.records(rows, { horse_name: req.query.horse }) });
+  } catch (e) { return res.status(500).json({ error: 'records failed' }); }
+});
+
+// GET /workload -> jumps per week + overload flag
+router.get('/insights/workload', async (req, res) => {
+  try {
+    const rows = await store.listByTenant(req.tenantId);
+    return res.json(patterns.workload(rows, {}));
+  } catch (e) { return res.status(500).json({ error: 'workload failed' }); }
+});
+
+// GET /patterns -> recurring-pattern alerts across recent analyses
+router.get('/insights/patterns', async (req, res) => {
+  try {
+    const rows = await store.listByTenant(req.tenantId);
+    return res.json(patterns.detectPatterns(rows, {}));
+  } catch (e) { return res.status(500).json({ error: 'patterns failed' }); }
+});
+
+// GET /compare -> best height + avg rider score per horse
+router.get('/insights/compare', async (req, res) => {
+  try {
+    const rows = await store.listByTenant(req.tenantId);
+    return res.json({ horses: patterns.compareHorses(rows) });
+  } catch (e) { return res.status(500).json({ error: 'compare failed' }); }
+});
+
+// POST /:id/journal -> append the rider's subjective note (perception vs data)
+router.post('/:id/journal', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const feeling = typeof b.feeling === 'string' ? b.feeling.slice(0, 600) : '';
+    if (!feeling.trim()) return res.status(422).json({ error: 'feeling required' });
+    const entry = {
+      feeling: feeling.trim(),
+      self_score: Number.isFinite(Number(b.selfScore)) ? Math.max(0, Math.min(100, Math.round(Number(b.selfScore)))) : null,
+      at: new Date().toISOString()
+    };
+    const row = await store.appendJournal(req.params.id, req.tenantId, entry);
+    if (!row) return res.status(404).json({ error: 'not found' });
+    return res.json(withShare(row));
+  } catch (e) { return res.status(500).json({ error: 'journal failed' }); }
 });
 
 // GET /  -> list (tenant-scoped)

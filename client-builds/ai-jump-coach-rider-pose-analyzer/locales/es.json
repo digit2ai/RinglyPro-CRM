@@ -64,5 +64,12 @@
   "jc_cta_head": "Este informe lo generó EquiMind: análisis de postura del jinete con IA.",
   "jc_cta_sub": "Analiza tus saltos, guarda tu historial y comparte informes como este.",
   "jc_cta_signup": "Regístrate gratis",
-  "jc_cta_login": "Iniciar sesión"
+  "jc_cta_login": "Iniciar sesión",
+  "jc_cat_label": "Categoría (altura)",
+  "jc_horse_label": "Caballo",
+  "jc_rider_label": "Jinete",
+  "jc_optimal_label": "Tiempo óptimo (s)",
+  "jc_total_label": "Tiempo total (s)",
+  "jc_score_title": "Puntaje del jinete",
+  "jc_score_of": "de 100"
 }

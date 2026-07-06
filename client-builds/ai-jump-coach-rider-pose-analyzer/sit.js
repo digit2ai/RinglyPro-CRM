@@ -23,12 +23,16 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 const jwt = require('jsonwebtoken');
 const http = require('http');
 const { analyze } = require('./lib/faultEngine');
+const rubric = require('./lib/rubric');
+const patterns = require('./lib/patterns');
 // Unified credits: analyses now bill against the horse account system.
 const horseAccount = require('../evaluacion-del-caballo-de-paso-fino/models/account');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 const ECPF_SECRET = process.env.ECPF_JWT_SECRET || JWT_SECRET;
-const ALLOWED = ['left_behind', 'dropped_rein', 'gaze_drop', 'forward_seat'];
+const BASE_FAULTS = ['left_behind', 'dropped_rein', 'gaze_drop', 'forward_seat'];
+// v2 rubric extends the fault vocabulary with rider-insight signatures.
+const ALLOWED = BASE_FAULTS.concat(['heel_up', 'leg_swing', 'hand_dependent', 'load_left', 'load_right', 'alignment_off', 'release_short', 'timing_ahead', 'timing_behind']);
 
 // Horse-account tokens (set in main() after creating two funded accounts).
 let TA = null, TB = null, AID_A = null, AID_B = null;
@@ -87,10 +91,31 @@ async function run(base) {
   {
     const out = analyze(fixture);
     const types = out.faults.map((f) => f.type);
-    const shaped = out.faults.every((f) => ALLOWED.indexOf(f.type) >= 0 && typeof f.timestampSec === 'number' && typeof f.confidence === 'number');
+    const shaped = out.faults.every((f) => BASE_FAULTS.indexOf(f.type) >= 0 && typeof f.timestampSec === 'number' && typeof f.confidence === 'number');
     check('0 faultEngine fixture -> shaped faults incl forward_seat',
       out.faults.length >= 1 && shaped && types.indexOf('forward_seat') >= 0,
       `faults=${JSON.stringify(out.faults)}`);
+  }
+
+  // 0b. Rubric engine: full evaluation shape (score, dimensions, phases, category).
+  {
+    const ev = rubric.evaluate(fixture, { heightCategory: '120', optimalTimeSec: 60, totalTimeSec: 63, manualFaults: [{ kind: 'rail', fence_type: 'oxer', at_sec: 1.0 }] });
+    const dimsOk = ev.dimensions && typeof ev.dimensions.postura_fase === 'object' && typeof ev.dimensions.manos_contacto === 'object';
+    const scoreOk = ev.rider_score == null || (typeof ev.rider_score === 'number' && ev.rider_score >= 0 && ev.rider_score <= 100);
+    const catOk = ev.category === '120' && ev.height_cm === 120;
+    const courseOk = ev.course && ev.course.delta_sec === 3 && typeof ev.course.time_score === 'number';
+    const faultsOk = ev.faults.every((f) => ALLOWED.indexOf(f.type) >= 0);
+    const manualOk = Array.isArray(ev.manual_faults) && ev.manual_faults.length === 1 && ev.manual_faults[0].fence_type === 'oxer';
+    const pendingOk = Array.isArray(ev.pending) && ev.pending.length >= 3;
+    check('0b rubric.evaluate -> score+dimensions+category+course+faults+pending',
+      dimsOk && scoreOk && catOk && courseOk && faultsOk && manualOk && pendingOk,
+      `score=${ev.rider_score} cat=${ev.category} course=${JSON.stringify(ev.course)}`);
+  }
+
+  // 0c. Category tolerance ordering (bigger fences -> larger tolerance factor).
+  {
+    const a = rubric.categoryOf('80').tol, b = rubric.categoryOf('120').tol, c = rubric.categoryOf('150_160').tol;
+    check('0c category tolerance increases with height', a < b && b < c, `80=${a} 120=${b} 150=${c}`);
   }
 
   // 1. health
@@ -114,16 +139,26 @@ async function run(base) {
     check('3 POST empty frames -> 422', r.status === 422, `status=${r.status}`);
   }
 
-  // 4. valid create -> 201 + faults[] shape + types
+  // 4. valid create -> 201 + faults[] shape + types + v2 rubric fields
   let createdId = null;
   {
-    const r = await req(base, 'POST', '/api/v1/analyses', { token: TA, body: { filename: 'jump.mp4', durationSec: 1.6, frames: fixture, lang: 'es' } });
-    const ok = r.status === 201 && r.json && r.json.id != null && r.json.tenant_id === AID_A &&
-      Array.isArray(r.json.faults) && r.json.faults.length >= 1 &&
-      r.json.faults.every((f) => ALLOWED.indexOf(f.type) >= 0 && typeof f.timestampSec === 'number' && typeof f.confidence === 'number') &&
-      r.json.faults.some((f) => f.type === 'forward_seat');
-    createdId = r.json && r.json.id;
-    check('4 POST valid -> 201 w/ id + shaped faults[] incl forward_seat', ok, `status=${r.status} body=${JSON.stringify(r.json)}`);
+    const r = await req(base, 'POST', '/api/v1/analyses', { token: TA, body: {
+      filename: 'jump.mp4', durationSec: 1.6, frames: fixture, lang: 'es',
+      heightCategory: '120', horseName: 'Relámpago', riderName: 'Manuel',
+      optimalTimeSec: 60, totalTimeSec: 63,
+      manualFaults: [{ kind: 'rail', fence_type: 'oxer', at_sec: 1.0 }]
+    } });
+    const j = r.json || {};
+    const ok = r.status === 201 && j.id != null && j.tenant_id === AID_A &&
+      Array.isArray(j.faults) && j.faults.length >= 1 &&
+      j.faults.every((f) => ALLOWED.indexOf(f.type) >= 0 && typeof f.timestampSec === 'number' && typeof f.confidence === 'number') &&
+      j.faults.some((f) => f.type === 'forward_seat') &&
+      j.height_category === '120' && j.height_cm === 120 && j.horse_name === 'Relámpago' &&
+      (j.rider_score == null || typeof j.rider_score === 'number') &&
+      j.dimension_scores && typeof j.dimension_scores === 'object' &&
+      j.course && j.course.delta_sec === 3;
+    createdId = j.id;
+    check('4 POST valid -> 201 w/ rubric fields (score, category, horse, course)', ok, `status=${r.status} body=${JSON.stringify(r.json)}`);
   }
 
   // 5. GET /:id owner -> 200 ; other tenant -> 404
@@ -151,6 +186,59 @@ async function run(base) {
       a.status === 200 && a.json && a.json.count >= 1 &&
       b.status === 200 && b.json && !(b.json.data || []).some((x) => x.id === createdId),
       `A=${a.json && a.json.count} B=${b.json && b.json.count}`);
+  }
+
+  // 6b. Seed 2 more analyses for A so cross-analysis intelligence has samples.
+  {
+    for (let i = 0; i < 2; i++) {
+      await req(base, 'POST', '/api/v1/analyses', { token: TA, body: {
+        frames: fixture, lang: 'es', heightCategory: '120', horseName: 'Relámpago', riderName: 'Manuel',
+        manualFaults: [{ kind: 'rail', fence_type: 'oxer', at_sec: 1.0 }]
+      } });
+    }
+  }
+
+  // 6c. Records: per-binomio best height + timeline
+  {
+    const r = await req(base, 'GET', '/api/v1/analyses/insights/records', { token: TA });
+    const rec = (r.json && r.json.records) || [];
+    const g = rec.find((x) => (x.horse_name || '').toLowerCase() === 'relámpago');
+    check('6c GET /insights/records -> binomio best_cm=120 + timeline',
+      r.status === 200 && g && g.best_cm === 120 && Array.isArray(g.timeline) && g.timeline.length >= 3, `body=${JSON.stringify(r.json)}`);
+  }
+
+  // 6d. Workload: current week count + overload flag present
+  {
+    const r = await req(base, 'GET', '/api/v1/analyses/insights/workload', { token: TA });
+    check('6d GET /insights/workload -> weeks + current.count + overload:false',
+      r.status === 200 && r.json && Array.isArray(r.json.weeks) && r.json.current && r.json.current.count >= 3 && r.json.overload === false, `body=${JSON.stringify(r.json)}`);
+  }
+
+  // 6e. Patterns: recurring dropped_rein/forward_seat across the 3 analyses
+  {
+    const r = await req(base, 'GET', '/api/v1/analyses/insights/patterns', { token: TA });
+    const alerts = (r.json && r.json.alerts) || [];
+    const recurring = alerts.some((a) => a.code === 'recurring_fault');
+    const railBias = alerts.some((a) => a.code === 'rail_fence_bias' && a.signal === 'oxer');
+    check('6e GET /insights/patterns -> recurring_fault + oxer rail bias',
+      r.status === 200 && recurring && railBias, `alerts=${JSON.stringify(alerts)}`);
+  }
+
+  // 6f. Compare horses: best_cm + avg score per horse
+  {
+    const r = await req(base, 'GET', '/api/v1/analyses/insights/compare', { token: TA });
+    const horses = (r.json && r.json.horses) || [];
+    check('6f GET /insights/compare -> horse row w/ best_cm',
+      r.status === 200 && horses.some((h) => h.horse_name === 'Relámpago' && h.best_cm === 120), `body=${JSON.stringify(r.json)}`);
+  }
+
+  // 6g. Journal: append subjective note to the created analysis
+  {
+    const r = await req(base, 'POST', '/api/v1/analyses/' + createdId + '/journal', { token: TA, body: { feeling: 'Sentí que solté tarde en el oxer', selfScore: 70 } });
+    const ok = r.status === 200 && r.json && Array.isArray(r.json.journal) && r.json.journal.length === 1 && r.json.journal[0].self_score === 70;
+    check('6h POST /:id/journal -> appended entry w/ self_score', ok, `status=${r.status} body=${JSON.stringify(r.json && r.json.journal)}`);
+    const cross = await req(base, 'POST', '/api/v1/analyses/' + createdId + '/journal', { token: TB, body: { feeling: 'x' } });
+    check('6i POST /:id/journal cross-tenant -> 404', cross.status === 404, `status=${cross.status}`);
   }
 
   // 7. pages: / default ES h1, /?lang=en EN h1

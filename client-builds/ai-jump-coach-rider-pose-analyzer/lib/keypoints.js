@@ -53,11 +53,15 @@ const wristMid = (f, v) => mid(f, LM.LEFT_WRIST, LM.RIGHT_WRIST, v);
 const elbowMid = (f, v) => mid(f, LM.LEFT_ELBOW, LM.RIGHT_ELBOW, v);
 const ankleMid = (f, v) => mid(f, LM.LEFT_ANKLE, LM.RIGHT_ANKLE, v);
 const eyeMid = (f, v) => mid(f, LM.LEFT_EYE, LM.RIGHT_EYE, v);
+const kneeMid = (f, v) => mid(f, LM.LEFT_KNEE, LM.RIGHT_KNEE, v);
+const heelMid = (f, v) => mid(f, LM.LEFT_HEEL, LM.RIGHT_HEEL, v);
+const footMid = (f, v) => mid(f, LM.LEFT_FOOT_INDEX, LM.RIGHT_FOOT_INDEX, v);
+const earMid = (f, v) => mid(f, LM.LEFT_EAR, LM.RIGHT_EAR, v);
 
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 
 module.exports = {
   LM, pt, mid,
-  shoulderMid, hipMid, wristMid, elbowMid, ankleMid, eyeMid,
+  shoulderMid, hipMid, wristMid, elbowMid, ankleMid, eyeMid, kneeMid, heelMid, footMid, earMid,
   clamp01
 };
