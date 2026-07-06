@@ -32,7 +32,7 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 
 A test-number AI phone agent that talks to callers and books appointments at ~half the ElevenLabs cost, by unbundling the stack: **Twilio ConversationRelay** (STT + TTS + turn-taking) + **Claude Haiku** brain + **Amazon Polly Neural** voice, reusing the existing `/api/elevenlabs/tools` booking backend UNCHANGED (appointments land in the same calendar/table).
 
-- **Brain**: `src/services/conversationRelayAgent.js` — `RelaySession` runs a think→tool→speak loop; tools `check_availability` + `book_appointment` called via loopback HTTP to `/api/elevenlabs/tools`; client resolved from the dialed number via `get_business_info`.
+- **Brain**: `src/services/conversationRelayAgent.js` — `RelaySession` runs a think→tool→speak loop; client resolved from the dialed number via `get_business_info`. Tools (loopback HTTP to `/api/elevenlabs/tools`): `check_availability`, `book_appointment`, `find_appointment`, `reschedule_appointment`, `cancel_appointment`, `take_message`. Plus agent-side `transfer_to_human` (REST-redirects the live call to `<Dial>` the client's `owner_phone`, using the setup `callSid`). Caller ID: recognizes returning callers by number (`find_appointment`), greets by name, preloads upcoming appts; the opening greeting is spoken by the agent over the socket (no static `welcomeGreeting`). Strict truthfulness: never confirms an action unless its tool returned `success:true`; a 14-day weekday→date table prevents LLM date-math errors.
 - **TwiML entry**: `src/routes/voice-relay.js` → `POST /voice/relay/incoming` returns `<Connect><ConversationRelay>` (emits raw XML — the 4.x twilio SDK has no `conversationRelay()` builder). Health: `GET /voice/relay/health`.
 - **WebSocket**: `src/server.js` at `/voice-relay/ws`. Both websockets (`/media-stream` + `/voice-relay/ws`) route through ONE `server.on('upgrade')` dispatcher with `noServer:true` — attaching two `ws.Server` via `{server, path}` makes the first abort (400) the other's path.
 - **Wire a number**: `node scripts/setup-voice-relay-number.js` (lists numbers) / `... <+E164>` (points its Voice webhook at the relay). Never repoints a number you didn't name.
@@ -41,6 +41,7 @@ A test-number AI phone agent that talks to callers and books appointments at ~ha
 - `VOICE_RELAY_CLIENT_ID` — fallback RinglyPro client_id when the dialed number doesn't resolve via `get_business_info` (useful when testing from a number not in the `clients` table). Unset = must dial a real RinglyPro number.
 - `VOICE_RELAY_POLLY_VOICE` — Amazon Polly voice for ConversationRelay TTS. Default `Joanna-Neural`.
 - `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
+- `VOICE_RELAY_TRANSFER_NUMBER` — fallback number `transfer_to_human` dials when the client has no `owner_phone` on file. Unset + no owner_phone = the agent offers to take a message instead.
 
 ## EquiMind 3D Gaussian Splatting Engine + Client Report
 
