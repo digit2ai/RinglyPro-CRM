@@ -91,20 +91,25 @@
   .demo-head{text-align:center;max-width:660px;margin:0 auto 30px}
   .demo-head h2{font-size:36px;font-weight:600;margin-top:12px;letter-spacing:-.01em}
   .demo-head p{color:var(--ink2);margin-top:12px;font-size:16px}
-  .demo-stage{position:relative;min-height:520px;display:flex;justify-content:center}
-  /* portrait clip in a phone frame — kept small so the source stays crisp (never upscaled) */
-  .player{position:relative;width:290px;max-width:82vw;aspect-ratio:9/16;border-radius:34px;overflow:hidden;background:#05060d;border:9px solid #05060d;box-shadow:0 34px 80px rgba(26,20,32,.34),0 0 0 1px rgba(255,255,255,.05);transition:opacity .45s,transform .45s}
+  .demo-stage{position:relative}
+  /* portrait clip in a phone frame — sized by its own aspect ratio, centered (crisp, never stretched) */
+  .player{position:relative;width:270px;max-width:78vw;aspect-ratio:9/16;margin:0 auto;border-radius:34px;overflow:hidden;background:#05060d;border:9px solid #05060d;box-shadow:0 34px 80px rgba(26,20,32,.34),0 0 0 1px rgba(255,255,255,.05)}
   .player video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0c1020}
-  .player .vidcap{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 14px;background:linear-gradient(transparent,rgba(5,6,13,.82));color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .player .vidcap{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 14px;background:linear-gradient(transparent,rgba(5,6,13,.86));color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
   .player .vidcap .lpulse{width:8px;height:8px;border-radius:50%;background:#3fbf87;box-shadow:0 0 0 0 rgba(63,191,135,.6);animation:lpulse 1.6s infinite}
   @keyframes lpulse{0%{box-shadow:0 0 0 0 rgba(63,191,135,.6)}70%{box-shadow:0 0 0 8px rgba(63,191,135,0)}100%{box-shadow:0 0 0 0 rgba(63,191,135,0)}}
-  .demo-stage.done .player{opacity:0;transform:scale(.94);position:absolute;pointer-events:none}
+  /* countdown ring (top-right) — time left until the AI report appears */
+  .vidcount{position:absolute;top:12px;right:12px;width:52px;height:52px;z-index:4}
+  .vidprog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.18);z-index:4}
+  .vidprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f2a9c8,#c86be0)}
+  .demo-stage.done .player{display:none}
 
   /* sophisticated analytics report (revealed when the clip finishes) */
-  .demo-report{width:100%;max-width:940px;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .5s,transform .5s;
+  .demo-report{display:none;width:100%;max-width:940px;margin:0 auto;
     background:radial-gradient(900px 460px at 84% -20%,rgba(242,169,200,.16),transparent 58%),linear-gradient(180deg,#12172a,#0b0e1c);
     color:#fff;border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:26px 28px;box-shadow:0 30px 70px rgba(26,20,32,.26)}
-  .demo-stage.done .demo-report{opacity:1;transform:none;pointer-events:auto}
+  .demo-stage.done .demo-report{display:block;animation:drUp .55s ease}
+  @keyframes drUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   .dr-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#7ee0b0;background:rgba(63,191,135,.1);border:1px solid rgba(63,191,135,.3);padding:6px 12px;border-radius:999px}
   .dr-badge .dr-pulse{width:7px;height:7px;border-radius:50%;background:#3fbf87;animation:lpulse 1.6s infinite}
   .dr-top{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;margin-top:16px;padding-bottom:22px;border-bottom:1px solid rgba(255,255,255,.09)}
@@ -400,7 +405,9 @@
   <div class="demo-stage" id="demoStage">
     <div class="player" id="demoPlayer">
       <video id="demoVideo" src="demo-short.mp4" muted playsinline autoplay preload="auto"></video>
+      <div class="vidcount" id="vidCount"></div>
       <div class="vidcap"><span class="lpulse"></span><span data-en>AI analyzing your round…</span><span data-es>La IA analiza tu recorrido…</span></div>
+      <div class="vidprog"><i id="vidProg"></i></div>
     </div>
 
     <div class="demo-report" id="demoReport">
@@ -673,12 +680,31 @@
 
   // demo: short muted clip -> reveal sophisticated AI analytics report when it finishes
   var demoVideo=document.getElementById('demoVideo'), demoStage=document.getElementById('demoStage');
+  var vidCount=document.getElementById('vidCount'), vidProg=document.getElementById('vidProg');
   // progress sparkline inside the report (drawn once; visible after reveal)
   var _dTrend=document.getElementById('demoTrend'); if(_dTrend) lineChart(_dTrend,[78,80,83,85,84,88,90,92],300,96,'#f2a9c8');
   function animateBars(on){ document.querySelectorAll('#demoReport .dr-fill').forEach(function(f){ f.style.width=on?((f.getAttribute('data-v')||0)+'%'):'0'; }); }
-  function demoDone(){ if(!demoStage)return; demoStage.classList.add('done'); setTimeout(function(){animateBars(true);},80); }
-  function demoReset(){ if(!demoStage)return; demoStage.classList.remove('done'); animateBars(false); }
+  // countdown ring: seconds left until the AI report appears
+  function drawCount(remaining,frac){
+    if(!vidCount)return;
+    var R=22,C=2*Math.PI*R,off=C*Math.max(0,Math.min(1,frac));
+    vidCount.innerHTML='<svg width="52" height="52" viewBox="0 0 52 52">'
+      +'<circle cx="26" cy="26" r="'+R+'" fill="rgba(5,6,13,.6)" stroke="rgba(255,255,255,.22)" stroke-width="3.5"/>'
+      +'<circle cx="26" cy="26" r="'+R+'" fill="none" stroke="#f2a9c8" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 26 26)"/>'
+      +'<text x="26" y="30" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">'+remaining+'s</text></svg>';
+  }
+  function updateCount(){
+    if(!demoVideo)return; var dur=demoVideo.duration||9, cur=demoVideo.currentTime||0;
+    var remaining=Math.max(0,Math.ceil(dur-cur)), frac=dur?cur/dur:0;
+    drawCount(remaining,frac);
+    if(vidProg) vidProg.style.width=(frac*100).toFixed(1)+'%';
+  }
+  function demoDone(){ if(!demoStage)return; demoStage.classList.add('done'); if(vidProg)vidProg.style.width='100%'; setTimeout(function(){animateBars(true);},80); }
+  function demoReset(){ if(!demoStage)return; demoStage.classList.remove('done'); animateBars(false); drawCount(Math.ceil(demoVideo&&demoVideo.duration||9),0); if(vidProg)vidProg.style.width='0'; }
   if(demoVideo&&demoStage){
+    drawCount(9,0);
+    demoVideo.addEventListener('loadedmetadata',function(){ drawCount(Math.ceil(demoVideo.duration||9),0); });
+    demoVideo.addEventListener('timeupdate',updateCount);
     demoVideo.addEventListener('ended',demoDone);
     // autoplay muted once it scrolls into view (mobile-safe)
     if('IntersectionObserver' in window){
