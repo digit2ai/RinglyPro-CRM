@@ -44,4 +44,10 @@ app.get(['/simulator', '/app'], (req, res) => {
 // Static assets (logo svg, etc). Never let it serve index.html directly.
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
+// Catch-all: any other GET (e.g. roundshare.app/login from a stale redirect)
+// renders the landing so the bare domain never dead-ends on a 404.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 module.exports = app;

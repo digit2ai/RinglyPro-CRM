@@ -177,6 +177,28 @@ app.use((req, res, next) => {
   return __equimindApp(req, res, next);
 });
 
+// Custom domain: roundshare.app → RoundShare landing (client-builds/roundshare).
+// Self-contained Express sub-app; invoked DIRECTLY at the domain root so the bare
+// domain shows the landing (roundshare.app/, /simulator, /app). The landing's
+// absolute "/roundshare/..." asset + simulator links are stripped of the mount
+// prefix here so the SAME file works on both roundshare.app and
+// aiagent.ringlypro.com/roundshare. Shared backend (/api/tts/edge, etc.) and ACME
+// challenges pass straight through. Host-gated: zero effect on other domains.
+let __roundshareApp = null;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host !== 'roundshare.app' && host !== 'www.roundshare.app') return next();
+  if (req.path.startsWith('/.well-known/')) return next(); // Render SSL issuance
+  if (req.url.startsWith('/api/')) return next();          // shared backend (TTS, etc.)
+  if (!__roundshareApp) {
+    try { __roundshareApp = require('../client-builds/roundshare'); }
+    catch (e) { return next(); }
+  }
+  if (req.url === '/roundshare') req.url = '/';
+  else if (req.url.startsWith('/roundshare/')) req.url = req.url.slice('/roundshare'.length);
+  return __roundshareApp(req, res, next);
+});
+
 // Custom domain: virtualchamber.app
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
