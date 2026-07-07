@@ -187,18 +187,38 @@
     for (var i = 0; i < frames.length; i++) { var d = Math.abs(frames[i].t - time); if (d < bd) { bd = d; best = frames[i]; } }
     return best;
   }
-  function drawOverlay() {
-    if (!overlayCanvas) return; var w = player.clientWidth, h = player.clientHeight; if (!w || !h) return;
+  // Draw one frame at time `t` onto the overlay: skeleton (always) + a stylized
+  // horse (only when there is NO real video behind — re-opened reports) + a
+  // TIME-WINDOWED fault cue (shows only within ~0.6s of a fault, then vanishes).
+  function drawScene(t) {
+    if (!overlayCanvas) return;
+    var stage = player.parentNode;
+    var w = hasVideoSrc ? player.clientWidth : (stage ? stage.clientWidth : 0);
+    var h = hasVideoSrc ? player.clientHeight : (w ? Math.round(w * 0.625) : 0);
+    if ((!w || !h) && stage) { w = stage.clientWidth; h = Math.round(w * 0.625); }
+    if (!w || !h) return;
     overlayCanvas.width = w; overlayCanvas.height = h; overlayCanvas.style.width = w + 'px'; overlayCanvas.style.height = h + 'px';
     var ctx = overlayCanvas.getContext('2d'); ctx.clearRect(0, 0, w, h);
-    var f = nearestFrame(player.currentTime); if (!f || !f.keypoints || !f.keypoints.length) return; var kp = f.keypoints;
-    ctx.strokeStyle = 'rgba(230,197,114,0.9)'; ctx.lineWidth = 2;
-    CONNECTIONS.forEach(function (c) { var a = kp[c[0]], b = kp[c[1]]; if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke(); });
-    ctx.fillStyle = 'rgba(95,208,139,0.95)';
-    kp.forEach(function (p) { if (!p) return; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 3, 0, Math.PI * 2); ctx.fill(); });
-    // guided review: highlight the active fault on the real footage
-    try { drawFaultCue(ctx, w, h, f); } catch (e) {}
+    var f = nearestFrame(t);
+    if (!hasVideoSrc && currentHorse && currentHorse.frames) {
+      var hf = null, bd = Infinity;
+      currentHorse.frames.forEach(function (x) { var d = Math.abs((x.t || 0) - t); if (d < bd) { bd = d; hf = x; } });
+      if (hf && hf.pts) {
+        ctx.strokeStyle = 'rgba(152,161,153,.85)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        HORSE_CONN.forEach(function (c) { var a = hf.pts[c[0]], b = hf.pts[c[1]]; if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a[0] * w, a[1] * h); ctx.lineTo(b[0] * w, b[1] * h); ctx.stroke(); });
+        var poll = hf.pts.poll; if (poll) { ctx.fillStyle = 'rgba(152,161,153,.9)'; ctx.beginPath(); ctx.arc(poll[0] * w, poll[1] * h, 6, 0, 7); ctx.fill(); }
+      }
+    }
+    if (f && f.keypoints && f.keypoints.length) {
+      var kp = f.keypoints;
+      ctx.strokeStyle = 'rgba(230,197,114,0.9)'; ctx.lineWidth = 2;
+      CONNECTIONS.forEach(function (c) { var a = kp[c[0]], b = kp[c[1]]; if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke(); });
+      ctx.fillStyle = 'rgba(95,208,139,0.95)';
+      kp.forEach(function (p) { if (!p) return; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 3, 0, Math.PI * 2); ctx.fill(); });
+    }
+    try { drawFaultCueAt(ctx, w, h, t, f); } catch (e) {}
   }
+  function drawOverlay() { drawScene(clock.time()); }
 
   // ---- arc geometry --------------------------------------------------------
   var X0 = 40, X1 = 960;
@@ -453,9 +473,31 @@
   }
 
   // ---- guided fault review ON the original video ---------------------------
-  // The original <video> plays and STOPS at each finding; the fault is drawn on
-  // the real footage at the exact joint/location, with the type + a fix tip.
+  // The video plays and STOPS at each finding. The fault is drawn on the footage
+  // ONLY within CUE_WIN seconds of the moment it happened, then removed. On
+  // re-opened reports (the original video is never stored) a reconstructed
+  // skeleton + stylized horse plays in the same stage via a virtual clock.
   var review = { faults: [], i: -1, auto: false, nextStop: 0 };
+  var HORSE_CONN = [['poll', 'withers'], ['withers', 'croup'], ['withers', 'fore_l'], ['withers', 'fore_r'], ['croup', 'hind_l'], ['croup', 'hind_r']];
+  var currentHorse = null, hasVideoSrc = false, CUE_WIN = 0.6;
+  var vt = 0, vDur = 1, vPlaying = false, vRaf = null, vLast = null, vSpeed = 0.5;
+
+  var clock = {
+    time: function () { return hasVideoSrc ? (player.currentTime || 0) : vt; },
+    dur: function () { return hasVideoSrc ? (player.duration || DUR || vDur || 1) : (vDur || 1); },
+    playing: function () { return hasVideoSrc ? !player.paused : vPlaying; },
+    seek: function (t) { t = Math.max(0, Math.min(this.dur(), t || 0)); if (hasVideoSrc) { try { player.currentTime = t; } catch (e) {} } else { vt = t; updateFrame(); } },
+    play: function () { if (hasVideoSrc) { player.play().catch(function () {}); } else if (!vPlaying) { vPlaying = true; vLast = null; if (playIcon) playIcon.innerHTML = PAUSE; vRaf = requestAnimationFrame(vTick); } },
+    pause: function () { if (hasVideoSrc) { try { player.pause(); } catch (e) {} } else { vPlaying = false; if (playIcon) playIcon.innerHTML = PLAY; if (vRaf) { cancelAnimationFrame(vRaf); vRaf = null; } } }
+  };
+  function vTick(ts) {
+    if (!vPlaying) { vRaf = null; return; }
+    if (vLast == null) vLast = ts; var dt = (ts - vLast) / 1000; vLast = ts;
+    vt += dt * vSpeed;
+    if (vt >= vDur) { vt = vDur; vPlaying = false; if (playIcon) playIcon.innerHTML = PLAY; }
+    updateFrame();
+    if (vPlaying) vRaf = requestAnimationFrame(vTick);
+  }
 
   function setArcPlayhead(frac) {
     var el = $('arcPlayhead'); if (!el) return;
@@ -463,8 +505,6 @@
     var x = 40 + Math.max(0, Math.min(1, frac)) * (960 - 40);
     el.setAttribute('x1', x); el.setAttribute('x2', x); el.setAttribute('opacity', '1');
   }
-  // Reconstruct in-memory `frames` from a persisted pose_track (re-opened reports
-  // / public share links) so the skeleton overlay + fault anchors work.
   function framesFromPoseTrack(pt) {
     if (!pt || !Array.isArray(pt.frames) || !Array.isArray(pt.idx)) return [];
     return pt.frames.map(function (f) {
@@ -485,12 +525,16 @@
     return { p: M(11, 12) };
   }
   function faultColor(type) { var s = faultSev(type); return s === 'high' ? '#CE4C3B' : (s === 'mid' ? '#D98A3E' : '#C9A24B'); }
-  // Draw the active fault highlight onto the video overlay (called by drawOverlay).
-  function drawFaultCue(ctx, w, h, frame) {
-    if (review.i < 0 || review.i >= review.faults.length || !frame || !frame.keypoints) return;
-    var f = review.faults[review.i];
+  // Time-windowed cue: draws the nearest fault ONLY within CUE_WIN of `t`.
+  function drawFaultCueAt(ctx, w, h, t, frame) {
+    if (!review.faults.length || !frame || !frame.keypoints) return;
+    var best = null, bd = Infinity;
+    review.faults.forEach(function (f) { var d = Math.abs(t - (f.timestampSec || 0)); if (d < bd) { bd = d; best = f; } });
+    if (!best || bd > CUE_WIN) return;
+    var alpha = Math.max(0.3, 1 - bd / CUE_WIN);
     var P = function (li) { var k = frame.keypoints[li]; return k ? { x: k.x, y: k.y } : null; };
-    var a = faultAnchor(f.type, P), col = faultColor(f.type);
+    var a = faultAnchor(best.type, P), col = faultColor(best.type);
+    ctx.globalAlpha = alpha;
     if (a.line) {
       ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([3, 5]); ctx.beginPath(); var st = false;
       a.line.forEach(function (p) { if (!p) return; if (!st) { ctx.moveTo(p.x * w, p.y * h); st = true; } else ctx.lineTo(p.x * w, p.y * h); });
@@ -498,14 +542,15 @@
     } else if (a.p) {
       var x = a.p.x * w, y = a.p.y * h;
       ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 15, 0, 7); ctx.stroke();
-      ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(x, y, 24, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.globalAlpha = alpha * 0.4; ctx.beginPath(); ctx.arc(x, y, 24, 0, 7); ctx.stroke(); ctx.globalAlpha = alpha;
       ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
       ctx.font = '600 13px Archivo,system-ui,sans-serif';
-      var lbl = faultName(f.type), tw = ctx.measureText(lbl).width;
+      var lbl = faultName(best.type), tw = ctx.measureText(lbl).width;
       var lx = Math.min(Math.max(x + 18, 6), w - tw - 12), ly = Math.max(y - 18, 16);
       ctx.fillStyle = 'rgba(12,16,12,.82)'; ctx.fillRect(lx - 6, ly - 14, tw + 12, 20);
       ctx.fillStyle = col; ctx.fillText(lbl, lx, ly);
     }
+    ctx.globalAlpha = 1;
   }
   function updateAutoBtn() {
     var b = $('rvAuto'); if (!b) return;
@@ -526,38 +571,58 @@
     if (next) next.disabled = review.i >= n - 1;
     review.faults.forEach(function (_, i) { setActive(i, i === review.i); });
   }
+  // Shared per-frame update — driven by the <video> timeupdate OR the virtual clock.
+  function updateFrame() {
+    var t = clock.time(), d = clock.dur() || 1;
+    if (played) played.style.width = (t / d * 100) + '%';
+    if (timeEl) timeEl.textContent = fmt(t) + ' / ' + fmt(d);
+    setArcPlayhead(t / d);
+    if (review.auto && review.nextStop < review.faults.length) {
+      var ns = review.faults[review.nextStop];
+      if (t + 0.02 >= (ns.timestampSec || 0)) {
+        var idx = review.nextStop; review.nextStop++;
+        review.i = idx; clock.pause(); updateReviewUI();
+        if (review.nextStop >= review.faults.length) review.auto = false;
+        updateAutoBtn();
+      }
+    }
+    drawScene(t);
+  }
   function gotoFault(i) {
     if (i < 0 || i >= review.faults.length) return;
     review.i = i;
     var t = review.faults[i].timestampSec || 0;
-    try { player.pause(); } catch (e) {}
-    if (playIcon) playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-    var onSeek = function () { player.removeEventListener('seeked', onSeek); drawOverlay(); };
-    player.addEventListener('seeked', onSeek);
-    try { player.currentTime = t; } catch (e) {}
-    var d = player.duration || DUR || 1; setArcPlayhead(d ? t / d : 0);
+    clock.pause();
+    if (hasVideoSrc) { var onSeek = function () { player.removeEventListener('seeked', onSeek); drawScene(clock.time()); }; player.addEventListener('seeked', onSeek); }
+    clock.seek(t);
+    var d = clock.dur() || 1; setArcPlayhead(t / d);
     updateReviewUI();
-    drawOverlay();
+    drawScene(t);
   }
   function startAuto() {
     if (!review.faults.length) return;
-    review.auto = true;
-    review.nextStop = review.faults.length;
-    for (var i = 0; i < review.faults.length; i++) { if ((review.faults[i].timestampSec || 0) > player.currentTime + 0.05) { review.nextStop = i; break; } }
-    updateAutoBtn();
-    try { player.play(); } catch (e) {}
+    review.auto = true; review.nextStop = review.faults.length;
+    for (var i = 0; i < review.faults.length; i++) { if ((review.faults[i].timestampSec || 0) > clock.time() + 0.05) { review.nextStop = i; break; } }
+    updateAutoBtn(); clock.play();
   }
   function setupReview(row) {
     review = { faults: [], i: -1, auto: false, nextStop: 0 };
+    clock.pause();
     var bar = $('reviewBar');
-    // rider frames: in-memory (fresh) or reconstructed from the persisted track.
+    hasVideoSrc = !!(player && player.currentSrc);
     if ((!frames || !frames.length) && row && row.pose_track) frames = framesFromPoseTrack(row.pose_track);
+    currentHorse = (row && row.horse_track) || null;
+    vt = 0; vLast = null;
+    vDur = (frames && frames.length) ? (frames[frames.length - 1].t || (row && row.duration_sec) || 1) : ((row && row.duration_sec) || 1);
     review.faults = (row && Array.isArray(row.faults)) ? row.faults.slice().sort(function (a, b) { return (a.timestampSec || 0) - (b.timestampSec || 0); }) : [];
-    if (!review.faults.length) { if (bar) bar.style.display = 'none'; setArcPlayhead(null); return; }
+    var note = $('rvHint');
+    if (note) note.textContent = hasVideoSrc ? (I18N.jc_rv_hint || '') : (EN ? 'Original video not stored — showing the pose reconstruction.' : 'El video original no se guarda — se muestra la reconstrucción de la pose.');
+    if (!review.faults.length) { if (bar) bar.style.display = 'none'; setArcPlayhead(null); try { drawScene(0); } catch (e) {} return; }
     updateAutoBtn(); updateReviewUI();
     var prev = $('rvPrev'); if (prev) prev.onclick = function () { review.auto = false; updateAutoBtn(); gotoFault(review.i <= 0 ? 0 : review.i - 1); };
     var next = $('rvNext'); if (next) next.onclick = function () { review.auto = false; updateAutoBtn(); gotoFault(review.i < 0 ? 0 : Math.min(review.i + 1, review.faults.length - 1)); };
-    var auto = $('rvAuto'); if (auto) auto.onclick = function () { if (review.auto) { try { player.play(); } catch (e) {} } else { startAuto(); } };
+    var auto = $('rvAuto'); if (auto) auto.onclick = function () { if (review.auto) clock.play(); else startAuto(); };
+    try { drawScene(0); } catch (e) {}
   }
 
   function renderResults(row) {
@@ -603,30 +668,17 @@
   // ---- real video controls -------------------------------------------------
   function seekVideo(tt) { try { player.currentTime = tt; player.play().catch(function () {}); } catch (e) {} }
   var PLAY = '<path d="M8 5v14l11-7z"/>', PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
-  if (playBtn) playBtn.addEventListener('click', function () { if (player.paused) player.play(); else player.pause(); });
+  // Main play button drives the clock (real video, or the virtual reconstruction).
+  if (playBtn) playBtn.addEventListener('click', function () { if (clock.playing()) clock.pause(); else clock.play(); });
   if (player) {
     player.addEventListener('play', function () { playIcon.innerHTML = PAUSE; });
     player.addEventListener('pause', function () { playIcon.innerHTML = PLAY; });
-    player.addEventListener('timeupdate', function () {
-      var d = player.duration || DUR || 1; if (played) played.style.width = (player.currentTime / d * 100) + '%';
-      if (timeEl) timeEl.textContent = fmt(player.currentTime) + ' / ' + fmt(d);
-      setArcPlayhead(player.currentTime / d);
-      // auto guided review: pause the video at each finding
-      if (review.auto && review.nextStop < review.faults.length) {
-        var ns = review.faults[review.nextStop];
-        if (player.currentTime + 0.02 >= (ns.timestampSec || 0)) {
-          var idx = review.nextStop; review.nextStop++;
-          gotoFault(idx);
-          if (review.nextStop >= review.faults.length) review.auto = false;
-          updateAutoBtn();
-        }
-      }
-      drawOverlay();
-    });
-    player.addEventListener('loadedmetadata', function () { DUR = player.duration || DUR; drawOverlay(); });
-    window.addEventListener('resize', drawOverlay);
+    // Real-video time advances -> shared per-frame update (arc, auto-stop, cue).
+    player.addEventListener('timeupdate', function () { if (hasVideoSrc) updateFrame(); });
+    player.addEventListener('loadedmetadata', function () { DUR = player.duration || DUR; drawScene(clock.time()); });
+    window.addEventListener('resize', function () { drawScene(clock.time()); });
   }
-  if (track) track.addEventListener('click', function (e) { var r = track.getBoundingClientRect(); var frac = (e.clientX - r.left) / r.width; seekVideo(frac * (player.duration || DUR || 0)); });
+  if (track) track.addEventListener('click', function (e) { var r = track.getBoundingClientRect(); var frac = (e.clientX - r.left) / r.width; clock.seek(frac * clock.dur()); });
 
   // ---- upload + analyze ----------------------------------------------------
   fileInput.addEventListener('change', function () {
@@ -738,7 +790,7 @@
   function bindShare() {
     var c = $('shareCopy'); if (c) c.addEventListener('click', function () { if (currentShareUrl) copyText(currentShareUrl); });
     var o = $('shareOpen'); if (o) o.addEventListener('click', function () { if (currentShareUrl) window.open(currentShareUrl, '_blank', 'noopener'); });
-    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; manualFaults = []; renderMfChips(); review = { faults: [], i: -1, auto: false, nextStop: 0 }; setArcPlayhead(null); try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; manualFaults = []; renderMfChips(); try { clock.pause(); } catch (e) {} review = { faults: [], i: -1, auto: false, nextStop: 0 }; setArcPlayhead(null); try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
     var g = $('goJumpHistory'); if (g) g.addEventListener('click', function () { loadHistory(); var h = $('jumpHistory'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     var r = $('jhRefresh'); if (r) r.addEventListener('click', loadHistory);
   }
