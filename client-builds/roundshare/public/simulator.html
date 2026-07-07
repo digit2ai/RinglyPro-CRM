@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RoundShare — App Simulator</title>
+<link rel="icon" href="/roundshare/roundshare-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --violet:#7c5cff; --violet-d:#5a3fe0; --violet-l:#efeaff; --violet-l2:#e2dbff;
+    --magenta:#c86be0; --pink:#e0559e;
+    --ink:#1a1730; --ink2:#4a4666; --mut:#8a86a6; --faint:#b8b4cf;
+    --line:#ece9f6; --line2:#ddd8ef; --bg:#f6f4fc; --card:#ffffff;
+    --green:#22b07d; --amber:#e6a935; --red:#e0556b; --blue:#4d7cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+
+  /* STAGE (full-screen mode) */
+  .stage{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px 12px;
+    background:
+      radial-gradient(900px 500px at 80% -10%,rgba(124,92,255,.30),transparent 60%),
+      radial-gradient(800px 500px at -10% 10%,rgba(200,107,224,.22),transparent 55%),
+      linear-gradient(180deg,#120c26,#0b0817)}
+  .stage .caption{color:#cdc6ea;font-size:13px;text-align:center;max-width:320px}
+  .stage .caption b{color:#fff}
+  .stage .backlink{position:fixed;top:16px;left:18px;color:#cdc6ea;text-decoration:none;font-size:13px;font-weight:700;
+    border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);z-index:50}
+
+  /* PHONE frame */
+  .device{width:390px;max-width:calc(100vw - 24px);height:844px;max-height:calc(100vh - 90px);
+    border-radius:52px;background:#05030d;padding:11px;box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 2px #2a2350;position:relative}
+  .screen{position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+  .device .dnotch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:130px;height:30px;background:#05030d;border-radius:0 0 18px 18px;z-index:40}
+
+  /* embed mode: fill the iframe, no device chrome */
+  body.embed{background:var(--bg)}
+  body.embed .stage{min-height:100vh;padding:0;background:var(--bg);gap:0}
+  body.embed .device{width:100%;max-width:100%;height:100vh;max-height:100vh;border-radius:0;padding:0;box-shadow:none}
+  body.embed .device .dnotch{display:none}
+  body.embed .screen{border-radius:0}
+  body.embed .backlink,body.embed .caption{display:none}
+
+  /* status bar */
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 6px;font-size:13px;font-weight:700;color:var(--ink);flex:0 0 auto}
+  .statusbar .r{display:flex;gap:5px;align-items:center;font-size:12px}
+
+  /* view area */
+  .view{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative}
+  .view::-webkit-scrollbar{width:0}
+  .pad{padding:6px 20px 26px}
+
+  /* generic */
+  .h-top{display:flex;align-items:center;gap:12px;padding:8px 20px 14px}
+  .h-top .back{font-size:22px;color:var(--ink);cursor:pointer;line-height:1}
+  .h-top h1{font-size:20px;font-weight:800;letter-spacing:-.02em;flex:1;text-align:center}
+  .h-top .sp{width:22px}
+  .center-title{text-align:center;font-size:19px;font-weight:800;padding:12px 20px 2px}
+  .muted{color:var(--mut)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 4px 18px rgba(30,20,60,.04)}
+  .row{display:flex;align-items:center;gap:12px}
+  .btn{display:block;width:100%;text-align:center;background:linear-gradient(90deg,var(--violet),var(--violet-d));color:#fff;border:none;
+    font:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:15px;cursor:pointer;margin-top:14px;box-shadow:0 10px 24px rgba(124,92,255,.3)}
+  .btn.sec{background:var(--violet-l);color:var(--violet-d);box-shadow:none}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line2);box-shadow:none}
+  .btn.sm{padding:11px;font-size:14px;border-radius:12px;margin-top:0}
+  .pill{display:inline-block;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .pill.good{background:#e2f6ee;color:var(--green)} .pill.warn{background:#fdf0d9;color:#b8860b}
+  .pill.v{background:var(--violet-l);color:var(--violet-d)}
+  .av{border-radius:50%;flex:0 0 auto;display:grid;place-items:center;font-weight:800;color:#fff;font-size:14px}
+  .thumb{border-radius:14px;background:linear-gradient(135deg,#5a4a7a,#2f2647);position:relative;overflow:hidden;flex:0 0 auto;display:grid;place-items:center;color:#fff}
+  .thumb .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px}
+  .thumb .pl{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);display:grid;place-items:center;color:var(--violet-d);font-size:15px}
+  .score-chip{font-weight:900;color:var(--violet-d)}
+
+  /* bottom tab bar */
+  .tabbar{flex:0 0 auto;display:flex;justify-content:space-around;align-items:center;padding:10px 8px 22px;background:#fff;border-top:1px solid var(--line);position:relative}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--faint);cursor:pointer;flex:1;padding:2px 0}
+  .tab .ti{font-size:20px;line-height:1}
+  .tab.on{color:var(--violet-d)}
+  .tab.rec .ti{width:52px;height:52px;margin-top:-26px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--magenta));
+    color:#fff;display:grid;place-items:center;font-size:24px;box-shadow:0 8px 22px rgba(124,92,255,.45);border:4px solid #fff}
+  .tab.rec{color:var(--violet-d)}
+
+  /* progress ring (processing) */
+  .ring{width:150px;height:150px;margin:8px auto}
+  .ring svg{transform:rotate(-90deg)}
+  .ringpct{font-size:30px;font-weight:900;fill:var(--ink)}
+
+  /* score ring */
+  .scorewrap{display:flex;justify-content:center;margin:6px 0}
+  .checkrow{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:14px;font-weight:600}
+  .checkrow .ck{width:22px;height:22px;border-radius:50%;background:#e2f6ee;color:var(--green);display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+  .checkrow .cx{width:22px;height:22px;border-radius:50%;background:#fdf0d9;color:var(--amber);display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+
+  .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+  .bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--magenta))}
+
+  .segtab{display:flex;background:var(--violet-l);border-radius:12px;padding:4px;margin:14px 0 4px;font-size:13px;font-weight:700}
+  .segtab .st{flex:1;text-align:center;padding:8px;border-radius:9px;color:var(--violet-d);cursor:pointer}
+  .segtab .st.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(30,20,60,.08)}
+
+  .feeditem{margin-top:16px}
+  .feedhead{display:flex;align-items:center;gap:10px}
+  .feedhead .nm{font-weight:800;font-size:14px}
+  .feedhead .mt{font-size:11px;color:var(--mut)}
+  .feedmedia{margin-top:11px;border-radius:16px;height:210px}
+  .reactions{display:flex;align-items:center;gap:16px;margin-top:11px;font-size:13px;font-weight:700;color:var(--ink2)}
+
+  .list .li{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .list .li:last-child{border-bottom:none}
+  .list .li .tt{flex:1;min-width:0}
+  .list .li .tt b{font-size:14px;font-weight:700;display:block}
+  .list .li .tt span{font-size:12px;color:var(--mut)}
+  .chev{color:var(--faint);font-size:18px}
+
+  .grid-icons{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .gi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer}
+  .gi .gie{font-size:24px} .gi .gil{font-size:11px;font-weight:700;margin-top:6px;color:var(--ink2)}
+
+  .kpis{display:flex;gap:10px;margin-top:14px}
+  .kpi{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 10px;text-align:center}
+  .kpi b{font-size:22px;font-weight:900;display:block;color:var(--ink)} .kpi span{font-size:11px;color:var(--mut)}
+
+  .badge-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+  .badge-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+  .badge-card .be{font-size:30px} .badge-card b{display:block;font-size:13px;margin-top:6px} .badge-card span{font-size:11px;color:var(--mut)}
+
+  .splash{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    background:linear-gradient(160deg,#7c5cff,#5a3fe0 55%,#c86be0);color:#fff;cursor:pointer}
+  .splash .lg{width:104px;height:104px}
+  .splash h1{font-size:34px;font-weight:900;letter-spacing:-.02em}
+  .splash p{opacity:.9;font-size:15px}
+  .splash .tap{position:absolute;bottom:40px;font-size:12px;opacity:.8}
+
+  .story-row{display:flex;gap:14px;overflow-x:auto;padding:4px 0 6px}
+  .story{flex:0 0 auto;width:58px;text-align:center}
+  .story .sr{width:58px;height:58px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--violet),var(--magenta))}
+  .story .sr .si{width:100%;height:100%;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-weight:800;color:#fff;font-size:16px}
+  .story span{font-size:10px;color:var(--ink2);display:block;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    font-size:13px;font-weight:700;padding:11px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .fade{animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .comment{display:flex;gap:10px;margin-top:14px}
+  .comment .cb{flex:1;background:var(--bg);border-radius:14px;padding:10px 12px}
+  .comment .cb .cn{font-weight:800;font-size:12px}
+  .comment .cb p{font-size:13px;margin-top:2px}
+  .inputbar{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line);background:#fff;flex:0 0 auto}
+  .inputbar input{flex:1;border:1px solid var(--line2);border-radius:999px;padding:11px 15px;font:inherit;font-size:14px;outline:none}
+  .inputbar .send{width:42px;height:42px;border-radius:50%;background:var(--violet);color:#fff;border:none;font-size:16px;cursor:pointer;flex:0 0 auto}
+</style>
+</head>
+<body>
+<div class="stage">
+  <a class="backlink" href="/roundshare/">← RoundShare</a>
+  <div class="device">
+    <div class="dnotch"></div>
+    <div class="screen">
+      <div class="statusbar" id="statusbar">
+        <span>9:41</span>
+        <span class="r">RoundShare ● ▲ ▮▮▮</span>
+      </div>
+      <div class="view" id="view"></div>
+      <div class="toast" id="toast"></div>
+      <div class="tabbar" id="tabbar" style="display:none"></div>
+    </div>
+  </div>
+  <div class="caption" id="caption"></div>
+</div>
+
+<script>
+(function(){
+  var IS_EMBED = /[?&]embed=1/.test(location.search);
+  if(IS_EMBED) document.body.classList.add('embed');
+
+  var view = document.getElementById('view');
+  var tabbar = document.getElementById('tabbar');
+  var toastEl = document.getElementById('toast');
+  var captionEl = document.getElementById('caption');
+  var statusbar = document.getElementById('statusbar');
+
+  // ---- shared assets ----
+  var LOGO = '<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="rl" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff" stop-opacity=".25"/><stop offset="1" stop-color="#ffffff" stop-opacity=".05"/></linearGradient></defs><rect x="4" y="4" width="92" height="92" rx="24" fill="url(#rl)" stroke="#ffffff" stroke-opacity=".5"/><circle cx="50" cy="42" r="23" fill="none" stroke="#fff" stroke-width="3.2"/><path fill="#fff" d="M39 50 C 36 41,41 34,48 32 C 49 30,51 29,52 29 L 58 23 C 57 27,56 30,55 32 C 59 34,62 41,64 48 C 65 51,63 54,60 53 C 57 52,54 48,52 45 C 51 49,49 55,48 60 L 40 60 Z"/><path d="M66 40 l7 4 l-7 4 Z" fill="#fff"/><g fill="#fff"><circle cx="34" cy="78" r="4"/><path d="M27 89 a7 7 0 0 1 14 0 Z"/><circle cx="50" cy="80" r="4.6"/><path d="M42 91 a8 8 0 0 1 16 0 Z"/><circle cx="66" cy="78" r="4"/><path d="M59 89 a7 7 0 0 1 14 0 Z"/></g></svg>';
+  function av(initials,color,size){ size=size||40; return '<div class="av" style="width:'+size+'px;height:'+size+'px;background:'+color+';font-size:'+(size*0.36)+'px">'+initials+'</div>'; }
+  var COLORS=['#7c5cff','#c86be0','#4d7cff','#22b07d','#e6a935','#e0556b','#5a3fe0','#e0559e'];
+  function cfor(s){ var n=0; for(var i=0;i<s.length;i++)n+=s.charCodeAt(i); return COLORS[n%COLORS.length]; }
+  function horseThumb(h,label,score){ h=h||210;
+    return '<div class="thumb" style="height:'+h+'px"><span style="font-size:40px;opacity:.9">🏇</span>'
+      +'<div class="pl" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">▶</div>'
+      +(label?'<span class="dur">'+label+'</span>':'')
+      +(score!=null?'<span class="dur" style="left:6px;right:auto;background:var(--violet-d);font-weight:800">'+score+'</span>':'')+'</div>'; }
+
+  // ---- score ring svg ----
+  function scoreRing(score){
+    var pct = score/10, C=2*Math.PI*54, off=C*(1-pct);
+    return '<div class="scorewrap"><svg width="150" height="150" viewBox="0 0 130 130">'
+      +'<circle cx="65" cy="65" r="54" fill="none" stroke="#ece9f6" stroke-width="11"/>'
+      +'<circle cx="65" cy="65" r="54" fill="none" stroke="url(#sg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" transform="rotate(-90 65 65)"/>'
+      +'<defs><linearGradient id="sg" x1="0" y1="0" x2="130" y2="130"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#c86be0"/></linearGradient></defs>'
+      +'<text x="65" y="62" text-anchor="middle" font-size="34" font-weight="900" fill="#1a1730">'+score.toFixed(1)+'</text>'
+      +'<text x="65" y="82" text-anchor="middle" font-size="11" font-weight="700" fill="#8a86a6">/ 10</text>'
+      +'</svg></div>';
+  }
+  // ---- line chart svg (progress) ----
+  function lineChart(vals,w,h){
+    w=w||300;h=h||120; var max=Math.max.apply(null,vals),min=Math.min.apply(null,vals),rng=(max-min)||1;
+    var pts=vals.map(function(v,i){ var x=8+i*((w-16)/(vals.length-1)); var y=h-10-((v-min)/rng)*(h-30); return [x,y]; });
+    var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
+    var area=d+' L'+pts[pts.length-1][0].toFixed(1)+' '+h+' L'+pts[0][0].toFixed(1)+' '+h+' Z';
+    var dots=pts.map(function(p){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3.2" fill="#7c5cff"/>';}).join('');
+    return '<svg width="100%" viewBox="0 0 '+w+' '+h+'"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c5cff" stop-opacity=".22"/><stop offset="1" stop-color="#7c5cff" stop-opacity="0"/></linearGradient></defs>'
+      +'<path d="'+area+'" fill="url(#ag)"/><path d="'+d+'" fill="none" stroke="#7c5cff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+dots+'</svg>';
+  }
+
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){toastEl.classList.remove('show');},1600); }
+
+  // ---------- SCREEN REGISTRY ----------
+  var S = {};
+
+  S.splash = { name:'1 · Splash', tab:null, dark:true, html:function(){
+    return '<div class="splash" onclick="RS.go(\'welcome\')"><div class="lg">'+LOGO+'</div>'
+      +'<h1>RoundShare</h1><p>Ride. Improve. Share.</p><div class="tap">Tap to continue</div></div>'; }};
+
+  S.welcome = { name:'2 · Welcome', tab:null, html:function(){
+    return '<div class="pad" style="text-align:center;padding-top:40px">'
+      +'<div style="width:88px;height:88px;margin:0 auto;border-radius:24px;background:linear-gradient(135deg,#7c5cff,#c86be0);padding:14px">'+LOGO+'</div>'
+      +'<h1 style="font-size:30px;font-weight:900;margin-top:18px">Round<span style="color:var(--violet-d)">Share</span></h1>'
+      +'<p class="muted" style="margin-top:6px">Your riding journey, shared.</p>'
+      +'<button class="btn" onclick="RS.go(\'ob1\')">Sign Up</button>'
+      +'<button class="btn ghost" onclick="RS.go(\'ob1\')">Log In</button>'
+      +'<div style="margin:22px 0 8px;color:var(--faint);font-size:12px">or continue with</div>'
+      +'<button class="btn ghost" onclick="RS.go(\'ob1\')"> Continue with Apple</button>'
+      +'<button class="btn ghost" onclick="RS.go(\'ob1\')">G  Continue with Google</button>'
+      +'</div>'; }};
+
+  S.ob1 = { name:'3 · Create Rider Profile', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'welcome\')">‹</span><h1>Tell us about you</h1><span class="sp"></span></div>'
+      +'<div class="pad"><p class="muted" style="text-align:center;margin-top:-6px">Let\'s personalize your experience</p>'
+      +'<div style="text-align:center;margin-top:16px">'+av('BR','linear-gradient(135deg,#7c5cff,#c86be0)',88)+'<div style="font-size:12px;color:var(--violet-d);font-weight:700;margin-top:8px">📷 Add photo</div></div>'
+      +field('Full name','Breda')+field('Age','13')+field('Discipline','Pony Hunter')+field('Home barn','Evergreen Farm')
+      +'<button class="btn" onclick="RS.go(\'ob2\')">Next</button></div>'; }};
+
+  S.ob2 = { name:'4 · Add Your Horses', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'ob1\')">‹</span><h1>Add your horses</h1><span class="sp"></span></div>'
+      +'<div class="pad"><p class="muted" style="text-align:center;margin-top:-6px">You can add more later</p>'
+      +horseCard('Snowy','Grey Pony',true)+horseCard('MP','Dutch Warmblood',true)
+      +'<div class="card row" style="justify-content:center;color:var(--violet-d);font-weight:800;cursor:pointer" onclick="RS.toast(\'Horse added\')">＋ Add Another Horse</div>'
+      +'<button class="btn" onclick="RS.enterApp(\'dashboard\')">Next</button></div>'; }};
+
+  S.dashboard = { name:'5 · Dashboard', tab:'home', html:function(){
+    return '<div class="pad">'
+      +'<div class="row" style="justify-content:space-between;margin-top:6px"><div style="font-size:22px;font-weight:900">Good morning, Breda! 👋</div>'+av('BR',cfor('Breda'),40)+'</div>'
+      +'<div class="card"><div class="row" style="justify-content:space-between"><div><div class="pill v">Upcoming Show</div><div style="font-weight:800;margin-top:8px">WEF Week 7</div><div class="muted" style="font-size:13px">Wellington International · Feb 14–16</div></div><div class="thumb" style="width:66px;height:66px;border-radius:14px"><span style="font-size:26px">🏇</span></div></div></div>'
+      +'<div class="card"><div class="muted" style="font-size:13px;font-weight:700">Last AI Score</div><div class="row" style="justify-content:space-between;align-items:flex-end;margin-top:4px"><div style="font-size:40px;font-weight:900;color:var(--violet-d)">8.1</div><div style="width:150px">'+lineChart([6.7,7.0,7.2,7.4,7.6,7.9,8.1],150,54)+'</div></div><div class="muted" style="font-size:12px">Great job! ↑ 1.4 vs last</div></div>'
+      +'<div class="card" style="background:linear-gradient(135deg,#efeaff,#f9f0ff)"><div class="row" style="gap:12px"><span style="font-size:24px">🎯</span><div><div style="font-weight:800;font-size:14px">Today\'s Goal</div><div class="muted" style="font-size:13px">Keep your eyes up through the corners.</div></div></div></div>'
+      +'<button class="btn" onclick="RS.go(\'upload\')">＋ Upload a Ride</button>'
+      +'<div class="grid-icons" style="margin-top:16px">'+gi('📰','Feed','feed')+gi('👥','Circles','circles')+gi('🏆','Achievements','achievements')+gi('🎯','Goals','goals')+gi('🎬','AI Reel','reel')+gi('⭐','Premium','premium')+'</div>'
+      +'</div>'; }};
+
+  S.upload = { name:'6 · Upload Ride', tab:'record', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.tabGo(\'home\')">‹</span><h1>Upload your round</h1><span class="sp"></span></div>'
+      +'<div class="pad">'
+      +'<div class="card" style="text-align:center;border-style:dashed;border-color:var(--line2);padding:34px 16px;cursor:pointer" onclick="RS.startProcessing()">'
+      +'<div style="width:66px;height:66px;margin:0 auto;border-radius:50%;background:var(--violet-l);display:grid;place-items:center;font-size:28px">🎥</div>'
+      +'<div style="font-weight:800;margin-top:14px;font-size:17px">Tap to upload</div><div class="muted" style="font-size:13px">or drag &amp; drop your video</div></div>'
+      +'<button class="btn sec sm" style="margin-top:14px" onclick="RS.startProcessing()">🎬 Record Video</button>'
+      +'<button class="btn ghost sm" style="margin-top:10px" onclick="RS.startProcessing()">🖼️ Choose from Library</button>'
+      +'<div class="card"><div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px;font-weight:700">Horse</span><b style="font-size:14px">Snowy ▾</b></div><div class="row" style="justify-content:space-between;margin-top:12px"><span class="muted" style="font-size:13px;font-weight:700">Show</span><b style="font-size:14px">WEF Week 7 ▾</b></div></div>'
+      +'<div class="card" style="background:#f4f1fc"><b style="font-size:13px">💡 Quick Tips</b><ul style="margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink2);line-height:1.8"><li>Best results with full rounds</li><li>Keep the phone steady, film from the side</li><li>Good lighting helps</li></ul></div>'
+      +'<button class="btn" onclick="RS.startProcessing()">Analyze my round</button></div>'; }};
+
+  S.processing = { name:'7 · AI Processing', tab:null, html:function(){
+    return '<div class="pad" style="text-align:center;padding-top:22px">'
+      +'<div class="thumb" style="height:150px;border-radius:18px"><span style="font-size:44px">🏇</span></div>'
+      +'<h1 style="font-size:22px;font-weight:900;margin-top:20px">Analyzing your ride…</h1>'
+      +'<div class="ring"><svg width="150" height="150" viewBox="0 0 130 130"><circle cx="65" cy="65" r="54" fill="none" stroke="#ece9f6" stroke-width="11"/><circle id="pRing" cx="65" cy="65" r="54" fill="none" stroke="url(#pg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3" transform="rotate(-90 65 65)"/><defs><linearGradient id="pg" x1="0" y1="0" x2="130" y2="130"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#c86be0"/></linearGradient></defs><text id="pPct" x="65" y="72" text-anchor="middle" font-size="26" font-weight="900" fill="#1a1730">0%</text></svg></div>'
+      +'<div id="pSteps" style="text-align:left;max-width:240px;margin:8px auto 0">'
+      +pstep('Jump detection')+pstep('Rhythm analysis')+pstep('Rider position tracking')+pstep('Line evaluation')+pstep('Generating feedback')+'</div>'
+      +'<p class="muted" style="font-size:12px;margin-top:16px">This usually takes 20–40 seconds</p></div>'; }};
+
+  S.feedback = { name:'8 · AI Feedback Overview', tab:null, html:function(){
+    return '<div class="pad" style="text-align:center">'
+      +'<div class="pill good" style="margin-top:6px">AI Analysis Complete ✨</div>'
+      +'<h1 style="font-size:23px;font-weight:900;margin-top:12px">Great ride, Breda! 🎉</h1>'
+      +'<p class="muted" style="font-size:13px">Here\'s your AI feedback</p>'
+      +scoreRing(8.1)
+      +'<div style="font-weight:800;color:var(--violet-d)">Very Good Ride · ★★★★★</div>'
+      +'<div class="card" style="text-align:left"><div class="checkrow"><span class="ck">✓</span>Consistent rhythm</div><div class="checkrow"><span class="ck">✓</span>Soft release over the jump</div><div class="checkrow"><span class="ck">✓</span>Beautiful track through the lines</div><div class="checkrow"><span class="cx">!</span>Keep your shoulders back before the fence</div></div>'
+      +'<button class="btn" onclick="RS.go(\'strengths\')">View Full Analysis</button>'
+      +'<button class="btn sec sm" style="margin-top:10px" onclick="RS.go(\'share\')">↗ Share this round</button></div>'; }};
+
+  S.strengths = { name:'9 · Strengths', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'feedback\')">‹</span><h1>Your Strengths</h1><span class="sp"></span></div>'
+      +'<div class="segtab"><div class="st on">Strengths</div><div class="st" onclick="RS.go(\'areas\')">Improve</div><div class="st" onclick="RS.go(\'homework\')">Homework</div></div>'
+      +'<div class="pad" style="padding-top:2px">'
+      +strengthCard('Consistent Rhythm','You maintained a steady, strong tempo throughout.',8.5)
+      +strengthCard('Soft Release','Great job following with your hands over the fences.',8.0)
+      +strengthCard('Balanced Landings','You landed in balance after each jump.',8.2)
+      +'<button class="btn sec" onclick="RS.go(\'areas\')">See areas to improve →</button></div>'; }};
+
+  S.areas = { name:'10 · Areas to Improve', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'strengths\')">‹</span><h1>Areas to Improve</h1><span class="sp"></span></div>'
+      +'<div class="segtab"><div class="st" onclick="RS.go(\'strengths\')">Strengths</div><div class="st on">Improve</div><div class="st" onclick="RS.go(\'homework\')">Homework</div></div>'
+      +'<div class="pad" style="padding-top:2px">'
+      +improveCard('Shoulders Back','Keep your shoulders back before the jump.',6.5)
+      +improveCard('Inside Leg','Move your inside leg to hold the outside rein.',6.0)
+      +improveCard('Look Ahead','Focus on looking to the next jump sooner.',6.5)
+      +'<button class="btn" onclick="RS.go(\'homework\')">Get my homework →</button></div>'; }};
+
+  S.homework = { name:'11 · Homework', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'areas\')">‹</span><h1>Your Homework</h1><span class="sp"></span></div>'
+      +'<div class="pad"><p class="muted" style="text-align:center;margin-top:-4px">Focus on these 3 things this week</p>'
+      +hwItem('Keep shoulders back after fence 4')+hwItem('Move inside leg to outside rein')+hwItem('Look sooner to the next jump')
+      +'<div class="card" style="text-align:center;background:#f4f1fc;font-size:13px;color:var(--ink2)">Review this before your next ride 🔁</div>'
+      +'<button class="btn" onclick="RS.toast(\'Marked complete ✓\')">Mark as Complete</button>'
+      +'<button class="btn ghost sm" style="margin-top:10px" onclick="RS.tabGo(\'progress\')">View my progress</button></div>'; }};
+
+  S.journey = { name:'12 · Journey / Progress', tab:'progress', html:function(){
+    return '<div class="center-title">Your Progress</div><div class="pad" style="padding-top:2px">'
+      +'<div class="segtab"><div class="st on">Journey</div><div class="st" onclick="RS.go(\'metrics\')">Metrics</div></div>'
+      +'<div class="card">'+journeyStep('WEF Week 1','4 / 5 fences',true)+journeyStep('WEF Week 3','5 / 5 fences',true)+journeyStep('WEF Week 5','5 / 5 fences',true)+journeyStep('WEF Week 7','Today',false,true)+journeyStep('Pony Finals','Goal',false)+'</div>'
+      +'<button class="btn sec" onclick="RS.go(\'metrics\')">View all metrics</button></div>'; }};
+
+  S.metrics = { name:'13 · Progress Metrics', tab:'progress', html:function(){
+    return '<div class="center-title">Your Metrics</div><div class="pad" style="padding-top:2px">'
+      +'<div class="card"><div class="row" style="justify-content:space-between"><b>Overall Score</b><span class="score-chip">8.1</span></div>'+lineChart([6.7,7.1,7.3,7.5,7.8,8.1],300,120)+'</div>'
+      +metricBar('Consistency',80)+metricBar('Position',80)+metricBar('Rhythm',86)
+      +'<div class="kpis">'+kpi('24','Rounds')+kpi('78','Avg Score')+kpi('90','Best')+'</div>'
+      +'<button class="btn sec" onclick="RS.tabGo(\'home\')">Back to dashboard</button></div>'; }};
+
+  S.feed = { name:'14 · Ride Feed', tab:'home', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.tabGo(\'home\')">‹</span><h1>Feed</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="story-row">'+story('You','+','#7c5cff')+story('Addison','AT')+story('Sophie','SM')+story('Ava','AT')+story('Team','TB')+'</div>'
+      +feedItem('Addison Clark','2h ago · 1.10m Jumper','Great round today in the 1.10m Classic! 💙',24,8,7.6)
+      +feedItem('Sophie Martin','3h ago · 0.90m Jumper','So much smoother than last week 👏',36,5,7.8)
+      +'</div>'; }};
+
+  S.ridedetail = { name:'15 · Ride Post Detail', tab:'home', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'feed\')">‹</span><h1>Ride Detail</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="feedhead">'+av('AT',cfor('Addison'),40)+'<div><div class="nm">Addison Clark</div><div class="mt">1.10m Classic · Willow Springs</div></div><span class="score-chip" style="margin-left:auto;font-size:20px">8.1</span></div>'
+      +horseThumb(210,'1:23')
+      +'<div class="reactions"><span>❤️ 22</span><span>💬 9</span><span>🎉 Cheer</span><span style="margin-left:auto">↗ Save</span></div>'
+      +'<p style="margin-top:12px;font-size:14px">Snowy was amazing today! Felt so much better in the first line. 🐴</p>'
+      +'<button class="btn sec" onclick="RS.go(\'comments\')">View 9 comments</button></div>'; }};
+
+  S.comments = { name:'16 · Comments', tab:null, keepInput:true, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'ridedetail\')">‹</span><h1>Comments</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0">'
+      +comment('Isabelle R.','Beautiful round! So balanced 👏','3m')
+      +comment('Addison T.','Love the inside turn to the last!','3m')
+      +comment('Barn Besties','Go Breda! 🎉🐴','2m')
+      +comment('Sophie M.','Great job today! 😍','1m')
+      +'</div>'; }, footer:function(){
+        return '<div class="inputbar"><input placeholder="Add a comment…" id="cin"><button class="send" onclick="RS.addComment()">➤</button></div>'; }};
+
+  S.circles = { name:'17 · My Circles', tab:'circles', html:function(){
+    return '<div class="center-title">My Circles</div><div class="pad" style="padding-top:4px">'
+      +circleRow('Evergreen Farm','12 members','EF')+circleRow('Barn Besties','8 members','BB')+circleRow('Pony Finals Crew','15 members','PC')+circleRow('WEF 2025','21 members','W5')
+      +'<div class="card row" style="justify-content:center;color:var(--violet-d);font-weight:800;cursor:pointer" onclick="RS.go(\'circlefeed\')">＋ Create a Circle</div></div>'; }};
+
+  S.circlefeed = { name:'18 · Circle Feed', tab:'circles', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'circles\')">‹</span><h1>Barn Besties</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><p class="muted" style="font-size:12px;margin-bottom:8px">8 members · Circle score 8.0</p>'
+      +'<div class="card">'+lineChart([7.0,7.2,7.5,7.6,7.8,8.0],300,90)+'</div>'
+      +feedItem('Savannah R.','Pony Finals 2024','First round down! 🐴',28,11,8.2)+'</div>'; }};
+
+  S.share = { name:'19 · Share Ride', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'feedback\')">‹</span><h1>Share Ride</h1><span class="sp"></span></div>'
+      +'<div class="pad"><p class="muted" style="text-align:center;margin-top:-4px">Choose who to share with</p>'
+      +shareRow('Mom',true)+shareRow('Best Friends',true)+shareRow('Barn Besties',true)+shareRow('Coach Amy',false)+shareRow('Instagram Reel',false)
+      +'<button class="btn" onclick="RS.share()">Share</button></div>'; }};
+
+  S.notifications = { name:'20 · Notifications', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.tabGo(\'home\')">‹</span><h1>Notifications</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="list">'
+      +notif('IR','Isabelle R. commented on your ride','2m')
+      +notif('AT','Addison T. cheered your ride','15m')
+      +notif('CA','Coach Amy left feedback','1h')
+      +notif('BB','Your homework is ready','3h')
+      +notif('SM','Barn Besties uploaded a ride','5h')+'</div></div>'; }};
+
+  S.messages = { name:'21 · Messages', tab:null, keepInput:true, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.tabGo(\'home\')">‹</span><h1>Messages</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="list">'
+      +msg('CA','Coach Amy','Great job on that turn!','2m')
+      +msg('IR','Isabelle R.','That line felt amazing 😍','15m')
+      +msg('CA','Coach Amy','Homework sent 📋','1h')
+      +msg('MM','Mom','So proud of you! 💜','3h')+'</div></div>'; }, footer:function(){
+        return '<div class="inputbar"><input placeholder="Message…" id="min"><button class="send" onclick="RS.toast(\'Sent ✓\')">➤</button></div>'; }};
+
+  S.profile = { name:'22 · Rider Profile', tab:'profile', html:function(){
+    return '<div class="pad"><div class="card" style="text-align:center;background:linear-gradient(135deg,#efeaff,#f9f0ff)">'
+      +'<div style="display:flex;justify-content:center">'+av('BR','linear-gradient(135deg,#7c5cff,#c86be0)',72)+'</div>'
+      +'<div style="font-weight:900;font-size:20px;margin-top:10px">Breda</div><div class="muted" style="font-size:13px">Pony Hunter · Evergreen Farm</div>'
+      +'<button class="btn sec sm" style="margin-top:12px;width:auto;display:inline-block;padding:9px 20px" onclick="RS.go(\'settings\')">Edit Profile</button>'
+      +'<div class="kpis" style="margin-top:16px">'+kpi('32','Rounds')+kpi('8.1','Avg')+kpi('12','Shows')+'</div></div>'
+      +'<div style="font-weight:800;margin-top:18px;font-size:15px">Current Horses</div>'
+      +'<div class="grid-icons">'+giHorse('Snowy')+giHorse('MP')+gi('＋','Add Horse','ob2')+'</div>'
+      +'<div class="grid-icons" style="margin-top:12px">'+gi('🏆','Achievements','achievements')+gi('🎯','Goals','goals')+gi('🎬','AI Reel','reel')+gi('⭐','Premium','premium')+gi('👨‍👩‍👧','Parent','parent')+gi('⚙️','Settings','settings')+'</div>'
+      +'<div class="grid-icons" style="margin-top:12px">'+gi('🐴','Horse Stats','horsestats')+gi('🔍','Search','search')+gi('📴','States','states')+'</div>'
+      +'</div>'; }};
+
+  S.horsestats = { name:'23 · Horse Stats', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>Snowy</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="thumb" style="height:170px;border-radius:18px"><span style="font-size:48px">🐴</span></div>'
+      +'<div class="row" style="justify-content:space-between;margin-top:14px"><div><b style="font-size:18px">Snowy</b><div class="muted" style="font-size:13px">Grey Pony · Hunter</div></div><span class="pill v">Avg 8.2</span></div>'
+      +'<div class="kpis">'+kpi('12','Age')+kpi('14.2','Height')+kpi('Hunter','Discipline')+'</div>'
+      +'<div class="card"><b style="font-size:14px">Last 10 Rides</b>'+lineChart([7.4,7.6,7.5,7.8,8.0,7.9,8.1,8.0,8.2,8.2],300,100)+'</div>'
+      +metricBar('Consistency',84)+metricBar('Rhythm',86)+metricBar('Jumping',82)+'</div>'; }};
+
+  S.goals = { name:'24 · Goals', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>My Goals</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0">'+goal('Qualify for Pony Finals','In Progress',75)+goal('Improve Equitation Score','In Progress',60)+goal('Ride 2× per week','On Track',80)
+      +'<button class="btn" onclick="RS.toast(\'Goal added 🎯\')">＋ Add Goal</button></div>'; }};
+
+  S.achievements = { name:'25 · Achievements', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>Achievements</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="badge-grid">'
+      +badge('🥇','First 3 Scores','Earned May 5')+badge('🔥','5 Ride Streak','Earned May 12')+badge('⭐','Consistent Star','Earned May 18')+badge('🏇','Course Master','Earned May 20')+'</div></div>'; }};
+
+  S.reel = { name:'26 · AI Reel', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>AI Reel</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="thumb" style="height:340px;border-radius:20px"><span style="font-size:52px">🎬</span><span class="dur">0:30</span></div>'
+      +'<p class="muted" style="text-align:center;margin-top:12px;font-size:13px">Auto-generated highlights of your best moments</p>'
+      +'<button class="btn" onclick="RS.toast(\'Reel created 🎬\')">Create Reel</button>'
+      +'<button class="btn sec sm" style="margin-top:10px" onclick="RS.toast(\'Shared to Instagram\')">Share to Instagram</button></div>'; }};
+
+  S.premium = { name:'27 · Premium', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>RoundShare Premium</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="card" style="background:linear-gradient(135deg,#7c5cff,#c86be0);color:#fff;text-align:center">'
+      +'<div style="font-size:34px">⭐</div><div style="font-weight:900;font-size:20px;margin-top:6px">Unlock everything</div><div style="opacity:.9;font-size:13px">Ride smarter, share more.</div></div>'
+      +premRow('Unlimited AI Feedback')+premRow('Advanced Analytics')+premRow('Unlimited Video Storage')+premRow('Priority Support')+premRow('AI Reels export')
+      +'<button class="btn" onclick="RS.toast(\'Trial started 🎉\')">Try 7 Days Free</button>'
+      +'<p class="muted" style="text-align:center;font-size:12px;margin-top:8px">$9.99 / month after trial</p></div>'; }};
+
+  S.parent = { name:'28 · Parent Dashboard', tab:'profile', html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>Parent Account</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="card" style="text-align:center"><div class="muted" style="font-size:13px">Breda\'s Progress · At a glance</div>'
+      +'<div class="row" style="justify-content:center;gap:22px;margin-top:10px"><div><div style="font-size:26px;font-weight:900;color:var(--violet-d)">8.1</div><div class="muted" style="font-size:11px">Avg Score</div></div><div><div style="font-size:26px;font-weight:900">12</div><div class="muted" style="font-size:11px">Rides / mo</div></div><div><div style="font-size:26px;font-weight:900">4</div><div class="muted" style="font-size:11px">This week</div></div></div></div>'
+      +'<div class="card"><b style="font-size:14px">Recent Activity</b>'
+      +'<div class="list" style="margin-top:6px">'+actLi('WEF Week 7','8.1')+actLi('WEF Week 5','7.8')+actLi('WEF Week 3','7.4')+'</div></div>'
+      +'<button class="btn sec" onclick="RS.go(\'messages\')">💬 Message Coach</button>'
+      +'<button class="btn ghost sm" style="margin-top:10px" onclick="RS.go(\'settings\')">Manage Account</button></div>'; }};
+
+  S.search = { name:'29 · Search', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>Search</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="card" style="padding:0"><input placeholder="🔍  Search riders, shows, or circles" style="width:100%;border:none;padding:15px;font:inherit;font-size:14px;border-radius:18px;outline:none"></div>'
+      +'<b style="display:block;margin-top:16px;font-size:14px">Recent Searches</b>'
+      +'<div class="list">'+srch('Isabelle R.')+srch('WEF Week 7')+srch('Pony Finals 2025')+srch('Evergreen Farm')+'</div></div>'; }};
+
+  S.settings = { name:'30 · Settings', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'profile\')">‹</span><h1>Settings</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0"><div class="list">'
+      +setLi('👤','Edit Profile','ob1')+setLi('🐴','My Horses','ob2')+setLi('🔔','Notifications','notifications')+setLi('👨‍👩‍👧','Parent Account','parent')+setLi('⭐','Premium','premium')+setLi('📴','App States','states')+'</div>'
+      +'<button class="btn ghost" onclick="RS.go(\'welcome\')">Log Out</button></div>'; }};
+
+  S.states = { name:'Empty · Offline · Error', tab:null, html:function(){
+    return '<div class="h-top"><span class="back" onclick="RS.go(\'settings\')">‹</span><h1>App States</h1><span class="sp"></span></div>'
+      +'<div class="pad" style="padding-top:0">'
+      +stateCard('☁️','Empty State','Upload your first ride to get AI feedback.','Upload Ride','upload')
+      +stateCard('📴','Offline','Check your connection and try again.','Retry','dashboard')
+      +stateCard('⚠️','Error','Something went wrong. Please try again.','Try Again','dashboard')
+      +'</div>'; }};
+
+  // ---- small html helpers ----
+  function field(l,v){ return '<div style="margin-top:14px"><div style="font-size:12px;font-weight:700;color:var(--mut)">'+l+'</div><div class="card" style="margin-top:6px;padding:13px 15px;font-weight:600">'+v+'</div></div>'; }
+  function horseCard(n,b,ck){ return '<div class="card row" style="justify-content:space-between"><div class="row">'+av(n.slice(0,2).toUpperCase(),cfor(n),44)+'<div><b style="font-size:15px">'+n+'</b><div class="muted" style="font-size:12px">'+b+'</div></div></div>'+(ck?'<span style="color:var(--green);font-size:18px">✓</span>':'')+'</div>'; }
+  function gi(e,l,scr){ return '<div class="gi" onclick="RS.go(\''+scr+'\')"><div class="gie">'+e+'</div><div class="gil">'+l+'</div></div>'; }
+  function giHorse(n){ return '<div class="gi" onclick="RS.go(\'horsestats\')">'+av(n.slice(0,2).toUpperCase(),cfor(n),40)+'<div class="gil" style="margin-top:6px">'+n+'</div></div>'; }
+  function pstep(t){ return '<div class="checkrow" data-step><span class="cx" style="background:#eee;color:#bbb">○</span>'+t+'</div>'; }
+  function strengthCard(t,d,s){ return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:15px">'+t+'</b><span class="pill good">'+s+'</span></div><p class="muted" style="font-size:13px;margin-top:6px">'+d+'</p></div>'; }
+  function improveCard(t,d,s){ return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:15px">'+t+'</b><span class="pill warn">'+s+'</span></div><p class="muted" style="font-size:13px;margin-top:6px">'+d+'</p></div>'; }
+  function hwItem(t){ return '<div class="card row" style="gap:12px"><span style="width:24px;height:24px;border-radius:7px;border:2px solid var(--line2);flex:0 0 auto;cursor:pointer" onclick="this.style.background=\'var(--violet)\';this.style.borderColor=\'var(--violet)\';this.innerHTML=\'<span style=color:#fff;font-size:13px;padding-left:4px>✓</span>\'"></span><span style="font-size:14px;font-weight:600">'+t+'</span></div>'; }
+  function journeyStep(t,s,done,now){ return '<div class="row" style="gap:12px;padding:8px 0"><span style="width:22px;height:22px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;font-size:12px;color:#fff;background:'+(done?'var(--green)':now?'var(--violet)':'var(--line2)')+'">'+(done?'✓':now?'●':'')+'</span><div style="flex:1"><b style="font-size:14px">'+t+'</b> <span class="muted" style="font-size:12px">· '+s+'</span></div>'+(now?'<span class="pill v">Now</span>':'')+'</div>'; }
+  function metricBar(l,p){ return '<div class="card" style="padding:13px 16px"><div class="row" style="justify-content:space-between"><b style="font-size:14px">'+l+'</b><span class="muted" style="font-size:13px;font-weight:700">'+p+'%</span></div><div class="bar"><i style="width:'+p+'%"></i></div></div>'; }
+  function kpi(v,l){ return '<div class="kpi"><b>'+v+'</b><span>'+l+'</span></div>'; }
+  function story(n,i,c){ return '<div class="story"><div class="sr"'+(c?' style="background:'+c+'"':'')+'><div class="si" style="background:'+(cfor(n))+'">'+i+'</div></div><span>'+n+'</span></div>'; }
+  function feedItem(n,m,txt,likes,cm,score){ return '<div class="feeditem"><div class="feedhead">'+av(n.split(' ').map(function(w){return w[0];}).join('').slice(0,2),cfor(n),40)+'<div><div class="nm">'+n+'</div><div class="mt">'+m+'</div></div></div>'
+      +'<div onclick="RS.go(\'ridedetail\')" style="cursor:pointer">'+horseThumb(200,'1:23',score)+'</div>'
+      +'<p style="margin-top:9px;font-size:14px">'+txt+'</p>'
+      +'<div class="reactions"><span>❤️ '+likes+'</span><span onclick="RS.go(\'comments\')" style="cursor:pointer">💬 '+cm+'</span><span onclick="RS.toast(\'🎉 Cheered!\')" style="cursor:pointer">🎉</span></div></div>'; }
+  function comment(n,t,ago){ return '<div class="comment">'+av(n.slice(0,2).toUpperCase(),cfor(n),36)+'<div class="cb"><div class="cn">'+n+' <span class="muted" style="font-weight:600">· '+ago+'</span></div><p>'+t+'</p></div></div>'; }
+  function circleRow(n,m,i){ return '<div class="card row" style="justify-content:space-between;cursor:pointer" onclick="RS.go(\'circlefeed\')"><div class="row">'+av(i,cfor(n),44)+'<div><b style="font-size:15px">'+n+'</b><div class="muted" style="font-size:12px">'+m+'</div></div></div><span class="chev">›</span></div>'; }
+  function shareRow(n,on){ return '<div class="card row" style="justify-content:space-between"><div class="row">'+av(n.slice(0,2).toUpperCase(),cfor(n),40)+'<b style="font-size:15px">'+n+'</b></div><span onclick="RS.tgl(this)" data-on="'+(on?1:0)+'" style="width:44px;height:26px;border-radius:99px;background:'+(on?'var(--violet)':'var(--line2)')+';position:relative;cursor:pointer;flex:0 0 auto"><span style="position:absolute;top:3px;left:'+(on?'21px':'3px')+';width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s"></span></span></div>'; }
+  function notif(i,t,ago){ return '<div class="li">'+av(i,cfor(i+t),40)+'<div class="tt"><b>'+t+'</b><span>'+ago+'</span></div></div>'; }
+  function msg(i,n,t,ago){ return '<div class="li" onclick="RS.go(\'messages\')" style="cursor:pointer">'+av(i,cfor(n),44)+'<div class="tt"><b>'+n+'</b><span>'+t+'</span></div><span class="muted" style="font-size:11px">'+ago+'</span></div>'; }
+  function goal(t,s,p){ return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:15px">'+t+'</b><span class="pill v">'+s+'</span></div><div class="bar"><i style="width:'+p+'%"></i></div><div class="muted" style="font-size:12px;margin-top:6px">'+p+'% complete</div></div>'; }
+  function badge(e,t,s){ return '<div class="badge-card"><div class="be">'+e+'</div><b>'+t+'</b><span>'+s+'</span></div>'; }
+  function premRow(t){ return '<div class="row" style="gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)"><span style="color:var(--green)">✓</span><span style="font-size:14px;font-weight:600">'+t+'</span></div>'; }
+  function actLi(t,s){ return '<div class="li"><div class="tt"><b>'+t+'</b></div><span class="score-chip">'+s+'</span></div>'; }
+  function srch(t){ return '<div class="li" onclick="RS.toast(\'Searching…\')" style="cursor:pointer"><span class="muted">🕐</span><div class="tt"><b style="font-weight:600">'+t+'</b></div></div>'; }
+  function setLi(e,t,scr){ return '<div class="li" onclick="RS.go(\''+scr+'\')" style="cursor:pointer"><span style="font-size:18px">'+e+'</span><div class="tt"><b style="font-weight:600">'+t+'</b></div><span class="chev">›</span></div>'; }
+  function stateCard(e,t,d,btn,scr){ return '<div class="card" style="text-align:center;padding:26px 16px"><div style="font-size:36px">'+e+'</div><b style="display:block;margin-top:8px;font-size:16px">'+t+'</b><p class="muted" style="font-size:13px;margin-top:4px">'+d+'</p><button class="btn sec sm" style="margin-top:12px;width:auto;display:inline-block;padding:9px 22px" onclick="RS.go(\''+scr+'\')">'+btn+'</button></div>'; }
+
+  // ---------- TABS ----------
+  var TABS=[['home','🏠','Home','dashboard'],['progress','📊','Progress','journey'],['record','＋','Record','upload'],['circles','👥','Circles','circles'],['profile','👤','Profile','profile']];
+  function renderTabs(active){
+    tabbar.innerHTML = TABS.map(function(t){ var on=t[0]===active?' on':''; var rec=t[0]==='record'?' rec':'';
+      return '<div class="tab'+on+rec+'" onclick="RS.tabGo(\''+t[0]+'\')"><span class="ti">'+t[1]+'</span>'+(t[0]==='record'?'':'<span>'+t[2]+'</span>')+'</div>'; }).join('');
+  }
+
+  // ---------- ROUTER ----------
+  var cur=null, appEntered=false;
+  var RS = {
+    go:function(id){ render(id); },
+    tabGo:function(tabId){ var t=TABS.filter(function(x){return x[0]===tabId;})[0]; if(t) render(t[3]); },
+    enterApp:function(id){ appEntered=true; render(id); },
+    toast:toast,
+    tgl:function(el){ var on=el.getAttribute('data-on')==='1'; on=!on; el.setAttribute('data-on',on?1:0); el.style.background=on?'var(--violet)':'var(--line2)'; el.firstChild.style.left=on?'21px':'3px'; },
+    share:function(){ toast('Shared to your circles ✓'); setTimeout(function(){render('feed');},700); },
+    addComment:function(){ var i=document.getElementById('cin'); if(i&&i.value.trim()){ var pad=view.querySelector('.pad'); pad.insertAdjacentHTML('beforeend', comment('You',i.value.trim(),'now')); i.value=''; pad.parentNode.scrollTop=pad.parentNode.scrollHeight; } },
+    startProcessing:function(){ render('processing'); runProcessing(); }
+  };
+  window.RS = RS;
+
+  function render(id){
+    var scr = S[id]; if(!scr) return;
+    cur = id;
+    statusbar.style.color = scr.dark ? '#fff' : 'var(--ink)';
+    var footer = scr.footer ? scr.footer() : '';
+    view.innerHTML = '<div class="fade">'+scr.html()+'</div>';
+    // footer (input bars) live outside .view scroll — append into screen
+    var existingFooter = document.getElementById('scrFooter');
+    if(existingFooter) existingFooter.remove();
+    if(footer){ var f=document.createElement('div'); f.id='scrFooter'; f.innerHTML=footer; tabbar.parentNode.insertBefore(f, tabbar); }
+    // tabs
+    if(scr.tab){ tabbar.style.display='flex'; renderTabs(scr.tab); }
+    else { tabbar.style.display='none'; }
+    view.scrollTop=0;
+    // caption
+    captionEl.innerHTML = '<b>'+scr.name+'</b> — tap around: every button navigates.';
+  }
+
+  function runProcessing(){
+    var ring=document.getElementById('pRing'), pct=document.getElementById('pPct');
+    var steps=Array.prototype.slice.call(document.querySelectorAll('[data-step]'));
+    var C=339.3, p=0, stepAt=[15,38,60,80,96];
+    var iv=setInterval(function(){
+      if(cur!=='processing'){ clearInterval(iv); return; }
+      p+=Math.random()*7+3; if(p>100)p=100;
+      if(ring){ ring.setAttribute('stroke-dashoffset', C*(1-p/100)); }
+      if(pct){ pct.textContent=Math.round(p)+'%'; }
+      stepAt.forEach(function(th,i){ if(p>=th && steps[i]){ var c=steps[i].firstChild; c.className='ck'; c.textContent='✓'; } });
+      if(p>=100){ clearInterval(iv); setTimeout(function(){ if(cur==='processing') render('feedback'); },600); }
+    },230);
+  }
+
+  // ---------- BOOT ----------
+  var startId = 'splash';
+  var m = location.hash.replace('#',''); if(m && S[m]) startId=m;
+  if(IS_EMBED){ startId = m && S[m] ? m : 'dashboard'; }
+  render(startId);
+  // splash auto-advance (non-embed)
+  if(startId==='splash'){ setTimeout(function(){ if(cur==='splash') render('welcome'); }, 1900); }
+})();
+</script>
+</body>
+</html>

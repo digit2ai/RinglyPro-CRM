@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" role="img" aria-label="RoundShare app icon">
+  <defs>
+    <linearGradient id="rs_g" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8b6bff"/>
+      <stop offset=".55" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#c86be0"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#rs_g)"/>
+  <circle cx="50" cy="42" r="24" fill="none" stroke="#ffffff" stroke-width="3.4" opacity=".95"/>
+  <path fill="#ffffff" d="M39 50 C 36 41, 41 34, 48 32 C 49 30, 51 29, 52 29 L 58 23 C 57 27, 56 30, 55 32 C 59 34, 62 41, 64 48 C 65 51, 63 54, 60 53 C 57 52, 54 48, 52 45 C 51 49, 49 55, 48 60 L 40 60 Z"/>
+  <circle cx="53.5" cy="39.5" r="1.7" fill="#7c5cff"/>
+  <path d="M66 40 l7 4 l-7 4 Z" fill="#ffffff" opacity=".9"/>
+  <g fill="#ffffff">
+    <circle cx="33" cy="78" r="4.4"/><path d="M25 90 a8 8 0 0 1 16 0 Z"/>
+    <circle cx="50" cy="80" r="5"/><path d="M41.5 93 a8.5 8.5 0 0 1 17 0 Z"/>
+    <circle cx="67" cy="78" r="4.4"/><path d="M59 90 a8 8 0 0 1 16 0 Z"/>
+  </g>
+</svg>
