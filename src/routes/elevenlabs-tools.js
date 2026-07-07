@@ -1694,6 +1694,20 @@ async function handleCheckAvailabilityD2AI({ date, days_ahead, timezone }) {
       type: QueryTypes.SELECT
     });
 
+    // Also exclude times busy on the owner's Google Calendar — real meetings live there,
+    // not just d2_calendar_events. Fail-open: if Google is unavailable, fall back to
+    // calendar events only (never block booking on a Google hiccup).
+    let googleBusy = [];
+    try {
+      const googleCalendarService = require('../services/googleCalendarService');
+      googleBusy = await googleCalendarService.getFreeBusy(
+        D2AI_CLIENT_ID, startObj, new Date(endDateStr + 'T23:59:59Z')
+      );
+      logger.info(`[ElevenLabs Tools] [D2AI] Google busy periods: ${googleBusy.length}`);
+    } catch (gErr) {
+      logger.warn('[ElevenLabs Tools] [D2AI] Google free/busy unavailable, using calendar events only:', gErr.message);
+    }
+
     const slots = [];
     const now = new Date();
     for (let i = 0; i < numDays; i++) {
@@ -1715,6 +1729,9 @@ async function handleCheckAvailabilityD2AI({ date, days_ahead, timezone }) {
             return slotStart < evEnd && slotEnd > evStart;
           });
           if (busy) continue;
+
+          // Skip anything that overlaps a Google Calendar meeting.
+          if (googleBusy.some(b => slotStart < b.end && slotEnd > b.start)) continue;
 
           const displayTime = new Date(2000, 0, 1, h, m).toLocaleTimeString('en-US', {
             hour: 'numeric', minute: '2-digit', hour12: true

@@ -29,6 +29,9 @@
     body.inbox-open .top-bar,
     body.inbox-open #champBanner,
     body.inbox-open #notSupportedHint{display:none !important}
+    /* Keep the top menu visible ABOVE the full-screen Intercom so champions can reach Calendar. */
+    body.inbox-open .d2-topnav{position:fixed;top:0;left:0;right:0;z-index:65;margin:0;background:var(--bg);padding:9px 4px}
+    body.inbox-open #inboxView.wa-full{top:54px}
     #inboxView.wa-full{
       position:fixed;inset:0;z-index:60;
       margin:0;border:0;border-radius:0;max-width:none;box-shadow:none;

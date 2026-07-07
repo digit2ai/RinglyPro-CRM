@@ -1030,7 +1030,8 @@
       updateChampBanner();
       // Champions land on Intercom by default (the chat). They tap "Send a
       // request" to reach the Voice-to-Intake form + their PoC links.
-      setView(true);
+      // The top menu can force the form view via ?view=form.
+      if (params.get('view') !== 'form') setView(true);
     });
     fetchInbox();
     setInterval(function () { pollUnread(); fetchInbox(); if (inboxView) fetchIntercom(); }, 8000);

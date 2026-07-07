@@ -11,10 +11,18 @@
   if (params.get('c')) keep.set('c', params.get('c'));
   if (params.get('lang')) keep.set('lang', params.get('lang'));
   var suffix = keep.toString() ? ('?' + keep.toString()) : '';
+  // Reception + Intercom are two views inside index.html (toggled via ?view=);
+  // Calendar is its own page. Champions default to the intercom view.
+  function withView(v) {
+    var p = new URLSearchParams(keep.toString());
+    if (v) p.set('view', v);
+    var s = p.toString();
+    return s ? ('?' + s) : '';
+  }
 
   var items = [
-    { key: 'reception', href: base + suffix, es: 'Voz a Recepción', en: 'Voice Reception' },
-    { key: 'intercom', href: base + 'intercom.html' + suffix, es: 'Intercom', en: 'Intercom' },
+    { key: 'reception', href: base + withView('form'), es: 'Voz a Recepción', en: 'Voice Reception' },
+    { key: 'intercom', href: base + withView('intercom'), es: 'Intercom', en: 'Intercom' },
     { key: 'calendar', href: base + 'calendar.html' + suffix, es: 'Calendario', en: 'Calendar' }
   ];
   var active = window.__D2_NAV_ACTIVE || '';
@@ -39,10 +47,21 @@
     nav.appendChild(a);
   });
 
+  // Highlight the intercom tab whenever the full-screen chat is open; otherwise the
+  // page's declared active tab. Re-runs as the body class changes.
+  function applyActive() {
+    var cur = document.body.classList.contains('inbox-open') ? 'intercom' : active;
+    Array.prototype.forEach.call(nav.children, function (a, i) {
+      a.classList.toggle('active', items[i].key === cur);
+    });
+  }
+
   function mount() {
     var target = document.getElementById('d2-nav-mount');
     if (target) target.appendChild(nav);
     else if (document.body) document.body.insertBefore(nav, document.body.firstChild);
+    applyActive();
+    try { new MutationObserver(applyActive).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) { /* ok */ }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
