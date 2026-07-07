@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" role="img" aria-label="RoundShare">
+  <defs>
+    <linearGradient id="rg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f2a9c8"/>
+      <stop offset="1" stop-color="#e07aa8"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="22" fill="#212430"/>
+  <g transform="translate(50,51) scale(0.86) translate(-49,-51)">
+    <path fill="none" stroke="url(#rg)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"
+      d="M30 86 C 20 60, 30 40, 46 34 C 48 30, 50 27, 52 26 L 63 15 C 61 24, 59 30, 57 34 C 64 38, 70 52, 74 64 C 76 70, 73 76, 66 74 C 61 72, 55 64, 51 58 C 49 66, 46 78, 44 88"/>
+    <circle cx="57" cy="40" r="3" fill="url(#rg)"/>
+  </g>
+</svg>
