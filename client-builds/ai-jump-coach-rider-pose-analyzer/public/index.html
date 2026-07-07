@@ -167,19 +167,19 @@
   .prog-label{display:flex;justify-content:space-between;gap:12px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted)}
   .prog-label .pct{color:var(--brass-bright)}
   .login-cta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  /* 2D animated replay */
-  .replay-stage{position:relative;width:100%;border-radius:12px;overflow:hidden;margin-top:10px;
-    background:radial-gradient(120% 90% at 50% 10%,rgba(62,142,107,.14),transparent 60%),linear-gradient(180deg,#12100c,#0c0f0c 62%,#141009);border:1px solid var(--line)}
-  #replayCanvas{display:block;width:100%;height:auto}
-  .replay-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
-  .replay-controls .rp-scrub{flex:1;min-width:140px;accent-color:var(--brass-bright)}
-  .rp-speeds{display:flex;gap:4px}
-  .rp-speeds button{font:inherit;font-size:12px;cursor:pointer;border:1px solid var(--line-2);background:var(--surface-2);color:var(--muted);border-radius:8px;padding:5px 9px}
-  .rp-speeds button.on{background:linear-gradient(180deg,var(--brass-bright),var(--brass));color:#1a140a;border-color:transparent;font-weight:600}
-  .rp-loop{font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
-  .rp-callout{margin-top:12px;min-height:20px;font-size:14px;color:var(--text)}
-  .rp-callout .rp-tip{color:var(--muted)}
-  .rp-callout b{color:var(--brass-bright)}
+  /* guided fault review (on the original video) */
+  .review-bar{margin:0 14px 14px;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line-2);border-radius:12px;padding:12px 14px}
+  .rv-head{display:flex;align-items:center;gap:12px}
+  .rv-nav{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);background:var(--surface-2);color:var(--text);font-size:22px;line-height:1;cursor:pointer;transition:border-color .2s,background .2s}
+  .rv-nav:hover:not(:disabled){border-color:var(--brass);color:var(--brass-bright)}
+  .rv-nav:disabled{opacity:.35;cursor:not-allowed}
+  .rv-info{flex:1;min-width:0;text-align:center}
+  .rv-title{font-size:15px;line-height:1.3}
+  .rv-title b{color:var(--brass-bright)}
+  .rv-title .mono{color:var(--faint);font-size:12px;margin-right:7px}
+  .rv-tip{color:var(--muted);font-size:13px;margin-top:3px}
+  .rv-actions{margin-top:11px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .rv-hint{color:var(--faint);font-size:12px}
 </style>
 </head>
 <body>
@@ -302,6 +302,21 @@
             <span class="k" data-i18n="apex_label">Ápice del salto</span>
             <span class="v mono"><span id="apexVal">—</span> <small data-i18n="second_abbr">s</small></span>
           </div>
+          <!-- Guided fault review ON the original video: stops at each finding -->
+          <div class="review-bar" id="reviewBar" style="display:none">
+            <div class="rv-head">
+              <button id="rvPrev" class="rv-nav" aria-label="prev">‹</button>
+              <div class="rv-info">
+                <div class="rv-title"><span id="rvCount" class="mono"></span> <b id="rvName"></b></div>
+                <div class="rv-tip" id="rvTip"></div>
+              </div>
+              <button id="rvNext" class="rv-nav" aria-label="next">›</button>
+            </div>
+            <div class="rv-actions">
+              <button id="rvAuto" class="jbtn" data-i18n="jc_rv_auto">Reproducir con pausas</button>
+              <span id="rvHint" class="rv-hint" data-i18n="jc_rv_hint">El video se detiene en cada fallo.</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -332,26 +347,6 @@
         <div class="faults" id="faultList"></div>
       </div>
     </div>
-
-    <!-- Repetición animada 2D (cámara lenta, fallos en tiempo y ubicación) -->
-    <section class="panel reveal hidden" id="replayPanel" style="margin-top:18px;padding:16px">
-      <div class="sub-label" style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
-        <span data-i18n="jc_replay_title">Repetición animada</span>
-        <span class="src-tag" id="replaySrc"></span>
-      </div>
-      <p style="color:var(--faint);font-size:12px;margin:0 0 4px" data-i18n="jc_replay_sub">Cámara lenta: el fallo aparece en el momento y el lugar exactos.</p>
-      <div class="replay-stage"><canvas id="replayCanvas" width="800" height="480"></canvas></div>
-      <div class="replay-controls">
-        <button class="play" id="rpPlay" aria-label="play"><svg id="rpPlayIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-        <input id="rpScrub" type="range" min="0" max="1000" value="0" class="rp-scrub" aria-label="scrub">
-        <span id="rpTime" class="time mono">0:00 / 0:00</span>
-        <div class="rp-speeds" id="rpSpeeds">
-          <button data-sp="0.25">0.25x</button><button data-sp="0.5" class="on">0.5x</button><button data-sp="1">1x</button>
-        </div>
-        <label class="rp-loop"><input type="checkbox" id="rpLoop" checked> <span data-i18n="jc_replay_loop">Bucle</span></label>
-      </div>
-      <div id="rpCallout" class="rp-callout"></div>
-    </section>
 
     <!-- Compartir (magic link público) + acciones -->
     <section class="panel reveal" style="margin-top:18px;padding:16px">

@@ -22,7 +22,7 @@ const store = require('./models/analysis');
 const pagesRouter = require('./routes/pages');
 const analysesRouter = require('./routes/analyses');
 
-const VERSION = '0.4.0';
+const VERSION = '0.4.1';
 const SERVICE = 'ai-jump-coach-rider-pose-analyzer';
 
 const app = express();

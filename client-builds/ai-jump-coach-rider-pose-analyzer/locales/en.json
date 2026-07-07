@@ -96,7 +96,6 @@
   "jc_panel_btn": "Go to panel",
   "jc_id_label": "ID",
   "jc_id_copied": "ID copied",
-  "jc_replay_title": "Animated replay",
-  "jc_replay_sub": "Slow motion: each fault appears at the exact time and place.",
-  "jc_replay_loop": "Loop"
+  "jc_rv_auto": "Play with pauses",
+  "jc_rv_hint": "The video stops at each fault."
 }

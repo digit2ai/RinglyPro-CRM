@@ -96,7 +96,6 @@
   "jc_panel_btn": "Ir al panel",
   "jc_id_label": "ID",
   "jc_id_copied": "ID copiado",
-  "jc_replay_title": "Repetición animada",
-  "jc_replay_sub": "Cámara lenta: el fallo aparece en el momento y el lugar exactos.",
-  "jc_replay_loop": "Bucle"
+  "jc_rv_auto": "Reproducir con pausas",
+  "jc_rv_hint": "El video se detiene en cada fallo."
 }

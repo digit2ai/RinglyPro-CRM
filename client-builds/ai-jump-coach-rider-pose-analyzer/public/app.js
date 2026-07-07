@@ -31,7 +31,7 @@
   var dz = $('dz'), dzTitle = $('dzTitle'), dzSub = $('dzSub');
 
   var frames = [], overlayCanvas = null, lastFaults = [], DUR = 0;
-  var manualFaults = [], currentAnalysisId = null, replayApi = null;
+  var manualFaults = [], currentAnalysisId = null;
 
   // ---- fault metadata (self-contained, bilingual) --------------------------
   var FAULT_META = {
@@ -196,6 +196,8 @@
     CONNECTIONS.forEach(function (c) { var a = kp[c[0]], b = kp[c[1]]; if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke(); });
     ctx.fillStyle = 'rgba(95,208,139,0.95)';
     kp.forEach(function (p) { if (!p) return; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 3, 0, Math.PI * 2); ctx.fill(); });
+    // guided review: highlight the active fault on the real footage
+    try { drawFaultCue(ctx, w, h, f); } catch (e) {}
   }
 
   // ---- arc geometry --------------------------------------------------------
@@ -224,7 +226,7 @@
         '<circle class="pin-dot" cx="' + px + '" cy="250" r="7" fill="' + col + '"/>' +
         '<circle cx="' + px + '" cy="250" r="12" fill="none" stroke="' + col + '" stroke-width="1" opacity=".35"/>' +
         '<text x="' + px + '" y="232" text-anchor="middle" fill="' + col + '" font-size="12" font-weight="600" opacity=".85">' + f.timestampSec.toFixed(2) + '</text>';
-      g.addEventListener('click', function () { seekVideo(f.timestampSec); });
+      g.addEventListener('click', function () { review.auto = false; updateAutoBtn(); var gi = review.faults.indexOf(f); if (gi >= 0) gotoFault(gi); else seekVideo(f.timestampSec); });
       g.addEventListener('mouseenter', function () { setActive(i, true); });
       g.addEventListener('mouseleave', function () { setActive(i, false); });
       pins.appendChild(g);
@@ -450,112 +452,112 @@
     };
   }
 
-  // ---- 2D animated slow-motion replay (canvas) -----------------------------
-  var RIDER_CONN = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
-  var HORSE_CONN = [['poll','withers'],['withers','croup'],['withers','fore_l'],['withers','fore_r'],['croup','hind_l'],['croup','hind_r']];
+  // ---- guided fault review ON the original video ---------------------------
+  // The original <video> plays and STOPS at each finding; the fault is drawn on
+  // the real footage at the exact joint/location, with the type + a fix tip.
+  var review = { faults: [], i: -1, auto: false, nextStop: 0 };
+
   function setArcPlayhead(frac) {
     var el = $('arcPlayhead'); if (!el) return;
     if (frac == null) { el.setAttribute('opacity', '0'); return; }
     var x = 40 + Math.max(0, Math.min(1, frac)) * (960 - 40);
     el.setAttribute('x1', x); el.setAttribute('x2', x); el.setAttribute('opacity', '1');
   }
-  function renderReplay(row) {
-    var panel = $('replayPanel'), canvas = $('replayCanvas');
-    if (replayApi && replayApi.stop) { try { replayApi.stop(); } catch (e) {} }
-    replayApi = null;
-    if (!panel || !canvas) return;
-    var pose = row && row.pose_track, horse = row && row.horse_track;
-    if (!pose || !Array.isArray(pose.frames) || pose.frames.length < 2) { panel.classList.add('hidden'); return; }
-    panel.classList.remove('hidden');
-    var src = $('replaySrc'); if (src) src.textContent = (horse && horse.source === 'horse_pose') ? (EN ? 'horse pose' : 'pose del caballo') : (EN ? 'stylized horse' : 'caballo estilizado');
-
-    var idxPos = {}; (pose.idx || []).forEach(function (li, i) { idxPos[li] = i; });
-    var pframes = pose.frames, hframes = (horse && horse.frames) || [], faults = row.faults || [];
-    var totalDur = pframes[pframes.length - 1].t || (row.duration_sec || 1); if (!(totalDur > 0)) totalDur = 1;
-    var apexT = row.apex_sec != null ? row.apex_sec : totalDur / 2;
-    var ctx = canvas.getContext('2d');
-    var ct = 0, playing = false, speed = 0.5, rafId = null, lastTs = null;
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-
-    function P(fr, li) { var pos = idxPos[li]; if (pos == null || !fr.xy) return null; var p = fr.xy[pos]; return p ? { x: p[0], y: p[1] } : null; }
-    function midp(a, b) { if (a && b) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; return a || b || null; }
-    function nearest(arr, t) { if (!arr.length) return null; var best = arr[0], bd = Infinity; for (var i = 0; i < arr.length; i++) { var d = Math.abs(arr[i].t - t); if (d < bd) { bd = d; best = arr[i]; } } return best; }
-    function fit() { var w = canvas.clientWidth || canvas.parentNode.clientWidth || 640; var h = Math.round(w * 0.6); var dpr = window.devicePixelRatio || 1; if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); } canvas.style.height = h + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { w: w, h: h }; }
-    function anchor(type, fr) {
-      if (type === 'gaze_drop') return { p: P(fr, 0) };
-      if (/dropped_rein|hand_dependent|release_short/.test(type)) return { p: midp(P(fr, 15), P(fr, 16)) };
-      if (/heel_up|leg_swing/.test(type)) return { p: midp(P(fr, 27), P(fr, 28)) };
-      if (type === 'load_left') return { p: midp(P(fr, 11), P(fr, 23)) };
-      if (type === 'load_right') return { p: midp(P(fr, 12), P(fr, 24)) };
-      if (type === 'alignment_off') return { line: [P(fr, 0), midp(P(fr, 11), P(fr, 12)), midp(P(fr, 23), P(fr, 24)), midp(P(fr, 27), P(fr, 28))] };
-      if (/left_behind|forward_seat|timing_/.test(type)) return { p: midp(P(fr, 23), P(fr, 24)) };
-      return { p: midp(P(fr, 11), P(fr, 12)) };
+  // Reconstruct in-memory `frames` from a persisted pose_track (re-opened reports
+  // / public share links) so the skeleton overlay + fault anchors work.
+  function framesFromPoseTrack(pt) {
+    if (!pt || !Array.isArray(pt.frames) || !Array.isArray(pt.idx)) return [];
+    return pt.frames.map(function (f) {
+      var kps = new Array(33).fill(null);
+      (f.xy || []).forEach(function (p, i) { var li = pt.idx[i]; if (p && li != null) kps[li] = { x: p[0], y: p[1], z: 0, visibility: 1 }; });
+      return { t: f.t, keypoints: kps };
+    });
+  }
+  function faultAnchor(type, P) {
+    var M = function (a, b) { var x = P(a), y = P(b); return (x && y) ? { x: (x.x + y.x) / 2, y: (x.y + y.y) / 2 } : (x || y || null); };
+    if (type === 'gaze_drop') return { p: P(0) };
+    if (/dropped_rein|hand_dependent|release_short/.test(type)) return { p: M(15, 16) };
+    if (/heel_up|leg_swing/.test(type)) return { p: M(27, 28) };
+    if (type === 'load_left') return { p: M(11, 23) };
+    if (type === 'load_right') return { p: M(12, 24) };
+    if (type === 'alignment_off') return { line: [P(0), M(11, 12), M(23, 24), M(27, 28)] };
+    if (/left_behind|forward_seat|timing_/.test(type)) return { p: M(23, 24) };
+    return { p: M(11, 12) };
+  }
+  function faultColor(type) { var s = faultSev(type); return s === 'high' ? '#CE4C3B' : (s === 'mid' ? '#D98A3E' : '#C9A24B'); }
+  // Draw the active fault highlight onto the video overlay (called by drawOverlay).
+  function drawFaultCue(ctx, w, h, frame) {
+    if (review.i < 0 || review.i >= review.faults.length || !frame || !frame.keypoints) return;
+    var f = review.faults[review.i];
+    var P = function (li) { var k = frame.keypoints[li]; return k ? { x: k.x, y: k.y } : null; };
+    var a = faultAnchor(f.type, P), col = faultColor(f.type);
+    if (a.line) {
+      ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([3, 5]); ctx.beginPath(); var st = false;
+      a.line.forEach(function (p) { if (!p) return; if (!st) { ctx.moveTo(p.x * w, p.y * h); st = true; } else ctx.lineTo(p.x * w, p.y * h); });
+      ctx.stroke(); ctx.setLineDash([]);
+    } else if (a.p) {
+      var x = a.p.x * w, y = a.p.y * h;
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 15, 0, 7); ctx.stroke();
+      ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.arc(x, y, 24, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
+      ctx.font = '600 13px Archivo,system-ui,sans-serif';
+      var lbl = faultName(f.type), tw = ctx.measureText(lbl).width;
+      var lx = Math.min(Math.max(x + 18, 6), w - tw - 12), ly = Math.max(y - 18, 16);
+      ctx.fillStyle = 'rgba(12,16,12,.82)'; ctx.fillRect(lx - 6, ly - 14, tw + 12, 20);
+      ctx.fillStyle = col; ctx.fillText(lbl, lx, ly);
     }
-    function colFor(type) { var s = faultSev(type); return s === 'high' ? '#CE4C3B' : (s === 'mid' ? '#D98A3E' : '#C9A24B'); }
-
-    function draw() {
-      var d = fit(), w = d.w, h = d.h; ctx.clearRect(0, 0, w, h);
-      var gY = h * 0.9;
-      ctx.strokeStyle = 'rgba(236,230,218,.14)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, gY); ctx.lineTo(w, gY); ctx.stroke();
-      var rf = nearest(pframes, ct);
-      // fence marker at apex x
-      var apexFr = nearest(pframes, apexT); var apexHip = apexFr ? midp(P(apexFr, 23), P(apexFr, 24)) : null;
-      if (apexHip) { var fx = apexHip.x * w; ctx.strokeStyle = 'rgba(201,162,75,.4)'; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(fx, gY); ctx.lineTo(fx, gY - h * 0.28); ctx.stroke(); ctx.setLineDash([]); }
-      // horse
-      var hf = nearest(hframes, ct);
-      if (hf && hf.pts) {
-        ctx.strokeStyle = 'rgba(152,161,153,.85)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-        HORSE_CONN.forEach(function (c) { var a = hf.pts[c[0]], b = hf.pts[c[1]]; if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a[0] * w, a[1] * h); ctx.lineTo(b[0] * w, b[1] * h); ctx.stroke(); });
-        var poll = hf.pts.poll; if (poll) { ctx.fillStyle = 'rgba(152,161,153,.9)'; ctx.beginPath(); ctx.arc(poll[0] * w, poll[1] * h, 6, 0, 7); ctx.fill(); }
-      }
-      // rider skeleton
-      if (rf) {
-        ctx.strokeStyle = 'rgba(230,197,114,.95)'; ctx.lineWidth = 3;
-        RIDER_CONN.forEach(function (c) { var a = P(rf, c[0]), b = P(rf, c[1]); if (!a || !b) return; ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke(); });
-        ctx.fillStyle = 'rgba(95,208,139,.95)';
-        (pose.idx || []).forEach(function (li) { var p = P(rf, li); if (!p) return; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, 3.2, 0, 7); ctx.fill(); });
-      }
-      // fault call-outs near ct
-      var active = null, win = 1.2;
-      faults.forEach(function (f) {
-        var dt = Math.abs(ct - (f.timestampSec || 0)); if (dt > win) return;
-        var a = anchor(f.type, rf || {}), alpha = 1 - dt / win, col = colFor(f.type);
-        if (a.line) {
-          ctx.globalAlpha = alpha * 0.9; ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([2, 4]); ctx.beginPath(); var st = false;
-          a.line.forEach(function (p) { if (!p) return; if (!st) { ctx.moveTo(p.x * w, p.y * h); st = true; } else ctx.lineTo(p.x * w, p.y * h); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
-        } else if (a.p) {
-          var x = a.p.x * w, y = a.p.y * h, pr = 8 + 6 * Math.sin((1 - dt / win) * Math.PI);
-          ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, pr, 0, 7); ctx.stroke();
-          ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill();
-          ctx.globalAlpha = Math.min(1, alpha + 0.2); ctx.font = '600 12px Archivo,system-ui,sans-serif';
-          var lbl = faultName(f.type), tw = ctx.measureText(lbl).width, lx = Math.min(Math.max(x + 10, 4), w - tw - 10), ly = Math.max(y - 14, 14);
-          ctx.fillStyle = 'rgba(12,16,12,.82)'; ctx.fillRect(lx - 5, ly - 13, tw + 10, 18); ctx.fillStyle = col; ctx.fillText(lbl, lx, ly); ctx.globalAlpha = 1;
-        }
-        if (!active || dt < active.dt) active = { f: f, dt: dt };
-      });
-      // callout tip + fault-card highlight + arc playhead + controls
-      var co = $('rpCallout');
-      if (co) { if (active) { co.innerHTML = '<b>' + esc(faultName(active.f.type)) + '</b> · <span class="rp-tip">' + esc(faultFix(active.f.type)) + '</span>'; } else { co.innerHTML = ''; } }
-      var ai = active ? faults.indexOf(active.f) : -1;
-      faults.forEach(function (_, i) { setActive(i, i === ai); });
-      setArcPlayhead(ct / totalDur);
-      var scrub = $('rpScrub'); if (scrub && document.activeElement !== scrub) scrub.value = Math.round(ct / totalDur * 1000);
-      var te = $('rpTime'); if (te) te.textContent = fmt(ct) + ' / ' + fmt(totalDur);
-    }
-    function setPlayIcon() { var i = $('rpPlayIcon'); if (i) i.innerHTML = playing ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>'; }
-    function tick(ts) { if (!playing) { rafId = null; return; } if (lastTs == null) lastTs = ts; var dt = (ts - lastTs) / 1000; lastTs = ts; ct += dt * speed; if (ct >= totalDur) { if ($('rpLoop') && $('rpLoop').checked) ct = 0; else { ct = totalDur; playing = false; setPlayIcon(); } } draw(); if (playing) rafId = requestAnimationFrame(tick); }
-    function play() { if (playing) return; playing = true; lastTs = null; setPlayIcon(); rafId = requestAnimationFrame(tick); }
-    function pause() { playing = false; setPlayIcon(); if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
-
-    // bind controls (overwrite handlers; idempotent across re-renders)
-    var pb = $('rpPlay'); if (pb) pb.onclick = function () { if (playing) pause(); else { if (ct >= totalDur) ct = 0; play(); } };
-    var sc = $('rpScrub'); if (sc) sc.oninput = function () { ct = (parseInt(sc.value, 10) / 1000) * totalDur; draw(); };
-    var sp = $('rpSpeeds'); if (sp) { [].forEach.call(sp.querySelectorAll('button'), function (b) { b.onclick = function () { speed = parseFloat(b.getAttribute('data-sp')) || 0.5; [].forEach.call(sp.querySelectorAll('button'), function (x) { x.classList.remove('on'); }); b.classList.add('on'); }; }); }
-    window.addEventListener('resize', draw);
-
-    replayApi = { seek: function (t) { ct = Math.max(0, Math.min(totalDur, t || 0)); draw(); }, stop: function () { pause(); setArcPlayhead(null); } };
-    draw();
-    if (!reduce) play(); else setPlayIcon();
+  }
+  function updateAutoBtn() {
+    var b = $('rvAuto'); if (!b) return;
+    b.textContent = review.auto ? (EN ? 'Continue' : 'Continuar') : (I18N.jc_rv_auto || (EN ? 'Play with pauses' : 'Reproducir con pausas'));
+  }
+  function updateReviewUI() {
+    var bar = $('reviewBar'); if (!bar) return;
+    var n = review.faults.length;
+    if (!n) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+    var f = review.i >= 0 ? review.faults[review.i] : null;
+    var cnt = $('rvCount'), nm = $('rvName'), tip = $('rvTip');
+    if (cnt) cnt.textContent = (review.i >= 0 ? (review.i + 1) : '–') + ' / ' + n;
+    if (nm) nm.textContent = f ? faultName(f.type) : (EN ? 'Step through each fault on the video' : 'Recorre cada fallo en el video');
+    if (tip) tip.textContent = f ? faultFix(f.type) : '';
+    var prev = $('rvPrev'), next = $('rvNext');
+    if (prev) prev.disabled = review.i <= 0;
+    if (next) next.disabled = review.i >= n - 1;
+    review.faults.forEach(function (_, i) { setActive(i, i === review.i); });
+  }
+  function gotoFault(i) {
+    if (i < 0 || i >= review.faults.length) return;
+    review.i = i;
+    var t = review.faults[i].timestampSec || 0;
+    try { player.pause(); } catch (e) {}
+    if (playIcon) playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    var onSeek = function () { player.removeEventListener('seeked', onSeek); drawOverlay(); };
+    player.addEventListener('seeked', onSeek);
+    try { player.currentTime = t; } catch (e) {}
+    var d = player.duration || DUR || 1; setArcPlayhead(d ? t / d : 0);
+    updateReviewUI();
+    drawOverlay();
+  }
+  function startAuto() {
+    if (!review.faults.length) return;
+    review.auto = true;
+    review.nextStop = review.faults.length;
+    for (var i = 0; i < review.faults.length; i++) { if ((review.faults[i].timestampSec || 0) > player.currentTime + 0.05) { review.nextStop = i; break; } }
+    updateAutoBtn();
+    try { player.play(); } catch (e) {}
+  }
+  function setupReview(row) {
+    review = { faults: [], i: -1, auto: false, nextStop: 0 };
+    var bar = $('reviewBar');
+    // rider frames: in-memory (fresh) or reconstructed from the persisted track.
+    if ((!frames || !frames.length) && row && row.pose_track) frames = framesFromPoseTrack(row.pose_track);
+    review.faults = (row && Array.isArray(row.faults)) ? row.faults.slice().sort(function (a, b) { return (a.timestampSec || 0) - (b.timestampSec || 0); }) : [];
+    if (!review.faults.length) { if (bar) bar.style.display = 'none'; setArcPlayhead(null); return; }
+    updateAutoBtn(); updateReviewUI();
+    var prev = $('rvPrev'); if (prev) prev.onclick = function () { review.auto = false; updateAutoBtn(); gotoFault(review.i <= 0 ? 0 : review.i - 1); };
+    var next = $('rvNext'); if (next) next.onclick = function () { review.auto = false; updateAutoBtn(); gotoFault(review.i < 0 ? 0 : Math.min(review.i + 1, review.faults.length - 1)); };
+    var auto = $('rvAuto'); if (auto) auto.onclick = function () { if (review.auto) { try { player.play(); } catch (e) {} } else { startAuto(); } };
   }
 
   function renderResults(row) {
@@ -568,7 +570,7 @@
     DUR = (row.duration_sec && row.duration_sec > 0) ? row.duration_sec : (player.duration || DUR || 1);
     resultsEl.classList.remove('hidden');
     ensureOverlay();
-    try { renderReplay(row); } catch (e) {}
+    try { setupReview(row); } catch (e) {}
 
     if (faultCount) faultCount.textContent = lastFaults.length + ' ' + (EN ? (lastFaults.length === 1 ? 'fault detected' : 'faults detected') : (lastFaults.length === 1 ? 'fallo detectado' : 'fallos detectados'));
     if (apexVal) apexVal.textContent = (row.apex_sec != null ? row.apex_sec.toFixed(2) : '—');
@@ -591,7 +593,7 @@
         '<div class="fault-time">' + f.timestampSec.toFixed(2) + '<small>' + (EN ? 'seconds' : 'segundos') + '</small></div>' +
         '<div class="fault-meta"><span class="sev-tag">' + sevLabel(sev) + '</span>' +
         '<span class="conf"><span class="conf-bar"><span class="conf-fill" style="width:' + pct + '%"></span></span><span class="conf-num">' + pct + '% ' + t('confidence') + '</span></span></div>';
-      card.addEventListener('click', function () { seekVideo(f.timestampSec); });
+      card.addEventListener('click', function () { review.auto = false; updateAutoBtn(); var gi = review.faults.indexOf(f); if (gi >= 0) gotoFault(gi); else seekVideo(f.timestampSec); });
       card.addEventListener('mouseenter', function () { setActive(i, true); });
       card.addEventListener('mouseleave', function () { setActive(i, false); });
       faultList.appendChild(card);
@@ -599,7 +601,7 @@
   }
 
   // ---- real video controls -------------------------------------------------
-  function seekVideo(tt) { try { player.currentTime = tt; player.play().catch(function () {}); } catch (e) {} if (replayApi) { try { replayApi.seek(tt); } catch (e) {} } }
+  function seekVideo(tt) { try { player.currentTime = tt; player.play().catch(function () {}); } catch (e) {} }
   var PLAY = '<path d="M8 5v14l11-7z"/>', PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
   if (playBtn) playBtn.addEventListener('click', function () { if (player.paused) player.play(); else player.pause(); });
   if (player) {
@@ -608,6 +610,17 @@
     player.addEventListener('timeupdate', function () {
       var d = player.duration || DUR || 1; if (played) played.style.width = (player.currentTime / d * 100) + '%';
       if (timeEl) timeEl.textContent = fmt(player.currentTime) + ' / ' + fmt(d);
+      setArcPlayhead(player.currentTime / d);
+      // auto guided review: pause the video at each finding
+      if (review.auto && review.nextStop < review.faults.length) {
+        var ns = review.faults[review.nextStop];
+        if (player.currentTime + 0.02 >= (ns.timestampSec || 0)) {
+          var idx = review.nextStop; review.nextStop++;
+          gotoFault(idx);
+          if (review.nextStop >= review.faults.length) review.auto = false;
+          updateAutoBtn();
+        }
+      }
       drawOverlay();
     });
     player.addEventListener('loadedmetadata', function () { DUR = player.duration || DUR; drawOverlay(); });
@@ -725,7 +738,7 @@
   function bindShare() {
     var c = $('shareCopy'); if (c) c.addEventListener('click', function () { if (currentShareUrl) copyText(currentShareUrl); });
     var o = $('shareOpen'); if (o) o.addEventListener('click', function () { if (currentShareUrl) window.open(currentShareUrl, '_blank', 'noopener'); });
-    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; manualFaults = []; renderMfChips(); if (replayApi && replayApi.stop) { try { replayApi.stop(); } catch (e) {} } try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    var n = $('newJump'); if (n) n.addEventListener('click', function () { resultsEl.classList.add('hidden'); if (fileInput) fileInput.value = ''; manualFaults = []; renderMfChips(); review = { faults: [], i: -1, auto: false, nextStop: 0 }; setArcPlayhead(null); try { history.replaceState(null, '', BASE + '?lang=' + LANG); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); });
     var g = $('goJumpHistory'); if (g) g.addEventListener('click', function () { loadHistory(); var h = $('jumpHistory'); if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     var r = $('jhRefresh'); if (r) r.addEventListener('click', loadHistory);
   }
