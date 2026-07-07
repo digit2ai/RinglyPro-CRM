@@ -70,4 +70,28 @@ router.get('/health', (req, res) => {
   });
 });
 
+// GET /voice/relay/transcripts — recent calls (most recent first)
+// GET /voice/relay/transcripts/:callSid — full turn-by-turn transcript of one call
+// NOTE: unauthenticated for the POC (owner's test line). Gate before real customer traffic.
+const transcript = require('../services/voiceTranscript');
+
+router.get('/transcripts', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 25, 100);
+    const calls = await transcript.recentCalls(limit);
+    res.json({ ok: true, count: calls.length, calls });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+router.get('/transcripts/:callSid', async (req, res) => {
+  try {
+    const turns = await transcript.getTranscript(req.params.callSid);
+    res.json({ ok: true, call_sid: req.params.callSid, turns });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 module.exports = router;

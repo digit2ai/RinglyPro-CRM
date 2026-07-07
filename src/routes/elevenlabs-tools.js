@@ -134,8 +134,10 @@ router.post('/', async (req, res) => {
         result = await handleBookAppointment(params);
         break;
       case 'find_appointment':
-      case 'identify_caller':
         result = await handleFindAppointment(params);
+        break;
+      case 'identify_caller':
+        result = await handleIdentifyCaller(params);
         break;
       case 'cancel_appointment':
         result = await handleCancelAppointment(params);
@@ -1954,6 +1956,41 @@ async function handleFindAppointmentD2AI(phone) {
     };
   } catch (error) {
     logger.error('[ElevenLabs Tools] [D2AI] find_appointment error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// identify_caller — recognize a caller by phone (name from ANY appointment, past or future)
+// plus their upcoming appointments. Used at call setup to greet returning callers by name.
+async function handleIdentifyCaller(params) {
+  const { client_id } = params;
+  const phone = params.customer_phone || params.phone;
+  if (!client_id || !phone) return { success: false, error: 'Missing client_id or customer_phone' };
+  const last10 = String(phone).replace(/\D/g, '').slice(-10);
+  if (!last10) return { success: true, found: false, customer_name: null, appointments: [] };
+  try {
+    if (parseInt(client_id, 10) === D2AI_CLIENT_ID) {
+      const db = d2Sequelize || sequelize;
+      const nameRow = await db.query(
+        `SELECT title FROM d2_calendar_events
+         WHERE workspace_id = 1 AND event_type = 'call'
+           AND regexp_replace(description, '[^0-9]', '', 'g') LIKE :like
+         ORDER BY start_time DESC LIMIT 1`,
+        { replacements: { like: `%${last10}` }, type: QueryTypes.SELECT });
+      const name = nameRow[0] ? String(nameRow[0].title || '').replace(/^Call:\s*/, '') : null;
+      const up = await handleFindAppointmentD2AI(phone);
+      return { success: true, found: !!name, customer_name: name, appointments: (up && up.appointments) || [] };
+    }
+    const nameRow = await sequelize.query(
+      `SELECT customer_name FROM appointments
+       WHERE client_id = :cid AND RIGHT(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = :last10
+       ORDER BY appointment_date DESC, appointment_time DESC LIMIT 1`,
+      { replacements: { cid: client_id, last10 }, type: QueryTypes.SELECT });
+    const name = nameRow[0] ? nameRow[0].customer_name : null;
+    const up = await handleFindAppointment({ client_id, customer_phone: phone });
+    return { success: true, found: !!name, customer_name: name, appointments: (up && up.appointments) || [] };
+  } catch (error) {
+    logger.error('[ElevenLabs Tools] identify_caller error:', error);
     return { success: false, error: error.message };
   }
 }

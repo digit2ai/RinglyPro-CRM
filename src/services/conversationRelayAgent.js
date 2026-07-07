@@ -16,6 +16,8 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+let transcript = { log: () => {} };
+try { transcript = require('./voiceTranscript'); } catch (e) { /* logging optional */ }
 
 // Haiku 4.5 — cheapest capable tier, good enough for scripted booking dialog.
 const MODEL = process.env.VOICE_RELAY_MODEL || 'claude-haiku-4-5-20251001';
@@ -159,6 +161,16 @@ class RelaySession {
     this.transferred = false;
   }
 
+  // Fire-and-forget transcript line for this call.
+  logTurn(role, text, toolName) {
+    transcript.log({
+      callSid: this.ctx.callSid,
+      clientId: this.clientId,
+      from: this.from,
+      role, text, toolName
+    });
+  }
+
   /**
    * First thing the caller hears — personalized if we recognized their number.
    * Records it as an assistant turn so the model has continuity.
@@ -169,6 +181,7 @@ class RelaySession {
       ? `Hi ${this.ctx.callerName}, welcome back to ${b}. How can I help you today?`
       : `Hi, thanks for calling ${b}. I can book, reschedule, or cancel an appointment, take a message, or connect you with someone. How can I help?`;
     this.messages.push({ role: 'assistant', content: text });
+    this.logTurn('agent', text);
     return text;
   }
 
@@ -178,6 +191,7 @@ class RelaySession {
   async handlePrompt(userText) {
     if (!userText || !userText.trim()) return null;
     this.messages.push({ role: 'user', content: userText.trim() });
+    this.logTurn('caller', userText.trim());
 
     let guard = 0;
     while (guard++ < 6) {
@@ -202,6 +216,7 @@ class RelaySession {
         for (const block of resp.content) {
           if (block.type === 'tool_use') {
             const out = await this.execTool(block.name, block.input || {});
+            this.logTurn('tool', `in=${JSON.stringify(block.input || {})} out=${JSON.stringify(out)}`, block.name);
             toolResults.push({
               type: 'tool_result',
               tool_use_id: block.id,
@@ -218,7 +233,9 @@ class RelaySession {
         .map(b => b.text)
         .join(' ')
         .trim();
-      return text || 'Could you repeat that for me?';
+      const reply = text || 'Could you repeat that for me?';
+      this.logTurn('agent', reply);
+      return reply;
     }
     return 'Let me get someone to help you with that.';
   }
@@ -297,7 +314,8 @@ async function resolveClientContext({ to, from, callSid }) {
   }
   const transferNumber = (info && info.transfer_number) || process.env.VOICE_RELAY_TRANSFER_NUMBER || null;
 
-  // Caller identity: recognize returning customers by their number + pull their upcoming appts.
+  // Caller identity: recognize returning customers by number (name from ANY past/future
+  // appointment) + pull their upcoming appts.
   let callerName = null;
   let upcoming = [];
   if (clientId && from) {
@@ -305,7 +323,7 @@ async function resolveClientContext({ to, from, callSid }) {
       const r2 = await fetch(toolsEndpoint(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool_name: 'find_appointment', client_id: clientId, customer_phone: from })
+        body: JSON.stringify({ tool_name: 'identify_caller', client_id: clientId, customer_phone: from })
       });
       const found = await r2.json();
       if (found && found.success) {
