@@ -21,7 +21,8 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     body{background:var(--bg);color:var(--txt);margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-    .app{display:flex;height:100vh;height:100dvh;overflow:hidden}
+    .app{display:flex;height:calc(100vh - 60px);height:calc(100dvh - 60px);overflow:hidden}
+    .d2-topnav{margin:8px auto 10px !important}
 
     /* ---------- Sidebar (chat list) ---------- */
     .sidebar{width:34%;min-width:300px;max-width:440px;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line)}
@@ -153,6 +154,8 @@
   </style>
 </head>
 <body>
+  <script>window.__VTI_BASE = '/voice-to-intake-transcript-direct-pipeli/'; window.__D2_NAV_ACTIVE = 'intercom';</script>
+  <div id="d2-nav-mount"></div>
   <div class="app">
     <!-- Chat list -->
     <aside class="sidebar">
@@ -708,5 +711,6 @@
     })();
   })();
   </script>
+  <script src="/voice-to-intake-transcript-direct-pipeli/nav.js"></script>
 </body>
 </html>

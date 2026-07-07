@@ -11,7 +11,7 @@
   <link rel="manifest" href="{{MANIFEST_HREF}}" />
   <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
   <link rel="apple-touch-icon" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
-  <script>window.__VTI_BASE = '{{BASE}}';</script>
+  <script>window.__VTI_BASE = '{{BASE}}'; window.__D2_NAV_ACTIVE = 'reception';</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --bg:#0b0f1a; --bg2:#0d1320; --card:#141b29; --line:#243049; --txt:#e9eef7; --mut:#8a98b0; --acc:#6a4bff; --green:#36d399; }
@@ -87,6 +87,7 @@
 </head>
 <body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
   <main class="w-full max-w-2xl">
+    <div id="d2-nav-mount"></div>
     <div class="top-bar flex justify-between items-center mb-6">
       <button id="inboxBtn" class="relative text-sm px-3 py-1 rounded-lg border" style="border-color:var(--line);color:var(--txt)">
         <span id="inboxTabLabel">{{INBOX_TAB}}</span>
@@ -229,5 +230,6 @@
 
   <script src="{{BASE}}i18n.js"></script>
   <script src="{{BASE}}app.js"></script>
+  <script src="{{BASE}}nav.js"></script>
 </body>
 </html>

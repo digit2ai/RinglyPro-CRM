@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digit2Ai — Agenda / Calendar</title>
+  <link rel="icon" type="image/png" href="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" />
+  <script>
+    window.__VTI_BASE = '/voice-to-intake-transcript-direct-pipeli/';
+    window.__D2_NAV_ACTIVE = 'calendar';
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg:#0b0f1a; --bg2:#0d1320; --card:#141b29; --line:#243049; --txt:#e9eef7; --mut:#8a98b0; --acc:#6a4bff; --green:#36d399; }
+    body { background:var(--bg); color:var(--txt); }
+    .chip { background:var(--bg2); border:1px solid var(--line); color:var(--txt); border-radius:12px; padding:10px 12px; cursor:pointer; transition:all .12s; }
+    .chip:hover { border-color:var(--acc); }
+    .chip.sel { background:linear-gradient(135deg,#6a4bff,#4b32c9); border-color:var(--acc); color:#fff; }
+    .slot { background:var(--bg2); border:1px solid var(--line); color:var(--txt); border-radius:10px; padding:9px 6px; cursor:pointer; font-variant-numeric:tabular-nums; transition:all .12s; text-align:center; }
+    .slot:hover { border-color:var(--acc); }
+    .slot.sel { background:var(--green); border-color:var(--green); color:#06281c; font-weight:700; }
+    input, textarea { background:var(--bg2); border:1px solid var(--line); color:var(--txt); }
+    input::placeholder, textarea::placeholder { color:var(--mut); }
+    .spin { width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto }
+    @keyframes spin { to { transform:rotate(360deg) } }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+  <main class="w-full max-w-2xl mx-auto">
+    <div id="d2-nav-mount"></div>
+
+    <div class="flex justify-center mb-4">
+      <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png" alt="Digit2Ai" class="w-20 h-20 rounded-2xl" />
+    </div>
+    <h1 id="h1" class="text-2xl font-bold mb-1 text-center"></h1>
+    <p id="sub" class="mb-6 text-center text-sm" style="color:var(--mut)"></p>
+
+    <div class="rounded-2xl p-5" style="background:var(--card);border:1px solid var(--line)">
+      <!-- Step 1: date -->
+      <div id="step1">
+        <div id="dateLabel" class="text-sm font-semibold mb-2" style="color:var(--mut)"></div>
+        <div id="loading" class="py-6"><div class="spin"></div></div>
+        <div id="dates" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+        <div id="noSlots" class="text-sm py-4 text-center" style="display:none;color:var(--mut)"></div>
+      </div>
+
+      <!-- Step 2: time -->
+      <div id="step2" style="display:none" class="mt-5 pt-4" >
+        <div id="timeLabel" class="text-sm font-semibold mb-2" style="color:var(--mut)"></div>
+        <div id="times" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+      </div>
+
+      <!-- Step 3: prospect details -->
+      <div id="step3" style="display:none" class="mt-5 pt-4" style="border-top:1px solid var(--line)">
+        <div id="pickedLabel" class="text-sm font-semibold mb-3" style="color:var(--green)"></div>
+        <input id="pName" class="w-full rounded-xl p-3 mb-2 text-sm" />
+        <input id="pPhone" class="w-full rounded-xl p-3 mb-2 text-sm" inputmode="tel" />
+        <input id="pEmail" class="w-full rounded-xl p-3 mb-2 text-sm" inputmode="email" />
+        <textarea id="pNote" rows="2" class="w-full rounded-xl p-3 mb-3 text-sm"></textarea>
+        <button id="bookBtn" class="w-full rounded-xl py-3 font-semibold" style="background:var(--green);color:#06281c"></button>
+        <div id="result" class="text-sm mt-3" style="min-height:18px"></div>
+      </div>
+    </div>
+
+    <p class="text-xs mt-4 text-center" style="color:var(--mut)"><span id="foot"></span></p>
+  </main>
+
+  <script src="/voice-to-intake-transcript-direct-pipeli/nav.js"></script>
+  <script>
+  (function () {
+    var CLIENT_ID = 15; // Manuel's (owner) Digit2Ai calendar
+    var API = '/api/elevenlabs/tools';
+    var params = new URLSearchParams(location.search);
+    var lang = params.get('lang') === 'en' ? 'en' : 'es';
+    var champ = params.get('c') || '';
+
+    var T = {
+      es: {
+        h1: 'Agenda una cita', sub: 'Elige un día y una hora disponibles para agendar a tu prospecto.',
+        dateLabel: '1. Elige el día', timeLabel: '2. Elige la hora',
+        noSlots: 'No hay horarios disponibles en este momento.',
+        name: 'Nombre del prospecto', phone: 'Teléfono del prospecto', email: 'Correo (opcional)',
+        note: 'Nota (opcional)', book: 'Agendar cita', booking: 'Agendando…',
+        picked: 'Seleccionado: ', needName: 'Por favor ingresa el nombre y el teléfono del prospecto.',
+        ok: '¡Cita agendada! ', okSub: ' Te enviaremos la confirmación.', err: 'No se pudo agendar: ',
+        foot: 'Agendas directamente en el calendario de Digit2Ai.'
+      },
+      en: {
+        h1: 'Book an appointment', sub: 'Pick an available day and time to schedule your prospect.',
+        dateLabel: '1. Pick the day', timeLabel: '2. Pick the time',
+        noSlots: 'No available times right now.',
+        name: 'Prospect name', phone: 'Prospect phone', email: 'Email (optional)',
+        note: 'Note (optional)', book: 'Book appointment', booking: 'Booking…',
+        picked: 'Selected: ', needName: 'Please enter the prospect name and phone.',
+        ok: 'Appointment booked! ', okSub: ' A confirmation will follow.', err: 'Could not book: ',
+        foot: 'You are booking directly on the Digit2Ai calendar.'
+      }
+    }[lang];
+
+    document.getElementById('h1').textContent = T.h1;
+    document.getElementById('sub').textContent = T.sub;
+    document.getElementById('dateLabel').textContent = T.dateLabel;
+    document.getElementById('timeLabel').textContent = T.timeLabel;
+    document.getElementById('noSlots').textContent = T.noSlots;
+    document.getElementById('pName').placeholder = T.name;
+    document.getElementById('pPhone').placeholder = T.phone;
+    document.getElementById('pEmail').placeholder = T.email;
+    document.getElementById('pNote').placeholder = T.note;
+    document.getElementById('bookBtn').textContent = T.book;
+    document.getElementById('foot').textContent = T.foot;
+
+    var byDate = {};        // date -> [{time, label}]
+    var dateOrder = [];     // preserves order
+    var dateLabels = {};    // date -> human label
+    var picked = { date: null, time: null };
+
+    function api(body) {
+      return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json(); });
+    }
+
+    function fmtDate(iso) {
+      // iso = YYYY-MM-DD -> "Mon, Jul 7" (formatted in UTC to match the slot's own date)
+      var d = new Date(iso + 'T12:00:00Z');
+      return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'es-ES', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' }).format(d);
+    }
+    function fmtTime(hhmm) {
+      var p = hhmm.split(':'); var h = parseInt(p[0], 10); var m = p[1];
+      if (lang === 'en') { var ap = h >= 12 ? 'PM' : 'AM'; var h12 = ((h + 11) % 12) + 1; return h12 + ':' + m + ' ' + ap; }
+      return hhmm;
+    }
+
+    function loadSlots() {
+      api({ tool_name: 'check_availability', client_id: CLIENT_ID, days_ahead: 14 }).then(function (res) {
+        document.getElementById('loading').style.display = 'none';
+        var slots = (res && res.slots) || [];
+        if (!slots.length) { document.getElementById('noSlots').style.display = 'block'; return; }
+        slots.forEach(function (s) {
+          if (!byDate[s.date]) { byDate[s.date] = []; dateOrder.push(s.date); dateLabels[s.date] = s.displayDate || fmtDate(s.date); }
+          byDate[s.date].push({ time: s.time, label: s.displayTime || fmtTime(s.time) });
+        });
+        renderDates();
+      }).catch(function () {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('noSlots').style.display = 'block';
+      });
+    }
+
+    function renderDates() {
+      var wrap = document.getElementById('dates');
+      wrap.innerHTML = '';
+      dateOrder.forEach(function (d) {
+        var el = document.createElement('div');
+        el.className = 'chip text-sm text-center' + (picked.date === d ? ' sel' : '');
+        el.textContent = dateLabels[d];
+        el.onclick = function () { picked.date = d; picked.time = null; renderDates(); renderTimes(); };
+        wrap.appendChild(el);
+      });
+    }
+
+    function renderTimes() {
+      var step2 = document.getElementById('step2');
+      var wrap = document.getElementById('times');
+      if (!picked.date) { step2.style.display = 'none'; return; }
+      step2.style.display = 'block';
+      wrap.innerHTML = '';
+      byDate[picked.date].forEach(function (t) {
+        var el = document.createElement('div');
+        el.className = 'slot text-sm' + (picked.time === t.time ? ' sel' : '');
+        el.textContent = t.label;
+        el.onclick = function () { picked.time = t.time; renderTimes(); showForm(t.label); };
+        wrap.appendChild(el);
+      });
+    }
+
+    function showForm(timeLabel) {
+      document.getElementById('step3').style.display = 'block';
+      document.getElementById('pickedLabel').textContent = T.picked + dateLabels[picked.date] + ' · ' + timeLabel;
+      document.getElementById('result').textContent = '';
+      document.getElementById('step3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('bookBtn').addEventListener('click', function () {
+      var name = document.getElementById('pName').value.trim();
+      var phone = document.getElementById('pPhone').value.trim();
+      var email = document.getElementById('pEmail').value.trim();
+      var note = document.getElementById('pNote').value.trim();
+      var result = document.getElementById('result');
+      if (!name || !phone || !picked.date || !picked.time) { result.style.color = '#f87171'; result.textContent = T.needName; return; }
+      var btn = this; btn.disabled = true; btn.textContent = T.booking;
+      var purpose = 'Booked via champion' + (champ ? ' ' + champ : '') + ' for prospect' + (note ? (': ' + note) : '');
+      api({
+        tool_name: 'book_appointment', client_id: CLIENT_ID,
+        customer_name: name, customer_phone: phone, customer_email: email || undefined,
+        appointment_date: picked.date, appointment_time: picked.time, purpose: purpose
+      }).then(function (res) {
+        btn.disabled = false; btn.textContent = T.book;
+        if (res && res.success) {
+          result.style.color = 'var(--green)';
+          result.textContent = T.ok + dateLabels[picked.date] + ' · ' + (byDate[picked.date].find(function (x) { return x.time === picked.time; }) || {}).label + '.' + T.okSub;
+          document.getElementById('pName').value = ''; document.getElementById('pPhone').value = '';
+          document.getElementById('pEmail').value = ''; document.getElementById('pNote').value = '';
+          // refresh availability so the booked slot disappears
+          byDate = {}; dateOrder = []; dateLabels = {}; picked = { date: null, time: null };
+          document.getElementById('step2').style.display = 'none'; document.getElementById('step3').style.display = 'none';
+          document.getElementById('loading').style.display = 'block';
+          setTimeout(loadSlots, 400);
+        } else {
+          result.style.color = '#f87171';
+          result.textContent = T.err + ((res && res.error) || 'unknown');
+        }
+      }).catch(function (e) {
+        btn.disabled = false; btn.textContent = T.book;
+        result.style.color = '#f87171'; result.textContent = T.err + e.message;
+      });
+    });
+
+    loadSlots();
+  })();
+  </script>
+</body>
+</html>
