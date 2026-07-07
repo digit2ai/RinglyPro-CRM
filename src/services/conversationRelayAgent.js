@@ -150,6 +150,27 @@ function buildSystemPrompt(ctx) {
   ].filter(Boolean).join('\n');
 }
 
+// Maps a "the action is done" claim in the agent's speech to the tool that must have
+// succeeded for that claim to be true. Used by the anti-hallucination guardrail.
+const ACTION_CLAIMS = [
+  { tool: 'book_appointment', label: 'booking',
+    re: /\b(booked|reserved|you'?re all set|your appointment (is|'?s) (set|booked|confirmed|scheduled)|scheduled you|got you (in|down) for)\b/i },
+  { tool: 'reschedule_appointment', label: 'reschedule',
+    re: /\b(rescheduled|moved your appointment|changed your appointment|moved you to)\b/i },
+  { tool: 'cancel_appointment', label: 'cancellation',
+    re: /\b(cancell?ed|called off)\b/i },
+  { tool: 'take_message', label: 'message',
+    re: /\b(passed (it|this|that|your message|along)|took (down )?your message|message (has been|'?s been|is|was) (saved|passed|recorded|noted|taken|delivered)|i'?ve (got|taken|recorded|saved|noted) (your|the) message|i'?ll (pass|make sure|let them know)|make sure (they|someone) (gets?|see))\b/i }
+];
+
+function detectUnbackedClaim(text, succeeded) {
+  if (!text) return null;
+  for (const c of ACTION_CLAIMS) {
+    if (c.re.test(text) && !succeeded.has(c.tool)) return c;
+  }
+  return null;
+}
+
 class RelaySession {
   constructor(ctx) {
     this.ctx = ctx;                 // { clientId, businessName, from, to, callSid, transferNumber, callerName, ... }
@@ -193,8 +214,10 @@ class RelaySession {
     this.messages.push({ role: 'user', content: userText.trim() });
     this.logTurn('caller', userText.trim());
 
+    const succeeded = new Set(); // tools that returned success THIS turn
+    let corrections = 0;
     let guard = 0;
-    while (guard++ < 6) {
+    while (guard++ < 9) {
       let resp;
       try {
         resp = await anthropic.messages.create({
@@ -216,6 +239,7 @@ class RelaySession {
         for (const block of resp.content) {
           if (block.type === 'tool_use') {
             const out = await this.execTool(block.name, block.input || {});
+            if (out && out.success) succeeded.add(block.name);
             this.logTurn('tool', `in=${JSON.stringify(block.input || {})} out=${JSON.stringify(out)}`, block.name);
             toolResults.push({
               type: 'tool_result',
@@ -234,6 +258,20 @@ class RelaySession {
         .join(' ')
         .trim();
       const reply = text || 'Could you repeat that for me?';
+
+      // GUARDRAIL: block a reply that CLAIMS an action is done when its tool didn't
+      // succeed this turn. Force the real tool call instead of a hallucinated confirmation.
+      const unbacked = detectUnbackedClaim(reply, succeeded);
+      if (unbacked && corrections < 2) {
+        corrections++;
+        console.warn(`[VoiceRelay] blocked unbacked "${unbacked.label}" claim; forcing ${unbacked.tool}`);
+        this.messages.push({
+          role: 'user',
+          content: `SYSTEM CORRECTION: You just told the caller their ${unbacked.label} was done, but you did NOT successfully call the ${unbacked.tool} tool this turn, so it did NOT happen. Do not confirm it. Call ${unbacked.tool} now with the details you have. If a required detail is missing, ask the caller for it instead of confirming.`
+        });
+        continue;
+      }
+
       this.logTurn('agent', reply);
       return reply;
     }
