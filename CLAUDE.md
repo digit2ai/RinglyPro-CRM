@@ -44,6 +44,15 @@ A test-number AI phone agent that talks to callers and books appointments at ~ha
 - `VOICE_RELAY_MODEL` — Anthropic model for the brain. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY` (already set on Render).
 - `VOICE_RELAY_TRANSFER_NUMBER` — fallback number `transfer_to_human` dials when the client has no `owner_phone` on file. Unset + no owner_phone = the agent offers to take a message instead.
 
+## RoundShare — Ride. Improve. Share. (EquiMind community layer)
+
+Self-contained sub-app auto-mounted at `/roundshare` (from `client-builds/roundshare/`). The **community/social layer** of the EquiMind "Jump Coach" ecosystem: riders record a round, get AI feedback, then SHARE it with friends, trainers and barn circles. Same brand DNA as EquiMind (purple identity, horse-jumper mark). Static build — no DB, no new backend.
+
+- **Landing:** `/roundshare/` — EquiMind purple theme, bilingual EN/ES toggle, hero "Share. Get Feedback. Get Better.", **What it is / Why it matters / How it works** cards, feature strip, embedded live phone preview, final CTA. Carries the **Lina voice AI orb** (What/Why/How narration) that **reuses the existing zero-key `/api/tts/edge`** route — voices: Ava (EN, default), Lina/Dalia + Paloma + Salomé (ES). No new TTS backend generated (Layers 1&2 already live per the `voice` runbook).
+- **App mockup simulator:** `/roundshare/simulator` (aliases `/roundshare/app`, `?embed=1` for the landing iframe) — an **interactive 40-screen phone simulator** with a working bottom tab bar (Home/Progress/Record/Circles/Profile) and a real **Upload Ride → animated AI Processing (0–100% ring + step checklist) → AI Feedback score (8.1)** flow, plus Strengths/Areas/Homework, Feed, Ride Detail, Comments (live add), Circles, Share (toggles), Notifications, Messages, Rider Profile, Horse Stats, Goals, Achievements, AI Reel, Premium, Parent Dashboard, Search, Settings, and Empty/Offline/Error states. Every button navigates; all screens reachable from the Profile grid.
+- **Assets:** `roundshare-icon.svg` (brand mark). Health: `GET /roundshare/health`.
+- **No env vars.** Auto-mounts via the client-builds loop (shortname `roundshare`).
+
 ## EquiMind 3D Gaussian Splatting Engine + Client Report
 
 Self-contained sub-app auto-mounted at `/equimind-gs-engine` (from `client-builds/equimind-gs-engine/`). Turns a phone video/photos of a horse into a navigable 3D scene, and generates a shareable **state-of-the-art client report** after an analysis. Reuses the EquiMind account/credit system for multi-tenant auth + billing. Data layer: `gs_sessions/gs_jobs/gs_scenes/gs_assets` (tenant-scoped, S3 storage + Render-disk fallback).
