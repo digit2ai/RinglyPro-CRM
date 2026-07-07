@@ -216,9 +216,27 @@
     .wl,.perks{justify-content:center}
   }
   @media(max-width:520px){.fgrid{grid-template-columns:1fr}.lina{flex-direction:column;text-align:center}.controls{justify-content:center}}
+
+  /* app simulator modal ("See How It Works") */
+  .simmodal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(6,8,16,.82);backdrop-filter:blur(6px)}
+  .simmodal.open{display:flex}
+  .simframe{position:relative;width:390px;max-width:100%;height:844px;max-height:88vh;aspect-ratio:390/844;border-radius:44px;overflow:hidden;background:#05030d;border:10px solid #05030d;box-shadow:0 40px 110px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08)}
+  .simframe iframe{width:100%;height:100%;border:0;display:block;background:#0e0a1e}
+  .simclose{position:absolute;top:-14px;right:-14px;z-index:5;width:44px;height:44px;border-radius:50%;background:var(--rose);color:#3a1226;border:none;font-size:22px;font-weight:700;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .simhint{position:absolute;bottom:-34px;left:0;right:0;text-align:center;color:#c9cbdb;font-size:13px}
+  @media(max-width:520px){.simmodal{padding:14px}.simclose{top:6px;right:6px}}
 </style>
 </head>
 <body>
+
+<!-- APP SIMULATOR MODAL -->
+<div class="simmodal" id="simModal" onclick="if(event.target===this)rsCloseSim()">
+  <div class="simframe">
+    <button class="simclose" onclick="rsCloseSim()" aria-label="Close">×</button>
+    <iframe id="simIframe" title="RoundShare app simulator" allow="autoplay"></iframe>
+    <div class="simhint"><span data-en>Tap through the app — Upload a ride, get AI feedback, share.</span><span data-es>Explora la app — Sube un recorrido, recibe feedback con IA, comparte.</span></div>
+  </div>
+</div>
 
 <!-- NAV -->
 <nav class="nav"><div class="wrap">
@@ -253,7 +271,7 @@
     </div>
     <div class="hero-cta">
       <button class="btn-hero" onclick="rsScroll('waitlist')"><span data-en>JOIN THE WAITLIST</span><span data-es>UNIRME A LA LISTA</span> →</button>
-      <button class="link-play" onclick="rsScroll('demo')"><span class="pc">▶</span> <span data-en>See How It Works</span><span data-es>Ver cómo funciona</span></button>
+      <button class="link-play" onclick="rsOpenSim()"><span class="pc">▶</span> <span data-en>See How It Works</span><span data-es>Ver cómo funciona</span></button>
     </div>
   </div>
   <div class="heroright">
@@ -474,7 +492,10 @@
   // demo play
   function rsPlayDemo(){ var v=document.getElementById('demoVideo'); v.scrollIntoView({behavior:'smooth',block:'center'}); v.play&&v.play().catch(function(){}); }
   function rsScroll(id){ var e=document.getElementById(id); if(e) e.scrollIntoView({behavior:'smooth',block:'start'}); }
-  window.rsPlayDemo=rsPlayDemo; window.rsScroll=rsScroll;
+  function rsOpenSim(){ var m=document.getElementById('simModal'), f=document.getElementById('simIframe'); if(!f.getAttribute('src')) f.setAttribute('src','simulator.html?embed=1'); m.classList.add('open'); document.body.style.overflow='hidden'; }
+  function rsCloseSim(){ document.getElementById('simModal').classList.remove('open'); document.body.style.overflow=''; }
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') rsCloseSim(); });
+  window.rsPlayDemo=rsPlayDemo; window.rsScroll=rsScroll; window.rsOpenSim=rsOpenSim; window.rsCloseSim=rsCloseSim;
 
   // language toggle
   var btnEN=document.getElementById('btnEN'), btnES=document.getElementById('btnES');
