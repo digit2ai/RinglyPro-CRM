@@ -93,8 +93,21 @@
   .demo p{color:var(--ink2);margin-top:14px;font-size:16px}
   .btn-demo{margin-top:24px;background:var(--rose);color:#3a1226;font-weight:700;font-size:14px;padding:14px 26px;border-radius:999px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
   .btn-demo:hover{background:var(--rose2)}
-  .player{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(26,20,32,.18);background:#0c1020}
-  .player video{width:100%;aspect-ratio:16/9;object-fit:cover;background:#0c1020}
+  .player{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(26,20,32,.18);background:#0c1020;aspect-ratio:16/9}
+  .player video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0c1020;transition:opacity .5s}
+  .player.done video{opacity:0;pointer-events:none}
+  /* analytics reveal (shown once the short clip finishes) */
+  .demo-an{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .55s;background:radial-gradient(700px 380px at 82% -10%,rgba(242,169,200,.20),transparent 60%),linear-gradient(180deg,#0c1020,#0a0d18);color:#fff;padding:20px 22px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+  .player.done .demo-an{opacity:1;visibility:visible}
+  .demo-an .ring{width:132px;height:132px;flex:0 0 auto}
+  .demo-an .exc{text-align:center;color:var(--rose);font-weight:700;font-size:12px;margin-top:4px}
+  .demo-an .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px}
+  .demo-an b{font-size:12px;font-weight:800;display:block;margin-bottom:6px}
+  .demo-an .li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#c9ccdd;margin-top:5px}
+  .demo-an .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+  .demo-an .replay{position:absolute;bottom:12px;right:14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);font-size:11px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .demo-an .replay:hover{background:rgba(255,255,255,.2)}
+  @media(max-width:640px){.demo-an{grid-template-columns:1fr;gap:10px;padding:16px}.demo-an .cols{grid-template-columns:1fr}.demo-an .ring{margin:0 auto}}
 
   /* STEPS */
   .steps{background:var(--cream);padding:10px 0 64px}
@@ -225,6 +238,25 @@
   .simclose{position:absolute;top:-14px;right:-14px;z-index:5;width:44px;height:44px;border-radius:50%;background:var(--rose);color:#3a1226;border:none;font-size:22px;font-weight:700;cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 26px rgba(0,0,0,.4)}
   .simhint{position:absolute;bottom:-34px;left:0;right:0;text-align:center;color:#c9cbdb;font-size:13px}
   @media(max-width:520px){.simmodal{padding:14px}.simclose{top:6px;right:6px}}
+
+  /* "Coming Soon" toast */
+  .toast{position:fixed;left:50%;bottom:36px;transform:translate(-50%,20px);z-index:300;background:#141024;color:#fff;border:1px solid rgba(242,169,200,.4);border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;box-shadow:0 20px 50px rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:.28s;display:flex;align-items:center;gap:10px}
+  .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+  .toast .tdot{width:8px;height:8px;border-radius:50%;background:var(--rose)}
+
+  /* ABOUT US — team profiles */
+  .about{background:#0c1020;color:#fff;padding:72px 0}
+  .about .head{text-align:center;margin-bottom:44px}
+  .about .head h2{font-size:38px;font-weight:600}
+  .about .head p{color:#c9cbdb;margin-top:12px;font-size:16px;max-width:620px;margin-left:auto;margin-right:auto}
+  .teamgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .tmcard{background:linear-gradient(180deg,#12172a,#0e1322);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 22px;text-align:center;transition:.18s}
+  .tmcard:hover{transform:translateY(-3px);border-color:rgba(242,169,200,.35)}
+  .tmavatar{width:92px;height:92px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;font-size:30px;font-weight:800;color:#fff;letter-spacing:.02em;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .tmcard h3{font-size:19px;font-weight:800}
+  .tmcard .role{color:var(--rose);font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:5px}
+  .tmcard .bio{color:#c3c6d6;font-size:13.5px;line-height:1.6;margin-top:14px}
+  @media(max-width:820px){.teamgrid{grid-template-columns:1fr;max-width:440px;margin:0 auto}}
 </style>
 </head>
 <body>
@@ -238,6 +270,9 @@
   </div>
 </div>
 
+<!-- COMING SOON toast -->
+<div class="toast" id="soonToast"><span class="tdot"></span><span data-en>Coming Soon</span><span data-es>Muy pronto</span></div>
+
 <!-- NAV -->
 <nav class="nav"><div class="wrap">
   <a class="brand" href="/roundshare/">
@@ -246,9 +281,9 @@
   </a>
   <div class="navlinks">
     <a href="#features"><span data-en>Features</span><span data-es>Funciones</span></a>
-    <a href="#how"><span data-en>How It Works</span><span data-es>Cómo funciona</span></a>
-    <a href="#parents"><span data-en>For Parents</span><span data-es>Padres</span></a>
-    <a href="#trainers"><span data-en>For Trainers</span><span data-es>Entrenadores</span></a>
+    <a href="#" onclick="rsOpenSim();return false;"><span data-en>How It Works</span><span data-es>Cómo funciona</span></a>
+    <a href="#" onclick="rsSoon();return false;"><span data-en>For Parents</span><span data-es>Padres</span></a>
+    <a href="#" onclick="rsSoon();return false;"><span data-en>For Trainers</span><span data-es>Entrenadores</span></a>
     <a href="#about"><span data-en>About Us</span><span data-es>Nosotros</span></a>
   </div>
   <div class="nav-right">
@@ -305,9 +340,59 @@
     <div class="eyebrow"><span data-en>See RoundShare in Action</span><span data-es>RoundShare en acción</span></div>
     <h2 class="serif"><span data-en>Demo: AI Ride Analysis</span><span data-es>Demo: Análisis con IA</span></h2>
     <p><span data-en>Watch how RoundShare reviews a pony round, scores key skills, and gives clear feedback.</span><span data-es>Mira cómo RoundShare revisa un recorrido, califica las habilidades clave y da consejos claros.</span></p>
-    <button class="btn-demo" onclick="rsPlayDemo()"><span data-en>WATCH DEMO</span><span data-es>VER DEMO</span> ▶</button>
   </div>
-  <div class="player"><video id="demoVideo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4" controls muted playsinline preload="metadata"></video></div>
+  <div class="player" id="demoPlayer">
+    <video id="demoVideo" src="demo-short.mp4" muted playsinline autoplay preload="auto"></video>
+    <div class="demo-an" id="demoAn">
+      <div>
+        <div class="ring" id="demoRing"></div>
+        <div class="exc"><span data-en>Excellent Ride!</span><span data-es>¡Excelente recorrido!</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <b><span data-en>Strengths</span><span data-es>Fortalezas</span></b>
+          <div class="li"><span class="dot" style="background:#3fbf87"></span><span data-en>Consistent rhythm</span><span data-es>Ritmo constante</span></div>
+          <div class="li"><span class="dot" style="background:#3fbf87"></span><span data-en>Soft release over jump</span><span data-es>Soltura sobre el salto</span></div>
+          <div class="li"><span class="dot" style="background:#3fbf87"></span><span data-en>Good posture &amp; leg</span><span data-es>Buena postura y pierna</span></div>
+        </div>
+        <div>
+          <b><span data-en>Areas to Improve</span><span data-es>A mejorar</span></b>
+          <div class="li"><span class="dot" style="background:#ec8fb8"></span><span data-en>Shoulders back before jump</span><span data-es>Hombros atrás antes del salto</span></div>
+          <div class="li"><span class="dot" style="background:#ec8fb8"></span><span data-en>Leg position at girth</span><span data-es>Pierna en la cincha</span></div>
+          <div class="li"><span class="dot" style="background:#ec8fb8"></span><span data-en>Eyes up in corners</span><span data-es>Mirada alta en las curvas</span></div>
+        </div>
+      </div>
+      <button class="replay" onclick="rsReplayDemo()">↻ <span data-en>Replay</span><span data-es>Repetir</span></button>
+    </div>
+  </div>
+</div></section>
+
+<!-- VOICE (Lina) -->
+<section class="voiceband"><div class="wrap">
+  <div class="lina">
+    <div class="orb" id="orb"></div>
+    <div class="lina-meta">
+      <div class="lina-name">Lina · <span data-en>Voice AI</span><span data-es>Voz AI</span></div>
+      <div class="lina-role"><span data-en>Let me walk you through RoundShare in under two minutes</span><span data-es>Te explico RoundShare en menos de dos minutos</span></div>
+      <div class="controls">
+        <button class="primary" id="playAll">▶ <span data-en>Let Lina explain it</span><span data-es>Que Lina lo explique</span></button>
+        <button id="pause" disabled>❚❚ <span data-en>Pause</span><span data-es>Pausar</span></button>
+        <button id="stop" disabled>■ <span data-en>Stop</span><span data-es>Detener</span></button>
+      </div>
+      <div class="status" id="status"><span data-en>Tap to start the walkthrough.</span><span data-es>Pulsa para comenzar.</span></div>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> <span data-en>Neural HD voice</span><span data-es>Voz neural HD</span></label>
+        &nbsp;·&nbsp; <span data-en>Voice</span><span data-es>Voz</span>:
+        <select id="voiceSel">
+          <option value="ava" selected>English (Ava)</option>
+          <option value="lina">Español · México (Dalia)</option>
+          <option value="paloma">Español · EE. UU. (Paloma)</option>
+          <option value="salome">Español · Colombia (Salomé)</option>
+        </select>
+        <span id="voiceMode" style="margin-left:8px;color:var(--green)"></span>
+      </div>
+    </div>
+  </div>
 </div></section>
 
 <!-- STEPS -->
@@ -360,42 +445,9 @@
   </div>
 </div></section>
 
-<!-- IN ACTION gallery (all provided clips) -->
-<section class="gallery"><div class="wrap">
-  <div class="head"><span class="eyebrow"><span data-en>RoundShare in Action</span><span data-es>RoundShare en acción</span></span><h2 class="serif"><span data-en>Real rounds, real feedback</span><span data-es>Recorridos reales, consejos reales</span></h2></div>
-  <div class="ggrid" id="galleryGrid"></div>
-</div></section>
-
-<!-- VOICE (Lina) -->
-<section class="voiceband"><div class="wrap">
-  <div class="lina">
-    <div class="orb" id="orb"></div>
-    <div class="lina-meta">
-      <div class="lina-name">Lina · <span data-en>Voice AI</span><span data-es>Voz AI</span></div>
-      <div class="lina-role"><span data-en>Let me walk you through RoundShare in under two minutes</span><span data-es>Te explico RoundShare en menos de dos minutos</span></div>
-      <div class="controls">
-        <button class="primary" id="playAll">▶ <span data-en>Let Lina explain it</span><span data-es>Que Lina lo explique</span></button>
-        <button id="pause" disabled>❚❚ <span data-en>Pause</span><span data-es>Pausar</span></button>
-        <button id="stop" disabled>■ <span data-en>Stop</span><span data-es>Detener</span></button>
-      </div>
-      <div class="status" id="status"><span data-en>Tap to start the walkthrough.</span><span data-es>Pulsa para comenzar.</span></div>
-      <div class="voicepick">
-        <label><input type="checkbox" id="neuralToggle" checked> <span data-en>Neural HD voice</span><span data-es>Voz neural HD</span></label>
-        &nbsp;·&nbsp; <span data-en>Voice</span><span data-es>Voz</span>:
-        <select id="voiceSel">
-          <option value="ava" selected>English (Ava)</option>
-          <option value="lina">Español · México (Dalia)</option>
-          <option value="paloma">Español · EE. UU. (Paloma)</option>
-          <option value="salome">Español · Colombia (Salomé)</option>
-        </select>
-        <span id="voiceMode" style="margin-left:8px;color:var(--green)"></span>
-      </div>
-    </div>
-  </div>
-</div></section>
 
 <!-- TESTIMONIALS -->
-<section class="testi" id="about"><div class="wrap">
+<section class="testi"><div class="wrap">
   <div class="head"><h2><span data-en>Loved by Riders &amp; Parents</span><span data-es>Amado por jinetes y padres</span></h2><div class="u"></div></div>
   <div class="tgrid">
     <div class="tcard"><div class="qt">"RoundShare helps me understand what I need to fix so I can improve between lessons. I love seeing my scores go up!"</div><div class="who"><span class="av" style="background:#e07aa8">EM</span><div><b>Emma, 15</b><span>Pony Finals Qualifier</span></div></div></div>
@@ -403,6 +455,34 @@
     <div class="tcard"><div class="qt">"As a mom, I love seeing the progress and knowing what my daughter is working on. Total game changer!"</div><div class="who"><span class="av" style="background:#3fbf87">JE</span><div><b>Jennifer</b><span>Parent</span></div></div></div>
   </div>
   <div class="tquote serif">“Share your progress, celebrate wins, and motivate each other. RoundShare makes improvement a team effort.”</div>
+</div></section>
+
+<!-- ABOUT US -->
+<section class="about" id="about"><div class="wrap">
+  <div class="head">
+    <h2 class="serif"><span data-en>About Us</span><span data-es>Nosotros</span></h2>
+    <p><span data-en>RoundShare pairs deep equestrian expertise with AI engineering — built by people who ride, coach, and build technology for a living.</span><span data-es>RoundShare une experiencia ecuestre con ingeniería de IA — creado por personas que montan, entrenan y desarrollan tecnología.</span></p>
+  </div>
+  <div class="teamgrid">
+    <div class="tmcard">
+      <div class="tmavatar" style="background:linear-gradient(135deg,#e07aa8,#c86be0)">CD</div>
+      <h3>Carrie Dickenson</h3>
+      <div class="role"><span data-en>Equestrian Advisor</span><span data-es>Asesora Ecuestre</span></div>
+      <div class="bio"><span data-en>A lifelong hunter/jumper professional, Carrie guides the riding science behind RoundShare — defining what great position, rhythm and form look like so the AI scores what real coaches care about.</span><span data-es>Profesional del hunter/jumper de toda la vida, Carrie guía la ciencia de monta detrás de RoundShare — define cómo se ve la buena posición, el ritmo y la forma para que la IA califique lo que a los entrenadores les importa.</span></div>
+    </div>
+    <div class="tmcard">
+      <div class="tmavatar" style="background:linear-gradient(135deg,#7c5cff,#5a3fd6)">LG</div>
+      <h3>Lala Garcia</h3>
+      <div class="role"><span data-en>Product &amp; Operations · Digit2AI</span><span data-es>Producto y Operaciones · Digit2AI</span></div>
+      <div class="bio"><span data-en>Lala leads product and rider experience — turning coaching insight into a simple, bilingual app that families and barns actually love using, from upload to shareable feedback.</span><span data-es>Lala lidera producto y experiencia del jinete — convierte el conocimiento del entrenamiento en una app bilingüe y sencilla que familias y establos disfrutan usar, desde la carga hasta el feedback para compartir.</span></div>
+    </div>
+    <div class="tmcard">
+      <div class="tmavatar" style="background:linear-gradient(135deg,#3fbf87,#2a9d8f)">MS</div>
+      <h3>Manuel Stagg</h3>
+      <div class="role"><span data-en>Founder &amp; AI Architect · Digit2AI</span><span data-es>Fundador y Arquitecto de IA · Digit2AI</span></div>
+      <div class="bio"><span data-en>Founder of Digit2AI, Manuel architects the neural intelligence that powers RoundShare — building the analysis pipeline, voice AI, and platform behind every ride score and insight.</span><span data-es>Fundador de Digit2AI, Manuel diseña la inteligencia neuronal que impulsa RoundShare — construye el análisis, la voz con IA y la plataforma detrás de cada calificación y consejo.</span></div>
+    </div>
+  </div>
 </div></section>
 
 <!-- FINAL -->
@@ -430,15 +510,8 @@
 <div class="foot">RoundShare · Ride. Improve. Share. · <span data-en>Powered by Digit2AI Neural Intelligence</span><span data-es>Impulsado por Digit2AI</span> · <a href="/roundshare/simulator"><span data-en>Try the app simulator</span><span data-es>Probar el simulador</span></a></div>
 
 <script>
-  // ===== waitlist webhook (set to your GHL Inbound Webhook URL) =====
-  var RS_GHL_WEBHOOK = '';
-  var GALLERY_VIDEOS = [
-    'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4',
-    'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d37072467f0ff0844441d.mp4',
-    'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4',
-    'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d3707a97402b00b724bb9.mp4',
-    'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d37072467f0ff0844441d.mp4'
-  ];
+  // ===== waitlist endpoint (saves to Postgres via the roundshare sub-app) =====
+  var RS_WAITLIST_URL = '/roundshare/api/waitlist';
 
   // logo (horse-head line mark, rose)
   document.getElementById('logoSlot').innerHTML =
@@ -465,11 +538,13 @@
   document.getElementById('fi-chat').innerHTML=svgIco(IC.chat);
   document.getElementById('fi-trend').innerHTML=svgIco(IC.trend);
 
-  // score ring (92)
-  (function(){
-    var C=2*Math.PI*40, off=C*(1-0.92);
-    document.getElementById('pRing').innerHTML='<svg width="118" height="118" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="50" cy="50" r="40" fill="none" stroke="#f2a9c8" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" transform="rotate(-90 50 50)"/><text x="50" y="52" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">92</text><text x="50" y="66" text-anchor="middle" font-size="9" fill="#9aa0b8">/100</text></svg>';
-  })();
+  // score ring (92) — horizontal text, upright
+  function scoreRing(size,score){
+    var C=2*Math.PI*40, off=C*(1-score/100);
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7"/><circle cx="50" cy="50" r="40" fill="none" stroke="#f2a9c8" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'" transform="rotate(-90 50 50)"/><text x="50" y="52" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">'+score+'</text><text x="50" y="66" text-anchor="middle" font-size="9" fill="#9aa0b8">/100</text></svg>';
+  }
+  document.getElementById('pRing').innerHTML=scoreRing(118,92);
+  var _dRing=document.getElementById('demoRing'); if(_dRing) _dRing.innerHTML=scoreRing(132,92);
 
   // charts
   function lineChart(el,vals,w,h,stroke){
@@ -484,18 +559,25 @@
   lineChart(document.getElementById('progChart'),[22,38,34,52,60,58,74,86,100],300,120,'#7c5cff');
   lineChart(document.getElementById('miniChart'),[40,52,48,63,70,66,82,87],160,60,'#f2a9c8');
 
-  // gallery
-  document.getElementById('galleryGrid').innerHTML = GALLERY_VIDEOS.map(function(u){
-    return '<div class="gcell"><video src="'+u+'" muted loop playsinline preload="metadata" onmouseover="this.play()" onmouseout="this.pause()" controls></video></div>';
-  }).join('');
-
-  // demo play
-  function rsPlayDemo(){ var v=document.getElementById('demoVideo'); v.scrollIntoView({behavior:'smooth',block:'center'}); v.play&&v.play().catch(function(){}); }
+  // demo: short muted clip -> reveal AI analytics mockup when it finishes
+  var demoVideo=document.getElementById('demoVideo'), demoPlayer=document.getElementById('demoPlayer');
+  if(demoVideo&&demoPlayer){
+    demoVideo.addEventListener('ended',function(){ demoPlayer.classList.add('done'); });
+    // autoplay muted once it scrolls into view (mobile-safe)
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting){ demoVideo.play&&demoVideo.play().catch(function(){}); } }); },{threshold:.4});
+      io.observe(demoPlayer);
+    }
+  }
+  function rsReplayDemo(){ if(!demoVideo)return; demoPlayer.classList.remove('done'); try{demoVideo.currentTime=0;}catch(e){} demoVideo.play&&demoVideo.play().catch(function(){}); }
+  function rsPlayDemo(){ if(demoVideo){ demoPlayer.classList.remove('done'); demoVideo.scrollIntoView({behavior:'smooth',block:'center'}); try{demoVideo.currentTime=0;}catch(e){} demoVideo.play&&demoVideo.play().catch(function(){}); } }
   function rsScroll(id){ var e=document.getElementById(id); if(e) e.scrollIntoView({behavior:'smooth',block:'start'}); }
+  var _soonT=null;
+  function rsSoon(){ var t=document.getElementById('soonToast'); if(!t)return; t.classList.add('show'); if(_soonT)clearTimeout(_soonT); _soonT=setTimeout(function(){t.classList.remove('show');},2200); }
   function rsOpenSim(){ var m=document.getElementById('simModal'), f=document.getElementById('simIframe'); if(!f.getAttribute('src')) f.setAttribute('src','simulator.html?embed=1'); m.classList.add('open'); document.body.style.overflow='hidden'; }
   function rsCloseSim(){ document.getElementById('simModal').classList.remove('open'); document.body.style.overflow=''; }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') rsCloseSim(); });
-  window.rsPlayDemo=rsPlayDemo; window.rsScroll=rsScroll; window.rsOpenSim=rsOpenSim; window.rsCloseSim=rsCloseSim;
+  window.rsPlayDemo=rsPlayDemo; window.rsReplayDemo=rsReplayDemo; window.rsScroll=rsScroll; window.rsOpenSim=rsOpenSim; window.rsCloseSim=rsCloseSim; window.rsSoon=rsSoon;
 
   // language toggle
   var btnEN=document.getElementById('btnEN'), btnES=document.getElementById('btnES');
@@ -503,13 +585,13 @@
     var vs=document.getElementById('voiceSel'); if(es&&vs.value==='ava'){vs.value='lina';voiceName='lina';clearCache();} if(!es&&vs.value!=='ava'){vs.value='ava';voiceName='ava';clearCache();} }
   btnEN.onclick=function(){setLang(false);}; btnES.onclick=function(){setLang(true);};
 
-  // waitlist submit
+  // waitlist submit -> saves to Postgres (rs_waitlist)
   document.getElementById('wlForm').addEventListener('submit',function(e){
     e.preventDefault();
     var email=(document.getElementById('wlEmail').value||'').trim();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){document.getElementById('wlEmail').focus();return;}
     var payload={email:email,source:'roundshare.app',tag:'roundshare-waitlist',language:document.body.classList.contains('es')?'es':'en'};
-    if(RS_GHL_WEBHOOK){ fetch(RS_GHL_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){}); }
+    fetch(RS_WAITLIST_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});
     document.getElementById('wlForm').style.display='none';
     document.getElementById('wlOk').style.display='block';
   });
