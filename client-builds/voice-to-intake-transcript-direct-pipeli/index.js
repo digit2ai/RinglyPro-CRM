@@ -107,6 +107,7 @@ app.use('/api/v1/intake', require('./routes/intake'));
 app.use('/api/v1/inbox', require('./routes/inbox'));
 app.use('/api/v1/champion-links', require('./routes/champion'));
 app.use('/api/v1/intercom', require('./routes/intercom'));
+app.use('/api/v1/calendar', require('./routes/calendar'));
 
 // Single-screen UI — render '/' with server-side language injection BEFORE the
 // static middleware (so the raw HTML reflects ?lang=es), then serve app.js /

@@ -68,8 +68,7 @@
   <script src="/voice-to-intake-transcript-direct-pipeli/nav.js"></script>
   <script>
   (function () {
-    var CLIENT_ID = 15; // Manuel's (owner) Digit2Ai calendar
-    var API = '/api/elevenlabs/tools';
+    var CAL_API = '/voice-to-intake-transcript-direct-pipeli/api/v1/calendar';
     var params = new URLSearchParams(location.search);
     var lang = params.get('lang') === 'en' ? 'en' : 'es';
     var champ = params.get('c') || '';
@@ -83,6 +82,7 @@
         note: 'Nota (opcional)', book: 'Agendar cita', booking: 'Agendando…',
         picked: 'Seleccionado: ', needName: 'Por favor ingresa el nombre y el teléfono del prospecto.',
         ok: '¡Cita agendada! ', okSub: ' Te enviaremos la confirmación.', err: 'No se pudo agendar: ',
+        locked: 'Abre el calendario desde tu enlace de campeón para poder agendar.',
         foot: 'Agendas directamente en el calendario de Digit2Ai.'
       },
       en: {
@@ -93,6 +93,7 @@
         note: 'Note (optional)', book: 'Book appointment', booking: 'Booking…',
         picked: 'Selected: ', needName: 'Please enter the prospect name and phone.',
         ok: 'Appointment booked! ', okSub: ' A confirmation will follow.', err: 'Could not book: ',
+        locked: 'Open the calendar from your champion link to book.',
         foot: 'You are booking directly on the Digit2Ai calendar.'
       }
     }[lang];
@@ -114,9 +115,10 @@
     var dateLabels = {};    // date -> human label
     var picked = { date: null, time: null };
 
-    function api(body) {
-      return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-        .then(function (r) { return r.json(); });
+    function showLocked() {
+      document.getElementById('loading').style.display = 'none';
+      var ns = document.getElementById('noSlots');
+      ns.textContent = T.locked; ns.style.display = 'block';
     }
 
     function fmtDate(iso) {
@@ -131,7 +133,12 @@
     }
 
     function loadSlots() {
-      api({ tool_name: 'check_availability', client_id: CLIENT_ID, days_ahead: 14 }).then(function (res) {
+      if (!champ) { showLocked(); return; }
+      fetch(CAL_API + '/availability?days=14&c=' + encodeURIComponent(champ)).then(function (r) {
+        if (r.status === 401) { showLocked(); return null; }
+        return r.json();
+      }).then(function (res) {
+        if (!res) return;
         document.getElementById('loading').style.display = 'none';
         var slots = (res && res.slots) || [];
         if (!slots.length) { document.getElementById('noSlots').style.display = 'block'; return; }
@@ -188,12 +195,13 @@
       var result = document.getElementById('result');
       if (!name || !phone || !picked.date || !picked.time) { result.style.color = '#f87171'; result.textContent = T.needName; return; }
       var btn = this; btn.disabled = true; btn.textContent = T.booking;
-      var purpose = 'Booked via champion' + (champ ? ' ' + champ : '') + ' for prospect' + (note ? (': ' + note) : '');
-      api({
-        tool_name: 'book_appointment', client_id: CLIENT_ID,
-        customer_name: name, customer_phone: phone, customer_email: email || undefined,
-        appointment_date: picked.date, appointment_time: picked.time, purpose: purpose
-      }).then(function (res) {
+      fetch(CAL_API + '/book', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          c: champ, customer_name: name, customer_phone: phone, customer_email: email || undefined,
+          appointment_date: picked.date, appointment_time: picked.time, note: note
+        })
+      }).then(function (r) { return r.json(); }).then(function (res) {
         btn.disabled = false; btn.textContent = T.book;
         if (res && res.success) {
           result.style.color = 'var(--green)';

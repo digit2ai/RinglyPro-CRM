@@ -135,7 +135,17 @@
       open.target='_blank'; open.rel='noopener'; open.href=data.url;
       open.className='text-sm px-3 py-1 rounded-lg border'; open.style.cssText='border-color:var(--line);color:var(--txt)'; open.textContent='Open';
       row.appendChild(open);
+      // Calendar link — lets this champion book prospects on your calendar.
+      var calUrl=data.url.replace('/?c=','/calendar.html?c=');
+      var calCopy=document.createElement('button');
+      calCopy.className='text-sm px-3 py-1 rounded-lg font-semibold'; calCopy.style.cssText='background:var(--acc);color:#fff'; calCopy.textContent='Copy calendar link';
+      calCopy.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy calendar link'; },1500);} if(navigator.clipboard) navigator.clipboard.writeText(calUrl).then(done,done); else done(); });
+      row.appendChild(calCopy);
       card.appendChild(row);
+      var calHint=document.createElement('div');
+      calHint.className='text-xs mt-2'; calHint.style.color='var(--mut)';
+      calHint.textContent='Calendar link (books prospects on your calendar): '+calUrl;
+      card.appendChild(calHint);
       results.prepend(card);
     }
 
@@ -181,6 +191,12 @@
           copy.className='text-xs px-2 py-1 rounded-lg border'; copy.style.cssText='border-color:var(--line);color:var(--txt)';
           copy.textContent='Copy'; copy.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy'; },1200);} if(navigator.clipboard) navigator.clipboard.writeText(c.url).then(done,done); else done(); });
           btns.appendChild(copy);
+          var calUrl=c.url.replace('/?c=','/calendar.html?c=');
+          var cal=document.createElement('button');
+          cal.className='text-xs px-2 py-1 rounded-lg font-semibold'; cal.style.cssText='background:var(--acc);color:#fff';
+          cal.textContent='Cal link'; cal.title='Copy this champion’s calendar booking link';
+          cal.addEventListener('click', function(){ var b=this; function done(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Cal link'; },1200);} if(navigator.clipboard) navigator.clipboard.writeText(calUrl).then(done,done); else done(); });
+          btns.appendChild(cal);
         }
         var reissue=document.createElement('button');
         reissue.className='text-xs px-2 py-1 rounded-lg border'; reissue.style.cssText='border-color:var(--line);color:var(--txt)';
