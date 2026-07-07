@@ -152,23 +152,49 @@
   .features .head{text-align:center;margin-bottom:8px}
   .features .head h2{font-size:22px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
   .features .head .u{width:54px;height:3px;background:var(--rose);border-radius:2px;margin:12px auto 0}
-  .fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:40px;align-items:start}
+  .fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:40px;align-items:stretch}
   .fcol{text-align:center;display:flex;flex-direction:column}
-  .fcol .fmedia,.fcol .fcard-static,.fcol .chart{margin-top:auto}
   .fcol .fi{display:inline-block;width:46px;height:46px;margin:0 auto 14px;color:var(--rose-deep)}
   .fcol h3{font-size:17px;font-weight:800}
   .fcol p{font-size:13.5px;color:var(--mut);margin-top:8px;min-height:74px}
-  .fmedia{margin-top:14px;border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(26,20,32,.12);position:relative;background:#0c1020;height:190px}
-  .fmedia video{width:100%;height:100%;object-fit:cover;display:block}
-  .fmedia .dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.62);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
-  .fmedia .badge92{position:absolute;right:8px;bottom:8px;background:rgba(9,12,22,.82);color:#fff;font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px}
-  .fcard-static{margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;box-shadow:0 12px 30px rgba(26,20,32,.06)}
-  .fcard-static .lab{font-size:12px;font-weight:800;color:var(--ink)}
-  .fcard-static .li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2);margin-top:7px}
-  .fcard-static .li .d{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
-  .chart{margin-top:14px;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 12px 30px rgba(26,20,32,.06)}
-  .chart .ct{font-size:12px;font-weight:800;margin-bottom:6px}
-  .share-prog{margin-top:16px;display:inline-flex;align-items:center;gap:9px;border:1px solid var(--rose);color:var(--rose-deep);font-weight:700;font-size:13px;padding:11px 18px;border-radius:999px;cursor:pointer}
+  /* unified feature infographic panels — all equal height so the 4 cards line up */
+  .finfo{margin-top:auto;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:15px;text-align:left;box-shadow:0 12px 30px rgba(26,20,32,.08);height:252px;display:flex;flex-direction:column;overflow:hidden}
+  /* card 1 — upload */
+  .fi-drop{border:1.6px dashed var(--rose);border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--rose-deep)}
+  .fi-drop svg{width:24px;height:24px}
+  .fi-drop small{font-size:12px;font-weight:700;color:var(--ink2)}
+  .fi-file{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .fi-th{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#f2a9c8,#c86be0);color:#fff;display:grid;place-items:center;font-size:13px;flex:0 0 auto}
+  .fi-fmeta{flex:1;min-width:0}
+  .fi-fmeta b{font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fi-fmeta i{font-size:11px;color:var(--mut);font-style:normal}
+  .fi-ok{color:#3fbf87;font-weight:800;font-size:15px}
+  .fi-bar{height:6px;border-radius:5px;background:#ececf2;overflow:hidden;margin-top:11px}
+  .fi-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#f2a9c8,#c86be0);width:100%}
+  .fi-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .fi-chips span{font-size:10.5px;font-weight:700;color:var(--ink2);background:var(--rose-soft);border-radius:6px;padding:5px 9px}
+  /* card 2 — analysis */
+  .fi-hd{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rose-deep)}
+  .fi-pulse{width:7px;height:7px;border-radius:50%;background:#3fbf87;animation:lpulse 1.6s infinite}
+  .fi-rows{margin-top:13px;display:flex;flex-direction:column;gap:10px}
+  .fi-row .rl{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;font-weight:600;color:var(--ink2)}
+  .fi-row .rl b{color:var(--rose-deep);font-weight:800}
+  .fi-meter{height:7px;border-radius:5px;background:#ececf2;overflow:hidden}
+  .fi-meter i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#f2a9c8,#c86be0)}
+  .fi-foot{margin-top:auto;display:flex;align-items:baseline;gap:5px;border-top:1px solid var(--line);padding-top:11px}
+  .fi-foot b{font-size:24px;font-weight:900}
+  .fi-foot small{font-size:11px;color:var(--mut)}
+  /* card 3 — feedback */
+  .fi-lab{font-size:12px;font-weight:800;color:var(--ink)}
+  .fi-fb{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);margin-top:6px}
+  .fi-fb .d{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+  /* card 4 — track + second infographic */
+  .fi-ct{font-size:12px;font-weight:800;margin-bottom:2px}
+  .fi-chartbox{flex:1;min-height:0;display:flex;align-items:center}
+  .fi-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .fi-stat{background:var(--rose-soft);border-radius:10px;padding:9px 5px;text-align:center}
+  .fi-stat b{font-size:17px;font-weight:900;display:block;color:var(--ink);line-height:1}
+  .fi-stat small{font-size:9px;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em;font-weight:700;display:block;margin-top:4px}
 
   /* IN ACTION video gallery */
   .gallery{background:var(--cream);padding:66px 0;position:relative;z-index:1}
@@ -470,35 +496,63 @@
       <span class="fi" id="fi-cam"></span>
       <h3><span data-en>Upload Your Ride</span><span data-es>Sube tu recorrido</span></h3>
       <p><span data-en>Upload lesson or show videos with ease.</span><span data-es>Sube videos de clase o competencia con facilidad.</span></p>
-      <div class="fmedia"><video src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d37072467f0ff0844441d.mp4" muted loop playsinline preload="metadata" onmouseover="this.play()" onmouseout="this.pause()"></video><span class="dur">1:24</span></div>
+      <div class="finfo">
+        <div class="fi-drop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <small><span data-en>Drag, drop or record</span><span data-es>Arrastra, suelta o graba</span></small>
+        </div>
+        <div class="fi-file">
+          <span class="fi-th">▶</span>
+          <div class="fi-fmeta"><b>wef-week7.mp4</b><i>1:24 · 84 MB · 1080p</i></div>
+          <span class="fi-ok">✓</span>
+        </div>
+        <div class="fi-bar"><i></i></div>
+        <div class="fi-chips"><span>MP4</span><span>MOV</span><span data-en>up to 4K</span><span data-es>hasta 4K</span></div>
+      </div>
     </div>
     <div class="fcol">
       <span class="fi" id="fi-chip"></span>
       <h3><span data-en>AI Analysis</span><span data-es>Análisis con IA</span></h3>
       <p><span data-en>Our AI analyzes your body position, your horse's rhythm and round in seconds.</span><span data-es>La IA analiza tu posición, el ritmo del caballo y el recorrido en segundos.</span></p>
-      <div class="fmedia"><video src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d3707a97402b00b724bb9.mp4" muted loop playsinline preload="metadata" onmouseover="this.play()" onmouseout="this.pause()"></video><span class="badge92">92<small style="font-weight:600;opacity:.7">/100</small></span></div>
+      <div class="finfo">
+        <div class="fi-hd"><span class="fi-pulse"></span><span data-en>Neural Analysis · 30 fps</span><span data-es>Análisis neuronal · 30 fps</span></div>
+        <div class="fi-rows">
+          <div class="fi-row"><div class="rl"><span data-en>Seat &amp; Balance</span><span data-es>Asiento y equilibrio</span><b>92</b></div><div class="fi-meter"><i style="width:92%"></i></div></div>
+          <div class="fi-row"><div class="rl"><span data-en>Rein Contact</span><span data-es>Contacto de riendas</span><b>89</b></div><div class="fi-meter"><i style="width:89%"></i></div></div>
+          <div class="fi-row"><div class="rl"><span data-en>Impulsion</span><span data-es>Impulsión</span><b>90</b></div><div class="fi-meter"><i style="width:90%"></i></div></div>
+          <div class="fi-row"><div class="rl"><span data-en>Straightness</span><span data-es>Rectitud</span><b>87</b></div><div class="fi-meter"><i style="width:87%"></i></div></div>
+        </div>
+        <div class="fi-foot"><b>92</b><small data-en>/100 overall score</small><small data-es>/100 puntaje total</small></div>
+      </div>
     </div>
     <div class="fcol" id="trainers">
       <span class="fi" id="fi-chat"></span>
       <h3><span data-en>RoundShare Feedback</span><span data-es>Consejos RoundShare</span></h3>
       <p><span data-en>Clear feedback and homework to help improve faster between shows and lessons.</span><span data-es>Consejos claros y tarea para mejorar entre clases y competencias.</span></p>
-      <div class="fcard-static">
-        <div class="lab">Strengths</div>
-        <div class="li"><span class="d" style="background:#3fbf87"></span>Consistent rhythm</div>
-        <div class="li"><span class="d" style="background:#3fbf87"></span>Soft release over jump</div>
-        <div class="li"><span class="d" style="background:#3fbf87"></span>Good posture and leg position</div>
-        <div class="lab" style="margin-top:12px">Areas to Improve</div>
-        <div class="li"><span class="d" style="background:#ec8fb8"></span>Keep shoulders back before jump</div>
-        <div class="li"><span class="d" style="background:#ec8fb8"></span>Maintain leg position at girth</div>
-        <div class="li"><span class="d" style="background:#ec8fb8"></span>Eyes up in corners</div>
+      <div class="finfo">
+        <div class="fi-lab"><span data-en>Strengths</span><span data-es>Fortalezas</span></div>
+        <div class="fi-fb"><span class="d" style="background:#3fbf87"></span><span data-en>Consistent rhythm</span><span data-es>Ritmo constante</span></div>
+        <div class="fi-fb"><span class="d" style="background:#3fbf87"></span><span data-en>Soft release over jump</span><span data-es>Soltura sobre el salto</span></div>
+        <div class="fi-fb"><span class="d" style="background:#3fbf87"></span><span data-en>Good posture &amp; leg</span><span data-es>Buena postura y pierna</span></div>
+        <div class="fi-lab" style="margin-top:13px"><span data-en>Areas to Improve</span><span data-es>A mejorar</span></div>
+        <div class="fi-fb"><span class="d" style="background:#ec8fb8"></span><span data-en>Shoulders back before jump</span><span data-es>Hombros atrás antes del salto</span></div>
+        <div class="fi-fb"><span class="d" style="background:#ec8fb8"></span><span data-en>Leg position at girth</span><span data-es>Pierna en la cincha</span></div>
+        <div class="fi-fb"><span class="d" style="background:#ec8fb8"></span><span data-en>Eyes up in corners</span><span data-es>Mirada alta en las curvas</span></div>
       </div>
     </div>
     <div class="fcol" id="parents">
       <span class="fi" id="fi-trend"></span>
       <h3><span data-en>Track &amp; Improve</span><span data-es>Sigue y mejora</span></h3>
       <p><span data-en>Track your progress over time, share your progress and upload streaks with friends.</span><span data-es>Sigue tu progreso, compártelo y mantén rachas con amigos.</span></p>
-      <div class="chart"><div class="ct">Progress Over Time</div><div id="progChart"></div></div>
-      <div class="share-prog" onclick="rsScroll('waitlist')">↗ <span data-en>Share progress with friends</span><span data-es>Compartir progreso</span></div>
+      <div class="finfo">
+        <div class="fi-ct"><span data-en>Progress Over Time</span><span data-es>Progreso en el tiempo</span></div>
+        <div class="fi-chartbox"><div id="progChart"></div></div>
+        <div class="fi-stats">
+          <div class="fi-stat"><b>+38%</b><small><span data-en>this season</span><span data-es>temporada</span></small></div>
+          <div class="fi-stat"><b>14</b><small><span data-en>ride streak</span><span data-es>racha</span></small></div>
+          <div class="fi-stat"><b>92</b><small><span data-en>best score</span><span data-es>mejor</span></small></div>
+        </div>
+      </div>
     </div>
   </div>
 </div></section>
