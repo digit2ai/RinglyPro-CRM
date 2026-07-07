@@ -19,7 +19,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:var(--white);-webkit-font-smoothing:antialiased;line-height:1.6}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:var(--white);-webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:clip}
   a{text-decoration:none;color:inherit}
   .serif{font-family:'Playfair Display',Georgia,serif}
   .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
@@ -270,8 +270,22 @@
   [data-en]{display:inline}[data-es]{display:none}
   body.es [data-en]{display:none}body.es [data-es]{display:inline}
 
+  /* hamburger (mobile only) */
+  .navtoggle{display:none;background:none;border:none;color:#fff;cursor:pointer;width:42px;height:42px;align-items:center;justify-content:center;flex:0 0 auto}
+  .navtoggle svg{width:24px;height:24px}
+  .navlinks .m-join{display:none}
   @media(max-width:960px){
-    .navlinks{display:none}
+    .nav .wrap{gap:10px}
+    .navtoggle{display:inline-flex}
+    .nav-right .btn-wl{display:none}                 /* the wide button lives in the menu on mobile */
+    .brand .wm{font-size:15px}
+    .navlinks{
+      position:absolute;top:74px;left:0;right:0;display:none;flex-direction:column;
+      background:rgba(9,12,22,.98);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);
+      padding:8px 22px 16px;gap:0;box-shadow:0 24px 50px rgba(0,0,0,.4)}
+    .navlinks.open{display:flex}
+    .navlinks a{padding:14px 4px;font-size:15px;color:#fff;border-bottom:1px solid rgba(255,255,255,.07)}
+    .navlinks .m-join{display:block;margin-top:12px;background:var(--rose);color:#3a1226;text-align:center;font-weight:700;border-radius:999px;border-bottom:none;padding:13px}
     .hero .wrap{grid-template-columns:1fr;text-align:center}
     .featrow{justify-content:center}
     .hero-cta{justify-content:center}
@@ -340,16 +354,20 @@
     <span class="logo" id="logoSlot"></span>
     <span class="wm">ROUNDSHARE<small>AI RIDING ASSISTANT</small></span>
   </a>
-  <div class="navlinks">
-    <a href="#features"><span data-en>Features</span><span data-es>Funciones</span></a>
-    <a href="#" onclick="rsOpenSim();return false;"><span data-en>How It Works</span><span data-es>Cómo funciona</span></a>
-    <a href="#" onclick="rsSoon();return false;"><span data-en>For Parents</span><span data-es>Padres</span></a>
-    <a href="#" onclick="rsSoon();return false;"><span data-en>For Trainers</span><span data-es>Entrenadores</span></a>
-    <a href="#about"><span data-en>About Us</span><span data-es>Nosotros</span></a>
+  <div class="navlinks" id="navLinks">
+    <a href="#features" onclick="rsNavClose()"><span data-en>Features</span><span data-es>Funciones</span></a>
+    <a href="#" onclick="rsNavClose();rsOpenSim();return false;"><span data-en>How It Works</span><span data-es>Cómo funciona</span></a>
+    <a href="#" onclick="rsNavClose();rsSoon();return false;"><span data-en>For Parents</span><span data-es>Padres</span></a>
+    <a href="#" onclick="rsNavClose();rsSoon();return false;"><span data-en>For Trainers</span><span data-es>Entrenadores</span></a>
+    <a href="#about" onclick="rsNavClose()"><span data-en>About Us</span><span data-es>Nosotros</span></a>
+    <a class="m-join" href="#" onclick="rsNavClose();rsScroll('waitlist');return false;"><span data-en>Join the Waitlist</span><span data-es>Unirme a la lista</span></a>
   </div>
   <div class="nav-right">
     <div class="langtog"><button id="btnEN" class="on">EN</button><button id="btnES">ES</button></div>
     <button class="btn-wl" onclick="rsScroll('waitlist')"><span data-en>JOIN THE WAITLIST</span><span data-es>LISTA DE ESPERA</span></button>
+    <button class="navtoggle" id="navToggle" aria-label="Menu" aria-expanded="false" onclick="rsNavToggle()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="nt-a" d="M4 7h16"/><path class="nt-b" d="M4 12h16"/><path class="nt-c" d="M4 17h16"/></svg>
+    </button>
   </div>
 </div></nav>
 
@@ -717,10 +735,12 @@
   function rsScroll(id){ var e=document.getElementById(id); if(e) e.scrollIntoView({behavior:'smooth',block:'start'}); }
   var _soonT=null;
   function rsSoon(){ var t=document.getElementById('soonToast'); if(!t)return; t.classList.add('show'); if(_soonT)clearTimeout(_soonT); _soonT=setTimeout(function(){t.classList.remove('show');},2200); }
+  function rsNavToggle(){ var n=document.getElementById('navLinks'),b=document.getElementById('navToggle'); if(!n)return; var open=n.classList.toggle('open'); if(b)b.setAttribute('aria-expanded',open?'true':'false'); }
+  function rsNavClose(){ var n=document.getElementById('navLinks'),b=document.getElementById('navToggle'); if(n)n.classList.remove('open'); if(b)b.setAttribute('aria-expanded','false'); }
   function rsOpenSim(){ var m=document.getElementById('simModal'), f=document.getElementById('simIframe'); if(!f.getAttribute('src')) f.setAttribute('src','simulator.html?embed=1'); m.classList.add('open'); document.body.style.overflow='hidden'; }
   function rsCloseSim(){ document.getElementById('simModal').classList.remove('open'); document.body.style.overflow=''; }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') rsCloseSim(); });
-  window.rsPlayDemo=rsPlayDemo; window.rsReplayDemo=rsReplayDemo; window.rsScroll=rsScroll; window.rsOpenSim=rsOpenSim; window.rsCloseSim=rsCloseSim; window.rsSoon=rsSoon;
+  window.rsPlayDemo=rsPlayDemo; window.rsReplayDemo=rsReplayDemo; window.rsScroll=rsScroll; window.rsOpenSim=rsOpenSim; window.rsCloseSim=rsCloseSim; window.rsSoon=rsSoon; window.rsNavToggle=rsNavToggle; window.rsNavClose=rsNavClose;
 
   // language toggle
   var btnEN=document.getElementById('btnEN'), btnES=document.getElementById('btnES');
