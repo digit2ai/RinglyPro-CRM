@@ -65,8 +65,8 @@
   /* hero right — phone + looping video */
   .heroright{position:relative;height:100%;min-height:440px;display:flex;justify-content:center;align-items:center}
   .herovid{position:absolute;inset:6% -4% 6% 6%;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
-  .herovid video{width:100%;height:100%;object-fit:cover;filter:saturate(1.05)}
-  .herovid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,12,22,.05),rgba(9,12,22,.5))}
+  .herovid video{width:100%;height:100%;object-fit:cover;filter:saturate(1.06) brightness(.82) blur(2px);transform:scale(1.06)}
+  .herovid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,12,22,.28),rgba(9,12,22,.62))}
   .phone{position:relative;z-index:3;width:250px;height:520px;border-radius:42px;background:#05060d;border:9px solid #05060d;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;margin-right:-40px}
   .phone .pnotch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:110px;height:24px;background:#05060d;border-radius:0 0 14px 14px;z-index:6}
   .pscreen{width:100%;height:100%;background:#0e1120;color:#fff;padding:34px 18px 16px;overflow:hidden;font-size:12px}
@@ -257,7 +257,7 @@
     </div>
   </div>
   <div class="heroright">
-    <div class="herovid"><video src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4" autoplay muted loop playsinline preload="metadata"></video></div>
+    <div class="herovid"><video src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d37072467f0ff0844441d.mp4" autoplay muted loop playsinline preload="metadata"></video></div>
     <div class="phone">
       <div class="pnotch"></div>
       <div class="pscreen">
@@ -290,7 +290,7 @@
     <p><span data-en>Watch how RoundShare reviews a pony round, scores key skills, and gives clear feedback.</span><span data-es>Mira cómo RoundShare revisa un recorrido, califica las habilidades clave y da consejos claros.</span></p>
     <button class="btn-demo" onclick="rsPlayDemo()"><span data-en>WATCH DEMO</span><span data-es>VER DEMO</span> ▶</button>
   </div>
-  <div class="player"><video id="demoVideo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4" controls playsinline preload="metadata"></video></div>
+  <div class="player"><video id="demoVideo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a4d370755edb24b90658cff.mp4" controls muted playsinline preload="metadata"></video></div>
 </div></section>
 
 <!-- STEPS -->
