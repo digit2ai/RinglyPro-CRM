@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RoundShare LLC — Operating Agreement (Private)</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root{
+    --desk:#e9e5dd; --paper:#fbfaf8; --ink:#1c1b19; --mut:#5f5a51; --line:#e0dbd1;
+    --accent:#6d4aff; --accent-soft:#f2eeff; --accent-line:#dcd2fb;
+    --notice-bg:#f4f2ee; --notice-ink:#4a463f;
+    --new:#0a7d43; --new-bg:#e9f8ef; --new-line:#bce6cd;
+    --ok:#0a7d43; --ok-bg:#e9f8ef;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 18px 50px rgba(40,34,20,.10);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --desk:#0e0f13; --paper:#181920; --ink:#e9e7e2; --mut:#9d988e; --line:#2c2e37;
+    --accent:#a48bff; --accent-soft:#20212c; --accent-line:#3a3552;
+    --notice-bg:#1d1e25; --notice-ink:#b7b3aa;
+    --new:#57d08c; --new-bg:#15241b; --new-line:#2c4a37; --ok:#57d08c; --ok-bg:#15241b;
+    --shadow:0 1px 3px rgba(0,0,0,.4),0 24px 60px rgba(0,0,0,.5);
+  }}
+  :root[data-theme="light"]{
+    --desk:#e9e5dd; --paper:#fbfaf8; --ink:#1c1b19; --mut:#5f5a51; --line:#e0dbd1;
+    --accent:#6d4aff; --accent-soft:#f2eeff; --accent-line:#dcd2fb;
+    --notice-bg:#f4f2ee; --notice-ink:#4a463f; --new:#0a7d43; --new-bg:#e9f8ef; --new-line:#bce6cd;
+    --ok:#0a7d43; --ok-bg:#e9f8ef; --shadow:0 1px 3px rgba(0,0,0,.06),0 18px 50px rgba(40,34,20,.10);
+  }
+  :root[data-theme="dark"]{
+    --desk:#0e0f13; --paper:#181920; --ink:#e9e7e2; --mut:#9d988e; --line:#2c2e37;
+    --accent:#a48bff; --accent-soft:#20212c; --accent-line:#3a3552;
+    --notice-bg:#1d1e25; --notice-ink:#b7b3aa; --new:#57d08c; --new-bg:#15241b; --new-line:#2c4a37;
+    --ok:#57d08c; --ok-bg:#15241b; --shadow:0 1px 3px rgba(0,0,0,.4),0 24px 60px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{background:var(--desk);margin:0;padding:0;-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+
+  /* toolbar */
+  .toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--paper);border-bottom:1px solid var(--line);padding:11px 18px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+  .toolbar .tt{font-weight:700;color:var(--ink);font-size:14px;margin-right:auto;display:flex;align-items:center;gap:9px}
+  .toolbar .lock{font-size:11px;color:var(--mut);font-weight:600;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  .btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:13px;font-weight:600;padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .sigcount{font-size:12.5px;color:var(--mut);font-weight:600}
+
+  /* document (paper) */
+  .wrap{max-width:820px;margin:0 auto;padding:34px 20px 80px}
+  .doc{background:var(--paper);color:var(--ink);font-family:Georgia,'Iowan Old Style','Times New Roman',serif;line-height:1.58;font-size:16px;
+    padding:60px 64px 84px;border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow)}
+  .doc h1{font-size:27px;text-align:center;margin:0 0 2px;letter-spacing:.01em;text-wrap:balance}
+  .doc h1.co{font-size:22px}
+  .doc .sub{text-align:center;font-style:italic;color:var(--mut);margin:0 0 4px}
+  .doc .eff{text-align:center;margin:2px 0 22px}
+  .doc h2{font-size:15.5px;margin:32px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line);letter-spacing:.03em;text-wrap:balance}
+  .doc h3{font-size:14px;margin:16px 0 4px}
+  .doc p{margin:9px 0}.doc ul{margin:9px 0 9px 2px;padding-left:20px}.doc li{margin:5px 0}
+  .doc .muted{color:var(--mut)}
+  .doc .notice{border:1px solid var(--line);background:var(--notice-bg);color:var(--notice-ink);font-size:13px;font-style:italic;padding:13px 17px;border-radius:6px;margin:16px 0}
+  .doc .changes{border:1px solid var(--accent-line);background:var(--accent-soft);border-radius:10px;padding:18px 22px;margin:22px 0}
+  .doc .changes h2{border:none;margin-top:0;color:var(--accent);letter-spacing:.02em}
+  .doc .tag{display:inline-block;font-family:-apple-system,sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--new);background:var(--new-bg);border:1px solid var(--new-line);border-radius:4px;padding:1px 6px;vertical-align:middle;margin-left:6px}
+  .doc table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto}
+  .doc th,.doc td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  .doc th{background:var(--notice-bg);font-family:-apple-system,sans-serif;font-size:12px}
+  .doc .fill{border-bottom:1px solid var(--mut);display:inline-block;min-width:150px}
+
+  /* signing widgets */
+  #signPanel{display:grid;gap:16px;margin-top:12px}
+  .signcard{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--notice-bg)}
+  .signcard .who{font-weight:700;font-size:14.5px;font-family:-apple-system,sans-serif}
+  .signcard .role{color:var(--mut);font-size:12.5px;margin-top:2px;font-family:-apple-system,sans-serif}
+  .signrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .signrow input{flex:1;min-width:150px;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-family:-apple-system,sans-serif}
+  .signrow input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .signed{margin-top:12px;display:flex;align-items:center;gap:10px;background:var(--ok-bg);border:1px solid var(--new-line);border-radius:8px;padding:11px 14px}
+  .signed .mark{color:var(--ok);font-weight:800}
+  .signed .sname{font-family:'Brush Script MT','Snell Roundhand',cursive;font-size:22px;color:var(--ink);line-height:1}
+  .signed .meta{font-size:11.5px;color:var(--mut);font-family:-apple-system,sans-serif}
+  .err{color:#c0392b;font-size:12.5px;margin-top:8px;font-family:-apple-system,sans-serif;min-height:1em}
+
+  /* passcode gate */
+  .gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--desk)}
+  .gatecard{width:100%;max-width:400px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:30px 28px;box-shadow:var(--shadow);text-align:center}
+  .gatecard .glogo{width:56px;height:56px;margin:0 auto 14px}
+  .gatecard h1{font-size:19px;margin:0 0 4px;color:var(--ink)}
+  .gatecard p{font-size:13px;color:var(--mut);margin:0 0 18px}
+  .gatecard input{width:100%;font-size:16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--notice-bg);color:var(--ink);text-align:center;letter-spacing:.04em}
+  .gatecard input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+  .gatecard .btn{width:100%;margin-top:12px;padding:12px}
+  .hidden{display:none!important}
+
+  @media(max-width:640px){.doc{padding:34px 22px 52px}.wrap{padding:20px 10px 56px}}
+  @media print{
+    .toolbar,.gate,.signrow,.err{display:none!important}
+    body,.doc{background:#fff!important;color:#000!important}
+    .wrap{padding:0;max-width:none}.doc{box-shadow:none;border:none;padding:0 6px}
+    .signcard{border:none;background:none;padding:8px 0}
+    .signed{background:none;border:none;padding:6px 0}
+  }
+</style>
+</head>
+<body>
+
+<!-- passcode gate -->
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <div class="glogo" id="glogo"></div>
+    <h1>Private Document</h1>
+    <p>RoundShare LLC — Operating Agreement.<br>Enter the access passcode to view and sign.</p>
+    <form id="gateForm">
+      <input type="password" id="passcode" placeholder="Access passcode" autocomplete="off" autofocus>
+      <button class="btn primary" type="submit">Unlock</button>
+      <div class="err" id="gateErr"></div>
+    </form>
+  </div>
+</div>
+
+<!-- toolbar (revealed after unlock) -->
+<div class="toolbar hidden" id="toolbar">
+  <span class="tt"><span class="lock">🔒 Private</span> RoundShare LLC — Operating Agreement</span>
+  <span class="sigcount" id="sigCount"></span>
+  <button class="btn" onclick="location.reload()">Refresh</button>
+  <button class="btn primary" id="pdfBtn">Download PDF</button>
+</div>
+
+<!-- document (injected after unlock) -->
+<div class="wrap hidden" id="wrap">
+  <article class="doc" id="docBody"></article>
+</div>
+
+<script>
+  var PARTIES=[
+    {key:'digit2ai', who:'DIGIT2AI LLC — By Manuel Stagg', role:'Authorized Representative · Sole Member during the Temporary Ownership Period'},
+    {key:'carrie',   who:'Carrie Dickenson',              role:'Founder & Chief Executive Officer · Prospective Member (earn-in)'},
+    {key:'maria',    who:'Maria Clara Garcia',            role:'Chief Business Development Officer · Prospective Member (earn-in)'}
+  ];
+  var PASS='';               // held in memory only after unlock
+  var SIGS={};               // key -> signature record
+
+  // brand horse mark for the gate
+  document.getElementById('glogo').innerHTML='<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="g" x1="0" y1="0" x2="100" y2="100"><stop offset="0" stop-color="#f2a9c8"/><stop offset="1" stop-color="#e07aa8"/></linearGradient></defs><rect x="2" y="2" width="96" height="96" rx="22" fill="#212430"/><g transform="translate(50,51) scale(.86) translate(-49,-51)"><path fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M30 86 C 20 60, 30 40, 46 34 C 48 30, 50 27, 52 26 L 63 15 C 61 24, 59 30, 57 34 C 64 38, 70 52, 74 64 C 76 70, 73 76, 66 74 C 61 72, 55 64, 51 58 C 49 66, 46 78, 44 88"/><circle cx="57" cy="40" r="3" fill="url(#g)"/></g></svg>';
+
+  // Base = this page's path without trailing slash (e.g. /agreement or /roundshare/agreement).
+  // The API lives under the SAME path (/agreement/body, /agreement/sign) — NOT under /api/,
+  // because on roundshare.app the /api/* prefix is proxied to the shared CRM backend.
+  var BASE=location.pathname.replace(/\/+$/,'');
+  function api(ep,payload){
+    return fetch(BASE+'/'+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});});
+  }
+  function fmt(ts){ try{var d=new Date(ts); return d.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})+' at '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}catch(e){return ts;} }
+
+  function renderSign(){
+    var panel=document.getElementById('signPanel'); if(!panel)return;
+    var signed=0;
+    panel.innerHTML='<h3 style="font-family:-apple-system,sans-serif;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:4px 0 2px">Electronic Signatures</h3>'+
+      PARTIES.map(function(p){
+        var s=SIGS[p.key];
+        var inner;
+        if(s){ signed++;
+          inner='<div class="signed"><span class="mark">✓</span><div><div class="sname">'+esc(s.signer_name)+'</div>'+
+                '<div class="meta">Signed '+fmt(s.signed_at)+(s.signer_email?(' · '+esc(s.signer_email)):'')+'</div></div></div>';
+        } else {
+          inner='<div class="signrow">'+
+                '<input id="nm_'+p.key+'" placeholder="Full legal name" autocomplete="name">'+
+                '<input id="em_'+p.key+'" placeholder="Email (optional)" autocomplete="email">'+
+                '<button class="btn primary" onclick="doSign(\''+p.key+'\')">Sign</button></div>'+
+                '<div class="err" id="er_'+p.key+'"></div>';
+        }
+        return '<div class="signcard"><div class="who">'+esc(p.who)+'</div><div class="role">'+esc(p.role)+'</div>'+inner+'</div>';
+      }).join('');
+    document.getElementById('sigCount').textContent=signed+' of '+PARTIES.length+' signed';
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  window.doSign=function(key){
+    var nm=(document.getElementById('nm_'+key).value||'').trim();
+    var em=(document.getElementById('em_'+key).value||'').trim();
+    var er=document.getElementById('er_'+key);
+    if(nm.length<2){ er.textContent='Please type your full legal name to sign.'; return; }
+    er.textContent='Signing…';
+    api('sign',{passcode:PASS,party:key,signer_name:nm,signer_email:em}).then(function(res){
+      if(res.ok&&res.j&&res.j.ok){ SIGS=res.j.signatures||SIGS; renderSign(); }
+      else { er.textContent=(res.j&&res.j.error)||'Could not record signature.'; }
+    }).catch(function(){ er.textContent='Network error — please try again.'; });
+  };
+
+  document.getElementById('gateForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var pc=document.getElementById('passcode').value||'';
+    var err=document.getElementById('gateErr'); err.textContent='Checking…';
+    api('body',{passcode:pc}).then(function(res){
+      if(res.ok&&res.j&&res.j.ok){
+        PASS=pc;
+        document.getElementById('docBody').innerHTML=res.j.html;
+        SIGS={}; (res.j.signatures||[]).forEach(function(s){SIGS[s.party]=s;});
+        document.getElementById('gate').classList.add('hidden');
+        document.getElementById('toolbar').classList.remove('hidden');
+        document.getElementById('wrap').classList.remove('hidden');
+        renderSign();
+      } else { err.textContent=(res.j&&res.j.error)||'Incorrect passcode.'; }
+    }).catch(function(){ err.textContent='Network error — please try again.'; });
+  });
+
+  document.getElementById('pdfBtn').addEventListener('click',function(){
+    document.title='RoundShare-LLC-Operating-Agreement-'+new Date().toISOString().slice(0,10);
+    window.print();
+  });
+</script>
+</body>
+</html>
