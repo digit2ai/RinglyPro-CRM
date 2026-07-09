@@ -24,11 +24,11 @@ const { Sequelize, DataTypes } = require('sequelize');
 
 const fs = require('fs');
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const SERVICE = 'roundshare';
 
 // Private Operating Agreement: passcode gate + e-signatures + PDF (client print).
-const AGREEMENT_VERSION = '3.0';
+const AGREEMENT_VERSION = '4.0';
 const AGREEMENT_PASSCODE = process.env.ROUNDSHARE_AGREEMENT_PASSCODE || 'roundshare2026';
 const AGREEMENT_PARTIES = ['digit2ai', 'carrie', 'maria'];
 let _agreementBody = null;
