@@ -24,7 +24,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 
 const fs = require('fs');
 
-const VERSION = '1.2.2';
+const VERSION = '1.3.0';
 const SERVICE = 'roundshare';
 
 // Private Operating Agreement: passcode gate + e-signatures + PDF (client print).
@@ -152,6 +152,12 @@ app.get('/', (req, res) => {
 // Interactive app mockup simulator.
 app.get(['/simulator', '/app'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'simulator.html'));
+});
+
+// Confidential pre-seed valuation / investor summary (noindex; shareable link).
+app.get(['/investor', '/investors', '/investor-summary', '/valuation', '/pre-seed-valuation'], (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'public', 'investor.html'));
 });
 
 // ---- Private Operating Agreement (passcode-gated) ----
