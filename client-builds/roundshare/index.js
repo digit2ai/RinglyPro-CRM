@@ -24,7 +24,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 
 const fs = require('fs');
 
-const VERSION = '1.2.1';
+const VERSION = '1.2.2';
 const SERVICE = 'roundshare';
 
 // Private Operating Agreement: passcode gate + e-signatures + PDF (client print).
@@ -95,12 +95,18 @@ async function currentSignatures() {
     where: { agreement_version: AGREEMENT_VERSION },
     order: [['created_at', 'ASC']],
   });
-  return rows.map((r) => ({
-    party: r.party,
-    signer_name: r.signer_name,
-    signer_email: r.signer_email || '',
-    signed_at: r.created_at,
-  }));
+  return rows.map((r) => {
+    const dv = r.dataValues || {};
+    // underscored:true names the timestamp attribute createdAt but the column created_at —
+    // cover both so signed_at is always a valid ISO string on the client.
+    const ca = dv.created_at || dv.createdAt || r.createdAt || null;
+    return {
+      party: r.party,
+      signer_name: r.signer_name,
+      signer_email: r.signer_email || '',
+      signed_at: ca ? new Date(ca).toISOString() : null,
+    };
+  });
 }
 function badPass(req) {
   return String((req.body && req.body.passcode) || '') !== AGREEMENT_PASSCODE;
@@ -192,6 +198,20 @@ app.post('/agreement/sign', async (req, res) => {
   } catch (e) {
     console.error('[roundshare] signature insert failed:', e.message);
     return res.status(500).json({ ok: false, error: 'Could not record signature.' });
+  }
+});
+
+// POST /agreement/reset -> clear ALL signatures for the current version (passcode-gated).
+app.post('/agreement/reset', async (req, res) => {
+  if (badPass(req)) return res.status(401).json({ ok: false, error: 'Incorrect passcode.' });
+  if (!Signature || !dbReady) return res.status(503).json({ ok: false, error: 'Signature storage is temporarily unavailable.' });
+  try {
+    const n = await Signature.destroy({ where: { agreement_version: AGREEMENT_VERSION } });
+    console.log('[roundshare] cleared', n, 'signature(s) for v' + AGREEMENT_VERSION);
+    return res.json({ ok: true, cleared: n, signatures: [] });
+  } catch (e) {
+    console.error('[roundshare] signature reset failed:', e.message);
+    return res.status(500).json({ ok: false, error: 'Could not clear signatures.' });
   }
 });
 

@@ -124,6 +124,7 @@
 <div class="toolbar hidden" id="toolbar">
   <span class="tt"><span class="lock">🔒 Private</span> RoundShare LLC — Operating Agreement</span>
   <span class="sigcount" id="sigCount"></span>
+  <button class="btn" id="clearBtn">Clear signatures</button>
   <button class="btn" onclick="location.reload()">Refresh</button>
   <button class="btn primary" id="pdfBtn">Download PDF</button>
 </div>
@@ -153,7 +154,7 @@
     return fetch(BASE+'/'+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});});
   }
-  function fmt(ts){ try{var d=new Date(ts); return d.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})+' at '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});}catch(e){return ts;} }
+  function fmt(ts){ if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; return d.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})+' at '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
 
   function renderSign(){
     var panel=document.getElementById('signPanel'); if(!panel)return;
@@ -163,8 +164,9 @@
         var s=SIGS[p.key];
         var inner;
         if(s){ signed++;
+          var when=fmt(s.signed_at);
           inner='<div class="signed"><span class="mark">✓</span><div><div class="sname">'+esc(s.signer_name)+'</div>'+
-                '<div class="meta">Signed '+fmt(s.signed_at)+(s.signer_email?(' · '+esc(s.signer_email)):'')+'</div></div></div>';
+                '<div class="meta">Signed'+(when?(' '+when):'')+(s.signer_email?(' · '+esc(s.signer_email)):'')+'</div></div></div>';
         } else {
           inner='<div class="signrow">'+
                 '<input id="nm_'+p.key+'" placeholder="Full legal name" autocomplete="name">'+
@@ -207,6 +209,14 @@
         renderSign();
       } else { err.textContent=(res.j&&res.j.error)||'Incorrect passcode.'; }
     }).catch(function(){ err.textContent='Network error — please try again.'; });
+  });
+
+  document.getElementById('clearBtn').addEventListener('click',function(){
+    if(!confirm('This permanently clears ALL signatures on this agreement. Continue?')) return;
+    api('reset',{passcode:PASS}).then(function(res){
+      if(res.ok&&res.j&&res.j.ok){ SIGS={}; renderSign(); }
+      else { alert((res.j&&res.j.error)||'Could not clear signatures.'); }
+    }).catch(function(){ alert('Network error — please try again.'); });
   });
 
   document.getElementById('pdfBtn').addEventListener('click',function(){
