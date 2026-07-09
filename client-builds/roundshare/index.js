@@ -24,7 +24,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 
 const fs = require('fs');
 
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 const SERVICE = 'roundshare';
 
 // Private Operating Agreement: passcode gate + e-signatures + PDF (client print).
@@ -38,6 +38,17 @@ function agreementBody() {
     catch (e) { console.error('[roundshare] agreement body missing:', e.message); _agreementBody = ''; }
   }
   return _agreementBody;
+}
+
+// Private valuation / investor package: passcode gate (default same key as the agreement).
+const INVESTOR_PASSCODE = process.env.ROUNDSHARE_INVESTOR_PASSCODE || 'roundshare2026';
+let _investorBody = null;
+function investorBody() {
+  if (_investorBody == null) {
+    try { _investorBody = fs.readFileSync(path.join(__dirname, 'investor-body.html'), 'utf8'); }
+    catch (e) { console.error('[roundshare] investor body missing:', e.message); _investorBody = ''; }
+  }
+  return _investorBody;
 }
 
 const app = express();
@@ -154,10 +165,17 @@ app.get(['/simulator', '/app'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'simulator.html'));
 });
 
-// Confidential pre-seed valuation / investor summary (noindex; shareable link).
+// Confidential valuation / investor package — passcode-gated shell (noindex).
 app.get(['/investor', '/investors', '/investor-summary', '/valuation', '/pre-seed-valuation'], (req, res) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'public', 'investor.html'));
+});
+// Gated document body — served only after the access key check.
+app.post(['/investor/body', '/investors/body', '/investor-summary/body', '/valuation/body', '/pre-seed-valuation/body'], (req, res) => {
+  if (String((req.body && req.body.passcode) || '') !== INVESTOR_PASSCODE) {
+    return res.status(401).json({ ok: false, error: 'Incorrect key.' });
+  }
+  return res.json({ ok: true, html: investorBody() });
 });
 
 // ---- Private Operating Agreement (passcode-gated) ----

@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>RoundShare — Confidential Pre-Seed Valuation & Investor Summary</title>
+<title>RoundShare — Confidential Valuation (Private)</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
   :root{
     --ink:#161326; --ink2:#2a2540; --muted:#6b6684; --line:#e7e3f0;
@@ -97,295 +98,62 @@
   .printbar{position:fixed;bottom:18px;right:18px;z-index:20}
   .printbar button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(109,74,255,.4)}
 </style>
+
+<style>
+  .gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(150deg,#140c2b 0%,#241541 55%,#3a1c52 100%)}
+  .gatecard{width:100%;max-width:400px;background:#fbfaf8;border-radius:18px;padding:30px 28px;text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .gatecard .glogo{width:58px;height:58px;margin:0 auto 14px;display:block}
+  .gatecard h1{font-size:19px;margin:0 0 4px;color:#161326}
+  .gatecard p{font-size:13px;color:#6b6684;margin:0 0 18px}
+  .gatecard input{width:100%;font-size:16px;padding:12px 14px;border:1px solid #e0dbd1;border-radius:10px;background:#f4f2ee;color:#161326;text-align:center;letter-spacing:.04em}
+  .gatecard input:focus{outline:2px solid #6d4aff;border-color:#6d4aff}
+  .gatecard button{width:100%;margin-top:12px;padding:12px;background:#6d4aff;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer}
+  .gerr{color:#c0392b;font-size:12.5px;margin-top:10px;min-height:1em}
+  .hidden{display:none!important}
+  .doc.hidden{display:none!important}
+</style>
 </head>
 <body>
-<div class="doc">
 
-  <!-- COVER -->
-  <div class="cover">
-    <div class="conf">CONFIDENTIAL</div>
-    <div class="brandrow">
-      <svg class="logo" viewBox="0 0 100 100" role="img" aria-label="RoundShare"><defs><linearGradient id="rg" x1="0" y1="0" x2="100" y2="100"><stop offset="0" stop-color="#f2a9c8"/><stop offset="1" stop-color="#e07aa8"/></linearGradient></defs><path fill="none" stroke="url(#rg)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" d="M30 86 C 20 60, 30 40, 46 34 C 48 30, 50 27, 52 26 L 63 15 C 61 24, 59 30, 57 34 C 64 38, 70 52, 74 64 C 76 70, 73 76, 66 74 C 61 72, 55 64, 51 58 C 49 66, 46 78, 44 88"/><circle cx="57" cy="40" r="3" fill="url(#rg)"/></svg>
-      <div><b>ROUNDSHARE</b><span>AI RIDING ASSISTANT · RIDE. IMPROVE. SHARE.</span></div>
-    </div>
-    <h1>Confidential Pre-Seed Valuation<br>&amp; Investor Summary</h1>
-    <div class="sub">An analysis of enterprise value for RoundShare LLC — the AI ride-analysis and community platform for equestrian athletes. Prepared for prospective pre-seed investors.</div>
-
-    <div class="coverstats">
-      <div><b>$2M–$5M</b><small>Indicative Valuation</small></div>
-      <div><b>40-screen</b><small>Product Built</small></div>
-      <div><b>3</b><small>Founding Members</small></div>
-      <div><b>EN / ES</b><small>Bilingual From Day 1</small></div>
-    </div>
-
-    <div class="meta">
-      <span>Prepared: <b>July 9, 2026</b></span>
-      <span>Stage: <b>Pre-Seed (pre-launch)</b></span>
-      <span>Basis: <b>Asset &amp; Market-Comparable</b></span>
-      <span>Status: <b>Draft v1.0 — Management Estimate</b></span>
-    </div>
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <svg class="glogo" viewBox="0 0 100 100" aria-label="RoundShare"><defs><linearGradient id="gg" x1="0" y1="0" x2="100" y2="100"><stop offset="0" stop-color="#f2a9c8"/><stop offset="1" stop-color="#e07aa8"/></linearGradient></defs><rect x="2" y="2" width="96" height="96" rx="22" fill="#212430"/><g transform="translate(50,51) scale(.86) translate(-49,-51)"><path fill="none" stroke="url(#gg)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M30 86 C 20 60, 30 40, 46 34 C 48 30, 50 27, 52 26 L 63 15 C 61 24, 59 30, 57 34 C 64 38, 70 52, 74 64 C 76 70, 73 76, 66 74 C 61 72, 55 64, 51 58 C 49 66, 46 78, 44 88"/><circle cx="57" cy="40" r="3" fill="url(#gg)"/></g></svg>
+    <h1>Private &mdash; RoundShare Valuation</h1>
+    <p>Confidential investor &amp; valuation package.<br>Enter the access key to view.</p>
+    <form id="gateForm">
+      <input type="password" id="passcode" placeholder="Access key" autocomplete="off" autofocus>
+      <button type="submit">Unlock</button>
+      <div class="gerr" id="gerr"></div>
+    </form>
   </div>
-
-  <!-- TOC / NOTICE -->
-  <section class="card toc">
-    <div class="grid g2">
-      <div>
-        <h2 style="margin-bottom:10px">Contents</h2>
-        1. <a href="#summary">Executive Summary</a><br>
-        2. <a href="#company">Company Overview</a><br>
-        3. <a href="#assets">Product &amp; Asset Inventory</a><br>
-        4. <a href="#market">Market Opportunity</a><br>
-        5. <a href="#method">Valuation Methodology</a><br>
-        6. <a href="#football">Valuation Summary</a><br>
-        7. <a href="#ask">The Pre-Seed Opportunity</a><br>
-        8. <a href="#risk">Risk Factors &amp; Value Drivers</a><br>
-        9. <a href="#assumptions">Assumptions &amp; Disclaimers</a>
-      </div>
-      <div>
-        <h2 style="margin-bottom:10px">Confidentiality Notice</h2>
-        <p style="font-size:13px;margin:0">This summary is confidential and is furnished solely for the recipient's evaluation of a potential investment in RoundShare LLC. It may not be reproduced or distributed without written consent. It does not constitute an offer to sell securities and contains forward-looking estimates that are inherently uncertain.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 1. EXEC SUMMARY -->
-  <section id="summary">
-    <h2>01 — Executive Summary</h2>
-    <div class="h2sub">A working AI product in a passionate, underserved sport</div>
-
-    <div class="headline card">
-      <small>Indicative Pre-Money Value — Current</small>
-      <div class="big">$2M – $5M</div>
-      <div class="note">Asset-, brand-, and team-anchored, pre-launch. Re-rates to <b>$6M–$10M+</b> on demonstrated product-market fit (~$1M ARR) at prevailing consumer-SaaS multiples.</div>
-    </div>
-
-    <p class="lead" style="margin-top:22px">RoundShare is an AI riding assistant for equestrian athletes: a rider records a round or lesson on a normal phone, and the AI analyzes body position, the horse's rhythm, and the round in seconds — returning a ride score, strengths, areas to improve, and homework — then lets the rider <b>share</b> that progress with friends, trainers, and their barn. It is the community and social layer of the EquiMind "Jump Coach" ecosystem, and is built on Digit2AI's AI-native engineering engine. The product is built and demonstrable (a 40-screen interactive app, a live bilingual site with a waitlist, and a working AI analysis flow); it is pre-launch, with public launch imminent.</p>
-
-    <div class="grid g3" style="margin-top:18px">
-      <div class="card kpi"><div class="n brand">40</div><div class="l">Interactive product screens built &amp; navigable</div></div>
-      <div class="card kpi"><div class="n rose">0-key</div><div class="l">Bilingual voice AI (EN/ES) already live on-site</div></div>
-      <div class="card kpi"><div class="n">$0</div><div class="l">Debt · founder-built on a shared AI platform</div></div>
-    </div>
-
-    <div class="callout" style="margin-top:18px">
-      <b>Valuation thesis.</b> The floor is the cost to replicate the built product (working AI-analysis UX, voice AI, brand, domain, and data/legal infrastructure) plus the value of a domain-expert founding team. The upside is a category with real passion and willingness to pay (competitive riders, juniors, and their parents) and almost no modern, mobile-first AI incumbent. The gate to the higher range is launch and retention evidence — outside the scope of this pre-launch, asset-based analysis.
-    </div>
-  </section>
-
-  <!-- 2. COMPANY OVERVIEW -->
-  <section id="company">
-    <h2>02 — Company Overview</h2>
-    <div class="h2sub">What RoundShare is</div>
-    <div class="card">
-      <div class="grid g2">
-        <div>
-          <p style="margin-top:0"><b>The product.</b> A mobile-first AI riding assistant — upload a ride, get an AI ride score with a skill breakdown (rhythm, position, jump form, line &amp; pace), strengths, areas to improve, and homework; then track progress and share it with friends, trainers, and barns. Live at <span class="pill">roundshare.app</span></p>
-          <p><b>The company.</b> RoundShare LLC — a Florida limited liability company owned in equal thirds by three founding members: a professional-equestrian CEO, a technology member (Digit2AI), and a business-development lead, plus a Founding Rider / youth ambassador.</p>
-        </div>
-        <div>
-          <p style="margin-top:0"><b>The engine.</b> Technology is delivered by Digit2AI LLC — an AI-native software company whose "RinglyPro Architect" build engine (an 83-agent workforce) compresses the cost and time of building and iterating the product. This is RoundShare's structural cost advantage versus a conventionally-staffed startup.</p>
-          <p><b>The ecosystem.</b> RoundShare is the US community layer of a three-platform equestrian family — alongside Digit2AI's <b>EquiMind (JumpCoach), Colombia</b> and <b>PasoFinoPro Global</b> — giving shared AI infrastructure and multi-market reach.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. ASSET INVENTORY -->
-  <section id="assets">
-    <h2>03 — Product &amp; Asset Inventory</h2>
-    <div class="h2sub">The estate being valued</div>
-
-    <div class="grid g3" style="margin-bottom:16px">
-      <div class="card kpi"><div class="n">40</div><div class="l">Interactive app screens (simulator)</div></div>
-      <div class="card kpi"><div class="n">2</div><div class="l">Languages shipped (EN/ES)</div></div>
-      <div class="card kpi"><div class="n">roundshare.app</div><div class="l">Owned brand domain, live</div></div>
-    </div>
-
-    <div class="card tbl-wrap">
-      <table>
-        <thead><tr><th>Asset / Component</th><th>What it is</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td><b>roundshare.app landing</b></td><td>Bilingual marketing site, brand, hero, feature infographics, live demo, waitlist capture</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>40-screen app simulator</b></td><td>Full interactive product UX: Upload → AI Processing → Feedback → Feed → Circles → Share → Profile → Premium → Parent Dashboard</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>AI ride-analysis &amp; scoring</b></td><td>Ride score, 5-skill breakdown, strengths / areas to improve, homework, progress tracking</td><td><span class="tag beta">Product built · model training next</span></td></tr>
-          <tr><td><b>Lina voice AI</b></td><td>Zero-key neural narration (EN/ES) that walks a visitor through the product</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>Waitlist &amp; data capture</b></td><td>Email waitlist persisted to a production Postgres database</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>Brand system</b></td><td>Horse-head mark, favicon, iOS/Android app icons, web manifest, social/OG cards</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>Legal &amp; e-signature infrastructure</b></td><td>Private passcode-gated Operating Agreement with e-signatures to Postgres + PDF</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>AI build engine access</b></td><td>Digit2AI's 83-agent NLP-to-production workforce + shared neural / voice / MCP infrastructure</td><td><span class="tag live">Live</span></td></tr>
-          <tr><td><b>Native iOS / Android apps</b></td><td>To be built out from the working simulator</td><td><span class="tag pre">Planned (use of proceeds)</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="font-size:12.5px;color:var(--muted)">Status reflects build state, not audited commercial traction. "Live" = deployed / serving; "Product built · model training next" = the UX and pipeline exist; the production ML scoring model is the primary post-raise engineering task.</p>
-  </section>
-
-  <!-- 4. MARKET -->
-  <section id="market">
-    <h2>04 — Market Opportunity</h2>
-    <div class="h2sub">A large, passionate, and under-digitized sport</div>
-    <div class="grid g3" style="margin-bottom:16px">
-      <div class="card kpi"><div class="n brand">$177B</div><div class="l">US horse-industry economic impact (AHC 2023)</div></div>
-      <div class="card kpi"><div class="n rose">~6.6M</div><div class="l">Horses in the US · 2.2M linked jobs (AHC 2023)</div></div>
-      <div class="card kpi"><div class="n">~83,000</div><div class="l">USEF competing members, +8% in 2024 (USEF)</div></div>
-    </div>
-    <div class="card">
-      <p style="margin-top:0"><b>Who pays.</b> Competitive hunter/jumper, dressage, and eventing riders — and, critically, <b>junior riders and their parents</b>, a segment with proven willingness to pay for coaching, shows, and improvement. Trainers and barns are a natural B2B2C channel.</p>
-      <p><b>Why now.</b> Sports video-analysis and AI coaching have matured in mainstream sports (e.g. Hudl, OnForm, GoPro's Coach's Eye), but equestrian sport remains largely served by generic video tools and word-of-mouth coaching. RoundShare pairs an AI that understands riding with a social layer built for how riders actually improve — between lessons, with their community.</p>
-      <p style="margin-bottom:0"><b>Model.</b> Freemium consumer app → premium rider subscription (monthly), with trainer/barn tiers and a parent dashboard. Bilingual EN/ES from day one opens both the US and LATAM markets, reinforced by the sister EquiMind (Colombia) and PasoFinoPro (global) platforms.</p>
-    </div>
-
-    <div class="card tbl-wrap" style="margin-top:16px">
-      <h3 style="margin:0 0 8px;font-size:15px">Comparable financings — sports-video &amp; equestrian apps</h3>
-      <table>
-        <thead><tr><th>Company</th><th>Category</th><th class="num">Capital raised</th></tr></thead>
-        <tbody>
-          <tr><td><b>Hudl</b></td><td>Sports video analysis (mainstream)</td><td class="num">~$230M total · $120M Series F (2020)</td></tr>
-          <tr><td><b>OnForm</b></td><td>Sports coaching video</td><td class="num">~$3M seed</td></tr>
-          <tr><td><b>Ridely</b> (SE)</td><td>Equestrian training app</td><td class="num">~$1.0M seed (2021)</td></tr>
-          <tr><td><b>Equilab</b> (SE)</td><td>Equestrian ride tracking</td><td class="num">~$0.4M (2020)</td></tr>
-        </tbody>
-      </table>
-      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Sources: Tracxn / PitchBook / Crunchbase / Dealroom / Bain Capital. Equestrian precedents are modest and under-built; RoundShare pairs a genuinely built, AI-native product with a professional-equestrian founder — supporting a valuation above the equestrian precedent but discounted below the ~$7–8M general pre-seed median (Carta 2025) for niche and pre-launch status.</p>
-    </div>
-  </section>
-
-  <!-- 5. METHODOLOGY -->
-  <section id="method">
-    <h2>05 — Valuation Methodology</h2>
-    <div class="h2sub">Three independent lenses</div>
-    <div class="grid" style="gap:16px">
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:17px">A. Cost / Asset-Replacement Approach <span class="pill">Floor</span></h3>
-        <p style="margin:0">Values the built product by the cost to rebuild it conventionally: a mobile-first AI-analysis app (40-screen UX + scoring pipeline), an integrated voice AI, a full brand and icon system, a live bilingual site with database capture, and legal/e-signature infrastructure. Conventionally this represents an estimated <b>3–6 engineer-years</b>; at a fully-loaded $150K–$200K/year that is <b>$450K–$1.2M</b>. Adding the owned brand/domain, the proprietary scoring design, and access to the Digit2AI build engine yields an asset floor of <b>$0.75M–$1.5M</b>.</p>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:17px">B. Market-Comparable (Revenue Multiple) <span class="pill">Primary at scale</span></h3>
-        <p style="margin:0 0 10px">Consumer / prosumer SaaS transacts on forward revenue multiples. Applying current-market ranges to scenario ARR:</p>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Scenario</th><th class="num">ARR</th><th class="num">Multiple</th><th class="num">Implied Value</th></tr></thead>
-            <tbody>
-              <tr><td>Pre-launch / waitlist (today)</td><td class="num">~$0</td><td class="num">—</td><td class="num">$1.5M–$4M</td></tr>
-              <tr><td>Early traction</td><td class="num">$0.25M–$0.5M</td><td class="num">5–8×</td><td class="num">$1.5M–$4M</td></tr>
-              <tr><td>Product-market fit</td><td class="num">$1.0M</td><td class="num">6–10×</td><td class="num">$6M–$10M</td></tr>
-              <tr><td>Scaling (&gt;80% YoY)</td><td class="num">$3.0M</td><td class="num">6–10×</td><td class="num">$18M–$30M</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:17px">C. Strategic / Optionality Approach <span class="pill">Upside</span></h3>
-        <p style="margin:0">RoundShare is one of three equestrian platforms in the EquiMind family (RoundShare US, EquiMind/JumpCoach Colombia, PasoFinoPro Global) sharing one AI engine. As the community/social layer, RoundShare compounds through network effects (riders invite trainers, barns, and friends), and the shared engine lowers the marginal cost of each new discipline, geography, and feature — raising the portfolio's expected value versus a single-market app.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 6. FOOTBALL FIELD -->
-  <section id="football">
-    <h2>06 — Valuation Summary</h2>
-    <div class="h2sub">Indicative pre-money range by method</div>
-    <div class="card">
-      <div class="ff">
-        <div class="ffrow">
-          <div class="lbl">Cost / Asset-Replacement</div>
-          <div class="fftrack"><div class="ffbar" style="left:6.25%;width:6.25%;background:#6b6684">$0.75–1.5M</div></div>
-        </div>
-        <div class="ffrow">
-          <div class="lbl">Current (asset + team + optionality)</div>
-          <div class="fftrack"><div class="ffbar" style="left:16.7%;width:25%;background:#6d4aff">$2–5M</div></div>
-        </div>
-        <div class="ffrow">
-          <div class="lbl">Market comp @ $0.5M ARR</div>
-          <div class="fftrack"><div class="ffbar" style="left:16.7%;width:16.7%;background:#e07aa8">$2–4M</div></div>
-        </div>
-        <div class="ffrow">
-          <div class="lbl">Market comp @ $1M ARR (PMF)</div>
-          <div class="fftrack"><div class="ffbar" style="left:50%;width:33.3%;background:#0f9d58">$6–10M</div></div>
-        </div>
-        <div class="axis"><span>$0</span><span>$3M</span><span>$6M</span><span>$9M</span><span>$12M</span></div>
-      </div>
-    </div>
-    <div class="callout" style="margin-top:18px">
-      <b>Concluded indicative value (current):</b> <b>$2M – $5M</b> pre-money, anchored to the replacement cost of the built product plus a premium for the domain-expert founding team, the owned brand, and portfolio optionality. A midpoint of <b>~$3.5M</b> is a reasonable reference for a pre-seed pre-money discussion — above the equestrian-app precedent, below the ~$7–8M general pre-seed median — subject to due diligence.
-    </div>
-  </section>
-
-  <!-- 7. THE ASK -->
-  <section id="ask">
-    <h2>07 — The Pre-Seed Opportunity</h2>
-    <div class="h2sub">Illustrative structure</div>
-    <div class="grid g3">
-      <div class="card kpi"><div class="n brand">$500K–$1M</div><div class="l">Indicative raise</div></div>
-      <div class="card kpi"><div class="n">~$3M–$3.5M</div><div class="l">Pre-money reference</div></div>
-      <div class="card kpi"><div class="n rose">12–18 mo</div><div class="l">Runway to launch + traction proof</div></div>
-    </div>
-    <div class="card" style="margin-top:16px">
-      <h3 style="margin:0 0 8px;font-size:16px">Use of proceeds — convert a built product into a launched, growing one</h3>
-      <ul class="clean">
-        <li><b>Ship the native apps</b> — build the iOS/Android apps from the working simulator and launch on the App Store / Play Store.</li>
-        <li><b>Train the production scoring model</b> — real pose/rhythm/form ML on rider video, validated against professional coaching (the CEO's domain expertise is the labeling advantage).</li>
-        <li><b>First 1,000 riders + barns</b> — trainer and barn partnerships, junior-rider and parent go-to-market, show-circuit presence.</li>
-        <li><b>Stand up revenue instrumentation</b> — subscriptions, retention, and cohort reporting to support the next round on a revenue multiple.</li>
-      </ul>
-    </div>
-    <p style="font-size:12.5px;color:var(--muted)">Structure shown is illustrative for discussion only and does not constitute an offer of securities. Final terms are subject to negotiation and definitive documentation.</p>
-  </section>
-
-  <!-- 8. RISK -->
-  <section id="risk">
-    <h2>08 — Risk Factors &amp; Value Drivers</h2>
-    <div class="h2sub">What moves the number</div>
-    <div class="grid g2">
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:16px;color:var(--warn)">Risks / discounts</h3>
-        <ul class="clean risk">
-          <li><b>Pre-launch, pre-revenue</b> — no traction, retention, or ARR yet; the single largest gate between the $2M and $10M ranges.</li>
-          <li><b>Production AI model unbuilt</b> — the UX and pipeline exist; the real video-scoring model still needs to be trained and validated.</li>
-          <li><b>Niche category</b> — equestrian is passionate but smaller than mainstream sports; TAM depends on penetration of competition riders + juniors.</li>
-          <li><b>Technology-partner dependency</b> — engineering is delivered by Digit2AI (a member); Digit2AI's background IP is licensed to, not owned by, RoundShare.</li>
-          <li><b>Seasonality &amp; hardware</b> — riding/show seasonality and reliance on phone-captured video quality.</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 6px;font-size:16px;color:var(--accent)">Value drivers / upside</h3>
-        <ul class="clean">
-          <li><b>Product already built</b> — a demonstrable 40-screen app + live bilingual site, not a pitch deck.</li>
-          <li><b>Domain-expert CEO</b> — a professional equestrian defines what "great riding" is — the labeling moat AI competitors lack.</li>
-          <li><b>AI-native cost advantage</b> — Digit2AI's build engine compresses the cost/time of shipping and iterating.</li>
-          <li><b>Community flywheel</b> — riders bring trainers, barns, and friends; sharing is the growth loop, not an afterthought.</li>
-          <li><b>Multi-market ecosystem</b> — bilingual, with sister platforms in Colombia and globally.</li>
-          <li><b>Willing-to-pay buyer</b> — junior riders + parents already spend heavily on the sport.</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- 9. ASSUMPTIONS -->
-  <section id="assumptions">
-    <h2>09 — Assumptions &amp; Disclaimers</h2>
-    <div class="card">
-      <ul class="clean">
-        <li>This summary presents a <b>management estimate</b> of value derived from the company's built product and prevailing market multiples. It is <b>not an independent, audited, or certified appraisal</b> and was not prepared by a licensed valuation firm.</li>
-        <li>Asset-replacement figures are engineering estimates based on the scope of the built product and assumed blended labor rates. They are directional, not a quote.</li>
-        <li>Market-comparable ranges use illustrative scenario revenue. <b>No revenue, ARR, customer, churn, or margin figures exist yet</b>; the company is pre-launch.</li>
-        <li>Market-size figures (US horses, industry economic impact) are as reported by the American Horse Council and are used for context, not as company metrics.</li>
-        <li>Forward-looking statements involve significant uncertainty; actual outcomes may differ materially. Nothing herein is an offer to sell or a solicitation to buy securities, nor investment, legal, tax, or accounting advice.</li>
-        <li>A prospective investor should conduct independent financial, technical, and legal due diligence before any transaction.</li>
-      </ul>
-    </div>
-    <div class="foot">
-      <p><b>ROUNDSHARE LLC — Confidential Pre-Seed Valuation &amp; Investor Summary</b></p>
-      <p>Prepared July 9, 2026 · Draft v1.0 · For the named recipient only · © 2026 RoundShare LLC. All rights reserved.</p>
-      <p>Indicative pre-money value: $2M–$5M (current) · $6M–$10M+ (on demonstrated $1M ARR). Subject to due diligence.</p>
-    </div>
-  </section>
-
+</div>
+<div class="doc hidden" id="invBody"></div>
+<div class="printbar noprint hidden" id="printbar">
+  <button id="pdfBtn">Download / Print PDF</button>
 </div>
 
-<div class="printbar noprint">
-  <button onclick="window.print()">Download / Print PDF</button>
-</div>
-
+<script>
+  var BASE=location.pathname.replace(/\/+$/,'');
+  document.getElementById('gateForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var pc=document.getElementById('passcode').value||'';
+    var err=document.getElementById('gerr'); err.textContent='Checking…';
+    fetch(BASE+'/body',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({passcode:pc})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        if(res.ok&&res.j&&res.j.ok){
+          document.getElementById('invBody').innerHTML=res.j.html;
+          document.getElementById('gate').classList.add('hidden');
+          document.getElementById('invBody').classList.remove('hidden');
+          document.getElementById('printbar').classList.remove('hidden');
+        } else { err.textContent=(res.j&&res.j.error)||'Incorrect key.'; }
+      }).catch(function(){ err.textContent='Network error — please try again.'; });
+  });
+  document.getElementById('pdfBtn').addEventListener('click',function(){
+    document.title='RoundShare-Valuation-'+new Date().toISOString().slice(0,10); window.print();
+  });
+</script>
 </body>
 </html>
