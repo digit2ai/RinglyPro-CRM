@@ -198,6 +198,8 @@
       if(res.ok&&res.j&&res.j.ok){
         PASS=pc;
         document.getElementById('docBody').innerHTML=res.j.html;
+        var ed=document.getElementById('effDate');
+        if(ed) ed.textContent=new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
         SIGS={}; (res.j.signatures||[]).forEach(function(s){SIGS[s.party]=s;});
         document.getElementById('gate').classList.add('hidden');
         document.getElementById('toolbar').classList.remove('hidden');
