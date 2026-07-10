@@ -1,0 +1,113 @@
+/* ============================================ */
+/* VARIABLES CSS - SISTEMA DE COLOR */
+/* ============================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  /* Colores primarios - Verde equilibrio y decisión */
+  --primary-100: #3C6063;
+  --primary-200: #254143;
+  --primary-300: #16373A;
+  --primary-400: #0B282B;
+  --primary-500: #02181A;
+
+  /* Colores secundarios 1 - Azul oscuro Confianza y claridad */
+  --secondary1-100: #46516E;
+  --secondary1-200: #2C344A;
+  --secondary1-300: #1C2640;
+  --secondary1-400: #0F182F;
+  --secondary1-500: #050B1D;
+
+  /* Colores secundarios 2 - Verde lima Energía y avance */
+  --secondary2-100: #4B7F52;
+  --secondary2-200: #2E5633;
+  --secondary2-300: #1B4A21;
+  --secondary2-400: #0D3712;
+  --secondary2-500: #022106;
+
+  /* Colores secundarios 3 - Azul claro Llamado a la acción */
+  --secondary3-100: #7FABAF;
+  --secondary3-200: #50888D;
+  --secondary3-300: #2F6E74;
+  --secondary3-400: #18565C;
+  --secondary3-500: #053C41;
+
+  /* Neutros */
+  --off-white: #f8faf9;
+  --gray-50: #f4f7f5;
+  --gray-100: #e8eeea;
+  --gray-200: #c5d1c9;
+  --gray-300: #8a9c8f;
+  --gray-400: #5c6e61;
+  --dark: #0a1f10;
+}
+
+/* ============================================ */
+/* ESTILOS BASE */
+/* ============================================ */
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  min-width: 100%;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.15;
+  height: 100%;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  background-color: var(--off-white);
+  color: var(--dark);
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  height: 100%;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ============================================ */
+/* SCROLLBARS */
+/* ============================================ */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary3-300) var(--primary-400);
+}
+
+/* WebKit / Blink */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-400);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--secondary3-300);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--secondary3-200);
+}

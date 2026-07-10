@@ -1,0 +1,7 @@
+{
+  "name": "planea-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}

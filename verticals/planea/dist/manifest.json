@@ -1,0 +1,22 @@
+{
+  "short_name": "Planea",
+  "name": "Planea - Entiende tu dinero. Planea tu futuro.",
+  "icons": [
+    {
+      "src": "images/logo_32x32.jpeg",
+      "sizes": "32x32",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "images/logo_800x800.jpeg",
+      "type": "image/jpeg",
+      "sizes": "800x800",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/planea/",
+  "scope": "/planea/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

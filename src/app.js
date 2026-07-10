@@ -1740,6 +1740,32 @@ app.get('/debug/torna-idioma-error', (req, res) => {
   });
 });
 
+// ==========================================
+// PLANEA — Copiloto financiero personal (Colombia)
+// Ionic React + Vite SPA (own Supabase backend). Static dist served at /planea.
+// ==========================================
+let planeaApp = null;
+let planeaError = null;
+try {
+  planeaApp = require('../verticals/planea/server.cjs');
+  app.use('/planea', planeaApp);
+  console.log('🇨🇴 Planea mounted at /planea');
+  console.log('   - App (SPA): /planea/ (redirects to /planea/login or /planea/home)');
+  console.log('   - Diagnóstico/Score: /planea/score');
+  console.log('   - Health Check: /planea/health');
+} catch (error) {
+  planeaError = error;
+  console.log('⚠️ Planea not available:', error.message);
+}
+
+app.get('/debug/planea-error', (req, res) => {
+  res.json({
+    service: 'Planea',
+    available: !planeaError,
+    error: planeaError ? { message: planeaError.message, stack: planeaError.stack } : null,
+  });
+});
+
 // ── ImagingMind TTS — ElevenLabs Lina voice for demo narration ──
 const crypto = require('crypto');
 app.post('/api/imagingmind-tts', express.json(), async (req, res) => {

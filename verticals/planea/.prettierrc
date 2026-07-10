@@ -1,0 +1,8 @@
+{
+  "bracketSpacing": true,
+  "editor.formatOnSave": true,
+  "endOfLine": "lf",
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "none"
+}

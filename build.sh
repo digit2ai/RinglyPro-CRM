@@ -509,6 +509,51 @@ else
     echo "Visionarium dashboard directory not found, skipping..."
 fi
 
+echo ""
+echo "================================================"
+echo "Building PLANEA (Copiloto Financiero) SPA"
+echo "================================================"
+
+if [ -d "verticals/planea" ]; then
+    cd verticals/planea
+    echo "Planea directory: $(pwd)"
+
+    if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+        echo "✅ Planea dist folder already exists (pre-built), skipping build"
+        ls -lh dist/
+        cd ../..
+    else
+        echo "📦 Installing Planea dependencies (Ionic React 19)..."
+        NODE_ENV=development npm install --legacy-peer-deps 2>&1 || {
+            echo "⚠️ npm install failed, retrying clean..."
+            rm -rf node_modules
+            NODE_ENV=development npm install --legacy-peer-deps 2>&1
+        }
+
+        echo ""
+        echo "🔨 Building Planea with Vite (base=/planea/)..."
+        set +e
+        NODE_ENV=production npm run build 2>&1
+        BUILD_EXIT_CODE=$?
+        set -e
+
+        if [ $BUILD_EXIT_CODE -ne 0 ]; then
+          echo "⚠️ Planea build failed with exit code $BUILD_EXIT_CODE"
+        fi
+
+        if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+            echo "✅ Planea dist folder created!"
+            ls -lh dist/
+        else
+            echo "⚠️ Planea dist folder not created — /planea returns 503 until built"
+        fi
+
+        cd ../..
+    fi
+else
+    echo "⚠️ Planea directory not found, skipping..."
+fi
+
 echo "================================================"
 echo "Build completed successfully!"
 echo "✅ Store Health AI Dashboard built at: ./store-health-ai-dashboard-dist"
@@ -520,4 +565,5 @@ echo "✅ Logistics Dashboard built at: ./verticals/logistics/frontend/dist"
 echo "✅ Torna Idioma Dashboard built at: ./verticals/torna_idioma/frontend/dist"
 echo "✅ ImagingMind Dashboard built at: ./verticals/msk_intelligence/frontend/dist"
 echo "✅ Intuitive Dashboard built at: ./verticals/intuitive/dashboard/dist"
+echo "✅ Planea SPA built at: ./verticals/planea/dist"
 echo "================================================"

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Confirmar cambio de correo electrónico — Planea</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#f8faf9;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f8faf9;line-height:1px;">
+    Confirma el cambio de correo electrónico de tu cuenta en Planea.&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="background-color:#f8faf9;min-width:320px;">
+    <tr>
+      <td align="center" style="padding:48px 16px 40px;">
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;
+                 box-shadow:0 2px 8px rgba(10,31,16,0.08),0 0 0 1px rgba(10,31,16,0.04);">
+
+          <tr>
+            <td style="background-color:#0B282B;padding:36px 40px 28px;text-align:center;">
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 20px;">
+                <tr>
+                  <td style="border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.25);">
+                    <img src="https://app.planea.co/images/logo_800x800.jpeg" alt="Planea" width="80"
+                      height="80" style="display:block;width:80px;height:80px;border-radius:16px;object-fit:cover;" />
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:28px;
+                         font-weight:800;letter-spacing:-0.5px;color:#f8faf9;line-height:1;">
+                Planea
+              </p>
+              <p style="margin:10px 0 0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;
+                         font-weight:400;font-style:italic;color:#7FABAF;line-height:1.5;">
+                Entiende tu dinero, Planea tu futuro
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:40px 40px 36px;">
+
+              <h2 style="margin:0 0 18px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                         font-size:24px;line-height:1.3;color:#0a1f10;font-weight:800;">
+                Confirma el cambio de correo electrónico
+              </h2>
+
+              <p style="margin:0 0 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:15px;color:#5c6e61;line-height:1.65;">
+                Sigue este enlace para confirmar el cambio de correo electrónico de
+                <strong style="color:#0a1f10;">{{ .Email }}</strong>
+                a
+                <strong style="color:#0a1f10;">{{ .NewEmail }}</strong>.
+              </p>
+
+              <p style="margin:0 0 32px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:14px;color:#8a9c8f;line-height:1.6;">
+                Si solicitaste este cambio, confirma la actualización desde el botón.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                style="margin:0 0 36px;">
+                <tr>
+                  <td align="center" style="border-radius:12px;background-color:#50888D;
+                           background-image:linear-gradient(135deg,#2F6E74 0%,#50888D 50%,#7FABAF 100%);
+                           mso-padding-alt:0;">
+                    <a href="{{ .ConfirmationURL }}" style="display:block;padding:17px 24px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                             font-size:16px;font-weight:700;color:#f8faf9;text-decoration:none;
+                             letter-spacing:0.3px;border-radius:12px;text-align:center;
+                             background-color:#50888D;
+                             background-image:linear-gradient(135deg,#2F6E74 0%,#50888D 50%,#7FABAF 100%);">
+                      Confirmar cambio de correo
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                style="margin:0 0 24px;">
+                <tr>
+                  <td style="border-top:1px solid #e8eeea;"></td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 6px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:12px;color:#8a9c8f;line-height:1.6;">
+                Si el botón no funciona, copia este enlace en tu navegador:
+              </p>
+
+              <p style="margin:0 0 24px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:12px;line-height:1.6;">
+                <a href="{{ .ConfirmationURL }}" style="color:#2F6E74;word-break:break-all;text-decoration:underline;">
+                  {{ .ConfirmationURL }}
+                </a>
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                style="background-color:#f4f7f5;border:1px solid #e8eeea;border-radius:12px;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                                font-size:14px;color:#5c6e61;line-height:1.6;">
+                      <strong style="color:#0a1f10;">¿No solicitaste este cambio?</strong><br />
+                      Ignora este correo o contáctanos en
+                      <a href="mailto:hola@planea.co" style="color:#2F6E74;text-decoration:underline;">
+                        hola@planea.co
+                      </a>.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color:#f4f7f5;padding:24px 40px;border-top:1px solid #e8eeea;">
+              <p style="margin:0 0 8px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:12px;color:#8a9c8f;line-height:1.6;text-align:center;">
+                Este correo fue enviado para confirmar un cambio de seguridad en tu cuenta.
+              </p>
+              <p style="margin:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:11px;color:#c5d1c9;text-align:center;">
+                © 2026 Planea · Todos los derechos reservados
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+
+</html>

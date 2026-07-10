@@ -1,0 +1,3 @@
+@keyframes fab-dash {
+  to { transform: rotate(360deg); }
+}
