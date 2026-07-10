@@ -371,6 +371,7 @@
     <a href="#" onclick="rsNavClose();rsOpenSim();return false;"><span data-en>How It Works</span><span data-es>Cómo funciona</span></a>
     <a href="#" onclick="rsNavClose();rsSoon();return false;"><span data-en>For Parents</span><span data-es>Padres</span></a>
     <a href="#" onclick="rsNavClose();rsSoon();return false;"><span data-en>For Trainers</span><span data-es>Entrenadores</span></a>
+    <a href="#pricing" onclick="rsNavClose()"><span data-en>Pricing</span><span data-es>Precios</span></a>
     <a href="#about" onclick="rsNavClose()"><span data-en>About Us</span><span data-es>Nosotros</span></a>
     <a class="m-join" href="#" onclick="rsNavClose();rsScroll('waitlist');return false;"><span data-en>Join the Waitlist</span><span data-es>Unirme a la lista</span></a>
   </div>
@@ -604,6 +605,98 @@
     <div class="tcard"><div class="qt">"As a mom, I love seeing the progress and knowing what my daughter is working on. Total game changer!"</div><div class="who"><span class="av" style="background:#3fbf87">JE</span><div><b>Jennifer</b><span>Parent</span></div></div></div>
   </div>
   <div class="tquote serif">“Share your progress, celebrate wins, and motivate each other. RoundShare makes improvement a team effort.”</div>
+</div></section>
+
+<!-- PRICING -->
+<style>
+  .pricing{background:var(--cream);padding:64px 0}
+  .pricing .head{text-align:center;margin-bottom:8px}
+  .pricing .head h2{font-size:22px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+  .pricing .head .u{width:54px;height:3px;background:var(--rose);border-radius:2px;margin:12px auto 0}
+  .pricing .sub{text-align:center;color:var(--mut);font-size:14.5px;max-width:560px;margin:14px auto 0}
+  .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:36px;align-items:stretch}
+  @media(max-width:960px){.pgrid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.pgrid{grid-template-columns:1fr}}
+  .pcard{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:26px 22px;display:flex;flex-direction:column;position:relative}
+  .pcard.feat{border:2px solid var(--rose-deep);box-shadow:0 14px 40px rgba(224,122,168,.18)}
+  .pbadge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--rose-deep);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 12px;border-radius:20px;white-space:nowrap}
+  .pcard .pname{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rose-deep)}
+  .pcard .pwho{font-size:12.5px;color:var(--mut);margin-top:2px;min-height:32px}
+  .pcard .pprice{font-size:30px;font-weight:900;color:var(--ink);margin:14px 0 2px;letter-spacing:-.5px}
+  .pcard .pprice small{font-size:14px;font-weight:600;color:var(--mut)}
+  .pcard .pyr{font-size:12.5px;color:var(--mut);min-height:18px}
+  .pcard ul{list-style:none;padding:0;margin:18px 0 0;flex:1}
+  .pcard ul li{position:relative;padding:7px 0 7px 24px;font-size:13.5px;color:var(--ink2);border-bottom:1px solid var(--line)}
+  .pcard ul li:last-child{border-bottom:none}
+  .pcard ul li:before{content:"✓";position:absolute;left:0;top:7px;color:var(--green);font-weight:800}
+  .pcard ul li.no:before{content:"–";color:var(--faint)}
+  .pcard .pbtn{margin-top:20px;display:block;text-align:center;background:var(--rose-deep);color:#fff;font-weight:700;font-size:14px;padding:12px 16px;border-radius:12px;text-decoration:none;cursor:pointer;border:none}
+  .pcard .pbtn.ghost{background:transparent;color:var(--rose-deep);border:1.5px solid var(--rose-deep)}
+  .pricing .pnote{text-align:center;color:var(--mut);font-size:12px;margin-top:24px}
+</style>
+<section class="pricing" id="pricing"><div class="wrap">
+  <div class="head">
+    <h2><span data-en>Simple Pricing</span><span data-es>Precios simples</span></h2>
+    <div class="u"></div>
+    <p class="sub"><span data-en>Join the community free. Unlock AI ride analysis when you're ready. Founder pricing locked in for early riders.</span><span data-es>Únete gratis a la comunidad. Activa el análisis con IA cuando quieras. Precio de fundador asegurado para los primeros jinetes.</span></p>
+  </div>
+  <div class="pgrid">
+
+    <div class="pcard">
+      <div class="pname">Free</div>
+      <div class="pwho"><span data-en>All riders</span><span data-es>Todos los jinetes</span></div>
+      <div class="pprice">$0</div>
+      <div class="pyr"><span data-en>Free forever</span><span data-es>Gratis para siempre</span></div>
+      <ul>
+        <li><span data-en>Community feed &amp; sharing</span><span data-es>Feed comunitario y compartir</span></li>
+        <li><span data-en>Follow riders &amp; barns</span><span data-es>Sigue jinetes y establos</span></li>
+        <li class="no"><span data-en>No AI ride analysis</span><span data-es>Sin análisis con IA</span></li>
+      </ul>
+      <a class="pbtn ghost" onclick="rsScroll('waitlist')"><span data-en>Join free</span><span data-es>Únete gratis</span></a>
+    </div>
+
+    <div class="pcard feat">
+      <div class="pbadge"><span data-en>Most popular</span><span data-es>Más popular</span></div>
+      <div class="pname">Premium</div>
+      <div class="pwho"><span data-en>Competition riders &amp; juniors</span><span data-es>Jinetes de competencia y juveniles</span></div>
+      <div class="pprice">$24.99<small>/mo</small></div>
+      <div class="pyr"><span data-en>or $249/year</span><span data-es>o $249/año</span></div>
+      <ul>
+        <li><span data-en>Up to 20 AI analyses/mo</span><span data-es>Hasta 20 análisis con IA/mes</span></li>
+        <li><span data-en>Progress history &amp; homework</span><span data-es>Historial de avance y tareas</span></li>
+        <li><span data-en>AI Reels &amp; parent dashboard</span><span data-es>AI Reels y panel para padres</span></li>
+      </ul>
+      <a class="pbtn" onclick="rsScroll('waitlist')"><span data-en>Start free trial</span><span data-es>Prueba gratis</span></a>
+    </div>
+
+    <div class="pcard">
+      <div class="pname"><span data-en>Trainer / Barn</span><span data-es>Entrenador / Establo</span></div>
+      <div class="pwho"><span data-en>Coaches &amp; facilities</span><span data-es>Entrenadores e instalaciones</span></div>
+      <div class="pprice">$199<small>/mo</small></div>
+      <div class="pyr"><span data-en>Up to 8 riders</span><span data-es>Hasta 8 jinetes</span></div>
+      <ul>
+        <li><span data-en>Multi-rider roster</span><span data-es>Roster de varios jinetes</span></li>
+        <li><span data-en>Assignments &amp; barn circle</span><span data-es>Tareas y círculo del establo</span></li>
+        <li><span data-en>Team analytics</span><span data-es>Analítica del equipo</span></li>
+      </ul>
+      <a class="pbtn ghost" onclick="rsScroll('waitlist')"><span data-en>Join waitlist</span><span data-es>Unirme a la lista</span></a>
+    </div>
+
+    <div class="pcard">
+      <div class="pname">Unlimited</div>
+      <div class="pwho"><span data-en>Pros, elite riders &amp; large barns</span><span data-es>Profesionales, élite y grandes establos</span></div>
+      <div class="pprice"><span data-en>Contact Sales</span><span data-es>Consultar</span></div>
+      <div class="pyr"><span data-en>Custom / enterprise</span><span data-es>Personalizado / empresarial</span></div>
+      <ul>
+        <li><span data-en>Unlimited AI analyses</span><span data-es>Análisis con IA ilimitados</span></li>
+        <li><span data-en>Priority processing</span><span data-es>Procesamiento prioritario</span></li>
+        <li><span data-en>Custom / enterprise terms</span><span data-es>Términos personalizados</span></li>
+      </ul>
+      <a class="pbtn ghost" href="mailto:hello@roundshare.app?subject=RoundShare%20Unlimited%20-%20Sales"><span data-en>Contact sales</span><span data-es>Contactar ventas</span></a>
+    </div>
+
+  </div>
+  <p class="pnote"><span data-en>Prices shown are founder pricing for early riders and may change at public launch.</span><span data-es>Los precios mostrados son precio de fundador para los primeros jinetes y pueden cambiar en el lanzamiento.</span></p>
 </div></section>
 
 <!-- ABOUT US -->
