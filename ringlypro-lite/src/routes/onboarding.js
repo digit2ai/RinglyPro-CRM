@@ -58,17 +58,20 @@ router.get('/forwarding-codes', requireAuth, async (req, res) => {
   const num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
   if (!num) return res.status(404).json({ error: 'no_number', message: 'Provision a number first.' });
   const carrier = req.query.carrier;
-  const codes = codesFor({ country: tenant.country, carrier, did: num.did });
+  const mode = req.query.mode === 'direct' ? 'direct' : 'noanswer';
+  const rings = req.query.rings || 2;
+  const codes = codesFor({ country: tenant.country, carrier, did: num.did, mode, rings });
   res.json({
     did: num.did,
     country: tenant.country,
+    mode,
     codes,
     warning: tenant.country === 'CO'
       ? 'La llamada reenviada se cobra a su plan móvil. Su número Lite es local de Colombia para mantener la llamada nacional.'
       : null,
     reminder: tenant.country === 'CO'
-      ? 'Eliminar la app NO desactiva el reenvío. Marque ##004# desde su teléfono para desactivarlo.'
-      : 'Deleting the app does NOT remove forwarding. Dial the deactivation code from your phone to stop it.'
+      ? `Eliminar la app NO desactiva el reenvío. Marque ${codes.deactivate} desde su teléfono para desactivarlo.`
+      : `Deleting the app does NOT remove forwarding. Dial ${codes.deactivate} from your phone to stop it.`
   });
 });
 

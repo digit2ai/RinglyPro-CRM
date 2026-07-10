@@ -68,7 +68,12 @@
   <!-- Step 3: forwarding -->
   <div class="card hide" id="s3">
     <h2 data-i="s3t">Turn on call forwarding</h2>
-    <div class="hint" data-i="s3h">Pick your carrier, then tap to dial the code from your phone. This forwards calls only when you don't answer.</div>
+    <div class="hint" data-i="s3h">Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.</div>
+    <label data-i="fmode">Forwarding mode</label>
+    <select id="omode">
+      <option value="direct" data-i="mdirect">Forward all calls (AI always answers)</option>
+      <option value="noanswer" data-i="mnoans">After 2 rings (if I don't answer)</option>
+    </select>
     <label data-i="carrier">Carrier</label><select id="carrier"></select>
     <div class="hint" data-i="acti">Activate forwarding</div>
     <div class="code" id="activate">—</div>
@@ -88,8 +93,8 @@
   </div>
 </div>
 <script>
-const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts, E.164 e.g. +15551234567)",country:"Country",lang:"Greeting language",create:"Create account",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick your carrier, then tap to dial the code from your phone. This forwards calls only when you don't answer.",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
-        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS, formato E.164 ej. +573001234567)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija su operador y toque para marcar el código desde su teléfono. Solo reenvía cuando usted no contesta.",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
+const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts, E.164 e.g. +15551234567)",country:"Country",lang:"Greeting language",create:"Create account",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
+        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS, formato E.164 ej. +573001234567)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija cómo se reenvían las llamadas para que la IA conteste antes de su buzón de voz, luego toque para marcar el código.",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');if(I[lang][k])e.textContent=I[lang][k]});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply()};apply();
@@ -113,10 +118,10 @@ $('go2').onclick=async()=>{
 async function loadCarriers(){
   const r=await fetch('/api/onboarding/carriers',{credentials:'include'});const j=await r.json();
   carrier.innerHTML=j.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
-  carrier.onchange=refreshCodes;await refreshCodes();
+  carrier.onchange=refreshCodes;omode.onchange=refreshCodes;await refreshCodes();
 }
 async function refreshCodes(){
-  const r=await fetch('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent(carrier.value),{credentials:'include'});
+  const r=await fetch('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent(carrier.value)+'&mode='+omode.value,{credentials:'include'});
   const j=await r.json();if(!r.ok)return;
   activate.textContent=j.codes.activate;deactivate.textContent=j.codes.deactivate;
   activate_tel.href=j.codes.activate_tel;

@@ -81,6 +81,11 @@
     <div class="card">
       <div class="day" data-i="fwd">Call forwarding</div>
       <div class="msg" id="fwdNum" style="margin-bottom:8px">—</div>
+      <label data-i="fmode">Forwarding mode</label>
+      <select id="fwdMode">
+        <option value="direct" data-i="mdirect">Forward all calls (AI always answers)</option>
+        <option value="noanswer" data-i="mnoans">After 2 rings (if I don't answer)</option>
+      </select>
       <label data-i="carrier">Carrier</label><select id="fwdCarrier"></select>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <a class="telbtn on" id="fwdOn" href="#" data-i="turnon">Turn ON</a>
@@ -107,8 +112,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -196,11 +201,11 @@ async function loadForwarding(){
   const cj=await api('/api/onboarding/carriers');
   if(!cj||!cj.carriers){$('fwdNum').textContent=lang==='es'?'Asigne un número primero.':'Assign a number first.';return}
   const sel=$('fwdCarrier');
-  if(!sel.dataset.loaded){sel.innerHTML=cj.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');sel.dataset.loaded='1';sel.onchange=refreshFwd}
+  if(!sel.dataset.loaded){sel.innerHTML=cj.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');sel.dataset.loaded='1';sel.onchange=refreshFwd;$('fwdMode').onchange=refreshFwd}
   await refreshFwd();
 }
 async function refreshFwd(){
-  const fc=await api('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent($('fwdCarrier').value));
+  const fc=await api('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent($('fwdCarrier').value)+'&mode='+$('fwdMode').value);
   if(!fc||!fc.codes){$('fwdNum').textContent=lang==='es'?'Asigne un número primero.':'Assign a number first.';return}
   $('fwdNum').textContent=(lang==='es'?'Número Lite: ':'Lite number: ')+fc.did;
   $('fwdOn').href=fc.codes.activate_tel; $('fwdOff').href=fc.codes.deactivate_tel;
