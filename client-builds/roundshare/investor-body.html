@@ -201,8 +201,8 @@
         <thead><tr><th>Layer</th><th>Definition</th><th class="num">Size</th></tr></thead>
         <tbody>
           <tr><td><b>TAM</b> — Total addressable</td><td>US + LATAM riders who could use an AI coaching &amp; community app</td><td class="num">Millions of riders · $177B industry context</td></tr>
-          <tr><td><b>SAM</b> — Serviceable</td><td>US competition riders + juniors/parents + LATAM markets, willing to pay &times; ~$200 ARPU</td><td class="num">~$100M–$200M</td></tr>
-          <tr><td><b>SOM</b> — Obtainable (Yr 3–4)</td><td>3–5% penetration of SAM</td><td class="num">~$3M–$8M ARR</td></tr>
+          <tr><td><b>SAM</b> — Serviceable</td><td>US competition riders + juniors/parents + LATAM markets, willing to pay &times; ~$260 ARPU</td><td class="num">~$130M–$260M</td></tr>
+          <tr><td><b>SOM</b> — Obtainable (Yr 3–4)</td><td>3–5% penetration of SAM</td><td class="num">~$4M–$10M ARR</td></tr>
         </tbody>
       </table>
       <p style="font-size:12px;color:var(--muted);margin:8px 0 0">TAM anchored to the AHC 2023 industry figure for context, not as a revenue claim. SAM/SOM are illustrative bottoms-up estimates from willing-to-pay rider counts &times; ARPU; not a forecast.</p>
@@ -238,18 +238,18 @@
       <table>
         <thead><tr><th>Tier</th><th>Who</th><th class="num">Price</th><th>What they get</th></tr></thead>
         <tbody>
-          <tr><td><b>Free</b></td><td>All riders</td><td class="num">$0</td><td>3 AI analyses/mo, feed, sharing</td></tr>
-          <tr><td><b>Premium</b></td><td>Competition riders / juniors</td><td class="num">$19.99/mo · $199/yr</td><td>30 AI analyses/mo, progress history, homework, AI reels</td></tr>
-          <tr><td><b>Trainer / Barn</b></td><td>Coaches &amp; facilities</td><td class="num">$99/mo</td><td>Up to 8 riders, assignments, barn circle, analytics</td></tr>
-          <tr><td><b>Parent add-on</b></td><td>Parents of juniors</td><td class="num">Bundled</td><td>Parent dashboard, progress &amp; safety visibility</td></tr>
+          <tr><td><b>Free</b></td><td>All riders</td><td class="num">$0</td><td>Community feed, sharing, follow riders &amp; barns — <b>no AI analysis</b></td></tr>
+          <tr><td><b>Premium</b></td><td>Competition riders / juniors</td><td class="num">$24.99/mo · $249/yr</td><td>Up to 20 AI analyses/mo, progress history, homework, AI reels, parent dashboard</td></tr>
+          <tr><td><b>Trainer / Barn</b></td><td>Coaches &amp; facilities</td><td class="num">$199/mo</td><td>Up to 8 riders, assignments, barn circle, analytics</td></tr>
+          <tr><td><b>Unlimited</b></td><td>Pros, elite riders &amp; large barns</td><td class="num">Contact Sales</td><td>Unlimited AI analyses, priority processing, custom / enterprise terms</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="grid g3" style="margin-top:16px">
-      <div class="card kpi"><div class="n brand">~$200</div><div class="l">Blended annual ARPU (target)</div></div>
-      <div class="card kpi"><div class="n">~72–77%</div><div class="l">Gross margin (real per-analysis COGS)</div></div>
-      <div class="card kpi"><div class="n rose">~10&times;</div><div class="l">Target LTV : CAC</div></div>
+      <div class="card kpi"><div class="n brand">~$260</div><div class="l">Blended annual ARPU (target)</div></div>
+      <div class="card kpi"><div class="n">~90–94%</div><div class="l">Gross margin (on-device analysis)</div></div>
+      <div class="card kpi"><div class="n rose">~15&times;</div><div class="l">Target LTV : CAC</div></div>
     </div>
 
     <div class="card tbl-wrap" style="margin-top:16px">
@@ -257,11 +257,12 @@
       <table>
         <thead><tr><th>Driver</th><th class="num">Value</th><th>Basis</th></tr></thead>
         <tbody>
-          <tr><td>AI / compute cost per analysis (COGS)</td><td class="num">~$0.55</td><td>Benchmarked to the EquiMind credit engine: ~$0.30–$0.80/analysis, provider ~$0.60/processing-min</td></tr>
-          <tr><td>Avg analyses per paying rider / month</td><td class="num">~10</td><td>Typical usage; Premium caps at 30/mo to bound cost</td></tr>
-          <tr><td>Monthly COGS per paying rider</td><td class="num">~$5.50</td><td>10 &times; $0.55</td></tr>
-          <tr><td>Premium price</td><td class="num">$19.99/mo</td><td>$199/yr annual option</td></tr>
-          <tr><td><b>Gross margin per subscriber</b></td><td class="num"><b>~72%</b></td><td>($19.99 &minus; $5.50) / $19.99; blends to ~77% at scale</td></tr>
+          <tr><td>Cloud AI cost per analysis (benchmark)</td><td class="num">~$0.55</td><td>EquiMind credit engine: ~$0.30–$0.80/analysis, GPU provider ~$0.60/processing-min</td></tr>
+          <tr><td>RoundShare on-device cost per analysis (target)</td><td class="num">~$0.15</td><td>2D pose runs on the phone (near-zero cloud); only a light LLM feedback step + storage</td></tr>
+          <tr><td>Avg analyses per paying rider / month</td><td class="num">~10</td><td>Premium caps at 20/mo to bound cost</td></tr>
+          <tr><td>Monthly COGS per paying rider</td><td class="num">~$1.50</td><td>10 &times; $0.15</td></tr>
+          <tr><td>Premium price</td><td class="num">$24.99/mo</td><td>$249/yr annual option</td></tr>
+          <tr><td><b>Gross margin per subscriber</b></td><td class="num"><b>~94%</b></td><td>($24.99 &minus; $1.50) / $24.99</td></tr>
         </tbody>
       </table>
     </div>
@@ -270,16 +271,16 @@
       <table>
         <thead><tr><th>Unit-economics metric (target)</th><th class="num">Value</th><th>Basis</th></tr></thead>
         <tbody>
-          <tr><td>Blended ARPU</td><td class="num">~$200/yr</td><td>Mix of premium ($199–$240/yr) + trainer/barn tiers</td></tr>
-          <tr><td>Gross margin</td><td class="num">~72–77%</td><td>Net of real per-analysis AI/compute COGS (~$0.55/analysis)</td></tr>
+          <tr><td>Blended ARPU</td><td class="num">~$260/yr</td><td>Mix of premium ($249–$300/yr) + trainer/barn tiers</td></tr>
+          <tr><td>Gross margin</td><td class="num">~90–94%</td><td>On-device analysis keeps per-analysis COGS ~$0.15</td></tr>
           <tr><td>Target CAC</td><td class="num">$25–$40</td><td>Referral / community-led acquisition (sharing loop)</td></tr>
-          <tr><td>Estimated LTV</td><td class="num">~$350–$400</td><td>ARPU &times; gross margin &times; ~2.5-yr life</td></tr>
-          <tr><td>LTV : CAC</td><td class="num">~10&times;</td><td>Well above the 3&times; venture benchmark</td></tr>
-          <tr><td>CAC payback</td><td class="num">&lt; 3 months</td><td>Community-led growth compresses payback</td></tr>
+          <tr><td>Estimated LTV</td><td class="num">~$550–$600</td><td>ARPU &times; gross margin &times; ~2.5-yr life</td></tr>
+          <tr><td>LTV : CAC</td><td class="num">~15&times;</td><td>Well above the 3&times; venture benchmark</td></tr>
+          <tr><td>CAC payback</td><td class="num">&lt; 2 months</td><td>Community-led growth compresses payback</td></tr>
         </tbody>
       </table>
     </div>
-    <p style="font-size:12.5px;color:var(--muted)">Per-analysis COGS is benchmarked to Digit2AI's live EquiMind credit engine (1 credit = $1 per standard analysis; documented AI/compute cost ~$0.30–$0.80). ARPU, margin, LTV, and CAC are <b>targets</b>, not actuals — RoundShare is pre-revenue; real figures will be instrumented post-launch (Section 09).</p>
+    <p style="font-size:12.5px;color:var(--muted)">Cloud per-analysis cost is benchmarked to Digit2AI's live EquiMind credit engine (~$0.30–$0.80). RoundShare targets a much lower <b>~$0.15/analysis</b> by running 2D pose estimation <b>on-device</b> (near-zero cloud cost), leaving only a light feedback step in the cloud — the standard architecture for high-margin mobile AI apps. The <b>Free tier includes no AI analysis</b>, so analysis cost is incurred only on paying subscribers, and the <b>Unlimited (Contact Sales)</b> tier is priced per-account so heavy usage never runs at negative margin — together holding gross margin near <b>~90%+</b>. A literal 100% margin is not attainable while any real compute cost exists per analysis. ARPU, margin, LTV, and CAC are <b>targets</b>, not actuals — RoundShare is pre-revenue; real figures will be instrumented post-launch (Section 09).</p>
   </section>
 
   <!-- 7. COMPETITIVE LANDSCAPE -->
@@ -362,16 +363,16 @@
           <tr><td>Registered riders</td><td class="num">15,000</td><td class="num">55,000</td><td class="num">150,000</td></tr>
           <tr><td>Paid conversion</td><td class="num">8%</td><td class="num">10%</td><td class="num">12%</td></tr>
           <tr><td>Paying subscribers</td><td class="num">~1,200</td><td class="num">~5,500</td><td class="num">~18,000</td></tr>
-          <tr><td>Blended annual ARPU</td><td class="num">$190</td><td class="num">$200</td><td class="num">$210</td></tr>
-          <tr><td>Consumer ARR</td><td class="num">~$0.23M</td><td class="num">~$1.10M</td><td class="num">~$3.78M</td></tr>
-          <tr><td>Trainer / barn ARR</td><td class="num">—</td><td class="num">~$0.15M</td><td class="num">~$0.42M</td></tr>
-          <tr><td><b>Total ARR</b></td><td class="num"><b>~$0.23M</b></td><td class="num"><b>~$1.25M</b></td><td class="num"><b>~$4.2M</b></td></tr>
-          <tr><td>Gross margin</td><td class="num">~70%</td><td class="num">~74%</td><td class="num">~77%</td></tr>
+          <tr><td>Blended annual ARPU</td><td class="num">$250</td><td class="num">$260</td><td class="num">$270</td></tr>
+          <tr><td>Consumer ARR</td><td class="num">~$0.30M</td><td class="num">~$1.43M</td><td class="num">~$4.86M</td></tr>
+          <tr><td>Trainer / barn ARR</td><td class="num">—</td><td class="num">~$0.20M</td><td class="num">~$0.54M</td></tr>
+          <tr><td><b>Total ARR</b></td><td class="num"><b>~$0.30M</b></td><td class="num"><b>~$1.6M</b></td><td class="num"><b>~$5.4M</b></td></tr>
+          <tr><td>Gross margin</td><td class="num">~88%</td><td class="num">~91%</td><td class="num">~93%</td></tr>
           <tr><td>Net burn (funded by round + Series A)</td><td class="num">($0.6M)</td><td class="num">($0.7M)</td><td class="num">approaching break-even</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="callout" style="margin-top:14px"><b>Read this as a shape, not a promise.</b> These are illustrative, forward-looking scenarios that tie directly to the valuation methodology (Section 12): Year 2 (~$1.2M ARR) crosses the ~$1M product-market-fit gate that re-rates the company to $6M–$10M; Year 3 (~$4M ARR) is the scaling scenario. No revenue exists yet; actual results will differ, potentially materially.</div>
+    <div class="callout" style="margin-top:14px"><b>Read this as a shape, not a promise.</b> These are illustrative, forward-looking scenarios that tie directly to the valuation methodology (Section 12): Year 2 (~$1.6M ARR) clears the ~$1M product-market-fit gate that re-rates the company to $6M–$10M; Year 3 (~$5.4M ARR) is the scaling scenario. No revenue exists yet; actual results will differ, potentially materially.</div>
   </section>
 
   <!-- 11. THE TEAM -->
