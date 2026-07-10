@@ -14,8 +14,12 @@ const store = require('../models/intake');
 const attachStore = require('../models/attachment');
 const { forwardToIntake } = require('../services/digit2ai');
 const projectsBridge = require('../services/projectsBridge');
+const { extractText } = require('../services/documentExtract');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+// Total extracted-document text folded into the transcript. Keeps the forwarded
+// description safely under the projects app's ~100kb JSON body limit.
+const MAX_DOC_TEXT_CHARS = 40000;
 
 // ---- Attachment upload config -----------------------------------------------
 const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB / file
@@ -78,9 +82,39 @@ router.post('/', (req, res, next) => {
     let transcript = typeof body.transcript === 'string' ? body.transcript.trim() : '';
     const files = Array.isArray(req.files) ? req.files : [];
     const lang = body.lang === 'es' ? 'es' : 'en';
+    const spoken = transcript; // the dictated / typed part (may be empty)
 
-    // Allow attachment-only submissions: synthesize a transcript placeholder.
-    if (!transcript && files.length) transcript = lang === 'es' ? '(Ver archivos adjuntos)' : '(See attached files)';
+    // Read the ACTUAL content of supported attachments (PDF/Word/text/…) and
+    // fold it into the transcript, so the inbox triage + PoC teaser analyze the
+    // real document — exactly like typed/dictated input. Extraction never blocks
+    // a submission (a failed/empty extract just leaves the attachment as a link).
+    let docText = '';
+    if (files.length) {
+      const parts = [];
+      let used = 0;
+      for (const f of files) {
+        const ext = extOf(f.originalname);
+        if (!ALLOWED_EXT.includes(ext)) continue;
+        let text = '';
+        try { text = await extractText(f); } catch (e) { text = ''; }
+        if (!text || !text.trim()) continue;
+        const header = `--- ${f.originalname} ---\n`;
+        const remaining = MAX_DOC_TEXT_CHARS - used;
+        if (remaining <= header.length + 100) break;
+        const block = header + text.trim().slice(0, remaining - header.length);
+        parts.push(block);
+        used += block.length;
+      }
+      if (parts.length) {
+        const label = lang === 'es' ? 'Contenido de los documentos adjuntos' : 'Attached document content';
+        docText = label + ':\n\n' + parts.join('\n\n');
+      }
+    }
+
+    // Compose the transcript the pipeline persists, forwards, and analyzes.
+    if (spoken && docText) transcript = spoken + '\n\n' + docText;
+    else if (docText) transcript = docText;
+    else if (!spoken && files.length) transcript = lang === 'es' ? '(Ver archivos adjuntos)' : '(See attached files)';
     if (!transcript) return res.status(422).json({ error: 'transcript is required and cannot be empty' });
 
     const submitter_id = body.submitter_id != null ? String(body.submitter_id).slice(0, 255) : null;
