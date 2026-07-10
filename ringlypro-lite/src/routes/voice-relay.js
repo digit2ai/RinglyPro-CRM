@@ -98,6 +98,11 @@ router.get('/health', async (req, res) => {
     anthropic_key_set: !!(process.env.LITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
     twilio_sid_prefix: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').slice(0, 2) || 'unset',
     twilio_token_set: !!(process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN),
+    // lengths only (no secrets): correct SID = 34 chars, Auth Token = 32 chars.
+    twilio_sid_len_raw: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').length,
+    twilio_sid_len_trim: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').trim().length,
+    twilio_token_len_raw: (process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN || '').length,
+    twilio_token_len_trim: (process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN || '').trim().length,
     ok: true
   };
   // ?check=twilio actively verifies credentials by making the same class of API

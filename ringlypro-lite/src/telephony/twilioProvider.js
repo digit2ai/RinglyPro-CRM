@@ -11,8 +11,11 @@ class TwilioProvider extends TelephonyProvider {
   constructor(config = {}) {
     super(config);
     this.name = 'twilio';
-    this.accountSid = process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID;
-    this.authToken = process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN;
+    // Defensively strip whitespace/quotes — pasting into a dashboard often
+    // appends a trailing newline or wrapping quotes, which Twilio rejects (20003).
+    const clean = (v) => (v == null ? v : String(v).trim().replace(/^["']|["']$/g, ''));
+    this.accountSid = clean(process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID);
+    this.authToken = clean(process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN);
     this.webhookBase = (process.env.LITE_WEBHOOK_BASE_URL || '').replace(/\/$/, '');
     this._client = null;
   }
