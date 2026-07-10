@@ -34,7 +34,11 @@
   nav a.on{color:var(--acc2)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
   .msg{font-size:13px;color:var(--mut);min-height:16px}
-  .fwd{font-family:ui-monospace,Menlo,monospace;background:#0f1626;border:1px dashed var(--acc);border-radius:8px;padding:8px 10px;display:inline-block}
+  .fwd{font-family:ui-monospace,Menlo,monospace;background:#0f1626;border:1px dashed var(--acc);border-radius:8px;padding:6px 10px;display:inline-block}
+  .telbtn{flex:1;min-width:96px;text-align:center;text-decoration:none;font-weight:800;border-radius:10px;padding:13px 10px;font-size:15px}
+  .telbtn.on{background:var(--ok);color:#04231a}
+  .telbtn.off{background:var(--err);color:#2a0606}
+  .telbtn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);flex:0 0 auto;min-width:64px}
 </style>
 </head>
 <body>
@@ -69,8 +73,19 @@
       <div style="margin-top:12px"><button id="saveAvail" class="sm" data-i="save">Save</button> <span class="msg" id="availMsg"></span></div>
     </div>
     <div class="card">
-      <div class="day" data-i="fwd">Forwarding code</div>
-      <div id="fwdBox" class="msg">—</div>
+      <div class="day" data-i="fwd">Call forwarding</div>
+      <div class="msg" id="fwdNum" style="margin-bottom:8px">—</div>
+      <label data-i="carrier">Carrier</label><select id="fwdCarrier"></select>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <a class="telbtn on" id="fwdOn" href="#" data-i="turnon">Turn ON</a>
+        <a class="telbtn off" id="fwdOff" href="#" data-i="turnoff">Turn OFF</a>
+        <a class="telbtn ghost" id="fwdCheck" href="#" data-i="check">Check</a>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:var(--mut)">
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span data-i="onlabel">ON code</span>: <span class="fwd" id="fwdOnCode">—</span> <button class="sm ghost" onclick="copyCode('fwdOnCode')" data-i="copy">Copy</button></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span data-i="offlabel">OFF code</span>: <span class="fwd" id="fwdOffCode">—</span> <button class="sm ghost" onclick="copyCode('fwdOffCode')" data-i="copy">Copy</button></div>
+      </div>
+      <div class="msg" id="fwdReminder" style="margin-top:10px"></div>
     </div>
     <div class="card" id="billCard" style="display:none">
       <div class="day" data-i="bill">Billing</div>
@@ -86,8 +101,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Forwarding code",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Código de reenvío",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -137,10 +152,8 @@ async function loadSettings(){
   $('set_timezone').value=j.tenant.timezone||'';
   rules=j.availability_rules.map(r=>({weekday:r.weekday,start:r.start,end:r.end,slot_minutes:r.slot_minutes}));
   renderAvail();
-  // forwarding
-  const fc=await api('/api/onboarding/forwarding-codes'+(j.tenant.country?'':''));
-  if(fc&&fc.codes){$('fwdBox').innerHTML=`${fc.did} · <span class="fwd">${fc.codes.activate}</span> · OFF: <span class="fwd">${fc.codes.deactivate}</span>`}
-  else $('fwdBox').textContent='—';
+  // forwarding — carrier selector + tap-to-dial ON/OFF
+  await loadForwarding();
   const cfg=await fetch('/api/config').then(r=>r.json()).catch(()=>({billing_enabled:false}));
   if(cfg.billing_enabled){
     $('billCard').style.display='';
@@ -156,6 +169,24 @@ function renderAvail(){
     <button class="sm ghost" onclick="rules.splice(${i},1);renderAvail()">×</button>
   </div>`).join('');
 }
+async function loadForwarding(){
+  const cj=await api('/api/onboarding/carriers');
+  if(!cj||!cj.carriers){$('fwdNum').textContent=lang==='es'?'Asigne un número primero.':'Assign a number first.';return}
+  const sel=$('fwdCarrier');
+  if(!sel.dataset.loaded){sel.innerHTML=cj.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');sel.dataset.loaded='1';sel.onchange=refreshFwd}
+  await refreshFwd();
+}
+async function refreshFwd(){
+  const fc=await api('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent($('fwdCarrier').value));
+  if(!fc||!fc.codes){$('fwdNum').textContent=lang==='es'?'Asigne un número primero.':'Assign a number first.';return}
+  $('fwdNum').textContent=(lang==='es'?'Número Lite: ':'Lite number: ')+fc.did;
+  $('fwdOn').href=fc.codes.activate_tel; $('fwdOff').href=fc.codes.deactivate_tel;
+  $('fwdOnCode').textContent=fc.codes.activate; $('fwdOffCode').textContent=fc.codes.deactivate;
+  if(fc.codes.check){$('fwdCheck').href='tel:'+encodeURIComponent(fc.codes.check);$('fwdCheck').style.display=''}
+  else $('fwdCheck').style.display='none';
+  $('fwdReminder').textContent=(fc.reminder||'')+(fc.warning?(' '+fc.warning):'');
+}
+window.copyCode=id=>{const t=document.getElementById(id).textContent;navigator.clipboard&&navigator.clipboard.writeText(t);};
 $('addRow').onclick=()=>{rules.push({weekday:1,start:'09:00',end:'17:00',slot_minutes:30});renderAvail()};
 $('saveBiz').onclick=async()=>{const r=await api('/api/settings',{method:'PATCH',body:JSON.stringify({business_name:$('set_business_name').value,owner_phone:$('set_owner_phone').value,locale:$('set_locale').value,timezone:$('set_timezone').value})});$('bizMsg').textContent=r&&r.success?'✓':'!'};
 $('saveAvail').onclick=async()=>{const r=await api('/api/availability',{method:'PUT',body:JSON.stringify({rules})});$('availMsg').textContent=r&&r.success?'✓':'!'};
