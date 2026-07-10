@@ -1,0 +1,40 @@
+# RinglyPro Lite — SEPARATE Render service (own DB, own env, own Twilio subaccount).
+# This file describes an INDEPENDENT deploy; it does not affect the main
+# ringlypro-crm service. Point Render at rootDir: ringlypro-lite.
+services:
+  - type: web
+    name: ringlypro-lite
+    env: node
+    region: oregon
+    plan: starter
+    rootDir: ringlypro-lite
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LITE_PORT
+        value: 10000
+      - key: LITE_WEBHOOK_BASE_URL
+        sync: false
+      - key: LITE_DATABASE_URL
+        sync: false
+      - key: LITE_JWT_SECRET
+        sync: false
+      - key: LITE_ANTHROPIC_API_KEY
+        sync: false
+      - key: LITE_TWILIO_ACCOUNT_SID
+        sync: false
+      - key: LITE_TWILIO_AUTH_TOKEN
+        sync: false
+      - key: LITE_STRIPE_SECRET_KEY
+        sync: false
+      - key: LITE_STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: LITE_STRIPE_PRICE_US
+        sync: false
+      - key: LITE_ADMIN_KEY
+        sync: false
+      - key: LITE_CO_NUMBERS_ENABLED
+        value: 0

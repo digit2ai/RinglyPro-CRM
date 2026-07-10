@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>RinglyPro Lite</title>
+<style>
+  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:72px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+  .brand{font-weight:800}.brand span{color:var(--acc2)}
+  .lang{font-size:13px;color:var(--mut);cursor:pointer}
+  main{max-width:560px;margin:0 auto;padding:14px}
+  .view{display:none}.view.on{display:block}
+  .item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .item .top{display:flex;justify-content:space-between;align-items:center}
+  .name{font-weight:700}.when{color:var(--mut);font-size:12px}
+  .body{color:var(--mut);font-size:14px;margin-top:6px}
+  .badge{background:var(--acc);color:#fff;font-size:11px;border-radius:10px;padding:2px 7px;margin-left:6px}
+  .unread{border-left:3px solid var(--acc)}
+  .call{display:inline-block;margin-top:8px;color:var(--ok);text-decoration:none;font-weight:700;font-size:14px}
+  .day{margin:16px 0 6px;color:var(--acc2);font-weight:700;font-size:14px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+  input,select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0f1626;color:var(--txt);font-size:15px}
+  button{padding:11px 14px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-weight:700;cursor:pointer}
+  button.sm{padding:7px 10px;font-size:13px}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .empty{color:var(--mut);text-align:center;padding:40px 10px}
+  .avail-row{display:flex;gap:6px;align-items:center;margin:6px 0}
+  .avail-row select,.avail-row input{padding:8px}
+  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line)}
+  nav a{flex:1;text-align:center;padding:12px 0;color:var(--mut);text-decoration:none;font-size:12px;font-weight:600}
+  nav a.on{color:var(--acc2)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .msg{font-size:13px;color:var(--mut);min-height:16px}
+  .fwd{font-family:ui-monospace,Menlo,monospace;background:#0f1626;border:1px dashed var(--acc);border-radius:8px;padding:8px 10px;display:inline-block}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">RinglyPro <span>Lite</span></div>
+  <div><span class="lang" id="lang">ES</span></div>
+</header>
+<main>
+  <!-- MESSAGES -->
+  <section class="view on" id="v-messages">
+    <div id="messages"></div>
+  </section>
+  <!-- CALENDAR -->
+  <section class="view" id="v-calendar">
+    <div id="calendar"></div>
+  </section>
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <div class="card">
+      <div class="day" data-i="biz">Business</div>
+      <label data-i="bizname">Business name</label><input id="set_business_name" />
+      <label data-i="ownerph">Owner mobile (SMS alerts)</label><input id="set_owner_phone" />
+      <label data-i="glang">Greeting language</label>
+      <select id="set_locale"><option value="en">English</option><option value="es">Español</option></select>
+      <label data-i="tz">Timezone</label><input id="set_timezone" />
+      <div style="margin-top:14px"><button id="saveBiz" class="sm" data-i="save">Save</button> <span class="msg" id="bizMsg"></span></div>
+    </div>
+    <div class="card">
+      <div class="day" data-i="avail">Availability</div>
+      <div id="avail"></div>
+      <button class="sm ghost" id="addRow" data-i="addhours">+ Add hours</button>
+      <div style="margin-top:12px"><button id="saveAvail" class="sm" data-i="save">Save</button> <span class="msg" id="availMsg"></span></div>
+    </div>
+    <div class="card">
+      <div class="day" data-i="fwd">Forwarding code</div>
+      <div id="fwdBox" class="msg">—</div>
+    </div>
+    <div class="card">
+      <div class="day" data-i="bill">Billing</div>
+      <div class="msg" id="billStatus">—</div>
+      <div style="margin-top:10px"><button class="sm" id="manageBill" data-i="startbill">Start / manage plan</button></div>
+    </div>
+    <div style="text-align:center;margin:18px 0"><a href="#" id="logout" style="color:var(--mut)" data-i="logout">Log out</a></div>
+  </section>
+</main>
+<nav>
+  <a href="#" class="on" data-view="messages" data-i="nmsg">Messages<span class="badge" id="unread" style="display:none">0</span></a>
+  <a href="#" data-view="calendar" data-i="ncal">Calendar</a>
+  <a href="#" data-view="settings" data-i="nset">Settings</a>
+</nav>
+<script>
+const I={en:{nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Forwarding code",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Código de reenvío",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+let lang=localStorage.getItem('lite_lang')||'en';
+function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
+document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
+const $=id=>document.getElementById(id);
+async function api(path,opts){const r=await fetch(path,Object.assign({credentials:'include',headers:{'Content-Type':'application/json'}},opts||{}));if(r.status===401){location.href='/login';return null}return r.json()}
+
+// nav
+document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();const v=a.getAttribute('data-view');
+  document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));$('v-'+v).classList.add('on');
+  if(v==='calendar')loadCalendar();if(v==='settings')loadSettings();});
+
+function fmt(d){return new Date(d).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
+
+async function loadMessages(){
+  const j=await api('/api/messages');if(!j)return;
+  const u=$('unread');if(j.unread>0){u.style.display='inline-block';u.textContent=j.unread}else u.style.display='none';
+  const box=$('messages');
+  if(!j.messages.length){box.innerHTML='<div class="empty">'+I[lang].noMsg+'</div>';return}
+  box.innerHTML=j.messages.map(m=>`<div class="item ${m.read_at?'':'unread'}">
+    <div class="top"><div class="name">${esc(m.caller_name||'—')}</div><div class="when">${fmt(m.created_at)}</div></div>
+    <div class="body">${esc(m.body||'')}</div>
+    ${m.callback_number?`<a class="call" href="tel:${esc(m.callback_number)}">${I[lang].callback}: ${esc(m.callback_number)}</a>`:''}
+    ${m.read_at?'':`<div style="margin-top:8px"><button class="sm ghost" onclick="markRead(${m.id})">${I[lang].read}</button></div>`}
+  </div>`).join('');
+}
+window.markRead=async id=>{await api('/api/messages/'+id+'/read',{method:'POST'});loadMessages()};
+
+async function loadCalendar(){
+  const j=await api('/api/appointments');if(!j)return;const box=$('calendar');
+  if(!j.appointments.length){box.innerHTML='<div class="empty">'+I[lang].noAppt+'</div>';return}
+  const byDay={};j.appointments.filter(a=>a.status!=='cancelled').forEach(a=>{const d=new Date(a.starts_at).toLocaleDateString(lang==='es'?'es-CO':'en-US',{weekday:'long',month:'long',day:'numeric'});(byDay[d]=byDay[d]||[]).push(a)});
+  box.innerHTML=Object.keys(byDay).map(d=>`<div class="day">${d}</div>`+byDay[d].map(a=>`<div class="item">
+    <div class="top"><div class="name">${esc(a.caller_name||'—')}</div><div class="when">${new Date(a.starts_at).toLocaleTimeString(lang==='es'?'es-CO':'en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
+    ${a.callback_number?`<a class="call" href="tel:${esc(a.callback_number)}">${esc(a.callback_number)}</a>`:''}
+    <div style="margin-top:8px"><button class="sm ghost" onclick="cancelAppt(${a.id})">${I[lang].cancel}</button></div>
+  </div>`).join('')).join('');
+}
+window.cancelAppt=async id=>{await api('/api/appointments/'+id+'/cancel',{method:'POST'});loadCalendar()};
+
+let rules=[];
+async function loadSettings(){
+  const j=await api('/api/settings');if(!j)return;
+  $('set_business_name').value=j.tenant.business_name||'';
+  $('set_owner_phone').value=j.tenant.owner_phone||'';
+  $('set_locale').value=j.tenant.locale||'en';
+  $('set_timezone').value=j.tenant.timezone||'';
+  rules=j.availability_rules.map(r=>({weekday:r.weekday,start:r.start,end:r.end,slot_minutes:r.slot_minutes}));
+  renderAvail();
+  // forwarding
+  const fc=await api('/api/onboarding/forwarding-codes'+(j.tenant.country?'':''));
+  if(fc&&fc.codes){$('fwdBox').innerHTML=`${fc.did} · <span class="fwd">${fc.codes.activate}</span> · OFF: <span class="fwd">${fc.codes.deactivate}</span>`}
+  else $('fwdBox').textContent='—';
+  const bs=await api('/api/billing/status');
+  if(bs)$('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?' (suspended)':'');
+}
+function renderAvail(){
+  $('avail').innerHTML=rules.map((r,i)=>`<div class="avail-row">
+    <select onchange="rules[${i}].weekday=+this.value">${I[lang].wd.map((w,wi)=>`<option value="${wi}" ${wi===r.weekday?'selected':''}>${w}</option>`).join('')}</select>
+    <input type="time" value="${r.start}" onchange="rules[${i}].start=this.value">
+    <input type="time" value="${r.end}" onchange="rules[${i}].end=this.value">
+    <button class="sm ghost" onclick="rules.splice(${i},1);renderAvail()">×</button>
+  </div>`).join('');
+}
+$('addRow').onclick=()=>{rules.push({weekday:1,start:'09:00',end:'17:00',slot_minutes:30});renderAvail()};
+$('saveBiz').onclick=async()=>{const r=await api('/api/settings',{method:'PATCH',body:JSON.stringify({business_name:$('set_business_name').value,owner_phone:$('set_owner_phone').value,locale:$('set_locale').value,timezone:$('set_timezone').value})});$('bizMsg').textContent=r&&r.success?'✓':'!'};
+$('saveAvail').onclick=async()=>{const r=await api('/api/availability',{method:'PUT',body:JSON.stringify({rules})});$('availMsg').textContent=r&&r.success?'✓':'!'};
+$('manageBill').onclick=async()=>{const r=await api('/api/billing/checkout',{method:'POST'});if(r&&r.url)location.href=r.url};
+$('logout').onclick=async e=>{e.preventDefault();await api('/api/auth/logout',{method:'POST'});location.href='/login'};
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){loadMessages();}
+apply();render();
+setInterval(loadMessages,20000);
+</script>
+</body>
+</html>

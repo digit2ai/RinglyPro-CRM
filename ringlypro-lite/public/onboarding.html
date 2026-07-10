@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>RinglyPro Lite — Setup</title>
+<style>
+  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding:18px 14px 60px}
+  .wrap{max-width:460px;margin:0 auto}
+  .brand{font-weight:800;font-size:20px;margin-bottom:2px}.brand span{color:var(--acc2)}
+  .steps{display:flex;gap:6px;margin:14px 0}
+  .dot{flex:1;height:4px;border-radius:3px;background:var(--line)}.dot.on{background:var(--acc)}
+  .card{background:linear-gradient(180deg,var(--card),#0e1421);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px}
+  h2{margin:0 0 4px;font-size:19px}.hint{color:var(--mut);font-size:14px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0f1626;color:var(--txt);font-size:15px}
+  button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .msg{margin-top:12px;font-size:14px;min-height:18px}
+  .hide{display:none}
+  .lang{position:fixed;top:14px;right:16px;font-size:13px;color:var(--mut);cursor:pointer}
+  .code{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:1px;background:#0f1626;border:1px dashed var(--acc);border-radius:12px;padding:14px;text-align:center;margin:8px 0}
+  .tel{display:block;text-align:center;background:var(--ok);color:#04231a;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0}
+  .warn{background:#3a2a12;border:1px solid var(--warn);color:#ffdca8;border-radius:10px;padding:12px;font-size:13px;margin-top:12px}
+  .save{background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--mut);margin-top:10px}
+  .save b{color:var(--txt)}
+</style>
+</head>
+<body>
+<div class="lang" id="lang">ES</div>
+<div class="wrap">
+  <div class="brand">RinglyPro <span>Lite</span></div>
+  <div class="steps"><div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
+
+  <!-- Step 1: account -->
+  <div class="card" id="s1">
+    <h2 data-i="s1t">Create your account</h2>
+    <div class="hint" data-i="s1h">7-day free trial. No card to start.</div>
+    <label data-i="biz">Business name</label><input id="business_name" />
+    <label data-i="owner">Your name</label><input id="owner_name" />
+    <label data-i="email">Email</label><input id="email" type="email" />
+    <label data-i="pass">Password</label><input id="password" type="password" />
+    <label data-i="mobile">Your mobile (for text alerts, E.164 e.g. +15551234567)</label><input id="owner_phone" placeholder="+1..." />
+    <label data-i="country">Country</label>
+    <select id="country"><option value="US">United States</option><option value="CO">Colombia</option></select>
+    <label data-i="lang">Greeting language</label>
+    <select id="locale"><option value="en">English</option><option value="es">Español</option></select>
+    <button id="go1" data-i="create">Create account</button>
+    <div class="msg" id="m1"></div>
+  </div>
+
+  <!-- Step 2: number -->
+  <div class="card hide" id="s2">
+    <h2 data-i="s2t">Get your Lite number</h2>
+    <div class="hint" data-i="s2h">This is the number your calls forward to when you can't answer.</div>
+    <button id="go2" data-i="getnum">Assign my Lite number</button>
+    <div class="msg" id="m2"></div>
+  </div>
+
+  <!-- Step 3: forwarding -->
+  <div class="card hide" id="s3">
+    <h2 data-i="s3t">Turn on call forwarding</h2>
+    <div class="hint" data-i="s3h">Pick your carrier, then tap to dial the code from your phone. This forwards calls only when you don't answer.</div>
+    <label data-i="carrier">Carrier</label><select id="carrier"></select>
+    <div class="hint" data-i="acti">Activate forwarding</div>
+    <div class="code" id="activate">—</div>
+    <a class="tel" id="activate_tel" href="#" data-i="tap">Tap to dial</a>
+    <div class="save"><b data-i="deacti">To turn it OFF later:</b> <span class="code" style="font-size:16px;display:inline-block;padding:4px 10px" id="deactivate">—</span></div>
+    <div class="warn" id="reminder"></div>
+    <button id="go3" data-i="next">I dialed it — continue</button>
+  </div>
+
+  <!-- Step 4: billing -->
+  <div class="card hide" id="s4">
+    <h2 data-i="s4t">Start your trial</h2>
+    <div class="hint" data-i="s4h">7 days free. Cancel anytime from Settings.</div>
+    <button id="go4" data-i="startbill">Start free trial</button>
+    <button class="ghost" id="skip" data-i="later">Skip for now — go to dashboard</button>
+    <div class="msg" id="m4"></div>
+  </div>
+</div>
+<script>
+const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts, E.164 e.g. +15551234567)",country:"Country",lang:"Greeting language",create:"Create account",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick your carrier, then tap to dial the code from your phone. This forwards calls only when you don't answer.",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
+        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS, formato E.164 ej. +573001234567)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija su operador y toque para marcar el código desde su teléfono. Solo reenvía cuando usted no contesta.",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
+let lang=localStorage.getItem('lite_lang')||'en';
+function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');if(I[lang][k])e.textContent=I[lang][k]});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
+document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply()};apply();
+const $=id=>document.getElementById(id);
+function step(n){[1,2,3,4].forEach(i=>{$('s'+i).classList.toggle('hide',i!==n);$('d'+i).classList.toggle('on',i<=n)})}
+
+$('go1').onclick=async()=>{
+  const b={business_name:business_name.value,owner_name:owner_name.value,email:email.value,password:password.value,owner_phone:owner_phone.value,country:country.value,locale:locale.value};
+  const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(b)});
+  const j=await r.json();
+  if(r.ok){step(2)}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.error||'Error'}
+};
+$('go2').onclick=async()=>{
+  $('m2').style.color='#8a98b0';$('m2').textContent='...';
+  const r=await fetch('/api/onboarding/provision-number',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:'{}'});
+  const j=await r.json();
+  if(r.ok){await loadCarriers();step(3)}
+  else{$('m2').style.color='#ffb454';$('m2').textContent=j.message||j.error}
+};
+async function loadCarriers(){
+  const r=await fetch('/api/onboarding/carriers',{credentials:'include'});const j=await r.json();
+  carrier.innerHTML=j.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  carrier.onchange=refreshCodes;await refreshCodes();
+}
+async function refreshCodes(){
+  const r=await fetch('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent(carrier.value),{credentials:'include'});
+  const j=await r.json();if(!r.ok)return;
+  activate.textContent=j.codes.activate;deactivate.textContent=j.codes.deactivate;
+  activate_tel.href=j.codes.activate_tel;
+  reminder.textContent=j.reminder+(j.warning?(' '+j.warning):'');
+}
+$('go3').onclick=()=>step(4);
+$('go4').onclick=async()=>{
+  const r=await fetch('/api/billing/checkout',{method:'POST',credentials:'include'});const j=await r.json();
+  if(r.ok&&j.url){location.href=j.url}else{$('m4').style.color='#ffb454';$('m4').textContent=j.error||'Billing not configured — you can start on trial.'}
+};
+$('skip').onclick=()=>location.href='/dashboard';
+</script>
+</body>
+</html>
