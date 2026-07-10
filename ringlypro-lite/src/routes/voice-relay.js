@@ -87,8 +87,8 @@ router.post('/status', async (req, res) => {
   res.sendStatus(204);
 });
 
-router.get('/health', (req, res) => {
-  res.json({
+router.get('/health', async (req, res) => {
+  const out = {
     service: 'ringlypro-lite-voice',
     model: process.env.LITE_VOICE_MODEL || 'claude-haiku-4-5-20251001',
     tts: 'Amazon Polly (ConversationRelay)',
@@ -96,8 +96,27 @@ router.get('/health', (req, res) => {
     wss: wssUrl(req),
     incoming_webhook: `${(process.env.LITE_WEBHOOK_BASE_URL || 'https://<host>')}/voice/incoming`,
     anthropic_key_set: !!(process.env.LITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
+    twilio_sid_prefix: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').slice(0, 2) || 'unset',
+    twilio_token_set: !!(process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN),
     ok: true
-  });
+  };
+  // ?check=twilio actively verifies credentials by making the same class of API
+  // call number-provisioning uses. Reveals no secrets, only auth pass/fail.
+  if (req.query.check === 'twilio') {
+    try {
+      const { getProvider } = require('../telephony');
+      const client = getProvider().client();
+      const nums = await client.availablePhoneNumbers('US').local.list({ limit: 1 });
+      out.twilio_auth = 'ok';
+      out.twilio_sample_available = nums.length;
+    } catch (e) {
+      out.twilio_auth = 'fail';
+      out.twilio_error = e.message;
+      out.twilio_code = e.code || null;
+      out.twilio_status = e.status || null;
+    }
+  }
+  res.json(out);
 });
 
 module.exports = router;
