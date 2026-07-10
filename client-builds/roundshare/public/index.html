@@ -11,6 +11,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
 <meta name="apple-mobile-web-app-title" content="RoundShare">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0d18">
 <meta property="og:type" content="website">
 <meta property="og:title" content="RoundShare — Ride Smarter. Improve Faster.">
@@ -359,6 +362,16 @@
 
 <!-- COMING SOON toast -->
 <div class="toast" id="soonToast"><span class="tdot"></span><span data-en>Coming Soon</span><span data-es>Muy pronto</span></div>
+
+<!-- PWA install button (shown when installable) -->
+<style>
+  .pwabtn{position:fixed;right:16px;bottom:16px;z-index:250;background:var(--rose-deep);color:#fff;border:none;border-radius:26px;padding:12px 18px;font-weight:800;font-size:14px;font-family:inherit;box-shadow:0 12px 30px rgba(224,122,168,.45);cursor:pointer;display:none;align-items:center;gap:8px}
+  .pwabtn svg{width:17px;height:17px}
+</style>
+<button class="pwabtn" id="pwaInstall" onclick="rsInstall()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+  <span data-en>Install app</span><span data-es>Instalar app</span>
+</button>
 
 <!-- PLAN / SUBSCRIPTION WAITLIST MODAL -->
 <style>
@@ -799,6 +812,30 @@
 <script>
   // ===== waitlist endpoint (saves to Postgres via the roundshare sub-app) =====
   var RS_WAITLIST_URL = '/roundshare/api/waitlist';
+
+  // ===== PWA: service worker + install prompt =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      // Derive base from the current page dir so it works at / and /roundshare/.
+      var base = location.pathname.replace(/[^/]*$/, '');
+      navigator.serviceWorker.register(base + 'sw.js', { scope: base }).catch(function () {});
+    });
+  }
+  var _deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); _deferredPrompt = e;
+    var b = document.getElementById('pwaInstall'); if (b) b.style.display = 'inline-flex';
+  });
+  function rsInstall() {
+    var b = document.getElementById('pwaInstall');
+    if (!_deferredPrompt) { if (b) b.style.display = 'none'; return; }
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function () { _deferredPrompt = null; if (b) b.style.display = 'none'; });
+  }
+  window.rsInstall = rsInstall;
+  window.addEventListener('appinstalled', function () {
+    var b = document.getElementById('pwaInstall'); if (b) b.style.display = 'none';
+  });
 
   // logo (horse-head line mark, rose)
   document.getElementById('logoSlot').innerHTML =
