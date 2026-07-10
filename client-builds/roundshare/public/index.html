@@ -692,7 +692,7 @@
         <li><span data-en>Priority processing</span><span data-es>Procesamiento prioritario</span></li>
         <li><span data-en>Custom / enterprise terms</span><span data-es>Términos personalizados</span></li>
       </ul>
-      <a class="pbtn ghost" href="mailto:hello@roundshare.app?subject=RoundShare%20Unlimited%20-%20Sales"><span data-en>Contact sales</span><span data-es>Contactar ventas</span></a>
+      <a class="pbtn ghost" href="#" onclick="rsContactSales();return false;"><span data-en>Contact sales</span><span data-es>Contactar ventas</span></a>
     </div>
 
   </div>
@@ -852,6 +852,32 @@
   function setLang(es){ document.body.classList.toggle('es',es); document.documentElement.lang=es?'es':'en'; btnES.classList.toggle('on',es); btnEN.classList.toggle('on',!es);
     var vs=document.getElementById('voiceSel'); if(es&&vs.value==='ava'){vs.value='lina';voiceName='lina';clearCache();} if(!es&&vs.value!=='ava'){vs.value='ava';voiceName='ava';clearCache();} }
   btnEN.onclick=function(){setLang(false);}; btnES.onclick=function(){setLang(true);};
+
+  // Unlimited tier -> prefilled sales email in the active language.
+  function rsContactSales(){
+    var es=document.body.classList.contains('es');
+    var to='hello@roundshare.app';
+    var subject=es?'RoundShare Unlimited — Consulta de ventas':'RoundShare Unlimited — Sales inquiry';
+    var body=es
+      ? 'Hola equipo de RoundShare:\n\n'
+        +'Me interesa el plan Unlimited (ilimitado).\n\n'
+        +'- Tipo (jinete profesional / entrenador / establo / organización): \n'
+        +'- Número de jinetes: \n'
+        +'- Análisis aproximados por mes: \n'
+        +'- Ubicación: \n\n'
+        +'¿Podrían compartir el precio Unlimited (empresarial) y los siguientes pasos?\n\n'
+        +'Gracias,\n[Su nombre]'
+      : 'Hi RoundShare team,\n\n'
+        +'I\'m interested in the Unlimited plan.\n\n'
+        +'- Type (professional rider / trainer / barn / organization): \n'
+        +'- Number of riders: \n'
+        +'- Approx. analyses per month: \n'
+        +'- Location: \n\n'
+        +'Please share Unlimited (enterprise) pricing and next steps.\n\n'
+        +'Thanks,\n[Your name]';
+    window.location.href='mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  }
+  window.rsContactSales=rsContactSales;
 
   // waitlist submit -> saves to Postgres (rs_waitlist)
   document.getElementById('wlForm').addEventListener('submit',function(e){
