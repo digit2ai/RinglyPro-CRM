@@ -77,7 +77,7 @@ export function Register(props: Props) {
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="mx-auto h-24 w-24 rounded-xl overflow-hidden shadow-lg ring-2 ring-(--gray-100)">
           <img
-            src="/images/logo_800x800.jpeg"
+            src={`${import.meta.env.BASE_URL}images/logo_800x800.jpeg`}
             alt="Planea"
             className="h-full w-full object-cover"
           />

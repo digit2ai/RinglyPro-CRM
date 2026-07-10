@@ -36,7 +36,7 @@ export function FloatingAIButton({ onClick, label = 'Abrir IA' }: FloatingAIButt
         />
       </svg>
       <span className="absolute inset-1 overflow-hidden rounded-full">
-        <img src="/images/guacamayo.png" alt="" aria-hidden="true" className="size-full object-cover" />
+        <img src={`${import.meta.env.BASE_URL}images/guacamayo.png`} alt="" aria-hidden="true" className="size-full object-cover" />
       </span>
     </button>
   )

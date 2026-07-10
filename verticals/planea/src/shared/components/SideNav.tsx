@@ -64,7 +64,7 @@ export function SideNav() {
       <div className="flex items-center gap-3 px-5 py-6">
         <div className="h-8 w-8 overflow-hidden rounded-lg ring-1 ring-white">
           <img
-            src="/images/logo_800x800.jpeg"
+            src={`${import.meta.env.BASE_URL}images/logo_800x800.jpeg`}
             alt="Planea"
             className="h-full w-full object-cover"
           />
