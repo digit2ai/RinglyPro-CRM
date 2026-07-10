@@ -115,7 +115,9 @@ async function refreshCodes(){
   activate_tel.href=j.codes.activate_tel;
   reminder.textContent=j.reminder+(j.warning?(' '+j.warning):'');
 }
-$('go3').onclick=()=>step(4);
+let BILLING=false;
+fetch('/api/config').then(r=>r.json()).then(c=>{BILLING=!!c.billing_enabled;if(!BILLING){$('d4').style.display='none'}}).catch(()=>{});
+$('go3').onclick=()=>{ if(BILLING){step(4)} else {location.href='/dashboard'} };
 $('go4').onclick=async()=>{
   const r=await fetch('/api/billing/checkout',{method:'POST',credentials:'include'});const j=await r.json();
   if(r.ok&&j.url){location.href=j.url}else{$('m4').style.color='#ffb454';$('m4').textContent=j.error||'Billing not configured — you can start on trial.'}

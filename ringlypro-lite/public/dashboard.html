@@ -72,7 +72,7 @@
       <div class="day" data-i="fwd">Forwarding code</div>
       <div id="fwdBox" class="msg">—</div>
     </div>
-    <div class="card">
+    <div class="card" id="billCard" style="display:none">
       <div class="day" data-i="bill">Billing</div>
       <div class="msg" id="billStatus">—</div>
       <div style="margin-top:10px"><button class="sm" id="manageBill" data-i="startbill">Start / manage plan</button></div>
@@ -141,8 +141,12 @@ async function loadSettings(){
   const fc=await api('/api/onboarding/forwarding-codes'+(j.tenant.country?'':''));
   if(fc&&fc.codes){$('fwdBox').innerHTML=`${fc.did} · <span class="fwd">${fc.codes.activate}</span> · OFF: <span class="fwd">${fc.codes.deactivate}</span>`}
   else $('fwdBox').textContent='—';
-  const bs=await api('/api/billing/status');
-  if(bs)$('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?' (suspended)':'');
+  const cfg=await fetch('/api/config').then(r=>r.json()).catch(()=>({billing_enabled:false}));
+  if(cfg.billing_enabled){
+    $('billCard').style.display='';
+    const bs=await api('/api/billing/status');
+    if(bs)$('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?' (suspended)':'');
+  }
 }
 function renderAvail(){
   $('avail').innerHTML=rules.map((r,i)=>`<div class="avail-row">
