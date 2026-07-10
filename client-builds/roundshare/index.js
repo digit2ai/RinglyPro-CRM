@@ -92,8 +92,10 @@ function agreementBody() {
   return _agreementBody;
 }
 
-// Private valuation / investor package: passcode gate (default same key as the agreement).
-const INVESTOR_PASSCODE = process.env.ROUNDSHARE_INVESTOR_PASSCODE || 'roundshare2026';
+// Private valuation / investor package: passcode gate.
+// Defaults to the admin password so there is one credential to remember; an explicit
+// ROUNDSHARE_INVESTOR_PASSCODE still overrides it when a separate passcode is preferred.
+const INVESTOR_PASSCODE = process.env.ROUNDSHARE_INVESTOR_PASSCODE || process.env.ROUNDSHARE_ADMIN_PASSWORD || 'roundshare2026';
 let _investorBody = null;
 function investorBody() {
   if (_investorBody == null) {
