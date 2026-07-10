@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoundShare — Admin</title>
+<style>
+  :root{--navy:#0a0d18;--ink:#1a1420;--ink2:#4a4356;--mut:#7c7488;--line:#ece2e8;--rose:#e07aa8;--rose-soft:#fbe4ee;--cream:#faf7f9;--green:#2fa36b;--red:#d1495b;--white:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#f4eef2;color:var(--ink);font-size:14px}
+  a{color:var(--rose);text-decoration:none}
+  /* login */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .lcard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(20,10,30,.12)}
+  .brand{font-weight:800;font-size:22px;letter-spacing:.5px;text-align:center}
+  .brand span{color:var(--rose)}
+  .lcard h1{font-size:16px;text-align:center;color:var(--mut);font-weight:600;margin:6px 0 22px}
+  label{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin:14px 0 5px}
+  input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;font-size:14.5px;font-family:inherit;outline:none}
+  input:focus{border-color:var(--rose)}
+  .btn{width:100%;margin-top:20px;background:var(--rose);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
+  .btn.sm{width:auto;margin:0;padding:7px 12px;font-size:12.5px;border-radius:9px}
+  .btn.ghost{background:transparent;color:var(--rose);border:1.5px solid var(--rose)}
+  .btn.grey{background:#efe9ee;color:var(--ink2)}
+  .btn.red{background:transparent;color:var(--red);border:1.5px solid #eab}
+  .err{color:var(--red);font-size:13px;text-align:center;margin-top:12px;min-height:16px}
+  /* app */
+  .wrap{max-width:1200px;margin:0 auto;padding:18px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr 1fr}}
+  .kc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .kc .n{font-size:24px;font-weight:800;color:var(--rose)}
+  .kc .l{font-size:11.5px;color:var(--mut);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .tools input,.tools select{width:auto;flex:1;min-width:150px}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto}
+  table{width:100%;border-collapse:collapse;min-width:820px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);padding:11px 12px;border-bottom:2px solid var(--line);white-space:nowrap;background:var(--cream)}
+  td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .name{font-weight:700}
+  .meta{color:var(--mut);font-size:12px}
+  .tagpill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--rose-soft);color:#b23a7e;text-transform:capitalize}
+  .st{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .st.new{background:#eef;color:#4a4dbb}.st.contacted{background:#e7f6ee;color:#1f7a4d}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .ic{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1.5px solid var(--line);color:var(--ink2);background:#fff;cursor:pointer}
+  .ic svg{width:15px;height:15px}
+  .ic.on{border-color:var(--rose);color:var(--rose)}
+  .ic.dis{opacity:.32;pointer-events:none}
+  .empty{padding:40px;text-align:center;color:var(--mut)}
+  .hint{font-size:11.5px;color:var(--mut);margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="loginView">
+  <div class="lcard">
+    <div class="brand">ROUND<span>SHARE</span></div>
+    <h1>Admin Console</h1>
+    <form id="loginForm">
+      <label for="lEmail">Email</label>
+      <input id="lEmail" type="email" autocomplete="username" value="">
+      <label for="lPass">Password</label>
+      <input id="lPass" type="password" autocomplete="current-password">
+      <button class="btn" type="submit">Sign in</button>
+      <div class="err" id="lErr"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap" id="appView" style="display:none">
+  <div class="top">
+    <div class="brand" style="font-size:20px">ROUND<span>SHARE</span> <span style="color:var(--mut);font-weight:600;font-size:13px">Admin</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn sm ghost" onclick="loadAll()">Refresh</button>
+      <button class="btn sm grey" onclick="doLogout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="Search name, phone, email…" oninput="render()">
+    <select id="fPlan" onchange="render()"><option value="">All plans</option></select>
+    <select id="fStatus" onchange="render()"><option value="">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option></select>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Date</th><th>Name</th><th>Contact</th><th>Interest</th><th>Lang</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">No signups yet.</div>
+  </div>
+  <div class="hint">Call / Message / Email open on your device. Tip: use this console on your phone to text or call leads directly.</div>
+</div>
+
+<script>
+  var APP = location.pathname.replace(/\/admin\/?$/, '');   // '' on roundshare.app, '/roundshare' on aiagent
+  var LEADS = [];
+
+  function api(p, opts){ opts = opts || {}; opts.credentials = 'same-origin'; return fetch(APP + p, opts); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  // ---- auth ----
+  document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var email = document.getElementById('lEmail').value.trim();
+    var password = document.getElementById('lPass').value;
+    document.getElementById('lErr').textContent = '';
+    api('/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email, password: password }) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(x){
+        if (x.ok && x.j.ok) { showApp(); }
+        else { document.getElementById('lErr').textContent = x.j.error === 'too_many_attempts' ? 'Too many attempts. Wait 15 minutes.' : 'Invalid email or password.'; }
+      })
+      .catch(function(){ document.getElementById('lErr').textContent = 'Network error.'; });
+  });
+  function doLogout(){ api('/admin/logout', { method:'POST' }).finally(function(){ location.reload(); }); }
+
+  function showApp(){
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('appView').style.display = 'block';
+    loadAll();
+  }
+
+  function loadAll(){
+    Promise.all([
+      api('/admin/api/stats').then(function(r){ return r.json(); }).catch(function(){ return {}; }),
+      api('/admin/api/leads').then(function(r){ return r.json(); }).catch(function(){ return { leads: [] }; })
+    ]).then(function(res){
+      renderCards(res[0] || {});
+      LEADS = (res[1] && res[1].leads) || [];
+      buildPlanFilter();
+      render();
+    });
+  }
+
+  function renderCards(s){
+    var byPlan = s.byPlan || {};
+    var chips = Object.keys(byPlan).map(function(k){ return '<div class="kc"><div class="n">' + byPlan[k] + '</div><div class="l">' + esc(k) + '</div></div>'; }).join('');
+    document.getElementById('cards').innerHTML =
+      '<div class="kc"><div class="n">' + (s.total || 0) + '</div><div class="l">Total signups</div></div>' +
+      '<div class="kc"><div class="n">' + (s.today || 0) + '</div><div class="l">Today</div></div>' +
+      '<div class="kc"><div class="n">' + (s.contacted || 0) + '</div><div class="l">Contacted</div></div>' +
+      '<div class="kc"><div class="n">' + ((s.total || 0) - (s.contacted || 0)) + '</div><div class="l">To contact</div></div>' +
+      chips;
+  }
+
+  function buildPlanFilter(){
+    var sel = document.getElementById('fPlan');
+    var plans = {}; LEADS.forEach(function(l){ if (l.plan) plans[l.plan] = 1; });
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">All plans</option>' + Object.keys(plans).map(function(p){ return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join('');
+    sel.value = cur;
+  }
+
+  function fmtDate(iso){ if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+
+  function contactBody(l){
+    var who = l.name ? (' ' + l.name.split(' ')[0]) : '';
+    var plan = l.plan && l.plan !== 'unknown' ? l.plan : 'waitlist';
+    return 'Hi' + who + ', this is RoundShare — thanks for joining our ' + plan + ' list! We would love to get you early access. When is a good time to connect?';
+  }
+
+  function iconBtns(l){
+    var phone = (l.phone || '').replace(/[^0-9+]/g, '');
+    var body = encodeURIComponent(contactBody(l));
+    var callBtn = phone
+      ? '<a class="ic" title="Call" href="tel:' + esc(phone) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg></a>'
+      : '<span class="ic dis" title="No phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7z"/></svg></span>';
+    var smsBtn = phone
+      ? '<a class="ic" title="Message" href="sms:' + esc(phone) + '?&body=' + body + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></a>'
+      : '<span class="ic dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>';
+    var emailBtn = l.email
+      ? '<a class="ic" title="Email" href="mailto:' + esc(l.email) + '?subject=' + encodeURIComponent('RoundShare — early access') + '&body=' + body + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a>'
+      : '<span class="ic dis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>';
+    var mark = '<button class="ic ' + (l.status === 'contacted' ? 'on' : '') + '" title="Toggle contacted" onclick="toggleStatus(' + l.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></button>';
+    var note = '<button class="ic" title="Notes" onclick="editNotes(' + l.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>';
+    var del = '<button class="ic" title="Delete" onclick="delLead(' + l.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/></svg></button>';
+    return '<div class="acts">' + callBtn + smsBtn + emailBtn + mark + note + del + '</div>';
+  }
+
+  function render(){
+    var q = (document.getElementById('q').value || '').toLowerCase().trim();
+    var fp = document.getElementById('fPlan').value;
+    var fs = document.getElementById('fStatus').value;
+    var list = LEADS.filter(function(l){
+      if (fp && l.plan !== fp) return false;
+      if (fs && (l.status || 'new') !== fs) return false;
+      if (q){ var hay = (l.name + ' ' + l.phone + ' ' + l.email + ' ' + l.plan).toLowerCase(); if (hay.indexOf(q) < 0) return false; }
+      return true;
+    });
+    var rows = list.map(function(l){
+      var interest = l.plan && l.plan !== 'unknown' ? l.plan : (l.tag && l.tag.indexOf('waitlist') >= 0 ? 'waitlist' : (l.tag || '—'));
+      var contact = (l.phone ? esc(l.phone) : '') + (l.phone && l.email ? '<br>' : '') + (l.email ? '<span class="meta">' + esc(l.email) + '</span>' : '');
+      if (!l.phone && !l.email) contact = '<span class="meta">—</span>';
+      return '<tr>' +
+        '<td class="meta">' + esc(fmtDate(l.created_at)) + '</td>' +
+        '<td><div class="name">' + (esc(l.name) || '<span class="meta">—</span>') + '</div>' + (l.notes ? '<div class="meta">' + esc(l.notes) + '</div>' : '') + '</td>' +
+        '<td>' + contact + '</td>' +
+        '<td><span class="tagpill">' + esc(interest) + '</span></td>' +
+        '<td class="meta">' + esc((l.language || '').toUpperCase()) + '</td>' +
+        '<td><span class="st ' + (l.status === 'contacted' ? 'contacted' : 'new') + '">' + (l.status === 'contacted' ? 'Contacted' : 'New') + '</span></td>' +
+        '<td>' + iconBtns(l) + '</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('rows').innerHTML = rows;
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+  }
+
+  function toggleStatus(id){
+    var l = LEADS.find(function(x){ return x.id === id; }); if (!l) return;
+    var next = l.status === 'contacted' ? 'new' : 'contacted';
+    api('/admin/api/leads/' + id, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: next }) })
+      .then(function(r){ return r.json(); }).then(function(j){ if (j.ok){ l.status = next; loadAll(); } });
+  }
+  function editNotes(id){
+    var l = LEADS.find(function(x){ return x.id === id; }); if (!l) return;
+    var v = prompt('Notes for ' + (l.name || l.phone || l.email || 'lead') + ':', l.notes || '');
+    if (v === null) return;
+    api('/admin/api/leads/' + id, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ notes: v }) })
+      .then(function(r){ return r.json(); }).then(function(j){ if (j.ok){ l.notes = v; render(); } });
+  }
+  function delLead(id){
+    var l = LEADS.find(function(x){ return x.id === id; }); if (!l) return;
+    if (!confirm('Delete ' + (l.name || l.phone || l.email || 'this lead') + '? This cannot be undone.')) return;
+    api('/admin/api/leads/' + id, { method:'DELETE' }).then(function(r){ return r.json(); }).then(function(j){ if (j.ok){ loadAll(); } });
+  }
+  window.doLogout = doLogout; window.loadAll = loadAll; window.render = render;
+  window.toggleStatus = toggleStatus; window.editNotes = editNotes; window.delLead = delLead;
+
+  // boot: are we already signed in?
+  api('/admin/api/me').then(function(r){ if (r.ok) showApp(); else document.getElementById('lEmail').focus(); })
+    .catch(function(){ document.getElementById('lEmail').focus(); });
+</script>
+</body>
+</html>

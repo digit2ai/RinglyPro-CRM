@@ -21,11 +21,63 @@
 const express = require('express');
 const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
+const crypto = require('crypto');
 
 const fs = require('fs');
 
-const VERSION = '1.3.1';
+const VERSION = '1.4.0';
 const SERVICE = 'roundshare';
+
+// Admin console: waitlist/subscription management. Credentials + signing secret
+// are env-overridable; defaults match the owner-provided login.
+const ADMIN_EMAIL = (process.env.ROUNDSHARE_ADMIN_EMAIL || 'admin@roundshare.app').trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.ROUNDSHARE_ADMIN_PASSWORD || 'LCMroundshare@7';
+const ADMIN_SECRET = process.env.ROUNDSHARE_ADMIN_SECRET || process.env.JWT_SECRET || ('roundshare-admin-' + ADMIN_PASSWORD);
+const ADMIN_COOKIE = 'rs_admin';
+const ADMIN_TTL_MS = 12 * 60 * 60 * 1000; // 12h session
+
+// --- signed-cookie session (HMAC, dependency-free) ---
+function b64url(buf) { return Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function signAdminToken(payload) {
+  const body = b64url(JSON.stringify(payload));
+  const sig = b64url(crypto.createHmac('sha256', ADMIN_SECRET).update(body).digest());
+  return body + '.' + sig;
+}
+function verifyAdminToken(token) {
+  if (!token || token.indexOf('.') < 0) return null;
+  const parts = token.split('.');
+  const body = parts[0], sig = parts[1] || '';
+  const expect = b64url(crypto.createHmac('sha256', ADMIN_SECRET).update(body).digest());
+  const a = Buffer.from(sig), b = Buffer.from(expect);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  try {
+    const p = JSON.parse(Buffer.from(body.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+    if (!p.exp || Date.now() > p.exp) return null;
+    return p;
+  } catch (e) { return null; }
+}
+function readCookie(req, name) {
+  const h = req.headers.cookie || '';
+  const hit = h.split(';').map((s) => s.trim()).find((s) => s.indexOf(name + '=') === 0);
+  return hit ? decodeURIComponent(hit.slice(name.length + 1)) : '';
+}
+function requireAdmin(req, res, next) {
+  const p = verifyAdminToken(readCookie(req, ADMIN_COOKIE));
+  if (!p || p.email !== ADMIN_EMAIL) return res.status(401).json({ ok: false, error: 'unauthorized' });
+  req.admin = p; next();
+}
+// crude in-memory login throttle: 10 failed attempts / 15 min / IP
+const _loginHits = new Map();
+function loginBlocked(ip) {
+  const e = _loginHits.get(ip);
+  if (!e) return false;
+  if (Date.now() - e.ts > 15 * 60 * 1000) { _loginHits.delete(ip); return false; }
+  return e.count >= 10;
+}
+function noteLoginFail(ip) {
+  const e = _loginHits.get(ip) || { count: 0, ts: Date.now() };
+  e.count += 1; e.ts = Date.now(); _loginHits.set(ip, e);
+}
 
 // Private Operating Agreement: passcode gate + e-signatures + PDF (client print).
 const AGREEMENT_VERSION = '4.0';
@@ -78,6 +130,8 @@ let dbReady = false;
       name:     { type: DataTypes.STRING },
       phone:    { type: DataTypes.STRING },
       plan:     { type: DataTypes.STRING(32) },
+      status:   { type: DataTypes.STRING(24) },
+      notes:    { type: DataTypes.TEXT },
       source:   { type: DataTypes.STRING },
       tag:      { type: DataTypes.STRING },
       language: { type: DataTypes.STRING(8) },
@@ -100,7 +154,9 @@ let dbReady = false;
         'ALTER TABLE rs_waitlist ' +
         'ADD COLUMN IF NOT EXISTS name VARCHAR(255), ' +
         'ADD COLUMN IF NOT EXISTS phone VARCHAR(64), ' +
-        'ADD COLUMN IF NOT EXISTS plan VARCHAR(32)'
+        'ADD COLUMN IF NOT EXISTS plan VARCHAR(32), ' +
+        'ADD COLUMN IF NOT EXISTS status VARCHAR(24), ' +
+        'ADD COLUMN IF NOT EXISTS notes TEXT'
       ).catch((e) => console.warn('[roundshare] rs_waitlist alter skipped:', e.message)))
       .then(() => Signature.sync({ alter: false }))
       .then(() => { dbReady = true; console.log('[roundshare] rs_waitlist + rs_agreement_signatures ready'); })
@@ -201,6 +257,102 @@ app.post('/api/plan-signup', async (req, res) => {
   } catch (e) {
     console.error('[roundshare] plan signup insert failed:', e.message);
     return res.status(500).json({ ok: false, error: 'insert_failed' });
+  }
+});
+
+// ---------------------------------------------------------------
+// Admin console — waitlist / subscription management (auth-gated).
+// ---------------------------------------------------------------
+app.get(['/admin', '/admin/'], (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.post('/admin/login', (req, res) => {
+  const ip = (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim();
+  if (loginBlocked(ip)) return res.status(429).json({ ok: false, error: 'too_many_attempts' });
+  const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+  const password = String((req.body && req.body.password) || '');
+  const okEmail = email === ADMIN_EMAIL;
+  const pw = Buffer.from(password); const exp = Buffer.from(ADMIN_PASSWORD);
+  const okPw = pw.length === exp.length && crypto.timingSafeEqual(pw, exp);
+  if (!okEmail || !okPw) { noteLoginFail(ip); return res.status(401).json({ ok: false, error: 'invalid_credentials' }); }
+  const token = signAdminToken({ email: ADMIN_EMAIL, exp: Date.now() + ADMIN_TTL_MS });
+  res.set('Set-Cookie', `${ADMIN_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${Math.floor(ADMIN_TTL_MS / 1000)}`);
+  return res.json({ ok: true });
+});
+
+app.post('/admin/logout', (req, res) => {
+  res.set('Set-Cookie', `${ADMIN_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`);
+  return res.json({ ok: true });
+});
+
+app.get('/admin/api/me', requireAdmin, (req, res) => res.json({ ok: true, email: req.admin.email }));
+
+app.get('/admin/api/leads', requireAdmin, async (req, res) => {
+  if (!Waitlist || !dbReady) return res.json({ ok: true, db: false, leads: [] });
+  try {
+    const rows = await Waitlist.findAll({ order: [['created_at', 'DESC']], limit: 2000 });
+    const leads = rows.map((r) => {
+      const d = r.dataValues || {};
+      const ca = d.created_at || d.createdAt || null;
+      return {
+        id: d.id, email: d.email || '', name: d.name || '', phone: d.phone || '',
+        plan: d.plan || '', tag: d.tag || '', language: d.language || '',
+        status: d.status || 'new', notes: d.notes || '', source: d.source || '',
+        created_at: ca ? new Date(ca).toISOString() : null,
+      };
+    });
+    return res.json({ ok: true, db: true, leads });
+  } catch (e) {
+    console.error('[roundshare] admin leads failed:', e.message);
+    return res.status(500).json({ ok: false, error: 'query_failed' });
+  }
+});
+
+app.get('/admin/api/stats', requireAdmin, async (req, res) => {
+  if (!Waitlist || !dbReady) return res.json({ ok: true, db: false, total: 0, byPlan: {} });
+  try {
+    const rows = await Waitlist.findAll({ attributes: ['plan', 'status', 'created_at'] });
+    const byPlan = {}; let contacted = 0; let today = 0;
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    rows.forEach((r) => {
+      const d = r.dataValues || {};
+      const plan = d.plan || 'waitlist';
+      byPlan[plan] = (byPlan[plan] || 0) + 1;
+      if ((d.status || 'new') === 'contacted') contacted += 1;
+      const ca = d.created_at || d.createdAt; if (ca && new Date(ca) >= startOfDay) today += 1;
+    });
+    return res.json({ ok: true, db: true, total: rows.length, today, contacted, byPlan });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'stats_failed' });
+  }
+});
+
+app.patch('/admin/api/leads/:id', requireAdmin, async (req, res) => {
+  if (!Waitlist || !dbReady) return res.status(503).json({ ok: false, error: 'db_unavailable' });
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: 'bad_id' });
+  const patch = {};
+  if (req.body && typeof req.body.status === 'string') patch.status = req.body.status.slice(0, 24);
+  if (req.body && typeof req.body.notes === 'string') patch.notes = req.body.notes.slice(0, 2000);
+  try {
+    const [n] = await Waitlist.update(patch, { where: { id } });
+    return res.json({ ok: true, updated: n });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'update_failed' });
+  }
+});
+
+app.delete('/admin/api/leads/:id', requireAdmin, async (req, res) => {
+  if (!Waitlist || !dbReady) return res.status(503).json({ ok: false, error: 'db_unavailable' });
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: 'bad_id' });
+  try {
+    const n = await Waitlist.destroy({ where: { id } });
+    return res.json({ ok: true, deleted: n });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'delete_failed' });
   }
 });
 
