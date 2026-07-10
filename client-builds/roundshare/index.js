@@ -75,6 +75,9 @@ let dbReady = false;
     Waitlist = sequelize.define('rs_waitlist', {
       id:       { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       email:    { type: DataTypes.STRING, allowNull: false },
+      name:     { type: DataTypes.STRING },
+      phone:    { type: DataTypes.STRING },
+      plan:     { type: DataTypes.STRING(32) },
       source:   { type: DataTypes.STRING },
       tag:      { type: DataTypes.STRING },
       language: { type: DataTypes.STRING(8) },
@@ -92,6 +95,13 @@ let dbReady = false;
     }, { tableName: 'rs_agreement_signatures', underscored: true, timestamps: true });
     sequelize.authenticate()
       .then(() => Waitlist.sync({ alter: false }))
+      // Add plan-signup columns to an already-existing table (sync alter:false won't).
+      .then(() => sequelize.query(
+        'ALTER TABLE rs_waitlist ' +
+        'ADD COLUMN IF NOT EXISTS name VARCHAR(255), ' +
+        'ADD COLUMN IF NOT EXISTS phone VARCHAR(64), ' +
+        'ADD COLUMN IF NOT EXISTS plan VARCHAR(32)'
+      ).catch((e) => console.warn('[roundshare] rs_waitlist alter skipped:', e.message)))
       .then(() => Signature.sync({ alter: false }))
       .then(() => { dbReady = true; console.log('[roundshare] rs_waitlist + rs_agreement_signatures ready'); })
       .catch((e) => console.error('[roundshare] db init failed:', e.message));
@@ -151,6 +161,45 @@ app.post('/api/waitlist', async (req, res) => {
     return res.json({ ok: true, persisted: true });
   } catch (e) {
     console.error('[roundshare] waitlist insert failed:', e.message);
+    return res.status(500).json({ ok: false, error: 'insert_failed' });
+  }
+});
+
+// Plan / subscription waitlist signup -> Postgres (rs_waitlist).
+// Name + phone required; email optional; plan = which subscription tier.
+app.post('/api/plan-signup', async (req, res) => {
+  const b = req.body || {};
+  const name = String(b.name || '').trim();
+  const phone = String(b.phone || '').trim();
+  const email = String(b.email || '').trim().toLowerCase();
+  const plan = String(b.plan || '').trim().toLowerCase();
+  const ALLOWED = ['free', 'premium', 'trainer', 'unlimited'];
+  if (!name || !phone) {
+    return res.status(400).json({ ok: false, error: 'name_and_phone_required' });
+  }
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ ok: false, error: 'invalid_email' });
+  }
+  const planSafe = ALLOWED.includes(plan) ? plan : 'unknown';
+  if (!Waitlist || !dbReady) {
+    console.warn('[roundshare] plan signup (db unavailable):', planSafe, name, phone);
+    return res.status(202).json({ ok: true, persisted: false });
+  }
+  try {
+    await Waitlist.create({
+      email: email || '',
+      name: name.slice(0, 180),
+      phone: phone.slice(0, 64),
+      plan: planSafe,
+      source: String(b.source || 'roundshare.app').slice(0, 120),
+      tag: ('roundshare-plan-' + planSafe).slice(0, 120),
+      language: String(b.language || 'en').slice(0, 8),
+      ip: (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim().slice(0, 64),
+      user_agent: String(req.headers['user-agent'] || '').slice(0, 500),
+    });
+    return res.json({ ok: true, persisted: true });
+  } catch (e) {
+    console.error('[roundshare] plan signup insert failed:', e.message);
     return res.status(500).json({ ok: false, error: 'insert_failed' });
   }
 });

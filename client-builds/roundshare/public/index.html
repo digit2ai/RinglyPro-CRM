@@ -360,6 +360,51 @@
 <!-- COMING SOON toast -->
 <div class="toast" id="soonToast"><span class="tdot"></span><span data-en>Coming Soon</span><span data-es>Muy pronto</span></div>
 
+<!-- PLAN / SUBSCRIPTION WAITLIST MODAL -->
+<style>
+  .plmodal{position:fixed;inset:0;z-index:260;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(6,8,16,.82);backdrop-filter:blur(6px)}
+  .plmodal.open{display:flex}
+  .plcard{background:#fff;color:var(--ink);width:100%;max-width:430px;border-radius:20px;padding:28px 26px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .plclose{position:absolute;top:12px;right:14px;background:none;border:none;font-size:26px;line-height:1;color:var(--mut);cursor:pointer}
+  .pleyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--rose-deep)}
+  .plcard h3{font-size:21px;margin:6px 0 12px;font-weight:800}
+  .plplan{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+  .plplan .plname{font-weight:800;font-size:15px}
+  .plplan .pldesc{font-size:12.5px;color:var(--mut);margin-top:2px}
+  .plmodal label{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin:12px 0 5px}
+  .plmodal input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;font-size:14.5px;font-family:inherit;color:var(--ink);outline:none}
+  .plmodal input:focus{border-color:var(--rose-deep)}
+  .plbtn{width:100%;margin-top:18px;background:var(--rose-deep);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
+  .plmini{font-size:11px;color:var(--mut);text-align:center;margin-top:10px}
+  .plok{text-align:center;padding:14px 0}
+  .plok .okmark{width:52px;height:52px;border-radius:50%;background:#e3f6ec;color:#0f7a44;font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+  .plok h4{font-size:18px;font-weight:800;margin:0 0 4px}
+  .plok p{font-size:13px;color:var(--mut);margin:0}
+</style>
+<div class="plmodal" id="planModal" onclick="if(event.target===this)rsClosePlan()">
+  <div class="plcard">
+    <button class="plclose" onclick="rsClosePlan()" aria-label="Close">×</button>
+    <div class="pleyebrow"><span data-en>Waitlist registration</span><span data-es>Registro en lista de espera</span></div>
+    <h3><span data-en>Reserve your spot</span><span data-es>Reserva tu lugar</span></h3>
+    <div class="plplan" id="plPlan"></div>
+    <form id="plForm" novalidate>
+      <label for="plName"><span data-en>Name</span><span data-es>Nombre</span> *</label>
+      <input id="plName" type="text" autocomplete="name" placeholder="">
+      <label for="plPhone"><span data-en>Phone number</span><span data-es>Número de teléfono</span> *</label>
+      <input id="plPhone" type="tel" autocomplete="tel" placeholder="">
+      <label for="plEmail"><span data-en>Email (optional)</span><span data-es>Correo electrónico (opcional)</span></label>
+      <input id="plEmail" type="email" autocomplete="email" placeholder="">
+      <button type="submit" class="plbtn"><span data-en>Join the waitlist</span><span data-es>Unirme a la lista</span></button>
+      <div class="plmini"><span data-en>Founder pricing locked in. No charge today.</span><span data-es>Precio de fundador asegurado. Sin cargo hoy.</span></div>
+    </form>
+    <div class="plok" id="plOk" style="display:none">
+      <div class="okmark">✓</div>
+      <h4><span data-en>You're on the list!</span><span data-es>¡Estás en la lista!</span></h4>
+      <p><span data-en>We'll reach out with early access and next steps.</span><span data-es>Te contactaremos con acceso anticipado y los siguientes pasos.</span></p>
+    </div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="nav"><div class="wrap">
   <a class="brand" href="/roundshare/">
@@ -652,7 +697,7 @@
         <li><span data-en>Follow riders &amp; barns</span><span data-es>Sigue jinetes y establos</span></li>
         <li class="no"><span data-en>No AI ride analysis</span><span data-es>Sin análisis con IA</span></li>
       </ul>
-      <a class="pbtn ghost" onclick="rsScroll('waitlist')"><span data-en>Join free</span><span data-es>Únete gratis</span></a>
+      <a class="pbtn ghost" onclick="rsOpenPlan('free')"><span data-en>Join free</span><span data-es>Únete gratis</span></a>
     </div>
 
     <div class="pcard feat">
@@ -666,7 +711,7 @@
         <li><span data-en>Progress history &amp; homework</span><span data-es>Historial de avance y tareas</span></li>
         <li><span data-en>AI Reels &amp; parent dashboard</span><span data-es>AI Reels y panel para padres</span></li>
       </ul>
-      <a class="pbtn" onclick="rsScroll('waitlist')"><span data-en>Start free trial</span><span data-es>Prueba gratis</span></a>
+      <a class="pbtn" onclick="rsOpenPlan('premium')"><span data-en>Start free trial</span><span data-es>Prueba gratis</span></a>
     </div>
 
     <div class="pcard">
@@ -679,7 +724,7 @@
         <li><span data-en>Assignments &amp; barn circle</span><span data-es>Tareas y círculo del establo</span></li>
         <li><span data-en>Team analytics</span><span data-es>Analítica del equipo</span></li>
       </ul>
-      <a class="pbtn ghost" onclick="rsScroll('waitlist')"><span data-en>Join waitlist</span><span data-es>Unirme a la lista</span></a>
+      <a class="pbtn ghost" onclick="rsOpenPlan('trainer')"><span data-en>Join waitlist</span><span data-es>Unirme a la lista</span></a>
     </div>
 
     <div class="pcard">
@@ -878,6 +923,43 @@
     window.location.href='mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
   }
   window.rsContactSales=rsContactSales;
+
+  // ===== Plan / subscription waitlist modal (Free / Premium / Trainer) =====
+  var RS_PLAN_URL='/roundshare/api/plan-signup';
+  var PLAN_INFO={
+    free:{en:'Free — $0',es:'Gratis — $0',den:'Community feed & sharing. No AI analysis.',des:'Feed comunitario y compartir. Sin análisis con IA.'},
+    premium:{en:'Premium — $24.99/mo',es:'Premium — $24.99/mes',den:'Up to 20 AI analyses/mo, progress, homework, AI reels.',des:'Hasta 20 análisis con IA/mes, avance, tareas y AI reels.'},
+    trainer:{en:'Trainer / Barn — $199/mo',es:'Entrenador / Establo — $199/mes',den:'Up to 8 riders, assignments, barn circle, analytics.',des:'Hasta 8 jinetes, tareas, círculo del establo y analítica.'}
+  };
+  var _curPlan='free';
+  function rsOpenPlan(plan){
+    _curPlan=plan; var p=PLAN_INFO[plan]||PLAN_INFO.free;
+    document.getElementById('plPlan').innerHTML=
+      '<div class="plname"><span data-en>'+p.en+'</span><span data-es>'+p.es+'</span></div>'+
+      '<div class="pldesc"><span data-en>'+p.den+'</span><span data-es>'+p.des+'</span></div>';
+    var f=document.getElementById('plForm'); f.style.display=''; f.reset();
+    document.getElementById('plOk').style.display='none';
+    document.getElementById('planModal').classList.add('open');
+    document.body.style.overflow='hidden';
+    setTimeout(function(){document.getElementById('plName').focus();},60);
+  }
+  function rsClosePlan(){document.getElementById('planModal').classList.remove('open');document.body.style.overflow='';}
+  window.rsOpenPlan=rsOpenPlan; window.rsClosePlan=rsClosePlan;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')rsClosePlan();});
+  document.getElementById('plForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=(document.getElementById('plName').value||'').trim();
+    var phone=(document.getElementById('plPhone').value||'').trim();
+    var email=(document.getElementById('plEmail').value||'').trim();
+    if(!name){document.getElementById('plName').focus();return;}
+    if(!phone){document.getElementById('plPhone').focus();return;}
+    if(email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){document.getElementById('plEmail').focus();return;}
+    var payload={plan:_curPlan,name:name,phone:phone,email:email,source:'roundshare.app',language:document.body.classList.contains('es')?'es':'en'};
+    fetch(RS_PLAN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});
+    document.getElementById('plForm').style.display='none';
+    document.getElementById('plOk').style.display='block';
+    setTimeout(rsClosePlan,2600);
+  });
 
   // waitlist submit -> saves to Postgres (rs_waitlist)
   document.getElementById('wlForm').addEventListener('submit',function(e){
