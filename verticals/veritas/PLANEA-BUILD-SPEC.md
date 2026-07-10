@@ -1,6 +1,6 @@
 # PLANEA — Build Spec (Requirements Intake)
 
-> **Estado:** FASE 1 — RECOLECTANDO INFORMACIÓN. No construir hasta que el usuario diga "build".
+> **Estado:** ✅ FASE 3 COMPLETA — PLANEA está LIVE en https://aiagent.ringlypro.com/planea (2026-07-10, commit 567e661d).
 > **Objetivo:** Replicar / desplegar la app **PLANEA** en `https://aiagent.ringlypro.com/planea`.
 > **Mantenido por:** RinglyPro AI Architect (MCP Brain). Cada dato nuevo que alimente el usuario se agrega/actualiza aquí.
 > **Fecha inicio intake:** 2026-07-10
@@ -308,3 +308,16 @@ en el docx PARTE 8.
   `BRD/` está vacío. `docs/` es la documentación funcional real; los `.docx` son la spec de negocio.
   Fase 1 prácticamente completa a nivel de conocimiento del producto. Faltan decisiones de Fase 3
   (Supabase vs CRM, base path, env vars) — todas registradas en §15. Esperando más info o el "build".
+- 2026-07-10 — **BUILD ejecutado (Fase 3, loop autónomo).** App real desplegada en `/planea`:
+  - Copiada a `verticals/planea/`, ajustado base path (`vite base=/planea/`, `BrowserRouter basename`,
+    `<base href>`, manifest scope/start_url).
+  - Montada vía `verticals/planea/server.cjs` (static dist + fallback SPA + `/planea/health`).
+    CLAVE: `.cjs` porque el package.json de planea es `type:module` y el CRM es CommonJS.
+  - `build.sh` con bloque "dist pre-compilado, saltar" + `dist/` committeado (force-add).
+  - Sin bloqueo de credenciales: Supabase URL+publishable key hardcodeados en `src/configurations/supabase.ts`.
+  - Verificación live: `/planea/health` 200 (dist:true), `/planea/` 200 (SPA), bundle JS 852KB 200,
+    deep-link `/planea/score` 200 (fallback SPA), manifest 200, `/debug/planea-error` available:true.
+  - PENDIENTE EXTERNO (único): en el dashboard de Supabase (proyecto `mfxujzvvrnsbiqcefvtg`) agregar
+    `https://aiagent.ringlypro.com/planea/**` a Site URL / Redirect URLs, para que los correos de
+    confirmación y magic links de reset redirijan a esta ruta (hoy apuntan a planea.co/vercel).
+    El login/registro por contraseña y el score/diagnóstico ya funcionan sin este cambio.
