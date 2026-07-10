@@ -4,6 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>RinglyPro Lite — Setup</title>
+<link rel="icon" type="image/png" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#0d1320" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="RinglyPro Lite" />
 <style>
   :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b}
   *{box-sizing:border-box}
@@ -31,7 +37,7 @@
 <body>
 <div class="lang" id="lang">ES</div>
 <div class="wrap">
-  <div class="brand">RinglyPro <span>Lite</span></div>
+  <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
   <div class="steps"><div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
 
   <!-- Step 1: account -->
@@ -87,6 +93,7 @@ const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start."
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');if(I[lang][k])e.textContent=I[lang][k]});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply()};apply();
+if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 const $=id=>document.getElementById(id);
 function step(n){[1,2,3,4].forEach(i=>{$('s'+i).classList.toggle('hide',i!==n);$('d'+i).classList.toggle('on',i<=n)})}
 

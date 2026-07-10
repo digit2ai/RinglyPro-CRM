@@ -4,6 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>RinglyPro Lite</title>
+<link rel="icon" type="image/png" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#0d1320" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="RinglyPro Lite" />
 <style>
   :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b}
   *{box-sizing:border-box}
@@ -43,8 +49,8 @@
 </head>
 <body>
 <header>
-  <div class="brand">RinglyPro <span>Lite</span></div>
-  <div><span class="lang" id="lang">ES</span></div>
+  <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
+  <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="bell" title="Alerts" style="cursor:pointer" data-i="alerts">Alerts</span><span class="lang" id="lang">ES</span></div>
 </header>
 <main>
   <!-- MESSAGES -->
@@ -101,8 +107,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -117,9 +123,26 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();c
 
 function fmt(d){return new Date(d).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 
+let lastUnread=null;
+function setAppBadge(n){
+  try{ if('setAppBadge'in navigator){ n>0?navigator.setAppBadge(n):navigator.clearAppBadge&&navigator.clearAppBadge(); } }catch(e){}
+  try{ navigator.serviceWorker&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:'badge',count:n}); }catch(e){}
+}
+function notifyNew(delta){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  try{
+    const title=lang==='es'?'RinglyPro Lite':'RinglyPro Lite';
+    const body=lang==='es'?(delta>1?`${delta} mensajes nuevos`:'Nuevo mensaje'):(delta>1?`${delta} new messages`:'New message');
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,icon:'/icon-192.png',badge:'/icon-192.png'}))}
+    else new Notification(title,{body,icon:'/icon-192.png'});
+  }catch(e){}
+}
 async function loadMessages(){
   const j=await api('/api/messages');if(!j)return;
   const u=$('unread');if(j.unread>0){u.style.display='inline-block';u.textContent=j.unread}else u.style.display='none';
+  setAppBadge(j.unread);
+  if(lastUnread!==null&&j.unread>lastUnread){ notifyNew(j.unread-lastUnread); }
+  lastUnread=j.unread;
   const box=$('messages');
   if(!j.messages.length){box.innerHTML='<div class="empty">'+I[lang].noMsg+'</div>';return}
   box.innerHTML=j.messages.map(m=>`<div class="item ${m.read_at?'':'unread'}">
@@ -195,6 +218,18 @@ $('logout').onclick=async e=>{e.preventDefault();await api('/api/auth/logout',{m
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function render(){loadMessages();}
+
+// PWA + alerts
+if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
+function refreshBell(){const b=$('bell');if(!('Notification'in window)){b.style.display='none';return}b.style.opacity=Notification.permission==='granted'?'1':'0.5'}
+$('bell').onclick=async()=>{
+  if(!('Notification'in window)){alert(lang==='es'?'Este dispositivo no admite alertas. Agregue la app a la pantalla de inicio.':'Alerts not supported here. Add the app to your Home Screen first.');return}
+  try{const p=await Notification.requestPermission();refreshBell();
+    if(p==='granted'){setAppBadge(lastUnread||0);}
+    else alert(lang==='es'?'Active las notificaciones en Ajustes del navegador. En iPhone: agregue la app a la pantalla de inicio y vuelva a intentar.':'Enable notifications in browser settings. On iPhone: add the app to your Home Screen, then try again.');
+  }catch(e){}
+};
+refreshBell();
 apply();render();
 setInterval(loadMessages,20000);
 </script>
