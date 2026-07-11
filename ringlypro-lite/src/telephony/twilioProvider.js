@@ -88,10 +88,17 @@ class TwilioProvider extends TelephonyProvider {
 
   async sendSMS({ from, to, body }) {
     const c = this.client();
-    // Prefer an A2P-registered Messaging Service (required for US 10DLC delivery;
-    // otherwise US carriers reject with error 30034). Falls back to `from`.
-    const msgSvc = process.env.LITE_MESSAGING_SERVICE_SID;
-    const payload = msgSvc ? { messagingServiceSid: msgSvc, to, body } : { from, to, body };
+    // Delivery to US numbers requires an A2P-registered sender (else error 30034).
+    // Priority: a verified toll-free / dedicated SMS sender (LITE_SMS_FROM) →
+    // an A2P Messaging Service (LITE_MESSAGING_SERVICE_SID) → the voice DID.
+    let payload;
+    if (process.env.LITE_SMS_FROM) {
+      payload = { from: process.env.LITE_SMS_FROM, to, body };
+    } else if (process.env.LITE_MESSAGING_SERVICE_SID) {
+      payload = { messagingServiceSid: process.env.LITE_MESSAGING_SERVICE_SID, to, body };
+    } else {
+      payload = { from, to, body };
+    }
     const msg = await c.messages.create(payload);
     return { sid: msg.sid };
   }
