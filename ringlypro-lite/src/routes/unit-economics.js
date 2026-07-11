@@ -7,7 +7,8 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Tenant, Call, Message, Appointment, Number } = require('../models');
+// alias LiteNumber — importing as `Number` shadows the global Number constructor.
+const { Tenant, Call, Message, Appointment, Number: LiteNumber } = require('../models');
 const { callCost, callCostUnbundled, TARGET_PER_MIN } = require('../utils/cost');
 
 function adminGate(req, res, next) {
@@ -34,7 +35,7 @@ router.get('/tenant/:id', async (req, res) => {
   if (!tenant) return res.status(404).json({ error: 'not_found' });
 
   const calls = await Call.findAll({ where: { tenant_id: tenantId, started_at: { [Op.gte]: since } } });
-  const num = await Number.findOne({ where: { tenant_id: tenantId, status: 'active' } });
+  const num = await LiteNumber.findOne({ where: { tenant_id: tenantId, status: 'active' } });
 
   let totalCogs = 0, totalMin = 0, totalUnbundled = 0;
   const perCall = calls.map(c => {

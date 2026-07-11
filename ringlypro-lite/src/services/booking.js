@@ -6,7 +6,9 @@
  * against the isolated Lite DB. Every function is tenant-scoped by tenant_id.
  */
 const { Op } = require('sequelize');
-const { sequelize, Tenant, Number, Call, Message, AvailabilityRule, Appointment } = require('../models');
+// NOTE: alias the LiteNumber model — importing it as `Number` shadows the
+// global Number constructor and breaks `.split('-').map(Number)` date parsing.
+const { sequelize, Tenant, Number: LiteNumber, Call, Message, AvailabilityRule, Appointment } = require('../models');
 const { zonedToUtc, utcToZonedParts, hhmmToMinutes, displaySlot } = require('../utils/dates');
 
 function last10(p) { return String(p || '').replace(/[^0-9]/g, '').slice(-10); }
@@ -16,7 +18,7 @@ async function getBusinessInfo({ did, tenantId }) {
   let tenant = null;
   if (tenantId) tenant = await Tenant.findByPk(tenantId);
   if (!tenant && did) {
-    const num = await Number.findOne({ where: { did } });
+    const num = await LiteNumber.findOne({ where: { did } });
     if (num) tenant = await Tenant.findByPk(num.tenant_id);
   }
   if (!tenant) return { success: false, error: 'tenant_not_found' };
