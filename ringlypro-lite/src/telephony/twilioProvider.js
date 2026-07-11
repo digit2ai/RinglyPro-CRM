@@ -108,6 +108,20 @@ class TwilioProvider extends TelephonyProvider {
 </Response>`;
   }
 
+  /**
+   * Redirect a live call to a human by updating it with <Dial> TwiML.
+   * Used by transfer_to_human. Note: if the owner's own phone unconditionally
+   * forwards back to the Lite DID, this can loop — set a dedicated
+   * transfer_number that isn't forwarded (or use no-answer forwarding).
+   */
+  async redirectCall({ callSid, number, message }) {
+    const c = this.client();
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response>${message ? `<Say>${esc(message)}</Say>` : ''}<Dial timeout="25">${esc(number)}</Dial></Response>`;
+    await c.calls(callSid).update({ twiml });
+    return { ok: true };
+  }
+
   // Fallback voicemail TwiML used when a tenant is suspended (failed payment).
   static voicemailTwiml(message) {
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

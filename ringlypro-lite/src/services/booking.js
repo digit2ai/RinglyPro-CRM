@@ -13,6 +13,22 @@ const { zonedToUtc, utcToZonedParts, hhmmToMinutes, displaySlot } = require('../
 
 function last10(p) { return String(p || '').replace(/[^0-9]/g, '').slice(-10); }
 
+// Pick `k` VARIED slots across the sorted candidate list (one per evenly-spaced
+// segment, randomized within the segment) so Lina offers different days/times
+// each call instead of a robotic 9:00 / 9:30 / 10:00. Returns them sorted.
+function pickVaried(all, k) {
+  if (all.length <= k) return all;
+  const seg = all.length / k;
+  const chosen = new Map();
+  for (let i = 0; i < k; i++) {
+    const lo = Math.floor(i * seg);
+    const hi = Math.max(lo, Math.floor((i + 1) * seg) - 1);
+    const idx = Math.min(all.length - 1, lo + Math.floor(Math.random() * (hi - lo + 1)));
+    chosen.set(all[idx].starts_at, all[idx]);
+  }
+  return Array.from(chosen.values()).sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+}
+
 /** Resolve tenant by the dialed Lite DID. */
 async function getBusinessInfo({ did, tenantId }) {
   let tenant = null;
@@ -80,7 +96,7 @@ async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) 
   const endDay = date ? 1 : days_ahead;   // if a specific date requested, only that day
   const slots = [];
 
-  for (let dOff = startDay; dOff <= endDay && slots.length < limit * 4; dOff++) {
+  for (let dOff = startDay; dOff <= endDay && slots.length < 80; dOff++) {
     // Determine the calendar date (in tenant tz) we are generating for.
     let y, mo, d;
     if (date) {
@@ -108,13 +124,15 @@ async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) 
           slot_minutes: step,
           display: displaySlot(tz, startUtc, tenant.locale)
         });
-        if (slots.length >= limit * 4) break;
+        if (slots.length >= 80) break;
       }
     }
     if (date) break;
   }
   slots.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
-  const top = slots.slice(0, limit);
+  // Specific-date requests: offer the nearest times on that day in order.
+  // Otherwise offer a VARIED spread so it doesn't sound robotic.
+  const top = date ? slots.slice(0, limit) : pickVaried(slots, limit);
   return { success: true, timezone: tz, slot_count: top.length, slots: top };
 }
 

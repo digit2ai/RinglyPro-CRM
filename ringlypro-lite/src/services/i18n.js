@@ -6,20 +6,22 @@
  */
 const STR = {
   en: {
-    greeting: (biz) => `Thank you for calling ${biz}. I'm the AI assistant. I can take a message or book you an appointment — how can I help?`,
-    greetingKnown: (biz, name) => `Hi ${name}, thanks for calling ${biz}. I can take a message or book an appointment — what do you need?`,
+    greeting: (biz) => `Hi, this is Lina with ${biz}. I'd be glad to help — I can book you an appointment or take a message. What can I do for you today?`,
+    greetingKnown: (biz, name) => `Hi ${name}, it's Lina with ${biz} — so nice to hear from you again. Would you like to book an appointment or leave a message?`,
+    transferSay: (biz) => `Of course — let me connect you now. One moment please.`,
     smsMessageOwner: (biz, name, phone, body) => `${biz} — new message from ${name || 'a caller'}${phone ? ' (' + phone + ')' : ''}: ${body}`,
     smsBookingOwner: (biz, name, when) => `${biz} — new appointment: ${name || 'caller'} on ${when}.`,
     smsBookingCaller: (biz, when) => `${biz}: your appointment is confirmed for ${when}. Reply to this number to reach us.`,
-    voicemail: (biz) => `Thank you for calling ${biz}. We can't take your call right now. Please leave a message after the beep.`
+    voicemail: (biz) => `Hi, you've reached ${biz}. We can't take your call right now — please leave a message after the beep and we'll get right back to you.`
   },
   es: {
-    greeting: (biz) => `Gracias por llamar a ${biz}. Soy el asistente de inteligencia artificial. Puedo tomar un mensaje o agendarle una cita. ¿En qué le puedo ayudar?`,
-    greetingKnown: (biz, name) => `Hola ${name}, gracias por llamar a ${biz}. Puedo tomar un mensaje o agendar una cita. ¿Qué necesita?`,
+    greeting: (biz) => `Hola, habla Lina de ${biz}. Con mucho gusto le ayudo — puedo agendarle una cita o tomar un mensaje. ¿En qué le puedo ayudar hoy?`,
+    greetingKnown: (biz, name) => `Hola ${name}, habla Lina de ${biz}. ¡Qué gusto saludarle de nuevo! ¿Desea agendar una cita o dejar un mensaje?`,
+    transferSay: (biz) => `Con mucho gusto, le comunico enseguida. Un momento por favor.`,
     smsMessageOwner: (biz, name, phone, body) => `${biz} — nuevo mensaje de ${name || 'una persona'}${phone ? ' (' + phone + ')' : ''}: ${body}`,
     smsBookingOwner: (biz, name, when) => `${biz} — nueva cita: ${name || 'llamante'} el ${when}.`,
     smsBookingCaller: (biz, when) => `${biz}: su cita quedó confirmada para el ${when}. Responda a este número para contactarnos.`,
-    voicemail: (biz) => `Gracias por llamar a ${biz}. No podemos atender su llamada en este momento. Por favor deje un mensaje después del tono.`
+    voicemail: (biz) => `Hola, se ha comunicado con ${biz}. En este momento no podemos atender su llamada. Por favor deje un mensaje después del tono y le devolveremos la llamada muy pronto.`
   }
 };
 

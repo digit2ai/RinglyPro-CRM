@@ -17,6 +17,7 @@ const { RelaySession, resolveContext } = require('./src/services/relayAgent');
 const { t } = require('./src/services/i18n');
 const transcript = require('./src/services/liteTranscript');
 const smsSvc = require('./src/services/sms');
+const { getProvider } = require('./src/telephony');
 const { Call, Tenant, Number } = require('./src/models');
 
 const PORT = process.env.LITE_PORT || process.env.PORT || 10001;
@@ -63,6 +64,27 @@ async function fireSms(ctx, ev) {
   } catch (e) { console.error('[lite] fireSms error:', e.message); return { segments: 0 }; }
 }
 
+/* ── Transfer the live call to a human (bypasses the AI) ──────────────── */
+async function fireTransfer(ctx, ev) {
+  try {
+    const tt = t(ctx.locale);
+    await getProvider().redirectCall({
+      callSid: ctx.callSid,
+      number: ev.data.number,
+      message: tt.transferSay(ctx.businessName)
+    });
+    console.log(`[lite] transferred call ${ctx.callSid} → ${ev.data.number}`);
+  } catch (e) {
+    console.error('[lite] fireTransfer error:', e.message);
+  }
+}
+
+/* ── Dispatch a queued agent event (SMS or live transfer) ─────────────── */
+async function fireEvent(ctx, ev) {
+  if (ev.type === 'transfer') return fireTransfer(ctx, ev);
+  return fireSms(ctx, ev);
+}
+
 /* ── Finalize the call row on socket close ────────────────────────────── */
 async function finalizeCall(ctx, session, startedAt) {
   try {
@@ -98,11 +120,11 @@ async function main() {
     const speak = (text, last = true) => send({ type: 'text', token: text, last });
     let sentEvents = 0;
 
-    async function flushSmsEvents() {
+    async function flushEvents() {
       if (!session) return;
       while (sentEvents < session.events.length) {
         const ev = session.events[sentEvents++];
-        await fireSms(ctx, ev);
+        await fireEvent(ctx, ev);
       }
     }
 
@@ -135,7 +157,7 @@ async function main() {
         try {
           const reply = await session.handlePrompt(msg.voicePrompt);
           speak(reply, true);
-          await flushSmsEvents();
+          await flushEvents();
         } catch (e) {
           console.error('[lite] prompt error:', e.message);
           speak(ctx && ctx.locale === 'es' ? 'Disculpe, tuve un problema. ¿Me lo repite?' : 'Sorry, I had a problem. Could you repeat that?');
@@ -147,7 +169,7 @@ async function main() {
     });
 
     ws.on('close', async () => {
-      if (session && ctx) { await flushSmsEvents(); await finalizeCall(ctx, session, startedAt); }
+      if (session && ctx) { await flushEvents(); await finalizeCall(ctx, session, startedAt); }
     });
     ws.on('error', (e) => console.error('[lite] ws error:', e.message));
   });

@@ -116,6 +116,33 @@ function ok(name, cond) { if (cond) { pass++; console.log('  PASS', name); } els
     ok('vague intent produced a message', booking._messages.length === 1);
   }
 
+  console.log('== Scenario 5: greeting persona (Lina, human, not AI) ==');
+  {
+    const booking = makeMockBooking();
+    const s = new RelaySession({ ...baseCtx('en') }, { booking, createMessage: makeScriptedLLM('message') });
+    const g = s.openingGreeting();
+    ok('greeting introduces Lina', /Lina/.test(g));
+    ok('greeting does NOT say AI/assistant', !/AI|assistant|bot|automated/i.test(g));
+    const known = new RelaySession({ ...baseCtx('en'), callerName: 'Maria' }, { booking, createMessage: makeScriptedLLM('message') });
+    ok('known caller greeted by name', /Maria/.test(known.openingGreeting()));
+  }
+
+  console.log('== Scenario 6: transfer to a human ==');
+  {
+    const booking = makeMockBooking();
+    const ctx = { ...baseCtx('en'), transferNumber: '+15551112222', ownerPhone: '+15553334444' };
+    const brain = (() => { let step = 0; return async () => { step++;
+      if (step === 1) return { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'tt1', name: 'transfer_to_human', input: { reason: 'wants to talk to her husband' } }], usage: { input_tokens: 700, output_tokens: 30 } };
+      return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Of course — connecting you now, one moment.' }], usage: { input_tokens: 700, output_tokens: 20 } };
+    }; })();
+    const s = new RelaySession(ctx, { booking, createMessage: brain });
+    s.openingGreeting();
+    const reply = await s.handlePrompt('I need to talk to my husband please.');
+    ok('disposition = transferred', s.disposition === 'transferred');
+    ok('emitted transfer event to owner number', s.events.some(e => e.type === 'transfer' && e.data.number === '+15551112222'));
+    ok('agent says connecting', /connect/i.test(reply));
+  }
+
   console.log(`\nCall-sim: ${pass} passed, ${fail} failed.`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

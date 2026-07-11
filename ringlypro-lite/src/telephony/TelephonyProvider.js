@@ -22,6 +22,8 @@ class TelephonyProvider {
   inboundWebhook() { throw new Error('inboundWebhook not implemented'); }
   async sendSMS() { throw new Error('sendSMS not implemented'); }
   answerTwiml() { throw new Error('answerTwiml not implemented'); }
+  // Redirect a live call to <Dial> a human number (used for transfer_to_human).
+  async redirectCall() { throw new Error('redirectCall not implemented'); }
 }
 
 module.exports = TelephonyProvider;
