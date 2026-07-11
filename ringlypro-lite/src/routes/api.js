@@ -40,22 +40,6 @@ router.get('/debug/booking', async (req, res) => {
   }
 });
 
-// Books the first open slot via the real bookAppointment path (diagnostic).
-router.post('/debug/book', async (req, res) => {
-  try {
-    const avail = await booking.checkAvailability({ tenantId: req.tenantId, days_ahead: 14, limit: 1 });
-    if (!avail.slots || !avail.slots.length) return res.json({ ok: false, reason: 'no_slots', avail });
-    const s = avail.slots[0];
-    const result = await booking.bookAppointment({
-      tenantId: req.tenantId, caller_name: 'Debug Booker', callback_number: '+15550000000',
-      date: s.date, time: s.time, slot_minutes: s.slot_minutes
-    });
-    res.json({ ok: result.success, offered: s, result });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message, stack: e.stack });
-  }
-});
-
 /* ── Messages ──────────────────────────────────────────────────────── */
 router.get('/messages', async (req, res) => {
   const rows = await Message.findAll({
