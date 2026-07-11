@@ -70,6 +70,7 @@
       <div class="day" data-i="biz">Business</div>
       <label data-i="bizname">Business name</label><input id="set_business_name" />
       <label data-i="ownerph">Owner mobile (SMS alerts)</label><input id="set_owner_phone" />
+      <label data-i="transferph">Transfer-to number (live person)</label><input id="set_transfer_number" placeholder="+1..." />
       <label data-i="glang">Greeting language</label>
       <select id="set_locale"><option value="en">English</option><option value="es">Español</option></select>
       <label data-i="tz">Timezone</label><input id="set_timezone" />
@@ -115,8 +116,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -179,6 +180,7 @@ async function loadSettings(){
   const j=await api('/api/settings');if(!j)return;
   $('set_business_name').value=j.tenant.business_name||'';
   $('set_owner_phone').value=j.tenant.owner_phone||'';
+  $('set_transfer_number').value=j.tenant.transfer_number||'';
   $('set_locale').value=j.tenant.locale||'en';
   $('set_timezone').value=j.tenant.timezone||'';
   rules=j.availability_rules.map(r=>({weekday:r.weekday,start:r.start,end:r.end,slot_minutes:r.slot_minutes}));
@@ -219,7 +221,7 @@ async function refreshFwd(){
 }
 window.copyCode=id=>{const t=document.getElementById(id).textContent;navigator.clipboard&&navigator.clipboard.writeText(t);};
 $('addRow').onclick=()=>{rules.push({weekday:1,start:'09:00',end:'17:00',slot_minutes:30});renderAvail()};
-$('saveBiz').onclick=async()=>{const r=await api('/api/settings',{method:'PATCH',body:JSON.stringify({business_name:$('set_business_name').value,owner_phone:$('set_owner_phone').value,locale:$('set_locale').value,timezone:$('set_timezone').value})});$('bizMsg').textContent=r&&r.success?'✓':'!'};
+$('saveBiz').onclick=async()=>{const r=await api('/api/settings',{method:'PATCH',body:JSON.stringify({business_name:$('set_business_name').value,owner_phone:$('set_owner_phone').value,transfer_number:$('set_transfer_number').value,locale:$('set_locale').value,timezone:$('set_timezone').value})});$('bizMsg').textContent=r&&r.success?'✓':'!'};
 $('saveAvail').onclick=async()=>{const r=await api('/api/availability',{method:'PUT',body:JSON.stringify({rules})});$('availMsg').textContent=r&&r.success?'✓':'!'};
 $('manageBill').onclick=async()=>{const r=await api('/api/billing/checkout',{method:'POST'});if(r&&r.url)location.href=r.url};
 $('logout').onclick=async e=>{e.preventDefault();await api('/api/auth/logout',{method:'POST'});location.href='/login'};
