@@ -68,10 +68,15 @@ async function fireSms(ctx, ev) {
 async function fireTransfer(ctx, ev) {
   try {
     const tt = t(ctx.locale);
+    const voice = ctx.locale === 'es'
+      ? (process.env.LITE_POLLY_VOICE_ES || 'Lupe-Neural')
+      : (process.env.LITE_POLLY_VOICE_EN || 'Joanna-Neural');
     await getProvider().redirectCall({
       callSid: ctx.callSid,
       number: ev.data.number,
-      message: tt.transferSay(ctx.businessName)
+      message: tt.transferSay(ctx.businessName),
+      voice,
+      language: ctx.locale === 'es' ? 'es-US' : 'en-US'
     });
     console.log(`[lite] transferred call ${ctx.callSid} → ${ev.data.number}`);
   } catch (e) {
@@ -156,7 +161,10 @@ async function main() {
         if (msg.last === false || !msg.voicePrompt) return;
         try {
           const reply = await session.handlePrompt(msg.voicePrompt);
-          speak(reply, true);
+          // If a transfer is queued, skip the socket line — the redirect's
+          // premium Polly <Say> speaks the hand-off (avoids double speech).
+          const transferPending = session.events.slice(sentEvents).some(e => e.type === 'transfer');
+          if (!transferPending) speak(reply, true);
           await flushEvents();
         } catch (e) {
           console.error('[lite] prompt error:', e.message);

@@ -114,10 +114,17 @@ class TwilioProvider extends TelephonyProvider {
    * forwards back to the Lite DID, this can loop — set a dedicated
    * transfer_number that isn't forwarded (or use no-answer forwarding).
    */
-  async redirectCall({ callSid, number, message }) {
+  async redirectCall({ callSid, number, message, voice, language }) {
     const c = this.client();
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response>${message ? `<Say>${esc(message)}</Say>` : ''}<Dial timeout="25">${esc(number)}</Dial></Response>`;
+    // Speak the hand-off line with the SAME premium Amazon Polly voice Lina uses
+    // (Twilio <Say> accepts Polly voices as "Polly.<VoiceId>"), not the default
+    // robotic voice.
+    const sayOpen = voice
+      ? `<Say voice="Polly.${esc(voice)}"${language ? ` language="${esc(language)}"` : ''}>`
+      : '<Say>';
+    const say = message ? `${sayOpen}${esc(message)}</Say>` : '';
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?><Response>${say}<Dial timeout="25">${esc(number)}</Dial></Response>`;
     await c.calls(callSid).update({ twiml });
     return { ok: true };
   }
