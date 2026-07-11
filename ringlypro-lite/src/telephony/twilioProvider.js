@@ -89,15 +89,15 @@ class TwilioProvider extends TelephonyProvider {
   async sendSMS({ from, to, body }) {
     const c = this.client();
     // Delivery to US numbers requires an A2P-registered sender (else error 30034).
-    // Priority: a verified toll-free / dedicated SMS sender (LITE_SMS_FROM) →
-    // an A2P Messaging Service (LITE_MESSAGING_SERVICE_SID) → the voice DID.
+    // Default sender = Digit2AI's verified toll-free (+18886103810), which is
+    // TWILIO_APPROVED and delivers to US. Override with LITE_SMS_FROM, or route
+    // through an A2P Messaging Service via LITE_MESSAGING_SERVICE_SID.
+    const smsFrom = process.env.LITE_SMS_FROM || TwilioProvider.DEFAULT_SMS_FROM;
     let payload;
-    if (process.env.LITE_SMS_FROM) {
-      payload = { from: process.env.LITE_SMS_FROM, to, body };
-    } else if (process.env.LITE_MESSAGING_SERVICE_SID) {
+    if (process.env.LITE_MESSAGING_SERVICE_SID) {
       payload = { messagingServiceSid: process.env.LITE_MESSAGING_SERVICE_SID, to, body };
     } else {
-      payload = { from, to, body };
+      payload = { from: smsFrom || from, to, body };
     }
     const msg = await c.messages.create(payload);
     return { sid: msg.sid };
@@ -150,5 +150,9 @@ class TwilioProvider extends TelephonyProvider {
 </Response>`;
   }
 }
+
+// Digit2AI verified toll-free (TWILIO_APPROVED) — default SMS sender for US
+// A2P delivery. Overridable via LITE_SMS_FROM.
+TwilioProvider.DEFAULT_SMS_FROM = '+18886103810';
 
 module.exports = TwilioProvider;

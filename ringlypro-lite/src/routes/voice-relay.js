@@ -96,7 +96,7 @@ router.get('/health', async (req, res) => {
     wss: wssUrl(req),
     incoming_webhook: `${(process.env.LITE_WEBHOOK_BASE_URL || 'https://<host>')}/voice/incoming`,
     anthropic_key_set: !!(process.env.LITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
-    sms_from: process.env.LITE_SMS_FROM || '(unset — sending from the voice DID → will 30034 on US)',
+    sms_from: process.env.LITE_SMS_FROM || require('../telephony').TwilioProvider.DEFAULT_SMS_FROM + ' (default toll-free)',
     sms_messaging_service: process.env.LITE_MESSAGING_SERVICE_SID || '(unset)',
     twilio_sid_prefix: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').slice(0, 2) || 'unset',
     twilio_token_set: !!(process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN),
