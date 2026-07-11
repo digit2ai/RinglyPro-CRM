@@ -8,9 +8,37 @@ const express = require('express');
 const { Op } = require('sequelize');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
-const { Tenant, Message, Appointment, AvailabilityRule, Call } = require('../models');
+const { Tenant, Message, Appointment, AvailabilityRule, Call, Transcript } = require('../models');
+const booking = require('../services/booking');
 
 router.use(requireAuth);
+
+/* ── Booking diagnostics (owner-scoped) ────────────────────────────── */
+router.get('/debug/booking', async (req, res) => {
+  try {
+    const tenant = await Tenant.findByPk(req.tenantId);
+    const rules = await AvailabilityRule.findAll({ where: { tenant_id: req.tenantId }, order: [['weekday', 'ASC'], ['start', 'ASC']] });
+    const availability = await booking.checkAvailability({ tenantId: req.tenantId, days_ahead: 14, limit: 5 });
+    const lastCall = await Call.findOne({ where: { tenant_id: req.tenantId }, order: [['started_at', 'DESC']] });
+    let transcript = [];
+    if (lastCall && lastCall.call_sid) {
+      transcript = await Transcript.findAll({ where: { call_sid: lastCall.call_sid }, order: [['id', 'ASC']] });
+    }
+    res.json({
+      tenant_id: req.tenantId,
+      timezone: tenant && tenant.timezone,
+      locale: tenant && tenant.locale,
+      now: new Date().toISOString(),
+      rules_count: rules.length,
+      rules,
+      availability,
+      last_call: lastCall,
+      transcript: transcript.map(t => ({ role: t.role, tool: t.tool_name, text: t.text }))
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
 
 /* ── Messages ──────────────────────────────────────────────────────── */
 router.get('/messages', async (req, res) => {
