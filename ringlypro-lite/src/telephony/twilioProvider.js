@@ -88,7 +88,11 @@ class TwilioProvider extends TelephonyProvider {
 
   async sendSMS({ from, to, body }) {
     const c = this.client();
-    const msg = await c.messages.create({ from, to, body });
+    // Prefer an A2P-registered Messaging Service (required for US 10DLC delivery;
+    // otherwise US carriers reject with error 30034). Falls back to `from`.
+    const msgSvc = process.env.LITE_MESSAGING_SERVICE_SID;
+    const payload = msgSvc ? { messagingServiceSid: msgSvc, to, body } : { from, to, body };
+    const msg = await c.messages.create(payload);
     return { sid: msg.sid };
   }
 
