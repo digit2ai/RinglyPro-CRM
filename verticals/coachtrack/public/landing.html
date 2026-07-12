@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Visionarium Coaching — Convierte cada sesión en acción</title>
-<meta name="description" content="Graba tus sesiones de coaching, extrae las acciones con IA y recibe guia de Lina. Gratis para usuarios Visionarium." />
+<meta name="description" content="Graba tus sesiones de coaching, extrae las acciones con IA y recibe guía de Lina. Gratis para usuarios Visionarium." />
 <meta name="theme-color" content="#17a6a6" />
 <link rel="icon" type="image/svg+xml" href="https://aiagent.ringlypro.com/coaching/favicon.svg" />
 <link rel="apple-touch-icon" href="https://aiagent.ringlypro.com/coaching/apple-touch-icon.png" />
@@ -45,19 +45,20 @@ nav .in{display:flex;align-items:center;gap:14px;height:64px}
 .nav-login{font-weight:800;font-size:14px;color:var(--ink)}
 @media(max-width:640px){.nav-login{display:none}}
 /* hero */
-.hero{padding:64px 0 40px;position:relative;overflow:hidden}
+.hero{padding:60px 0 26px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:
   radial-gradient(ellipse 44% 40% at 88% 0%, rgba(63,192,106,.12) 0%, transparent 60%),
   radial-gradient(ellipse 46% 44% at 0% 100%, rgba(42,111,158,.12) 0%, transparent 60%)}
-.hero .in{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
+.hero .in{position:relative;max-width:740px;margin:0 auto;text-align:center}
 .eyebrow{display:inline-block;background:rgba(23,166,166,.12);color:#0f766e;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:7px 13px;border-radius:999px;margin-bottom:18px}
 h1{font-size:44px;line-height:1.08;letter-spacing:-.02em;margin-bottom:18px;font-weight:800}
 h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-.lead{font-size:18px;color:var(--muted);max-width:38ch;margin-bottom:26px}
-.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.lead{font-size:18px;color:var(--muted);max-width:44ch;margin:0 auto 26px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .trust{margin-top:20px;font-size:13px;color:var(--muted);font-weight:600}
-/* phone mock */
-.phone{justify-self:center;width:280px;max-width:100%;background:#0e1a2c;border-radius:36px;padding:12px;box-shadow:0 30px 70px rgba(22,35,58,.22);border:1px solid #22344d}
+/* showcase (section 2) + phone mock */
+.showcase{padding:0 0 52px;display:flex;justify-content:center}
+.phone{width:280px;max-width:100%;margin:0 auto;background:#0e1a2c;border-radius:36px;padding:12px;box-shadow:0 30px 70px rgba(22,35,58,.22);border:1px solid #22344d}
 .screen{background:var(--soft);border-radius:26px;overflow:hidden;height:520px;display:flex;flex-direction:column}
 .ph-top{background:#fff;padding:14px 14px 12px;border-bottom:1px solid var(--border)}
 .ph-body{padding:14px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
@@ -105,18 +106,37 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .istep{text-align:left;background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .istep b{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
 .istep p{font-size:13px;color:var(--muted)}
+/* faq */
+.faq{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq details{border:1px solid var(--border);border-radius:14px;background:#fff;padding:0 18px;transition:border-color .15s}
+.faq details[open]{border-color:var(--teal)}
+.faq summary{list-style:none;cursor:pointer;font-weight:700;font-size:16px;padding:16px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';font-size:22px;line-height:1;color:var(--teal);font-weight:800;flex:none}
+.faq details[open] summary::after{content:'\2212'}
+.faq details p{color:var(--muted);font-size:14.5px;padding:0 0 16px;margin:0}
 @media(max-width:860px){
-  .hero .in{grid-template-columns:1fr;gap:34px;text-align:center}
-  .lead{margin-left:auto;margin-right:auto}
-  .cta-row{justify-content:center}
-  .eyebrow{margin-top:6px}
   .steps,.features{grid-template-columns:1fr}
-  h1{font-size:36px}
+  h1{font-size:38px}
 }
-@media(max-width:640px){
-  .nav .in{gap:9px}
+@media(max-width:600px){
+  .nav .in{flex-wrap:wrap;height:auto;padding:9px 0;gap:8px 9px}
+  .wm-sub{display:none}
+  .btn{min-height:42px;padding:10px 13px;font-size:13px}
+  .btn.lg{padding:13px 18px;font-size:15px}
   #navInstall{padding:10px 12px;font-size:13px}
+  .hero{padding:44px 0 20px}
+  h1{font-size:31px}
+  .lead{font-size:16px}
+  section{padding:44px 0}
+  .sec-head{margin-bottom:30px}
+  .sec-head h2{font-size:26px}
+  .sec-head p{font-size:15px}
+  .band{padding:34px 22px}
+  .band h2{font-size:24px}
+  .showcase{padding:0 0 40px}
 }
+@media(max-width:380px){ .phone{width:250px} }
 </style>
 </head>
 <body>
@@ -151,6 +171,11 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
       </div>
       <div class="trust" id="trust">Gratis para usuarios Visionarium. Sin tarjeta.</div>
     </div>
+  </div>
+</header>
+
+<section class="showcase">
+  <div class="wrap">
     <div class="phone" aria-hidden="true">
       <div class="screen">
         <div class="ph-top"><span class="brand"><svg class="mk" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="vgm2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset=".5" stop-color="#17a6a6"/><stop offset="1" stop-color="#2a6f9e"/></linearGradient></defs><path d="M12 15 L24 26 L38 12 M24 26 L18 39 M24 26 L34 37" stroke="url(#vgm2)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="2.7" fill="url(#vgm2)"/><circle cx="38" cy="12" r="2.7" fill="url(#vgm2)"/><circle cx="18" cy="39" r="2.7" fill="url(#vgm2)"/><circle cx="34" cy="37" r="2.7" fill="url(#vgm2)"/><circle cx="24" cy="26" r="5" fill="url(#vgm2)"/></svg><span class="wm" style="font-size:15px">VISI<i class="o"></i>NARIUM</span></span></div>
@@ -174,7 +199,7 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
       </div>
     </div>
   </div>
-</header>
+</section>
 
 <section id="que">
   <div class="wrap">
@@ -203,12 +228,25 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   <div class="wrap">
     <div class="sec-head"><h2 id="featH">Todo lo que necesitas para avanzar</h2></div>
     <div class="features">
-      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div><h3 id="f1t">Voz y texto</h3><p id="f1p">Dicta por voz o escribe. Una sola tuberia, misma transcripción.</p></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div><h3 id="f1t">Voz y texto</h3><p id="f1p">Dicta por voz o escribe. Un solo flujo, la misma transcripción.</p></div>
       <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div><h3 id="f2t">Transcripción completa</h3><p id="f2p">Cada sesión queda guardada, turno por turno, para siempre.</p></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3 id="f3t">Acciones con IA</h3><p id="f3p">Tema del día, resumen y acciones concretas extraidas automaticamente.</p></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3 id="f3t">Acciones con IA</h3><p id="f3p">Tema del día, resumen y acciones concretas extraídas automáticamente.</p></div>
       <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3 id="f4t">Rendición de cuentas</h3><p id="f4p">Un tablero de todas tus acciones: abiertas, en progreso, vencidas y hechas.</p></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3 id="f5t">Lina, tu coach IA</h3><p id="f5p">Guia práctica y motivadora en cada acción, en español o inglés.</p></div>
-      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></div><h3 id="f6t">App instalable</h3><p id="f6p">Instálala en tu telefono como app (PWA). Rápida y lista para móvil.</p></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3 id="f5t">Lina, tu coach IA</h3><p id="f5p">Guía práctica y motivadora en cada acción, en español o inglés.</p></div>
+      <div class="feat"><div class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></div><h3 id="f6t">App instalable</h3><p id="f6p">Instálala en tu teléfono como app (PWA). Rápida y lista para móvil.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head"><h2 id="faqH">Preguntas frecuentes</h2></div>
+    <div class="faq">
+      <details><summary id="q1">¿Es realmente gratis?</summary><p id="a1">Sí. Visionarium Coaching es gratis para los usuarios de Visionarium. No pedimos tarjeta.</p></details>
+      <details><summary id="q2">¿Necesito instalar algo?</summary><p id="a2">No. Funciona en el navegador de tu teléfono o computadora. Si quieres, puedes instalarla como app (un toque) para abrirla desde la pantalla de inicio.</p></details>
+      <details><summary id="q3">¿En qué idioma funciona?</summary><p id="a3">En español e inglés. Puedes hablar o escribir en cualquiera de los dos, y Lina te responde en el mismo idioma.</p></details>
+      <details><summary id="q4">¿Mis sesiones son privadas?</summary><p id="a4">Sí. Cada cuenta es privada e independiente. Solo tú ves tus sesiones, tu transcripción y tus acciones.</p></details>
+      <details><summary id="q5">¿Cuánto tiempo toma?</summary><p id="a5">Grabar toma lo que dure tu sesión. Al finalizar, la IA extrae el tema y las acciones en segundos.</p></details>
     </div>
   </div>
 </section>
@@ -255,6 +293,12 @@ const DICT={
     f4t:'Accountability',f4p:'A board of every action: open, in progress, overdue and done.',
     f5t:'Lina, your AI coach',f5p:'Practical, motivating guidance on each action, in Spanish or English.',
     f6t:'Installable app',f6p:'Install it on your phone as an app (PWA). Fast and mobile-ready.',
+    faqH:'Frequently asked questions',
+    q1:'Is it really free?',a1:'Yes. Visionarium Coaching is free for Visionarium users. No card required.',
+    q2:'Do I need to install anything?',a2:'No. It works in your phone or computer browser. If you want, you can install it as an app (one tap) to open it from your home screen.',
+    q3:'What language does it work in?',a3:'Spanish and English. You can speak or type in either one, and Lina replies in the same language.',
+    q4:'Are my sessions private?',a4:'Yes. Every account is private and separate. Only you see your sessions, your transcript, and your action items.',
+    q5:'How long does it take?',a5:'Recording takes as long as your session. When you finalize, AI extracts the topic and action items in seconds.',
     bandH:'Free for Visionarium users',bandP:'Create your account and log your first session today.',
     bandCta1:'Create free account',bandCta2:'Log in',footNote:'Creativity & Leadership Incubator',
     navInstall:'Get the app',imTitle:'Add CoachTrack to your home screen',
@@ -275,12 +319,18 @@ const DICT={
     s2t:'La IA extrae las acciones',s2p:'Al finalizar, la IA identifica el tema del día, un resumen y tus acciones concretas.',
     s3t:'Pregúntale a Lina',s3p:'En cada acción, tu coach IA te da pasos claros para avanzar y quitar obstáculos.',
     featH:'Todo lo que necesitas para avanzar',
-    f1t:'Voz y texto',f1p:'Dicta por voz o escribe. Una sola tuberia, misma transcripción.',
+    f1t:'Voz y texto',f1p:'Dicta por voz o escribe. Un solo flujo, la misma transcripción.',
     f2t:'Transcripción completa',f2p:'Cada sesión queda guardada, turno por turno, para siempre.',
-    f3t:'Acciones con IA',f3p:'Tema del día, resumen y acciones concretas extraidas automaticamente.',
+    f3t:'Acciones con IA',f3p:'Tema del día, resumen y acciones concretas extraídas automáticamente.',
     f4t:'Rendición de cuentas',f4p:'Un tablero de todas tus acciones: abiertas, en progreso, vencidas y hechas.',
-    f5t:'Lina, tu coach IA',f5p:'Guia práctica y motivadora en cada acción, en español o inglés.',
-    f6t:'App instalable',f6p:'Instálala en tu telefono como app (PWA). Rápida y lista para móvil.',
+    f5t:'Lina, tu coach IA',f5p:'Guía práctica y motivadora en cada acción, en español o inglés.',
+    f6t:'App instalable',f6p:'Instálala en tu teléfono como app (PWA). Rápida y lista para móvil.',
+    faqH:'Preguntas frecuentes',
+    q1:'¿Es realmente gratis?',a1:'Sí. Visionarium Coaching es gratis para los usuarios de Visionarium. No pedimos tarjeta.',
+    q2:'¿Necesito instalar algo?',a2:'No. Funciona en el navegador de tu teléfono o computadora. Si quieres, puedes instalarla como app (un toque) para abrirla desde la pantalla de inicio.',
+    q3:'¿En qué idioma funciona?',a3:'En español e inglés. Puedes hablar o escribir en cualquiera de los dos, y Lina te responde en el mismo idioma.',
+    q4:'¿Mis sesiones son privadas?',a4:'Sí. Cada cuenta es privada e independiente. Solo tú ves tus sesiones, tu transcripción y tus acciones.',
+    q5:'¿Cuánto tiempo toma?',a5:'Grabar toma lo que dure tu sesión. Al finalizar, la IA extrae el tema y las acciones en segundos.',
     bandH:'Gratis para usuarios Visionarium',bandP:'Crea tu cuenta y registra tu primera sesión hoy.',
     bandCta1:'Crear cuenta gratis',bandCta2:'Iniciar sesión',footNote:'Creativity & Leadership Incubator',
     navInstall:'Descargar app',imTitle:'Añade CoachTrack a tu pantalla de inicio',
@@ -289,7 +339,7 @@ const DICT={
     imClose:'Entendido'
   }
 };
-const IDS=['navLogin','navSignup','navInstall','eyebrow','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose'];
+const IDS=['navLogin','navSignup','navInstall','eyebrow','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','faqH','q1','a1','q2','a2','q3','a3','q4','a4','q5','a5','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose'];
 function apply(lang){
   const d=DICT[lang];document.documentElement.lang=lang;
   IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!=null)el.innerHTML=d[id];});
