@@ -47,13 +47,23 @@
   <div class="card" id="s1">
     <h2 data-i="s1t">Create your account</h2>
     <div class="hint" data-i="s1h">7-day free trial. No card to start.</div>
-    <label data-i="biz">Business name</label><input id="business_name" />
-    <label data-i="owner">Your name</label><input id="owner_name" />
-    <label data-i="email">Email</label><input id="email" type="email" />
-    <label data-i="pass">Password</label><input id="password" type="password" />
-    <label data-i="mobile">Your mobile (for text alerts, E.164 e.g. +15551234567)</label><input id="owner_phone" placeholder="+1..." />
+    <label data-i="biz">Business name</label><input id="business_name" autocomplete="organization" />
+    <label data-i="owner">Your name</label><input id="owner_name" autocomplete="name" />
+    <label data-i="email">Email</label><input id="email" type="email" inputmode="email" autocomplete="email" />
+    <label data-i="pass">Password</label>
+    <div style="position:relative">
+      <input id="password" type="password" autocomplete="new-password" style="padding-right:64px" />
+      <span id="pwToggle" data-i="show" style="position:absolute;right:12px;top:0;bottom:0;display:flex;align-items:center;font-size:13px;color:var(--acc2);cursor:pointer">Show</span>
+    </div>
+    <div id="pwMeter" style="height:6px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden"><div id="pwBar" style="height:100%;width:0;background:var(--err);transition:width .2s,background .2s"></div></div>
+    <div id="pwText" class="hint" style="margin:6px 0 0;min-height:16px"></div>
     <label data-i="country">Country</label>
     <select id="country"><option value="US">United States</option><option value="CO">Colombia</option></select>
+    <label data-i="mobile">Your mobile (for text alerts)</label>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <span id="dialcode" style="display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#0f1626;color:var(--txt);font-size:16px;white-space:nowrap">+1</span>
+      <input id="owner_phone_num" inputmode="tel" autocomplete="tel-national" placeholder="3001234567" style="flex:1" />
+    </div>
     <label data-i="lang">Greeting language</label>
     <select id="locale"><option value="en">English</option><option value="es">Español</option></select>
     <button id="go1" data-i="create">Create account</button>
@@ -96,8 +106,8 @@
   </div>
 </div>
 <script>
-const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts, E.164 e.g. +15551234567)",country:"Country",lang:"Greeting language",create:"Create account",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
-        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS, formato E.164 ej. +573001234567)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija cómo se reenvían las llamadas para que la IA conteste antes de su buzón de voz, luego toque para marcar el código.",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
+const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts)",country:"Country",lang:"Greeting language",create:"Create account",show:"Show",hide:"Hide",pwWeak:"Weak password",pwFair:"Fair — add length or a number/symbol",pwGood:"Good password",pwStrong:"Strong password",pwShort:"Use at least 8 characters (letters + a number)",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
+        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",show:"Mostrar",hide:"Ocultar",pwWeak:"Contraseña débil",pwFair:"Aceptable — agregue longitud o un número/símbolo",pwGood:"Buena contraseña",pwStrong:"Contraseña fuerte",pwShort:"Use al menos 8 caracteres (letras + un número)",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija cómo se reenvían las llamadas para que la IA conteste antes de su buzón de voz, luego toque para marcar el código.",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');if(I[lang][k])e.textContent=I[lang][k]});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply()};apply();
@@ -105,8 +115,37 @@ if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch
 const $=id=>document.getElementById(id);
 function step(n){[1,2,3,4].forEach(i=>{$('s'+i).classList.toggle('hide',i!==n);$('d'+i).classList.toggle('on',i<=n)})}
 
+// Country → dial code + default greeting language
+const DIAL={US:'+1',CO:'+57'};
+let localeTouched=false;
+$('locale').addEventListener('change',()=>{localeTouched=true});
+function applyCountry(){
+  const cc=country.value;
+  $('dialcode').textContent=DIAL[cc]||'+1';
+  if(!localeTouched){ $('locale').value = cc==='CO'?'es':'en'; }
+}
+country.addEventListener('change',applyCountry);
+applyCountry();
+
+// Password strength meter + show/hide
+function pwScore(p){let s=0;if(p.length>=8)s++;if(p.length>=12)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^a-zA-Z0-9]/.test(p))s++;return Math.min(s,4);}
+const PW_COLORS=['#ff6b6b','#ff6b6b','#ffb454','#9be15d','#3ad29f'];
+password.addEventListener('input',()=>{
+  const p=password.value, sc=pwScore(p);
+  const pct=p?Math.max(12,(sc/4)*100):0;
+  $('pwBar').style.width=pct+'%'; $('pwBar').style.background=PW_COLORS[sc];
+  $('pwText').style.color=PW_COLORS[sc];
+  $('pwText').textContent=!p?'':(I[lang]['pw'+['Weak','Weak','Fair','Good','Strong'][sc]]||'');
+});
+$('pwToggle').onclick=()=>{const t=password.type==='password';password.type=t?'text':'password';$('pwToggle').textContent=I[lang][t?'hide':'show'];};
+
 $('go1').onclick=async()=>{
-  const b={business_name:business_name.value,owner_name:owner_name.value,email:email.value,password:password.value,owner_phone:owner_phone.value,country:country.value,locale:locale.value};
+  $('m1').textContent='';
+  const p=password.value||'';
+  if(pwScore(p)<2 || p.length<8){$('m1').style.color='#ffb454';$('m1').textContent=I[lang].pwShort;return;}
+  const digits=($('owner_phone_num').value||'').replace(/[^0-9]/g,'');
+  const owner_phone=digits?((DIAL[country.value]||'+1')+digits):'';
+  const b={business_name:business_name.value,owner_name:owner_name.value,email:email.value,password:p,owner_phone,country:country.value,locale:locale.value};
   const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(b)});
   const j=await r.json();
   if(r.ok){step(2)}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.error||'Error'}
