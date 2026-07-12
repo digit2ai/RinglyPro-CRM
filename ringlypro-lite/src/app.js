@@ -39,9 +39,9 @@ app.get('/api/config', (req, res) => res.json({
 // API routers
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/onboarding', require('./routes/onboarding'));
-app.use('/api', require('./routes/api'));                // dashboard (auth-gated inside)
+app.use('/api/webchat', require('./routes/webchat'));       // PUBLIC live chat (CORS) — must be before the /api gate
 app.use('/api/billing', require('./routes/billing'));
-app.use('/api/webchat', require('./routes/webchat'));       // landing-page live chat (CORS)
+app.use('/api', require('./routes/api'));                // dashboard (auth-gated inside) — generic /api catch-all, mount LAST
 app.use('/webhooks', require('./routes/webhooks'));      // /webhooks/stripe
 app.use('/internal/economics', require('./routes/unit-economics'));
 
