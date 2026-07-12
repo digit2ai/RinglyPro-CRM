@@ -37,6 +37,8 @@ async function initDb() {
 /* ── SMS side-effects for a completed agent event ─────────────────────── */
 async function fireSms(ctx, ev) {
   try {
+    // Demo line: text the caller a real confirmation (no owner on file).
+    if (ctx.is_demo) { const r = await smsSvc.sendDemoConfirm(ctx, ev); return { segments: r.segments || 0 }; }
     const tenant = await Tenant.findByPk(ctx.tenantId);
     if (!tenant) return { segments: 0 };
     const num = await Number.findOne({ where: { tenant_id: ctx.tenantId, status: 'active' } });

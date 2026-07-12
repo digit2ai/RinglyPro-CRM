@@ -10,6 +10,17 @@ const express = require('express');
 const router = express.Router();
 const { RelaySession } = require('../services/relayAgent');
 const bookingSvc = require('../services/booking');
+const smsSvc = require('../services/sms');
+
+// Text the caller a demo confirmation for any new booking/message events.
+async function flushDemoSms(entry) {
+  const evs = entry.session.events;
+  while ((entry.sent || 0) < evs.length) {
+    const ev = evs[entry.sent || 0];
+    entry.sent = (entry.sent || 0) + 1;
+    try { await smsSvc.sendDemoConfirm(entry.session.ctx, ev); } catch (_) {}
+  }
+}
 
 const sessions = new Map(); // id -> { session, expires, turns }
 const TTL_MS = 20 * 60 * 1000;
@@ -55,6 +66,7 @@ router.post('/', async (req, res) => {
       if (!text) return res.json({ session_id: id, reply: greeting });
       entry.turns++;
       const reply = await session.handlePrompt(text);
+      await flushDemoSms(entry);
       return res.json({ session_id: id, reply, disposition: session.disposition });
     }
 
@@ -69,6 +81,7 @@ router.post('/', async (req, res) => {
     }
     entry.turns++;
     const reply = await entry.session.handlePrompt(text);
+    await flushDemoSms(entry);
     res.json({ session_id, reply, disposition: entry.session.disposition });
   } catch (e) {
     console.error('[lite:webchat]', e.message);
