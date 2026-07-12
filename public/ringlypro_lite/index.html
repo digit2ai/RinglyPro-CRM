@@ -122,7 +122,7 @@
 <header><div class="wrap"><nav>
   <a class="logo" href="#"><img src="https://ringlypro-lite.onrender.com/icon-192.png" alt="RinglyPro Lite" style="border-radius:8px" />RinglyPro <span class="litebadge">Lite</span></a>
   <div class="navlinks">
-    <span class="lang" id="lang">Español</span>
+    <span class="lang" id="lang">ES</span>
     <a class="login" href="https://ringlypro-lite.onrender.com/login"><span data-en>Log in</span><span data-es>Ingresar</span></a>
     <a class="btn primary" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start free trial</span><span data-es>Prueba gratis</span></a>
   </div>
@@ -235,7 +235,7 @@
   var langBtn=document.getElementById('lang');
   var DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(762) 761-1589',tel:'+17627611589'}};
   function setLang(l){
-    root.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'English':'Español';
+    root.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'EN':'ES';
     try{localStorage.setItem('rpl_lang',l)}catch(e){}
     var links=root.querySelectorAll('a[href*="/signup"]');for(var i=0;i<links.length;i++){links[i].href='https://ringlypro-lite.onrender.com/signup?lang='+l;}
     var d=DEMO[l];
