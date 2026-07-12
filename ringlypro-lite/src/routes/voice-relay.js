@@ -87,26 +87,6 @@ router.post('/status', async (req, res) => {
   res.sendStatus(204);
 });
 
-// TEMP diagnostic — recent calls + transcript turns (to debug live call issues).
-router.get('/debug/recent', async (req, res) => {
-  try {
-    const { Call, Transcript } = require('../models');
-    const calls = await Call.findAll({ order: [['started_at', 'DESC']], limit: 8 });
-    const out = [];
-    for (const c of calls) {
-      const turns = c.call_sid ? await Transcript.findAll({ where: { call_sid: c.call_sid }, order: [['id', 'ASC']] }) : [];
-      out.push({
-        call_sid: c.call_sid, to: c.did, from: c.caller, tenant_id: c.tenant_id,
-        started_at: c.started_at, duration: c.duration, disposition: c.disposition,
-        turns: turns.map(t => ({ role: t.role, tool: t.tool_name, text: (t.text || '').slice(0, 200) }))
-      });
-    }
-    res.json({ count: out.length, calls: out });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 router.get('/health', async (req, res) => {
   const out = {
     service: 'ringlypro-lite-voice',
