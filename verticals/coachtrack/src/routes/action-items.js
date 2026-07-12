@@ -14,7 +14,8 @@ const { Op } = require('sequelize');
 const { ActionItem, Session, Guidance } = require('../models');
 const brain = require('../services/coach-brain');
 
-const TENANT = 1;
+function tenantOf(req) { return (req.user && req.user.tenant_id) || (req.user && req.user.id) || 0; }
+
 
 // Roll open items whose due date has passed into 'overdue' (display helper).
 function withOverdue(item) {
@@ -30,7 +31,7 @@ function withOverdue(item) {
 router.get('/', async (req, res) => {
   try {
     const items = await ActionItem.findAll({
-      where: { tenant_id: TENANT },
+      where: { tenant_id: tenantOf(req) },
       order: [['status', 'ASC'], ['due_date', 'ASC'], ['id', 'DESC']],
       limit: 500
     });
@@ -52,7 +53,7 @@ router.get('/', async (req, res) => {
 // Update an action item
 router.patch('/:id', async (req, res) => {
   try {
-    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: TENANT } });
+    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!item) return res.status(404).json({ error: 'Acción no encontrada' });
 
     if (req.body.status && ['open', 'in_progress', 'done', 'overdue'].includes(req.body.status)) {
@@ -72,7 +73,10 @@ router.patch('/:id', async (req, res) => {
 // Guidance thread
 router.get('/:id/guidance', async (req, res) => {
   try {
-    const thread = await Guidance.findAll({ where: { action_item_id: req.params.id }, order: [['ts', 'ASC']] });
+    // Enforce tenant ownership before returning the thread.
+    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!item) return res.status(404).json({ error: 'Acción no encontrada' });
+    const thread = await Guidance.findAll({ where: { action_item_id: item.id }, order: [['ts', 'ASC']] });
     res.json({ success: true, thread });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -82,7 +86,7 @@ router.get('/:id/guidance', async (req, res) => {
 // Ask the coaching AI agent about this item
 router.post('/:id/guidance', async (req, res) => {
   try {
-    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: TENANT } });
+    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!item) return res.status(404).json({ error: 'Acción no encontrada' });
     const question = String(req.body.question || '').trim();
     if (!question) return res.status(400).json({ error: 'Pregunta requerida' });

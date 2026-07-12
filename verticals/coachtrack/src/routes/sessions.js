@@ -15,14 +15,15 @@ const { Op } = require('sequelize');
 const { Session, Transcript, ActionItem } = require('../models');
 const brain = require('../services/coach-brain');
 
-const TENANT = 1; // single-user lite
+function tenantOf(req) { return (req.user && req.user.tenant_id) || (req.user && req.user.id) || 0; }
+
 
 // Start a session
 router.post('/', async (req, res) => {
   try {
     const s = await Session.create({
-      tenant_id: TENANT,
-      coach_name: (req.body.coach_name || 'Lala').slice(0, 80),
+      tenant_id: tenantOf(req),
+      coach_name: (req.body.coach_name || 'Lina').slice(0, 80),
       session_date: req.body.session_date || undefined,
       status: 'in_progress'
     });
@@ -36,7 +37,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const sessions = await Session.findAll({
-      where: { tenant_id: TENANT },
+      where: { tenant_id: tenantOf(req) },
       order: [['created_at', 'DESC']],
       limit: 200
     });
@@ -58,7 +59,7 @@ router.get('/', async (req, res) => {
 // Session detail
 router.get('/:id', async (req, res) => {
   try {
-    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: TENANT } });
+    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!s) return res.status(404).json({ error: 'Sesión no encontrada' });
     const transcript = await Transcript.findAll({ where: { session_id: s.id }, order: [['turn_index', 'ASC'], ['id', 'ASC']] });
     const action_items = await ActionItem.findAll({ where: { session_id: s.id }, order: [['id', 'ASC']] });
@@ -71,7 +72,7 @@ router.get('/:id', async (req, res) => {
 // Append a transcript turn (voice or typed — same pipeline)
 router.post('/:id/turn', async (req, res) => {
   try {
-    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: TENANT } });
+    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!s) return res.status(404).json({ error: 'Sesión no encontrada' });
     const text = String(req.body.text || '').trim();
     if (!text) return res.status(400).json({ error: 'Texto requerido' });
@@ -92,7 +93,7 @@ router.post('/:id/turn', async (req, res) => {
 // Finalize: AI-extract subject + summary + action items
 router.post('/:id/finalize', async (req, res) => {
   try {
-    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: TENANT } });
+    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!s) return res.status(404).json({ error: 'Sesión no encontrada' });
     const turns = await Transcript.findAll({ where: { session_id: s.id }, order: [['turn_index', 'ASC'], ['id', 'ASC']] });
 
@@ -109,7 +110,7 @@ router.post('/:id/finalize', async (req, res) => {
     const created = [];
     for (const a of result.action_items) {
       created.push(await ActionItem.create({
-        tenant_id: TENANT,
+        tenant_id: tenantOf(req),
         session_id: s.id,
         text: a.text,
         due_date: a.due_date || null,

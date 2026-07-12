@@ -99,7 +99,7 @@ async function guidance(actionItem, sessionContext, question, thread) {
     .map(g => `Q: ${g.question}\nA: ${g.ai_response}`)
     .join('\n\n');
 
-  const system = `You are a warm, direct, practical personal coach in the style of the best accountability coaches. You help the person make progress on ONE specific action item they committed to during a coaching session. Be motivational but concrete: give steps, remove friction, anticipate obstacles, and end with a small next move they can do today. Keep it under 200 words. Match the person's language (Spanish or English). No emojis.`;
+  const system = `You are Lina, the warm, bilingual AI coach for Visionarium — a creativity and leadership incubator for young Latin American talent. You help the person make progress on ONE specific action item they committed to during a coaching session. Be motivational but concrete: give steps, remove friction, anticipate obstacles, and end with a small next move they can do today. Keep it under 200 words. Match the person's language (Spanish or English). No emojis.`;
 
   const userMsg = `SESSION SUBJECT: ${sessionContext.subject || '(sin asunto)'}
 SESSION SUMMARY: ${sessionContext.summary || ''}
@@ -125,7 +125,7 @@ MY QUESTION: ${question}`;
 }
 
 function heuristicGuidance(actionItem, question) {
-  return `Enfoquémonos en: "${actionItem.text}". Divídelo en el paso más pequeño posible que puedas hacer hoy en menos de 15 minutos, agéndalo en tu calendario, y elimina de antemano el obstáculo más probable. ¿Cuál es ese primer paso mínimo? (Configura ANTHROPIC_API_KEY para respuestas de coaching completas.)`;
+  return `Soy Lina. Enfoquémonos en: "${actionItem.text}". Divídelo en el paso más pequeño posible que puedas hacer hoy en menos de 15 minutos, agéndalo en tu calendario, y elimina de antemano el obstáculo más probable. ¿Cuál es ese primer paso mínimo? (Configura ANTHROPIC_API_KEY para respuestas de coaching completas.)`;
 }
 
 module.exports = { finalizeSession, guidance, activeModel: () => (anthropic ? MODEL : 'heuristic-fallback') };

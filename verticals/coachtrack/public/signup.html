@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Visionarium Coaching — Iniciar sesión</title>
+<title>Visionarium Coaching — Crear cuenta</title>
 <meta name="theme-color" content="#17a6a6" />
 <link rel="manifest" href="/coaching/manifest.webmanifest" />
 <link rel="icon" type="image/svg+xml" href="/coaching/favicon.svg" />
@@ -19,15 +19,17 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(-
 body::before{content:'';position:fixed;inset:0;pointer-events:none;background:
   radial-gradient(ellipse 46% 42% at 85% 6%, rgba(63,192,106,.14) 0%, transparent 62%),
   radial-gradient(ellipse 48% 46% at 10% 92%, rgba(42,111,158,.14) 0%, transparent 62%)}
-.card{position:relative;z-index:1;width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:34px 30px;box-shadow:0 24px 60px rgba(22,35,58,.10)}
-.logo{display:block;margin:0 auto 4px;height:52px;width:auto;max-width:230px;object-fit:contain}
-.sub{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 26px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+.card{position:relative;z-index:1;width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:34px 30px;box-shadow:0 24px 60px rgba(22,35,58,.10)}
+.logo{display:block;margin:0 auto 4px;height:50px;width:auto;max-width:230px;object-fit:contain}
+.sub{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 6px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+.free{display:block;text-align:center;margin:0 auto 22px;background:rgba(63,192,106,.12);color:#1a7a44;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;width:max-content;letter-spacing:.03em}
 label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em}
 input{width:100%;background:#f6f9fc;border:1px solid var(--border);color:var(--ink);padding:14px 14px;border-radius:12px;font-family:inherit;font-size:16px}
 input:focus{outline:none;border-color:var(--teal);background:#fff}
 button{width:100%;margin-top:24px;background:var(--grad);color:#fff;border:none;padding:15px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .15s}
 button:hover{filter:brightness(1.05);transform:translateY(-1px)}
 button:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.hint{font-size:11px;color:var(--muted);margin-top:5px}
 .err{margin-top:14px;color:#dc2626;font-size:13px;text-align:center;min-height:18px}
 .alt{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
 .alt a{color:var(--teal);font-weight:800;text-decoration:none}
@@ -38,27 +40,31 @@ button:disabled{opacity:.6;cursor:not-allowed;transform:none}
 <div class="card">
   <img class="logo" src="/coaching/visionarium-logo.png" alt="Visionarium" />
   <div class="sub">Coaching con IA</div>
+  <span class="free">Gratis para usuarios Visionarium</span>
   <form id="f">
+    <label for="name">Nombre</label>
+    <input id="name" type="text" autocomplete="name" required />
     <label for="email">Correo</label>
-    <input id="email" type="email" autocomplete="username" inputmode="email" required />
+    <input id="email" type="email" autocomplete="email" inputmode="email" required />
     <label for="password">Contraseña</label>
-    <input id="password" type="password" autocomplete="current-password" required />
-    <button id="btn" type="submit">Entrar</button>
+    <input id="password" type="password" autocomplete="new-password" required />
+    <div class="hint">Mínimo 6 caracteres.</div>
+    <button id="btn" type="submit">Crear cuenta</button>
     <div class="err" id="err"></div>
   </form>
-  <div class="alt">¿No tienes cuenta? <a href="/coaching/signup">Crear cuenta gratis</a></div>
+  <div class="alt">¿Ya tienes cuenta? <a href="/coaching/login">Iniciar sesión</a></div>
   <div class="foot">Visionarium &middot; Creativity &amp; Leadership Incubator</div>
 </div>
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/coaching/sw.js').catch(()=>{});}
 const f=document.getElementById('f'),btn=document.getElementById('btn'),err=document.getElementById('err');
 f.addEventListener('submit',async(e)=>{
-  e.preventDefault();err.textContent='';btn.disabled=true;btn.textContent='Entrando...';
+  e.preventDefault();err.textContent='';btn.disabled=true;btn.textContent='Creando...';
   try{
-    const r=await fetch('/coaching/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
-      body:JSON.stringify({email:document.getElementById('email').value,password:document.getElementById('password').value})});
+    const r=await fetch('/coaching/api/v1/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+      body:JSON.stringify({name:document.getElementById('name').value,email:document.getElementById('email').value,password:document.getElementById('password').value})});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');location.href='/coaching/';
-  }catch(ex){err.textContent=ex.message;btn.disabled=false;btn.textContent='Entrar';}
+  }catch(ex){err.textContent=ex.message;btn.disabled=false;btn.textContent='Crear cuenta';}
 });
 </script>
 </body>

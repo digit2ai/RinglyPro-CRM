@@ -34,19 +34,22 @@ function getCookie(req, name) {
   const m = h.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
-const PUBLIC_EXACT = ['/login', '/health', '/favicon.svg'];
+const PUBLIC_EXACT = ['/login', '/signup', '/health', '/favicon.svg', '/manifest.webmanifest', '/sw.js'];
+// Static assets must load pre-login (PWA install, login/signup branding).
+const PUBLIC_ASSET = /\.(png|svg|webmanifest|css|js|woff2?|ico)$/i;
 router.use((req, res, next) => {
   const token = getCookie(req, 'coachtrack_token');
   if (token) { try { req.user = jwt.verify(token, AUTH_SECRET); } catch (e) { /* invalid */ } }
   const p = req.path;
-  if (PUBLIC_EXACT.includes(p) || p.startsWith('/api/v1/auth')) return next();
+  if (PUBLIC_EXACT.includes(p) || PUBLIC_ASSET.test(p) || p.startsWith('/api/v1/auth')) return next();
   if (req.user) return next();
   if (p.startsWith('/api/')) return res.status(401).json({ error: 'No autorizado' });
   return res.redirect('/coaching/login');
 });
 
-// ── Login page ───────────────────────────────────────────────────────────────
+// ── Login + signup pages ─────────────────────────────────────────────────────
 router.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
+router.get('/signup', (req, res) => res.sendFile(path.join(publicDir, 'signup.html')));
 
 // ── API routes ─────────────────────────────────────────────────────────────
 router.use('/api/v1/auth', require('./routes/auth'));
@@ -66,9 +69,18 @@ router.get('/', (req, res) => {
   try {
     await sequelize.sync({ alter: false });
     console.log('  COACHTRACK database tables synced (ct_*)');
+    // sync({alter:false}) does not add new columns to existing tables — ensure
+    // the multi-tenant columns exist (idempotent).
+    try {
+      await sequelize.query('ALTER TABLE ct_users ADD COLUMN IF NOT EXISTS tenant_id INTEGER');
+      await sequelize.query("ALTER TABLE ct_users ADD COLUMN IF NOT EXISTS org VARCHAR(80) DEFAULT 'visionarium'");
+      await sequelize.query('UPDATE ct_users SET tenant_id = id WHERE tenant_id IS NULL');
+    } catch (mErr) {
+      console.error('  COACHTRACK column ensure error:', mErr.message);
+    }
     try {
       const u = await seedUsers();
-      console.log(`  COACHTRACK owner account ensured (${u.total}, ${u.created} new)`);
+      console.log(`  COACHTRACK accounts ensured (${u.total}, ${u.created} new)`);
     } catch (uErr) {
       console.error('  COACHTRACK user seed error:', uErr.message);
     }

@@ -13,10 +13,12 @@ const sequelize = require('./db');
 // Console login accounts.
 const User = sequelize.define('CoachUser', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER }, // each user is their own private tenant (= user id)
   email: { type: DataTypes.STRING, allowNull: false, unique: true },
   name: { type: DataTypes.STRING },
   password_hash: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.STRING, defaultValue: 'owner' },
+  org: { type: DataTypes.STRING, defaultValue: 'visionarium' }, // signup source / cohort
+  role: { type: DataTypes.STRING, defaultValue: 'member' },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'ct_users', timestamps: false });
 

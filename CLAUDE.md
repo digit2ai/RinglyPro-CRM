@@ -268,29 +268,32 @@ TODO: wire actual Render cron jobs once first quarterly refresh window approache
 
 Full build status + remaining external dependencies (provider keys, AWS Rekognition for likeness, legal-reviewed templates) are tracked in `verticals/veritas/ECOSYSTEM.md`.
 
-## CoachTrack — Personal AI Coaching Tracker
+## Visionarium Coaching — Multi-tenant AI Coaching Tracker (folder: coachtrack)
 
-**Purpose:** Personal (owner's own) AI coaching tracker. Log weekly 1:1 coaching sessions (coach = **Lala**), record + transcribe the full session (voice NLP or typed), auto-extract the subject of the day + action items, and ask an AI coaching agent for guidance on each action item. Structure modeled on CoachAccountable (accountability state machine), BetterUp (session->goals), Quenza (between-session reflection), Mentalyc (notes from audio). Spanish-first, emoji-free. Mounted at `/coaching`.
+**Purpose:** Multi-tenant AI coaching tracker for **Visionarium** (creativity & leadership incubator, brand visionarium.app). Log 1:1 coaching sessions, record + transcribe the full session (voice NLP or typed), auto-extract the subject of the day + action items, and ask the Visionarium AI coach **Lina** for guidance on each action item. **Open free self-signup** for Visionarium users. Structure modeled on CoachAccountable (accountability state machine), BetterUp (session->goals), Quenza (between-session reflection), Mentalyc (notes from audio). Spanish-first, emoji-free. Mounted at `/coaching`. Product name = "Visionarium Coaching"; folder/mount stay `coachtrack` / `/coaching`.
 
-**Location:** `verticals/coachtrack/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/coachtrack/migrations/20260712_coachtrack_tables.sql`. Multi-tenant (`tenant_id`, single-user lite = 1), `ct_` prefix: `ct_users, ct_sessions, ct_transcripts, ct_action_items, ct_guidance`.
+**Multi-tenancy:** each signup is its own private tenant (`tenant_id = user.id`); all data isolated per user, scoped by `req.user.tenant_id` in every query. `ct_users.tenant_id` added via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in `index.js` init (sync({alter:false}) never adds columns).
 
-**Live:** dashboard `/coaching/` · login `/coaching/login` · health `/coaching/health` · debug `/debug/coachtrack-error`.
+**Location:** `verticals/coachtrack/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/coachtrack/migrations/20260712_coachtrack_tables.sql`. Multi-tenant (`tenant_id`), `ct_` prefix: `ct_users, ct_sessions, ct_transcripts, ct_action_items, ct_guidance`.
 
-**AI brain:** `src/services/coach-brain.js` reuses `ANTHROPIC_API_KEY` (Claude Haiku). `finalizeSession(transcript)` extracts `{subject, summary, action_items[]}`; `guidance(item, sessionContext, question, thread)` answers per-action-item coaching questions with the session loaded as context. Zero-key **heuristic fallback** if no API key — the app still runs end-to-end.
+**Live:** dashboard `/coaching/` · signup `/coaching/signup` (open free) · login `/coaching/login` · health `/coaching/health` · debug `/debug/coachtrack-error`.
 
-**Capture:** browser Web Speech API (`es-ES`, zero key) for live voice dictation AND typed input both POST to `/sessions/:id/turn` — one pipeline. Full turn-by-turn transcript saved to `ct_transcripts`. "Finalize" runs the AI extraction; each action item has an inline "Preguntar a mi coach" chat.
+**PWA + mobile:** installable PWA — `public/manifest.webmanifest` (standalone, theme `#17a6a6`), `public/sw.js` (offline shell; network-first navigations, never caches `/api/`), `apple-touch-icon.png`, icons 192/512 (generated from the Visionarium logo via `sips` fit-then-pad), branded `favicon.svg` (constellation node mark). Light Visionarium theme (white + green→teal→blue gradient), logo `public/visionarium-logo.png`, safe-area insets, 44px touch targets, in-app Install bar. PWA assets serve pre-login (auth gate allows `/signup`, `/manifest.webmanifest`, `/sw.js`, and any static asset extension).
+
+**AI brain:** `src/services/coach-brain.js` = **Lina**; reuses `ANTHROPIC_API_KEY` (Claude Haiku). `finalizeSession(transcript)` extracts `{subject, summary, action_items[]}`; `guidance(item, sessionContext, question, thread)` answers per-action-item questions with the session as context. Zero-key **heuristic fallback** if no API key.
+
+**Capture:** browser Web Speech API (`es-ES`, zero key) live voice AND typed input both POST to `/sessions/:id/turn` — one pipeline. Full transcript saved to `ct_transcripts`. "Finalize" runs the AI extraction; each action item has an inline "Preguntar a Lina" chat.
 
 **REST API (`/coaching/api/v1/*`):**
-- `POST /sessions` (start) · `GET /sessions` (list + open-item counts) · `GET /sessions/:id` (session + transcript + items)
-- `POST /sessions/:id/turn` (append voice/typed turn) · `POST /sessions/:id/finalize` (AI extract subject + summary + action items)
-- `GET /action-items` (cross-session accountability board, open/overdue first) · `PATCH /action-items/:id` (status/due/notes)
-- `GET|POST /action-items/:id/guidance` (per-item coaching AI thread) · `GET /health`
+- Auth: `POST /auth/signup` (open free) · `POST /auth/login` · `POST /auth/logout` · `GET /auth/me`
+- `POST /sessions` · `GET /sessions` (list + open-item counts) · `GET /sessions/:id` · `POST /sessions/:id/turn` · `POST /sessions/:id/finalize`
+- `GET /action-items` (cross-session accountability board) · `PATCH /action-items/:id` · `GET|POST /action-items/:id/guidance` · `GET /health`
 
 **Environment Variables:**
-- `COACHTRACK_JWT_SECRET` — signs the `coachtrack_token` cookie (fallback `JWT_SECRET`). SET on prod.
+- `COACHTRACK_JWT_SECRET` — signs the `coachtrack_token` cookie (fallback `JWT_SECRET`), 30d. SET on prod.
 - `COACHTRACK_MODEL` — Anthropic model for extraction + guidance. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`.
-- `COACHTRACK_DEFAULT_PASSWORD` — owner console password, seeded idempotently (`mstagg@digit2ai.com`). Default `coachtrack@2026`.
-- `COACHTRACK_SEED_DEMO` — `1` seeds one sample session with transcript + action items on boot. Default unset = clean.
+- `COACHTRACK_DEFAULT_PASSWORD` — seeded admin password (`mstagg@digit2ai.com`). Default `coachtrack@2026`. (Regular users self-signup; no shared password.)
+- `COACHTRACK_SEED_DEMO` — `1` seeds one sample session on boot. Default unset = clean.
 
 ## Projects Hub — Client 15 Command Center (`/projects`)
 

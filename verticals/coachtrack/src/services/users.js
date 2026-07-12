@@ -10,7 +10,7 @@ const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 
 const ACCOUNTS = [
-  { email: 'mstagg@digit2ai.com', name: 'Manuel Stagg', role: 'owner' }
+  { email: 'mstagg@digit2ai.com', name: 'Manuel Stagg', role: 'admin' }
 ];
 
 async function seedUsers() {
@@ -21,9 +21,10 @@ async function seedUsers() {
     const email = a.email.toLowerCase().trim();
     const [user, isNew] = await User.findOrCreate({
       where: { email },
-      defaults: { email, name: a.name, role: a.role, password_hash: hash }
+      defaults: { email, name: a.name, role: a.role, org: 'visionarium', password_hash: hash }
     });
     if (isNew) created++;
+    if (!user.tenant_id) { user.tenant_id = user.id; await user.save(); }
   }
   return { total: ACCOUNTS.length, created };
 }
