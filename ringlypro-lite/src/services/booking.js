@@ -14,6 +14,18 @@ const { answeringAllowed } = require('./entitlement');
 
 function last10(p) { return String(p || '').replace(/[^0-9]/g, '').slice(-10); }
 
+// The shared demo line answers as tenant_id 0 (no DB row). Resolve it to a
+// synthetic tenant so the booking/message tools work in the demo (Mon–Fri 9–17).
+const DEMO_TENANT = {
+  id: 0, is_demo: true,
+  timezone: 'America/New_York', locale: 'en',
+  business_name: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite Demo',
+  owner_phone: null
+};
+function isDemo(tenantId) { return Number(tenantId) === 0; }
+async function resolveTenant(tenantId) { return isDemo(tenantId) ? DEMO_TENANT : Tenant.findByPk(tenantId); }
+const DEMO_RULES = [1, 2, 3, 4, 5].map(wd => ({ weekday: wd, start: '09:00', end: '17:00', slot_minutes: 30 }));
+
 // Pick `k` VARIED slots across the sorted candidate list (one per evenly-spaced
 // segment, randomized within the segment) so Lina offers different days/times
 // each call instead of a robotic 9:00 / 9:30 / 10:00. Returns them sorted.
@@ -97,10 +109,12 @@ async function identifyCaller({ tenantId, phone }) {
  * excluding past and already-booked slots. Returns up to `limit` nearest slots.
  */
 async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) {
-  const tenant = await Tenant.findByPk(tenantId);
+  const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const tz = tenant.timezone || 'America/New_York';
-  const rules = await AvailabilityRule.findAll({ where: { tenant_id: tenantId, active: true } });
+  const rules = isDemo(tenantId)
+    ? DEMO_RULES
+    : await AvailabilityRule.findAll({ where: { tenant_id: tenantId, active: true } });
   if (!rules.length) return { success: true, slots: [], slot_count: 0, note: 'no_availability_rules' };
 
   const now = new Date();
@@ -159,7 +173,7 @@ async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) 
  * final race guard, so two concurrent calls can never double-book one slot.
  */
 async function bookAppointment({ tenantId, caller_name, callback_number, date, time, starts_at, slot_minutes, call_id }) {
-  const tenant = await Tenant.findByPk(tenantId);
+  const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const tz = tenant.timezone || 'America/New_York';
 
@@ -210,7 +224,7 @@ async function bookAppointment({ tenantId, caller_name, callback_number, date, t
 
 /** Message-taking path. */
 async function takeMessage({ tenantId, call_id, caller_name, callback_number, body }) {
-  const tenant = await Tenant.findByPk(tenantId);
+  const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const msg = await Message.create({
     tenant_id: tenantId, call_id: call_id || null,
