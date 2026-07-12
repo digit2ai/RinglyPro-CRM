@@ -55,6 +55,10 @@
   <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
   <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="bell" title="Alerts" style="cursor:pointer" data-i="alerts">Alerts</span><span class="lang" id="lang">ES</span></div>
 </header>
+<div id="payBanner" style="display:none;background:#3a0f14;border-bottom:1px solid var(--err);color:#ffd0d0;padding:12px 16px;font-size:14px;text-align:center">
+  <span data-i="payMsg">Your free trial ended. Add payment to keep answering calls.</span>
+  <button class="sm" id="payNow" style="margin-left:10px" data-i="payNow">Add payment</button>
+</div>
 <main>
   <!-- MESSAGES -->
   <section class="view on" id="v-messages">
@@ -118,8 +122,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -194,8 +198,15 @@ async function loadSettings(){
     $('billCard').style.display='';
     const bs=await api('/api/billing/status');
     if(bs){
-      $('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?(lang==='es'?' (suspendido)':' (suspended)'):'');
+      let line='',color='var(--mut)';
+      if(bs.needs_payment){line=lang==='es'?'Prueba terminada — agregue un método de pago para seguir contestando llamadas':'Trial ended — add payment to keep answering calls';color='var(--err)';}
+      else if(bs.subscription_status==='active'){line=lang==='es'?'Suscripción activa':'Subscription active';color='var(--ok)';}
+      else if(bs.trial_days_left!=null&&!bs.has_subscription){line=lang==='es'?`Prueba gratis: ${bs.trial_days_left} día(s) restante(s)`:`Free trial: ${bs.trial_days_left} day(s) left`;color=bs.trial_days_left<=2?'var(--warn)':'var(--acc2)';}
+      else line=bs.subscription_status||'';
+      $('billStatus').style.color=color;$('billStatus').textContent=line;
       if(bs.plan)$('billPlan').textContent=`$${bs.plan.monthly_usd}/mo · ${bs.plan.included_minutes} min ${lang==='es'?'incluidos':'incl'} · overage $${bs.plan.overage_per_min_usd}/min · setup $${bs.plan.setup_usd}`;
+      // Prominent banner if payment is needed (answering is suspended).
+      if(bs.needs_payment){$('payBanner').style.display='';}
     }
     const us=await api('/api/billing/usage');
     if(us&&!us.error){
@@ -236,6 +247,7 @@ $('addRow').onclick=()=>{rules.push({weekday:1,start:'09:00',end:'17:00',slot_mi
 $('saveBiz').onclick=async()=>{const r=await api('/api/settings',{method:'PATCH',body:JSON.stringify({business_name:$('set_business_name').value,owner_phone:$('set_owner_phone').value,transfer_number:$('set_transfer_number').value,locale:$('set_locale').value,timezone:$('set_timezone').value})});$('bizMsg').textContent=r&&r.success?'✓':'!'};
 $('saveAvail').onclick=async()=>{const r=await api('/api/availability',{method:'PUT',body:JSON.stringify({rules})});$('availMsg').textContent=r&&r.success?'✓':'!'};
 $('manageBill').onclick=async()=>{const r=await api('/api/billing/checkout',{method:'POST'});if(r&&r.url)location.href=r.url};
+$('payNow').onclick=async()=>{const r=await api('/api/billing/checkout',{method:'POST'});if(r&&r.url)location.href=r.url};
 $('logout').onclick=async e=>{e.preventDefault();await api('/api/auth/logout',{method:'POST'});location.href='/login'};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}

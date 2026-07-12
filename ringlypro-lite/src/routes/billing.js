@@ -15,6 +15,7 @@ const { Op } = require('sequelize');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { Tenant, Call } = require('../models');
+const { entitlement } = require('../services/entitlement');
 
 function stripe() {
   const key = process.env.LITE_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
@@ -69,6 +70,7 @@ router.get('/status', requireAuth, async (req, res) => {
     trial_ends_at: tenant.trial_ends_at,
     suspended: !!tenant.suspended_at,
     country: tenant.country,
+    ...entitlement(tenant),
     plan: {
       monthly_usd: p.monthlyCents / 100,
       setup_usd: p.setupCents / 100,

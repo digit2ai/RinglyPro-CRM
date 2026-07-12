@@ -10,6 +10,7 @@ const { Op } = require('sequelize');
 // global Number constructor and breaks `.split('-').map(Number)` date parsing.
 const { sequelize, Tenant, Number: LiteNumber, Call, Message, AvailabilityRule, Appointment } = require('../models');
 const { zonedToUtc, utcToZonedParts, hhmmToMinutes, displaySlot } = require('../utils/dates');
+const { answeringAllowed } = require('./entitlement');
 
 function last10(p) { return String(p || '').replace(/[^0-9]/g, '').slice(-10); }
 
@@ -48,7 +49,8 @@ async function getBusinessInfo({ did, tenantId }) {
     country: tenant.country,
     locale: tenant.locale,
     timezone: tenant.timezone,
-    suspended: !!tenant.suspended_at || tenant.subscription_status === 'suspended' || tenant.subscription_status === 'canceled'
+    // Suspend answering on failed payment OR expired trial with no card.
+    suspended: !answeringAllowed(tenant)
   };
 }
 
