@@ -1513,6 +1513,36 @@ app.get('/debug/veritas-error', (req, res) => {
 });
 
 // =====================================================
+// COACHTRACK — Personal AI Coaching Tracker (served at /coaching/)
+// =====================================================
+
+let coachtrackApp = null;
+let coachtrackError = null;
+try {
+  coachtrackApp = require('../verticals/coachtrack/src/index');
+  app.get('/coaching', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/coaching/');
+    next();
+  });
+  app.use('/coaching', coachtrackApp);
+  console.log('CoachTrack Personal Coaching Tracker mounted at /coaching');
+  console.log('   - Dashboard UI: /coaching/');
+  console.log('   - Health Check: /coaching/health');
+  console.log('   - API: /coaching/api/v1/*');
+} catch (error) {
+  coachtrackError = error;
+  console.log('⚠️ CoachTrack not available:', error.message);
+}
+
+app.get('/debug/coachtrack-error', (req, res) => {
+  res.json({
+    service: 'CoachTrack Personal Coaching Tracker',
+    available: !coachtrackError,
+    error: coachtrackError ? { message: coachtrackError.message, stack: coachtrackError.stack } : null
+  });
+});
+
+// =====================================================
 // AGROMERCADO DIGITAL — national agro marketplace (served at /agromercado/)
 // Developed by ISTC; AI layer by Digit2AI. Self-contained vertical.
 // =====================================================

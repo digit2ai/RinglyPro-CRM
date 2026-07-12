@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CoachTrack — Coaching Personal con IA</title>
+<link rel="icon" type="image/svg+xml" href="/coaching/favicon.svg" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#0b1020;--panel:#121a33;--panel2:#0e1530;--indigo:#6366f1;--teal:#14b8a6;--text:#eef2ff;--muted:#9aa6c8;--border:#233054;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--me:#22d3ee;--coach:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 18px 60px}
+header{display:flex;align-items:center;gap:12px;padding:8px 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap}
+.mark{width:38px;height:38px;border-radius:10px;overflow:hidden}
+.mark svg{display:block;width:100%;height:100%}
+.title{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.title small{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.14em}
+.spacer{flex:1}
+.btn{background:linear-gradient(120deg,var(--indigo),var(--teal));color:#fff;border:none;padding:11px 16px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .15s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.sm{padding:7px 11px;font-size:12px;border-radius:8px}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn.mic{background:var(--bad)}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tab{padding:9px 15px;border-radius:10px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
+.tab.on{color:#fff;border-color:var(--indigo);background:linear-gradient(120deg,rgba(99,102,241,.25),rgba(20,184,166,.2))}
+.card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:16px 16px;margin-bottom:14px}
+.grid{display:grid;gap:12px}
+@media(min-width:720px){.grid.k3{grid-template-columns:repeat(3,1fr)}}
+.kpi{text-align:center;padding:16px 10px}
+.kpi .n{font-size:30px;font-weight:800;line-height:1}
+.kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-top:6px}
+.muted{color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px}
+.sess{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--border);border-radius:11px;background:var(--panel2);cursor:pointer;margin-bottom:10px;transition:border-color .15s}
+.sess:hover{border-color:var(--indigo)}
+.sess .s-subj{font-weight:700}
+.sess .s-meta{font-size:12px;color:var(--muted)}
+.pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em}
+.pill.open{background:rgba(99,102,241,.18);color:#c7c9ff}
+.pill.in_progress{background:rgba(245,158,11,.18);color:#fcd34d}
+.pill.done{background:rgba(34,197,94,.16);color:#86efac}
+.pill.overdue{background:rgba(239,68,68,.18);color:#fca5a5}
+.pill.finalized{background:rgba(20,184,166,.16);color:#7dd3c9}
+h2{font-size:16px;margin-bottom:12px}
+h3{font-size:14px;margin:0 0 8px}
+textarea,input,select{width:100%;background:#0c1430;border:1px solid var(--border);color:var(--text);padding:11px 12px;border-radius:10px;font-family:inherit;font-size:14px;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--indigo)}
+.transcript{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.turn{padding:9px 12px;border-radius:10px;max-width:88%;font-size:14px;line-height:1.45}
+.turn.me{align-self:flex-end;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3)}
+.turn.coach{align-self:flex-start;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3)}
+.turn .who{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;opacity:.7;margin-bottom:2px}
+.turn.me .who{color:var(--me)} .turn.coach .who{color:var(--coach)}
+.ai-item{border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:12px;background:var(--panel2)}
+.ai-item .txt{font-weight:600;margin-bottom:8px}
+.item-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.chat{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
+.q{font-size:13px;color:var(--me);font-weight:700;margin-top:8px}
+.a{font-size:13px;color:var(--text);background:rgba(167,139,250,.08);border-left:2px solid var(--coach);padding:8px 10px;border-radius:6px;margin-top:4px;white-space:pre-wrap;line-height:1.5}
+.recdot{width:9px;height:9px;border-radius:50%;background:var(--bad);display:inline-block;animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.hidden{display:none!important}
+.empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px}
+.flash{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--indigo);color:#fff;padding:11px 18px;border-radius:10px;font-weight:700;font-size:13px;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.back{cursor:pointer;color:var(--muted);font-weight:700;font-size:13px;margin-bottom:12px;display:inline-block}
+.back:hover{color:#fff}
+label.lbl{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark"><svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><path d="M20 40 L28 32 L34 38 L46 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="46" cy="24" r="3.5" fill="#fff"/></svg></div>
+    <div class="title">CoachTrack<small>Coaching Personal con IA</small></div>
+    <div class="spacer"></div>
+    <button class="btn" id="newBtn">+ Nueva sesión</button>
+    <button class="btn ghost sm" id="logout">Salir</button>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-v="home">Inicio</div>
+    <div class="tab" data-v="board">Acciones</div>
+  </div>
+
+  <!-- HOME -->
+  <div id="view-home">
+    <div class="grid k3" id="kpis"></div>
+    <div class="card">
+      <h2>Mis sesiones</h2>
+      <div id="sessList"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCOUNTABILITY BOARD -->
+  <div id="view-board" class="hidden">
+    <div class="card">
+      <h2>Todas las acciones</h2>
+      <div id="boardList"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- LIVE SESSION -->
+  <div id="view-live" class="hidden">
+    <span class="back" id="liveBack">&larr; Volver</span>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0" id="liveTitle">Sesión en curso</h2>
+        <span id="recState" class="muted" style="font-size:12px"></span>
+      </div>
+      <div class="transcript" id="liveTranscript" style="margin:12px 0"></div>
+      <div class="row" style="gap:8px;margin-bottom:8px">
+        <select id="speaker" style="max-width:120px"><option value="me">Yo</option><option value="coach">Lala</option></select>
+        <button class="btn ghost sm" id="micBtn">Voz</button>
+      </div>
+      <textarea id="turnText" rows="2" placeholder="Escribe lo que se dijo, o usa el boton Voz para dictar..."></textarea>
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <button class="btn ghost" id="addTurn">Agregar</button>
+        <button class="btn" id="finalizeBtn">Finalizar y extraer acciones</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION DETAIL -->
+  <div id="view-detail" class="hidden">
+    <span class="back" id="detailBack">&larr; Volver</span>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0" id="dSubject">—</h2>
+        <span class="pill finalized" id="dStatus">finalized</span>
+      </div>
+      <div class="muted" style="font-size:12px;margin:4px 0 12px" id="dMeta"></div>
+      <div id="dSummary" style="line-height:1.6"></div>
+    </div>
+    <div class="card">
+      <h2>Acciones (Action Items)</h2>
+      <div id="dItems"></div>
+    </div>
+    <div class="card">
+      <h3>Transcripción completa</h3>
+      <div class="transcript" id="dTranscript"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/coaching/api/v1';
+let LIVE_ID = null, REC = null, RECOG_ON = false;
+
+function flash(m){ const d=document.createElement('div'); d.className='flash'; d.textContent=m; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); }
+async function api(path, opts={}){
+  const r = await fetch(API+path, Object.assign({credentials:'include',headers:{'Content-Type':'application/json'}}, opts));
+  if(r.status===401){ location.href='/coaching/login'; throw new Error('401'); }
+  const d = await r.json(); if(!r.ok) throw new Error(d.error||'Error'); return d;
+}
+function show(v){
+  ['home','board','live','detail'].forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden', x!==v));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.v===v));
+  document.getElementById('tabs').classList.toggle('hidden', v==='live'||v==='detail');
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ── HOME ──
+async function loadHome(){
+  const d = await api('/sessions');
+  const sessions = d.sessions||[];
+  let allItems=[]; try{ allItems=(await api('/action-items')).action_items||[]; }catch(e){}
+  const open = allItems.filter(i=>i.status!=='done').length;
+  const overdue = allItems.filter(i=>i.status==='overdue').length;
+  document.getElementById('kpis').innerHTML =
+    kpi(sessions.length,'Sesiones') + kpi(open,'Acciones abiertas') + kpi(overdue,'Vencidas');
+  const list = document.getElementById('sessList');
+  if(!sessions.length){ list.innerHTML='<div class="empty">Aun no tienes sesiones. Toca <b>+ Nueva sesión</b> para empezar tu primera sesión con Lala.</div>'; return; }
+  list.innerHTML = sessions.map(s=>`
+    <div class="sess" onclick="openDetail(${s.id})">
+      <div style="flex:1">
+        <div class="s-subj">${esc(s.subject||'Sesión sin finalizar')}</div>
+        <div class="s-meta">${esc(s.coach_name||'Lala')} &middot; ${esc(s.session_date||'')}</div>
+      </div>
+      ${s.status==='in_progress'?'<span class="pill open">en curso</span>':`<span class="pill finalized">${s.open_action_items} acciones</span>`}
+    </div>`).join('');
+}
+function kpi(n,l){ return `<div class="card kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`; }
+
+// ── ACCOUNTABILITY BOARD ──
+async function loadBoard(){
+  const d = await api('/action-items');
+  const items = d.action_items||[];
+  const el = document.getElementById('boardList');
+  if(!items.length){ el.innerHTML='<div class="empty">No hay acciones todavia. Finaliza una sesión para generar acciones.</div>'; return; }
+  el.innerHTML = items.map(renderItem).join('');
+}
+
+function renderItem(i){
+  return `<div class="ai-item" id="item-${i.id}">
+    <div class="txt">${esc(i.text)}</div>
+    <div class="item-actions">
+      <span class="pill ${i.status}">${i.status}</span>
+      ${i.session?`<span class="muted" style="font-size:12px">de: ${esc(i.session.subject||'sesión')}</span>`:''}
+      ${i.due_date?`<span class="muted" style="font-size:12px">vence ${esc(i.due_date)}</span>`:''}
+    </div>
+    <div class="item-actions">
+      <button class="btn sm ghost" onclick="setStatus(${i.id},'in_progress')">En progreso</button>
+      <button class="btn sm ghost" onclick="setStatus(${i.id},'done')">Hecho</button>
+      <button class="btn sm" onclick="toggleChat(${i.id})">Preguntar a mi coach</button>
+    </div>
+    <div class="chat hidden" id="chat-${i.id}">
+      <div id="thread-${i.id}"></div>
+      <div class="row" style="margin-top:8px">
+        <input id="qin-${i.id}" placeholder="¿Cómo empiezo? ¿Qué me está frenando?" />
+        <button class="btn sm" onclick="askCoach(${i.id})">Enviar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function setStatus(id,status){ await api('/action-items/'+id,{method:'PATCH',body:JSON.stringify({status})}); flash('Actualizado'); refreshCurrent(); }
+
+async function toggleChat(id){
+  const c=document.getElementById('chat-'+id); c.classList.toggle('hidden');
+  if(!c.classList.contains('hidden')){
+    const d=await api('/action-items/'+id+'/guidance'); renderThread(id,d.thread||[]);
+  }
+}
+function renderThread(id,thread){
+  document.getElementById('thread-'+id).innerHTML = thread.map(g=>`<div class="q">Tú: ${esc(g.question)}</div><div class="a">${esc(g.ai_response)}</div>`).join('');
+}
+async function askCoach(id){
+  const inp=document.getElementById('qin-'+id); const q=inp.value.trim(); if(!q) return;
+  inp.value=''; inp.disabled=true;
+  const t=document.getElementById('thread-'+id); t.insertAdjacentHTML('beforeend',`<div class="q">Tú: ${esc(q)}</div><div class="a" id="pending">Pensando...</div>`);
+  try{ await api('/action-items/'+id+'/guidance',{method:'POST',body:JSON.stringify({question:q})});
+    const d=await api('/action-items/'+id+'/guidance'); renderThread(id,d.thread||[]);
+  }catch(e){ document.getElementById('pending').textContent='Error: '+e.message; }
+  inp.disabled=false; inp.focus();
+}
+
+// ── LIVE SESSION ──
+async function startSession(){
+  const d = await api('/sessions',{method:'POST',body:JSON.stringify({coach_name:'Lala'})});
+  LIVE_ID = d.session.id;
+  document.getElementById('liveTranscript').innerHTML='';
+  document.getElementById('liveTitle').textContent='Sesión en curso con Lala';
+  show('live');
+}
+function renderTurn(container,role,text){
+  container.insertAdjacentHTML('beforeend',`<div class="turn ${role}"><div class="who">${role==='coach'?'Lala':'Yo'}</div>${esc(text)}</div>`);
+  container.scrollTop=container.scrollHeight;
+}
+async function addTurn(){
+  const ta=document.getElementById('turnText'); const text=ta.value.trim(); if(!text||!LIVE_ID) return;
+  const role=document.getElementById('speaker').value; const source = RECOG_ON?'voice':'typed';
+  renderTurn(document.getElementById('liveTranscript'),role,text); ta.value='';
+  try{ await api('/sessions/'+LIVE_ID+'/turn',{method:'POST',body:JSON.stringify({role,text,source})}); }catch(e){ flash('Error al guardar'); }
+}
+async function finalize(){
+  if(!LIVE_ID) return;
+  const b=document.getElementById('finalizeBtn'); b.disabled=true; b.textContent='Extrayendo con IA...';
+  try{ const d=await api('/sessions/'+LIVE_ID+'/finalize',{method:'POST',body:JSON.stringify({})});
+    flash('Sesión finalizada: '+(d.session.subject||'')); openDetail(LIVE_ID); LIVE_ID=null;
+  }catch(e){ flash('Error: '+e.message); }
+  b.disabled=false; b.textContent='Finalizar y extraer acciones';
+}
+
+// Voice capture (Web Speech API — zero key)
+function setupMic(){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  const btn=document.getElementById('micBtn');
+  if(!SR){ btn.disabled=true; btn.title='Tu navegador no soporta dictado por voz'; return; }
+  btn.onclick=()=>{
+    if(RECOG_ON){ REC && REC.stop(); return; }
+    REC = new SR(); REC.lang='es-ES'; REC.interimResults=true; REC.continuous=true;
+    let finalText='';
+    REC.onstart=()=>{ RECOG_ON=true; btn.classList.add('mic'); btn.textContent='Detener'; document.getElementById('recState').innerHTML='<span class="recdot"></span> Escuchando...'; };
+    REC.onresult=(e)=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) finalText+=t+' '; else interim+=t; } document.getElementById('turnText').value=(finalText+interim).trim(); };
+    REC.onerror=()=>{};
+    REC.onend=()=>{ RECOG_ON=false; btn.classList.remove('mic'); btn.textContent='Voz'; document.getElementById('recState').textContent=''; if(document.getElementById('turnText').value.trim()) addTurn(); };
+    REC.start();
+  };
+}
+
+// ── DETAIL ──
+async function openDetail(id){
+  const d = await api('/sessions/'+id);
+  const s=d.session;
+  document.getElementById('dSubject').textContent = s.subject||'Sesión sin finalizar';
+  document.getElementById('dStatus').textContent = s.status;
+  document.getElementById('dStatus').className = 'pill '+(s.status==='finalized'?'finalized':'open');
+  document.getElementById('dMeta').textContent = `${s.coach_name||'Lala'} · ${s.session_date||''}` + (s.duration_min?` · ${s.duration_min} min`:'');
+  document.getElementById('dSummary').innerHTML = s.summary?esc(s.summary):'<span class="muted">Sin resumen. Esta sesión aun no se finaliza.</span>';
+  const items=d.action_items||[];
+  document.getElementById('dItems').innerHTML = items.length?items.map(renderItem).join(''):'<div class="empty">Sin acciones.</div>';
+  const tc=document.getElementById('dTranscript'); tc.innerHTML='';
+  (d.transcript||[]).forEach(t=>renderTurn(tc,t.role,t.text));
+  show('detail');
+}
+
+function refreshCurrent(){
+  if(!document.getElementById('view-board').classList.contains('hidden')) loadBoard();
+  else if(!document.getElementById('view-home').classList.contains('hidden')) loadHome();
+}
+
+// ── wire up ──
+document.getElementById('newBtn').onclick=startSession;
+document.getElementById('addTurn').onclick=addTurn;
+document.getElementById('finalizeBtn').onclick=finalize;
+document.getElementById('turnText').addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); addTurn(); }});
+document.getElementById('liveBack').onclick=()=>{ show('home'); loadHome(); };
+document.getElementById('detailBack').onclick=()=>{ show('home'); loadHome(); };
+document.getElementById('logout').onclick=async()=>{ await api('/auth/logout',{method:'POST'}); location.href='/coaching/login'; };
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ const v=t.dataset.v; show(v); v==='board'?loadBoard():loadHome(); });
+setupMic(); loadHome();
+</script>
+</body>
+</html>

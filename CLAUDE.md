@@ -268,6 +268,30 @@ TODO: wire actual Render cron jobs once first quarterly refresh window approache
 
 Full build status + remaining external dependencies (provider keys, AWS Rekognition for likeness, legal-reviewed templates) are tracked in `verticals/veritas/ECOSYSTEM.md`.
 
+## CoachTrack — Personal AI Coaching Tracker
+
+**Purpose:** Personal (owner's own) AI coaching tracker. Log weekly 1:1 coaching sessions (coach = **Lala**), record + transcribe the full session (voice NLP or typed), auto-extract the subject of the day + action items, and ask an AI coaching agent for guidance on each action item. Structure modeled on CoachAccountable (accountability state machine), BetterUp (session->goals), Quenza (between-session reflection), Mentalyc (notes from audio). Spanish-first, emoji-free. Mounted at `/coaching`.
+
+**Location:** `verticals/coachtrack/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/coachtrack/migrations/20260712_coachtrack_tables.sql`. Multi-tenant (`tenant_id`, single-user lite = 1), `ct_` prefix: `ct_users, ct_sessions, ct_transcripts, ct_action_items, ct_guidance`.
+
+**Live:** dashboard `/coaching/` · login `/coaching/login` · health `/coaching/health` · debug `/debug/coachtrack-error`.
+
+**AI brain:** `src/services/coach-brain.js` reuses `ANTHROPIC_API_KEY` (Claude Haiku). `finalizeSession(transcript)` extracts `{subject, summary, action_items[]}`; `guidance(item, sessionContext, question, thread)` answers per-action-item coaching questions with the session loaded as context. Zero-key **heuristic fallback** if no API key — the app still runs end-to-end.
+
+**Capture:** browser Web Speech API (`es-ES`, zero key) for live voice dictation AND typed input both POST to `/sessions/:id/turn` — one pipeline. Full turn-by-turn transcript saved to `ct_transcripts`. "Finalize" runs the AI extraction; each action item has an inline "Preguntar a mi coach" chat.
+
+**REST API (`/coaching/api/v1/*`):**
+- `POST /sessions` (start) · `GET /sessions` (list + open-item counts) · `GET /sessions/:id` (session + transcript + items)
+- `POST /sessions/:id/turn` (append voice/typed turn) · `POST /sessions/:id/finalize` (AI extract subject + summary + action items)
+- `GET /action-items` (cross-session accountability board, open/overdue first) · `PATCH /action-items/:id` (status/due/notes)
+- `GET|POST /action-items/:id/guidance` (per-item coaching AI thread) · `GET /health`
+
+**Environment Variables:**
+- `COACHTRACK_JWT_SECRET` — signs the `coachtrack_token` cookie (fallback `JWT_SECRET`). SET on prod.
+- `COACHTRACK_MODEL` — Anthropic model for extraction + guidance. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`.
+- `COACHTRACK_DEFAULT_PASSWORD` — owner console password, seeded idempotently (`mstagg@digit2ai.com`). Default `coachtrack@2026`.
+- `COACHTRACK_SEED_DEMO` — `1` seeds one sample session with transcript + action items on boot. Default unset = clean.
+
 ## Projects Hub — Client 15 Command Center (`/projects`)
 
 The Digit2AI Projects Hub doubles as the owner's (client 15) single command center, surfacing RinglyPro CRM data alongside projects. Glue lives in `src/routes/projects-bridge.js` (mounted `/api/projects-bridge`, hard-scoped to `D2AI_CLIENT_ID = 15`, runs on the main CRM sequelize).
