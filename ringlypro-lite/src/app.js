@@ -51,7 +51,10 @@ app.use('/voice', require('./routes/voice-relay'));
 // Static assets + pages
 app.use(express.static(PUBLIC));
 const page = (file) => (req, res) => res.sendFile(path.join(PUBLIC, file));
-app.get('/', optionalAuth, (req, res) => res.redirect(req.user ? '/dashboard' : '/login'));
+// Bare app root → dashboard if logged in, else the branded marketing landing
+// (so ringlypro-lite.onrender.com shows the RinglyPro Lite page, not a raw login).
+const LANDING_URL = process.env.LITE_LANDING_URL || 'https://aiagent.ringlypro.com/ringlypro_lite/';
+app.get('/', optionalAuth, (req, res) => res.redirect(req.user ? '/dashboard' : LANDING_URL));
 app.get('/login', page('login.html'));
 app.get('/signup', page('onboarding.html'));
 app.get('/onboarding', page('onboarding.html'));
