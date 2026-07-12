@@ -42,6 +42,8 @@ nav .in{display:flex;align-items:center;gap:14px;height:64px}
 .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
 .btn.ghost:hover{border-color:var(--teal)}
 .btn.lg{padding:15px 26px;font-size:16px;border-radius:13px}
+.btn.dl svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;margin-right:2px}
+.hero-dl{margin:16px 0 2px}
 .nav-login{font-weight:800;font-size:14px;color:var(--ink)}
 @media(max-width:640px){.nav-login{display:none}}
 /* hero */
@@ -163,6 +165,7 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   <div class="wrap in">
     <div>
       <span class="eyebrow" id="eyebrow">Coaching con IA para Visionarium</span>
+      <div class="hero-dl"><button class="btn grad dl" id="heroDl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg><span id="heroDlT">Descargar app CoachTrack</span></button></div>
       <h1 id="heroTitle">Convierte cada sesión de coaching en <span class="g">acción</span>.</h1>
       <p class="lead" id="heroSub">Graba tu sesión por voz o texto, deja que la IA extraiga el tema y las acciones, y pregúntale a Lina cómo avanzar en cada una.</p>
       <div class="cta-row">
@@ -276,7 +279,7 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 const DICT={
   en:{
     lang:'ES',navLogin:'Log in',navSignup:'Create free account',
-    eyebrow:'AI coaching for Visionarium',
+    eyebrow:'AI coaching for Visionarium',heroDlT:'Download CoachTrack app',
     heroTitle:'Turn every coaching session into <span class="g">action</span>.',
     heroSub:'Record your session by voice or text, let AI pull out the topic and action items, and ask Lina how to move each one forward.',
     heroCta1:'Start free',heroCta2:'See how it works',trust:'Free for Visionarium users. No card.',
@@ -308,7 +311,7 @@ const DICT={
   },
   es:{
     lang:'EN',navLogin:'Iniciar sesión',navSignup:'Crear cuenta gratis',
-    eyebrow:'Coaching con IA para Visionarium',
+    eyebrow:'Coaching con IA para Visionarium',heroDlT:'Descargar app CoachTrack',
     heroTitle:'Convierte cada sesión de coaching en <span class="g">acción</span>.',
     heroSub:'Graba tu sesión por voz o texto, deja que la IA extraiga el tema y las acciones, y pregúntale a Lina cómo avanzar en cada una.',
     heroCta1:'Empezar gratis',heroCta2:'Ver cómo funciona',trust:'Gratis para usuarios Visionarium. Sin tarjeta.',
@@ -339,7 +342,7 @@ const DICT={
     imClose:'Entendido'
   }
 };
-const IDS=['navLogin','navSignup','navInstall','eyebrow','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','faqH','q1','a1','q2','a2','q3','a3','q4','a4','q5','a5','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose'];
+const IDS=['navLogin','navSignup','navInstall','eyebrow','heroDlT','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','faqH','q1','a1','q2','a2','q3','a3','q4','a4','q5','a5','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose'];
 function apply(lang){
   const d=DICT[lang];document.documentElement.lang=lang;
   IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!=null)el.innerHTML=d[id];});
@@ -359,13 +362,15 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/coachtrack-s
 var deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
 function inStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
-document.getElementById("navInstall").addEventListener('click',async function(){
+async function doInstall(){
   if(inStandalone()){location.href='/coaching/';return;}
   if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;return;}
   // iOS / no native prompt: install from an app page so the icon opens the app.
   location.href='/coaching/signup?install=1';
-});
-if(inStandalone()){var ib=document.getElementById("navInstall");if(ib)ib.style.display='none';}
+}
+document.getElementById("navInstall").addEventListener('click',doInstall);
+var _heroDl=document.getElementById("heroDl");if(_heroDl)_heroDl.addEventListener('click',doInstall);
+if(inStandalone()){['navInstall','heroDl'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});}
 </script>
 </body>
 </html>
