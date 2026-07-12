@@ -67,7 +67,7 @@
   .rpl .typing{color:#8a98b0;font-size:12px;margin:4px 12px}
   .rpl .chatinput{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #243049;background:#141b29}
   .rpl .chatinput input{flex:1;min-width:0;background:#0f1626;border:1px solid #243049;border-radius:20px;color:#e9eef7;padding:10px 14px;font-size:15px;outline:none}
-  .rpl .chatinput button{background:var(--blue);color:#fff;border:0;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0}
+  .rpl .chatinput button{background:var(--blue);color:#fff;border:0;border-radius:50%;width:40px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .rpl .chatinput button:disabled{opacity:.5}
   /* sections */
   .rpl section{padding:56px 0}
@@ -78,7 +78,8 @@
   .rpl .step .num{width:38px;height:38px;border-radius:10px;background:var(--soft2);color:var(--blue);font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
   .rpl .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   .rpl .feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
-  .rpl .feat .ic{width:44px;height:44px;border-radius:11px;background:var(--soft2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--blue);font-size:22px;font-weight:800}
+  .rpl .feat .ic{width:46px;height:46px;border-radius:12px;background:var(--soft2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--blue)}
+  .rpl .feat .ic svg{width:24px;height:24px}
   .rpl .feat p{color:var(--mut);font-size:15px;margin:0}
   .rpl .soft{background:var(--soft)}
   .rpl .demo{background:linear-gradient(135deg,var(--navy),#12305e);color:#fff;border-radius:22px;padding:40px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
@@ -154,7 +155,7 @@
     <div class="chatmsgs" id="chatMsgs"></div>
     <div class="chatinput">
       <input id="chatText" autocomplete="off" enterkeyhint="send" />
-      <button id="chatSend" type="button" aria-label="Send">➤</button>
+      <button id="chatSend" type="button" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
     </div>
   </div></div>
 </div></div></div>
@@ -172,12 +173,12 @@
 <section class="soft"><div class="wrap">
   <div class="center"><h2><span data-en>Everything a small business needs. Nothing it doesn't.</span><span data-es>Todo lo que un negocio necesita. Nada de más.</span></h2></div>
   <div class="grid">
-    <div class="feat"><div class="ic">✎</div><h3><span data-en>Takes messages</span><span data-es>Toma mensajes</span></h3><p><span data-en>Captures the caller's name, number and reason — transcribed and saved.</span><span data-es>Captura nombre, número y motivo — transcrito y guardado.</span></p></div>
-    <div class="feat"><div class="ic">📅</div><h3><span data-en>Books appointments</span><span data-es>Agenda citas</span></h3><p><span data-en>Offers your open times and books on the spot. No double-booking.</span><span data-es>Ofrece tus horarios y agenda al instante. Sin choques de cita.</span></p></div>
-    <div class="feat"><div class="ic">💬</div><h3><span data-en>Instant SMS alerts</span><span data-es>Alertas SMS</span></h3><p><span data-en>You and your caller get a text the moment a message or booking comes in.</span><span data-es>Tú y el cliente reciben un SMS al instante con el mensaje o la cita.</span></p></div>
-    <div class="feat"><div class="ic">🌎</div><h3><span data-en>English &amp; Spanish</span><span data-es>Inglés y español</span></h3><p><span data-en>Lina greets and speaks in your customers' language.</span><span data-es>Lina saluda y habla en el idioma de tus clientes.</span></p></div>
-    <div class="feat"><div class="ic">📱</div><h3><span data-en>Keep your number</span><span data-es>Conserva tu número</span></h3><p><span data-en>No porting, no new phone. Conditional forwarding does the work.</span><span data-es>Sin portar, sin teléfono nuevo. El reenvío condicional hace el trabajo.</span></p></div>
-    <div class="feat"><div class="ic">🙋</div><h3><span data-en>Transfer to a person</span><span data-es>Transfiere a una persona</span></h3><p><span data-en>Ask for a live person and Lina connects the call to you.</span><span data-es>Pide hablar con alguien y Lina te transfiere la llamada.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg></div><h3><span data-en>Takes messages</span><span data-es>Toma mensajes</span></h3><p><span data-en>Captures the caller's name, number and reason — transcribed and saved.</span><span data-es>Captura nombre, número y motivo — transcrito y guardado.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><h3><span data-en>Books appointments</span><span data-es>Agenda citas</span></h3><p><span data-en>Offers your open times and books on the spot. No double-booking.</span><span data-es>Ofrece tus horarios y agenda al instante. Sin choques de cita.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><h3><span data-en>Instant SMS alerts</span><span data-es>Alertas SMS</span></h3><p><span data-en>You and your caller get a text the moment a message or booking comes in.</span><span data-es>Tú y el cliente reciben un SMS al instante con el mensaje o la cita.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><h3><span data-en>English &amp; Spanish</span><span data-es>Inglés y español</span></h3><p><span data-en>Lina greets and speaks in your customers' language.</span><span data-es>Lina saluda y habla en el idioma de tus clientes.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div><h3><span data-en>Keep your number</span><span data-es>Conserva tu número</span></h3><p><span data-en>No porting, no new phone. Conditional forwarding does the work.</span><span data-es>Sin portar, sin teléfono nuevo. El reenvío condicional hace el trabajo.</span></p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><h3><span data-en>Transfer to a person</span><span data-es>Transfiere a una persona</span></h3><p><span data-en>Ask for a live person and Lina connects the call to you.</span><span data-es>Pide hablar con alguien y Lina te transfiere la llamada.</span></p></div>
   </div>
 </div></section>
 
