@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Visionarium -- Foundation White Paper v1.0</title>
+<link rel="icon" type="image/svg+xml" href="/coaching/favicon.svg">
+<link rel="apple-touch-icon" href="/coaching/apple-touch-icon.png">
+<meta name="theme-color" content="#0b1d4a">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -1179,6 +1182,36 @@
     .lang-toggle { display: none; }
   }
 
+  /* CoachTrack download button (menu bar) */
+  .ct-dl {
+    position: fixed; top: 38px; left: 20px; z-index: 100;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e);
+    color: #fff; font-family: 'Inter', sans-serif; font-weight: 800;
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    text-decoration: none; padding: 11px 18px; border-radius: 30px;
+    box-shadow: 0 6px 24px rgba(23,166,166,0.35);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .ct-dl:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(23,166,166,0.5); }
+  .ct-dl svg { width: 16px; height: 16px; }
+  @media (max-width: 768px) { .ct-dl { top: 14px; left: 14px; font-size: 11px; padding: 9px 14px; letter-spacing: 1px; } }
+  @media print { .ct-dl { display: none; } }
+
+  /* CoachTrack promo section */
+  .ct-promo { padding: 80px 40px; background: linear-gradient(135deg, var(--navy-dark), var(--navy)); display: flex; justify-content: center; }
+  .ct-promo-card { max-width: 900px; width: 100%; display: flex; gap: 34px; align-items: center; background: rgba(61,203,202,0.04); border: 1px solid var(--gray-300); border-radius: 20px; padding: 38px 40px; }
+  .ct-promo-icon { flex: none; width: 96px; height: 96px; border-radius: 22px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+  .ct-promo-icon img { width: 100%; height: 100%; display: block; }
+  .ct-promo-badge { display: inline-block; background: rgba(45,232,230,0.1); border: 1px solid var(--teal-neon); color: var(--teal-neon); font-family: var(--mono); font-size: 11px; letter-spacing: 2px; font-weight: 600; padding: 5px 12px; border-radius: 4px; margin-bottom: 14px; text-transform: uppercase; }
+  .ct-promo-body h2 { font-family: 'Inter', sans-serif; color: #fff; font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; line-height: 1.15; }
+  .ct-promo-body p { color: var(--gray-700); font-size: 16px; max-width: 52ch; margin-bottom: 22px; }
+  .ct-promo-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .ct-promo-btn { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-decoration: none; padding: 13px 24px; border-radius: 8px; background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e); color: #fff; transition: transform .2s, box-shadow .2s; }
+  .ct-promo-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(23,166,166,0.4); }
+  .ct-promo-btn.ghost { background: transparent; border: 1px solid var(--gray-300); color: #fff; }
+  @media (max-width: 768px) { .ct-promo { padding: 56px 22px; } .ct-promo-card { flex-direction: column; text-align: center; padding: 30px 24px; gap: 22px; } .ct-promo-body p { margin-left: auto; margin-right: auto; } .ct-promo-cta { justify-content: center; } .ct-promo-body h2 { font-size: 25px; } }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .cover { padding: 140px 24px 60px; }
@@ -1214,6 +1247,12 @@
   <a href="whitepaper.html" class="active">EN</a>
   <a href="whitepaper-es.html">ES</a>
 </div>
+
+<!-- ============ DOWNLOAD COACHTRACK APP (menu bar) ============ -->
+<a class="ct-dl" href="https://visionarium.app/coachtrack">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+  Download CoachTrack app
+</a>
 
 <!-- ============ COVER ============ -->
 <div class="cover">
@@ -2132,6 +2171,22 @@
 
 </div><!-- /container -->
 
+<!-- ============ COACHTRACK PROMO ============ -->
+<div class="ct-promo">
+  <div class="ct-promo-card">
+    <div class="ct-promo-icon"><img src="/coaching/icon-192.png" alt="Visionarium CoachTrack"></div>
+    <div class="ct-promo-body">
+      <div class="ct-promo-badge">New</div>
+      <h2>Introducing Visionarium CoachTrack</h2>
+      <p>Turn every coaching session into action. Record by voice or text, let AI extract your topic and action items, and ask Lina how to move each one forward. Free for Visionarium users.</p>
+      <div class="ct-promo-cta">
+        <a href="https://visionarium.app/coachtrack" class="ct-promo-btn">Open CoachTrack</a>
+        <a href="https://visionarium.app/coachtrack" class="ct-promo-btn ghost">Add to home screen</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ FOOTER ============ -->
 <div class="footer">
   <h2>Be Part of the Founding Class.</h2>
@@ -2141,9 +2196,6 @@
     Visionarium Foundation &middot; White Paper v1.0 &middot; Est. 2015, New York &middot; Miami, Florida &middot; 2026
   </div>
 </div>
-
-<elevenlabs-convai agent-id="agent_3301kp969e5tfcmb8jk2bam3exqa"></elevenlabs-convai>
-<script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 
 <script>
 (function() {

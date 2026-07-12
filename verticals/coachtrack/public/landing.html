@@ -8,6 +8,11 @@
 <meta name="theme-color" content="#17a6a6" />
 <link rel="icon" type="image/svg+xml" href="https://aiagent.ringlypro.com/coaching/favicon.svg" />
 <link rel="apple-touch-icon" href="https://aiagent.ringlypro.com/coaching/apple-touch-icon.png" />
+<link rel="manifest" href="/coachtrack.webmanifest" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="CoachTrack" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta property="og:title" content="Visionarium Coaching" />
 <meta property="og:description" content="Convierte cada sesión de coaching en acción, con IA." />
 <meta property="og:type" content="website" />
@@ -90,6 +95,16 @@ section{padding:56px 0}
 .band .btn.solid{background:#fff;color:var(--blue)}
 footer{border-top:1px solid var(--border);padding:30px 0;color:var(--muted);font-size:13px}
 footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.imodal{display:none;position:fixed;inset:0;z-index:100;background:rgba(11,29,74,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
+.imodal.show{display:flex}
+.imodal-card{background:#fff;border:1px solid var(--border);border-radius:20px;max-width:420px;width:100%;padding:26px 24px;box-shadow:0 30px 80px rgba(22,35,58,.3);position:relative;text-align:center}
+.imodal-x{position:absolute;top:10px;right:14px;background:none;border:none;font-size:26px;line-height:1;color:var(--muted);cursor:pointer}
+.imodal-ic{width:66px;height:66px;margin:2px auto 12px;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(22,35,58,.15)}
+.imodal-ic img{width:100%;height:100%;display:block}
+.imodal-card h3{font-size:19px;margin-bottom:16px;color:var(--ink)}
+.istep{text-align:left;background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.istep b{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
+.istep p{font-size:13px;color:var(--muted)}
 @media(max-width:860px){
   .hero .in{grid-template-columns:1fr;gap:34px;text-align:center}
   .lead{margin-left:auto;margin-right:auto}
@@ -97,6 +112,10 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .eyebrow{margin-top:6px}
   .steps,.features{grid-template-columns:1fr}
   h1{font-size:36px}
+}
+@media(max-width:640px){
+  .nav .in{gap:9px}
+  #navInstall{padding:10px 12px;font-size:13px}
 }
 </style>
 </head>
@@ -115,6 +134,7 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
     <div class="spacer"></div>
     <button class="lang" id="lang">EN</button>
     <a class="nav-login" href="https://aiagent.ringlypro.com/coaching/login" id="navLogin">Iniciar sesión</a>
+    <button class="btn ghost" id="navInstall">Descargar app</button>
     <a class="btn grad" href="https://aiagent.ringlypro.com/coaching/signup" id="navSignup">Crear cuenta gratis</a>
   </div>
 </nav>
@@ -214,6 +234,17 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   </div>
 </footer>
 
+<div id="installModal" class="imodal" role="dialog" aria-modal="true">
+  <div class="imodal-card">
+    <button class="imodal-x" id="imX" aria-label="Cerrar">&times;</button>
+    <div class="imodal-ic"><img src="https://aiagent.ringlypro.com/coaching/icon-192.png" alt="CoachTrack" /></div>
+    <h3 id="imTitle">Añade CoachTrack a tu pantalla de inicio</h3>
+    <div class="istep"><b id="imIosT">iPhone / iPad (Safari)</b><p id="imIos">Toca el ícono Compartir y luego elige "Añadir a inicio".</p></div>
+    <div class="istep"><b id="imAndT">Android (Chrome)</b><p id="imAnd">Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".</p></div>
+    <button class="btn grad lg" id="imCloseBtn" style="width:100%;margin-top:6px">Entendido</button>
+  </div>
+</div>
+
 <script>
 const DICT={
   en:{
@@ -236,7 +267,11 @@ const DICT={
     f5t:'Lina, your AI coach',f5p:'Practical, motivating guidance on each action, in Spanish or English.',
     f6t:'Installable app',f6p:'Install it on your phone as an app (PWA). Fast and mobile-ready.',
     bandH:'Free for Visionarium users',bandP:'Create your account and log your first session today.',
-    bandCta1:'Create free account',bandCta2:'Log in',footNote:'Creativity & Leadership Incubator'
+    bandCta1:'Create free account',bandCta2:'Log in',footNote:'Creativity & Leadership Incubator',
+    navInstall:'Get the app',imTitle:'Add CoachTrack to your home screen',
+    imIosT:'iPhone / iPad (Safari)',imIos:'Tap the Share icon, then choose "Add to Home Screen".',
+    imAndT:'Android (Chrome)',imAnd:'Open the menu (three dots), then tap "Install app" or "Add to Home screen".',
+    imClose:'Got it'
   },
   es:{
     lang:'EN',navLogin:'Iniciar sesión',navSignup:'Crear cuenta gratis',
@@ -258,10 +293,14 @@ const DICT={
     f5t:'Lina, tu coach IA',f5p:'Guia práctica y motivadora en cada acción, en español o inglés.',
     f6t:'App instalable',f6p:'Instálala en tu telefono como app (PWA). Rápida y lista para móvil.',
     bandH:'Gratis para usuarios Visionarium',bandP:'Crea tu cuenta y registra tu primera sesión hoy.',
-    bandCta1:'Crear cuenta gratis',bandCta2:'Iniciar sesión',footNote:'Creativity & Leadership Incubator'
+    bandCta1:'Crear cuenta gratis',bandCta2:'Iniciar sesión',footNote:'Creativity & Leadership Incubator',
+    navInstall:'Descargar app',imTitle:'Añade CoachTrack a tu pantalla de inicio',
+    imIosT:'iPhone / iPad (Safari)',imIos:'Toca el ícono Compartir y luego elige "Añadir a inicio".',
+    imAndT:'Android (Chrome)',imAnd:'Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".',
+    imClose:'Entendido'
   }
 };
-const IDS=['navLogin','navSignup','eyebrow','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','bandH','bandP','bandCta1','bandCta2','footNote'];
+const IDS=['navLogin','navSignup','navInstall','eyebrow','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose'];
 function apply(lang){
   const d=DICT[lang];document.documentElement.lang=lang;
   IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!=null)el.innerHTML=d[id];});
@@ -272,6 +311,23 @@ let LANG=(function(){try{return localStorage.getItem('vsn_lang')||(navigator.lan
 if(LANG!=='en'&&LANG!=='es')LANG='es';
 apply(LANG);
 document.getElementById('lang').onclick=()=>{LANG=LANG==='es'?'en':'es';apply(LANG);};
+
+// ── PWA install (Add to Home Screen) ──
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/coachtrack-sw.js',{scope:'/coachtrack'}).catch(function(){});}
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
+function inStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+function showInstall(){document.getElementById('installModal').classList.add('show');}
+function hideInstall(){document.getElementById('installModal').classList.remove('show');}
+document.getElementById("navInstall").addEventListener('click',async function(){
+  if(inStandalone())return;
+  if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;return;}
+  showInstall();
+});
+document.getElementById('imX').addEventListener('click',hideInstall);
+document.getElementById('imCloseBtn').addEventListener('click',hideInstall);
+document.getElementById('installModal').addEventListener('click',function(e){if(e.target===this)hideInstall();});
+if(inStandalone()){var ib=document.getElementById("navInstall");if(ib)ib.style.display='none';}
 </script>
 </body>
 </html>
