@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RinglyPro Lite — Never miss a call. Your AI answers.</title>
+<meta name="description" content="When you can't answer, your AI receptionist does — takes a message or books the appointment. Forward your existing number. 7-day free trial." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3ER%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --blue:#2563eb;--blue-d:#1d4ed8;--navy:#0b1e3e;--ink:#111827;--body:#374151;--mut:#6b7280;
+    --teal:#10b981;--line:#e5e7eb;--bg:#ffffff;--soft:#f4f7fb;--soft2:#eef4ff
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--body);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+  h1,h2,h3{color:var(--ink);line-height:1.15;margin:0 0 12px}
+  h1{font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-.01em}
+  h3{font-size:19px;font-weight:700}
+  p{margin:0 0 14px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:16px;border-radius:12px;padding:14px 22px;cursor:pointer;border:0;transition:.15s}
+  .btn.primary{background:var(--blue);color:#fff}.btn.primary:hover{background:var(--blue-d);transform:translateY(-1px)}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}.btn.ghost:hover{border-color:var(--blue);color:var(--blue)}
+  .btn.tealb{background:var(--teal);color:#04231a}.btn.tealb:hover{transform:translateY(-1px)}
+  /* nav */
+  header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--ink)}
+  .logo .mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#60a5fa);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+  .logo .lite{color:var(--blue)}
+  .navlinks{display:flex;align-items:center;gap:8px}
+  .lang{font-size:14px;color:var(--mut);cursor:pointer;padding:8px 10px;border-radius:8px}
+  .lang:hover{background:var(--soft)}
+  .navlinks .login{font-weight:600;color:var(--ink);padding:9px 14px;border-radius:9px}
+  .navlinks .login:hover{background:var(--soft)}
+  /* hero */
+  .hero{background:linear-gradient(180deg,var(--soft2),#fff);padding:64px 0 40px}
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+  .eyebrow{display:inline-block;background:#dbeafe;color:var(--blue-d);font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;margin-bottom:16px}
+  .hero p.sub{font-size:19px;color:var(--body);max-width:560px}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+  .trust{margin-top:18px;color:var(--mut);font-size:14px}
+  .trust b{color:var(--ink)}
+  /* phone mock */
+  .phone{justify-self:center;width:290px;background:#0b1e3e;border-radius:34px;padding:12px;box-shadow:0 30px 60px rgba(11,30,62,.28)}
+  .phone .screen{background:#0d1320;border-radius:24px;overflow:hidden;color:#e9eef7;font-size:13px}
+  .phone .top{background:#141b29;padding:12px 14px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:1px solid #243049}
+  .phone .top .d{width:9px;height:9px;border-radius:50%;background:var(--teal)}
+  .bubble{margin:10px 12px;padding:10px 12px;border-radius:12px;max-width:80%}
+  .bubble.ai{background:#1b2536;border:1px solid #243049}
+  .bubble.me{background:var(--blue);color:#fff;margin-left:auto}
+  .msgcard{margin:12px;background:#141b29;border:1px solid #243049;border-radius:12px;padding:12px}
+  .msgcard .lbl{color:#8a98b0;font-size:11px}
+  /* sections */
+  section{padding:64px 0}
+  .center{text-align:center;max-width:720px;margin:0 auto 40px}
+  .center p{color:var(--mut);font-size:18px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;position:relative}
+  .step .num{width:38px;height:38px;border-radius:10px;background:var(--soft2);color:var(--blue);font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+  .feat .ic{width:44px;height:44px;border-radius:11px;background:var(--soft2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--blue);font-size:22px;font-weight:800}
+  .feat p{color:var(--mut);font-size:15px;margin:0}
+  .soft{background:var(--soft)}
+  /* demo */
+  .demo{background:linear-gradient(135deg,var(--navy),#12305e);color:#fff;border-radius:22px;padding:44px;display:flex;align-items:center;justify-content:space-between;gap:30px;flex-wrap:wrap}
+  .demo h2{color:#fff}.demo p{color:#c7d2e8;font-size:18px;margin:0}
+  .demo .num{font-size:30px;font-weight:800;color:#fff;letter-spacing:.5px}
+  /* pricing */
+  .price{max-width:460px;margin:0 auto;background:#fff;border:2px solid var(--blue);border-radius:20px;padding:34px;text-align:center;box-shadow:0 20px 50px rgba(37,99,235,.12)}
+  .price .amt{font-size:52px;font-weight:800;color:var(--ink);line-height:1}
+  .price .amt span{font-size:18px;color:var(--mut);font-weight:600}
+  .price ul{list-style:none;padding:0;margin:22px 0;text-align:left}
+  .price li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;color:var(--body)}
+  .price li:before{content:"✓";color:var(--teal);font-weight:800}
+  .price .note{color:var(--mut);font-size:14px;margin-top:14px}
+  /* faq */
+  details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+  summary{font-weight:700;color:var(--ink);cursor:pointer;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  details p{margin:12px 0 0;color:var(--mut)}
+  /* final */
+  .final{background:linear-gradient(135deg,var(--blue),#3b82f6);color:#fff;text-align:center;border-radius:24px;padding:56px 30px}
+  .final h2{color:#fff}.final p{color:#dbeafe;font-size:18px;max-width:560px;margin:0 auto 24px}
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--mut);font-size:14px}
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:center}
+  .foot-row a{color:var(--mut)}.foot-row a:hover{color:var(--blue)}
+  @media(max-width:860px){
+    .hero-grid{grid-template-columns:1fr}.phone{grid-row:1;margin-bottom:10px}
+    .steps,.grid{grid-template-columns:1fr}
+    .demo{flex-direction:column;text-align:center}
+  }
+  [data-en]{display:inline}[data-es]{display:none}
+  body.es [data-en]{display:none}body.es [data-es]{display:inline}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap"><nav>
+    <a class="logo" href="#"><span class="mark">R</span>RinglyPro <span class="lite">Lite</span></a>
+    <div class="navlinks">
+      <span class="lang" id="lang">Español</span>
+      <a class="login" href="https://ringlypro-lite.onrender.com/login"><span data-en>Log in</span><span data-es>Ingresar</span></a>
+      <a class="btn primary" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start free trial</span><span data-es>Prueba gratis</span></a>
+    </div>
+  </nav></div>
+</header>
+
+<!-- HERO -->
+<div class="hero"><div class="wrap"><div class="hero-grid">
+  <div>
+    <span class="eyebrow"><span data-en>AI receptionist for small business</span><span data-es>Recepcionista AI para tu negocio</span></span>
+    <h1><span data-en>Never miss a call again.</span><span data-es>Nunca pierdas otra llamada.</span></h1>
+    <p class="sub">
+      <span data-en>When you can't answer, your AI receptionist does — it takes a message or books the appointment, then texts you the details. Just forward your existing number.</span>
+      <span data-es>Cuando no puedes contestar, tu recepcionista AI sí — toma un mensaje o agenda la cita, y te envía los detalles por SMS. Solo reenvía tu número actual.</span>
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start 7-day free trial</span><span data-es>Iniciar prueba de 7 días</span></a>
+      <a class="btn ghost" href="tel:+18132120813"><span data-en>Hear it now: (813) 212-0813</span><span data-es>Escúchalo: (813) 212-0813</span></a>
+    </div>
+    <div class="trust"><span data-en>No charge today · <b>$0 to start</b> · Cancel anytime</span><span data-es>Sin cobro hoy · <b>$0 para empezar</b> · Cancela cuando quieras</span></div>
+  </div>
+  <div class="phone"><div class="screen">
+    <div class="top"><span class="d"></span> <span data-en>Lina · answering now</span><span data-es>Lina · contestando</span></div>
+    <div class="bubble ai"><span data-en>"Hi, this is Lina with Sunset Auto. I can book you an appointment or take a message — how can I help?"</span><span data-es>"Hola, habla Lina de Sunset Auto. Puedo agendarle una cita o tomar un mensaje. ¿Cómo le ayudo?"</span></div>
+    <div class="bubble me"><span data-en>I need an oil change Thursday</span><span data-es>Necesito un cambio de aceite el jueves</span></div>
+    <div class="bubble ai"><span data-en>"I have Thursday at 2:00 or 3:30 — which works?"</span><span data-es>"Tengo el jueves a las 2:00 o 3:30. ¿Cuál prefiere?"</span></div>
+    <div class="msgcard"><div class="lbl"><span data-en>NEW APPOINTMENT</span><span data-es>NUEVA CITA</span></div><b><span data-en>Thu 2:00 PM · confirmed</span><span data-es>Jue 2:00 PM · confirmada</span></b></div>
+  </div></div>
+</div></div></div>
+
+<!-- HOW IT WORKS -->
+<section><div class="wrap">
+  <div class="center"><h2><span data-en>Up and running in minutes</span><span data-es>Listo en minutos</span></h2>
+  <p><span data-en>Keep your number. Keep your phone. The AI only steps in when you don't answer.</span><span data-es>Conserva tu número y tu teléfono. La AI solo entra cuando no contestas.</span></p></div>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h3><span data-en>Forward your number</span><span data-es>Reenvía tu número</span></h3><p><span data-en>Tap one dial code — calls forward to your AI line only when you don't pick up.</span><span data-es>Marca un código — las llamadas se reenvían a tu línea AI solo cuando no contestas.</span></p></div>
+    <div class="step"><div class="num">2</div><h3><span data-en>Lina answers</span><span data-es>Lina contesta</span></h3><p><span data-en>A warm, human-sounding AI greets callers by your business name and helps them.</span><span data-es>Una AI cálida y natural saluda con el nombre de tu negocio y les ayuda.</span></p></div>
+    <div class="step"><div class="num">3</div><h3><span data-en>You get everything</span><span data-es>Recibes todo</span></h3><p><span data-en>Messages and appointments land in your dashboard, plus an instant text alert.</span><span data-es>Mensajes y citas llegan a tu panel, con alerta instantánea por SMS.</span></p></div>
+  </div>
+</div></section>
+
+<!-- FEATURES -->
+<section class="soft"><div class="wrap">
+  <div class="center"><h2><span data-en>Everything a small business needs. Nothing it doesn't.</span><span data-es>Todo lo que un negocio necesita. Nada de más.</span></h2></div>
+  <div class="grid">
+    <div class="feat"><div class="ic">✎</div><h3><span data-en>Takes messages</span><span data-es>Toma mensajes</span></h3><p><span data-en>Captures the caller's name, number and reason — transcribed and saved.</span><span data-es>Captura nombre, número y motivo — transcrito y guardado.</span></p></div>
+    <div class="feat"><div class="ic">📅</div><h3><span data-en>Books appointments</span><span data-es>Agenda citas</span></h3><p><span data-en>Offers your open times and books on the spot. No double-booking.</span><span data-es>Ofrece tus horarios y agenda al instante. Sin choques de cita.</span></p></div>
+    <div class="feat"><div class="ic">💬</div><h3><span data-en>Instant SMS alerts</span><span data-es>Alertas SMS</span></h3><p><span data-en>You and your caller get a text the moment a message or booking comes in.</span><span data-es>Tú y el cliente reciben un SMS al instante con el mensaje o la cita.</span></p></div>
+    <div class="feat"><div class="ic">🌎</div><h3><span data-en>English &amp; Spanish</span><span data-es>Inglés y español</span></h3><p><span data-en>Lina greets and speaks in your customers' language.</span><span data-es>Lina saluda y habla en el idioma de tus clientes.</span></p></div>
+    <div class="feat"><div class="ic">📱</div><h3><span data-en>Keep your number</span><span data-es>Conserva tu número</span></h3><p><span data-en>No porting, no new phone. Conditional forwarding does the work.</span><span data-es>Sin portar, sin teléfono nuevo. El reenvío condicional hace el trabajo.</span></p></div>
+    <div class="feat"><div class="ic">🙋</div><h3><span data-en>Transfer to a person</span><span data-es>Transfiere a una persona</span></h3><p><span data-en>Ask for a live person and Lina connects the call to you.</span><span data-es>Pide hablar con alguien y Lina te transfiere la llamada.</span></p></div>
+  </div>
+</div></section>
+
+<!-- DEMO -->
+<section><div class="wrap"><div class="demo">
+  <div>
+    <h2><span data-en>Hear Lina yourself</span><span data-es>Escucha a Lina tú mismo</span></h2>
+    <p><span data-en>Call the demo line right now and talk to the AI receptionist.</span><span data-es>Llama a la línea demo ahora y habla con la recepcionista AI.</span></p>
+  </div>
+  <div style="text-align:center">
+    <div class="num">(813) 212-0813</div>
+    <a class="btn tealb" href="tel:+18132120813" style="margin-top:12px"><span data-en>Tap to call</span><span data-es>Toca para llamar</span></a>
+  </div>
+</div></div></section>
+
+<!-- PRICING -->
+<section class="soft"><div class="wrap">
+  <div class="center"><h2><span data-en>One simple plan</span><span data-es>Un plan simple</span></h2>
+  <p><span data-en>Start free for 7 days. No card charged today.</span><span data-es>Gratis por 7 días. Sin cobro hoy.</span></p></div>
+  <div class="price">
+    <div class="amt">$49<span>/<span data-en>mo</span><span data-es>mes</span></span></div>
+    <div style="color:var(--mut);margin-top:6px"><span data-en>+ $49 one-time setup · 7-day free trial</span><span data-es>+ $49 configuración única · 7 días gratis</span></div>
+    <ul>
+      <li><span data-en>150 answered minutes / month included</span><span data-es>150 minutos contestados / mes incluidos</span></li>
+      <li><span data-en>Unlimited message-taking &amp; booking</span><span data-es>Mensajes y citas ilimitados</span></li>
+      <li><span data-en>Your dedicated AI phone number</span><span data-es>Tu número AI dedicado</span></li>
+      <li><span data-en>SMS alerts + mobile dashboard</span><span data-es>Alertas SMS + panel móvil</span></li>
+      <li><span data-en>English &amp; Spanish</span><span data-es>Inglés y español</span></li>
+    </ul>
+    <a class="btn primary" style="width:100%;justify-content:center" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start free trial</span><span data-es>Iniciar prueba gratis</span></a>
+    <div class="note"><span data-en>Extra minutes $0.40/min · Cancel anytime</span><span data-es>Minutos extra $0.40/min · Cancela cuando quieras</span></div>
+  </div>
+</div></section>
+
+<!-- FAQ -->
+<section><div class="wrap" style="max-width:760px">
+  <div class="center"><h2><span data-en>Questions</span><span data-es>Preguntas</span></h2></div>
+  <details><summary><span data-en>Does it change my phone number?</span><span data-es>¿Cambia mi número de teléfono?</span></summary><p><span data-en>No. You keep your number and phone. You forward calls to your AI line only when you can't answer.</span><span data-es>No. Conservas tu número y teléfono. Reenvías las llamadas a tu línea AI solo cuando no puedes contestar.</span></p></details>
+  <details><summary><span data-en>What happens after the 7-day trial?</span><span data-es>¿Qué pasa después de los 7 días?</span></summary><p><span data-en>Your card is charged $49/mo only if you keep it. Cancel anytime during the trial and you pay nothing.</span><span data-es>Se cobra $49/mes solo si continúas. Cancela durante la prueba y no pagas nada.</span></p></details>
+  <details><summary><span data-en>Can it really book appointments?</span><span data-es>¿De verdad agenda citas?</span></summary><p><span data-en>Yes. Set your weekly hours and Lina offers open times, confirms, and books — with no double-booking.</span><span data-es>Sí. Configura tu horario y Lina ofrece horas disponibles, confirma y agenda — sin choques.</span></p></details>
+  <details><summary><span data-en>Does it speak Spanish?</span><span data-es>¿Habla español?</span></summary><p><span data-en>Yes — set your greeting language and Lina answers in English or Spanish.</span><span data-es>Sí — elige el idioma del saludo y Lina contesta en inglés o español.</span></p></details>
+</div></section>
+
+<!-- FINAL CTA -->
+<section><div class="wrap"><div class="final">
+  <h2><span data-en>Stop losing customers to voicemail.</span><span data-es>Deja de perder clientes en el buzón de voz.</span></h2>
+  <p><span data-en>Set it up in minutes. Your AI answers the very next missed call.</span><span data-es>Configúralo en minutos. Tu AI contesta la próxima llamada perdida.</span></p>
+  <a class="btn tealb" href="https://ringlypro-lite.onrender.com/signup" style="font-size:18px;padding:16px 28px"><span data-en>Start your free trial</span><span data-es>Inicia tu prueba gratis</span></a>
+</div></div></section>
+
+<!-- FOOTER -->
+<footer><div class="wrap"><div class="foot-row">
+  <div>
+    <div class="logo" style="font-size:17px;margin-bottom:6px"><span class="mark" style="width:26px;height:26px;border-radius:7px">R</span>RinglyPro <span class="lite">Lite</span></div>
+    <div><span data-en>A service of Digit2ai LLC · (223) 294-9184</span><span data-es>Un servicio de Digit2ai LLC · (223) 294-9184</span></div>
+    <div style="margin-top:4px"><span data-en>No hidden fees. No risk. Cancel anytime.</span><span data-es>Sin cargos ocultos. Sin riesgo. Cancela cuando quieras.</span></div>
+  </div>
+  <div style="display:flex;gap:18px;flex-wrap:wrap">
+    <a href="https://ringlypro-lite.onrender.com/login"><span data-en>Log in</span><span data-es>Ingresar</span></a>
+    <a href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start trial</span><span data-es>Prueba</span></a>
+    <a href="https://ringlypro.com/">RinglyPro</a>
+    <a href="tel:+18132120813"><span data-en>Demo</span><span data-es>Demo</span></a>
+  </div>
+</div></div></footer>
+
+<script>
+  const langBtn=document.getElementById('lang');
+  function setLang(l){document.body.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'English':'Español';try{localStorage.setItem('rpl_lang',l)}catch(e){}}
+  langBtn.onclick=()=>setLang(document.body.classList.contains('es')?'en':'es');
+  let saved='en';try{saved=localStorage.getItem('rpl_lang')||((navigator.language||'').startsWith('es')?'es':'en')}catch(e){}
+  setLang(saved);
+</script>
+</body>
+</html>
