@@ -140,6 +140,9 @@ let localeTouched=false;
 $('locale').addEventListener('change',()=>{localeTouched=true});
 function applyCountry(){const cc=country.value;$('dialcode').textContent=DIAL[cc]||'+1';if(!localeTouched){$('locale').value=cc==='CO'?'es':'en';}}
 country.addEventListener('change',applyCountry);applyCountry();
+// Inherit language from the landing (?lang=es|en): set the UI + default the
+// greeting language so the client's AI speaks their language.
+(function(){const p=new URLSearchParams(location.search).get('lang');if(p==='es'||p==='en'){lang=p;localStorage.setItem('lite_lang',lang);apply();$('locale').value=p;localeTouched=true;}})();
 
 // Password strength meter + show/hide
 function pwScore(p){let s=0;if(p.length>=8)s++;if(p.length>=12)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^a-zA-Z0-9]/.test(p))s++;return Math.min(s,4);}

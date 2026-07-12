@@ -61,7 +61,10 @@ async function getBusinessInfo({ did, tenantId }) {
         success: true, tenant_id: 0, is_demo: true,
         business_name: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite Demo',
         owner_name: null, owner_phone: null, transfer_number: null,
-        country: 'US', locale: 'en', timezone: 'America/New_York', suspended: false
+        // Spanish-first voice (Lupe) so es callers get a native demo; the agent
+        // is bilingual and mirrors the caller's language (see relayAgent).
+        country: 'US', locale: process.env.LITE_DEMO_LANG || 'es',
+        timezone: 'America/New_York', suspended: false
       };
     }
     return { success: false, error: 'tenant_not_found' };

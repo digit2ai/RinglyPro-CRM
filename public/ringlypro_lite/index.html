@@ -223,7 +223,12 @@
 
 <script>
   const langBtn=document.getElementById('lang');
-  function setLang(l){document.body.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'English':'Español';try{localStorage.setItem('rpl_lang',l)}catch(e){}}
+  function setLang(l){
+    document.body.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'English':'Español';
+    try{localStorage.setItem('rpl_lang',l)}catch(e){}
+    // Carry the selected language into signup so the client's AI defaults to it.
+    document.querySelectorAll('a[href*="/signup"]').forEach(a=>{a.href='https://ringlypro-lite.onrender.com/signup?lang='+l;});
+  }
   langBtn.onclick=()=>setLang(document.body.classList.contains('es')?'en':'es');
   let saved='en';try{saved=localStorage.getItem('rpl_lang')||((navigator.language||'').startsWith('es')?'es':'en')}catch(e){}
   setLang(saved);
