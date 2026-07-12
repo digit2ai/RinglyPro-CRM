@@ -234,17 +234,6 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   </div>
 </footer>
 
-<div id="installModal" class="imodal" role="dialog" aria-modal="true">
-  <div class="imodal-card">
-    <button class="imodal-x" id="imX" aria-label="Cerrar">&times;</button>
-    <div class="imodal-ic"><img src="https://aiagent.ringlypro.com/coaching/icon-192.png" alt="CoachTrack" /></div>
-    <h3 id="imTitle">Añade CoachTrack a tu pantalla de inicio</h3>
-    <div class="istep"><b id="imIosT">iPhone / iPad (Safari)</b><p id="imIos">Toca el ícono Compartir y luego elige "Añadir a inicio".</p></div>
-    <div class="istep"><b id="imAndT">Android (Chrome)</b><p id="imAnd">Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".</p></div>
-    <button class="btn grad lg" id="imCloseBtn" style="width:100%;margin-top:6px">Entendido</button>
-  </div>
-</div>
-
 <script>
 const DICT={
   en:{
@@ -312,21 +301,20 @@ if(LANG!=='en'&&LANG!=='es')LANG='es';
 apply(LANG);
 document.getElementById('lang').onclick=()=>{LANG=LANG==='es'?'en':'es';apply(LANG);};
 
-// ── PWA install (Add to Home Screen) ──
+// ── Install the APP (not the landing) ──
+// The landing manifest's start_url is /coaching/, so a native install here
+// creates a home-screen icon that opens the app. Where no native prompt exists
+// (iOS Safari), we send the user into the app to Add-to-Home-Screen there.
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/coachtrack-sw.js',{scope:'/coachtrack'}).catch(function(){});}
 var deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
 function inStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
-function showInstall(){document.getElementById('installModal').classList.add('show');}
-function hideInstall(){document.getElementById('installModal').classList.remove('show');}
 document.getElementById("navInstall").addEventListener('click',async function(){
-  if(inStandalone())return;
+  if(inStandalone()){location.href='/coaching/';return;}
   if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;return;}
-  showInstall();
+  // iOS / no native prompt: install from an app page so the icon opens the app.
+  location.href='/coaching/signup?install=1';
 });
-document.getElementById('imX').addEventListener('click',hideInstall);
-document.getElementById('imCloseBtn').addEventListener('click',hideInstall);
-document.getElementById('installModal').addEventListener('click',function(e){if(e.target===this)hideInstall();});
 if(inStandalone()){var ib=document.getElementById("navInstall");if(ib)ib.style.display='none';}
 </script>
 </body>

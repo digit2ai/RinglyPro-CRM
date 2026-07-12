@@ -2,7 +2,7 @@
   "name": "Visionarium CoachTrack",
   "short_name": "CoachTrack",
   "description": "Convierte cada sesión de coaching en acción, con IA. De Visionarium.",
-  "start_url": "/coachtrack",
+  "start_url": "/coaching/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

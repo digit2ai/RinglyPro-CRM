@@ -9,7 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="/coaching/favicon.svg" />
 <link rel="apple-touch-icon" href="/coaching/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="Visionarium" />
+<meta name="apple-mobile-web-app-title" content="CoachTrack" />
 <meta name="mobile-web-app-capable" content="yes" />
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
@@ -65,6 +65,13 @@ button:disabled{opacity:.6;cursor:not-allowed;transform:none}
   <div class="alt">¿Ya tienes cuenta? <a href="/coaching/login">Iniciar sesión</a></div>
   <div class="foot">Visionarium &middot; Creativity &amp; Leadership Incubator</div>
 </div>
+
+<div id="pwaBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 16px 50px rgba(22,35,58,.18);padding:11px 12px;align-items:center;gap:11px;font-size:13px;color:var(--ink)">
+  <img src="/coaching/apple-touch-icon.png" alt="" style="width:42px;height:42px;border-radius:11px;flex:none" />
+  <div id="pwaText" style="flex:1;line-height:1.4">Instala CoachTrack en tu inicio.</div>
+  <button id="pwaAction" style="background:linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e);color:#fff;border:none;font-weight:800;font-size:13px;padding:9px 13px;border-radius:9px;cursor:pointer;font-family:inherit;display:none">Instalar</button>
+  <button id="pwaClose" aria-label="Cerrar" style="background:none;border:none;font-size:20px;line-height:1;color:var(--muted);cursor:pointer">&times;</button>
+</div>
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/coaching/sw.js').catch(()=>{});}
 const f=document.getElementById('f'),btn=document.getElementById('btn'),err=document.getElementById('err');
@@ -76,6 +83,19 @@ f.addEventListener('submit',async(e)=>{
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');location.href='/coaching/';
   }catch(ex){err.textContent=ex.message;btn.disabled=false;btn.textContent='Crear cuenta';}
 });
+// Install the APP to the home screen (native prompt on Android; iOS instructions).
+(function(){
+  var b=document.getElementById('pwaBanner');if(!b)return;
+  var t=document.getElementById('pwaText'),act=document.getElementById('pwaAction'),cl=document.getElementById('pwaClose');
+  if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true)return;
+  var isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var want=new URLSearchParams(location.search).get('install')==='1';
+  var dp=null;
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;t.textContent='Instala CoachTrack en tu inicio.';act.style.display='';b.style.display='flex';});
+  act.addEventListener('click',async function(){if(dp){dp.prompt();try{await dp.userChoice;}catch(e){}dp=null;b.style.display='none';}});
+  cl.addEventListener('click',function(){b.style.display='none';});
+  if(isiOS&&want){t.innerHTML='Para instalar CoachTrack: toca <b>Compartir</b> y luego <b>Añadir a inicio</b>.';act.style.display='none';b.style.display='flex';}
+})();
 </script>
 </body>
 </html>
