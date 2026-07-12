@@ -39,6 +39,20 @@ function answeringAllowed(tenant) {
   return !trialExpired(tenant);
 }
 
+/**
+ * Whether the tenant may have a dedicated number provisioned. A Twilio DID is a
+ * real recurring cost, so we only buy one once a payment method is on file
+ * (card-required trial) — this stops non-converting free signups from burning
+ * numbers. Free/dev mode (billing off) always allows it.
+ * @returns {boolean}
+ */
+function canProvisionNumber(tenant) {
+  if (!billingEnabled()) return true;              // free/dev mode
+  if (tenant.stripe_subscription_id) return true;  // card on file (trialing or active)
+  if (tenant.subscription_status === 'active') return true;
+  return false;                                    // no card yet → no number
+}
+
 // Owner-facing entitlement snapshot for the dashboard/billing UI.
 function entitlement(tenant) {
   const enabled = billingEnabled();
@@ -55,4 +69,4 @@ function entitlement(tenant) {
   };
 }
 
-module.exports = { billingEnabled, answeringAllowed, entitlement, trialExpired, trialDaysLeft };
+module.exports = { billingEnabled, answeringAllowed, canProvisionNumber, entitlement, trialExpired, trialDaysLeft };

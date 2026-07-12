@@ -1,5 +1,5 @@
 /* RinglyPro Lite service worker — installability + app-icon badge support. */
-const CACHE = 'lite-v4';
+const CACHE = 'lite-v5';
 const ASSETS = ['/dashboard', '/apple-touch-icon.png', '/icon-192.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

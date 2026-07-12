@@ -35,18 +35,21 @@
   .warn{background:#3a2a12;border:1px solid var(--warn);color:#ffdca8;border-radius:10px;padding:12px;font-size:13px;margin-top:12px}
   .save{background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--mut);margin-top:10px}
   .save b{color:var(--txt)}
+  .trialbox{background:#0f1626;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;color:var(--mut);margin-top:6px}
+  .trialbox b{color:var(--txt)}
+  .trialbox .row{display:flex;justify-content:space-between;margin:4px 0}
 </style>
 </head>
 <body>
 <div class="lang" id="lang">ES</div>
 <div class="wrap">
   <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
-  <div class="steps"><div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
+  <div class="steps"><div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div></div>
 
   <!-- Step 1: account -->
   <div class="card" id="s1">
     <h2 data-i="s1t">Create your account</h2>
-    <div class="hint" data-i="s1h">7-day free trial. No card to start.</div>
+    <div class="hint" data-i="s1h">Free to sign up. 7-day free trial, $0 today.</div>
     <label data-i="biz">Business name</label><input id="business_name" autocomplete="organization" />
     <label data-i="owner">Your name</label><input id="owner_name" autocomplete="name" />
     <label data-i="email">Email</label><input id="email" type="email" inputmode="email" autocomplete="email" />
@@ -75,17 +78,31 @@
     <div class="msg" id="m1"></div>
   </div>
 
-  <!-- Step 2: number -->
-  <div class="card hide" id="s2">
+  <!-- Step 2a: trial / card (billing enabled) -->
+  <div class="card hide" id="s2trial">
+    <h2 data-i="trt">Start your free trial</h2>
+    <div class="hint" data-i="trh">Add a card to activate your AI number. You won't be charged today.</div>
+    <div class="trialbox">
+      <div class="row"><span data-i="trToday">Charged today</span><b>$0.00</b></div>
+      <div class="row"><span data-i="trAfter">After 7-day trial</span><b>$49/mo + $49 setup</b></div>
+      <div class="row"><span data-i="trCancel">Cancel anytime in the trial</span><b data-i="trFree">Free</b></div>
+    </div>
+    <button id="goTrial" data-i="starttrial">Start free trial — $0 today</button>
+    <div class="msg" id="mTrial"></div>
+  </div>
+
+  <!-- Step 2b: number (free mode only, no card) -->
+  <div class="card hide" id="s2num">
     <h2 data-i="s2t">Get your Lite number</h2>
     <div class="hint" data-i="s2h">This is the number your calls forward to when you can't answer.</div>
-    <button id="go2" data-i="getnum">Assign my Lite number</button>
+    <button id="goNum" data-i="getnum">Get my number</button>
     <div class="msg" id="m2"></div>
   </div>
 
   <!-- Step 3: forwarding -->
-  <div class="card hide" id="s3">
+  <div class="card hide" id="s3fwd">
     <h2 data-i="s3t">Turn on call forwarding</h2>
+    <div class="hint" id="numLine" style="color:var(--acc2)"></div>
     <div class="hint" data-i="s3h">Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.</div>
     <label data-i="fmode">Forwarding mode</label>
     <select id="omode">
@@ -98,102 +115,105 @@
     <a class="tel" id="activate_tel" href="#" data-i="tap">Tap to dial</a>
     <div class="save"><b data-i="deacti">To turn it OFF later:</b> <span class="code" style="font-size:16px;display:inline-block;padding:4px 10px" id="deactivate">—</span></div>
     <div class="warn" id="reminder"></div>
-    <button id="go3" data-i="next">I dialed it — continue</button>
-  </div>
-
-  <!-- Step 4: billing -->
-  <div class="card hide" id="s4">
-    <h2 data-i="s4t">Start your trial</h2>
-    <div class="hint" data-i="s4h">7 days free. Cancel anytime from Settings.</div>
-    <button id="go4" data-i="startbill">Start free trial</button>
-    <button class="ghost" id="skip" data-i="later">Skip for now — go to dashboard</button>
-    <div class="msg" id="m4"></div>
+    <button id="goDone" data-i="next">I dialed it — go to dashboard</button>
   </div>
 </div>
 <script>
-const I={en:{s1t:"Create your account",s1h:"7-day free trial. No card to start.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts)",country:"Country",lang:"Greeting language",create:"Create account",show:"Show",hide:"Hide",pass2:"Confirm password",pwMatch:"Match",pwNoMatch:"No match",pwMismatch:"Passwords do not match",pwWeak:"Weak password",pwFair:"Fair — add length or a number/symbol",pwGood:"Good password",pwStrong:"Strong password",pwShort:"Use at least 8 characters (letters + a number)",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Assign my Lite number",s3t:"Turn on call forwarding",s3h:"Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — continue",s4t:"Start your trial",s4h:"7 days free. Cancel anytime from Settings.",startbill:"Start free trial",later:"Skip for now — go to dashboard"},
-        es:{s1t:"Cree su cuenta",s1h:"Prueba gratis de 7 días. Sin tarjeta para empezar.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",show:"Mostrar",hide:"Ocultar",pass2:"Confirmar contraseña",pwMatch:"Coincide",pwNoMatch:"No coincide",pwMismatch:"Las contraseñas no coinciden",pwWeak:"Contraseña débil",pwFair:"Aceptable — agregue longitud o un número/símbolo",pwGood:"Buena contraseña",pwStrong:"Contraseña fuerte",pwShort:"Use al menos 8 caracteres (letras + un número)",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Asignar mi número Lite",s3t:"Active el reenvío de llamadas",s3h:"Elija cómo se reenvían las llamadas para que la IA conteste antes de su buzón de voz, luego toque para marcar el código.",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — continuar",s4t:"Inicie su prueba",s4h:"7 días gratis. Cancele cuando quiera desde Ajustes.",startbill:"Iniciar prueba gratis",later:"Omitir por ahora — ir al panel"}};
+const I={en:{s1t:"Create your account",s1h:"Free to sign up. 7-day free trial, $0 today.",biz:"Business name",owner:"Your name",email:"Email",pass:"Password",mobile:"Your mobile (for text alerts)",country:"Country",lang:"Greeting language",create:"Create account",show:"Show",hide:"Hide",pass2:"Confirm password",pwMatch:"Match",pwNoMatch:"No match",pwMismatch:"Passwords do not match",pwWeak:"Weak password",pwFair:"Fair — add length or a number/symbol",pwGood:"Good password",pwStrong:"Strong password",pwShort:"Use at least 8 characters (letters + a number)",trt:"Start your free trial",trh:"Add a card to activate your AI number. You won't be charged today.",trToday:"Charged today",trAfter:"After 7-day trial",trCancel:"Cancel anytime in the trial",trFree:"Free",starttrial:"Start free trial — $0 today",s2t:"Get your Lite number",s2h:"This is the number your calls forward to when you can't answer.",getnum:"Get my number",s3t:"Turn on call forwarding",s3h:"Pick how calls forward so the AI answers before your voicemail, then tap to dial the code from your phone.",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",acti:"Activate forwarding",tap:"Tap to dial",deacti:"To turn it OFF later:",next:"I dialed it — go to dashboard",setting:"Setting up your number…",payCanceled:"Payment canceled — you can try again.",numIs:"Your Lite number:"},
+        es:{s1t:"Cree su cuenta",s1h:"Registro gratis. Prueba de 7 días, $0 hoy.",biz:"Nombre del negocio",owner:"Su nombre",email:"Correo",pass:"Contraseña",mobile:"Su móvil (para alertas SMS)",country:"País",lang:"Idioma del saludo",create:"Crear cuenta",show:"Mostrar",hide:"Ocultar",pass2:"Confirmar contraseña",pwMatch:"Coincide",pwNoMatch:"No coincide",pwMismatch:"Las contraseñas no coinciden",pwWeak:"Contraseña débil",pwFair:"Aceptable — agregue longitud o un número/símbolo",pwGood:"Buena contraseña",pwStrong:"Contraseña fuerte",pwShort:"Use al menos 8 caracteres (letras + un número)",trt:"Inicie su prueba gratis",trh:"Agregue una tarjeta para activar su número de IA. No se le cobra hoy.",trToday:"Se cobra hoy",trAfter:"Tras la prueba de 7 días",trCancel:"Cancele cuando quiera en la prueba",trFree:"Gratis",starttrial:"Iniciar prueba gratis — $0 hoy",s2t:"Obtenga su número Lite",s2h:"Es el número al que se reenvían sus llamadas cuando no contesta.",getnum:"Obtener mi número",s3t:"Active el reenvío de llamadas",s3h:"Elija cómo se reenvían las llamadas para que la IA conteste antes de su buzón de voz, luego toque para marcar el código.",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",acti:"Activar reenvío",tap:"Toque para marcar",deacti:"Para desactivarlo después:",next:"Ya lo marqué — ir al panel",setting:"Configurando su número…",payCanceled:"Pago cancelado — puede intentar de nuevo.",numIs:"Su número Lite:"}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');if(I[lang][k])e.textContent=I[lang][k]});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply()};apply();
 if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 const $=id=>document.getElementById(id);
-function step(n){[1,2,3,4].forEach(i=>{$('s'+i).classList.toggle('hide',i!==n);$('d'+i).classList.toggle('on',i<=n)})}
+let BILLING=true;
+
+function show(id){['s1','s2trial','s2num','s3fwd'].forEach(x=>$(x).classList.toggle('hide',x!==id));}
+function dots(n){[1,2,3].forEach(i=>$('d'+i).classList.toggle('on',i<=n));}
+function goStep2(){ if(BILLING){show('s2trial');} else {show('s2num');} dots(2); window.scrollTo(0,0); }
+function goForwarding(){ show('s3fwd'); dots(3); loadCarriers(); window.scrollTo(0,0); }
 
 // Country → dial code + default greeting language
 const DIAL={US:'+1',CO:'+57'};
 let localeTouched=false;
 $('locale').addEventListener('change',()=>{localeTouched=true});
-function applyCountry(){
-  const cc=country.value;
-  $('dialcode').textContent=DIAL[cc]||'+1';
-  if(!localeTouched){ $('locale').value = cc==='CO'?'es':'en'; }
-}
-country.addEventListener('change',applyCountry);
-applyCountry();
+function applyCountry(){const cc=country.value;$('dialcode').textContent=DIAL[cc]||'+1';if(!localeTouched){$('locale').value=cc==='CO'?'es':'en';}}
+country.addEventListener('change',applyCountry);applyCountry();
 
 // Password strength meter + show/hide
 function pwScore(p){let s=0;if(p.length>=8)s++;if(p.length>=12)s++;if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^a-zA-Z0-9]/.test(p))s++;return Math.min(s,4);}
 const PW_COLORS=['#ff6b6b','#ff6b6b','#ffb454','#9be15d','#3ad29f'];
-password.addEventListener('input',()=>{
-  const p=password.value, sc=pwScore(p);
-  const pct=p?Math.max(12,(sc/4)*100):0;
-  $('pwBar').style.width=pct+'%'; $('pwBar').style.background=PW_COLORS[sc];
-  $('pwText').style.color=PW_COLORS[sc];
-  $('pwText').textContent=!p?'':(I[lang]['pw'+['Weak','Weak','Fair','Good','Strong'][sc]]||'');
-});
+password.addEventListener('input',()=>{const p=password.value,sc=pwScore(p);const pct=p?Math.max(12,(sc/4)*100):0;$('pwBar').style.width=pct+'%';$('pwBar').style.background=PW_COLORS[sc];$('pwText').style.color=PW_COLORS[sc];$('pwText').textContent=!p?'':(I[lang]['pw'+['Weak','Weak','Fair','Good','Strong'][sc]]||'');});
 $('pwToggle').onclick=()=>{const t=password.type==='password';password.type=t?'text':'password';password2.type=t?'text':'password';$('pwToggle').textContent=I[lang][t?'hide':'show'];};
+function checkMatch(){const p=password.value,p2=password2.value;if(!p2){$('pw2Match').textContent='';return;}const ok=p===p2;$('pw2Match').textContent=I[lang][ok?'pwMatch':'pwNoMatch'];$('pw2Match').style.color=ok?'var(--ok)':'var(--err)';}
+password2.addEventListener('input',checkMatch);password.addEventListener('input',checkMatch);
 
-// Confirm-password match indicator
-function checkMatch(){
-  const p=password.value, p2=password2.value;
-  if(!p2){$('pw2Match').textContent='';return;}
-  const ok=p===p2;
-  $('pw2Match').textContent=I[lang][ok?'pwMatch':'pwNoMatch'];
-  $('pw2Match').style.color=ok?'var(--ok)':'var(--err)';
-}
-password2.addEventListener('input',checkMatch);
-password.addEventListener('input',checkMatch);
-
+// Step 1 → create account → step 2
 $('go1').onclick=async()=>{
   $('m1').textContent='';
   const p=password.value||'';
-  if(pwScore(p)<2 || p.length<8){$('m1').style.color='#ffb454';$('m1').textContent=I[lang].pwShort;return;}
+  if(pwScore(p)<2||p.length<8){$('m1').style.color='#ffb454';$('m1').textContent=I[lang].pwShort;return;}
   if(p!==(password2.value||'')){$('m1').style.color='#ff6b6b';$('m1').textContent=I[lang].pwMismatch;return;}
   const digits=($('owner_phone_num').value||'').replace(/[^0-9]/g,'');
   const owner_phone=digits?((DIAL[country.value]||'+1')+digits):'';
   const b={business_name:business_name.value,owner_name:owner_name.value,email:email.value,password:p,owner_phone,country:country.value,locale:locale.value};
   const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(b)});
   const j=await r.json();
-  if(r.ok){step(2)}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.error||'Error'}
+  if(r.ok){goStep2();}else{$('m1').style.color='#ff6b6b';$('m1').textContent=j.error||'Error'}
 };
-$('go2').onclick=async()=>{
-  $('m2').style.color='#8a98b0';$('m2').textContent='...';
+
+// Step 2a → start trial → Stripe checkout (redirects away, returns to ?paid=1)
+$('goTrial').onclick=async()=>{
+  $('mTrial').style.color='#8a98b0';$('mTrial').textContent='...';
+  const r=await fetch('/api/billing/checkout',{method:'POST',credentials:'include'});const j=await r.json();
+  if(r.ok&&j.url){location.href=j.url}else{$('mTrial').style.color='#ff6b6b';$('mTrial').textContent=j.error||'Billing not configured'}
+};
+
+// Step 2b (free mode) → provision number directly
+$('goNum').onclick=async()=>{
+  $('m2').style.color='#8a98b0';$('m2').textContent=I[lang].setting;
+  const ok=await provisionNumber($('m2'));
+  if(ok)goForwarding();
+};
+
+async function provisionNumber(msgEl){
   const r=await fetch('/api/onboarding/provision-number',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:'{}'});
   const j=await r.json();
-  if(r.ok){await loadCarriers();step(3)}
-  else{$('m2').style.color='#ffb454';$('m2').textContent=j.message||j.error}
-};
+  if(r.ok){return true;}
+  if(msgEl){msgEl.style.color='#ffb454';msgEl.textContent=j.message||j.error||'Error';}
+  return false;
+}
+
 async function loadCarriers(){
   const r=await fetch('/api/onboarding/carriers',{credentials:'include'});const j=await r.json();
+  if(!j.carriers)return;
   carrier.innerHTML=j.carriers.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
   carrier.onchange=refreshCodes;omode.onchange=refreshCodes;await refreshCodes();
 }
 async function refreshCodes(){
   const r=await fetch('/api/onboarding/forwarding-codes?carrier='+encodeURIComponent(carrier.value)+'&mode='+omode.value,{credentials:'include'});
   const j=await r.json();if(!r.ok)return;
+  $('numLine').textContent=I[lang].numIs+' '+j.did;
   activate.textContent=j.codes.activate;deactivate.textContent=j.codes.deactivate;
   activate_tel.href=j.codes.activate_tel;
   reminder.textContent=j.reminder+(j.warning?(' '+j.warning):'');
 }
-let BILLING=false;
-fetch('/api/config').then(r=>r.json()).then(c=>{BILLING=!!c.billing_enabled;if(!BILLING){$('d4').style.display='none'}}).catch(()=>{});
-$('go3').onclick=()=>{ if(BILLING){step(4)} else {location.href='/dashboard'} };
-$('go4').onclick=async()=>{
-  const r=await fetch('/api/billing/checkout',{method:'POST',credentials:'include'});const j=await r.json();
-  if(r.ok&&j.url){location.href=j.url}else{$('m4').style.color='#ffb454';$('m4').textContent=j.error||'Billing not configured — you can start on trial.'}
-};
-$('skip').onclick=()=>location.href='/dashboard';
+$('goDone').onclick=()=>location.href='/dashboard';
+
+// Load config + handle Stripe return
+(async function init(){
+  try{const c=await fetch('/api/config').then(r=>r.json());BILLING=!!c.billing_enabled;}catch(e){}
+  const params=new URLSearchParams(location.search);
+  if(params.get('paid')==='1'){
+    // Returned from Stripe with a card on file → confirm, provision, forwarding.
+    show('s2trial');dots(2);$('mTrial').style.color='#8a98b0';$('mTrial').textContent=I[lang].setting;
+    try{await fetch('/api/billing/confirm',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({session_id:params.get('sid')})});}catch(e){}
+    const ok=await provisionNumber($('mTrial'));
+    if(ok)goForwarding();
+  } else if(params.get('paid')==='0'){
+    show('s2trial');dots(2);$('mTrial').style.color='#ffb454';$('mTrial').textContent=I[lang].payCanceled;
+  }
+})();
 </script>
 </body>
 </html>

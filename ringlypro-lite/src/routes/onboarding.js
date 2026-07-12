@@ -10,6 +10,7 @@ const { requireAuth } = require('../middleware/auth');
 const { Tenant, Number } = require('../models');
 const { getProvider } = require('../telephony');
 const { codesFor, carriers } = require('../services/forwardingCodes');
+const { canProvisionNumber } = require('../services/entitlement');
 
 // List carriers for a country (drives the onboarding dropdown).
 router.get('/carriers', requireAuth, async (req, res) => {
@@ -25,6 +26,16 @@ router.post('/provision-number', requireAuth, async (req, res) => {
 
     let num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
     if (num) return res.json({ success: true, already: true, number: num });
+
+    // Card-required gate: don't burn a Twilio DID on a card-free signup that may
+    // never convert. A number is only provisioned once payment is on file.
+    if (!canProvisionNumber(tenant)) {
+      return res.status(402).json({
+        success: false,
+        error: 'payment_required',
+        message: 'Add a payment method to activate your number. Your 7-day free trial starts with $0 charged today.'
+      });
+    }
 
     // Isolation guard: DID country MUST match tenant country.
     const country = tenant.country || 'US';

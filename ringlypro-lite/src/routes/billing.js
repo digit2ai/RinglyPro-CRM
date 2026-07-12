@@ -133,8 +133,8 @@ router.post('/checkout', requireAuth, async (req, res) => {
         trial_period_days: TRIAL_DAYS,
         metadata: { tenant_id: String(tenant.id), country: tenant.country, plan: 'us_lite_49' }
       },
-      success_url: `${base}/dashboard?billing=success`,
-      cancel_url: `${base}/dashboard?billing=cancel`,
+      success_url: `${base}/onboarding?paid=1&sid={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/onboarding?paid=0`,
       metadata: { tenant_id: String(tenant.id) }
     });
     res.json({ success: true, url: session.url });
@@ -166,6 +166,68 @@ router.post('/overage/bill', async (req, res) => {
       metadata: { tenant_id: String(tenant.id), period_start: since.toISOString() }
     });
     res.json({ ok: true, overage_minutes: +overageMin.toFixed(2), amount_usd: amount / 100, invoice_item: item.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Confirm a completed Checkout session and persist the subscription on the
+// tenant immediately (so onboarding can proceed to number provisioning without
+// waiting on the webhook). Called right after the Stripe redirect back.
+router.post('/confirm', requireAuth, async (req, res) => {
+  try {
+    const sid = (req.body && req.body.session_id) || req.query.session_id;
+    if (!sid) return res.status(400).json({ error: 'missing_session_id' });
+    const session = await stripe().checkout.sessions.retrieve(sid);
+    if (String(session.metadata && session.metadata.tenant_id) !== String(req.tenantId)) {
+      return res.status(403).json({ error: 'session_tenant_mismatch' });
+    }
+    const tenant = await Tenant.findByPk(req.tenantId);
+    if (session.customer) tenant.stripe_customer_id = session.customer;
+    if (session.subscription) tenant.stripe_subscription_id = session.subscription;
+    tenant.subscription_status = 'trialing';   // webhook will refine to active/etc.
+    tenant.suspended_at = null;
+    await tenant.save();
+    res.json({ success: true, has_card: !!tenant.stripe_subscription_id });
+  } catch (e) {
+    console.error('[lite:billing] confirm error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Auto-release DIDs from non-converting tenants to stop paying for dead numbers.
+// Releases numbers where the subscription is canceled, OR the trial expired with
+// no card on file (grace period), then marks the number released. Admin-gated;
+// wire a Render cron to call this daily.
+router.post('/release-unconverted', async (req, res) => {
+  try {
+    const key = process.env.LITE_ADMIN_KEY;
+    if (!key || (req.headers['x-admin-key'] || req.query.key) !== key) return res.status(401).json({ error: 'unauthorized' });
+    const graceDays = int('LITE_RELEASE_GRACE_DAYS', 3);
+    const cutoff = new Date(Date.now() - graceDays * 86400000);
+    const { Number } = require('../models');
+    const { getProvider } = require('../telephony');
+
+    const active = await Number.findAll({ where: { status: 'active' } });
+    const released = [];
+    for (const num of active) {
+      const tenant = await Tenant.findByPk(num.tenant_id);
+      if (!tenant) continue;
+      const canceled = tenant.subscription_status === 'canceled';
+      const trialLapsed = !tenant.stripe_subscription_id
+        && tenant.subscription_status !== 'active'
+        && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < cutoff;
+      if (!canceled && !trialLapsed) continue;
+      try {
+        if (num.provider_sid) await getProvider().releaseNumber({ providerSid: num.provider_sid });
+        num.status = 'released';
+        await num.save();
+        released.push({ tenant_id: tenant.id, did: num.did, reason: canceled ? 'canceled' : 'trial_lapsed' });
+      } catch (e) {
+        console.error('[lite:billing] release error for', num.did, e.message);
+      }
+    }
+    res.json({ ok: true, released_count: released.length, released });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
