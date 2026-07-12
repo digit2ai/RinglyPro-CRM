@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RinglyPro Lite — GHL Embed Code</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#0d1320;color:#e9eef7;padding:24px;line-height:1.6}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:26px 0 8px;color:#bda4ff}
+  p{color:#8a98b0;font-size:14px;margin:0 0 12px}
+  code{background:#141b29;border:1px solid #243049;border-radius:6px;padding:2px 6px;font-size:13px}
+  textarea{width:100%;height:340px;background:#0f1626;border:1px solid #243049;border-radius:10px;color:#c9d4e6;font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:14px;white-space:pre;overflow:auto}
+  .row{display:flex;gap:10px;align-items:center;margin:10px 0}
+  button{background:#6a4bff;color:#fff;border:0;border-radius:9px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer}
+  button:active{transform:translateY(1px)}
+  .ok{color:#3ad29f;font-size:14px}
+  ol{color:#8a98b0;font-size:14px;padding-left:20px}
+  ol li{margin:6px 0}
+  .box{background:#141b29;border:1px solid #243049;border-radius:12px;padding:16px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>RinglyPro Lite — GoHighLevel embed</h1>
+  <p>Two ways to make a GHL page (e.g. <code>ringlypro.com/home</code>) show the exact same landing as
+  <code>aiagent.ringlypro.com/ringlypro_lite</code>. Option A is zero-maintenance and always in sync.</p>
+
+  <h2>Option A — Iframe (recommended, always identical)</h2>
+  <div class="box">
+    <p>In GHL add a <b>Custom Code / HTML</b> element and paste:</p>
+    <textarea id="iframeCode" readonly style="height:70px"></textarea>
+    <div class="row"><button onclick="copy('iframeCode')">Copy iframe</button><span class="ok" id="ok1"></span></div>
+    <p>The page renders the live landing, so any future change updates automatically.</p>
+  </div>
+
+  <h2>Option B — Inline code (paste the block)</h2>
+  <div class="box">
+    <ol>
+      <li>In GHL, add a <b>Custom Code / HTML</b> element.</li>
+      <li>Click <b>Copy code</b> below and paste it in.</li>
+      <li>Save. The code is scoped under <code>.rpl</code>, so it won't affect the rest of your GHL page.</li>
+    </ol>
+    <div class="row"><button onclick="copy('blockCode')">Copy code</button><span class="ok" id="ok2"></span><span id="loadMsg" style="color:#ffb454;font-size:13px"></span></div>
+    <textarea id="blockCode" readonly>Loading the current landing code…</textarea>
+    <p>This is the exact block between the <code>GHL-EMBEDDABLE BLOCK</code> markers on the live landing — kept in sync automatically.</p>
+  </div>
+</div>
+<script>
+  var LANDING='https://aiagent.ringlypro.com/ringlypro_lite/';
+  document.getElementById('iframeCode').value =
+    '<iframe src="'+LANDING+'" style="width:100%;min-height:100vh;border:0;display:block" loading="lazy" title="RinglyPro Lite"></iframe>';
+
+  function copy(id){
+    var t=document.getElementById(id); t.select(); t.setSelectionRange(0,999999);
+    try{ document.execCommand('copy'); }catch(e){}
+    if(navigator.clipboard){ navigator.clipboard.writeText(t.value).catch(function(){}); }
+    var ok=document.getElementById(id==='iframeCode'?'ok1':'ok2'); ok.textContent='Copied!'; setTimeout(function(){ok.textContent='';},2000);
+  }
+
+  // Pull the current embeddable block from the live landing (same origin — no CORS).
+  fetch(LANDING).then(function(r){return r.text();}).then(function(html){
+    var A='<!-- ===== GHL-EMBEDDABLE BLOCK: copy from <style> to </script> ===== -->';
+    var B='<!-- ===== END GHL-EMBEDDABLE BLOCK ===== -->';
+    var i=html.indexOf(A), j=html.indexOf(B);
+    if(i>=0 && j>i){ document.getElementById('blockCode').value = html.slice(i+A.length, j).trim(); }
+    else { document.getElementById('blockCode').value = html; document.getElementById('loadMsg').textContent='(markers not found — full page shown)'; }
+  }).catch(function(e){ document.getElementById('loadMsg').textContent='Could not load ('+e.message+'). Use Option A (iframe).'; });
+</script>
+</body>
+</html>
