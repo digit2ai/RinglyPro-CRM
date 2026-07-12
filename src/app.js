@@ -1547,6 +1547,21 @@ app.get(['/visionarium/coachtrack', '/visionarium/coachtrack/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'verticals', 'coachtrack', 'public', 'landing.html'));
 });
 
+// GHL-ready embed block. `.txt` (or ?raw=1) serves the source as plain text
+// to copy into a GoHighLevel Custom-Code element; otherwise renders a preview.
+app.get(['/visionarium/coachtrack-ghl', '/visionarium/coachtrack-ghl.txt'], (req, res) => {
+  const fs = require('fs');
+  const file = path.join(__dirname, '..', 'verticals', 'coachtrack', 'public', 'landing-ghl.html');
+  const raw = req.path.endsWith('.txt') || req.query.raw === '1';
+  try {
+    const html = fs.readFileSync(file, 'utf8');
+    if (raw) { res.type('text/plain; charset=utf-8').send(html); }
+    else { res.type('text/html; charset=utf-8').send(html); } // renders (self-contained block)
+  } catch (e) {
+    res.status(500).send('Not available');
+  }
+});
+
 // =====================================================
 // AGROMERCADO DIGITAL — national agro marketplace (served at /agromercado/)
 // Developed by ISTC; AI layer by Digit2AI. Self-contained vertical.
