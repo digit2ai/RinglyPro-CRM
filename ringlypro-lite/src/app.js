@@ -28,7 +28,13 @@ app.get('/health', (req, res) => res.json({ service: 'ringlypro-lite', ok: true,
 // Robust to stray whitespace/casing in the env value (a common dashboard paste issue).
 function envFlag(v) { return ['1', 'true', 'yes', 'on'].includes(String(v || '').trim().toLowerCase()); }
 app.get('/api/config', (req, res) => res.json({
-  billing_enabled: envFlag(process.env.LITE_BILLING_ENABLED)
+  billing_enabled: envFlag(process.env.LITE_BILLING_ENABLED),
+  _diag: {
+    present: 'LITE_BILLING_ENABLED' in process.env,
+    raw_len: (process.env.LITE_BILLING_ENABLED || '').length,
+    // list any env keys that look like a mistyped billing flag
+    similar_keys: Object.keys(process.env).filter(k => /BILLING/i.test(k))
+  }
 }));
 
 // API routers
