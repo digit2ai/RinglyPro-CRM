@@ -24,6 +24,8 @@ header{display:flex;align-items:center;gap:12px;padding:max(6px,env(safe-area-in
 .brand .mk{width:30px;height:30px;flex:none}
 .wm{font-weight:800;font-size:19px;letter-spacing:.13em;padding-left:.13em;display:inline-flex;align-items:center;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .wm .o{width:.56em;height:.56em;border-radius:50%;background:var(--grad);display:inline-block;margin:0 .12em;flex:none}
+.wm-sub{font-weight:600;font-size:13px;color:var(--muted);align-self:center;letter-spacing:.08em;text-transform:uppercase;border-left:1px solid #d5deea;padding-left:9px;margin-left:2px}
+@media(max-width:480px){.wm-sub{display:none}}
 .spacer{flex:1}
 .btn{background:var(--grad);color:#fff;border:none;padding:11px 16px;border-radius:11px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .15s;min-height:44px}
 .btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
@@ -95,6 +97,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--teal);ba
         <circle cx="12" cy="15" r="2.7" fill="url(#vgm)"/><circle cx="38" cy="12" r="2.7" fill="url(#vgm)"/><circle cx="18" cy="39" r="2.7" fill="url(#vgm)"/><circle cx="34" cy="37" r="2.7" fill="url(#vgm)"/><circle cx="24" cy="26" r="5" fill="url(#vgm)"/>
       </svg>
       <div class="wm">VISI<i class="o"></i>NARIUM</div>
+      <span class="wm-sub">Coaching</span>
     </div>
     <div class="spacer"></div>
     <button class="btn" id="newBtn">+<span class="lbl"> Nueva sesión</span></button>
