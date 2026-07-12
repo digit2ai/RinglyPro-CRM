@@ -203,30 +203,8 @@ router.post('/release-unconverted', async (req, res) => {
   try {
     const key = process.env.LITE_ADMIN_KEY;
     if (!key || (req.headers['x-admin-key'] || req.query.key) !== key) return res.status(401).json({ error: 'unauthorized' });
-    const graceDays = int('LITE_RELEASE_GRACE_DAYS', 3);
-    const cutoff = new Date(Date.now() - graceDays * 86400000);
-    const { Number } = require('../models');
-    const { getProvider } = require('../telephony');
-
-    const active = await Number.findAll({ where: { status: 'active' } });
-    const released = [];
-    for (const num of active) {
-      const tenant = await Tenant.findByPk(num.tenant_id);
-      if (!tenant) continue;
-      const canceled = tenant.subscription_status === 'canceled';
-      const trialLapsed = !tenant.stripe_subscription_id
-        && tenant.subscription_status !== 'active'
-        && tenant.trial_ends_at && new Date(tenant.trial_ends_at) < cutoff;
-      if (!canceled && !trialLapsed) continue;
-      try {
-        if (num.provider_sid) await getProvider().releaseNumber({ providerSid: num.provider_sid });
-        num.status = 'released';
-        await num.save();
-        released.push({ tenant_id: tenant.id, did: num.did, reason: canceled ? 'canceled' : 'trial_lapsed' });
-      } catch (e) {
-        console.error('[lite:billing] release error for', num.did, e.message);
-      }
-    }
+    const { releaseUnconverted } = require('../services/numberReclaim');
+    const released = await releaseUnconverted();
     res.json({ ok: true, released_count: released.length, released });
   } catch (e) {
     res.status(500).json({ error: e.message });

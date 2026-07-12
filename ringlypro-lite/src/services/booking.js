@@ -38,7 +38,22 @@ async function getBusinessInfo({ did, tenantId }) {
     const num = await LiteNumber.findOne({ where: { did } });
     if (num) tenant = await Tenant.findByPk(num.tenant_id);
   }
-  if (!tenant) return { success: false, error: 'tenant_not_found' };
+  if (!tenant) {
+    // Shared demo line: if this DID is the configured demo number, answer as a
+    // synthetic demo tenant (no DB row, no per-tenant cost) so prospects can
+    // hear Lina before adding a card. Requires the DID's voice webhook to point
+    // at this Lite service.
+    const demo = process.env.LITE_DEMO_NUMBER;
+    if (did && demo && last10(did) === last10(demo)) {
+      return {
+        success: true, tenant_id: 0, is_demo: true,
+        business_name: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite Demo',
+        owner_name: null, owner_phone: null, transfer_number: null,
+        country: 'US', locale: 'en', timezone: 'America/New_York', suspended: false
+      };
+    }
+    return { success: false, error: 'tenant_not_found' };
+  }
   return {
     success: true,
     tenant_id: tenant.id,

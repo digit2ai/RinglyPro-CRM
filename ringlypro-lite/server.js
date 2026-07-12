@@ -195,6 +195,9 @@ async function main() {
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);
+    // Daily auto-release of unconverted numbers (no external cron needed).
+    try { require('./src/services/numberReclaim').startScheduler(); }
+    catch (e) { console.error('[lite] reclaim scheduler failed to start:', e.message); }
   });
 }
 
