@@ -6,7 +6,8 @@
  * trial expired with no card on file past a grace window. Mirrors Twilio's own
  * unused-number sweep. Called by the daily in-app scheduler and the admin route.
  */
-const { Tenant, Number } = require('../models');
+// alias LiteNumber — importing as `Number` shadows the global Number constructor.
+const { Tenant, Number: LiteNumber } = require('../models');
 const { getProvider } = require('../telephony');
 
 function graceDays() {
@@ -16,7 +17,7 @@ function graceDays() {
 
 async function releaseUnconverted() {
   const cutoff = new Date(Date.now() - graceDays() * 86400000);
-  const active = await Number.findAll({ where: { status: 'active' } });
+  const active = await LiteNumber.findAll({ where: { status: 'active' } });
   const released = [];
   for (const num of active) {
     const tenant = await Tenant.findByPk(num.tenant_id);
