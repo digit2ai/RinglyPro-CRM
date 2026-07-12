@@ -1542,6 +1542,11 @@ app.get('/debug/coachtrack-error', (req, res) => {
   });
 });
 
+// Public promo landing page for Visionarium Coaching.
+app.get(['/visionarium/coachtrack', '/visionarium/coachtrack/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'verticals', 'coachtrack', 'public', 'landing.html'));
+});
+
 // =====================================================
 // AGROMERCADO DIGITAL — national agro marketplace (served at /agromercado/)
 // Developed by ISTC; AI layer by Digit2AI. Self-contained vertical.

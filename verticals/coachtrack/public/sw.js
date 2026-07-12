@@ -1,5 +1,5 @@
 /* Visionarium Coaching — service worker (PWA offline shell). */
-const CACHE = 'vsn-coaching-v1';
+const CACHE = 'vsn-coaching-v2';
 const SHELL = [
   '/coaching/',
   '/coaching/login',

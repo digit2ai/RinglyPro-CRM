@@ -276,7 +276,9 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **Location:** `verticals/coachtrack/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/coachtrack/migrations/20260712_coachtrack_tables.sql`. Multi-tenant (`tenant_id`), `ct_` prefix: `ct_users, ct_sessions, ct_transcripts, ct_action_items, ct_guidance`.
 
-**Live:** dashboard `/coaching/` · signup `/coaching/signup` (open free) · login `/coaching/login` · health `/coaching/health` · debug `/debug/coachtrack-error`.
+**Live:** promo landing `/visionarium/coachtrack` (public, bilingual ES/EN, served from `verticals/coachtrack/public/landing.html` via a route in `src/app.js`) · dashboard `/coaching/` · signup `/coaching/signup` (open free) · login `/coaching/login` · health `/coaching/health` · debug `/debug/coachtrack-error`.
+
+**Branding:** crisp vector brand lockup (constellation mark + `VISI●NARIUM` wordmark with gradient node-O) inline in login/signup/dashboard/landing — replaced the low-res `visionarium-logo.png`. App icons (`icon-192/512`, `apple-touch-icon`, `favicon-32`) rasterized from `public/icon-master.svg` (square constellation mark) via `sips -s format png -Z`. Green→teal→blue gradient (`#3fc06a → #17a6a6 → #2a6f9e`).
 
 **PWA + mobile:** installable PWA — `public/manifest.webmanifest` (standalone, theme `#17a6a6`), `public/sw.js` (offline shell; network-first navigations, never caches `/api/`), `apple-touch-icon.png`, icons 192/512 (generated from the Visionarium logo via `sips` fit-then-pad), branded `favicon.svg` (constellation node mark). Light Visionarium theme (white + green→teal→blue gradient), logo `public/visionarium-logo.png`, safe-area insets, 44px touch targets, in-app Install bar. PWA assets serve pre-login (auth gate allows `/signup`, `/manifest.webmanifest`, `/sw.js`, and any static asset extension).
 

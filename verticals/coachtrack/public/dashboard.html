@@ -20,7 +20,10 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(-
 a{color:inherit}
 .wrap{max-width:1000px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
 header{display:flex;align-items:center;gap:12px;padding:max(6px,env(safe-area-inset-top)) 0 14px;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap}
-.logo{height:34px;width:auto;max-width:190px;object-fit:contain}
+.brand{display:inline-flex;align-items:center;gap:9px}
+.brand .mk{width:30px;height:30px;flex:none}
+.wm{font-weight:800;font-size:19px;letter-spacing:.13em;padding-left:.13em;display:inline-flex;align-items:center;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.wm .o{width:.56em;height:.56em;border-radius:50%;background:var(--grad);display:inline-block;margin:0 .12em;flex:none}
 .spacer{flex:1}
 .btn{background:var(--grad);color:#fff;border:none;padding:11px 16px;border-radius:11px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .15s;min-height:44px}
 .btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
@@ -85,7 +88,14 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--teal);ba
 <body>
 <div class="wrap">
   <header>
-    <img class="logo" src="/coaching/visionarium-logo.png" alt="Visionarium" />
+    <div class="brand">
+      <svg class="mk" viewBox="0 0 48 48" fill="none" aria-label="Visionarium">
+        <defs><linearGradient id="vgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset=".5" stop-color="#17a6a6"/><stop offset="1" stop-color="#2a6f9e"/></linearGradient></defs>
+        <path d="M12 15 L24 26 L38 12 M24 26 L18 39 M24 26 L34 37" stroke="url(#vgm)" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="15" r="2.7" fill="url(#vgm)"/><circle cx="38" cy="12" r="2.7" fill="url(#vgm)"/><circle cx="18" cy="39" r="2.7" fill="url(#vgm)"/><circle cx="34" cy="37" r="2.7" fill="url(#vgm)"/><circle cx="24" cy="26" r="5" fill="url(#vgm)"/>
+      </svg>
+      <div class="wm">VISI<i class="o"></i>NARIUM</div>
+    </div>
     <div class="spacer"></div>
     <button class="btn" id="newBtn">+<span class="lbl"> Nueva sesión</span></button>
     <button class="btn ghost sm" id="logout">Salir</button>

@@ -20,8 +20,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:
   radial-gradient(ellipse 46% 42% at 85% 6%, rgba(63,192,106,.14) 0%, transparent 62%),
   radial-gradient(ellipse 48% 46% at 10% 92%, rgba(42,111,158,.14) 0%, transparent 62%)}
 .card{position:relative;z-index:1;width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:34px 30px;box-shadow:0 24px 60px rgba(22,35,58,.10)}
-.logo{display:block;margin:0 auto 4px;height:50px;width:auto;max-width:230px;object-fit:contain}
-.sub{text-align:center;color:var(--muted);font-size:12px;margin:8px 0 6px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}
+.brand{display:flex;flex-direction:column;align-items:center;gap:11px;margin-bottom:4px}
+.brand .mk{width:46px;height:46px}
+.wm{font-weight:800;font-size:27px;letter-spacing:.15em;padding-left:.15em;display:inline-flex;align-items:center;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.wm .o{width:.56em;height:.56em;border-radius:50%;background:var(--grad);display:inline-block;margin:0 .13em;flex:none}
+.sub{text-align:center;color:var(--muted);font-size:12px;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.14em;font-weight:700}
 .free{display:block;text-align:center;margin:0 auto 22px;background:rgba(63,192,106,.12);color:#1a7a44;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;width:max-content;letter-spacing:.03em}
 label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em}
 input{width:100%;background:#f6f9fc;border:1px solid var(--border);color:var(--ink);padding:14px 14px;border-radius:12px;font-family:inherit;font-size:16px}
@@ -38,7 +41,14 @@ button:disabled{opacity:.6;cursor:not-allowed;transform:none}
 </head>
 <body>
 <div class="card">
-  <img class="logo" src="/coaching/visionarium-logo.png" alt="Visionarium" />
+  <div class="brand">
+    <svg class="mk" viewBox="0 0 48 48" fill="none" aria-label="Visionarium">
+      <defs><linearGradient id="vgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset=".5" stop-color="#17a6a6"/><stop offset="1" stop-color="#2a6f9e"/></linearGradient></defs>
+      <path d="M12 15 L24 26 L38 12 M24 26 L18 39 M24 26 L34 37" stroke="url(#vgm)" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="15" r="2.7" fill="url(#vgm)"/><circle cx="38" cy="12" r="2.7" fill="url(#vgm)"/><circle cx="18" cy="39" r="2.7" fill="url(#vgm)"/><circle cx="34" cy="37" r="2.7" fill="url(#vgm)"/><circle cx="24" cy="26" r="5" fill="url(#vgm)"/>
+    </svg>
+    <div class="wm">VISI<i class="o"></i>NARIUM</div>
+  </div>
   <div class="sub">Coaching con IA</div>
   <span class="free">Gratis para usuarios Visionarium</span>
   <form id="f">
