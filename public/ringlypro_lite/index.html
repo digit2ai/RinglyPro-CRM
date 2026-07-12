@@ -62,6 +62,13 @@
   .rpl .bubble.me{background:var(--blue);color:#fff;margin-left:auto}
   .rpl .msgcard{margin:12px;background:#141b29;border:1px solid #243049;border-radius:12px;padding:12px}
   .rpl .msgcard .lbl{color:#8a98b0;font-size:11px}
+  .rpl .chatmsgs{height:300px;overflow-y:auto;padding:8px 2px;display:flex;flex-direction:column}
+  .rpl .chatmsgs .bubble{margin:6px 12px}
+  .rpl .typing{color:#8a98b0;font-size:12px;margin:4px 12px}
+  .rpl .chatinput{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #243049;background:#141b29}
+  .rpl .chatinput input{flex:1;min-width:0;background:#0f1626;border:1px solid #243049;border-radius:20px;color:#e9eef7;padding:10px 14px;font-size:15px;outline:none}
+  .rpl .chatinput button{background:var(--blue);color:#fff;border:0;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0}
+  .rpl .chatinput button:disabled{opacity:.5}
   /* sections */
   .rpl section{padding:56px 0}
   .rpl .center{text-align:center;max-width:720px;margin:0 auto 36px}
@@ -143,11 +150,12 @@
     <div class="trust"><span data-en>No charge today · <b>$0 to start</b> · Cancel anytime</span><span data-es>Sin cobro hoy · <b>$0 para empezar</b> · Cancela cuando quieras</span></div>
   </div>
   <div class="phone"><div class="screen">
-    <div class="top"><span class="d"></span> <span data-en>Lina · answering now</span><span data-es>Lina · contestando</span></div>
-    <div class="bubble ai"><span data-en>"Hi, this is Lina with Sunset Auto. I can book you an appointment or take a message — how can I help?"</span><span data-es>"Hola, habla Lina de Sunset Auto. Puedo agendarle una cita o tomar un mensaje. ¿Cómo le ayudo?"</span></div>
-    <div class="bubble me"><span data-en>I need an oil change Thursday</span><span data-es>Necesito un cambio de aceite el jueves</span></div>
-    <div class="bubble ai"><span data-en>"I have Thursday at 2:00 or 3:30 — which works?"</span><span data-es>"Tengo el jueves a las 2:00 o 3:30. ¿Cuál prefiere?"</span></div>
-    <div class="msgcard"><div class="lbl"><span data-en>NEW APPOINTMENT</span><span data-es>NUEVA CITA</span></div><b><span data-en>Thu 2:00 PM · confirmed</span><span data-es>Jue 2:00 PM · confirmada</span></b></div>
+    <div class="top"><span class="d"></span> <span data-en>Lina · live demo — chat now</span><span data-es>Lina · demo en vivo — chatea</span></div>
+    <div class="chatmsgs" id="chatMsgs"></div>
+    <div class="chatinput">
+      <input id="chatText" autocomplete="off" enterkeyhint="send" />
+      <button id="chatSend" type="button" aria-label="Send">➤</button>
+    </div>
   </div></div>
 </div></div></div>
 
@@ -234,6 +242,34 @@
   var root=document.getElementById('rpl');
   var langBtn=document.getElementById('lang');
   var DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(762) 761-1589',tel:'+17627611589'}};
+  function curLang(){ return root.classList.contains('es')?'es':'en'; }
+
+  // ---- Live web chat (same Lina brain over HTTP) ----
+  var API='https://ringlypro-lite.onrender.com/api/webchat';
+  var GREET={
+    es:"Hola, habla Lina de RinglyPro. Con mucho gusto le ayudo — puedo agendarle una cita o tomar un mensaje. ¿En qué le puedo ayudar hoy?",
+    en:"Hi, this is Lina with RinglyPro. I'd be glad to help — I can book you an appointment or take a message. What can I do for you today?"
+  };
+  var chatMsgs=document.getElementById('chatMsgs');
+  var chatText=document.getElementById('chatText');
+  var chatSend=document.getElementById('chatSend');
+  var chatSession=null, chatBusy=false;
+  function addBubble(txt,who){ var d=document.createElement('div'); d.className='bubble '+(who==='me'?'me':'ai'); d.textContent=txt; chatMsgs.appendChild(d); chatMsgs.scrollTop=chatMsgs.scrollHeight; return d; }
+  function initChat(){ chatSession=null; chatMsgs.innerHTML=''; addBubble(GREET[curLang()],'ai'); chatText.placeholder=curLang()==='es'?'Escriba un mensaje…':'Type a message…'; }
+  async function sendChat(){
+    var t=(chatText.value||'').trim(); if(!t||chatBusy) return;
+    chatText.value=''; addBubble(t,'me'); chatBusy=true; chatSend.disabled=true;
+    var typing=document.createElement('div'); typing.className='typing'; typing.textContent=curLang()==='es'?'Lina está escribiendo…':'Lina is typing…'; chatMsgs.appendChild(typing); chatMsgs.scrollTop=chatMsgs.scrollHeight;
+    try{
+      var r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:chatSession,text:t,lang:curLang()})});
+      var j=await r.json(); if(j.session_id) chatSession=j.session_id;
+      typing.remove(); addBubble(j.reply||(curLang()==='es'?'Disculpe, ¿me repite?':'Sorry, could you repeat that?'),'ai');
+    }catch(e){ typing.remove(); addBubble(curLang()==='es'?'Conexión lenta, intente de nuevo en un momento.':'Slow connection — please try again in a moment.','ai'); }
+    chatBusy=false; chatSend.disabled=false; chatText.focus();
+  }
+  chatSend.onclick=sendChat;
+  chatText.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sendChat(); } });
+
   function setLang(l){
     root.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'EN':'ES';
     try{localStorage.setItem('rpl_lang',l)}catch(e){}
@@ -242,6 +278,7 @@
     var b=document.getElementById('demoBtn');b.href='tel:'+d.tel;b.textContent=(l==='es'?'Escúchalo: ':'Hear it now: ')+d.num;
     document.getElementById('demoNum').textContent=d.num;
     document.getElementById('demoBtn2').href='tel:'+d.tel;
+    initChat();  // reset the live chat to the selected language
   }
   langBtn.onclick=function(){setLang(root.classList.contains('es')?'en':'es');};
   function detectLang(){

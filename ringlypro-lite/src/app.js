@@ -41,6 +41,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/onboarding', require('./routes/onboarding'));
 app.use('/api', require('./routes/api'));                // dashboard (auth-gated inside)
 app.use('/api/billing', require('./routes/billing'));
+app.use('/api/webchat', require('./routes/webchat'));       // landing-page live chat (CORS)
 app.use('/webhooks', require('./routes/webhooks'));      // /webhooks/stripe
 app.use('/internal/economics', require('./routes/unit-economics'));
 
