@@ -25,8 +25,10 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 app.get('/health', (req, res) => res.json({ service: 'ringlypro-lite', ok: true, ts: new Date().toISOString() }));
 
 // Public config (no auth) — drives free-mode UI. Billing OFF unless explicitly enabled.
+// Robust to stray whitespace/casing in the env value (a common dashboard paste issue).
+function envFlag(v) { return ['1', 'true', 'yes', 'on'].includes(String(v || '').trim().toLowerCase()); }
 app.get('/api/config', (req, res) => res.json({
-  billing_enabled: process.env.LITE_BILLING_ENABLED === '1'
+  billing_enabled: envFlag(process.env.LITE_BILLING_ENABLED)
 }));
 
 // API routers
