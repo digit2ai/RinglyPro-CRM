@@ -1210,7 +1210,30 @@
   .ct-promo-btn { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; text-decoration: none; padding: 13px 24px; border-radius: 8px; background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e); color: #fff; transition: transform .2s, box-shadow .2s; }
   .ct-promo-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(23,166,166,0.4); }
   .ct-promo-btn.ghost { background: transparent; border: 1px solid var(--gray-300); color: #fff; }
-  @media (max-width: 768px) { .ct-promo { padding: 56px 22px; } .ct-promo-card { flex-direction: column; text-align: center; padding: 30px 24px; gap: 22px; } .ct-promo-body p { margin-left: auto; margin-right: auto; } .ct-promo-cta { justify-content: center; } .ct-promo-body h2 { font-size: 25px; } }
+  /* CoachTrack phone mockup */
+  .ctm-phone { flex: none; width: 232px; background: #0e1a2c; border-radius: 32px; padding: 10px; box-shadow: 0 24px 60px rgba(0,0,0,0.45); border: 1px solid #22344d; }
+  .ctm-screen { background: #f2f7fb; border-radius: 24px; overflow: hidden; }
+  .ctm-top { background: #fff; padding: 13px 13px 11px; border-bottom: 1px solid #e4ebf3; display: flex; align-items: center; gap: 7px; }
+  .ctm-top svg { width: 26px; height: 26px; }
+  .ctm-wm { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 14px; letter-spacing: .1em; padding-left: .1em; display: inline-flex; align-items: center; background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .ctm-wm .o { width: .55em; height: .55em; border-radius: 50%; background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e); display: inline-block; margin: 0 .12em; }
+  .ctm-body { padding: 13px; display: flex; flex-direction: column; gap: 10px; }
+  .ctm-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .ctm-kpi { background: #fff; border: 1px solid #e4ebf3; border-radius: 11px; padding: 11px 4px; text-align: center; }
+  .ctm-kpi .n { font-family: 'Inter', sans-serif; font-size: 19px; font-weight: 800; background: linear-gradient(120deg,#3fc06a,#17a6a6,#2a6f9e); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .ctm-kpi .l { font-family: 'Inter', sans-serif; font-size: 8px; color: #5b6b86; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; margin-top: 4px; }
+  .ctm-c { background: #fff; border: 1px solid #e4ebf3; border-radius: 12px; padding: 12px; }
+  .ctm-c h4 { font-family: 'Inter', sans-serif; font-size: 12px; color: #16233a; margin: 0 0 9px; font-weight: 700; }
+  .ctm-item { font-family: 'Inter', sans-serif; font-size: 10.5px; color: #16233a; padding: 8px 10px; border: 1px solid #e4ebf3; border-radius: 9px; margin-bottom: 7px; display: flex; justify-content: space-between; align-items: center; gap: 8px; line-height: 1.3; }
+  .ctm-item:last-child { margin-bottom: 0; }
+  .ctm-pill { font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 800; padding: 3px 7px; border-radius: 999px; text-transform: uppercase; white-space: nowrap; }
+  .ctm-pill.o { background: rgba(42,111,158,0.12); color: #255f88; }
+  .ctm-pill.p { background: rgba(217,119,6,0.14); color: #b45309; }
+  .ctm-pill.d { background: rgba(22,163,74,0.14); color: #15803d; }
+  .ctm-lina { background: rgba(23,166,166,0.06); border: 1px solid #e4ebf3; border-radius: 12px; padding: 12px; }
+  .ctm-lina h4 { font-family: 'Inter', sans-serif; font-size: 12px; color: #16233a; margin: 0 0 5px; font-weight: 700; }
+  .ctm-lina p { font-family: 'Inter', sans-serif; font-size: 10px; color: #5b6b86; line-height: 1.5; margin: 0; }
+  @media (max-width: 768px) { .ct-promo { padding: 56px 22px; } .ct-promo-card { flex-direction: column; text-align: center; padding: 30px 24px; gap: 26px; } .ct-promo-body p { margin-left: auto; margin-right: auto; } .ct-promo-cta { justify-content: center; } .ct-promo-body h2 { font-size: 25px; } .ctm-phone { margin: 0 auto; order: 2; } .ct-promo-body { order: 1; } }
 
   /* RESPONSIVE */
   @media (max-width: 768px) {
@@ -2175,7 +2198,6 @@
 <!-- ============ COACHTRACK PROMO ============ -->
 <div class="ct-promo">
   <div class="ct-promo-card">
-    <div class="ct-promo-icon"><img src="/coaching/icon-192.png" alt="Visionarium CoachTrack"></div>
     <div class="ct-promo-body">
       <div class="ct-promo-badge">Nuevo</div>
       <h2>Presentamos Visionarium CoachTrack</h2>
@@ -2183,6 +2205,31 @@
       <div class="ct-promo-cta">
         <a href="https://visionarium.app/coachtrack" class="ct-promo-btn">Abrir CoachTrack</a>
         <a href="https://visionarium.app/coachtrack" class="ct-promo-btn ghost">A&ntilde;adir a inicio</a>
+      </div>
+    </div>
+    <div class="ctm-phone" aria-hidden="true">
+      <div class="ctm-screen">
+        <div class="ctm-top">
+          <svg viewBox="0 0 48 48" fill="none"><defs><linearGradient id="ctmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fc06a"/><stop offset=".5" stop-color="#17a6a6"/><stop offset="1" stop-color="#2a6f9e"/></linearGradient></defs><path d="M12 15 L24 26 L38 12 M24 26 L18 39 M24 26 L34 37" stroke="url(#ctmg)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="2.7" fill="url(#ctmg)"/><circle cx="38" cy="12" r="2.7" fill="url(#ctmg)"/><circle cx="18" cy="39" r="2.7" fill="url(#ctmg)"/><circle cx="34" cy="37" r="2.7" fill="url(#ctmg)"/><circle cx="24" cy="26" r="5" fill="url(#ctmg)"/></svg>
+          <span class="ctm-wm">VISI<i class="o"></i>NARIUM</span>
+        </div>
+        <div class="ctm-body">
+          <div class="ctm-kpis">
+            <div class="ctm-kpi"><div class="n">6</div><div class="l">Sesiones</div></div>
+            <div class="ctm-kpi"><div class="n">4</div><div class="l">Acciones</div></div>
+            <div class="ctm-kpi"><div class="n">1</div><div class="l">Vencidas</div></div>
+          </div>
+          <div class="ctm-c">
+            <h4>Priorizar el lanzamiento</h4>
+            <div class="ctm-item">Delegar los reportes al equipo <span class="ctm-pill d">Hecho</span></div>
+            <div class="ctm-item">Bloquear 2h diarias para el plan <span class="ctm-pill p">En curso</span></div>
+            <div class="ctm-item">Escribir el guion del pitch <span class="ctm-pill o">Abierta</span></div>
+          </div>
+          <div class="ctm-lina">
+            <h4>Lina</h4>
+            <p>Empieza hoy con un bloque de 15 min. &iquest;Cu&aacute;l es el primer paso m&iacute;nimo?</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
