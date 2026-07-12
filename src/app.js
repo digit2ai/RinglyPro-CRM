@@ -1543,7 +1543,10 @@ app.get('/debug/coachtrack-error', (req, res) => {
 });
 
 // Public promo landing page for Visionarium Coaching.
-app.get(['/visionarium/coachtrack', '/visionarium/coachtrack/'], (req, res) => {
+// Reachable at /coachtrack (clean path to map visionarium.app/coachtrack onto)
+// and /visionarium/coachtrack. All CTAs are absolute to the app backend so the
+// page works verbatim under any host (visionarium.app proxy/redirect, etc.).
+app.get(['/coachtrack', '/coachtrack/', '/visionarium/coachtrack', '/visionarium/coachtrack/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'verticals', 'coachtrack', 'public', 'landing.html'));
 });
 
