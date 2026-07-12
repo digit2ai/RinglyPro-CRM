@@ -297,6 +297,18 @@
     }catch(e){return 'es';}
   }
   setLang(detectLang());
+
+  // When embedded in an iframe (e.g. GoHighLevel), publish our full height so
+  // the parent can size the iframe to show the whole page (no inner scroll).
+  function postHeight(){
+    if(window.parent===window) return;
+    var h=Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+    try{ window.parent.postMessage({rplHeight:h}, '*'); }catch(e){}
+  }
+  window.addEventListener('load', postHeight);
+  window.addEventListener('resize', postHeight);
+  setInterval(postHeight, 1200);
+  postHeight();
 })();
 </script>
 <!-- ===== END GHL-EMBEDDABLE BLOCK ===== -->

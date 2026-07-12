@@ -26,10 +26,11 @@
   <p>Two ways to make a GHL page (e.g. <code>ringlypro.com/home</code>) show the exact same landing as
   <code>aiagent.ringlypro.com/ringlypro_lite</code>. Option A is zero-maintenance and always in sync.</p>
 
-  <h2>Option A — Iframe (recommended, always identical)</h2>
+  <h2>Option A — Iframe, full-page auto-height (recommended, always identical)</h2>
   <div class="box">
-    <p>In GHL add a <b>Custom Code / HTML</b> element and paste:</p>
-    <textarea id="iframeCode" readonly style="height:70px"></textarea>
+    <p>In GHL add a <b>Custom Code / HTML</b> element and paste this. The iframe
+    grows to the landing's full height (whole page shows, no inner scrollbar):</p>
+    <textarea id="iframeCode" readonly style="height:150px"></textarea>
     <div class="row"><button onclick="copy('iframeCode')">Copy iframe</button><span class="ok" id="ok1"></span></div>
     <p>The page renders the live landing, so any future change updates automatically.</p>
   </div>
@@ -49,7 +50,13 @@
 <script>
   var LANDING='https://aiagent.ringlypro.com/ringlypro_lite/';
   document.getElementById('iframeCode').value =
-    '<iframe src="'+LANDING+'" style="width:100%;min-height:100vh;border:0;display:block" loading="lazy" title="RinglyPro Lite"></iframe>';
+    '<iframe id="ringlyproLite" src="'+LANDING+'" title="RinglyPro Lite"\n'+
+    '  style="width:100%;height:2400px;border:0;display:block" scrolling="no" loading="lazy"></iframe>\n'+
+    '<script>\n'+
+    'window.addEventListener("message",function(e){\n'+
+    '  if(e.data&&e.data.rplHeight){var f=document.getElementById("ringlyproLite");if(f)f.style.height=e.data.rplHeight+"px";}\n'+
+    '});\n'+
+    '<\/script>';
 
   function copy(id){
     var t=document.getElementById(id); t.select(); t.setSelectionRange(0,999999);
