@@ -207,7 +207,8 @@ $('goDone').onclick=()=>location.href='/dashboard';
 // Load config + handle Stripe return
 (async function init(){
   try{const c=await fetch('/api/config').then(r=>r.json());BILLING=!!c.billing_enabled;
-    if(c.demo_number){const d=$('demoLink');d.href='tel:'+c.demo_number;d.textContent=(lang==='es'?'¿Quiere escuchar a Lina primero? Llame al ':'Want to hear Lina first? Call ')+c.demo_number;d.classList.remove('hide');}
+    const demoN=(lang==='es'?(c.demo_number_es||c.demo_number):(c.demo_number_en||c.demo_number));
+    if(demoN){const d=$('demoLink');d.href='tel:'+demoN;d.textContent=(lang==='es'?'¿Quiere escuchar a Lina primero? Llame al ':'Want to hear Lina first? Call ')+demoN;d.classList.remove('hide');}
   }catch(e){}
   const params=new URLSearchParams(location.search);
   if(params.get('paid')==='1'){

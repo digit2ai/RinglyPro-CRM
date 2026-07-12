@@ -123,7 +123,7 @@
     </p>
     <div class="cta-row">
       <a class="btn primary" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start 7-day free trial</span><span data-es>Iniciar prueba de 7 días</span></a>
-      <a class="btn ghost" href="tel:+18132120813"><span data-en>Hear it now: (813) 212-0813</span><span data-es>Escúchalo: (813) 212-0813</span></a>
+      <a class="btn ghost" id="demoBtn" href="tel:+18132120813">Hear it now</a>
     </div>
     <div class="trust"><span data-en>No charge today · <b>$0 to start</b> · Cancel anytime</span><span data-es>Sin cobro hoy · <b>$0 para empezar</b> · Cancela cuando quieras</span></div>
   </div>
@@ -167,8 +167,8 @@
     <p><span data-en>Call the demo line right now and talk to the AI receptionist.</span><span data-es>Llama a la línea demo ahora y habla con la recepcionista AI.</span></p>
   </div>
   <div style="text-align:center">
-    <div class="num">(813) 212-0813</div>
-    <a class="btn tealb" href="tel:+18132120813" style="margin-top:12px"><span data-en>Tap to call</span><span data-es>Toca para llamar</span></a>
+    <div class="num" id="demoNum">(813) 212-0813</div>
+    <a class="btn tealb" id="demoBtn2" href="tel:+18132120813" style="margin-top:12px"><span data-en>Tap to call</span><span data-es>Toca para llamar</span></a>
   </div>
 </div></div></section>
 
@@ -224,15 +224,37 @@
 
 <script>
   const langBtn=document.getElementById('lang');
+  // One demo number per language (each answers in that language only).
+  const DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(762) 761-1589',tel:'+17627611589'}};
   function setLang(l){
     document.body.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'English':'Español';
     try{localStorage.setItem('rpl_lang',l)}catch(e){}
     // Carry the selected language into signup so the client's AI defaults to it.
     document.querySelectorAll('a[href*="/signup"]').forEach(a=>{a.href='https://ringlypro-lite.onrender.com/signup?lang='+l;});
+    // Swap the demo line to the matching-language number.
+    const d=DEMO[l];
+    const b=document.getElementById('demoBtn');b.href='tel:'+d.tel;b.textContent=(l==='es'?'Escúchalo: ':'Hear it now: ')+d.num;
+    document.getElementById('demoNum').textContent=d.num;
+    document.getElementById('demoBtn2').href='tel:'+d.tel;
   }
   langBtn.onclick=()=>setLang(document.body.classList.contains('es')?'en':'es');
-  let saved='en';try{saved=localStorage.getItem('rpl_lang')||((navigator.language||'').startsWith('es')?'es':'en')}catch(e){}
-  setLang(saved);
+  // Geo/locale detection — Spanish is the default; open in English only for a
+  // clearly English location/browser. A saved choice always wins.
+  function detectLang(){
+    try{
+      const saved=localStorage.getItem('rpl_lang');if(saved==='es'||saved==='en')return saved;
+      const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||'');
+      const nav=(navigator.language||'').toLowerCase();
+      const esTZ=/(America\/(Bogota|Lima|Mexico_City|Monterrey|Tijuana|Argentina|Buenos_Aires|Cordoba|Santiago|Caracas|Guayaquil|La_Paz|Asuncion|Montevideo|Panama|Costa_Rica|Guatemala|El_Salvador|Tegucigalpa|Managua|Santo_Domingo|Havana)|Atlantic\/Canary|Europe\/Madrid|Africa\/Ceuta)/i;
+      const enTZ=/(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Detroit|Toronto|Vancouver|Anchorage|Boise|Indiana|Kentucky|Halifax|Winnipeg|Edmonton|Sao_Paulo)|Europe\/London|Australia\/|Pacific\/Auckland|Africa\/Johannesburg)/i;
+      if(esTZ.test(tz))return 'es';
+      if(enTZ.test(tz))return nav.startsWith('es')?'es':'en';
+      if(nav.startsWith('es'))return 'es';
+      if(nav.startsWith('en'))return 'en';
+      return 'es';
+    }catch(e){return 'es';}
+  }
+  setLang(detectLang());
 </script>
 </body>
 </html>

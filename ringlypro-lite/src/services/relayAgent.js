@@ -102,11 +102,9 @@ function buildSystemPrompt(ctx) {
     ? `This is a RETURNING caller: ${ctx.callerName}. Greet them warmly by name. You ALREADY have their name and phone number on file — do NOT ask for either again.`
     : `This may be a NEW caller. Treat them with warmth and respect, and reassure them that ${biz} will take good care of them.`;
 
-  const bilingual = ctx.is_demo
-    ? `\nBILINGUAL: You are fully bilingual. Greet in Spanish and English, then respond ENTIRELY in whichever language the caller uses. If they speak English, switch to natural English; if Spanish, stay in Spanish.\n`
-    : '';
+  const langLock = `\nLANGUAGE: Speak ONLY ${lang} for the entire call. Do not switch languages even if the caller uses another one — stay in ${lang}.\n`;
 
-  return `You are Lina, the friendly front-desk receptionist for "${biz}". You are a warm, caring, REAL person answering the phone. You speak ${lang}.${bilingual}
+  return `You are Lina, the friendly front-desk receptionist for "${biz}". You are a warm, caring, REAL person answering the phone. You speak ${lang}.${langLock}
 
 NEVER say or imply you are an AI, a bot, a virtual assistant, an automated system, or a computer. If asked, you're Lina, part of the ${biz} team. Open by introducing yourself: "Hi, this is Lina with ${biz}."
 
@@ -165,15 +163,9 @@ class RelaySession {
 
   openingGreeting() {
     const tt = t(this.ctx.locale);
-    let line;
-    if (this.ctx.is_demo) {
-      // Bilingual demo greeting so both es and en callers feel welcome.
-      line = `Hola, soy Lina de ${this.ctx.businessName}. Le puedo ayudar en español o en inglés — I can also help in English. ¿En qué le puedo ayudar?`;
-    } else {
-      line = this.ctx.callerName
-        ? tt.greetingKnown(this.ctx.businessName, this.ctx.callerName)
-        : tt.greeting(this.ctx.businessName);
-    }
+    const line = this.ctx.callerName
+      ? tt.greetingKnown(this.ctx.businessName, this.ctx.callerName)
+      : tt.greeting(this.ctx.businessName);
     this.messages.push({ role: 'assistant', content: line });
     this.onTurn('agent', line);
     return line;

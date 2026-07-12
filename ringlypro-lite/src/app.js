@@ -29,9 +29,11 @@ app.get('/health', (req, res) => res.json({ service: 'ringlypro-lite', ok: true,
 function envDisabled(v) { return ['0', 'false', 'no', 'off'].includes(String(v || '').trim().toLowerCase()); }
 app.get('/api/config', (req, res) => res.json({
   billing_enabled: !envDisabled(process.env.LITE_BILLING_ENABLED),
-  // Optional shared demo line — prospects hear Lina before adding a card,
-  // so a dedicated Twilio DID is never provisioned for a non-converting trial.
-  demo_number: process.env.LITE_DEMO_NUMBER || null
+  // Shared demo lines — one language each (Spanish default + English), so a
+  // prospect hears Lina in their language before a dedicated DID is provisioned.
+  demo_number: process.env.LITE_DEMO_NUMBER || '+18132120813',
+  demo_number_es: process.env.LITE_DEMO_NUMBER || '+18132120813',
+  demo_number_en: process.env.LITE_DEMO_NUMBER_EN || '+17627611589'
 }));
 
 // API routers

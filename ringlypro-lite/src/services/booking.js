@@ -55,18 +55,20 @@ async function getBusinessInfo({ did, tenantId }) {
     // synthetic demo tenant (no DB row, no per-tenant cost) so prospects can
     // hear Lina before adding a card. Requires the DID's voice webhook to point
     // at this Lite service.
-    const demo = process.env.LITE_DEMO_NUMBER;
-    if (did && demo && last10(did) === last10(demo)) {
-      return {
-        success: true, tenant_id: 0, is_demo: true,
-        business_name: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite Demo',
-        owner_name: null, owner_phone: null, transfer_number: null,
-        // Spanish-first voice (Lupe) so es callers get a native demo; the agent
-        // is bilingual and mirrors the caller's language (see relayAgent).
-        country: 'US', locale: process.env.LITE_DEMO_LANG || 'es',
-        timezone: 'America/New_York', suspended: false
-      };
-    }
+    // Two dedicated demo lines, ONE language each (no bilingual switching):
+    // Spanish default + a separate English line. Locale is set by which DID was
+    // dialed, so each demo answers strictly in its own language.
+    const DEMO_ES = process.env.LITE_DEMO_NUMBER || '+18132120813';
+    const DEMO_EN = process.env.LITE_DEMO_NUMBER_EN || '+17627611589';
+    const demoTenant = (locale) => ({
+      success: true, tenant_id: 0, is_demo: true,
+      business_name: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite Demo',
+      owner_name: null, owner_phone: null, transfer_number: null,
+      country: locale === 'es' ? 'US' : 'US', locale,
+      timezone: 'America/New_York', suspended: false
+    });
+    if (did && last10(did) === last10(DEMO_ES)) return demoTenant('es');
+    if (did && DEMO_EN && last10(did) === last10(DEMO_EN)) return demoTenant('en');
     return { success: false, error: 'tenant_not_found' };
   }
   return {
