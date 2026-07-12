@@ -88,6 +88,7 @@
       <div class="row"><span data-i="trCancel">Cancel anytime in the trial</span><b data-i="trFree">Free</b></div>
     </div>
     <button id="goTrial" data-i="starttrial">Start free trial — $0 today</button>
+    <a id="demoLink" class="hide" href="#" style="display:block;text-align:center;margin-top:10px;color:var(--acc2);text-decoration:none;font-size:14px"></a>
     <div class="msg" id="mTrial"></div>
   </div>
 
@@ -202,7 +203,9 @@ $('goDone').onclick=()=>location.href='/dashboard';
 
 // Load config + handle Stripe return
 (async function init(){
-  try{const c=await fetch('/api/config').then(r=>r.json());BILLING=!!c.billing_enabled;}catch(e){}
+  try{const c=await fetch('/api/config').then(r=>r.json());BILLING=!!c.billing_enabled;
+    if(c.demo_number){const d=$('demoLink');d.href='tel:'+c.demo_number;d.textContent=(lang==='es'?'¿Quiere escuchar a Lina primero? Llame al ':'Want to hear Lina first? Call ')+c.demo_number;d.classList.remove('hide');}
+  }catch(e){}
   const params=new URLSearchParams(location.search);
   if(params.get('paid')==='1'){
     // Returned from Stripe with a card on file → confirm, provision, forwarding.

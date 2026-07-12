@@ -28,7 +28,10 @@ app.get('/health', (req, res) => res.json({ service: 'ringlypro-lite', ok: true,
 // (US plan is live); set LITE_BILLING_ENABLED=0 to return to free mode.
 function envDisabled(v) { return ['0', 'false', 'no', 'off'].includes(String(v || '').trim().toLowerCase()); }
 app.get('/api/config', (req, res) => res.json({
-  billing_enabled: !envDisabled(process.env.LITE_BILLING_ENABLED)
+  billing_enabled: !envDisabled(process.env.LITE_BILLING_ENABLED),
+  // Optional shared demo line — prospects hear Lina before adding a card,
+  // so a dedicated Twilio DID is never provisioned for a non-converting trial.
+  demo_number: process.env.LITE_DEMO_NUMBER || null
 }));
 
 // API routers
