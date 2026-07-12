@@ -105,7 +105,9 @@
     <div class="card" id="billCard" style="display:none">
       <div class="day" data-i="bill">Billing</div>
       <div class="msg" id="billStatus">—</div>
-      <div style="margin-top:10px"><button class="sm" id="manageBill" data-i="startbill">Start / manage plan</button></div>
+      <div class="msg" id="billPlan" style="margin-top:6px"></div>
+      <div id="billUsage" style="margin-top:8px"></div>
+      <div style="margin-top:12px"><button class="sm" id="manageBill" data-i="startbill">Start / manage plan</button></div>
     </div>
     <div style="text-align:center;margin:18px 0"><a href="#" id="logout" style="color:var(--mut)" data-i="logout">Log out</a></div>
   </section>
@@ -191,7 +193,17 @@ async function loadSettings(){
   if(cfg.billing_enabled){
     $('billCard').style.display='';
     const bs=await api('/api/billing/status');
-    if(bs)$('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?' (suspended)':'');
+    if(bs){
+      $('billStatus').textContent=(bs.subscription_status||'')+(bs.suspended?(lang==='es'?' (suspendido)':' (suspended)'):'');
+      if(bs.plan)$('billPlan').textContent=`$${bs.plan.monthly_usd}/mo · ${bs.plan.included_minutes} min ${lang==='es'?'incluidos':'incl'} · overage $${bs.plan.overage_per_min_usd}/min · setup $${bs.plan.setup_usd}`;
+    }
+    const us=await api('/api/billing/usage');
+    if(us&&!us.error){
+      const u=lang==='es'?'Usados':'Used', c=lang==='es'?'llamadas':'calls', est=lang==='es'?'total est.':'est. total';
+      $('billUsage').innerHTML=`<div style="font-size:13px;color:var(--mut)">${u} <b style="color:var(--txt)">${us.minutes_used}</b> / ${us.included_minutes} min · ${us.calls} ${c}`+
+        (us.overage_minutes>0?` · <span style="color:var(--warn)">overage ${us.overage_minutes} min ($${us.overage_usd})</span>`:'')+
+        ` · ${est} <b style="color:var(--txt)">$${us.estimated_total_usd}</b></div>`;
+    }
   }
 }
 function renderAvail(){
