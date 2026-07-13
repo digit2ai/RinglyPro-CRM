@@ -75,6 +75,13 @@ router.post('/messages/read-all', async (req, res) => {
   res.json({ success: true });
 });
 
+// Delete a message (swipe-left to delete).
+router.delete('/messages/:id', async (req, res) => {
+  const n = await Message.destroy({ where: { id: req.params.id, tenant_id: req.tenantId } });
+  if (!n) return res.status(404).json({ error: 'not_found' });
+  res.json({ success: true });
+});
+
 /* ── Appointments (calendar) ───────────────────────────────────────── */
 router.get('/appointments', async (req, res) => {
   const from = req.query.from ? new Date(req.query.from) : new Date(Date.now() - 86400000);

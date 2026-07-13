@@ -13,7 +13,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
 <style>
-  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b}
+  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b;--inp:var(--inp)}
+  html[data-theme="light"]{--bg:#f4f7fb;--card:#ffffff;--line:#e5e7eb;--txt:#111827;--mut:#6b7280;--acc:#2563eb;--acc2:#1d4ed8;--ok:#0f9d6e;--warn:#c2740a;--err:#dc2626;--inp:#eef2f7}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding:calc(18px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
@@ -24,21 +25,22 @@
   .card{background:linear-gradient(180deg,var(--card),#0e1421);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:14px}
   h2{margin:0 0 4px;font-size:19px}.hint{color:var(--mut);font-size:14px;margin-bottom:14px}
   label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
-  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0f1626;color:var(--txt);font-size:16px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--inp);color:var(--txt);font-size:16px}
   button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
   .msg{margin-top:12px;font-size:14px;min-height:18px}
   .hide{display:none}
   .lang{position:fixed;top:calc(12px + env(safe-area-inset-top));right:calc(16px + env(safe-area-inset-right));font-size:13px;color:var(--mut);cursor:pointer;z-index:9}
-  .code{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:1px;background:#0f1626;border:1px dashed var(--acc);border-radius:12px;padding:14px;text-align:center;margin:8px 0}
+  .code{font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:1px;background:var(--inp);border:1px dashed var(--acc);border-radius:12px;padding:14px;text-align:center;margin:8px 0}
   .tel{display:block;text-align:center;background:var(--ok);color:#04231a;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0}
   .warn{background:#3a2a12;border:1px solid var(--warn);color:#ffdca8;border-radius:10px;padding:12px;font-size:13px;margin-top:12px}
-  .save{background:#0f1626;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--mut);margin-top:10px}
+  .save{background:var(--inp);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;color:var(--mut);margin-top:10px}
   .save b{color:var(--txt)}
-  .trialbox{background:#0f1626;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;color:var(--mut);margin-top:6px}
+  .trialbox{background:var(--inp);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;color:var(--mut);margin-top:6px}
   .trialbox b{color:var(--txt)}
   .trialbox .row{display:flex;justify-content:space-between;margin:4px 0}
 </style>
+<script>(function(){try{var t=localStorage.getItem("lite_theme");if(t!=="light"&&t!=="dark")t="dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 </head>
 <body>
 <div class="lang" id="lang">ES</div>
@@ -69,7 +71,7 @@
     <select id="country"><option value="US">United States</option><option value="CO">Colombia</option></select>
     <label data-i="mobile">Your mobile (for text alerts)</label>
     <div style="display:flex;gap:8px;align-items:stretch">
-      <span id="dialcode" style="display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#0f1626;color:var(--txt);font-size:16px;white-space:nowrap">+1</span>
+      <span id="dialcode" style="display:flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--inp);color:var(--txt);font-size:16px;white-space:nowrap">+1</span>
       <input id="owner_phone_num" inputmode="tel" autocomplete="tel-national" placeholder="3001234567" style="flex:1" />
     </div>
     <label data-i="lang">Greeting language</label>

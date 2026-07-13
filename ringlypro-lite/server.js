@@ -31,6 +31,13 @@ async function initDb() {
     `CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_appts_slot
        ON lite_appointments(tenant_id, starts_at) WHERE status <> 'cancelled'`
   );
+  // sync({alter:false}) never adds columns to existing tables — add the
+  // minute-banking columns idempotently (rollover + prepaid recharge minutes).
+  await sequelize.query(`
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS rollover_minutes NUMERIC(8,2) DEFAULT 0;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS purchased_minutes NUMERIC(8,2) DEFAULT 0;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS rollover_period_start TIMESTAMP WITH TIME ZONE;
+  `);
   console.log('[lite] DB ready');
 }
 
@@ -200,6 +207,19 @@ async function main() {
     // Daily auto-release of unconverted numbers (no external cron needed).
     try { require('./src/services/numberReclaim').startScheduler(); }
     catch (e) { console.error('[lite] reclaim scheduler failed to start:', e.message); }
+    // Daily minute-rollover reconcile so idle tenants also carry unused minutes.
+    try {
+      const minutesSvc = require('./src/services/minutes');
+      const runRollover = async () => {
+        try {
+          const tenants = await Tenant.findAll();
+          for (const tn of tenants) { try { await minutesSvc.reconcileRollover(tn); } catch (_) {} }
+          console.log(`[lite] rollover reconcile: ${tenants.length} tenants`);
+        } catch (e) { console.error('[lite] rollover reconcile error:', e.message); }
+      };
+      setInterval(runRollover, 24 * 60 * 60 * 1000);
+      setTimeout(runRollover, 60 * 1000);   // once shortly after boot
+    } catch (e) { console.error('[lite] rollover scheduler failed to start:', e.message); }
   });
 }
 

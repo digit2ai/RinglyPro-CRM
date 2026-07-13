@@ -14,8 +14,9 @@ const express = require('express');
 const { Op } = require('sequelize');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
-const { Tenant, Call } = require('../models');
+const { Tenant, Call, Recharge } = require('../models');
 const { entitlement } = require('../services/entitlement');
+const minutesSvc = require('../services/minutes');
 
 function stripe() {
   const key = process.env.LITE_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
@@ -25,6 +26,11 @@ function stripe() {
 function int(env, def) { const v = parseInt(process.env[env], 10); return Number.isFinite(v) ? v : def; }
 
 const TRIAL_DAYS = int('LITE_TRIAL_DAYS', 7);
+
+// Recharge amounts (USD) offered in the "add minutes" dialog. Each is charged to
+// the tenant's saved payment method and credited as prepaid overage minutes.
+const RECHARGE_AMOUNTS_USD = (process.env.LITE_RECHARGE_AMOUNTS || '10,20,40,60,80,100')
+  .split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n > 0);
 
 // US plan (the only market for now). All amounts config-overridable.
 function plan() {
@@ -40,36 +46,22 @@ function plan() {
   };
 }
 
-// Current billing period start: Stripe subscription period, else calendar month.
-async function periodStart(tenant) {
-  if (tenant.stripe_subscription_id) {
-    try {
-      const sub = await stripe().subscriptions.retrieve(tenant.stripe_subscription_id);
-      if (sub && sub.current_period_start) return new Date(sub.current_period_start * 1000);
-    } catch (_) { /* fall through */ }
-  }
-  const d = new Date();
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
-}
-
-// Answered minutes used this period (any call that connected).
-async function usedMinutes(tenantId, since) {
-  const calls = await Call.findAll({
-    where: { tenant_id: tenantId, started_at: { [Op.gte]: since }, duration: { [Op.gt]: 0 } },
-    attributes: ['duration']
-  });
-  const secs = calls.reduce((a, c) => a + (c.duration || 0), 0);
-  return { minutes: +(secs / 60).toFixed(2), calls: calls.length };
-}
+// periodStart + usedMinutes now live in services/minutes.js (rollover-aware).
+const periodStart = minutesSvc.periodStart;
 
 router.get('/status', requireAuth, async (req, res) => {
   const tenant = await Tenant.findByPk(req.tenantId);
+  // Advance banked minutes if the billing period rolled over.
+  try { await minutesSvc.reconcileRollover(tenant); } catch (_) {}
   const p = plan();
   res.json({
     subscription_status: tenant.subscription_status,
     trial_ends_at: tenant.trial_ends_at,
     suspended: !!tenant.suspended_at,
     country: tenant.country,
+    rollover_minutes: Number(tenant.rollover_minutes) || 0,
+    purchased_minutes: Number(tenant.purchased_minutes) || 0,
+    recharge_amounts_usd: RECHARGE_AMOUNTS_USD,
     ...entitlement(tenant),
     plan: {
       monthly_usd: p.monthlyCents / 100,
@@ -80,26 +72,109 @@ router.get('/status', requireAuth, async (req, res) => {
   });
 });
 
-// Usage + projected overage for the current period.
+// Usage + projected overage for the current period (rollover + prepaid aware).
 router.get('/usage', requireAuth, async (req, res) => {
   try {
     const tenant = await Tenant.findByPk(req.tenantId);
     const p = plan();
-    const since = await periodStart(tenant);
-    const { minutes, calls } = await usedMinutes(tenant.id, since);
-    const overageMin = Math.max(0, +(minutes - p.includedMinutes).toFixed(2));
-    const overageUsd = +((overageMin * p.overagePerMinCents) / 100).toFixed(2);
+    const snap = await minutesSvc.usageSnapshot(tenant);
     res.json({
-      period_start: since.toISOString(),
-      calls,
-      minutes_used: minutes,
-      included_minutes: p.includedMinutes,
-      minutes_remaining: Math.max(0, +(p.includedMinutes - minutes).toFixed(2)),
-      overage_minutes: overageMin,
-      overage_usd: overageUsd,
-      estimated_total_usd: +((p.monthlyCents / 100) + overageUsd).toFixed(2)
+      ...snap,
+      estimated_total_usd: +((p.monthlyCents / 100) + snap.overage_usd).toFixed(2)
     });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Resolve the tenant's default/saved card payment method (invoice default →
+// subscription default → first card on file). Returns a PM id or null.
+async function savedPaymentMethod(s, tenant) {
+  if (!tenant.stripe_customer_id) return null;
+  try {
+    const cust = await s.customers.retrieve(tenant.stripe_customer_id);
+    let pm = cust && cust.invoice_settings && cust.invoice_settings.default_payment_method;
+    if (!pm && tenant.stripe_subscription_id) {
+      const sub = await s.subscriptions.retrieve(tenant.stripe_subscription_id);
+      pm = sub && sub.default_payment_method;
+    }
+    if (!pm) {
+      const list = await s.paymentMethods.list({ customer: tenant.stripe_customer_id, type: 'card', limit: 1 });
+      pm = list.data[0] && list.data[0].id;
+    }
+    return pm || null;
+  } catch (_) { return null; }
+}
+
+// Recharge: buy prepaid overage minutes. Charges the SAVED card off-session and
+// credits minutes immediately; if no card is on file yet, returns a Checkout URL
+// (one-time payment that also saves the card) and the webhook credits on success.
+router.post('/recharge', requireAuth, async (req, res) => {
+  try {
+    const s = stripe();
+    const tenant = await Tenant.findByPk(req.tenantId);
+    const p = plan();
+    const amountUsd = parseInt((req.body && req.body.amount_usd), 10);
+    if (!RECHARGE_AMOUNTS_USD.includes(amountUsd)) {
+      return res.status(400).json({ error: 'invalid_amount', allowed: RECHARGE_AMOUNTS_USD });
+    }
+    const cents = amountUsd * 100;
+    const mins = minutesSvc.minutesForCents(cents);
+
+    // Ensure a Stripe customer exists.
+    if (!tenant.stripe_customer_id) {
+      const c = await s.customers.create({ email: tenant.owner_email || undefined, metadata: { tenant_id: String(tenant.id) } });
+      tenant.stripe_customer_id = c.id; await tenant.save();
+    }
+
+    const pm = await savedPaymentMethod(s, tenant);
+    const base = (process.env.LITE_WEBHOOK_BASE_URL || 'https://localhost').replace(/\/$/, '');
+
+    if (pm) {
+      // Off-session charge to the saved card.
+      const rec = await Recharge.create({ tenant_id: tenant.id, amount_cents: cents, minutes: mins, currency: p.currency, status: 'pending' });
+      try {
+        const pi = await s.paymentIntents.create({
+          amount: cents, currency: p.currency, customer: tenant.stripe_customer_id,
+          payment_method: pm, off_session: true, confirm: true,
+          description: `RinglyPro Lite recharge — ${mins} min ($${amountUsd})`,
+          metadata: { tenant_id: String(tenant.id), recharge_id: String(rec.id), minutes: String(mins) }
+        });
+        rec.stripe_payment_intent = pi.id;
+        if (pi.status === 'succeeded') {
+          rec.status = 'succeeded'; await rec.save();
+          const balance = await minutesSvc.creditMinutes(tenant, mins);
+          return res.json({ success: true, charged: true, minutes_added: mins, purchased_minutes: balance, amount_usd: amountUsd });
+        }
+        await rec.save();
+        return res.json({ success: false, requires_action: true, status: pi.status });
+      } catch (e) {
+        rec.status = 'failed'; await rec.save();
+        // Card was declined / needs authentication → fall back to Checkout.
+        if (e.code === 'authentication_required' || e.type === 'StripeCardError') {
+          // fall through to checkout below
+        } else {
+          return res.status(402).json({ error: e.message, code: e.code });
+        }
+      }
+    }
+
+    // No saved card (or the off-session charge needs the customer present):
+    // one-time Checkout that saves the card for next time. Webhook credits minutes.
+    const rec = await Recharge.create({ tenant_id: tenant.id, amount_cents: cents, minutes: mins, currency: p.currency, status: 'pending' });
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      customer: tenant.stripe_customer_id,
+      payment_intent_data: { setup_future_usage: 'off_session' },
+      line_items: [{ price_data: { currency: p.currency, product_data: { name: `${p.name} — ${mins} minutes` }, unit_amount: cents }, quantity: 1 }],
+      success_url: `${base}/dashboard?recharge=1`,
+      cancel_url: `${base}/dashboard?recharge=0`,
+      metadata: { tenant_id: String(tenant.id), recharge_id: String(rec.id), minutes: String(mins), kind: 'recharge' }
+    });
+    rec.stripe_checkout_session = session.id; await rec.save();
+    res.json({ success: true, charged: false, checkout_url: session.url, minutes: mins, amount_usd: amountUsd });
+  } catch (e) {
+    console.error('[lite:billing] recharge error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -154,8 +229,10 @@ router.post('/overage/bill', async (req, res) => {
     if (!tenant || !tenant.stripe_customer_id) return res.status(400).json({ error: 'no_customer' });
     const p = plan();
     const since = await periodStart(tenant);
-    const { minutes } = await usedMinutes(tenant.id, since);
-    const overageMin = Math.max(0, minutes - p.includedMinutes);
+    const { minutes } = await minutesSvc.usedMinutes(tenant.id, since);
+    // Only bill beyond ALL banked minutes (included + rollover + prepaid).
+    const banked = p.includedMinutes + (Number(tenant.rollover_minutes) || 0) + (Number(tenant.purchased_minutes) || 0);
+    const overageMin = Math.max(0, minutes - banked);
     if (overageMin <= 0) return res.json({ ok: true, overage_minutes: 0, billed: false });
     const amount = Math.round(overageMin * p.overagePerMinCents);
     const item = await stripe().invoiceItems.create({

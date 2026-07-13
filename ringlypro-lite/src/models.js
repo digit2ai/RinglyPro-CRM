@@ -28,6 +28,13 @@ const Tenant = sequelize.define('LiteTenant', {
   subscription_status: { type: DataTypes.STRING, defaultValue: 'trialing' }, // trialing|active|past_due|canceled|suspended
   trial_ends_at: { type: DataTypes.DATE },
   suspended_at: { type: DataTypes.DATE },           // answering suspended (failed payment)
+  // Minute banking:
+  //  rollover_minutes = unused INCLUDED minutes carried from prior periods.
+  //  purchased_minutes = prepaid overage minutes bought via recharge (do not expire).
+  //  rollover_period_start = the period start these balances were reconciled against.
+  rollover_minutes: { type: DataTypes.DECIMAL(8, 2), defaultValue: 0 },
+  purchased_minutes: { type: DataTypes.DECIMAL(8, 2), defaultValue: 0 },
+  rollover_period_start: { type: DataTypes.DATE },
   active: { type: DataTypes.BOOLEAN, defaultValue: true },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'lite_tenants', timestamps: false, indexes: [{ fields: ['stripe_customer_id'] }] });
@@ -123,6 +130,19 @@ const Transcript = sequelize.define('LiteTranscript', {
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'lite_call_transcripts', timestamps: false, indexes: [{ fields: ['call_sid'] }] });
 
+/* ── Recharges (prepaid overage-minute top-ups) ────────────────────────── */
+const Recharge = sequelize.define('LiteRecharge', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  amount_cents: { type: DataTypes.INTEGER, allowNull: false },
+  minutes: { type: DataTypes.DECIMAL(8, 2), allowNull: false },
+  currency: { type: DataTypes.STRING(3), defaultValue: 'usd' },
+  stripe_payment_intent: { type: DataTypes.STRING },
+  stripe_checkout_session: { type: DataTypes.STRING },
+  status: { type: DataTypes.STRING, defaultValue: 'pending' },  // pending|succeeded|failed
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'lite_recharges', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['stripe_payment_intent'] }, { fields: ['stripe_checkout_session'] }] });
+
 /* associations (loose — tenant_id scoping is enforced in queries) */
 Call.hasMany(Message, { foreignKey: 'call_id' });
 Message.belongsTo(Call, { foreignKey: 'call_id' });
@@ -130,5 +150,5 @@ Call.hasMany(Appointment, { foreignKey: 'call_id' });
 
 module.exports = {
   sequelize,
-  Tenant, User, Number, Call, Message, AvailabilityRule, Appointment, Transcript
+  Tenant, User, Number, Call, Message, AvailabilityRule, Appointment, Transcript, Recharge
 };

@@ -13,16 +13,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
 <style>
-  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--err:#ff6b6b}
+  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--err:#ff6b6b;--inp:#0f1626}
+  html[data-theme="light"]{--bg:#f4f7fb;--card:#ffffff;--line:#e5e7eb;--txt:#111827;--mut:#6b7280;--acc:#2563eb;--acc2:#1d4ed8;--ok:#0f9d6e;--err:#dc2626;--inp:#eef2f7}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100svh;display:flex;align-items:center;justify-content:center;padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))}
-  .card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--card),#0e1421);border:1px solid var(--line);border-radius:20px;padding:28px}
+  .card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--card),var(--bg));border:1px solid var(--line);border-radius:20px;padding:28px}
   .brand{font-weight:800;font-size:22px;margin-bottom:4px}
   .brand span{color:var(--acc2)}
   .sub{color:var(--mut);font-size:14px;margin-bottom:22px}
   label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
-  input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#0f1626;color:var(--txt);font-size:16px}
+  input{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:var(--inp);color:var(--txt);font-size:16px}
   button{width:100%;margin-top:20px;padding:13px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
   button:active{transform:translateY(1px)}
   .row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:14px}
@@ -30,6 +31,7 @@
   .msg{margin-top:14px;font-size:14px;min-height:18px}
   .lang{position:fixed;top:calc(12px + env(safe-area-inset-top));right:calc(16px + env(safe-area-inset-right));font-size:13px;color:var(--mut);cursor:pointer;z-index:9}
 </style>
+<script>(function(){try{var t=localStorage.getItem("lite_theme");if(t!=="light"&&t!=="dark")t="dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 </head>
 <body>
 <div class="lang" id="lang">ES</div>

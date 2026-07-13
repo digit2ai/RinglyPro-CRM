@@ -8,7 +8,8 @@
  */
 const express = require('express');
 const router = express.Router();
-const { Tenant } = require('../models');
+const { Tenant, Recharge } = require('../models');
+const minutesSvc = require('../services/minutes');
 
 function stripe() {
   const key = process.env.LITE_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
@@ -42,13 +43,29 @@ router.post('/stripe', async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const tenant = await tenantFromEvent(obj);
-        if (tenant) {
+        if (!tenant) break;
+        // Recharge (one-time minutes top-up) — credit prepaid minutes once.
+        if (obj.metadata && obj.metadata.kind === 'recharge') {
           tenant.stripe_customer_id = obj.customer || tenant.stripe_customer_id;
-          tenant.stripe_subscription_id = obj.subscription || tenant.stripe_subscription_id;
-          tenant.subscription_status = 'active';
-          tenant.suspended_at = null;
-          await tenant.save();
+          const rid = Number(obj.metadata.recharge_id);
+          const rec = rid ? await Recharge.findByPk(rid) : null;
+          if (rec && rec.status !== 'succeeded') {
+            rec.status = 'succeeded';
+            rec.stripe_payment_intent = obj.payment_intent || rec.stripe_payment_intent;
+            await rec.save();
+            await minutesSvc.creditMinutes(tenant, Number(rec.minutes) || 0);
+          } else if (!rec) {
+            await minutesSvc.creditMinutes(tenant, Number(obj.metadata.minutes) || 0);
+            await tenant.save();
+          }
+          break;
         }
+        // Subscription checkout.
+        tenant.stripe_customer_id = obj.customer || tenant.stripe_customer_id;
+        tenant.stripe_subscription_id = obj.subscription || tenant.stripe_subscription_id;
+        tenant.subscription_status = 'active';
+        tenant.suspended_at = null;
+        await tenant.save();
         break;
       }
       case 'customer.subscription.updated':
