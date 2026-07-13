@@ -342,6 +342,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: vision2ai.app -> Vision2Ai corporate landing, served IN PLACE
+// so the address bar stays on vision2ai.app. Mirrors the /vision2ai path served
+// from public/vision2ai/index.html. Only exercised once vision2ai.app DNS points
+// AT THIS APP and the domain is added on Render/Cloudflare; until then this app
+// never sees the Host header and the block is a harmless no-op. The booking API
+// (/vision2ai/api/*), champion teaser, TTS and all static assets pass through.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'vision2ai.app' || host === 'www.vision2ai.app') {
+    const p = req.path;
+    // Pass API, teaser, and any static asset (has a file extension) through untouched
+    if (p.startsWith('/vision2ai/api') || p.startsWith('/api') ||
+        p.startsWith('/champion-teaser') || /\.[a-z0-9]{2,5}$/i.test(p)) {
+      return next();
+    }
+    if (p === '/' || p === '' || p === '/index.html' || p === '/vision2ai' || p === '/vision2ai/') {
+      req.url = '/vision2ai/index.html';
+    }
+  }
+  next();
+});
+
 // Custom domain: vallemilagro.com.co (partner-owned) -> Valle Milagro landing,
 // served IN PLACE so the address bar stays on the custom domain. This block is
 // only exercised once the partner points vallemilagro.com.co DNS AT THIS APP
