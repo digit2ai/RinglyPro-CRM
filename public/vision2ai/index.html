@@ -272,7 +272,20 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 .m-success h3{margin-bottom:8px}
 .m-success p{color:var(--muted);font-size:.95rem}
 .m-success .when{color:var(--text);font-weight:800;margin:12px 0}
-.m-loading{color:var(--muted);font-size:.86rem;margin-top:6px}
+.m-loading{color:var(--muted);font-size:.86rem;margin:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  border:1px solid var(--line);background:#0d1330;color:var(--text);
+  border-radius:999px;padding:8px 14px;font:inherit;font-size:.88rem;cursor:pointer;
+  transition:border-color .15s,background .15s,color .15s;
+}
+.chip:hover{border-color:var(--cyan)}
+.chip.active{background:var(--grad);border-color:transparent;color:#fff;font-weight:700}
+#slotChips{max-height:168px;overflow-y:auto}
+.chips .none{color:var(--muted);font-size:.86rem}
+.picked{margin-top:12px;font-size:.92rem;color:var(--muted)}
+.picked strong{color:var(--text)}
+.slotpick{margin-bottom:6px}
 </style>
 </head>
 <body class="lang-en">
@@ -520,6 +533,14 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <h3 id="mTitle" data-i18n="modal.title">Request an Introduction</h3>
       <p class="m-sub" data-i18n="modal.sub">Pick a time and our team — or Lina, our AI assistant — will meet with you. Times shown in US Eastern.</p>
       <form id="bookForm">
+        <div class="m-loading" id="mLoading" data-i18n="modal.loading">Loading available times…</div>
+        <!-- Step 1: pick a slot (visible open times) -->
+        <div class="slotpick" id="slotPick" style="display:none">
+          <div class="field"><label data-i18n="modal.date">Date</label><div class="chips" id="dayChips"></div></div>
+          <div class="field"><label data-i18n="modal.time">Time</label><div class="chips" id="slotChips"></div></div>
+          <div class="picked" id="picked" style="display:none"><span data-i18n="modal.picked">Selected:</span> <strong id="pickedTxt"></strong></div>
+        </div>
+        <!-- Step 2: your details -->
         <div class="grid2">
           <div class="field"><label data-i18n="modal.name">Full name</label><input type="text" id="f-name" required></div>
           <div class="field"><label data-i18n="modal.email">Email</label><input type="email" id="f-email" required></div>
@@ -528,12 +549,8 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <div class="field"><label data-i18n="modal.company">Company (optional)</label><input type="text" id="f-company"></div>
           <div class="field"><label data-i18n="modal.phone">Phone (optional)</label><input type="tel" id="f-phone"></div>
         </div>
-        <div class="grid2">
-          <div class="field"><label data-i18n="modal.date">Date</label><select id="f-date" required></select></div>
-          <div class="field"><label data-i18n="modal.time">Time</label><select id="f-time" required></select></div>
-        </div>
         <div class="field"><label data-i18n="modal.notes">What would you like to discuss? (optional)</label><textarea id="f-notes"></textarea></div>
-        <div class="m-loading" id="mLoading" data-i18n="modal.loading">Loading available times…</div>
+        <input type="hidden" id="f-date"><input type="hidden" id="f-time">
         <button type="submit" class="btn btn-grad" id="mSubmit" data-i18n="modal.submit">Confirm Appointment</button>
         <div class="m-msg" id="mMsg"></div>
       </form>
@@ -609,7 +626,7 @@ var I18N = {
     'modal.name':'Full name','modal.email':'Email','modal.company':'Company (optional)','modal.phone':'Phone (optional)','modal.date':'Date','modal.time':'Time','modal.notes':'What would you like to discuss? (optional)',
     'modal.loading':'Loading available times…','modal.submit':'Confirm Appointment',
     'modal.done.h':"You're booked!",'modal.done.p':'A confirmation is on its way. We look forward to meeting you.','modal.done.close':'Close',
-    'modal.err.slot':'That time was just taken. Please pick another.','modal.err.generic':'Something went wrong. Please try again.','modal.err.none':'No times are open right now — please email us instead.','modal.picktime':'Select a time','modal.pickdate':'Select a date','modal.booking':'Booking…'
+    'modal.err.slot':'That time was just taken. Please pick another.','modal.err.generic':'Something went wrong. Please try again.','modal.err.none':'No times are open right now — please email us instead.','modal.picktime':'Select a time','modal.pickdate':'Select a date','modal.booking':'Booking…','modal.picked':'Selected:'
   },
   es: {
     'nav.merger':'La Fusión','nav.pillars':'Pilares','nav.factory':'Fábrica de IA','nav.fellowship':'Programa','nav.cta':'Únete al Ecosistema',
@@ -669,7 +686,7 @@ var I18N = {
     'modal.name':'Nombre completo','modal.email':'Correo','modal.company':'Empresa (opcional)','modal.phone':'Teléfono (opcional)','modal.date':'Fecha','modal.time':'Hora','modal.notes':'¿Qué te gustaría conversar? (opcional)',
     'modal.loading':'Cargando horarios disponibles…','modal.submit':'Confirmar Cita',
     'modal.done.h':'¡Cita confirmada!','modal.done.p':'Pronto llegará una confirmación. Esperamos conocerte.','modal.done.close':'Cerrar',
-    'modal.err.slot':'Ese horario se acaba de ocupar. Por favor elige otro.','modal.err.generic':'Algo salió mal. Inténtalo de nuevo.','modal.err.none':'No hay horarios disponibles por ahora — escríbenos por correo.','modal.picktime':'Selecciona una hora','modal.pickdate':'Selecciona una fecha','modal.booking':'Agendando…'
+    'modal.err.slot':'Ese horario se acaba de ocupar. Por favor elige otro.','modal.err.generic':'Algo salió mal. Inténtalo de nuevo.','modal.err.none':'No hay horarios disponibles por ahora — escríbenos por correo.','modal.picktime':'Selecciona una hora','modal.pickdate':'Selecciona una fecha','modal.booking':'Agendando…','modal.picked':'Seleccionado:'
   }
 };
 
@@ -740,8 +757,13 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
   var LITE_BASE = 'https://ringlypro-lite.onrender.com/api/public-booking';
   var LITE_KEY  = 'vision2ai-pub-9';
   var back = document.getElementById('modalBack');
-  var dateSel = document.getElementById('f-date');
-  var timeSel = document.getElementById('f-time');
+  var dateHidden = document.getElementById('f-date');
+  var timeHidden = document.getElementById('f-time');
+  var slotPick = document.getElementById('slotPick');
+  var dayChips = document.getElementById('dayChips');
+  var slotChips = document.getElementById('slotChips');
+  var picked = document.getElementById('picked');
+  var pickedTxt = document.getElementById('pickedTxt');
   var loading = document.getElementById('mLoading');
   var msg = document.getElementById('mMsg');
   var form = document.getElementById('bookForm');
@@ -749,6 +771,7 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
   var mForm = document.getElementById('mForm');
   var mDone = document.getElementById('mDone');
   var availDays = [];
+  var selDate = '', selTime = '', selDayLabel = '', selTimeLabel = '';
 
   function openModal(){
     back.classList.add('open'); back.setAttribute('aria-hidden','false');
@@ -757,25 +780,53 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
   }
   function closeModal(){ back.classList.remove('open'); back.setAttribute('aria-hidden','true'); }
 
+  function clearSel(){ selDate=selTime=''; dateHidden.value=''; timeHidden.value=''; picked.style.display='none'; }
+
+  function renderDays(){
+    dayChips.innerHTML = '';
+    availDays.forEach(function(day, i){
+      var b = document.createElement('button');
+      b.type='button'; b.className='chip'; b.textContent=day.display;
+      b.addEventListener('click', function(){ selectDay(i); });
+      dayChips.appendChild(b);
+    });
+  }
+  function selectDay(i){
+    Array.prototype.forEach.call(dayChips.children, function(c,idx){ c.classList.toggle('active', idx===i); });
+    var day = availDays[i]; selDate = day.date; selDayLabel = day.display;
+    selTime=''; timeHidden.value=''; picked.style.display='none';
+    slotChips.innerHTML = '';
+    (day.slots||[]).forEach(function(s){
+      var b = document.createElement('button');
+      b.type='button'; b.className='chip'; b.textContent=s.display;
+      b.addEventListener('click', function(){ selectTime(s, b); });
+      slotChips.appendChild(b);
+    });
+    if (!(day.slots||[]).length) slotChips.innerHTML = '<span class="none">'+t('modal.err.none')+'</span>';
+  }
+  function selectTime(s, btn){
+    Array.prototype.forEach.call(slotChips.children, function(c){ c.classList.remove('active'); });
+    btn.classList.add('active');
+    selTime = s.time; selTimeLabel = s.display;
+    dateHidden.value = selDate; timeHidden.value = selTime;
+    pickedTxt.textContent = selDayLabel + ' · ' + selTimeLabel;
+    picked.style.display='';
+  }
+
   function loadAvail(){
     loading.style.display=''; loading.textContent = t('modal.loading');
-    dateSel.innerHTML=''; timeSel.innerHTML='';
+    slotPick.style.display='none'; dayChips.innerHTML=''; slotChips.innerHTML=''; clearSel();
     submit.disabled = true;
     fetch(LITE_BASE + '/availability?key=' + encodeURIComponent(LITE_KEY) + '&days=14&lang=' + LANG).then(function(r){return r.json();}).then(function(d){
       availDays = (d && d.days) || [];
       loading.style.display='none';
       if (!availDays.length){ msg.textContent = t('modal.err.none'); msg.className='m-msg err'; return; }
-      dateSel.innerHTML = '<option value="" disabled selected>' + t('modal.pickdate') + '</option>' +
-        availDays.map(function(day){ return '<option value="'+day.date+'">'+day.display+'</option>'; }).join('');
-      timeSel.innerHTML = '<option value="" disabled selected>' + t('modal.picktime') + '</option>';
+      slotPick.style.display='';
+      renderDays();
+      selectDay(0); // show first day's open times immediately
       submit.disabled = false;
     }).catch(function(){ loading.style.display='none'; msg.textContent = t('modal.err.generic'); msg.className='m-msg err'; });
   }
-  dateSel.addEventListener('change', function(){
-    var day = availDays.filter(function(x){return x.date===dateSel.value;})[0];
-    timeSel.innerHTML = '<option value="" disabled selected>' + t('modal.picktime') + '</option>' +
-      ((day && day.slots) || []).map(function(s){ return '<option value="'+s.time+'">'+s.display+'</option>'; }).join('');
-  });
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
@@ -786,7 +837,7 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
       email: document.getElementById('f-email').value,
       company: document.getElementById('f-company').value,
       phone: document.getElementById('f-phone').value,
-      date: dateSel.value, time: timeSel.value,
+      date: selDate, time: selTime,
       notes: document.getElementById('f-notes').value,
       lang: LANG
     };
