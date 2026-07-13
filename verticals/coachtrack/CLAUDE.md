@@ -19,13 +19,24 @@ Each signup is its **own private tenant** (`tenant_id = user.id`); all coaching 
 `manifest.webmanifest` (standalone, theme `#17a6a6`, icons 192/512 + maskable), `sw.js` (offline shell cache; network-first for navigations, never caches `/api/`), `apple-touch-icon.png`, safe-area insets, 44px touch targets, in-app **Install** bar via `beforeinstallprompt`. Icons generated from the logo with `sips` (fit-then-pad, no crop). Branded `favicon.svg` = constellation node mark.
 
 ## Capture flow
-Voice (browser Web Speech API, `es-ES`, zero key) and typed both POST to `/sessions/:id/turn` — same pipeline. On **Finalize**, `coach-brain.finalizeSession()` returns `{subject, summary, action_items[]}`, persisted. Each action item has a `/guidance` chat with Lala that loads the session as context.
+Voice (browser Web Speech API, `es-ES`/`en-US` by UI lang, zero key) and typed both POST to `/sessions/:id/turn` — same pipeline. On **Finalize**, `coach-brain.finalizeSession()` returns `{subject, summary, action_items[]}`, persisted. Each action item has a `/guidance` chat with Lala that loads the session as context.
+
+### Dashboard enhancements (7-feature set, `public/dashboard.html`)
+1. **EN/ES language selector** (`langBtn`) — full-app i18n via `T` dict + `t()`; persisted `localStorage['ct_lang']`; also switches Web Speech `REC.lang`.
+2. **Expanded session input** — `#turnText` min-height 140px, auto-grows to 52vh then scrolls (`autoGrow()`).
+3. **Per-session AI action generation** — in session detail, "Generar acciones con IA" → `POST /sessions/:id/generate-action-items` (analyzes ONLY that session, APPENDS, dedupes).
+4. **Pending-actions dashboard card** (`pendingCard`) — counter of non-done items; opens the board **grouped by session**.
+5. **Full action-item CRUD** — add (`POST /action-items`), edit/complete/reopen (`PATCH`), delete (`DELETE`). Completed items shown struck-through, sorted last, still accessible.
+6. **Voice auto-save + resume** — each *final* speech result is saved as a turn immediately (no data loss if the user never taps Agregar/Finalizar); an in-progress session shows a **Resume** banner on home.
+7. **30-min mic idle timeout** — `IDLE_MS=30min` → warning bar with 60s (`GRACE_MS`) countdown → auto-stop mic, transcript preserved. Any voice activity or "Continuar" resets it.
 
 ## API (`/coaching/api/v1/*`)
 - Auth: `POST /auth/signup` (open free) · `POST /auth/login` · `POST /auth/logout` · `GET /auth/me`
-- `POST /sessions` · `GET /sessions` · `GET /sessions/:id` · `POST /sessions/:id/turn` · `POST /sessions/:id/finalize`
-- `GET /action-items` (accountability board) · `PATCH /action-items/:id` · `GET|POST /action-items/:id/guidance`
+- Sessions: `POST /sessions` · `GET /sessions` (hides the `__manual__` bucket) · `GET /sessions/:id` · `POST /sessions/:id/turn` · `POST /sessions/:id/finalize` · `POST /sessions/:id/generate-action-items` (append, this session only)
+- Action items: `GET /action-items` (board; each item carries its `session`) · `POST /action-items` (manual add; no `session_id` → per-tenant `__manual__` session bucket) · `PATCH /action-items/:id` (status/text/notes/due_date) · `DELETE /action-items/:id` · `GET|POST /action-items/:id/guidance`
 - `GET /health`
+
+No schema change was needed for the 7-feature set — all columns already exist in `ct_action_items` (`text/status/completed_at`) and `ct_transcripts` (`source`).
 
 ## Key env vars
 `COACHTRACK_JWT_SECRET` (set on prod), `COACHTRACK_MODEL` (default `claude-haiku-4-5-20251001`, reuses `ANTHROPIC_API_KEY`), `COACHTRACK_DEFAULT_PASSWORD` (seeded admin login), `COACHTRACK_SEED_DEMO=1` (optional).
