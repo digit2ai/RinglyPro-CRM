@@ -734,6 +734,11 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
 
 /* ==================== Booking modal ==================== */
 (function(){
+  // Bookings go straight into the Vision2Ai RinglyPro Lite calendar (tenant 9)
+  // via Lite's public tenant-scoped endpoint. The key is a PUBLIC booking key
+  // (not a password) that only permits reading slots + creating a booking.
+  var LITE_BASE = 'https://ringlypro-lite.onrender.com/api/public-booking';
+  var LITE_KEY  = 'vision2ai-pub-9';
   var back = document.getElementById('modalBack');
   var dateSel = document.getElementById('f-date');
   var timeSel = document.getElementById('f-time');
@@ -756,7 +761,7 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
     loading.style.display=''; loading.textContent = t('modal.loading');
     dateSel.innerHTML=''; timeSel.innerHTML='';
     submit.disabled = true;
-    fetch('/vision2ai/api/v1/availability?lang=' + LANG).then(function(r){return r.json();}).then(function(d){
+    fetch(LITE_BASE + '/availability?key=' + encodeURIComponent(LITE_KEY) + '&days=14&lang=' + LANG).then(function(r){return r.json();}).then(function(d){
       availDays = (d && d.days) || [];
       loading.style.display='none';
       if (!availDays.length){ msg.textContent = t('modal.err.none'); msg.className='m-msg err'; return; }
@@ -776,17 +781,18 @@ fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(funct
     e.preventDefault();
     msg.textContent=''; msg.className='m-msg';
     var payload = {
+      key: LITE_KEY,
       name: document.getElementById('f-name').value,
       email: document.getElementById('f-email').value,
       company: document.getElementById('f-company').value,
       phone: document.getElementById('f-phone').value,
       date: dateSel.value, time: timeSel.value,
       notes: document.getElementById('f-notes').value,
-      lang: LANG, source: 'web'
+      lang: LANG
     };
     if (!payload.date || !payload.time){ msg.textContent = t('modal.picktime'); msg.className='m-msg err'; return; }
     submit.disabled = true; submit.textContent = t('modal.booking');
-    fetch('/vision2ai/api/v1/book', {
+    fetch(LITE_BASE + '/book', {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, status:r.status, j:j}; }); })
       .then(function(res){
