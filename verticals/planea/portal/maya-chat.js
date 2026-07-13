@@ -54,6 +54,8 @@
   var speaking = true; // auto-speak Maya replies
   var recognizing = false;
   var recog = null;
+  var handsFree = false; // hands-free conversation mode
+  var hfEmpty = 0; // consecutive silent listens
   var els = {};
 
   function profile() { return window.PLANEA_PROFILE || DEMO_PROFILE; }
@@ -95,6 +97,23 @@
       '.maya-fab .l1{font-weight:700;font-size:14px;line-height:1.15}',
       '.maya-fab .l2{font-size:11.5px;color:rgba(255,255,255,.65)}',
       '@media (prefers-reduced-motion:reduce){.maya-fab .orb{animation:none}}',
+      // Hands-free header button
+      '.maya-head button.hf.on{background:#2E7D5B}',
+      // Hands-free conversation stage (overlay)
+      '.maya-stage{position:absolute;left:0;right:0;top:58px;bottom:0;background:#0f2a2c;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;z-index:5}',
+      '.maya-stage.activo{display:flex}',
+      '.stage-orb{width:124px;height:124px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8FE3B5,#2E7D5B 55%,#16373A 100%);box-shadow:0 0 0 0 rgba(143,227,181,.5)}',
+      '.stage-orb.speaking{animation:hfSpeak 1s ease-in-out infinite}',
+      '.stage-orb.listening{animation:hfListen 1.5s ease-in-out infinite}',
+      '.stage-orb.thinking{opacity:.75;animation:hfThink 1.1s ease-in-out infinite}',
+      '@keyframes hfSpeak{0%,100%{box-shadow:0 0 0 0 rgba(143,227,181,.55);transform:scale(1)}50%{box-shadow:0 0 0 20px rgba(143,227,181,0);transform:scale(1.05)}}',
+      '@keyframes hfListen{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.4)}50%{box-shadow:0 0 0 16px rgba(255,255,255,0)}}',
+      '@keyframes hfThink{0%,100%{transform:scale(1)}50%{transform:scale(.94)}}',
+      '.stage-status{font-family:"Inter",system-ui,sans-serif;font-weight:700;font-size:16px}',
+      '.stage-cap{font-size:13.5px;color:rgba(255,255,255,.72);min-height:20px;max-width:280px;line-height:1.4}',
+      '.stage-stop{margin-top:6px;background:#B5533C;color:#fff;border:none;border-radius:99px;padding:11px 24px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}',
+      '.stage-stop:hover{filter:brightness(1.06)}',
+      '@media (prefers-reduced-motion:reduce){.stage-orb{animation:none!important}}',
       '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:88px;width:auto;height:calc(100vh - 120px)}.maya-fab .txt{display:none}.maya-fab{padding:14px;border-radius:50%}}'
     ].join('');
     document.head.appendChild(s);
@@ -122,8 +141,15 @@
         '<span class="orb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>' +
         '<div><div class="t1">Maya</div><div class="t2">Tu guía financiera IA</div></div>' +
         '<span class="sp"></span>' +
+        '<button class="hf" title="Conversar en manos libres" aria-label="Hablar con Maya en manos libres" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h0"/></svg></button>' +
         '<button class="voz on" title="Voz de Maya" aria-label="Activar o silenciar la voz de Maya">&#128266;</button>' +
         '<button class="cerrar" title="Cerrar" aria-label="Cerrar chat">&times;</button>' +
+      '</div>' +
+      '<div class="maya-stage">' +
+        '<div class="stage-orb"></div>' +
+        '<div class="stage-status">Toca el orbe para hablar con Maya</div>' +
+        '<div class="stage-cap"></div>' +
+        '<button class="stage-stop">Terminar</button>' +
       '</div>' +
       '<div class="maya-body"></div>' +
       '<div class="maya-sug"></div>' +
@@ -141,6 +167,12 @@
     els.send = wrap.querySelector('.maya-send');
     els.voz = wrap.querySelector('.voz');
     els.cerrar = wrap.querySelector('.cerrar');
+    els.hf = wrap.querySelector('.hf');
+    els.stage = wrap.querySelector('.maya-stage');
+    els.stageOrb = wrap.querySelector('.stage-orb');
+    els.stageStatus = wrap.querySelector('.stage-status');
+    els.stageCap = wrap.querySelector('.stage-cap');
+    els.stageStop = wrap.querySelector('.stage-stop');
 
     els.send.addEventListener('click', function () { sendText(els.input.value); });
     els.input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(els.input.value); } });
@@ -148,6 +180,9 @@
     els.cerrar.addEventListener('click', close);
     els.voz.addEventListener('click', function () { speaking = !speaking; els.voz.classList.toggle('on', speaking); els.voz.innerHTML = speaking ? '&#128266;' : '&#128263;'; if (!speaking) stopAudio(); });
     els.mic.addEventListener('click', toggleMic);
+    els.hf.addEventListener('click', function () { handsFree ? stopHF() : startHF(); });
+    els.stageOrb.addEventListener('click', function () { if (!handsFree) startHF(); });
+    els.stageStop.addEventListener('click', stopHF);
     renderSug();
   }
 
@@ -176,16 +211,16 @@
     }
   }
 
-  function sendText(text) {
+  // Core ask: append user msg, call Maya, append reply. opts.onReply(reply) lets the
+  // hands-free loop chain speak→listen; opts.silentTyping hides the "pensando" bubble.
+  function ask(text, opts) {
+    opts = opts || {};
     text = (text || '').trim();
     if (!text) return;
-    els.input.value = '';
-    els.input.style.height = 'auto';
-    if (els.sug) els.sug.style.display = 'none';
     addMsg('user', text);
     history.push({ role: 'user', content: text });
-    var typing = addMsg('maya', 'Maya está pensando...');
-    typing.classList.add('typing');
+    var typing = opts.silentTyping ? null : addMsg('maya', 'Maya está pensando...');
+    if (typing) typing.classList.add('typing');
 
     fetch(API, {
       method: 'POST',
@@ -194,30 +229,54 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        typing.remove();
+        if (typing) typing.remove();
         var reply = (data && data.reply) || 'No pude responder en este momento.';
         history.push({ role: 'assistant', content: reply });
         addMsg('maya', reply);
-        if (speaking) speak(reply);
+        if (opts.onReply) opts.onReply(reply);
+        else if (speaking) speak(reply);
       })
       .catch(function () {
-        typing.remove();
+        if (typing) typing.remove();
         addMsg('maya', 'Tuve un problema de conexión. Intenta de nuevo.');
+        if (opts.onError) opts.onError();
       });
   }
 
-  // ── Voice output (TTS) ──
-  var audio = null;
-  function stopAudio() { if (audio) { try { audio.pause(); } catch (e) {} audio = null; } }
-  function speak(text) {
-    stopAudio();
-    fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: TTS_VOICE }) })
-      .then(function (r) { return r.ok ? r.blob() : null; })
-      .then(function (b) { if (!b || b.size < 200) return; audio = new Audio(URL.createObjectURL(b)); audio.play().catch(function () {}); })
-      .catch(function () {});
+  function sendText(text) {
+    text = (text || '').trim();
+    if (!text) return;
+    els.input.value = '';
+    els.input.style.height = 'auto';
+    if (els.sug) els.sug.style.display = 'none';
+    ask(text);
   }
 
-  // ── Voice input (Web Speech API) ──
+  // ── Voice output (Web Audio — precise onended for the hands-free loop) ──
+  var actx = null, curSource = null;
+  function ensureCtx() { if (!actx) { var C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); } return actx; }
+  function unlockAudio() { var c = ensureCtx(); if (c && c.state === 'suspended') { try { c.resume(); } catch (e) {} } }
+  function stopAudio() { if (curSource) { try { curSource.onended = null; curSource.stop(); } catch (e) {} curSource = null; } }
+  function speak(text, onEnd) {
+    stopAudio();
+    var c = ensureCtx();
+    fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: TTS_VOICE }) })
+      .then(function (r) { return r.ok ? r.arrayBuffer() : null; })
+      .then(function (buf) {
+        if (!buf || !c) { if (onEnd) onEnd(); return; }
+        c.decodeAudioData(buf.slice(0), function (decoded) {
+          var src = c.createBufferSource();
+          src.buffer = decoded;
+          src.connect(c.destination);
+          src.onended = function () { if (curSource === src) curSource = null; if (onEnd) onEnd(); };
+          curSource = src;
+          try { src.start(0); } catch (e) { if (onEnd) onEnd(); }
+        }, function () { if (onEnd) onEnd(); });
+      })
+      .catch(function () { if (onEnd) onEnd(); });
+  }
+
+  // ── One-shot voice input (mic button — fills the textbox, then sends) ──
   function toggleMic() {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { addMsg('maya', 'Tu navegador no permite dictado por voz. Usa Chrome o Safari, o escríbeme.'); return; }
@@ -243,8 +302,88 @@
   }
   function stopMic() { recognizing = false; els.mic.classList.remove('rec'); }
 
+  // ── Hands-free conversation mode (call-with-Maya) ──
+  function updateHF() {
+    els.hf.classList.toggle('on', handsFree);
+    els.hf.setAttribute('aria-pressed', handsFree ? 'true' : 'false');
+    els.stage.classList.toggle('activo', handsFree);
+  }
+  function setStage(state, caption) {
+    els.stageOrb.className = 'stage-orb' + (state ? ' ' + state : '');
+    var t = state === 'speaking' ? 'Maya está hablando…'
+      : state === 'listening' ? 'Te escucho…'
+      : state === 'thinking' ? 'Pensando…'
+      : 'Toca el orbe para hablar con Maya';
+    els.stageStatus.textContent = t;
+    if (caption !== undefined) els.stageCap.textContent = caption || '';
+  }
+  function startHF() {
+    if (!els.panel.classList.contains('abierto')) open();
+    handsFree = true; hfEmpty = 0; updateHF(); unlockAudio();
+    if (els.sug) els.sug.style.display = 'none';
+    var g = 'Hola ' + (profile().nombre || '') + '. Soy Maya. Cuéntame, ¿qué quieres saber sobre tus finanzas?';
+    addMsg('maya', g); history.push({ role: 'assistant', content: g });
+    hfSpeakThenListen(g);
+  }
+  function stopHF() {
+    handsFree = false; updateHF();
+    stopAudio();
+    if (recognizing) { try { recog.stop(); } catch (e) {} }
+    setStage('', '');
+  }
+  function hfSpeakThenListen(text) {
+    if (!handsFree) return;
+    setStage('speaking', '');
+    speak(text, function () { if (handsFree) hfListen(); });
+  }
+  function hfSpeakThenStop(text) {
+    addMsg('maya', text);
+    setStage('speaking', '');
+    speak(text, function () { stopHF(); });
+  }
+  function hfListen() {
+    if (!handsFree) return;
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { addMsg('maya', 'Tu navegador no permite voz. Usa Chrome o Safari.'); stopHF(); return; }
+    setStage('listening', '');
+    recog = new SR();
+    recog.lang = 'es-CO';
+    recog.interimResults = true;
+    recog.continuous = false;
+    recognizing = true;
+    var finalText = '';
+    recog.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      setStage('listening', (finalText + interim).trim());
+    };
+    recog.onerror = function () { recognizing = false; };
+    recog.onend = function () {
+      recognizing = false;
+      if (!handsFree) return;
+      var t = finalText.trim();
+      if (t) {
+        hfEmpty = 0;
+        setStage('thinking', t);
+        ask(t, {
+          silentTyping: true,
+          onReply: function (reply) { hfSpeakThenListen(reply); },
+          onError: function () { if (handsFree) hfListen(); }
+        });
+      } else {
+        hfEmpty++;
+        if (hfEmpty >= 3) hfSpeakThenStop('Me quedo por aquí. Toca el orbe cuando quieras seguir.');
+        else hfListen();
+      }
+    };
+    try { recog.start(); } catch (e) { setTimeout(function () { if (handsFree) hfListen(); }, 400); }
+  }
+
   function open() { els.panel.classList.add('abierto'); greet(); setTimeout(function () { els.input.focus(); }, 60); }
-  function close() { els.panel.classList.remove('abierto'); stopAudio(); if (recognizing) try { recog.stop(); } catch (e) {} }
+  function close() { els.panel.classList.remove('abierto'); stopHF(); stopAudio(); if (recognizing) try { recog.stop(); } catch (e) {} }
   function toggle() { els.panel.classList.contains('abierto') ? close() : open(); }
 
   function init() {
