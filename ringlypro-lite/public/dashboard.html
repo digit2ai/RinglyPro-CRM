@@ -224,7 +224,7 @@ function renderMessages(){
   if(msgFilter==='unread')list=list.filter(m=>!m.read_at);
   if(msgQuery){const q=msgQuery.toLowerCase();list=list.filter(m=>((m.caller_name||'')+' '+(m.body||'')+' '+(m.callback_number||'')).toLowerCase().includes(q));}
   if(!list.length){box.innerHTML='<div class="empty">'+I[lang].noResults+'</div>';return}
-  box.innerHTML=list.map(m=>`<div class="swipewrap" data-id="${m.id}" data-num="${esc(m.callback_number||'')}">
+  box.innerHTML=list.map(m=>`<div class="swipewrap" data-id="${m.id}" data-num="${esc(m.callback_number||'')}" data-name="${esc(m.caller_name||'')}">
     <div class="swipe-actions"><div class="sms-hint">${I[lang].sms}</div><div class="del-hint">${I[lang].del}</div></div>
     <div class="item ${m.read_at?'':'unread'}">
       <div class="top"><div class="name">${esc(m.caller_name||'—')}</div><div class="when">${fmt(m.created_at)}</div></div>
@@ -252,7 +252,7 @@ function attachSwipe(){
       if(!dragging)return;dragging=false;item.style.transition='transform .18s ease';
       const TH=80;
       if(horiz&&dx<=-TH){ item.style.transform='translateX(-100%)'; setTimeout(()=>deleteMsg(wrap.getAttribute('data-id')),160); }
-      else if(horiz&&dx>=TH){ item.style.transform='translateX(0)'; const num=wrap.getAttribute('data-num'); if(num)location.href='sms:'+num; }
+      else if(horiz&&dx>=TH){ item.style.transform='translateX(0)'; const num=wrap.getAttribute('data-num'); if(num)location.href=smsHref(num,contactMsg('call',wrap.getAttribute('data-name'),'')); }
       else{ item.style.transform='translateX(0)'; }
     });
   });
@@ -267,15 +267,18 @@ async function loadCalendar(){
   const j=await api('/api/appointments');if(!j)return;const box=$('calendar');
   if(!j.appointments.length){box.innerHTML='<div class="empty">'+I[lang].noAppt+'</div>';return}
   const byDay={};j.appointments.filter(a=>a.status!=='cancelled').forEach(a=>{const d=new Date(a.starts_at).toLocaleDateString(lang==='es'?'es-CO':'en-US',{weekday:'long',month:'long',day:'numeric'});(byDay[d]=byDay[d]||[]).push(a)});
-  box.innerHTML=Object.keys(byDay).map(d=>`<div class="day">${d}</div>`+byDay[d].map(a=>`<div class="item">
+  box.innerHTML=Object.keys(byDay).map(d=>`<div class="day">${d}</div>`+byDay[d].map(a=>{
+    const wh=new Date(a.starts_at).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',hour:'numeric',minute:'2-digit'});
+    const msg=contactMsg('appt',a.caller_name,wh);
+    return `<div class="item">
     <div class="top"><div class="name">${esc(a.caller_name||'—')}</div><div class="when">${new Date(a.starts_at).toLocaleTimeString(lang==='es'?'es-CO':'en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
     ${a.callback_number?`<a class="call" href="tel:${esc(a.callback_number)}">${esc(a.callback_number)}</a>`:''}
     <div class="apptbtns">
       <button class="sm ghost" onclick="cancelAppt(${a.id})">${I[lang].cancel}</button>
-      ${a.callback_number?`<a class="actbtn wa" target="_blank" rel="noopener" href="https://wa.me/${digits(a.callback_number)}">${I[lang].whatsapp}</a>
-      <a class="actbtn sms" href="sms:${esc(a.callback_number)}">${I[lang].sms}</a>`:''}
+      ${a.callback_number?`<a class="actbtn wa" target="_blank" rel="noopener" href="${waHref(a.callback_number,msg)}">${I[lang].whatsapp}</a>
+      <a class="actbtn sms" href="${smsHref(a.callback_number,msg)}">${I[lang].sms}</a>`:''}
     </div>
-  </div>`).join('')).join('');
+  </div>`;}).join('')).join('');
 }
 window.cancelAppt=async id=>{await api('/api/appointments/'+id+'/cancel',{method:'POST'});loadCalendar()};
 
@@ -367,6 +370,21 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','
 function digits(s){return String(s==null?'':s).replace(/[^0-9]/g,'')}
 function render(){loadMessages();}
 
+// Prefill outgoing SMS/WhatsApp with a RinglyPro-branded, personalized message so
+// the compose box always shows OUR text (never a stale draft left by another app).
+let bizName='';
+function contactMsg(kind,name,when){
+  const es=lang==='es'; const who=name?(' '+name):''; const b=bizName;
+  if(kind==='appt'){
+    if(es)return `Hola${who}, le escribo${b?' de '+b:''} sobre su cita del ${when}.`;
+    return `Hi${who},${b?' this is '+b:''} regarding your appointment on ${when}.`;
+  }
+  if(es)return `Hola${who}, le devuelvo la llamada${b?' de parte de '+b:''}.`;
+  return `Hi${who},${b?' this is '+b+' —':''} returning your call.`;
+}
+function smsHref(num,body){return 'sms:'+num+(body?('?body='+encodeURIComponent(body)):'')}
+function waHref(num,body){return 'https://wa.me/'+digits(num)+(body?('?text='+encodeURIComponent(body)):'')}
+
 /* ── Theme (Light/Dark) — applied to <html data-theme>, persisted ─────── */
 function applyTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('lite_theme',t)}catch(e){}
   const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',t==='light'?'#f4f7fb':'#0d1320');
@@ -418,6 +436,8 @@ $('bell').onclick=async()=>{
 };
 refreshBell();
 apply();render();
+// Business name for branded SMS/WhatsApp prefills.
+api('/api/settings').then(j=>{if(j&&j.tenant)bizName=j.tenant.business_name||''}).catch(()=>{});
 $('msgSearchBar').classList.add('on');   // Messages is the default view
 // Returning from a recharge Checkout fallback → refresh billing view.
 if(/[?&]recharge=1/.test(location.search)){location.hash='';document.querySelector('nav a[data-view="settings"]').click();}
