@@ -3931,7 +3931,12 @@
   }
   (function () {
     var saved = null;
-    try { saved = localStorage.getItem('teaser-lang'); } catch (_) {}
+    // ?lang= wins (lets sister pages like /vision2ai carry the chosen language over)
+    try {
+      var urlLang = new URLSearchParams(window.location.search).get('lang');
+      if (urlLang === 'en' || urlLang === 'es') saved = urlLang;
+    } catch (_) {}
+    if (saved !== 'en' && saved !== 'es') { try { saved = localStorage.getItem('teaser-lang'); } catch (_) {} }
     if (saved !== 'en' && saved !== 'es') saved = 'en';
     document.body.classList.remove('lang-en', 'lang-es');
     document.body.classList.add('lang-' + saved);

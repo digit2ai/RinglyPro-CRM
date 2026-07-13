@@ -17,6 +17,7 @@
   --magenta:#d946a8;
   --cyan:#38bdf8;
   --amber:#f5a94b;
+  --green:#3fc06a;
   --text:#e8eaff;
   --muted:#9aa3d0;
   --grad:linear-gradient(100deg,var(--blue),var(--violet) 45%,var(--magenta));
@@ -41,18 +42,24 @@ nav{
   background:rgba(6,8,26,.78);backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
 }
-.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
 .wordmark{font-weight:700;font-size:1.25rem;letter-spacing:.01em;display:flex;align-items:center;gap:10px}
 .wordmark .two{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .wordmark .ai{background:linear-gradient(120deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .mark{width:34px;height:34px;flex:none}
 .nav-links{display:flex;gap:28px;font-size:.86rem;font-weight:600;color:var(--muted)}
 .nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.lang-toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:rgba(255,255,255,.03)}
+.lang-toggle button{background:transparent;border:none;padding:5px 11px;border-radius:999px;font-size:.72rem;font-weight:800;letter-spacing:.08em;color:var(--muted);cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
+.lang-toggle button.active{background:var(--grad);color:#fff}
+.lang-toggle button:not(.active):hover{color:var(--text)}
 .nav-cta{
   font-size:.83rem;font-weight:700;padding:9px 18px;border-radius:999px;
-  background:var(--grad);color:#fff;
+  background:var(--grad);color:#fff;white-space:nowrap;
 }
-@media(max-width:760px){.nav-links{display:none}}
+@media(max-width:820px){.nav-links{display:none}}
+@media(max-width:520px){.nav-cta{display:none}}
 
 /* ---------- Hero ---------- */
 header{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden}
@@ -80,13 +87,21 @@ header{position:relative;min-height:100svh;display:flex;align-items:center;overf
 .hero-sub strong{color:var(--text)}
 .cta-row{margin-top:38px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .btn{
-  padding:14px 30px;border-radius:999px;font-weight:700;font-size:.95rem;
-  transition:transform .2s,box-shadow .2s;
+  padding:14px 30px;border-radius:999px;font-weight:700;font-size:.95rem;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;border:none;font-family:inherit;
 }
 .btn:hover{transform:translateY(-2px)}
 .btn-grad{background:var(--grad);color:#fff;box-shadow:0 8px 30px rgba(139,92,246,.35)}
-.btn-ghost{border:1px solid rgba(139,148,255,.35);color:var(--text)}
+.btn-ghost{border:1px solid rgba(139,148,255,.35);color:var(--text);background:transparent}
 .btn-ghost:hover{border-color:var(--cyan)}
+.call-chip{
+  margin:22px auto 0;display:none;align-items:center;justify-content:center;gap:9px;
+  font-size:.9rem;color:var(--muted);
+}
+.call-chip.on{display:flex}
+.call-chip a{color:var(--cyan);font-weight:800;border-bottom:1px dashed rgba(56,189,248,.5)}
+.call-chip .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(63,192,106,.6);animation:cp 1.6s infinite}
+@keyframes cp{0%{box-shadow:0 0 0 0 rgba(63,192,106,.5)}70%{box-shadow:0 0 0 10px rgba(63,192,106,0)}100%{box-shadow:0 0 0 0 rgba(63,192,106,0)}}
 
 /* ---------- Sections ---------- */
 section{padding:100px 0;position:relative}
@@ -179,13 +194,12 @@ h2{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spa
   display:flex;gap:14px;align-items:baseline;
 }
 .fellow-list li:last-child{border-bottom:none}
-.fellow-list .k{color:var(--cyan);font-weight:800;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;flex:none;width:92px}
+.fellow-list .k{color:var(--cyan);font-weight:800;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;flex:none;width:104px}
 blockquote{
   margin-top:34px;padding:26px 30px;border-left:3px solid;border-image:var(--grad) 1;
   background:rgba(139,92,246,.06);border-radius:0 14px 14px 0;
   font-size:1.02rem;color:var(--text);
 }
-blockquote .es{display:block;margin-top:10px;font-size:.9rem}
 @media(max-width:900px){.fellow-wrap{grid-template-columns:1fr}}
 
 /* CTA */
@@ -210,9 +224,45 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
   .reveal{opacity:1;transform:none;transition:none}
   .btn:hover,.pillar:hover,.prod:hover{transform:none}
 }
+
+/* ---------- Booking modal ---------- */
+.modal-back{
+  position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  background:rgba(3,4,14,.72);backdrop-filter:blur(6px);padding:20px;
+}
+.modal-back.open{display:flex}
+.modal{
+  width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:32px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative;
+}
+.modal-close{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal .m-eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);margin-bottom:10px}
+.modal h3{font-size:1.5rem;margin-bottom:8px}
+.modal .m-sub{color:var(--muted);font-size:.92rem;margin-bottom:22px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.74rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;background:#0d1330;border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;color:var(--text);font-family:inherit;font-size:.95rem;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--violet)}
+.field textarea{resize:vertical;min-height:66px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:460px){.grid2{grid-template-columns:1fr}}
+.modal .btn{width:100%;margin-top:8px}
+.m-msg{margin-top:14px;font-size:.9rem;min-height:20px}
+.m-msg.err{color:#ff8f9e}
+.m-success{text-align:center;padding:14px 0}
+.m-success .check{width:66px;height:66px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:2rem;color:#04121a}
+.m-success h3{margin-bottom:8px}
+.m-success p{color:var(--muted);font-size:.95rem}
+.m-success .when{color:var(--text);font-weight:800;margin:12px 0}
+.m-loading{color:var(--muted);font-size:.86rem;margin-top:6px}
 </style>
 </head>
-<body>
+<body class="lang-en">
 
 <!-- SVG defs for the V2Ai mark -->
 <svg width="0" height="0" style="position:absolute">
@@ -249,12 +299,18 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       Vision<span class="two">2</span><span class="ai">Ai</span>
     </a>
     <div class="nav-links">
-      <a href="#merger">The Merger</a>
-      <a href="#pillars">Pillars</a>
-      <a href="#factory">AI Factory</a>
-      <a href="#fellowship">Fellowship</a>
+      <a href="#merger" data-i18n="nav.merger">The Merger</a>
+      <a href="#pillars" data-i18n="nav.pillars">Pillars</a>
+      <a href="#factory" data-i18n="nav.factory">AI Factory</a>
+      <a href="#fellowship" data-i18n="nav.fellowship">Fellowship</a>
     </div>
-    <a class="nav-cta" href="#join">Join the Ecosystem</a>
+    <div class="nav-right">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
+      <a class="nav-cta" id="joinCta" href="/champion-teaser.html" data-i18n="nav.cta">Join the Ecosystem</a>
+    </div>
   </div>
 </nav>
 
@@ -265,53 +321,58 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <svg class="hero-mark"><use href="#v2ai"/></svg>
     <h1>Vision<span class="two">2</span><span class="ai">Ai</span></h1>
     <div class="tagline">
-      <span>AI Factory</span><span class="dot v"></span>
-      <span>Business Ecosystem</span><span class="dot c"></span>
-      <span>Limitless Future</span>
+      <span data-i18n="tag.factory">AI Factory</span><span class="dot v"></span>
+      <span data-i18n="tag.ecosystem">Business Ecosystem</span><span class="dot c"></span>
+      <span data-i18n="tag.future">Limitless Future</span>
     </div>
-    <p class="hero-sub">
+    <p class="hero-sub" data-i18n="hero.sub">
       The production AI platform of <strong>Digit2ai</strong> and the leadership incubator of
       <strong>Visionarium</strong> — now one company. We build the intelligence engines,
       and we build the people who will lead with them.
     </p>
     <div class="cta-row">
-      <a class="btn btn-grad" href="#factory">Explore the AI Factory</a>
-      <a class="btn btn-ghost" href="#fellowship">Meet the Fellowship</a>
+      <a class="btn btn-grad" href="#factory" data-i18n="hero.cta1">Explore the AI Factory</a>
+      <a class="btn btn-ghost" href="#fellowship" data-i18n="hero.cta2">Meet the Fellowship</a>
+    </div>
+    <div class="call-chip" id="callChip">
+      <span class="pulse"></span>
+      <span data-i18n="call.label">Prefer to talk? Call our AI assistant</span>
+      <a id="callLink" href="#"></a>
     </div>
   </div>
 </header>
 
 <section id="merger">
   <div class="wrap">
-    <span class="eyebrow">The Merger</span>
-    <h2>Two builders. One future.</h2>
-    <p class="lede">Since 2015, one company has been shipping production AI across the Americas while the other has been forming its next generation of leaders. Vision2Ai unites both under a single roof.</p>
+    <span class="eyebrow" data-i18n="merger.eyebrow">The Merger</span>
+    <h2 data-i18n="merger.h2">Two builders. One future.</h2>
+    <p class="lede" data-i18n="merger.lede">Since 2015, one company has been shipping production AI across the Americas while the other has been forming its next generation of leaders. Vision2Ai unites both under a single roof.</p>
 
     <div class="merge-grid">
       <div class="merge-card left reveal">
         <span class="co">Digit2ai · Tampa, FL</span>
-        <h3>The AI Factory</h3>
-        <p>A production artificial-intelligence platform company operating a dozen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
+        <h3 data-i18n="merger.left.h">The AI Factory</h3>
+        <p data-i18n="merger.left.p">A production artificial-intelligence platform company operating a dozen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
       </div>
       <div class="merge-x">×</div>
       <div class="merge-card right reveal">
         <span class="co">Visionarium · Miami, FL · Est. 2015</span>
-        <h3>The Human Pipeline</h3>
-        <p>A bilingual AI-powered leadership, creativity, and technology fellowship preparing Latin America's next generation for global impact — open to every young person, selective at the top.</p>
+        <h3 data-i18n="merger.right.h">The Human Pipeline</h3>
+        <p data-i18n="merger.right.p">A bilingual AI-powered leadership, creativity, and technology fellowship preparing Latin America's next generation for global impact — open to every young person, selective at the top.</p>
       </div>
     </div>
 
     <div class="merge-result reveal">
       <h3>= Vision2Ai</h3>
-      <p>An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.</p>
+      <p data-i18n="merger.result.p">An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.</p>
     </div>
   </div>
 </section>
 
 <section id="pillars" class="section-alt">
   <div class="wrap">
-    <span class="eyebrow">What We Are</span>
-    <h2>Three pillars, one system.</h2>
+    <span class="eyebrow" data-i18n="pillars.eyebrow">What We Are</span>
+    <h2 data-i18n="pillars.h2">Three pillars, one system.</h2>
 
     <div class="pillars">
       <div class="pillar p1 reveal">
@@ -321,18 +382,18 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <line x1="18" y1="17" x2="28" y2="17"/><line x1="23" y1="17" x2="23" y2="24"/>
           <line x1="18" y1="34" x2="18" y2="40"/><line x1="28" y1="34" x2="28" y2="40"/>
         </svg>
-        <h3>AI Factory</h3>
-        <div class="sub">Intelligence Engine</div>
-        <p>Multi-tenant SaaS architecture, voice AI agents, MCP orchestration, and bilingual NLP — production systems shipped fast and run at scale, from Rachel and Lina to full vertical platforms.</p>
+        <h3 data-i18n="tag.factory">AI Factory</h3>
+        <div class="sub" data-i18n="pillars.p1.sub">Intelligence Engine</div>
+        <p data-i18n="pillars.p1.p">Multi-tenant SaaS architecture, voice AI agents, MCP orchestration, and bilingual NLP — production systems shipped fast and run at scale, from Rachel and Lina to full vertical platforms.</p>
       </div>
       <div class="pillar p2 reveal">
         <svg class="ico" viewBox="0 0 46 46" fill="none" stroke="url(#g2)" stroke-width="2">
           <circle cx="23" cy="12" r="5"/><circle cx="11" cy="32" r="5"/><circle cx="35" cy="32" r="5"/>
           <line x1="19" y1="16" x2="13" y2="27"/><line x1="27" y1="16" x2="33" y2="27"/><line x1="16" y1="32" x2="30" y2="32"/>
         </svg>
-        <h3>Business Ecosystem</h3>
-        <div class="sub">Connected Growth</div>
-        <p>Twelve live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
+        <h3 data-i18n="tag.ecosystem">Business Ecosystem</h3>
+        <div class="sub" data-i18n="pillars.p2.sub">Connected Growth</div>
+        <p data-i18n="pillars.p2.p">Twelve live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
       </div>
       <div class="pillar p3 reveal">
         <svg class="ico" viewBox="0 0 46 46" fill="none" stroke-width="2">
@@ -340,9 +401,9 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
           <ellipse cx="23" cy="23" rx="19" ry="7" stroke="#38bdf8" transform="rotate(-18 23 23)"/>
           <circle cx="38" cy="15" r="2" fill="#38bdf8" stroke="none"/>
         </svg>
-        <h3>Limitless Future</h3>
-        <div class="sub">Vision · Innovation · Impact</div>
-        <p>The Visionarium Fellowship: 10,000 bilingual technology leaders by 2035, each with a personal AI mentor from day one — free to every young person aged 16–22 across the Americas.</p>
+        <h3 data-i18n="tag.future">Limitless Future</h3>
+        <div class="sub" data-i18n="pillars.p3.sub">Vision · Innovation · Impact</div>
+        <p data-i18n="pillars.p3.p">The Visionarium Fellowship: 10,000 bilingual technology leaders by 2035, each with a personal AI mentor from day one — free to every young person aged 16–22 across the Americas.</p>
       </div>
     </div>
   </div>
@@ -350,68 +411,67 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
 
 <section id="factory">
   <div class="wrap">
-    <span class="eyebrow">The AI Factory</span>
-    <h2>Live products, not roadmap slides.</h2>
-    <p class="lede">Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.</p>
+    <span class="eyebrow" data-i18n="factory.eyebrow">The AI Factory</span>
+    <h2 data-i18n="factory.h2">Live products, not roadmap slides.</h2>
+    <p class="lede" data-i18n="factory.lede">Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.</p>
 
     <div class="prod-grid">
-      <div class="prod reveal"><span class="tag voice">Voice AI · CRM</span><h4>RinglyPro</h4><p>Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.</p></div>
-      <div class="prod reveal"><span class="tag edu">Education</span><h4>Torna Idioma</h4><p>Bilingual language-learning platform powering the University of Makati SFL program.</p></div>
-      <div class="prod reveal"><span class="tag health">Healthcare</span><h4>ImagingMind.app</h4><p>AI-powered musculoskeletal radiology and medical-imaging analysis for orthopedic practices.</p></div>
-      <div class="prod reveal"><span class="tag ops">Retail Ops</span><h4>Store Health AI</h4><p>Real-time retail operations monitoring and intelligence dashboards.</p></div>
-      <div class="prod reveal"><span class="tag net">Network</span><h4>HispanoTec Digital</h4><p>Hispanic professional network with an MCP orchestrator and mathematical trust models.</p></div>
-      <div class="prod reveal"><span class="tag ops">Logistics</span><h4>FreightMind.app</h4><p>Freight and logistics intelligence ecosystem for carrier and fleet operations.</p></div>
-      <div class="prod reveal"><span class="tag ops">Industrial</span><h4>WarehouseMind.app</h4><p>Warehouse and distribution analytics with real-time OEE shop-floor monitoring.</p></div>
-      <div class="prod reveal"><span class="tag agro">AgriTech</span><h4>LactoTech.app</h4><p>AI dairy-herd and milk-production analytics for cooperatives, farms, and processors.</p></div>
-      <div class="prod reveal"><span class="tag health">Healthcare</span><h4>MaraMed.app</h4><p>AI-assisted clinical documentation and patient-care intelligence for medical practices.</p></div>
-      <div class="prod reveal"><span class="tag health">MedTech</span><h4>SurgicalMind.app</h4><p>AI sales-operations and clinical-value platform for robotic-surgery programs.</p></div>
-      <div class="prod reveal"><span class="tag voice">Motorsports</span><h4>TunjoRacing</h4><p>Motorsports CRM and press portal platform.</p></div>
-      <div class="prod reveal"><span class="tag edu">Fellowship</span><h4>Visionarium Platform</h4><p>Open-community portal, fellow portal, Lina AI mentor, admissions, and sponsor dashboards.</p></div>
+      <div class="prod reveal"><span class="tag voice" data-i18n="tagn.voice">Voice AI · CRM</span><h4>RinglyPro</h4><p data-i18n="prod.ringlypro">Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.</p></div>
+      <div class="prod reveal"><span class="tag edu" data-i18n="tagn.edu">Education</span><h4>Torna Idioma</h4><p data-i18n="prod.torna">Bilingual language-learning platform powering the University of Makati SFL program.</p></div>
+      <div class="prod reveal"><span class="tag health" data-i18n="tagn.health">Healthcare</span><h4>ImagingMind.app</h4><p data-i18n="prod.imaging">AI-powered musculoskeletal radiology and medical-imaging analysis for orthopedic practices.</p></div>
+      <div class="prod reveal"><span class="tag ops" data-i18n="tagn.retail">Retail Ops</span><h4>Store Health AI</h4><p data-i18n="prod.store">Real-time retail operations monitoring and intelligence dashboards.</p></div>
+      <div class="prod reveal"><span class="tag net" data-i18n="tagn.net">Network</span><h4>HispanoTec Digital</h4><p data-i18n="prod.hispanotec">Hispanic professional network with an MCP orchestrator and mathematical trust models.</p></div>
+      <div class="prod reveal"><span class="tag ops" data-i18n="tagn.logistics">Logistics</span><h4>FreightMind.app</h4><p data-i18n="prod.freight">Freight and logistics intelligence ecosystem for carrier and fleet operations.</p></div>
+      <div class="prod reveal"><span class="tag ops" data-i18n="tagn.industrial">Industrial</span><h4>WarehouseMind.app</h4><p data-i18n="prod.warehouse">Warehouse and distribution analytics with real-time OEE shop-floor monitoring.</p></div>
+      <div class="prod reveal"><span class="tag agro" data-i18n="tagn.agro">AgriTech</span><h4>LactoTech.app</h4><p data-i18n="prod.lacto">AI dairy-herd and milk-production analytics for cooperatives, farms, and processors.</p></div>
+      <div class="prod reveal"><span class="tag health" data-i18n="tagn.health">Healthcare</span><h4>MaraMed.app</h4><p data-i18n="prod.maramed">AI-assisted clinical documentation and patient-care intelligence for medical practices.</p></div>
+      <div class="prod reveal"><span class="tag health" data-i18n="tagn.medtech">MedTech</span><h4>SurgicalMind.app</h4><p data-i18n="prod.surgical">AI sales-operations and clinical-value platform for robotic-surgery programs.</p></div>
+      <div class="prod reveal"><span class="tag voice" data-i18n="tagn.motorsports">Motorsports</span><h4>TunjoRacing</h4><p data-i18n="prod.tunjo">Motorsports CRM and press portal platform.</p></div>
+      <div class="prod reveal"><span class="tag edu" data-i18n="tagn.fellowship">Fellowship</span><h4>Visionarium Platform</h4><p data-i18n="prod.visionarium">Open-community portal, fellow portal, Lina AI mentor, admissions, and sponsor dashboards.</p></div>
     </div>
   </div>
 </section>
 
 <section id="fellowship" class="section-alt">
   <div class="wrap">
-    <span class="eyebrow">The Fellowship</span>
-    <h2>From Latin American talent to global leadership.</h2>
+    <span class="eyebrow" data-i18n="fellow.eyebrow">The Fellowship</span>
+    <h2 data-i18n="fellow.h2">From Latin American talent to global leadership.</h2>
 
     <div class="fellow-wrap">
       <div>
-        <p class="lede" style="max-width:none">
+        <p class="lede" style="max-width:none" data-i18n="fellow.lede">
           The Visionarium Fellowship is the flagship of the Vision2Ai ecosystem: a nine-month,
           fully sponsor-funded program launching from Miami in Fall 2026. Every participant —
           Fellow or open-community member — gets Lina, a bilingual AI mentor with voice, memory,
           and 24/7 availability, built on the same production platform as the AI Factory.
         </p>
         <ul class="fellow-list">
-          <li><span class="k">Open Tier</span>Free to any young person aged 16–22 across the Americas — no cap, no cost, no application.</li>
-          <li><span class="k">Fellows</span>40 selected per cohort. Nine months, human mentors, Miami immersions, and a shipped capstone at Demo Day.</li>
-          <li><span class="k">Bilingual</span>English and Spanish as equal operating languages — by design, not by translation.</li>
-          <li><span class="k">Outcomes</span>Placements, startups, and scholarships measured publicly — not hours delivered.</li>
+          <li><span class="k" data-i18n="fellow.k1">Open Tier</span><span data-i18n="fellow.v1">Free to any young person aged 16–22 across the Americas — no cap, no cost, no application.</span></li>
+          <li><span class="k" data-i18n="fellow.k2">Fellows</span><span data-i18n="fellow.v2">40 selected per cohort. Nine months, human mentors, Miami immersions, and a shipped capstone at Demo Day.</span></li>
+          <li><span class="k" data-i18n="fellow.k3">Bilingual</span><span data-i18n="fellow.v3">English and Spanish as equal operating languages — by design, not by translation.</span></li>
+          <li><span class="k" data-i18n="fellow.k4">Outcomes</span><span data-i18n="fellow.v4">Placements, startups, and scholarships measured publicly — not hours delivered.</span></li>
         </ul>
-        <blockquote>
+        <blockquote data-i18n="fellow.quote">
           Every fellow has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.
-          <span class="es">Cada becario tiene un mentor bilingüe, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.</span>
         </blockquote>
       </div>
       <div class="stats">
-        <div class="stat reveal"><div class="num">160M+</div><div class="lbl">Young people under 25 across Latin America</div></div>
-        <div class="stat reveal"><div class="num">40</div><div class="lbl">Fellows per cohort, fully sponsor-funded</div></div>
-        <div class="stat reveal"><div class="num">2026</div><div class="lbl">First formalized cohort launches from Miami</div></div>
-        <div class="stat reveal"><div class="num">10,000</div><div class="lbl">Bilingual alumni target by 2035</div></div>
+        <div class="stat reveal"><div class="num">160M+</div><div class="lbl" data-i18n="stat.1">Young people under 25 across Latin America</div></div>
+        <div class="stat reveal"><div class="num">40</div><div class="lbl" data-i18n="stat.2">Fellows per cohort, fully sponsor-funded</div></div>
+        <div class="stat reveal"><div class="num">2026</div><div class="lbl" data-i18n="stat.3">First formalized cohort launches from Miami</div></div>
+        <div class="stat reveal"><div class="num">10,000</div><div class="lbl" data-i18n="stat.4">Bilingual alumni target by 2035</div></div>
       </div>
     </div>
   </div>
 </section>
 
 <section class="cta-final" id="join">
-  <span class="eyebrow" style="justify-content:center">Be Part of the Founding Class</span>
-  <h2>The factory is running. The future is enrolling.</h2>
-  <p class="lede">Sponsor a fellowship, partner on a vertical, mentor a cohort, or nominate a young leader. The partners who join the founding year will be remembered for a generation.</p>
+  <span class="eyebrow" style="justify-content:center" data-i18n="final.eyebrow">Be Part of the Founding Class</span>
+  <h2 data-i18n="final.h2">The factory is running. The future is enrolling.</h2>
+  <p class="lede" data-i18n="final.lede">Sponsor a fellowship, partner on a vertical, mentor a cohort, or nominate a young leader. The partners who join the founding year will be remembered for a generation.</p>
   <div class="cta-row">
-    <a class="btn btn-grad" href="mailto:Lalag16@gmail.com?subject=Vision2Ai%20—%20Request%20an%20Introduction">Request an Introduction</a>
-    <a class="btn btn-ghost" href="#top">Back to Top</a>
+    <button class="btn btn-grad" id="bookBtn" data-i18n="final.cta1">Request an Introduction</button>
+    <a class="btn btn-ghost" href="#top" data-i18n="final.cta2">Back to Top</a>
   </div>
 </section>
 
@@ -421,41 +481,318 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <svg class="mark" style="width:26px;height:26px"><use href="#v2ai"/></svg>
       Vision<span class="two">2</span><span class="ai">Ai</span>
     </a>
-    <div class="foot-tag">AI Factory · Business Ecosystem · Limitless Future</div>
+    <div class="foot-tag" data-i18n="foot.tag">AI Factory · Business Ecosystem · Limitless Future</div>
     <div>Tampa · Miami · Cali · Manila — © 2026 Vision2Ai</div>
   </div>
 </footer>
 
+<!-- ---------- Booking modal ---------- -->
+<div class="modal-back" id="modalBack" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <div id="mForm">
+      <div class="m-eyebrow" data-i18n="modal.eyebrow">Book a Meeting</div>
+      <h3 id="mTitle" data-i18n="modal.title">Request an Introduction</h3>
+      <p class="m-sub" data-i18n="modal.sub">Pick a time and our team — or Lina, our AI assistant — will meet with you. Times shown in US Eastern.</p>
+      <form id="bookForm">
+        <div class="grid2">
+          <div class="field"><label data-i18n="modal.name">Full name</label><input type="text" id="f-name" required></div>
+          <div class="field"><label data-i18n="modal.email">Email</label><input type="email" id="f-email" required></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label data-i18n="modal.company">Company (optional)</label><input type="text" id="f-company"></div>
+          <div class="field"><label data-i18n="modal.phone">Phone (optional)</label><input type="tel" id="f-phone"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label data-i18n="modal.date">Date</label><select id="f-date" required></select></div>
+          <div class="field"><label data-i18n="modal.time">Time</label><select id="f-time" required></select></div>
+        </div>
+        <div class="field"><label data-i18n="modal.notes">What would you like to discuss? (optional)</label><textarea id="f-notes"></textarea></div>
+        <div class="m-loading" id="mLoading" data-i18n="modal.loading">Loading available times…</div>
+        <button type="submit" class="btn btn-grad" id="mSubmit" data-i18n="modal.submit">Confirm Appointment</button>
+        <div class="m-msg" id="mMsg"></div>
+      </form>
+    </div>
+    <div id="mDone" class="m-success" style="display:none">
+      <div class="check">✓</div>
+      <h3 data-i18n="modal.done.h">You're booked!</h3>
+      <div class="when" id="mWhen"></div>
+      <p data-i18n="modal.done.p">A confirmation is on its way. We look forward to meeting you.</p>
+      <button class="btn btn-ghost" id="mCloseDone" style="margin-top:18px" data-i18n="modal.done.close">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* Network constellation hero */
-const canvas=document.getElementById('net'),ctx=canvas.getContext('2d');
-const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let W,H,pts=[];
-const COLORS=['#3b82f6','#8b5cf6','#d946a8','#38bdf8','#f5a94b'];
+/* ==================== i18n ==================== */
+var I18N = {
+  en: {
+    'nav.merger':'The Merger','nav.pillars':'Pillars','nav.factory':'AI Factory','nav.fellowship':'Fellowship','nav.cta':'Join the Ecosystem',
+    'tag.factory':'AI Factory','tag.ecosystem':'Business Ecosystem','tag.future':'Limitless Future',
+    'hero.sub':'The production AI platform of <strong>Digit2ai</strong> and the leadership incubator of <strong>Visionarium</strong> — now one company. We build the intelligence engines, and we build the people who will lead with them.',
+    'hero.cta1':'Explore the AI Factory','hero.cta2':'Meet the Fellowship',
+    'call.label':'Prefer to talk? Call our AI assistant',
+    'merger.eyebrow':'The Merger','merger.h2':'Two builders. One future.',
+    'merger.lede':'Since 2015, one company has been shipping production AI across the Americas while the other has been forming its next generation of leaders. Vision2Ai unites both under a single roof.',
+    'merger.left.h':'The AI Factory',
+    'merger.left.p':'A production artificial-intelligence platform company operating a dozen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.',
+    'merger.right.h':'The Human Pipeline',
+    'merger.right.p':"A bilingual AI-powered leadership, creativity, and technology fellowship preparing Latin America's next generation for global impact — open to every young person, selective at the top.",
+    'merger.result.p':'An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.',
+    'pillars.eyebrow':'What We Are','pillars.h2':'Three pillars, one system.',
+    'pillars.p1.sub':'Intelligence Engine','pillars.p1.p':'Multi-tenant SaaS architecture, voice AI agents, MCP orchestration, and bilingual NLP — production systems shipped fast and run at scale, from Rachel and Lina to full vertical platforms.',
+    'pillars.p2.sub':'Connected Growth','pillars.p2.p':'Twelve live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.',
+    'pillars.p3.sub':'Vision · Innovation · Impact','pillars.p3.p':'The Visionarium Fellowship: 10,000 bilingual technology leaders by 2035, each with a personal AI mentor from day one — free to every young person aged 16–22 across the Americas.',
+    'factory.eyebrow':'The AI Factory','factory.h2':'Live products, not roadmap slides.',
+    'factory.lede':"Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.",
+    'tagn.voice':'Voice AI · CRM','tagn.edu':'Education','tagn.health':'Healthcare','tagn.retail':'Retail Ops','tagn.net':'Network','tagn.logistics':'Logistics','tagn.industrial':'Industrial','tagn.agro':'AgriTech','tagn.medtech':'MedTech','tagn.motorsports':'Motorsports','tagn.fellowship':'Fellowship',
+    'prod.ringlypro':'Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.',
+    'prod.torna':'Bilingual language-learning platform powering the University of Makati SFL program.',
+    'prod.imaging':'AI-powered musculoskeletal radiology and medical-imaging analysis for orthopedic practices.',
+    'prod.store':'Real-time retail operations monitoring and intelligence dashboards.',
+    'prod.hispanotec':'Hispanic professional network with an MCP orchestrator and mathematical trust models.',
+    'prod.freight':'Freight and logistics intelligence ecosystem for carrier and fleet operations.',
+    'prod.warehouse':'Warehouse and distribution analytics with real-time OEE shop-floor monitoring.',
+    'prod.lacto':'AI dairy-herd and milk-production analytics for cooperatives, farms, and processors.',
+    'prod.maramed':'AI-assisted clinical documentation and patient-care intelligence for medical practices.',
+    'prod.surgical':'AI sales-operations and clinical-value platform for robotic-surgery programs.',
+    'prod.tunjo':'Motorsports CRM and press portal platform.',
+    'prod.visionarium':'Open-community portal, fellow portal, Lina AI mentor, admissions, and sponsor dashboards.',
+    'fellow.eyebrow':'The Fellowship','fellow.h2':'From Latin American talent to global leadership.',
+    'fellow.lede':'The Visionarium Fellowship is the flagship of the Vision2Ai ecosystem: a nine-month, fully sponsor-funded program launching from Miami in Fall 2026. Every participant — Fellow or open-community member — gets Lina, a bilingual AI mentor with voice, memory, and 24/7 availability, built on the same production platform as the AI Factory.',
+    'fellow.k1':'Open Tier','fellow.v1':'Free to any young person aged 16–22 across the Americas — no cap, no cost, no application.',
+    'fellow.k2':'Fellows','fellow.v2':'40 selected per cohort. Nine months, human mentors, Miami immersions, and a shipped capstone at Demo Day.',
+    'fellow.k3':'Bilingual','fellow.v3':'English and Spanish as equal operating languages — by design, not by translation.',
+    'fellow.k4':'Outcomes','fellow.v4':'Placements, startups, and scholarships measured publicly — not hours delivered.',
+    'fellow.quote':'Every fellow has something most Ivy League undergraduates do not: a dedicated, bilingual, always-available mentor who knows their goals, their pace, and their name.',
+    'stat.1':'Young people under 25 across Latin America','stat.2':'Fellows per cohort, fully sponsor-funded','stat.3':'First formalized cohort launches from Miami','stat.4':'Bilingual alumni target by 2035',
+    'final.eyebrow':'Be Part of the Founding Class','final.h2':'The factory is running. The future is enrolling.',
+    'final.lede':'Sponsor a fellowship, partner on a vertical, mentor a cohort, or nominate a young leader. The partners who join the founding year will be remembered for a generation.',
+    'final.cta1':'Request an Introduction','final.cta2':'Back to Top',
+    'foot.tag':'AI Factory · Business Ecosystem · Limitless Future',
+    'modal.eyebrow':'Book a Meeting','modal.title':'Request an Introduction',
+    'modal.sub':'Pick a time and our team — or Lina, our AI assistant — will meet with you. Times shown in US Eastern.',
+    'modal.name':'Full name','modal.email':'Email','modal.company':'Company (optional)','modal.phone':'Phone (optional)','modal.date':'Date','modal.time':'Time','modal.notes':'What would you like to discuss? (optional)',
+    'modal.loading':'Loading available times…','modal.submit':'Confirm Appointment',
+    'modal.done.h':"You're booked!",'modal.done.p':'A confirmation is on its way. We look forward to meeting you.','modal.done.close':'Close',
+    'modal.err.slot':'That time was just taken. Please pick another.','modal.err.generic':'Something went wrong. Please try again.','modal.err.none':'No times are open right now — please email us instead.','modal.picktime':'Select a time','modal.pickdate':'Select a date','modal.booking':'Booking…'
+  },
+  es: {
+    'nav.merger':'La Fusión','nav.pillars':'Pilares','nav.factory':'Fábrica de IA','nav.fellowship':'Programa','nav.cta':'Únete al Ecosistema',
+    'tag.factory':'Fábrica de IA','tag.ecosystem':'Ecosistema de Negocios','tag.future':'Futuro Sin Límites',
+    'hero.sub':'La plataforma de IA en producción de <strong>Digit2ai</strong> y la incubadora de liderazgo de <strong>Visionarium</strong> — ahora una sola compañía. Construimos los motores de inteligencia y formamos a las personas que liderarán con ellos.',
+    'hero.cta1':'Explora la Fábrica de IA','hero.cta2':'Conoce el Programa',
+    'call.label':'¿Prefieres hablar? Llama a nuestra asistente de IA',
+    'merger.eyebrow':'La Fusión','merger.h2':'Dos creadores. Un solo futuro.',
+    'merger.lede':'Desde 2015, una compañía ha desplegado IA en producción por toda América mientras la otra forma a su próxima generación de líderes. Vision2Ai une a ambas bajo un mismo techo.',
+    'merger.left.h':'La Fábrica de IA',
+    'merger.left.p':'Una compañía de plataformas de inteligencia artificial en producción que opera una docena de productos en vivo — IA de voz, CRM, salud, logística, educación y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
+    'merger.right.h':'El Semillero Humano',
+    'merger.right.p':'Un programa bilingüe de liderazgo, creatividad y tecnología impulsado por IA que prepara a la próxima generación de América Latina para el impacto global — abierto a cada joven, selectivo en la cima.',
+    'merger.result.p':'Una institución nativa de IA donde las plataformas financian e impulsan a las personas, y las personas demuestran lo que las plataformas hacen posible. Dominio tecnológico, formación de liderazgo y ejecución real — a escala de ecosistema.',
+    'pillars.eyebrow':'Qué Somos','pillars.h2':'Tres pilares, un sistema.',
+    'pillars.p1.sub':'Motor de Inteligencia','pillars.p1.p':'Arquitectura SaaS multiinquilino, agentes de IA de voz, orquestación MCP y PLN bilingüe — sistemas en producción desplegados rápido y operando a escala, desde Rachel y Lina hasta plataformas verticales completas.',
+    'pillars.p2.sub':'Crecimiento Conectado','pillars.p2.p':'Doce verticales en vivo compartiendo una sola plataforma base — CRM, patrocinadores, socios y un mercado de oportunidades que conecta el talento con trabajo real en EE. UU., Colombia y Filipinas.',
+    'pillars.p3.sub':'Visión · Innovación · Impacto','pillars.p3.p':'El Programa Visionarium: 10.000 líderes tecnológicos bilingües para 2035, cada uno con un mentor de IA personal desde el primer día — gratis para cada joven de 16 a 22 años en toda América.',
+    'factory.eyebrow':'La Fábrica de IA','factory.h2':'Productos en vivo, no diapositivas.',
+    'factory.lede':'Cada vertical a continuación es un sistema en producción sobre la plataforma compartida de Vision2Ai — la misma infraestructura que impulsa a Lina, la mentora de IA bilingüe del programa.',
+    'tagn.voice':'IA de Voz · CRM','tagn.edu':'Educación','tagn.health':'Salud','tagn.retail':'Retail','tagn.net':'Red','tagn.logistics':'Logística','tagn.industrial':'Industrial','tagn.agro':'AgroTech','tagn.medtech':'MedTech','tagn.motorsports':'Automovilismo','tagn.fellowship':'Programa',
+    'prod.ringlypro':'CRM con IA de voz multiinquilino: los agentes Rachel, Ana y Lina contestan, agendan y dan seguimiento en inglés y español.',
+    'prod.torna':'Plataforma bilingüe de aprendizaje de idiomas que impulsa el programa SFL de la Universidad de Makati.',
+    'prod.imaging':'Análisis de radiología musculoesquelética e imagen médica con IA para consultas ortopédicas.',
+    'prod.store':'Monitoreo de operaciones de retail en tiempo real y tableros de inteligencia.',
+    'prod.hispanotec':'Red profesional hispana con un orquestador MCP y modelos matemáticos de confianza.',
+    'prod.freight':'Ecosistema de inteligencia de carga y logística para operaciones de transportistas y flotas.',
+    'prod.warehouse':'Analítica de almacén y distribución con monitoreo OEE de planta en tiempo real.',
+    'prod.lacto':'Analítica de hato lechero y producción de leche con IA para cooperativas, fincas y procesadores.',
+    'prod.maramed':'Documentación clínica asistida por IA e inteligencia de atención al paciente para consultas médicas.',
+    'prod.surgical':'Plataforma de operaciones de ventas y valor clínico con IA para programas de cirugía robótica.',
+    'prod.tunjo':'CRM y portal de prensa para automovilismo.',
+    'prod.visionarium':'Portal de comunidad abierta, portal de becarios, mentora de IA Lina, admisiones y tableros de patrocinadores.',
+    'fellow.eyebrow':'El Programa','fellow.h2':'Del talento latinoamericano al liderazgo global.',
+    'fellow.lede':'El Programa Visionarium es el buque insignia del ecosistema Vision2Ai: un programa de nueve meses, financiado por patrocinadores, que se lanza desde Miami en el otoño de 2026. Cada participante — becario o miembro de la comunidad abierta — recibe a Lina, una mentora de IA bilingüe con voz, memoria y disponibilidad 24/7, construida sobre la misma plataforma en producción que la Fábrica de IA.',
+    'fellow.k1':'Nivel Abierto','fellow.v1':'Gratis para cualquier joven de 16 a 22 años en toda América — sin cupo, sin costo, sin postulación.',
+    'fellow.k2':'Becarios','fellow.v2':'40 seleccionados por cohorte. Nueve meses, mentores humanos, inmersiones en Miami y un proyecto final entregado en el Demo Day.',
+    'fellow.k3':'Bilingüe','fellow.v3':'Inglés y español como lenguas de trabajo por igual — por diseño, no por traducción.',
+    'fellow.k4':'Resultados','fellow.v4':'Colocaciones, startups y becas medidas públicamente — no horas entregadas.',
+    'fellow.quote':'Cada becario tiene algo que la mayoría de los universitarios de la Ivy League no tienen: un mentor bilingüe, dedicado y siempre disponible que conoce sus metas, su ritmo y su nombre.',
+    'stat.1':'Jóvenes menores de 25 años en América Latina','stat.2':'Becarios por cohorte, financiados por patrocinadores','stat.3':'Primera cohorte formal se lanza desde Miami','stat.4':'Meta de egresados bilingües para 2035',
+    'final.eyebrow':'Sé Parte de la Generación Fundadora','final.h2':'La fábrica está encendida. El futuro está matriculando.',
+    'final.lede':'Patrocina un programa, asóciate en un vertical, mentorea una cohorte o nomina a un joven líder. Los socios que se unan al año fundador serán recordados por una generación.',
+    'final.cta1':'Solicita una Presentación','final.cta2':'Volver Arriba',
+    'foot.tag':'Fábrica de IA · Ecosistema de Negocios · Futuro Sin Límites',
+    'modal.eyebrow':'Agenda una Reunión','modal.title':'Solicita una Presentación',
+    'modal.sub':'Elige un horario y nuestro equipo — o Lina, nuestra asistente de IA — te atenderá. Horarios en hora del Este de EE. UU.',
+    'modal.name':'Nombre completo','modal.email':'Correo','modal.company':'Empresa (opcional)','modal.phone':'Teléfono (opcional)','modal.date':'Fecha','modal.time':'Hora','modal.notes':'¿Qué te gustaría conversar? (opcional)',
+    'modal.loading':'Cargando horarios disponibles…','modal.submit':'Confirmar Cita',
+    'modal.done.h':'¡Cita confirmada!','modal.done.p':'Pronto llegará una confirmación. Esperamos conocerte.','modal.done.close':'Cerrar',
+    'modal.err.slot':'Ese horario se acaba de ocupar. Por favor elige otro.','modal.err.generic':'Algo salió mal. Inténtalo de nuevo.','modal.err.none':'No hay horarios disponibles por ahora — escríbenos por correo.','modal.picktime':'Selecciona una hora','modal.pickdate':'Selecciona una fecha','modal.booking':'Agendando…'
+  }
+};
+
+var LANG = 'en';
+function t(k){ return (I18N[LANG] && I18N[LANG][k]) || (I18N.en[k] || k); }
+function applyLang(lang){
+  LANG = (lang === 'es') ? 'es' : 'en';
+  document.documentElement.lang = LANG;
+  document.body.classList.remove('lang-en','lang-es');
+  document.body.classList.add('lang-' + LANG);
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    el.innerHTML = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.lang === LANG);
+  });
+  var join = document.getElementById('joinCta');
+  if (join) join.href = '/champion-teaser.html?lang=' + LANG;
+  try { localStorage.setItem('vision2ai-lang', LANG); } catch(e){}
+}
+function detectLang(){
+  try {
+    var u = new URLSearchParams(location.search).get('lang');
+    if (u === 'es' || u === 'en') return u;
+    var s = localStorage.getItem('vision2ai-lang');
+    if (s === 'es' || s === 'en') return s;
+  } catch(e){}
+  // Geolocation heuristic (no permission prompt): browser languages + timezone
+  try {
+    var navs = (navigator.languages || [navigator.language || '']).join(',').toLowerCase();
+    if (/(^|,)es\b/.test(navs)) return 'es';
+    var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+    var esZones = ['America/Mexico_City','America/Monterrey','America/Bogota','America/Lima',
+      'America/Caracas','America/Guayaquil','America/La_Paz','America/Santiago','America/Argentina',
+      'America/Montevideo','America/Asuncion','America/Panama','America/Costa_Rica','America/Guatemala',
+      'America/El_Salvador','America/Tegucigalpa','America/Managua','America/Santo_Domingo','America/Havana',
+      'America/Puerto_Rico','Europe/Madrid','Atlantic/Canary'];
+    for (var i=0;i<esZones.length;i++){ if (tz === esZones[i] || tz.indexOf(esZones[i]) === 0) return 'es'; }
+  } catch(e){}
+  return 'en'; // English default
+}
+document.querySelectorAll('.lang-toggle button').forEach(function(b){
+  b.addEventListener('click', function(){ applyLang(b.dataset.lang); });
+});
+applyLang(detectLang());
+
+/* ==================== Voice line (config) ==================== */
+fetch('/vision2ai/api/v1/config').then(function(r){return r.json();}).then(function(c){
+  if (c && c.voice_number){
+    var chip = document.getElementById('callChip');
+    var link = document.getElementById('callLink');
+    link.href = 'tel:' + c.voice_number;
+    link.textContent = c.voice_display || c.voice_number;
+    chip.classList.add('on');
+  }
+}).catch(function(){});
+
+/* ==================== Booking modal ==================== */
+(function(){
+  var back = document.getElementById('modalBack');
+  var dateSel = document.getElementById('f-date');
+  var timeSel = document.getElementById('f-time');
+  var loading = document.getElementById('mLoading');
+  var msg = document.getElementById('mMsg');
+  var form = document.getElementById('bookForm');
+  var submit = document.getElementById('mSubmit');
+  var mForm = document.getElementById('mForm');
+  var mDone = document.getElementById('mDone');
+  var availDays = [];
+
+  function openModal(){
+    back.classList.add('open'); back.setAttribute('aria-hidden','false');
+    mForm.style.display=''; mDone.style.display='none'; msg.textContent=''; msg.className='m-msg';
+    loadAvail();
+  }
+  function closeModal(){ back.classList.remove('open'); back.setAttribute('aria-hidden','true'); }
+
+  function loadAvail(){
+    loading.style.display=''; loading.textContent = t('modal.loading');
+    dateSel.innerHTML=''; timeSel.innerHTML='';
+    submit.disabled = true;
+    fetch('/vision2ai/api/v1/availability?lang=' + LANG).then(function(r){return r.json();}).then(function(d){
+      availDays = (d && d.days) || [];
+      loading.style.display='none';
+      if (!availDays.length){ msg.textContent = t('modal.err.none'); msg.className='m-msg err'; return; }
+      dateSel.innerHTML = '<option value="" disabled selected>' + t('modal.pickdate') + '</option>' +
+        availDays.map(function(day){ return '<option value="'+day.date+'">'+day.display+'</option>'; }).join('');
+      timeSel.innerHTML = '<option value="" disabled selected>' + t('modal.picktime') + '</option>';
+      submit.disabled = false;
+    }).catch(function(){ loading.style.display='none'; msg.textContent = t('modal.err.generic'); msg.className='m-msg err'; });
+  }
+  dateSel.addEventListener('change', function(){
+    var day = availDays.filter(function(x){return x.date===dateSel.value;})[0];
+    timeSel.innerHTML = '<option value="" disabled selected>' + t('modal.picktime') + '</option>' +
+      ((day && day.slots) || []).map(function(s){ return '<option value="'+s.time+'">'+s.display+'</option>'; }).join('');
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    msg.textContent=''; msg.className='m-msg';
+    var payload = {
+      name: document.getElementById('f-name').value,
+      email: document.getElementById('f-email').value,
+      company: document.getElementById('f-company').value,
+      phone: document.getElementById('f-phone').value,
+      date: dateSel.value, time: timeSel.value,
+      notes: document.getElementById('f-notes').value,
+      lang: LANG, source: 'web'
+    };
+    if (!payload.date || !payload.time){ msg.textContent = t('modal.picktime'); msg.className='m-msg err'; return; }
+    submit.disabled = true; submit.textContent = t('modal.booking');
+    fetch('/vision2ai/api/v1/book', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, status:r.status, j:j}; }); })
+      .then(function(res){
+        submit.disabled = false; submit.textContent = t('modal.submit');
+        if (res.ok && res.j.success){
+          document.getElementById('mWhen').textContent = res.j.appointment.display_date + ' · ' + res.j.appointment.display_time + ' (ET)';
+          mForm.style.display='none'; mDone.style.display='';
+        } else if (res.status === 409){
+          msg.textContent = t('modal.err.slot'); msg.className='m-msg err'; loadAvail();
+        } else {
+          msg.textContent = t('modal.err.generic'); msg.className='m-msg err';
+        }
+      }).catch(function(){
+        submit.disabled = false; submit.textContent = t('modal.submit');
+        msg.textContent = t('modal.err.generic'); msg.className='m-msg err';
+      });
+  });
+
+  document.getElementById('bookBtn').addEventListener('click', openModal);
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('mCloseDone').addEventListener('click', closeModal);
+  back.addEventListener('click', function(e){ if (e.target === back) closeModal(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+})();
+
+/* ==================== Network constellation hero ==================== */
+var canvas=document.getElementById('net'),ctx=canvas.getContext('2d');
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var W,H,pts=[];
+var COLORS=['#3b82f6','#8b5cf6','#d946a8','#38bdf8','#f5a94b'];
 function resize(){
   W=canvas.width=canvas.offsetWidth*devicePixelRatio;
   H=canvas.height=canvas.offsetHeight*devicePixelRatio;
-  const n=Math.min(90,Math.floor(canvas.offsetWidth/14));
-  pts=Array.from({length:n},()=>({
+  var n=Math.min(90,Math.floor(canvas.offsetWidth/14));
+  pts=Array.from({length:n},function(){return{
     x:Math.random()*W,y:Math.random()*H,
     vx:(Math.random()-.5)*.25*devicePixelRatio,
     vy:(Math.random()-.5)*.25*devicePixelRatio,
     r:(Math.random()*1.8+1)*devicePixelRatio,
     c:COLORS[Math.random()<.08?4:Math.floor(Math.random()*4)]
-  }));
+  };});
 }
 function draw(){
   ctx.clearRect(0,0,W,H);
-  const link=140*devicePixelRatio;
-  for(let i=0;i<pts.length;i++){
-    const a=pts[i];
+  var link=140*devicePixelRatio;
+  for(var i=0;i<pts.length;i++){
+    var a=pts[i];
     if(!reduce){
       a.x+=a.vx;a.y+=a.vy;
       if(a.x<0||a.x>W)a.vx*=-1;
       if(a.y<0||a.y>H)a.vy*=-1;
     }
-    for(let j=i+1;j<pts.length;j++){
-      const b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
+    for(var j=i+1;j<pts.length;j++){
+      var b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
       if(d<link){
         ctx.globalAlpha=(1-d/link)*.28;
         ctx.strokeStyle=a.c;ctx.lineWidth=devicePixelRatio*.6;
@@ -464,20 +801,21 @@ function draw(){
     }
   }
   ctx.globalAlpha=1;
-  for(const p of pts){
+  for(var k=0;k<pts.length;k++){
+    var p=pts[k];
     ctx.fillStyle=p.c;
     ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
   }
   if(!reduce)requestAnimationFrame(draw);
 }
-resize();addEventListener('resize',()=>{resize();if(reduce)draw();});
+resize();addEventListener('resize',function(){resize();if(reduce)draw();});
 draw();
 
 /* Scroll reveals */
-const io=new IntersectionObserver(es=>es.forEach(e=>{
+var io=new IntersectionObserver(function(es){es.forEach(function(e){
   if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
-}),{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+});},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
 </script>
 </body>
 </html>
