@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Digit2AI Factory vs Lovable — Internal Deep Dive</title>
+<style>
+  :root{
+    --bg:#f5f6fa; --bg2:#ffffff; --card:#ffffff; --line:#e2e5ee; --line2:#d3d8e6;
+    --ink:#161a26; --mut:#5b6478; --faint:#8b93a7;
+    --violet:#6a4bff; --violet-soft:#eae6ff; --violet-ink:#4a34c8;
+    --coral:#ff4d76; --coral-soft:#ffe4ea; --coral-ink:#c93257;
+    --green:#1f9d57; --green-soft:#dcf3e6;
+    --amber:#c07a12; --amber-soft:#f8ecd3;
+    --grid:rgba(106,75,255,.06);
+    --shadow:0 1px 2px rgba(20,25,45,.04),0 8px 30px rgba(20,25,45,.06);
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b0f1a; --bg2:#0e1422; --card:#121a2b; --line:#212c44; --line2:#2c3a58;
+      --ink:#e9eef7; --mut:#9aa6be; --faint:#6b768e;
+      --violet:#9b83ff; --violet-soft:#221c48; --violet-ink:#c3b4ff;
+      --coral:#ff6b8c; --coral-soft:#3a1c27; --coral-ink:#ff9db2;
+      --green:#4fd08a; --green-soft:#13301f;
+      --amber:#e0a94a; --amber-soft:#33260f;
+      --grid:rgba(155,131,255,.07);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 40px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f5f6fa; --bg2:#ffffff; --card:#ffffff; --line:#e2e5ee; --line2:#d3d8e6;
+    --ink:#161a26; --mut:#5b6478; --faint:#8b93a7;
+    --violet:#6a4bff; --violet-soft:#eae6ff; --violet-ink:#4a34c8;
+    --coral:#ff4d76; --coral-soft:#ffe4ea; --coral-ink:#c93257;
+    --green:#1f9d57; --green-soft:#dcf3e6; --amber:#c07a12; --amber-soft:#f8ecd3;
+    --grid:rgba(106,75,255,.06);
+    --shadow:0 1px 2px rgba(20,25,45,.04),0 8px 30px rgba(20,25,45,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b0f1a; --bg2:#0e1422; --card:#121a2b; --line:#212c44; --line2:#2c3a58;
+    --ink:#e9eef7; --mut:#9aa6be; --faint:#6b768e;
+    --violet:#9b83ff; --violet-soft:#221c48; --violet-ink:#c3b4ff;
+    --coral:#ff6b8c; --coral-soft:#3a1c27; --coral-ink:#ff9db2;
+    --green:#4fd08a; --green-soft:#13301f; --amber:#e0a94a; --amber-soft:#33260f;
+    --grid:rgba(155,131,255,.07);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 40px rgba(0,0,0,.4);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:44px 44px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  h1,h2,h3{text-wrap:balance;letter-spacing:-.02em;line-height:1.15;margin:0}
+  p{margin:0}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+  header.hero{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+  .hero .eyebrow{color:var(--violet)}
+  .hero h1{font-size:clamp(34px,5.4vw,60px);font-weight:800;margin:16px 0 0}
+  .hero h1 .vs{color:var(--faint);font-weight:500}
+  .hero h1 .d2{color:var(--violet)}
+  .hero h1 .lv{color:var(--coral)}
+  .hero .lede{font-size:clamp(17px,2vw,21px);color:var(--mut);max-width:62ch;margin-top:22px}
+  .hero .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:26px;font-family:var(--mono);font-size:12.5px;color:var(--faint)}
+  .hero .meta b{color:var(--mut);font-weight:600}
+
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  .sec-head{max-width:64ch;margin-bottom:30px}
+  .sec-head .eyebrow{margin-bottom:12px;display:block}
+  .sec-head h2{font-size:clamp(24px,3.4vw,34px);font-weight:750}
+  .sec-head p{color:var(--mut);margin-top:12px;font-size:16.5px}
+
+  .thesis{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:34px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .thesis::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+    background:linear-gradient(180deg,var(--violet),var(--coral))}
+  .thesis .k{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+  .thesis p{font-size:clamp(18px,2.4vw,24px);line-height:1.5;font-weight:500}
+  .thesis em{font-style:normal;color:var(--violet);font-weight:700}
+  .thesis .em2{color:var(--coral);font-weight:700}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .idcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
+  .idcard.d2{border-top:3px solid var(--violet)}
+  .idcard.lv{border-top:3px solid var(--coral)}
+  .idcard .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+    display:inline-block;padding:4px 10px;border-radius:999px;margin-bottom:14px}
+  .idcard.d2 .tag{background:var(--violet-soft);color:var(--violet-ink)}
+  .idcard.lv .tag{background:var(--coral-soft);color:var(--coral-ink)}
+  .idcard h3{font-size:20px;font-weight:750;margin-bottom:6px}
+  .idcard .cat{font-size:14px;color:var(--faint);font-family:var(--mono);margin-bottom:16px}
+  .idcard ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px}
+  .idcard li{position:relative;padding-left:22px;font-size:14.5px;color:var(--mut)}
+  .idcard li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:2px}
+  .idcard.d2 li::before{background:var(--violet)}
+  .idcard.lv li::before{background:var(--coral)}
+  .idcard li b{color:var(--ink);font-weight:650}
+
+  .pipe-scroll{overflow-x:auto;padding-bottom:8px;margin:0 -4px}
+  .pipe{display:flex;gap:0;min-width:900px;align-items:stretch;padding:4px}
+  .stage{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:16px 14px;position:relative;margin-right:20px;box-shadow:var(--shadow)}
+  .stage:last-child{margin-right:0}
+  .stage::after{content:"";position:absolute;right:-15px;top:50%;transform:translateY(-50%);
+    width:10px;height:10px;border-top:2px solid var(--line2);border-right:2px solid var(--line2);rotate:45deg}
+  .stage:last-child::after{display:none}
+  .stage .n{font-family:var(--mono);font-size:11px;color:var(--violet);font-weight:700;letter-spacing:.05em}
+  .stage h4{font-size:14px;font-weight:700;margin:6px 0 5px;letter-spacing:-.01em}
+  .stage p{font-size:12px;color:var(--mut);line-height:1.45}
+  .stage .file{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:8px;display:block;word-break:break-word}
+  .stage.gate{border-color:var(--amber);background:linear-gradient(180deg,var(--amber-soft),var(--card))}
+  .stage.gate .n{color:var(--amber)}
+  .pipe-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:18px;font-size:12.5px;color:var(--mut);font-family:var(--mono)}
+  .pipe-legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  .mcp-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .mcp{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+  .mcp h3{font-size:16px;font-weight:750;margin-bottom:4px}
+  .mcp .sub{font-family:var(--mono);font-size:12px;color:var(--violet);margin-bottom:14px}
+  .mcp p{font-size:14px;color:var(--mut);margin-bottom:10px}
+  .mcp code{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;color:var(--ink)}
+
+  .bench{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px}
+  .dept{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+  .dept .c{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--violet);line-height:1}
+  .dept .l{font-size:12px;color:var(--mut);margin-top:6px;line-height:1.3}
+  .callout{margin-top:22px;background:var(--violet-soft);border:1px solid var(--line);border-radius:12px;padding:18px 20px;font-size:14px;color:var(--ink)}
+  .callout b{color:var(--violet-ink)}
+
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;min-width:720px;background:var(--card);font-size:14px}
+  thead th{text-align:left;padding:15px 18px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line2);background:var(--bg2);position:sticky;top:0}
+  thead th.d2{color:var(--violet)}
+  thead th.lv{color:var(--coral)}
+  tbody td{padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--mut)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td.dim{color:var(--ink);font-weight:650;width:20%}
+  tbody td b{color:var(--ink);font-weight:650}
+  tbody tr:hover td{background:var(--bg2)}
+
+  .score{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .win{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow)}
+  .win h3{font-size:16px;font-weight:750;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .win.d2 h3{color:var(--violet)} .win.lv h3{color:var(--coral)}
+  .win ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+  .win li{font-size:14px;color:var(--mut);padding-left:24px;position:relative}
+  .win li::before{content:"\25B8";position:absolute;left:2px;top:0;font-weight:700}
+  .win.d2 li::before{color:var(--violet)} .win.lv li::before{color:var(--coral)}
+  .win li b{color:var(--ink);font-weight:650}
+
+  .honest{background:var(--amber-soft);border:1px solid var(--line);border-left:4px solid var(--amber);
+    border-radius:12px;padding:22px 24px;margin-top:24px}
+  .honest h3{font-size:15px;color:var(--amber);font-weight:750;margin-bottom:12px;font-family:var(--mono);letter-spacing:.03em;text-transform:uppercase}
+  .honest ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:9px}
+  .honest li{font-size:14px;color:var(--ink)}
+  .honest li b{color:var(--amber)}
+  .honest code{font-family:var(--mono);font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+
+  .takeaway{background:linear-gradient(135deg,var(--violet) 0%,var(--coral) 130%);border-radius:20px;
+    padding:40px 36px;color:#fff;box-shadow:var(--shadow)}
+  .takeaway .eyebrow{color:rgba(255,255,255,.75)}
+  .takeaway h2{color:#fff;font-size:clamp(22px,3vw,30px);font-weight:800;margin:12px 0 16px}
+  .takeaway p{color:rgba(255,255,255,.94);font-size:16.5px;max-width:66ch;margin-bottom:14px}
+  .takeaway p:last-child{margin-bottom:0}
+  .takeaway b{color:#fff;font-weight:750}
+
+  footer{padding:40px 0 64px;color:var(--faint);font-family:var(--mono);font-size:12px}
+
+  @media (max-width:760px){
+    .duo,.mcp-grid,.score{grid-template-columns:1fr}
+    section{padding:44px 0}
+    header.hero{padding:52px 0 32px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .stage{transition:transform .15s ease}
+    .stage:hover{transform:translateY(-2px)}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Deep-dive analysis &middot; Digit2AI internal</span>
+    <h1><span class="d2">Digit2AI Factory</span> <span class="vs">vs</span> <span class="lv">Lovable.dev</span></h1>
+    <p class="lede">Both turn a sentence into working software. But one is a <b>product you rent</b> that hands you an app &mdash; and the other is a <b>services firm compiled into code</b> that runs a deal from first contact to a deployed, human-approved vertical. They are not the same category.</p>
+    <div class="meta">
+      <span><b>Scope:</b> intake &middot; MCP &middot; 83-agent workforce &middot; full-stack pipeline</span>
+      <span><b>Sources:</b> live repo + lovable.dev (Jul 2026)</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="thesis">
+      <div class="k">The difference in one sentence</div>
+      <p>Lovable is a <span class="em2">self-serve tool</span> that generates a <span class="em2">standalone React + Supabase app you own and host</span>. The Digit2AI Factory is an <em>agency operating system</em> &mdash; a revenue funnel, an orchestration brain, and a build-test-approve-ship assembly line that turns a client conversation into a <em>priced, contracted, multi-tenant vertical living inside one shared platform</em>.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">01 &middot; What each one actually is</span>
+      <h2>A tool versus a firm-in-a-box</h2>
+      <p>The clearest way to see the gap: look at what each one is optimized to produce, and who is meant to operate it.</p>
+    </div>
+    <div class="duo">
+      <div class="idcard d2">
+        <span class="tag">Digit2AI Factory</span>
+        <h3>An AI-native services firm, expressed as software</h3>
+        <div class="cat">category &middot; agency OS + orchestration layer</div>
+        <ul>
+          <li><b>Operator:</b> Digit2AI itself. Clients are the <i>customers</i>, not the users of the builder.</li>
+          <li><b>Front door is a sales funnel:</b> public intake form / voice intake &rarr; AI triage &rarr; teaser &rarr; quote &rarr; Stripe contract &rarr; build.</li>
+          <li><b>Output is a vertical</b> mounted inside one multi-tenant monorepo (RinglyPro-CRM), sharing DB, auth, voice, billing.</li>
+          <li><b>The "workforce" is the pitch:</b> one MCP Brain routing an 83-agent bench of specialists.</li>
+          <li><b>Ships with a business wrapper:</b> pricing docs, proposals, UAT sign-off, SIT gates, meeting minutes, Neural stall-detection.</li>
+        </ul>
+      </div>
+      <div class="idcard lv">
+        <span class="tag">Lovable.dev</span>
+        <h3>A self-serve "vibe-coding" app builder</h3>
+        <div class="cat">category &middot; developer product (SaaS)</div>
+        <ul>
+          <li><b>Operator:</b> the end user. Anyone types a prompt and gets an app back in the same session.</li>
+          <li><b>Front door is a chat box:</b> describe it or drop a screenshot &rarr; working app with UI, code, DB.</li>
+          <li><b>Output is a standalone app</b> &mdash; React + TypeScript + Tailwind + Supabase &mdash; that <i>you</i> own, two-way synced to your GitHub, ejectable anytime.</li>
+          <li><b>The "workforce" is two modes:</b> Agent Mode (autonomous) and Chat Mode (interactive), plus Visual Edits.</li>
+          <li><b>Ships as a product:</b> credits, Lovable Cloud hosting, one-click deploy, $6.6B valuation, $200M ARR.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">02 &middot; The intake &rarr; ship assembly line</span>
+      <h2>The Factory's real spine</h2>
+      <p>This is the piece Lovable simply doesn't have. A prospect's words move through a scored, priced, contracted, gated pipeline. Amber stages are deliberate human/payment gates &mdash; the Factory is <b>not</b> fully autonomous by design.</p>
+    </div>
+    <div class="pipe-scroll">
+      <div class="pipe">
+        <div class="stage">
+          <div class="n">01 &middot; INTAKE</div>
+          <h4>Capture request</h4>
+          <p>Public form or voice-to-intake. NL problem statement + Q&amp;A become a project row.</p>
+          <span class="file">intake.js &rarr; d2_projects</span>
+        </div>
+        <div class="stage">
+          <div class="n">02 &middot; TRIAGE</div>
+          <h4>AI fit score</h4>
+          <p>Sonnet 4.6 + web search &rarr; fit 1&ndash;10, go/poc/no, wedge, flags. Chains a premortem agent.</p>
+          <span class="file">inboxTriageAgent.js &middot; premortemAgent.js</span>
+        </div>
+        <div class="stage">
+          <div class="n">03 &middot; TEASER</div>
+          <h4>Demo magic link</h4>
+          <p>Branded simulated build + Lina voice walkthrough, sent to the client.</p>
+          <span class="file">voiceTeaserGenerator.js</span>
+        </div>
+        <div class="stage">
+          <div class="n">04 &middot; QUOTE</div>
+          <h4>Price + proposal</h4>
+          <p>Cost (internal) &rarr; quote (+70% + IVA) &rarr; full proposal HTML.</p>
+          <span class="file">public/proposals/*</span>
+        </div>
+        <div class="stage gate">
+          <div class="n">05 &middot; CONTRACT</div>
+          <h4>Stripe activates</h4>
+          <p>Deposit + monthly. Webhook flips phase to <code>build_authorized</code>.</p>
+          <span class="file">stripeContract.js</span>
+        </div>
+        <div class="stage">
+          <div class="n">06 &middot; SYNTH</div>
+          <h4>Prompt engineered</h4>
+          <p>Raw context &rarr; Opus "Senior Prompt Engineer" &rarr; tight sprint brief.</p>
+          <span class="file">architectPromptSynth.js</span>
+        </div>
+        <div class="stage">
+          <div class="n">07 &middot; BUILD</div>
+          <h4>Architect codes</h4>
+          <p>/ringlypro-architect writes the sub-app into <code>client-builds/&lt;slug&gt;/</code>.</p>
+          <span class="file">ringlypro-architect.md</span>
+        </div>
+        <div class="stage">
+          <div class="n">08 &middot; SIT</div>
+          <h4>Auto health-check</h4>
+          <p>60s poller hits <code>/health</code>; pass &rarr; UAT, fail &rarr; re-build email.</p>
+          <span class="file">architectPipeline.js</span>
+        </div>
+        <div class="stage gate">
+          <div class="n">09 &middot; UAT</div>
+          <h4>Human sign-off</h4>
+          <p>Stakeholders test via magic link. Approve &rarr; shipped; comment &rarr; revision.</p>
+          <span class="file">onUatApproval()</span>
+        </div>
+      </div>
+    </div>
+    <div class="pipe-legend">
+      <span><span class="dot" style="background:var(--violet)"></span>automated stage</span>
+      <span><span class="dot" style="background:var(--amber)"></span>deliberate human / payment gate</span>
+      <span>state: build_authorized &rarr; queued &rarr; manual_build &rarr; sit_running &rarr; uat_ready &rarr; shipped</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">03 &middot; The two meanings of "MCP"</span>
+      <h2>"MCP" is used for two different things</h2>
+      <p>Worth being precise internally, because the word carries a real runtime system <i>and</i> an orchestration metaphor. Both are legitimate &mdash; they're just different layers.</p>
+    </div>
+    <div class="mcp-grid">
+      <div class="mcp">
+        <h3>1. Runtime MCP &mdash; the CRM tool layer</h3>
+        <div class="sub">real production code &middot; shipped</div>
+        <p>Real MCP-style tool servers per vertical (<code>gohighlevel-mcp</code>, <code>hispatec-mcp</code>, <code>mcp-oee</code>, CW): natural language &rarr; intent match &rarr; per-session CRM proxy (40+ methods) &rarr; external API. Credential-isolated sessions, 30-min TTL.</p>
+        <p class="mono" style="font-size:12px;color:var(--faint)">mcp-integrations/api/* &middot; src/routes/*-mcp.js</p>
+      </div>
+      <div class="mcp">
+        <h3>2. "MCP Brain" &mdash; the 83-agent orchestrator</h3>
+        <div class="sub">orchestration pattern &middot; realized as Task subagents</div>
+        <p>The <code>/ringlypro-architect</code> command casts itself as an "MCP Brain" that routes work to a bench of specialists. In practice these are <b>Claude Code Task subagents + skills</b> spun up per build with role-scoped briefs &mdash; not 83 persistent services.</p>
+        <p class="mono" style="font-size:12px;color:var(--faint)">.claude/commands/ringlypro-architect.md &middot; Task fan-out</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">04 &middot; The workforce</span>
+      <h2>83 agents vs two modes</h2>
+      <p>The Factory's bench is <b>8 always-on core agents + 75 on-demand senior specialists</b>, grouped into departments and routed by a cheat-sheet. It's a routing registry, not 83 running processes &mdash; but the departmental coverage is real and is the core sales narrative.</p>
+    </div>
+    <div class="bench">
+      <div class="dept"><div class="c">12</div><div class="l">Engineering &amp; Build</div></div>
+      <div class="dept"><div class="c">8</div><div class="l">Data, ML &amp; Math</div></div>
+      <div class="dept"><div class="c">8</div><div class="l">Business &amp; Strategy</div></div>
+      <div class="dept"><div class="c">9</div><div class="l">Sales, Marketing &amp; Customer</div></div>
+      <div class="dept"><div class="c">7</div><div class="l">Finance &amp; Risk</div></div>
+      <div class="dept"><div class="c">8</div><div class="l">Legal, Compliance &amp; HR</div></div>
+      <div class="dept"><div class="c">6</div><div class="l">AI-Native / LLM</div></div>
+      <div class="dept"><div class="c">5</div><div class="l">Reliability &amp; Trust</div></div>
+      <div class="dept"><div class="c">4</div><div class="l">Vertical SMEs</div></div>
+      <div class="dept"><div class="c">5</div><div class="l">Design, Content &amp; L10n</div></div>
+      <div class="dept"><div class="c">3</div><div class="l">Growth &amp; Partnerships</div></div>
+      <div class="dept"><div class="c">8</div><div class="l">+ Core always-on</div></div>
+    </div>
+    <div class="callout">
+      <b>The strategic point:</b> Lovable ships an engineer-in-a-box (frontend + backend + DB). The Factory ships an <b>entire company in a box</b> &mdash; the same build muscle, wrapped in triage, pricing, legal, compliance, finance, GTM and vertical domain SMEs. That's a services-firm surface, not a dev-tool surface.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">05 &middot; Head to head</span>
+      <h2>The comparison matrix</h2>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th class="d2">Digit2AI Factory</th><th class="lv">Lovable.dev</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="dim">Category</td><td>Agency OS &mdash; funnel + orchestration + build line</td><td>Self-serve app builder (SaaS product)</td></tr>
+          <tr><td class="dim">Who operates it</td><td><b>Digit2AI</b> builds <i>for</i> clients</td><td><b>The end user</b> builds their own app</td></tr>
+          <tr><td class="dim">Entry point</td><td>Intake form / voice &rarr; AI triage &rarr; quote &rarr; contract</td><td>A chat prompt or screenshot</td></tr>
+          <tr><td class="dim">What it outputs</td><td>A multi-tenant vertical inside one shared monorepo</td><td>A standalone app you own + host</td></tr>
+          <tr><td class="dim">Stack produced</td><td>Node/Express + Sequelize + Postgres, static HTML/JS (React only if needed)</td><td>React + TypeScript + Tailwind + Supabase (fixed)</td></tr>
+          <tr><td class="dim">Ownership</td><td>Digit2AI-hosted; client rents the outcome</td><td>You own the code; two-way GitHub sync, ejectable</td></tr>
+          <tr><td class="dim">Autonomy</td><td>Human-gated: Stripe gate, sensitive-data greenlight, UAT sign-off</td><td>Agent Mode is largely autonomous within a session</td></tr>
+          <tr><td class="dim">Business layer</td><td><b>Built in</b> &mdash; triage, pricing, proposals, contracts, minutes</td><td>Out of scope &mdash; you handle sales/pricing yourself</td></tr>
+          <tr><td class="dim">Multi-tenancy</td><td>First-class &mdash; <code>tenant_id</code> on every table, enforced</td><td>Per-app; you design your own tenancy in Supabase</td></tr>
+          <tr><td class="dim">Voice / telephony</td><td>Native &mdash; Rachel/Ana/Lina, Twilio, ElevenLabs, ConversationRelay</td><td>Not a focus; voice = "describe changes by speaking"</td></tr>
+          <tr><td class="dim">Verticalization</td><td>Deep &mdash; health, logistics, agro, fintech SMEs + compliance</td><td>Horizontal &mdash; general-purpose app generation</td></tr>
+          <tr><td class="dim">Pricing model</td><td>Project quotes (cost &times;1.70 + IVA) + monthly</td><td>Credits ($25/mo Pro, $50/mo Business) + usage cloud</td></tr>
+          <tr><td class="dim">Maturity</td><td>Internal tooling on one operator's repo; parts aspirational</td><td>Funded product at scale &mdash; Klarna, Uber, Zendesk</td></tr>
+          <tr><td class="dim">Best at</td><td>Turning a <b>deal</b> into a shipped, supported product</td><td>Turning an <b>idea</b> into an app in minutes, solo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">06 &middot; Honest scorecard</span>
+      <h2>Where each one genuinely wins</h2>
+    </div>
+    <div class="score">
+      <div class="win lv">
+        <h3>Lovable wins on</h3>
+        <ul>
+          <li><b>Speed to a standalone app</b> &mdash; minutes, no funnel, no human gate.</li>
+          <li><b>Self-serve reach</b> &mdash; millions of non-technical users, zero onboarding.</li>
+          <li><b>Code ownership</b> &mdash; clean React/TS you can eject and self-host anytime.</li>
+          <li><b>Product polish</b> &mdash; Visual Edits, Plan Mode, image gen, mobile app.</li>
+          <li><b>Ecosystem</b> &mdash; Supabase + Stripe + GitHub as first-class, battle-tested rails.</li>
+          <li><b>Scale &amp; trust</b> &mdash; funded, proven, enterprise logos.</li>
+        </ul>
+      </div>
+      <div class="win d2">
+        <h3>The Factory wins on</h3>
+        <ul>
+          <li><b>The whole deal, not just the code</b> &mdash; triage &rarr; price &rarr; contract &rarr; ship &rarr; support.</li>
+          <li><b>Business surface area</b> &mdash; legal, finance, GTM, compliance departments Lovable has none of.</li>
+          <li><b>Multi-tenant + shared services</b> &mdash; new verticals inherit voice, billing, auth, Neural for free.</li>
+          <li><b>Voice-AI DNA</b> &mdash; real telephony agents, not a builder feature.</li>
+          <li><b>Vertical depth</b> &mdash; regulated-domain SMEs (HIPAA, FMCSA, BCV/agro, payments).</li>
+          <li><b>Human quality gates</b> &mdash; SIT + UAT sign-off before a client sees it.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="honest">
+      <h3>Straight talk &mdash; what's real vs aspirational in the Factory</h3>
+      <ul>
+        <li><b>"83 agents"</b> is a <b>routing registry + sales narrative</b>, realized as ephemeral Task subagents/skills per build &mdash; not 83 persistent, independently-running employees.</li>
+        <li><b>Only ~5 agents are real code</b> (triage, premortem, business-analyst, research, outreach &mdash; a Sonnet-backed task queue). The other 78 are prompt personas conjured as Task subagents per build.</li>
+        <li><b>The autonomous build loop is partly manual.</b> Code comments call it "Push #1 = human-driven build handed to Manuel by email; Push #2 will swap in an autonomous Claude Agent SDK loop." The prompt is auto-synthesized (Opus); the coding step still leans on an operator running the slash command.</li>
+        <li><b>No sandbox, no tenant isolation yet.</b> Generated code is pushed straight to the owner's <b>production <code>main</code></b> and mounted live into the CRM; <code>workspace_id</code> is hardcoded to <code>1</code>. The factory plan flags per-tenant billing/isolation as unbuilt and "high risk." Lovable, by contrast, sandboxes each app and hands you ownership.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:none">
+  <div class="wrap">
+    <div class="takeaway">
+      <span class="eyebrow">The takeaway</span>
+      <h2>You're not competing with Lovable &mdash; you're one layer above it</h2>
+      <p>Lovable makes the <b>build step</b> cheap and instant. That's exactly the step your architect pipeline already automates internally. The moat isn't "we can generate an app too" &mdash; Lovable does that faster and cleaner. Your moat is <b>everything around the app</b>: the intake funnel, AI triage, pricing/contract machinery, multi-tenant shared services, voice AI, vertical compliance, and a human sign-off before ship.</p>
+      <p>The sharpest strategic move: <b>let a Lovable-class engine be the build muscle</b> inside stage 07, and sell the thing Lovable can't &mdash; a firm that takes a client from "I have a problem" to a live, supported, regulated-industry product. That's a <b>services + platform</b> business, not a dev tool. Position, price, and pitch it as one.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Digit2AI Factory deep-dive &middot; prepared from the live RinglyPro-CRM repo + lovable.dev public sources, July 2026 &middot; internal strategy document &middot; not for external distribution
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    try{ var s=localStorage.getItem('theme'); if(s) root.setAttribute('data-theme',s); }catch(e){}
+  })();
+</script>
+</body>
+</html>
