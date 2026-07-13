@@ -67,6 +67,23 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Change password (verify current, set new).
+router.post('/change-password', async (req, res) => {
+  try {
+    const { email, current_password, new_password } = req.body || {};
+    const user = await User.findOne({ where: { email: String(email || '').toLowerCase() } });
+    if (!user) return res.status(404).json({ error: 'not_found' });
+    const ok = await bcrypt.compare(current_password || '', user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'invalid_current_password' });
+    if (!new_password || String(new_password).length < 6) return res.status(400).json({ error: 'weak_password' });
+    user.password_hash = await bcrypt.hash(String(new_password), 10);
+    await user.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/logout', (req, res) => { auth.clearCookie(res); res.json({ success: true }); });
 
 router.get('/me', auth.requireAuth, async (req, res) => {
