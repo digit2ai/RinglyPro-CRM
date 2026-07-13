@@ -39,6 +39,99 @@ router.get('/health', (req, res) => {
   });
 });
 
+// ── Maya — conversational financial guide (Flow 1: Financial Planner + Compliance) ──
+// POST /planea/api/v1/maya/chat  { messages:[{role,content}], profile:{...} }
+// Calls Claude with the Financial Planner operating manual (decision tree A–I + CFP
+// pyramid) grounded on THIS user's data, gated by the Compliance rules. Voice in/out
+// happen in the browser (Web Speech API + the zero-key /api/tts/edge route).
+const MAYA_MODEL = process.env.PLANEA_MAYA_MODEL || 'claude-haiku-4-5-20251001';
+
+function copFmt(n) {
+  if (n == null || isNaN(n)) return 'n/d';
+  return '$' + Number(n).toLocaleString('es-CO');
+}
+
+function buildMayaSystem(profile) {
+  const p = profile || {};
+  const perfil = JSON.stringify(p, null, 2);
+  return `Eres Maya, la guía financiera de Planea (Planea Financiera S.A.S., Cali, Colombia). Hablas español colombiano con un tono motivador, cercano y honesto. Sin emojis. Ortografía correcta (tildes, ñ).
+
+QUIÉN ERES
+- Acompañas al usuario a entender su situación financiera y a dar el siguiente paso concreto.
+- Planea es una plataforma de EDUCACIÓN financiera, NO de asesoría de inversión regulada.
+
+DATOS DEL USUARIO (úsalos siempre; responde sobre SU realidad, nunca genérico):
+${perfil}
+
+MANUAL DE RECOMENDACIÓN (Financial Planner — no improvises fuera de esto):
+Pirámide de prioridades (de abajo hacia arriba, se sube solo si el nivel previo está resuelto):
+  1) Colchón mínimo de supervivencia (~$500.000 COP)
+  2) Pagar deuda cara (tasa > 20% E.A.: tarjetas, libre inversión)
+  3) Fondo de emergencia completo (3 a 6 meses de gastos)
+  4) Ahorrar para metas grandes (casa, educación, retiro)
+  5) Invertir y hacer crecer
+Orden de diagnóstico SIEMPRE: primero flujo de caja, luego deuda cara, luego fondo de emergencia, luego inversión.
+Regla de honestidad: si el objetivo declarado del usuario no es lo más inteligente ahora, díselo con empatía:
+  "Sé que quieres [objetivo]. Vamos a llegar ahí. Pero primero [razón honesta]. Cuando lo resolvamos, [cómo conecta con su objetivo]."
+Escenarios A–I: A flujo negativo · B flujo crítico (colchón $500.000) · C deuda cara + DTI>20% (método avalancha) · D deuda cara + DTI<=20% (50/50 deuda-fondo) · E sin ahorro (primer mes) · F <1 mes de fondo · G 1–3 meses de fondo · H sólido con deuda buena (invertir) · I sin deuda y fondo completo (invertir >=20% del ingreso).
+
+CUMPLIMIENTO (Compliance — obligatorio):
+- NUNCA des recomendaciones individualizadas de inversión como asesoría regulada. Si hablas de productos, son "información de referencia del mercado", con el aviso: "Las sugerencias son información de referencia sobre productos disponibles en el mercado. Planea no ofrece recomendaciones individualizadas de inversión."
+- NUNCA prometas rendimientos garantizados.
+- NUNCA menciones datos de otro usuario.
+- Cumple Ley 1581 de 2012 y Decreto 1377 de 2013 sobre datos personales.
+
+ESTILO DE RESPUESTA
+- Responde en 2 a 6 frases, claras y accionables. Usa cifras concretas del usuario en pesos colombianos.
+- Cuando resumas su salud financiera, menciona el Planea Score, los pilares fuertes y el débil, y el siguiente paso más importante.`;
+}
+
+router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, res) => {
+  try {
+    const KEY = process.env.ANTHROPIC_API_KEY;
+    const { messages, profile } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'messages[] requerido' });
+    }
+    if (!KEY) {
+      return res.json({
+        reply: 'Maya se está configurando en este entorno (falta la clave del modelo). Muy pronto podré responder sobre tus finanzas.',
+        configured: false,
+      });
+    }
+    const clean = messages
+      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .slice(-12)
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: MAYA_MODEL,
+        max_tokens: 700,
+        system: buildMayaSystem(profile),
+        messages: clean,
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      console.error('Maya Anthropic error', r.status, t.slice(0, 300));
+      return res.status(502).json({ error: 'maya_upstream', reply: 'Tuve un problema para responder en este momento. Intenta de nuevo en unos segundos.' });
+    }
+    const data = await r.json();
+    const reply = (data && data.content && data.content[0] && data.content[0].text) || 'No pude generar una respuesta.';
+    res.json({ reply, configured: true });
+  } catch (e) {
+    console.error('Maya chat error', e.message);
+    res.status(500).json({ error: e.message, reply: 'Ocurrió un error. Intenta de nuevo.' });
+  }
+});
+
 if (hasPortal) {
   // /planea/portal → inicio; /planea/portal/<page> → <page>.html; plus the css.
   router.get(['/portal', '/portal/'], (req, res) => res.sendFile(path.join(portalDir, 'inicio.html')));
