@@ -431,7 +431,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <div class="neural reveal">
       <div class="neural-badge"><span class="pulse"></span>Neural Intelligence · MCP</div>
       <p data-i18n="factory.neural">We build custom AI-powered software for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called Neural Intelligence, wired together through the open MCP standard — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
-      <a class="btn btn-grad" href="https://digit2ai.com/neural-intelligence" target="_blank" rel="noopener" data-i18n="factory.neural.cta">Explore Neural Intelligence →</a>
+      <a class="btn btn-grad" id="neuralCta" href="https://digit2ai.com/neural-intelligence" target="_blank" rel="noopener" data-i18n="factory.neural.cta">Explore Neural Intelligence →</a>
     </div>
 
     <div class="prod-grid">
@@ -691,6 +691,8 @@ function applyLang(lang){
   });
   var join = document.getElementById('joinCta');
   if (join) join.href = '/champion-teaser.html?lang=' + LANG;
+  var neural = document.getElementById('neuralCta');
+  if (neural) neural.href = 'https://digit2ai.com/neural-intelligence?lang=' + LANG;
   try { localStorage.setItem('vision2ai-lang', LANG); } catch(e){}
 }
 function detectLang(){

@@ -1571,6 +1571,10 @@ app.get('/debug/coachtrack-error', (req, res) => {
 app.get(['/vision2ai', '/vision2ai/'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'vision2ai', 'index.html'));
 });
+// Vision2Ai — booking-requests admin (key-gated in the page + API).
+app.get(['/vision2ai/admin', '/vision2ai/admin/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'vision2ai', 'admin.html'));
+});
 
 // Reachable at /coachtrack (clean path to map visionarium.app/coachtrack onto)
 // and /visionarium/coachtrack. All CTAs are absolute to the app backend so the

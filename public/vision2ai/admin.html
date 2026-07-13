@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision2Ai — Requests</title>
+<style>
+:root{--ink:#06081a;--panel:#0b0f2b;--line:rgba(139,148,255,.16);--text:#e8eaff;--muted:#9aa3d0;--cyan:#38bdf8;--violet:#8b5cf6;--grad:linear-gradient(100deg,#3b82f6,#8b5cf6 45%,#d946a8)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:28px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-size:1.5rem;margin-bottom:4px}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+input,select,button{font:inherit;background:#0d1330;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text)}
+button{background:var(--grad);border:none;font-weight:700;cursor:pointer}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.count{color:var(--cyan);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+tr:hover td{background:rgba(139,148,255,.05)}
+.when{font-weight:700;white-space:nowrap}
+.email a{color:var(--cyan)}
+.badge{display:inline-block;font-size:.66rem;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,.15);color:var(--cyan);text-transform:uppercase;letter-spacing:.06em}
+.badge.voice{background:rgba(139,92,246,.18);color:#b79bff}
+.empty,.err{color:var(--muted);padding:40px 0;text-align:center}
+.err{color:#ff8f9e}
+.notes{color:var(--muted);max-width:260px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vision2Ai — Introduction Requests</h1>
+  <div class="sub">Bookings from the landing "Solicita una Presentación / Request an Introduction" form. Times in US Eastern.</div>
+  <div class="bar">
+    <input id="key" type="password" placeholder="Admin key" style="min-width:220px">
+    <select id="scope"><option value="upcoming">Upcoming</option><option value="all">All (incl. past)</option></select>
+    <button id="load">Load</button>
+    <button class="ghost" id="refresh">↻ Refresh</button>
+    <span id="count" class="count"></span>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>When (ET)</th><th>Name</th><th>Email</th><th>Company</th><th>Phone</th><th>Lang</th><th>Source</th><th>Notes</th><th>Booked</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="9" class="empty">Enter the admin key and click Load.</td></tr></tbody>
+    </table>
+  </div>
+</div>
+<script>
+var keyEl=document.getElementById('key'), scopeEl=document.getElementById('scope'), rowsEl=document.getElementById('rows'), countEl=document.getElementById('count');
+try{ var u=new URLSearchParams(location.search).get('key'); var s=localStorage.getItem('v2ai-admin-key'); if(u){keyEl.value=u} else if(s){keyEl.value=s} }catch(e){}
+function esc(x){return (x==null?'':String(x)).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function fmt(d,t){ try{var p=String(d).slice(0,10).split('-');var dt=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));var ds=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'});var hm=String(t).slice(0,5).split(':');var tt=new Date(Date.UTC(2000,0,1,+hm[0],+hm[1])).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'UTC'});return ds+' · '+tt}catch(e){return d+' '+t} }
+function load(){
+  var k=keyEl.value.trim(); if(!k){rowsEl.innerHTML='<tr><td colspan="9" class="err">Enter the admin key.</td></tr>';return}
+  try{localStorage.setItem('v2ai-admin-key',k)}catch(e){}
+  rowsEl.innerHTML='<tr><td colspan="9" class="empty">Loading…</td></tr>'; countEl.textContent='';
+  fetch('/vision2ai/api/v1/appointments?scope='+scopeEl.value+'&key='+encodeURIComponent(k))
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j}})})
+    .then(function(res){
+      if(res.status===401){rowsEl.innerHTML='<tr><td colspan="9" class="err">Invalid admin key.</td></tr>';return}
+      if(!res.ok||!res.j.success){rowsEl.innerHTML='<tr><td colspan="9" class="err">Error loading requests.</td></tr>';return}
+      var a=res.j.appointments||[]; countEl.textContent=a.length+' request'+(a.length===1?'':'s');
+      if(!a.length){rowsEl.innerHTML='<tr><td colspan="9" class="empty">No requests yet.</td></tr>';return}
+      rowsEl.innerHTML=a.map(function(x){
+        var booked=''; try{booked=new Date(x.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch(e){}
+        return '<tr>'
+          +'<td class="when">'+fmt(x.appt_date,x.appt_time)+'</td>'
+          +'<td>'+esc(x.name)+'</td>'
+          +'<td class="email"><a href="mailto:'+esc(x.email)+'">'+esc(x.email)+'</a></td>'
+          +'<td>'+esc(x.company||'—')+'</td>'
+          +'<td>'+esc(x.phone||'—')+'</td>'
+          +'<td>'+esc((x.lang||'').toUpperCase())+'</td>'
+          +'<td><span class="badge '+(x.source==='voice'?'voice':'')+'">'+esc(x.source||'web')+'</span></td>'
+          +'<td class="notes">'+esc(x.notes||'—')+'</td>'
+          +'<td class="notes">'+esc(booked)+'</td>'
+        +'</tr>';
+      }).join('');
+    })
+    .catch(function(){rowsEl.innerHTML='<tr><td colspan="9" class="err">Network error.</td></tr>'});
+}
+document.getElementById('load').addEventListener('click',load);
+document.getElementById('refresh').addEventListener('click',load);
+scopeEl.addEventListener('change',load);
+keyEl.addEventListener('keydown',function(e){if(e.key==='Enter')load()});
+if(keyEl.value) load();
+</script>
+</body>
+</html>

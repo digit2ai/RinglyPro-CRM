@@ -28,6 +28,40 @@ const TENANT = 'vision2ai';
 const TZ = 'America/New_York';
 const HOURS = { start: 9, end: 18, slotMin: 30 }; // last start 17:30
 const DEFAULT_WINDOW_DAYS = 21;
+const ADMIN_KEY = process.env.VISION2AI_ADMIN_KEY || 'vision2ai-admin-2026';
+
+// Fire-and-forget owner notification + optional Lite/n8n webhook mirror.
+// Answers "how do I know someone requested?": emails the owner on every booking.
+function notifyOwner(appt, body) {
+  if (process.env.VISION2AI_NOTIFY_DISABLED === '1') return;
+  const to = process.env.VISION2AI_NOTIFY_EMAIL || 'Lalag16@gmail.com';
+  const from = process.env.SENDGRID_FROM_EMAIL;
+  const key = process.env.SENDGRID_API_KEY;
+  const line = `${body.name} · ${body.email} · ${appt.display_date} ${appt.display_time} ET`;
+  if (key && from) {
+    try {
+      const sg = require('@sendgrid/mail'); sg.setApiKey(key);
+      const text = `New Vision2Ai introduction request\n\n`
+        + `Name:    ${body.name}\nEmail:   ${body.email}\nCompany: ${body.company || '-'}\n`
+        + `Phone:   ${body.phone || '-'}\nWhen:    ${appt.display_date} at ${appt.display_time} (US Eastern)\n`
+        + `Lang:    ${body.lang}\nNotes:   ${body.notes || '-'}\n\n`
+        + `See all requests: https://aiagent.ringlypro.com/vision2ai/admin?key=${encodeURIComponent(ADMIN_KEY)}\n`;
+      sg.send({ to, from, subject: `Vision2Ai request — ${line}`, text })
+        .then(() => console.log('[vision2ai] notify email sent to', to))
+        .catch(e => console.warn('[vision2ai] notify email failed:', e.message));
+    } catch (e) { console.warn('[vision2ai] notify email error:', e.message); }
+  } else {
+    console.log('[vision2ai] booking (email not configured):', line);
+  }
+  // Mirror to RinglyPro Lite / n8n when a webhook is configured (flip-on integration
+  // seam; unset today because Lite runs on its own isolated DB and is not yet deployed).
+  const hook = process.env.VISION2AI_LITE_WEBHOOK_URL;
+  if (hook && typeof fetch === 'function') {
+    fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'vision2ai-landing', appointment: appt, contact: body }) })
+      .catch(e => console.warn('[vision2ai] lite webhook failed:', e.message));
+  }
+}
 
 // ---------- table bootstrap (idempotent) ----------
 let ready = null;
@@ -184,15 +218,14 @@ router.post('/v1/book', async (req, res) => {
          RETURNING id`,
         { replacements: { t: TENANT, name, email, company, phone, date, time, notes, lang, source } }
       );
-      return res.status(201).json({
-        success: true,
-        appointment: {
-          id: ins[0].id,
-          date, time,
-          display_date: displayDate(date, lang),
-          display_time: displayTime(time, lang)
-        }
-      });
+      const appointment = {
+        id: ins[0].id,
+        date, time,
+        display_date: displayDate(date, lang),
+        display_time: displayTime(time, lang)
+      };
+      notifyOwner(appointment, { name, email, company, phone, notes, lang });
+      return res.status(201).json({ success: true, appointment });
     } catch (err) {
       const code = (err && (err.original || err.parent || {}).code) || err.code;
       const txt = `${err.message || ''} ${(err.original || err.parent || {}).message || ''}`;
@@ -204,6 +237,29 @@ router.post('/v1/book', async (req, res) => {
   } catch (e) {
     console.error('[vision2ai] book error:', e.message);
     res.status(500).json({ success: false, error: 'book_failed' });
+  }
+});
+
+// ---------- admin: list requests (key-gated) ----------
+router.get('/v1/appointments', async (req, res) => {
+  if ((req.query.key || '') !== ADMIN_KEY) {
+    return res.status(401).json({ success: false, error: 'unauthorized' });
+  }
+  try {
+    await ensureTable();
+    const all = req.query.scope === 'all';
+    const [rows] = await sequelize.query(
+      `SELECT id, name, email, company, phone, appt_date, appt_time, notes, lang, status, source, created_at
+       FROM vision2ai_appointments
+       WHERE tenant_id = :t AND status <> 'cancelled'
+       ${all ? '' : "AND appt_date >= (NOW() AT TIME ZONE 'America/New_York')::date"}
+       ORDER BY appt_date ASC, appt_time ASC`,
+      { replacements: { t: TENANT } }
+    );
+    res.json({ success: true, count: rows.length, appointments: rows });
+  } catch (e) {
+    console.error('[vision2ai] list error:', e.message);
+    res.status(500).json({ success: false, error: 'list_failed' });
   }
 });
 
