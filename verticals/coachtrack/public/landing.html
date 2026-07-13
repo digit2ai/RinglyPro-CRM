@@ -281,6 +281,18 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   </div>
 </footer>
 
+<!-- Install-to-home-screen helper (shown when the browser has no native install prompt, e.g. iPhone Safari) -->
+<div class="imodal" id="imodal" role="dialog" aria-modal="true" aria-labelledby="imTitle">
+  <div class="imodal-card">
+    <button class="imodal-x" id="imX" aria-label="Cerrar">&times;</button>
+    <div class="imodal-ic"><img src="https://aiagent.ringlypro.com/coaching/apple-touch-icon.png" alt="CoachTrack" /></div>
+    <h3 id="imTitle">Añade CoachTrack a tu pantalla de inicio</h3>
+    <div class="istep"><b id="imIosT">iPhone / iPad (Safari)</b><p id="imIos">Toca el ícono Compartir y luego elige "Añadir a inicio".</p></div>
+    <div class="istep"><b id="imAndT">Android (Chrome)</b><p id="imAnd">Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".</p></div>
+    <button class="btn grad lg" id="imClose" style="width:100%;margin-top:6px">Entendido</button>
+  </div>
+</div>
+
 <script>
 const DICT={
   en:{
@@ -368,14 +380,30 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('/coachtrack-s
 var deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;});
 function inStandalone(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+// Install-help modal (fallback for browsers with no native install prompt, e.g. iPhone Safari).
+var imodal=document.getElementById('imodal');
+function openInstallHelp(){if(imodal)imodal.classList.add('show');}
+function closeInstallHelp(){if(imodal)imodal.classList.remove('show');}
+['imX','imClose'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',closeInstallHelp);});
+if(imodal)imodal.addEventListener('click',function(e){if(e.target===imodal)closeInstallHelp();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeInstallHelp();});
+
+// Clicking "Download the app" installs the PWA to the home screen.
+// Chrome/Android/desktop: fire the native install prompt. iPhone Safari (no API):
+// show the Add-to-Home-Screen card — NEVER bounce to the signup page.
 async function doInstall(){
   if(inStandalone()){location.href='/coaching/';return;}
-  if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;return;}
-  // iOS / no native prompt: install from an app page so the icon opens the app.
-  location.href='/coaching/signup?install=1';
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    try{await deferredPrompt.userChoice;}catch(e){}
+    deferredPrompt=null;
+    return;
+  }
+  openInstallHelp();
 }
 document.getElementById("navInstall").addEventListener('click',doInstall);
 var _heroDl=document.getElementById("heroDl");if(_heroDl)_heroDl.addEventListener('click',doInstall);
+// Once installed & launched from the home screen, hide the install buttons.
 if(inStandalone()){['navInstall','heroDl'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});}
 </script>
 </body>
