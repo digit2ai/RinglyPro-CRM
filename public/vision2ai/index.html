@@ -176,6 +176,17 @@ h2{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spa
 .tag.ops{background:rgba(56,189,248,.15);color:var(--cyan)}
 .tag.net{background:rgba(139,92,246,.18);color:#b79bff}
 .tag.agro{background:rgba(63,192,106,.15);color:#5fd48a}
+/* Neural Intelligence panel */
+.neural{margin:44px 0 4px;padding:34px 36px;border-radius:22px;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,rgba(59,130,246,.13),rgba(139,92,246,.13) 50%,rgba(217,70,168,.13));
+  border:1px solid rgba(139,92,246,.34)}
+.neural::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad)}
+.neural-badge{display:inline-flex;align-items:center;gap:9px;font-size:.72rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px}
+.neural-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 0 0 rgba(139,92,246,.6);animation:cp 1.8s infinite}
+.neural p{color:var(--text);font-size:1.05rem;max-width:840px;margin-bottom:24px}
+.neural p a{color:var(--cyan);font-weight:700;border-bottom:1px dashed rgba(56,189,248,.5)}
+.neural .btn{display:inline-block}
+@media(max-width:600px){.neural{padding:26px 22px}}
 @media(max-width:900px){.prod-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.prod-grid{grid-template-columns:1fr}}
 
@@ -354,7 +365,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="merge-card left reveal">
         <span class="co">Digit2ai · Tampa, FL · Est. 2024</span>
         <h3 data-i18n="merger.left.h">The AI Factory</h3>
-        <p data-i18n="merger.left.p">A production artificial-intelligence platform company operating eighteen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
+        <p data-i18n="merger.left.p">A production artificial-intelligence platform company operating {N} live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
       </div>
       <div class="merge-x">×</div>
       <div class="merge-card right reveal">
@@ -395,7 +406,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         </svg>
         <h3 data-i18n="tag.ecosystem">Business Ecosystem</h3>
         <div class="sub" data-i18n="pillars.p2.sub">Connected Growth</div>
-        <p data-i18n="pillars.p2.p">Eighteen live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
+        <p data-i18n="pillars.p2.p">{N} live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
       </div>
       <div class="pillar p3 reveal">
         <svg class="ico" viewBox="0 0 46 46" fill="none" stroke-width="2">
@@ -416,6 +427,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
     <span class="eyebrow" data-i18n="factory.eyebrow">The AI Factory</span>
     <h2 data-i18n="factory.h2">Live products, not roadmap slides.</h2>
     <p class="lede" data-i18n="factory.lede">Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.</p>
+
+    <div class="neural reveal">
+      <div class="neural-badge"><span class="pulse"></span>Neural Intelligence · MCP</div>
+      <p data-i18n="factory.neural">We build custom AI-powered software for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called Neural Intelligence, wired together through the open MCP standard — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.</p>
+      <a class="btn btn-grad" href="https://digit2ai.com/neural-intelligence" target="_blank" rel="noopener" data-i18n="factory.neural.cta">Explore Neural Intelligence →</a>
+    </div>
 
     <div class="prod-grid">
       <div class="prod reveal"><span class="tag voice" data-i18n="tagn.voice">Voice AI · CRM</span><h4>RinglyPro</h4><p data-i18n="prod.ringlypro">Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.</p></div>
@@ -543,16 +560,18 @@ var I18N = {
     'merger.eyebrow':'The Merger','merger.h2':'Two builders. One future.',
     'merger.lede':'Since 2015, Visionarium has been forming the next generation of leaders across the Americas. In 2024, Digit2ai was born to ship AI intelligence in production at scale. Vision2Ai unites both under a single roof.',
     'merger.left.h':'The AI Factory',
-    'merger.left.p':'A production artificial-intelligence platform company operating eighteen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.',
+    'merger.left.p':'A production artificial-intelligence platform company operating {N} live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.',
     'merger.right.h':'The Human Pipeline',
     'merger.right.p':"A bilingual AI-powered leadership, creativity, and technology fellowship preparing Latin America's next generation for global impact — open to every young person, selective at the top.",
     'merger.result.p':'An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.',
     'pillars.eyebrow':'What We Are','pillars.h2':'Three pillars, one system.',
     'pillars.p1.sub':'Intelligence Engine','pillars.p1.p':'Multi-tenant SaaS architecture, voice AI agents, MCP orchestration, and bilingual NLP — production systems shipped fast and run at scale, from Rachel and Lina to full vertical platforms.',
-    'pillars.p2.sub':'Connected Growth','pillars.p2.p':'Eighteen live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.',
+    'pillars.p2.sub':'Connected Growth','pillars.p2.p':'{N} live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.',
     'pillars.p3.sub':'Vision · Innovation · Impact','pillars.p3.p':'The Visionarium Fellowship: 10,000 bilingual technology leaders by 2035, each with a personal AI mentor from day one — free to every young person aged 16–22 across the Americas.',
     'factory.eyebrow':'The AI Factory','factory.h2':'Live products, not roadmap slides.',
     'factory.lede':"Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.",
+    'factory.neural':'We build custom AI-powered software for any business that needs to act faster than its tooling allows — operations, finance, sales, customer service, executive ops. We do it with a coordinated stack of specialized AI agents called Neural Intelligence, wired together through the open MCP standard — a senior consulting team that lives inside the software, scopes the work, drafts the deliverables, builds the product, and keeps it running. Prospects submit a request at <a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a>, the system triages it in minutes, and a real human comes back with a build plan within 48 hours.',
+    'factory.neural.cta':'Explore Neural Intelligence →',
     'tagn.voice':'Voice AI · CRM','tagn.edu':'Education','tagn.health':'Healthcare','tagn.retail':'Retail Ops','tagn.net':'Network','tagn.logistics':'Logistics','tagn.industrial':'Industrial','tagn.agro':'AgriTech','tagn.medtech':'MedTech','tagn.motorsports':'Motorsports','tagn.fellowship':'Fellowship',
     'tagn.compliance':'Compliance','tagn.assistant':'AI Assistant','tagn.equine':'Equestrian','tagn.chambers':'Chambers','tagn.commerce':'Commerce',
     'prod.ringlypro':'Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.',
@@ -601,16 +620,18 @@ var I18N = {
     'merger.eyebrow':'La Fusión','merger.h2':'Dos creadores. Un solo futuro.',
     'merger.lede':'Desde 2015, Visionarium ha formado a la próxima generación de líderes en toda América. En 2024 nació Digit2ai para desplegar inteligencia artificial en producción y a escala. Vision2Ai une a ambas bajo un mismo techo.',
     'merger.left.h':'La Fábrica de IA',
-    'merger.left.p':'Una compañía de plataformas de inteligencia artificial en producción que opera dieciocho productos en vivo — IA de voz, CRM, salud, logística, educación y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
+    'merger.left.p':'Una compañía de plataformas de inteligencia artificial en producción que opera {N} productos en vivo — IA de voz, CRM, salud, logística, educación y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
     'merger.right.h':'El Semillero Humano',
     'merger.right.p':'Un programa bilingüe de liderazgo, creatividad y tecnología impulsado por IA que prepara a la próxima generación de América Latina para el impacto global — abierto a cada joven, selectivo en la cima.',
     'merger.result.p':'Una institución nativa de IA donde las plataformas financian e impulsan a las personas, y las personas demuestran lo que las plataformas hacen posible. Dominio tecnológico, formación de liderazgo y ejecución real — a escala de ecosistema.',
     'pillars.eyebrow':'Qué Somos','pillars.h2':'Tres pilares, un sistema.',
     'pillars.p1.sub':'Motor de Inteligencia','pillars.p1.p':'Arquitectura SaaS multiinquilino, agentes de IA de voz, orquestación MCP y PLN bilingüe — sistemas en producción desplegados rápido y operando a escala, desde Rachel y Lina hasta plataformas verticales completas.',
-    'pillars.p2.sub':'Crecimiento Conectado','pillars.p2.p':'Dieciocho verticales en vivo compartiendo una sola plataforma base — CRM, patrocinadores, socios y un mercado de oportunidades que conecta el talento con trabajo real en EE. UU., Colombia y Filipinas.',
+    'pillars.p2.sub':'Crecimiento Conectado','pillars.p2.p':'{N} verticales en vivo compartiendo una sola plataforma base — CRM, patrocinadores, socios y un mercado de oportunidades que conecta el talento con trabajo real en EE. UU., Colombia y Filipinas.',
     'pillars.p3.sub':'Visión · Innovación · Impacto','pillars.p3.p':'El Programa Visionarium: 10.000 líderes tecnológicos bilingües para 2035, cada uno con un mentor de IA personal desde el primer día — gratis para cada joven de 16 a 22 años en toda América.',
     'factory.eyebrow':'La Fábrica de IA','factory.h2':'Productos en vivo, no diapositivas.',
     'factory.lede':'Cada vertical a continuación es un sistema en producción sobre la plataforma compartida de Vision2Ai — la misma infraestructura que impulsa a Lina, la mentora de IA bilingüe del programa.',
+    'factory.neural':'Construimos software impulsado por IA a la medida para cualquier empresa que necesite actuar más rápido de lo que sus herramientas permiten — operaciones, finanzas, ventas, servicio al cliente y operación ejecutiva. Lo hacemos con un stack coordinado de agentes de IA especializados llamado Neural Intelligence, conectados mediante el estándar abierto MCP — un equipo de consultoría senior que vive dentro del software: define el alcance, redacta los entregables, construye el producto y lo mantiene en marcha. Los prospectos envían una solicitud en <a href="https://digit2ai.com" target="_blank" rel="noopener">digit2ai.com</a>, el sistema la clasifica en minutos y una persona real responde con un plan de construcción en un plazo de 48 horas.',
+    'factory.neural.cta':'Conoce Neural Intelligence →',
     'tagn.voice':'IA de Voz · CRM','tagn.edu':'Educación','tagn.health':'Salud','tagn.retail':'Retail','tagn.net':'Red','tagn.logistics':'Logística','tagn.industrial':'Industrial','tagn.agro':'AgroTech','tagn.medtech':'MedTech','tagn.motorsports':'Automovilismo','tagn.fellowship':'Programa',
     'tagn.compliance':'Cumplimiento','tagn.assistant':'Asistente IA','tagn.equine':'Ecuestre','tagn.chambers':'Cámaras','tagn.commerce':'Comercio',
     'prod.ringlypro':'CRM con IA de voz multiinquilino: los agentes Rachel, Ana y Lina contestan, agendan y dan seguimiento en inglés y español.',
@@ -659,8 +680,11 @@ function applyLang(lang){
   document.documentElement.lang = LANG;
   document.body.classList.remove('lang-en','lang-es');
   document.body.classList.add('lang-' + LANG);
+  var cardCount = document.querySelectorAll('.prod').length; // count the cards -> keep copy honest
   document.querySelectorAll('[data-i18n]').forEach(function(el){
-    el.innerHTML = t(el.getAttribute('data-i18n'));
+    var html = t(el.getAttribute('data-i18n'));
+    if (html.indexOf('{N}') >= 0) html = html.replace(/\{N\}/g, cardCount);
+    el.innerHTML = html;
   });
   document.querySelectorAll('.lang-toggle button').forEach(function(b){
     b.classList.toggle('active', b.dataset.lang === LANG);
