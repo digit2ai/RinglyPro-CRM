@@ -2,10 +2,12 @@
 
 /**
  * CoachTrack — action items API (the accountability layer).
- *  GET   /                     all items across sessions (open/overdue first)
- *  PATCH /:id                  update status / due_date / notes
- *  GET   /:id/guidance         guidance thread for this item
- *  POST  /:id/guidance         ask the coaching AI agent about this item
+ *  GET    /                    all items across sessions (open/overdue first)
+ *  POST   /                    manually add an action item (optional session_id)
+ *  PATCH  /:id                 update status / due_date / notes / text
+ *  DELETE /:id                 delete an action item
+ *  GET    /:id/guidance        guidance thread for this item
+ *  POST   /:id/guidance        ask the coaching AI agent about this item
  */
 
 const express = require('express');
@@ -50,6 +52,46 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Find-or-create the per-tenant "manual" session bucket so manually added
+// action items still group by a session (grouping requires session_id NOT NULL).
+async function manualSession(tenant) {
+  let s = await Session.findOne({ where: { tenant_id: tenant, subject: '__manual__' } });
+  if (!s) {
+    s = await Session.create({
+      tenant_id: tenant, subject: '__manual__',
+      summary: 'Acciones agregadas manualmente', status: 'finalized'
+    });
+  }
+  return s;
+}
+
+// Manually add an action item (feature: Manage Action Items → Add)
+router.post('/', async (req, res) => {
+  try {
+    const tenant = tenantOf(req);
+    const text = String(req.body.text || '').trim();
+    if (!text) return res.status(400).json({ error: 'Texto requerido' });
+
+    let sessionId = req.body.session_id ? parseInt(req.body.session_id, 10) : null;
+    if (sessionId) {
+      const owns = await Session.findOne({ where: { id: sessionId, tenant_id: tenant } });
+      if (!owns) sessionId = null; // ignore a session that isn't the caller's
+    }
+    if (!sessionId) sessionId = (await manualSession(tenant)).id;
+
+    const item = await ActionItem.create({
+      tenant_id: tenant,
+      session_id: sessionId,
+      text: text.slice(0, 500),
+      due_date: req.body.due_date || null,
+      status: 'open'
+    });
+    res.status(201).json({ success: true, action_item: item });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Update an action item
 router.patch('/:id', async (req, res) => {
   try {
@@ -65,6 +107,19 @@ router.patch('/:id', async (req, res) => {
     if (req.body.text) item.text = String(req.body.text).slice(0, 500);
     await item.save();
     res.json({ success: true, action_item: item });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Delete an action item (feature: Manage Action Items → Delete)
+router.delete('/:id', async (req, res) => {
+  try {
+    const item = await ActionItem.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!item) return res.status(404).json({ error: 'Acción no encontrada' });
+    await Guidance.destroy({ where: { action_item_id: item.id } });
+    await item.destroy();
+    res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

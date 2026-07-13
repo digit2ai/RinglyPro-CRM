@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const sessions = await Session.findAll({
-      where: { tenant_id: tenantOf(req) },
+      where: { tenant_id: tenantOf(req), subject: { [Op.or]: [{ [Op.ne]: '__manual__' }, { [Op.is]: null }] } },
       order: [['created_at', 'DESC']],
       limit: 200
     });
@@ -86,6 +86,42 @@ router.post('/:id/turn', async (req, res) => {
     });
     res.json({ success: true, turn });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Generate action items from ONE specific session (History → open session →
+// "Generate action items"). Analyzes ONLY this session's transcript and APPENDS
+// new items (dedupe by text) — never destroys existing/edited/completed items.
+router.post('/:id/generate-action-items', async (req, res) => {
+  try {
+    const s = await Session.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!s) return res.status(404).json({ error: 'Sesión no encontrada' });
+    const turns = await Transcript.findAll({ where: { session_id: s.id }, order: [['turn_index', 'ASC'], ['id', 'ASC']] });
+    if (!turns.length) return res.status(400).json({ error: 'Esta sesión no tiene transcripción' });
+
+    const result = await brain.finalizeSession(turns.map(t => ({ role: t.role, text: t.text })));
+
+    if (!s.subject || s.subject === '__manual__') s.subject = result.subject;
+    if (!s.summary) s.summary = result.summary;
+    if (s.status !== 'finalized') s.status = 'finalized';
+    await s.save();
+
+    const existing = await ActionItem.findAll({ where: { session_id: s.id } });
+    const seen = new Set(existing.map(i => String(i.text).trim().toLowerCase()));
+    const created = [];
+    for (const a of result.action_items) {
+      const key = String(a.text).trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      created.push(await ActionItem.create({
+        tenant_id: tenantOf(req), session_id: s.id,
+        text: a.text, due_date: a.due_date || null, status: 'open'
+      }));
+    }
+    res.json({ success: true, session: s, created, added: created.length });
+  } catch (e) {
+    console.error('CoachTrack generate-action-items error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
