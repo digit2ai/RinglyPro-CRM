@@ -125,7 +125,7 @@ async function identifyCaller({ tenantId, phone }) {
  * Compute open slots across the next `days_ahead` days from availability rules,
  * excluding past and already-booked slots. Returns up to `limit` nearest slots.
  */
-async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) {
+async function checkAvailability({ tenantId, date, time, days_ahead = 7, limit = 3 }) {
   const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const tz = tenant.timezone || 'America/New_York';
@@ -178,10 +178,39 @@ async function checkAvailability({ tenantId, date, days_ahead = 7, limit = 3 }) 
     if (date) break;
   }
   slots.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+
+  // Caller asked for an EXACT time (e.g. "today at 3") → tell the agent whether
+  // that precise slot is open, plus a reason if not. The agent uses this to
+  // confirm-and-book, or to offer the alternatives below.
+  let requested = null;
+  if (time) {
+    let ry, rmo, rd;
+    if (date) { [ry, rmo, rd] = date.split('-').map(Number); }
+    else { const p = utcToZonedParts(tz, now); ry = p.y; rmo = p.mo; rd = p.d; }
+    const tp = String(time).split(':').map(Number);
+    const rh = tp[0], rmi = tp[1] || 0;
+    if (Number.isFinite(ry) && Number.isFinite(rh)) {
+      const reqUtc = zonedToUtc(tz, ry, rmo, rd, rh, rmi);
+      const wd = utcToZonedParts(tz, zonedToUtc(tz, ry, rmo, rd, 12, 0)).weekday;
+      const reqMin = rh * 60 + rmi;
+      const inWindow = rules.some(r => r.weekday === wd && reqMin >= hhmmToMinutes(r.start) && reqMin < hhmmToMinutes(r.end));
+      const future = reqUtc.getTime() > now.getTime() + 60000;
+      const taken = bookedSet.has(reqUtc.getTime());
+      const open = inWindow && future && !taken;
+      requested = {
+        date: `${ry}-${String(rmo).padStart(2, '0')}-${String(rd).padStart(2, '0')}`,
+        time: `${String(rh).padStart(2, '0')}:${String(rmi).padStart(2, '0')}`,
+        open,
+        reason: !inWindow ? 'outside_hours' : (!future ? 'in_past' : (taken ? 'already_booked' : 'open')),
+        display: open ? displaySlot(tz, reqUtc, tenant.locale) : null
+      };
+    }
+  }
+
   // Specific-date requests: offer the nearest times on that day in order.
   // Otherwise offer a VARIED spread so it doesn't sound robotic.
-  const top = date ? slots.slice(0, limit) : pickVaried(slots, limit);
-  return { success: true, timezone: tz, slot_count: top.length, slots: top };
+  const top = date ? slots.slice(0, Math.max(limit, 3)) : pickVaried(slots, limit);
+  return { success: true, timezone: tz, requested, slot_count: top.length, slots: top };
 }
 
 /**

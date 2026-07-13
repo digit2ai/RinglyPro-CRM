@@ -30,11 +30,12 @@ function anthropic() {
 const TOOL_DEFS = [
   {
     name: 'check_availability',
-    description: 'List open appointment slots. Call before offering times.',
+    description: 'List open appointment slots. Call before offering or confirming any time. If the caller names a specific time, pass BOTH date and time to check that exact slot — the result has a "requested" object with open:true/false.',
     input_schema: {
       type: 'object',
       properties: {
         date: { type: 'string', description: 'YYYY-MM-DD for a specific day (optional)' },
+        time: { type: 'string', description: 'HH:MM 24h local — pass this (with date) to check ONE exact time the caller requested' },
         days_ahead: { type: 'integer', description: 'How many days out to search (default 7)' }
       }
     }
@@ -122,10 +123,16 @@ HOW YOU SOUND — like a real, kind human receptionist:
 WHO YOU'RE TALKING TO:
 ${whoIsThis}
 
-BOOKING AN APPOINTMENT:
-- Call check_availability, then warmly offer TWO or THREE of the returned times in a natural, varied way (e.g. "I have Tuesday at 10:30, or Thursday afternoon at 2 — would either of those work?"). Never invent a time that wasn't returned.
-- Once they pick one, confirm the day and time back warmly. ${known ? 'You already have their name and number — do not re-ask.' : 'Ask their first name. Only ask for a callback number if you do not already have it.'}
-- Then call book_appointment. Never say it's booked until book_appointment returns success.
+BOOKING AN APPOINTMENT — two paths:
+A) Caller has NO time in mind: call check_availability (no time), then warmly offer TWO or THREE of the returned times in a natural, varied way (e.g. "I have Tuesday at 10:30, or Thursday afternoon at 2 — would either of those work?"). Never invent a time that wasn't returned.
+B) Caller ASKS FOR A SPECIFIC DAY OR TIME (e.g. "today", "something earlier", "3 o'clock", "tomorrow morning"):
+   1. If they gave a day but not an exact time, ask warmly which time they'd like: "Of course — what time works best for you?" One question, then wait.
+   2. Call check_availability with that date AND time to check that exact slot.
+   3. If the result's "requested.open" is true: warmly confirm it's available — "Yes, [day] at [time] is open" — then proceed to book it.
+   4. If "requested.open" is false: apologize gently ("I'm sorry, that time's already spoken for") and offer the nearest open times from the returned "slots" as alternatives.
+- Once they settle on a time, confirm the day and time back warmly. ${known ? 'You already have their name and number — do not re-ask.' : 'Ask their first name. Only ask for a callback number if you do not already have it.'}
+- Then call book_appointment. Never say it's booked until book_appointment returns success. Only ever confirm a time as "open" after check_availability said so — never guess.
+- LAST RESORT: if after offering alternatives you still can't find a time that works for them, warmly offer to connect them to a live person (call transfer_to_human). If a transfer isn't available, offer to take a message instead.
 
 TAKING A MESSAGE:
 - Be professional and caring. Ask what they'd like ${biz} to know.
