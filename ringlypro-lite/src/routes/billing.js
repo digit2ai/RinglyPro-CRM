@@ -32,7 +32,7 @@ function plan() {
     priceId: process.env.LITE_STRIPE_PRICE_US || null,     // optional pre-made recurring Price
     setupPriceId: process.env.LITE_STRIPE_SETUP_PRICE_US || null, // optional one-time Price
     monthlyCents: int('LITE_PRICE_US_CENTS', 4900),        // $49/mo
-    setupCents: int('LITE_SETUP_US_CENTS', 4900),          // $49 one-time
+    setupCents: int('LITE_SETUP_US_CENTS', 0),             // no setup fee (0 = disabled)
     includedMinutes: int('LITE_INCLUDED_MIN_US', 150),     // 150 min included
     overagePerMinCents: int('LITE_OVERAGE_US_CENTS', 40),  // $0.40/min
     currency: (process.env.LITE_PRICE_US_CURRENCY || 'usd').toLowerCase(),

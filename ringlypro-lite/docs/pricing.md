@@ -5,7 +5,7 @@ US-only for launch. All figures USD. COGS traces to `docs/telephony-costs.md`.
 ## Plan
 | Item | Price |
 |---|---|
-| **Setup (one-time)** | **$49** |
+| **Setup (one-time)** | **$0 (removed)** |
 | **Monthly subscription** | **$49/mo** |
 | **Included** | **150 answered minutes/mo** (~100 calls @ 90s) |
 | **Overage** | **$0.40 / minute** beyond 150 |
