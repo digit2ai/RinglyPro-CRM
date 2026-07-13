@@ -108,6 +108,16 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .istep{text-align:left;background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .istep b{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
 .istep p{font-size:13px;color:var(--muted)}
+/* install action cards */
+.iopt{display:flex;gap:12px;align-items:center;text-align:left;width:100%;background:var(--soft);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:11px;cursor:pointer;font-family:inherit;transition:border-color .15s,transform .1s,box-shadow .15s}
+.iopt:hover{border-color:var(--teal);box-shadow:0 6px 18px rgba(22,35,58,.08)}
+.iopt:active{transform:scale(.99)}
+.iopt .ico{width:42px;height:42px;border-radius:11px;background:#fff;border:1px solid var(--border);display:grid;place-items:center;flex:none}
+.iopt .ico svg{width:22px;height:22px;stroke:var(--teal);fill:none;stroke-width:1.9}
+.iopt .tx{flex:1;min-width:0}
+.iopt .tx b{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
+.iopt .tx span{display:block;font-size:12.5px;color:var(--muted);line-height:1.45}
+.iopt .go{flex:none;color:var(--teal);font-size:20px;font-weight:800;line-height:1}
 /* faq */
 .faq{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .faq details{border:1px solid var(--border);border-radius:14px;background:#fff;padding:0 18px;transition:border-color .15s}
@@ -287,13 +297,28 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
     <button class="imodal-x" id="imX" aria-label="Cerrar">&times;</button>
     <div class="imodal-ic"><img src="https://aiagent.ringlypro.com/coaching/apple-touch-icon.png" alt="CoachTrack" /></div>
     <h3 id="imTitle">Añade CoachTrack a tu pantalla de inicio</h3>
-    <div class="istep"><b id="imIosT">iPhone / iPad (Safari)</b><p id="imIos">Toca el ícono Compartir y luego elige "Añadir a inicio".</p></div>
-    <div class="istep"><b id="imAndT">Android (Chrome)</b><p id="imAnd">Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".</p></div>
+    <div class="iopt" id="ioptAnd" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+      <div class="tx"><b id="imAndT">Android (Chrome)</b><span id="imAnd">Toca aquí para instalar la app en tu inicio.</span></div>
+      <span class="go">&rsaquo;</span>
+    </div>
+    <div class="iopt" id="ioptIos" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M6 12H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1"/></svg></div>
+      <div class="tx"><b id="imIosT">iPhone / iPad (Safari)</b><span id="imIos">Toca el ícono Compartir abajo y elige "Añadir a inicio".</span></div>
+      <span class="go">&rsaquo;</span>
+    </div>
     <button class="btn grad lg" id="imClose" style="width:100%;margin-top:6px">Entendido</button>
   </div>
 </div>
 
 <script>
+// If this page was OPENED from a home-screen icon (installed PWA / standalone),
+// it IS the app shortcut — send it straight to the app, never show the landing.
+// This guarantees the installed icon opens login/sign-up, not this marketing page,
+// even on iOS where "Add to Home Screen" saves whatever URL was on screen.
+if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true){
+  location.replace('/coaching/');
+}
 const DICT={
   en:{
     lang:'ES',navLogin:'Log in',navSignup:'Create free account',
@@ -322,9 +347,9 @@ const DICT={
     q5:'How long does it take?',a5:'Recording takes as long as your session. When you finalize, AI extracts the topic and action items in seconds.',
     bandH:'Free for Visionarium users',bandP:'Create your account and log your first session today.',
     bandCta1:'Create free account',bandCta2:'Log in',footNote:'Creativity & Leadership Incubator',
-    navInstall:'Get the app',imTitle:'Add CoachTrack to your home screen',
-    imIosT:'iPhone / iPad (Safari)',imIos:'Tap the Share icon, then choose "Add to Home Screen".',
-    imAndT:'Android (Chrome)',imAnd:'Open the menu (three dots), then tap "Install app" or "Add to Home screen".',
+    navInstall:'Get the app',imTitle:'Install CoachTrack on your home screen',
+    imIosT:'iPhone / iPad (Safari)',imIos:'Tap the Share icon below, then choose "Add to Home Screen".',
+    imAndT:'Android (Chrome)',imAnd:'Tap here to install the app to your home screen.',
     imClose:'Got it'
   },
   es:{
@@ -354,9 +379,9 @@ const DICT={
     q5:'¿Cuánto tiempo toma?',a5:'Grabar toma lo que dure tu sesión. Al finalizar, la IA extrae el tema y las acciones en segundos.',
     bandH:'Gratis para usuarios Visionarium',bandP:'Crea tu cuenta y registra tu primera sesión hoy.',
     bandCta1:'Crear cuenta gratis',bandCta2:'Iniciar sesión',footNote:'Creativity & Leadership Incubator',
-    navInstall:'Descargar app',imTitle:'Añade CoachTrack a tu pantalla de inicio',
-    imIosT:'iPhone / iPad (Safari)',imIos:'Toca el ícono Compartir y luego elige "Añadir a inicio".',
-    imAndT:'Android (Chrome)',imAnd:'Abre el menú (tres puntos) y toca "Instalar aplicación" o "Añadir a inicio".',
+    navInstall:'Descargar app',imTitle:'Instala CoachTrack en tu pantalla de inicio',
+    imIosT:'iPhone / iPad (Safari)',imIos:'Toca el ícono Compartir abajo y elige "Añadir a inicio".',
+    imAndT:'Android (Chrome)',imAnd:'Toca aquí para instalar la app en tu inicio.',
     imClose:'Entendido'
   }
 };
@@ -387,6 +412,11 @@ function closeInstallHelp(){if(imodal)imodal.classList.remove('show');}
 ['imX','imClose'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',closeInstallHelp);});
 if(imodal)imodal.addEventListener('click',function(e){if(e.target===imodal)closeInstallHelp();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeInstallHelp();});
+// Android action card: fire the native install prompt if the browser has it queued.
+var _ioptAnd=document.getElementById('ioptAnd');
+if(_ioptAnd)_ioptAnd.addEventListener('click',async function(){
+  if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;closeInstallHelp();}
+});
 
 // Clicking "Download the app" installs the PWA to the home screen.
 // Chrome/Android/desktop: fire the native install prompt. iPhone Safari (no API):
