@@ -163,6 +163,8 @@ h2{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:700;line-height:1.2;letter-spa
 }
 .prod:hover{border-color:rgba(56,189,248,.5);transform:translateY(-3px)}
 .prod h4{font-family:'Manrope';font-weight:800;font-size:.98rem;margin-bottom:6px}
+.prod h4 a{color:inherit;border-bottom:1px dashed transparent}
+.prod h4 a:hover{color:var(--cyan);border-bottom-color:rgba(56,189,248,.5)}
 .prod p{color:var(--muted);font-size:.85rem}
 .prod .tag{
   display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
@@ -352,7 +354,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="merge-card left reveal">
         <span class="co">Digit2ai · Tampa, FL</span>
         <h3 data-i18n="merger.left.h">The AI Factory</h3>
-        <p data-i18n="merger.left.p">A production artificial-intelligence platform company operating a dozen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
+        <p data-i18n="merger.left.p">A production artificial-intelligence platform company operating eighteen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.</p>
       </div>
       <div class="merge-x">×</div>
       <div class="merge-card right reveal">
@@ -393,7 +395,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
         </svg>
         <h3 data-i18n="tag.ecosystem">Business Ecosystem</h3>
         <div class="sub" data-i18n="pillars.p2.sub">Connected Growth</div>
-        <p data-i18n="pillars.p2.p">Twelve live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
+        <p data-i18n="pillars.p2.p">Eighteen live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.</p>
       </div>
       <div class="pillar p3 reveal">
         <svg class="ico" viewBox="0 0 46 46" fill="none" stroke-width="2">
@@ -426,6 +428,12 @@ footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-s
       <div class="prod reveal"><span class="tag agro" data-i18n="tagn.agro">AgriTech</span><h4>LactoTech.app</h4><p data-i18n="prod.lacto">AI dairy-herd and milk-production analytics for cooperatives, farms, and processors.</p></div>
       <div class="prod reveal"><span class="tag health" data-i18n="tagn.health">Healthcare</span><h4>MaraMed.app</h4><p data-i18n="prod.maramed">AI-assisted clinical documentation and patient-care intelligence for medical practices.</p></div>
       <div class="prod reveal"><span class="tag health" data-i18n="tagn.medtech">MedTech</span><h4>SurgicalMind.app</h4><p data-i18n="prod.surgical">AI sales-operations and clinical-value platform for robotic-surgery programs.</p></div>
+      <div class="prod reveal"><span class="tag net" data-i18n="tagn.compliance">Compliance</span><h4><a href="https://compliancemind.app" target="_blank" rel="noopener">ComplianceMind.app</a></h4><p data-i18n="prod.compliance">AI regulatory-compliance monitoring, policy checks, and audit-trail automation for regulated industries.</p></div>
+      <div class="prod reveal"><span class="tag voice" data-i18n="tagn.assistant">AI Assistant</span><h4><a href="https://kanchoai.com" target="_blank" rel="noopener">KanchoAI</a></h4><p data-i18n="prod.kancho">AI conversational assistant and business-automation platform.</p></div>
+      <div class="prod reveal"><span class="tag agro" data-i18n="tagn.equine">Equestrian</span><h4><a href="https://roundshare.app" target="_blank" rel="noopener">RoundShare</a></h4><p data-i18n="prod.roundshare">Ride, improve, share — AI performance feedback and community for equestrian riders.</p></div>
+      <div class="prod reveal"><span class="tag agro" data-i18n="tagn.equine">Equestrian</span><h4><a href="https://equimind.app" target="_blank" rel="noopener">EquiMind</a></h4><p data-i18n="prod.equimind">AI jump-coach and biomechanics analysis for equestrian training.</p></div>
+      <div class="prod reveal"><span class="tag net" data-i18n="tagn.chambers">Chambers</span><h4><a href="https://virtualchamber.app" target="_blank" rel="noopener">VirtualChamber</a></h4><p data-i18n="prod.virtualchamber">Config-driven virtual chamber-of-commerce platform with AI business planning and member management.</p></div>
+      <div class="prod reveal"><span class="tag ops" data-i18n="tagn.commerce">Commerce</span><h4><a href="https://ordergopro.com" target="_blank" rel="noopener">OrderGoPro</a></h4><p data-i18n="prod.ordergopro">Online storefront, digital menu, and ordering SaaS for restaurants and retailers.</p></div>
       <div class="prod reveal"><span class="tag voice" data-i18n="tagn.motorsports">Motorsports</span><h4>TunjoRacing</h4><p data-i18n="prod.tunjo">Motorsports CRM and press portal platform.</p></div>
       <div class="prod reveal"><span class="tag edu" data-i18n="tagn.fellowship">Fellowship</span><h4>Visionarium Platform</h4><p data-i18n="prod.visionarium">Open-community portal, fellow portal, Lina AI mentor, admissions, and sponsor dashboards.</p></div>
     </div>
@@ -535,17 +543,18 @@ var I18N = {
     'merger.eyebrow':'The Merger','merger.h2':'Two builders. One future.',
     'merger.lede':'Since 2015, one company has been shipping production AI across the Americas while the other has been forming its next generation of leaders. Vision2Ai unites both under a single roof.',
     'merger.left.h':'The AI Factory',
-    'merger.left.p':'A production artificial-intelligence platform company operating a dozen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.',
+    'merger.left.p':'A production artificial-intelligence platform company operating eighteen live products — voice AI, CRM, healthcare, logistics, education, and industrial analytics — serving thousands of users daily across the Americas.',
     'merger.right.h':'The Human Pipeline',
     'merger.right.p':"A bilingual AI-powered leadership, creativity, and technology fellowship preparing Latin America's next generation for global impact — open to every young person, selective at the top.",
     'merger.result.p':'An AI-native institution where the platforms fund and power the people, and the people prove what the platforms make possible. Technology mastery, leadership formation, and real execution — at ecosystem scale.',
     'pillars.eyebrow':'What We Are','pillars.h2':'Three pillars, one system.',
     'pillars.p1.sub':'Intelligence Engine','pillars.p1.p':'Multi-tenant SaaS architecture, voice AI agents, MCP orchestration, and bilingual NLP — production systems shipped fast and run at scale, from Rachel and Lina to full vertical platforms.',
-    'pillars.p2.sub':'Connected Growth','pillars.p2.p':'Twelve live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.',
+    'pillars.p2.sub':'Connected Growth','pillars.p2.p':'Eighteen live verticals sharing one platform backbone — CRM, sponsors, partners, and an opportunity marketplace connecting talent to real work across the US, Colombia, and the Philippines.',
     'pillars.p3.sub':'Vision · Innovation · Impact','pillars.p3.p':'The Visionarium Fellowship: 10,000 bilingual technology leaders by 2035, each with a personal AI mentor from day one — free to every young person aged 16–22 across the Americas.',
     'factory.eyebrow':'The AI Factory','factory.h2':'Live products, not roadmap slides.',
     'factory.lede':"Every vertical below is a production system on the shared Vision2Ai platform — the same infrastructure that powers Lina, the fellowship's bilingual AI mentor.",
     'tagn.voice':'Voice AI · CRM','tagn.edu':'Education','tagn.health':'Healthcare','tagn.retail':'Retail Ops','tagn.net':'Network','tagn.logistics':'Logistics','tagn.industrial':'Industrial','tagn.agro':'AgriTech','tagn.medtech':'MedTech','tagn.motorsports':'Motorsports','tagn.fellowship':'Fellowship',
+    'tagn.compliance':'Compliance','tagn.assistant':'AI Assistant','tagn.equine':'Equestrian','tagn.chambers':'Chambers','tagn.commerce':'Commerce',
     'prod.ringlypro':'Multi-tenant voice AI CRM with Rachel, Ana, and Lina agents answering, booking, and following up in English and Spanish.',
     'prod.torna':'Bilingual language-learning platform powering the University of Makati SFL program.',
     'prod.imaging':'AI-powered musculoskeletal radiology and medical-imaging analysis for orthopedic practices.',
@@ -558,6 +567,12 @@ var I18N = {
     'prod.surgical':'AI sales-operations and clinical-value platform for robotic-surgery programs.',
     'prod.tunjo':'Motorsports CRM and press portal platform.',
     'prod.visionarium':'Open-community portal, fellow portal, Lina AI mentor, admissions, and sponsor dashboards.',
+    'prod.compliance':'AI regulatory-compliance monitoring, policy checks, and audit-trail automation for regulated industries.',
+    'prod.kancho':'AI conversational assistant and business-automation platform.',
+    'prod.roundshare':'Ride, improve, share — AI performance feedback and community for equestrian riders.',
+    'prod.equimind':'AI jump-coach and biomechanics analysis for equestrian training.',
+    'prod.virtualchamber':'Config-driven virtual chamber-of-commerce platform with AI business planning and member management.',
+    'prod.ordergopro':'Online storefront, digital menu, and ordering SaaS for restaurants and retailers.',
     'fellow.eyebrow':'The Fellowship','fellow.h2':'From Latin American talent to global leadership.',
     'fellow.lede':'The Visionarium Fellowship is the flagship of the Vision2Ai ecosystem: a nine-month, fully sponsor-funded program launching from Miami in Fall 2026. Every participant — Fellow or open-community member — gets Lina, a bilingual AI mentor with voice, memory, and 24/7 availability, built on the same production platform as the AI Factory.',
     'fellow.k1':'Open Tier','fellow.v1':'Free to any young person aged 16–22 across the Americas — no cap, no cost, no application.',
@@ -586,17 +601,18 @@ var I18N = {
     'merger.eyebrow':'La Fusión','merger.h2':'Dos creadores. Un solo futuro.',
     'merger.lede':'Desde 2015, una compañía ha desplegado IA en producción por toda América mientras la otra forma a su próxima generación de líderes. Vision2Ai une a ambas bajo un mismo techo.',
     'merger.left.h':'La Fábrica de IA',
-    'merger.left.p':'Una compañía de plataformas de inteligencia artificial en producción que opera una docena de productos en vivo — IA de voz, CRM, salud, logística, educación y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
+    'merger.left.p':'Una compañía de plataformas de inteligencia artificial en producción que opera dieciocho productos en vivo — IA de voz, CRM, salud, logística, educación y analítica industrial — al servicio de miles de usuarios cada día en toda América.',
     'merger.right.h':'El Semillero Humano',
     'merger.right.p':'Un programa bilingüe de liderazgo, creatividad y tecnología impulsado por IA que prepara a la próxima generación de América Latina para el impacto global — abierto a cada joven, selectivo en la cima.',
     'merger.result.p':'Una institución nativa de IA donde las plataformas financian e impulsan a las personas, y las personas demuestran lo que las plataformas hacen posible. Dominio tecnológico, formación de liderazgo y ejecución real — a escala de ecosistema.',
     'pillars.eyebrow':'Qué Somos','pillars.h2':'Tres pilares, un sistema.',
     'pillars.p1.sub':'Motor de Inteligencia','pillars.p1.p':'Arquitectura SaaS multiinquilino, agentes de IA de voz, orquestación MCP y PLN bilingüe — sistemas en producción desplegados rápido y operando a escala, desde Rachel y Lina hasta plataformas verticales completas.',
-    'pillars.p2.sub':'Crecimiento Conectado','pillars.p2.p':'Doce verticales en vivo compartiendo una sola plataforma base — CRM, patrocinadores, socios y un mercado de oportunidades que conecta el talento con trabajo real en EE. UU., Colombia y Filipinas.',
+    'pillars.p2.sub':'Crecimiento Conectado','pillars.p2.p':'Dieciocho verticales en vivo compartiendo una sola plataforma base — CRM, patrocinadores, socios y un mercado de oportunidades que conecta el talento con trabajo real en EE. UU., Colombia y Filipinas.',
     'pillars.p3.sub':'Visión · Innovación · Impacto','pillars.p3.p':'El Programa Visionarium: 10.000 líderes tecnológicos bilingües para 2035, cada uno con un mentor de IA personal desde el primer día — gratis para cada joven de 16 a 22 años en toda América.',
     'factory.eyebrow':'La Fábrica de IA','factory.h2':'Productos en vivo, no diapositivas.',
     'factory.lede':'Cada vertical a continuación es un sistema en producción sobre la plataforma compartida de Vision2Ai — la misma infraestructura que impulsa a Lina, la mentora de IA bilingüe del programa.',
     'tagn.voice':'IA de Voz · CRM','tagn.edu':'Educación','tagn.health':'Salud','tagn.retail':'Retail','tagn.net':'Red','tagn.logistics':'Logística','tagn.industrial':'Industrial','tagn.agro':'AgroTech','tagn.medtech':'MedTech','tagn.motorsports':'Automovilismo','tagn.fellowship':'Programa',
+    'tagn.compliance':'Cumplimiento','tagn.assistant':'Asistente IA','tagn.equine':'Ecuestre','tagn.chambers':'Cámaras','tagn.commerce':'Comercio',
     'prod.ringlypro':'CRM con IA de voz multiinquilino: los agentes Rachel, Ana y Lina contestan, agendan y dan seguimiento en inglés y español.',
     'prod.torna':'Plataforma bilingüe de aprendizaje de idiomas que impulsa el programa SFL de la Universidad de Makati.',
     'prod.imaging':'Análisis de radiología musculoesquelética e imagen médica con IA para consultas ortopédicas.',
@@ -609,6 +625,12 @@ var I18N = {
     'prod.surgical':'Plataforma de operaciones de ventas y valor clínico con IA para programas de cirugía robótica.',
     'prod.tunjo':'CRM y portal de prensa para automovilismo.',
     'prod.visionarium':'Portal de comunidad abierta, portal de becarios, mentora de IA Lina, admisiones y tableros de patrocinadores.',
+    'prod.compliance':'Monitoreo de cumplimiento regulatorio, verificación de políticas y automatización de pistas de auditoría con IA para industrias reguladas.',
+    'prod.kancho':'Plataforma de asistente conversacional de IA y automatización de negocios.',
+    'prod.roundshare':'Monta, mejora, comparte — retroalimentación de desempeño con IA y comunidad para jinetes.',
+    'prod.equimind':'Entrenador de salto con IA y análisis de biomecánica para el entrenamiento ecuestre.',
+    'prod.virtualchamber':'Plataforma configurable de cámaras de comercio virtuales con planeación de negocios por IA y gestión de miembros.',
+    'prod.ordergopro':'SaaS de tienda en línea, menú digital y pedidos para restaurantes y comercios.',
     'fellow.eyebrow':'El Programa','fellow.h2':'Del talento latinoamericano al liderazgo global.',
     'fellow.lede':'El Programa Visionarium es el buque insignia del ecosistema Vision2Ai: un programa de nueve meses, financiado por patrocinadores, que se lanza desde Miami en el otoño de 2026. Cada participante — becario o miembro de la comunidad abierta — recibe a Lina, una mentora de IA bilingüe con voz, memoria y disponibilidad 24/7, construida sobre la misma plataforma en producción que la Fábrica de IA.',
     'fellow.k1':'Nivel Abierto','fellow.v1':'Gratis para cualquier joven de 16 a 22 años en toda América — sin cupo, sin costo, sin postulación.',
