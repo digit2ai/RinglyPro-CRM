@@ -679,6 +679,26 @@ app.get('*', (req, res) => {
     }
     console.log('[D2AI-Projects] Pipeline & workflow tables ready');
 
+    // Migration 018 — Claude Premortem agent columns on d2_projects.
+    // Adversarial risk analysis that travels with every feasibility.
+    const premortemMigrations = [
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_brief TEXT`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_structured JSONB`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_verdict VARCHAR(30)`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_at TIMESTAMPTZ`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_model VARCHAR(80)`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_version INTEGER DEFAULT 0`,
+      `ALTER TABLE d2_projects ADD COLUMN IF NOT EXISTS premortem_flagged BOOLEAN DEFAULT false`,
+      // Partial index so the "needs Manny's attention" query stays fast.
+      `CREATE INDEX IF NOT EXISTS idx_d2_projects_premortem_flagged ON d2_projects (premortem_flagged) WHERE premortem_flagged = true`
+    ];
+    for (const sql of premortemMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!/already exists|does not exist/i.test(e.message)) console.log('[D2AI-Projects] Premortem migration notice:', e.message.substring(0, 120));
+      }
+    }
+    console.log('[D2AI-Projects] Premortem columns ready');
+
     // Voice POC teasers (one-click AI teaser per project request)
     const teaserMigrations = [
       `CREATE TABLE IF NOT EXISTS d2_project_teasers (

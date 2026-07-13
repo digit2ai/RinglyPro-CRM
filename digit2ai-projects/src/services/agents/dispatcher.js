@@ -12,12 +12,14 @@ const researchBriefAgent = require('./researchBriefAgent');
 const outreachDrafterAgent = require('./outreachDrafterAgent');
 const inboxTriageAgent = require('./inboxTriageAgent');
 const businessAnalystAgent = require('./businessAnalystAgent');
+const premortemAgent = require('./premortemAgent');
 
 const AGENT_MAP = {
   research:  researchBriefAgent,
   draft:     outreachDrafterAgent,
   triage:    inboxTriageAgent,
-  senior_ba: businessAnalystAgent
+  senior_ba: businessAnalystAgent,
+  premortem: premortemAgent
 };
 
 // Process one task by id. Caller is expected to have already flipped

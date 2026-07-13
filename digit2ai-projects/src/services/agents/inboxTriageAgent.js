@@ -127,7 +127,43 @@ function renderMarkdown(project, parsed) {
   return lines.join('\n');
 }
 
-async function run({ project }) {
+// Run Claude Premortem for a freshly-triaged project, then flag + notify Manny
+// when the verdict is RESHAPE or DECLINE (before any commitment reaches the
+// requestor). Required lazily to avoid any require-cycle at module load.
+async function runPremortem(project, triageStructured, language) {
+  const premortemAgent = require('./premortemAgent');
+  // Re-read premortem_version so re-runs increment correctly.
+  const projForPremortem = { ...project.toJSON ? project.toJSON() : project, triage_structured: triageStructured };
+  const r = await premortemAgent.run({
+    project: projForPremortem,
+    triage: triageStructured,
+    language: language && language !== 'auto' ? language : undefined
+  });
+  if (r && r.ok && (r.verdict === 'RESHAPE' || r.verdict === 'DECLINE')) {
+    try {
+      const { Notification } = require('../../models');
+      const { logActivity } = require('../activityService');
+      const rationale = (r.structured && r.structured.verdict_rationale) || '';
+      await Notification.create({
+        workspace_id: 1,
+        user_email: process.env.OWNER_EMAIL || 'digitalinformation2ai@gmail.com',
+        type: 'premortem_flag',
+        title: `Premortem ${r.verdict}: ${project.name || 'project ' + project.id}`,
+        message: `Claude Premortem returned ${r.verdict} for "${project.name || project.id}". Do NOT communicate any commitment to the requestor until reviewed. Rationale: ${rationale}`.slice(0, 2000),
+        entity_type: 'project',
+        entity_id: project.id,
+        read: false
+      });
+      try { await logActivity(null, 'premortem_flag', 'project', project.id, `${r.verdict}: ${rationale.slice(0, 120)}`); } catch (_) {}
+      console.warn(`[inboxTriageAgent] PREMORTEM ${r.verdict} — flagged project ${project.id}, Manny notified`);
+    } catch (nErr) {
+      console.error('[inboxTriageAgent] premortem flag/notify failed:', nErr.message);
+    }
+  }
+  return r;
+}
+
+async function run({ project, language }) {
   if (!project || !project.id) {
     return { ok: false, error: 'missing_project', output_md: '', structured: null, cost_estimate_usd: 0, model: SONNET_MODEL };
   }
@@ -221,11 +257,35 @@ Provide 10-15 stakeholder questions in EACH language, organized by feasibility /
     } catch (dbErr) {
       console.error('[inboxTriageAgent] persist failed:', dbErr.message);
     }
+
+    // MANDATORY PREMORTEM — a feasibility without a premortem is incomplete.
+    // Chain Claude Premortem now; append its section to triage_brief so the two
+    // travel together. On failure/timeout the premortem agent returns a visible
+    // "PREMORTEM PENDING" banner (never silently without it).
+    let premortem = null;
+    try {
+      premortem = await runPremortem(project, parsed, language);
+    } catch (pmErr) {
+      console.error('[inboxTriageAgent] premortem chain crashed:', pmErr.message);
+    }
+    const combined_md = premortem && premortem.output_md
+      ? `${output_md}\n\n---\n\n${premortem.output_md}`
+      : output_md;
+    if (premortem && premortem.output_md) {
+      try {
+        await Project.update({ triage_brief: combined_md }, { where: { id: project.id, workspace_id: 1 } });
+      } catch (dbErr) {
+        console.error('[inboxTriageAgent] combined persist failed:', dbErr.message);
+      }
+    }
+
+    const totalCost = Number((cost + (premortem?.cost_estimate_usd || 0)).toFixed(4));
     return {
       ok: true,
-      output_md,
+      output_md: combined_md,
       structured: parsed,
-      cost_estimate_usd: Number(cost.toFixed(4)),
+      premortem: premortem ? { verdict: premortem.verdict, ok: premortem.ok, structured: premortem.structured } : null,
+      cost_estimate_usd: totalCost,
       model: SONNET_MODEL
     };
   } catch (err) {

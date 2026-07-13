@@ -116,6 +116,16 @@ const Project = sequelize.define('Project', {
   triage_structured: DataTypes.JSONB,
   triage_at: DataTypes.DATE,
   triage_model: DataTypes.STRING(60),
+  // Claude Premortem agent output (migration 018) — adversarial risk analysis
+  // that travels with every feasibility. premortem_flagged=true means the
+  // verdict was RESHAPE/DECLINE and Manny was notified before any commitment.
+  premortem_brief: DataTypes.TEXT,
+  premortem_structured: DataTypes.JSONB,
+  premortem_verdict: DataTypes.STRING(30),
+  premortem_at: DataTypes.DATE,
+  premortem_model: DataTypes.STRING(80),
+  premortem_version: { type: DataTypes.INTEGER, defaultValue: 0 },
+  premortem_flagged: { type: DataTypes.BOOLEAN, defaultValue: false },
   start_date: DataTypes.DATEONLY,
   due_date: DataTypes.DATEONLY,
   notes: DataTypes.TEXT,

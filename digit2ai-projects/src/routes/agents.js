@@ -11,6 +11,8 @@ const router = express.Router();
 const { sequelize, Task, Project } = require('../models');
 const dispatcher = require('../services/agents/dispatcher');
 const inboxTriageAgent = require('../services/agents/inboxTriageAgent');
+const premortemAgent = require('../services/agents/premortemAgent');
+const registry = require('../services/agents/registry');
 const classifier = require('../services/agents/classifier');
 
 // GET /api/v1/agents/health
@@ -172,6 +174,69 @@ router.post('/reject/:taskId', async (req, res) => {
     await task.update({ agent_status: 'rejected', agent_error: String(reason).slice(0, 2000) });
     res.json({ success: true, data: task });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/v1/agents/registry — Registry Agent catalog (NIN org chart node source).
+// Lists departments (Premortem + intake bench) with descriptions, input/output
+// schemas, and owners.
+router.get('/registry', (_req, res) => {
+  res.json({ success: true, data: registry.catalog() });
+});
+
+// POST /api/v1/agents/premortem/:projectId — manual run of Claude Premortem.
+// Body (all optional): { failure_horizon, language: 'en'|'es'|'auto' }
+// Runs against the project's stored triage_structured; appends the Premortem
+// Analysis section to triage_brief and flags/notifies on RESHAPE/DECLINE.
+router.post('/premortem/:projectId', async (req, res) => {
+  try {
+    const id = parseInt(req.params.projectId, 10);
+    const project = await Project.findOne({ where: { id, workspace_id: 1 } });
+    if (!project) return res.status(404).json({ success: false, error: 'project_not_found' });
+    const { failure_horizon, language } = req.body || {};
+    const r = await premortemAgent.run({
+      project,
+      triage: project.triage_structured || null,
+      failure_horizon,
+      language: (language === 'en' || language === 'es') ? language : undefined
+    });
+
+    // Keep the two artifacts travelling together: re-stitch triage_brief with
+    // the fresh premortem section (strip any prior premortem/pending block).
+    try {
+      const base = String(project.triage_brief || '').split(/\n\n---\n\n/)[0];
+      const combined = r.output_md ? `${base}\n\n---\n\n${r.output_md}` : base;
+      const updates = { triage_brief: combined };
+      await project.update(updates);
+    } catch (_) {}
+
+    // Flag + notify on adverse verdict (manual path mirrors the auto path).
+    if (r.ok && (r.verdict === 'RESHAPE' || r.verdict === 'DECLINE')) {
+      try {
+        const { Notification } = require('../models');
+        await Notification.create({
+          workspace_id: 1,
+          user_email: process.env.OWNER_EMAIL || 'digitalinformation2ai@gmail.com',
+          type: 'premortem_flag',
+          title: `Premortem ${r.verdict}: ${project.name || 'project ' + id}`,
+          message: `Claude Premortem returned ${r.verdict}. Rationale: ${(r.structured && r.structured.verdict_rationale) || ''}`.slice(0, 2000),
+          entity_type: 'project', entity_id: id, read: false
+        });
+      } catch (_) {}
+    }
+
+    if (!r.ok) return res.status(200).json({ success: false, verdict: r.verdict, error: r.error, premortem_md: r.output_md });
+    res.json({
+      success: true,
+      verdict: r.verdict,
+      version: r.version,
+      failure_mode_count: (r.structured && r.structured.failure_modes.length) || 0,
+      flagged: r.verdict === 'RESHAPE' || r.verdict === 'DECLINE',
+      cost_usd: r.cost_estimate_usd
+    });
+  } catch (err) {
+    console.error('[agents] /premortem error:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
