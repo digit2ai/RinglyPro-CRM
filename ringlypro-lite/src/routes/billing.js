@@ -14,7 +14,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
-const { Tenant, Call, Recharge } = require('../models');
+const { Tenant, Call, Recharge, User, Number: LiteNumber } = require('../models');
 const { entitlement } = require('../services/entitlement');
 const minutesSvc = require('../services/minutes');
 
@@ -283,6 +283,46 @@ router.post('/release-unconverted', async (req, res) => {
     const { releaseUnconverted } = require('../services/numberReclaim');
     const released = await releaseUnconverted();
     res.json({ ok: true, released_count: released.length, released });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin-only: list all signed-up users/tenants (read-only, no secrets).
+// Gate: LITE_ADMIN_KEY via ?key= or x-admin-key header (same as other admin routes).
+// Open in a browser: /api/billing/admin/users?key=YOUR_LITE_ADMIN_KEY
+router.get('/admin/users', async (req, res) => {
+  try {
+    const key = process.env.LITE_ADMIN_KEY;
+    if (!key || (req.headers['x-admin-key'] || req.query.key) !== key) {
+      return res.status(401).json({ error: 'unauthorized', hint: 'set LITE_ADMIN_KEY on Render and pass ?key=' });
+    }
+    const users = await User.findAll({ order: [['created_at', 'DESC']] });
+    const tenants = await Tenant.findAll();
+    const numbers = await LiteNumber.findAll({ where: { status: 'active' } });
+    const tById = new Map(tenants.map(t => [t.id, t]));
+    const numByTenant = new Map(numbers.map(n => [n.tenant_id, n.did]));
+    const rows = users.map(u => {
+      const t = tById.get(u.tenant_id) || {};
+      return {
+        user_id: u.id,
+        email: u.email,
+        name: u.name,
+        signed_up: u.created_at,
+        business_name: t.business_name,
+        country: t.country,
+        locale: t.locale,
+        subscription_status: t.subscription_status,
+        trial_ends_at: t.trial_ends_at,
+        has_card: !!t.stripe_subscription_id,
+        number: numByTenant.get(u.tenant_id) || null,
+        rollover_minutes: t.rollover_minutes != null ? Number(t.rollover_minutes) : 0,
+        purchased_minutes: t.purchased_minutes != null ? Number(t.purchased_minutes) : 0
+      };
+    });
+    const paying = rows.filter(r => r.subscription_status === 'active').length;
+    const trialing = rows.filter(r => r.subscription_status === 'trialing').length;
+    res.json({ count: rows.length, paying, trialing, users: rows });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
