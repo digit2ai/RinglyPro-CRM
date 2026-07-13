@@ -87,9 +87,29 @@
       '.maya-send{background:#16373A;color:#fff}',
       '.maya-ic svg{width:18px;height:18px}',
       '@keyframes mayaPulse{0%,100%{box-shadow:0 0 0 0 rgba(181,83,60,.5)}50%{box-shadow:0 0 0 7px rgba(181,83,60,0)}}',
-      '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:88px;width:auto;height:calc(100vh - 120px)}}'
+      // Self-injected floating launcher (used on pages that have no .chatbot button)
+      '.maya-fab{position:fixed;right:24px;bottom:24px;z-index:55;display:flex;align-items:center;gap:11px;background:#16373A;color:#fff;border:none;cursor:pointer;padding:13px 20px 13px 15px;border-radius:99px;box-shadow:0 10px 30px rgba(22,55,58,.32);font-family:"DM Sans",system-ui,sans-serif;transition:transform .18s,box-shadow .18s}',
+      '.maya-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(22,55,58,.4)}',
+      '.maya-fab:focus-visible{outline:3px solid #2E7D5B;outline-offset:3px}',
+      '.maya-fab .orb{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;animation:mayaPulse 3s ease-in-out infinite}',
+      '.maya-fab .l1{font-weight:700;font-size:14px;line-height:1.15}',
+      '.maya-fab .l2{font-size:11.5px;color:rgba(255,255,255,.65)}',
+      '@media (prefers-reduced-motion:reduce){.maya-fab .orb{animation:none}}',
+      '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:88px;width:auto;height:calc(100vh - 120px)}.maya-fab .txt{display:none}.maya-fab{padding:14px;border-radius:50%}}'
     ].join('');
     document.head.appendChild(s);
+  }
+
+  function makeFab() {
+    var b = document.createElement('button');
+    b.className = 'maya-fab';
+    b.setAttribute('aria-label', 'Abrir chat con Maya, tu guía financiera IA');
+    b.innerHTML =
+      '<span class="orb"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>' +
+      '<span class="txt"><span class="l1">Pregúntale a Maya</span><br><span class="l2">Tu guía financiera IA</span></span>';
+    b.addEventListener('click', toggle);
+    document.body.appendChild(b);
+    return b;
   }
 
   function build() {
@@ -230,9 +250,14 @@
   function init() {
     css();
     build();
-    // Bind every floating chatbot button on the page to open Maya.
+    // Bind any existing floating chatbot buttons; if none, inject our own launcher
+    // so this script works standalone on ANY page (landing, etc.).
     var btns = document.querySelectorAll('.chatbot');
-    btns.forEach(function (b) { b.removeAttribute('onclick'); b.addEventListener('click', toggle); });
+    if (btns.length) {
+      btns.forEach(function (b) { b.removeAttribute('onclick'); b.addEventListener('click', toggle); });
+    } else {
+      makeFab();
+    }
     window.MayaChat = { open: open, close: close, toggle: toggle };
   }
 

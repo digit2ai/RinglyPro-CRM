@@ -139,13 +139,27 @@ if (hasPortal) {
 }
 
 if (hasBuild) {
+  // Inject the Maya floating chat into every SPA page (landing/login/score/home/...).
+  // Done at serve time so it survives Vite rebuilds and needs no source change.
+  const MAYA_TAG = '<script src="/planea/portal/maya-chat.js" defer></script>';
+  let spaHtml = null;
+  try {
+    const raw = fs.readFileSync(indexHtml, 'utf8');
+    spaHtml = raw.includes('maya-chat.js')
+      ? raw
+      : raw.replace('</body>', MAYA_TAG + '</body>');
+  } catch (e) {
+    spaHtml = null;
+  }
+
   // Static assets (/planea/assets/*, /planea/images/*, /planea/manifest.json, etc.)
   router.use(express.static(distDir, { index: false, maxAge: '1h' }));
 
-  // SPA history fallback — any non-file route returns index.html so the
-  // client router (basename="/planea") can take over (/planea/score, /home, ...).
+  // SPA history fallback — any non-file route returns index.html (with Maya injected)
+  // so the client router (basename="/planea") can take over (/planea/score, /home, ...).
   router.get('*', (req, res, next) => {
     if (req.method !== 'GET') return next();
+    if (spaHtml) return res.type('html').send(spaHtml);
     res.sendFile(indexHtml);
   });
 } else {
