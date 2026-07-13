@@ -60,6 +60,92 @@
 
   function profile() { return window.PLANEA_PROFILE || DEMO_PROFILE; }
 
+  // ── Real logged-in user (Supabase) ─────────────────────────────────────────
+  // On the authenticated app, read the user's session + data so Maya talks about
+  // the REAL user (not the Eduardo demo). On the portal preview (no session), the
+  // demo profile stays. Public Supabase URL + publishable key (safe in the client).
+  var SB_URL = 'https://mfxujzvvrnsbiqcefvtg.supabase.co';
+  var SB_KEY = 'sb_publishable_0dMP5Pof56t9H4fyCNJn9Q_NKGuorXc';
+
+  function sbSession() {
+    try {
+      var key = null;
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (/^sb-.*-auth-token$/.test(k)) { key = k; break; }
+      }
+      if (!key) return null;
+      var o = JSON.parse(localStorage.getItem(key));
+      var s = o && o.access_token ? o : (o && o.currentSession) ? o.currentSession : null;
+      return s && s.access_token ? s : null;
+    } catch (e) { return null; }
+  }
+  function rangoDe(s) {
+    return s <= 30 ? 'Punto de partida' : s <= 50 ? 'Construyendo' : s <= 70 ? 'En camino' : s <= 85 ? 'Sólido' : 'Planeado';
+  }
+  function firstName(full, email) {
+    var n = (full || '').trim().split(/\s+/)[0];
+    if (n) return n;
+    return email ? email.split('@')[0] : '';
+  }
+  function sbGet(pathQuery, token) {
+    return fetch(SB_URL + '/rest/v1/' + pathQuery, {
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, Accept: 'application/json' }
+    }).then(function (r) { return r.ok ? r.json() : null; });
+  }
+
+  // Sync: set the name immediately from the session so Maya never greets "Eduardo"
+  // to a logged-in user. Async: enrich with their real financial data.
+  function bootstrapProfile() {
+    var sess = sbSession();
+    if (!sess) return; // portal preview / not logged in → keep demo
+    var user = sess.user || {};
+    var meta = user.user_metadata || {};
+    var base = {
+      nombre: firstName(meta.full_name, user.email),
+      email: user.email || '',
+      sin_diagnostico: true
+    };
+    window.PLANEA_PROFILE = base;
+    var token = sess.access_token;
+    sbGet('persons?select=full_name,score_data,progress_data', token).then(function (rows) {
+      var p = (rows && rows[0]) || {};
+      var prof = { nombre: firstName(p.full_name || meta.full_name, user.email), email: user.email || '' };
+      var sd = p.score_data || {};
+      if (sd && sd.score != null) {
+        prof.planea_score = sd.score;
+        prof.rango = rangoDe(sd.score);
+        prof.escenario = sd.scenario || null;
+        prof.score_pilares_pct = sd.pillars || null;
+      } else {
+        prof.sin_diagnostico = true;
+      }
+      window.PLANEA_PROFILE = prof;
+      // patrimony (RLS returns only this user's row)
+      sbGet('persons_patrimony?select=assets_data,liabilities_data', token).then(function (pat) {
+        var pp = (pat && pat[0]) || {};
+        var assets = pp.assets_data || [], liab = pp.liabilities_data || [];
+        if (assets.length || liab.length) {
+          var at = assets.reduce(function (a, x) { return a + (+x.value || 0); }, 0);
+          var lt = liab.reduce(function (a, x) { return a + (+x.value || 0); }, 0);
+          prof.activos_total_cop = at; prof.pasivos_total_cop = lt; prof.patrimonio_neto_cop = at - lt;
+          prof.activos = assets.map(function (x) { return { nombre: x.name, valor_cop: x.value }; });
+          prof.pasivos = liab.map(function (x) { return { nombre: x.name, valor_cop: x.value }; });
+        }
+        window.PLANEA_PROFILE = prof;
+      }).catch(function () {});
+      // long-term goals
+      sbGet('persons_long_term_goals?select=name,type,target_amount,current_savings,monthly_saving', token).then(function (goals) {
+        if (goals && goals.length) {
+          prof.metas = goals.map(function (g) {
+            return { nombre: g.name, tipo: g.type, objetivo_cop: g.target_amount, actual_cop: g.current_savings, aporte_mensual_cop: g.monthly_saving };
+          });
+        }
+        window.PLANEA_PROFILE = prof;
+      }).catch(function () {});
+    }).catch(function () {});
+  }
+
   function css() {
     var s = document.createElement('style');
     s.textContent = [
@@ -90,7 +176,7 @@
       '.maya-ic svg{width:18px;height:18px}',
       '@keyframes mayaPulse{0%,100%{box-shadow:0 0 0 0 rgba(181,83,60,.5)}50%{box-shadow:0 0 0 7px rgba(181,83,60,0)}}',
       // Self-injected floating launcher (used on pages that have no .chatbot button)
-      '.maya-fab{position:fixed;right:24px;bottom:24px;z-index:55;display:flex;align-items:center;gap:11px;background:#16373A;color:#fff;border:none;cursor:pointer;padding:13px 20px 13px 15px;border-radius:99px;box-shadow:0 10px 30px rgba(22,55,58,.32);font-family:"DM Sans",system-ui,sans-serif;transition:transform .18s,box-shadow .18s}',
+      '.maya-fab{position:fixed;right:24px;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:55;display:flex;align-items:center;gap:11px;background:#16373A;color:#fff;border:none;cursor:pointer;padding:13px 20px 13px 15px;border-radius:99px;box-shadow:0 10px 30px rgba(22,55,58,.32);font-family:"DM Sans",system-ui,sans-serif;transition:transform .18s,box-shadow .18s}',
       '.maya-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(22,55,58,.4)}',
       '.maya-fab:focus-visible{outline:3px solid #2E7D5B;outline-offset:3px}',
       '.maya-fab .orb{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;animation:mayaPulse 3s ease-in-out infinite}',
@@ -114,7 +200,8 @@
       '.stage-stop{margin-top:6px;background:#B5533C;color:#fff;border:none;border-radius:99px;padding:11px 24px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}',
       '.stage-stop:hover{filter:brightness(1.06)}',
       '@media (prefers-reduced-motion:reduce){.stage-orb{animation:none!important}}',
-      '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:88px;width:auto;height:calc(100vh - 120px)}.maya-fab .txt{display:none}.maya-fab{padding:14px;border-radius:50%}}'
+      // Mobile: lift the launcher ABOVE the app bottom tab bar so it never covers it.
+      '@media (max-width:520px){.maya-panel{right:8px;left:8px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:auto;height:calc(100vh - 170px)}.maya-fab .txt{display:none}.maya-fab{right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));padding:14px;border-radius:50%}}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -207,7 +294,12 @@
 
   function greet() {
     if (els.body.childElementCount === 0) {
-      addMsg('maya', 'Hola ' + (profile().nombre || '') + ', soy Maya. Puedo explicarte tu Planea Score, revisar tus metas y decirte qué hacer primero. Escríbeme o toca el micrófono.');
+      var p = profile();
+      var nom = p.nombre ? ' ' + p.nombre : '';
+      var msg = p.sin_diagnostico
+        ? 'Hola' + nom + ', soy Maya, tu guía financiera. Aún no veo tu diagnóstico. Cuando quieras, hacemos tu Planea Score en dos minutos y te digo exactamente por dónde empezar. ¿Te cuento cómo funciona?'
+        : 'Hola' + nom + ', soy Maya. Puedo explicarte tu Planea Score, revisar tus metas y decirte qué hacer primero. Escríbeme o toca el micrófono.';
+      addMsg('maya', msg);
     }
   }
 
@@ -387,6 +479,7 @@
   function toggle() { els.panel.classList.contains('abierto') ? close() : open(); }
 
   function init() {
+    bootstrapProfile(); // load the real logged-in user (if any) before the greeting
     css();
     build();
     // Bind any existing floating chatbot buttons; if none, inject our own launcher
