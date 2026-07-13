@@ -45,7 +45,9 @@ nav .in{display:flex;align-items:center;gap:14px;height:64px}
 .btn.dl svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;margin-right:2px}
 .hero-dl{margin:16px 0 2px}
 .nav-login{font-weight:800;font-size:14px;color:var(--ink)}
-@media(max-width:640px){.nav-login,#navInstall{display:none}}
+@media(max-width:640px){#navInstall{display:none}}
+.nav-login{border:1px solid var(--border);border-radius:10px;padding:9px 13px;min-height:40px;display:inline-flex;align-items:center}
+.nav-login:hover{border-color:var(--teal)}
 /* hero */
 .hero{padding:60px 0 26px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:
@@ -142,11 +144,12 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   h1{font-size:38px}
 }
 @media(max-width:600px){
-  nav .in{height:auto;padding:10px 0;gap:10px}
+  nav .in{height:auto;padding:10px 0;gap:8px 10px;flex-wrap:wrap;justify-content:center}
+  .spacer{display:none}
   .wm-sub{display:none}
-  .btn{min-height:44px;padding:11px 14px;font-size:14px}
+  .btn{min-height:42px;padding:10px 13px;font-size:13.5px}
   .btn.lg{padding:14px 18px;font-size:15px}
-  #navSignup{margin-left:auto}
+  .nav-login{padding:9px 12px;min-height:42px}
   .hero{padding:32px 0 18px}
   .hero-dl{margin:4px 0 16px}
   .hero-dl .btn{width:100%;max-width:340px}
