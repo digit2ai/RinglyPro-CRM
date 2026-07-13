@@ -118,6 +118,8 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .iopt .tx b{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
 .iopt .tx span{display:block;font-size:12.5px;color:var(--muted);line-height:1.45}
 .iopt .go{flex:none;color:var(--teal);font-size:20px;font-weight:800;line-height:1}
+.iopt.match{border-color:var(--teal);background:rgba(23,166,166,.07);box-shadow:0 6px 18px rgba(23,166,166,.12)}
+.imodal-card{max-height:88vh;overflow-y:auto}
 /* iOS "tap Share" coach-mark */
 #iosHint{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px);z-index:200;flex-direction:column;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
 #iosHint.show{display:flex;animation:iosIn .2s ease}
@@ -305,14 +307,24 @@ footer .in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
     <button class="imodal-x" id="imX" aria-label="Cerrar">&times;</button>
     <div class="imodal-ic"><img src="https://aiagent.ringlypro.com/coaching/apple-touch-icon.png" alt="CoachTrack" /></div>
     <h3 id="imTitle">Añade CoachTrack a tu pantalla de inicio</h3>
-    <div class="iopt" id="ioptAnd" role="button" tabindex="0">
-      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
-      <div class="tx"><b id="imAndT">Android (Chrome)</b><span id="imAnd">Toca aquí para instalar la app en tu inicio.</span></div>
+    <div class="iopt" id="ioptIos" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10.5 18.5h3"/></svg></div>
+      <div class="tx"><b id="imIosT">iPhone / iPad</b><span id="imIos">Toca el ícono Compartir abajo y elige "Añadir a inicio".</span></div>
       <span class="go">&rsaquo;</span>
     </div>
-    <div class="iopt" id="ioptIos" role="button" tabindex="0">
-      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M6 12H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1"/></svg></div>
-      <div class="tx"><b id="imIosT">iPhone / iPad (Safari)</b><span id="imIos">Toca el ícono Compartir abajo y elige "Añadir a inicio".</span></div>
+    <div class="iopt" id="ioptAnd" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11a7 7 0 0 1 14 0v6a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 8L6.5 5.5M16 8l1.5-2.5"/><circle cx="9.5" cy="12" r=".5" fill="currentColor"/><circle cx="14.5" cy="12" r=".5" fill="currentColor"/></svg></div>
+      <div class="tx"><b id="imAndT">Android</b><span id="imAnd">Toca aquí para instalar la app.</span></div>
+      <span class="go">&rsaquo;</span>
+    </div>
+    <div class="iopt" id="ioptMac" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 20h20"/></svg></div>
+      <div class="tx"><b id="imMacT">Mac</b><span id="imMac">En Chrome/Edge toca aquí. En Safari: menú Archivo → "Añadir al Dock".</span></div>
+      <span class="go">&rsaquo;</span>
+    </div>
+    <div class="iopt" id="ioptWin" role="button" tabindex="0">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg></div>
+      <div class="tx"><b id="imWinT">Windows</b><span id="imWin">Toca aquí, o usa el ícono Instalar en la barra de direcciones.</span></div>
       <span class="go">&rsaquo;</span>
     </div>
     <button class="btn grad lg" id="imClose" style="width:100%;margin-top:6px">Entendido</button>
@@ -364,9 +376,11 @@ const DICT={
     q5:'How long does it take?',a5:'Recording takes as long as your session. When you finalize, AI extracts the topic and action items in seconds.',
     bandH:'Free for Visionarium users',bandP:'Create your account and log your first session today.',
     bandCta1:'Create free account',bandCta2:'Log in',footNote:'Creativity & Leadership Incubator',
-    navInstall:'Get the app',imTitle:'Install CoachTrack on your home screen',
-    imIosT:'iPhone / iPad (Safari)',imIos:'Tap the Share icon below, then choose "Add to Home Screen".',
-    imAndT:'Android (Chrome)',imAnd:'Tap here to install the app to your home screen.',
+    navInstall:'Get the app',imTitle:'Install CoachTrack',
+    imIosT:'iPhone / iPad',imIos:'Tap the Share icon below, then choose "Add to Home Screen".',
+    imAndT:'Android',imAnd:'Tap here to install the app.',
+    imMacT:'Mac',imMac:'In Chrome/Edge, tap here. In Safari: File menu → "Add to Dock".',
+    imWinT:'Windows',imWin:'Tap here, or use the Install icon in the address bar.',
     imClose:'Got it',iosHintTxt:'Tap Share, then "Add to Home Screen"'
   },
   es:{
@@ -396,13 +410,15 @@ const DICT={
     q5:'¿Cuánto tiempo toma?',a5:'Grabar toma lo que dure tu sesión. Al finalizar, la IA extrae el tema y las acciones en segundos.',
     bandH:'Gratis para usuarios Visionarium',bandP:'Crea tu cuenta y registra tu primera sesión hoy.',
     bandCta1:'Crear cuenta gratis',bandCta2:'Iniciar sesión',footNote:'Creativity & Leadership Incubator',
-    navInstall:'Descargar app',imTitle:'Instala CoachTrack en tu pantalla de inicio',
-    imIosT:'iPhone / iPad (Safari)',imIos:'Toca el ícono Compartir abajo y elige "Añadir a inicio".',
-    imAndT:'Android (Chrome)',imAnd:'Toca aquí para instalar la app en tu inicio.',
+    navInstall:'Descargar app',imTitle:'Instala CoachTrack',
+    imIosT:'iPhone / iPad',imIos:'Toca el ícono Compartir abajo y elige "Añadir a inicio".',
+    imAndT:'Android',imAnd:'Toca aquí para instalar la app.',
+    imMacT:'Mac',imMac:'En Chrome/Edge toca aquí. En Safari: menú Archivo → "Añadir al Dock".',
+    imWinT:'Windows',imWin:'Toca aquí, o usa el ícono Instalar en la barra de direcciones.',
     imClose:'Entendido',iosHintTxt:'Toca Compartir, luego "Añadir a inicio"'
   }
 };
-const IDS=['navLogin','navSignup','navInstall','eyebrow','heroDlT','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','faqH','q1','a1','q2','a2','q3','a3','q4','a4','q5','a5','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imClose','iosHintTxt'];
+const IDS=['navLogin','navSignup','navInstall','eyebrow','heroDlT','heroTitle','heroSub','heroCta1','heroCta2','trust','whatH','whatP','howH','howP','s1t','s1p','s2t','s2p','s3t','s3p','featH','f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p','f5t','f5p','f6t','f6p','faqH','q1','a1','q2','a2','q3','a3','q4','a4','q5','a5','bandH','bandP','bandCta1','bandCta2','footNote','imTitle','imIosT','imIos','imAndT','imAnd','imMacT','imMac','imWinT','imWin','imClose','iosHintTxt'];
 function apply(lang){
   const d=DICT[lang];document.documentElement.lang=lang;
   IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!=null)el.innerHTML=d[id];});
@@ -429,22 +445,26 @@ function closeInstallHelp(){if(imodal)imodal.classList.remove('show');}
 ['imX','imClose'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',closeInstallHelp);});
 if(imodal)imodal.addEventListener('click',function(e){if(e.target===imodal)closeInstallHelp();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeInstallHelp();});
-// Detect iOS (iPhone/iPad, incl. iPadOS reporting as MacIntel with touch).
-var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-// Show only the card that matches the device, so there's no ambiguity.
-(function(){var a=document.getElementById('ioptAnd'),i=document.getElementById('ioptIos');
-  if(isIOS){if(a)a.style.display='none';}else{if(i)i.style.display='none';}})();
+// Detect platform: iOS / Android / Mac / Windows — to highlight the right card + wire the right action.
+var ua=navigator.userAgent||'';
+var isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+var isAndroid=/android/i.test(ua);
+var isWindows=/windows/i.test(ua);
+var isMac=!isIOS&&/macintosh|mac os x/i.test(ua);
+// Highlight the card that matches this device (all four stay visible/selectable).
+(function(){var id=isIOS?'ioptIos':isAndroid?'ioptAnd':isMac?'ioptMac':isWindows?'ioptWin':null;
+  if(id){var el=document.getElementById(id);if(el)el.classList.add('match');}})();
 
 // iOS coach-mark: points at Safari's Share button (Apple allows no auto-install API).
 var iosHint=document.getElementById('iosHint'),iosHintT=null;
 function showIosHint(){if(!iosHint)return;iosHint.classList.add('show');clearTimeout(iosHintT);iosHintT=setTimeout(function(){iosHint.classList.remove('show');},8000);}
 
-// Android action card: fire the native install prompt if the browser has it queued.
-var _ioptAnd=document.getElementById('ioptAnd');
-if(_ioptAnd)_ioptAnd.addEventListener('click',async function(){
+// Fire the browser's native install prompt (Android, and Chrome/Edge on Mac/Windows).
+async function nativeInstallClick(){
   if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;closeInstallHelp();}
-});
-// iPhone action card: close the popup and point the user to the Share button.
+}
+['ioptAnd','ioptMac','ioptWin'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',nativeInstallClick);});
+// iPhone card: close the popup and point the user to Safari's Share button.
 var _ioptIos=document.getElementById('ioptIos');
 if(_ioptIos)_ioptIos.addEventListener('click',function(){closeInstallHelp();showIosHint();});
 
