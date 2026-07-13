@@ -1543,6 +1543,12 @@ app.get('/debug/coachtrack-error', (req, res) => {
 });
 
 // Public promo landing page for Visionarium Coaching.
+// Vision2Ai — corporate landing for the Digit2ai × Visionarium merger.
+// AI Factory · Business Ecosystem · Limitless Future. Static, self-contained.
+app.get(['/vision2ai', '/vision2ai/'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'vision2ai', 'index.html'));
+});
+
 // Reachable at /coachtrack (clean path to map visionarium.app/coachtrack onto)
 // and /visionarium/coachtrack. All CTAs are absolute to the app backend so the
 // page works verbatim under any host (visionarium.app proxy/redirect, etc.).
