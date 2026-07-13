@@ -40,6 +40,19 @@ router.get('/debug/booking', async (req, res) => {
   }
 });
 
+// One-time: pull synthetic-demo (tenant 0) messages/appointments into the
+// logged-in account so past demo activity becomes visible in the dashboard.
+router.post('/import-demo', async (req, res) => {
+  try {
+    const m = await Message.update({ tenant_id: req.tenantId }, { where: { tenant_id: 0 } });
+    const a = await Appointment.update({ tenant_id: req.tenantId }, { where: { tenant_id: 0 } });
+    const c = await Call.update({ tenant_id: req.tenantId }, { where: { tenant_id: 0 } });
+    res.json({ success: true, imported: { messages: m[0], appointments: a[0], calls: c[0] } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /* ── Messages ──────────────────────────────────────────────────────── */
 router.get('/messages', async (req, res) => {
   const rows = await Message.findAll({

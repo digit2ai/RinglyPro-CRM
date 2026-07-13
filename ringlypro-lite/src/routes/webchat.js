@@ -11,6 +11,7 @@ const router = express.Router();
 const { RelaySession } = require('../services/relayAgent');
 const bookingSvc = require('../services/booking');
 const smsSvc = require('../services/sms');
+const { Tenant } = require('../models');
 
 // Text the caller a demo confirmation for any new booking/message events.
 async function flushDemoSms(entry) {
@@ -52,10 +53,14 @@ router.post('/', async (req, res) => {
     // New chat session (demo tenant, language from the landing).
     if (!entry) {
       const locale = lang === 'en' ? 'en' : 'es';
+      // Route web-chat demo activity to the real demo tenant so it shows in the
+      // demo account's dashboard (falls back to synthetic tenant 0).
+      const demoTenantId = parseInt(process.env.LITE_DEMO_TENANT_ID || '7', 10);
+      const dt = demoTenantId ? await Tenant.findByPk(demoTenantId) : null;
       const ctx = {
-        tenantId: 0, is_demo: true,
-        businessName: process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite',
-        locale, country: 'US', timezone: 'America/New_York',
+        tenantId: dt ? dt.id : 0, is_demo: true,
+        businessName: dt ? dt.business_name : (process.env.LITE_DEMO_BUSINESS || 'RinglyPro Lite'),
+        locale, country: 'US', timezone: dt ? (dt.timezone || 'America/New_York') : 'America/New_York',
         from: null, to: demoNumber(locale), callSid: newId(), callerName: null, callId: null
       };
       const session = new RelaySession(ctx, { booking: bookingSvc });
