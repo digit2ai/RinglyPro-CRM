@@ -160,6 +160,15 @@ app.use('/artifact', require('./routes/agentArtifactShare'));
 // Mounted BEFORE the authenticated routers so the path isn't hijacked.
 app.use('/teaser', require('./routes/teasers').publicRouter);
 
+// Public read-only Registry Agent catalog (NIN org chart node source).
+// Non-sensitive roster data — departments, agents, input/output schemas, owners.
+// Mounted BEFORE the authenticated /api/v1/agents router so the org chart and
+// any dashboard can render the live roster without a token.
+app.get('/api/v1/registry', (_req, res) => {
+  try { res.json({ success: true, data: require('./services/agents/registry').catalog() }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 // API routes (authenticated)
 app.use('/api/v1/dashboard', authenticateToken, dashboardRoutes);
 app.use('/api/v1/findings', authenticateToken, findingsRoutes);
