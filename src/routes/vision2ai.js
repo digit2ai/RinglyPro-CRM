@@ -194,7 +194,9 @@ router.post('/v1/book', async (req, res) => {
         }
       });
     } catch (err) {
-      if (String(err.message || '').match(/unique|duplicate/i)) {
+      const code = (err && (err.original || err.parent || {}).code) || err.code;
+      const txt = `${err.message || ''} ${(err.original || err.parent || {}).message || ''}`;
+      if (code === '23505' || /unique|duplicate/i.test(txt)) {
         return res.status(409).json({ success: false, error: 'slot_taken' });
       }
       throw err;
