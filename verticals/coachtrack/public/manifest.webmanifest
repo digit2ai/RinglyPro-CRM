@@ -1,7 +1,7 @@
 {
   "name": "Visionarium CoachTrack",
   "short_name": "CoachTrack",
-  "description": "Registra tus sesiones de coaching, extrae acciones con IA y recibe guia de Lina.",
+  "description": "Registra tus sesiones de coaching, extrae acciones con IA y recibe guia de Lala.",
   "start_url": "/coaching/",
   "scope": "/coaching/",
   "display": "standalone",

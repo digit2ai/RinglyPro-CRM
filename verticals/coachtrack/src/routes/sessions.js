@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
   try {
     const s = await Session.create({
       tenant_id: tenantOf(req),
-      coach_name: (req.body.coach_name || 'Lina').slice(0, 80),
+      coach_name: (req.body.coach_name || 'Lala').slice(0, 80),
       session_date: req.body.session_date || undefined,
       status: 'in_progress'
     });

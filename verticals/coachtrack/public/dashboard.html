@@ -142,7 +142,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--teal);ba
       </div>
       <div class="transcript" id="liveTranscript" style="margin:12px 0"></div>
       <div class="row" style="gap:8px;margin-bottom:8px">
-        <select id="speaker" style="max-width:130px"><option value="me">Yo</option><option value="coach">Lina</option></select>
+        <select id="speaker" style="max-width:130px"><option value="me">Yo</option><option value="coach">Lala</option></select>
         <button class="btn ghost sm mic" id="micBtn">Voz</button>
       </div>
       <textarea id="turnText" rows="2" placeholder="Escribe lo que se dijo, o usa el boton Voz para dictar..."></textarea>
@@ -207,12 +207,12 @@ async function loadHome(){
   const overdue=allItems.filter(i=>i.status==='overdue').length;
   document.getElementById('kpis').innerHTML=kpi(sessions.length,'Sesiones')+kpi(open,'Acciones abiertas')+kpi(overdue,'Vencidas');
   const list=document.getElementById('sessList');
-  if(!sessions.length){list.innerHTML='<div class="empty">Aun no tienes sesiones.<br>Toca <b>+ Nueva sesión</b> para empezar tu primera sesión con Lina.</div>';return;}
+  if(!sessions.length){list.innerHTML='<div class="empty">Aun no tienes sesiones.<br>Toca <b>+ Nueva sesión</b> para empezar tu primera sesión con Lala.</div>';return;}
   list.innerHTML=sessions.map(s=>`
     <div class="sess" onclick="openDetail(${s.id})">
       <div style="flex:1">
         <div class="s-subj">${esc(s.subject||'Sesión sin finalizar')}</div>
-        <div class="s-meta">${esc(s.coach_name||'Lina')} &middot; ${esc(s.session_date||'')}</div>
+        <div class="s-meta">${esc(s.coach_name||'Lala')} &middot; ${esc(s.session_date||'')}</div>
       </div>
       ${s.status==='in_progress'?'<span class="pill open">en curso</span>':`<span class="pill finalized">${s.open_action_items} acciones</span>`}
     </div>`).join('');
@@ -236,7 +236,7 @@ function renderItem(i){
     <div class="item-actions">
       <button class="btn sm ghost" onclick="setStatus(${i.id},'in_progress')">En progreso</button>
       <button class="btn sm ghost" onclick="setStatus(${i.id},'done')">Hecho</button>
-      <button class="btn sm" onclick="toggleChat(${i.id})">Preguntar a Lina</button>
+      <button class="btn sm" onclick="toggleChat(${i.id})">Preguntar a Lala</button>
     </div>
     <div class="chat hidden" id="chat-${i.id}">
       <div id="thread-${i.id}"></div>
@@ -258,7 +258,7 @@ function renderThread(id,thread){
 async function askCoach(id){
   const inp=document.getElementById('qin-'+id);const q=inp.value.trim();if(!q)return;
   inp.value='';inp.disabled=true;
-  const t=document.getElementById('thread-'+id);t.insertAdjacentHTML('beforeend',`<div class="q">Tú: ${esc(q)}</div><div class="a" id="pending">Lina esta pensando...</div>`);
+  const t=document.getElementById('thread-'+id);t.insertAdjacentHTML('beforeend',`<div class="q">Tú: ${esc(q)}</div><div class="a" id="pending">Lala esta pensando...</div>`);
   try{await api('/action-items/'+id+'/guidance',{method:'POST',body:JSON.stringify({question:q})});
     const d=await api('/action-items/'+id+'/guidance');renderThread(id,d.thread||[]);
   }catch(e){document.getElementById('pending').textContent='Error: '+e.message;}
@@ -266,14 +266,14 @@ async function askCoach(id){
 }
 
 async function startSession(){
-  const d=await api('/sessions',{method:'POST',body:JSON.stringify({coach_name:'Lina'})});
+  const d=await api('/sessions',{method:'POST',body:JSON.stringify({coach_name:'Lala'})});
   LIVE_ID=d.session.id;
   document.getElementById('liveTranscript').innerHTML='';
-  document.getElementById('liveTitle').textContent='Sesión en curso con Lina';
+  document.getElementById('liveTitle').textContent='Sesión en curso con Lala';
   show('live');document.getElementById('turnText').focus();
 }
 function renderTurn(container,role,text){
-  container.insertAdjacentHTML('beforeend',`<div class="turn ${role}"><div class="who">${role==='coach'?'Lina':'Yo'}</div>${esc(text)}</div>`);
+  container.insertAdjacentHTML('beforeend',`<div class="turn ${role}"><div class="who">${role==='coach'?'Lala':'Yo'}</div>${esc(text)}</div>`);
   container.scrollTop=container.scrollHeight;
 }
 async function addTurn(){
@@ -284,7 +284,7 @@ async function addTurn(){
 }
 async function finalize(){
   if(!LIVE_ID)return;
-  const b=document.getElementById('finalizeBtn');b.disabled=true;b.textContent='Lina esta extrayendo...';
+  const b=document.getElementById('finalizeBtn');b.disabled=true;b.textContent='Lala esta extrayendo...';
   try{const d=await api('/sessions/'+LIVE_ID+'/finalize',{method:'POST',body:JSON.stringify({})});
     flash('Sesión finalizada: '+(d.session.subject||''));openDetail(LIVE_ID);LIVE_ID=null;
   }catch(e){flash('Error: '+e.message);}
@@ -313,7 +313,7 @@ async function openDetail(id){
   document.getElementById('dSubject').textContent=s.subject||'Sesión sin finalizar';
   document.getElementById('dStatus').textContent=s.status;
   document.getElementById('dStatus').className='pill '+(s.status==='finalized'?'finalized':'open');
-  document.getElementById('dMeta').textContent=`${s.coach_name||'Lina'} · ${s.session_date||''}`+(s.duration_min?` · ${s.duration_min} min`:'');
+  document.getElementById('dMeta').textContent=`${s.coach_name||'Lala'} · ${s.session_date||''}`+(s.duration_min?` · ${s.duration_min} min`:'');
   document.getElementById('dSummary').innerHTML=s.summary?esc(s.summary):'<span class="muted">Sin resumen. Esta sesión aun no se finaliza.</span>';
   const items=d.action_items||[];
   document.getElementById('dItems').innerHTML=items.length?items.map(renderItem).join(''):'<div class="empty">Sin acciones.</div>';
