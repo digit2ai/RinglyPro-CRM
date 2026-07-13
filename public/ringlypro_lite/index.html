@@ -242,6 +242,23 @@
 (function(){
   var root=document.getElementById('rpl');
   var langBtn=document.getElementById('lang');
+
+  // Set the home-screen / favicon on whatever page hosts this block (e.g. a GHL
+  // page) so iOS "Add to Home Screen" shows the RinglyPro icon, not a letter.
+  (function setIcons(){
+    try{
+      var ICON='https://ringlypro-lite.onrender.com/apple-touch-icon.png';
+      var FAV='https://ringlypro-lite.onrender.com/favicon-32.png';
+      var old=document.querySelectorAll('link[rel="apple-touch-icon"],link[rel="apple-touch-icon-precomposed"]');
+      for(var i=0;i<old.length;i++) old[i].parentNode.removeChild(old[i]);
+      var a=document.createElement('link');a.rel='apple-touch-icon';a.href=ICON;document.head.appendChild(a);
+      if(!document.querySelector('link[rel="icon"]')){var f=document.createElement('link');f.rel='icon';f.type='image/png';f.href=FAV;document.head.appendChild(f);}
+      function meta(n,c){if(document.querySelector('meta[name="'+n+'"]'))return;var m=document.createElement('meta');m.name=n;m.content=c;document.head.appendChild(m);}
+      meta('apple-mobile-web-app-title','RinglyPro');
+      meta('apple-mobile-web-app-capable','yes');
+      meta('mobile-web-app-capable','yes');
+    }catch(e){}
+  })();
   var DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(762) 761-1589',tel:'+17627611589'}};
   function curLang(){ return root.classList.contains('es')?'es':'en'; }
 
