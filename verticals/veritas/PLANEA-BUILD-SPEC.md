@@ -333,3 +333,13 @@ en el docx PARTE 8.
     Postgres CRM · OQ-3 proveedor open finance (único bloqueo externo, E4/S5) · OQ-4 push · OQ-5 multi-moneda.
   - NO construido en esta iteración (por diseño/spec): los 3 agentes de servidor, chat con Maya, extracción
     de PDF, open finance, scheduler — quedan como backlog S1–S5. Product Matchmaker: solo extension point.
+- 2026-07-13 — **Maya conversational chat SHIPPED (Flujo 1: Financial Planner + Compliance).**
+  Backend `POST /planea/api/v1/maya/chat` (server.cjs) → Claude (Haiku, ANTHROPIC_API_KEY) con manual
+  Financial Planner (pirámide CFP + árbol A–I) grounded en el perfil del usuario + reglas Compliance
+  (no asesoría regulada, disclaimer, sin promesas, Ley 1581). Frontend `portal/maya-chat.js`: chat
+  flotante con entrada por TEXTO o VOZ (Web Speech API es-CO) y respuesta HABLADA (/api/tts/edge, voz
+  Salomé es-CO), chips de sugerencia. Cableado en las 4 pantallas del portal (botón Maya). Usa perfil
+  demo (Eduardo) o `window.PLANEA_PROFILE` (la app real inyecta el usuario autenticado). Verificado LIVE:
+  Maya responde con los números reales de Eduardo, sigue el árbol, TTS devuelve MP3. Backlog S2 avanzado.
+  PENDIENTE para producción con usuarios reales: (1) agente Compliance como gate separado (hoy va en el
+  system prompt); (2) inyectar el perfil real desde la SPA autenticada; (3) persistir `agent_messages`.
