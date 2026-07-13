@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planea — Patrimonio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-portal.css">
+</head>
+<body>
+<div class="preview-tag">Vista previa v2</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#FFFFFF"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#FFFFFF"/></svg>
+      <span>Planea</span>
+    </div>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="/planea/portal/inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</a>
+      <a href="/planea/portal/patrimonio" class="activo" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V10M11 21V6M16 21V12M21 21V8"/></svg>Patrimonio</a>
+      <a href="/planea/portal/metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>Metas</a>
+      <a href="/planea/portal/cuentas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/></svg>Cuentas</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 1 1-4-7.2"/><path d="M21 5l-8 8-3-3"/></svg>Asesoría</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z"/></svg>Configuración</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="perfil" role="button" tabindex="0" aria-label="Perfil de usuario"><div class="avatar">EL</div><div><div class="nombre">Eduardo</div><div class="plan">Plan gratuito</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="encabezado">
+      <div class="titulo"><h1>Patrimonio</h1><p>Todo tu plan en una sola lectura.</p></div>
+      <div class="score-box" role="group" aria-label="Planea Score: 97, rango Planeado"><div class="etiqueta">Planea Score</div><div class="num">97</div><div class="rango">Planeado</div></div>
+    </div>
+
+    <div class="total-bloque">
+      <div class="lbl">Patrimonio total</div>
+      <div class="cifra">$100.000.000<span class="moneda">COP</span></div>
+      <div class="monedas">
+        <span class="lbl-m">Diversificación por moneda</span>
+        <div class="barra-monedas" role="img" aria-label="70% en pesos colombianos, 20% en dólares, 10% en euros"><div class="cop" style="width:70%"></div><div class="usd" style="width:20%"></div><div class="eur" style="width:10%"></div></div>
+        <div class="leyenda"><span><span class="punto t"></span>COP <strong>70%</strong></span><span><span class="punto v"></span>USD <strong>20%</strong></span><span><span class="punto e"></span>EUR <strong>10%</strong></span></div>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <h2>Evolución del patrimonio</h2>
+        <p class="sub">Últimos 12 meses</p>
+        <svg viewBox="0 0 560 200" role="img" aria-label="Gráfica del patrimonio en los últimos 12 meses, con tendencia ascendente">
+          <line x1="40" y1="30" x2="545" y2="30" stroke="#EEF1F0" stroke-width="1"/><line x1="40" y1="75" x2="545" y2="75" stroke="#EEF1F0" stroke-width="1"/><line x1="40" y1="120" x2="545" y2="120" stroke="#EEF1F0" stroke-width="1"/><line x1="40" y1="165" x2="545" y2="165" stroke="#EEF1F0" stroke-width="1"/>
+          <text x="34" y="34" font-size="10" fill="#6E7D7B" text-anchor="end" font-family="DM Sans">100M</text><text x="34" y="79" font-size="10" fill="#6E7D7B" text-anchor="end" font-family="DM Sans">90M</text><text x="34" y="124" font-size="10" fill="#6E7D7B" text-anchor="end" font-family="DM Sans">80M</text><text x="34" y="169" font-size="10" fill="#6E7D7B" text-anchor="end" font-family="DM Sans">70M</text>
+          <path d="M45 160 L88 150 L131 156 L174 138 L217 128 L260 134 L303 112 L346 100 L389 106 L432 82 L475 60 L540 34" fill="none" stroke="#16373A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M45 160 L88 150 L131 156 L174 138 L217 128 L260 134 L303 112 L346 100 L389 106 L432 82 L475 60 L540 34 L540 195 L45 195 Z" fill="rgba(22,55,58,0.06)"/>
+          <circle cx="540" cy="34" r="4" fill="#2E7D5B"/>
+          <text x="45" y="192" font-size="10" fill="#6E7D7B" font-family="DM Sans">Ago</text><text x="174" y="192" font-size="10" fill="#6E7D7B" font-family="DM Sans">Nov</text><text x="303" y="192" font-size="10" fill="#6E7D7B" font-family="DM Sans">Feb</text><text x="432" y="192" font-size="10" fill="#6E7D7B" font-family="DM Sans">May</text><text x="522" y="192" font-size="10" fill="#6E7D7B" font-family="DM Sans">Jul</text>
+        </svg>
+      </div>
+      <div class="chart-card">
+        <h2>Activos y pasivos</h2>
+        <p class="sub">Composición actual</p>
+        <div class="avp">
+          <div class="item verde"><div class="cab"><span class="lbl">Activos</span><span class="val">$135.000.000</span></div><div class="pista"><div class="relleno" style="width:100%"></div></div></div>
+          <div class="item rojo"><div class="cab"><span class="lbl">Pasivos</span><span class="val">$35.000.000</span></div><div class="pista"><div class="relleno" style="width:26%"></div></div></div>
+          <div class="neto"><span>Patrimonio neto</span><strong>$100.000.000</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="seccion">
+      <h2>Tus activos</h2>
+      <p class="sub">Lo que tienes, organizado por categoría</p>
+      <div class="grid-cat">
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg></span><span class="nombre">Liquidez</span></div><div class="valor">$12.000.000</div><div class="peso">Efectivo y cuentas · 9% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M15 12h7v4h-7a2 2 0 0 1 0-4Z"/></svg></span><span class="nombre">Ahorro</span></div><div class="valor">$18.000.000</div><div class="peso">CDT, fondos y bolsillos · 13% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><span class="nombre">Inversiones</span></div><div class="valor">$22.000.000</div><div class="peso">Portafolio financiero · 16% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg></span><span class="nombre">Sociedades</span></div><div class="valor">$15.000.000</div><div class="peso">Participación en empresas · 11% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span><span class="nombre">Vivienda</span></div><div class="valor">$55.000.000</div><div class="peso">Inmuebles · 41% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16"/><rect x="3.5" y="16" width="17" height="4" rx="1.5"/><circle cx="7.5" cy="20" r="1.6"/><circle cx="16.5" cy="20" r="1.6"/></svg></span><span class="nombre">Vehículos</span></div><div class="valor">$9.000.000</div><div class="peso">Carro y moto · 7% de tus activos</div></div>
+        <div class="cat"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.9L12 3Z"/></svg></span><span class="nombre">Activos no financieros</span></div><div class="valor">$4.000.000</div><div class="peso">Coleccionables, arte y otros · 3% de tus activos</div></div>
+      </div>
+    </section>
+
+    <section class="seccion">
+      <h2>Tus pasivos</h2>
+      <p class="sub">Lo que debes</p>
+      <div class="grid-cat">
+        <div class="cat pasivo"><div class="cab"><span class="icono"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><span class="nombre">Deuda</span></div><div class="valor">$35.000.000</div><div class="peso">Créditos, tarjetas e hipoteca</div></div>
+      </div>
+    </section>
+
+    <section class="proteccion">
+      <div class="txt"><h2>Protección de patrimonio</h2><p>Fondo de emergencia y pólizas que respaldan lo que has construido.</p></div>
+      <span class="estado">Fondo de emergencia: 3,2 meses cubiertos</span>
+    </section>
+
+    <section class="insight">
+      <div class="txt"><div class="tag">Insight de la semana</div><h2>Tu vivienda concentra 41% de tus activos</h2><p>Diversificar hacia activos líquidos puede darte más margen de maniobra. Aprende cómo en 4 minutos.</p></div>
+      <button class="btn">Leer más</button>
+    </section>
+  </main>
+</div>
+
+<button class="chatbot" aria-label="Abrir chat con Maya, tu guía financiera IA" onclick="mayaHola()">
+  <span class="orbe"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>
+  <span class="txt"><span class="t1">Pregúntale a Maya</span><br><span class="t2">Tu guía financiera IA</span></span>
+</button>
+<script>function mayaHola(){alert('Maya, tu guía financiera IA, llega al portal en la próxima entrega. Por ahora esta es la vista previa del nuevo diseño.');}</script>
+</body>
+</html>

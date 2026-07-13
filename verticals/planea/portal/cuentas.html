@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planea — Cuentas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-portal.css">
+</head>
+<body>
+<div class="preview-tag">Vista previa v2</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#FFFFFF"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#FFFFFF"/></svg>
+      <span>Planea</span>
+    </div>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="/planea/portal/inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</a>
+      <a href="/planea/portal/patrimonio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V10M11 21V6M16 21V12M21 21V8"/></svg>Patrimonio</a>
+      <a href="/planea/portal/metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>Metas</a>
+      <a href="/planea/portal/cuentas" class="activo" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/></svg>Cuentas</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 1 1-4-7.2"/><path d="M21 5l-8 8-3-3"/></svg>Asesoría</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z"/></svg>Configuración</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="perfil" role="button" tabindex="0" aria-label="Perfil de usuario"><div class="avatar">EL</div><div><div class="nombre">Eduardo</div><div class="plan">Plan gratuito</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="encabezado">
+      <div class="titulo"><h1>Cuentas</h1><p>Tus productos financieros, agrupados por institución.</p></div>
+      <div class="score-box" role="group" aria-label="Planea Score: 97, rango Planeado"><div class="etiqueta">Planea Score</div><div class="num">97</div><div class="rango">Planeado</div></div>
+    </div>
+
+    <section class="institucion">
+      <div class="inst-cab"><div class="inst-logo">B</div><div class="info"><div class="nombre">Bancolombia</div><span class="estado-i"><span class="p"></span>Conectado vía open finance</span></div><div class="total"><div class="lbl">Saldo neto</div><div class="val">$21.700.000</div></div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M15 12h7v4h-7a2 2 0 0 1 0-4Z"/></svg></span><div class="info"><div class="nombre">Cuenta de ahorros</div><div class="tipo">Ahorros · ****4521</div></div><div class="saldo">$14.200.000</div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg></span><div class="info"><div class="nombre">Cuenta corriente</div><div class="tipo">Corriente · ****8830</div></div><div class="saldo">$9.900.000</div></div>
+      <div class="producto deuda"><span class="prod-icono"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><div class="info"><div class="nombre">Tarjeta de crédito</div><div class="tipo">Mastercard · ****2214</div></div><div class="saldo">−$2.400.000<span class="nota">Corte: 25 de julio</span></div></div>
+      <div class="producto deuda"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M3 12c0-4 2-7 9-7s9 3 9 7-2 7-9 7-9-3-9-7Z"/></svg></span><div class="info"><div class="nombre">Línea de crédito</div><div class="tipo">Crediágil · cupo $10.000.000</div></div><div class="saldo">$0<span class="nota">Sin utilizar</span></div></div>
+    </section>
+
+    <section class="institucion">
+      <div class="inst-cab"><div class="inst-logo">AF</div><div class="info"><div class="nombre">Alianza Fiduciaria</div><span class="estado-i"><span class="p"></span>Conectado vía open finance</span></div><div class="total"><div class="lbl">Saldo total</div><div class="val">$34.000.000</div></div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><div class="info"><div class="nombre">Fondo de inversión colectiva</div><div class="tipo">Inversión · perfil moderado</div></div><div class="saldo">$22.000.000</div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div class="info"><div class="nombre">Pensión voluntaria</div><div class="tipo">Pensión · aporte mensual programado</div></div><div class="saldo">$12.000.000</div></div>
+    </section>
+
+    <section class="institucion">
+      <div class="inst-cab"><div class="inst-logo">TP</div><div class="info"><div class="nombre">Seguros TuPrimero</div><span class="estado-i"><span class="p"></span>Pólizas registradas</span></div><div class="total"><div class="lbl">Pólizas activas</div><div class="val">2</div></div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/></svg></span><div class="info"><div class="nombre">Seguro de vida</div><div class="tipo">Póliza · renovación en marzo 2027</div></div><div class="saldo">Activa<span class="nota">Prima mensual: $85.000</span></div></div>
+      <div class="producto"><span class="prod-icono"><svg viewBox="0 0 24 24"><path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16"/><rect x="3.5" y="16" width="17" height="4" rx="1.5"/><circle cx="7.5" cy="20" r="1.6"/><circle cx="16.5" cy="20" r="1.6"/></svg></span><div class="info"><div class="nombre">Seguro de vehículo</div><div class="tipo">Póliza todo riesgo · renovación en octubre 2026</div></div><div class="saldo">Activa<span class="nota">Prima mensual: $120.000</span></div></div>
+    </section>
+
+    <button class="conectar"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Conectar otra institución</button>
+
+    <section class="sugerencias">
+      <h2>Sugerencias de productos</h2>
+      <p class="sub">Alternativas del mercado relacionadas con tu momento financiero, para que compares y decidas.</p>
+      <div class="sug-grid">
+        <div class="sug"><span class="cat-tag">Ahorro</span><h3>CDT a 12 meses</h3><p>Tu fondo de emergencia está cerca de completarse. Un CDT es una opción del mercado para el excedente que no necesitas líquido.</p><button class="btn">Comparar opciones</button></div>
+        <div class="sug"><span class="cat-tag">Crédito</span><h3>Crédito hipotecario</h3><p>Tu meta de vivienda supera el 45% de avance. Estas son las líneas hipotecarias disponibles en el mercado y sus condiciones.</p><button class="btn">Comparar opciones</button></div>
+        <div class="sug"><span class="cat-tag">Protección</span><h3>Póliza de hogar</h3><p>Tienes vivienda dentro de tus activos y aún no registras una póliza que la cubra. Conoce las coberturas que existen.</p><button class="btn">Comparar opciones</button></div>
+      </div>
+      <p class="aviso">Las sugerencias son información de referencia sobre productos disponibles en el mercado. Planea no ofrece recomendaciones individualizadas de inversión.</p>
+    </section>
+  </main>
+</div>
+
+<button class="chatbot" aria-label="Abrir chat con Maya, tu guía financiera IA" onclick="mayaHola()">
+  <span class="orbe"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>
+  <span class="txt"><span class="t1">Pregúntale a Maya</span><br><span class="t2">Tu guía financiera IA</span></span>
+</button>
+<script>function mayaHola(){alert('Maya, tu guía financiera IA, llega al portal en la próxima entrega. Por ahora esta es la vista previa del nuevo diseño.');}</script>
+</body>
+</html>

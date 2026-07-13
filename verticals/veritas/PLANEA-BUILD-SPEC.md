@@ -321,3 +321,15 @@ en el docx PARTE 8.
     `https://aiagent.ringlypro.com/planea/**` a Site URL / Redirect URLs, para que los correos de
     confirmación y magic links de reset redirijan a esta ruta (hoy apuntan a planea.co/vercel).
     El login/registro por contraseña y el score/diagnóstico ya funcionan sin este cambio.
+- 2026-07-13 — **UPGRADE v2 (loop) desde `planea-architect-prompt.json` + 4 pantallas + User Stories PDF.**
+  - LIVE: Portal v2 (preview del nuevo design system teal) — Inicio/Patrimonio/Metas/Cuentas navegables en
+    `/planea/portal/*` (HTML/CSS estático, UTF-8 correcto, nav cableada, botón Maya placeholder, 7 pilares).
+    Servido por `verticals/planea/server.cjs` (portal estático + `/planea/health` ahora reporta `portal:true`).
+  - Doc nuevo: `verticals/planea/PLANEA-V2-ARCHITECTURE.md` — gap analysis (exists/partial/missing), data
+    model PostgreSQL, orquestación de 3 agentes (Financial Planner / Relationship Manager / Compliance) + 3
+    flujos + Product Matchmaker reservado (NO construir), compliance gate, scheduler de 6 triggers
+    (America/Bogota), backlog por los 7 criterios de aceptación, y 6 Open Questions para Manny.
+  - Decisiones clave abiertas (ver PLANEA-V2-ARCHITECTURE §7): OQ-1 4 vs 7 pilares · OQ-2 Supabase vs
+    Postgres CRM · OQ-3 proveedor open finance (único bloqueo externo, E4/S5) · OQ-4 push · OQ-5 multi-moneda.
+  - NO construido en esta iteración (por diseño/spec): los 3 agentes de servidor, chat con Maya, extracción
+    de PDF, open finance, scheduler — quedan como backlog S1–S5. Product Matchmaker: solo extension point.

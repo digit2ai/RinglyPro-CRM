@@ -21,6 +21,12 @@ const distDir = path.join(__dirname, 'dist');
 const indexHtml = path.join(distDir, 'index.html');
 const hasBuild = fs.existsSync(indexHtml);
 
+// Portal v2 — static design-preview of the new dashboard screens (Inicio,
+// Patrimonio, Metas, Cuentas). Plain HTML/CSS, no build step. Served at
+// /planea/portal. Registered BEFORE the SPA fallback so it isn't swallowed.
+const portalDir = path.join(__dirname, 'portal');
+const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
+
 // Health check — GET /planea/health
 router.get('/health', (req, res) => {
   res.json({
@@ -28,9 +34,16 @@ router.get('/health', (req, res) => {
     status: hasBuild ? 'ok' : 'no-build',
     app: 'Planea - copiloto financiero personal',
     dist: hasBuild,
+    portal: hasPortal,
     ts: new Date().toISOString(),
   });
 });
+
+if (hasPortal) {
+  // /planea/portal → inicio; /planea/portal/<page> → <page>.html; plus the css.
+  router.get(['/portal', '/portal/'], (req, res) => res.sendFile(path.join(portalDir, 'inicio.html')));
+  router.use('/portal', express.static(portalDir, { extensions: ['html'], index: 'inicio.html' }));
+}
 
 if (hasBuild) {
   // Static assets (/planea/assets/*, /planea/images/*, /planea/manifest.json, etc.)

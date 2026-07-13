@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planea — Inicio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-portal.css">
+</head>
+<body>
+<div class="preview-tag">Vista previa v2</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#FFFFFF"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#FFFFFF"/></svg>
+      <span>Planea</span>
+    </div>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="/planea/portal/inicio" class="activo" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</a>
+      <a href="/planea/portal/patrimonio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V10M11 21V6M16 21V12M21 21V8"/></svg>Patrimonio</a>
+      <a href="/planea/portal/metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>Metas</a>
+      <a href="/planea/portal/cuentas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/></svg>Cuentas</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 1 1-4-7.2"/><path d="M21 5l-8 8-3-3"/></svg>Asesoría</a>
+      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z"/></svg>Configuración</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="perfil" role="button" tabindex="0" aria-label="Perfil de usuario"><div class="avatar">EL</div><div><div class="nombre">Eduardo</div><div class="plan">Plan gratuito</div></div></div>
+  </aside>
+
+  <main class="main">
+    <div class="encabezado">
+      <div class="saludo"><h1>Inicio</h1><p>Este es el estado de tus finanzas hoy.</p></div>
+      <div class="score-box" role="group" aria-label="Planea Score: 97, rango Planeado"><div class="etiqueta">Planea Score</div><div class="num">97</div><div class="rango">Planeado</div></div>
+    </div>
+
+    <section class="seccion">
+      <h2>Patrimonio</h2>
+      <p class="sub">Tu riqueza neta a la fecha</p>
+      <div class="cifra">$100.000.000<span class="moneda">COP</span></div>
+    </section>
+
+    <section class="seccion balance">
+      <h2>Balance</h2>
+      <p class="sub">Activos frente a pasivos</p>
+      <div class="barras">
+        <div class="item verde"><div class="cab"><span class="lbl">Activos</span><span class="val">$135.000.000</span></div><div class="pista"><div class="relleno" style="width:100%"></div></div></div>
+        <div class="item rojo"><div class="cab"><span class="lbl">Pasivos</span><span class="val">$35.000.000</span></div><div class="pista"><div class="relleno" style="width:26%"></div></div></div>
+      </div>
+    </section>
+
+    <section class="seccion meta">
+      <div class="cab">
+        <div><h2>Fondo de emergencia</h2><p class="sub">Tu meta más prioritaria en este momento</p></div>
+        <span class="chip">Meta prioritaria</span>
+      </div>
+      <div class="progreso">
+        <div class="pista"><div class="relleno" style="width:62%"></div></div>
+        <div class="pie"><span><strong>62%</strong> completado</span><span><strong>3 meses</strong> restantes al ritmo actual</span></div>
+      </div>
+    </section>
+
+    <section class="seccion pilares">
+      <h2>Tus pilares financieros</h2>
+      <p class="sub">Avance en cada área de tu planeación</p>
+      <div class="lista">
+        <div class="pilar"><div class="cab"><span class="nombre">Ahorro</span><span class="pct">74%</span></div><div class="pista"><div class="relleno" style="width:74%"></div></div></div>
+        <div class="pilar alerta"><div class="cab"><span class="nombre">Deuda</span><span class="pct">38%</span></div><div class="pista"><div class="relleno" style="width:38%"></div></div></div>
+        <div class="pilar"><div class="cab"><span class="nombre">Inversión</span><span class="pct">55%</span></div><div class="pista"><div class="relleno" style="width:55%"></div></div></div>
+        <div class="pilar"><div class="cab"><span class="nombre">Seguros <span class="nota">· fondo de emergencia y pólizas</span></span><span class="pct">61%</span></div><div class="pista"><div class="relleno" style="width:61%"></div></div></div>
+        <div class="pilar"><div class="cab"><span class="nombre">Impuestos</span><span class="pct">80%</span></div><div class="pista"><div class="relleno" style="width:80%"></div></div></div>
+        <div class="pilar"><div class="cab"><span class="nombre">Pensión <span class="nota">· retiro</span></span><span class="pct">45%</span></div><div class="pista"><div class="relleno" style="width:45%"></div></div></div>
+        <div class="pilar"><div class="cab"><span class="nombre">Legado</span><span class="pct">20%</span></div><div class="pista"><div class="relleno" style="width:20%"></div></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<button class="chatbot" aria-label="Abrir chat con Maya, tu guía financiera IA" onclick="mayaHola()">
+  <span class="orbe"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>
+  <span class="txt"><span class="t1">Pregúntale a Maya</span><br><span class="t2">Tu guía financiera IA</span></span>
+</button>
+<script>function mayaHola(){alert('Maya, tu guía financiera IA, llega al portal en la próxima entrega. Por ahora esta es la vista previa del nuevo diseño.');}</script>
+</body>
+</html>
