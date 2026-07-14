@@ -1386,7 +1386,7 @@
         if (e.results[i].isFinal) committed = (committed ? committed + ' ' : '') + tr.trim();
         else interim += tr;
       }
-      if (input) { input.value = (committed + (interim ? ' ' + interim : '')).replace(/\s+/g, ' ').trim(); try { input.dispatchEvent(new Event('input')); } catch (x) {} }
+      if (input) { input.value = (committed + (interim ? ' ' + interim : '')).replace(/\s+/g, ' ').trim(); input.scrollTop = input.scrollHeight; try { input.dispatchEvent(new Event('input')); } catch (x) {} }
     };
     recog.onerror = function (ev) {
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
