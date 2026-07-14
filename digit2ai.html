@@ -1253,109 +1253,55 @@
   }
   window.runPartnershipTriage = runTriageFromAgent;
 
-  // ── Voice engine: zero-key Edge neural TTS (the house /api/tts/edge system —
-  //    same one the teasers + Lina orb use) for OUTPUT, browser Web Speech for
-  //    INPUT where supported (desktop), typed input everywhere else (iOS Safari
-  //    has no SpeechRecognition). No ElevenLabs, no API key, no paused account. ──
-  var NEURAL_URL = '/api/tts/edge';
-  var currentAudio = null, activeRec = null;
+  // ── Dictation engine (like /voice-to-intake): CONTINUOUS speech-to-text that
+  //    streams live into the description box. Continuous + auto-restart means it
+  //    never "cuts" after a pause. No two-way conversation, so background noise
+  //    can't interrupt it. iOS Safari has no SpeechRecognition → user types. ──
+  var recog = null, recognizing = false, committed = '';
   function isES() { return (document.documentElement.lang || wrap.dataset.lang || 'en').toLowerCase().indexOf('es') === 0; }
-  function orbVoice() { return isES() ? 'lina' : 'ava'; }      // Edge aliases: lina=es-MX Dalia, ava=en-US Ava
-  function stopAudio() {
-    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
-    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  function d2bInput() { return document.getElementById('d2b-input'); }
+  function setCaption() {
+    if (!caption) return;
+    caption.textContent = recognizing
+      ? (isES() ? 'ESCUCHANDO… HABLE AHORA — TOQUE PARA DETENER' : 'LISTENING… SPEAK NOW — TAP TO STOP')
+      : (isES() ? 'TOQUE EL ORBE Y DICTE SU SOLICITUD' : 'TAP THE ORB AND DICTATE YOUR REQUEST');
   }
-  function speak(text) {
-    return new Promise(function (resolve) {
-      if (!text) { resolve(); return; }
-      stopAudio(); setState('speaking');
-      fetch(NEURAL_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: orbVoice() }) })
-        .then(function (r) { if (!r.ok) throw new Error('tts'); return r.blob(); })
-        .then(function (b) {
-          if (!b || b.size < 200) throw new Error('empty');
-          var u = URL.createObjectURL(b); var a = new Audio(u); currentAudio = a;
-          a.onended = function () { try { URL.revokeObjectURL(u); } catch (e) {} if (currentAudio === a) currentAudio = null; resolve(); };
-          a.onerror = function () { resolve(); };
-          a.play().catch(function () { resolve(); });
-        })
-        .catch(function () {   // browser speech-synthesis fallback if Edge is unreachable
-          try { var us = new SpeechSynthesisUtterance(text); us.lang = isES() ? 'es-ES' : 'en-US'; us.onend = function () { resolve(); }; us.onerror = function () { resolve(); }; window.speechSynthesis.speak(us); }
-          catch (e) { resolve(); }
-        });
-    });
+  function stopRec() {
+    recognizing = false;
+    if (recog) { try { recog.stop(); } catch (e) {} }
+    setState('idle'); setCaption();
   }
-  function listen() {
-    return new Promise(function (resolve, reject) {
-      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { reject('nostt'); return; }
-      var rec = new SR(); activeRec = rec; var done = false;
-      rec.lang = isES() ? 'es-ES' : 'en-US';
-      rec.interimResults = false; rec.maxAlternatives = 1;
-      rec.onresult = function (e) { done = true; resolve((e.results[0][0].transcript || '').trim()); };
-      rec.onerror = function (e) { if (!done) reject(e.error || 'err'); };
-      rec.onend = function () { activeRec = null; if (!done) reject('nospeech'); };
-      setState('listening');
-      try { rec.start(); } catch (e) { reject('start'); }
-    });
-  }
-  function verdictWord(v) {
-    v = String(v || '').toLowerCase();
-    if (isES()) return v === 'go' ? 'adelante' : (v === 'poc' ? 'prueba de concepto recomendada' : (v === 'no' || v === 'stop' ? 'no recomendado por ahora' : v));
-    return v || '';
-  }
-
-  function endVoiceSession() {
-    session = null; connecting = false;
-    stopAudio();
-    if (activeRec) { try { activeRec.stop(); } catch (e) {} activeRec = null; }
-    setState('idle');
-    if (caption) caption.style.opacity = '';
-  }
-
-  function activateOrb() {
-    if (connecting) return;
-    if (session) { endVoiceSession(); return; }        // second tap = stop
-    connecting = true; session = true;
+  // endVoiceSession kept (Escape handler + external calls reference it).
+  function endVoiceSession() { stopRec(); }
+  function startRec() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var input = d2bInput();
+    if (!SR) { showFallback('mic'); if (input) { input.focus(); } return; }  // iOS/unsupported → type
     if (fallbackEl) fallbackEl.hidden = true;
     wrap.classList.remove('disabled');
-    if (caption) caption.style.opacity = '0.7';
-    var es = isES();
-    var input = document.getElementById('d2b-input');
-    var SRok = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-    var greet = SRok
-      ? (es ? 'Hola, soy el cerebro de Digit2AI. Después del tono, dime en una frase qué necesita tu negocio.' : "Hi, I'm the Digit2AI brain. After the tone, tell me in a sentence what your business needs.")
-      : (es ? 'Hola, soy el cerebro de Digit2AI. Escribe tu idea en el cuadro de abajo y pulsa, generar mi plan.' : "Hi, I'm the Digit2AI brain. Type your idea in the box below and tap, get my plan.");
-
-    speak(greet).then(function () {
-      if (!session) throw 'stopped';
-      if (!SRok) { if (input) input.focus(); throw 'typed'; }   // iOS etc. → typed path
-      return listen();
-    }).then(function (transcript) {
-      if (!session) throw 'stopped';
-      if (input && transcript) { input.value = transcript; try { input.dispatchEvent(new Event('input')); } catch (e) {} }
-      return speak(es ? 'Entendido. Analizando tu proyecto.' : 'Got it. Analyzing your project now.')
-        .then(function () { return runTriageFromAgent({ description: transcript }); });
-    }).then(function (res) {
-      if (!session) return;
-      if (res && res.ok) {
-        var line = es
-          ? ('Listo. Veredicto: ' + verdictWord(res.verdict) + '. ' + (res.project_title || '') + '. ' + (res.technical_summary || '') + (res.delivery_window ? (' Entrega estimada: ' + res.delivery_window + '.') : '') + ' Tu plan está abajo; puedes editarlo y enviarlo cuando quieras.')
-          : ('Done. My verdict: ' + (res.verdict || '') + '. ' + (res.project_title || '') + '. ' + (res.technical_summary || '') + (res.delivery_window ? (' Estimated delivery: ' + res.delivery_window + '.') : '') + ' Your plan is below — you can edit it and send it whenever you like.');
-        return speak(line);
+    committed = (input && input.value ? input.value.trim() : '');
+    recog = new SR();
+    recog.continuous = true; recog.interimResults = true; recog.lang = isES() ? 'es-ES' : 'en-US';
+    recog.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var tr = e.results[i][0].transcript;
+        if (e.results[i].isFinal) committed = (committed ? committed + ' ' : '') + tr.trim();
+        else interim += tr;
       }
-      return speak(es ? 'No pude generar el plan. Escribe tu idea abajo e inténtalo.' : "I could not generate the plan. Type your idea below and try again.");
-    }).then(function () {
-      endVoiceSession();
-    }).catch(function (err) {
-      var es2 = isES(); var input2 = document.getElementById('d2b-input');
-      connecting = false; session = null; setState('idle'); if (caption) caption.style.opacity = '';
-      if (err === 'not-allowed' || err === 'service-not-allowed') { showFallback('mic'); }
-      else if (err === 'nospeech') { speak(es2 ? 'No escuché nada. Escribe tu idea abajo.' : "I didn't hear anything. Type your idea below."); if (input2) input2.focus(); }
-      else if (err === 'nostt' || err === 'typed') { if (input2) input2.focus(); }
-      // 'stopped' / other → silent
-    });
+      if (input) { input.value = (committed + (interim ? ' ' + interim : '')).replace(/\s+/g, ' ').trim(); try { input.dispatchEvent(new Event('input')); } catch (x) {} }
+    };
+    recog.onerror = function (ev) {
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
+      // 'no-speech'/'aborted' → onend will auto-restart while recognizing
+    };
+    recog.onend = function () { if (recognizing) { try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); } } };
+    recognizing = true; setState('listening'); setCaption();
+    try { recog.start(); } catch (x) { recognizing = false; setState('idle'); setCaption(); showFallback('mic'); }
   }
+  function activateOrb() { if (recognizing) stopRec(); else startRec(); }
 
+  setCaption();
   wrap.addEventListener('click', activateOrb);
   wrap.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateOrb(); }
