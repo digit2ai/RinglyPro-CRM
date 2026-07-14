@@ -1,0 +1,145 @@
+/* PLANEA app — dark theme mirror (from the client's reference model).
+   Mobile-first single column, deep-green dark UI, Maya floating button. */
+:root{
+  --bg:#0b1411;
+  --bg-elev:#0f1a16;
+  --card:#131f1b;
+  --card2:#16231f;
+  --line:#24322c;
+  --txt:#eaf1ec;
+  --mut:#8a9b93;
+  --green:#57b98a;
+  --greenb:#7fd9a8;
+  --green-soft:rgba(87,185,138,.14);
+  --red:#c66a4f;
+  --red-soft:rgba(198,106,79,.18);
+  --cream:#f1eee4;
+  --ink:#11201b;
+  --radius:18px;
+}
+body.light{
+  --bg:#eef2ef; --bg-elev:#ffffff; --card:#ffffff; --card2:#ffffff; --line:#e3e8e5;
+  --txt:#14201b; --mut:#5f716a; --green:#2e7d5b; --greenb:#2e7d5b; --green-soft:#e7f2ec;
+  --cream:#16373a; --ink:#ffffff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--txt)}
+body{font-family:'Inter','DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit;text-decoration:none}
+.app{max-width:520px;margin:0 auto;min-height:100vh;padding-bottom:120px}
+
+/* Top bar */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg);border-bottom:1px solid transparent}
+.iconbtn{width:44px;height:44px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--txt);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn svg{width:20px;height:20px}
+.brand{display:flex;align-items:center;gap:9px;font-family:'Inter',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.02em}
+.brand svg{width:26px;height:26px}
+.topbar .sp{flex:1}
+
+/* Slide-down menu */
+.menu{display:none;flex-direction:column;gap:2px;padding:8px 12px 14px;background:var(--bg);border-bottom:1px solid var(--line)}
+.menu.open{display:flex}
+.menu a{padding:12px 14px;border-radius:12px;font-weight:600;color:var(--mut)}
+.menu a:hover,.menu a.on{background:var(--card);color:var(--txt)}
+
+.wrap{padding:16px 16px 0}
+
+/* Hero card */
+.hero{position:relative;border-radius:22px;overflow:hidden;min-height:320px;display:flex;flex-direction:column;justify-content:flex-start;
+  background:
+    linear-gradient(180deg,rgba(9,16,13,.15) 0%,rgba(9,16,13,.55) 55%,rgba(9,16,13,.9) 100%),
+    radial-gradient(130% 90% at 72% 8%,#40624e 0%,#274135 42%,#132219 78%,#0d1712 100%);
+  border:1px solid var(--line);padding:26px 22px 22px}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;
+  background:
+    radial-gradient(80% 120% at 20% 100%,rgba(20,34,27,.9),transparent 70%),
+    radial-gradient(70% 120% at 80% 100%,rgba(16,28,22,.9),transparent 70%);
+  opacity:.7;pointer-events:none}
+.hero-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.hero h1{font-family:'Inter',sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;line-height:1.05}
+.hero .lede{color:rgba(234,241,236,.82);font-size:14.5px;margin-top:8px;max-width:230px}
+.ring{position:relative;width:112px;height:112px;flex-shrink:0;text-align:center}
+.ring svg{width:112px;height:112px;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .num b{font-family:'Inter',sans-serif;font-weight:800;font-size:34px;line-height:1}
+.ring .num span{font-size:10px;letter-spacing:.18em;color:rgba(234,241,236,.75);margin-top:2px}
+.hero .score-cap{position:relative;z-index:2;text-align:right;margin-top:8px}
+.hero .score-cap .t{font-size:10.5px;letter-spacing:.16em;color:rgba(234,241,236,.7);font-weight:700}
+.hero .score-cap .r{font-family:'Inter',sans-serif;font-style:italic;font-weight:600;font-size:15px;color:var(--greenb);margin-top:2px}
+.hero .divider{position:relative;z-index:2;height:1px;background:rgba(255,255,255,.14);margin:22px 0 16px}
+.hero .hoy{position:relative;z-index:2}
+.hero .hoy .lbl{font-size:11px;letter-spacing:.16em;color:rgba(234,241,236,.6);font-weight:700}
+.hero .hoy .fecha{font-family:'Inter',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.01em;margin-top:4px}
+.pill-loc{position:relative;z-index:2;display:inline-flex;align-items:center;gap:9px;margin-top:16px;padding:9px 15px;border:1px solid rgba(255,255,255,.18);border-radius:99px;font-size:14px;font-weight:600}
+.pill-loc .dot{width:8px;height:8px;border-radius:50%;background:var(--greenb)}
+.pill-loc .muted{color:rgba(234,241,236,.6);font-weight:500}
+
+/* Generic section */
+.sec{padding:26px 0;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:none}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sec h2{font-family:'Inter',sans-serif;font-weight:700;font-size:18px;letter-spacing:-0.01em}
+.sec .sub{color:var(--mut);font-size:13.5px;margin-top:3px}
+.link{color:var(--green);font-weight:700;font-size:14px;white-space:nowrap}
+
+/* Patrimonio big number */
+.big-money{font-family:'Inter',sans-serif;font-weight:800;font-size:40px;letter-spacing:-0.03em;margin-top:14px}
+.big-money .cur{font-size:17px;font-weight:600;color:var(--mut);margin-left:6px}
+.btn-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:14.5px;padding:14px 20px;border-radius:14px;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--cream);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn:hover{transform:translateY(-1px)}
+
+/* Balance bars */
+.bars{margin-top:18px;display:flex;flex-direction:column;gap:18px}
+.bar .cab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.bar .lbl{font-weight:700;font-size:14.5px}
+.bar .val{font-family:'Inter',sans-serif;font-weight:700;font-size:17px}
+.track{height:10px;border-radius:99px;background:var(--card2);overflow:hidden}
+.fill{height:100%;border-radius:99px;background:var(--green)}
+.bar.neg .lbl,.bar.neg .val{color:var(--red)}
+.bar.neg .fill{background:var(--red)}
+
+/* Priority goal card */
+.goal{margin-top:6px}
+.goal .row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(127,217,168,.4);background:var(--green-soft);padding:6px 12px;border-radius:99px;white-space:nowrap}
+.goal .pista{height:12px;border-radius:99px;background:var(--card2);overflow:hidden;margin-top:16px}
+.goal .pista .r{height:100%;border-radius:99px;background:var(--green)}
+.goal .pie{display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)}
+.goal .pie strong{color:var(--txt)}
+
+/* Maya suggests + step cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.tagline{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--greenb);border:1px solid rgba(127,217,168,.35);background:var(--green-soft);padding:5px 11px;border-radius:99px;display:inline-block}
+.card h3{font-family:'Inter',sans-serif;font-weight:700;font-size:18px;margin-top:14px}
+.card p{color:var(--mut);font-size:14px;margin-top:6px;line-height:1.5}
+.steps{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.step .n{width:32px;height:32px;border-radius:50%;background:var(--green-soft);color:var(--greenb);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:800;font-size:14px}
+.step h4{font-family:'Inter',sans-serif;font-weight:700;font-size:17px;margin-top:16px}
+.step p{color:var(--mut);font-size:14px;margin-top:8px;line-height:1.5}
+.step .link{display:inline-block;margin-top:14px}
+
+/* Pillars */
+.pilar{margin-top:20px}
+.pilar:first-of-type{margin-top:20px}
+.pilar .cab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.pilar .nombre{font-weight:700;font-size:15px}
+.pilar .nota{color:var(--mut);font-weight:500;font-size:12.5px}
+.pilar .pct{font-family:'Inter',sans-serif;font-weight:700;font-size:15px}
+.pilar .track{height:11px}
+.pilar.alerta .pct{color:var(--red)}
+.pilar.alerta .fill{background:var(--red)}
+.pilar .fill{background:var(--green)}
+
+/* Maya floating button (matches reference: white orb + label) */
+.chatbot{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
+.chatbot .orbe{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
+@keyframes mpulse{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 0 rgba(127,217,168,.4)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 10px rgba(127,217,168,0)}}
+@media (prefers-reduced-motion:reduce){.chatbot .orbe{animation:none}}
+.chatbot .txt{display:flex;flex-direction:column;text-align:left;background:rgba(11,20,17,.7);backdrop-filter:blur(6px);padding:8px 14px;border-radius:12px}
+.chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
+.chatbot .t2{font-size:11.5px;color:var(--mut)}
+@media (max-width:420px){.chatbot .txt{display:none}}
