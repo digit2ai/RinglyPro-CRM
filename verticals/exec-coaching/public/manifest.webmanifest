@@ -1,0 +1,13 @@
+{
+  "name": "Executive English Coaching",
+  "short_name": "Exec English",
+  "description": "AI-assisted executive English coaching for international leadership.",
+  "start_url": "/coaching-english/",
+  "scope": "/coaching-english/",
+  "display": "standalone",
+  "background_color": "#0d1320",
+  "theme_color": "#1b3a6b",
+  "icons": [
+    { "src": "/coaching-english/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

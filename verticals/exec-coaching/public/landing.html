@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Executive English Coaching — Digit2AI</title>
+<link rel="icon" href="/coaching-english/favicon.svg">
+<meta name="theme-color" content="#1b3a6b">
+<style>
+  :root{--bg:#0d1320;--bg2:#0a0f19;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--accent:#2a6f9e;--accent2:#1b3a6b;--green:#3fc06a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%,#182742,var(--bg)) fixed;color:var(--txt);line-height:1.55}
+  .wrap{max-width:860px;margin:0 auto;padding:20px}
+  .top{display:flex;align-items:center;gap:12px;padding-top:max(10px,env(safe-area-inset-top))}
+  .top svg{width:38px;height:38px}.top b{font-size:16px;flex:1}
+  .lang{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:7px 11px;font-size:13px;cursor:pointer}
+  .hero{text-align:center;padding:44px 8px 20px}
+  .hero h1{font-size:32px;margin:0 0 12px;line-height:1.15}
+  .hero p{font-size:17px;color:var(--mut);max-width:620px;margin:0 auto 22px}
+  .cta{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  a.btn{text-decoration:none;color:#fff;background:linear-gradient(90deg,var(--accent),var(--accent2));padding:13px 22px;border-radius:12px;font-weight:600;font-size:15px}
+  a.btn.ghost{background:none;border:1px solid var(--line);color:var(--txt)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:30px 0}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:20px}
+  .card h3{margin:0 0 8px;font-size:16px}.card p{margin:0;color:var(--mut);font-size:14px}
+  .steps{counter-reset:s;margin:24px 0}
+  .step{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start}
+  .step .n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .step b{display:block}.step span{color:var(--mut);font-size:14px}
+  footer{text-align:center;color:var(--mut);font-size:13px;padding:30px 0 40px}
+  [data-en]{display:none}
+  body.en [data-es]{display:none}body.en [data-en]{display:inline}
+  body.en [data-en-block]{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a6f9e"/><stop offset="1" stop-color="#1b3a6b"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><path d="M20 40 L32 18 L44 40" fill="none" stroke="#e9eef7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><line x1="25" y1="33" x2="39" y2="33" stroke="#9fc6e8" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="48" r="3.2" fill="#9fc6e8"/></svg>
+    <b>Executive English Coaching</b>
+    <button class="lang" onclick="document.body.classList.toggle('en')">EN / ES</button>
+  </div>
+
+  <div class="hero">
+    <h1><span data-es>Coaching ejecutivo de inglés, con IA que hace el seguimiento</span><span data-en>Executive English coaching, with AI that handles the follow-up</span></h1>
+    <p><span data-es>Entrenamiento uno a uno para liderazgo internacional: comercio, inversión, diplomacia y prensa. La IA graba, transcribe y genera el reporte de cada sesión — usted enseña, nosotros documentamos el progreso.</span><span data-en>One-on-one training for international leadership: trade, investment, diplomacy and press. The AI records, transcribes and generates each session's report — you teach, we document the progress.</span></p>
+    <div class="cta">
+      <a class="btn" href="/coaching-english/signup"><span data-es>Crear cuenta gratis</span><span data-en>Create free account</span></a>
+      <a class="btn ghost" href="/coaching-english/login"><span data-es>Ingresar</span><span data-en>Sign in</span></a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h3><span data-es>Reporte automático</span><span data-en>Automatic report</span></h3><p><span data-es>Los 5 entregables por sesión: fortalezas, aspectos a mejorar, expresiones de alto impacto, vocabulario estratégico y ejercicio del día siguiente — generados por IA en segundos.</span><span data-en>The 5 per-session deliverables: strengths, areas to improve, high-impact expressions, strategic vocabulary and next-day exercise — AI-generated in seconds.</span></p></div>
+    <div class="card"><h3><span data-es>Medidor 80% habla el alumno</span><span data-en>80% student-speaks meter</span></h3><p><span data-es>La metodología exige que el alumno hable el 80% del tiempo. La app lo mide en vivo y lo hace demostrable.</span><span data-en>The method requires the student to speak 80% of the time. The app measures it live and makes it provable.</span></p></div>
+    <div class="card"><h3><span data-es>Dictado por voz</span><span data-en>Voice dictation</span></h3><p><span data-es>Capture la sesión hablando en inglés; la transcripción se guarda completa, sin escribir.</span><span data-en>Capture the session by speaking in English; the full transcript is saved, no typing.</span></p></div>
+    <div class="card"><h3><span data-es>Entre sesiones</span><span data-en>Between sessions</span></h3><p><span data-es>Tareas diarias de inmersión (audio, artículo, podcast, expresión del día) en menos de 15 minutos.</span><span data-en>Daily immersion tasks (audio, article, podcast, expression of the day) in under 15 minutes.</span></p></div>
+  </div>
+
+  <h2 data-es>Cómo funciona</h2><h2 data-en style="display:none">How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><b><span data-es>Registre a su alumno</span><span data-en>Add your student</span></b><span data-es>Cargo, nivel objetivo y meta.</span><span data-en>Role, target level and goal.</span></div></div>
+    <div class="step"><div class="n">2</div><div><b><span data-es>Grabe la sesión</span><span data-en>Record the session</span></b><span data-es>Por voz o texto — con el escenario que enfrentará (rueda de prensa, negociación).</span><span data-en>By voice or text — with the scenario they'll face (press conference, negotiation).</span></div></div>
+    <div class="step"><div class="n">3</div><div><b><span data-es>Finalice</span><span data-en>Finalize</span></b><span data-es>La IA entrega el reporte de los 5 puntos y el medidor de habla.</span><span data-en>The AI delivers the 5-point report and the speaking meter.</span></div></div>
+    <div class="step"><div class="n">4</div><div><b><span data-es>Asigne tareas</span><span data-en>Assign tasks</span></b><span data-es>Inmersión diaria automática entre sesiones.</span><span data-en>Automatic daily immersion between sessions.</span></div></div>
+  </div>
+
+  <div class="cta" style="justify-content:flex-start">
+    <a class="btn" href="/coaching-english/signup"><span data-es>Empezar ahora</span><span data-en>Get started</span></a>
+  </div>
+
+  <footer>Digit2AI · Executive English Coaching for International Leadership</footer>
+</div>
+</body>
+</html>

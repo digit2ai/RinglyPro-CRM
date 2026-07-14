@@ -1565,6 +1565,41 @@ app.get('/debug/coachtrack-error', (req, res) => {
   });
 });
 
+// =====================================================
+// EXECUTIVE ENGLISH COACHING — Digit2AI multi-tenant coaching (served at /coaching-english/)
+// =====================================================
+
+let execCoachingApp = null;
+let execCoachingError = null;
+try {
+  execCoachingApp = require('../verticals/exec-coaching/src/index');
+  app.get('/coaching-english', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/coaching-english/');
+    next();
+  });
+  app.use('/coaching-english', execCoachingApp);
+  console.log('Executive English Coaching mounted at /coaching-english');
+  console.log('   - Dashboard UI: /coaching-english/');
+  console.log('   - Health Check: /coaching-english/health');
+  console.log('   - API: /coaching-english/api/v1/*');
+} catch (error) {
+  execCoachingError = error;
+  console.log('⚠️ Executive English Coaching not available:', error.message);
+}
+
+app.get('/debug/exec-coaching-error', (req, res) => {
+  res.json({
+    service: 'Executive English Coaching',
+    available: !execCoachingError,
+    error: execCoachingError ? { message: execCoachingError.message, stack: execCoachingError.stack } : null
+  });
+});
+
+// Public promo landing (bilingual EN/ES) for Executive English Coaching.
+app.get(['/executive-english', '/executive-english/', '/coaching-english-landing'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'verticals', 'exec-coaching', 'public', 'landing.html'));
+});
+
 // Public promo landing page for Visionarium Coaching.
 // Vision2Ai — corporate landing for the Digit2ai × Visionarium merger.
 // AI Factory · Business Ecosystem · Limitless Future. Static, self-contained.

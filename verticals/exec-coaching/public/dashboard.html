@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Executive English Coaching</title>
+<link rel="icon" href="/coaching-english/favicon.svg">
+<link rel="manifest" href="/coaching-english/manifest.webmanifest">
+<meta name="theme-color" content="#1b3a6b">
+<style>
+  :root{--bg:#0d1320;--bg2:#0a0f19;--card:#141b29;--card2:#0f1725;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
+    --accent:#2a6f9e;--accent2:#1b3a6b;--green:#3fc06a;--amber:#e0a63f;--red:#e05a5a;--violet:#9b7bff;--cyan:#57c7d4}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--txt);padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  a{color:#9fc6e8}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#152540,#101827);
+    border-bottom:1px solid var(--line);padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));
+    display:flex;align-items:center;gap:12px}
+  header svg{width:32px;height:32px;flex:0 0 32px}
+  header .t{flex:1;min-width:0}
+  header .t b{font-size:15px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .t span{font-size:12px;color:var(--mut)}
+  header button.logout{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer}
+  main{max-width:820px;margin:0 auto;padding:16px}
+  .view{display:none}.view.active{display:block}
+  h2{font-size:18px;margin:4px 0 14px}
+  h3{font-size:15px;margin:20px 0 10px}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .muted{color:var(--mut);font-size:13px}
+  label{display:block;font-size:12px;color:var(--mut);margin:12px 0 6px}
+  input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);
+    font-size:15px;padding:11px 12px;font-family:inherit}
+  input:focus,select,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:72px;resize:vertical}
+  button{border:0;border-radius:10px;font-size:14px;font-weight:600;color:#fff;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));cursor:pointer;padding:11px 16px;min-height:44px}
+  button.ghost{background:none;border:1px solid var(--line);color:var(--txt)}
+  button.sm{padding:7px 11px;min-height:0;font-size:13px}
+  button.danger{background:none;border:1px solid var(--red);color:var(--red)}
+  button:disabled{opacity:.55;cursor:default}
+  .pill{display:inline-block;font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+  .pill.green{color:var(--green);border-color:#2c5b3c}.pill.amber{color:var(--amber);border-color:#5b4a2c}
+  .list-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:var(--card2);cursor:pointer}
+  .list-item:hover{border-color:var(--accent)}
+  .list-item .g{flex:1;min-width:0}
+  .list-item .g b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{text-align:center;color:var(--mut);padding:36px 16px;font-size:14px}
+  /* speaking meter */
+  .meter{margin-top:8px}
+  .meter .bar{height:12px;border-radius:999px;background:#22304a;overflow:hidden}
+  .meter .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--amber),var(--green));transition:width .3s,background .3s}
+  .meter .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:6px}
+  .big{font-size:34px;font-weight:800;line-height:1}
+  /* transcript */
+  .turn{padding:9px 12px;border-radius:10px;margin-bottom:8px;font-size:14px;border:1px solid var(--line)}
+  .turn.student{background:rgba(87,199,212,.08);border-color:#1f4750}
+  .turn.coach{background:rgba(155,123,255,.08);border-color:#3a2f66}
+  .turn .who{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:3px}
+  /* report deliverables */
+  .deliv{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:14px 0}
+  .deliv h4{margin:0 0 8px;font-size:14px}
+  .deliv ul{margin:0;padding-left:18px}.deliv li{margin-bottom:5px;font-size:14px}
+  .corr{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:13px}
+  .corr .x{color:var(--red)}.corr .v{color:var(--green)}
+  /* bottom tab bar */
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;background:#0c1220;border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav.tabs button{flex:1;background:none;border:0;color:var(--mut);font-size:11px;font-weight:600;padding:9px 4px;min-height:56px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:0}
+  nav.tabs button.active{color:#9fc6e8}
+  nav.tabs button .ic{font-size:19px;line-height:1}
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#1c2740;border:1px solid var(--line);
+    color:var(--txt);padding:11px 16px;border-radius:12px;font-size:13px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .rec{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:middle}
+  .rec.on{animation:blink 1s infinite}@keyframes blink{50%{opacity:.25}}
+  @media print{
+    header,nav.tabs,.noprint{display:none!important}
+    body{background:#fff;color:#000;padding:0}
+    .card{border:1px solid #ccc;box-shadow:none}
+    .deliv{border-color:#666}
+  }
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a6f9e"/><stop offset="1" stop-color="#1b3a6b"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><path d="M20 40 L32 18 L44 40" fill="none" stroke="#e9eef7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><line x1="25" y1="33" x2="39" y2="33" stroke="#9fc6e8" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="48" r="3.2" fill="#9fc6e8"/></svg>
+  <div class="t"><b>Executive English Coaching</b><span id="whoami">—</span></div>
+  <button class="logout" onclick="logout()">Salir</button>
+</header>
+
+<main>
+  <!-- ALUMNOS -->
+  <section class="view active" id="v-students">
+    <h2>Alumnos</h2>
+    <div class="card">
+      <div class="row"><b style="flex:1">Nuevo alumno</b><button class="ghost sm" onclick="toggle('newStudent')">+ Agregar</button></div>
+      <div id="newStudent" style="display:none">
+        <label>Nombre *</label><input id="st-name" placeholder="Dr. Mauricio Gómez Amín">
+        <label>Cargo / rol</label><input id="st-role" placeholder="Ministro de Comercio, Industria y Turismo">
+        <div class="row">
+          <div style="flex:1"><label>Nivel objetivo (CEFR)</label>
+            <select id="st-level"><option>A2</option><option>B1</option><option>B2</option><option selected>C1</option><option>C2</option></select></div>
+          <div style="flex:1"><label>Idioma nativo</label>
+            <select id="st-lang"><option value="es" selected>Español</option><option value="pt">Portugués</option><option value="fr">Francés</option><option value="other">Otro</option></select></div>
+        </div>
+        <label>Objetivo / meta</label><textarea id="st-goals" placeholder="Interlocución de alto nivel en inglés con gobiernos, inversionistas y medios."></textarea>
+        <div class="row" style="margin-top:12px"><button onclick="createStudent()">Guardar alumno</button></div>
+      </div>
+    </div>
+    <div id="students-list"></div>
+  </section>
+
+  <!-- SESIÓN (capture) -->
+  <section class="view" id="v-session">
+    <h2>Sesión</h2>
+    <div id="session-setup" class="card">
+      <label>Alumno</label>
+      <select id="se-student"></select>
+      <label>Escenario (opcional)</label>
+      <select id="se-scenario">
+        <option value="">Conversación general</option>
+        <option>Rueda de prensa internacional</option>
+        <option>Negociación de alto nivel</option>
+        <option>Reunión con inversionistas</option>
+        <option>Small talk diplomático</option>
+        <option>Entrevista con medios</option>
+        <option>Foro OMC / OCDE</option>
+      </select>
+      <div class="row" style="margin-top:14px"><button onclick="startSession()">Iniciar sesión</button></div>
+    </div>
+
+    <div id="session-live" style="display:none">
+      <div class="card">
+        <div class="row" style="align-items:center">
+          <b style="flex:1" id="live-title">Sesión en curso</b>
+          <span class="pill" id="live-status">En curso</span>
+        </div>
+        <div class="meter">
+          <div class="bar"><div class="fill" id="spk-fill" style="width:0%"></div></div>
+          <div class="lab"><span>Alumno habla: <b id="spk-pct">—</b></span><span>Meta: 80%</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="align-items:center;margin-bottom:8px">
+          <b style="flex:1">Capturar</b>
+          <div class="row">
+            <button class="ghost sm" id="role-student" onclick="setRole('student')">Alumno</button>
+            <button class="ghost sm" id="role-coach" onclick="setRole('coach')">Coach</button>
+          </div>
+        </div>
+        <textarea id="turn-text" placeholder="Escriba lo que se dijo, o pulse el micrófono para dictar en inglés..."></textarea>
+        <div class="row" style="margin-top:10px;align-items:center">
+          <button class="ghost sm" id="mic-btn" onclick="toggleMic()"><span class="rec" id="mic-dot"></span>Dictar</button>
+          <button class="sm" onclick="addTurn()">Agregar turno</button>
+          <span class="muted" id="mic-note" style="flex:1"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Transcripción</h3>
+        <div id="live-transcript"><div class="empty">Aún no hay turnos.</div></div>
+      </div>
+
+      <div class="card noprint">
+        <div class="row"><label style="margin:0;flex:1;align-self:center">Duración (min)</label><input id="se-duration" type="number" style="width:90px" placeholder="50"></div>
+        <div class="row" style="margin-top:14px">
+          <button onclick="finalizeSession()" id="finalize-btn" style="flex:1">Finalizar y generar reporte</button>
+        </div>
+        <div class="muted" style="margin-top:8px">Genera fortalezas, aspectos a mejorar, expresiones, vocabulario y ejercicio.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="view" id="v-history">
+    <h2>Historial</h2>
+    <div id="history-list"></div>
+  </section>
+
+  <!-- TAREAS -->
+  <section class="view" id="v-tasks">
+    <h2>Entre sesiones</h2>
+    <div class="card noprint">
+      <div class="row"><b style="flex:1">Nueva tarea</b><button class="ghost sm" onclick="toggle('newTask')">+ Agregar</button></div>
+      <div id="newTask" style="display:none">
+        <label>Alumno</label><select id="ta-student"></select>
+        <label>Tipo</label>
+        <select id="ta-kind">
+          <option value="expresion">Expresión diplomática del día</option>
+          <option value="vocabulario">Vocabulario ejecutivo</option>
+          <option value="articulo">Lectura de un artículo</option>
+          <option value="podcast">Podcast o video corto</option>
+          <option value="audio">Audio corto por WhatsApp</option>
+          <option value="ejercicio">Ejercicio práctico</option>
+        </select>
+        <label>Título</label><input id="ta-title" placeholder="Grabar audio de 1 minuto resumiendo el artículo">
+        <label>Detalle</label><textarea id="ta-detail"></textarea>
+        <div class="row" style="margin-top:12px"><button onclick="createTask()">Guardar tarea</button></div>
+      </div>
+    </div>
+    <div id="tasks-list"></div>
+  </section>
+
+  <!-- DETALLE (session detail overlay-as-view) -->
+  <section class="view" id="v-detail"></section>
+</main>
+
+<nav class="tabs">
+  <button class="active" data-view="students" onclick="nav('students')"><span class="ic">&#128101;</span>Alumnos</button>
+  <button data-view="session" onclick="nav('session')"><span class="ic">&#127908;</span>Sesión</button>
+  <button data-view="history" onclick="nav('history')"><span class="ic">&#128220;</span>Historial</button>
+  <button data-view="tasks" onclick="nav('tasks')"><span class="ic">&#9989;</span>Tareas</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/coaching-english/api/v1';
+let ME = null, STUDENTS = [], CUR = null, ROLE = 'student', REC = null, RECON = false;
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function toggle(id){ const e=document.getElementById(id); e.style.display = e.style.display==='none'?'block':'none'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function api(path, opts){ const r=await fetch(API+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts}); const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }
+
+function nav(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  window.scrollTo(0,0);
+  if(v==='students') loadStudents();
+  if(v==='session') fillStudentSelects();
+  if(v==='history') loadHistory();
+  if(v==='tasks'){ fillStudentSelects(); loadTasks(); }
+}
+
+async function logout(){ try{ await api('/auth/logout',{method:'POST'}); }catch(e){} location.href='/coaching-english/login'; }
+
+// ── Students ────────────────────────────────────────────────────────────────
+async function loadStudents(){
+  try{
+    const d = await api('/students');
+    STUDENTS = d.students;
+    const el = document.getElementById('students-list');
+    if(!STUDENTS.length){ el.innerHTML='<div class="empty">Aún no hay alumnos. Agregue el primero arriba.</div>'; return; }
+    el.innerHTML = STUDENTS.map(s=>`
+      <div class="list-item" onclick="openStudent(${s.id})">
+        <div class="g">
+          <b>${esc(s.name)}</b>
+          <span class="muted">${esc(s.role_title||'—')} · ${s.session_count} sesión(es) · ${s.open_assignments} tarea(s)</span>
+        </div>
+        <span class="pill">${esc(s.target_level||'')}</span>
+      </div>`).join('');
+  }catch(e){ toast(e.message); }
+}
+async function createStudent(){
+  const name=document.getElementById('st-name').value.trim();
+  if(!name){ toast('Nombre requerido'); return; }
+  try{
+    await api('/students',{method:'POST',body:JSON.stringify({
+      name, role_title:document.getElementById('st-role').value.trim(),
+      target_level:document.getElementById('st-level').value,
+      native_language:document.getElementById('st-lang').value,
+      goals:document.getElementById('st-goals').value.trim()
+    })});
+    ['st-name','st-role','st-goals'].forEach(i=>document.getElementById(i).value='');
+    toggle('newStudent'); toast('Alumno guardado'); loadStudents();
+  }catch(e){ toast(e.message); }
+}
+async function openStudent(id){
+  try{
+    const d = await api('/students/'+id);
+    const s=d.student;
+    const el=document.getElementById('v-detail'); nav('detail'); document.getElementById('v-detail').classList.add('active');
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    el.innerHTML=`
+      <h2>${esc(s.name)}</h2>
+      <div class="card">
+        <div class="muted">${esc(s.role_title||'')}</div>
+        <p style="font-size:14px">${esc(s.goals||'Sin objetivo definido.')}</p>
+        <div class="row">
+          <span class="pill">Nivel ${esc(s.target_level||'')}</span>
+          <span class="pill">${d.sessions.length} sesiones</span>
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="sm" onclick="quickStart(${s.id})">Iniciar sesión</button>
+          <button class="ghost sm" onclick="nav('students')">Volver</button>
+          <button class="danger sm" onclick="deleteStudent(${s.id})">Eliminar</button>
+        </div>
+      </div>
+      <h3>Sesiones</h3>
+      ${d.sessions.length? d.sessions.map(se=>`
+        <div class="list-item" onclick="openSession(${se.id})">
+          <div class="g"><b>${esc(se.subject||'Sesión sin finalizar')}</b>
+          <span class="muted">${esc(se.session_date||'')} · ${se.status==='finalized'?'Finalizada':'En curso'}${se.speaking_pct!=null?' · alumno '+se.speaking_pct+'%':''}</span></div>
+          <span class="pill ${se.status==='finalized'?'green':'amber'}">${se.status==='finalized'?'✓':'···'}</span>
+        </div>`).join('') : '<div class="empty">Sin sesiones aún.</div>'}
+      <h3>Tareas abiertas</h3>
+      ${d.assignments.filter(a=>a.status==='open').length? d.assignments.filter(a=>a.status==='open').map(a=>`
+        <div class="list-item"><div class="g"><b>${esc(a.title)}</b><span class="muted">${esc(a.kind)}</span></div>
+        <button class="ghost sm" onclick="event.stopPropagation();markTask(${a.id},'done')">Hecho</button></div>`).join('') : '<div class="empty">Sin tareas abiertas.</div>'}
+    `;
+  }catch(e){ toast(e.message); }
+}
+async function deleteStudent(id){
+  if(!confirm('¿Eliminar este alumno y todas sus sesiones?')) return;
+  try{ await api('/students/'+id,{method:'DELETE'}); toast('Eliminado'); nav('students'); }catch(e){ toast(e.message); }
+}
+function quickStart(sid){ nav('session'); setTimeout(()=>{ document.getElementById('se-student').value=sid; },50); }
+
+// ── Session capture ─────────────────────────────────────────────────────────
+function fillStudentSelects(){
+  if(!STUDENTS.length){ loadStudents().then(()=>fillStudentSelects()); }
+  const opts = STUDENTS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  ['se-student','ta-student'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts||'<option value="">— sin alumnos —</option>'; });
+}
+function setRole(r){ ROLE=r; document.getElementById('role-student').classList.toggle('active',r==='student');
+  document.getElementById('role-coach').classList.toggle('active',r==='coach');
+  document.getElementById('role-student').style.borderColor=r==='student'?'var(--cyan)':'var(--line)';
+  document.getElementById('role-coach').style.borderColor=r==='coach'?'var(--violet)':'var(--line)'; }
+
+async function startSession(){
+  const sid=document.getElementById('se-student').value;
+  if(!sid){ toast('Seleccione un alumno'); return; }
+  try{
+    const d=await api('/sessions',{method:'POST',body:JSON.stringify({student_id:sid,scenario:document.getElementById('se-scenario').value})});
+    CUR=d.session; CUR.turns=[];
+    document.getElementById('session-setup').style.display='none';
+    document.getElementById('session-live').style.display='block';
+    const st=STUDENTS.find(s=>String(s.id)===String(sid));
+    document.getElementById('live-title').textContent=(st?st.name:'Sesión')+(CUR.scenario?' · '+CUR.scenario:'');
+    renderTranscript(); setRole('student'); updateMeter(null,0,0);
+  }catch(e){ toast(e.message); }
+}
+function renderTranscript(){
+  const el=document.getElementById('live-transcript');
+  if(!CUR.turns.length){ el.innerHTML='<div class="empty">Aún no hay turnos.</div>'; return; }
+  el.innerHTML=CUR.turns.map(t=>`<div class="turn ${t.role}"><div class="who">${t.role==='coach'?'Coach':'Alumno'}</div>${esc(t.text)}</div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function updateMeter(pct,sw,cw){
+  const p = pct==null?0:pct;
+  document.getElementById('spk-fill').style.width=p+'%';
+  document.getElementById('spk-pct').textContent = pct==null?'—':pct+'%';
+  const fill=document.getElementById('spk-fill');
+  fill.style.background = (pct!=null&&pct>=80)?'var(--green)':'linear-gradient(90deg,var(--amber),var(--green))';
+}
+async function addTurn(){
+  const text=document.getElementById('turn-text').value.trim();
+  if(!text){ return; }
+  if(!CUR){ toast('Inicie una sesión'); return; }
+  try{
+    const d=await api('/sessions/'+CUR.id+'/turn',{method:'POST',body:JSON.stringify({text,role:ROLE,source:RECON?'voice':'typed'})});
+    CUR.turns.push({role:ROLE,text});
+    document.getElementById('turn-text').value='';
+    renderTranscript(); updateMeter(d.speaking_pct,d.student_words,d.coach_words);
+  }catch(e){ toast(e.message); }
+}
+async function finalizeSession(){
+  if(!CUR){ return; }
+  if(!CUR.turns.length){ toast('Agregue al menos un turno'); return; }
+  const btn=document.getElementById('finalize-btn'); btn.disabled=true; btn.textContent='Generando reporte...';
+  stopMic();
+  try{
+    const dur=document.getElementById('se-duration').value;
+    const d=await api('/sessions/'+CUR.id+'/finalize',{method:'POST',body:JSON.stringify({duration_min:dur||undefined})});
+    toast('Reporte generado');
+    document.getElementById('session-live').style.display='none';
+    document.getElementById('session-setup').style.display='block';
+    const id=CUR.id; CUR=null;
+    openSession(id);
+  }catch(e){ toast(e.message); }
+  finally{ btn.disabled=false; btn.textContent='Finalizar y generar reporte'; }
+}
+
+// ── Voice dictation (Web Speech API, en-US) ─────────────────────────────────
+const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+function toggleMic(){ if(RECON) stopMic(); else startMic(); }
+function startMic(){
+  if(!SR){ document.getElementById('mic-note').textContent='Este navegador no soporta dictado; escriba el texto (iOS Safari puede usar el teclado por voz).'; return; }
+  REC=new SR(); REC.lang='en-US'; REC.continuous=true; REC.interimResults=true;
+  let base=document.getElementById('turn-text').value;
+  REC.onresult=(e)=>{ let interim='',fin=''; for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal) fin+=t; else interim+=t; }
+    document.getElementById('turn-text').value=(base+' '+fin+' '+interim).trim(); if(fin) base=(base+' '+fin).trim(); };
+  REC.onend=()=>{ if(RECON){ try{REC.start();}catch(e){} } };
+  REC.onerror=()=>{};
+  try{ REC.start(); RECON=true; document.getElementById('mic-dot').classList.add('on'); document.getElementById('mic-btn').classList.add('active'); document.getElementById('mic-note').textContent='Escuchando en inglés...'; }catch(e){}
+}
+function stopMic(){ RECON=false; if(REC){ try{REC.stop();}catch(e){} } document.getElementById('mic-dot').classList.remove('on'); const b=document.getElementById('mic-btn'); if(b)b.classList.remove('active'); const n=document.getElementById('mic-note'); if(n)n.textContent=''; }
+
+// ── History ─────────────────────────────────────────────────────────────────
+async function loadHistory(){
+  try{
+    const d=await api('/sessions');
+    const el=document.getElementById('history-list');
+    if(!d.sessions.length){ el.innerHTML='<div class="empty">Sin sesiones aún.</div>'; return; }
+    el.innerHTML=d.sessions.map(s=>`
+      <div class="list-item" onclick="openSession(${s.id})">
+        <div class="g"><b>${esc(s.subject||'Sesión sin finalizar')}</b>
+        <span class="muted">${esc(s.student_name||'')} · ${esc(s.session_date||'')}${s.speaking_pct!=null?' · alumno '+s.speaking_pct+'%':''}</span></div>
+        <span class="pill ${s.status==='finalized'?'green':'amber'}">${s.status==='finalized'?'Finalizada':'En curso'}</span>
+      </div>`).join('');
+  }catch(e){ toast(e.message); }
+}
+async function openSession(id){
+  try{
+    const d=await api('/sessions/'+id);
+    const s=d.session, r=d.report;
+    nav('detail'); document.getElementById('v-detail').classList.add('active');
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    const meterHtml = s.speaking_pct!=null?`
+      <div class="meter"><div class="bar"><div class="fill" style="width:${s.speaking_pct}%;background:${s.speaking_pct>=80?'var(--green)':'linear-gradient(90deg,var(--amber),var(--green))'}"></div></div>
+      <div class="lab"><span>Alumno habló: <b>${s.speaking_pct}%</b></span><span>Meta: 80% ${s.speaking_pct>=80?'✓':''}</span></div></div>`:'';
+    const list=(arr)=>arr&&arr.length?'<ul>'+arr.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>':'<div class="muted">—</div>';
+    const reportHtml = r?`
+      <div class="card">
+        <div class="row noprint"><b style="flex:1">Reporte de la sesión</b>
+          <button class="ghost sm" onclick="window.print()">PDF</button>
+          <button class="ghost sm" onclick="emailReport(${id})">Email</button>
+        </div>
+        <div class="deliv"><h4>Principales fortalezas</h4>${list(r.fortalezas)}</div>
+        <div class="deliv"><h4>Aspectos a mejorar</h4>${list(r.aspectos_mejorar)}</div>
+        <div class="deliv"><h4>Nuevas expresiones de alto impacto</h4>${list(r.expresiones)}</div>
+        <div class="deliv"><h4>Vocabulario estratégico</h4>${list(r.vocabulario)}</div>
+        <div class="deliv"><h4>Ejercicio práctico para el día siguiente</h4><p style="font-size:14px;margin:0">${esc(r.ejercicio||'—')}</p></div>
+        ${r.correcciones&&r.correcciones.length?`<div class="deliv"><h4>Correcciones</h4>${r.correcciones.map(c=>`<div class="corr"><span class="x">✗ ${esc(c.error)}</span><br><span class="v">✓ ${esc(c.correccion)}</span></div>`).join('')}</div>`:''}
+        <div class="row noprint" style="margin-top:10px"><button class="sm" onclick="suggestTasks(${id})">Generar tareas "entre sesiones" con IA</button></div>
+      </div>`:`<div class="card noprint"><div class="muted">Esta sesión aún no tiene reporte.</div></div>`;
+    document.getElementById('v-detail').innerHTML=`
+      <h2>${esc(s.subject||'Sesión')}</h2>
+      <div class="card">
+        <div class="muted">${esc(d.student?d.student.name:'')} · ${esc(s.session_date||'')}${s.scenario?' · '+esc(s.scenario):''}${s.duration_min?' · '+s.duration_min+' min':''}</div>
+        <p style="font-size:14px">${esc(s.summary||'')}</p>
+        ${meterHtml}
+        <div class="row noprint" style="margin-top:12px"><button class="ghost sm" onclick="nav('history')">Volver</button></div>
+      </div>
+      ${reportHtml}
+      <div class="card">
+        <h3 style="margin-top:0">Transcripción</h3>
+        ${d.transcript.length? d.transcript.map(t=>`<div class="turn ${t.role}"><div class="who">${t.role==='coach'?'Coach':'Alumno'}</div>${esc(t.text)}</div>`).join('') : '<div class="empty">Sin transcripción.</div>'}
+      </div>`;
+    window.scrollTo(0,0);
+  }catch(e){ toast(e.message); }
+}
+function emailReport(id){
+  // Client-side mailto (matches the project-wide Apple Mail pattern).
+  api('/sessions/'+id).then(d=>{
+    const s=d.session,r=d.report; if(!r){ toast('Sin reporte'); return; }
+    const L=(t,a)=>`${t}:\n`+(a&&a.length?a.map(x=>' - '+x).join('\n'):' -')+'\n\n';
+    let body=`Reporte de sesión — ${s.subject||''}\n${s.session_date||''}\n\n`;
+    if(s.speaking_pct!=null) body+=`El alumno habló el ${s.speaking_pct}% del tiempo (meta 80%).\n\n`;
+    body+=L('Principales fortalezas',r.fortalezas)+L('Aspectos a mejorar',r.aspectos_mejorar)+L('Nuevas expresiones de alto impacto',r.expresiones)+L('Vocabulario estratégico',r.vocabulario);
+    body+='Ejercicio para el día siguiente:\n'+(r.ejercicio||'')+'\n';
+    location.href=`mailto:${d.student&&d.student.email?d.student.email:''}?subject=${encodeURIComponent('Reporte de coaching — '+(s.subject||''))}&body=${encodeURIComponent(body)}`;
+  }).catch(e=>toast(e.message));
+}
+async function suggestTasks(id){
+  try{ const d=await api('/sessions/'+id+'/suggest-assignments',{method:'POST'}); toast(d.created.length+' tareas creadas'); }catch(e){ toast(e.message); }
+}
+
+// ── Tasks ───────────────────────────────────────────────────────────────────
+async function loadTasks(){
+  try{
+    const d=await api('/assignments');
+    const el=document.getElementById('tasks-list');
+    const open=d.assignments.filter(a=>a.status==='open'), done=d.assignments.filter(a=>a.status==='done');
+    if(!d.assignments.length){ el.innerHTML='<div class="empty">Sin tareas. Agregue una o genérelas desde un reporte.</div>'; return; }
+    const item=(a)=>`<div class="list-item"><div class="g"><b>${esc(a.title)}</b>
+      <span class="muted">${esc(a.student_name||'')} · ${esc(a.kind)}${a.detail?' · '+esc(a.detail).slice(0,60):''}</span></div>
+      ${a.status==='open'?`<button class="ghost sm" onclick="markTask(${a.id},'done')">Hecho</button>`:`<button class="ghost sm" onclick="markTask(${a.id},'open')">Reabrir</button>`}
+      <button class="danger sm" onclick="delTask(${a.id})">✕</button></div>`;
+    el.innerHTML=(open.length?'<h3>Pendientes</h3>'+open.map(item).join(''):'')+(done.length?'<h3>Completadas</h3>'+done.map(item).join(''):'');
+  }catch(e){ toast(e.message); }
+}
+async function createTask(){
+  const sid=document.getElementById('ta-student').value; const title=document.getElementById('ta-title').value.trim();
+  if(!sid){ toast('Seleccione un alumno'); return; } if(!title){ toast('Título requerido'); return; }
+  try{
+    await api('/assignments',{method:'POST',body:JSON.stringify({student_id:sid,kind:document.getElementById('ta-kind').value,title,detail:document.getElementById('ta-detail').value.trim()})});
+    document.getElementById('ta-title').value=''; document.getElementById('ta-detail').value='';
+    toggle('newTask'); toast('Tarea guardada'); loadTasks();
+  }catch(e){ toast(e.message); }
+}
+async function markTask(id,status){ try{ await api('/assignments/'+id,{method:'PATCH',body:JSON.stringify({status})}); loadTasks(); }catch(e){ toast(e.message); } }
+async function delTask(id){ try{ await api('/assignments/'+id,{method:'DELETE'}); loadTasks(); }catch(e){ toast(e.message); } }
+
+// ── Boot ────────────────────────────────────────────────────────────────────
+(async function(){
+  try{
+    const d=await api('/auth/me'); ME=d.user;
+    if(!ME){ location.href='/coaching-english/login'; return; }
+    document.getElementById('whoami').textContent=ME.name||ME.email;
+    loadStudents();
+  }catch(e){ location.href='/coaching-english/login'; }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('/coaching-english/sw.js').catch(()=>{}); }
+})();
+</script>
+</body>
+</html>
