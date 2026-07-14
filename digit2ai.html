@@ -1283,7 +1283,13 @@
             return Conversation.startSession({
               agentId: cfg.agent_id,
               clientTools: { run_partnership_triage: function (params) { return runTriageFromAgent(params || {}); } },
-              onConnect: function () { setState('listening'); if (fallbackEl) fallbackEl.hidden = true; wrap.classList.remove('disabled'); },
+              onConnect: function () {
+                setState('listening'); if (fallbackEl) fallbackEl.hidden = true; wrap.classList.remove('disabled');
+                // Release OUR gesture/waveform mic capture — the SDK now owns the
+                // single mic stream, so its echo-cancellation works and the agent
+                // doesn't hear itself and self-interrupt in the first second.
+                stopWaveform(); releaseMic();
+              },
               onDisconnect: function () { setState('idle'); stopWaveform(); session = null; releaseMic(); },
               onError: function (e) { console.error('[orb] convai error', e); setState('idle'); stopWaveform(); showFallback('sdk'); },
               onModeChange: function (mode) {
