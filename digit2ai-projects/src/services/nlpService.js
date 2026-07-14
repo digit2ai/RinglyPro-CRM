@@ -3,6 +3,9 @@
 const { Op } = require('sequelize');
 const { Contact, Project, Task, CalendarEvent, Vertical, ProjectContact, ProjectMilestone, Notification } = require('../models');
 const { logActivity, createNotification } = require('./activityService');
+const zoomService = require('./zoom');
+
+const HUB_TZ = process.env.D2AI_TZ || 'America/New_York';
 
 // Intent patterns for NLP parsing - ordered by specificity (most specific first)
 // Designed for non-technical users: supports casual, conversational language
@@ -45,7 +48,8 @@ const INTENT_PATTERNS = [
   { pattern: /^any\s+overdue\s+tasks/i, intent: 'overdue_tasks' },
 
   // Calendar intents
-  { pattern: /^(create|add|schedule|new|book|set\s+up)\s+(?:(?:a|the|another|new)\s+)*(meeting|event|appointment|calendar|call)/i, intent: 'create_event' },
+  { pattern: /^(?:create|add|schedule|new|book|plan|arrange|organi[sz]e|set\s*up|setup)\s+(?:(?:a|an|the|another|new|up)\s+)*(?:meeting|event|appointment|calendar|call|zoom|sync)/i, intent: 'create_event' },
+  { pattern: /^(?:meet|call)\s+with\s+/i, intent: 'create_event' },
   { pattern: /^(show|list|get|what|see|view)\s+(are\s+)?(my\s+)?(upcoming|this week|today|next|calendar|schedule|events)/i, intent: 'upcoming_events' },
   { pattern: /^what.*coming\s+up/i, intent: 'upcoming_events' },
   { pattern: /^what.*my\s+(schedule|calendar|agenda)/i, intent: 'upcoming_events' },
@@ -188,6 +192,34 @@ function parseDateFreeform(s) {
     return `${yr}-${String(months[m[2]]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
   }
   return null;
+}
+
+// Parse a free-form time ("10am", "10:30 am", "2 pm", "at 3", "15:00", "noon").
+function parseTimeFreeform(s) {
+  if (!s) return null;
+  const t = s.toLowerCase();
+  if (/\bnoon\b/.test(t)) return { h: 12, m: 0 };
+  if (/\bmidnight\b/.test(t)) return { h: 0, m: 0 };
+  let m = t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)/);
+  if (m) { let h = parseInt(m[1], 10) % 12; if (/p/.test(m[3])) h += 12; return { h, m: m[2] ? parseInt(m[2], 10) : 0 }; }
+  m = t.match(/\b(\d{1,2}):(\d{2})\b/);
+  if (m) return { h: parseInt(m[1], 10), m: parseInt(m[2], 10) };
+  m = t.match(/\bat\s+(\d{1,2})\b/);
+  if (m) return { h: parseInt(m[1], 10), m: 0 };
+  return null;
+}
+
+// Convert a wall-clock time in a given IANA tz to a correct UTC Date (DST-safe).
+function wallTimeToUtc(tz, y, mo, d, h, mi) {
+  const dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  let ts = Date.UTC(y, mo - 1, d, h, mi, 0);
+  for (let i = 0; i < 3; i++) {
+    const p = dtf.formatToParts(new Date(ts)).reduce((a, x) => (a[x.type] = x.value, a), {});
+    const shown = Date.UTC(+p.year, +p.month - 1, +p.day, +(p.hour === '24' ? 0 : p.hour), +p.minute, +p.second);
+    const offset = shown - ts;                 // tz offset at ts
+    ts = Date.UTC(y, mo - 1, d, h, mi, 0) - offset;
+  }
+  return new Date(ts);
 }
 
 // Detect intent from text
@@ -507,17 +539,74 @@ async function executeCommand(inputText, userEmail) {
       }
 
       case 'create_event': {
-        const titleMatch = inputText.match(/(?:meeting|event|appointment|calendar|call)\s+(?:with\s+|for\s+|about\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow)|$)/i);
-        const title = titleMatch ? titleMatch[1].trim() : 'New Event';
-        const startDate = entities.date ? new Date(entities.date + 'T10:00:00') : new Date(Date.now() + 86400000);
+        // 1) Attendees — everything after "with" up to a trailing zoom/time/date clause.
+        let attendees = [];
+        const wm = inputText.match(/\bwith\s+(.+)$/i);
+        if (wm) {
+          let a = wm[1]
+            .replace(/\b(?:and\s+|,\s*)?(?:please\s+)?(?:activate|enable|turn\s+on|add|use|via|on|through)\s+(?:the\s+)?zoom.*$/i, '')
+            .replace(/\b(?:today|tomorrow|tonight|this|next|on|at)\b.*$/i, '')
+            .trim();
+          attendees = a.split(/\s*(?:,|&|\band\b|\by\b|\be\b)\s*/i)
+            .map(s => s.trim()).filter(Boolean)
+            .map(s => s.charAt(0).toUpperCase() + s.slice(1));
+        }
+        const wantsZoom = /\bzoom\b/i.test(inputText);
+
+        // 2) Title.
+        let title;
+        if (attendees.length) title = `Meeting with ${attendees.join(', ')}`;
+        else {
+          const tm2 = inputText.match(/(?:meeting|event|appointment|calendar|call|sync)\s+(?:for\s+|about\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow|today|with)|$)/i);
+          title = tm2 && tm2[1] && !/^\d/.test(tm2[1].trim()) ? tm2[1].trim() : 'New Meeting';
+        }
+
+        // 3) Date + time → correct UTC instant (interpreted in the hub timezone).
+        const dateStr = entities.date || new Date().toLocaleDateString('en-CA', { timeZone: HUB_TZ });
+        const tm = parseTimeFreeform(inputText) || { h: 10, m: 0 };
+        const [Y, Mo, D] = dateStr.split('-').map(Number);
+        const startDate = wallTimeToUtc(HUB_TZ, Y, Mo, D, tm.h, tm.m);
+        const endDate = new Date(startDate.getTime() + 3600000);
+
+        // 4) Resolve attendee names to contacts → invited_emails (best effort).
+        const inviteEmails = [];
+        for (const nm of attendees) {
+          try {
+            const c = await Contact.findOne({ where: { workspace_id: 1, name: { [Op.iLike]: `%${nm}%` }, email: { [Op.ne]: null } } });
+            if (c && c.email) inviteEmails.push(c.email);
+          } catch (_) { /* ignore */ }
+        }
+
+        // 5) Zoom (real meeting if configured).
+        let zoomFields = {}, zoomNote = '';
+        if (wantsZoom) {
+          if (zoomService.isConfigured && zoomService.isConfigured()) {
+            try {
+              const mtg = await zoomService.createMeeting({ topic: title, startISO: startDate.toISOString(), durationMinutes: 60, timezone: HUB_TZ, agenda: '' });
+              zoomFields = { zoom_meeting_id: mtg.id, zoom_join_url: mtg.join_url, zoom_start_url: mtg.start_url, zoom_password: mtg.password, location: mtg.join_url };
+              zoomNote = `\nZoom: ${mtg.join_url}`;
+            } catch (zErr) {
+              zoomNote = `\n(Zoom link couldn't be created: ${zErr.response?.data?.message || zErr.message})`;
+            }
+          } else {
+            zoomFields = { location: 'Zoom' };
+            zoomNote = `\n(Zoom isn't configured on the server, so no link was generated.)`;
+          }
+        }
+
         const event = await CalendarEvent.create({
           workspace_id: 1, user_email: userEmail, title,
-          start_time: startDate, end_time: new Date(startDate.getTime() + 3600000),
-          event_type: 'meeting'
+          start_time: startDate, end_time: endDate,
+          event_type: 'meeting',
+          invited_emails: inviteEmails,
+          ...zoomFields
         });
-        await logActivity(userEmail, 'created', 'calendar_event', event.id, title, { via: 'nlp' });
+        await logActivity(userEmail, 'created', 'calendar_event', event.id, title, { via: 'nlp', attendees, zoom: wantsZoom });
         data = event;
-        response = `Scheduled! "${title}" on ${startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}. Check your Calendar to see it.`;
+        const whenStr = startDate.toLocaleString('en-US', { timeZone: HUB_TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        response = `Scheduled "${title}" for ${whenStr}.` +
+          (attendees.length ? ` Attendees: ${attendees.join(', ')}${inviteEmails.length ? ` (${inviteEmails.length} invite email${inviteEmails.length > 1 ? 's' : ''} found)` : ''}.` : '') +
+          zoomNote + `\nCheck your Calendar to see it.`;
         break;
       }
 

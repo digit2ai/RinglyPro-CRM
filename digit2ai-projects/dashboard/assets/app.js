@@ -9056,7 +9056,9 @@ function startDictation(inputId, target) {
   window._dictating = rec;
   if (micBtn) micBtn.classList.add('listening');
 
+  let got = false;
   rec.onresult = (e) => {
+    got = true;
     const text = e.results[0][0].transcript;
     const input = document.getElementById(inputId);
     if (input) input.value = text;
@@ -9064,7 +9066,21 @@ function startDictation(inputId, target) {
     setTimeout(() => sendAICommand(target), 150);
   };
   const cleanup = () => { window._dictating = null; if (micBtn) micBtn.classList.remove('listening'); };
-  rec.onerror = cleanup;
+  // Surface mic failures in the chat so the button never appears "dead".
+  rec.onerror = (e) => {
+    cleanup();
+    const box = document.getElementById(target === 'ai' ? 'ai-messages' : 'nlp-messages');
+    if (box && !got) {
+      const err = e && e.error;
+      const msg = err === 'not-allowed' || err === 'service-not-allowed'
+        ? 'I need microphone permission. Enable the mic for this site (click the lock icon in the address bar) and try again.'
+        : err === 'no-speech'
+          ? "I didn't hear anything — tap the mic and speak, or just type your request."
+          : 'Voice input had a problem (' + (err || 'unknown') + '). You can type your request instead.';
+      box.innerHTML += `<div class="nlp-msg system">${escHtml(msg)}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+  };
   rec.onend = cleanup;
   try { rec.start(); } catch (e) { cleanup(); }
 }
