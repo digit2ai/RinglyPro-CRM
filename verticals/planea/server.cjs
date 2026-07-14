@@ -39,6 +39,26 @@ router.get('/health', (req, res) => {
   });
 });
 
+// ── The new dark app IS the product now ──
+// Point the app root and the legacy SPA landing routes at the portal so
+// /planea, /planea/home, etc. all show the new dark mirror (drawer nav, all
+// module screens). The old Ionic SPA stays reachable at /planea/app/* for
+// auth/diagnostic flows that haven't been ported yet.
+if (hasPortal) {
+  const PORTAL_HOME = '/planea/portal/inicio';
+  const legacyToPortal = {
+    '/': PORTAL_HOME, '/index.html': PORTAL_HOME, '/home': PORTAL_HOME,
+    '/dashboard': PORTAL_HOME, '/mi-planea': PORTAL_HOME,
+    '/patrimony': '/planea/portal/patrimonio', '/patrimonio': '/planea/portal/patrimonio',
+    '/progress': '/planea/portal/metas', '/goals': '/planea/portal/metas', '/metas': '/planea/portal/metas',
+    '/accounts': '/planea/portal/cuentas', '/cuentas': '/planea/portal/cuentas',
+    '/profile': '/planea/portal/mas', '/settings': '/planea/portal/configuracion',
+  };
+  Object.keys(legacyToPortal).forEach((from) => {
+    router.get(from, (req, res) => res.redirect(302, legacyToPortal[from]));
+  });
+}
+
 // ── Maya — conversational financial guide (Flow 1: Financial Planner + Compliance) ──
 // POST /planea/api/v1/maya/chat  { messages:[{role,content}], profile:{...} }
 // Calls Claude with the Financial Planner operating manual (decision tree A–I + CFP
