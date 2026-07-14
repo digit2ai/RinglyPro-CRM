@@ -1621,12 +1621,24 @@ app.get(['/executive-english', '/executive-english/', '/coaching-english-landing
 });
 
 // Speakly — premium bilingual marketing landing (domain speakly.vip) for the
-// exec-coaching vertical. Served on any host for testing; speakly.vip rewrites
-// its root here via the custom-domain handler above.
+// exec-coaching vertical. speakly.vip is the canonical home: when the page is
+// requested on ANY other host (e.g. aiagent.ringlypro.com/speakly), 301-redirect
+// to the equivalent speakly.vip URL. On speakly.vip itself the custom-domain
+// handler above has already rewritten '/', '/terms', '/privacy' -> '/speakly*',
+// and the host is still 'speakly.vip', so we serve the file (no redirect loop).
 const speaklyDir = path.join(__dirname, '..', 'verticals', 'exec-coaching', 'public');
-app.get(['/speakly', '/speakly/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly.html')));
-app.get(['/speakly/terms', '/speakly/terms/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly-terms.html')));
-app.get(['/speakly/privacy', '/speakly/privacy/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly-privacy.html')));
+function speaklyRoute(file, canonicalPath) {
+  return (req, res) => {
+    const host = (req.get('host') || '').toLowerCase();
+    if (host !== 'speakly.vip' && host !== 'www.speakly.vip') {
+      return res.redirect(301, 'https://speakly.vip' + canonicalPath);
+    }
+    res.sendFile(path.join(speaklyDir, file));
+  };
+}
+app.get(['/speakly', '/speakly/'], speaklyRoute('speakly.html', '/'));
+app.get(['/speakly/terms', '/speakly/terms/'], speaklyRoute('speakly-terms.html', '/terms'));
+app.get(['/speakly/privacy', '/speakly/privacy/'], speaklyRoute('speakly-privacy.html', '/privacy'));
 
 // Public promo landing page for Visionarium Coaching.
 // Vision2Ai — corporate landing for the Digit2ai × Visionarium merger.
