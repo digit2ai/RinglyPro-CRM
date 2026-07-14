@@ -100,6 +100,31 @@
 .d2b .poc-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
 .d2b .poc-note{font-size:12.5px;color:var(--good);margin-top:10px;min-height:14px}
 .d2b .spinner.dark{border:2px solid rgba(139,92,246,.3);border-top-color:var(--violet)}
+.d2b .poc-start{margin-top:16px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;border:none;font-weight:750;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:filter .12s ease,transform .12s ease}
+.d2b .poc-start:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.d2b .d2b-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.d2b .d2b-modal[hidden]{display:none}
+.d2b .d2b-modal-backdrop{position:absolute;inset:0;background:rgba(4,5,10,.74);backdrop-filter:blur(3px)}
+.d2b .d2b-modal-box{position:relative;z-index:1;width:100%;max-width:440px;background:var(--card);border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:28px 26px;animation:d2bfade .25s ease}
+.d2b .d2b-modal-x{position:absolute;top:12px;right:15px;font-size:24px;line-height:1;color:var(--faint);background:none;border:none;cursor:pointer}
+.d2b .d2b-modal-x:hover{color:var(--ink)}
+.d2b .modal-title{font-size:20px;font-weight:780}
+.d2b .modal-sub{font-size:14px;color:var(--mut);margin-top:6px}
+.d2b .modal-fields{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+.d2b .modal-fields input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 14px;color:var(--ink);font:inherit;font-size:15px;outline:none;transition:border-color .12s ease}
+.d2b .modal-fields input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .modal-fields input::placeholder{color:#7c808c}
+.d2b .modal-go{width:100%;justify-content:center;margin-top:4px}
+.d2b .modal-status{font-size:13px;color:var(--mut);margin-top:10px;min-height:16px;text-align:center}
+.d2b .modal-status.err{color:#ff9a8f}
+.d2b .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.d2b .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
+.d2b .slot{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:11px;padding:11px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:all .12s ease}
+.d2b .slot:hover{border-color:var(--violet)}
+.d2b .slot.sel{border-color:var(--violet);background:rgba(139,92,246,.18)}
+.d2b .slot .d{font-weight:700;font-size:13.5px}
+.d2b .slot .t{color:var(--mut);font-size:12.5px;margin-top:2px}
+@media(max-width:480px){.d2b .slots{grid-template-columns:1fr}}
 .d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
 .d2b .nav-links a:hover{color:var(--ink)}
 .d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
@@ -302,6 +327,34 @@
   <div class="ambient"></div>
   <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
 
+  <div class="d2b-modal" id="d2b-contact-modal" hidden>
+    <div class="d2b-modal-backdrop" data-close></div>
+    <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Your details">
+      <button class="d2b-modal-x" data-close aria-label="Close">&times;</button>
+      <div class="modal-title">Almost there</div>
+      <div class="modal-sub">Where should we send your build plan and shareable demo?</div>
+      <div class="modal-fields">
+        <input type="text" id="cm-name" placeholder="Your name" autocomplete="name">
+        <input type="tel" id="cm-phone" placeholder="Phone (for your demo link)" autocomplete="tel">
+        <input type="email" id="cm-email" placeholder="Email (optional)" autocomplete="email">
+      </div>
+      <button type="button" class="btn btn-grad modal-go" id="cm-continue">Generate my plan &amp; demo</button>
+      <div class="modal-status" id="cm-status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="d2b-modal" id="d2b-book-modal" hidden>
+    <div class="d2b-modal-backdrop" data-close></div>
+    <div class="d2b-modal-box" role="dialog" aria-modal="true" aria-label="Book your kickoff">
+      <button class="d2b-modal-x" data-close aria-label="Close">&times;</button>
+      <div class="modal-title">Book your kickoff</div>
+      <div class="modal-sub">Pick an open slot &mdash; times shown in Colombia time (COT).</div>
+      <div class="slots" id="bk-slots"><div class="slots-loading"><span class="spinner dark"></span> Loading open slots&hellip;</div></div>
+      <button type="button" class="btn btn-grad modal-go" id="bk-confirm" disabled>Confirm booking</button>
+      <div class="modal-status" id="bk-status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <nav>
     <a class="brand" href="#" aria-label="Digit2AI"><img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" width="173" height="30"></a>
     <div class="nav-links">
@@ -428,11 +481,6 @@
     <div class="builder wrap">
       <form id="d2b-form" class="promptcard">
         <textarea id="d2b-input" maxlength="5000" placeholder="Ask Digit2AI to build...  e.g. &quot;An AI receptionist that answers calls in Spanish, books appointments, and texts a confirmation&quot;"></textarea>
-        <div class="d2b-contact">
-          <input type="text" id="d2b-name" placeholder="Your name" autocomplete="name">
-          <input type="tel" id="d2b-phone" placeholder="Phone (for your demo link)" autocomplete="tel">
-          <input type="email" id="d2b-email" placeholder="Email (optional)" autocomplete="email">
-        </div>
         <div class="promptbar">
           <span class="hint" id="d2b-hint">Describe your idea &mdash; the more detail, the sharper the plan.</span>
           <button type="submit" id="d2b-go">Get my plan &amp; demo
@@ -688,8 +736,10 @@
       +'<a class="poc-btn ghost" href="'+esc(url)+'" target="_blank" rel="noopener">Open</a>'
       +'<button type="button" class="poc-btn ghost" id="poc-copy">Copy link</button>'
       +'</div>'
-      +'<div class="poc-note" id="poc-note"></div>';
+      +'<div class="poc-note" id="poc-note"></div>'
+      +'<button type="button" class="poc-start" id="poc-start">Start building &mdash; book your kickoff &rarr;</button>';
     result.appendChild(d);
+    var sb=d.querySelector('#poc-start'); if(sb) sb.addEventListener('click', function(){ openBookModal(); });
     var cp=d.querySelector('#poc-copy');
     cp.addEventListener('click', function(){
       if(navigator.clipboard && navigator.clipboard.writeText){
@@ -699,48 +749,65 @@
     d.scrollIntoView({behavior:'smooth',block:'center'});
   }
 
+  // ---- contact modal + booking state ----
+  var pendingProjectId=null, contact={name:'',phone:'',email:''}, selectedSlot=null;
+  var contactModal=root.querySelector('#d2b-contact-modal');
+  var bookModal=root.querySelector('#d2b-book-modal');
+  function openModal(m){ if(m){ m.hidden=false; document.body.style.overflow='hidden'; } }
+  function closeModal(m){ if(m){ m.hidden=true; document.body.style.overflow=''; } }
+  root.querySelectorAll('.d2b-modal [data-close]').forEach(function(el){
+    el.addEventListener('click', function(){ closeModal(el.closest('.d2b-modal')); });
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(contactModal); closeModal(bookModal); } });
+
+  // Submit the idea -> open the contact box FIRST (before any triage).
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
     var desc=input.value.trim();
-    var name=((nameEl && nameEl.value)||'').trim();
-    var phone=((phoneEl && phoneEl.value)||'').trim();
-    var email=((emailEl && emailEl.value)||'').trim();
     if(desc.length < 30){ updateHint(); input.focus(); return; }
-    if(!name){ showError('Please add your name so we can prepare your demo.'); if(nameEl) nameEl.focus(); return; }
-    if(!phone){ showError('Please add your phone — we send your shareable demo link there.'); if(phoneEl) phoneEl.focus(); return; }
     lastDescription=desc;
+    var cn=root.querySelector('#cm-name'); if(cn && contact.name) cn.value=contact.name;
+    var cp=root.querySelector('#cm-phone'); if(cp && contact.phone) cp.value=contact.phone;
+    var ce=root.querySelector('#cm-email'); if(ce && contact.email) ce.value=contact.email;
+    openModal(contactModal);
+    setTimeout(function(){ if(cn) cn.focus(); }, 60);
+  });
+
+  var cmBtn=root.querySelector('#cm-continue');
+  if(cmBtn){
+    cmBtn.addEventListener('click', function(){
+      var name=((root.querySelector('#cm-name').value)||'').trim();
+      var phone=((root.querySelector('#cm-phone').value)||'').trim();
+      var email=((root.querySelector('#cm-email').value)||'').trim();
+      var st=root.querySelector('#cm-status');
+      if(!name){ st.textContent='Please add your name.'; st.className='modal-status err'; return; }
+      if(!phone){ st.textContent='Please add your phone — we send your demo link there.'; st.className='modal-status err'; return; }
+      st.textContent=''; st.className='modal-status';
+      contact={name:name,phone:phone,email:email};
+      closeModal(contactModal);
+      runFullFlow(lastDescription||input.value.trim(), name, phone, email);
+    });
+  }
+
+  // Save contact + create project (autosave to inbox) -> plan -> shareable teaser.
+  function runFullFlow(desc, name, phone, email){
     removePoc();
     result.className='';
     loading(true,'Saving your details…');
-
     var projectId=null;
-    // 1) Save the contact + create the project (autosaves to the projects inbox).
     fetch('/projects/api/v1/intake/public/request', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        full_name:name, phone:phone, email:email||undefined,
-        project_title: desc.slice(0,80), problem: desc, project_description: desc,
-        heard_from:'digit2ai self-serve builder', language: D2B_LANG
-      })
+      body: JSON.stringify({ full_name:name, phone:phone, email:email||undefined, project_title: desc.slice(0,80), problem: desc, project_description: desc, heard_from:'digit2ai self-serve builder', language: D2B_LANG })
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
-    .then(function(reg){ if(reg && reg.success){ projectId = reg.project_id; } })
-    .catch(function(){ /* non-fatal: still show the plan */ })
-    .then(function(){
-      // 2) Run the triage plan.
-      loading(true,'Analyzing your project…');
-      return fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, language: D2B_LANG }) });
-    })
+    .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id; } })
+    .catch(function(){})
+    .then(function(){ loading(true,'Analyzing your project…'); return fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, language: D2B_LANG }) }); })
     .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
     .then(function(res){
       if(res.status===200 && res.json && res.json.success){ render(res.json.data); }
-      else {
-        var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
-        if(res.status===429) msg='You\'ve generated several plans already. '+msg;
-        showError(msg); throw new Error('triage');
-      }
-      // 3) Generate the shareable PoC teaser (best-effort).
+      else { var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.'; if(res.status===429) msg='You\'ve generated several plans already. '+msg; showError(msg); throw new Error('triage'); }
       if(projectId){
         appendPocLoading();
         loading(true,'Building your shareable demo…');
@@ -752,7 +819,67 @@
     })
     .then(function(){ loading(false); })
     .catch(function(err){ loading(false); if(err && err.message!=='triage'){ showError('Could not reach the build engine. Check your connection and try again.'); } });
-  });
+  }
+
+  // "Start building" -> booking modal with open calendar slots from /projects.
+  function openBookModal(){
+    selectedSlot=null;
+    var wrap=root.querySelector('#bk-slots');
+    var confirmBtn=root.querySelector('#bk-confirm');
+    var st=root.querySelector('#bk-status');
+    if(st){ st.textContent=''; st.className='modal-status'; }
+    if(confirmBtn){ confirmBtn.disabled=true; confirmBtn.style.display=''; confirmBtn.textContent='Confirm booking'; }
+    wrap.innerHTML='<div class="slots-loading"><span class="spinner dark"></span> Loading open slots…</div>';
+    openModal(bookModal);
+    fetch('/projects/api/v1/intake/public/slots?count=6')
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res || !res.success || !res.data || !res.data.slots || !res.data.slots.length){
+          wrap.innerHTML='<div class="slots-loading">No open slots right now — we\'ll reach out to schedule.</div>'; return;
+        }
+        var loc=(D2B_LANG==='es')?'es-CO':'en-US';
+        wrap.innerHTML='';
+        res.data.slots.forEach(function(sl){
+          var b=document.createElement('button'); b.type='button'; b.className='slot';
+          var dt=new Date(sl.start_time);
+          var day=dt.toLocaleString(loc,{timeZone:'America/Bogota',weekday:'short',month:'short',day:'numeric'});
+          var tim=dt.toLocaleString(loc,{timeZone:'America/Bogota',hour:'numeric',minute:'2-digit'});
+          b.innerHTML='<div class="d">'+day+'</div><div class="t">'+tim+' COT</div>';
+          b.addEventListener('click', function(){
+            root.querySelectorAll('#bk-slots .slot').forEach(function(x){ x.classList.remove('sel'); });
+            b.classList.add('sel'); selectedSlot=sl; if(confirmBtn) confirmBtn.disabled=false;
+          });
+          wrap.appendChild(b);
+        });
+      })
+      .catch(function(){ wrap.innerHTML='<div class="slots-loading">Could not load slots. Please try again.</div>'; });
+  }
+
+  var bkBtn=root.querySelector('#bk-confirm');
+  if(bkBtn){
+    bkBtn.addEventListener('click', function(){
+      if(!selectedSlot || !pendingProjectId) return;
+      var st=root.querySelector('#bk-status');
+      bkBtn.disabled=true; bkBtn.textContent='Booking…';
+      fetch('/projects/api/v1/intake/public/book/'+pendingProjectId, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ start_time:selectedSlot.start_time, end_time:selectedSlot.end_time, name:contact.name, email:contact.email, phone:contact.phone })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.success){
+          var loc=(D2B_LANG==='es')?'es-CO':'en-US';
+          var when=new Date(selectedSlot.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+          root.querySelector('#bk-slots').innerHTML='<div class="slots-loading" style="color:var(--good)">Booked for '+when+' COT. We\'ll be in touch — see you then!</div>';
+          bkBtn.style.display='none';
+        } else {
+          if(st){ st.textContent=(res && res.error) || 'Could not book. Please try again.'; st.className='modal-status err'; }
+          bkBtn.disabled=false; bkBtn.textContent='Confirm booking';
+        }
+      })
+      .catch(function(){ if(st){ st.textContent='Could not reach the server. Please try again.'; st.className='modal-status err'; } bkBtn.disabled=false; bkBtn.textContent='Confirm booking'; });
+    });
+  }
 })();
 </script>
 

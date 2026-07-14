@@ -325,6 +325,105 @@ router.post('/public/teaser/:projectId', async (req, res) => {
 });
 
 // =====================================================
+// PUBLIC KICKOFF SCHEDULING (no auth) — /digit2ai "Start building"
+// =====================================================
+// GET  /public/slots?count=6    -> open weekday slots (Colombia business hours)
+// POST /public/book/:projectId  -> books a kickoff meeting for the project
+async function _genOpenSlots({ count = 6, minDaysOut = 2, durationMin = 30, workspaceId = 1 } = {}) {
+  const { CalendarEvent } = require('../models');
+  const { Op } = require('sequelize');
+  const lookaheadDays = 21;
+  const now = new Date();
+  const horizon = new Date(now.getTime() + (lookaheadDays + 2) * 86400000);
+  let evWindows = [];
+  try {
+    const events = await CalendarEvent.findAll({
+      where: { workspace_id: workspaceId, start_time: { [Op.lt]: horizon }, end_time: { [Op.gt]: now } },
+      attributes: ['start_time', 'end_time']
+    });
+    evWindows = events.map(e => [new Date(e.start_time).getTime(), new Date(e.end_time || e.start_time).getTime()]);
+  } catch (_) { /* no conflict data */ }
+  const overlaps = (s, e) => evWindows.some(([es, ee]) => s < ee && e > es);
+  // Colombia (UTC-5) business hours -> UTC start minutes. 10:00 & 14:00 COT = 15:00 / 19:00 UTC.
+  const startMinsUtc = [15 * 60, 19 * 60];
+  const slots = [];
+  const cursor = new Date();
+  let weekdaysAdvanced = 0, dayAttempts = 0;
+  while (slots.length < count && dayAttempts < lookaheadDays * 2) {
+    dayAttempts++;
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const dow = cursor.getUTCDay();
+    if (dow === 0 || dow === 6) continue;
+    weekdaysAdvanced++;
+    if (weekdaysAdvanced < minDaysOut) continue;
+    const dayStartMs = Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate(), 0, 0, 0);
+    for (const sm of startMinsUtc) {
+      if (slots.length >= count) break;
+      const s = dayStartMs + sm * 60000;
+      const e = s + durationMin * 60000;
+      if (s < Date.now()) continue;
+      if (!overlaps(s, e)) slots.push({ start_time: new Date(s).toISOString(), end_time: new Date(e).toISOString() });
+    }
+  }
+  return slots;
+}
+
+router.get('/public/slots', async (req, res) => {
+  try {
+    const count = Math.max(3, Math.min(12, Number(req.query.count) || 6));
+    const slots = await _genOpenSlots({ count });
+    res.json({ success: true, data: { slots, timezone: 'America/Bogota' } });
+  } catch (err) {
+    console.error('[D2AI-Intake] public slots error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/public/book/:projectId', async (req, res) => {
+  try {
+    const { CalendarEvent } = require('../models');
+    const b = req.body || {};
+    const start = new Date(b.start_time), end = new Date(b.end_time);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json({ success: false, error: 'Invalid start/end times' });
+    }
+    if (start < new Date()) return res.status(400).json({ success: false, error: 'Cannot book a past time' });
+    const project = await Project.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+    const name  = String(b.name  || project.submitter_name  || '').trim();
+    const email = String(b.email || project.submitter_email || '').trim();
+    const phone = String(b.phone || project.submitter_phone || '').trim();
+
+    let event;
+    try {
+      event = await CalendarEvent.create({
+        workspace_id: project.workspace_id || 1,
+        project_id: project.id,
+        title: `Kickoff — ${project.name}`.slice(0, 200),
+        start_time: start,
+        end_time: end,
+        user_email: email || null,
+        description: `Self-serve kickoff booked via /digit2ai.\nContact: ${name}${phone ? ' / ' + phone : ''}${email ? ' <' + email + '>' : ''}`.trim()
+      });
+    } catch (e) {
+      console.error('[D2AI-Intake] calendar create failed:', e.message);
+      return res.status(500).json({ success: false, error: 'Could not book the slot: ' + e.message });
+    }
+
+    try {
+      project.kickoff_event_id = event.id;
+      project.kickoff_scheduled_at = start;
+      await project.save();
+    } catch (_) { /* columns optional */ }
+
+    res.json({ success: true, data: { event_id: event.id, start_time: start.toISOString(), end_time: end.toISOString() } });
+  } catch (err) {
+    console.error('[D2AI-Intake] public book error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // PUBLIC TRIAGE PREVIEW (champion-facing demo) — no auth
 // =====================================================
 // POST /public-triage-preview
