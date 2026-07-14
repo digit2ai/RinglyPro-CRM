@@ -30,6 +30,9 @@
   --r:14px;--r-lg:22px;--r-xl:30px;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#ec4899;
+  --ink-mute:#a6a9b4;--amber:#e6b45a;--radius-sm:12px;
   font-family:var(--sans);color:var(--ink);background:var(--bg);
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   line-height:1.55;letter-spacing:-.011em;width:100%;min-height:100vh;overflow-x:hidden;position:relative;
@@ -79,6 +82,71 @@
 .d2b .eyebrow .pip{width:7px;height:7px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 3px rgba(255,146,43,.25)}
 .d2b .hero h1{font-size:clamp(40px,7vw,78px);font-weight:840;letter-spacing:-.05em;color:#fff;text-shadow:0 2px 40px rgba(0,0,0,.35)}
 .d2b .hero .lede{font-size:clamp(17px,2.1vw,21px);color:#c9ccd6;max-width:52ch;margin:22px auto 0;font-weight:450}
+
+/* ===== champion-teaser voice orb (ported verbatim) ===== */
+.d2b .hero-logo{display:flex;flex-direction:column;justify-content:center;align-items:center;margin:36px 0 6px;--orb-size:320px;position:relative;z-index:3}
+.d2b .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 200ms ease;user-select:none;-webkit-tap-highlight-color:transparent;--orb-amp:0;will-change:transform}
+.d2b .orb-wrap:hover{transform:scale(1.02)}
+.d2b .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(34,211,238,.15)}
+.d2b .orb-wrap.disabled{cursor:default}
+.d2b .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.d2b .orb-wrap[data-state="listening"] .orb-svg{transform:scale(calc(1 + var(--orb-amp)*.06));transition:transform 80ms linear,filter 80ms linear}
+.d2b .orb-wrap[data-state="listening"] .orb-ring{stroke-width:calc(1.5px + var(--orb-amp)*2px)!important}
+.d2b .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.d2b .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.d2b .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.d2b .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.d2b .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.d2b .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.d2b .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.d2b .orb-wrap[data-state="listening"] .orb-svg{filter:drop-shadow(0 8px 32px rgba(34,211,238,.55)) drop-shadow(0 4px 18px rgba(139,92,246,.35)) brightness(1.15);transition:filter 200ms ease}
+.d2b .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
+.d2b .orb-wrap[data-state="listening"] .orb-ring{opacity:1;animation:orbRingPulse 1.6s ease-out infinite}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-1{animation-delay:0s}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-2{animation-delay:.5s}
+.d2b .orb-wrap[data-state="listening"] .orb-ring-3{animation-delay:1s}
+@keyframes orbRingPulse{0%{opacity:.9;stroke-width:1.5}100%{opacity:0;stroke-width:.5}}
+.d2b .orb-particles{opacity:0}
+.d2b .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+.d2b .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+.d2b .orb-wrap[data-state="thinking"] .orb-core{animation:orbThinkSpin 6s linear infinite}
+.d2b .orb-wrap[data-state="thinking"] .orb-ring{opacity:.7;animation:orbRingTight 2.4s ease-in-out infinite}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+.d2b .orb-wrap[data-state="speaking"] .orb-core,.d2b .orb-wrap[data-state="speaking"] .orb-glow{filter:brightness(1.3) saturate(1.2)}
+.d2b .orb-wave{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:240px;height:60px;opacity:0;pointer-events:none;transition:opacity 200ms ease}
+.d2b .orb-wrap[data-state="speaking"] .orb-wave{opacity:.85}
+.d2b .orb-caption{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(360px,92vw);text-align:center;font-family:var(--font-mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-mute);transition:color 200ms ease;line-height:1.4}
+.d2b .orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.d2b .orb-cap-idle,.d2b .orb-cap-active{display:none}
+.d2b .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
+.d2b .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
+.d2b .orb-wrap:hover .orb-caption{color:var(--accent-cyan)}
+.d2b .orb-wrap[data-state="listening"] .orb-caption{color:var(--accent-cyan)}
+.d2b .orb-wrap[data-state="thinking"] .orb-caption{color:var(--accent-violet)}
+.d2b .orb-wrap[data-state="speaking"] .orb-caption{color:var(--accent-magenta)}
+.d2b .orb-wrap[data-state="listening"] .orb-caption::after{content:' · listening'}
+.d2b .orb-wrap[data-state="thinking"] .orb-caption::after{content:' · analyzing'}
+.d2b .orb-wrap[data-state="speaking"] .orb-caption::after{content:' · speaking'}
+.d2b .orb-fallback[hidden]{display:none!important}
+.d2b .orb-fallback{margin:20px auto 0;font-size:12.5px;color:var(--amber);text-align:center;max-width:min(420px,92vw);line-height:1.55;padding:14px 18px;border:1px solid rgba(230,180,90,.3);border-radius:var(--radius-sm);background:rgba(230,180,90,.08)}
+.d2b .or-divider{position:relative;z-index:3;text-align:center;color:var(--faint);font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:24px auto 2px}
+@media(max-width:900px){.d2b .hero-logo{--orb-size:290px}}
+@media(max-width:480px){.d2b .hero-logo{--orb-size:240px}}
+@media(prefers-reduced-motion:reduce){
+  .d2b .orb-ring-outer,.d2b .orb-ring-mid,.d2b .orb-ring-inner,.d2b .orb-iris-outer,.d2b .orb-iris-segs,.d2b .orb-scan,.d2b .orb-crosshair,.d2b .orb-particle{animation:none!important}
+  .d2b .orb-svg animate,.d2b .orb-svg animateTransform{display:none}
+  .d2b .orb-wrap[data-state="listening"] .orb-svg{transform:none!important}
+  .d2b .orb-wrap[data-state="listening"] .orb-ring{animation:none!important;opacity:1}
+  .d2b .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+  .d2b .orb-wrap[data-state="thinking"] .orb-core{animation:none!important}
+  .d2b .orb-wrap[data-state="speaking"] .orb-wave{opacity:.5}
+}
 
 /* prompt box */
 .d2b .builder{position:relative;z-index:3;max-width:720px;margin:40px auto 0}
@@ -212,6 +280,112 @@
       <h1>Build something<br><span class="grad-text">your business runs on.</span></h1>
       <p class="lede">Describe the AI tool your company needs in plain language. Our AI workforce scopes it, plans the build, and ships it &mdash; voice agents, dashboards, automations, full platforms.</p>
     </div>
+
+    <div class="hero-logo">
+      <div class="orb-wrap" id="orb-wrap" role="button" tabindex="0"
+           aria-label="Activate the Neural brain — press Enter or Space to start a voice conversation"
+           aria-pressed="false" aria-describedby="orb-caption orb-sr-status"
+           data-state="idle" data-configured="false">
+        <span class="orb-sr" id="orb-sr-status" aria-live="polite" aria-atomic="true"></span>
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+        <canvas class="orb-wave" id="orb-wave" width="240" height="60" aria-hidden="true"></canvas>
+        <div class="orb-caption" id="orb-caption">
+          <span class="orb-cap-idle">Click to speak with the Neural brain</span>
+          <span class="orb-cap-active">Tap orb or press Esc to stop</span>
+        </div>
+      </div>
+      <div class="orb-fallback" id="orb-fallback" hidden>
+        <strong>Voice mode is warming up.</strong><br>
+        Type your idea below and our AI will build you a real plan in seconds.
+      </div>
+    </div>
+
+    <div class="or-divider">— or type your idea —</div>
 
     <div class="builder wrap">
       <form id="d2b-form" class="promptcard">
@@ -431,6 +605,9 @@
     result.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
+  // Expose so the voice orb can pipe its triage result into the same panel.
+  window.__d2bRenderPlan = render;
+
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
@@ -521,5 +698,196 @@
   window.addEventListener('resize', resize);
   resize();
   frame();
+})();
+</script>
+
+<!-- ElevenLabs SDK — lazy-loaded on first orb click (T4.4) -->
+<script>
+  window.__loadElevenLabsSdk = function () {
+    if (window.__ElevenLabsConversation) return Promise.resolve(window.__ElevenLabsConversation);
+    if (window.__ElevenLabsSdkPromise) return window.__ElevenLabsSdkPromise;
+    window.__ElevenLabsSdkPromise = import('https://esm.sh/@elevenlabs/client@1.9.0')
+      .then(function (mod) {
+        var C = mod.Conversation || (mod.default && mod.default.Conversation);
+        window.__ElevenLabsConversation = C;
+        return C;
+      })
+      .catch(function (e) {
+        console.warn('[orb] ElevenLabs SDK failed to load — voice mode unavailable.', e);
+        return null;
+      });
+    return window.__ElevenLabsSdkPromise;
+  };
+</script>
+
+<!-- Champion-teaser voice orb controller (ported) -->
+<script>
+(function () {
+  var wrap = document.getElementById('orb-wrap');
+  if (!wrap) return;
+  var caption = document.getElementById('orb-caption');
+  var fallbackEl = document.getElementById('orb-fallback');
+  var waveCanvas = document.getElementById('orb-wave');
+  var srStatus = document.getElementById('orb-sr-status');
+  var API_BASE = '/projects/api/v1/intake';
+  var session = null, connecting = false, audioCtx = null, analyser = null, waveAnim = null, micStream = null, ampSmoothed = 0;
+  var SR = { idle: 'Neural brain ready. Press Enter to start a voice conversation.', listening: 'Listening.', thinking: 'Analyzing your project.', speaking: 'The brain is speaking.' };
+
+  function setState(s) {
+    wrap.setAttribute('data-state', s);
+    wrap.setAttribute('aria-pressed', s !== 'idle' ? 'true' : 'false');
+    if (srStatus) srStatus.textContent = SR[s] || '';
+  }
+  function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
+  function showFallback() {
+    wrap.classList.add('disabled');
+    wrap.setAttribute('aria-disabled', 'true');
+    if (fallbackEl) fallbackEl.hidden = false;
+    connecting = false;
+  }
+  function fetchConfig() {
+    return fetch(API_BASE + '/partnership-orb-config?lang=en')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.success && j.data) {
+          wrap.dataset.configured = j.data.configured ? 'true' : 'false';
+          wrap.dataset.agentId = j.data.agent_id || '';
+          wrap.dataset.lang = j.data.language || 'en';
+          return j.data;
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  }
+  function startWaveform(stream) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var src = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128; analyser.smoothingTimeConstant = 0.6;
+      src.connect(analyser);
+      var ctx2d = waveCanvas.getContext('2d');
+      var buf = new Uint8Array(analyser.frequencyBinCount);
+      var w = waveCanvas.width, h = waveCanvas.height;
+      function paint() {
+        if (!analyser) return;
+        analyser.getByteFrequencyData(buf);
+        var sum = 0, count = 0, hi = Math.min(24, buf.length);
+        for (var k = 2; k < hi; k++) { sum += buf[k] * buf[k]; count++; }
+        var rms = count ? Math.sqrt(sum / count) / 255 : 0;
+        var b = Math.min(1, rms * 2.4);
+        ampSmoothed = ampSmoothed * 0.7 + b * 0.3;
+        setAmp(ampSmoothed);
+        ctx2d.clearRect(0, 0, w, h);
+        var barW = (w / buf.length) * 1.6;
+        for (var i = 0; i < buf.length; i++) {
+          var v = buf[i] / 255, barH = v * h * 0.95, x = i * barW;
+          var g = ctx2d.createLinearGradient(0, h, 0, h - barH);
+          g.addColorStop(0, '#22d3ee'); g.addColorStop(0.5, '#8b5cf6'); g.addColorStop(1, '#ec4899');
+          ctx2d.fillStyle = g;
+          ctx2d.fillRect(x, h - barH, barW * 0.7, barH);
+        }
+        waveAnim = requestAnimationFrame(paint);
+      }
+      paint();
+    } catch (e) { /* analyser optional */ }
+  }
+  function stopWaveform() {
+    if (waveAnim) cancelAnimationFrame(waveAnim);
+    waveAnim = null; analyser = null; ampSmoothed = 0; setAmp(0);
+    if (waveCanvas) { var c = waveCanvas.getContext('2d'); if (c) c.clearRect(0, 0, waveCanvas.width, waveCanvas.height); }
+  }
+  function releaseMic() {
+    if (micStream) { try { micStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} micStream = null; }
+  }
+
+  // The agent calls this when it has enough context. POST to the same
+  // voice-trigger-triage endpoint and render into the on-page plan panel.
+  function runTriageFromAgent(payload) {
+    setState('thinking');
+    var lang = wrap.dataset.lang || 'en';
+    return fetch(API_BASE + '/voice-trigger-triage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: (payload && payload.description) || '',
+        conversation_summary: (payload && payload.conversation_summary) || '',
+        name: payload && payload.name || undefined,
+        email: payload && payload.email || undefined,
+        company: payload && payload.company || undefined,
+        country: payload && payload.country || undefined,
+        language: lang
+      })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      setState(session ? 'listening' : 'idle');
+      if (res && res.success && res.data) {
+        if (window.__d2bRenderPlan) window.__d2bRenderPlan(res.data);
+        var d = res.data;
+        var ts = (d.technical_solution && d.technical_solution.summary) || '';
+        if (ts.length > 200) ts = ts.slice(0, 200).replace(/\s+\S*$/, '') + '...';
+        return { ok: true, verdict: d.verdict, fit_score: d.fit_score, fit_reasoning: d.fit_reasoning || '',
+                 project_title: d.project_title_suggested || '', technical_summary: ts,
+                 delivery_window: (d.technical_solution && d.technical_solution.delivery_window) || '' };
+      }
+      return { ok: false, error: (res && res.error) || 'triage_failed' };
+    })
+    .catch(function (err) { setState(session ? 'listening' : 'idle'); return { ok: false, error: err.message }; });
+  }
+  window.runPartnershipTriage = runTriageFromAgent;
+
+  function endVoiceSession() {
+    if (session) { try { session.endSession && session.endSession(); } catch (e) {} }
+    session = null; stopWaveform(); releaseMic(); setState('idle');
+    if (caption) caption.style.opacity = '';
+  }
+
+  function activateOrb() {
+    if (connecting) return;
+    if (session) { endVoiceSession(); return; }
+    connecting = true;
+    if (caption) caption.style.opacity = '0.7';
+    var p = (window.__ElevenLabsConversation)
+      ? Promise.resolve(window.__ElevenLabsConversation)
+      : (window.__loadElevenLabsSdk ? window.__loadElevenLabsSdk() : Promise.resolve(null));
+    p.then(function (Conversation) {
+      if (!Conversation) { showFallback(); return; }
+      proceed(Conversation);
+    });
+  }
+  function proceed(Conversation) {
+    fetchConfig().then(function (cfg) {
+      if (!cfg || !cfg.configured || !cfg.agent_id) { showFallback(); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showFallback(); return; }
+      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
+        .then(function (stream) {
+          micStream = stream;
+          startWaveform(stream);
+          return Conversation.startSession({
+            agentId: cfg.agent_id,
+            clientTools: { run_partnership_triage: function (params) { return runTriageFromAgent(params || {}); } },
+            onConnect: function () { setState('listening'); },
+            onDisconnect: function () { setState('idle'); stopWaveform(); session = null; releaseMic(); },
+            onError: function (e) { console.error('[orb] convai error', e); setState('idle'); stopWaveform(); showFallback(); },
+            onModeChange: function (mode) {
+              if (mode && mode.mode) {
+                if (mode.mode === 'speaking') setState('speaking');
+                else if (mode.mode === 'listening') setState('listening');
+                else if (mode.mode === 'thinking') setState('thinking');
+              }
+            }
+          });
+        })
+        .then(function (s) { session = s; connecting = false; })
+        .catch(function (err) { console.warn('[orb] mic/session failed', err); stopWaveform(); releaseMic(); showFallback(); });
+    });
+  }
+
+  wrap.addEventListener('click', activateOrb);
+  wrap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateOrb(); }
+    else if (e.key === 'Escape') { endVoiceSession(); }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && session) endVoiceSession(); });
 })();
 </script>
