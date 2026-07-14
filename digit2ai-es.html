@@ -361,7 +361,7 @@
       <a href="#how">Cómo funciona</a>
       <a href="#platforms">Plataformas</a>
       <a href="#numbers">Por qué nosotros</a>
-      <a href="https://digit2ai.com" class="btn btn-primary">Empezar</a>
+      <a href="#d2b-form" class="btn btn-primary" id="d2b-getstarted">Empezar</a>
     </div>
   </nav>
 
@@ -638,6 +638,13 @@
   });
 
   if(scroll){ scroll.addEventListener('click', function(e){
+    e.preventDefault();
+    form.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){ input.focus(); }, 400);
+  }); }
+
+  var d2bGetStarted = root.querySelector('#d2b-getstarted');
+  if(d2bGetStarted){ d2bGetStarted.addEventListener('click', function(e){
     e.preventDefault();
     form.scrollIntoView({behavior:'smooth',block:'center'});
     setTimeout(function(){ input.focus(); }, 400);
