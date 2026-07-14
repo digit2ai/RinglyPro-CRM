@@ -1,12 +1,12 @@
 /* PLANEA PWA service worker — app-shell caching.
    Network-first for navigations (so new deploys show), cache-first for static
    assets, never touches /api/. Scope: /planea/portal/. */
-var CACHE = 'planea-shell-v1';
+var CACHE = 'planea-shell-v2';
 var BASE = '/planea/portal/';
 var SHELL = [
   BASE + 'inicio', BASE + 'patrimonio', BASE + 'metas', BASE + 'cuentas',
   BASE + 'retiro', BASE + 'ahorro', BASE + 'deuda', BASE + 'inversion',
-  BASE + 'seguros', BASE + 'mas', BASE + 'configuracion',
+  BASE + 'seguros', BASE + 'mas', BASE + 'configuracion', BASE + 'guia',
   BASE + 'planea-app.css', BASE + 'planea-nav.js', BASE + 'maya-chat.js',
   BASE + 'manifest.webmanifest', BASE + 'icon.svg', BASE + 'icon-192.png',
   BASE + 'icon-512.png', BASE + 'hero-valle.png'

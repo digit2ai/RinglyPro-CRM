@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Guía de uso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-app.css">
+<style>
+  .gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:14px}
+  .gcard .gh{display:flex;align-items:center;gap:14px}
+  .gcard .gi{width:44px;height:44px;border-radius:12px;background:var(--group);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .gcard .gi svg{width:21px;height:21px;stroke:var(--greenb);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .gcard h3{font-family:'Inter',sans-serif;font-weight:700;font-size:17px}
+  .gcard p{color:var(--mut);font-size:14px;margin-top:10px;line-height:1.55}
+  .gcard ul{margin:10px 0 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .gcard li{color:var(--mut);font-size:13.5px;line-height:1.5;padding-left:18px;position:relative}
+  .gcard li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .gcard li b{color:var(--txt);font-weight:700}
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+
+  <div class="phead"><div><h1>Guía de uso</h1><p class="lede">Todo lo que puedes hacer en Planea, en dos minutos.</p></div></div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span><h3>Tu Planea Score</h3></div>
+    <p>Un número del 0 al 100 que resume qué tan sana está tu vida financiera. No mide cuánto tienes, sino qué tan bien manejas lo que tienes.</p>
+    <ul>
+      <li>Se construye con cuatro pilares: <b>fondo de emergencia, flujo de caja, salud de deudas y estabilidad</b>.</li>
+      <li>Rangos: Punto de partida, Construyendo, En camino, Sólido y <b>Planeado</b> (el mejor).</li>
+    </ul>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/></svg></span><h3>Habla con Maya, tu guía IA</h3></div>
+    <p>Toca el botón <b>Pregúntale a Maya</b> abajo a la derecha en cualquier pantalla. Maya responde sobre tus datos reales, no consejos genéricos.</p>
+    <ul>
+      <li><b>Escribe</b> tu pregunta, o</li>
+      <li>toca el <b>micrófono</b> para hablar una vez, o</li>
+      <li>toca el <b>orbe de ondas</b> en el encabezado del chat para el <b>modo manos libres</b>: Maya te habla, te escucha y responde en bucle, sin escribir.</li>
+    </ul>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><h3>Tus módulos</h3></div>
+    <p>Abre el menú con el botón <b>☰</b> (arriba a la izquierda) o el panel lateral en pantalla grande.</p>
+    <ul>
+      <li><b>Inicio:</b> el resumen de tus finanzas hoy.</li>
+      <li><b>Mi Patrimonio:</b> tus activos menos tus pasivos, en un solo número.</li>
+      <li><b>Mis metas:</b> tus planes ordenados por prioridad.</li>
+      <li><b>Ahorro · Deuda · Inversión · Seguros · Retiro:</b> el detalle de cada área.</li>
+      <li><b>Cuentas vinculadas:</b> tus productos conectados por open finance.</li>
+    </ul>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><h3>Personaliza tu portal</h3></div>
+    <p>En <b>Agregar módulo</b> (menú izquierdo) o en <b>Configuración</b> activas solo los módulos que necesitas. Cada uno aparece como una opción en el menú.</p>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span><h3>Instala la app</h3></div>
+    <p>Planea funciona como app instalable, incluso sin conexión.</p>
+    <ul>
+      <li><b>Android / computador:</b> toca <b>Instalar Planea</b> en el menú izquierdo, o el ícono de instalar del navegador.</li>
+      <li><b>iPhone:</b> en Safari, toca <b>Compartir → Agregar a inicio</b>.</li>
+    </ul>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><h3>Tu privacidad</h3></div>
+    <p>Planea ve tus finanzas, pero <b>solo tú mueves tu dinero</b>. Nunca te pedimos las claves de tu banco. Tratamos tus datos conforme a la Ley 1581 de 2012 de Colombia.</p>
+  </div>
+
+  <div class="gcard">
+    <div class="gh"><span class="gi"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span><h3>Cerrar sesión</h3></div>
+    <p>Encuentras <b>Cerrar sesión</b> al final del panel izquierdo, debajo de tu perfil.</p>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <span class="tagline">¿Dudas?</span>
+    <h3>Pregúntale a Maya</h3>
+    <p>Si algo no queda claro, ábrela y dile: "¿cómo funciona Planea?" o "¿qué hago primero con mi dinero?".</p>
+    <a class="btn primary" href="#" data-action="maya" style="margin-top:16px">Abrir a Maya →</a>
+  </div>
+
+</div></div>
+<script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/maya-chat.js" defer></script>
+</body>
+</html>

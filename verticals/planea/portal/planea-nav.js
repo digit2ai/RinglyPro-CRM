@@ -14,6 +14,7 @@
     { k: 'retiro', label: 'Retiro', icon: 'circle:12,12,9|M12 7v5l3 3' },
     { k: 'cuentas', label: 'Cuentas vinculadas', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19' },
     { k: 'maya', label: 'Planea IA', icon: 'M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z', plus: true, action: 'maya' },
+    { k: 'guia', label: 'Guía de uso', icon: 'M12 6.5V21|M12 6.5C10 5 6 4.5 4 5v13c2-.5 6 0 8 1.5|M12 6.5C14 5 18 4.5 20 5v13c-2-.5-6 0-8 1.5' },
     { k: 'mas', label: 'Más', icon: 'M4 7h16M4 12h16M4 17h16' }
   ];
 
