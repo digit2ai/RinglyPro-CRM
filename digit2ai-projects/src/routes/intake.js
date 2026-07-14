@@ -20,6 +20,48 @@ const {
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 const TOKEN_AUDIENCE = 'd2ai-intake';
 
+// ---------------------------------------------------------------
+// Team lead notification — internal ops alert when a new public
+// project request lands (e.g. the /digit2ai "Start this project"
+// flow). Deliberately NOT gated by EMAIL_AUTOSEND_DISABLED: that
+// flag suppresses CLIENT-facing mail (spam risk); this is an
+// internal alert to the Digit2AI team. Fire-and-forget.
+//   Config: SENDGRID_API_KEY + SENDGRID_FROM_EMAIL required.
+//   Recipient: D2AI_LEAD_NOTIFY_EMAIL (default info@digit2ai.com).
+// ---------------------------------------------------------------
+let _leadSg = null;
+function _leadMailer() {
+  if (_leadSg) return _leadSg;
+  try {
+    _leadSg = require('@sendgrid/mail');
+    if (process.env.SENDGRID_API_KEY) _leadSg.setApiKey(process.env.SENDGRID_API_KEY);
+  } catch (_) { _leadSg = null; }
+  return _leadSg;
+}
+function _esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+function notifyTeamOfLead(lead) {
+  try {
+    const sg = _leadMailer();
+    const to = process.env.D2AI_LEAD_NOTIFY_EMAIL || 'info@digit2ai.com';
+    const from = process.env.SENDGRID_FROM_EMAIL;
+    if (!sg || !process.env.SENDGRID_API_KEY || !from) {
+      console.log('[D2AI-Intake] lead notify skipped (SendGrid/from not configured) for', lead && lead.email);
+      return;
+    }
+    const html = `<h2 style="margin:0 0 8px">New project request — Digit2AI self-serve</h2>
+      <p style="margin:4px 0"><b>${_esc(lead.name || '')}</b> &lt;${_esc(lead.email || '')}&gt;${lead.phone ? ' &middot; ' + _esc(lead.phone) : ''}</p>
+      <p style="margin:4px 0"><b>Company:</b> ${_esc(lead.company || '—')}<br><b>Source:</b> ${_esc(lead.source || '—')}</p>
+      <p style="margin:4px 0"><b>Project:</b> ${_esc(lead.title || '—')}</p>
+      <p style="margin:4px 0"><b>Problem:</b><br>${_esc(lead.problem || '—')}</p>
+      <p style="margin:12px 0"><a href="${_esc(lead.url || '')}">Open in the review console &rarr;</a></p>`;
+    sg.send({ to, from, subject: `New lead: ${lead.title || lead.name || 'Digit2AI request'}`, html })
+      .then(() => console.log('[D2AI-Intake] lead notify sent to', to))
+      .catch(e => console.warn('[D2AI-Intake] lead notify failed:', e.message));
+  } catch (e) { console.warn('[D2AI-Intake] lead notify error:', e.message); }
+}
+
 // =====================================================
 // HEALTH (unauthenticated)
 // =====================================================
@@ -215,6 +257,15 @@ router.post('/public/request', async (req, res) => {
         }).catch(e => console.warn('[D2AI-Intake] triage agent crashed:', e.message));
       } catch (e) { console.warn('[D2AI-Intake] triage agent dispatch failed:', e.message); }
     }, 3000);
+
+    // Fire-and-forget internal alert so the team sees the lead immediately.
+    notifyTeamOfLead({
+      project_id: project.id,
+      name: b.full_name, email: b.email, phone: b.phone,
+      company: companyName, title: b.project_title,
+      problem: b.problem, source: b.heard_from,
+      url: `${baseUrl}/projects/intake/batch.html?token=${accessToken.token}`
+    });
   } catch (err) {
     try { await t.rollback(); } catch (_) {}
     console.error('[D2AI-Intake] public request error:', err);
@@ -446,7 +497,7 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
         agents_involved: Array.isArray(ts.agents_involved) ? ts.agents_involved.map(a => String(a).trim()).filter(Boolean) : [],
         what_we_build: Array.isArray(ts.what_we_build) ? ts.what_we_build.map(a => String(a).trim()).filter(Boolean) : [],
         data_sources_via_mcp: Array.isArray(ts.data_sources_via_mcp) ? ts.data_sources_via_mcp.map(a => String(a).trim()).filter(Boolean) : [],
-        delivery_window: String(ts.delivery_window || '').trim()
+        delivery_window: '2 weeks'  // pinned per Digit2AI 2-week delivery positioning
       },
       week_1_deliverables: Array.isArray(parsed.week_1_deliverables) ? parsed.week_1_deliverables.map(a => String(a).trim()).filter(Boolean) : [],
       verify_flags: Array.isArray(parsed.verify_flags) ? parsed.verify_flags.map(a => String(a).trim()).filter(Boolean) : [],
@@ -1508,7 +1559,7 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
         agents_involved: Array.isArray(ts.agents_involved) ? ts.agents_involved.map(a => String(a).trim()).filter(Boolean) : [],
         what_we_build: Array.isArray(ts.what_we_build) ? ts.what_we_build.map(a => String(a).trim()).filter(Boolean) : [],
         data_sources_via_mcp: Array.isArray(ts.data_sources_via_mcp) ? ts.data_sources_via_mcp.map(a => String(a).trim()).filter(Boolean) : [],
-        delivery_window: String(ts.delivery_window || '').trim()
+        delivery_window: '2 weeks'  // pinned per Digit2AI 2-week delivery positioning
       },
       week_1_deliverables: Array.isArray(parsed.week_1_deliverables) ? parsed.week_1_deliverables.map(a => String(a).trim()).filter(Boolean) : [],
       verify_flags: Array.isArray(parsed.verify_flags) ? parsed.verify_flags.map(a => String(a).trim()).filter(Boolean) : [],

@@ -258,9 +258,13 @@
 .d2b .finalcard .btn-white{background:#fff;color:var(--pill-ink);padding:15px 30px;font-size:16px;font-weight:750;border-radius:13px;box-shadow:var(--shadow)}
 
 /* footer */
-.d2b footer.d2f{border-top:1px solid var(--line);padding:34px 0;color:var(--faint);font-size:13px}
-.d2b .d2f .row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.d2b .d2f a:hover{color:var(--ink)}
+.d2b footer.d2f{border-top:1px solid var(--line);padding:32px 0 44px;color:var(--faint);font-size:13px;position:relative;z-index:1}
+.d2b .d2f-top{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.d2b .d2f-links{display:flex;align-items:center;gap:24px;flex-wrap:wrap;font-weight:500}
+.d2b .d2f-links a{color:var(--mut)}
+.d2b .d2f-links a:hover{color:var(--ink)}
+.d2b .d2f-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:16px}
+@media(max-width:640px){.d2b .d2f-top,.d2b .d2f-bottom{flex-direction:column;align-items:flex-start;gap:14px}}
 
 @media(max-width:900px){
   .d2b .gallery{grid-template-columns:repeat(2,1fr)}
@@ -505,10 +509,19 @@
 
   <footer class="d2f">
     <div class="wrap">
-      <div class="row">
-        <img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" style="height:24px;width:auto">
-        <div>21 live platforms &middot; 22 verticals &middot; 99.9% SLA</div>
-        <div><a href="https://digit2ai.com">digit2ai.com</a></div>
+      <div class="d2f-top">
+        <img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" style="height:26px;width:auto">
+        <div class="d2f-links">
+          <a href="/terms.html">Terms of Service</a>
+          <a href="/privacy.html">Privacy Policy</a>
+          <a href="tel:+12232949184">223-294-9184</a>
+          <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
+          <a href="https://wa.me/18136414177" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+      <div class="d2f-bottom">
+        <span>&copy; 2026 DIGIT2AI LLC &mdash; All rights reserved.</span>
+        <span>21 live platforms &middot; 22 verticals &middot; 99.9% SLA</span>
       </div>
     </div>
   </footer>
