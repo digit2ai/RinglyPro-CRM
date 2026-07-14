@@ -1,0 +1,102 @@
+/* PLANEA — shared chrome: top bar + left drawer nav + Maya floating button.
+   Injected on every module screen so all pages stay identical. */
+(function () {
+  'use strict';
+  var BASE = '/planea/portal/';
+  var ITEMS = [
+    { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
+    { k: 'patrimonio', label: 'Mi Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
+    { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
+    { k: 'ahorro', label: 'Ahorro', icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },
+    { k: 'deuda', label: 'Deuda', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19|M6 15.5h4' },
+    { k: 'inversion', label: 'Inversión', icon: 'M3 17l6-6 4 4 8-8|M15 7h6v6' },
+    { k: 'seguros', label: 'Seguros', icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z|M9 12l2 2 4-4' },
+    { k: 'retiro', label: 'Retiro', icon: 'circle:12,12,9|M12 7v5l3 3' },
+    { k: 'cuentas', label: 'Cuentas vinculadas', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19' },
+    { k: 'maya', label: 'Planea IA', icon: 'M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z', plus: true, action: 'maya' },
+    { k: 'mas', label: 'Más', icon: 'M4 7h16M4 12h16M4 17h16' }
+  ];
+
+  function svg(path) {
+    var parts = path.split('|'), inner = '';
+    parts.forEach(function (p) {
+      if (p.indexOf('circle:') === 0) { var c = p.slice(7).split(','); inner += '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '"' + (c[2] === '0.8' ? ' fill="currentColor"' : '') + '/>'; }
+      else if (p.indexOf('rect:') === 0) { var r = p.slice(5).split(','); inner += '<rect x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '" rx="' + r[4] + '"/>'; }
+      else inner += '<path d="' + p + '"/>';
+    });
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+  }
+
+  var LOGO = '<svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
+  var current = (location.pathname.split('/').pop() || 'inicio').replace('.html', '');
+
+  function build() {
+    // Theme
+    try { if (localStorage.getItem('planea-theme') === 'light') document.body.classList.add('light'); } catch (e) {}
+    var isLight = document.body.classList.contains('light');
+
+    // Top bar
+    var top = document.createElement('div');
+    top.className = 'topbar';
+    top.innerHTML =
+      '<button class="iconbtn" id="pl-menu" aria-label="Menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>' +
+      '<span class="brand" style="color:var(--txt)">' + LOGO + 'Planea</span><span class="sp"></span>' +
+      '<button class="iconbtn" id="pl-theme" aria-label="Cambiar tema"></button>';
+    document.body.insertBefore(top, document.body.firstChild);
+
+    // Scrim + drawer
+    var scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.id = 'pl-scrim';
+    var d = document.createElement('aside'); d.className = 'drawer'; d.id = 'pl-drawer';
+    var nav = ITEMS.map(function (it) {
+      var on = (it.k === current) ? ' on' : '';
+      var href = it.action === 'maya' ? '#' : BASE + it.k;
+      var plus = it.plus ? '<span class="plus">+</span>' : '';
+      return '<a href="' + href + '"' + (it.action ? ' data-action="' + it.action + '"' : '') + ' class="' + on.trim() + '">' + svg(it.icon) + it.label + plus + '</a>';
+    }).join('');
+    d.innerHTML =
+      '<div class="dbrand"><span class="mk" style="color:var(--txt)">' + LOGO + '</span><span>Planea</span></div>' +
+      '<nav class="dnav">' + nav + '</nav>' +
+      '<div class="dsep"></div>' +
+      '<button class="dbtn" id="pl-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar módulo</button>' +
+      '<button class="dbtn solid" id="pl-theme2"></button>' +
+      '<div class="dprofile"><span class="av">PL</span><div><div class="nm">Planea</div><div class="pl">Plan gratuito</div></div></div>';
+    document.body.appendChild(scrim);
+    document.body.appendChild(d);
+
+    // Maya button
+    var maya = document.createElement('button');
+    maya.className = 'chatbot';
+    maya.setAttribute('aria-label', 'Abrir chat con Maya, tu guía financiera IA');
+    maya.innerHTML = '<span class="orbe"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span><span class="txt"><span class="t1">Pregúntale a Maya</span><span class="t2">Tu guía financiera IA</span></span>';
+    document.body.appendChild(maya);
+
+    // Wiring
+    function openD() { scrim.classList.add('open'); d.classList.add('open'); }
+    function closeD() { scrim.classList.remove('open'); d.classList.remove('open'); }
+    document.getElementById('pl-menu').addEventListener('click', openD);
+    scrim.addEventListener('click', closeD);
+    function themeLabel() {
+      var light = document.body.classList.contains('light');
+      var sun = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+      var moon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/></svg>';
+      document.getElementById('pl-theme').innerHTML = light ? moon : sun;
+      var t2 = document.getElementById('pl-theme2');
+      t2.innerHTML = (light ? moon : sun) + (light ? 'Modo oscuro' : 'Modo claro');
+    }
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      try { localStorage.setItem('planea-theme', document.body.classList.contains('light') ? 'light' : 'dark'); } catch (e) {}
+      themeLabel();
+    }
+    document.getElementById('pl-theme').addEventListener('click', toggleTheme);
+    document.getElementById('pl-theme2').addEventListener('click', toggleTheme);
+    document.getElementById('pl-add').addEventListener('click', function () { location.href = BASE + 'configuracion'; });
+    d.querySelectorAll('[data-action="maya"]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); closeD(); if (window.MayaChat) window.MayaChat.open(); });
+    });
+    themeLabel();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+  else build();
+})();

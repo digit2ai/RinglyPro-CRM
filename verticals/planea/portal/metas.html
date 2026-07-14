@@ -2,98 +2,42 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planea — Metas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Mis metas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="planea-portal.css">
+<link rel="stylesheet" href="planea-app.css">
 </head>
 <body>
-<div class="preview-tag">Vista previa v2</div>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="logo">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#FFFFFF"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#FFFFFF"/></svg>
-      <span>Planea</span>
-    </div>
-    <nav class="nav" aria-label="Navegación principal">
-      <a href="/planea/portal/inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</a>
-      <a href="/planea/portal/patrimonio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V10M11 21V6M16 21V12M21 21V8"/></svg>Patrimonio</a>
-      <a href="/planea/portal/metas" class="activo" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>Metas</a>
-      <a href="/planea/portal/cuentas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/></svg>Cuentas</a>
-      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 1 1-4-7.2"/><path d="M21 5l-8 8-3-3"/></svg>Asesoría</a>
-      <a href="/planea/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z"/></svg>Configuración</a>
-    </nav>
-    <div class="spacer"></div>
-    <div class="perfil" role="button" tabindex="0" aria-label="Perfil de usuario"><div class="avatar">EL</div><div><div class="nombre">Eduardo</div><div class="plan">Plan gratuito</div></div></div>
-  </aside>
+<div class="app"><div class="wrap">
 
-  <main class="main">
-    <div class="encabezado">
-      <div class="titulo"><h1>Metas</h1><p>Tus planes, ordenados por lo que más importa.</p></div>
-      <div class="score-box" role="group" aria-label="Planea Score: 97, rango Planeado"><div class="etiqueta">Planea Score</div><div class="num">97</div><div class="rango">Planeado</div></div>
-    </div>
+  <div class="phead"><div><h1>Mis metas</h1><p class="lede">Todos tus planes, en orden prioritario.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="9"/></svg><div class="num">97</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango">Excepcional</div></div></div>
 
-    <section class="grupo">
-      <div class="grupo-cab"><h2>Alta prioridad</h2><span class="badge alta">Enfócate aquí</span></div>
-      <div class="metas-lista">
-        <div class="meta-card">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span><div><div class="nombre">Vivienda</div><div class="detalle">Cuota inicial de apartamento</div></div></div><div class="cifras"><div class="actual">$28.000.000</div><div class="objetivo">de $60.000.000</div></div></div>
-          <div class="pista"><div class="relleno" style="width:47%"></div></div>
-          <div class="pie"><span><strong>47%</strong> completado</span><span><strong>16 meses</strong> restantes al ritmo actual</span></div>
-        </div>
-        <div class="meta-card">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><path d="M2 22l10-10M13 11l4-4c1.5-1.5 3.5-2 4.5-1.5.5 1 0 3-1.5 4.5l-4 4"/><path d="M11 13l-3 3H5l-1 1 3 2 2 3 1-1v-3l3-3"/></svg></span><div><div class="nombre">Viajes</div><div class="detalle">Europa 2027</div></div></div><div class="cifras"><div class="actual">$4.500.000</div><div class="objetivo">de $15.000.000</div></div></div>
-          <div class="pista"><div class="relleno" style="width:30%"></div></div>
-          <div class="pie"><span><strong>30%</strong> completado</span><span><strong>14 meses</strong> restantes al ritmo actual</span></div>
-        </div>
-        <div class="meta-card">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div><div class="nombre">Retiro</div><div class="detalle">Pensión voluntaria</div></div></div><div class="cifras"><div class="actual">$12.000.000</div><div class="objetivo">de $200.000.000</div></div></div>
-          <div class="pista"><div class="relleno" style="width:6%"></div></div>
-          <div class="pie"><span><strong>6%</strong> completado</span><span>Horizonte largo · aporte mensual constante</span></div>
-        </div>
-        <div class="meta-card">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11.5V17c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5"/></svg></span><div><div class="nombre">Educación</div><div class="detalle">Maestría</div></div></div><div class="cifras"><div class="actual">$9.000.000</div><div class="objetivo">de $30.000.000</div></div></div>
-          <div class="pista"><div class="relleno" style="width:30%"></div></div>
-          <div class="pie"><span><strong>30%</strong> completado</span><span><strong>21 meses</strong> restantes al ritmo actual</span></div>
-        </div>
-        <div class="meta-card">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><path d="M12 3c-1.5 3-6 4-6 9a6 6 0 0 0 12 0c0-5-4.5-6-6-9Z"/></svg></span><div><div class="nombre">Fondo de emergencia</div><div class="detalle">6 meses de gastos esenciales</div></div></div><div class="cifras"><div class="actual">$11.200.000</div><div class="objetivo">de $18.000.000</div></div></div>
-          <div class="pista"><div class="relleno" style="width:62%"></div></div>
-          <div class="pie"><span><strong>62%</strong> completado</span><span><strong>3 meses</strong> restantes al ritmo actual</span></div>
-        </div>
-      </div>
-      <button class="crear-ia"><svg viewBox="0 0 24 24"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/></svg>Crear una meta personalizada con IA</button>
-    </section>
+  <div class="group"><div class="group-head"><div><div class="gt">Alta prioridad</div><div class="gs">Enfócate aquí primero</div></div><div class="gv">5 metas activas <span class="chev">^</span></div></div><div class="group-body">
 
-    <section class="grupo">
-      <div class="grupo-cab"><h2>Baja prioridad</h2><span class="badge baja">En segundo plano</span></div>
-      <div class="metas-lista">
-        <div class="meta-card baja">
-          <div class="fila1"><div class="id"><span class="icono"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><div><div class="nombre">Pagar deuda</div><div class="detalle">Tarjeta de crédito</div></div></div><div class="cifras"><div class="actual">$2.400.000</div><div class="objetivo">de $6.000.000 abonados</div></div></div>
-          <div class="pista"><div class="relleno" style="width:40%"></div></div>
-          <div class="pie"><span><strong>40%</strong> abonado</span><span><strong>9 meses</strong> restantes al ritmo actual</span></div>
-        </div>
-      </div>
-    </section>
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span><div><div class="nm">Vivienda</div><div class="de">Cuota inicial de apartamento</div></div><div class="cif"><div class="a">$28.000.000</div><div class="o">de $60.000.000</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:47%"></div></div><div class="pie"><span><strong>47%</strong> completado</span><span><strong>16 meses</strong> restantes al ritmo actual</span></div></div>
 
-    <section class="neural" aria-label="Neural Insights Planea">
-      <div class="cab"><div class="tag">Neural Insights Planea</div><h2>Acciones para alinearte mejor con tus metas</h2><p class="sub">Cada semana, una lectura de tu avance y los movimientos que más impacto tendrían en tus planes.</p></div>
-      <div class="acciones">
-        <div class="accion"><span class="num">1</span><div class="txt"><div class="t">Completa primero tu fondo de emergencia</div><div class="d">Estás a 3 meses de cubrir los 6 meses de gastos esenciales. Cerrar esta meta primero le da respaldo a todas las demás.</div></div><span class="meta-ref">Fondo de emergencia</span></div>
-        <div class="accion"><span class="num">2</span><div class="txt"><div class="t">Tu meta de vivienda avanza por debajo del ritmo planeado</div><div class="d">Al ritmo actual llegarías 4 meses tarde a la cuota inicial. Un aporte adicional de $250.000 al mes te devuelve al calendario.</div></div><span class="meta-ref">Vivienda</span></div>
-        <div class="accion"><span class="num">3</span><div class="txt"><div class="t">El interés de tu tarjeta supera el avance de tu meta de viajes</div><div class="d">Lo que pagas en intereses cada mes es mayor que tu aporte a Viajes. Reordenar esos dos flujos aceleraría ambos objetivos.</div></div><span class="meta-ref">Pagar deuda</span></div>
-      </div>
-      <div class="pie-news"><p>Recibe estos insights cada semana en tu correo.</p><button class="btn">Suscribirme al newsletter</button></div>
-    </section>
-  </main>
-</div>
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><path d="M2 22l10-10M13 11l4-4c1.5-1.5 3.5-2 4.5-1.5.5 1 0 3-1.5 4.5l-4 4"/><path d="M11 13l-3 3H5l-1 1 3 2 2 3 1-1v-3l3-3"/></svg></span><div><div class="nm">Viajes</div><div class="de">Europa 2027</div></div><div class="cif"><div class="a">$4.500.000</div><div class="o">de $15.000.000</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:30%"></div></div><div class="pie"><span><strong>30%</strong> completado</span><span><strong>14 meses</strong> restantes al ritmo actual</span></div></div>
 
-<button class="chatbot" aria-label="Abrir chat con Maya, tu guía financiera IA">
-  <span class="orbe"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z" fill="#16373A"/><circle cx="18.5" cy="17.5" r="2" fill="#16373A"/></svg></span>
-  <span class="txt"><span class="t1">Pregúntale a Maya</span><br><span class="t2">Tu guía financiera IA</span></span>
-</button>
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div><div class="nm">Retiro</div><div class="de">Pensión voluntaria</div></div><div class="cif"><div class="a">$12.000.000</div><div class="o">de $200.000.000</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:6%"></div></div><div class="pie"><span><strong>6%</strong> completado</span><span>Horizonte largo · aporte mensual constante</span></div></div>
+
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11.5V17c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5"/></svg></span><div><div class="nm">Educación</div><div class="de">Maestría</div></div><div class="cif"><div class="a">$9.000.000</div><div class="o">de $30.000.000</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:30%"></div></div><div class="pie"><span><strong>30%</strong> completado</span><span><strong>21 meses</strong> restantes al ritmo actual</span></div></div>
+
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 3c-1.5 3-6 4-6 9a6 6 0 0 0 12 0c0-5-4.5-6-6-9Z"/></svg></span><div><div class="nm">Fondo de emergencia</div><div class="de">6 meses de gastos esenciales</div></div><div class="cif"><div class="a">$11.200.000</div><div class="o">de $18.000.000</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:62%"></div></div><div class="pie"><span><strong>62%</strong> completado</span><span><strong>3 meses</strong> restantes al ritmo actual</span></div></div>
+
+  </div></div>
+
+  <a class="btn ghost" href="#" data-action="maya" style="margin-top:16px;width:100%;justify-content:center;border-style:dashed">Crear una meta personalizada con IA</a>
+
+  <div class="group" style="margin-top:20px"><div class="group-head"><div><div class="gt">Baja prioridad</div><div class="gs">En segundo plano</div></div><div class="gv">1 meta <span class="chev">^</span></div></div><div class="group-body">
+
+    <div class="metacard"><div class="top"><span class="mi"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><div><div class="nm">Pagar deuda</div><div class="de">Tarjeta de crédito</div></div><div class="cif"><div class="a">$2.400.000</div><div class="o">de $6.000.000 abonados</div></div></div><div class="mini-track" style="margin-top:14px"><div class="mini-fill" style="width:40%"></div></div><div class="pie"><span><strong>40%</strong> abonado</span><span><strong>9 meses</strong> restantes al ritmo actual</span></div></div>
+
+  </div></div>
+
+</div></div>
+<script src="/planea/portal/planea-nav.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
 </body>
 </html>
