@@ -231,6 +231,12 @@
   padding:8px 15px;border-radius:999px;transition:all .12s ease;backdrop-filter:blur(6px)}
 .d2b .chip:hover{border-color:rgba(139,92,246,.6);color:#cbb8ff;background:rgba(139,92,246,.14)}
 .d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
+@media(max-width:560px){
+  .d2b textarea{min-height:150px;font-size:16px;padding:20px 16px 10px}
+  .d2b .promptbar{flex-direction:column;align-items:stretch;gap:12px;padding:6px 8px 10px}
+  .d2b .promptbar .hint{text-align:center}
+  .d2b #d2b-go{width:100%;justify-content:center;padding:15px 22px;font-size:16px}
+}
 
 /* result */
 .d2b #d2b-result{max-width:760px;margin:26px auto 0;display:none}
@@ -999,10 +1005,18 @@
     if (srStatus) srStatus.textContent = SR[s] || '';
   }
   function setAmp(v) { wrap.style.setProperty('--orb-amp', String(Math.max(0, Math.min(1, v)))); }
-  function showFallback() {
+  function showFallback(reason) {
     wrap.classList.add('disabled');
     wrap.setAttribute('aria-disabled', 'true');
-    if (fallbackEl) fallbackEl.hidden = false;
+    if (fallbackEl) {
+      if (reason === 'mic') {
+        var isES = (document.documentElement.lang || 'en').toLowerCase().indexOf('es') === 0;
+        fallbackEl.innerHTML = isES
+          ? '<strong>Activa el micrófono.</strong><br>Permite el acceso al micrófono y toca el orbe otra vez &mdash; o escribe tu idea abajo.'
+          : '<strong>Microphone access needed.</strong><br>Allow the mic, then tap the orb again &mdash; or type your idea below.';
+      }
+      fallbackEl.hidden = false;
+    }
     connecting = false;
   }
   function fetchConfig() {
@@ -1105,44 +1119,52 @@
   function activateOrb() {
     if (connecting) return;
     if (session) { endVoiceSession(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showFallback('mic'); return; }
     connecting = true;
     if (caption) caption.style.opacity = '0.7';
-    var p = (window.__ElevenLabsConversation)
-      ? Promise.resolve(window.__ElevenLabsConversation)
-      : (window.__loadElevenLabsSdk ? window.__loadElevenLabsSdk() : Promise.resolve(null));
-    p.then(function (Conversation) {
-      if (!Conversation) { showFallback(); return; }
-      proceed(Conversation);
-    });
-  }
-  function proceed(Conversation) {
-    fetchConfig().then(function (cfg) {
-      if (!cfg || !cfg.configured || !cfg.agent_id) { showFallback(); return; }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showFallback(); return; }
-      navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
-        .then(function (stream) {
-          micStream = stream;
-          startWaveform(stream);
-          return Conversation.startSession({
-            agentId: cfg.agent_id,
-            clientTools: { run_partnership_triage: function (params) { return runTriageFromAgent(params || {}); } },
-            onConnect: function () { setState('listening'); },
-            onDisconnect: function () { setState('idle'); stopWaveform(); session = null; releaseMic(); },
-            onError: function (e) { console.error('[orb] convai error', e); setState('idle'); stopWaveform(); showFallback(); },
-            onModeChange: function (mode) {
-              if (mode && mode.mode) {
-                if (mode.mode === 'speaking') setState('speaking');
-                else if (mode.mode === 'listening') setState('listening');
-                else if (mode.mode === 'thinking') setState('thinking');
+    // MOBILE-CRITICAL: request the mic FIRST, synchronously inside the user
+    // gesture. A dynamic import + config fetch BEFORE getUserMedia loses the
+    // gesture on iOS Safari / mobile Chrome, so the permission prompt never
+    // fires and the orb drops straight to the fallback.
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
+      .then(function (stream) {
+        micStream = stream;
+        startWaveform(stream);
+        var p = (window.__ElevenLabsConversation)
+          ? Promise.resolve(window.__ElevenLabsConversation)
+          : (window.__loadElevenLabsSdk ? window.__loadElevenLabsSdk() : Promise.resolve(null));
+        return p.then(function (Conversation) {
+          if (!Conversation) throw new Error('sdk');
+          return fetchConfig().then(function (cfg) {
+            if (!cfg || !cfg.configured || !cfg.agent_id) throw new Error('config');
+            return Conversation.startSession({
+              agentId: cfg.agent_id,
+              clientTools: { run_partnership_triage: function (params) { return runTriageFromAgent(params || {}); } },
+              onConnect: function () { setState('listening'); if (fallbackEl) fallbackEl.hidden = true; wrap.classList.remove('disabled'); },
+              onDisconnect: function () { setState('idle'); stopWaveform(); session = null; releaseMic(); },
+              onError: function (e) { console.error('[orb] convai error', e); setState('idle'); stopWaveform(); showFallback('sdk'); },
+              onModeChange: function (mode) {
+                if (mode && mode.mode) {
+                  if (mode.mode === 'speaking') setState('speaking');
+                  else if (mode.mode === 'listening') setState('listening');
+                  else if (mode.mode === 'thinking') setState('thinking');
+                }
               }
-            }
+            }).then(function (s) { session = s; connecting = false; });
           });
-        })
-        .then(function (s) { session = s; connecting = false; })
-        .catch(function (err) { console.warn('[orb] mic/session failed', err); stopWaveform(); releaseMic(); showFallback(); });
-    });
+        });
+      })
+      .catch(function (err) {
+        connecting = false; stopWaveform(); releaseMic();
+        var name = err && (err.name || err.message);
+        var reason = (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NotFoundError' || name === 'NotReadableError') ? 'mic' : 'sdk';
+        console.warn('[orb] activate failed:', name);
+        showFallback(reason);
+      });
   }
 
+  // Warm the SDK shortly after load so startSession is instant once mic is granted.
+  setTimeout(function () { try { if (window.__loadElevenLabsSdk) window.__loadElevenLabsSdk(); } catch (e) {} }, 1500);
   wrap.addEventListener('click', activateOrb);
   wrap.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activateOrb(); }
