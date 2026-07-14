@@ -9,34 +9,34 @@
 
   // ── Demo profile (mockup data) — overridden by window.PLANEA_PROFILE in the real app ──
   var DEMO_PROFILE = {
-    nombre: 'Eduardo',
-    planea_score: 97,
-    rango: 'Planeado',
-    ingreso_mensual_cop: 6500000,
-    gasto_mensual_cop: 3800000,
-    pilares_planeacion_pct: { ahorro: 74, deuda: 38, inversion: 55, seguros: 61, impuestos: 80, pension: 45, legado: 20 },
-    score_pilares_pct: { fondo_emergencia: 95, flujo_caja: 98, salud_deuda: 96, estabilidad: 92 },
-    patrimonio_neto_cop: 100000000,
-    activos_total_cop: 135000000,
-    pasivos_total_cop: 35000000,
+    nombre: 'Manuel',
+    planea_score: 89,
+    rango: 'Sólido',
+    ingreso_mensual_cop: 10800000,
+    gasto_mensual_cop: 4500000,
+    pilares_planeacion_pct: { ahorro: 82, deuda: 55, inversion: 70, seguros: 68, impuestos: 84, pension: 60, legado: 35 },
+    score_pilares_pct: { fondo_emergencia: 78, flujo_caja: 92, salud_deuda: 84, estabilidad: 88 },
+    patrimonio_neto_cop: 128500000,
+    activos_total_cop: 172000000,
+    pasivos_total_cop: 43500000,
     activos: [
-      { nombre: 'Liquidez', valor_cop: 12000000 }, { nombre: 'Ahorro (CDT y fondos)', valor_cop: 18000000 },
-      { nombre: 'Inversiones', valor_cop: 22000000 }, { nombre: 'Sociedades', valor_cop: 15000000 },
-      { nombre: 'Vivienda', valor_cop: 55000000 }, { nombre: 'Vehículos', valor_cop: 9000000 },
-      { nombre: 'Activos no financieros', valor_cop: 4000000 }
+      { nombre: 'Ahorro líquido', valor_cop: 18400000 }, { nombre: 'Inversiones', valor_cop: 27000000 },
+      { nombre: 'Vivienda', valor_cop: 95000000 }, { nombre: 'Vehículo', valor_cop: 22000000 },
+      { nombre: 'Otros activos', valor_cop: 9600000 }
     ],
     pasivos: [
-      { nombre: 'Hipoteca', valor_cop: 25000000 }, { nombre: 'Crédito de consumo', valor_cop: 7600000 },
-      { nombre: 'Tarjeta de crédito', valor_cop: 2400000, tasa_ea: 0.29 }
+      { nombre: 'Crédito de vehículo', valor_cop: 28000000, tasa_ea: 0.142 },
+      { nombre: 'Crédito de libre inversión', valor_cop: 11000000, tasa_ea: 0.189 },
+      { nombre: 'Tarjeta de crédito', valor_cop: 4500000, tasa_ea: 0.275 }
     ],
-    fondo_emergencia_meses: 3.2,
-    meta_prioritaria: { nombre: 'Fondo de emergencia', objetivo_cop: 18000000, actual_cop: 11200000, progreso_pct: 62, meses_restantes: 3 },
+    fondo_emergencia_meses: 4.1,
+    meta_prioritaria: { nombre: 'Fondo de emergencia', objetivo_cop: 22000000, actual_cop: 16800000, progreso_pct: 76, meses_restantes: 2 },
     metas: [
-      { nombre: 'Vivienda (cuota inicial)', objetivo_cop: 60000000, actual_cop: 28000000, pct: 47, meses_restantes: 16, prioridad: 'alta' },
-      { nombre: 'Viajes (Europa 2027)', objetivo_cop: 15000000, actual_cop: 4500000, pct: 30, meses_restantes: 14, prioridad: 'alta' },
-      { nombre: 'Retiro (pensión voluntaria)', objetivo_cop: 200000000, actual_cop: 12000000, pct: 6, prioridad: 'alta' },
-      { nombre: 'Educación (maestría)', objetivo_cop: 30000000, actual_cop: 9000000, pct: 30, meses_restantes: 21, prioridad: 'alta' },
-      { nombre: 'Pagar deuda (tarjeta)', objetivo_cop: 6000000, actual_cop: 2400000, pct: 40, meses_restantes: 9, prioridad: 'baja' }
+      { nombre: 'Vivienda (cuota inicial)', objetivo_cop: 70000000, actual_cop: 42000000, pct: 60, meses_restantes: 12, prioridad: 'alta' },
+      { nombre: 'Viajes (Europa 2027)', objetivo_cop: 18000000, actual_cop: 6800000, pct: 38, meses_restantes: 11, prioridad: 'alta' },
+      { nombre: 'Retiro (pensión voluntaria)', objetivo_cop: 250000000, actual_cop: 34000000, pct: 14, prioridad: 'alta' },
+      { nombre: 'Educación (maestría)', objetivo_cop: 35000000, actual_cop: 14000000, pct: 40, meses_restantes: 15, prioridad: 'alta' },
+      { nombre: 'Pagar deuda (tarjeta)', objetivo_cop: 5500000, actual_cop: 1800000, pct: 33, meses_restantes: 7, prioridad: 'baja' }
     ]
   };
 
