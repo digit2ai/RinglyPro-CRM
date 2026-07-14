@@ -384,6 +384,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: speakly.vip -> Speakly (exec-coaching vertical) marketing
+// landing, served IN PLACE so the address bar stays on speakly.vip. Only
+// exercised once speakly.vip DNS points AT THIS APP and the domain is added on
+// Render/Cloudflare; until then this app never sees the Host header and the
+// block is a harmless no-op. The app (/coaching-english/*), API and all static
+// assets pass through untouched; vanity paths map to the real app routes.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'speakly.vip' || host === 'www.speakly.vip') {
+    const p = req.path;
+    if (p.startsWith('/coaching-english') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html') req.url = '/speakly';
+    else if (p === '/terms') req.url = '/speakly/terms';
+    else if (p === '/privacy') req.url = '/speakly/privacy';
+    else if (p === '/login') req.url = '/coaching-english/login';
+    else if (p === '/register' || p === '/start' || p === '/signup') req.url = '/coaching-english/start';
+  }
+  next();
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
@@ -1599,6 +1619,14 @@ app.get('/debug/exec-coaching-error', (req, res) => {
 app.get(['/executive-english', '/executive-english/', '/coaching-english-landing'], (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'verticals', 'exec-coaching', 'public', 'landing.html'));
 });
+
+// Speakly — premium bilingual marketing landing (domain speakly.vip) for the
+// exec-coaching vertical. Served on any host for testing; speakly.vip rewrites
+// its root here via the custom-domain handler above.
+const speaklyDir = path.join(__dirname, '..', 'verticals', 'exec-coaching', 'public');
+app.get(['/speakly', '/speakly/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly.html')));
+app.get(['/speakly/terms', '/speakly/terms/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly-terms.html')));
+app.get(['/speakly/privacy', '/speakly/privacy/'], (req, res) => res.sendFile(path.join(speaklyDir, 'speakly-privacy.html')));
 
 // Public promo landing page for Visionarium Coaching.
 // Vision2Ai — corporate landing for the Digit2ai × Visionarium merger.
