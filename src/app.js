@@ -2578,7 +2578,7 @@ ${D2AI_GEO_REDIRECT_SCRIPT('en')}
 <meta name="twitter:title" content="DIGIT2AI — Describe it. We build it.">
 <meta name="twitter:description" content="Describe your idea and get a real AI build plan in seconds.">
 <meta name="twitter:image" content="${ogImage}">
-<style>html,body{margin:0;padding:0;background:#faf8f5;}</style>
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
 </head>
 <body>
 ${content}
