@@ -127,12 +127,16 @@
 @media(max-width:480px){.d2b .slots{grid-template-columns:1fr}}
 .d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
 .d2b .nav-links a:hover{color:var(--ink)}
+.d2b .lang-toggle{display:inline-flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;font-family:var(--mono);font-size:12px}
+.d2b .lang-opt{padding:6px 12px;color:var(--mut);font-weight:700;letter-spacing:.05em}
+.d2b .lang-opt.active{background:var(--grad);color:#fff}
+.d2b .lang-opt:not(.active):hover{color:var(--ink)}
 .d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
 .d2b .btn:hover{transform:translateY(-1px)}
 .d2b .btn-primary{background:var(--pill);color:var(--pill-ink);padding:11px 20px;font-size:14.5px;box-shadow:var(--shadow-sm)}
 .d2b .btn-primary:hover{filter:brightness(1.05)}
 .d2b .btn-grad{background:var(--grad);color:#fff;padding:13px 24px;font-size:15px;box-shadow:var(--shadow)}
-@media(max-width:680px){.d2b .nav-links a:not(.btn){display:none}}
+@media(max-width:680px){.d2b .nav-links > a:not(.btn){display:none}}
 
 /* hero */
 .d2b .hero{position:relative;z-index:2;text-align:center;padding:70px 0 24px}
@@ -361,6 +365,10 @@
       <a href="#how">How it works</a>
       <a href="#platforms">Platforms</a>
       <a href="#numbers">Why us</a>
+      <span class="lang-toggle" role="group" aria-label="Language">
+        <a href="/digit2ai?lang=en" class="lang-opt active" aria-current="true">EN</a>
+        <a href="/digit2ai-es?lang=es" class="lang-opt">ES</a>
+      </span>
       <a href="#d2b-form" class="btn btn-primary" id="d2b-getstarted">Get started</a>
     </div>
   </nav>
@@ -678,7 +686,7 @@
       + '<div class="rcard">'
       +   '<div class="rhead">'
       +     '<div><h3>'+esc(d.project_title_suggested||'Your build plan')+'</h3>'
-      +       '<div class="pcaption">Fit score '+esc(d.fit_score)+'/10 &middot; scoped by '+esc(d.model||'Claude')+'</div></div>'
+      +       '<div class="pcaption">Fit score '+esc(d.fit_score)+'/10 &middot; scoped by Digit2Ai Neural Intelligence</div></div>'
       +     '<span class="verdict '+v.cls+'">'+v.label+'</span>'
       +   '</div>'
       +   '<div class="rbody">';
