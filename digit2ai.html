@@ -66,6 +66,21 @@
   padding:22px 24px;max-width:1120px;margin:0 auto}
 .d2b .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.04em}
 .d2b .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--grad);box-shadow:var(--shadow-sm)}
+.d2b .brand-logo{height:30px;width:auto;display:block}
+.d2b .rstart{padding:0 26px 24px}
+.d2b .rstart-form{display:flex;flex-direction:column;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.d2b .rstart-title{font-size:16px;font-weight:750}
+.d2b .rstart-sub{font-size:13.5px;color:var(--mut)}
+.d2b .rstart-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.d2b .rstart input{background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .12s ease}
+.d2b .rstart input:focus{border-color:var(--violet)}
+.d2b .rstart input::placeholder{color:var(--faint)}
+.d2b .rstart-form .btn{align-self:flex-start;margin-top:4px}
+.d2b .rstart-status{font-size:13px;color:var(--mut);min-height:16px}
+.d2b .rstart-status.err{color:#ff9a8f}
+.d2b .rstart-success{text-align:center;padding:12px 4px}
+.d2b .rs-check{width:46px;height:46px;border-radius:50%;background:var(--good-soft);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 12px;border:1px solid rgba(58,208,127,.35)}
+@media(max-width:520px){.d2b .rstart-grid{grid-template-columns:1fr}}
 .d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
 .d2b .nav-links a:hover{color:var(--ink)}
 .d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
@@ -265,7 +280,7 @@
   <canvas class="stars" id="d2b-stars" aria-hidden="true"></canvas>
 
   <nav>
-    <div class="brand"><span class="mark"></span> DIGIT2AI</div>
+    <a class="brand" href="#" aria-label="Digit2AI"><img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" width="173" height="30"></a>
     <div class="nav-links">
       <a href="#how">How it works</a>
       <a href="#platforms">Platforms</a>
@@ -406,7 +421,7 @@
         <button class="chip" data-p="A marketplace with live auctions, real-time currency conversion, and KYC verification for agricultural buyers and sellers.">Live-auction marketplace</button>
       </div>
 
-      <p class="disclaim">Powered by our real triage engine (Claude) &mdash; it returns a genuine scope, not a canned demo.</p>
+      <p class="disclaim">Powered by our real triage engine (Digit2Ai Neural Intelligence MCP + A2A) &mdash; it returns a genuine scope, not a canned demo.</p>
 
       <div id="d2b-result" aria-live="polite"></div>
     </div>
@@ -491,7 +506,7 @@
   <footer class="d2f">
     <div class="wrap">
       <div class="row">
-        <div class="brand" style="font-size:16px"><span class="mark" style="width:22px;height:22px"></span> DIGIT2AI</div>
+        <img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" style="height:24px;width:auto">
         <div>21 live platforms &middot; 22 verticals &middot; 99.9% SLA</div>
         <div><a href="https://digit2ai.com">digit2ai.com</a></div>
       </div>
@@ -512,6 +527,7 @@
   var scroll = root.querySelector('#d2b-scrolltop');
   var ENDPOINT = '/projects/api/v1/intake/public-triage-preview';
   var busy = false;
+  var lastDescription = '';
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -596,13 +612,91 @@
     html +=   '</div>'
       +   '<div class="rfoot">'
       +     '<div class="note">This is an automated first-pass scope. Ready to make it real?</div>'
-      +     '<a class="btn btn-grad" href="https://digit2ai.com">Start this project &rarr;</a>'
+      +     '<button type="button" class="btn btn-grad" id="d2b-start">Start this project &rarr;</button>'
+      +   '</div>'
+      +   '<div class="rstart" id="d2b-start-zone" hidden>'
+      +     '<form id="d2b-start-form" class="rstart-form" novalidate>'
+      +       '<div class="rstart-title">Start this project</div>'
+      +       '<div class="rstart-sub">Tell us where to reach you. We\'ll review your plan and get back within one business day.</div>'
+      +       '<div class="rstart-grid">'
+      +         '<input type="text" id="ds-name" placeholder="Your name" autocomplete="name">'
+      +         '<input type="email" id="ds-email" placeholder="you@company.com" autocomplete="email">'
+      +         '<input type="text" id="ds-company" placeholder="Company (optional)" autocomplete="organization">'
+      +         '<input type="tel" id="ds-phone" placeholder="Phone (optional)" autocomplete="tel">'
+      +       '</div>'
+      +       '<button type="submit" class="btn btn-grad" id="ds-submit">Send to Digit2AI</button>'
+      +       '<div class="rstart-status" id="ds-status" aria-live="polite"></div>'
+      +     '</form>'
       +   '</div>'
       + '</div>';
 
     result.className='show';
     result.innerHTML = html;
     result.scrollIntoView({behavior:'smooth',block:'start'});
+
+    // "Start this project" — reveal the capture form, then submit as a real intake.
+    var startBtn = result.querySelector('#d2b-start');
+    var zone = result.querySelector('#d2b-start-zone');
+    var sform = result.querySelector('#d2b-start-form');
+    if(startBtn && zone){
+      startBtn.addEventListener('click', function(){
+        zone.hidden = false;
+        startBtn.style.display = 'none';
+        var n = result.querySelector('#ds-name'); if(n) n.focus();
+        zone.scrollIntoView({behavior:'smooth',block:'center'});
+      });
+    }
+    if(sform){
+      sform.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var name    = (result.querySelector('#ds-name').value||'').trim();
+        var email   = (result.querySelector('#ds-email').value||'').trim();
+        var company = (result.querySelector('#ds-company').value||'').trim();
+        var phone   = (result.querySelector('#ds-phone').value||'').trim();
+        var sstatus = result.querySelector('#ds-status');
+        var submitBtn = result.querySelector('#ds-submit');
+        if(!name || email.indexOf('@') < 1){
+          sstatus.textContent = 'Please enter your name and a valid email.';
+          sstatus.className = 'rstart-status err';
+          return;
+        }
+        submitBtn.disabled = true; submitBtn.textContent = 'Sending…';
+        sstatus.textContent = ''; sstatus.className = 'rstart-status';
+        var problem = lastDescription || d.problem_in_our_words || (d.technical_solution && d.technical_solution.summary) || d.project_title_suggested || 'AI project';
+        fetch('/projects/api/v1/intake/public/request', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            full_name: name, email: email,
+            phone: phone || undefined, company_name: company || undefined,
+            project_title: d.project_title_suggested || 'AI project',
+            project_description: (d.technical_solution && d.technical_solution.summary) || problem,
+            problem: problem,
+            ai_category: (d.technical_solution && d.technical_solution.agents_involved) || [],
+            heard_from: 'digit2ai self-serve builder'
+          })
+        })
+        .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
+        .then(function(res){
+          if((res.status===200 || res.status===201) && res.json && res.json.success){
+            zone.innerHTML = '<div class="rstart-success">'
+              + '<div class="rs-check">&#10003;</div>'
+              + '<div class="rstart-title">Project received</div>'
+              + '<div class="rstart-sub">Thanks '+esc(name)+' &mdash; your plan for <b>'+esc(d.project_title_suggested||'your project')+'</b> is in our queue. We\'ll review it and reach out to '+esc(email)+' within one business day.</div>'
+              + '</div>';
+            zone.scrollIntoView({behavior:'smooth',block:'center'});
+          } else {
+            var m = (res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
+            sstatus.textContent = m; sstatus.className = 'rstart-status err';
+            submitBtn.disabled = false; submitBtn.textContent = 'Send to Digit2AI';
+          }
+        })
+        .catch(function(){
+          sstatus.textContent = 'Could not reach the server. Please try again.';
+          sstatus.className = 'rstart-status err';
+          submitBtn.disabled = false; submitBtn.textContent = 'Send to Digit2AI';
+        });
+      });
+    }
   }
 
   // Expose so the voice orb can pipe its triage result into the same panel.
@@ -613,6 +707,7 @@
     if(busy) return;
     var desc = input.value.trim();
     if(desc.length < 30){ updateHint(); input.focus(); return; }
+    lastDescription = desc;
 
     loading(true);
     result.className=''; // hide while loading
