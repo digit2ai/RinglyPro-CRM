@@ -131,12 +131,23 @@
 .d2b .lang-opt{padding:6px 12px;color:var(--mut);font-weight:700;letter-spacing:.05em}
 .d2b .lang-opt.active{background:var(--grad);color:#fff}
 .d2b .lang-opt:not(.active):hover{color:var(--ink)}
-.d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+.d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;white-space:nowrap;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
 .d2b .btn:hover{transform:translateY(-1px)}
 .d2b .btn-primary{background:var(--pill);color:var(--pill-ink);padding:11px 20px;font-size:14.5px;box-shadow:var(--shadow-sm)}
 .d2b .btn-primary:hover{filter:brightness(1.05)}
 .d2b .btn-grad{background:var(--grad);color:#fff;padding:13px 24px;font-size:15px;box-shadow:var(--shadow)}
 @media(max-width:680px){.d2b .nav-links > a:not(.btn){display:none}}
+@media(max-width:600px){
+  .d2b nav{padding:16px 16px}
+  .d2b .nav-links{gap:12px}
+  .d2b .btn-primary{padding:10px 15px;font-size:14px}
+  .d2b .brand-logo{height:26px}
+}
+@media(max-width:380px){
+  .d2b .nav-links{gap:8px}
+  .d2b .btn-primary{padding:9px 12px;font-size:13px}
+  .d2b .lang-opt{padding:5px 9px}
+}
 
 /* hero */
 .d2b .hero{position:relative;z-index:2;text-align:center;padding:70px 0 24px}
@@ -232,10 +243,21 @@
 .d2b .chip:hover{border-color:rgba(139,92,246,.6);color:#cbb8ff;background:rgba(139,92,246,.14)}
 .d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
 @media(max-width:560px){
-  .d2b textarea{min-height:150px;font-size:16px;padding:20px 16px 10px}
+  .d2b .builder{margin-top:28px}
+  /* Comfortable, readable description box on phones (16px = no iOS zoom-in). */
+  .d2b textarea{min-height:150px;font-size:16px;line-height:1.55;padding:18px 16px 8px}
+  .d2b textarea::placeholder{font-size:15px;line-height:1.5}
+  .d2b .promptcard{padding:8px}
   .d2b .promptbar{flex-direction:column;align-items:stretch;gap:12px;padding:6px 8px 10px}
   .d2b .promptbar .hint{text-align:center}
   .d2b #d2b-go{width:100%;justify-content:center;padding:15px 22px;font-size:16px}
+  .d2b .chips{gap:8px;margin-top:18px}
+  .d2b .chip{font-size:13px;padding:8px 13px}
+}
+@media(max-width:430px){
+  .d2b .hero h1{font-size:clamp(32px,9vw,40px)}
+  .d2b .hero .lede{font-size:16px;margin-top:16px}
+  .d2b .eyebrow{font-size:12px}
 }
 
 /* result */
