@@ -174,7 +174,7 @@ publicRouter.get('/:token', async (req, res) => {
   try {
     const row = await loadTeaser(req.params.token);
     if (!row) return res.status(404).type('html').send('<h1>Teaser not found</h1>');
-    res.type('html').send(renderTeaserPage(contentOf(row)));
+    res.type('html').send(renderTeaserPage(contentOf(row), { projectId: row.project_id }));
   } catch (err) {
     console.error('[teasers] viewer failed:', err);
     res.status(500).type('html').send('<h1>Error</h1><pre>' + esc(err.message) + '</pre>');
@@ -188,8 +188,9 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function renderTeaserPage(t) {
+function renderTeaserPage(t, meta = {}) {
   const es = t.lang === 'es';
+  const projectId = meta.projectId || '';
   const segs = JSON.stringify(t.segments || []);
   // Brand default: the teaser voice is always México (Dalia) = Lina, regardless of
   // the teaser's narration language. The listener can switch via the accent picker.
@@ -266,6 +267,24 @@ button:disabled{opacity:.45;cursor:default}
 .cta h2{font-size:1.6rem;margin-bottom:8px}
 .cta p{color:var(--mut);max-width:520px;margin:0 auto 18px}
 .cta a{display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;text-decoration:none;padding:14px 30px;border-radius:10px}
+.cta button.ts-cta-btn{display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:14px 30px;border-radius:10px;font-size:1rem;font-family:inherit}
+.ts-modal{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px}
+.ts-modal-bd{position:absolute;inset:0;background:rgba(3,6,14,.78);backdrop-filter:blur(3px)}
+.ts-modal-box{position:relative;z-index:1;width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 24px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.ts-modal-x{position:absolute;top:12px;right:15px;font-size:24px;line-height:1;color:var(--mut);background:none;border:none;cursor:pointer}
+.ts-modal-title{font-size:1.3rem;font-weight:800}
+.ts-modal-sub{color:var(--mut);font-size:.92rem;margin-top:6px}
+.ts-slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 0}
+.ts-slots-load{grid-column:1/-1;color:var(--mut);font-size:.9rem;padding:10px 0}
+.ts-slot{display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;padding:11px 12px;color:var(--txt);font-family:inherit;text-align:left;cursor:pointer}
+.ts-slot:hover{border-color:var(--violet)}
+.ts-slot.sel{border-color:var(--violet);background:rgba(124,92,255,.18)}
+.ts-slot .d{font-weight:700;font-size:.85rem}
+.ts-slot .t{color:var(--mut);font-size:.8rem}
+.ts-modal-go{width:100%;margin-top:6px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:13px;border-radius:10px;font-size:1rem;font-family:inherit}
+.ts-modal-go:disabled{opacity:.5;cursor:not-allowed}
+.ts-modal-status{text-align:center;color:#fca5a5;font-size:.85rem;margin-top:10px;min-height:14px}
+@media(max-width:480px){.ts-slots{grid-template-columns:1fr}}
 .foot{margin-top:34px;text-align:center;color:#5f7197;font-size:12px}
 @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
 </style>
@@ -317,7 +336,9 @@ button:disabled{opacity:.45;cursor:default}
   <div class="cta" id="cta">
     <h2>${esc(t.cta.heading)}</h2>
     <p>${esc(t.cta.body)}</p>
-    <a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>
+    ${projectId
+      ? `<button type="button" id="ts-book-btn" class="ts-cta-btn">${ui.cta} &rarr;</button>`
+      : `<a href="mailto:${ctaEmail}?subject=${ctaSubject}">${ui.cta} &rarr;</a>`}
   </div>
 
   <div class="foot">${ui.poweredBy}</div>
@@ -406,6 +427,80 @@ button:disabled{opacity:.45;cursor:default}
   });
   stopBtn.addEventListener('click',finish);
   window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){try{currentAudio.pause();}catch(e){}} });
+})();
+</script>
+
+<div class="ts-modal" id="ts-book-modal">
+  <div class="ts-modal-bd" data-close></div>
+  <div class="ts-modal-box" role="dialog" aria-modal="true">
+    <button class="ts-modal-x" data-close aria-label="Close">&times;</button>
+    <div class="ts-modal-title">${es ? 'Agenda tu cita' : 'Book your appointment'}</div>
+    <div class="ts-modal-sub">${es ? 'Elige un horario disponible &mdash; en hora de Colombia (COT).' : 'Pick an open slot &mdash; times shown in Colombia time (COT).'}</div>
+    <div class="ts-slots" id="ts-slots"></div>
+    <button type="button" class="ts-modal-go" id="ts-confirm" disabled>${es ? 'Confirmar cita' : 'Confirm appointment'}</button>
+    <div class="ts-modal-status" id="ts-status" aria-live="polite"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PID = ${JSON.stringify(String(projectId || ''))};
+  var ES = ${es ? 'true' : 'false'};
+  if(!PID) return;
+  var btn = document.getElementById('ts-book-btn');
+  var modal = document.getElementById('ts-book-modal');
+  var slotsEl = document.getElementById('ts-slots');
+  var confirmBtn = document.getElementById('ts-confirm');
+  var statusEl = document.getElementById('ts-status');
+  var sel = null;
+  var loc = ES ? 'es-CO' : 'en-US';
+  var T = ES ? {
+    loading:'Cargando horarios…', confirm:'Confirmar cita', booking:'Reservando…',
+    none:'Sin horarios disponibles ahora — te contactaremos para agendar.',
+    fail:'No se pudieron cargar los horarios. Inténtalo de nuevo.',
+    booked:function(w){return 'Reservado para '+w+' COT. Te contactaremos — ¡nos vemos!';},
+    err:'No se pudo reservar. Inténtalo de nuevo.', net:'No se pudo conectar. Inténtalo de nuevo.'
+  } : {
+    loading:'Loading open slots…', confirm:'Confirm appointment', booking:'Booking…',
+    none:'No open slots right now — we\\'ll reach out to schedule.',
+    fail:'Could not load slots. Please try again.',
+    booked:function(w){return 'Booked for '+w+' COT. We\\'ll be in touch — see you then!';},
+    err:'Could not book. Please try again.', net:'Could not reach the server. Please try again.'
+  };
+  function open(){ modal.style.display='flex'; document.body.style.overflow='hidden'; load(); }
+  function close(){ modal.style.display='none'; document.body.style.overflow=''; }
+  function load(){
+    sel=null; confirmBtn.disabled=true; confirmBtn.style.display=''; confirmBtn.textContent=T.confirm; statusEl.textContent='';
+    slotsEl.innerHTML='<div class="ts-slots-load">'+T.loading+'</div>';
+    fetch('/projects/api/v1/intake/public/slots?count=6').then(function(r){return r.json();}).then(function(res){
+      if(!res||!res.success||!res.data||!res.data.slots||!res.data.slots.length){ slotsEl.innerHTML='<div class="ts-slots-load">'+T.none+'</div>'; return; }
+      slotsEl.innerHTML='';
+      res.data.slots.forEach(function(sl2){
+        var b=document.createElement('button'); b.type='button'; b.className='ts-slot';
+        var dt=new Date(sl2.start_time);
+        var day=dt.toLocaleString(loc,{timeZone:'America/Bogota',weekday:'short',month:'short',day:'numeric'});
+        var tim=dt.toLocaleString(loc,{timeZone:'America/Bogota',hour:'numeric',minute:'2-digit'});
+        b.innerHTML='<span class="d">'+day+'</span><span class="t">'+tim+' COT</span>';
+        b.onclick=function(){ var all=slotsEl.querySelectorAll('.ts-slot'); for(var i=0;i<all.length;i++) all[i].classList.remove('sel'); b.classList.add('sel'); sel=sl2; confirmBtn.disabled=false; };
+        slotsEl.appendChild(b);
+      });
+    }).catch(function(){ slotsEl.innerHTML='<div class="ts-slots-load">'+T.fail+'</div>'; });
+  }
+  confirmBtn.onclick=function(){
+    if(!sel) return;
+    confirmBtn.disabled=true; confirmBtn.textContent=T.booking;
+    fetch('/projects/api/v1/intake/public/book/'+PID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_time:sel.start_time,end_time:sel.end_time})})
+      .then(function(r){return r.json();}).then(function(res){
+        if(res&&res.success){
+          var w=new Date(sel.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+          slotsEl.innerHTML='<div class="ts-slots-load" style="color:#34d399">'+T.booked(w)+'</div>';
+          confirmBtn.style.display='none';
+        } else { statusEl.textContent=(res&&res.error)||T.err; confirmBtn.disabled=false; confirmBtn.textContent=T.confirm; }
+      }).catch(function(){ statusEl.textContent=T.net; confirmBtn.disabled=false; confirmBtn.textContent=T.confirm; });
+  };
+  if(btn) btn.addEventListener('click', open);
+  var closers = modal.querySelectorAll('[data-close]');
+  for(var i=0;i<closers.length;i++) closers[i].addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.style.display==='flex') close(); });
 })();
 </script>
 </body>
