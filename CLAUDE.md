@@ -297,6 +297,32 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `COACHTRACK_DEFAULT_PASSWORD` — seeded admin password (`mstagg@digit2ai.com`). Default `coachtrack@2026`. (Regular users self-signup; no shared password.)
 - `COACHTRACK_SEED_DEMO` — `1` seeds one sample session on boot. Default unset = clean.
 
+## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)
+
+**Purpose:** Digit2AI vertical for **executive English coaching for international leadership** (trade, investment, diplomacy, press). Built from Fernando de la Espriella García's coaching program for Dr. Mauricio Gómez Amín (new Colombian Minister of Comercio, Industria y Turismo). A coach logs 1:1 sessions, records + transcribes (voice or typed), and the AI generates the program's **5 post-session deliverables** + an **"80% student speaks" meter**. Spanish-first, emoji-free. Mounted at `/coaching-english`.
+
+**Multi-tenancy:** one coach = one tenant (`tenant_id = coach user id`); all students/sessions/reports isolated per coach. Academy-ready via `ec_students.coach_id` (a future `owner` role can hold multiple coaches under one tenant without migration). `ec_users.tenant_id` + newer `ec_sessions` columns ensured via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in `index.js` init.
+
+**Location:** `verticals/exec-coaching/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/exec-coaching/migrations/20260714_exec_coaching_tables.sql`. Multi-tenant (`tenant_id`), `ec_` prefix: `ec_users, ec_students, ec_sessions, ec_transcripts, ec_reports, ec_assignments`.
+
+**Live:** landing `/executive-english` (public, bilingual EN/ES) · dashboard `/coaching-english/` · signup `/coaching-english/signup` (open free for coaches) · login `/coaching-english/login` · health `/coaching-english/health` · debug `/debug/exec-coaching-error`.
+
+**AI brain:** `src/services/coach-brain.js` reuses `ANTHROPIC_API_KEY` (Claude Haiku). `finalizeSession(turns, ctx)` returns `{subject, summary, fortalezas[], aspectos_mejorar[], expresiones[], vocabulario[], ejercicio, correcciones[]}` — the 5 deliverables from the program's SEGUIMIENTO section. `suggestAssignments(report, ctx)` proposes "entre sesiones" tasks. `guidance(...)` answers coach questions. Zero-key **heuristic fallback** if no API key. The **80%-student-speaks meter** is deterministic (transcript word counts in the route, not the LLM).
+
+**Capture:** browser Web Speech API (`en-US`) live voice AND typed input both POST to `/sessions/:id/turn` — one pipeline. "Finalize" runs the AI report + locks speaking %; report shown with per-section deliverables, PDF (print) + Email (mailto) buttons.
+
+**REST API (`/coaching-english/api/v1/*`):**
+- Auth: `POST /auth/signup|login|logout` · `GET /auth/me`
+- Students: `GET|POST /students` · `GET|PATCH|DELETE /students/:id`
+- Sessions: `POST /sessions` · `GET /sessions` (opt `?student_id=`) · `GET /sessions/:id` · `POST /sessions/:id/turn` · `POST /sessions/:id/finalize` · `GET /sessions/:id/report` · `POST /sessions/:id/suggest-assignments` · `POST /sessions/:id/guidance`
+- Assignments: `GET|POST /assignments` · `PATCH|DELETE /assignments/:id`
+
+**Environment Variables:**
+- `EXEC_COACHING_JWT_SECRET` — signs the `exec_coaching_token` cookie (fallback `JWT_SECRET`), 30d. SET on prod.
+- `EXEC_COACHING_MODEL` — Anthropic model for report + guidance. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`.
+- `EXEC_COACHING_DEFAULT_PASSWORD` — seeded password for the two default accounts (fernandodelae@gmail.com coach, mstagg@digit2ai.com owner). Default `exec@2026`. Regular coaches self-signup.
+- `EXEC_COACHING_SEED_DEMO` — `1` seeds Fernando's tenant with the Minister as a student + one finalized sample session on boot. Default unset = clean.
+
 ## Projects Hub — Client 15 Command Center (`/projects`)
 
 The Digit2AI Projects Hub doubles as the owner's (client 15) single command center, surfacing RinglyPro CRM data alongside projects. Glue lives in `src/routes/projects-bridge.js` (mounted `/api/projects-bridge`, hard-scoped to `D2AI_CLIENT_ID = 15`, runs on the main CRM sequelize).
