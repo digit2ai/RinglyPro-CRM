@@ -15,17 +15,68 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const router = express.Router();
 const distDir = path.join(__dirname, 'dist');
 const indexHtml = path.join(distDir, 'index.html');
 const hasBuild = fs.existsSync(indexHtml);
+const privateDir = path.join(__dirname, 'private');
 
 // Portal v2 — static design-preview of the new dashboard screens (Inicio,
 // Patrimonio, Metas, Cuentas). Plain HTML/CSS, no build step. Served at
 // /planea/portal. Registered BEFORE the SPA fallback so it isn't swallowed.
 const portalDir = path.join(__dirname, 'portal');
 const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
+
+// ── Private technical architecture doc — GET /planea/tech_architecture ──
+// Gated behind a single admin credential. Signed HttpOnly cookie (HMAC), 30d.
+// Override the defaults with env on prod: PLANEA_DOCS_PASSWORD / PLANEA_DOCS_SECRET.
+const DOCS_SECRET = process.env.PLANEA_DOCS_SECRET || process.env.VERITAS_JWT_SECRET || process.env.JWT_SECRET || 'planea-docs-secret';
+const DOCS_EMAIL = (process.env.PLANEA_DOCS_EMAIL || 'admin@planea.com.co').toLowerCase();
+const DOCS_PASSWORD = process.env.PLANEA_DOCS_PASSWORD || 'Digit2Ai@7';
+
+function signDocs() {
+  const payload = Buffer.from(JSON.stringify({ e: DOCS_EMAIL, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString('base64url');
+  const mac = crypto.createHmac('sha256', DOCS_SECRET).update(payload).digest('base64url');
+  return payload + '.' + mac;
+}
+function verifyDocs(tok) {
+  if (!tok || tok.indexOf('.') < 0) return false;
+  const parts = tok.split('.');
+  const expect = crypto.createHmac('sha256', DOCS_SECRET).update(parts[0]).digest('base64url');
+  if (parts[1] !== expect) return false;
+  try { const p = JSON.parse(Buffer.from(parts[0], 'base64url').toString()); return p.exp > Date.now(); } catch (e) { return false; }
+}
+function docsCookie(req) {
+  const h = req.headers.cookie || '';
+  const m = h.match(/(?:^|;\s*)planea_docs=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function setDocsCookie(req, res, value, maxAge) {
+  const https = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  res.setHeader('Set-Cookie',
+    'planea_docs=' + value + '; HttpOnly; Path=/planea/tech_architecture; Max-Age=' + maxAge + '; SameSite=Lax' + (https ? '; Secure' : ''));
+}
+
+router.get('/tech_architecture/login', (req, res) => res.sendFile(path.join(privateDir, 'login.html')));
+router.post('/tech_architecture/login', express.urlencoded({ extended: false }), (req, res) => {
+  const email = (req.body && req.body.email || '').trim().toLowerCase();
+  const password = (req.body && req.body.password) || '';
+  if (email === DOCS_EMAIL && password === DOCS_PASSWORD) {
+    setDocsCookie(req, res, signDocs(), 60 * 60 * 24 * 30);
+    return res.redirect(302, '/planea/tech_architecture');
+  }
+  return res.redirect(302, '/planea/tech_architecture/login?e=1');
+});
+router.post('/tech_architecture/logout', (req, res) => {
+  setDocsCookie(req, res, '', 0);
+  res.redirect(302, '/planea/tech_architecture/login');
+});
+router.get('/tech_architecture', (req, res) => {
+  if (!verifyDocs(docsCookie(req))) return res.redirect(302, '/planea/tech_architecture/login');
+  res.sendFile(path.join(privateDir, 'tech_architecture.html'));
+});
 
 // Health check — GET /planea/health
 router.get('/health', (req, res) => {

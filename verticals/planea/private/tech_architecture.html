@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Planea — Arquitectura Técnica</title>
+<style>
+  :root{
+    --bg:#0a1310;--panel:#111d18;--panel2:#16231f;--group:#1b2e27;--line:#25332c;
+    --txt:#eef3ef;--mut:#93a49c;--mut2:#647268;
+    --green:#5cba8a;--greenb:#8fd9ac;--gold:#d8c48a;--red:#c86b4f;--blue:#7fb0d9;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"Cascadia Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--txt);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.6;
+    background-image:radial-gradient(120% 60% at 100% -5%,rgba(92,186,138,.08),transparent 55%)}
+  .tnum{font-variant-numeric:tabular-nums}
+  code,.mono{font-family:var(--mono)}
+  a{color:var(--greenb);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* Top bar */
+  .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:14px 22px;background:rgba(10,19,16,.9);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:-.02em}
+  .top .brand svg{width:24px;height:24px}
+  .top .doc{font-size:13px;color:var(--mut);border-left:1px solid var(--line);padding-left:14px}
+  .top .sp{flex:1}
+  .badge-priv{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--greenb);background:rgba(92,186,138,.12);border:1px solid rgba(92,186,138,.25);padding:5px 11px;border-radius:99px;font-weight:600}
+  .badge-priv svg{width:12px;height:12px}
+  .logout{font-family:var(--sans);font-size:12.5px;color:var(--mut);background:transparent;border:1px solid var(--line);border-radius:9px;padding:7px 12px;cursor:pointer}
+  .logout:hover{color:var(--txt);border-color:var(--green)}
+
+  .shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:236px 1fr;gap:34px;padding:30px 22px 90px}
+  @media(max-width:900px){.shell{grid-template-columns:1fr;gap:0}.toc{display:none}}
+
+  /* TOC */
+  .toc{position:sticky;top:74px;align-self:start;height:calc(100vh - 96px);overflow-y:auto;padding-right:6px}
+  .toc .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut2);margin:14px 0 8px}
+  .toc a{display:block;color:var(--mut);font-size:13.5px;padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+  .toc a:hover{color:var(--txt);background:var(--panel);text-decoration:none}
+  .toc a .n{font-family:var(--mono);color:var(--mut2);font-size:11px;margin-right:7px}
+
+  /* Content */
+  .content{min-width:0}
+  .hero-doc{border:1px solid var(--line);border-radius:18px;padding:30px 30px 26px;background:linear-gradient(180deg,var(--group),var(--panel));margin-bottom:12px}
+  .hero-doc .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--green);font-weight:600}
+  .hero-doc h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;margin-top:10px;line-height:1.08;text-wrap:balance}
+  .hero-doc p{color:var(--mut);font-size:15px;margin-top:12px;max-width:640px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .meta span{font-family:var(--mono);font-size:11.5px;color:var(--txt);background:var(--panel2);border:1px solid var(--line);padding:5px 10px;border-radius:8px}
+  .meta span b{color:var(--greenb)}
+
+  section{scroll-margin-top:80px;padding:30px 0;border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:none}
+  h2{font-size:22px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:baseline;gap:12px}
+  h2 .num{font-family:var(--mono);font-size:14px;color:var(--green);font-weight:600}
+  h3{font-size:15.5px;font-weight:700;margin-top:22px;color:var(--txt)}
+  p.lead{color:var(--mut);font-size:14.5px;margin-top:10px;max-width:70ch}
+  ul{margin:12px 0 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+  ul li{color:var(--mut);font-size:14px;padding-left:20px;position:relative;line-height:1.55}
+  ul li::before{content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+  ul li b,ul li strong{color:var(--txt)}
+  code{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--greenb)}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:620px){.cards{grid-template-columns:1fr}}
+  .c{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px}
+  .c .h{display:flex;align-items:center;gap:10px}
+  .c .ic{width:34px;height:34px;border-radius:9px;background:var(--group);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .c .ic svg{width:17px;height:17px;stroke:var(--greenb);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .c h4{font-size:14.5px;font-weight:700}
+  .c p{color:var(--mut);font-size:13px;margin-top:9px;line-height:1.5}
+
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600;padding:11px 14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--mut);vertical-align:top}
+  td b,td strong{color:var(--txt)}
+  tr:last-child td{border-bottom:none}
+  td code{white-space:nowrap}
+
+  .diagram{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:22px;margin-top:18px;overflow-x:auto}
+  .flowrow{display:flex;align-items:stretch;gap:0;min-width:640px}
+  .node{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative}
+  .node.accent{border-color:rgba(143,217,172,.45);box-shadow:0 0 0 1px rgba(92,186,138,.08)}
+  .node .t{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+  .node .n{font-size:14.5px;font-weight:700;margin-top:5px}
+  .node .d{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.45}
+  .conn{display:flex;align-items:center;color:var(--mut2);font-size:20px;padding:0 8px;flex-shrink:0}
+
+  .stack{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .layer{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;border-left:3px solid var(--green)}
+  .layer .k{font-family:var(--mono);font-size:11px;color:var(--greenb);text-transform:uppercase;letter-spacing:.08em;min-width:120px}
+  .layer .v{font-size:13.5px;color:var(--mut)}
+  .layer .v b{color:var(--txt)}
+
+  .note{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:11px;padding:14px 18px;margin-top:16px;font-size:13.5px;color:var(--mut)}
+  .note b{color:var(--gold)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}
+  .pill.ok{color:var(--greenb);border-color:rgba(92,186,138,.3)}
+  .pill.plan{color:var(--gold);border-color:rgba(216,196,138,.3)}
+  .pill.ext{color:var(--blue);border-color:rgba(127,176,217,.3)}
+
+  footer{max-width:1200px;margin:0 auto;padding:24px 22px 60px;color:var(--mut2);font-family:var(--mono);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="brand"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#fff"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#fff"/></svg>Planea</span>
+  <span class="doc">Arquitectura Técnica</span>
+  <span class="sp"></span>
+  <span class="badge-priv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Privado</span>
+  <form method="POST" action="/planea/tech_architecture/logout" style="display:inline"><button class="logout" type="submit">Cerrar sesión</button></form>
+</div>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="lbl">Contenido</div>
+    <a href="#resumen"><span class="n">01</span>Resumen ejecutivo</a>
+    <a href="#topologia"><span class="n">02</span>Topología del sistema</a>
+    <a href="#frontend"><span class="n">03</span>Frontend · App & PWA</a>
+    <a href="#maya"><span class="n">04</span>Maya · Capa de IA</a>
+    <a href="#mcp"><span class="n">05</span>Arquitectura MCP Neural</a>
+    <a href="#backend"><span class="n">06</span>Backend & montaje</a>
+    <a href="#datos"><span class="n">07</span>Modelo de datos</a>
+    <a href="#motor"><span class="n">08</span>Motor financiero</a>
+    <a href="#integraciones"><span class="n">09</span>Integraciones</a>
+    <a href="#seguridad"><span class="n">10</span>Seguridad & privacidad</a>
+    <a href="#entrega"><span class="n">11</span>Metodología de entrega</a>
+    <a href="#despliegue"><span class="n">12</span>Despliegue & operación</a>
+    <a href="#env"><span class="n">13</span>Variables de entorno</a>
+    <a href="#roadmap"><span class="n">14</span>Roadmap & decisiones</a>
+    <a href="#apendice"><span class="n">15</span>Apéndice · rutas</a>
+  </nav>
+
+  <main class="content">
+    <div class="hero-doc">
+      <div class="eyebrow">Documento de arquitectura · confidencial</div>
+      <h1>Ecosistema Planea — Arquitectura Técnica</h1>
+      <p>Copiloto financiero personal para Colombia. App oscura instalable (PWA), guía conversacional Maya (chat + voz + manos libres) y una capa de agentes MCP Neural, montada sobre RinglyPro CRM.</p>
+      <div class="meta">
+        <span>Entidad · <b>Planea Financiera S.A.S.</b></span>
+        <span>Host · <b>aiagent.ringlypro.com/planea</b></span>
+        <span>Estado · <b>Producción</b></span>
+        <span>Versión · <b>1.0</b></span>
+      </div>
+    </div>
+
+    <section id="resumen">
+      <h2><span class="num">01</span>Resumen ejecutivo</h2>
+      <p class="lead">Planea convierte la situación financiera dispersa de una persona en un puntaje claro (0–100), un diagnóstico honesto y un siguiente paso concreto. Es una plataforma de <b>educación financiera</b> — no de asesoría de inversión regulada.</p>
+      <div class="cards">
+        <div class="c"><div class="h"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span><h4>Planea Score</h4></div><p>Puntaje 0–100 sobre 4 pilares (fondo de emergencia, flujo de caja, salud de deudas, estabilidad) con metodología CFP adaptada a Colombia.</p></div>
+        <div class="c"><div class="h"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/></svg></span><h4>Maya · IA</h4></div><p>Guía financiera que responde por texto o voz sobre los datos reales del usuario, siguiendo un árbol de decisión determinístico.</p></div>
+        <div class="c"><div class="h"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><h4>App modular</h4></div><p>12 pantallas (Inicio, Patrimonio, Metas, Ahorro, Deuda, Inversión, Seguros, Retiro, Cuentas, Configuración, Más, Guía) con drawer lateral.</p></div>
+        <div class="c"><div class="h"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></span><h4>PWA</h4></div><p>Instalable en móvil y escritorio, con service worker (shell offline) y layout responsivo (columna móvil / sidebar fijo en desktop).</p></div>
+      </div>
+    </section>
+
+    <section id="topologia">
+      <h2><span class="num">02</span>Topología del sistema</h2>
+      <p class="lead">Cliente (PWA) ↔ RinglyPro CRM (Express) ↔ servicios de IA y datos. El navegador orquesta STT/TTS; el servidor concentra la marca, el enrutamiento y el cerebro de Maya.</p>
+      <div class="diagram">
+        <div class="flowrow">
+          <div class="node accent"><div class="t">Cliente</div><div class="n">PWA · Portal oscuro</div><div class="d">HTML/CSS/JS estático · service worker · Web Speech (STT) · Web Audio (TTS)</div></div>
+          <div class="conn">→</div>
+          <div class="node accent"><div class="t">Servidor</div><div class="n">RinglyPro CRM · Express</div><div class="d">server.cjs montado en /planea · static + redirects + endpoint Maya + docs gated</div></div>
+          <div class="conn">→</div>
+          <div class="node"><div class="t">Servicios</div><div class="n">Supabase · Anthropic · Edge TTS</div><div class="d">Auth+DB+RLS · Claude (Maya) · voz neural sin llave</div></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="layer"><span class="k">Presentación</span><span class="v"><b>Portal PWA</b> (12 pantallas) + SPA Ionic React legacy (login/diagnóstico)</span></div>
+        <div class="layer"><span class="k">Aplicación</span><span class="v"><b>Express Router</b> self-contained (server.cjs), montado en <code>/planea</code> desde el CRM</span></div>
+        <div class="layer"><span class="k">IA</span><span class="v"><b>Maya</b> — Claude vía <code>/planea/api/v1/maya/chat</code> · voz por <code>/api/tts/edge</code></span></div>
+        <div class="layer"><span class="k">Datos</span><span class="v"><b>Supabase (PostgreSQL + RLS)</b> hoy · Postgres del CRM multi-tenant (propuesto)</span></div>
+      </div>
+    </section>
+
+    <section id="frontend">
+      <h2><span class="num">03</span>Frontend · App & PWA</h2>
+      <p class="lead">Portal estático servido bajo <code>/planea/portal/*</code>. Cada pantalla es un HTML mínimo; el chrome (barra superior, drawer, botón de Maya, PWA) se inyecta por un único script compartido.</p>
+      <h3>Piezas compartidas</h3>
+      <ul>
+        <li><code>planea-app.css</code> — sistema de diseño oscuro (tokens de color, tipografía Inter/DM Sans, componentes) + tema claro y layout de escritorio (sidebar fijo ≥1024px).</li>
+        <li><code>planea-nav.js</code> — inyecta barra superior + drawer con todos los módulos, toggle claro/oscuro, perfil, <b>Cerrar sesión</b>, botón de Maya, y el registro del <b>service worker</b> + prompt de instalación PWA.</li>
+        <li><code>maya-chat.js</code> — widget conversacional (ver §4).</li>
+      </ul>
+      <h3>PWA</h3>
+      <ul>
+        <li><code>manifest.webmanifest</code> — standalone, scope <code>/planea/portal/</code>, íconos 192/512/SVG, tema <code>#0a1310</code>.</li>
+        <li><code>sw.js</code> — cache del app-shell (<span class="pill ok">network-first</span> en navegaciones, <span class="pill">cache-first</span> en estáticos, nunca cachea <code>/api/</code>); versión <code>planea-shell-v3</code>.</li>
+        <li>Instalable en Android/desktop (Chrome/Edge) e iOS (Agregar a inicio). Funciona offline.</li>
+      </ul>
+      <h3>Responsivo</h3>
+      <ul>
+        <li><b>Móvil:</b> columna única, drawer deslizable, botón flotante de Maya sobre la barra inferior (safe-area).</li>
+        <li><b>Escritorio (≥1024px):</b> sidebar fijo a la izquierda + contenido ancho centrado; los pasos sugeridos pasan a 3 columnas.</li>
+      </ul>
+      <div class="note"><b>Nota.</b> La app Ionic React (Vite) original permanece para <code>/planea/login</code> y <code>/planea/score</code>; el recorrido principal redirige al portal oscuro (ver §6).</div>
+    </section>
+
+    <section id="maya">
+      <h2><span class="num">04</span>Maya · Capa de IA conversacional</h2>
+      <p class="lead">Guía financiera accesible desde cualquier pantalla. Tres modos de interacción, una sola inteligencia, anclada a los datos del usuario.</p>
+      <div class="cards">
+        <div class="c"><div class="h"><h4>Entrada</h4></div><p><b>Texto</b> · <b>voz única</b> (Web Speech API, <code>es-CO</code>) · <b>manos libres</b>: Maya habla → escucha → responde en bucle, sin escribir.</p></div>
+        <div class="c"><div class="h"><h4>Salida</h4></div><p>Voz neural sin llave vía <code>/api/tts/edge</code> (Microsoft Edge Read Aloud, voz Salomé <code>es-CO</code>). Reproducción por <b>frases</b> (Web Audio) para latencia baja; markdown removido antes de sintetizar.</p></div>
+        <div class="c"><div class="h"><h4>Cerebro</h4></div><p><code>POST /planea/api/v1/maya/chat</code> → Claude (<code>claude-haiku-4-5</code>). System prompt = manual del Financial Planner + reglas de Compliance, con el perfil del usuario serializado.</p></div>
+        <div class="c"><div class="h"><h4>Anclaje al usuario</h4></div><p><code>maya-chat.js</code> lee la sesión Supabase del navegador y carga el perfil real (nombre, score, patrimonio, metas) vía REST/RLS; sin sesión usa el perfil demo.</p></div>
+      </div>
+      <div class="note"><b>Cumplimiento en el prompt.</b> Maya nunca da recomendaciones individualizadas de inversión reguladas, no promete rendimientos, adjunta el aviso de referencia de mercado y respeta la Ley 1581. Responde en texto plano, breve y conversacional.</div>
+    </section>
+
+    <section id="mcp">
+      <h2><span class="num">05</span>Arquitectura MCP Neural (agentes)</h2>
+      <p class="lead">Diseño objetivo: tres agentes coordinados, con un cuarto reservado para monetización. Hoy la lógica vive en el prompt de Maya; la separación en agentes es el backlog (§14).</p>
+      <div class="diagram">
+        <div class="flowrow">
+          <div class="node accent"><div class="t">P1</div><div class="n">Financial Planner</div><div class="d">Cerebro. Árbol A–I + pirámide CFP. Genera diagnóstico, respuestas e insights.</div></div>
+          <div class="conn">·</div>
+          <div class="node"><div class="t">P2</div><div class="n">Relationship Manager</div><div class="d">Retención. 6 triggers de tiempo/evento (nunca por chat). Push / in-app.</div></div>
+          <div class="conn">·</div>
+          <div class="node"><div class="t">P3</div><div class="n">Compliance</div><div class="d">Gate obligatorio en toda salida al usuario. Audita cada respuesta.</div></div>
+        </div>
+      </div>
+      <h3>Flujos</h3>
+      <ul>
+        <li><b>Chat:</b> usuario → Financial Planner (con contexto) → Compliance valida → respuesta.</li>
+        <li><b>Proactivo:</b> trigger del Relationship Manager → consulta al Planner → Compliance → push/in-app.</li>
+        <li><b>PDF:</b> extracto → Planner extrae y compara con lo declarado → propone actualizar el score → Compliance cifra y aísla el documento.</li>
+      </ul>
+      <h3>Scheduler — 6 triggers (America/Bogota)</h3>
+      <div class="tbl-scroll"><table>
+        <tr><th>#</th><th>Evento</th><th>Acción</th><th>Canal</th></tr>
+        <tr><td>1</td><td>Survey sin volver en 48h</td><td>Reactivación</td><td>push + in-app</td></tr>
+        <tr><td>2</td><td>Martes 7:00 PM</td><td>Martes de Maya — insight del pilar débil</td><td>push</td></tr>
+        <tr><td>3</td><td>Día 15 y 30</td><td>Check-in de 2 preguntas → recalcula score</td><td>in-app</td></tr>
+        <tr><td>4</td><td>Meta completada</td><td>Celebración + nueva meta en 24h</td><td>push + in-app</td></tr>
+        <tr><td>5</td><td>Inactivo 7 días</td><td>Re-engagement</td><td>push</td></tr>
+        <tr><td>6</td><td>Solo vio el score y se fue</td><td>Prospecting</td><td>push + in-app</td></tr>
+      </table></div>
+      <div class="note"><b>Reservado ·</b> <span class="pill plan">Product Matchmaker (P4)</span> — empareja perfil con productos de aliados (Nubank, Lulo, Addi, Sura). No se construye; el diseño reserva el punto de extensión.</div>
+    </section>
+
+    <section id="backend">
+      <h2><span class="num">06</span>Backend & montaje</h2>
+      <p class="lead"><code>verticals/planea/server.cjs</code> — Express Router self-contained montado en <code>/planea</code> desde <code>src/app.js</code> del CRM. Debe ser <code>.cjs</code> (el paquete es <code>type:module</code>, el CRM es CommonJS).</p>
+      <div class="tbl-scroll"><table>
+        <tr><th>Ruta</th><th>Método</th><th>Función</th></tr>
+        <tr><td><code>/planea</code>, <code>/planea/home</code>, legacy</td><td>GET</td><td>302 → portal oscuro (la app nueva es el producto)</td></tr>
+        <tr><td><code>/planea/portal/*</code></td><td>GET</td><td>Pantallas estáticas + assets del portal</td></tr>
+        <tr><td><code>/planea/api/v1/maya/chat</code></td><td>POST</td><td>Cerebro de Maya (Claude)</td></tr>
+        <tr><td><code>/planea/tech_architecture</code></td><td>GET</td><td>Este documento (gated, cookie HMAC)</td></tr>
+        <tr><td><code>/planea/health</code></td><td>GET</td><td>Estado del servicio</td></tr>
+        <tr><td><code>/planea/login</code>, <code>/planea/score</code></td><td>GET</td><td>SPA Ionic legacy (auth + diagnóstico)</td></tr>
+      </table></div>
+      <div class="note"><b>SPA fallback.</b> Cualquier ruta GET no capturada sirve el <code>index.html</code> de la SPA Ionic (con Maya inyectada), permitiendo el ruteo del cliente.</div>
+    </section>
+
+    <section id="datos">
+      <h2><span class="num">07</span>Modelo de datos</h2>
+      <h3>Hoy · Supabase (PostgreSQL + RLS)</h3>
+      <ul>
+        <li><code>persons</code> (1:1 con auth) — nombre, teléfono, <code>score_data</code> (jsonb), <code>progress_data</code> (meta activa).</li>
+        <li><code>persons_score_history</code> — snapshots inmutables (<code>source: survey|checkin</code>).</li>
+        <li><code>persons_patrimony</code> — <code>assets_data[]</code> + <code>liabilities_data[]</code> (jsonb).</li>
+        <li><code>persons_long_term_goals</code> — metas de largo plazo.</li>
+        <li>Row Level Security por usuario en cada tabla; el frontend habla directo con Supabase.</li>
+      </ul>
+      <h3>Propuesto · Postgres del CRM (multi-tenant)</h3>
+      <p class="lead">Migración a un modelo <code>tenant_id</code> de ~17 tablas para habilitar los agentes MCP y la orquestación server-side.</p>
+      <div class="tbl-scroll"><table>
+        <tr><th>Grupo</th><th>Tablas</th></tr>
+        <tr><td>Usuario / onboarding</td><td><code>users · survey_responses · scores · score_scenarios(A–I) · pillars</code></td></tr>
+        <tr><td>Planeación</td><td><code>goals · assets · liabilities</code></td></tr>
+        <tr><td>Cuentas / open finance</td><td><code>institutions · accounts · policies</code></td></tr>
+        <tr><td>IA / agentes</td><td><code>agent_messages · message_triggers · insights · pdf_documents</code></td></tr>
+        <tr><td>Cumplimiento</td><td><code>compliance_audit_log</code></td></tr>
+      </table></div>
+    </section>
+
+    <section id="motor">
+      <h2><span class="num">08</span>Motor financiero</h2>
+      <h3>Planea Score</h3>
+      <div class="tbl-scroll"><table>
+        <tr><th>Pilar</th><th>Peso</th><th>Mide</th></tr>
+        <tr><td><b>Fondo de emergencia</b></td><td class="tnum">35%</td><td>Meses de gastos cubiertos sin ingresos</td></tr>
+        <tr><td><b>Flujo de caja</b></td><td class="tnum">25%</td><td>Relación ingresos / gastos</td></tr>
+        <tr><td><b>Salud de deudas</b></td><td class="tnum">25%</td><td>% del ingreso en cuotas (DTI) y tipo de deuda</td></tr>
+        <tr><td><b>Estabilidad</b></td><td class="tnum">15%</td><td>Ingreso fijo/variable + personas a cargo</td></tr>
+      </table></div>
+      <p class="lead" style="margin-top:14px">Rangos: Punto de partida (0–30) · Construyendo (31–50) · En camino (51–70) · Sólido (71–85) · Planeado (86–100). Los <b>7 pilares de planeación</b> del portal (Ahorro, Deuda, Inversión, Seguros, Impuestos, Pensión, Legado) son una vista superior, no recalculan el score.</p>
+      <h3>Árbol de decisión (Financial Planner)</h3>
+      <ul>
+        <li><b>Orden estricto:</b> flujo de caja → deuda cara (&gt;20% E.A.) → fondo de emergencia (3–6 meses) → inversión.</li>
+        <li><b>Escenarios A–I:</b> de flujo negativo (A) a usuario sin deuda con fondo completo (I). Cada uno produce mensaje + meta + timeline.</li>
+        <li><b>Regla de honestidad:</b> si el objetivo declarado no es lo más inteligente ahora, Maya lo dice con empatía y lo conecta con la prioridad real.</li>
+      </ul>
+    </section>
+
+    <section id="integraciones">
+      <h2><span class="num">09</span>Integraciones</h2>
+      <div class="tbl-scroll"><table>
+        <tr><th>Servicio</th><th>Uso</th><th>Estado</th></tr>
+        <tr><td><b>Supabase</b></td><td>Auth, PostgreSQL, RLS, edge functions, storage</td><td><span class="pill ok">Live</span></td></tr>
+        <tr><td><b>Anthropic (Claude)</b></td><td>Cerebro de Maya (Haiku)</td><td><span class="pill ok">Live</span></td></tr>
+        <tr><td><b>Edge TTS</b></td><td>Voz de Maya sin llave (<code>/api/tts/edge</code>)</td><td><span class="pill ok">Live</span></td></tr>
+        <tr><td><b>Web Speech API</b></td><td>Dictado de voz en el navegador</td><td><span class="pill ok">Live</span></td></tr>
+        <tr><td><b>Vercel</b></td><td>Hosting previo de la SPA Ionic</td><td><span class="pill ext">Legacy</span></td></tr>
+        <tr><td><b>Open finance</b> (Belvo / Finerio)</td><td>Conexión de cuentas bancarias</td><td><span class="pill plan">Planeado</span></td></tr>
+        <tr><td><b>WhatsApp</b></td><td>Martes de Maya / notificaciones</td><td><span class="pill plan">v1.5</span></td></tr>
+      </table></div>
+    </section>
+
+    <section id="seguridad">
+      <h2><span class="num">10</span>Seguridad & privacidad</h2>
+      <ul>
+        <li><b>Row Level Security</b> por usuario en Supabase; ningún usuario ve datos de otro.</li>
+        <li><b>Ley 1581 de 2012 + Decreto 1377 de 2013</b> (habeas data Colombia). Autoridad: SIC.</li>
+        <li><b>Nunca</b> se piden claves de banco ni se mueve dinero: "Planea ve tus finanzas, solo tú mueves tu dinero".</li>
+        <li><b>Canal corporativo:</b> el empleador solo ve agregados anónimos, nunca datos individuales.</li>
+        <li><b>PDFs</b> tratados con la misma confidencialidad que el survey (cifrado en reposo y tránsito) — a implementar con la ingesta de extractos.</li>
+        <li><b>Compliance gate:</b> toda salida de IA valida no-asesoría-regulada, disclaimers, sin promesas de retorno.</li>
+        <li><b>Este documento:</b> gated por credencial única, cookie HttpOnly firmada con HMAC-SHA256 (30 días), <code>SameSite=Lax; Secure</code>.</li>
+      </ul>
+    </section>
+
+    <section id="entrega">
+      <h2><span class="num">11</span>Metodología de entrega — fan-out MCP</h2>
+      <p class="lead">El ecosistema se construye con el patrón del RinglyPro AI Architect: un MCP Brain descompone el trabajo y despacha agentes especialistas en paralelo, luego reconcilia y despliega.</p>
+      <div class="diagram">
+        <div class="flowrow">
+          <div class="node accent"><div class="t">MCP Brain</div><div class="n">Architect</div><div class="d">route · fan-out · collect · reconcile · deploy</div></div>
+          <div class="conn">→</div>
+          <div class="node"><div class="t">Paralelo</div><div class="n">N agentes Senior</div><div class="d">1 unidad de trabajo → 1 agente (p. ej. 9 pantallas simultáneas)</div></div>
+          <div class="conn">→</div>
+          <div class="node"><div class="t">Pipeline</div><div class="n">Reconcile → Deploy</div><div class="d">integración · commit · Render · verificación live</div></div>
+        </div>
+      </div>
+      <ul>
+        <li>Independientes en paralelo, dependientes en pipeline (build → test → release).</li>
+        <li>Cada agente recibe rol + entregable + contexto + criterios de éxito, y devuelve artefactos.</li>
+        <li>El Brain reconcilia, resuelve conflictos y despliega. Verificación en producción antes de cerrar.</li>
+      </ul>
+    </section>
+
+    <section id="despliegue">
+      <h2><span class="num">12</span>Despliegue & operación</h2>
+      <ul>
+        <li><b>Plataforma:</b> Render, auto-deploy en <code>push</code> a <code>main</code> (~2 min).</li>
+        <li><b>Build:</b> <code>build.sh</code> — la SPA Ionic se compila si falta <code>dist/</code>; el portal es estático (sin build).</li>
+        <li><b>Health:</b> <code>GET /planea/health</code> reporta <code>dist</code> y <code>portal</code>.</li>
+        <li><b>PWA:</b> el service worker versiona el caché (<code>v3</code>); network-first en navegaciones para que los deploys se reflejen.</li>
+        <li><b>CDN/imagen:</b> el hero usa la imagen del Valle de Cocora servida localmente desde el portal.</li>
+      </ul>
+    </section>
+
+    <section id="env">
+      <h2><span class="num">13</span>Variables de entorno</h2>
+      <div class="tbl-scroll"><table>
+        <tr><th>Variable</th><th>Uso</th><th>Default</th></tr>
+        <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Cerebro de Maya</td><td>— (requerida)</td></tr>
+        <tr><td><code>PLANEA_MAYA_MODEL</code></td><td>Modelo de Maya</td><td><code>claude-haiku-4-5</code></td></tr>
+        <tr><td><code>PLANEA_DOCS_EMAIL</code></td><td>Usuario del doc técnico</td><td><code>admin@planea.com.co</code></td></tr>
+        <tr><td><code>PLANEA_DOCS_PASSWORD</code></td><td>Contraseña del doc técnico</td><td>fijada — <b>cambiar en prod</b></td></tr>
+        <tr><td><code>PLANEA_DOCS_SECRET</code></td><td>Firma de la cookie del doc</td><td>fallback <code>JWT_SECRET</code></td></tr>
+        <tr><td>Supabase URL + publishable key</td><td>Auth/DB (en <code>src/configurations/supabase.ts</code>)</td><td>hardcoded (público por RLS)</td></tr>
+      </table></div>
+      <div class="note"><b>Acción de prod.</b> Define <code>PLANEA_DOCS_PASSWORD</code> y <code>PLANEA_DOCS_SECRET</code> como variables de entorno en Render para no depender de los valores por defecto del código.</div>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="num">14</span>Roadmap & decisiones abiertas</h2>
+      <h3>Backlog por sprint</h3>
+      <div class="tbl-scroll"><table>
+        <tr><th>Sprint</th><th>Entregable</th><th>Dependencia</th></tr>
+        <tr><td>S1</td><td>Financial Planner server (árbol A–I) + modelo de datos</td><td>Supabase vs Postgres (OQ-2)</td></tr>
+        <tr><td>S2</td><td>Chat con memoria (<code>agent_messages</code>) + Compliance como gate separado</td><td>revisión legal</td></tr>
+        <tr><td>S3</td><td>Relationship Manager + scheduler (6 triggers) + portar pantallas a la app real</td><td>infra push</td></tr>
+        <tr><td>S4</td><td>Ingesta de PDF + comparación con el survey</td><td>almacenamiento cifrado</td></tr>
+        <tr><td>S5</td><td>Open finance + sugerencias (reserva Product Matchmaker)</td><td><b>proveedor open finance</b></td></tr>
+      </table></div>
+      <h3>Decisiones abiertas</h3>
+      <ul>
+        <li><b>OQ-1</b> · 4 vs 7 pilares: score de 4 pilares como motor; 7 como tablero de planeación (recomendado).</li>
+        <li><b>OQ-2</b> · Backend: mantener Supabase con capa MCP, o migrar a Postgres del CRM.</li>
+        <li><b>OQ-3</b> · Proveedor open finance (Belvo / Finerio / API directa) — único bloqueo externo real.</li>
+        <li><b>OQ-4</b> · Push notifications (Capacitor FCM/APNs vs in-app + email).</li>
+        <li><b>OQ-5</b> · Multi-moneda: tasas manuales vs feed de TRM automático.</li>
+      </ul>
+    </section>
+
+    <section id="apendice">
+      <h2><span class="num">15</span>Apéndice · inventario</h2>
+      <h3>Pantallas del portal</h3>
+      <ul>
+        <li>Inicio · Mi Patrimonio · Mis metas · Cuentas vinculadas · Retiro · Ahorro · Deuda · Inversión · Seguros · Configuración (módulos) · Más · Guía de uso.</li>
+      </ul>
+      <h3>Archivos clave</h3>
+      <div class="tbl-scroll"><table>
+        <tr><th>Archivo</th><th>Rol</th></tr>
+        <tr><td><code>verticals/planea/server.cjs</code></td><td>Montaje, redirects, endpoint Maya, docs gated</td></tr>
+        <tr><td><code>verticals/planea/portal/planea-app.css</code></td><td>Sistema de diseño</td></tr>
+        <tr><td><code>verticals/planea/portal/planea-nav.js</code></td><td>Chrome + PWA + perfil</td></tr>
+        <tr><td><code>verticals/planea/portal/maya-chat.js</code></td><td>Widget de Maya (chat/voz/manos libres)</td></tr>
+        <tr><td><code>verticals/planea/portal/sw.js</code></td><td>Service worker (offline shell)</td></tr>
+        <tr><td><code>verticals/planea/portal/manifest.webmanifest</code></td><td>Manifiesto PWA</td></tr>
+      </table></div>
+    </section>
+
+  </main>
+</div>
+
+<footer>Planea Financiera S.A.S. · Documento de arquitectura técnica v1.0 · Confidencial — solo uso interno · aiagent.ringlypro.com/planea</footer>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Planea — Acceso técnico</title>
+<style>
+  :root{--bg:#0a1310;--card:#121e1a;--line:#25332c;--txt:#eef3ef;--mut:#8a9b93;--green:#5cba8a;--greenb:#8fd9ac;--red:#c86b4f;--cream:#f1eee4;--ink:#11201b}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;background-image:radial-gradient(120% 80% at 50% -10%,rgba(92,186,138,.10),transparent 60%)}
+  .card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:34px 30px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em;justify-content:center}
+  .brand svg{width:26px;height:26px}
+  .lock{display:inline-flex;align-items:center;gap:7px;margin:16px auto 0;font-size:12px;color:var(--greenb);background:rgba(92,186,138,.12);border:1px solid rgba(92,186,138,.25);padding:5px 12px;border-radius:99px;font-weight:600}
+  .lock svg{width:13px;height:13px}
+  h1{text-align:center;font-size:19px;font-weight:700;margin-top:20px;letter-spacing:-.01em}
+  p.sub{text-align:center;color:var(--mut);font-size:13.5px;margin-top:6px}
+  form{margin-top:24px;display:flex;flex-direction:column;gap:14px}
+  label{font-size:12px;color:var(--mut);font-weight:600;display:block;margin-bottom:6px}
+  input{width:100%;background:#0e1a16;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--txt);font-size:15px;font-family:inherit}
+  input:focus{outline:2px solid var(--green);border-color:transparent}
+  button{background:var(--cream);color:var(--ink);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px}
+  button:hover{transform:translateY(-1px)}
+  .err{display:none;background:rgba(200,107,79,.14);border:1px solid rgba(200,107,79,.4);color:#e8a892;font-size:13px;padding:10px 12px;border-radius:10px;text-align:center}
+  .err.show{display:block}
+  .foot{text-align:center;color:#647268;font-size:11.5px;margin-top:20px;font-family:ui-monospace,Menlo,monospace}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><svg viewBox="0 0 26 26" fill="none"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="#fff"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="#fff"/></svg>Planea</div>
+    <div style="text-align:center"><span class="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento privado</span></div>
+    <h1>Arquitectura Técnica</h1>
+    <p class="sub">Acceso restringido al equipo de Planea.</p>
+    <div class="err" id="err">Credenciales incorrectas. Intenta de nuevo.</div>
+    <form method="POST" action="/planea/tech_architecture/login">
+      <div><label for="email">Correo</label><input id="email" name="email" type="email" autocomplete="username" placeholder="admin@planea.com.co" required></div>
+      <div><label for="password">Contraseña</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required></div>
+      <button type="submit">Ingresar →</button>
+    </form>
+    <div class="foot">aiagent.ringlypro.com/planea/tech_architecture</div>
+  </div>
+  <script>if(new URLSearchParams(location.search).get('e'))document.getElementById('err').classList.add('show');</script>
+</body>
+</html>
