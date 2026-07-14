@@ -305,7 +305,9 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **Location:** `verticals/exec-coaching/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/exec-coaching/migrations/20260714_exec_coaching_tables.sql`. Multi-tenant (`tenant_id`), `ec_` prefix: `ec_users, ec_students, ec_sessions, ec_transcripts, ec_reports, ec_assignments`.
 
-**Live:** landing `/executive-english` (public, bilingual EN/ES, two paths) · coach dashboard `/coaching-english/` · coach signup/login · **student self-signup `/coaching-english/start`** · **student app `/coaching-english/learn`** · health `/coaching-english/health` · debug `/debug/exec-coaching-error`.
+**Public domain — Speakly (speakly.vip):** the consumer-facing brand for this vertical is **Speakly**. Premium bilingual (ES default / EN toggle) marketing landing at `/speakly` (+ `/speakly/terms`, `/speakly/privacy`), modeled on Enverson/Leya AI. Login/Register CTAs wire to `/coaching-english/login` and `/coaching-english/start`. Custom-domain handler in `src/app.js` routes `speakly.vip` root/terms/privacy/login/register vanity paths (no-op until DNS points at the app). Landing + legal files live in `verticals/exec-coaching/public/speakly*.html`. Use "Speakly" in all marketing; "Executive English Coaching" is the internal/coach label.
+
+**Live:** Speakly landing `/speakly` (public) · landing `/executive-english` (public, bilingual EN/ES, two paths) · coach dashboard `/coaching-english/` · coach signup/login · **student self-signup `/coaching-english/start`** · **student app `/coaching-english/learn`** · health `/coaching-english/health` · debug `/debug/exec-coaching-error`.
 
 **Two tracks (v2):**
 - **Coach track (v1):** log 1:1 sessions → AI 5-deliverable report + 80%-speaks meter (below).
