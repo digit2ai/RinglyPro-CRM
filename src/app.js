@@ -2601,7 +2601,7 @@ app.get('/digit2ai-es', (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ${D2AI_GEO_REDIRECT_SCRIPT('es')}
-<title>DIGIT2AI - Plataformas AI-Nativas para Pequeñas Empresas</title>
+<title>DIGIT2AI — Descríbelo. Lo construimos.</title>
 <meta name="description" content="DIGIT2AI construye y escala plataformas verticales con AI. 21 productos en vivo en 22 industrias. El sistema operativo del AI vertical.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://aiagent.ringlypro.com/digit2ai-es">
@@ -2614,7 +2614,7 @@ ${D2AI_GEO_REDIRECT_SCRIPT('es')}
 <meta name="twitter:title" content="DIGIT2AI — Plataformas AI-Nativas para Pequeñas Empresas">
 <meta name="twitter:description" content="21 plataformas AI en vivo en 22 verticales industriales.">
 <meta name="twitter:image" content="${ogImage}">
-<style>html,body{margin:0;padding:0;background:#05070e;}</style>
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
 </head>
 <body>
 ${content}
