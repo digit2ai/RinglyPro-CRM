@@ -1,2495 +1,454 @@
-<!-- DIGIT2AI | Next-Gen Public Site | v3.0 -->
+<!-- DIGIT2AI | Self-Serve Builder Landing | v4.0 (Lovable-style, light) -->
 <style>
 /* ============================================================
-   DIGIT2AI — DESIGN SYSTEM
-   Dark, sophisticated, aurora-gradient aesthetic
+   DIGIT2AI — SELF-SERVE BUILDER (light, Lovable-inspired)
+   All styles scoped under .d2b to avoid collisions.
    ============================================================ */
-.dnx *, .dnx *::before, .dnx *::after { margin:0; padding:0; box-sizing:border-box; }
-.dnx {
-  --bg:#05070e;
-  --bg-elev:#0b0e1a;
-  --bg-card:rgba(255,255,255,0.025);
-  --bg-card-hover:rgba(255,255,255,0.045);
-  --border:rgba(255,255,255,0.08);
-  --border-strong:rgba(255,255,255,0.14);
-  --text:#e8ecf4;
-  --text-dim:#9aa4b8;
-  --text-faint:#6b7386;
-  --accent-cyan:#22d3ee;
-  --accent-blue:#3b82f6;
-  --accent-violet:#8b5cf6;
-  --accent-magenta:#ec4899;
-  --accent-lime:#84cc16;
-  --grad-primary:linear-gradient(135deg,#22d3ee 0%,#3b82f6 40%,#8b5cf6 75%,#ec4899 100%);
-  --grad-soft:linear-gradient(135deg,rgba(34,211,238,0.14),rgba(139,92,246,0.14));
-  --shadow-glow:0 0 80px -20px rgba(59,130,246,0.35);
-  --radius-sm:10px;
-  --radius:16px;
-  --radius-lg:24px;
-  --radius-xl:32px;
-  --font-sans:'Inter','SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --font-display:'Instrument Serif','Times New Roman',serif;
-  --font-mono:'JetBrains Mono','SF Mono',ui-monospace,Consolas,monospace;
-  font-family:var(--font-sans);
-  font-feature-settings:"ss01","cv11";
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  color:var(--text);
-  background:var(--bg);
-  line-height:1.55;
-  letter-spacing:-0.011em;
-  width:100%;
-  min-height:100vh;
-  overflow-x:hidden;
-  position:relative;
+.d2b, .d2b *, .d2b *::before, .d2b *::after{margin:0;padding:0;box-sizing:border-box}
+.d2b{
+  --bg:#faf8f5;
+  --bg2:#ffffff;
+  --card:#ffffff;
+  --line:#eae6df;
+  --line2:#ded8ce;
+  --ink:#14161c;
+  --mut:#5c6270;
+  --faint:#8b91a0;
+  --teal:#0ea5a8;
+  --teal-ink:#0a7d80;
+  --teal-soft:#e2f6f5;
+  --violet:#6a4bff;
+  --violet-soft:#ece7ff;
+  --magenta:#ec4899;
+  --grad:linear-gradient(100deg,#0ea5a8 0%,#6a4bff 55%,#ec4899 100%);
+  --grad-soft:linear-gradient(135deg,rgba(14,165,168,.12),rgba(106,75,255,.12));
+  --good:#12924f;--good-soft:#dcf3e6;
+  --warn:#b7791f;--warn-soft:#f8eccf;
+  --shadow-sm:0 1px 2px rgba(20,22,28,.05);
+  --shadow:0 2px 6px rgba(20,22,28,.05),0 14px 40px rgba(20,22,28,.07);
+  --shadow-lg:0 8px 24px rgba(20,22,28,.08),0 30px 70px rgba(20,22,28,.12);
+  --r:14px;--r-lg:22px;--r-xl:30px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-family:var(--sans);color:var(--ink);background:var(--bg);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  line-height:1.55;letter-spacing:-.011em;width:100%;min-height:100vh;overflow-x:hidden;position:relative;
 }
+.d2b a{color:inherit;text-decoration:none}
+.d2b button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.d2b img{max-width:100%;display:block}
+.d2b ul{list-style:none}
+.d2b h1,.d2b h2,.d2b h3{line-height:1.1;letter-spacing:-.03em;text-wrap:balance}
+.d2b .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.d2b .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
-.dnx a { color:inherit; text-decoration:none; }
-.dnx button { font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
-.dnx img { max-width:100%; display:block; }
-.dnx ul, .dnx ol { list-style:none; }
+/* ambient */
+.d2b .ambient{position:absolute;inset:0 0 auto 0;height:820px;z-index:0;pointer-events:none;overflow:hidden}
+.d2b .ambient::before{content:"";position:absolute;top:-320px;left:50%;transform:translateX(-50%);
+  width:1200px;height:900px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(14,165,168,.20),transparent 70%),
+             radial-gradient(closest-side,rgba(106,75,255,.16),transparent 70%);
+  background-position:30% 40%,70% 30%;background-repeat:no-repeat;filter:blur(20px);opacity:.9}
 
-/* Google fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+/* nav */
+.d2b nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  padding:22px 24px;max-width:1120px;margin:0 auto}
+.d2b .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.04em}
+.d2b .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--grad);box-shadow:var(--shadow-sm)}
+.d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
+.d2b .nav-links a:hover{color:var(--ink)}
+.d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+.d2b .btn:hover{transform:translateY(-1px)}
+.d2b .btn-primary{background:var(--ink);color:#fff;padding:11px 20px;font-size:14.5px;box-shadow:var(--shadow-sm)}
+.d2b .btn-primary:hover{filter:brightness(1.15)}
+.d2b .btn-grad{background:var(--grad);color:#fff;padding:13px 24px;font-size:15px;box-shadow:var(--shadow)}
+.d2b .btn-ghost{border:1px solid var(--line2);padding:10px 18px;font-size:14.5px;background:var(--bg2)}
+@media(max-width:680px){.d2b .nav-links a:not(.btn){display:none}}
 
-/* ============================================================
-   AMBIENT BACKGROUND (aurora + grain)
-   ============================================================ */
-.dnx-ambient {
-  position:fixed; inset:0; z-index:0; pointer-events:none;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(34,211,238,0.12), transparent 60%),
-    radial-gradient(ellipse 50% 50% at 80% 20%, rgba(139,92,246,0.14), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(236,72,153,0.08), transparent 60%),
-    var(--bg);
-}
-.dnx-ambient::before {
-  content:""; position:absolute; inset:0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-  background-size:80px 80px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 30%, black 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 30%, black 30%, transparent 80%);
-  opacity:0.6;
-}
-.dnx-ambient::after {
-  content:""; position:absolute; inset:0;
-  background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity:0.04; mix-blend-mode:overlay;
-}
-.dnx-canvas {
-  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.55;
-}
+/* hero */
+.d2b .hero{position:relative;z-index:2;text-align:center;padding:56px 0 24px}
+.d2b .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--teal-ink);
+  background:var(--teal-soft);border:1px solid rgba(14,165,168,.25);padding:6px 14px;border-radius:999px;margin-bottom:26px}
+.d2b .eyebrow .pip{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(14,165,168,.2)}
+.d2b .hero h1{font-size:clamp(38px,6.4vw,72px);font-weight:830;letter-spacing:-.045em}
+.d2b .hero .lede{font-size:clamp(17px,2.1vw,21px);color:var(--mut);max-width:56ch;margin:22px auto 0;font-weight:450}
 
-.dnx-root { position:relative; z-index:2; }
-.dnx-wrap { max-width:1240px; margin:0 auto; padding:0 28px; }
+/* prompt box */
+.d2b .builder{position:relative;z-index:3;max-width:720px;margin:38px auto 0}
+.d2b .promptcard{background:var(--card);border:1px solid var(--line2);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-lg);padding:10px;transition:box-shadow .2s ease}
+.d2b .promptcard:focus-within{box-shadow:var(--shadow-lg),0 0 0 3px rgba(106,75,255,.18)}
+.d2b textarea{width:100%;border:none;outline:none;resize:none;background:transparent;color:var(--ink);
+  font-family:inherit;font-size:17px;line-height:1.5;padding:18px 18px 6px;min-height:96px}
+.d2b textarea::placeholder{color:var(--faint)}
+.d2b .promptbar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 8px 16px;gap:12px}
+.d2b .promptbar .hint{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
+.d2b .promptbar .hint.warn{color:var(--warn)}
+.d2b #d2b-go{background:var(--grad);color:#fff;font-weight:700;font-size:15px;padding:12px 22px;border-radius:13px;
+  display:inline-flex;align-items:center;gap:9px;box-shadow:var(--shadow);transition:transform .12s ease,filter .12s ease}
+.d2b #d2b-go:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.d2b #d2b-go:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.d2b .chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:20px}
+.d2b .chip{font-size:13.5px;color:var(--mut);background:var(--bg2);border:1px solid var(--line);
+  padding:8px 15px;border-radius:999px;transition:all .12s ease}
+.d2b .chip:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-soft)}
+.d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
 
-/* ============================================================
-   HEADER / NAV
-   ============================================================ */
-.dnx-hdr {
-  position:sticky; top:0; z-index:50;
-  padding:14px 0;
-  background:rgba(5,7,14,0.6);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border-bottom:1px solid var(--border);
-}
-.dnx-hdr-inner { display:flex; align-items:center; justify-content:space-between; }
-.dnx-brand { display:flex; align-items:center; gap:10px; }
-.dnx-brand-logo { height:200px; width:auto; display:block; max-width:60vw; object-fit:contain; }
-@media (max-width:920px) { .dnx-brand-logo { height:96px; } }
-@media (max-width:640px) { .dnx-brand-logo { height:56px; } }
-@media (max-width:420px) { .dnx-brand-logo { height:44px; } }
-/* elevenlabs widget hide powered-by */
-.dnx-convai-mount { position:fixed; bottom:20px; right:20px; z-index:9998; }
-elevenlabs-convai a[href*="elevenlabs"],
-elevenlabs-convai [class*="powered" i],
-elevenlabs-convai [class*="Powered"] { display:none !important; height:0 !important; overflow:hidden !important; }
-.dnx-nav { display:none; align-items:center; gap:4px; }
-.dnx-nav a {
-  padding:8px 14px; border-radius:10px; font-size:14px; font-weight:500;
-  color:var(--text-dim); transition:color 160ms ease, background 160ms ease;
-}
-.dnx-nav a:hover { color:var(--text); background:var(--bg-card); }
-.dnx-nav-signin { display:none; }
-@media (max-width:920px) { .dnx-nav-signin { display:block; } }
-.dnx-hdr-cta { display:flex; align-items:center; gap:10px; }
-.dnx-lang {
-  padding:7px 12px; border-radius:999px; font-size:12px; font-weight:600;
-  border:1px solid var(--border); color:var(--text-dim); letter-spacing:0.04em;
-}
-.dnx-lang:hover { color:var(--text); border-color:var(--border-strong); }
-.dnx-btn {
-  display:inline-flex; align-items:center; gap:8px;
-  padding:10px 18px; border-radius:999px; font-size:14px; font-weight:600;
-  transition:transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
-  white-space:nowrap;
-}
-.dnx-btn-primary {
-  background:var(--grad-primary); color:#fff;
-  box-shadow:0 4px 20px -4px rgba(139,92,246,0.45);
-}
-.dnx-btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 32px -4px rgba(139,92,246,0.6); }
-.dnx-btn-ghost { border:1px solid var(--border-strong); color:var(--text); background:rgba(255,255,255,0.03); }
-.dnx-btn-ghost:hover { background:rgba(255,255,255,0.07); }
-.dnx-menubtn { display:none; width:40px; height:40px; border-radius:10px; border:1px solid var(--border); align-items:center; justify-content:center; color:var(--text); }
-.dnx-menubtn span { display:block; width:18px; height:1.5px; background:currentColor; position:relative; }
-.dnx-menubtn span::before, .dnx-menubtn span::after { content:""; position:absolute; left:0; width:18px; height:1.5px; background:currentColor; }
-.dnx-menubtn span::before { top:-6px; } .dnx-menubtn span::after { top:6px; }
+/* result */
+.d2b #d2b-result{max-width:760px;margin:26px auto 0;display:none}
+.d2b #d2b-result.show{display:block;animation:d2bfade .4s ease}
+@keyframes d2bfade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.d2b .rcard{background:var(--card);border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
+.d2b .rhead{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.d2b .rhead h3{font-size:20px;font-weight:760}
+.d2b .rhead .pcaption{font-size:13px;color:var(--faint);font-family:var(--mono);margin-top:5px}
+.d2b .verdict{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;white-space:nowrap}
+.d2b .verdict.go{background:var(--good-soft);color:var(--good)}
+.d2b .verdict.poc{background:var(--warn-soft);color:var(--warn)}
+.d2b .verdict.stop{background:#f3e6e6;color:#a33}
+.d2b .rbody{padding:22px 26px;display:flex;flex-direction:column;gap:20px}
+.d2b .rblock h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700;margin-bottom:9px;font-family:var(--mono)}
+.d2b .rblock p{font-size:15px;color:var(--ink)}
+.d2b .rlist{display:flex;flex-direction:column;gap:8px}
+.d2b .rlist li{position:relative;padding-left:24px;font-size:14.5px;color:var(--mut)}
+.d2b .rlist li::before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:3px;background:var(--teal)}
+.d2b .tagrow{display:flex;flex-wrap:wrap;gap:8px}
+.d2b .tag{font-size:12.5px;font-weight:600;color:var(--violet);background:var(--violet-soft);border:1px solid rgba(106,75,255,.2);padding:5px 12px;border-radius:8px}
+.d2b .rmeta{display:flex;flex-wrap:wrap;gap:22px;padding-top:4px}
+.d2b .rmeta .m .k{font-size:11.5px;font-family:var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.d2b .rmeta .m .v{font-size:15px;font-weight:700;margin-top:3px}
+.d2b .rfoot{padding:20px 26px;border-top:1px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.d2b .rfoot .note{font-size:13px;color:var(--mut);max-width:44ch}
+.d2b .r-err{background:#fdecea;border:1px solid #f6c9c4;color:#a3352b;border-radius:var(--r);padding:16px 18px;font-size:14.5px}
+.d2b .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:d2bspin .7s linear infinite}
+@keyframes d2bspin{to{transform:rotate(360deg)}}
 
-@media (max-width:920px) {
-  .dnx-nav { display:none; position:absolute; top:100%; left:0; right:0; flex-direction:column; align-items:stretch; gap:0; padding:12px; background:rgba(5,7,14,0.95); backdrop-filter:blur(24px); border-bottom:1px solid var(--border); }
-  .dnx-nav.dnx-open { display:flex; }
-  .dnx-nav a { padding:12px 16px; }
-  .dnx-menubtn { display:flex; }
-  /* compact CTAs on tablet */
-  .dnx-hdr-cta .dnx-btn-primary { padding:8px 14px; font-size:13px; }
-  .dnx-hdr-cta .dnx-btn-presentation { padding:8px 12px; font-size:13px; }
-}
-@media (max-width:560px) {
-  /* Keep Presentation + Project Request visible on phones --
-     they are the primary conversion CTAs and were getting lost
-     in the hamburger menu. Tighten padding/font so they fit. */
-  .dnx-hdr-cta { gap:6px; }
-  .dnx-hdr-cta .dnx-lang { padding:6px 8px; font-size:12px; }
-  .dnx-hdr-cta .dnx-btn-presentation {
-    padding:6px 10px; font-size:11px; gap:3px;
-  }
-  .dnx-hdr-cta .dnx-btn-presentation svg { width:11px; height:11px; }
-  .dnx-hdr-cta .dnx-btn-primary {
-    padding:6px 10px; font-size:11px;
-  }
-  .dnx-hdr-cta .dnx-btn-primary .dnx-arrow { display:none; }
-  /* Brand logo a touch smaller so all buttons + hamburger fit one row */
-  .dnx-brand-logo { max-height:28px; }
-}
-@media (max-width:380px) {
-  /* Last-resort: hide the Presentation ghost button on very narrow
-     phones; Project Request stays as the primary CTA. */
-  .dnx-hdr-cta .dnx-btn-presentation { display:none; }
-}
+/* proof strip */
+.d2b .proof{position:relative;z-index:2;text-align:center;margin-top:46px;font-size:13.5px;color:var(--faint);font-weight:500}
+.d2b .proof b{color:var(--mut)}
 
-/* ============================================================
-   HERO
-   ============================================================ */
-.dnx-hero { padding:32px 0 80px; position:relative; text-align:center; }
-.dnx-hero .dnx-hero-sub, .dnx-hero .dnx-hero-ctas, .dnx-hero .dnx-hero-meta { text-align:left; }
-.dnx-hero .dnx-hero-sub { margin-left:auto; margin-right:auto; max-width:760px; text-align:center; }
-.dnx-hero .dnx-hero-ctas { justify-content:center; }
-.dnx-hero .dnx-hero-meta { margin-left:auto; margin-right:auto; text-align:center; justify-items:center; }
-.dnx-hero-pill {
-  display:inline-flex; align-items:center; gap:10px;
-  padding:7px 14px; border-radius:999px;
-  background:rgba(34,211,238,0.08);
-  border:1px solid rgba(34,211,238,0.25);
-  font-size:12.5px; font-weight:500; letter-spacing:0.02em;
-  color:var(--accent-cyan);
-  margin-bottom:28px;
-}
-.dnx-pulse {
-  width:7px; height:7px; border-radius:50%; background:var(--accent-cyan);
-  box-shadow:0 0 0 0 rgba(34,211,238,0.7);
-  animation:dnxPulse 2s infinite;
-}
-@keyframes dnxPulse {
-  0% { box-shadow:0 0 0 0 rgba(34,211,238,0.7); }
-  70% { box-shadow:0 0 0 10px rgba(34,211,238,0); }
-  100% { box-shadow:0 0 0 0 rgba(34,211,238,0); }
-}
-.dnx-hero h1 {
-  font-size:clamp(42px, 6.5vw, 88px);
-  font-weight:600;
-  letter-spacing:-0.035em;
-  line-height:1.02;
-  margin-bottom:28px;
-  max-width:17ch;
-}
-.dnx-hero h1 em {
-  font-family:var(--font-display); font-style:italic; font-weight:400;
-  background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent;
-  display:inline-block;
-  position:relative;
-}
-.dnx-hero h1 em::after {
-  content:""; position:absolute; left:-8%; right:-8%; top:-12%; bottom:-12%;
-  background:var(--grad-primary); filter:blur(48px); opacity:0.22; z-index:-1;
-}
-.dnx-hero-svg {
-  border-radius:18px; overflow:hidden;
-  box-shadow:0 20px 60px rgba(34,211,238,0.12), 0 0 0 1px rgba(139,92,246,0.18);
-  background:rgba(10,16,36,0.4);
-}
-.dnx-hero-svg svg { display:block; width:100%; height:auto; }
+/* section */
+.d2b section.blk{position:relative;z-index:1;padding:76px 0}
+.d2b .blk-head{max-width:56ch;margin:0 auto 44px;text-align:center}
+.d2b .blk-head .kick{font-size:13px;font-weight:700;color:var(--teal-ink);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;font-family:var(--mono)}
+.d2b .blk-head h2{font-size:clamp(28px,4vw,42px);font-weight:800}
+.d2b .blk-head p{color:var(--mut);font-size:17px;margin-top:14px}
 
-.dnx-app-shell {
-  display:grid; grid-template-columns:240px minmax(0, 1fr); gap:28px;
-  align-items:start; margin-bottom:32px;
-}
-.dnx-sidebar {
-  position:sticky; top:96px;
-  padding:18px; border-radius:18px;
-  background:rgba(15,23,42,0.6); border:1px solid var(--border);
-  backdrop-filter:blur(18px);
-  display:flex; flex-direction:column; gap:6px;
-}
-.dnx-sidebar-group-lbl {
-  font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.16em;
-  text-transform:uppercase; color:var(--text-faint);
-  padding:10px 12px 6px; font-weight:600;
-}
-.dnx-sidebar-link {
-  display:flex; align-items:center; gap:10px;
-  padding:9px 12px; border-radius:10px; font-size:13.5px; font-weight:500;
-  color:var(--text-dim); transition:background 160ms ease, color 160ms ease;
-  border:1px solid transparent;
-}
-.dnx-sidebar-link:hover {
-  color:var(--text); background:var(--bg-card); border-color:var(--border);
-}
-.dnx-sidebar-link.is-active {
-  color:var(--text); background:rgba(34,211,238,0.08);
-  border-color:rgba(34,211,238,0.3);
-}
-.dnx-sidebar-dot {
-  width:6px; height:6px; border-radius:50%; background:var(--text-faint);
-  flex-shrink:0; transition:background 160ms ease;
-}
-.dnx-sidebar-link:hover .dnx-sidebar-dot,
-.dnx-sidebar-link.is-active .dnx-sidebar-dot { background:var(--accent-cyan); }
-.dnx-sidebar-divider { height:1px; background:var(--border); margin:8px 8px; }
+/* steps */
+.d2b .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.d2b .step{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px;box-shadow:var(--shadow-sm)}
+.d2b .step .num{font-family:var(--mono);font-weight:800;font-size:14px;color:#fff;width:34px;height:34px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.d2b .step h3{font-size:19px;font-weight:740;margin-bottom:8px}
+.d2b .step p{font-size:14.5px;color:var(--mut)}
 
-@media (max-width:920px) {
-  .dnx-app-shell { grid-template-columns:1fr; gap:18px; }
-  .dnx-sidebar {
-    position:static; flex-direction:row; flex-wrap:nowrap; overflow-x:auto;
-    gap:6px; padding:10px; -webkit-overflow-scrolling:touch;
-  }
-  .dnx-sidebar-group-lbl, .dnx-sidebar-divider { display:none; }
-  .dnx-sidebar-link { white-space:nowrap; padding:8px 12px; font-size:12.5px; }
-}
-.dnx-hero-sub {
-  font-size:clamp(16px, 1.5vw, 20px);
-  color:var(--text-dim);
-  max-width:620px;
-  margin-bottom:40px;
-  line-height:1.55;
-}
-.dnx-hero-ctas { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:48px; }
-.dnx-btn-lg { padding:14px 26px; font-size:15px; }
-.dnx-arrow { width:14px; height:14px; flex-shrink:0; transition:transform 180ms ease; }
-.dnx-btn:hover .dnx-arrow { transform:translateX(2px); }
+/* showcase */
+.d2b .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.d2b .gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .15s ease,box-shadow .15s ease;display:flex;flex-direction:column}
+.d2b .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.d2b .gcard .thumb{height:104px;background:var(--grad-soft);position:relative;border-bottom:1px solid var(--line)}
+.d2b .gcard .thumb::after{content:attr(data-i);position:absolute;left:16px;bottom:12px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--teal-ink);background:#fff;padding:3px 9px;border-radius:6px;box-shadow:var(--shadow-sm)}
+.d2b .gcard .body{padding:16px 17px;display:flex;flex-direction:column;gap:6px;flex:1}
+.d2b .gcard h4{font-size:15.5px;font-weight:740}
+.d2b .gcard p{font-size:13px;color:var(--mut);line-height:1.45;flex:1}
+.d2b .gcard .v{font-size:11px;font-family:var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
 
-.dnx-hero-meta {
-  display:grid; grid-template-columns:repeat(4, 1fr);
-  gap:32px; padding-top:32px; max-width:720px;
-  border-top:1px solid var(--border);
-}
-.dnx-meta-num {
-  font-family:var(--font-display); font-style:italic; font-weight:400;
-  font-size:44px; line-height:1;
-  background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent;
-  margin-bottom:4px;
-}
-.dnx-meta-lbl { font-size:12px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.08em; font-weight:500; }
+/* numbers */
+.d2b .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.d2b .numcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px 24px;text-align:center;box-shadow:var(--shadow-sm)}
+.d2b .numcard .big{font-size:clamp(34px,5vw,52px);font-weight:840;letter-spacing:-.04em}
+.d2b .numcard .lab{font-size:13.5px;color:var(--mut);margin-top:6px;font-weight:500}
 
-@media (max-width:720px) {
-  .dnx-hero { padding:60px 0 48px; }
-  .dnx-hero-meta { grid-template-columns:repeat(2, 1fr); gap:24px; }
-}
+/* final cta */
+.d2b .final{position:relative;z-index:1;padding:20px 0 96px}
+.d2b .finalcard{background:var(--ink);border-radius:var(--r-xl);padding:60px 40px;text-align:center;color:#fff;position:relative;overflow:hidden}
+.d2b .finalcard::before{content:"";position:absolute;inset:0;background:var(--grad);opacity:.9}
+.d2b .finalcard > *{position:relative;z-index:1}
+.d2b .finalcard h2{font-size:clamp(28px,4vw,44px);font-weight:840;color:#fff;max-width:20ch;margin:0 auto}
+.d2b .finalcard p{color:rgba(255,255,255,.92);font-size:17px;margin:16px auto 28px;max-width:52ch}
+.d2b .finalcard .btn-white{background:#fff;color:var(--ink);padding:15px 30px;font-size:16px;font-weight:750;border-radius:13px;box-shadow:var(--shadow)}
 
-/* ============================================================
-   LOGO MARQUEE
-   ============================================================ */
-.dnx-marquee {
-  position:relative; padding:40px 0;
-  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
-  background:rgba(255,255,255,0.015);
-  overflow:hidden;
-  mask-image:linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
-  -webkit-mask-image:linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
-}
-.dnx-marquee-lbl {
-  text-align:center; font-size:11px; letter-spacing:0.2em; text-transform:uppercase;
-  color:var(--text-faint); margin-bottom:24px; font-weight:600;
-}
-.dnx-marquee-track {
-  display:flex; gap:72px; align-items:center;
-  animation:dnxScroll 45s linear infinite;
-  width:max-content;
-}
-.dnx-marquee-item {
-  font-family:var(--font-display); font-style:italic; font-size:22px;
-  color:var(--text-dim); white-space:nowrap;
-  display:flex; align-items:center; gap:12px;
-}
-.dnx-marquee-item::before { content:""; width:4px; height:4px; border-radius:50%; background:var(--accent-cyan); opacity:0.7; }
-@keyframes dnxScroll { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+/* footer */
+.d2b footer.d2f{border-top:1px solid var(--line);padding:34px 0;color:var(--faint);font-size:13px}
+.d2b .d2f .row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.d2b .d2f a:hover{color:var(--ink)}
 
-/* ============================================================
-   SECTION FRAMING
-   ============================================================ */
-.dnx-sec { padding:110px 0; position:relative; }
-.dnx-sec-head { margin-bottom:60px; max-width:780px; }
-.dnx-kicker {
-  display:inline-flex; align-items:center; gap:8px;
-  font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.15em;
-  color:var(--accent-cyan); text-transform:uppercase; font-weight:500;
-  margin-bottom:18px;
+@media(max-width:900px){
+  .d2b .gallery{grid-template-columns:repeat(2,1fr)}
+  .d2b .nums{grid-template-columns:repeat(2,1fr)}
 }
-.dnx-kicker::before {
-  content:""; width:20px; height:1px; background:var(--accent-cyan);
+@media(max-width:680px){
+  .d2b .steps{grid-template-columns:1fr}
+  .d2b section.blk{padding:56px 0}
 }
-.dnx-sec-title {
-  font-size:clamp(32px, 4.5vw, 56px);
-  font-weight:600; letter-spacing:-0.03em; line-height:1.08;
-  margin-bottom:20px;
+@media(prefers-reduced-motion:reduce){
+  .d2b *{animation:none!important;transition:none!important}
 }
-.dnx-sec-title em { font-family:var(--font-display); font-style:italic; font-weight:400; color:var(--accent-cyan); }
-.dnx-sec-sub { font-size:17px; color:var(--text-dim); max-width:640px; }
-.dnx-sec-head-center { margin:0 auto 60px; text-align:center; }
-
-/* ============================================================
-   OPPORTUNITY / WHY NOW
-   ============================================================ */
-.dnx-grid-3 { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
-.dnx-grid-4 { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
-.dnx-grid-5 { display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; }
-.dnx-grid-2 { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; }
-
-.dnx-step-card { position:relative; padding:32px 22px 24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); transition:border-color 240ms ease, background 240ms ease; }
-.dnx-step-card:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
-.dnx-step-num { position:absolute; top:-18px; left:24px; width:36px; height:36px; border-radius:50%; background:var(--grad-primary); color:#0a1024; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(34,211,238,0.35); }
-.dnx-step-kicker { font-family:var(--font-mono); font-size:11px; letter-spacing:0.16em; color:var(--accent-cyan); text-transform:uppercase; margin:6px 0 12px; font-weight:600; }
-.dnx-step-card h3 { font-size:18px; font-weight:600; letter-spacing:-0.015em; margin-bottom:12px; line-height:1.25; }
-.dnx-step-card p { font-size:14px; color:var(--text-dim); line-height:1.6; }
-
-.dnx-card {
-  position:relative;
-  padding:28px;
-  border-radius:var(--radius-lg);
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  transition:border-color 240ms ease, transform 240ms ease, background 240ms ease;
-  overflow:hidden;
-}
-.dnx-card::before {
-  content:""; position:absolute; inset:0;
-  background:radial-gradient(600px circle at var(--mx, 50%) var(--my, 0%), rgba(139,92,246,0.1), transparent 40%);
-  opacity:0; transition:opacity 300ms ease; pointer-events:none;
-}
-.dnx-card:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
-.dnx-card:hover::before { opacity:1; }
-.dnx-card-num {
-  font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em;
-  color:var(--text-faint); margin-bottom:16px; display:block;
-}
-.dnx-card h3 {
-  font-size:18px; font-weight:600; letter-spacing:-0.015em;
-  margin-bottom:10px;
-}
-.dnx-card p { font-size:14.5px; color:var(--text-dim); line-height:1.6; }
-
-.dnx-stat-card {
-  padding:36px 28px;
-  border-radius:var(--radius-lg);
-  background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-  border:1px solid var(--border);
-  text-align:left;
-}
-.dnx-stat-num {
-  font-family:var(--font-display); font-style:italic; font-weight:400;
-  font-size:56px; line-height:1;
-  background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent;
-  margin-bottom:8px;
-}
-.dnx-stat-lbl { font-size:14px; font-weight:600; color:var(--text); margin-bottom:6px; }
-.dnx-stat-desc { font-size:13px; color:var(--text-faint); line-height:1.55; }
-
-@media (max-width:1100px) {
-  .dnx-grid-5 { grid-template-columns:repeat(3, 1fr); }
-}
-@media (max-width:920px) {
-  .dnx-grid-3, .dnx-grid-4, .dnx-grid-5 { grid-template-columns:repeat(2, 1fr); }
-}
-@media (max-width:600px) {
-  .dnx-grid-3, .dnx-grid-4, .dnx-grid-5, .dnx-grid-2 { grid-template-columns:1fr; }
-  .dnx-sec { padding:70px 0; }
-  .dnx-step-card { padding-top:38px; }
-  .dnx-step-num { top:-16px; left:16px; width:32px; height:32px; font-size:13px; }
-  .dnx-agent-card { padding:20px; }
-  .dnx-agent-name { font-size:18px; }
-  .dnx-pillar-card { padding:22px; }
-  .dnx-pillar-card h3 { font-size:18px; }
-  .dnx-arch-layer { padding:14px 16px; }
-  .dnx-metric-tile { padding:22px 18px; }
-  .dnx-metric-num { font-size:40px; }
-  .dnx-trust-item { padding:18px; }
-}
-
-/* ============================================================
-   NEURAL COMPONENTS (metrics, agents, arch, pillars, table, use, trust)
-   ============================================================ */
-.dnx-metric-bar { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
-.dnx-metric-tile { padding:28px 24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); text-align:left; }
-.dnx-metric-num { font-family:var(--font-display); font-style:italic; font-weight:400; font-size:48px; line-height:1; background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:10px; }
-.dnx-metric-lbl { font-size:13px; color:var(--text-dim); font-weight:500; letter-spacing:0.02em; }
-@media (max-width:920px) { .dnx-metric-bar { grid-template-columns:repeat(2, 1fr); } }
-@media (max-width:600px) { .dnx-metric-bar { grid-template-columns:1fr; } }
-
-.dnx-agent-card { padding:24px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); transition:border-color 240ms ease, background 240ms ease; }
-.dnx-agent-card:hover { border-color:var(--border-strong); background:var(--bg-card-hover); }
-.dnx-agent-name { font-size:20px; font-weight:600; letter-spacing:-0.01em; margin-bottom:4px; color:var(--text); }
-.dnx-agent-role { font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em; color:var(--accent-cyan); text-transform:uppercase; margin-bottom:14px; }
-.dnx-agent-owns { font-size:12.5px; color:var(--text-faint); margin-bottom:12px; line-height:1.5; }
-.dnx-agent-owns strong { color:var(--text-dim); font-weight:500; }
-.dnx-agent-tag { font-size:14px; color:var(--text-dim); line-height:1.55; font-style:italic; }
-
-.dnx-arch-stack { display:flex; flex-direction:column; gap:10px; max-width:880px; margin:0 auto; }
-.dnx-arch-layer { padding:18px 22px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); display:grid; grid-template-columns:200px 1fr; gap:18px; align-items:center; }
-.dnx-arch-layer.dnx-arch-core { background:linear-gradient(180deg, rgba(34,211,238,0.08), rgba(139,92,246,0.04)); border-color:rgba(34,211,238,0.35); }
-.dnx-arch-label { font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; color:var(--accent-cyan); font-weight:600; text-transform:uppercase; }
-.dnx-arch-desc { font-size:14px; color:var(--text-dim); line-height:1.55; }
-@media (max-width:600px) { .dnx-arch-layer { grid-template-columns:1fr; gap:8px; } }
-
-.dnx-pillar-card { padding:28px; border-radius:var(--radius-lg); background:var(--bg-card); border:1px solid var(--border); }
-.dnx-pillar-card h3 { font-size:20px; font-weight:600; margin-bottom:14px; letter-spacing:-0.01em; }
-.dnx-pillar-card ul { list-style:none; padding:0; margin:0; }
-.dnx-pillar-card li { font-size:14px; color:var(--text-dim); padding:7px 0 7px 18px; position:relative; line-height:1.5; }
-.dnx-pillar-card li::before { content:""; position:absolute; left:0; top:13px; width:8px; height:8px; border-radius:50%; background:var(--grad-primary); }
-
-.dnx-cmp-table { width:100%; border-collapse:separate; border-spacing:0; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:var(--bg-card); }
-.dnx-cmp-table thead th { font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); padding:18px 20px; text-align:left; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); font-weight:600; }
-.dnx-cmp-table thead th:last-child { color:var(--accent-cyan); }
-.dnx-cmp-table tbody td { padding:16px 20px; font-size:14px; color:var(--text-dim); border-bottom:1px solid var(--border); line-height:1.5; }
-.dnx-cmp-table tbody tr:last-child td { border-bottom:none; }
-.dnx-cmp-table tbody td:first-child { color:var(--text); font-weight:500; }
-.dnx-cmp-table tbody td:last-child { color:var(--text); background:rgba(34,211,238,0.04); }
-.dnx-cmp-wrap { overflow-x:auto; }
-@media (max-width:600px) {
-  .dnx-cmp-wrap { overflow-x:visible; }
-  .dnx-cmp-table, .dnx-cmp-table thead, .dnx-cmp-table tbody, .dnx-cmp-table tr, .dnx-cmp-table td { display:block; width:100%; }
-  .dnx-cmp-table { border:none; background:transparent; }
-  .dnx-cmp-table thead { display:none; }
-  .dnx-cmp-table tbody tr { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
-  .dnx-cmp-table tbody td { padding:8px 0; border:none; font-size:13.5px; display:grid; grid-template-columns:120px 1fr; gap:10px; align-items:start; }
-  .dnx-cmp-table tbody td:first-child { font-size:15px; font-weight:600; color:var(--text); padding:0 0 8px; border-bottom:1px solid var(--border); margin-bottom:8px; display:block; }
-  .dnx-cmp-table tbody td:not(:first-child)::before { content:attr(data-label); font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint); padding-top:2px; }
-  .dnx-cmp-table tbody td:last-child { background:transparent; color:var(--accent-cyan); font-weight:500; }
-}
-
-.dnx-trust-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
-.dnx-trust-item { padding:22px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); }
-.dnx-trust-lbl { font-size:15px; font-weight:600; color:var(--text); margin-bottom:6px; letter-spacing:-0.005em; }
-.dnx-trust-desc { font-size:13.5px; color:var(--text-dim); line-height:1.5; }
-@media (max-width:920px) { .dnx-trust-grid { grid-template-columns:repeat(2, 1fr); } }
-@media (max-width:600px) { .dnx-trust-grid { grid-template-columns:1fr; } }
-
-/* ============================================================
-   BENTO / PORTFOLIO
-   ============================================================ */
-.dnx-bento {
-  display:grid;
-  grid-template-columns:repeat(6, 1fr);
-  gap:14px;
-  grid-auto-rows:minmax(200px, auto);
-}
-.dnx-tile {
-  position:relative; overflow:hidden;
-  border-radius:var(--radius-lg);
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  padding:24px;
-  display:flex; flex-direction:column; justify-content:space-between;
-  transition:transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 240ms ease;
-  min-height:220px;
-}
-.dnx-tile-img {
-  position:absolute; inset:0; z-index:0;
-  background-size:cover; background-position:center;
-  opacity:0.28; transition:opacity 320ms ease, transform 500ms ease;
-  filter:saturate(1.1) contrast(1.05);
-}
-.dnx-tile::before {
-  content:""; position:absolute; inset:0; z-index:1;
-  background:linear-gradient(180deg, rgba(5,7,14,0.3) 0%, rgba(5,7,14,0.85) 60%, rgba(5,7,14,0.95) 100%);
-}
-.dnx-tile:hover { border-color:var(--border-strong); transform:translateY(-4px); }
-.dnx-tile:hover .dnx-tile-img { opacity:0.45; transform:scale(1.04); }
-.dnx-tile-inner { position:relative; z-index:2; display:flex; flex-direction:column; justify-content:space-between; height:100%; gap:24px; }
-.dnx-tile-tag {
-  display:inline-flex; align-items:center; gap:6px; width:fit-content;
-  padding:4px 10px; border-radius:999px;
-  font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
-  background:rgba(34,211,238,0.1); color:var(--accent-cyan); border:1px solid rgba(34,211,238,0.2);
-  margin-bottom:12px;
-}
-.dnx-tile h3 {
-  font-size:22px; font-weight:600; letter-spacing:-0.02em; margin-bottom:6px;
-}
-.dnx-tile-dom { font-family:var(--font-mono); font-size:12px; color:var(--text-faint); margin-bottom:10px; }
-.dnx-tile p { font-size:13.5px; color:var(--text-dim); line-height:1.55; }
-.dnx-tile-link {
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:13px; font-weight:600; color:var(--accent-cyan);
-  transition:gap 200ms ease;
-}
-.dnx-tile-link:hover { gap:10px; }
-.dnx-tile-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-.dnx-tile-pills li {
-  padding:3px 9px; border-radius:6px;
-  background:rgba(255,255,255,0.05); border:1px solid var(--border);
-  font-size:11px; color:var(--text-dim); font-weight:500;
-}
-/* bento sizing */
-.dnx-tile.span-3 { grid-column:span 3; }
-.dnx-tile.span-2 { grid-column:span 2; }
-.dnx-tile.span-4 { grid-column:span 4; }
-.dnx-tile.span-6 { grid-column:span 6; }
-.dnx-tile.tall { min-height:360px; }
-.dnx-tile.flagship { grid-column:span 4; min-height:360px; }
-.dnx-tile.flagship h3 { font-size:32px; }
-.dnx-tile.flagship p { font-size:15px; max-width:46ch; }
-
-@media (max-width:1024px) {
-  .dnx-bento { grid-template-columns:repeat(4, 1fr); }
-  .dnx-tile.span-3, .dnx-tile.flagship { grid-column:span 4; }
-  .dnx-tile.span-2 { grid-column:span 2; }
-  .dnx-tile.span-4 { grid-column:span 4; }
-}
-@media (max-width:640px) {
-  .dnx-bento { grid-template-columns:1fr; gap:12px; }
-  .dnx-tile, .dnx-tile.span-2, .dnx-tile.span-3, .dnx-tile.span-4, .dnx-tile.flagship { grid-column:1 / -1; }
-}
-
-/* ============================================================
-   BUSINESS MODEL / SPLIT PANELS
-   ============================================================ */
-.dnx-split {
-  display:grid; grid-template-columns:1.1fr 1fr; gap:60px; align-items:center;
-}
-.dnx-split.reversed { grid-template-columns:1fr 1.1fr; }
-.dnx-panel {
-  position:relative; padding:40px;
-  border-radius:var(--radius-xl);
-  background:linear-gradient(145deg, rgba(34,211,238,0.06), rgba(139,92,246,0.06));
-  border:1px solid var(--border-strong);
-  overflow:hidden;
-}
-.dnx-panel::before {
-  content:""; position:absolute; inset:-1px; z-index:-1;
-  border-radius:inherit;
-  background:var(--grad-primary); opacity:0.12; filter:blur(40px);
-}
-.dnx-panel-title {
-  font-family:var(--font-display); font-style:italic; font-size:40px; font-weight:400; line-height:1.05;
-  margin-bottom:16px;
-}
-.dnx-panel-list { display:flex; flex-direction:column; gap:18px; }
-.dnx-panel-item { display:flex; gap:14px; align-items:flex-start; }
-.dnx-panel-idx {
-  flex-shrink:0; width:28px; height:28px; border-radius:8px;
-  background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.3);
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent-cyan);
-}
-.dnx-panel-item h4 { font-size:15px; font-weight:600; margin-bottom:3px; }
-.dnx-panel-item p { font-size:13.5px; color:var(--text-dim); line-height:1.55; }
-
-@media (max-width:920px) {
-  .dnx-split, .dnx-split.reversed { grid-template-columns:1fr; gap:36px; }
-}
-
-/* ============================================================
-   FAQ
-   ============================================================ */
-.dnx-faq { display:flex; flex-direction:column; gap:12px; max-width:860px; margin:0 auto; }
-.dnx-faq-item {
-  border:1px solid var(--border); border-radius:var(--radius);
-  background:var(--bg-card); overflow:hidden;
-  transition:border-color 200ms ease;
-}
-.dnx-faq-item:hover { border-color:var(--border-strong); }
-.dnx-faq-q {
-  width:100%; text-align:left; padding:22px 26px;
-  font-size:16px; font-weight:500; letter-spacing:-0.01em;
-  display:flex; align-items:center; justify-content:space-between; gap:20px;
-  color:var(--text);
-}
-.dnx-faq-q-icon {
-  flex-shrink:0; width:22px; height:22px; position:relative;
-  transition:transform 240ms ease;
-}
-.dnx-faq-q-icon::before, .dnx-faq-q-icon::after {
-  content:""; position:absolute; background:var(--accent-cyan); transition:transform 240ms ease;
-}
-.dnx-faq-q-icon::before { left:0; right:0; top:50%; height:1.5px; transform:translateY(-50%); }
-.dnx-faq-q-icon::after { top:0; bottom:0; left:50%; width:1.5px; transform:translateX(-50%); }
-.dnx-faq-item.open .dnx-faq-q-icon::after { transform:translateX(-50%) scaleY(0); }
-.dnx-faq-a {
-  max-height:0; overflow:hidden; transition:max-height 320ms ease, padding 200ms ease;
-  padding:0 26px;
-  color:var(--text-dim); font-size:14.5px; line-height:1.65;
-}
-.dnx-faq-item.open .dnx-faq-a { padding:0 26px 22px; max-height:400px; }
-
-/* ============================================================
-   CTA / CONTACT
-   ============================================================ */
-.dnx-cta {
-  position:relative; padding:70px 48px;
-  border-radius:var(--radius-xl);
-  background:linear-gradient(140deg, rgba(34,211,238,0.08) 0%, rgba(59,130,246,0.08) 40%, rgba(236,72,153,0.08) 100%);
-  border:1px solid var(--border-strong); overflow:hidden;
-  text-align:center;
-}
-.dnx-cta::before {
-  content:""; position:absolute; inset:-40%;
-  background:conic-gradient(from 0deg, transparent, rgba(34,211,238,0.25), transparent 30%);
-  animation:dnxSpin 20s linear infinite;
-  z-index:-1;
-}
-@keyframes dnxSpin { to{transform:rotate(360deg);} }
-.dnx-cta::after {
-  content:""; position:absolute; inset:1px; border-radius:calc(var(--radius-xl) - 1px);
-  background:rgba(11,14,26,0.8); backdrop-filter:blur(40px);
-  z-index:-1;
-}
-.dnx-cta h2 {
-  font-size:clamp(32px, 4.5vw, 52px); font-weight:600; letter-spacing:-0.03em;
-  margin-bottom:16px; line-height:1.1;
-}
-.dnx-cta h2 em { font-family:var(--font-display); font-style:italic; font-weight:400; color:var(--accent-cyan); }
-.dnx-cta p { font-size:17px; color:var(--text-dim); max-width:540px; margin:0 auto 32px; }
-.dnx-cta-contacts { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:32px; }
-.dnx-cta-contact {
-  display:inline-flex; align-items:center; gap:8px;
-  padding:10px 16px; border-radius:999px;
-  background:rgba(255,255,255,0.05); border:1px solid var(--border);
-  font-size:13.5px; color:var(--text); font-weight:500;
-  transition:background 180ms ease, border-color 180ms ease;
-}
-.dnx-cta-contact:hover { background:rgba(255,255,255,0.1); border-color:var(--border-strong); }
-
-/* ============================================================
-   FOOTER
-   ============================================================ */
-.dnx-ftr {
-  padding:72px 0 48px; border-top:1px solid var(--border);
-  background:rgba(5,7,14,0.6);
-}
-.dnx-ftr-grid {
-  display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr;
-  gap:48px; margin-bottom:48px;
-}
-.dnx-ftr-col h4 {
-  font-family:var(--font-mono); font-size:11px; letter-spacing:0.15em;
-  text-transform:uppercase; color:var(--text-faint); margin-bottom:20px;
-  font-weight:500;
-}
-.dnx-ftr-col ul { display:flex; flex-direction:column; gap:10px; }
-.dnx-ftr-col a { font-size:13.5px; color:var(--text-dim); transition:color 180ms ease; }
-.dnx-ftr-col a:hover { color:var(--text); }
-.dnx-ftr-brand { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.dnx-ftr-tag { font-size:14px; color:var(--text-dim); line-height:1.6; max-width:300px; }
-.dnx-ftr-bot {
-  display:flex; justify-content:space-between; align-items:center;
-  padding-top:28px; border-top:1px solid var(--border);
-  font-size:12.5px; color:var(--text-faint);
-}
-.dnx-ftr-bot a { color:var(--text-faint); margin-left:20px; }
-.dnx-ftr-bot a:hover { color:var(--text-dim); }
-@media (max-width:920px) {
-  .dnx-ftr-grid { grid-template-columns:1fr 1fr; gap:32px; }
-  .dnx-ftr-bot { flex-direction:column; gap:16px; text-align:center; }
-}
-@media (max-width:560px) {
-  .dnx-ftr-grid { grid-template-columns:1fr; }
-}
-
-/* ============================================================
-   SCROLL REVEAL
-   ============================================================ */
-.dnx-reveal { opacity:0; transform:translateY(24px); transition:opacity 800ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1); }
-.dnx-reveal.dnx-in { opacity:1; transform:translateY(0); }
-
-@media (prefers-reduced-motion: reduce) {
-  .dnx-reveal { opacity:1; transform:none; transition:none; }
-  .dnx-marquee-track, .dnx-cta::before { animation:none; }
-}
-
-/* ============================================================
-   MOBILE TUNING
-   ============================================================ */
-@media (max-width:920px) {
-  .dnx-wrap { padding:0 20px; }
-  .dnx-hdr { padding:8px 0; }
-  .dnx-hero { padding:56px 0 48px; }
-  .dnx-sec { padding:72px 0; }
-  .dnx-sec-head { margin-bottom:40px; }
-  .dnx-panel { padding:28px; }
-  .dnx-panel-title { font-size:32px; }
-  .dnx-cta { padding:48px 28px; }
-  .dnx-marquee-item { font-size:18px; }
-  .dnx-marquee-track { gap:48px; }
-}
-
-@media (max-width:640px) {
-  .dnx {
-    /* no horizontal overflow */
-    max-width:100vw;
-  }
-  .dnx-wrap { padding:0 16px; }
-  .dnx-hdr { padding:6px 0; }
-  .dnx-hdr-cta { gap:6px; }
-  .dnx-lang { padding:6px 10px; font-size:11px; }
-  .dnx-btn { padding:9px 14px; font-size:13px; }
-  .dnx-btn-lg { padding:12px 20px; font-size:14px; }
-  .dnx-menubtn { width:38px; height:38px; }
-
-  .dnx-hero { padding:40px 0 36px; }
-  .dnx-hero-pill { padding:6px 12px; font-size:11.5px; margin-bottom:20px; }
-  .dnx-hero h1 { font-size:clamp(32px, 9vw, 48px); margin-bottom:18px; line-height:1.05; }
-  .dnx-hero-sub { font-size:15px; margin-bottom:28px; }
-  .dnx-hero-ctas { margin-bottom:32px; gap:10px; }
-  .dnx-hero-ctas .dnx-btn { flex:1 1 auto; justify-content:center; }
-  .dnx-hero-meta { grid-template-columns:repeat(2, 1fr); gap:20px; padding-top:24px; }
-  .dnx-meta-num { font-size:34px; }
-  .dnx-meta-lbl { font-size:11px; }
-
-  .dnx-marquee { padding:28px 0; }
-  .dnx-marquee-lbl { font-size:10px; letter-spacing:0.15em; margin-bottom:18px; }
-  .dnx-marquee-item { font-size:16px; gap:10px; }
-  .dnx-marquee-track { gap:36px; }
-
-  .dnx-sec { padding:56px 0; }
-  .dnx-sec-head { margin-bottom:32px; }
-  .dnx-kicker { font-size:10.5px; margin-bottom:14px; }
-  .dnx-sec-title { font-size:clamp(26px, 7vw, 36px); margin-bottom:14px; line-height:1.1; }
-  .dnx-sec-sub { font-size:15px; }
-
-  .dnx-card { padding:22px; border-radius:18px; }
-  .dnx-card h3 { font-size:16px; }
-  .dnx-card p { font-size:13.5px; }
-
-  .dnx-stat-card { padding:26px 22px; border-radius:18px; }
-  .dnx-stat-num { font-size:42px; }
-  .dnx-stat-lbl { font-size:13px; }
-  .dnx-stat-desc { font-size:12.5px; }
-
-  .dnx-bento { gap:10px; }
-  .dnx-tile { padding:20px; min-height:200px; border-radius:18px; }
-  .dnx-tile.flagship h3 { font-size:24px; }
-  .dnx-tile.flagship p { font-size:14px; }
-  .dnx-tile.flagship, .dnx-tile.tall { min-height:260px; }
-  .dnx-tile h3 { font-size:19px; }
-  .dnx-tile p { font-size:13px; }
-
-  .dnx-panel { padding:24px; border-radius:22px; }
-  .dnx-panel-title { font-size:28px; }
-  .dnx-panel-item h4 { font-size:14.5px; }
-  .dnx-panel-item p { font-size:13px; }
-
-  .dnx-faq-q { padding:18px 20px; font-size:14.5px; gap:14px; }
-  .dnx-faq-item.open .dnx-faq-a { padding:0 20px 18px; }
-  .dnx-faq-a { padding:0 20px; font-size:13.5px; }
-
-  .dnx-cta { padding:40px 22px; border-radius:22px; }
-  .dnx-cta h2 { font-size:clamp(26px, 7vw, 36px); margin-bottom:12px; }
-  .dnx-cta p { font-size:14.5px; margin-bottom:24px; }
-  .dnx-cta-contacts { gap:8px; }
-  .dnx-cta-contact { padding:9px 14px; font-size:12.5px; }
-
-  .dnx-ftr { padding:48px 0 32px; }
-  .dnx-ftr-grid { gap:28px; margin-bottom:32px; }
-  .dnx-ftr-bot { font-size:12px; }
-  .dnx-ftr-bot a { margin-left:0; margin-right:16px; }
-  .dnx-ftr-brand img.dnx-brand-logo { height:72px; }
-
-  /* ElevenLabs widget — lift slightly above iOS safe-area */
-  elevenlabs-convai { bottom:max(16px, env(safe-area-inset-bottom)) !important; right:12px !important; }
-}
-
-@media (max-width:420px) {
-  .dnx-wrap { padding:0 14px; }
-  .dnx-hero h1 { font-size:clamp(28px, 8.5vw, 40px); }
-  .dnx-hero-sub { font-size:14px; }
-  .dnx-meta-num { font-size:30px; }
-  .dnx-sec-title { font-size:clamp(24px, 7vw, 32px); }
-  .dnx-stat-num { font-size:36px; }
-  .dnx-tile.flagship h3 { font-size:22px; }
-  .dnx-panel-title { font-size:24px; }
-  .dnx-hero-ctas { flex-direction:column; }
-  .dnx-hero-ctas .dnx-btn { width:100%; }
-}
-
-/* prevent horizontal scroll from ambient layer on tiny screens */
-html, body { max-width:100%; overflow-x:hidden; }
 </style>
 
-<div class="dnx">
-  <div class="dnx-ambient"></div>
-  <canvas class="dnx-canvas" id="dnxCanvas"></canvas>
+<div class="d2b">
+  <div class="ambient"></div>
 
-  <div class="dnx-root">
+  <nav>
+    <div class="brand"><span class="mark"></span> DIGIT2AI</div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#platforms">Platforms</a>
+      <a href="#numbers">Why us</a>
+      <a href="https://digit2ai.com" class="btn btn-primary">Get started</a>
+    </div>
+  </nav>
 
-    <!-- HEADER -->
-    <header class="dnx-hdr">
-      <div class="dnx-wrap dnx-hdr-inner">
-        <a href="#top" class="dnx-brand">
-          <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="DIGIT2AI" class="dnx-brand-logo">
-        </a>
-        <nav class="dnx-nav" id="dnxNav">
-          <a href="#workflow">Workflow</a>
-          <a href="#agents">Taskforce</a>
-          <a href="#mcp-architecture">Architecture</a>
-          <a href="#pillars">Pillars</a>
-          <a href="#comparison">Compare</a>
-          <a href="#use-cases">Use Cases</a>
-          <a href="#trust">Trust</a>
-          <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html">Presentation</a>
-          <a href="https://aiagent.ringlypro.com/projects/intake/request.html" class="dnx-nav-signin" style="color:var(--accent-cyan); font-weight:600;">Project Request →</a>
-        </nav>
-        <div class="dnx-hdr-cta">
-          <a href="https://aiagent.ringlypro.com/digit2ai-es" target="_top" class="dnx-lang">ES</a>
-          <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" class="dnx-btn dnx-btn-ghost dnx-btn-presentation">
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="margin-right:2px;"><path d="M5 4l7 4-7 4V4z" fill="currentColor"/></svg>
-            Presentation
-          </a>
-          <a href="https://aiagent.ringlypro.com/projects/intake/request.html" class="dnx-btn dnx-btn-primary">
-            Project Request
-            <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <button class="dnx-menubtn" id="dnxMenuBtn" aria-label="Menu"><span></span></button>
-        </div>
-      </div>
-    </header>
-
-    <!-- HERO -->
-    <section class="dnx-hero" id="top">
-      <div class="dnx-wrap">
-        <div class="dnx-app-shell">
-          <aside class="dnx-sidebar dnx-reveal" aria-label="Section navigation">
-            <div class="dnx-sidebar-group-lbl">The Platform</div>
-            <a href="#workflow" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Workflow</a>
-            <a href="#agents" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Taskforce</a>
-            <a href="#mcp-architecture" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Architecture</a>
-            <a href="#pillars" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Pillars</a>
-            <a href="#comparison" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Compare</a>
-            <a href="#use-cases" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Use Cases</a>
-            <a href="#trust" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Trust</a>
-            <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" class="dnx-sidebar-link" style="color:var(--accent-cyan);"><span class="dnx-sidebar-dot" style="background:var(--accent-cyan);"></span>Presentation &rarr;</a>
-            <div class="dnx-sidebar-divider"></div>
-            <div class="dnx-sidebar-group-lbl">The Business</div>
-            <a href="#opportunity" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Opportunity</a>
-            <a href="#platforms" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Portfolio</a>
-            <a href="#model" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Model</a>
-            <a href="#traction" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Traction</a>
-            <a href="#faq" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>FAQ</a>
-            <a href="#contact" class="dnx-sidebar-link"><span class="dnx-sidebar-dot"></span>Contact</a>
-          </aside>
-        <div class="dnx-hero-content">
-        <div class="dnx-hero-svg dnx-reveal">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" role="img" preserveAspectRatio="xMidYMid meet">
-          <title>MCP server with AI agents finding and fixing money leaks</title>
-          <desc>Animated illustration of a central MCP server orchestrating a team of AI agents that detect leaks in money pipelines and patch them automatically</desc>
-          <defs>
-          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#0a1024"/>
-          <stop offset="0.55" stop-color="#101a3a"/>
-          <stop offset="1" stop-color="#1a2750"/>
-          </linearGradient>
-          <radialGradient id="serverGlow" cx="0.5" cy="0.5">
-          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.28"/>
-          <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="pipe" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#92400e"/>
-          <stop offset="0.5" stop-color="#d97706"/>
-          <stop offset="1" stop-color="#451a03"/>
-          </linearGradient>
-          <clipPath id="pipeClip">
-          <rect x="20" y="388" width="640" height="24" rx="12"/>
-          </clipPath>
-          <style>
-          .bg{fill:url(#sky)}
-          .glow{fill:url(#serverGlow)}
-          .title{fill:#f1f5f9;font-family:system-ui,sans-serif;font-weight:500;font-size:24px;letter-spacing:0.3px}
-          .subtitle{fill:#22d3ee;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:2.5px}
-          .caption{fill:#94a3b8;font-family:ui-monospace,monospace;font-size:10px;letter-spacing:1.5px}
-          .serverBody{fill:#1e293b;stroke:#475569;stroke-width:1}
-          .serverEdge{fill:#0f172a}
-          .serverScreen{fill:#022c22;stroke:#10b981;stroke-width:0.6}
-          .serverBay{fill:#020617;stroke:#1e293b;stroke-width:0.5}
-          .led-g{fill:#10b981}
-          .led-a{fill:#fbbf24}
-          .led-c{fill:#22d3ee}
-          .vent{stroke:#475569;stroke-width:0.6;fill:none}
-          .tag{fill:#22d3ee;font-family:ui-monospace,monospace;font-weight:500;font-size:8px;letter-spacing:0.5px}
-          .tagS{fill:#94a3b8;font-family:ui-monospace,monospace;font-size:7px}
-          .tagG{fill:#10b981;font-family:ui-monospace,monospace;font-weight:500;font-size:8px}
-          .agent{fill:#1e293b;stroke:#22d3ee;stroke-width:1.4}
-          .agentS{fill:#0c4a6e;stroke:#22d3ee;stroke-width:0.5}
-          .agentEye{fill:#22d3ee}
-          .agentAnt{stroke:#22d3ee;stroke-width:1;fill:none}
-          .connect{stroke:#22d3ee;stroke-width:0.7;fill:none;opacity:0.5;stroke-dasharray:3 3}
-          .connectFix{stroke:#10b981;stroke-width:1;fill:none;opacity:0.75;stroke-dasharray:4 4}
-          .scanArc{stroke:#22d3ee;stroke-width:0.5;fill:none}
-          .dollar{fill:#fde68a;font-family:system-ui,sans-serif;font-weight:700;font-size:14px}
-          .dollarSm{fill:#fcd34d;font-family:system-ui,sans-serif;font-weight:700;font-size:9px}
-          .drop{fill:#fbbf24}
-          .dropDark{fill:#92400e}
-          .crack{stroke:#fef3c7;stroke-width:1.2;fill:none;stroke-linecap:round}
-          .patch{fill:#10b981;stroke:#064e3b;stroke-width:1}
-          .patchBolt{fill:#022c22}
-          .checkmark{stroke:#022c22;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
-          .dot{fill:#475569;opacity:0.5}
-          .cross{stroke:#334155;stroke-width:0.6;fill:none}
-          .wrench{fill:#94a3b8;stroke:#475569;stroke-width:0.4}
-          </style>
-          </defs>
-
-          <rect class="bg" width="680" height="460"/>
-
-          <g>
-          <circle class="dot" cx="40" cy="50" r="1"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3s" repeatCount="indefinite"/></circle>
-          <circle class="dot" cx="120" cy="30" r="1"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="4s" repeatCount="indefinite"/></circle>
-          <circle class="dot" cx="200" cy="60" r="1"/>
-          <circle class="dot" cx="540" cy="40" r="1"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3.5s" repeatCount="indefinite"/></circle>
-          <circle class="dot" cx="620" cy="80" r="1"><animate attributeName="opacity" values="0.1;0.6;0.1" dur="2.5s" repeatCount="indefinite"/></circle>
-          <circle class="dot" cx="660" cy="50" r="1"/>
-          <circle class="dot" cx="50" cy="180" r="1"/>
-          <circle class="dot" cx="630" cy="180" r="1"><animate attributeName="opacity" values="0.4;0.1;0.4" dur="3.2s" repeatCount="indefinite"/></circle>
-          <circle class="dot" cx="20" cy="240" r="1"/>
-          <circle class="dot" cx="660" cy="240" r="1"/>
-          <circle class="dot" cx="180" cy="440" r="1"/>
-          <circle class="dot" cx="500" cy="445" r="1"/>
-          <g class="cross"><line x1="78" y1="100" x2="84" y2="100"/><line x1="81" y1="97" x2="81" y2="103"/></g>
-          <g class="cross"><line x1="600" y1="120" x2="606" y2="120"/><line x1="603" y1="117" x2="603" y2="123"/></g>
-          <g class="cross"><line x1="160" y1="420" x2="166" y2="420"/><line x1="163" y1="417" x2="163" y2="423"/></g>
-          <g class="cross"><line x1="540" y1="430" x2="546" y2="430"/><line x1="543" y1="427" x2="543" y2="433"/></g>
-          </g>
-
-          <text class="subtitle" x="340" y="42" text-anchor="middle">MODEL CONTEXT PROTOCOL  ·  AI AGENT TEAM</text>
-          <text class="title" x="340" y="76" text-anchor="middle">Find money leaks. Fix them automatically.</text>
-
-          <circle class="glow" cx="340" cy="240" r="180">
-          <animate attributeName="r" values="170;195;170" dur="4s" repeatCount="indefinite"/>
-          </circle>
-
-          <circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
-          <animate attributeName="r" values="80;180;80" dur="5s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.6;0;0.6" dur="5s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
-          <animate attributeName="r" values="80;180;80" dur="5s" begin="1.7s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.6;0;0.6" dur="5s" begin="1.7s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="340" cy="240" r="100" stroke="#22d3ee" stroke-width="0.5" fill="none">
-          <animate attributeName="r" values="80;180;80" dur="5s" begin="3.3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.6;0;0.6" dur="5s" begin="3.3s" repeatCount="indefinite"/>
-          </circle>
-
-          <line class="connect" x1="290" y1="190" x2="140" y2="195">
-          <animate attributeName="stroke-dashoffset" from="0" to="-30" dur="2s" repeatCount="indefinite"/>
-          </line>
-          <line class="connect" x1="390" y1="190" x2="540" y2="195">
-          <animate attributeName="stroke-dashoffset" from="0" to="30" dur="2s" repeatCount="indefinite"/>
-          </line>
-          <line class="connect" x1="290" y1="260" x2="120" y2="320">
-          <animate attributeName="stroke-dashoffset" from="0" to="-30" dur="2.4s" repeatCount="indefinite"/>
-          </line>
-          <line class="connect" x1="390" y1="260" x2="560" y2="320">
-          <animate attributeName="stroke-dashoffset" from="0" to="30" dur="2.4s" repeatCount="indefinite"/>
-          </line>
-
-          <g>
-          <path stroke="#451a03" stroke-width="22" stroke-linecap="round" fill="none" d="M 20 400 L 660 400"/>
-          <path stroke="url(#pipe)" stroke-width="14" stroke-linecap="round" fill="none" d="M 20 400 L 660 400"/>
-          <path stroke="#fbbf24" stroke-width="2" fill="none" opacity="0.5" d="M 20 394 L 660 394"/>
-          <circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="120" cy="400" r="2.5"/>
-          <circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="260" cy="400" r="2.5"/>
-          <circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="420" cy="400" r="2.5"/>
-          <circle fill="#451a03" stroke="#7c2d12" stroke-width="0.5" cx="560" cy="400" r="2.5"/>
-          </g>
-
-          <g clip-path="url(#pipeClip)">
-          <g>
-          <text class="dollar" x="-90" y="406" text-anchor="middle">$</text>
-          <text class="dollar" x="40" y="406" text-anchor="middle">$</text>
-          <text class="dollar" x="220" y="406" text-anchor="middle">$</text>
-          <text class="dollar" x="380" y="406" text-anchor="middle">$</text>
-          <text class="dollar" x="510" y="406" text-anchor="middle">$</text>
-          <text class="dollar" x="640" y="406" text-anchor="middle">$</text>
-          <animateTransform attributeName="transform" type="translate" from="0 0" to="160 0" dur="3.5s" repeatCount="indefinite"/>
-          </g>
-          </g>
-
-          <g transform="translate(290 130)">
-          <rect class="serverBody" x="0" y="0" width="100" height="170" rx="6"/>
-          <rect class="serverEdge" x="0" y="0" width="100" height="6" rx="2"/>
-          <rect class="serverBay" x="8" y="14" width="84" height="28" rx="2"/>
-          <circle class="led-g" cx="16" cy="22" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite"/></circle>
-          <circle class="led-g" cx="24" cy="22" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/></circle>
-          <circle class="led-a" cx="32" cy="22" r="2"><animate attributeName="opacity" values="0.4;1;0.4" dur="0.8s" repeatCount="indefinite"/></circle>
-          <line class="vent" x1="50" y1="20" x2="86" y2="20"/>
-          <line class="vent" x1="50" y1="24" x2="86" y2="24"/>
-          <line class="vent" x1="50" y1="28" x2="86" y2="28"/>
-          <line class="vent" x1="50" y1="32" x2="86" y2="32"/>
-          <text class="tagS" x="16" y="38">CORE-01</text>
-
-          <rect class="serverBay" x="8" y="48" width="84" height="28" rx="2"/>
-          <circle class="led-c" cx="16" cy="56" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
-          <circle class="led-g" cx="24" cy="56" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite"/></circle>
-          <circle class="led-g" cx="32" cy="56" r="2"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.3s" repeatCount="indefinite"/></circle>
-          <line class="vent" x1="50" y1="54" x2="86" y2="54"/>
-          <line class="vent" x1="50" y1="58" x2="86" y2="58"/>
-          <line class="vent" x1="50" y1="62" x2="86" y2="62"/>
-          <line class="vent" x1="50" y1="66" x2="86" y2="66"/>
-          <text class="tagS" x="16" y="72">CORE-02</text>
-
-          <rect class="serverScreen" x="8" y="82" width="84" height="46" rx="2"/>
-          <text class="tag" x="50" y="98" text-anchor="middle" fill="#10b981">MCP</text>
-          <text x="50" y="113" text-anchor="middle" fill="#10b981" font-family="ui-monospace,monospace" font-weight="700" font-size="11" letter-spacing="1">SERVER</text>
-          <line stroke="#10b981" stroke-width="0.5" x1="14" y1="118" x2="86" y2="118" opacity="0.6"/>
-          <text class="tagS" x="50" y="125" text-anchor="middle" fill="#10b981">4 agents · online</text>
-
-          <rect class="serverBay" x="8" y="134" width="84" height="28" rx="2"/>
-          <circle class="led-g" cx="16" cy="146" r="2"><animate attributeName="opacity" values="1;0.4;1" dur="1.4s" repeatCount="indefinite"/></circle>
-          <circle class="led-g" cx="24" cy="146" r="2"><animate attributeName="opacity" values="0.4;1;0.4" dur="1.7s" repeatCount="indefinite"/></circle>
-          <circle class="led-g" cx="32" cy="146" r="2"><animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite"/></circle>
-          <circle class="led-c" cx="40" cy="146" r="2"><animate attributeName="opacity" values="0.3;1;0.3" dur="0.9s" repeatCount="indefinite"/></circle>
-          <circle class="led-c" cx="48" cy="146" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/></circle>
-          <text class="tagG" x="58" y="148">●ALL OK</text>
-          <text class="tagS" x="16" y="158">ORCHESTRATOR</text>
-          </g>
-
-          <text class="tag" x="340" y="318" text-anchor="middle">▼ MCP-SERVER</text>
-
-          <g transform="translate(60 170)">
-          <line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
-          <circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.3s" repeatCount="indefinite"/></circle>
-          <rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
-          <rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
-          <ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;3;3;0.4;3" dur="4s" repeatCount="indefinite"/>
-          </ellipse>
-          <ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;3;3;0.4;3" dur="4s" repeatCount="indefinite"/>
-          </ellipse>
-          <line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
-          <text class="tag" x="40" y="42" text-anchor="middle">DETECTOR</text>
-          <text class="tagS" x="40" y="64" text-anchor="middle">scanning logs</text>
-          </g>
-
-          <g transform="translate(540 170)">
-          <line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
-          <circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/></circle>
-          <rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
-          <rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
-          <ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;3;0.4;3;3" dur="5s" repeatCount="indefinite"/>
-          </ellipse>
-          <ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;3;0.4;3;3" dur="5s" repeatCount="indefinite"/>
-          </ellipse>
-          <line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
-          <text class="tag" x="40" y="42" text-anchor="middle">ANALYZER</text>
-          <text class="tagS" x="40" y="64" text-anchor="middle">root cause</text>
-          </g>
-
-          <g transform="translate(40 295)">
-          <line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
-          <circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite"/></circle>
-          <rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
-          <rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
-          <ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;0.4;3;3;3" dur="4.5s" repeatCount="indefinite"/>
-          </ellipse>
-          <ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;3;0.4;3;3;3" dur="4.5s" repeatCount="indefinite"/>
-          </ellipse>
-          <line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
-          <text class="tag" x="40" y="42" text-anchor="middle">AUDITOR</text>
-          <text class="tagS" x="40" y="64" text-anchor="middle">found a leak</text>
-          </g>
-
-          <g transform="translate(560 295)">
-          <line class="agentAnt" x1="40" y1="0" x2="40" y2="-8"/>
-          <circle fill="#22d3ee" cx="40" cy="-10" r="2"><animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite"/></circle>
-          <rect class="agent" x="0" y="0" width="80" height="50" rx="6"/>
-          <rect class="agentS" x="6" y="6" width="68" height="22" rx="2"/>
-          <ellipse class="agentEye" cx="22" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;0.4;3;3;3;3" dur="4.2s" repeatCount="indefinite"/>
-          </ellipse>
-          <ellipse class="agentEye" cx="58" cy="17" rx="3" ry="3">
-          <animate attributeName="ry" values="3;0.4;3;3;3;3" dur="4.2s" repeatCount="indefinite"/>
-          </ellipse>
-          <line stroke="#22d3ee" stroke-width="1" x1="32" y1="17" x2="48" y2="17" opacity="0.4"/>
-          <text class="tag" x="40" y="42" text-anchor="middle">REPAIR</text>
-          <text class="tagS" x="40" y="64" text-anchor="middle">patching now</text>
-          </g>
-
-          <line class="connectFix" x1="80" y1="345" x2="170" y2="390">
-          <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.5s" repeatCount="indefinite"/>
-          </line>
-          <line class="connectFix" x1="600" y1="345" x2="510" y2="390">
-          <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.5s" repeatCount="indefinite"/>
-          </line>
-
-          <g transform="translate(170 400)">
-          <path class="crack" d="M -6 -10 L -2 -3 M 1 -10 L 5 -2 M -3 -8 L 3 -7"/>
-          <g>
-          <ellipse class="drop" cx="0" cy="0" rx="3.5" ry="5.5">
-          <animate attributeName="cy" values="2;48" dur="1.6s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="1.6s" repeatCount="indefinite"/>
-          </ellipse>
-          </g>
-          <g>
-          <ellipse class="drop" cx="-3" cy="0" rx="2.8" ry="4.5">
-          <animate attributeName="cy" values="2;48" dur="1.6s" begin="0.55s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="1.6s" begin="0.55s" repeatCount="indefinite"/>
-          </ellipse>
-          </g>
-          <g>
-          <ellipse class="dropDark" cx="3" cy="0" rx="2.2" ry="3.5">
-          <animate attributeName="cy" values="2;48" dur="1.6s" begin="1.1s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="1.6s" begin="1.1s" repeatCount="indefinite"/>
-          </ellipse>
-          </g>
-          <text class="dollarSm" x="-3" y="0" opacity="0">
-          <animate attributeName="y" values="6;52" dur="2.2s" begin="0.3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0;1;1;0" dur="2.2s" begin="0.3s" repeatCount="indefinite"/>
-          $</text>
-          </g>
-
-          <g transform="translate(340 400)">
-          <rect class="patch" x="-16" y="-13" width="32" height="16" rx="3"/>
-          <circle class="patchBolt" cx="-11" cy="-9" r="1.3"/>
-          <circle class="patchBolt" cx="11" cy="-9" r="1.3"/>
-          <circle class="patchBolt" cx="-11" cy="-1" r="1.3"/>
-          <circle class="patchBolt" cx="11" cy="-1" r="1.3"/>
-          <path class="checkmark" d="M -6 -5 L -2 -1 L 6 -9"/>
-          <text class="tagG" x="0" y="-20" text-anchor="middle">●SEALED<animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/></text>
-          </g>
-
-          <g transform="translate(510 400)">
-          <rect class="patch" x="-13" y="-11" width="26" height="14" rx="2" opacity="0.9"/>
-          <circle class="patchBolt" cx="-9" cy="-7" r="1.2"/>
-          <circle class="patchBolt" cx="9" cy="-7" r="1.2"/>
-          <circle class="patchBolt" cx="-9" cy="-1" r="1.2"/>
-          <circle class="patchBolt" cx="9" cy="-1" r="1.2"/>
-          <g transform="translate(14 -16)">
-          <g>
-          <rect class="wrench" x="-1.5" y="-10" width="3" height="14" rx="1"/>
-          <circle class="wrench" cx="0" cy="-12" r="3"/>
-          <circle fill="#1e293b" cx="0" cy="-12" r="1.5"/>
-          <animateTransform attributeName="transform" type="rotate" values="20;50;20" dur="1.2s" repeatCount="indefinite"/>
-          </g>
-          </g>
-          </g>
-
-          <g transform="translate(60 400)">
-          <path class="crack" d="M -3 -8 L 1 -3"/>
-          <ellipse class="drop" cx="0" cy="0" rx="2" ry="3">
-          <animate attributeName="cy" values="2;30" dur="2s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="2s" repeatCount="indefinite"/>
-          </ellipse>
-          </g>
-
-          <g transform="translate(620 400)">
-          <path class="crack" d="M -3 -8 L 1 -3 M -2 -10 L 3 -7"/>
-          <ellipse class="drop" cx="0" cy="0" rx="2.2" ry="3.2">
-          <animate attributeName="cy" values="2;30" dur="1.8s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="1.8s" repeatCount="indefinite"/>
-          </ellipse>
-          <ellipse class="dropDark" cx="-2" cy="0" rx="1.8" ry="2.5">
-          <animate attributeName="cy" values="2;30" dur="1.8s" begin="0.6s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;1;0" dur="1.8s" begin="0.6s" repeatCount="indefinite"/>
-          </ellipse>
-          </g>
-
-          <text class="caption" x="340" y="448" text-anchor="middle">ORCHESTRATED BY MCP  ·  AGENTS DETECT, DIAGNOSE, PATCH  ·  AUTONOMOUS</text>
-          </svg>
-        </div>
-        <p class="dnx-hero-sub dnx-reveal">
-          DIGIT2AI builds full-stack, industry-specific AI platforms — voice agents, vertical SaaS, and automation — for the SMBs big tech ignores. Production today. Scalable tomorrow.
-        </p>
-        <div class="dnx-hero-ctas dnx-reveal">
-          <a href="https://aiagent.ringlypro.com/neural/dashboard.html" class="dnx-btn dnx-btn-primary dnx-btn-lg">
-            Try Live Demo
-            <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <a href="https://aiagent.ringlypro.com/digit2ai-presentation.html" class="dnx-btn dnx-btn-ghost dnx-btn-lg">
-            Lina's Presentation
-          </a>
-          <a href="#contact" class="dnx-btn dnx-btn-ghost dnx-btn-lg">
-            Talk to founders
-          </a>
-        </div>
-        <div class="dnx-hero-meta dnx-reveal">
-          <div><div class="dnx-meta-num">21</div><div class="dnx-meta-lbl">Live platforms</div></div>
-          <div><div class="dnx-meta-num">22</div><div class="dnx-meta-lbl">Industry verticals</div></div>
-          <div><div class="dnx-meta-num">3</div><div class="dnx-meta-lbl">AI voice agents</div></div>
-          <div><div class="dnx-meta-num">24/7</div><div class="dnx-meta-lbl">Autonomous ops</div></div>
-        </div>
-        </div><!-- /.dnx-hero-content -->
-        </div><!-- /.dnx-app-shell -->
-      </div>
-    </section>
-
-    <!-- MARQUEE -->
-    <div class="dnx-marquee">
-      <div class="dnx-wrap"><div class="dnx-marquee-lbl">Powering production workloads across</div></div>
-      <div class="dnx-marquee-track">
-        <div class="dnx-marquee-item">RinglyPro</div>
-        <div class="dnx-marquee-item">SurgicalMind</div>
-        <div class="dnx-marquee-item">Lactotec</div>
-        <div class="dnx-marquee-item">KanchoAI</div>
-        <div class="dnx-marquee-item">LawnCopilot</div>
-        <div class="dnx-marquee-item">Enruta</div>
-        <div class="dnx-marquee-item">AIHotelTalent</div>
-        <div class="dnx-marquee-item">TunjoRacing</div>
-        <div class="dnx-marquee-item">OrderGoPro</div>
-        <div class="dnx-marquee-item">Doctor Picante</div>
-        <div class="dnx-marquee-item">PixlyPro</div>
-        <div class="dnx-marquee-item">AIA Store</div>
-        <div class="dnx-marquee-item">Ronin</div>
-        <div class="dnx-marquee-item">GEBHARDT</div>
-        <div class="dnx-marquee-item">CW Carriers</div>
-        <div class="dnx-marquee-item">HISPATEC</div>
-        <div class="dnx-marquee-item">MSK Access</div>
-        <div class="dnx-marquee-item">Torna Idioma</div>
-        <div class="dnx-marquee-item">Visionarium</div>
-        <div class="dnx-marquee-item">CamaraVirtual</div>
-        <!-- duplicate for seamless loop -->
-        <div class="dnx-marquee-item">RinglyPro</div>
-        <div class="dnx-marquee-item">SurgicalMind</div>
-        <div class="dnx-marquee-item">Lactotec</div>
-        <div class="dnx-marquee-item">KanchoAI</div>
-        <div class="dnx-marquee-item">LawnCopilot</div>
-        <div class="dnx-marquee-item">Enruta</div>
-        <div class="dnx-marquee-item">AIHotelTalent</div>
-        <div class="dnx-marquee-item">TunjoRacing</div>
-        <div class="dnx-marquee-item">OrderGoPro</div>
-        <div class="dnx-marquee-item">Doctor Picante</div>
-        <div class="dnx-marquee-item">PixlyPro</div>
-        <div class="dnx-marquee-item">AIA Store</div>
-        <div class="dnx-marquee-item">Ronin</div>
-        <div class="dnx-marquee-item">GEBHARDT</div>
-        <div class="dnx-marquee-item">CW Carriers</div>
-        <div class="dnx-marquee-item">HISPATEC</div>
-        <div class="dnx-marquee-item">MSK Access</div>
-        <div class="dnx-marquee-item">Torna Idioma</div>
-        <div class="dnx-marquee-item">Visionarium</div>
-        <div class="dnx-marquee-item">CamaraVirtual</div>
-      </div>
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><span class="pip"></span> AI-native software firm &middot; describe it, we build it</span>
+      <h1>Build something<br><span class="grad-text">your business runs on.</span></h1>
+      <p class="lede">Describe the AI tool your company needs in plain language. Our AI workforce scopes it, plans the build, and ships it &mdash; voice agents, dashboards, automations, full platforms.</p>
     </div>
 
-    <!-- WORKFLOW -->
-    <section class="dnx-sec" id="workflow">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">THE WORKFLOW</div>
-          <h2 class="dnx-sec-title">From signal to <em>fix</em> — without humans in the loop.</h2>
-          <p class="dnx-sec-sub" style="margin:0 auto;">Five stages run continuously across your business. Each stage is owned by a different agent. The MCP server orchestrates the handoffs.</p>
+    <div class="builder wrap">
+      <form id="d2b-form" class="promptcard">
+        <textarea id="d2b-input" maxlength="5000" placeholder="Ask Digit2AI to build...  e.g. &quot;An AI receptionist that answers calls in Spanish, books appointments, and texts a confirmation&quot;"></textarea>
+        <div class="promptbar">
+          <span class="hint" id="d2b-hint">Describe your idea &mdash; the more detail, the sharper the plan.</span>
+          <button type="submit" id="d2b-go">Generate my build plan
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
         </div>
+      </form>
 
-        <div class="dnx-grid-5" style="row-gap:36px;">
-          <div class="dnx-step-card dnx-reveal">
-            <div class="dnx-step-num">1</div>
-            <div class="dnx-step-kicker">Detect</div>
-            <h3>Scan every workflow</h3>
-            <p>Ten Neural analyzers continuously inspect calls, leads, bookings, pipeline, transcripts, and CRM activity. Anomalies and revenue gaps get flagged in real time.</p>
-          </div>
-          <div class="dnx-step-card dnx-reveal">
-            <div class="dnx-step-num">2</div>
-            <div class="dnx-step-kicker">Diagnose</div>
-            <h3>Route to the right specialist</h3>
-            <p>The MCP server reads each finding, identifies which specialist agent owns the domain, and forwards full context — data, history, urgency, dependencies.</p>
-          </div>
-          <div class="dnx-step-card dnx-reveal">
-            <div class="dnx-step-num">3</div>
-            <div class="dnx-step-kicker">Prescribe</div>
-            <h3>Recommend a fix</h3>
-            <p>The receiving agent proposes a workflow: a callback, a nurture sequence, a re-pricing, a re-book, an outbound campaign — with the expected outcome and risk.</p>
-          </div>
-          <div class="dnx-step-card dnx-reveal">
-            <div class="dnx-step-num">4</div>
-            <div class="dnx-step-kicker">Auto-Fix</div>
-            <h3>Execute autonomously</h3>
-            <p>Pre-approved fixes run immediately. Higher-risk ones surface to a human for one-click approval. Either way, the agent owns the action end-to-end.</p>
-          </div>
-          <div class="dnx-step-card dnx-reveal">
-            <div class="dnx-step-num">5</div>
-            <div class="dnx-step-kicker">Verify</div>
-            <h3>Measure and report</h3>
-            <p>Every action is logged with the data it acted on, the rule it applied, and the outcome it produced. The score moves; the next finding starts the loop again.</p>
-          </div>
+      <div class="chips" id="d2b-chips">
+        <button class="chip" data-p="An AI that calls patients who missed their appointment and reschedules them automatically in English and Spanish.">Missed-appointment recovery</button>
+        <button class="chip" data-p="A bilingual AI receptionist that answers inbound calls 24/7, books appointments into my calendar, and sends SMS confirmations.">AI phone receptionist</button>
+        <button class="chip" data-p="A dashboard that scores my store locations on real-time performance and alerts owners when a score drops below target.">Store health dashboard</button>
+        <button class="chip" data-p="An AI agent that detects deepfakes and impersonations of my brand online and files takedown requests automatically.">Deepfake protection</button>
+        <button class="chip" data-p="A marketplace with live auctions, real-time currency conversion, and KYC verification for agricultural buyers and sellers.">Live-auction marketplace</button>
+      </div>
+
+      <p class="disclaim">Powered by our real triage engine (Claude) &mdash; it returns a genuine scope, not a canned demo.</p>
+
+      <div id="d2b-result" aria-live="polite"></div>
+    </div>
+
+    <div class="proof wrap">
+      <b>Powering 21 live platforms across 22 industry verticals</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
+    </div>
+  </header>
+
+  <section class="blk" id="how">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">How it works</div>
+        <h2>From an idea to a shipped product</h2>
+        <p>Not a prompt box that leaves you with code to maintain. A firm that takes the whole build off your plate.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Describe it</h3>
+          <p>Tell us the problem in plain language &mdash; by text or voice. Our AI instantly scopes fit, the smallest valuable v1, and any regulatory flags.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>The workforce builds</h3>
+          <p>An 83-role AI workforce &mdash; engineering, data, design, compliance, domain experts &mdash; builds the full stack, then runs automated tests before anyone sees it.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>Review &amp; ship</h3>
+          <p>You test it on a private link and approve. We deploy it live on a platform we run, monitor, and support for you &mdash; voice, billing, and auth included.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- NEURAL METRICS -->
-    <section class="dnx-sec" id="neural-metrics" style="padding-top:40px;">
-      <div class="dnx-wrap">
-        <div class="dnx-metric-bar dnx-reveal">
-          <div class="dnx-metric-tile">
-            <div class="dnx-metric-num">8+</div>
-            <div class="dnx-metric-lbl">Specialized AI Agents</div>
-          </div>
-          <div class="dnx-metric-tile">
-            <div class="dnx-metric-num">10</div>
-            <div class="dnx-metric-lbl">Neural Analyzers</div>
-          </div>
-          <div class="dnx-metric-tile">
-            <div class="dnx-metric-num">30s</div>
-            <div class="dnx-metric-lbl">To First Finding</div>
-          </div>
-          <div class="dnx-metric-tile">
-            <div class="dnx-metric-num">24/7</div>
-            <div class="dnx-metric-lbl">Auto-Fix Coverage</div>
-          </div>
-        </div>
+  <section class="blk" id="platforms" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Built with Digit2AI</div>
+        <h2>Live platforms, real industries</h2>
+        <p>Every one started as a sentence. Here's a slice of what the workforce has shipped.</p>
       </div>
-    </section>
-
-    <!-- AGENT ROSTER -->
-    <section class="dnx-sec" id="agents">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">THE TASKFORCE</div>
-          <h2 class="dnx-sec-title">Eight specialists. <em>One supervisor.</em> Every channel.</h2>
-          <p class="dnx-sec-sub" style="margin:0 auto;">A pre-built team of named agents — each owns a domain, each owns a KPI, each operates 24/7 under the MCP server.</p>
-        </div>
-
-        <div class="dnx-grid-3">
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Rachel</div>
-            <div class="dnx-agent-role">Voice Concierge</div>
-            <div class="dnx-agent-owns">Owns <strong>Missed Calls · After-Hours Coverage</strong></div>
-            <div class="dnx-agent-tag">"Answers every inbound call, qualifies the caller, and books the meeting."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Ana</div>
-            <div class="dnx-agent-role">Bilingual Lead Responder</div>
-            <div class="dnx-agent-owns">Owns <strong>Lead Response Time · Hispanic Coverage</strong></div>
-            <div class="dnx-agent-tag">"Calls every new lead inside sixty seconds in English or Spanish."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Lina</div>
-            <div class="dnx-agent-role">Pipeline Nurturer</div>
-            <div class="dnx-agent-owns">Owns <strong>Stale Leads · Engagement Failures</strong></div>
-            <div class="dnx-agent-tag">"Reactivates stale leads with personalized sequences, scores intent."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Sentinel</div>
-            <div class="dnx-agent-role">Pipeline Health Monitor</div>
-            <div class="dnx-agent-owns">Owns <strong>Pipeline Health · Deal Velocity</strong></div>
-            <div class="dnx-agent-tag">"Watches every deal stage continuously. Flags stuck deals."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Nova</div>
-            <div class="dnx-agent-role">No-Show Reducer</div>
-            <div class="dnx-agent-owns">Owns <strong>No-Shows · Meeting Conversion</strong></div>
-            <div class="dnx-agent-tag">"Confirms appointments, sends smart reminders, auto-rebooks missed meetings."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Vault</div>
-            <div class="dnx-agent-role">Revenue Leak Hunter</div>
-            <div class="dnx-agent-owns">Owns <strong>Revenue Leaks · Renewals</strong></div>
-            <div class="dnx-agent-tag">"Cross-checks calls, contacts, and deals to surface unbilled work."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Origin</div>
-            <div class="dnx-agent-role">Source ROI Auditor</div>
-            <div class="dnx-agent-owns">Owns <strong>Lead Sources · Marketing Attribution</strong></div>
-            <div class="dnx-agent-tag">"Ranks every lead source by close rate and cost."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal">
-            <div class="dnx-agent-name">Coach</div>
-            <div class="dnx-agent-role">Conversion Reviewer</div>
-            <div class="dnx-agent-owns">Owns <strong>Call Conversion · Rep Performance</strong></div>
-            <div class="dnx-agent-tag">"Listens to call transcripts, scores rep performance."</div>
-          </div>
-          <div class="dnx-agent-card dnx-reveal" style="border-color:rgba(34,211,238,0.4); background:linear-gradient(180deg, rgba(34,211,238,0.06), rgba(139,92,246,0.03));">
-            <div class="dnx-agent-name">Custom Agent</div>
-            <div class="dnx-agent-role">Built To Spec</div>
-            <div class="dnx-agent-owns">Owns <strong>Whatever your business needs</strong></div>
-            <div class="dnx-agent-tag">"Industry-specific work? We build and deploy in days, not months."</div>
-          </div>
-        </div>
+      <div class="gallery">
+        <div class="gcard"><div class="thumb" data-i="Telephony"></div><div class="body"><div class="v">CRM &middot; Voice AI</div><h4>RinglyPro</h4><p>24/7 bilingual voice agents that qualify, book, and log calls to your CRM.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Healthcare"></div><div class="body"><div class="v">MedTech</div><h4>SurgicalMind</h4><p>Robotic-surgery growth intelligence &mdash; surveys, dollarization, business plans.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Equestrian"></div><div class="body"><div class="v">Sports AI</div><h4>EquiMind</h4><p>AI jump-coach and 3D horse analysis from a phone video.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="AgriTech"></div><div class="body"><div class="v">Marketplace</div><h4>AgroMercado</h4><p>National agro marketplace: live auctions, BCV currency, KYC.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Trust &amp; Safety"></div><div class="body"><div class="v">Security</div><h4>Veritas</h4><p>AI deepfake detection and automated impersonation takedowns.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="EdTech"></div><div class="body"><div class="v">Language</div><h4>Torna Idioma</h4><p>Spanish-for-work platform with a 12-level SRS curriculum.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Community"></div><div class="body"><div class="v">Network</div><h4>HISPATEC</h4><p>Hispanic professional network across six strategic axes.</p></div></div>
+        <div class="gcard"><div class="thumb" data-i="Coaching"></div><div class="body"><div class="v">Productivity</div><h4>Visionarium</h4><p>AI coaching tracker: record a session, get action items and guidance.</p></div></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- MCP ARCHITECTURE -->
-    <section class="dnx-sec" id="mcp-architecture">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">MCP ARCHITECTURE</div>
-          <h2 class="dnx-sec-title">A single <em>protocol-native</em> backbone for the entire fleet.</h2>
-        </div>
-
-        <div class="dnx-arch-stack dnx-reveal">
-          <div class="dnx-arch-layer">
-            <div class="dnx-arch-label">Experience Layer</div>
-            <div class="dnx-arch-desc">Voice · Web · SMS · WhatsApp · Email · Mobile · API · MCP Client</div>
-          </div>
-          <div class="dnx-arch-layer dnx-arch-core">
-            <div class="dnx-arch-label">MCP Server</div>
-            <div class="dnx-arch-desc">Orchestration backbone — routes findings to the right agent, carries shared context, enforces protocols, logs every call.</div>
-          </div>
-          <div class="dnx-arch-layer">
-            <div class="dnx-arch-label">Agent Runtime</div>
-            <div class="dnx-arch-desc">The taskforce — Rachel · Ana · Lina · Sentinel · Nova · Vault · Origin · Coach + custom agents.</div>
-          </div>
-          <div class="dnx-arch-layer">
-            <div class="dnx-arch-label">Reasoning</div>
-            <div class="dnx-arch-desc">LLM router (Opus · Sonnet · Haiku · Gemini · GPT) + Neural rule engine.</div>
-          </div>
-          <div class="dnx-arch-layer">
-            <div class="dnx-arch-label">Memory</div>
-            <div class="dnx-arch-desc">Per-tenant context store, conversation history, customer record cache.</div>
-          </div>
-          <div class="dnx-arch-layer">
-            <div class="dnx-arch-label">Tools</div>
-            <div class="dnx-arch-desc">CRM writes · calendar · payments · ticketing · email/SMS · custom webhooks.</div>
-          </div>
-        </div>
+  <section class="blk" id="numbers">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Digit2AI in numbers</div>
+        <h2>An operating system for vertical AI</h2>
       </div>
-    </section>
-
-    <!-- PLATFORM PILLARS -->
-    <section class="dnx-sec" id="pillars">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">PLATFORM PILLARS</div>
-          <h2 class="dnx-sec-title">Build, deploy, govern, and observe — <em>from one place.</em></h2>
-        </div>
-
-        <div class="dnx-grid-4">
-          <div class="dnx-pillar-card dnx-reveal">
-            <h3>Build</h3>
-            <ul>
-              <li>Visual workflow builder</li>
-              <li>Pre-trained voice personas</li>
-              <li>Plug in your own knowledge base</li>
-              <li>No-code prompt + tool wiring</li>
-              <li>Code-first SDK for power users</li>
-            </ul>
-          </div>
-          <div class="dnx-pillar-card dnx-reveal">
-            <h3>Deploy</h3>
-            <ul>
-              <li>Inbound + outbound voice (PSTN)</li>
-              <li>Web chat + SMS + WhatsApp</li>
-              <li>Mobile SDK (iOS + Android)</li>
-              <li>REST API + MCP server</li>
-              <li>One-click rollback</li>
-            </ul>
-          </div>
-          <div class="dnx-pillar-card dnx-reveal">
-            <h3>Govern</h3>
-            <ul>
-              <li>Role-based access (RBAC)</li>
-              <li>Multi-tenant isolation</li>
-              <li>Full audit trail per action</li>
-              <li>SOC2-style logging + retention</li>
-              <li>Data residency controls</li>
-            </ul>
-          </div>
-          <div class="dnx-pillar-card dnx-reveal">
-            <h3>Observe</h3>
-            <ul>
-              <li>Real-time KPI dashboards</li>
-              <li>Call transcripts + sentiment</li>
-              <li>Per-agent ROI tracking</li>
-              <li>Anomaly + escalation alerts</li>
-              <li>Eval harness for prompt regressions</li>
-            </ul>
-          </div>
-        </div>
+      <div class="nums">
+        <div class="numcard"><div class="big grad-text">21</div><div class="lab">Live platforms</div></div>
+        <div class="numcard"><div class="big grad-text">22</div><div class="lab">Industry verticals</div></div>
+        <div class="numcard"><div class="big grad-text">83</div><div class="lab">AI-role workforce</div></div>
+        <div class="numcard"><div class="big grad-text">99.9%</div><div class="lab">Uptime SLA</div></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- COMPARISON TABLE -->
-    <section class="dnx-sec" id="comparison">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">THE DIFFERENCE</div>
-          <h2 class="dnx-sec-title">Not another chatbot. Not a DIY toolkit. <em>A finished platform.</em></h2>
-        </div>
-
-        <div class="dnx-cmp-wrap dnx-reveal">
-          <table class="dnx-cmp-table">
-            <thead>
-              <tr>
-                <th>Feature</th>
-                <th>Single Chatbot</th>
-                <th>DIY on Hyperscaler</th>
-                <th>Digit2ai Neural</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Time to first value</td><td data-label="Single Chatbot">Days</td><td data-label="DIY Hyperscaler">Months</td><td data-label="Digit2ai Neural">30 seconds</td></tr>
-              <tr><td>Pre-built agents</td><td data-label="Single Chatbot">1 generic</td><td data-label="DIY Hyperscaler">0 — you build them</td><td data-label="Digit2ai Neural">8 specialists + custom</td></tr>
-              <tr><td>Channel coverage</td><td data-label="Single Chatbot">Web only</td><td data-label="DIY Hyperscaler">Whatever you wire up</td><td data-label="Digit2ai Neural">Voice · Web · SMS · WhatsApp · Email · API · MCP</td></tr>
-              <tr><td>Agent-to-agent protocol</td><td data-label="Single Chatbot">None</td><td data-label="DIY Hyperscaler">Build your own</td><td data-label="Digit2ai Neural">MCP-native</td></tr>
-              <tr><td>Auto-detect business gaps</td><td data-label="Single Chatbot">No</td><td data-label="DIY Hyperscaler">You write the rules</td><td data-label="Digit2ai Neural">10 neural analyzers built-in</td></tr>
-              <tr><td>Pricing</td><td data-label="Single Chatbot">Per seat</td><td data-label="DIY Hyperscaler">Per token + engineering salaries</td><td data-label="Digit2ai Neural">Per resolved outcome</td></tr>
-              <tr><td>Audit + governance</td><td data-label="Single Chatbot">Limited</td><td data-label="DIY Hyperscaler">Six-month security review</td><td data-label="Digit2ai Neural">Enterprise-ready day one</td></tr>
-            </tbody>
-          </table>
-        </div>
+  <section class="final">
+    <div class="wrap">
+      <div class="finalcard">
+        <h2>Tell us what to build.</h2>
+        <p>Describe your idea above and get a real build plan in seconds &mdash; or talk to us directly.</p>
+        <a href="#" class="btn btn-white" id="d2b-scrolltop">Start building &uarr;</a>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- USE CASES -->
-    <section class="dnx-sec" id="use-cases">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">USE CASES</div>
-          <h2 class="dnx-sec-title">Where Neural <em>finds the most money.</em></h2>
-        </div>
-
-        <div class="dnx-grid-3">
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">SALES OPS</span>
-            <h3>Sales Operations</h3>
-            <p>Catch missed calls, slow lead response, stuck pipelines, and stale leads before they cost a deal.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">SUPPORT</span>
-            <h3>Customer Support</h3>
-            <p>Auto-triage tickets, deflect FAQs, escalate hot issues, and ship coaching summaries to managers.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">FIELD</span>
-            <h3>Field Services</h3>
-            <p>Confirm appointments, reduce no-shows, dispatch follow-ups, and surface unbilled work.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">HEALTHCARE</span>
-            <h3>Healthcare Practices</h3>
-            <p>Patient outreach, appointment reminders, intake processing, and after-hours triage.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">REAL ESTATE</span>
-            <h3>Real Estate</h3>
-            <p>Speed-to-lead inside sixty seconds, listing inquiries answered 24/7, showing scheduling on autopilot.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">LEGAL</span>
-            <h3>Legal &amp; Professional Services</h3>
-            <p>Bilingual intake, conflict-of-interest checks, contract renewal monitoring, and unbilled-time recovery.</p>
-          </div>
-        </div>
+  <footer class="d2f">
+    <div class="wrap">
+      <div class="row">
+        <div class="brand" style="font-size:16px"><span class="mark" style="width:22px;height:22px"></span> DIGIT2AI</div>
+        <div>21 live platforms &middot; 22 verticals &middot; 99.9% SLA</div>
+        <div><a href="https://digit2ai.com">digit2ai.com</a></div>
       </div>
-    </section>
-
-    <!-- TRUST & SECURITY -->
-    <section class="dnx-sec" id="trust">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">TRUST &amp; SECURITY</div>
-          <h2 class="dnx-sec-title">Enterprise-grade <em>from day one.</em></h2>
-        </div>
-
-        <div class="dnx-trust-grid dnx-reveal">
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Multi-Tenant Isolation</div><div class="dnx-trust-desc">Hard boundaries per customer.</div></div>
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Full Audit Trail</div><div class="dnx-trust-desc">Every agent decision logged.</div></div>
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">RBAC + SSO</div><div class="dnx-trust-desc">Role-based access controls.</div></div>
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Data Residency</div><div class="dnx-trust-desc">US, EU, regional options.</div></div>
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">99.9% Uptime SLA</div><div class="dnx-trust-desc">Production-grade infrastructure.</div></div>
-          <div class="dnx-trust-item"><div class="dnx-trust-lbl">Secrets Vault</div><div class="dnx-trust-desc">No credentials in prompts.</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- OPPORTUNITY -->
-    <section class="dnx-sec" id="opportunity">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-reveal">
-          <div class="dnx-kicker">01 — The Opportunity</div>
-          <h2 class="dnx-sec-title">A <em>once-in-a-generation</em> window for SMB AI.</h2>
-          <p class="dnx-sec-sub">33 million U.S. small businesses still run on phone calls, spreadsheets, and manual work. Four converging forces have opened the door for a new class of AI-native operators.</p>
-        </div>
-
-        <div class="dnx-grid-3">
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">01 / Cost collapse</span>
-            <h3>AI inference down 90%+</h3>
-            <p>LLM costs fell over 90% in 18 months. Voice AI that cost $1/minute in 2023 now costs pennies — making full-stack AI viable for $500/mo SMB subscriptions.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">02 / Adoption inflection</span>
-            <h3>SMB AI adoption crossed 15%</h3>
-            <p>From under 5% to 15%+ in 2025. Early adopters see ROI, word-of-mouth pulls industries forward. We're at the bottom of the S-curve.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">03 / Behavior shift</span>
-            <h3>Voice AI went mainstream</h3>
-            <p>Consumers now expect AI on the phone. Businesses without 24/7 AI response lose leads nightly. SMBs need tools to keep up — fast.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">04 / First-mover</span>
-            <h3>Verticals with zero competition</h3>
-            <p>No one builds AI-native platforms for dairy plants, martial arts schools, or lawn care. Big tech chases enterprise. We own these niches first.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">05 / Bilingual moat</span>
-            <h3>Bilingual from day one</h3>
-            <p>Full English + Spanish across voice, UI, and operations. Unlocks 62M+ Hispanic Americans and all of LATAM — a market most competitors treat as an afterthought.</p>
-          </div>
-          <div class="dnx-card dnx-reveal">
-            <span class="dnx-card-num">06 / Shared infrastructure</span>
-            <h3>New verticals in weeks</h3>
-            <p>Each new platform starts at 60% complete thanks to shared infra: voice, auth, billing, CRM, MCP, dashboards. Velocity compounds.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TRACTION STATS -->
-    <section class="dnx-sec" id="traction" style="padding-top:0;">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-reveal">
-          <div class="dnx-kicker">02 — Proven Traction</div>
-          <h2 class="dnx-sec-title">Not a pitch deck. <em>Real production.</em></h2>
-          <p class="dnx-sec-sub">Every platform below is deployed, serving customers, and generating data. The market, team, and infrastructure are already proven.</p>
-        </div>
-
-        <div class="dnx-grid-4">
-          <div class="dnx-stat-card dnx-reveal">
-            <div class="dnx-stat-num">$300B+</div>
-            <div class="dnx-stat-lbl">Total addressable market</div>
-            <div class="dnx-stat-desc">SMB AI automation + voice AI + vertical SaaS combined market by 2028</div>
-          </div>
-          <div class="dnx-stat-card dnx-reveal">
-            <div class="dnx-stat-num">85%</div>
-            <div class="dnx-stat-lbl">Underserved SMBs</div>
-            <div class="dnx-stat-desc">Too expensive, too complex, or not built for their industry</div>
-          </div>
-          <div class="dnx-stat-card dnx-reveal">
-            <div class="dnx-stat-num">40%+</div>
-            <div class="dnx-stat-lbl">Voice AI CAGR</div>
-            <div class="dnx-stat-desc">Annual growth as businesses replace call centers with AI</div>
-          </div>
-          <div class="dnx-stat-card dnx-reveal">
-            <div class="dnx-stat-num">60%</div>
-            <div class="dnx-stat-lbl">Head start per vertical</div>
-            <div class="dnx-stat-desc">New platforms inherit shared infra — weeks to market, not months</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PORTFOLIO (BENTO) -->
-    <section class="dnx-sec" id="platforms" style="padding-top:0;">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-reveal">
-          <div class="dnx-kicker">03 — Live Portfolio</div>
-          <h2 class="dnx-sec-title">21 production platforms. <em>One shared brain.</em></h2>
-          <p class="dnx-sec-sub">Each platform is standalone, industry-specific, and revenue-generating — but all share our AI voice stack, MCP server, CRM, and automation layer.</p>
-        </div>
-
-        <div class="dnx-bento">
-
-          <!-- Flagship: RinglyPro -->
-          <a href="https://ringlypro.com" target="_blank" rel="noopener" class="dnx-tile flagship dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/691758aeac7fade66e3cc403.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Flagship</span>
-                <h3>RinglyPro</h3>
-                <div class="dnx-tile-dom">ringlypro.com</div>
-                <p>Multi-tenant AI CRM with 3 voice agents — Rachel, Ana, Lina. Calls, appointments, SMS, email in EN + ES. MCP server, GoHighLevel integration, mobile apps. Our core revenue driver.</p>
-                <ul class="dnx-tile-pills">
-                  <li>Voice AI</li><li>Multi-tenant</li><li>Bilingual</li><li>SaaS</li>
-                </ul>
-              </div>
-              <span class="dnx-tile-link">Visit platform
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- TunjoRacing -->
-          <a href="https://tunjoracing.com" target="_blank" rel="noopener" class="dnx-tile span-2 tall dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/696cf718439b6bf938457268.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Sports + Media</span>
-                <h3>TunjoRacing</h3>
-                <div class="dnx-tile-dom">tunjoracing.com</div>
-                <p>Full digital platform for IMSA driver Oscar Tunjo — press portal, e-commerce, live results, sponsorship, React admin.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Lactotec -->
-          <a href="https://lactotec.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6992015c6bac248c13982bcf.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Dairy / Agritech</span>
-                <h3>Lactotec</h3>
-                <div class="dnx-tile-dom">lactotec.com</div>
-                <p>AI-powered dairy plant ops — pasteurizer monitoring, quality, yield analytics.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- LawnCopilot -->
-          <a href="https://lawncopilot.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69933b0ea9efde9430a78201.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Lawn Care</span>
-                <h3>LawnCopilot</h3>
-                <div class="dnx-tile-dom">lawncopilot.com</div>
-                <p>AI scheduling, route optimization, voice booking for lawn service operators.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- KanchoAI -->
-          <a href="https://kanchoai.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993395128abf92af7c9e672.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Martial Arts</span>
-                <h3>KanchoAI</h3>
-                <div class="dnx-tile-dom">kanchoai.com</div>
-                <p>Studio management, student lifecycle, AI receptionist for dojos.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- AIA Store -->
-          <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" rel="noopener" class="dnx-tile span-3 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/699338d328abf916a6c9d33d.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Retail Health</span>
-                <h3>AIA Store</h3>
-                <div class="dnx-tile-dom">aiastore.ringlypro.com</div>
-                <p>Retail store-health monitoring powered by computer vision + AI incident triage. Dashboards, alerts, live ops view.</p>
-              </div>
-              <span class="dnx-tile-link">Visit platform
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Enruta -->
-          <a href="https://aiagent.ringlypro.com/enruta" target="_blank" rel="noopener" class="dnx-tile span-3 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993390167cb8452109837f1.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Auto / Fleet</span>
-                <h3>Enruta</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/enruta</div>
-                <p>Vehicle, driver, and route management with AI dispatcher. Built for auto fleets and mobility operators.</p>
-              </div>
-              <span class="dnx-tile-link">Visit platform
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Ronin -->
-          <a href="https://aiagent.ringlypro.com/ronin" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Community</span>
-                <h3>Ronin</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/ronin</div>
-                <p>Brotherhood platform with events, content, member management.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- AIHotelTalent -->
-          <a href="https://aihoteltalent.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Hospitality HR</span>
-                <h3>AIHotelTalent</h3>
-                <div class="dnx-tile-dom">aihoteltalent.com</div>
-                <p>AI-powered hotel recruitment — screening, scheduling, bilingual voice interviews.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Recovery + Nutrition -->
-          <a href="#contact" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69935db36bac249b23d2d5c4.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Wellness</span>
-                <h3>Recovery + Nutrition</h3>
-                <div class="dnx-tile-dom">Eastern US</div>
-                <p>Boutique fitness / recovery chain with AI member journey & retention.</p>
-              </div>
-              <span class="dnx-tile-link">Learn more
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- OrderGoPro -->
-          <a href="https://ordergopro.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6935f87381eaa1f4da169f8e.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Restaurants</span>
-                <h3>OrderGoPro</h3>
-                <div class="dnx-tile-dom">ordergopro.com</div>
-                <p>Voice + kiosk ordering for restaurants — full stack with menus and POS.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Doctor Picante -->
-          <a href="https://doctorpicante.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6937beaae03e9d93c66837ef.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">F&B Wholesale</span>
-                <h3>Doctor Picante</h3>
-                <div class="dnx-tile-dom">doctorpicante.com</div>
-                <p>B2B hot-sauce wholesale with AI sales agent and order ops.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- PixlyPro -->
-          <a href="https://pixlypro.com" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-img" style="background-image:url('https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/69308e428da9675b37a8180a.png');"></div>
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Creative AI</span>
-                <h3>PixlyPro</h3>
-                <div class="dnx-tile-dom">pixlypro.com</div>
-                <p>AI photography + image generation for product sellers and creatives.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- GEBHARDT -->
-          <a href="https://ringlypro.com/gebhardt" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Intralogistics</span>
-                <h3>GEBHARDT</h3>
-                <div class="dnx-tile-dom">ringlypro.com/gebhardt</div>
-                <p>Warehouse automation partner portal — system ops, maintenance, SLAs.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- CW Carriers -->
-          <a href="https://ringlypro.com/cw_carriers/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Logistics</span>
-                <h3>CW Carriers</h3>
-                <div class="dnx-tile-dom">ringlypro.com/cw_carriers</div>
-                <p>Freight brokerage operations, dispatch, and autopilot workflows.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Logistics -->
-          <a href="https://aiagent.ringlypro.com/logistics/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Fleet Ops</span>
-                <h3>Logistics Hub</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/logistics</div>
-                <p>Multi-tenant logistics console — drivers, loads, AI dispatch.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- SurgicalMind -->
-          <a href="https://www.surgicalmind.app/" target="_blank" rel="noopener" class="dnx-tile span-3 tall dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">MedTech / Surgical</span>
-                <h3>SurgicalMind</h3>
-                <div class="dnx-tile-dom">surgicalmind.app</div>
-                <p>AI sales-ops platform for surgical reps — hospital intelligence, proforma tracking, clinical dollarization, and business-plan generation for medtech teams.</p>
-                <ul class="dnx-tile-pills">
-                  <li>MedTech</li><li>Sales Ops</li><li>Clinical AI</li>
-                </ul>
-              </div>
-              <span class="dnx-tile-link">Visit platform
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- MSK Access -->
-          <a href="https://aiagent.ringlypro.com/msk/" target="_blank" rel="noopener" class="dnx-tile span-3 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">MSK / Imaging AI</span>
-                <h3>MSK Access</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/msk</div>
-                <p>Musculoskeletal imaging AI — ImagingMind technology for radiology workflow, diagnosis acceleration, and patient access programs.</p>
-                <ul class="dnx-tile-pills">
-                  <li>Radiology</li><li>Imaging AI</li><li>Healthcare</li>
-                </ul>
-              </div>
-              <span class="dnx-tile-link">Visit platform
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- HISPATEC -->
-          <a href="https://aiagent.ringlypro.com/hispatec/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Professional Network</span>
-                <h3>HISPATEC</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/hispatec</div>
-                <p>Hispanic professional network — 6 strategic axes, MCP orchestrator, member management. "Acción no sólo palabras."</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Torna Idioma -->
-          <a href="https://aiagent.ringlypro.com/Torna_Idioma/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">EdTech / Language</span>
-                <h3>Torna Idioma</h3>
-                <div class="dnx-tile-dom">aiagent.ringlypro.com/Torna_Idioma</div>
-                <p>12-level SFL English curriculum platform — UVEG partnership, React SPA, multi-city rollout (Makati, Zamboanga, Cavite).</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- Visionarium -->
-          <a href="https://visionarium.app/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Vision AI</span>
-                <h3>Visionarium</h3>
-                <div class="dnx-tile-dom">visionarium.app</div>
-                <p>AI-powered vision intelligence platform — real-time computer vision for enterprise monitoring and analytics.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-          <!-- CamaraVirtual -->
-          <a href="https://www.camaravirtual.app/" target="_blank" rel="noopener" class="dnx-tile span-2 dnx-reveal">
-            <div class="dnx-tile-inner">
-              <div>
-                <span class="dnx-tile-tag">Chamber AI</span>
-                <h3>CamaraVirtual</h3>
-                <div class="dnx-tile-dom">camaravirtual.app</div>
-                <p>Virtual chamber of commerce platform — config-driven, bilingual, powering PCCI and PACCCFL chamber networks.</p>
-              </div>
-              <span class="dnx-tile-link">Visit
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </div>
-          </a>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- BUSINESS MODEL -->
-    <section class="dnx-sec" id="model">
-      <div class="dnx-wrap">
-        <div class="dnx-split">
-          <div class="dnx-reveal">
-            <div class="dnx-kicker">04 — Business Model</div>
-            <h2 class="dnx-sec-title">Three <em>compounding</em> revenue streams.</h2>
-            <p class="dnx-sec-sub" style="margin-bottom:28px;">Every platform we ship feeds the same financial machine — recurring subscriptions, usage-based expansion, and vertical licensing. New verticals deepen the moat.</p>
-            <div class="dnx-hero-ctas">
-              <a href="#contact" class="dnx-btn dnx-btn-ghost">
-                See financial detail
-                <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </a>
-            </div>
-          </div>
-          <div class="dnx-panel dnx-reveal">
-            <div class="dnx-panel-list">
-              <div class="dnx-panel-item">
-                <div class="dnx-panel-idx">1</div>
-                <div>
-                  <h4>SaaS subscriptions</h4>
-                  <p>Monthly recurring revenue across all 15 deployed platforms. Voice agents, CRM access, dashboards, automation — billed per tenant.</p>
-                </div>
-              </div>
-              <div class="dnx-panel-item">
-                <div class="dnx-panel-idx">2</div>
-                <div>
-                  <h4>Usage-based revenue</h4>
-                  <p>Per-call and per-message fees on AI voice agents. As clients grow, usage grows — built-in expansion with zero upselling.</p>
-                </div>
-              </div>
-              <div class="dnx-panel-item">
-                <div class="dnx-panel-idx">3</div>
-                <div>
-                  <h4>Vertical licensing</h4>
-                  <p>Each industry platform can be white-labeled and licensed across regions, operators, and franchise networks.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ZERO-COPY ARCHITECTURE -->
-    <section class="dnx-sec" style="padding-top:0;">
-      <div class="dnx-wrap">
-        <div class="dnx-split reversed">
-          <div class="dnx-panel dnx-reveal" style="min-height:340px;">
-            <div class="dnx-panel-title" style="background:var(--grad-primary); -webkit-background-clip:text; background-clip:text; color:transparent;">Zero-copy<br>customer data.</div>
-            <p style="color:var(--text-dim); font-size:15px; line-height:1.65; max-width:42ch;">
-              One CRM core, 15 vertical front-doors. Customer records, voice transcripts, appointments, and ops data stay in a single multi-tenant graph — never replicated, never fragmented. Every new vertical gets the full intelligence of the last one, instantly.
-            </p>
-          </div>
-          <div class="dnx-reveal">
-            <div class="dnx-kicker">05 — Architecture</div>
-            <h2 class="dnx-sec-title">One brain. <em>Many front-doors.</em></h2>
-            <p class="dnx-sec-sub">Our MCP-powered infrastructure means every platform inherits voice, memory, billing, and automation — without duplicating a single customer record. This is how we add verticals in weeks, not years.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="dnx-sec" id="faq">
-      <div class="dnx-wrap">
-        <div class="dnx-sec-head dnx-sec-head-center dnx-reveal">
-          <div class="dnx-kicker">06 — FAQ</div>
-          <h2 class="dnx-sec-title">Answers for <em>operators</em> and <em>investors</em>.</h2>
-        </div>
-
-        <div class="dnx-faq">
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">What does DIGIT2AI actually do? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">We build and operate industry-specific AI platforms for small and medium businesses. Voice agents, vertical SaaS, CRM, and automation — all sharing a single multi-tenant architecture. Flagship: RinglyPro. 14 additional live platforms across 16 verticals.</div>
-          </div>
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">How is this different from enterprise AI? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">Enterprise AI is saturated and expensive. SMBs — dairy plants, dojos, lawn companies, restaurants — are ignored. We build full-stack, industry-specific AI that costs what an SMB can pay and does what their business actually needs. Most have never had software written for them.</div>
-          </div>
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">Are these platforms really live? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">Yes. Every platform in our portfolio is deployed, serving real businesses, and generating data. Visit any of them — they're public and functional. We don't ship mockups.</div>
-          </div>
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">How fast can you launch a new vertical? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">Weeks, not months. Shared infrastructure — voice, billing, auth, MCP server, CRM, dashboards — means each new platform starts at roughly 60% complete. We only build the vertical-specific surface.</div>
-          </div>
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">What's the language strategy? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">Full English + Spanish from day one. Voice, UI, automation — everything bilingual. This unlocks 62M+ Hispanic Americans plus all of LATAM. Most competitors bolt Spanish on later; for us it's the default.</div>
-          </div>
-          <div class="dnx-faq-item dnx-reveal">
-            <button class="dnx-faq-q">How do I work with DIGIT2AI? <span class="dnx-faq-q-icon"></span></button>
-            <div class="dnx-faq-a">Three paths: (1) licensing an existing platform for your industry, (2) co-building a vertical with us as a partner, (3) exploring investment. Reach out using the contact block below and we'll route you.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA / CONTACT -->
-    <section class="dnx-sec" id="contact" style="padding-bottom:140px;">
-      <div class="dnx-wrap">
-        <div class="dnx-cta dnx-reveal">
-          <h2>Let's build your <em>vertical</em>.</h2>
-          <p>Investor, operator, or partner — we respond within one business day. Production demos available on request.</p>
-          <div class="dnx-hero-ctas" style="justify-content:center; margin-bottom:0;">
-            <a href="https://ringlypro.com/demo" target="_blank" rel="noopener" class="dnx-btn dnx-btn-primary dnx-btn-lg">
-              Schedule a demo
-              <svg class="dnx-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a href="mailto:info@digit2ai.com" class="dnx-btn dnx-btn-ghost dnx-btn-lg">info@digit2ai.com</a>
-          </div>
-          <div class="dnx-cta-contacts">
-            <a href="tel:+12232949184" class="dnx-cta-contact">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3h3l1 3-2 1c1 2 2 3 4 4l1-2 3 1v3c-6 0-10-4-10-10z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-              223-294-9184
-            </a>
-            <a href="https://wa.me/18136414177" target="_blank" rel="noopener" class="dnx-cta-contact">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C4.4 1.5 1.5 4.4 1.5 8c0 1.2.3 2.3.9 3.3L1.5 14.5l3.3-.9c.9.5 2 .8 3.2.8 3.6 0 6.5-2.9 6.5-6.5S11.6 1.5 8 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-              WhatsApp
-            </a>
-            <a href="https://aiagent.ringlypro.com/digit2ai-es" target="_top" class="dnx-cta-contact">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13" stroke="currentColor" stroke-width="1.3"/></svg>
-              Ver en español
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="dnx-ftr">
-      <div class="dnx-wrap">
-        <div class="dnx-ftr-grid">
-          <div class="dnx-ftr-col">
-            <div class="dnx-ftr-brand">
-              <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png" alt="DIGIT2AI" class="dnx-brand-logo">
-            </div>
-            <p class="dnx-ftr-tag">AI-native platforms for the 33 million small businesses big tech ignores. Building the operating system of vertical AI.</p>
-          </div>
-          <div class="dnx-ftr-col">
-            <h4>Platforms</h4>
-            <ul>
-              <li><a href="https://ringlypro.com" target="_blank" rel="noopener">RinglyPro</a></li>
-              <li><a href="https://tunjoracing.com" target="_blank" rel="noopener">TunjoRacing</a></li>
-              <li><a href="https://kanchoai.com" target="_blank" rel="noopener">KanchoAI</a></li>
-              <li><a href="https://lactotec.com" target="_blank" rel="noopener">Lactotec</a></li>
-              <li><a href="https://lawncopilot.com" target="_blank" rel="noopener">LawnCopilot</a></li>
-              <li><a href="https://pixlypro.com" target="_blank" rel="noopener">PixlyPro</a></li>
-            </ul>
-          </div>
-          <div class="dnx-ftr-col">
-            <h4>Verticals</h4>
-            <ul>
-              <li><a href="https://www.surgicalmind.app/" target="_blank" rel="noopener">SurgicalMind</a></li>
-              <li><a href="https://aiagent.ringlypro.com/msk/" target="_blank" rel="noopener">MSK Access</a></li>
-              <li><a href="https://aiagent.ringlypro.com/hispatec/" target="_blank" rel="noopener">HISPATEC</a></li>
-              <li><a href="https://aiagent.ringlypro.com/Torna_Idioma/" target="_blank" rel="noopener">Torna Idioma</a></li>
-              <li><a href="https://visionarium.app/" target="_blank" rel="noopener">Visionarium</a></li>
-              <li><a href="https://www.camaravirtual.app/" target="_blank" rel="noopener">CamaraVirtual</a></li>
-              <li><a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" rel="noopener">AIA Store</a></li>
-              <li><a href="https://aiagent.ringlypro.com/enruta" target="_blank" rel="noopener">Enruta</a></li>
-              <li><a href="https://aihoteltalent.com" target="_blank" rel="noopener">AIHotelTalent</a></li>
-              <li><a href="https://ordergopro.com" target="_blank" rel="noopener">OrderGoPro</a></li>
-              <li><a href="https://doctorpicante.com" target="_blank" rel="noopener">Doctor Picante</a></li>
-            </ul>
-          </div>
-          <div class="dnx-ftr-col">
-            <h4>Company</h4>
-            <ul>
-              <li><a href="#opportunity">Opportunity</a></li>
-              <li><a href="#model">Business Model</a></li>
-              <li><a href="#faq">FAQ</a></li>
-              <li><a href="#contact">Contact</a></li>
-              <li><a href="https://aiagent.ringlypro.com/digit2ai-es" target="_top">Español</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="dnx-ftr-bot">
-          <div>© 2026 DIGIT2AI LLC — All rights reserved.</div>
-          <div>
-            <a href="mailto:info@digit2ai.com">info@digit2ai.com</a>
-            <a href="tel:+12232949184">223-294-9184</a>
-            <a href="https://wa.me/18136414177" target="_blank" rel="noopener">WhatsApp</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-  </div>
+    </div>
+  </footer>
 </div>
 
-<!-- ELEVENLABS VOICE AGENT (branding removed) -->
-<!-- When iframed by digit2ai.com (GHL) without allow="microphone", the
-     widget fails with "Permission denied". Detect that case and replace the
-     widget with a button that opens the standalone page in a new window,
-     where mic works because it's top-level. -->
 <script>
 (function(){
-  var iframed = false;
-  try { iframed = window.self !== window.top; } catch(e) { iframed = true; }
-  var hasMic = true;
-  try {
-    if (document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function') {
-      hasMic = document.featurePolicy.allowsFeature('microphone');
-    }
-  } catch(e) {}
-  if (iframed && !hasMic) {
-    // Render a fallback button instead of the broken widget.
-    var s = document.createElement('style');
-    s.textContent =
-      '#d2a-voice-fallback{display:inline-flex;align-items:center;gap:10px;' +
-      'padding:12px 20px;border-radius:999px;' +
-      'background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;' +
-      'font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:14px;cursor:pointer;' +
-      'border:0;box-shadow:0 10px 30px rgba(0,0,0,.35);' +
-      'transition:transform .2s ease, box-shadow .2s ease;white-space:nowrap;}' +
-      '#d2a-voice-fallback:hover{transform:translateY(-2px);' +
-      'box-shadow:0 14px 36px rgba(0,0,0,.45);}' +
-      '#d2a-voice-fallback svg{width:18px;height:18px;flex:0 0 auto;}' +
-      /* Fallback (header not found): pin to top center */
-      '#d2a-voice-fallback.d2a-floating{position:fixed;top:16px;left:50%;' +
-      'transform:translateX(-50%);z-index:2147483647;}' +
-      '#d2a-voice-fallback.d2a-floating:hover{transform:translateX(-50%) translateY(-2px);}' +
-      '@media (max-width:640px){#d2a-voice-fallback{padding:8px 14px;font-size:12px;gap:6px;}' +
-      '#d2a-voice-fallback svg{width:14px;height:14px;}}';
-    document.head.appendChild(s);
-    var btn = document.createElement('button');
-    btn.id = 'd2a-voice-fallback';
-    btn.type = 'button';
-    btn.setAttribute('aria-label', 'Talk to Rachel');
-    btn.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' +
-      '<span>Talk to Rachel</span>';
-    btn.onclick = function(){
-      window.open('https://aiagent.ringlypro.com/talk-to-rachel.html', 'rachel_chat',
-        'width=460,height=720,noopener,noreferrer');
-    };
-    // Inject into the header so it sits inline with the brand and CTA group,
-    // aligned at the same vertical level via flex. Fall back to fixed
-    // top-center if the header is not present.
-    var mount = function(){
-      var inner = document.querySelector('.dnx-hdr-inner');
-      if (inner) {
-        var cta = inner.querySelector('.dnx-hdr-cta');
-        if (cta) inner.insertBefore(btn, cta);
-        else inner.appendChild(btn);
-      } else {
-        btn.classList.add('d2a-floating');
-        document.body.appendChild(btn);
-      }
-    };
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', mount);
-    } else {
-      mount();
-    }
-    return; // Skip mounting the broken widget entirely
-  }
-  // Normal path: top-level page or iframe with mic permission. Mount the
-  // ElevenLabs widget as usual.
-  var w = document.createElement('elevenlabs-convai');
-  w.setAttribute('agent-id', 'agent_1001kdge3jz0ejj8a8g5d7vkqr8f');
-  document.body.appendChild(w);
-  var sc = document.createElement('script');
-  sc.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed@latest/dist/index.js';
-  sc.async = true;
-  document.body.appendChild(sc);
-})();
-</script>
-<script>
-(function hideElevenLabsBranding(){
-  function scrub(){
-    var el = document.querySelector('elevenlabs-convai');
-    if (!el) return;
-    var root = el.shadowRoot;
-    if (!root) return;
-    if (!root.querySelector('style[data-dnx-hide]')) {
-      var s = document.createElement('style');
-      s.setAttribute('data-dnx-hide','1');
-      s.textContent =
-        'a[href*="elevenlabs"]{display:none!important;height:0!important;margin:0!important;padding:0!important;line-height:0!important;font-size:0!important;overflow:hidden!important;}' +
-        'div:has(>a[href*="elevenlabs"]){display:none!important;height:0!important;}' +
-        'span:has(>a[href*="elevenlabs"]){display:none!important;}' +
-        'p:has(>a[href*="elevenlabs"]){display:none!important;}' +
-        '[class*="powered" i]{display:none!important;height:0!important;}';
-      root.appendChild(s);
-    }
-  }
-  var attempts = 0;
-  var iv = setInterval(function(){
-    attempts++;
-    scrub();
-    if (attempts > 40) clearInterval(iv);
-  }, 500);
-})();
-</script>
+  var root = document.querySelector('.d2b');
+  if(!root) return;
+  var form   = root.querySelector('#d2b-form');
+  var input  = root.querySelector('#d2b-input');
+  var go     = root.querySelector('#d2b-go');
+  var hint   = root.querySelector('#d2b-hint');
+  var result = root.querySelector('#d2b-result');
+  var chips  = root.querySelectorAll('#d2b-chips .chip');
+  var scroll = root.querySelector('#d2b-scrolltop');
+  var ENDPOINT = '/projects/api/v1/intake/public-triage-preview';
+  var busy = false;
 
-<script>
-(function(){
-  // mobile menu
-  var btn = document.getElementById('dnxMenuBtn');
-  var nav = document.getElementById('dnxNav');
-  if (btn && nav) {
-    btn.addEventListener('click', function(){ nav.classList.toggle('dnx-open'); });
-    nav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ nav.classList.remove('dnx-open'); }); });
-  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-  // scroll reveal
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting) { e.target.classList.add('dnx-in'); io.unobserve(e.target); }
-      });
-    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
-    document.querySelectorAll('.dnx-reveal').forEach(function(el){ io.observe(el); });
-  } else {
-    document.querySelectorAll('.dnx-reveal').forEach(function(el){ el.classList.add('dnx-in'); });
+  function updateHint(){
+    var n = input.value.trim().length;
+    if(n===0){ hint.textContent='Describe your idea — the more detail, the sharper the plan.'; hint.classList.remove('warn'); }
+    else if(n<30){ hint.textContent=(30-n)+' more characters to generate a plan'; hint.classList.add('warn'); }
+    else { hint.textContent=n+' characters'; hint.classList.remove('warn'); }
   }
+  input.addEventListener('input', updateHint);
 
-  // sidebar scroll-spy
-  var sideLinks = document.querySelectorAll('.dnx-sidebar-link');
-  if (sideLinks.length && 'IntersectionObserver' in window) {
-    var byId = {};
-    sideLinks.forEach(function(a){
-      var id = (a.getAttribute('href') || '').replace('#','');
-      if (id) byId[id] = a;
-    });
-    var spy = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        var link = byId[e.target.id];
-        if (!link) return;
-        if (e.isIntersecting) {
-          sideLinks.forEach(function(l){ l.classList.remove('is-active'); });
-          link.classList.add('is-active');
-        }
-      });
-    }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
-    Object.keys(byId).forEach(function(id){
-      var sec = document.getElementById(id);
-      if (sec) spy.observe(sec);
-    });
-  }
-
-  // card spotlight
-  document.querySelectorAll('.dnx-card').forEach(function(card){
-    card.addEventListener('mousemove', function(e){
-      var r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  chips.forEach(function(c){
+    c.addEventListener('click', function(){
+      input.value = c.getAttribute('data-p');
+      updateHint(); input.focus();
+      input.scrollIntoView({behavior:'smooth',block:'center'});
     });
   });
 
-  // FAQ accordion
-  document.querySelectorAll('.dnx-faq-q').forEach(function(q){
-    q.addEventListener('click', function(){
-      var item = q.parentElement;
-      item.classList.toggle('open');
-    });
-  });
+  if(scroll){ scroll.addEventListener('click', function(e){
+    e.preventDefault();
+    form.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){ input.focus(); }, 400);
+  }); }
 
-  // smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(function(a){
-    a.addEventListener('click', function(e){
-      var id = a.getAttribute('href');
-      if (id.length > 1) {
-        var target = document.querySelector(id);
-        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-      }
-    });
-  });
-
-  // ambient neural canvas
-  var c = document.getElementById('dnxCanvas');
-  if (c && window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var ctx = c.getContext('2d');
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var nodes = [];
-    var mouse = { x: -1e4, y: -1e4 };
-    function resize(){
-      c.width = window.innerWidth * dpr;
-      c.height = window.innerHeight * dpr;
-      c.style.width = window.innerWidth + 'px';
-      c.style.height = window.innerHeight + 'px';
-      var density = Math.min(1, window.innerWidth / 1400);
-      var target = Math.floor(60 * density);
-      nodes = [];
-      for (var i = 0; i < target; i++) {
-        nodes.push({
-          x: Math.random() * c.width,
-          y: Math.random() * c.height,
-          vx: (Math.random() - 0.5) * 0.15 * dpr,
-          vy: (Math.random() - 0.5) * 0.15 * dpr,
-          r: (Math.random() * 1.2 + 0.4) * dpr
-        });
-      }
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', function(e){ mouse.x = e.clientX * dpr; mouse.y = e.clientY * dpr; });
-    window.addEventListener('mouseleave', function(){ mouse.x = -1e4; mouse.y = -1e4; });
-
-    function tick(){
-      ctx.clearRect(0,0,c.width,c.height);
-      // lines
-      for (var i = 0; i < nodes.length; i++){
-        var a = nodes[i];
-        a.x += a.vx; a.y += a.vy;
-        if (a.x < 0 || a.x > c.width) a.vx *= -1;
-        if (a.y < 0 || a.y > c.height) a.vy *= -1;
-        for (var j = i+1; j < nodes.length; j++){
-          var b = nodes[j];
-          var dx = a.x - b.x, dy = a.y - b.y;
-          var d2 = dx*dx + dy*dy;
-          var max = 140 * dpr;
-          if (d2 < max*max){
-            var alpha = 1 - Math.sqrt(d2)/max;
-            ctx.strokeStyle = 'rgba(120,170,255,' + (alpha*0.12) + ')';
-            ctx.lineWidth = 0.6 * dpr;
-            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-          }
-        }
-        // mouse attract
-        var mdx = mouse.x - a.x, mdy = mouse.y - a.y;
-        var md2 = mdx*mdx + mdy*mdy;
-        var mmax = 180 * dpr;
-        if (md2 < mmax*mmax){
-          var ma = 1 - Math.sqrt(md2)/mmax;
-          ctx.strokeStyle = 'rgba(34,211,238,' + (ma*0.25) + ')';
-          ctx.lineWidth = 0.8 * dpr;
-          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(mouse.x,mouse.y); ctx.stroke();
-        }
-        // node
-        ctx.fillStyle = 'rgba(160,190,230,0.45)';
-        ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fill();
-      }
-      requestAnimationFrame(tick);
-    }
-    tick();
+  function loading(on){
+    busy = on; go.disabled = on;
+    go.innerHTML = on
+      ? '<span class="spinner"></span> Thinking…'
+      : 'Generate my build plan <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   }
+
+  function showError(msg){
+    result.className='show';
+    result.innerHTML='<div class="r-err">'+esc(msg)+'</div>';
+  }
+
+  var VERDICT = {
+    go:  {cls:'go',  label:'Strong fit'},
+    poc: {cls:'poc', label:'Proof-of-concept fit'},
+    stop:{cls:'stop',label:'Not a fit yet'}
+  };
+
+  function render(d){
+    var v = VERDICT[d.verdict] || VERDICT.poc;
+    var ts = d.technical_solution || {};
+    function list(arr){ return (arr||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join(''); }
+    function tags(arr){ return (arr||[]).map(function(x){ return '<span class="tag">'+esc(x)+'</span>'; }).join(''); }
+
+    var html = ''
+      + '<div class="rcard">'
+      +   '<div class="rhead">'
+      +     '<div><h3>'+esc(d.project_title_suggested||'Your build plan')+'</h3>'
+      +       '<div class="pcaption">Fit score '+esc(d.fit_score)+'/10 &middot; scoped by '+esc(d.model||'Claude')+'</div></div>'
+      +     '<span class="verdict '+v.cls+'">'+v.label+'</span>'
+      +   '</div>'
+      +   '<div class="rbody">';
+
+    if(d.problem_in_our_words){
+      html += '<div class="rblock"><h4>The problem, in our words</h4><p>'+esc(d.problem_in_our_words)+'</p></div>';
+    }
+    if(ts.summary){
+      html += '<div class="rblock"><h4>How we\'d build it</h4><p>'+esc(ts.summary)+'</p></div>';
+    }
+    if(ts.what_we_build && ts.what_we_build.length){
+      html += '<div class="rblock"><h4>What we build</h4><ul class="rlist">'+list(ts.what_we_build)+'</ul></div>';
+    }
+    if(ts.agents_involved && ts.agents_involved.length){
+      html += '<div class="rblock"><h4>Workforce on this build</h4><div class="tagrow">'+tags(ts.agents_involved)+'</div></div>';
+    }
+    if(ts.data_sources_via_mcp && ts.data_sources_via_mcp.length){
+      html += '<div class="rblock"><h4>Data &amp; integrations (via MCP)</h4><div class="tagrow">'+tags(ts.data_sources_via_mcp)+'</div></div>';
+    }
+    if(d.week_1_deliverables && d.week_1_deliverables.length){
+      html += '<div class="rblock"><h4>Week 1 deliverables</h4><ul class="rlist">'+list(d.week_1_deliverables)+'</ul></div>';
+    }
+    if(ts.delivery_window){
+      html += '<div class="rblock"><div class="rmeta"><div class="m"><div class="k">Delivery window</div><div class="v">'+esc(ts.delivery_window)+'</div></div></div></div>';
+    }
+
+    html +=   '</div>'
+      +   '<div class="rfoot">'
+      +     '<div class="note">This is an automated first-pass scope. Ready to make it real?</div>'
+      +     '<a class="btn btn-grad" href="https://digit2ai.com">Start this project &rarr;</a>'
+      +   '</div>'
+      + '</div>';
+
+    result.className='show';
+    result.innerHTML = html;
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(busy) return;
+    var desc = input.value.trim();
+    if(desc.length < 30){ updateHint(); input.focus(); return; }
+
+    loading(true);
+    result.className=''; // hide while loading
+
+    fetch(ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ description: desc })
+    })
+    .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
+    .then(function(res){
+      loading(false);
+      if(res.status===200 && res.json && res.json.success){ render(res.json.data); return; }
+      var msg = (res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
+      if(res.status===429) msg = 'You\'ve generated several plans already. '+msg;
+      showError(msg);
+    })
+    .catch(function(){
+      loading(false);
+      showError('Could not reach the build engine. Check your connection and try again.');
+    });
+  });
 })();
 </script>

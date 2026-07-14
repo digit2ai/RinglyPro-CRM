@@ -2565,20 +2565,20 @@ app.get('/digit2ai', (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ${D2AI_GEO_REDIRECT_SCRIPT('en')}
-<title>DIGIT2AI - AI-Native Platforms for Small Business</title>
-<meta name="description" content="DIGIT2AI builds and scales AI-powered vertical platforms. 21 live products across 22 industries. The operating system of vertical AI.">
+<title>DIGIT2AI — Describe it. We build it.</title>
+<meta name="description" content="Describe the AI tool your business needs in plain language. Digit2AI's AI workforce scopes it, builds it, and ships it live. 21 platforms across 22 verticals.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://digit2ai.com">
-<meta property="og:title" content="DIGIT2AI — AI-Native Platforms for Small Business">
-<meta property="og:description" content="21 live AI-powered platforms across 22 industry verticals. Voice agents, vertical SaaS, and automation.">
+<meta property="og:title" content="DIGIT2AI — Describe it. We build it.">
+<meta property="og:description" content="Describe your idea and get a real AI build plan in seconds. An AI-native software firm — voice agents, dashboards, automations, full platforms.">
 <meta property="og:image" content="${ogImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DIGIT2AI — AI-Native Platforms for Small Business">
-<meta name="twitter:description" content="21 live AI-powered platforms across 22 industry verticals.">
+<meta name="twitter:title" content="DIGIT2AI — Describe it. We build it.">
+<meta name="twitter:description" content="Describe your idea and get a real AI build plan in seconds.">
 <meta name="twitter:image" content="${ogImage}">
-<style>html,body{margin:0;padding:0;background:#05070e;}</style>
+<style>html,body{margin:0;padding:0;background:#faf8f5;}</style>
 </head>
 <body>
 ${content}
