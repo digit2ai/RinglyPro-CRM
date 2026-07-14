@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comenzar — Executive English Coaching</title>
+<link rel="icon" href="/coaching-english/favicon.svg">
+<link rel="manifest" href="/coaching-english/manifest.webmanifest">
+<meta name="theme-color" content="#1b3a6b">
+<style>
+  :root{--bg:#0d1320;--bg2:#0a0f19;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--accent:#2a6f9e;--accent2:#1b3a6b;--green:#3fc06a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#182742,var(--bg)) fixed;color:var(--txt);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;padding-top:max(24px,env(safe-area-inset-top))}
+  .card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+    border-radius:20px;padding:32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .brand svg{width:40px;height:40px}.brand b{font-size:18px}
+  h1{font-size:20px;margin:18px 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+  label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
+  input{width:100%;background:#0f1725;border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:15px;padding:12px 14px;min-height:44px}
+  input:focus{outline:none;border-color:var(--accent)}
+  button{width:100%;margin-top:22px;min-height:48px;border:0;border-radius:12px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(90deg,var(--accent),var(--accent2));cursor:pointer}
+  button:disabled{opacity:.6}
+  .msg{margin-top:14px;font-size:13px;min-height:18px}.msg.err{color:#ff7a7a}.msg.ok{color:var(--green)}
+  .alt{margin-top:18px;text-align:center;font-size:13px;color:var(--mut)}.alt a{color:#9fc6e8;text-decoration:none}
+</style>
+</head>
+<body>
+  <form class="card" id="f">
+    <div class="brand">
+      <svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a6f9e"/><stop offset="1" stop-color="#1b3a6b"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><path d="M20 40 L32 18 L44 40" fill="none" stroke="#e9eef7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><line x1="25" y1="33" x2="39" y2="33" stroke="#9fc6e8" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="48" r="3.2" fill="#9fc6e8"/></svg>
+      <b>Executive English Coaching</b>
+    </div>
+    <h1>Comience su programa</h1>
+    <div class="sub">Cree su cuenta. En minutos tendrá un programa de inglés personalizado a su cargo y su industria.</div>
+    <label>Nombre completo</label>
+    <input id="name" type="text" autocomplete="name" required>
+    <label>Correo</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label>Contraseña (mín. 6 caracteres)</label>
+    <input id="password" type="password" autocomplete="new-password" required>
+    <button type="submit" id="btn">Crear mi cuenta</button>
+    <div class="msg" id="msg"></div>
+    <div class="alt">¿Ya tiene cuenta? <a href="/coaching-english/login">Ingresar</a></div>
+  </form>
+<script>
+  const f=document.getElementById('f'),msg=document.getElementById('msg'),btn=document.getElementById('btn');
+  f.addEventListener('submit',async(e)=>{
+    e.preventDefault();btn.disabled=true;msg.className='msg';msg.textContent='Creando...';
+    try{
+      const r=await fetch('/coaching-english/api/v1/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+        body:JSON.stringify({name:document.getElementById('name').value.trim(),email:document.getElementById('email').value.trim(),password:document.getElementById('password').value,role:'student'})});
+      const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');
+      msg.className='msg ok';msg.textContent='Listo. Redirigiendo...';location.href='/coaching-english/learn';
+    }catch(err){msg.className='msg err';msg.textContent=err.message;btn.disabled=false;}
+  });
+</script>
+</body>
+</html>

@@ -38,21 +38,28 @@ function getCookie(req, name) {
   const m = h.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
-const PUBLIC_EXACT = ['/login', '/signup', '/health', '/favicon.svg', '/manifest.webmanifest', '/sw.js'];
+const PUBLIC_EXACT = ['/login', '/signup', '/start', '/health', '/favicon.svg', '/manifest.webmanifest', '/sw.js'];
 const PUBLIC_ASSET = /\.(png|svg|webmanifest|css|js|woff2?|ico)$/i;
 router.use((req, res, next) => {
   const token = getCookie(req, 'exec_coaching_token');
   if (token) { try { req.user = jwt.verify(token, AUTH_SECRET); } catch (e) { /* invalid */ } }
   const p = req.path;
   if (PUBLIC_EXACT.includes(p) || PUBLIC_ASSET.test(p) || p.startsWith('/api/v1/auth')) return next();
-  if (req.user) return next();
+  if (req.user) {
+    // Role-aware routing: students live in /learn, coaches in the dashboard.
+    if (req.user.role === 'student' && p === '/') return res.redirect('/coaching-english/learn');
+    if (req.user.role !== 'student' && p === '/learn') return res.redirect('/coaching-english/');
+    return next();
+  }
   if (p.startsWith('/api/')) return res.status(401).json({ error: 'No autorizado' });
   return res.redirect('/coaching-english/login');
 });
 
-// ── Login + signup pages ─────────────────────────────────────────────────────
+// ── Login + signup + student pages ──────────────────────────────────────────
 router.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html')));
 router.get('/signup', (req, res) => res.sendFile(path.join(publicDir, 'signup.html')));
+router.get('/start', (req, res) => res.sendFile(path.join(publicDir, 'start.html')));   // student self-signup
+router.get('/learn', (req, res) => res.sendFile(path.join(publicDir, 'learn.html')));    // student app
 
 // ── API routes ─────────────────────────────────────────────────────────────
 router.use('/api/v1/auth', require('./routes/auth'));
@@ -60,6 +67,9 @@ router.use('/health', require('./routes/health'));
 router.use('/api/v1/students', require('./routes/students'));
 router.use('/api/v1/sessions', require('./routes/sessions'));
 router.use('/api/v1/assignments', require('./routes/assignments'));
+router.use('/api/v1/intake', require('./routes/intake'));       // student self-serve
+router.use('/api/v1/learning', require('./routes/learning'));   // student self-serve
+router.use('/api/v1/kb', require('./routes/knowledge-base'));   // coach KB + supervision
 
 // ── Static dashboard (no build step — self-contained HTML) ──────────────────
 router.use(express.static(publicDir));

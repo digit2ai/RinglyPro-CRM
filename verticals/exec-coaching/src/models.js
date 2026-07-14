@@ -109,7 +109,122 @@ const Assignment = sequelize.define('ExecAssignment', {
   completed_at: { type: DataTypes.DATE }
 }, { tableName: 'ec_assignments', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['student_id'] }, { fields: ['status'] }] });
 
-// Associations
+// ═══════════════════════════════════════════════════════════════════════════
+// STUDENT SELF-SERVE MODEL (v2 upgrade) — intake → placement → AI curriculum →
+// modular learning → assessments. A self-serve student is an ec_users row with
+// role='student' and tenant_id = own id. All tables below key on
+// student_user_id = ec_users.id.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── ec_intake_profiles ────────────────────────────────────────────────────
+// The typeform-style intake answers + placement result (one row per student).
+const IntakeProfile = sequelize.define('ExecIntakeProfile', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  student_user_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+  first_name: { type: DataTypes.STRING },
+  last_name: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },
+  email: { type: DataTypes.STRING },
+  age_range: { type: DataTypes.STRING },        // 18-24 ... 65+
+  occupation: { type: DataTypes.STRING },
+  industry: { type: DataTypes.STRING },
+  motivation: { type: DataTypes.STRING },       // multiple-choice key
+  motivation_text: { type: DataTypes.TEXT },    // free text
+  timeline_months: { type: DataTypes.INTEGER, defaultValue: 6 },
+  hours_per_week: { type: DataTypes.INTEGER, defaultValue: 3 },
+  self_level: { type: DataTypes.STRING, defaultValue: 'medium' }, // low|medium|high
+  placement_level: { type: DataTypes.STRING },   // verified low|medium|high
+  placement_score: { type: DataTypes.INTEGER },  // 0-100
+  placement_spoken: { type: DataTypes.TEXT },    // JSON rubric of the 30s spoken response
+  step: { type: DataTypes.INTEGER, defaultValue: 1 }, // furthest intake step reached
+  status: { type: DataTypes.STRING, defaultValue: 'in_progress' }, // in_progress|completed
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_intake_profiles', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['student_user_id'] }] });
+
+// ─── ec_curricula ──────────────────────────────────────────────────────────
+// The AI-generated personalized program (one active per student).
+const Curriculum = sequelize.define('ExecCurriculum', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  student_user_id: { type: DataTypes.INTEGER, allowNull: false },
+  title: { type: DataTypes.STRING },
+  level: { type: DataTypes.STRING },             // low|medium|high (CEFR-ish)
+  focus: { type: DataTypes.TEXT },               // ESP domain description
+  total_modules: { type: DataTypes.INTEGER, defaultValue: 5 },
+  pass_threshold: { type: DataTypes.INTEGER, defaultValue: 80 },
+  generated_by: { type: DataTypes.STRING, defaultValue: 'ai' }, // ai|heuristic
+  status: { type: DataTypes.STRING, defaultValue: 'active' },    // active|archived
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_curricula', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['student_user_id'] }] });
+
+// ─── ec_modules ────────────────────────────────────────────────────────────
+// One module of the curriculum. Lessons + vocab stored inline as JSON.
+const Module = sequelize.define('ExecModule', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  student_user_id: { type: DataTypes.INTEGER, allowNull: false },
+  curriculum_id: { type: DataTypes.INTEGER, allowNull: false },
+  order_index: { type: DataTypes.INTEGER, defaultValue: 0 },
+  title: { type: DataTypes.STRING },
+  objective: { type: DataTypes.TEXT },
+  vocab: { type: DataTypes.TEXT },               // JSON [{term, meaning_es, example}]
+  lessons: { type: DataTypes.TEXT },             // JSON [{title, type, mins, content_en, exercises[]}]
+  status: { type: DataTypes.STRING, defaultValue: 'locked' }, // locked|unlocked|in_progress|passed
+  best_score: { type: DataTypes.INTEGER },
+  reinforcement: { type: DataTypes.TEXT },       // AI reinforcement content after a fail
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_modules', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['student_user_id'] }, { fields: ['curriculum_id'] }] });
+
+// ─── ec_assessments ────────────────────────────────────────────────────────
+// The end-of-module assessment (one per module). Questions stored as JSON.
+const Assessment = sequelize.define('ExecAssessment', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  student_user_id: { type: DataTypes.INTEGER, allowNull: false },
+  module_id: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+  questions: { type: DataTypes.TEXT },           // JSON [{type, q, options?, answer, points?}]
+  pass_threshold: { type: DataTypes.INTEGER, defaultValue: 80 },
+  is_final: { type: DataTypes.BOOLEAN, defaultValue: false },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_assessments', timestamps: false, indexes: [{ fields: ['module_id'] }, { fields: ['student_user_id'] }] });
+
+// ─── ec_assessment_attempts ────────────────────────────────────────────────
+const AssessmentAttempt = sequelize.define('ExecAssessmentAttempt', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  student_user_id: { type: DataTypes.INTEGER, allowNull: false },
+  assessment_id: { type: DataTypes.INTEGER, allowNull: false },
+  module_id: { type: DataTypes.INTEGER, allowNull: false },
+  answers: { type: DataTypes.TEXT },             // JSON array aligned to questions
+  score: { type: DataTypes.INTEGER },
+  passed: { type: DataTypes.BOOLEAN, defaultValue: false },
+  weak_areas: { type: DataTypes.TEXT },          // JSON list of missed concepts
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_assessment_attempts', timestamps: false, indexes: [{ fields: ['module_id'] }, { fields: ['student_user_id'] }] });
+
+// ─── ec_kb_documents ───────────────────────────────────────────────────────
+// Coach knowledge base: teaching materials that steer the AI to teach the way
+// THIS coach teaches (white-label coach AI). Keyed by coach tenant.
+const KbDocument = sequelize.define('ExecKbDocument', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  coach_id: { type: DataTypes.INTEGER, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: false },
+  kind: { type: DataTypes.STRING, defaultValue: 'method' }, // method|vocab|lesson_plan|transcript|notes
+  content: { type: DataTypes.TEXT },             // plain text (RAG-lite: whole-doc context)
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'ec_kb_documents', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['coach_id'] }] });
+
+// Associations — student self-serve
+Curriculum.hasMany(Module, { foreignKey: 'curriculum_id' });
+Module.belongsTo(Curriculum, { foreignKey: 'curriculum_id' });
+Module.hasOne(Assessment, { foreignKey: 'module_id' });
+Assessment.belongsTo(Module, { foreignKey: 'module_id' });
+Assessment.hasMany(AssessmentAttempt, { foreignKey: 'assessment_id' });
+AssessmentAttempt.belongsTo(Assessment, { foreignKey: 'assessment_id' });
+
+// Associations — coach session model (v1)
 Student.hasMany(Session, { foreignKey: 'student_id' });
 Session.belongsTo(Student, { foreignKey: 'student_id' });
 Session.hasMany(Transcript, { foreignKey: 'session_id' });
@@ -119,4 +234,7 @@ Report.belongsTo(Session, { foreignKey: 'session_id' });
 Student.hasMany(Assignment, { foreignKey: 'student_id' });
 Assignment.belongsTo(Student, { foreignKey: 'student_id' });
 
-module.exports = { sequelize, User, Student, Session, Transcript, Report, Assignment };
+module.exports = {
+  sequelize, User, Student, Session, Transcript, Report, Assignment,
+  IntakeProfile, Curriculum, Module, Assessment, AssessmentAttempt, KbDocument
+};

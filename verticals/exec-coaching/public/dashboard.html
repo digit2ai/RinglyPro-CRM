@@ -205,6 +205,29 @@
     <div id="tasks-list"></div>
   </section>
 
+  <!-- BASE DE CONOCIMIENTO + SUPERVISIÓN (self-serve students) -->
+  <section class="view" id="v-kb">
+    <h2>Base de conocimiento</h2>
+    <div class="card">
+      <div class="muted">Suba sus materiales, métodos y vocabulario. La IA diseñará los programas de sus alumnos enseñando a su manera.</div>
+      <label>Título</label><input id="kb-title" placeholder="Mi método de negociación ejecutiva">
+      <label>Tipo</label>
+      <select id="kb-kind">
+        <option value="method">Método de enseñanza</option>
+        <option value="vocab">Lista de vocabulario</option>
+        <option value="lesson_plan">Plan de lección</option>
+        <option value="transcript">Transcripción / grabación</option>
+        <option value="notes">Notas</option>
+      </select>
+      <label>Contenido</label><textarea id="kb-content" style="min-height:120px" placeholder="Pegue aquí el material de enseñanza..."></textarea>
+      <div class="row" style="margin-top:12px"><button onclick="addKb()">Guardar en la base</button></div>
+    </div>
+    <div id="kb-list"></div>
+    <h3>Alumnos self-serve (supervisión)</h3>
+    <div class="muted" id="coach-code" style="margin-bottom:10px"></div>
+    <div id="kb-students"></div>
+  </section>
+
   <!-- DETALLE (session detail overlay-as-view) -->
   <section class="view" id="v-detail"></section>
 </main>
@@ -213,6 +236,7 @@
   <button class="active" data-view="students" onclick="nav('students')"><span class="ic">&#128101;</span>Alumnos</button>
   <button data-view="session" onclick="nav('session')"><span class="ic">&#127908;</span>Sesión</button>
   <button data-view="history" onclick="nav('history')"><span class="ic">&#128220;</span>Historial</button>
+  <button data-view="kb" onclick="nav('kb')"><span class="ic">&#129504;</span>IA / KB</button>
   <button data-view="tasks" onclick="nav('tasks')"><span class="ic">&#9989;</span>Tareas</button>
 </nav>
 
@@ -236,6 +260,40 @@ function nav(v){
   if(v==='session') fillStudentSelects();
   if(v==='history') loadHistory();
   if(v==='tasks'){ fillStudentSelects(); loadTasks(); }
+  if(v==='kb'){ loadKb(); loadKbStudents(); }
+}
+
+// ── Knowledge base + self-serve student supervision ─────────────────────────
+async function loadKb(){
+  try{
+    const d=await api('/kb');
+    const el=document.getElementById('kb-list');
+    if(!d.documents.length){ el.innerHTML='<div class="empty">Sin documentos aún. Suba su primer material arriba.</div>'; return; }
+    el.innerHTML=d.documents.map(x=>`<div class="list-item"><div class="g"><b>${esc(x.title)}</b><span class="muted">${esc(x.kind)} · ${String(x.content||'').length} caracteres</span></div>
+      <button class="danger sm" onclick="delKb(${x.id})">✕</button></div>`).join('');
+  }catch(e){ toast(e.message); }
+}
+async function addKb(){
+  const title=document.getElementById('kb-title').value.trim();
+  if(!title){ toast('Título requerido'); return; }
+  try{
+    await api('/kb',{method:'POST',body:JSON.stringify({title,kind:document.getElementById('kb-kind').value,content:document.getElementById('kb-content').value})});
+    document.getElementById('kb-title').value=''; document.getElementById('kb-content').value='';
+    toast('Guardado'); loadKb();
+  }catch(e){ toast(e.message); }
+}
+async function delKb(id){ try{ await api('/kb/'+id,{method:'DELETE'}); loadKb(); }catch(e){ toast(e.message); } }
+async function loadKbStudents(){
+  try{
+    const cc=document.getElementById('coach-code');
+    if(cc && ME) cc.innerHTML='Su código de coach: <b style="color:var(--txt)">'+(ME.tenant_id||ME.id)+'</b> — los alumnos lo ingresan al registrarse para vincularse a su base de conocimiento.';
+    const d=await api('/kb/students');
+    const el=document.getElementById('kb-students');
+    if(!d.students.length){ el.innerHTML='<div class="empty">Ningún alumno self-serve en su cuenta todavía. Comparta su código de coach para vincularlos.</div>'; return; }
+    el.innerHTML=d.students.map(s=>`<div class="list-item"><div class="g"><b>${esc(s.name||s.email)}</b>
+      <span class="muted">${esc(s.program||'Sin programa')}${s.total?' · '+s.passed+'/'+s.total+' módulos ('+s.pct+'%)':''}</span></div>
+      ${s.stuck?'<span class="pill amber">Atascado</span>':(s.total&&s.passed===s.total?'<span class="pill green">Completo</span>':'')}</div>`).join('');
+  }catch(e){ toast(e.message); }
 }
 
 async function logout(){ try{ await api('/auth/logout',{method:'POST'}); }catch(e){} location.href='/coaching-english/login'; }

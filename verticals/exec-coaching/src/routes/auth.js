@@ -46,6 +46,9 @@ router.post('/signup', async (req, res) => {
     const name = String(req.body.name || '').trim().slice(0, 120);
     const email = String(req.body.email || '').toLowerCase().trim();
     const password = String(req.body.password || '');
+    // role: 'student' (self-serve learner) or 'coach' (default). Students are
+    // their own private tenant unless they carry a valid coach code.
+    const role = req.body.role === 'student' ? 'student' : 'coach';
     if (!name) return res.status(400).json({ error: 'Nombre requerido' });
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Correo inválido' });
     if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
@@ -54,8 +57,19 @@ router.post('/signup', async (req, res) => {
     if (existing) return res.status(409).json({ error: 'Ese correo ya está registrado. Inicia sesión.' });
 
     const password_hash = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email, password_hash, org: 'digit2ai', role: 'coach' });
-    user.tenant_id = user.id;
+    const user = await User.create({ name, email, password_hash, org: 'digit2ai', role });
+
+    // Optional coach code links a student into that coach's tenant (so the
+    // coach's knowledge base + supervision apply). Otherwise self-tenant.
+    let tenant = user.id;
+    if (role === 'student') {
+      const code = String(req.body.coach_code || '').trim();
+      if (code) {
+        const coach = await User.findOne({ where: { id: parseInt(code, 10) || 0, role: ['coach', 'owner'] } });
+        if (coach) tenant = coach.tenant_id || coach.id;
+      }
+    }
+    user.tenant_id = tenant;
     await user.save();
 
     setAuthCookie(res, sign(user));

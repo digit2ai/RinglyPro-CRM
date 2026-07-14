@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Programa — Executive English Coaching</title>
+<link rel="icon" href="/coaching-english/favicon.svg">
+<link rel="manifest" href="/coaching-english/manifest.webmanifest">
+<meta name="theme-color" content="#1b3a6b">
+<style>
+  :root{--bg:#0d1320;--bg2:#0a0f19;--card:#141b29;--card2:#0f1725;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
+    --accent:#2a6f9e;--accent2:#1b3a6b;--green:#3fc06a;--amber:#e0a63f;--red:#e05a5a;--cyan:#57c7d4}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt)}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#152540,#101827);border-bottom:1px solid var(--line);
+    padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+  header svg{width:28px;height:28px}header .t{flex:1;font-size:14px;font-weight:600}
+  header button{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer}
+  main{max-width:720px;margin:0 auto;padding:16px}
+  h1{font-size:22px;margin:6px 0 4px}h2{font-size:18px;margin:2px 0 14px}h3{font-size:15px;margin:18px 0 8px}
+  .mut{color:var(--mut);font-size:13px}
+  .card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+  input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:16px;padding:12px 13px;font-family:inherit}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:70px;resize:vertical}
+  button.b{border:0;border-radius:12px;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(90deg,var(--accent),var(--accent2));cursor:pointer;padding:13px 18px;min-height:48px;width:100%}
+  button.b.ghost{background:none;border:1px solid var(--line);color:var(--txt)}
+  button.b:disabled{opacity:.55}
+  .choices{display:grid;gap:10px;margin-top:6px}
+  .choice{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:14px;cursor:pointer;font-size:15px}
+  .choice.sel{border-color:var(--accent);background:rgba(42,111,158,.15)}
+  .prog{height:6px;background:#22304a;border-radius:999px;overflow:hidden;margin-bottom:18px}
+  .prog .f{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .3s}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .step-nav{display:flex;gap:10px;margin-top:18px}
+  .module{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:10px;background:var(--card2)}
+  .module.locked{opacity:.5}
+  .module.open{cursor:pointer}.module.open:hover{border-color:var(--accent)}
+  .module .n{flex:0 0 34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--accent2)}
+  .module .g{flex:1;min-width:0}.module .g b{display:block}
+  .badge{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+  .badge.passed{color:var(--green);border-color:#2c5b3c}.badge.open{color:var(--cyan);border-color:#1f4750}.badge.locked{color:var(--mut)}
+  .lesson{border-left:3px solid var(--accent);padding:2px 0 2px 14px;margin:16px 0}
+  .lesson .content h1,.lesson .content h2,.lesson .content h3{font-size:15px;margin:10px 0 6px}
+  .lesson .content{font-size:14px;line-height:1.6}.lesson .content ul{padding-left:18px}
+  .vocab{display:grid;gap:8px}
+  .vterm{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+  .vterm b{color:var(--cyan)}
+  .q{margin:16px 0}.q .qt{font-weight:600;margin-bottom:8px;font-size:15px}
+  .opt{display:block;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;font-size:14px;background:var(--card2)}
+  .opt.sel{border-color:var(--accent);background:rgba(42,111,158,.15)}
+  .result{text-align:center;padding:10px}
+  .result .big{font-size:44px;font-weight:800}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1c2740;border:1px solid var(--line);color:var(--txt);padding:11px 16px;border-radius:12px;font-size:13px;z-index:50;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .rec{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px}.rec.on{animation:blink 1s infinite}@keyframes blink{50%{opacity:.25}}
+  .cert{text-align:center;border:2px solid var(--green);border-radius:16px;padding:24px;background:linear-gradient(180deg,rgba(63,192,106,.12),transparent)}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;vertical-align:middle}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a6f9e"/><stop offset="1" stop-color="#1b3a6b"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#g)"/><path d="M20 40 L32 18 L44 40" fill="none" stroke="#e9eef7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><line x1="25" y1="33" x2="39" y2="33" stroke="#9fc6e8" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="48" r="3.2" fill="#9fc6e8"/></svg>
+  <div class="t" id="hdr">Mi Programa</div>
+  <button onclick="logout()">Salir</button>
+</header>
+<main id="app"><div class="card"><span class="spin"></span> Cargando...</div></main>
+<div class="toast" id="toast"></div>
+
+<script>
+const API='/coaching-english/api/v1';
+let PROFILE=null, STEP=1, DRAFT={}, PLACEMENT=[], PLACE_ANS=[], MODULES=[], CUR=null;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function api(path,opts){const r=await fetch(API+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;}
+async function logout(){try{await api('/auth/logout',{method:'POST'});}catch(e){}location.href='/coaching-english/login';}
+// tiny markdown -> html (headings, bold, lists, paragraphs)
+function md(s){
+  s=esc(s);
+  s=s.replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h3>$1</h3>').replace(/^# (.*)$/gm,'<h3>$1</h3>');
+  s=s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  const lines=s.split('\n');let out='',inList=false;
+  for(let ln of lines){
+    if(/^\s*[-*] /.test(ln)){ if(!inList){out+='<ul>';inList=true;} out+='<li>'+ln.replace(/^\s*[-*] /,'')+'</li>'; }
+    else { if(inList){out+='</ul>';inList=false;} if(ln.trim()==='' ){out+='';} else if(/^<h3>/.test(ln)){out+=ln;} else {out+='<p>'+ln+'</p>';} }
+  }
+  if(inList)out+='</ul>';
+  return out;
+}
+
+// ═══ INTAKE WIZARD ═══════════════════════════════════════════════════════════
+const AGES=['18-24','25-34','35-44','45-54','55-64','65+'];
+const MOTIVES=[
+  ['career','Avanzar en mi carrera / nuevo cargo'],
+  ['global','Negociar y reunirme con contrapartes internacionales'],
+  ['media','Entrevistas, prensa y foros internacionales'],
+  ['confidence','Ganar confianza y fluidez'],
+  ['relocation','Trabajo o estudios en el exterior']
+];
+const TOTAL_STEPS=7;
+
+function renderIntake(){
+  document.getElementById('hdr').textContent='Configuración';
+  const pct=Math.round((STEP-1)/TOTAL_STEPS*100);
+  let body='';
+  if(STEP===1) body=`
+    <h2>Sus datos</h2>
+    <div class="row"><div><label>Nombre</label><input id="i-fn" value="${esc(DRAFT.first_name||'')}"></div><div><label>Apellido</label><input id="i-ln" value="${esc(DRAFT.last_name||'')}"></div></div>
+    <label>Teléfono</label><input id="i-phone" value="${esc(DRAFT.phone||'')}" placeholder="+57 ...">
+    <label>Correo</label><input id="i-email" type="email" value="${esc(DRAFT.email||'')}">`;
+  else if(STEP===2) body=`
+    <h2>Su rango de edad</h2>
+    <div class="choices">${AGES.map(a=>`<div class="choice ${DRAFT.age_range===a?'sel':''}" onclick="pick('age_range','${a}')">${a} años</div>`).join('')}</div>`;
+  else if(STEP===3) body=`
+    <h2>Su trabajo</h2>
+    <div class="mut">Esto define el vocabulario de su programa (negocios, político/diplomático, legal, etc.).</div>
+    <label>Cargo / ocupación</label><input id="i-occ" value="${esc(DRAFT.occupation||'')}" placeholder="Ministro, CEO, Director...">
+    <label>Industria / sector</label><input id="i-ind" value="${esc(DRAFT.industry||'')}" placeholder="Gobierno, banca, energía...">`;
+  else if(STEP===4) body=`
+    <h2>¿Por qué quiere aprender inglés?</h2>
+    <div class="choices">${MOTIVES.map(m=>`<div class="choice ${DRAFT.motivation===m[0]?'sel':''}" onclick="pick('motivation','${m[0]}')">${m[1]}</div>`).join('')}</div>
+    <label>Cuéntenos más (opcional)</label><textarea id="i-mtext">${esc(DRAFT.motivation_text||'')}</textarea>`;
+  else if(STEP===5) body=`
+    <h2>Tiempo disponible</h2>
+    <label>Meta de tiempo</label>
+    <div class="choices">${[[3,'3 meses'],[6,'6 meses'],[12,'12 meses']].map(t=>`<div class="choice ${DRAFT.timeline_months==t[0]?'sel':''}" onclick="pick('timeline_months',${t[0]})">${t[1]}</div>`).join('')}</div>
+    <label>Horas por semana</label>
+    <div class="choices">${[[2,'~2 horas'],[3,'~3-4 horas'],[5,'5+ horas']].map(t=>`<div class="choice ${DRAFT.hours_per_week==t[0]?'sel':''}" onclick="pick('hours_per_week',${t[0]})">${t[1]}</div>`).join('')}</div>`;
+  else if(STEP===6) return renderPlacement();
+  else if(STEP===7) return renderSummary();
+  document.getElementById('app').innerHTML=`
+    <div class="prog"><div class="f" style="width:${pct}%"></div></div>
+    <div class="mut">Paso ${STEP} de ${TOTAL_STEPS}</div>
+    <div class="card">${body}</div>
+    <div class="step-nav">
+      ${STEP>1?`<button class="b ghost" onclick="prevStep()">Atrás</button>`:''}
+      <button class="b" onclick="nextStep()">Continuar</button>
+    </div>`;
+}
+function pick(k,v){ DRAFT[k]=v; renderIntake(); }
+function collectStep(){
+  if(STEP===1){ DRAFT.first_name=val('i-fn');DRAFT.last_name=val('i-ln');DRAFT.phone=val('i-phone');DRAFT.email=val('i-email'); }
+  if(STEP===3){ DRAFT.occupation=val('i-occ');DRAFT.industry=val('i-ind'); }
+  if(STEP===4){ DRAFT.motivation_text=val('i-mtext'); }
+}
+function val(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+async function saveDraft(){ try{ await api('/intake/save',{method:'POST',body:JSON.stringify({...DRAFT,step:STEP})}); }catch(e){toast(e.message);} }
+function prevStep(){ collectStep(); STEP=Math.max(1,STEP-1); renderIntake(); }
+async function nextStep(){
+  collectStep();
+  if(STEP===1&&(!DRAFT.first_name)){toast('Ingrese su nombre');return;}
+  if(STEP===2&&!DRAFT.age_range){toast('Seleccione su rango de edad');return;}
+  if(STEP===3&&!DRAFT.occupation){toast('Ingrese su cargo');return;}
+  if(STEP===4&&!DRAFT.motivation){toast('Seleccione una motivación');return;}
+  if(STEP===5&&(!DRAFT.timeline_months||!DRAFT.hours_per_week)){toast('Elija tiempo y horas');return;}
+  await saveDraft();
+  STEP++; renderIntake();
+}
+
+// Placement (step 6)
+async function renderPlacement(){
+  document.getElementById('app').innerHTML=`<div class="card"><span class="spin"></span> Cargando prueba...</div>`;
+  if(!PLACEMENT.length){ try{ const d=await api('/intake/placement'); PLACEMENT=d.items; }catch(e){toast(e.message);} }
+  PLACE_ANS=PLACE_ANS.length?PLACE_ANS:new Array(PLACEMENT.length).fill(null);
+  const pct=Math.round((STEP-1)/TOTAL_STEPS*100);
+  document.getElementById('app').innerHTML=`
+    <div class="prog"><div class="f" style="width:${pct}%"></div></div>
+    <div class="mut">Paso 6 de ${TOTAL_STEPS} — Prueba de nivel (2-3 min)</div>
+    <div class="card">
+      <h2>Prueba de nivel</h2>
+      <div class="mut">Responda para calibrar su programa. No se preocupe por acertar todo.</div>
+      ${PLACEMENT.map((it,i)=>`<div class="q"><div class="qt">${i+1}. ${esc(it.q)}</div>
+        ${it.options.map((o,j)=>`<label class="opt ${PLACE_ANS[i]===j?'sel':''}" onclick="pAns(${i},${j})">${esc(o)}</label>`).join('')}</div>`).join('')}
+      <h3>Respuesta hablada (opcional)</h3>
+      <div class="mut">Pulse y preséntese en inglés por 30 segundos: su nombre, cargo y por qué quiere mejorar su inglés.</div>
+      <textarea id="spoken" placeholder="Su respuesta aparecerá aquí al dictar..."></textarea>
+      <button class="b ghost" style="margin-top:8px" id="micb" onclick="toggleMic()"><span class="rec" id="micdot"></span>Dictar en inglés</button>
+    </div>
+    <div class="step-nav">
+      <button class="b ghost" onclick="prevStep()">Atrás</button>
+      <button class="b" onclick="submitPlacement()">Calcular mi nivel</button>
+    </div>`;
+}
+function pAns(i,j){ PLACE_ANS[i]=j; document.querySelectorAll('.q')[i].querySelectorAll('.opt').forEach((o,k)=>o.classList.toggle('sel',k===j)); }
+async function submitPlacement(){
+  try{
+    const d=await api('/intake/placement/submit',{method:'POST',body:JSON.stringify({answers:PLACE_ANS})});
+    DRAFT.placement_level=d.level; DRAFT.placement_score=d.score;
+    const said=val('spoken');
+    if(said){ try{ const s=await api('/intake/placement/spoken',{method:'POST',body:JSON.stringify({target:'Introduce yourself, your role and why you want to improve your English.',said})}); DRAFT.spoken_score=s.score; }catch(e){} }
+    stopMic();
+    toast('Nivel: '+({low:'Básico',medium:'Intermedio',high:'Avanzado'}[d.level]||d.level)+' ('+d.score+'%)');
+    STEP=7; renderIntake();
+  }catch(e){toast(e.message);}
+}
+
+// Summary + generate (step 7)
+function renderSummary(){
+  document.getElementById('app').innerHTML=`
+    <div class="prog"><div class="f" style="width:95%"></div></div>
+    <div class="mut">Paso 7 de ${TOTAL_STEPS}</div>
+    <div class="card">
+      <h2>Resumen de su perfil</h2>
+      <div class="vterm"><b>Cargo</b>: ${esc(DRAFT.occupation||'')} · ${esc(DRAFT.industry||'')}</div>
+      <div class="vterm" style="margin-top:8px"><b>Nivel</b>: ${({low:'Básico',medium:'Intermedio',high:'Avanzado'}[DRAFT.placement_level]||'Intermedio')}${DRAFT.placement_score!=null?' ('+DRAFT.placement_score+'%)':''}</div>
+      <div class="vterm" style="margin-top:8px"><b>Meta</b>: ${DRAFT.timeline_months||6} meses · ${DRAFT.hours_per_week||3} h/semana</div>
+      <div class="mut" style="margin-top:14px">La IA diseñará un programa modular específico para su cargo y su industria, con vocabulario y evaluaciones a la medida.</div>
+      <button class="b" style="margin-top:18px" id="genb" onclick="generateProgram()">Generar mi programa</button>
+    </div>
+    <div class="step-nav"><button class="b ghost" onclick="(function(){STEP=6;renderIntake();})()">Atrás</button></div>`;
+}
+async function generateProgram(){
+  const b=document.getElementById('genb'); b.disabled=true; b.innerHTML='<span class="spin"></span> Diseñando su programa (puede tardar ~20s)...';
+  try{
+    await saveDraft();
+    await api('/intake/generate-program',{method:'POST',body:JSON.stringify({})});
+    toast('Programa listo'); loadProgram();
+  }catch(e){ toast(e.message); b.disabled=false; b.textContent='Generar mi programa'; }
+}
+
+// ═══ LEARNING ════════════════════════════════════════════════════════════════
+async function loadProgram(){
+  document.getElementById('hdr').textContent='Mi Programa';
+  document.getElementById('app').innerHTML=`<div class="card"><span class="spin"></span> Cargando...</div>`;
+  try{
+    const d=await api('/learning/program');
+    CUR=d.curriculum; MODULES=d.modules;
+    if(!CUR){ startIntake(); return; }
+    const passed=MODULES.filter(m=>m.status==='passed').length;
+    const pct=MODULES.length?Math.round(passed/MODULES.length*100):0;
+    document.getElementById('app').innerHTML=`
+      <h1>${esc(CUR.title)}</h1>
+      <div class="mut">${esc(CUR.focus||'')}</div>
+      <div class="card" style="margin-top:12px">
+        <div class="mut">Progreso: ${passed} de ${MODULES.length} módulos</div>
+        <div class="prog" style="margin-top:8px"><div class="f" style="width:${pct}%"></div></div>
+      </div>
+      ${MODULES.map(m=>moduleRow(m)).join('')}
+      ${passed===MODULES.length&&MODULES.length?`<div class="cert"><h2 style="color:var(--green)">Programa completado</h2><div class="mut">Ha aprobado todos los módulos. Felicitaciones.</div></div>`:''}`;
+  }catch(e){toast(e.message);}
+}
+function moduleRow(m){
+  const st=m.status;
+  const cls=st==='locked'?'locked':'open';
+  const badge=st==='passed'?'<span class="badge passed">Aprobado '+(m.best_score||'')+'%</span>':st==='locked'?'<span class="badge locked">Bloqueado</span>':'<span class="badge open">Disponible</span>';
+  return `<div class="module ${cls}" ${st!=='locked'?`onclick="openModule(${m.id})"`:''}>
+    <div class="n">${m.order_index+1}</div>
+    <div class="g"><b>${esc(m.title)}</b><span class="mut">${m.lesson_count} lección(es) · ${m.vocab_count} términos</span></div>
+    ${badge}</div>`;
+}
+async function openModule(id){
+  document.getElementById('app').innerHTML=`<div class="card"><span class="spin"></span> Cargando módulo...</div>`;
+  try{
+    const d=await api('/learning/modules/'+id);
+    const m=d.module;
+    document.getElementById('app').innerHTML=`
+      <button class="b ghost" style="width:auto;padding:8px 14px;min-height:0" onclick="loadProgram()">← Volver</button>
+      <h1 style="margin-top:12px">${esc(m.title)}</h1>
+      <div class="mut">${esc(m.objective||'')}</div>
+      ${m.reinforcement?`<div class="card" style="border-color:var(--amber)"><h3 style="margin-top:0;color:var(--amber)">Repaso recomendado</h3><div class="lesson"><div class="content">${md(m.reinforcement)}</div></div></div>`:''}
+      <div class="card">
+        <h3 style="margin-top:0">Vocabulario</h3>
+        <div class="vocab">${(m.vocab||[]).map(v=>`<div class="vterm"><b>${esc(v.term)}</b> — ${esc(v.meaning_es)}<br><span class="mut">${esc(v.example||'')}</span></div>`).join('')||'<span class="mut">—</span>'}</div>
+      </div>
+      ${(m.lessons||[]).map(l=>`<div class="card"><h3 style="margin-top:0">${esc(l.title)} <span class="mut">· ${l.mins} min</span></h3><div class="lesson"><div class="content">${md(l.content_en)}</div></div></div>`).join('')}
+      <div class="card">
+        <h3 style="margin-top:0">Evaluación${d.is_final?' final (certificación)':''}</h3>
+        <div class="mut">${d.question_count} preguntas · aprobación ${d.pass_threshold}%. Al aprobar se desbloquea el siguiente módulo.</div>
+        <button class="b" style="margin-top:14px" onclick="startAssessment(${id},${d.is_final})">Tomar evaluación</button>
+      </div>`;
+  }catch(e){toast(e.message);}
+}
+let ASSESS=null, ASSESS_ANS=[];
+async function startAssessment(moduleId,isFinal){
+  try{
+    const d=await api('/learning/modules/'+moduleId+'/assessment');
+    ASSESS={module_id:moduleId,questions:d.questions,threshold:d.pass_threshold,is_final:isFinal};
+    ASSESS_ANS=new Array(d.questions.length).fill(null);
+    renderAssessment();
+  }catch(e){toast(e.message);}
+}
+function renderAssessment(){
+  document.getElementById('app').innerHTML=`
+    <h1>Evaluación</h1><div class="mut">Aprobación: ${ASSESS.threshold}%</div>
+    <div class="card">
+      ${ASSESS.questions.map((q,i)=>`<div class="q"><div class="qt">${i+1}. ${esc(q.q)}</div>
+        ${q.type==='multiple_choice'
+          ? q.options.map((o,j)=>`<label class="opt ${ASSESS_ANS[i]===j?'sel':''}" onclick="aAns(${i},${j})">${esc(o)}</label>`).join('')
+          : `<input oninput="ASSESS_ANS[${i}]=this.value" value="${ASSESS_ANS[i]||''}" placeholder="Escriba la palabra">`}
+      </div>`).join('')}
+      <button class="b" onclick="submitAssessment()">Enviar respuestas</button>
+    </div>
+    <button class="b ghost" onclick="openModule(${ASSESS.module_id})">Cancelar</button>`;
+}
+function aAns(i,j){ ASSESS_ANS[i]=j; document.querySelectorAll('.q')[i].querySelectorAll('.opt').forEach((o,k)=>o.classList.toggle('sel',k===j)); }
+async function submitAssessment(){
+  try{
+    const d=await api('/learning/modules/'+ASSESS.module_id+'/assessment/submit',{method:'POST',body:JSON.stringify({answers:ASSESS_ANS})});
+    const color=d.passed?'var(--green)':'var(--amber)';
+    document.getElementById('app').innerHTML=`
+      <div class="card"><div class="result">
+        <div class="big" style="color:${color}">${d.score}%</div>
+        <h2 style="color:${color}">${d.passed?'¡Aprobado!':'Aún no'}</h2>
+        <div class="mut">${d.correct} de ${d.total} correctas · umbral ${d.pass_threshold}%</div>
+      </div></div>
+      ${d.certificate?`<div class="cert"><h2 style="color:var(--green)">Certificación obtenida</h2><div class="mut">Completó el programa. Excelente trabajo.</div></div>`:''}
+      ${!d.passed&&d.reinforcement?`<div class="card" style="border-color:var(--amber)"><h3 style="margin-top:0;color:var(--amber)">Repaso enfocado</h3><div class="lesson"><div class="content">${md(d.reinforcement)}</div></div></div>`:''}
+      <div class="step-nav">
+        ${d.passed?`<button class="b" onclick="loadProgram()">${d.unlocked_next?'Continuar al siguiente módulo':'Volver al programa'}</button>`:`<button class="b" onclick="startAssessment(${ASSESS.module_id},${ASSESS.is_final})">Reintentar</button><button class="b ghost" onclick="openModule(${ASSESS.module_id})">Repasar módulo</button>`}
+      </div>`;
+    if(d.passed) toast('Módulo aprobado');
+  }catch(e){toast(e.message);}
+}
+
+// Voice dictation (en-US)
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let REC=null,RECON=false;
+function toggleMic(){ if(RECON)stopMic(); else startMic(); }
+function startMic(){
+  if(!SR){ toast('Su navegador no soporta dictado; escriba el texto.'); return; }
+  REC=new SR();REC.lang='en-US';REC.continuous=true;REC.interimResults=true;
+  const ta=document.getElementById('spoken');let base=ta?ta.value:'';
+  REC.onresult=(e)=>{let interim='',fin='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else interim+=t;} if(ta){ta.value=(base+' '+fin+' '+interim).trim();} if(fin)base=(base+' '+fin).trim();};
+  REC.onend=()=>{ if(RECON){try{REC.start();}catch(e){}} };
+  try{REC.start();RECON=true;const d=document.getElementById('micdot');if(d)d.classList.add('on');}catch(e){}
+}
+function stopMic(){RECON=false;if(REC){try{REC.stop();}catch(e){}}const d=document.getElementById('micdot');if(d)d.classList.remove('on');}
+
+// ═══ BOOT ════════════════════════════════════════════════════════════════════
+function startIntake(){
+  // hydrate DRAFT from saved profile
+  if(PROFILE){ ['first_name','last_name','phone','email','age_range','occupation','industry','motivation','motivation_text','timeline_months','hours_per_week','self_level','placement_level','placement_score'].forEach(k=>{ if(PROFILE[k]!=null) DRAFT[k]=PROFILE[k]; }); }
+  STEP=1; renderIntake();
+}
+(async function(){
+  try{
+    const me=await api('/auth/me');
+    if(!me.user){ location.href='/coaching-english/login'; return; }
+    if(me.user.role!=='student'){ location.href='/coaching-english/'; return; }
+    const d=await api('/intake/me'); PROFILE=d.profile;
+    if(d.has_program) loadProgram();
+    else startIntake();
+  }catch(e){ location.href='/coaching-english/login'; }
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('/coaching-english/sw.js').catch(()=>{}); }
+})();
+</script>
+</body>
+</html>
