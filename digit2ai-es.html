@@ -81,6 +81,25 @@
 .d2b .rstart-success{text-align:center;padding:12px 4px}
 .d2b .rs-check{width:46px;height:46px;border-radius:50%;background:var(--good-soft);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 12px;border:1px solid rgba(58,208,127,.35)}
 @media(max-width:520px){.d2b .rstart-grid{grid-template-columns:1fr}}
+.d2b .d2b-contact{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:2px 8px 8px}
+.d2b .d2b-contact input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none;transition:border-color .12s ease}
+.d2b .d2b-contact input:focus{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-contact input::placeholder{color:#7c808c}
+@media(max-width:560px){.d2b .d2b-contact{grid-template-columns:1fr}}
+.d2b .poc-card{max-width:760px;margin:16px auto 0;background:linear-gradient(135deg,rgba(58,208,127,.09),rgba(139,92,246,.09));border:1px solid var(--line2);box-shadow:var(--shadow);border-radius:var(--r-lg);padding:22px 24px}
+.d2b .poc-card.poc-loading{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:14.5px;background:var(--card)}
+.d2b .poc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.d2b .poc-badge{font-size:11.5px;font-weight:700;font-family:var(--mono);letter-spacing:.05em;color:var(--good);background:var(--good-soft);border:1px solid rgba(58,208,127,.35);padding:4px 10px;border-radius:999px}
+.d2b .poc-title{font-size:17px;font-weight:750}
+.d2b .poc-sub{font-size:14px;color:var(--mut);margin-top:8px}
+.d2b .poc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.d2b .poc-btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:transform .12s ease,filter .12s ease}
+.d2b .poc-btn:hover{transform:translateY(-1px)}
+.d2b .poc-btn.wa{background:#25d366;color:#08240f}
+.d2b .poc-btn.sms{background:#6a4bff;color:#fff}
+.d2b .poc-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
+.d2b .poc-note{font-size:12.5px;color:var(--good);margin-top:10px;min-height:14px}
+.d2b .spinner.dark{border:2px solid rgba(139,92,246,.3);border-top-color:var(--violet)}
 .d2b .nav-links{display:flex;align-items:center;gap:28px;font-size:14.5px;color:var(--mut);font-weight:500}
 .d2b .nav-links a:hover{color:var(--ink)}
 .d2b .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
@@ -409,9 +428,14 @@
     <div class="builder wrap">
       <form id="d2b-form" class="promptcard">
         <textarea id="d2b-input" maxlength="5000" placeholder="Pídele a Digit2AI que construya...  ej. &quot;Una recepcionista de IA que contesta llamadas en español, agenda citas y envía una confirmación por SMS&quot;"></textarea>
+        <div class="d2b-contact">
+          <input type="text" id="d2b-name" placeholder="Tu nombre" autocomplete="name">
+          <input type="tel" id="d2b-phone" placeholder="Teléfono (para tu enlace demo)" autocomplete="tel">
+          <input type="email" id="d2b-email" placeholder="Correo (opcional)" autocomplete="email">
+        </div>
         <div class="promptbar">
           <span class="hint" id="d2b-hint">Describe tu idea &mdash; cuanto más detalle, mejor será el plan.</span>
-          <button type="submit" id="d2b-go">Generar mi plan
+          <button type="submit" id="d2b-go">Obtener mi plan y demo
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
@@ -541,6 +565,10 @@
   var ENDPOINT = '/projects/api/v1/intake/public-triage-preview';
   var busy = false;
   var lastDescription = '';
+  var nameEl  = root.querySelector('#d2b-name');
+  var phoneEl = root.querySelector('#d2b-phone');
+  var emailEl = root.querySelector('#d2b-email');
+  var D2B_LANG = 'es';
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -567,11 +595,11 @@
     setTimeout(function(){ input.focus(); }, 400);
   }); }
 
-  function loading(on){
+  function loading(on, label){
     busy = on; go.disabled = on;
     go.innerHTML = on
-      ? '<span class="spinner"></span> Pensando…'
-      : 'Generar mi plan <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+      ? '<span class="spinner"></span> '+(label||'Pensando…')
+      : 'Obtener mi plan y demo <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   }
 
   function showError(msg){
@@ -624,124 +652,106 @@
 
     html +=   '</div>'
       +   '<div class="rfoot">'
-      +     '<div class="note">Este es un alcance automático de primera pasada. ¿Listo para hacerlo realidad?</div>'
-      +     '<button type="button" class="btn btn-grad" id="d2b-start">Iniciar este proyecto &rarr;</button>'
-      +   '</div>'
-      +   '<div class="rstart" id="d2b-start-zone" hidden>'
-      +     '<form id="d2b-start-form" class="rstart-form" novalidate>'
-      +       '<div class="rstart-title">Iniciar este proyecto</div>'
-      +       '<div class="rstart-sub">Dinos cómo contactarte. Revisaremos tu plan y te responderemos en un día hábil.</div>'
-      +       '<div class="rstart-grid">'
-      +         '<input type="text" id="ds-name" placeholder="Tu nombre" autocomplete="name">'
-      +         '<input type="email" id="ds-email" placeholder="you@company.com" autocomplete="email">'
-      +         '<input type="text" id="ds-company" placeholder="Empresa (opcional)" autocomplete="organization">'
-      +         '<input type="tel" id="ds-phone" placeholder="Teléfono (opcional)" autocomplete="tel">'
-      +       '</div>'
-      +       '<button type="submit" class="btn btn-grad" id="ds-submit">Enviar a Digit2AI</button>'
-      +       '<div class="rstart-status" id="ds-status" aria-live="polite"></div>'
-      +     '</form>'
+      +     '<div class="note">Este es un alcance automático de primera pasada &mdash; y ya está guardado con nuestro equipo. Tu demo para compartir está abajo.</div>'
       +   '</div>'
       + '</div>';
 
     result.className='show';
     result.innerHTML = html;
     result.scrollIntoView({behavior:'smooth',block:'start'});
-
-    // "Start this project" — reveal the capture form, then submit as a real intake.
-    var startBtn = result.querySelector('#d2b-start');
-    var zone = result.querySelector('#d2b-start-zone');
-    var sform = result.querySelector('#d2b-start-form');
-    if(startBtn && zone){
-      startBtn.addEventListener('click', function(){
-        zone.hidden = false;
-        startBtn.style.display = 'none';
-        var n = result.querySelector('#ds-name'); if(n) n.focus();
-        zone.scrollIntoView({behavior:'smooth',block:'center'});
-      });
-    }
-    if(sform){
-      sform.addEventListener('submit', function(ev){
-        ev.preventDefault();
-        var name    = (result.querySelector('#ds-name').value||'').trim();
-        var email   = (result.querySelector('#ds-email').value||'').trim();
-        var company = (result.querySelector('#ds-company').value||'').trim();
-        var phone   = (result.querySelector('#ds-phone').value||'').trim();
-        var sstatus = result.querySelector('#ds-status');
-        var submitBtn = result.querySelector('#ds-submit');
-        if(!name || email.indexOf('@') < 1){
-          sstatus.textContent = 'Ingresa tu nombre y un correo válido.';
-          sstatus.className = 'rstart-status err';
-          return;
-        }
-        submitBtn.disabled = true; submitBtn.textContent = 'Enviando…';
-        sstatus.textContent = ''; sstatus.className = 'rstart-status';
-        var problem = lastDescription || d.problem_in_our_words || (d.technical_solution && d.technical_solution.summary) || d.project_title_suggested || 'AI project';
-        fetch('/projects/api/v1/intake/public/request', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            full_name: name, email: email,
-            phone: phone || undefined, company_name: company || undefined,
-            project_title: d.project_title_suggested || 'AI project',
-            project_description: (d.technical_solution && d.technical_solution.summary) || problem,
-            problem: problem,
-            ai_category: (d.technical_solution && d.technical_solution.agents_involved) || [],
-            heard_from: 'digit2ai self-serve builder'
-          })
-        })
-        .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
-        .then(function(res){
-          if((res.status===200 || res.status===201) && res.json && res.json.success){
-            zone.innerHTML = '<div class="rstart-success">'
-              + '<div class="rs-check">&#10003;</div>'
-              + '<div class="rstart-title">Proyecto recibido</div>'
-              + '<div class="rstart-sub">Gracias '+esc(name)+' &mdash; tu plan para <b>'+esc(d.project_title_suggested||'tu proyecto')+'</b> está en nuestra cola. Lo revisaremos y te contactaremos en '+esc(email)+' dentro de un día hábil.</div>'
-              + '</div>';
-            zone.scrollIntoView({behavior:'smooth',block:'center'});
-          } else {
-            var m = (res.json && res.json.error) ? res.json.error : 'Algo salió mal. Inténtalo de nuevo.';
-            sstatus.textContent = m; sstatus.className = 'rstart-status err';
-            submitBtn.disabled = false; submitBtn.textContent = 'Enviar a Digit2AI';
-          }
-        })
-        .catch(function(){
-          sstatus.textContent = 'No se pudo conectar con el servidor. Inténtalo de nuevo.';
-          sstatus.className = 'rstart-status err';
-          submitBtn.disabled = false; submitBtn.textContent = 'Enviar a Digit2AI';
-        });
-      });
-    }
   }
 
   // Expose so the voice orb can pipe its triage result into the same panel.
   window.__d2bRenderPlan = render;
 
+  // ---- Shareable PoC teaser card (WhatsApp / SMS / Open / Copy) ----
+  function removePoc(){ ['d2b-poc','d2b-poc-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
+  function appendPocLoading(){
+    removePoc();
+    var d=document.createElement('div'); d.className='poc-card poc-loading'; d.id='d2b-poc-loading';
+    d.innerHTML='<span class="spinner dark"></span> Generando tu demo para compartir…';
+    result.appendChild(d);
+  }
+  function renderPoc(url, name, phone){
+    removePoc();
+    var digits=(phone||'').replace(/[^0-9]/g,'');
+    var msg=encodeURIComponent((name?('Hola '+name+', '):'')+'aquí está tu demo interactiva de Digit2AI: '+url);
+    var wa='https://wa.me/'+digits+'?text='+msg;
+    var sms='sms:'+(phone||'')+'?&body='+msg;
+    var d=document.createElement('div'); d.className='poc-card'; d.id='d2b-poc';
+    d.innerHTML=''
+      +'<div class="poc-head"><span class="poc-badge">PoC listo</span><div class="poc-title">Tu demo para compartir está lista</div></div>'
+      +'<div class="poc-sub">Una prueba de concepto interactiva'+(name?(' para '+esc(name)):'')+'. Envíala o ábrela tú mismo.</div>'
+      +'<div class="poc-actions">'
+      +'<a class="poc-btn wa" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>'
+      +'<a class="poc-btn sms" href="'+sms+'">SMS</a>'
+      +'<a class="poc-btn ghost" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir</a>'
+      +'<button type="button" class="poc-btn ghost" id="poc-copy">Copiar enlace</button>'
+      +'</div>'
+      +'<div class="poc-note" id="poc-note"></div>';
+    result.appendChild(d);
+    var cp=d.querySelector('#poc-copy');
+    cp.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ d.querySelector('#poc-note').textContent='Enlace copiado.'; }).catch(function(){ window.prompt('Copia este enlace:', url); });
+      } else { window.prompt('Copia este enlace:', url); }
+    });
+    d.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
-    var desc = input.value.trim();
+    var desc=input.value.trim();
+    var name=((nameEl && nameEl.value)||'').trim();
+    var phone=((phoneEl && phoneEl.value)||'').trim();
+    var email=((emailEl && emailEl.value)||'').trim();
     if(desc.length < 30){ updateHint(); input.focus(); return; }
-    lastDescription = desc;
+    if(!name){ showError('Agrega tu nombre para preparar tu demo.'); if(nameEl) nameEl.focus(); return; }
+    if(!phone){ showError('Agrega tu teléfono — ahí te enviamos el enlace de tu demo.'); if(phoneEl) phoneEl.focus(); return; }
+    lastDescription=desc;
+    removePoc();
+    result.className='';
+    loading(true,'Guardando tus datos…');
 
-    loading(true);
-    result.className=''; // hide while loading
-
-    fetch(ENDPOINT, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ description: desc, language: 'es' })
+    var projectId=null;
+    // 1) Save the contact + create the project (autosaves to the projects inbox).
+    fetch('/projects/api/v1/intake/public/request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        full_name:name, phone:phone, email:email||undefined,
+        project_title: desc.slice(0,80), problem: desc, project_description: desc,
+        heard_from:'digit2ai self-serve builder', language: D2B_LANG
+      })
+    })
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(reg){ if(reg && reg.success){ projectId = reg.project_id; } })
+    .catch(function(){ /* non-fatal: still show the plan */ })
+    .then(function(){
+      // 2) Run the triage plan.
+      loading(true,'Analizando tu proyecto…');
+      return fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, language: D2B_LANG }) });
     })
     .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
     .then(function(res){
-      loading(false);
-      if(res.status===200 && res.json && res.json.success){ render(res.json.data); return; }
-      var msg = (res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
-      if(res.status===429) msg = 'Ya generaste varios planes. '+msg;
-      showError(msg);
+      if(res.status===200 && res.json && res.json.success){ render(res.json.data); }
+      else {
+        var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.';
+        if(res.status===429) msg='Ya generaste varios planes. '+msg;
+        showError(msg); throw new Error('triage');
+      }
+      // 3) Generate the shareable PoC teaser (best-effort).
+      if(projectId){
+        appendPocLoading();
+        loading(true,'Creando tu demo para compartir…');
+        return fetch('/projects/api/v1/intake/public/teaser/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG }) })
+          .then(function(r){ return r.json(); })
+          .then(function(tz){ if(tz && tz.success && tz.url){ renderPoc(tz.url, name, phone); } else { removePoc(); } })
+          .catch(function(){ removePoc(); });
+      }
     })
-    .catch(function(){
-      loading(false);
-      showError('No se pudo conectar con el motor. Verifica tu conexión e inténtalo de nuevo.');
-    });
+    .then(function(){ loading(false); })
+    .catch(function(err){ loading(false); if(err && err.message!=='triage'){ showError('No se pudo conectar con el motor. Verifica tu conexión e inténtalo de nuevo.'); } });
   });
 })();
 </script>

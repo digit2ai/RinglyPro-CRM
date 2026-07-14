@@ -274,6 +274,57 @@ router.post('/public/request', async (req, res) => {
 });
 
 // =====================================================
+// PUBLIC POC TEASER GENERATION (no auth) — /digit2ai self-serve
+// =====================================================
+// POST /public/teaser/:projectId  { lang? }
+//   Generates a shareable PoC teaser for an existing project (created
+//   moments earlier by /public/request) and returns the magic link so
+//   the browser can share it via WhatsApp / SMS / copy. Rate-limited by
+//   IP (shared triage bucket) to cap AI-generation cost.
+router.post('/public/teaser/:projectId', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
+    const project = await Project.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    let company_name = '';
+    if (project.company_id && Company) {
+      const c = await Company.findByPk(project.company_id).catch(() => null);
+      company_name = c ? c.name : '';
+    }
+    const projObj = { ...project.toJSON(), company_name };
+
+    const generator = require('../services/voiceTeaserGenerator');
+    const teaser = await generator.generate(projObj, { lang: (req.body && req.body.lang) });
+    const crypto = require('crypto');
+    const token = crypto.randomUUID();
+    const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    await sequelize.query(
+      `INSERT INTO d2_project_teasers (workspace_id, project_id, token, title, lang, voice, content_json, status, model, created_at, updated_at)
+       VALUES (:workspace_id, :project_id, :token, :title, :lang, :voice, CAST(:content AS JSONB), 'ready', :model, NOW(), NOW())`,
+      { replacements: {
+        workspace_id: project.workspace_id || 1,
+        project_id: project.id,
+        token,
+        title: teaser.title,
+        lang: teaser.lang,
+        voice: teaser.voice,
+        content: JSON.stringify(teaser),
+        model: teaser.model
+      } }
+    );
+    res.json({ success: true, token, url: `${baseUrl}/projects/teaser/${token}` });
+  } catch (err) {
+    console.error('[D2AI-Intake] public teaser gen failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // PUBLIC TRIAGE PREVIEW (champion-facing demo) — no auth
 // =====================================================
 // POST /public-triage-preview
