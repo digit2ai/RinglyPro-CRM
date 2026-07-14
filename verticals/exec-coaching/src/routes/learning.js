@@ -14,17 +14,38 @@ const router = express.Router();
 const { Curriculum, Module, Assessment, AssessmentAttempt, IntakeProfile } = require('../models');
 const brain = require('../services/curriculum-brain');
 
-// Lazily fill a module's lesson content on first open (Phase B of the agent).
-async function ensureLessons(mod, req) {
-  let lessons = [];
+const { KbDocument } = require('../models');
+
+// Lazily materialize a module (vocab + lessons + assessment questions) on first
+// open — Phase B of the two-phase AI Curriculum Agent. Idempotent.
+async function ensureModuleContent(mod, req) {
+  let lessons = [], vocab = [];
   try { lessons = JSON.parse(mod.lessons || '[]'); } catch (e) { lessons = []; }
-  const needs = !lessons.length || lessons.some(l => !l.content_en);
-  if (!needs) return lessons;
+  try { vocab = JSON.parse(mod.vocab || '[]'); } catch (e) { vocab = []; }
+  const hasLessonContent = lessons.length && lessons.every(l => l.content_en);
+  if (hasLessonContent) return { vocab, lessons };
+
   const profile = await IntakeProfile.findOne({ where: { student_user_id: mod.student_user_id } });
-  const filled = await brain.generateLessons({ title: mod.title, objective: mod.objective, lessons }, profile ? profile.toJSON() : {});
-  mod.lessons = JSON.stringify(filled);
+  const kbDocs = await KbDocument.findAll({ where: { tenant_id: mod.tenant_id }, limit: 10 });
+  const kbText = kbDocs.map(d => `# ${d.title}\n${d.content}`).join('\n\n');
+
+  const content = await brain.generateModuleContent(
+    { title: mod.title, objective: mod.objective }, profile ? profile.toJSON() : {}, kbText
+  );
+  mod.vocab = JSON.stringify(content.vocab || []);
+  mod.lessons = JSON.stringify(content.lessons || []);
   await mod.save();
-  return filled;
+
+  // Fill the assessment questions if they weren't materialized yet.
+  const a = await Assessment.findOne({ where: { module_id: mod.id } });
+  if (a) {
+    let existing = []; try { existing = JSON.parse(a.questions || '[]'); } catch (e) { existing = []; }
+    if (!existing.length && content.assessment && content.assessment.questions && content.assessment.questions.length) {
+      a.questions = JSON.stringify(content.assessment.questions);
+      await a.save();
+    }
+  }
+  return { vocab: content.vocab || [], lessons: content.lessons || [] };
 }
 
 function studentId(req) { return req.user && req.user.id; }
@@ -63,12 +84,12 @@ router.get('/modules/:id', async (req, res) => {
     if (!m) return res.status(404).json({ error: 'Módulo no encontrado' });
     if (m.status === 'locked') return res.status(403).json({ error: 'Módulo bloqueado. Apruebe el módulo anterior.' });
     if (m.status === 'unlocked') { m.status = 'in_progress'; await m.save(); }
-    const lessons = await ensureLessons(m, req);   // lazy AI lesson content on first open
+    const { vocab, lessons } = await ensureModuleContent(m, req);   // lazy AI materialization on first open
     const assessment = await Assessment.findOne({ where: { module_id: m.id } });
     res.json({
       success: true,
       module: { id: m.id, title: m.title, objective: m.objective, status: m.status, best_score: m.best_score,
-        vocab: parse(m.vocab, []), lessons, reinforcement: m.reinforcement || null },
+        vocab, lessons, reinforcement: m.reinforcement || null },
       assessment_id: assessment ? assessment.id : null,
       is_final: assessment ? assessment.is_final : false,
       question_count: assessment ? parse(assessment.questions, []).length : 0,
@@ -84,6 +105,7 @@ router.get('/modules/:id/assessment', async (req, res) => {
     const m = await ownedModule(req, req.params.id);
     if (!m) return res.status(404).json({ error: 'Módulo no encontrado' });
     if (m.status === 'locked') return res.status(403).json({ error: 'Módulo bloqueado' });
+    await ensureModuleContent(m, req);   // safety: materialize if assessment reached before module open
     const a = await Assessment.findOne({ where: { module_id: m.id } });
     if (!a) return res.status(404).json({ error: 'Sin evaluación' });
     const qs = parse(a.questions, []).map(q => q.type === 'multiple_choice'

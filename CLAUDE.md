@@ -305,7 +305,12 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **Location:** `verticals/exec-coaching/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/exec-coaching/migrations/20260714_exec_coaching_tables.sql`. Multi-tenant (`tenant_id`), `ec_` prefix: `ec_users, ec_students, ec_sessions, ec_transcripts, ec_reports, ec_assignments`.
 
-**Live:** landing `/executive-english` (public, bilingual EN/ES) · dashboard `/coaching-english/` · signup `/coaching-english/signup` (open free for coaches) · login `/coaching-english/login` · health `/coaching-english/health` · debug `/debug/exec-coaching-error`.
+**Live:** landing `/executive-english` (public, bilingual EN/ES, two paths) · coach dashboard `/coaching-english/` · coach signup/login · **student self-signup `/coaching-english/start`** · **student app `/coaching-english/learn`** · health `/coaching-english/health` · debug `/debug/exec-coaching-error`.
+
+**Two tracks (v2):**
+- **Coach track (v1):** log 1:1 sessions → AI 5-deliverable report + 80%-speaks meter (below).
+- **Student self-serve (v2):** derived from Torna Idioma (reversed ES→EN, premium). 7-step typeform intake + placement quiz (+ optional AI-scored 30s spoken response) → **AI Curriculum Agent** (`services/curriculum-brain.js`, two-phase: compact outline then lazy per-module lesson content) generates a personalized modular program (ESP by occupation/industry, 80/20 vocab, micro-lessons). Modular learning: markdown lessons + vocab + AI-graded MC/fill assessment; pass unlocks next, fail → AI reinforcement, final → certificate. Pass threshold coach-configurable (default 80%). Tables: `ec_intake_profiles, ec_curricula, ec_modules, ec_assessments, ec_assessment_attempts`. Routes: `intake`, `learning`.
+- **Coach KB (v2):** coach uploads teaching materials (`ec_kb_documents`, route `kb`) that steer the curriculum agent to teach the coach's way (white-label). Coach linking code = coach tenant id (students enter it at signup to join that coach's tenant+KB). Supervision view lists self-serve students + progress + stuck flags. Role-aware gate: students→/learn, coaches→dashboard.
 
 **AI brain:** `src/services/coach-brain.js` reuses `ANTHROPIC_API_KEY` (Claude Haiku). `finalizeSession(turns, ctx)` returns `{subject, summary, fortalezas[], aspectos_mejorar[], expresiones[], vocabulario[], ejercicio, correcciones[]}` — the 5 deliverables from the program's SEGUIMIENTO section. `suggestAssignments(report, ctx)` proposes "entre sesiones" tasks. `guidance(...)` answers coach questions. Zero-key **heuristic fallback** if no API key. The **80%-student-speaks meter** is deterministic (transcript word counts in the route, not the LLM).
 
@@ -322,6 +327,7 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `EXEC_COACHING_MODEL` — Anthropic model for report + guidance. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`.
 - `EXEC_COACHING_DEFAULT_PASSWORD` — seeded password for the two default accounts (fernandodelae@gmail.com coach, mstagg@digit2ai.com owner). Default `exec@2026`. Regular coaches self-signup.
 - `EXEC_COACHING_SEED_DEMO` — `1` seeds Fernando's tenant with the Minister as a student + one finalized sample session on boot. Default unset = clean.
+- (v2 student self-serve reuses `ANTHROPIC_API_KEY` + `EXEC_COACHING_MODEL` for the AI Curriculum Agent — no new keys.)
 
 ## Projects Hub — Client 15 Command Center (`/projects`)
 
