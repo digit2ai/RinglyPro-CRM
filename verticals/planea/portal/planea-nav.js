@@ -58,8 +58,10 @@
       '<nav class="dnav">' + nav + '</nav>' +
       '<div class="dsep"></div>' +
       '<button class="dbtn" id="pl-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar módulo</button>' +
+      '<button class="dbtn solid" id="pl-install" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Instalar Planea</button>' +
       '<button class="dbtn solid" id="pl-theme2"></button>' +
-      '<div class="dprofile"><span class="av">PL</span><div><div class="nm">Planea</div><div class="pl">Plan gratuito</div></div></div>';
+      '<div class="dprofile"><span class="av">PL</span><div><div class="nm">Planea</div><div class="pl">Plan gratuito</div></div></div>' +
+      '<button class="dbtn" id="pl-logout" style="margin-top:10px;color:var(--red);border-color:rgba(200,107,79,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Cerrar sesión</button>';
     document.body.appendChild(scrim);
     document.body.appendChild(d);
 
@@ -94,7 +96,37 @@
     d.querySelectorAll('[data-action="maya"]').forEach(function (a) {
       a.addEventListener('click', function (e) { e.preventDefault(); closeD(); if (window.MayaChat) window.MayaChat.open(); });
     });
+    // Logout: clear the Supabase session + local tokens, back to login.
+    document.getElementById('pl-logout').addEventListener('click', function () {
+      try {
+        for (var i = localStorage.length - 1; i >= 0; i--) {
+          var k = localStorage.key(i);
+          if (/^sb-.*-auth-token$/.test(k) || k === 'token' || k === 'planea-profile') localStorage.removeItem(k);
+        }
+      } catch (e) {}
+      location.href = '/planea/login';
+    });
     themeLabel();
+    initPWA();
+  }
+
+  // ── PWA: manifest + icons + service worker + install prompt ──
+  function initPWA() {
+    function head(tag, attrs) { var el = document.createElement(tag); for (var k in attrs) el.setAttribute(k, attrs[k]); document.head.appendChild(el); }
+    head('link', { rel: 'manifest', href: '/planea/portal/manifest.webmanifest' });
+    head('meta', { name: 'theme-color', content: '#0a1310' });
+    head('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+    head('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' });
+    head('meta', { name: 'apple-mobile-web-app-title', content: 'Planea' });
+    head('link', { rel: 'apple-touch-icon', href: '/planea/portal/icon-192.png' });
+    head('link', { rel: 'icon', type: 'image/svg+xml', href: '/planea/portal/icon.svg' });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/planea/portal/sw.js').catch(function () {});
+    }
+    var installBtn = document.getElementById('pl-install'), deferred = null;
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; if (installBtn) installBtn.style.display = 'flex'; });
+    if (installBtn) installBtn.addEventListener('click', function () { if (deferred) { deferred.prompt(); deferred = null; installBtn.style.display = 'none'; } });
+    window.addEventListener('appinstalled', function () { if (installBtn) installBtn.style.display = 'none'; });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);

@@ -226,6 +226,19 @@ a{color:inherit;text-decoration:none}
 .groupt{font-family:'Inter',sans-serif;font-weight:700;font-size:18px;margin-top:26px}
 .groupt+.subt{color:var(--mut);font-size:13.5px;margin-top:4px}
 
+/* ── Desktop: persistent left sidebar + wide content ── */
+@media (min-width:1024px){
+  .topbar{display:none}
+  .scrim{display:none !important}
+  .drawer{transform:none !important;box-shadow:none;width:280px}
+  body{padding-left:280px}
+  .app{max-width:940px;margin:0 auto;padding-top:14px;padding-bottom:80px}
+  .wrap{padding:26px 44px 0}
+  .steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .phead h1{font-size:34px}
+}
+@media (min-width:1500px){ .app{max-width:1080px} }
+
 /* Maya floating button */
 .chatbot{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:12px;background:transparent;border:none;cursor:pointer;font-family:inherit}
 .chatbot .orbe{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.45);animation:mpulse 3s ease-in-out infinite}
