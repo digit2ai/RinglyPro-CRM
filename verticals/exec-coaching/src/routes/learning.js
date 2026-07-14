@@ -14,6 +14,19 @@ const router = express.Router();
 const { Curriculum, Module, Assessment, AssessmentAttempt, IntakeProfile } = require('../models');
 const brain = require('../services/curriculum-brain');
 
+// Lazily fill a module's lesson content on first open (Phase B of the agent).
+async function ensureLessons(mod, req) {
+  let lessons = [];
+  try { lessons = JSON.parse(mod.lessons || '[]'); } catch (e) { lessons = []; }
+  const needs = !lessons.length || lessons.some(l => !l.content_en);
+  if (!needs) return lessons;
+  const profile = await IntakeProfile.findOne({ where: { student_user_id: mod.student_user_id } });
+  const filled = await brain.generateLessons({ title: mod.title, objective: mod.objective, lessons }, profile ? profile.toJSON() : {});
+  mod.lessons = JSON.stringify(filled);
+  await mod.save();
+  return filled;
+}
+
 function studentId(req) { return req.user && req.user.id; }
 function tenantOf(req) { return (req.user && req.user.tenant_id) || (req.user && req.user.id) || 0; }
 function ensureStudent(req, res) {
@@ -50,11 +63,12 @@ router.get('/modules/:id', async (req, res) => {
     if (!m) return res.status(404).json({ error: 'Módulo no encontrado' });
     if (m.status === 'locked') return res.status(403).json({ error: 'Módulo bloqueado. Apruebe el módulo anterior.' });
     if (m.status === 'unlocked') { m.status = 'in_progress'; await m.save(); }
+    const lessons = await ensureLessons(m, req);   // lazy AI lesson content on first open
     const assessment = await Assessment.findOne({ where: { module_id: m.id } });
     res.json({
       success: true,
       module: { id: m.id, title: m.title, objective: m.objective, status: m.status, best_score: m.best_score,
-        vocab: parse(m.vocab, []), lessons: parse(m.lessons, []), reinforcement: m.reinforcement || null },
+        vocab: parse(m.vocab, []), lessons, reinforcement: m.reinforcement || null },
       assessment_id: assessment ? assessment.id : null,
       is_final: assessment ? assessment.is_final : false,
       question_count: assessment ? parse(assessment.questions, []).length : 0,

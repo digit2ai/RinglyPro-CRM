@@ -34,7 +34,10 @@ function suggestModuleCount(level, months) {
   return Math.min(8, base + bump);
 }
 
-// ─── AI Curriculum Agent ────────────────────────────────────────────────────
+// ─── AI Curriculum Agent — Phase A: compact OUTLINE (fast, reliable) ─────────
+// Produces module shells (title, objective, vocab, lesson TITLES, assessment).
+// Full lesson content is generated lazily per-module (Phase B) so no single
+// call is large enough to truncate at max_tokens.
 async function generateCurriculum(profile, kbText) {
   const level = profile.placement_level || profile.self_level || 'medium';
   const months = profile.timeline_months || 6;
@@ -42,8 +45,8 @@ async function generateCurriculum(profile, kbText) {
 
   if (!anthropic) return heuristicCurriculum(profile, count, level);
 
-  const kb = (kbText || '').slice(0, 6000);
-  const prompt = `You are the AI Curriculum Agent for a premium executive English program for Spanish-speaking professionals. Design a personalized, modular English curriculum. Teach English THROUGH the student's own job context (ESP). All learning CONTENT is in English; all instructions/labels prose is in Spanish.
+  const kb = (kbText || '').slice(0, 4000);
+  const prompt = `You are the AI Curriculum Agent for a premium executive English program for Spanish-speaking professionals. Design a personalized modular English OUTLINE. Teach English THROUGH the student's own job context (ESP). Learning content is English; Spanish fields prose in Spanish.
 
 STUDENT PROFILE:
 - Level: ${level}
@@ -53,31 +56,22 @@ STUDENT PROFILE:
 - Timeline: ${months} months, ${profile.hours_per_week || 3} hours/week
 ${kb ? `\nCOACH KNOWLEDGE BASE (teach in THIS style; prioritize these methods/vocabulary):\n${kb}\n` : ''}
 
-Produce EXACTLY ${count} modules of increasing difficulty. Apply 80/20 vocabulary (high-frequency words + top industry terms first) and task-based micro-lessons (10-15 min each). Return ONLY JSON:
+Produce EXACTLY ${count} modules of increasing difficulty. Apply 80/20 vocabulary (high-frequency + top industry terms first). Do NOT write full lesson prose — only lesson TITLES. Return ONLY JSON:
 {
   "title": "program title (Spanish)",
   "focus": "1-2 sentence ESP focus (Spanish)",
   "modules": [
-    {
-      "title": "module title (English topic, e.g. 'Executive Meetings')",
-      "objective": "what the student can DO after it (Spanish)",
-      "vocab": [ { "term": "English term", "meaning_es": "significado", "example": "English example sentence" } ],
-      "lessons": [
-        { "title": "lesson title (English)", "type": "reading|dialogue|drill", "mins": 12,
-          "content_en": "the lesson content in English, markdown, concrete to the student's job",
-          "exercises": [ { "type": "multiple_choice", "q": "...", "options": ["..."], "answer": 0 }, { "type": "fill_blank", "q": "... ___ ...", "answer": "word" } ] }
-      ],
-      "assessment": {
-        "questions": [ { "type": "multiple_choice", "q": "...", "options": ["..."], "answer": 0 }, { "type": "fill_blank", "q": "...", "answer": "word" } ]
-      }
-    }
+    { "title": "module topic (English)", "objective": "what the student can DO (Spanish)",
+      "vocab": [ { "term": "English term", "meaning_es": "significado", "example": "short English example" } ],
+      "lesson_titles": ["lesson title 1 (English)", "lesson title 2 (English)"],
+      "assessment": { "questions": [ { "type": "multiple_choice", "q": "...", "options": ["..."], "answer": 0 }, { "type": "fill_blank", "q": "...", "answer": "word" } ] } }
   ]
 }
-Rules: 2-3 lessons per module; 5-8 vocab per module; 5-8 assessment questions per module; the LAST module is the capstone/certification. content_en concrete to a ${profile.occupation || 'executive'}. Proper Spanish orthography in Spanish fields. No emojis.`;
+Rules: 2 lesson_titles per module; 5-6 vocab per module; 5-6 assessment questions per module; LAST module is the capstone/certification. Concrete to a ${profile.occupation || 'executive'} in ${profile.industry || 'business'}. Proper Spanish orthography. No emojis.`;
 
   try {
     const resp = await anthropic.messages.create({
-      model: MODEL, max_tokens: 8000,
+      model: MODEL, max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }]
     });
     const raw = (resp.content || []).map(b => b.text || '').join('').trim();
@@ -97,6 +91,11 @@ Rules: 2-3 lessons per module; 5-8 vocab per module; 5-8 assessment questions pe
 
 function sanitizeModule(m) {
   const arr = (v) => Array.isArray(v) ? v : [];
+  // Lesson shells from titles — content_en filled lazily (Phase B).
+  const titles = arr(m.lesson_titles).length ? arr(m.lesson_titles) : arr(m.lessons).map(l => l && l.title);
+  const lessons = titles.filter(Boolean).slice(0, 3).map(t => ({
+    title: String(t).slice(0, 200), type: 'reading', mins: 12, content_en: '', exercises: []
+  }));
   return {
     title: String(m.title || 'Module').slice(0, 200),
     objective: String(m.objective || '').slice(0, 800),
@@ -105,15 +104,54 @@ function sanitizeModule(m) {
       meaning_es: String(v.meaning_es || '').slice(0, 200),
       example: String(v.example || '').slice(0, 300)
     })),
-    lessons: arr(m.lessons).slice(0, 4).map(l => ({
-      title: String(l.title || 'Lesson').slice(0, 200),
-      type: ['reading', 'dialogue', 'drill'].includes(l.type) ? l.type : 'reading',
-      mins: Math.min(30, Math.max(5, parseInt(l.mins, 10) || 12)),
-      content_en: String(l.content_en || '').slice(0, 6000),
-      exercises: sanitizeQuestions(l.exercises)
-    })),
+    lessons: lessons.length ? lessons : [{ title: 'Core Lesson', type: 'reading', mins: 12, content_en: '', exercises: [] }],
     assessment: { questions: sanitizeQuestions(m.assessment && m.assessment.questions) }
   };
+}
+
+// ─── AI Curriculum Agent — Phase B: fill one module's lesson content ─────────
+// Called lazily the first time a student opens a module (small, fast call).
+async function generateLessons(module, profile) {
+  const lessons = Array.isArray(module.lessons) ? module.lessons : [];
+  if (!anthropic || !lessons.length) return heuristicLessons(module, profile);
+  const titles = lessons.map(l => l.title);
+  const prompt = `Write the English lesson content for the module "${module.title}" of an executive English program for a Spanish-speaking ${profile.occupation || 'executive'} in ${profile.industry || 'business'}. Objective: ${module.objective || ''}.
+
+For EACH of these lessons, write concrete, task-based content (10-15 min) in English markdown, plus 2 exercises. Lessons: ${JSON.stringify(titles)}.
+
+Return ONLY JSON: [ { "title": "...", "type": "reading|dialogue|drill", "mins": 12, "content_en": "markdown English content, concrete phrases the student will actually use", "exercises": [ { "type": "multiple_choice", "q": "...", "options": ["..."], "answer": 0 }, { "type": "fill_blank", "q": "... ___ ...", "answer": "word" } ] } ]
+Keep each content_en under 220 words. No emojis.`;
+  try {
+    const resp = await anthropic.messages.create({
+      model: MODEL, max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    const raw = (resp.content || []).map(b => b.text || '').join('').trim();
+    const p = extractJson(raw, '[', ']');
+    if (!Array.isArray(p) || !p.length) return heuristicLessons(module, profile);
+    return p.slice(0, 3).map((l, i) => ({
+      title: String(l.title || titles[i] || 'Lesson').slice(0, 200),
+      type: ['reading', 'dialogue', 'drill'].includes(l.type) ? l.type : 'reading',
+      mins: Math.min(30, Math.max(5, parseInt(l.mins, 10) || 12)),
+      content_en: String(l.content_en || '').slice(0, 4000),
+      exercises: sanitizeQuestions(l.exercises)
+    }));
+  } catch (e) {
+    console.error('generateLessons error:', e.message);
+    return heuristicLessons(module, profile);
+  }
+}
+
+function heuristicLessons(module, profile) {
+  const job = profile.occupation || 'executive';
+  return (Array.isArray(module.lessons) && module.lessons.length ? module.lessons : [{ title: module.title + ': Core Phrases' }]).map(l => ({
+    title: l.title || 'Core Lesson', type: 'reading', mins: 12,
+    content_en: `# ${l.title || module.title}\n\nKey executive English for a ${job}.\n\n- "Let me walk you through the key points."\n- "That said, our priority remains..."\n- "I'd be happy to elaborate on that."\n\nPractice each phrase aloud three times, then use it in a sentence about your work.`,
+    exercises: [
+      { type: 'multiple_choice', q: 'Which best opens a structured explanation?', options: ['Whatever.', 'Let me walk you through the key points.', 'I dunno.'], answer: 1 },
+      { type: 'fill_blank', q: 'That said, our priority ___ competitiveness.', answer: 'remains' }
+    ]
+  }));
 }
 
 function sanitizeQuestions(qs) {
@@ -250,7 +288,7 @@ function scorePlacement(answers) {
 }
 
 module.exports = {
-  generateCurriculum, gradeAssessment, reinforce, scoreSpoken,
+  generateCurriculum, generateLessons, gradeAssessment, reinforce, scoreSpoken,
   PLACEMENT_BANK: PLACEMENT_BANK.map(({ q, options }) => ({ q, options })), // no answers to client
   scorePlacement, suggestModuleCount,
   activeModel: () => (anthropic ? MODEL : 'heuristic-fallback')
