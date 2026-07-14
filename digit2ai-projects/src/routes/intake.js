@@ -1754,6 +1754,40 @@ const _ALLOWED_AUDIO = new Set([
   'application/octet-stream'
 ]);
 
+// POST /public/extract-attachments (multipart/form-data)
+//   field "attachments": up to 5 files (pdf/docx/txt/md/csv/rtf/json) <= 10 MB each
+//   -> { success, text, files:[{name,chars}] } — extracted text to fold into the
+//      project description so the public digit2ai landing can accept uploads.
+const _attachUpload = _multer({ storage: _multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 5 } });
+const _ALLOWED_DOC_EXT = new Set(['pdf', 'docx', 'doc', 'txt', 'md', 'csv', 'rtf', 'json']);
+router.post('/public/extract-attachments', (req, res) => {
+  _attachUpload.array('attachments', 5)(req, res, async (uploadErr) => {
+    try {
+      if (uploadErr) {
+        const tooBig = uploadErr.code === 'LIMIT_FILE_SIZE';
+        return res.status(tooBig ? 413 : 400).json({ success: false, error: tooBig ? 'A file is larger than 10 MB.' : 'Could not read the uploaded files.' });
+      }
+      const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+      const rl = _triageRateLimit(ip);
+      if (!rl.allowed) return res.status(429).json({ success: false, error: 'Too many requests. Please wait a moment.' });
+      const { extractText, extOf } = require('../services/documentExtract');
+      const files = (req.files || []).slice(0, 5);
+      const parts = [], meta = [];
+      for (const f of files) {
+        const ext = extOf(f.originalname);
+        if (!_ALLOWED_DOC_EXT.has(ext)) { meta.push({ name: f.originalname, chars: 0, skipped: 'type' }); continue; }
+        const txt = await extractText(f);
+        meta.push({ name: f.originalname, chars: txt.length });
+        if (txt) parts.push('--- ' + f.originalname + ' ---\n' + txt);
+      }
+      res.json({ success: true, text: parts.join('\n\n'), files: meta });
+    } catch (e) {
+      console.error('[intake] extract-attachments error:', e.message);
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+});
+
 router.post('/public/transcribe-voice-note', (req, res) => {
   _voiceUpload.single('audio')(req, res, async (uploadErr) => {
     try {

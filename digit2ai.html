@@ -241,6 +241,18 @@
 .d2b .chip{font-size:13.5px;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
   padding:8px 15px;border-radius:999px;transition:all .12s ease;backdrop-filter:blur(6px)}
 .d2b .chip:hover{border-color:rgba(139,92,246,.6);color:#cbb8ff;background:rgba(139,92,246,.14)}
+.d2b .d2b-extra{padding:4px 8px 8px;display:flex;flex-direction:column;gap:10px}
+.d2b .d2b-attach{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.d2b .d2b-attach-btn{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--ink);border-radius:11px;padding:10px 14px;font-size:13.5px;font-weight:600;cursor:pointer;transition:border-color .12s ease}
+.d2b .d2b-attach-btn:hover{border-color:rgba(139,92,246,.6)}
+.d2b .d2b-attach-hint{font-size:11.5px;color:var(--faint);font-family:var(--mono)}
+.d2b .d2b-filelist{width:100%;display:flex;flex-direction:column;gap:6px}
+.d2b .d2b-filerow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--mut)}
+.d2b .d2b-filerow button{background:none;border:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.d2b .d2b-idrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.d2b .d2b-idrow input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 13px;color:var(--ink);font:inherit;font-size:16px;outline:none;transition:border-color .12s ease}
+.d2b .d2b-idrow input:focus{border-color:var(--violet)}
+@media(max-width:560px){.d2b .d2b-idrow{grid-template-columns:1fr}}
 .d2b .disclaim{font-size:12.5px;color:var(--faint);margin-top:18px;text-align:center}
 @media(max-width:560px){
   .d2b .builder{margin-top:28px}
@@ -571,6 +583,21 @@
     <div class="builder wrap">
       <form id="d2b-form" class="promptcard">
         <textarea id="d2b-input" maxlength="5000" placeholder="Ask Digit2AI to build...  e.g. &quot;An AI receptionist that answers calls in Spanish, books appointments, and texts a confirmation&quot;"></textarea>
+        <div class="d2b-extra">
+          <div class="d2b-attach">
+            <input type="file" id="d2b-files" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv,.rtf" hidden>
+            <button type="button" class="d2b-attach-btn" id="d2b-attach">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              Attach files (PDF, Word, text)
+            </button>
+            <span class="d2b-attach-hint">PDF, Word, text, CSV or RTF &mdash; up to 5 files, 10 MB each</span>
+            <div class="d2b-filelist" id="d2b-filelist"></div>
+          </div>
+          <div class="d2b-idrow">
+            <input type="text" id="d2b-name" placeholder="Your name" autocomplete="name">
+            <input type="email" id="d2b-email" placeholder="Email — we send your plan here" autocomplete="email">
+          </div>
+        </div>
         <div class="promptbar">
           <span class="hint" id="d2b-hint">Describe your idea &mdash; the more detail, the sharper the plan.</span>
           <button type="submit" id="d2b-go">Get my plan &amp; demo
@@ -917,18 +944,33 @@
   });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(contactModal); closeModal(bookModal); } });
 
-  // Submit the idea -> open the contact box FIRST (before any triage).
+  // Submit the idea -> fold in any uploaded docs, then (inline name+email present)
+  // go straight to the plan, else open the contact box first.
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(busy) return;
     var desc=input.value.trim();
-    if(desc.length < 30){ updateHint(); input.focus(); return; }
-    lastDescription=desc;
-    var cn=root.querySelector('#cm-name'); if(cn && contact.name) cn.value=contact.name;
-    var cp=root.querySelector('#cm-phone'); if(cp && contact.phone) cp.value=contact.phone;
-    var ce=root.querySelector('#cm-email'); if(ce && contact.email) ce.value=contact.email;
-    openModal(contactModal);
-    setTimeout(function(){ if(cn) cn.focus(); }, 60);
+    if(desc.length < 30 && !selectedFiles.length){ updateHint(); input.focus(); return; }
+    if(go){ go.disabled=true; }
+    extractAttachments().then(function(extra){
+      if(go){ go.disabled=false; }
+      var full=(extra ? (desc + (desc?'\n\n':'') + extra) : desc).trim();
+      if(full.length < 30){ updateHint(); input.focus(); return; }
+      lastDescription=full;
+      var nm=((nameEl&&nameEl.value)||'').trim(), em=((emailEl&&emailEl.value)||'').trim();
+      if(nm) contact.name=nm; if(em) contact.email=em;
+      if(nm && em){                      // inline identity → skip the modal (voice-to-intake style)
+        saveContact(nm, contact.phone||'', em);
+        contact={name:nm, phone:contact.phone||'', email:em};
+        runFullFlow(full, nm, contact.phone||'', em);
+        return;
+      }
+      var cn=root.querySelector('#cm-name'); if(cn) cn.value=nm||contact.name||'';
+      var cp=root.querySelector('#cm-phone'); if(cp && contact.phone) cp.value=contact.phone;
+      var ce=root.querySelector('#cm-email'); if(ce) ce.value=em||contact.email||'';
+      openModal(contactModal);
+      setTimeout(function(){ if(cn) cn.focus(); }, 60);
+    });
   });
 
   var cmBtn=root.querySelector('#cm-continue');
@@ -942,10 +984,65 @@
       if(!phone){ st.textContent='Please add your phone — we send your demo link there.'; st.className='modal-status err'; return; }
       st.textContent=''; st.className='modal-status';
       contact={name:name,phone:phone,email:email};
+      saveContact(name, phone, email);
       closeModal(contactModal);
       runFullFlow(lastDescription||input.value.trim(), name, phone, email);
     });
   }
+
+  // ---- Attachments (PDF/Word/Text) + inline identity (like /voice-to-intake) ----
+  var selectedFiles = [];
+  var MAX_FILES = 5, MAX_FILE_BYTES = 10 * 1024 * 1024;
+  var ALLOWED_EXT = ['pdf','doc','docx','txt','md','csv','rtf'];
+  var fileInput = root.querySelector('#d2b-files');
+  var attachBtn = root.querySelector('#d2b-attach');
+  var fileList  = root.querySelector('#d2b-filelist');
+  function extOf(n){ var m=String(n||'').toLowerCase().match(/\.([a-z0-9]+)$/); return m?m[1]:''; }
+  function renderFileList(){
+    if(!fileList) return;
+    fileList.innerHTML='';
+    selectedFiles.forEach(function(f,i){
+      var row=document.createElement('div'); row.className='d2b-filerow';
+      var nm=document.createElement('span'); nm.textContent=f.name+' ('+Math.round(f.size/1024)+' KB)';
+      var rm=document.createElement('button'); rm.type='button'; rm.textContent='✕'; rm.title='Remove';
+      rm.addEventListener('click', function(){ selectedFiles.splice(i,1); renderFileList(); });
+      row.appendChild(nm); row.appendChild(rm); fileList.appendChild(row);
+    });
+  }
+  function addFiles(list){
+    for(var i=0;i<list.length;i++){
+      var f=list[i];
+      if(selectedFiles.length>=MAX_FILES) break;
+      if(ALLOWED_EXT.indexOf(extOf(f.name))===-1) continue;
+      if(f.size>MAX_FILE_BYTES) continue;
+      selectedFiles.push(f);
+    }
+    renderFileList();
+  }
+  if(attachBtn && fileInput){
+    attachBtn.addEventListener('click', function(){ fileInput.click(); });
+    fileInput.addEventListener('change', function(){ addFiles(fileInput.files||[]); fileInput.value=''; });
+  }
+  // Send files to the public extractor; returns combined text (never rejects).
+  function extractAttachments(){
+    if(!selectedFiles.length) return Promise.resolve('');
+    var fd=new FormData();
+    selectedFiles.forEach(function(f){ fd.append('attachments', f, f.name); });
+    return fetch('/projects/api/v1/intake/public/extract-attachments', { method:'POST', body:fd })
+      .then(function(r){ return r.json(); })
+      .then(function(j){ return (j && j.success && j.text) ? j.text : ''; })
+      .catch(function(){ return ''; });
+  }
+  // Remember name/email so returning visitors don't retype (like the screenshot's "not you?").
+  function saveContact(n,p,e){ try{ localStorage.setItem('d2ai_contact', JSON.stringify({name:n||'',phone:p||'',email:e||''})); }catch(x){} }
+  (function prefillContact(){
+    try{
+      var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
+      if(c.name){ contact.name=c.name; if(nameEl) nameEl.value=c.name; }
+      if(c.email){ contact.email=c.email; if(emailEl) emailEl.value=c.email; }
+      if(c.phone){ contact.phone=c.phone; }
+    }catch(x){}
+  })();
 
   // Save contact + create project (autosave to inbox) -> plan -> shareable teaser.
   function runFullFlow(desc, name, phone, email){
