@@ -1147,9 +1147,16 @@
     if (fallbackEl) {
       if (reason === 'mic') {
         var isES = (document.documentElement.lang || 'en').toLowerCase().indexOf('es') === 0;
-        fallbackEl.innerHTML = isES
+        // When embedded (e.g. digit2ai.com iframes this page), a mic block on the
+        // PARENT origin can't be reset from here. Offer a full-screen path on the
+        // canonical origin, where the mic prompt works cleanly.
+        var inFrame = false; try { inFrame = window.top !== window.self; } catch (e) { inFrame = true; }
+        var full = 'https://aiagent.ringlypro.com/digit2ai' + (isES ? '-es' : '');
+        fallbackEl.innerHTML = (isES
           ? '<strong>Activa el micrófono.</strong><br>Permite el acceso al micrófono y toca el orbe otra vez &mdash; o escribe tu idea abajo.'
-          : '<strong>Microphone access needed.</strong><br>Allow the mic, then tap the orb again &mdash; or type your idea below.';
+          : '<strong>Microphone access needed.</strong><br>Allow the mic, then tap the orb again &mdash; or type your idea below.')
+          + (inFrame ? '<br><a href="' + full + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#cbb8ff;font-weight:700;text-decoration:underline">'
+              + (isES ? 'Abrir modo voz en pantalla completa &rarr;' : 'Open voice mode full-screen &rarr;') + '</a>' : '');
       }
       fallbackEl.hidden = false;
     }
