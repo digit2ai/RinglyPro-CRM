@@ -283,10 +283,22 @@
     });
   }
 
+  function stripMd(t) {
+    return String(t)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`([^`]*)`/g, '$1')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/__(.*?)__/g, '$1')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/^\s*[-•]\s+/gm, '')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .trim();
+  }
   function addMsg(role, text) {
     var d = document.createElement('div');
     d.className = 'maya-msg ' + (role === 'user' ? 'u' : 'm');
-    d.textContent = text;
+    d.textContent = role === 'user' ? text : stripMd(text);
     els.body.appendChild(d);
     els.body.scrollTop = els.body.scrollHeight;
     return d;
@@ -344,28 +356,70 @@
     ask(text);
   }
 
-  // ── Voice output (Web Audio — precise onended for the hands-free loop) ──
-  var actx = null, curSource = null;
+  // ── Voice output (Web Audio, sentence-chunked so Maya starts talking fast) ──
+  var actx = null, curSource = null, speakToken = 0;
   function ensureCtx() { if (!actx) { var C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); } return actx; }
   function unlockAudio() { var c = ensureCtx(); if (c && c.state === 'suspended') { try { c.resume(); } catch (e) {} } }
-  function stopAudio() { if (curSource) { try { curSource.onended = null; curSource.stop(); } catch (e) {} curSource = null; } }
-  function speak(text, onEnd) {
-    stopAudio();
-    var c = ensureCtx();
-    fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: TTS_VOICE }) })
+  function stopAudio() { speakToken++; if (curSource) { try { curSource.onended = null; curSource.stop(); } catch (e) {} curSource = null; } }
+
+  // Strip markdown/symbols so the TTS never reads "asterisco" etc.
+  function cleanForTTS(t) {
+    return String(t)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`([^`]*)`/g, '$1')
+      .replace(/\*\*|\*|__|_|#+|>/g, ' ')
+      .replace(/^\s*[-•]\s+/gm, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  // Split into speakable chunks (merge tiny fragments) so the first sentence plays ~1s in.
+  function splitChunks(t) {
+    var clean = cleanForTTS(t);
+    var parts = clean.match(/[^.!?;\n]+[.!?;]?/g) || [clean];
+    var out = [], cur = '';
+    parts.forEach(function (p) {
+      p = p.trim(); if (!p) return;
+      cur = cur ? cur + ' ' + p : p;
+      if (cur.length >= 45) { out.push(cur); cur = ''; }
+    });
+    if (cur) out.push(cur);
+    return out.length ? out : [clean];
+  }
+  function fetchDecoded(text) {
+    var c = ensureCtx(); if (!c) return Promise.resolve(null);
+    return fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: TTS_VOICE }) })
       .then(function (r) { return r.ok ? r.arrayBuffer() : null; })
       .then(function (buf) {
-        if (!buf || !c) { if (onEnd) onEnd(); return; }
-        c.decodeAudioData(buf.slice(0), function (decoded) {
-          var src = c.createBufferSource();
-          src.buffer = decoded;
-          src.connect(c.destination);
-          src.onended = function () { if (curSource === src) curSource = null; if (onEnd) onEnd(); };
-          curSource = src;
-          try { src.start(0); } catch (e) { if (onEnd) onEnd(); }
-        }, function () { if (onEnd) onEnd(); });
+        if (!buf) return null;
+        return new Promise(function (res) { c.decodeAudioData(buf.slice(0), function (d) { res(d); }, function () { res(null); }); });
       })
-      .catch(function () { if (onEnd) onEnd(); });
+      .catch(function () { return null; });
+  }
+  function speak(text, onEnd) {
+    stopAudio();
+    var myToken = speakToken; // stopAudio already bumped it
+    var c = ensureCtx();
+    var chunks = splitChunks(text);
+    if (!c || !chunks.length) { if (onEnd) onEnd(); return; }
+    var i = 0;
+    var nextP = fetchDecoded(chunks[0]); // start synthesizing the first sentence now
+    function playNext() {
+      if (myToken !== speakToken) return; // interrupted
+      if (i >= chunks.length) { if (onEnd) onEnd(); return; }
+      var p = nextP;
+      nextP = (i + 1 < chunks.length) ? fetchDecoded(chunks[i + 1]) : null; // prefetch next
+      p.then(function (buf) {
+        if (myToken !== speakToken) return;
+        if (!buf) { i++; playNext(); return; }
+        var src = c.createBufferSource();
+        src.buffer = buf; src.connect(c.destination);
+        src.onended = function () { if (myToken !== speakToken) return; if (curSource === src) curSource = null; i++; playNext(); };
+        curSource = src;
+        try { src.start(0); } catch (e) { i++; playNext(); }
+      });
+    }
+    playNext();
   }
 
   // ── One-shot voice input (mic button — fills the textbox, then sends) ──

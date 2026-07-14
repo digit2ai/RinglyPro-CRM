@@ -88,9 +88,11 @@ CUMPLIMIENTO (Compliance — obligatorio):
 - NUNCA menciones datos de otro usuario.
 - Cumple Ley 1581 de 2012 y Decreto 1377 de 2013 sobre datos personales.
 
-ESTILO DE RESPUESTA
-- Responde en 2 a 6 frases, claras y accionables. Usa cifras concretas del usuario en pesos colombianos.
-- Cuando resumas su salud financiera, menciona el Planea Score, los pilares fuertes y el débil, y el siguiente paso más importante.`;
+ESTILO DE RESPUESTA (IMPORTANTE — tus respuestas se leen en voz alta)
+- Habla como una persona, en TEXTO PLANO. PROHIBIDO usar markdown: nada de asteriscos (*), almohadillas (#), guiones bajos (_), viñetas, ni negritas. Si necesitas enumerar, hazlo dentro de la frase ("primero…, luego…").
+- Sé BREVE y natural: 2 a 4 frases cortas. Ve al grano. No repitas los datos como una lista; convérsalos.
+- Di las cifras en palabras naturales para que se escuchen bien (por ejemplo "cien millones de pesos", no "$100.000.000").
+- Cuando resuman su salud financiera: una frase de cómo está, una del punto débil, y una del siguiente paso. Nada más.`;
 }
 
 router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, res) => {
@@ -120,7 +122,7 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
       },
       body: JSON.stringify({
         model: MAYA_MODEL,
-        max_tokens: 700,
+        max_tokens: 380,
         system: buildMayaSystem(profile),
         messages: clean,
       }),
