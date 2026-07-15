@@ -78,6 +78,7 @@
     <div class="brand" style="font-size:20px">ROUND<span>SHARE</span> <span style="color:var(--mut);font-weight:600;font-size:13px">Admin</span></div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn sm ghost" onclick="openInvestor()">Investor Package</button>
+      <button class="btn sm ghost" onclick="openAgreement()">Operating Agreement</button>
       <button class="btn sm ghost" onclick="loadAll()">Refresh</button>
       <button class="btn sm grey" onclick="doLogout()">Log out</button>
     </div>
@@ -126,6 +127,9 @@
   // Open the confidential investor package. The admin cookie auto-unlocks it (no access key).
   function openInvestor(){ window.open(APP + '/investor', '_blank'); }
   window.openInvestor = openInvestor;
+  // Open the private Operating Agreement (passcode-gated signing app).
+  function openAgreement(){ window.open(APP + '/agreement', '_blank'); }
+  window.openAgreement = openAgreement;
 
   function showApp(){
     document.getElementById('loginView').style.display = 'none';
