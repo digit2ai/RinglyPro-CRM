@@ -100,6 +100,7 @@
 .d2b .poc-btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--ink)}
 .d2b .poc-note{font-size:12.5px;color:var(--good);margin-top:10px;min-height:14px}
 .d2b .spinner.dark{border:2px solid rgba(139,92,246,.3);border-top-color:var(--violet)}
+.d2b .demo-cd{font-variant-numeric:tabular-nums;font-weight:650;opacity:.92;white-space:nowrap}
 .d2b .poc-start{margin-top:16px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;border:none;font-weight:750;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;transition:filter .12s ease,transform .12s ease}
 .d2b .poc-start:hover{filter:brightness(1.06);transform:translateY(-1px)}
 .d2b .d2b-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -898,12 +899,26 @@
   window.__d2bRenderPlan = render;
 
   // ---- Shareable PoC teaser card (WhatsApp / SMS / Open / Copy) ----
-  function removePoc(){ ['d2b-poc','d2b-poc-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
+  var __demoCd=null;
+  function stopDemoCountdown(){ if(__demoCd){ clearInterval(__demoCd); __demoCd=null; } }
+  // Live countdown shown inside the "building / generating your demo" button + card.
+  function startDemoCountdown(secs, overflowTxt){
+    stopDemoCountdown();
+    var rem=secs|0;
+    function ensureSpan(c){ if(!c) return null; var el=c.querySelector('.demo-cd'); if(!el){ el=document.createElement('span'); el.className='demo-cd'; c.appendChild(el); } return el; }
+    function paint(){ var t=rem>0?('· '+rem+'s'):('· '+(overflowTxt||'almost there'));
+      var b=ensureSpan(go); if(b) b.textContent=' '+t;
+      var c=ensureSpan(document.getElementById('d2b-poc-loading')); if(c) c.textContent=' '+t; }
+    paint();
+    __demoCd=setInterval(function(){ if(rem>0) rem--; paint(); }, 1000);
+  }
+  function removePoc(){ stopDemoCountdown(); ['d2b-poc','d2b-poc-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
   function appendPocLoading(){
     removePoc();
     var d=document.createElement('div'); d.className='poc-card poc-loading'; d.id='d2b-poc-loading';
-    d.innerHTML='<span class="spinner dark"></span> Generating your shareable demo…';
+    d.innerHTML='<span class="spinner dark"></span> Generating your shareable demo… <span class="demo-cd"></span>';
     result.appendChild(d);
+    startDemoCountdown(25, 'almost there');
   }
   function renderPoc(url, name, phone){
     removePoc();
@@ -1064,8 +1079,8 @@
       if(res.status===200 && res.json && res.json.success){ render(res.json.data); }
       else { var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.'; if(res.status===429) msg='You\'ve generated several plans already. '+msg; showError(msg); throw new Error('triage'); }
       if(projectId){
-        appendPocLoading();
         loading(true,'Building your shareable demo…');
+        appendPocLoading();
         return fetch('/projects/api/v1/intake/public/teaser/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG }) })
           .then(function(r){ return r.json(); })
           .then(function(tz){ if(tz && tz.success && tz.url){ renderPoc(tz.url, name, phone); } else { removePoc(); } })
