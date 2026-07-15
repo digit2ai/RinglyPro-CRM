@@ -5,7 +5,7 @@
   "nav_create": "Create",
   "nav_library": "My library",
   "login_title": "Sign in without a password",
-  "login_desc": "We email you a magic link. No passwords.",
+  "login_desc": "Type your email and you're in instantly. No passwords, no waiting for email.",
   "email_placeholder": "you@email.com",
   "send_link": "Send magic link",
   "enter": "Sign in",

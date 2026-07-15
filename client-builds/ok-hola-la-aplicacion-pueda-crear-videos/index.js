@@ -16,7 +16,7 @@ const fs = require('fs');
 
 const { resolveLang, dict } = require('./services/i18n');
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const SERVICE = 'ok-hola-la-aplicacion-pueda-crear-videos';
 
 const app = express();
@@ -53,9 +53,12 @@ function serveLocalized(file, res, req) {
   // Inject active lang + dict so the page renders correct copy on first paint.
   html = html
     .replace(/\{\{LANG\}\}/g, lang)
+    .replace(/\{\{VERSION\}\}/g, VERSION)
     .replace(/\{\{H1\}\}/g, d.h1 || 'OK Hola')
     .replace(/\{\{TAGLINE\}\}/g, d.tagline || '')
     .replace('{{DICT_JSON}}', JSON.stringify(d));
+  // Never cache the shell — ensures a fresh bundle reference on every load.
+  res.set('Cache-Control', 'no-store');
   res.status(200).type('html').send(html);
 }
 

@@ -3,8 +3,10 @@
 (function () {
   var DICT = window.__DICT || {};
   var LANG = window.__LANG || 'es';
-  // sub-app mount path: strip a trailing /app or /dashboard (and any trailing slash)
-  var BASE = location.pathname.replace(/\/(app|dashboard)\/?$/, '').replace(/\/$/, '');
+  // Fixed sub-app mount path — the app is always mounted here by the parent CRM.
+  // Hardcoded (not derived from pathname) so /app, /dashboard, trailing slashes,
+  // or a stale cached bundle can never build a wrong API URL.
+  var BASE = '/ok-hola-la-aplicacion-pueda-crear-videos';
   var API = BASE + '/api/v1';
   var TOKEN_KEY = 'okhola_jwt';
 
