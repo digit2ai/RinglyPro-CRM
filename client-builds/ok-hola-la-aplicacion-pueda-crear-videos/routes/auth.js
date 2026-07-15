@@ -7,7 +7,6 @@ const { signJwt } = require('../middleware/auth');
 const router = express.Router();
 
 const MAGIC_TTL_MS = 15 * 60 * 1000; // 15 minutes
-const IS_PROD = process.env.NODE_ENV === 'production';
 
 // Sanitize email for logs: s***@domain
 function maskEmail(email) {
@@ -33,9 +32,14 @@ router.post('/magic-link', async (req, res) => {
     // NEVER log the token. Mask the email.
     console.log(`[okhola] magic-link issued for ${maskEmail(email)}`);
 
-    // TODO: real email delivery (SMTP/SendGrid). Until then, non-prod returns the token.
-    const body = { ok: true, message: 'Magic link generado. Revisa tu correo.' };
-    if (!IS_PROD) body.loginToken = token;
+    // Email delivery is NOT wired yet (no SMTP/SendGrid). Until it is, we return
+    // the token so the frontend can auto-verify and log the user in one step —
+    // no token to copy, no email to check. Once OKHOLA_EMAIL_ENABLED=1 (real
+    // delivery configured), the token is withheld and only emailed.
+    // TODO: real email delivery (SMTP/SendGrid).
+    const emailEnabled = process.env.OKHOLA_EMAIL_ENABLED === '1';
+    const body = { ok: true, emailEnabled, message: emailEnabled ? 'Enlace enviado. Revisa tu correo.' : 'Listo, entrando...' };
+    if (!emailEnabled) body.loginToken = token; // frictionless auto-login
     return res.status(200).json(body);
   } catch (e) {
     process.stderr.write(`[okhola] magic-link error: ${e.message}\n`);

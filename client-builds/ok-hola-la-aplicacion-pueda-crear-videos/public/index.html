@@ -34,9 +34,10 @@
       <p class="text-sm text-zinc-400" data-i18n="login_desc"></p>
       <div class="flex flex-col sm:flex-row gap-2">
         <input id="email" type="email" class="flex-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm" data-i18n-ph="email_placeholder">
-        <button id="btnMagic" class="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-medium" data-i18n="send_link">Enviar enlace mágico</button>
+        <button id="btnMagic" class="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-5 py-2 text-sm font-medium" data-i18n="enter">Entrar</button>
       </div>
-      <div id="tokenRow" class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-zinc-800">
+      <!-- Fallback: only shown if real email delivery is enabled (token arrives by email) -->
+      <div id="tokenRow" class="hidden flex-col sm:flex-row gap-2 pt-2 border-t border-zinc-800">
         <input id="loginToken" type="text" class="flex-1 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm mono" data-i18n-ph="have_token">
         <button id="btnVerify" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-sm font-medium" data-i18n="verify">Verificar y entrar</button>
       </div>

@@ -59,8 +59,14 @@ function serveLocalized(file, res, req) {
   res.status(200).type('html').send(html);
 }
 
-// ---- Landing (voice/text input) ----
+// ---- Marketing landing (hero + What/Why/How + CTA) ----
 app.get('/', (req, res) => {
+  try { serveLocalized('landing.html', res, req); }
+  catch (e) { res.status(500).send('boot error'); }
+});
+
+// ---- App (voice/text input tool) ----
+app.get('/app', (req, res) => {
   try { serveLocalized('index.html', res, req); }
   catch (e) { res.status(500).send('boot error'); }
 });

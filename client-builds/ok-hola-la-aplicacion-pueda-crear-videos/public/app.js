@@ -3,7 +3,8 @@
 (function () {
   var DICT = window.__DICT || {};
   var LANG = window.__LANG || 'es';
-  var BASE = location.pathname.replace(/\/(dashboard)?$/, ''); // sub-app mount path
+  // sub-app mount path: strip a trailing /app or /dashboard (and any trailing slash)
+  var BASE = location.pathname.replace(/\/(app|dashboard)\/?$/, '').replace(/\/$/, '');
   var API = BASE + '/api/v1';
   var TOKEN_KEY = 'okhola_jwt';
 
@@ -42,9 +43,10 @@
     }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
   }
 
-  // ============ LANDING PAGE ============
-  function initLanding() {
+  // ============ APP PAGE (voice/text tool) ============
+  function initApp() {
     var authPanel = $('authPanel'), sessionBar = $('sessionBar'), composer = $('composer');
+    if (!authPanel) return; // not on the tool page
 
     function refreshAuthUI() {
       if (jwt()) {
@@ -63,16 +65,29 @@
       }
     }
 
+    // One-step login: enter email -> get magic-link token -> auto-verify -> in.
+    // No token to copy. If real email delivery is on (no token returned), we
+    // reveal the manual token box and tell the user to check their inbox.
     $('btnMagic').addEventListener('click', function () {
       var email = $('email').value.trim();
       if (!email) { $('authMsg').textContent = t('error_empty'); return; }
-      $('authMsg').textContent = '...';
+      var btn = $('btnMagic'); btn.disabled = true; btn.textContent = t('entering');
+      $('authMsg').textContent = t('entering');
       api('POST', '/auth/magic-link', { email: email }).then(function (r) {
-        if (r.status === 200) {
-          if (r.body.loginToken) { $('loginToken').value = r.body.loginToken; $('authMsg').textContent = r.body.message + ' (token auto-rellenado para pruebas)'; }
-          else { $('authMsg').textContent = r.body.message; }
-        } else { $('authMsg').textContent = r.body.error || t('error_generic'); }
-      }).catch(function () { $('authMsg').textContent = t('error_generic'); });
+        if (r.status !== 200) { btn.disabled = false; btn.textContent = t('enter'); $('authMsg').textContent = r.body.error || t('error_generic'); return; }
+        if (r.body.loginToken) {
+          // frictionless: verify immediately, user never sees a token
+          return api('POST', '/auth/verify', { token: r.body.loginToken }).then(function (v) {
+            btn.disabled = false; btn.textContent = t('enter');
+            if (v.status === 200 && v.body.jwt) { setJwt(v.body.jwt); $('authMsg').textContent = ''; refreshAuthUI(); }
+            else { $('authMsg').textContent = (v.body && v.body.error) || t('error_generic'); }
+          });
+        }
+        // email delivery is enabled -> token was emailed, show manual entry
+        btn.disabled = false; btn.textContent = t('enter');
+        $('tokenRow').classList.remove('hidden'); $('tokenRow').classList.add('flex');
+        $('authMsg').textContent = t('check_email');
+      }).catch(function () { btn.disabled = false; btn.textContent = t('enter'); $('authMsg').textContent = t('error_generic'); });
     });
 
     $('btnVerify').addEventListener('click', function () {
@@ -190,7 +205,8 @@
     applyI18n();
     wireLangToggle();
     if (/\/dashboard\/?$/.test(location.pathname)) initDashboard();
-    else initLanding();
+    else if (/\/app\/?$/.test(location.pathname)) initApp();
+    // else: marketing landing — i18n + lang toggle only
   });
   window.__initDashboard = initDashboard;
 })();

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OK Hola — De tu voz a un video</title>
+  <meta name="description" content="Describe tu video hablando. OK Hola construye el prompt estructurado por ti.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .grad { background: radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.28), transparent 60%); }
+    .card { background: linear-gradient(180deg, rgba(24,24,27,.9), rgba(9,9,11,.9)); }
+    .orb { background: radial-gradient(circle at 35% 30%, #c7b6ff, #6366f1 45%, #2a1f6b 100%); box-shadow: 0 0 60px rgba(99,102,241,.5); animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .fade { opacity: 0; transform: translateY(12px); animation: fade .7s ease forwards; }
+    @keyframes fade { to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen antialiased">
+  <script>window.__DICT = {{DICT_JSON}}; window.__LANG = "{{LANG}}";</script>
+
+  <!-- Nav -->
+  <header class="relative z-10">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-2 font-bold tracking-tight">
+        <span class="w-7 h-7 rounded-full orb inline-block"></span> OK Hola
+      </div>
+      <nav class="flex items-center gap-4 text-sm">
+        <a href="./dashboard?lang={{LANG}}" class="text-zinc-400 hover:text-zinc-100" data-i18n="nav_library">Mi biblioteca</a>
+        <a id="langToggle" href="#" class="text-zinc-400 hover:text-zinc-100">EN / ES</a>
+        <a href="./app?lang={{LANG}}" class="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 font-medium" data-i18n="lp_cta_primary">Empezar gratis</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="grad">
+    <div class="max-w-4xl mx-auto px-6 pt-16 pb-20 text-center">
+      <div class="w-20 h-20 rounded-full orb mx-auto mb-8"></div>
+      <p class="text-indigo-400 font-medium mb-3 fade" data-i18n="lp_kicker">Voz a video, sin fricción</p>
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight fade" data-i18n="h1">OK Hola — De tu voz a un video</h1>
+      <p class="mt-5 text-lg text-zinc-300 max-w-2xl mx-auto fade" data-i18n="lp_hero_sub">Dile a OK Hola qué video quieres en tus propias palabras.</p>
+      <div class="mt-8 flex flex-wrap gap-3 justify-center fade">
+        <a href="./app?lang={{LANG}}" class="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-3 font-semibold" data-i18n="lp_cta_primary">Empezar gratis</a>
+        <a href="#how" class="rounded-xl border border-zinc-700 hover:border-zinc-500 px-6 py-3 font-semibold" data-i18n="lp_cta_secondary">Ver cómo funciona</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- What / Why -->
+  <section class="max-w-5xl mx-auto px-6 py-14 grid md:grid-cols-2 gap-5">
+    <div class="card rounded-2xl border border-zinc-800 p-7">
+      <h2 class="text-xl font-bold mb-2" data-i18n="lp_what_title">Qué es</h2>
+      <p class="text-zinc-300" data-i18n="lp_what_body"></p>
+    </div>
+    <div class="card rounded-2xl border border-zinc-800 p-7">
+      <h2 class="text-xl font-bold mb-2" data-i18n="lp_why_title">Por qué importa</h2>
+      <p class="text-zinc-300" data-i18n="lp_why_body"></p>
+    </div>
+  </section>
+
+  <!-- How -->
+  <section id="how" class="max-w-5xl mx-auto px-6 py-8">
+    <h2 class="text-2xl font-bold text-center mb-8" data-i18n="lp_how_title">Cómo funciona</h2>
+    <div class="grid sm:grid-cols-3 gap-5">
+      <div class="card rounded-2xl border border-zinc-800 p-6">
+        <div class="text-indigo-400 text-3xl mb-3">&#127908;</div>
+        <h3 class="font-semibold mb-1" data-i18n="lp_how_1_t">1. Habla o escribe</h3>
+        <p class="text-sm text-zinc-400" data-i18n="lp_how_1_b"></p>
+      </div>
+      <div class="card rounded-2xl border border-zinc-800 p-6">
+        <div class="text-indigo-400 text-3xl mb-3">&#10024;</div>
+        <h3 class="font-semibold mb-1" data-i18n="lp_how_2_t">2. La IA estructura</h3>
+        <p class="text-sm text-zinc-400" data-i18n="lp_how_2_b"></p>
+      </div>
+      <div class="card rounded-2xl border border-zinc-800 p-6">
+        <div class="text-indigo-400 text-3xl mb-3">&#128190;</div>
+        <h3 class="font-semibold mb-1" data-i18n="lp_how_3_t">3. Edita y guarda</h3>
+        <p class="text-sm text-zinc-400" data-i18n="lp_how_3_b"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="max-w-5xl mx-auto px-6 py-14">
+    <div class="card rounded-2xl border border-zinc-800 p-8">
+      <h2 class="text-xl font-bold mb-6 text-center" data-i18n="lp_feat_title">Pensado para creadores</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+        <div class="text-sm"><div class="text-indigo-400 text-2xl mb-2">&#9679;</div><span data-i18n="lp_f1">Dictado por voz</span></div>
+        <div class="text-sm"><div class="text-indigo-400 text-2xl mb-2">&#9679;</div><span data-i18n="lp_f2">Sin límite de longitud</span></div>
+        <div class="text-sm"><div class="text-indigo-400 text-2xl mb-2">&#9679;</div><span data-i18n="lp_f3">Prompt estructurado editable</span></div>
+        <div class="text-sm"><div class="text-indigo-400 text-2xl mb-2">&#9679;</div><span data-i18n="lp_f4">Biblioteca privada</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="grad">
+    <div class="max-w-3xl mx-auto px-6 py-20 text-center">
+      <h2 class="text-3xl font-extrabold" data-i18n="lp_final_title">Tu próxima idea de video empieza con tu voz</h2>
+      <a href="./app?lang={{LANG}}" class="inline-block mt-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-8 py-3.5 font-semibold text-lg" data-i18n="lp_final_cta">Crear mi primer prompt</a>
+    </div>
+  </section>
+
+  <footer class="border-t border-zinc-800">
+    <div class="max-w-5xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
+      <span data-i18n="lp_footer_note">Render de video y publicación en redes: en camino.</span>
+      <a href="./privacy" class="hover:underline" data-i18n="footer_privacy">Aviso de privacidad</a>
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
