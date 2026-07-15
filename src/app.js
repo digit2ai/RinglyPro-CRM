@@ -2727,6 +2727,118 @@ ${content}
   res.send(html);
 });
 
+// ============================================================
+// ORBUP — orbup.com brand (voice-orb-first clone of /digit2ai).
+// The talking Neural orb is the center of attraction; no logo,
+// enlarged orb, "it's time to OrbUp" messaging. Same AI-native
+// firm, same live backend (triage/intake/voice) — new brand.
+// Framable from orbup.com / digit2ai.com (GHL), like /digit2ai.
+// ============================================================
+const ORBUP_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
+(function(){
+  try {
+    var TARGET = ${JSON.stringify(targetLang)};
+    var url = new URL(window.location.href);
+    var override = url.searchParams.get('lang');
+    var STORE_KEY = 'orbup_lang';
+    var safeGet = function(){ try { return localStorage.getItem(STORE_KEY); } catch(e){ return null; } };
+    var safeSet = function(v){ try { localStorage.setItem(STORE_KEY, v); } catch(e){} };
+    var nav = function(path){
+      var dest = 'https://aiagent.ringlypro.com' + path;
+      try { if (window.top && window.top !== window.self) { window.top.location.replace(dest); return; } } catch(e){}
+      window.location.replace(path);
+    };
+    if (override === 'en' || override === 'es') {
+      safeSet(override);
+      if (override !== TARGET) nav(override === 'es' ? '/orbup-es' : '/orbup');
+      return;
+    }
+    var stored = safeGet();
+    if (stored === 'en' || stored === 'es') {
+      if (stored !== TARGET) nav(stored === 'es' ? '/orbup-es' : '/orbup');
+      return;
+    }
+    if (TARGET === 'es') { safeSet('es'); return; }
+    var SPANISH_COUNTRIES = ['ES','MX','AR','CO','PE','VE','CL','EC','GT','CU','BO','DO','HN','PY','SV','NI','CR','PR','UY','GQ'];
+    var done = false; var html = document.documentElement; html.style.visibility = 'hidden';
+    var finish = function(toEs){ if (done) return; done = true; html.style.visibility='';
+      if (toEs) { safeSet('es'); nav('/orbup-es'); } else { safeSet('en'); } };
+    setTimeout(function(){ finish(false); }, 1200);
+    fetch('https://ipapi.co/json/', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ var c = d && d.country_code ? String(d.country_code).toUpperCase() : '';
+        finish(SPANISH_COUNTRIES.indexOf(c) !== -1); })
+      .catch(function(){ finish(false); });
+  } catch(e) {}
+})();
+</script>`;
+
+const orbupFrameCsp = "frame-ancestors 'self' https://orbup.com https://*.orbup.com https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
+
+app.get('/orbup', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
+  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${ORBUP_GEO_REDIRECT_SCRIPT('en')}
+<title>OrbUp — Talk to it. We build it.</title>
+<meta name="description" content="It's time to OrbUp. Tap the orb and talk — let your website and AI ecosystem speak for themselves. An AI-native software firm: voice agents, dashboards, automations, full platforms.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://orbup.com">
+<meta property="og:title" content="OrbUp — Talk to it. We build it.">
+<meta property="og:description" content="Tap the orb and describe your idea. OrbUp's AI workforce scopes it, builds it, and ships it live.">
+<meta property="og:image" content="${ogImage}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="OrbUp — Talk to it. We build it.">
+<meta name="twitter:description" content="It's time to OrbUp. Let the website and ecosystem speak.">
+<meta name="twitter:image" content="${ogImage}">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
+app.get('/orbup-es', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
+  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+${ORBUP_GEO_REDIRECT_SCRIPT('es')}
+<title>OrbUp — Háblale. Lo construimos.</title>
+<meta name="description" content="Es hora de OrbUp. Toca el orbe y habla — deja que tu sitio web y tu ecosistema de IA hablen por sí mismos. Firma de software AI-native: agentes de voz, tableros, automatizaciones y plataformas completas.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://orbup.com">
+<meta property="og:title" content="OrbUp — Háblale. Lo construimos.">
+<meta property="og:description" content="Toca el orbe y describe tu idea. La fuerza de trabajo con IA de OrbUp la dimensiona, la construye y la lanza en vivo.">
+<meta property="og:image" content="${ogImage}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="OrbUp — Háblale. Lo construimos.">
+<meta name="twitter:image" content="${ogImage}">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+console.log('🔮 OrbUp brand pages mounted at /orbup and /orbup-es');
+
 // Presto — 5-minute executive mini-demo (EN/ES toggle in-page)
 app.get('/presto', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/presto.html'));
