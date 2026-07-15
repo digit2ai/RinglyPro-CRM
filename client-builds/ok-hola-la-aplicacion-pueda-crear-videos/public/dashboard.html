@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OK Hola — Mi biblioteca</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <script>window.__DICT = {{DICT_JSON}}; window.__LANG = "{{LANG}}";</script>
+
+  <header class="border-b border-zinc-800">
+    <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="font-bold" data-i18n="library_title">Mi biblioteca de prompts</div>
+      <a href="./?lang={{LANG}}" class="text-sm text-indigo-400 hover:underline" data-i18n="back_create">Crear otro</a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-10 space-y-4">
+    <div id="needLogin" class="hidden text-amber-400 text-sm">
+      <span data-i18n="login_desc"></span> <a href="./?lang={{LANG}}" class="underline text-indigo-400" data-i18n="nav_create">Crear</a>
+    </div>
+    <div id="empty" class="hidden text-zinc-400" data-i18n="library_empty">Aún no tienes prompts guardados.</div>
+    <div id="list" class="space-y-3"></div>
+  </main>
+
+  <script src="./app.js"></script>
+  <script>window.__DASHBOARD = true;</script>
+  <script>if (window.__initDashboard) window.__initDashboard();</script>
+</body>
+</html>
