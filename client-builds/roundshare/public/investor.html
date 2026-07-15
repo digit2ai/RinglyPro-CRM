@@ -136,6 +136,22 @@
 
 <script>
   var BASE=location.pathname.replace(/\/+$/,'');
+  // '' on roundshare.app, '/roundshare' on aiagent — mount base for the admin endpoint.
+  var APP=location.pathname.replace(/\/(investors?|investor-summary|valuation|pre-seed-valuation)\/?$/,'');
+
+  function revealDoc(html){
+    document.getElementById('invBody').innerHTML=html;
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('invBody').classList.remove('hidden');
+    document.getElementById('printbar').classList.remove('hidden');
+  }
+
+  // Authenticated admins skip the access-key gate entirely.
+  fetch(APP+'/admin/api/investor-body',{credentials:'same-origin'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){ if(j&&j.ok&&j.html){ revealDoc(j.html); } })
+    .catch(function(){});
+
   document.getElementById('gateForm').addEventListener('submit',function(e){
     e.preventDefault();
     var pc=document.getElementById('passcode').value||'';
@@ -144,10 +160,7 @@
       .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
       .then(function(res){
         if(res.ok&&res.j&&res.j.ok){
-          document.getElementById('invBody').innerHTML=res.j.html;
-          document.getElementById('gate').classList.add('hidden');
-          document.getElementById('invBody').classList.remove('hidden');
-          document.getElementById('printbar').classList.remove('hidden');
+          revealDoc(res.j.html);
         } else { err.textContent=(res.j&&res.j.error)||'Incorrect key.'; }
       }).catch(function(){ err.textContent='Network error — please try again.'; });
   });

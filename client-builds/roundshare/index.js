@@ -291,6 +291,13 @@ app.post('/admin/logout', (req, res) => {
 
 app.get('/admin/api/me', requireAdmin, (req, res) => res.json({ ok: true, email: req.admin.email }));
 
+// Investor package body for authenticated admins — no passcode required.
+// The investor page tries this first; if the admin cookie is valid it renders
+// the document directly (bypassing the public access-key gate).
+app.get('/admin/api/investor-body', requireAdmin, (req, res) => {
+  res.json({ ok: true, html: investorBody() });
+});
+
 app.get('/admin/api/leads', requireAdmin, async (req, res) => {
   if (!Waitlist || !dbReady) return res.json({ ok: true, db: false, leads: [] });
   try {
