@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pricing — DIGIT2AI</title>
-<meta name="description" content="Simple credit-based pricing for Digit2AI. Start free, scale with monthly build credits. Powered by Stripe.">
-<meta property="og:title" content="Pricing — DIGIT2AI">
+<title>Pricing — OrbUp</title>
+<meta name="description" content="Simple credit-based pricing for OrbUp. Start free, scale with monthly build credits. Powered by Stripe.">
+<meta property="og:title" content="Pricing — OrbUp">
 <meta property="og:description" content="Start free. Scale with monthly AI build credits. Pro from $25/mo, Business from $50/mo, Enterprise volume pricing.">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -149,16 +149,16 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
 <div class="ambient"></div>
 
 <nav>
-  <a href="/digit2ai" aria-label="Digit2AI"><img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI"></a>
+  <a href="/orbup" aria-label="OrbUp"><img class="brand-logo" src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580b27c06d2134c6e06440.png" alt="OrbUp"></a>
   <div class="nav-links">
-    <a href="/digit2ai#how" data-i18n="how">How it works</a>
-    <a href="/digit2ai#platforms" data-i18n="platforms">Platforms</a>
+    <a href="/orbup#how" data-i18n="how">How it works</a>
+    <a href="/orbup#platforms" data-i18n="platforms">Platforms</a>
     <a href="/pricing" style="color:var(--ink)" data-i18n="pricing">Pricing</a>
     <span class="lang">
       <a href="#" class="active" data-lang="en">EN</a>
       <a href="#" data-lang="es">ES</a>
     </span>
-    <a href="/digit2ai#d2b-form" class="btn btn-primary" data-i18n="getstarted">Get started</a>
+    <a href="/orbup#d2b-form" class="btn btn-primary" data-i18n="getstarted">Get started</a>
   </div>
 </nav>
 
@@ -171,7 +171,7 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
 
 <p class="note">
   <span data-i18n="note">Payments are securely processed by Stripe. Prices in USD, billed monthly. Need something custom?</span>
-  <a href="mailto:info@digit2ai.com?subject=Digit2AI%20Enterprise">info@digit2ai.com</a>
+  <a href="mailto:info@digit2ai.com?subject=OrbUp%20Enterprise">info@digit2ai.com</a>
 </p>
 
 <div id="toast"></div>
@@ -235,7 +235,7 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
   var TIERS = {
     free:{
       name:{en:"Free",es:"Gratis"},
-      sub:{en:"Discover what Digit2AI can do for you.",es:"Descubre lo que Digit2AI puede hacer por ti."},
+      sub:{en:"Discover what OrbUp can do for you.",es:"Descubre lo que OrbUp puede hacer por ti."},
       meta:{
         en:["No credit card needed","Free grants: 5 build credits/day (up to 30/mo)"],
         es:["Sin tarjeta de crédito","Créditos gratis: 5/día (hasta 30/mes)"]
@@ -324,7 +324,7 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       +'<div class="tier">'+TIERS.free.name[lang]+'</div>'
       +'<div class="tier-sub">'+TIERS.free.sub[lang]+'</div>'
       +'<div class="price"><span class="amt">$0</span><span class="per">'+t('per')+'</span></div>'
-      +'<div class="cta"><a class="btn btn-ghost" href="/digit2ai#d2b-form">'+t('getstarted')+'</a></div>'
+      +'<div class="cta"><a class="btn btn-ghost" href="/orbup#d2b-form">'+t('getstarted')+'</a></div>'
       +metaRows('free')+feats('free')+'</div>';
 
     // PRO (featured)
