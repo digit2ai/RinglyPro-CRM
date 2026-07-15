@@ -45,6 +45,18 @@ try {
   console.log('⚠️ Member-signup Stripe webhook not available:', e.message);
 }
 
+// Digit2AI Pricing credit-grant Stripe webhook - MUST be before body parser (raw body)
+try {
+  const pricingCredits = require('./routes/pricing-credits');
+  app.post('/webhooks/pricing-stripe',
+    express.raw({ type: 'application/json' }),
+    pricingCredits.stripeWebhookHandler
+  );
+  console.log('✅ Pricing credit webhook mounted at /webhooks/pricing-stripe (before body parser)');
+} catch (e) {
+  console.log('⚠️ Pricing credit webhook not available:', e.message);
+}
+
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
@@ -796,6 +808,23 @@ console.log('👑 Admin portal API routes mounted at /api/admin');
 app.use('/api/projects', projectRoutes); // Client project tracker API
 app.use('/api/admin/projects', adminProjectRoutes); // Admin project tracker API
 console.log('📋 Project Tracker routes mounted at /api/projects and /api/admin/projects');
+
+// Digit2AI Pricing + Credit system API (lovable-style credit checkout)
+try {
+  const pricingCreditsRoutes = require('./routes/pricing-credits');
+  app.use('/api/pricing', pricingCreditsRoutes);
+  pricingCreditsRoutes.ensureSchema().catch(e => console.log('⚠️ pricing schema init:', e.message));
+  console.log('💳 Digit2AI Pricing/Credits API mounted at /api/pricing');
+} catch (e) {
+  console.log('⚠️ Pricing/Credits API not available:', e.message);
+}
+
+// Digit2AI Pricing page — framable from digit2ai.com (GHL), like /digit2ai
+app.get('/pricing', (req, res) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  res.sendFile(path.join(__dirname, '../public/digit2ai-pricing.html'));
+});
 
 // Call forwarding API routes
 app.use('/api/call-forwarding', callForwardingRoutes);

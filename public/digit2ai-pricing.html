@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — DIGIT2AI</title>
+<meta name="description" content="Simple credit-based pricing for Digit2AI. Start free, scale with monthly build credits. Powered by Stripe.">
+<meta property="og:title" content="Pricing — DIGIT2AI">
+<meta property="og:description" content="Start free. Scale with monthly AI build credits. Pro from $25/mo, Business from $50/mo, Enterprise volume pricing.">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f5f5f7; --mut:#a6a9b4; --faint:#767a86;
+  --grad:linear-gradient(120deg,#5b7bff 0%,#e64980 52%,#ff922b 100%);
+  --violet:#8b5cf6; --good:#3ad07f; --good-soft:rgba(58,208,127,.14);
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --r:14px; --r-lg:22px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.55;letter-spacing:-.011em;min-height:100vh;overflow-x:hidden;position:relative}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+ul{list-style:none}
+h1,h2,h3{line-height:1.08;letter-spacing:-.03em}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* aurora ambient */
+.ambient{position:absolute;inset:0 0 auto 0;height:900px;z-index:0;pointer-events:none;overflow:hidden}
+.ambient::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(58% 30% at 50% 20%, rgba(66,99,235,.42), transparent 68%),
+    radial-gradient(66% 34% at 50% 40%, rgba(230,73,128,.34), transparent 70%),
+    radial-gradient(78% 40% at 50% 62%, rgba(255,146,43,.28), transparent 74%);
+  filter:blur(30px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);
+          mask-image:linear-gradient(180deg,#000 0%,#000 52%,transparent 100%);}
+
+/* nav */
+nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;
+  max-width:1200px;margin:0 auto;padding:22px 24px}
+.brand-logo{height:30px;width:auto}
+.nav-links{display:flex;align-items:center;gap:22px;font-size:14.5px;color:var(--mut);font-weight:500}
+.nav-links a:hover{color:var(--ink)}
+.lang{display:inline-flex;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang a{padding:3px 9px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--faint)}
+.lang a.active{background:rgba(255,255,255,.12);color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;
+  border-radius:999px;padding:10px 18px;font-size:14px;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--ink);color:#0a0a0e}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,255,255,.14)}
+.btn-ghost{border:1px solid var(--line2);color:var(--ink)}
+.btn-ghost:hover{background:rgba(255,255,255,.06)}
+
+/* header */
+.head{position:relative;z-index:2;text-align:center;padding:52px 0 8px}
+.head h1{font-size:clamp(38px,6vw,60px);font-weight:800}
+.head p{color:var(--mut);font-size:17px;margin-top:16px;max-width:620px;margin-left:auto;margin-right:auto}
+
+/* grid */
+.grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;
+  max-width:1200px;margin:44px auto 0;padding:0 24px}
+@media(max-width:1080px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:26px 22px;display:flex;flex-direction:column;position:relative}
+.card.featured{background:linear-gradient(180deg,#1b1b24,#141419);border-color:rgba(139,92,246,.5);
+  box-shadow:0 0 0 1px rgba(139,92,246,.25),0 24px 60px rgba(139,92,246,.14)}
+.badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  background:var(--grad);color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.04em;
+  padding:5px 12px;border-radius:999px;text-transform:uppercase}
+.tier{font-size:20px;font-weight:700}
+.tier-sub{color:var(--mut);font-size:13.5px;margin-top:6px;min-height:38px}
+.price{margin-top:22px;display:flex;align-items:baseline;gap:6px}
+.price .amt{font-size:44px;font-weight:800;letter-spacing:-.04em}
+.price .per{color:var(--mut);font-size:14px}
+.price .fee-label{color:var(--mut);font-size:19px;font-weight:600}
+
+/* credit selector */
+.sel{margin-top:18px;position:relative}
+.sel select{width:100%;appearance:none;background:var(--card2);color:var(--ink);
+  border:1px solid var(--line2);border-radius:10px;padding:12px 40px 12px 14px;
+  font-size:14.5px;font-weight:600;cursor:pointer}
+.sel::after{content:"⌄";position:absolute;right:16px;top:46%;transform:translateY(-50%);
+  color:var(--mut);pointer-events:none;font-size:16px}
+.save-pill{display:inline-block;background:var(--good-soft);color:var(--good);
+  font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:6px}
+
+.cta{margin-top:20px}
+.cta .btn{width:100%;padding:12px}
+.card.featured .cta .btn-primary{background:var(--violet);color:#fff}
+.card.featured .cta .btn-primary:hover{box-shadow:0 8px 24px rgba(139,92,246,.4)}
+
+.meta{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;display:flex;flex-direction:column;gap:9px}
+.meta .row{display:flex;align-items:center;gap:9px}
+.feats{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:11px}
+.feats li{display:flex;gap:10px;font-size:13.5px;color:var(--ink)}
+.feats li .ck{color:var(--good);flex:none;font-weight:700}
+.feats li.muted{color:var(--mut)}
+.feats .grp{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:4px}
+
+.note{position:relative;z-index:2;text-align:center;color:var(--faint);font-size:13px;margin:40px auto 60px;max-width:620px;padding:0 24px}
+.note a{color:var(--mut);text-decoration:underline}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:#1c1c24;border:1px solid var(--line2);color:var(--ink);padding:12px 20px;border-radius:12px;
+  font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<nav>
+  <a href="/digit2ai" aria-label="Digit2AI"><img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI"></a>
+  <div class="nav-links">
+    <a href="/digit2ai#how" data-i18n="how">How it works</a>
+    <a href="/digit2ai#platforms" data-i18n="platforms">Platforms</a>
+    <a href="/pricing" style="color:var(--ink)" data-i18n="pricing">Pricing</a>
+    <span class="lang">
+      <a href="#" class="active" data-lang="en">EN</a>
+      <a href="#" data-lang="es">ES</a>
+    </span>
+    <a href="/digit2ai#d2b-form" class="btn btn-primary" data-i18n="getstarted">Get started</a>
+  </div>
+</nav>
+
+<header class="head wrap">
+  <h1><span data-i18n="h1a">Simple, </span><span class="grad-text" data-i18n="h1b">credit-based</span><span data-i18n="h1c"> pricing</span></h1>
+  <p data-i18n="sub">Start free. Scale with monthly build credits. Every credit fuels your AI workforce — scoping, building, and shipping real software. Cancel anytime.</p>
+</header>
+
+<div class="grid" id="grid"><!-- rendered by JS --></div>
+
+<p class="note">
+  <span data-i18n="note">Payments are securely processed by Stripe. Prices in USD, billed monthly. Need something custom?</span>
+  <a href="mailto:info@digit2ai.com?subject=Digit2AI%20Enterprise">info@digit2ai.com</a>
+</p>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  // ---------- i18n ----------
+  var I18N = {
+    en:{ how:"How it works", platforms:"Platforms", pricing:"Pricing", getstarted:"Get started",
+      h1a:"Simple, ", h1b:"credit-based", h1c:" pricing",
+      sub:"Start free. Scale with monthly build credits. Every credit fuels your AI workforce — scoping, building, and shipping real software. Cancel anytime.",
+      note:"Payments are securely processed by Stripe. Prices in USD, billed monthly. Need something custom?",
+      per:"/ month", creditsMo:"monthly credits", bookDemo:"Book a demo", platformFee:"Platform fee",
+      redirecting:"Redirecting to secure checkout…", noStripe:"Payments not configured yet — email info@digit2ai.com.",
+      err:"Something went wrong. Please try again." },
+    es:{ how:"Cómo funciona", platforms:"Plataformas", pricing:"Precios", getstarted:"Empezar",
+      h1a:"Precios simples ", h1b:"por créditos", h1c:"",
+      sub:"Empieza gratis. Escala con créditos mensuales de construcción. Cada crédito impulsa tu fuerza laboral de IA — diseñar, construir y lanzar software real. Cancela cuando quieras.",
+      note:"Los pagos se procesan de forma segura con Stripe. Precios en USD, facturación mensual. ¿Necesitas algo a medida?",
+      per:"/ mes", creditsMo:"créditos mensuales", bookDemo:"Agendar demo", platformFee:"Tarifa de plataforma",
+      redirecting:"Redirigiendo al pago seguro…", noStripe:"Pagos aún no configurados — escribe a info@digit2ai.com.",
+      err:"Algo salió mal. Inténtalo de nuevo." }
+  };
+  var lang = (function(){
+    try{
+      var q=new URLSearchParams(location.search).get('lang');
+      if(q==='es'||q==='en'){ try{localStorage.setItem('d2ai_lang',q);}catch(_){}; return q; }
+      return localStorage.getItem('d2ai_lang')==='es'?'es':'en';
+    }catch(e){ return 'en'; }
+  })();
+
+  // ---------- tier copy (bilingual) ----------
+  var TIERS = {
+    free:{
+      name:{en:"Free",es:"Gratis"},
+      sub:{en:"Discover what Digit2AI can do for you.",es:"Descubre lo que Digit2AI puede hacer por ti."},
+      meta:{
+        en:["No credit card needed","Free grants: 5 build credits/day (up to 30/mo)"],
+        es:["Sin tarjeta de crédito","Créditos gratis: 5/día (hasta 30/mes)"]
+      },
+      feats:{
+        en:["Workspace-private projects","Unlimited collaborators","Voice AI demo access","Community support"],
+        es:["Proyectos privados","Colaboradores ilimitados","Acceso a demo de voz IA","Soporte de comunidad"]
+      }
+    },
+    pro:{
+      name:{en:"Pro",es:"Pro"},
+      sub:{en:"For builders shipping real tools, together in real time.",es:"Para quienes construyen y lanzan herramientas reales, en tiempo real."},
+      feats:{
+        en:["Everything in Free","Monthly build credits","Private projects","User roles & permissions","Custom domains","Standard support"],
+        es:["Todo lo de Gratis","Créditos mensuales","Proyectos privados","Roles y permisos","Dominios personalizados","Soporte estándar"]
+      }
+    },
+    business:{
+      name:{en:"Business",es:"Business"},
+      sub:{en:"For teams that need scale, security and control.",es:"Para equipos que necesitan escala, seguridad y control."},
+      feats:{
+        en:["Everything in Pro","SSO","Security center","Design templates","Priority support"],
+        es:["Todo lo de Pro","SSO","Centro de seguridad","Plantillas de diseño","Soporte prioritario"]
+      }
+    },
+    enterprise:{
+      name:{en:"Enterprise",es:"Enterprise"},
+      sub:{en:"Built for large orgs needing flexibility, scale and governance.",es:"Para grandes organizaciones que necesitan flexibilidad, escala y gobernanza."},
+      feats:{
+        en:["All Business features","Volume-based credit pricing","Dedicated support","Onboarding services","Design systems","SCIM","Custom connectors","Publishing & sharing controls"],
+        es:["Todo lo de Business","Precios por volumen","Soporte dedicado","Servicios de onboarding","Sistemas de diseño","SCIM","Conectores personalizados","Controles de publicación"]
+      }
+    }
+  };
+
+  var MATRIX = null; // fetched from /api/pricing/plans
+  var selected = { pro:100, business:100 };
+
+  function t(k){ return (I18N[lang]&&I18N[lang][k])||I18N.en[k]||k; }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+
+  function toast(msg){
+    var el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+    clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove('show'); },3200);
+  }
+
+  function priceCard(plan){
+    var rows = MATRIX[plan]||[];
+    var cur = rows.find(function(r){return r.credits===selected[plan];})||rows[0];
+    return cur ? cur.price : 0;
+  }
+
+  function creditOptions(plan){
+    var rows = MATRIX[plan]||[];
+    return rows.map(function(r){
+      var save = r.discount>0 ? '  ·  Save '+Math.round(r.discount*100)+'%' : '';
+      return '<option value="'+r.credits+'"'+(r.credits===selected[plan]?' selected':'')+'>'
+        + fmt(r.credits)+' credits — $'+fmt(r.price)+'/mo'+save+'</option>';
+    }).join('');
+  }
+
+  function render(){
+    document.documentElement.lang = lang;
+    // i18n static
+    document.querySelectorAll('[data-i18n]').forEach(function(el){
+      var k=el.getAttribute('data-i18n'); if(I18N[lang][k]!==undefined) el.textContent=I18N[lang][k];
+    });
+    document.querySelectorAll('.lang a').forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('data-lang')===lang);
+    });
+
+    if(!MATRIX){ return; }
+    var g=document.getElementById('grid');
+    var ck='<span class="ck">✓</span>';
+
+    function feats(plan){
+      return '<ul class="feats">'+TIERS[plan].feats[lang].map(function(f){return '<li>'+ck+'<span>'+f+'</span></li>';}).join('')+'</ul>';
+    }
+    function metaRows(plan){
+      if(!TIERS[plan].meta) return '';
+      return '<div class="meta">'+TIERS[plan].meta[lang].map(function(m){return '<div class="row">'+ck+'<span>'+m+'</span></div>';}).join('')+'</div>';
+    }
+
+    // FREE
+    var free='<div class="card">'
+      +'<div class="tier">'+TIERS.free.name[lang]+'</div>'
+      +'<div class="tier-sub">'+TIERS.free.sub[lang]+'</div>'
+      +'<div class="price"><span class="amt">$0</span><span class="per">'+t('per')+'</span></div>'
+      +'<div class="cta"><a class="btn btn-ghost" href="/digit2ai#d2b-form">'+t('getstarted')+'</a></div>'
+      +metaRows('free')+feats('free')+'</div>';
+
+    // PRO (featured)
+    var pro='<div class="card featured">'
+      +'<div class="badge">Most popular</div>'
+      +'<div class="tier">'+TIERS.pro.name[lang]+'</div>'
+      +'<div class="tier-sub">'+TIERS.pro.sub[lang]+'</div>'
+      +'<div class="price"><span class="amt" id="pro-amt">$'+fmt(priceCard('pro'))+'</span><span class="per">'+t('per')+'</span></div>'
+      +'<div class="sel"><select id="pro-sel" aria-label="Pro credits">'+creditOptions('pro')+'</select></div>'
+      +'<div class="cta"><button class="btn btn-primary" data-buy="pro">'+t('getstarted')+'</button></div>'
+      +feats('pro')+'</div>';
+
+    // BUSINESS
+    var biz='<div class="card">'
+      +'<div class="tier">'+TIERS.business.name[lang]+'</div>'
+      +'<div class="tier-sub">'+TIERS.business.sub[lang]+'</div>'
+      +'<div class="price"><span class="amt" id="business-amt">$'+fmt(priceCard('business'))+'</span><span class="per">'+t('per')+'</span></div>'
+      +'<div class="sel"><select id="business-sel" aria-label="Business credits">'+creditOptions('business')+'</select></div>'
+      +'<div class="cta"><button class="btn btn-ghost" data-buy="business">'+t('getstarted')+'</button></div>'
+      +feats('business')+'</div>';
+
+    // ENTERPRISE
+    var ent='<div class="card">'
+      +'<div class="tier">'+TIERS.enterprise.name[lang]+'</div>'
+      +'<div class="tier-sub">'+TIERS.enterprise.sub[lang]+'</div>'
+      +'<div class="price"><span class="fee-label">'+t('platformFee')+'</span></div>'
+      +'<div class="cta"><a class="btn btn-ghost" href="mailto:info@digit2ai.com?subject=Digit2AI%20Enterprise">'+t('bookDemo')+'</a></div>'
+      +feats('enterprise')+'</div>';
+
+    g.innerHTML = free+pro+biz+ent;
+
+    // wire selects
+    ['pro','business'].forEach(function(plan){
+      var sel=document.getElementById(plan+'-sel');
+      if(sel) sel.addEventListener('change',function(){
+        selected[plan]=Number(sel.value);
+        document.getElementById(plan+'-amt').textContent='$'+fmt(priceCard(plan));
+      });
+    });
+    // wire buy buttons
+    document.querySelectorAll('[data-buy]').forEach(function(b){
+      b.addEventListener('click',function(){ checkout(b.getAttribute('data-buy'), b); });
+    });
+  }
+
+  function checkout(plan, btn){
+    var original = btn.innerHTML;
+    btn.innerHTML='<span class="spin"></span>'; btn.disabled=true;
+    fetch('/api/pricing/checkout',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ plan:plan, credits:selected[plan] })
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d && d.success && d.url){ toast(t('redirecting')); window.location.href=d.url; }
+      else { toast(d && d.error ? d.error : t('noStripe')); btn.innerHTML=original; btn.disabled=false; }
+    }).catch(function(){ toast(t('err')); btn.innerHTML=original; btn.disabled=false; });
+  }
+
+  // lang toggle
+  document.querySelectorAll('.lang a').forEach(function(a){
+    a.addEventListener('click',function(e){
+      e.preventDefault(); lang=a.getAttribute('data-lang');
+      try{ localStorage.setItem('d2ai_lang',lang); }catch(_){}
+      render();
+    });
+  });
+
+  // success/cancel banner from Stripe redirect
+  (function(){
+    var q=new URLSearchParams(location.search);
+    if(q.get('checkout')==='success') setTimeout(function(){toast(lang==='es'?'¡Pago exitoso! Tus créditos se activarán en segundos.':'Payment successful! Your credits activate in seconds.');},400);
+    if(q.get('checkout')==='canceled') setTimeout(function(){toast(lang==='es'?'Pago cancelado.':'Checkout canceled.');},400);
+  })();
+
+  // load matrix then render
+  fetch('/api/pricing/plans').then(function(r){return r.json();}).then(function(d){
+    if(d&&d.success){ MATRIX=d.plans; }
+    render();
+  }).catch(function(){ render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>
