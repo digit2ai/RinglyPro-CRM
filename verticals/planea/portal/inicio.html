@@ -38,14 +38,14 @@
 
   <section class="hero">
     <div class="hero-top">
-      <div><h1>Hola, Manuel</h1><p class="lede">Tus propias finanzas en un solo lugar.</p></div>
+      <div><h1>Hola, <span data-pl="nombre">Manuel</span></h1><p class="lede">Tus propias finanzas en un solo lugar.</p></div>
       <div class="ringw">
         <div class="ring">
-          <svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg>
-          <div class="num"><b>89</b><small>PLANEA</small></div>
+          <svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg>
+          <div class="num"><b data-pl="score">89</b><small>PLANEA</small></div>
         </div>
         <div class="cap">PUNTAJE PLANEA</div>
-        <div class="rango">Sólido</div>
+        <div class="rango" data-pl="rango">Sólido</div>
       </div>
     </div>
     <div class="divg"></div>
@@ -55,22 +55,24 @@
 
   <section class="sec">
     <div class="sec-head"><div><h2>Tu patrimonio</h2><div class="sub">Cuánto has construido hasta hoy</div></div><a class="link" href="/planea/portal/patrimonio">Ver detalle →</a></div>
-    <div class="big-money">$128.500.000<span class="cur">COP</span></div>
+    <div class="big-money"><span data-pl="patrimonio_total">$128.500.000</span><span class="cur">COP</span></div>
     <div class="btn-row"><a class="btn primary" href="/planea/portal/patrimonio">Ver mi patrimonio →</a><a class="btn ghost" href="/planea/portal/cuentas">Conectar cuentas</a></div>
   </section>
 
   <section class="sec">
     <div class="sec-head"><div><h2>Balance</h2><div class="sub">Lo que tienes frente a lo que debes</div></div><a class="link" href="/planea/portal/patrimonio">Ver desglose →</a></div>
     <div class="bars">
-      <div class="bar"><div class="cab"><span class="lbl">Activos</span><span class="val">$172.000.000</span></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
-      <div class="bar neg"><div class="cab"><span class="lbl">Pasivos</span><span class="val">$43.500.000</span></div><div class="track"><div class="fill" style="width:25%"></div></div></div>
+      <div class="bar"><div class="cab"><span class="lbl">Activos</span><span class="val" data-pl="activos_total">$172.000.000</span></div><div class="track"><div class="fill" data-pl-bar="activos" style="width:100%"></div></div></div>
+      <div class="bar neg"><div class="cab"><span class="lbl">Pasivos</span><span class="val" data-pl="pasivos_total">$43.500.000</span></div><div class="track"><div class="fill" data-pl-bar="pasivos" style="width:25%"></div></div></div>
     </div>
   </section>
 
   <section class="sec">
     <div class="sec-head"><div><h2>Fondo de emergencia</h2><div class="sub">Tu meta más prioritaria en este momento</div></div><span class="badge">Prioridad alta</span></div>
-    <div class="track" style="height:12px;margin-top:16px"><div class="fill" style="width:71%"></div></div>
-    <div class="pie" style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)"><span><strong style="color:var(--txt)">71%</strong> completado</span><span><strong style="color:var(--txt)">2 meses</strong> restantes al ritmo actual</span></div>
+    <div data-pl-list="fondo_emergencia" data-pl-empty="Aún no defines tu fondo de emergencia. Habla con Maya para dar el primer paso.">
+      <div class="track" style="height:12px;margin-top:16px"><div class="fill" style="width:71%"></div></div>
+      <div class="pie" style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)"><span><strong style="color:var(--txt)">71%</strong> completado</span><span><strong style="color:var(--txt)">2 meses</strong> restantes al ritmo actual</span></div>
+    </div>
     <div class="btn-row"><a class="btn primary" href="/planea/portal/metas">Aportar ahora →</a><a class="btn ghost" href="/planea/portal/metas">Ver todas mis metas</a></div>
   </section>
 
@@ -79,27 +81,26 @@
   </section>
 
   <section class="sec">
-    <h2>Próximos pasos sugeridos por Maya</h2><div class="sub">3 acciones concretas para mejorar tu score esta semana</div>
+    <h2>Próximos pasos sugeridos por Maya</h2><div class="sub">Acciones concretas para mejorar tu Planea Score</div>
     <div class="steps">
-      <div class="step"><div class="n">1</div><h4>Aporta a tu fondo de emergencia</h4><p>Te faltan $5,2M para cubrir 6 meses. Un aporte de $1,3M este mes te acerca al 80%.</p><a class="link" href="/planea/portal/ahorro">Programar aporte →</a></div>
-      <div class="step"><div class="n">2</div><h4>Reduce tu tarjeta de crédito</h4><p>La tarjeta representa ~6% de tus pasivos y es tu deuda más cara. Abonar $1,2M ahora te ahorra ~$210k en intereses.</p><a class="link" href="/planea/portal/deuda">Ver plan de pago →</a></div>
-      <div class="step"><div class="n">3</div><h4>Conecta Banco de Occidente</h4><p>Aún no vemos tus cuentas de nómina. Al conectarlas mejoramos tu Planea Score.</p><a class="link" href="/planea/portal/cuentas">Conectar cuenta →</a></div>
+      <div class="step"><div class="n">1</div><h4>Haz tu diagnóstico Planea</h4><p>Responde el cuestionario de dos minutos para calcular tu Planea Score real y ver tus puntos débiles.</p><a class="link" href="#" data-action="maya">Empezar con Maya →</a></div>
+      <div class="step"><div class="n">2</div><h4>Registra tu patrimonio</h4><p>Agrega tus activos y deudas para que Maya te dé recomendaciones basadas en tu realidad, no en promedios.</p><a class="link" href="/planea/portal/patrimonio">Ver mi patrimonio →</a></div>
+      <div class="step"><div class="n">3</div><h4>Conecta tus cuentas</h4><p>Al vincular tus cuentas bancarias mantenemos tus cifras al día y mejoramos tu Planea Score.</p><a class="link" href="/planea/portal/cuentas">Conectar cuenta →</a></div>
     </div>
   </section>
 
   <section class="sec">
-    <div class="sec-head"><div><h2>Tus pilares financieros</h2><div class="sub">Avance en cada área de tu planeación</div></div><a class="link" href="#" data-action="maya">Planea IA →</a></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Ahorro</span><span class="pct">82%</span></div><div class="track"><div class="fill" style="width:82%"></div></div></div>
-    <div class="pilar alerta"><div class="cab"><span class="nombre">Deuda</span><span class="pct">55%</span></div><div class="track"><div class="fill" style="width:55%"></div></div></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Inversión</span><span class="pct">70%</span></div><div class="track"><div class="fill" style="width:70%"></div></div></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Seguros <span class="nota">· fondo de emergencia y pólizas</span></span><span class="pct">68%</span></div><div class="track"><div class="fill" style="width:68%"></div></div></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Impuestos</span><span class="pct">84%</span></div><div class="track"><div class="fill" style="width:84%"></div></div></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Pensión <span class="nota">· retiro</span></span><span class="pct">60%</span></div><div class="track"><div class="fill" style="width:60%"></div></div></div>
-    <div class="pilar"><div class="cab"><span class="nombre">Legado</span><span class="pct">35%</span></div><div class="track"><div class="fill" style="width:35%"></div></div></div>
+    <div class="sec-head"><div><h2>Tus pilares financieros</h2><div class="sub">Avance en cada área de tu diagnóstico</div></div><a class="link" href="#" data-action="maya">Planea IA →</a></div>
+    <div data-pl-list="pilares" data-pl-empty="Haz tu diagnóstico Planea para ver el avance de tus pilares financieros.">
+      <div class="pilar"><div class="cab"><span class="nombre">Ahorro</span><span class="pct">82%</span></div><div class="track"><div class="fill" style="width:82%"></div></div></div>
+      <div class="pilar alerta"><div class="cab"><span class="nombre">Deuda</span><span class="pct">55%</span></div><div class="track"><div class="fill" style="width:55%"></div></div></div>
+      <div class="pilar"><div class="cab"><span class="nombre">Inversión</span><span class="pct">70%</span></div><div class="track"><div class="fill" style="width:70%"></div></div></div>
+    </div>
   </section>
 
 </div></div>
 <script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
 </body>
 </html>

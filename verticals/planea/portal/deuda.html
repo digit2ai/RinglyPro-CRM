@@ -12,19 +12,16 @@
 <body>
 <div class="app"><div class="wrap">
 
-  <div class="phead"><div><h1>Deuda</h1><p class="lede">Todo lo que debes, ordenado por costo y prioridad de pago.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango">Sólido</div></div></div>
+  <div class="phead"><div><h1>Deuda</h1><p class="lede">Todo lo que debes, ordenado por costo y prioridad de pago.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num" data-pl="score">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango" data-pl="rango">Sólido</div></div></div>
 
   <div class="eyebrow">Saldo total de deuda · pasivos activos</div>
-  <div class="big-money">$43.500.000<span class="cur">COP</span></div>
-
-  <div class="eyebrow" style="margin-top:22px">Intereses estimados este año</div>
-  <div class="legend"><span><i class="dot d1"></i>Intereses <b>$7.200.000</b></span><span><i class="dot d2"></i>Cuota total <b>$1.820.000/mes</b></span><span><i class="dot d3"></i>% ingreso <b>16.8%</b></span></div>
+  <div class="big-money"><span data-pl="deuda_total">$43.500.000</span><span class="cur">COP</span></div>
 
   <div class="divider-h"></div>
 
   <div class="group">
-    <div class="group-head"><div><div class="gt">Tus créditos y tarjetas</div><div class="gs">Ordenados por tasa: la más cara primero</div></div><div class="gv">$43.500.000 <span class="chev">^</span></div></div>
-    <div class="group-body">
+    <div class="group-head"><div><div class="gt">Tus créditos y tarjetas</div><div class="gs">Ordenados de mayor a menor saldo</div></div><div class="gv"><span data-pl="deuda_total">$43.500.000</span> <span class="chev">^</span></div></div>
+    <div class="group-body" data-pl-list="deuda" data-pl-empty="Aún no has registrado deudas. Agrega tus créditos y tarjetas en Mi Patrimonio para ver aquí tu plan de pago.">
       <div class="pocket"><div class="r1"><div class="nm">Tarjeta de crédito Visa <span class="m">· Banco de Occidente</span></div><div class="amt rate">$4.500.000 · 27.5% E.A.</div></div><div class="mini-track"><div class="mini-fill" style="width:10%"></div></div><div class="sub"><span>Cuota</span><span>$580.000/mes</span></div></div>
       <div class="pocket"><div class="r1"><div class="nm">Crédito de libre inversión <span class="m">· Banco de Occidente</span></div><div class="amt rate">$11.000.000 · 18.9% E.A.</div></div><div class="mini-track"><div class="mini-fill" style="width:25%"></div></div><div class="sub"><span>Cuota</span><span>$520.000/mes</span></div></div>
       <div class="pocket"><div class="r1"><div class="nm">Crédito de vehículo <span class="m">· Banco de Occidente</span></div><div class="amt rate">$28.000.000 · 14.2% E.A.</div></div><div class="mini-track"><div class="mini-fill" style="width:64%"></div></div><div class="sub"><span>Cuota</span><span>$720.000/mes</span></div></div>
@@ -33,6 +30,7 @@
 
 </div></div>
 <script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
 </body>
 </html>

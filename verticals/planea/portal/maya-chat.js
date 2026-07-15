@@ -97,6 +97,9 @@
   // Sync: set the name immediately from the session so Maya never greets "Eduardo"
   // to a logged-in user. Async: enrich with their real financial data.
   function bootstrapProfile() {
+    // planea-data.js (dashboard loader) owns window.PLANEA_PROFILE when present —
+    // it fetches the same user with person_id-scoped queries. Don't double-fetch.
+    if (window.__planeaDataLoader) return;
     var sess = sbSession();
     if (!sess) return; // portal preview / not logged in → keep demo
     var user = sess.user || {};

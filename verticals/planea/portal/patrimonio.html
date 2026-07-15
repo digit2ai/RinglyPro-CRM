@@ -14,12 +14,12 @@
 
   <div class="phead">
     <div><div class="eyebrow dotted">Actualizado hoy</div><h1>Mi Patrimonio</h1><p class="lede">Todas tus finanzas en una sola lectura.</p></div>
-    <div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango">Sólido</div></div>
+    <div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num" data-pl="score">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango" data-pl="rango">Sólido</div></div>
   </div>
 
   <section class="sec">
     <div class="eyebrow">Patrimonio total</div>
-    <div class="big-money">$128.500.000<span class="cur">COP</span></div>
+    <div class="big-money"><span data-pl="patrimonio_total">$128.500.000</span><span class="cur">COP</span></div>
 
     <div class="eyebrow" style="margin-top:22px">Diversificación por moneda</div>
     <div class="multibar"><i class="c1" style="width:65%"></i><i class="c2" style="width:25%"></i><i class="c3" style="width:10%"></i></div>
@@ -27,14 +27,14 @@
 
     <div class="divider-h"></div>
 
-    <div class="group"><div class="group-head"><div><div class="gt">Activos y pasivos</div><div class="gs">Composición actual</div></div><div class="gv">$128.500.000 neto <span class="chev">^</span></div></div><div class="group-body" style="padding:18px 20px">
+    <div class="group"><div class="group-head"><div><div class="gt">Activos y pasivos</div><div class="gs">Composición actual</div></div><div class="gv"><span data-pl="patrimonio_neto">$128.500.000</span> neto <span class="chev">^</span></div></div><div class="group-body" style="padding:18px 20px">
       <div class="bars">
-        <div class="bar"><div class="cab"><span class="lbl">Activos</span><span class="val">$172.000.000</span></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
-        <div class="bar neg"><div class="cab"><span class="lbl">Pasivos</span><span class="val">$43.500.000</span></div><div class="track"><div class="fill" style="width:25%"></div></div></div>
+        <div class="bar"><div class="cab"><span class="lbl">Activos</span><span class="val" data-pl="activos_total">$172.000.000</span></div><div class="track"><div class="fill" data-pl-bar="activos" style="width:100%"></div></div></div>
+        <div class="bar neg"><div class="cab"><span class="lbl">Pasivos</span><span class="val" data-pl="pasivos_total">$43.500.000</span></div><div class="track"><div class="fill" data-pl-bar="pasivos" style="width:25%"></div></div></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:14px;margin-top:6px">
         <span>Patrimonio neto</span>
-        <span style="font-family:'Inter',sans-serif;font-weight:800;font-size:18px">$128.500.000</span>
+        <span style="font-family:'Inter',sans-serif;font-weight:800;font-size:18px" data-pl="patrimonio_neto">$128.500.000</span>
       </div>
     </div></div>
   </section>
@@ -46,6 +46,7 @@
 
 </div></div>
 <script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
 </body>
 </html>

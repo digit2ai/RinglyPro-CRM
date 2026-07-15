@@ -12,29 +12,25 @@
 <body>
 <div class="app"><div class="wrap">
 
-  <div class="phead"><div><h1>Ahorro</h1><p class="lede">Tu colchón de seguridad y el hábito que sostiene todo lo demás.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango">Sólido</div></div></div>
+  <div class="phead"><div><h1>Ahorro</h1><p class="lede">Tu colchón de seguridad y el hábito que sostiene todo lo demás.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num" data-pl="score">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango" data-pl="rango">Sólido</div></div></div>
 
   <div class="eyebrow">Total ahorrado · líquido disponible</div>
-  <div class="big-money">$18.400.000<span class="cur">COP</span></div>
-
-  <div class="eyebrow" style="margin-top:22px">Cobertura de gastos</div>
-  <div class="legend"><span><i class="dot d1"></i>Meses cubiertos <b>4.1</b></span><span><i class="dot d2"></i>Objetivo <b>6 meses</b></span><span><i class="dot d3"></i>Faltante <b>$8.500.000</b></span></div>
+  <div class="big-money"><span data-pl="ahorro_total">$18.400.000</span><span class="cur">COP</span></div>
 
   <div class="divider-h"></div>
 
   <div class="group">
-    <div class="group-head"><div><div class="gt">Tus bolsillos de ahorro</div><div class="gs">3 bolsillos · cada uno con propósito</div></div><div class="gv">$18.400.000 <span class="chev">^</span></div></div>
-    <div class="group-body">
+    <div class="group-head"><div><div class="gt">Tus bolsillos de ahorro</div><div class="gs">Cada uno con propósito</div></div><div class="gv"><span data-pl="ahorro_total">$18.400.000</span> <span class="chev">^</span></div></div>
+    <div class="group-body" data-pl-list="ahorro" data-pl-empty="Aún no has registrado ahorros. Agrega tus cuentas de ahorro en Mi Patrimonio o pídele a Maya que te ayude a empezar.">
       <div class="pocket"><div class="r1"><div class="nm">Fondo de emergencia <span class="m">· Banco de Occidente · Cuenta AFC</span></div><div class="amt">$12.000.000 / $20.000.000</div></div><div class="mini-track"><div class="mini-fill" style="width:60%"></div></div></div>
       <div class="pocket"><div class="r1"><div class="nm">Ahorro corriente <span class="m">· Banco de Occidente · Ahorros</span></div><div class="amt">$4.200.000 / $6.000.000</div></div><div class="mini-track"><div class="mini-fill" style="width:70%"></div></div></div>
       <div class="pocket"><div class="r1"><div class="nm">Alcancía metas cortas <span class="m">· Alianza Fiduciaria · FIC</span></div><div class="amt">$2.200.000 / $4.000.000</div></div><div class="mini-track"><div class="mini-fill" style="width:55%"></div></div></div>
     </div>
   </div>
 
-  <div class="insight"><div class="tag">Insight de Maya</div><h3>Automatiza $700.000/mes y llegas a 6 meses en 12 meses</h3><p>Programar un débito automático el día de pago es la forma más segura de cerrar la brecha sin pensarlo.</p></div>
-
 </div></div>
 <script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
 </body>
 </html>
