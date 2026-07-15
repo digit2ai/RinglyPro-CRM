@@ -416,6 +416,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: orbup.app -> OrbUp (voice-orb-first brand) marketing landing,
+// served IN PLACE so the address bar stays on orbup.app. GHL domain + Render are
+// configured, so this app now sees the Host header. Root serves the EN landing;
+// /es the Spanish one. /orbup, /orbup-es, /pricing, API and any static asset
+// (has a file extension) pass through untouched so the page + lang toggle work.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'orbup.app' || host === 'www.orbup.app') {
+    const p = req.path;
+    if (p.startsWith('/orbup') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    if (p === '/' || p === '' || p === '/index.html' || p === '/en') req.url = '/orbup';
+    else if (p === '/es') req.url = '/orbup-es';
+  }
+  next();
+});
+
 // Legacy chamber URL redirects -- BEFORE express.static so the redirect
 // fires for /chamber/hispamind/* before static serves the bundled HTML
 const LEGACY_CHAMBER_MAP_EARLY = { hispamind: 'cv-1', pacccfl: 'cv-2', pcci: 'cv-3' };
@@ -2773,7 +2789,7 @@ const ORBUP_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
 })();
 </script>`;
 
-const orbupFrameCsp = "frame-ancestors 'self' https://orbup.com https://*.orbup.com https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
+const orbupFrameCsp = "frame-ancestors 'self' https://orbup.app https://*.orbup.app https://orbup.com https://*.orbup.com https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
 
 app.get('/orbup', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
@@ -2789,7 +2805,7 @@ ${ORBUP_GEO_REDIRECT_SCRIPT('en')}
 <title>OrbUp — Talk to it. We build it.</title>
 <meta name="description" content="It's time to OrbUp. Tap the orb and talk — let your website and AI ecosystem speak for themselves. An AI-native software firm: voice agents, dashboards, automations, full platforms.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://orbup.com">
+<meta property="og:url" content="https://orbup.app">
 <meta property="og:title" content="OrbUp — Talk to it. We build it.">
 <meta property="og:description" content="Tap the orb and describe your idea. OrbUp's AI workforce scopes it, builds it, and ships it live.">
 <meta property="og:image" content="${ogImage}">
@@ -2821,7 +2837,7 @@ ${ORBUP_GEO_REDIRECT_SCRIPT('es')}
 <title>OrbUp — Háblale. Lo construimos.</title>
 <meta name="description" content="Es hora de OrbUp. Toca el orbe y habla — deja que tu sitio web y tu ecosistema de IA hablen por sí mismos. Firma de software AI-native: agentes de voz, tableros, automatizaciones y plataformas completas.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://orbup.com">
+<meta property="og:url" content="https://orbup.app">
 <meta property="og:title" content="OrbUp — Háblale. Lo construimos.">
 <meta property="og:description" content="Toca el orbe y describe tu idea. La fuerza de trabajo con IA de OrbUp la dimensiona, la construye y la lanza en vivo.">
 <meta property="og:image" content="${ogImage}">
