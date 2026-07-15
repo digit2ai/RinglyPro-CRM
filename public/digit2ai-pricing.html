@@ -115,6 +115,34 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
 .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);
   border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
+.spin.dark{border-color:rgba(139,92,246,.3);border-top-color:var(--violet)}
+
+/* book-a-demo modal */
+#bkmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px}
+#bkmodal[hidden]{display:none}
+#bkmodal .bk-back{position:absolute;inset:0;background:rgba(4,5,10,.74);backdrop-filter:blur(3px)}
+#bkmodal .bk-box{position:relative;z-index:1;width:100%;max-width:460px;background:var(--card);
+  border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:0 24px 70px rgba(0,0,0,.6);padding:26px 24px}
+#bkmodal .bk-x{position:absolute;top:12px;right:15px;font-size:24px;line-height:1;color:var(--faint);background:none;border:none;cursor:pointer}
+#bkmodal .bk-x:hover{color:var(--ink)}
+#bkmodal .bk-title{font-size:20px;font-weight:750}
+#bkmodal .bk-sub{font-size:13.5px;color:var(--mut);margin-top:6px}
+#bkmodal .bk-fields{display:flex;flex-direction:column;gap:9px;margin:16px 0 4px}
+#bkmodal .bk-fields input{background:var(--card2);border:1px solid var(--line2);border-radius:10px;
+  padding:11px 13px;color:var(--ink);font:inherit;font-size:14.5px;outline:none}
+#bkmodal .bk-fields input:focus{border-color:var(--violet)}
+#bkmodal .slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+@media(max-width:480px){#bkmodal .slots{grid-template-columns:1fr}}
+#bkmodal .slots-loading{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;padding:8px 0}
+#bkmodal .slot{background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:10px 12px;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:.12s}
+#bkmodal .slot:hover{border-color:var(--violet)}
+#bkmodal .slot.sel{border-color:var(--violet);background:rgba(139,92,246,.18)}
+#bkmodal .slot .d{font-weight:700;font-size:13.5px}
+#bkmodal .slot .t{color:var(--mut);font-size:12.5px;margin-top:2px}
+#bkmodal .bk-go{width:100%;justify-content:center;margin-top:6px}
+#bkmodal .bk-status{font-size:13px;color:var(--mut);margin-top:10px;min-height:16px;text-align:center}
+#bkmodal .bk-status.err{color:#ff9a8f}
+#bkmodal .bk-status.ok{color:var(--good)}
 </style>
 </head>
 <body>
@@ -148,6 +176,22 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
 
 <div id="toast"></div>
 
+<div id="bkmodal" hidden>
+  <div class="bk-back" data-bk-close></div>
+  <div class="bk-box" role="dialog" aria-modal="true" aria-label="Book a demo">
+    <button class="bk-x" data-bk-close aria-label="Close">&times;</button>
+    <div class="bk-title" id="bk-title">Book your Enterprise demo</div>
+    <div class="bk-sub" id="bk-sub">Pick an open slot — times shown in Colombia time (COT).</div>
+    <div class="bk-fields">
+      <input type="text" id="bk-name" autocomplete="name">
+      <input type="email" id="bk-email" autocomplete="email">
+    </div>
+    <div class="slots" id="bk-slots"></div>
+    <button type="button" class="btn btn-primary bk-go" id="bk-confirm" disabled>Confirm booking</button>
+    <div class="bk-status" id="bk-status" aria-live="polite"></div>
+  </div>
+</div>
+
 <script>
 (function(){
   // ---------- i18n ----------
@@ -158,14 +202,26 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       note:"Payments are securely processed by Stripe. Prices in USD, billed monthly. Need something custom?",
       per:"/ month", creditsMo:"monthly credits", bookDemo:"Book a demo", platformFee:"Platform fee",
       redirecting:"Redirecting to secure checkout…", noStripe:"Payments not configured yet — email info@digit2ai.com.",
-      err:"Something went wrong. Please try again." },
+      err:"Something went wrong. Please try again.",
+      bkTitle:"Book your Enterprise demo", bkSub:"Pick an open slot — times shown in Colombia time (COT).",
+      bkName:"Your name", bkEmail:"Work email", bkLoading:"Loading open slots…",
+      bkNone:"No open slots right now — email info@digit2ai.com and we'll schedule.",
+      bkFail:"Could not load slots. Please try again.", bkConfirm:"Confirm booking", bkBooking:"Booking…",
+      bkNeed:"Enter your name and email first.", bkBooked:"Booked for", bkThanks:"COT. See you then — we'll email details.",
+      bkErr:"Could not book. Please try again." },
     es:{ how:"Cómo funciona", platforms:"Plataformas", pricing:"Precios", getstarted:"Empezar",
       h1a:"Precios simples ", h1b:"por créditos", h1c:"",
       sub:"Empieza gratis. Escala con créditos mensuales de construcción. Cada crédito impulsa tu fuerza laboral de IA — diseñar, construir y lanzar software real. Cancela cuando quieras.",
       note:"Los pagos se procesan de forma segura con Stripe. Precios en USD, facturación mensual. ¿Necesitas algo a medida?",
       per:"/ mes", creditsMo:"créditos mensuales", bookDemo:"Agendar demo", platformFee:"Tarifa de plataforma",
       redirecting:"Redirigiendo al pago seguro…", noStripe:"Pagos aún no configurados — escribe a info@digit2ai.com.",
-      err:"Algo salió mal. Inténtalo de nuevo." }
+      err:"Algo salió mal. Inténtalo de nuevo.",
+      bkTitle:"Agenda tu demo Enterprise", bkSub:"Elige un horario disponible — hora de Colombia (COT).",
+      bkName:"Tu nombre", bkEmail:"Correo de trabajo", bkLoading:"Cargando horarios disponibles…",
+      bkNone:"No hay horarios ahora — escribe a info@digit2ai.com y coordinamos.",
+      bkFail:"No se pudieron cargar los horarios. Inténtalo de nuevo.", bkConfirm:"Confirmar reserva", bkBooking:"Reservando…",
+      bkNeed:"Ingresa tu nombre y correo primero.", bkBooked:"Reservado para el", bkThanks:"COT. Nos vemos — te enviaremos los detalles.",
+      bkErr:"No se pudo reservar. Inténtalo de nuevo." }
   };
   var lang = (function(){
     try{
@@ -295,7 +351,7 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       +'<div class="tier">'+TIERS.enterprise.name[lang]+'</div>'
       +'<div class="tier-sub">'+TIERS.enterprise.sub[lang]+'</div>'
       +'<div class="price"><span class="fee-label">'+t('platformFee')+'</span></div>'
-      +'<div class="cta"><a class="btn btn-ghost" href="mailto:info@digit2ai.com?subject=Digit2AI%20Enterprise">'+t('bookDemo')+'</a></div>'
+      +'<div class="cta"><button class="btn btn-ghost" id="ent-book">'+t('bookDemo')+'</button></div>'
       +feats('enterprise')+'</div>';
 
     g.innerHTML = free+pro+biz+ent;
@@ -312,6 +368,9 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
     document.querySelectorAll('[data-buy]').forEach(function(b){
       b.addEventListener('click',function(){ checkout(b.getAttribute('data-buy'), b); });
     });
+    // wire Enterprise "Book a demo" -> calendar open-slots modal
+    var eb=document.getElementById('ent-book');
+    if(eb) eb.addEventListener('click', openBookModal);
   }
 
   function checkout(plan, btn){
@@ -325,6 +384,85 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       else { toast(d && d.error ? d.error : t('noStripe')); btn.innerHTML=original; btn.disabled=false; }
     }).catch(function(){ toast(t('err')); btn.innerHTML=original; btn.disabled=false; });
   }
+
+  // ---------- Enterprise "Book a demo" -> real calendar open slots ----------
+  var bkSlot=null, bkProjectId=null;
+  var bkm=document.getElementById('bkmodal');
+  function bkEl(id){ return document.getElementById(id); }
+  function closeBk(){ bkm.hidden=true; }
+  bkm.querySelectorAll('[data-bk-close]').forEach(function(x){ x.addEventListener('click', closeBk); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !bkm.hidden) closeBk(); });
+
+  function openBookModal(){
+    bkSlot=null; bkProjectId=null;
+    bkEl('bk-title').textContent=t('bkTitle');
+    bkEl('bk-sub').textContent=t('bkSub');
+    bkEl('bk-name').placeholder=t('bkName');
+    bkEl('bk-email').placeholder=t('bkEmail');
+    var st=bkEl('bk-status'); st.textContent=''; st.className='bk-status';
+    var cf=bkEl('bk-confirm'); cf.disabled=true; cf.style.display=''; cf.textContent=t('bkConfirm');
+    var wrap=bkEl('bk-slots');
+    wrap.innerHTML='<div class="slots-loading"><span class="spin dark"></span> '+t('bkLoading')+'</div>';
+    bkm.hidden=false;
+    fetch('/projects/api/v1/intake/public/slots?count=6')
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(!res || !res.success || !res.data || !res.data.slots || !res.data.slots.length){
+          wrap.innerHTML='<div class="slots-loading">'+t('bkNone')+'</div>'; return;
+        }
+        var loc=(lang==='es')?'es-CO':'en-US';
+        wrap.innerHTML='';
+        res.data.slots.forEach(function(sl){
+          var b=document.createElement('button'); b.type='button'; b.className='slot';
+          var dt=new Date(sl.start_time);
+          var day=dt.toLocaleString(loc,{timeZone:'America/Bogota',weekday:'short',month:'short',day:'numeric'});
+          var tim=dt.toLocaleString(loc,{timeZone:'America/Bogota',hour:'numeric',minute:'2-digit'});
+          b.innerHTML='<div class="d">'+day+'</div><div class="t">'+tim+' COT</div>';
+          b.addEventListener('click', function(){
+            wrap.querySelectorAll('.slot').forEach(function(x){ x.classList.remove('sel'); });
+            b.classList.add('sel'); bkSlot=sl; bkEl('bk-confirm').disabled=false;
+          });
+          wrap.appendChild(b);
+        });
+      })
+      .catch(function(){ wrap.innerHTML='<div class="slots-loading">'+t('bkFail')+'</div>'; });
+  }
+
+  bkEl('bk-confirm').addEventListener('click', function(){
+    var cf=bkEl('bk-confirm'), st=bkEl('bk-status');
+    var name=bkEl('bk-name').value.trim(), email=bkEl('bk-email').value.trim();
+    if(!bkSlot) return;
+    if(!name || !email){ st.textContent=t('bkNeed'); st.className='bk-status err'; return; }
+    cf.disabled=true; cf.textContent=t('bkBooking'); st.textContent=''; st.className='bk-status';
+    // 1) create a project row (lead) so the booking has something to attach to
+    var mk = bkProjectId
+      ? Promise.resolve(bkProjectId)
+      : fetch('/projects/api/v1/intake/public/request',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ full_name:name, email:email, project_title:'Enterprise demo',
+            problem:'Enterprise plan demo requested from the pricing page.',
+            project_description:'Enterprise plan demo requested from the pricing page.',
+            heard_from:'pricing enterprise demo', language:lang })
+        }).then(function(r){ return r.json(); }).then(function(j){ bkProjectId=(j&&j.project_id)||null; return bkProjectId; });
+    mk.then(function(pid){
+      if(!pid) throw new Error('noproject');
+      // 2) book the chosen slot into that project's calendar
+      return fetch('/projects/api/v1/intake/public/book/'+pid,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ start_time:bkSlot.start_time, end_time:bkSlot.end_time, name:name, email:email })
+      }).then(function(r){ return r.json(); });
+    }).then(function(res){
+      if(res && res.success){
+        var loc=(lang==='es')?'es-CO':'en-US';
+        var when=new Date(bkSlot.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+        bkEl('bk-slots').innerHTML='<div class="slots-loading ok" style="color:var(--good)">'+t('bkBooked')+' '+when+' '+t('bkThanks')+'</div>';
+        cf.style.display='none';
+      } else {
+        st.textContent=(res&&res.error)||t('bkErr'); st.className='bk-status err';
+        cf.disabled=false; cf.textContent=t('bkConfirm');
+      }
+    }).catch(function(){ st.textContent=t('bkErr'); st.className='bk-status err'; cf.disabled=false; cf.textContent=t('bkConfirm'); });
+  });
 
   // lang toggle
   document.querySelectorAll('.lang a').forEach(function(a){
