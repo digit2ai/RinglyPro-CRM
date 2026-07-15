@@ -8,6 +8,15 @@
 <meta property="og:title" content="Pricing — OrbUp">
 <meta property="og:description" content="Start free. Scale with monthly AI build credits. Pro from $25/mo, Business from $50/mo, Enterprise volume pricing.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a0a0e">
+<link rel="icon" type="image/png" sizes="32x32" href="/orbup/favicon-32.png">
+<link rel="apple-touch-icon" href="/orbup/apple-touch-icon.png">
+<link rel="manifest" href="/orbup/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OrbUp">
+<script>if('serviceWorker' in navigator && location.hostname.indexOf('orbup.app')!==-1){window.addEventListener('load',function(){navigator.serviceWorker.register('/orbup-sw.js',{scope:'/'}).catch(function(){});});}</script>
 <style>
 :root{
   --bg:#0a0a0e; --bg2:#101016; --card:#16161d; --card2:#1c1c24;
@@ -54,6 +63,13 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,255,255,.14)}
 .btn-ghost{border:1px solid var(--line2);color:var(--ink)}
 .btn-ghost:hover{background:rgba(255,255,255,.06)}
+@media(max-width:600px){
+  nav{flex-wrap:wrap;gap:10px;padding:16px}
+  .nav-links{gap:12px}
+  .nav-links a[data-i18n="how"],.nav-links a[data-i18n="platforms"]{display:none}
+  .head{padding:34px 0 6px}
+  .brand-logo{height:26px}
+}
 
 /* header */
 .head{position:relative;z-index:2;text-align:center;padding:52px 0 8px}

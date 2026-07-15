@@ -2791,6 +2791,18 @@ const ORBUP_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
 
 const orbupFrameCsp = "frame-ancestors 'self' https://orbup.app https://*.orbup.app https://orbup.com https://*.orbup.com https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;";
 
+// PWA head (favicon + app icons + manifest + SW). SW registers ONLY on orbup.app
+// so it never installs a service worker on aiagent.ringlypro.com (main CRM).
+const ORBUP_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
+<link rel="icon" type="image/png" sizes="32x32" href="/orbup/favicon-32.png">
+<link rel="apple-touch-icon" href="/orbup/apple-touch-icon.png">
+<link rel="manifest" href="/orbup/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OrbUp">
+<script>if('serviceWorker' in navigator && location.hostname.indexOf('orbup.app')!==-1){window.addEventListener('load',function(){navigator.serviceWorker.register('/orbup-sw.js',{scope:'/'}).catch(function(){});});}</script>`;
+
 app.get('/orbup', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
   const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
@@ -2803,6 +2815,7 @@ app.get('/orbup', (req, res) => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ${ORBUP_GEO_REDIRECT_SCRIPT('en')}
 <title>OrbUp — Talk to it. We build it.</title>
+${ORBUP_PWA_HEAD}
 <meta name="description" content="It's time to OrbUp. Tap the orb and talk — let your website and AI ecosystem speak for themselves. An AI-native software firm: voice agents, dashboards, automations, full platforms.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://orbup.app">
@@ -2835,6 +2848,7 @@ app.get('/orbup-es', (req, res) => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ${ORBUP_GEO_REDIRECT_SCRIPT('es')}
 <title>OrbUp — Háblale. Lo construimos.</title>
+${ORBUP_PWA_HEAD}
 <meta name="description" content="Es hora de OrbUp. Toca el orbe y habla — deja que tu sitio web y tu ecosistema de IA hablen por sí mismos. Firma de software AI-native: agentes de voz, tableros, automatizaciones y plataformas completas.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://orbup.app">
