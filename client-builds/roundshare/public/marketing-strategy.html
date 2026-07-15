@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoundShare — Marketing Strategy &amp; Angel Raise</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root{
+    --ink:#161326; --ink2:#2a2540; --muted:#6b6684; --line:#e7e3f0;
+    --brand:#6d4aff; --brand2:#e07aa8; --accent:#0f9d58; --warn:#b9740b;
+    --bg:#f6f4fb; --card:#ffffff; --shadow:0 1px 3px rgba(22,19,38,.08),0 8px 28px rgba(22,19,38,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased;}
+  .doc{max-width:920px; margin:0 auto; padding:0 22px 90px;}
+
+  .cover{background:linear-gradient(150deg,#140c2b 0%,#241541 55%,#3a1c52 100%);
+    color:#fff; border-radius:0 0 26px 26px; padding:54px 44px 46px; position:relative; overflow:hidden; box-shadow:var(--shadow);}
+  .cover:after{content:"";position:absolute;right:-120px;top:-120px;width:360px;height:360px;
+    background:radial-gradient(circle,rgba(224,122,168,.34),transparent 62%);}
+  .brandrow{display:flex;align-items:center;gap:18px;margin-bottom:30px}
+  .logo{height:84px;width:84px;display:block;filter:drop-shadow(0 6px 22px rgba(224,122,168,.4))}
+  .brandrow b{font-size:19px;letter-spacing:.3px}
+  .brandrow span{color:#c8b6ff;font-size:12.5px;display:block;margin-top:2px;letter-spacing:.4px}
+  .conf{position:absolute;top:22px;right:26px;font-size:11px;letter-spacing:2px;
+    border:1px solid rgba(255,255,255,.35);padding:5px 11px;border-radius:20px;color:#e6d8ff}
+  .cover h1{font-size:33px;line-height:1.18;margin:8px 0 6px;font-weight:800;letter-spacing:-.5px}
+  .cover .sub{color:#d5c6ff;font-size:16px;max-width:640px}
+  .coverstats{display:flex;flex-wrap:wrap;gap:26px;margin-top:34px;padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
+  .coverstats div{min-width:120px}
+  .coverstats b{display:block;font-size:24px;color:#fff;letter-spacing:-.5px}
+  .coverstats small{color:#c8b6ff;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+  .meta{display:flex;flex-wrap:wrap;gap:22px;margin-top:30px;font-size:12.5px;color:#c8b6ff}
+  .meta b{color:#fff;font-weight:600}
+
+  section{margin-top:40px}
+  h2{font-size:13px;letter-spacing:2.4px;text-transform:uppercase;color:var(--brand);margin:0 0 4px;font-weight:700}
+  .h2sub{font-size:23px;font-weight:800;letter-spacing:-.4px;margin:0 0 18px;color:var(--ink)}
+  p{color:var(--ink2)}
+  .lead{font-size:17px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr 1fr 1fr}
+  @media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+  .headline{background:linear-gradient(135deg,#6d4aff 0%,#e07aa8 100%);color:#fff;border:none;text-align:center;padding:30px}
+  .headline small{text-transform:uppercase;letter-spacing:2px;font-size:11.5px;opacity:.92}
+  .headline .big{font-size:42px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px}
+  .headline .note{font-size:13.5px;opacity:.95;max-width:600px;margin:8px auto 0}
+
+  .kpi{padding:18px 20px}
+  .kpi .n{font-size:27px;font-weight:800;letter-spacing:-.6px;color:var(--ink)}
+  .kpi .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .kpi .n.brand{color:var(--brand)}
+  .kpi .n.rose{color:var(--brand2)}
+  .kpi .n.green{color:var(--accent)}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  .tbl-wrap{overflow-x:auto}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;letter-spacing:.3px}
+  .tag.live{background:#e3f6ec;color:#0f7a44}
+  .tag.pre{background:#efecf6;color:#6b6684}
+  .tag.warn{background:#fbeee0;color:#b9740b}
+
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0 9px 26px;position:relative;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink2)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li:before{content:"";position:absolute;left:4px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--brand2)}
+
+  .callout{border-left:4px solid var(--brand);background:#f2eeff;padding:14px 18px;border-radius:0 12px 12px 0;font-size:14px;color:var(--ink2)}
+  .callout.rose{border-left-color:var(--brand2);background:#fdeef5}
+  .foot{margin-top:46px;border-top:1px solid var(--line);padding-top:20px;font-size:11.5px;color:var(--muted)}
+  .foot p{font-size:11.5px;color:var(--muted);margin:6px 0}
+  .pill{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:3px 10px;display:inline-block}
+
+  @media print{ body{background:#fff} .cover{border-radius:0} .card,.cover,.headline{box-shadow:none} section{break-inside:avoid} .noprint{display:none} }
+  .printbar{position:fixed;bottom:18px;right:18px;z-index:20}
+  .printbar button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(109,74,255,.4)}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="conf">CONFIDENTIAL</div>
+    <div class="brandrow">
+      <svg class="logo" viewBox="0 0 100 100" role="img" aria-label="RoundShare"><defs><linearGradient id="rg" x1="0" y1="0" x2="100" y2="100"><stop offset="0" stop-color="#f2a9c8"/><stop offset="1" stop-color="#e07aa8"/></linearGradient></defs><path fill="none" stroke="url(#rg)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" d="M30 86 C 20 60, 30 40, 46 34 C 48 30, 50 27, 52 26 L 63 15 C 61 24, 59 30, 57 34 C 64 38, 70 52, 74 64 C 76 70, 73 76, 66 74 C 61 72, 55 64, 51 58 C 49 66, 46 78, 44 88"/><circle cx="57" cy="40" r="3" fill="url(#rg)"/></svg>
+      <div><b>ROUNDSHARE</b><span>MARKETING STRATEGY &amp; ANGEL RAISE</span></div>
+    </div>
+    <h1>Barn-First Marketing Strategy<br>&amp; the Angel First Close</h1>
+    <div class="sub">The go-to-market plan RoundShare actually runs — barns as the unit of growth — and exactly how much we raise from angels, in what order, to fund it. Operationalizes Execution Plan v3.</div>
+
+    <div class="coverstats">
+      <div><b>$350K</b><small>Angel First Close</small></div>
+      <div><b>$187.5K</b><small>12-mo Marketing Budget</small></div>
+      <div><b>20 barns</b><small>Beachhead → ~1,000 riders</small></div>
+      <div><b>Barn-first</b><small>Growth Model</small></div>
+    </div>
+
+    <div class="meta">
+      <span>Prepared: <b>July 15, 2026</b></span>
+      <span>Companion to: <b>Memorandum v2.1 · Pre-Mortem · Execution Plan v3</b></span>
+      <span>Instrument: <b>Post-Money SAFE (tranched)</b></span>
+    </div>
+  </div>
+
+  <!-- 1. THE ANGEL ASK -->
+  <section id="ask">
+    <h2>01 — The Angel Ask</h2>
+    <div class="h2sub">How much we raise from angels — and in what order</div>
+
+    <div class="headline card">
+      <small>Seek from angels — first close</small>
+      <div class="big">$350,000</div>
+      <div class="note">from <b>equestrian-world angel investors</b>, via the same post-money SAFE ($4M cap, 20% discount, MFN). Minimum check <b>$25,000</b> — roughly <b>7&ndash;14 angels</b>. This first close funds the product completion and the 20-barn marketing beachhead. A milestone-gated <b>$400,000</b> second tranche follows; <b>$750,000</b> total.</div>
+    </div>
+
+    <div class="card tbl-wrap" style="margin-top:18px">
+      <h3 style="margin:0 0 8px;font-size:16px">The tranched raise — capital follows evidence</h3>
+      <table>
+        <thead><tr><th>Tranche</th><th class="num">Amount</th><th>What it funds</th><th>Release condition</th></tr></thead>
+        <tbody>
+          <tr><td><b>First close</b> <span class="tag pre">Angels</span></td><td class="num"><b>$350,000</b></td><td>Native iOS/Android apps · production scoring model · 20-barn pilot (the marketing beachhead)</td><td>Gate 0 outputs in hand (scoring validation, measured CAC, Pivo resolution, named lead)</td></tr>
+          <tr><td><b>Second tranche</b></td><td class="num">$400,000</td><td>Scale GTM (paid + referral) · LATAM pilot · ops &amp; instrumentation</td><td>Traction gate: <b>20 paying barns OR 500 paying riders</b>, whichever comes first</td></tr>
+          <tr><td><b>Total round</b></td><td class="num"><b>$750,000</b></td><td>—</td><td>Same SAFE instrument for both tranches</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rose" style="margin-top:16px"><b>Why $350K from angels first, not $750K from institutions.</b> A $350K first close from inside the equestrian world is a far easier raise than $750K from institutional pre-seed funds — and it directly cuts the largest failure scenario in the pre-mortem (raise fails / wind-down, ~30% &rarr; ~15%). Milestone-released capital also signals discipline: the founders volunteer accountability instead of asking for blind trust.</div>
+  </section>
+
+  <!-- 2. STRATEGIC REFRAME -->
+  <section id="reframe">
+    <h2>02 — The Marketing Strategy</h2>
+    <div class="h2sub">Barn-first: the trainer is the channel, not the obstacle</div>
+
+    <div class="callout" style="margin-bottom:16px"><b>RoundShare is not a consumer app that hopes barns follow. It is a barn-first B2B2C platform:</b> the trainer is the trusted entry point, riders are the users, and the consumer sharing loop is an <b>amplifier — not the engine</b>. One trainer onboards 8&ndash;15 riders at once, with built-in credibility no ad can buy.</div>
+
+    <p class="lead">The original plan bet everything on a consumer viral loop — the single highest-probability way the venture dies. The marketing strategy below makes <b>barns the unit of growth</b>, so no single channel failing is fatal: the largest channel has a floor, the riskiest channel has a cap and a kill switch, and the fragile channel (referral) is no longer load-bearing.</p>
+
+    <div class="card tbl-wrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Failure mode it neutralizes</th><th>How barn-first marketing solves it</th></tr></thead>
+        <tbody>
+          <tr><td><b>Referral loop never fires</b></td><td>Barn rosters provide a floor of ~300&ndash;400 riders even if consumer sharing underperforms</td></tr>
+          <tr><td><b>AI not credible to experts</b></td><td>The trainer endorses and verifies scores inside the app — the most dangerous critic becomes the distribution channel</td></tr>
+          <tr><td><b>Filming friction</b></td><td>Barns have fixed arenas: one mounted phone position, lesson-time filming routines, trainers who already film students</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3. CHANNEL MIX & BUDGET -->
+  <section id="budget">
+    <h2>03 — Channel Mix &amp; 12-Month Budget</h2>
+    <div class="h2sub">$187,500, barn-first — no single-channel failure is fatal</div>
+
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="card kpi"><div class="n brand">$187.5K</div><div class="l">Total marketing budget</div></div>
+      <div class="card kpi"><div class="n">~1,000</div><div class="l">Paying riders target (800 base case)</div></div>
+      <div class="card kpi"><div class="n rose">&lt;$60</div><div class="l">Blended CAC target</div></div>
+      <div class="card kpi"><div class="n green">$200</div><div class="l">Paid-CAC kill switch</div></div>
+    </div>
+
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr><th>Priority</th><th>Channel</th><th class="num">Budget</th><th>12-mo target</th><th>Why it survives</th></tr></thead>
+        <tbody>
+          <tr><td><b>1</b></td><td><b>Barn / trainer pilots</b> — 20 barns on a 90-day free pilot converting to $199/mo</td><td class="num">~$70,000</td><td>~300&ndash;400 riders via rosters</td><td>One trainer = 8&ndash;15 riders; endorsement solves credibility + distribution in one move</td></tr>
+          <tr><td><b>2</b></td><td><b>Referral loop</b> — give-a-month / get-a-month on exported, watermarked reels</td><td class="num">~$25,000</td><td>~200&ndash;300 riders</td><td>Amplifier, not engine — the plan does not die if it underperforms</td></tr>
+          <tr><td><b>3</b></td><td><b>Paid Meta</b> — retargeting waitlist, Pony Finals audiences, lookalikes</td><td class="num">$60,000 (capped)</td><td>~200&ndash;300 riders</td><td>Ignition only; hard kill switch at $200 measured CAC</td></tr>
+          <tr><td><b>—</b></td><td><b>Content, analytics &amp; reserve</b> — creative, attribution stack, monthly-reallocated test budget</td><td class="num">~$32,500</td><td>Supports all channels</td><td>Instrumentation makes every dollar measurable</td></tr>
+          <tr><td></td><td><b>Total</b></td><td class="num"><b>$187,500</b></td><td><b>~1,000 blended</b></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">The difference from a consumer-viral plan is structural: the largest channel (barns) has a floor, the riskiest channel (paid) has a cap and a kill switch, and the fragile channel (referral) is no longer load-bearing.</p>
+  </section>
+
+  <!-- 4. HOW MARKETING MAPS TO THE RAISE -->
+  <section id="mapping">
+    <h2>04 — How the Marketing Money Sits in the Raise</h2>
+    <div class="h2sub">The $350K angel close carries the beachhead; the $400K tranche scales it</div>
+    <div class="grid g2">
+      <div class="card tbl-wrap">
+        <h3 style="margin:0 0 8px;font-size:15px">First close — $350,000 (angels)</h3>
+        <table><tbody>
+          <tr><td>Native iOS/Android apps + production scoring model</td><td class="num">~$225,000</td></tr>
+          <tr><td>Barn-pilot marketing beachhead (Gate 0 $10K + barn pilots $70K + launch content ~$10K)</td><td class="num">~$90,000</td></tr>
+          <tr><td>Ops, instrumentation &amp; buffer</td><td class="num">~$35,000</td></tr>
+          <tr><td><b>Total first close</b></td><td class="num"><b>$350,000</b></td></tr>
+        </tbody></table>
+      </div>
+      <div class="card tbl-wrap">
+        <h3 style="margin:0 0 8px;font-size:15px">Second tranche — $400,000 (milestone-gated)</h3>
+        <table><tbody>
+          <tr><td>Scale marketing (paid Meta $60K + referral $25K + content/analytics ~$12.5K)</td><td class="num">~$97,500</td></tr>
+          <tr><td>LATAM pilot, ops &amp; runway buffer</td><td class="num">~$302,500</td></tr>
+          <tr><td><b>Total second tranche</b></td><td class="num"><b>$400,000</b></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:16px"><b>Marketing across the full round = $187,500</b> — ~$90K deployed in the first-close pilot phase (barns) and ~$97.5K released with the second tranche (scale). Angels fund the proof; the tranche funds the scale, only after the traction gate is met.</div>
+  </section>
+
+  <!-- 5. PHASED ROLLOUT + GATE 0 -->
+  <section id="phases">
+    <h2>05 — Phased Rollout</h2>
+    <div class="h2sub">Prove it before you spend it</div>
+
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr><th>Phase</th><th>Window</th><th class="num">Spend</th><th>Objective</th></tr></thead>
+        <tbody>
+          <tr><td><b>Gate 0 — Validate</b> <span class="tag warn">pre-raise</span></td><td>Now &rarr; 60 days</td><td class="num">~$10,000</td><td>Blind AI-vs-expert scoring test; $5K Meta CPC/CAC test on the waitlist; resolve Pivo in writing; name the full-time lead — pitch on measured data, not benchmarks</td></tr>
+          <tr><td><b>Phase 1 — Ignite</b></td><td>Months 1&ndash;6</td><td class="num">~$80,000</td><td>Onboard first 10&ndash;20 barns on free pilots; launch referral program; Pony Finals activation; scale winning paid creative within the cap</td></tr>
+          <tr><td><b>Phase 2 — Scale</b></td><td>Months 7&ndash;12</td><td class="num">~$97,500</td><td>Convert pilot barns to $199/mo; double down on best channel mix; LATAM (ES) pilot; ambassador cohort 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">Gate 0 spends roughly <b>$10K to decide the fate of $750K</b>. Investors are pitched only after its four outputs exist. Spend is stage-gated — no phase's budget releases until the prior gate is met.</p>
+  </section>
+
+  <!-- 6. KILL / SCALE GATES -->
+  <section id="gates">
+    <h2>06 — Kill / Scale Gates</h2>
+    <div class="h2sub">Decided in advance, not in the moment</div>
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr><th>Gate</th><th>When</th><th>Threshold</th><th>If passed</th><th>If missed</th></tr></thead>
+        <tbody>
+          <tr><td><b>G1 — Paid viability</b></td><td>Month 2</td><td>Paid CAC &le; $200 on &ge;1 audience/creative pair</td><td>Scale winning creative within the $60K cap</td><td>Shift paid budget to barn pilots; paid becomes retargeting-only</td></tr>
+          <tr><td><b>G2 — Traction</b></td><td>Month 6</td><td>&ge; 300 paying riders AND referral share &ge; 20%</td><td><b>Releases second tranche ($400K)</b></td><td>Hold tranche; diagnose funnel; extend pilot phase</td></tr>
+          <tr><td><b>G3 — Retention</b></td><td>Month 9</td><td>Month-2 paid retention &ge; 80%</td><td>Continue scaling</td><td>Stop all acquisition spend; fix product first</td></tr>
+          <tr><td><b>G4 — Series A prep</b></td><td>Month 12</td><td>&ge; 800 paying riders AND &ge; 20 paying barns</td><td>Begin Series A on the barn-first trajectory</td><td>Reassess: insider bridge, profitability path, or strategic sale</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted)">Gates are pre-committed in writing among the three members so unanimous-consent governance cannot stall a kill decision — the decision was already made when the gate was signed.</p>
+  </section>
+
+  <!-- 7. KPI DASHBOARD -->
+  <section id="kpi">
+    <h2>07 — KPI Dashboard</h2>
+    <div class="h2sub">What we watch weekly</div>
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr><th>KPI</th><th class="num">Target</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Paying barns / trainer accounts</td><td class="num">20 in 12 mo</td><td>The growth engine — each barn = 8&ndash;15 riders</td></tr>
+          <tr><td>Blended CAC</td><td class="num">&le; $60</td><td>Keeps LTV:CAC healthy at ~$550&ndash;$600 LTV</td></tr>
+          <tr><td>Paid CAC</td><td class="num">$75&ndash;$150</td><td>Kill threshold at $200</td></tr>
+          <tr><td>Referral share of new signups</td><td class="num">&ge; 20% by month 6</td><td>The amplifier working; part of the G2 tranche gate</td></tr>
+          <tr><td>Month-2 paid retention</td><td class="num">&ge; 80%</td><td>Retention debt is never marketed over (G3)</td></tr>
+          <tr><td>Blind scoring agreement rate</td><td class="num">&ge; 70%</td><td>The credibility number quoted in every trainer &amp; diligence conversation</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 8. WHO THE ANGELS ARE -->
+  <section id="angels">
+    <h2>08 — Where the Angel Money Comes From</h2>
+    <div class="h2sub">Raise inside the sport we're building for</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:15px">Who to target ($350K, ~7&ndash;14 checks)</h3>
+        <ul class="clean">
+          <li><b>Barn &amp; facility owners</b> and successful trainers who already believe in the problem.</li>
+          <li><b>Junior-rider parents</b> with means — the segment that spends heavily on the sport.</li>
+          <li><b>Show-circuit &amp; federation figures</b> (hunter/jumper, dressage, eventing) — strategic, well-networked.</li>
+          <li><b>Equestrian-adjacent operators</b> — tack/feed/media businesses, breed associations.</li>
+          <li><b>Digit2AI's own network</b> of prior angels and platform partners.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:15px">How we reach them</h3>
+        <ul class="clean">
+          <li><b>The 20-barn pilot is the pitch:</b> a partnering barn is a warm introduction to the money in that barn.</li>
+          <li><b>Pony Finals / show-circuit presence</b> doubles as an investor-sourcing venue.</li>
+          <li><b>The Gate 0 scoring number</b> ("AI matches a pro's eye N% of the time") pre-empts the credibility question in every conversation.</li>
+          <li><b>Live demo + this deck</b> — product built, not promised, de-risks the ask.</li>
+          <li><b>$25K minimum check</b> keeps the round accessible to individual equestrian angels.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout rose" style="margin-top:16px"><b>The strategic read.</b> Roughly <b>$30K of Gate-0 spend</b> (scoring validation + $5K paid test + Pivo letter) decides whether the $350K angel close is worth pitching at all. Spend that $30K first, in that order — then raise the $350K from the sport, launch barn-first, and let the milestone gate unlock the $400K.</div>
+  </section>
+
+  <!-- DISCLAIMERS -->
+  <section id="disclaimer">
+    <div class="foot">
+      <p><b>ROUNDSHARE LLC — Marketing Strategy &amp; Angel Raise (Confidential)</b></p>
+      <p>Prepared July 15, 2026 · Companion to Investment Memorandum v2.1, Pre-Mortem &amp; Feasibility Assessment, and Execution Plan v3 · For the named recipient only · &copy; 2026 RoundShare LLC.</p>
+      <p>Budgets, targets, gates, and CAC figures are forward-looking planning estimates drawn from standard consumer-SaaS benchmarks, to be replaced by measured Gate 0 / Phase 1 data. Nothing herein is an offer to sell or a solicitation to buy securities; deal terms are illustrative and subject to negotiation and definitive documentation. Angels are solicited only under applicable exemptions via definitive SAFE documentation.</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="printbar noprint">
+  <button id="pdfBtn">Download / Print PDF</button>
+</div>
+<script>
+  document.getElementById('pdfBtn').addEventListener('click',function(){
+    document.title='RoundShare-Marketing-Strategy-'+new Date().toISOString().slice(0,10);
+    window.print();
+  });
+</script>
+</body>
+</html>

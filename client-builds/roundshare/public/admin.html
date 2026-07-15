@@ -78,6 +78,7 @@
     <div class="brand" style="font-size:20px">ROUND<span>SHARE</span> <span style="color:var(--mut);font-weight:600;font-size:13px">Admin</span></div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn sm ghost" onclick="openInvestor()">Investor Package</button>
+      <button class="btn sm ghost" onclick="openMarketing()">Marketing Strategy</button>
       <button class="btn sm ghost" onclick="openAgreement()">Operating Agreement</button>
       <button class="btn sm ghost" onclick="loadAll()">Refresh</button>
       <button class="btn sm grey" onclick="doLogout()">Log out</button>
@@ -130,6 +131,9 @@
   // Open the private Operating Agreement (passcode-gated signing app).
   function openAgreement(){ window.open(APP + '/agreement', '_blank'); }
   window.openAgreement = openAgreement;
+  // Open the marketing strategy & angel-raise deck (print-to-PDF).
+  function openMarketing(){ window.open(APP + '/marketing', '_blank'); }
+  window.openMarketing = openMarketing;
 
   function showApp(){
     document.getElementById('loginView').style.display = 'none';

@@ -380,6 +380,12 @@ app.get(['/investor', '/investors', '/investor-summary', '/valuation', '/pre-see
   res.set('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'public', 'investor.html'));
 });
+
+// Marketing strategy & angel-raise deck — self-contained print-to-PDF page (noindex).
+app.get(['/marketing', '/marketing-strategy', '/gtm'], (req, res) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'public', 'marketing-strategy.html'));
+});
 // Gated document body — served only after the access key check.
 app.post(['/investor/body', '/investors/body', '/investor-summary/body', '/valuation/body', '/pre-seed-valuation/body'], (req, res) => {
   if (String((req.body && req.body.passcode) || '') !== INVESTOR_PASSCODE) {
