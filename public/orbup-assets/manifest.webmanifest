@@ -1,0 +1,17 @@
+{
+  "name": "OrbUp",
+  "short_name": "OrbUp",
+  "description": "It's time to OrbUp — talk to it, we build it. An AI-native software firm: voice agents, dashboards, automations, full platforms.",
+  "start_url": "/orbup",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0e",
+  "theme_color": "#0a0a0e",
+  "icons": [
+    { "src": "/orbup-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/orbup-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/orbup-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/orbup-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

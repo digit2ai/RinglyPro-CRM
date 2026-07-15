@@ -2794,9 +2794,9 @@ const orbupFrameCsp = "frame-ancestors 'self' https://orbup.app https://*.orbup.
 // PWA head (favicon + app icons + manifest + SW). SW registers ONLY on orbup.app
 // so it never installs a service worker on aiagent.ringlypro.com (main CRM).
 const ORBUP_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
-<link rel="icon" type="image/png" sizes="32x32" href="/orbup/favicon-32.png">
-<link rel="apple-touch-icon" href="/orbup/apple-touch-icon.png">
-<link rel="manifest" href="/orbup/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/orbup-assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/orbup-assets/apple-touch-icon.png">
+<link rel="manifest" href="/orbup-assets/manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

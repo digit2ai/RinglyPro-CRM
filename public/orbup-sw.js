@@ -2,11 +2,11 @@
    Offline shell for the landing + cached brand icons. Never touches API calls. */
 const CACHE = 'orbup-v1';
 const ASSETS = [
-  '/orbup/icon-192.png',
-  '/orbup/icon-512.png',
-  '/orbup/apple-touch-icon.png',
-  '/orbup/favicon-32.png',
-  '/orbup/manifest.webmanifest'
+  '/orbup-assets/icon-192.png',
+  '/orbup-assets/icon-512.png',
+  '/orbup-assets/apple-touch-icon.png',
+  '/orbup-assets/favicon-32.png',
+  '/orbup-assets/manifest.webmanifest'
 ];
 
 self.addEventListener('install', function(e){
@@ -39,7 +39,7 @@ self.addEventListener('fetch', function(e){
   }
 
   // Static brand assets: cache-first.
-  if(url.pathname.indexOf('/orbup/') === 0){
+  if(url.pathname.indexOf('/orbup-assets/') === 0){
     e.respondWith(caches.match(req).then(function(c){ return c || fetch(req); }));
   }
 });
