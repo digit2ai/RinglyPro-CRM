@@ -257,6 +257,7 @@ ${desc || project.name || '(no description)'}${planLine}
 Design the interactive app mockup blueprint as a single JSON object per the required shape. Respond with JSON only.`;
 
   let raw = '';
+  let _lastStop = null;
   try {
     const resp = await client.messages.create({
       model,
@@ -264,7 +265,9 @@ Design the interactive app mockup blueprint as a single JSON object per the requ
       system: SIM_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMsg }]
     });
-    raw = resp && resp.content && resp.content[0] ? resp.content[0].text : '';
+    _lastStop = resp && resp.stop_reason ? resp.stop_reason : null;
+    const textBlock = resp && Array.isArray(resp.content) ? resp.content.find(c => c && c.type === 'text') : null;
+    raw = textBlock ? textBlock.text : (resp && resp.content && resp.content[0] ? resp.content[0].text : '');
   } catch (err) {
     console.error('[AppSimulator] Claude call failed:', err.message);
     return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic', lang };
@@ -272,7 +275,14 @@ Design the interactive app mockup blueprint as a single JSON object per the requ
 
   const parsed = safeJson(raw);
   if (!parsed) {
-    return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic-fallback', lang };
+    const dbg = {
+      raw_len: (raw || '').length,
+      raw_head: (raw || '').slice(0, 400),
+      raw_tail: (raw || '').slice(-400),
+      stop_reason: (typeof _lastStop !== 'undefined' ? _lastStop : null)
+    };
+    console.error('[AppSimulator] parse failed. len=%d head=%s', dbg.raw_len, dbg.raw_head.slice(0, 120));
+    return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic-fallback', lang, _debug: dbg };
   }
   const bp = normalizeBlueprint(parsed, fallbackName);
   return { ...bp, model, lang };
