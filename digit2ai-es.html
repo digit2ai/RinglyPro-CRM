@@ -398,6 +398,21 @@
 @media(prefers-reduced-motion:reduce){
   .d2b *{animation:none!important;transition:none!important}
 }
+
+/* Neural Intelligence deck embed (el modelo operativo AI-Native) */
+.d2b .deck-embed{max-width:1120px;margin:0 auto;border:1px solid var(--line2);border-radius:var(--r-xl);overflow:hidden;background:#070b16;box-shadow:var(--shadow-lg)}
+.d2b .deck-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--line)}
+.d2b .deck-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.16)}
+.d2b .deck-dot:nth-child(1){background:#ff5f57}.d2b .deck-dot:nth-child(2){background:#febc2e}.d2b .deck-dot:nth-child(3){background:#28c840}
+.d2b .deck-tt{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d2b .deck-open{margin-left:auto;font-size:13px;font-weight:650;color:#cbb8ff;white-space:nowrap}
+.d2b .deck-open:hover{color:#fff}
+.d2b .deck-frame{display:block;width:100%;height:80vh;min-height:540px;border:0;background:#070b16}
+.d2b .deck-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:0 auto 26px;max-width:900px}
+.d2b .deck-stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 18px;text-align:center}
+.d2b .deck-stat .n{font-size:22px;font-weight:840;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.d2b .deck-stat .l{font-size:12px;color:var(--mut);margin-top:2px}
+@media(max-width:680px){.d2b .deck-frame{height:72vh;min-height:460px}.d2b .deck-tt{display:none}}
 </style>
 
 <div class="d2b">
@@ -436,6 +451,7 @@
     <a class="brand" href="#" aria-label="Digit2AI"><img class="brand-logo" src="/digit2ai-logo.png" alt="Digit2AI" width="173" height="30"></a>
     <div class="nav-links">
       <a href="#how">Cómo funciona</a>
+      <a href="#operating-model">Modelo operativo</a>
       <a href="#platforms">Plataformas</a>
       <a href="#numbers">Por qué nosotros</a>
       <a href="/pricing?lang=es">Precios</a>
@@ -687,6 +703,32 @@
           <h3>Revisa y lanza</h3>
           <p>Lo pruebas en un enlace privado y lo apruebas. Lo desplegamos en vivo en una plataforma que operamos, monitoreamos y soportamos por ti &mdash; voz, facturación y autenticación incluidas.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="operating-model">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Inteligencia Neural</div>
+        <h2>El modelo operativo AI-Native</h2>
+        <p>150 agentes de IA especializados sobre una sola columna vertebral &mdash; 30&ndash;50% menos costos operativos, en semanas, no años. Así se hace el trabajo de verdad.</p>
+      </div>
+      <div class="deck-stats">
+        <div class="deck-stat"><div class="n">150</div><div class="l">Agentes de IA especializados</div></div>
+        <div class="deck-stat"><div class="n">1</div><div class="l">Columna neural</div></div>
+        <div class="deck-stat"><div class="n">30&ndash;50%</div><div class="l">Menos costo operativo</div></div>
+        <div class="deck-stat"><div class="n">Semanas</div><div class="l">No años</div></div>
+      </div>
+      <div class="deck-embed">
+        <div class="deck-bar">
+          <span class="deck-dot"></span><span class="deck-dot"></span><span class="deck-dot"></span>
+          <span class="deck-tt">DIGIT2AI Neural Intelligence &mdash; deck de 11 diapositivas</span>
+          <a class="deck-open" href="/neural-intelligence.html" target="_blank" rel="noopener">Pantalla completa &#8599;</a>
+        </div>
+        <iframe class="deck-frame" src="/neural-intelligence.html" title="DIGIT2AI Neural Intelligence — El modelo operativo AI-Native"
+                loading="lazy" allow="microphone; autoplay; clipboard-write; fullscreen"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
     </div>
   </section>
