@@ -1145,6 +1145,38 @@
     var bk=document.getElementById('d2b-book2'); if(bk) bk.addEventListener('click', function(){ openBookModal(); });
   }
 
+  // Convierte silenciosamente la idea dictada/escrita en una solicitud
+  // ORGANIZADA y estructurada (mismo cerebro que /projects/intake/create.html).
+  // No cambia el flujo: solo enriquece lo que guardamos. Corre dentro del
+  // "teatro de construcción" para que la llamada sea invisible, y ante CUALQUIER
+  // fallo vuelve al texto crudo para que el flujo nunca se rompa.
+  function structureRequest(desc){
+    var raw = { project_title: desc.slice(0,80), problem: desc, project_description: desc };
+    return fetch('/projects/api/v1/intake/generate-request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject: desc.slice(0,2000), language: D2B_LANG })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.success || !j.data) return raw;
+      var d = j.data;
+      return {
+        project_title:       d.project_title       || raw.project_title,
+        problem:             d.problem             || raw.problem,
+        project_description: d.project_description || raw.project_description,
+        industry:            d.industry            || undefined,
+        target_users:        d.target_users        || undefined,
+        current_process:     d.current_process     || undefined,
+        data_sources:        d.data_sources        || undefined,
+        timeline:            d.timeline            || undefined,
+        budget_range:        d.budget_range        || undefined,
+        success_metrics:     d.success_metrics     || undefined,
+        ai_category:         (d.ai_category && d.ai_category.length) ? d.ai_category : undefined
+      };
+    })
+    .catch(function(){ return raw; });
+  }
+
   // Guarda contacto + crea proyecto -> teaser (voz + simulador en vivo).
   function runFullFlow(desc, name, phone, email){
     removePoc(); removeSim();
@@ -1152,9 +1184,11 @@
     loading(true, D2B_LANG==='es'?'Iniciando…':'Starting…');
     startBuild();
     var projectId=null;
-    fetch('/projects/api/v1/intake/public/request', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ full_name:name, phone:phone, email:email||undefined, project_title: desc.slice(0,80), problem: desc, project_description: desc, heard_from:'orbup self-serve builder', language: D2B_LANG })
+    structureRequest(desc).then(function(s){
+      return fetch('/projects/api/v1/intake/public/request', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(Object.assign({ full_name:name, phone:phone, email:email||undefined, heard_from:'orbup self-serve builder', language: D2B_LANG }, s))
+      });
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
     .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id; } })

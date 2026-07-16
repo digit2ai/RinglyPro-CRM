@@ -1101,15 +1101,48 @@
     }catch(x){}
   })();
 
+  // Silently turn the raw dictated/typed idea into an ORGANIZED, structured
+  // request (same brain as /projects/intake/create.html). Does NOT change the
+  // workflow: it only enriches what we save to the inbox, and on ANY failure it
+  // falls back to the raw text so the flow can never break.
+  function structureRequest(desc){
+    var raw = { project_title: desc.slice(0,80), problem: desc, project_description: desc };
+    return fetch('/projects/api/v1/intake/generate-request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject: desc.slice(0,2000), language: D2B_LANG })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.success || !j.data) return raw;
+      var d = j.data;
+      return {
+        project_title:       d.project_title       || raw.project_title,
+        problem:             d.problem             || raw.problem,
+        project_description: d.project_description || raw.project_description,
+        industry:            d.industry            || undefined,
+        target_users:        d.target_users        || undefined,
+        current_process:     d.current_process     || undefined,
+        data_sources:        d.data_sources        || undefined,
+        timeline:            d.timeline            || undefined,
+        budget_range:        d.budget_range        || undefined,
+        success_metrics:     d.success_metrics     || undefined,
+        ai_category:         (d.ai_category && d.ai_category.length) ? d.ai_category : undefined
+      };
+    })
+    .catch(function(){ return raw; });
+  }
+
   // Save contact + create project (autosave to inbox) -> plan -> shareable teaser.
   function runFullFlow(desc, name, phone, email){
     removePoc();
     result.className='';
     loading(true,'Guardando tus datos…');
     var projectId=null;
-    fetch('/projects/api/v1/intake/public/request', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ full_name:name, phone:phone, email:email||undefined, project_title: desc.slice(0,80), problem: desc, project_description: desc, heard_from:'digit2ai self-serve builder', language: D2B_LANG })
+    structureRequest(desc).then(function(s){
+      return fetch('/projects/api/v1/intake/public/request', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(Object.assign({ full_name:name, phone:phone, email:email||undefined, heard_from:'digit2ai self-serve builder', language: D2B_LANG }, s))
+      });
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
     .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id; } })
