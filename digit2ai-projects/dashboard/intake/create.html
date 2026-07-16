@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Request Creator - Digit2AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background:#05060f; color:#e6edf3; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+  .grad-title { background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .card { background:linear-gradient(180deg,rgba(15,23,42,.85),rgba(2,6,23,.85)); }
+  label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  input, textarea, select {
+    width:100%; background:#0b1220; border:1px solid #1e293b; color:#e6edf3;
+    border-radius:8px; padding:10px 12px; font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline:none; border-color:#38bdf8; box-shadow:0 0 0 2px rgba(56,189,248,.15);
+  }
+  textarea { resize:vertical; }
+  .chip-group { display:flex; flex-wrap:wrap; gap:8px; background:#0b1220; border:1px solid #1e293b; border-radius:8px; padding:10px; }
+  .chip-opt { padding:8px 14px; border-radius:999px; font-size:13px; font-weight:600; color:#cbd5e1; background:#0f172a; border:1px solid #1e293b; cursor:pointer; transition:all .15s; user-select:none; }
+  .chip-opt:hover { border-color:#38bdf8; color:#e6edf3; }
+  .chip-opt.selected { background:rgba(56,189,248,.15); color:#7dd3fc; border-color:#38bdf8; box-shadow:0 0 0 1px rgba(56,189,248,.4); }
+  .chip-opt .check { display:none; margin-right:4px; }
+  .chip-opt.selected .check { display:inline; }
+  .btn-primary { background:#38bdf8; color:#020617; border:none; border-radius:8px; padding:14px 24px; font-weight:700; font-size:15px; cursor:pointer; transition:all .15s; }
+  .btn-primary:hover { background:#0ea5e9; }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-ghost { background:transparent; color:#7dd3fc; border:1px solid #1e293b; border-radius:8px; padding:12px 20px; font-weight:600; font-size:14px; cursor:pointer; transition:all .15s; }
+  .btn-ghost:hover { border-color:#38bdf8; }
+  .btn-ghost:disabled { opacity:.5; cursor:not-allowed; }
+  .field-group { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width: 640px) { .field-group { grid-template-columns:1fr; } }
+  .lang-btn { padding:6px 14px; border-radius:999px; font-size:13px; font-weight:600; border:1px solid #1e293b; color:#94a3b8; background:#0b1220; cursor:pointer; }
+  .lang-btn.active { background:rgba(56,189,248,.15); color:#7dd3fc; border-color:#38bdf8; }
+  .ex-chip { font-size:12px; color:#94a3b8; background:#0f172a; border:1px solid #1e293b; border-radius:999px; padding:6px 12px; cursor:pointer; transition:all .15s; }
+  .ex-chip:hover { border-color:#38bdf8; color:#e6edf3; }
+  .verdict-go { color:#4ade80; } .verdict-poc { color:#fbbf24; } .verdict-stop { color:#fb7185; }
+  .spin { animation:spin 1s linear infinite; } @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- LOGO BAND -->
+<div class="border-b border-slate-800 bg-slate-950">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex justify-center">
+    <img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/69d97bc215a505b6793950c0.png"
+         alt="Digit2AI" class="h-28 sm:h-40 w-auto" />
+  </div>
+</div>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl sm:text-4xl font-bold grad-title" id="t_h1">Project Request Creator</h1>
+    <p class="text-slate-400 mt-3 text-sm sm:text-base" id="t_sub">
+      Type a subject or a rough idea. The Neural Brain expands it into a complete, structured project request — ready for AI triage, business plan, and the Claude premortem.
+    </p>
+  </div>
+
+  <div class="flex justify-center gap-2 mb-6">
+    <button class="lang-btn active" data-lang="en" onclick="setLang('en')">English</button>
+    <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
+  </div>
+
+  <!-- STEP 1 — IDEA INPUT -->
+  <div class="card rounded-2xl p-5 sm:p-7 border border-slate-800">
+    <label for="subject" id="t_subject_label">Your subject or idea</label>
+    <textarea id="subject" rows="3" placeholder="e.g. I need AI software to monitor my retail stores daily like a traffic light — red / yellow / green with a health score, plus a voice AI that explains why a store is in trouble."></textarea>
+
+    <div class="flex flex-wrap gap-2 mt-3" id="examples"></div>
+
+    <div class="mt-5">
+      <button id="gen_btn" class="btn-primary w-full flex items-center justify-center gap-2" onclick="generate()">
+        <span id="gen_label">Generate project request</span>
+      </button>
+    </div>
+    <p id="gen_err" class="hidden text-rose-400 text-sm mt-3"></p>
+  </div>
+
+  <!-- STEP 2 — GENERATED REQUEST (editable) -->
+  <div id="result" class="hidden mt-8">
+    <div class="card rounded-2xl p-5 sm:p-7 border border-slate-800">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-bold text-slate-100" id="t_review">Review &amp; edit your request</h2>
+        <span class="text-[11px] text-slate-500" id="model_tag"></span>
+      </div>
+
+      <div class="space-y-5">
+        <div class="field-group">
+          <div>
+            <label id="t_title">Project title</label>
+            <input id="project_title" type="text">
+          </div>
+          <div>
+            <label id="t_industry">Industry</label>
+            <input id="industry" type="text">
+          </div>
+        </div>
+
+        <div>
+          <label id="t_desc">Project description</label>
+          <textarea id="project_description" rows="8"></textarea>
+        </div>
+
+        <div>
+          <label id="t_problem">Problem to solve</label>
+          <textarea id="problem" rows="2"></textarea>
+        </div>
+
+        <div class="field-group">
+          <div>
+            <label id="t_users">Target users</label>
+            <textarea id="target_users" rows="2"></textarea>
+          </div>
+          <div>
+            <label id="t_current">Current process</label>
+            <textarea id="current_process" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <label id="t_data">Data sources / volume</label>
+          <textarea id="data_sources" rows="2"></textarea>
+        </div>
+
+        <div class="field-group">
+          <div>
+            <label id="t_timeline">Timeline</label>
+            <input id="timeline" type="text">
+          </div>
+          <div>
+            <label id="t_budget">Budget range</label>
+            <input id="budget_range" type="text">
+          </div>
+        </div>
+
+        <div>
+          <label id="t_metrics">Success metrics</label>
+          <textarea id="success_metrics" rows="2"></textarea>
+        </div>
+
+        <div>
+          <label id="t_cat">AI category</label>
+          <div id="ai_category_chips" class="chip-group" role="group" aria-label="AI category">
+            <span class="chip-opt" data-value="Voice agent (inbound / outbound)"><span class="check">&#10003;</span>Voice agent (inbound / outbound)</span>
+            <span class="chip-opt" data-value="Conversational AI / chatbot"><span class="check">&#10003;</span>Conversational AI / chatbot</span>
+            <span class="chip-opt" data-value="Document understanding (OCR, extraction)"><span class="check">&#10003;</span>Document understanding (OCR, extraction)</span>
+            <span class="chip-opt" data-value="Computer vision"><span class="check">&#10003;</span>Computer vision</span>
+            <span class="chip-opt" data-value="Compliance / wire-screening / fraud"><span class="check">&#10003;</span>Compliance / wire-screening / fraud</span>
+            <span class="chip-opt" data-value="Predictive analytics / forecasting"><span class="check">&#10003;</span>Predictive analytics / forecasting</span>
+            <span class="chip-opt" data-value="Generative AI / content generation"><span class="check">&#10003;</span>Generative AI / content generation</span>
+            <span class="chip-opt" data-value="Recommendation / personalization"><span class="check">&#10003;</span>Recommendation / personalization</span>
+            <span class="chip-opt" data-value="Other / not sure"><span class="check">&#10003;</span>Other / not sure</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Triage preview -->
+      <div class="mt-6 pt-5 border-t border-slate-800">
+        <button id="triage_btn" class="btn-ghost w-full" onclick="runTriage()"><span id="triage_label">Run AI Triage preview</span></button>
+        <div id="triage_out" class="hidden mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — SUBMIT TO FACTORY -->
+    <div class="card rounded-2xl p-5 sm:p-7 border border-slate-800 mt-6">
+      <h2 class="text-lg font-bold text-slate-100 mb-1" id="t_submit_h">Send to the AI Factory</h2>
+      <p class="text-slate-400 text-sm mb-5" id="t_submit_sub">This ingests the request for deep search, business plan, and the Claude premortem report.</p>
+      <div class="field-group">
+        <div>
+          <label id="t_name">Your name</label>
+          <input id="full_name" type="text">
+        </div>
+        <div>
+          <label id="t_email">Your email</label>
+          <input id="email" type="email">
+        </div>
+      </div>
+      <button id="submit_btn" class="btn-primary w-full mt-5" onclick="submitToFactory()"><span id="submit_label">Submit to AI Factory</span></button>
+      <p id="submit_err" class="hidden text-rose-400 text-sm mt-3"></p>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="success" class="hidden mt-8 card rounded-2xl p-7 border border-green-800 text-center">
+    <h2 class="text-2xl font-bold text-green-400 mb-2" id="t_success">Request submitted</h2>
+    <p class="text-slate-300 text-sm mb-5" id="t_success_sub">Your project request is now in the AI Factory queue.</p>
+    <a id="success_open" href="#" target="_blank" class="btn-primary inline-block" style="text-decoration:none;">Open project</a>
+    <div class="mt-4"><a id="success_url" href="#" target="_blank" class="text-sky-400 text-xs break-all"></a></div>
+    <div class="mt-6"><button class="btn-ghost" onclick="location.reload()" id="t_again">Create another</button></div>
+  </div>
+
+  <p class="text-xs text-slate-600 text-center mt-10" id="t_foot">Digit2AI Neural Intelligence · front-of-funnel request generator</p>
+</main>
+
+<script>
+let LANG = 'en';
+let lastData = null;
+
+const I18N = {
+  en: {
+    h1:'Project Request Creator',
+    sub:'Type a subject or a rough idea. The Neural Brain expands it into a complete, structured project request — ready for AI triage, business plan, and the Claude premortem.',
+    subject_label:'Your subject or idea',
+    gen:'Generate project request', gen_ing:'Generating…',
+    review:'Review & edit your request',
+    title:'Project title', industry:'Industry', desc:'Project description', problem:'Problem to solve',
+    users:'Target users', current:'Current process', data:'Data sources / volume',
+    timeline:'Timeline', budget:'Budget range', metrics:'Success metrics', cat:'AI category',
+    triage:'Run AI Triage preview', triage_ing:'Triaging…',
+    submit_h:'Send to the AI Factory', submit_sub:'This ingests the request for deep search, business plan, and the Claude premortem report.',
+    name:'Your name', email:'Your email', submit:'Submit to AI Factory', submit_ing:'Submitting…',
+    success:'Request submitted', success_sub:'Your project request is now in the AI Factory queue.',
+    again:'Create another', foot:'Digit2AI Neural Intelligence · front-of-funnel request generator',
+    verdict:{go:'GO',poc:'POC',stop:'STOP'}, fit:'Fit', window:'Delivery',
+    examples:[
+      'Monitor my retail stores daily like a traffic light with a health score and a voice AI that explains the issues',
+      'AI that calls my aging parents each morning and alerts me if something is wrong',
+      'Read incoming invoices and auto-enter them into my accounting system'
+    ]
+  },
+  es: {
+    h1:'Creador de Solicitudes de Proyecto',
+    sub:'Escribe un tema o una idea general. El Cerebro Neural lo expande en una solicitud de proyecto completa y estructurada — lista para el triaje de IA, el plan de negocio y el premortem de Claude.',
+    subject_label:'Tu tema o idea',
+    gen:'Generar solicitud', gen_ing:'Generando…',
+    review:'Revisa y edita tu solicitud',
+    title:'Título del proyecto', industry:'Industria', desc:'Descripción del proyecto', problem:'Problema a resolver',
+    users:'Usuarios objetivo', current:'Proceso actual', data:'Fuentes de datos / volumen',
+    timeline:'Plazo', budget:'Rango de presupuesto', metrics:'Métricas de éxito', cat:'Categoría de IA',
+    triage:'Ejecutar triaje de IA', triage_ing:'Analizando…',
+    submit_h:'Enviar a la Fábrica de IA', submit_sub:'Esto ingesta la solicitud para búsqueda profunda, plan de negocio y el reporte premortem de Claude.',
+    name:'Tu nombre', email:'Tu correo', submit:'Enviar a la Fábrica de IA', submit_ing:'Enviando…',
+    success:'Solicitud enviada', success_sub:'Tu solicitud de proyecto está ahora en la cola de la Fábrica de IA.',
+    again:'Crear otra', foot:'Digit2AI Neural Intelligence · generador de solicitudes',
+    verdict:{go:'GO',poc:'POC',stop:'STOP'}, fit:'Ajuste', window:'Entrega',
+    examples:[
+      'Monitorear mis tiendas a diario como un semáforo con un puntaje de salud y una IA de voz que explique los problemas',
+      'IA que llame a mis padres mayores cada mañana y me alerte si algo anda mal',
+      'Leer facturas entrantes e ingresarlas automáticamente en mi sistema contable'
+    ]
+  }
+};
+
+function t(){ return I18N[LANG]; }
+
+function setLang(l){
+  LANG = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
+  const T = t();
+  const map = {
+    t_h1:'h1', t_sub:'sub', t_subject_label:'subject_label', gen_label:'gen', t_review:'review',
+    t_title:'title', t_industry:'industry', t_desc:'desc', t_problem:'problem', t_users:'users',
+    t_current:'current', t_data:'data', t_timeline:'timeline', t_budget:'budget', t_metrics:'metrics',
+    t_cat:'cat', triage_label:'triage', t_submit_h:'submit_h', t_submit_sub:'submit_sub',
+    t_name:'name', t_email:'email', submit_label:'submit', t_success:'success', t_success_sub:'success_sub',
+    t_again:'again', t_foot:'foot'
+  };
+  for (const [id,key] of Object.entries(map)){ const el=document.getElementById(id); if(el) el.textContent = T[key]; }
+  renderExamples();
+}
+
+function renderExamples(){
+  const box = document.getElementById('examples');
+  box.innerHTML = '';
+  t().examples.forEach(ex => {
+    const c = document.createElement('span');
+    c.className = 'ex-chip';
+    c.textContent = ex.length > 60 ? ex.slice(0,58)+'…' : ex;
+    c.title = ex;
+    c.onclick = () => { document.getElementById('subject').value = ex; };
+    box.appendChild(c);
+  });
+}
+
+document.querySelectorAll('#ai_category_chips .chip-opt').forEach(el => {
+  el.addEventListener('click', () => el.classList.toggle('selected'));
+});
+function setSelectedCategories(cats){
+  const set = new Set(cats || []);
+  document.querySelectorAll('#ai_category_chips .chip-opt').forEach(el => {
+    el.classList.toggle('selected', set.has(el.dataset.value));
+  });
+}
+function getSelectedCategories(){
+  return Array.from(document.querySelectorAll('#ai_category_chips .chip-opt.selected')).map(el => el.dataset.value);
+}
+
+async function generate(){
+  const subject = document.getElementById('subject').value.trim();
+  const err = document.getElementById('gen_err');
+  err.classList.add('hidden');
+  if (subject.length < 6){ err.textContent = LANG==='es' ? 'Escribe una idea un poco más larga.' : 'Type a slightly longer idea.'; err.classList.remove('hidden'); return; }
+  const btn = document.getElementById('gen_btn');
+  btn.disabled = true; document.getElementById('gen_label').textContent = t().gen_ing;
+  try {
+    const r = await fetch('/projects/api/v1/intake/generate-request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ subject, language: LANG })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'Generation failed');
+    lastData = d.data;
+    fillForm(d.data);
+    document.getElementById('result').classList.remove('hidden');
+    document.getElementById('triage_out').classList.add('hidden');
+    document.getElementById('model_tag').textContent = d.data.model || '';
+    document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e){
+    err.textContent = e.message || 'Generation failed'; err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; document.getElementById('gen_label').textContent = t().gen;
+  }
+}
+
+function fillForm(d){
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value = v||''; };
+  set('project_title', d.project_title);
+  set('industry', d.industry);
+  set('project_description', d.project_description);
+  set('problem', d.problem);
+  set('target_users', d.target_users);
+  set('current_process', d.current_process);
+  set('data_sources', d.data_sources);
+  set('timeline', d.timeline);
+  set('budget_range', d.budget_range);
+  set('success_metrics', d.success_metrics);
+  setSelectedCategories(d.ai_category);
+}
+
+function collectForm(){
+  const g = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    project_title:g('project_title'), industry:g('industry'),
+    project_description:g('project_description'), problem:g('problem'),
+    target_users:g('target_users'), current_process:g('current_process'),
+    data_sources:g('data_sources'), timeline:g('timeline'),
+    budget_range:g('budget_range'), success_metrics:g('success_metrics'),
+    ai_category:getSelectedCategories()
+  };
+}
+
+async function runTriage(){
+  const f = collectForm();
+  const desc = f.project_description || f.problem;
+  const out = document.getElementById('triage_out');
+  if ((desc||'').length < 30){ out.classList.remove('hidden'); out.innerHTML = '<p class="text-rose-400 text-sm">'+(LANG==='es'?'La descripción es demasiado corta para el triaje.':'Description is too short to triage.')+'</p>'; return; }
+  const btn = document.getElementById('triage_btn');
+  btn.disabled = true; document.getElementById('triage_label').textContent = t().triage_ing;
+  try {
+    const r = await fetch('/projects/api/v1/intake/public-triage-preview', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ description: desc, language: LANG })
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'Triage failed');
+    renderTriage(d.data);
+  } catch(e){
+    out.classList.remove('hidden'); out.innerHTML = '<p class="text-rose-400 text-sm">'+(e.message||'Triage failed')+'</p>';
+  } finally {
+    btn.disabled = false; document.getElementById('triage_label').textContent = t().triage;
+  }
+}
+
+function renderTriage(v){
+  const out = document.getElementById('triage_out');
+  const T = t();
+  const vc = v.verdict==='go'?'verdict-go':v.verdict==='stop'?'verdict-stop':'verdict-poc';
+  const ts = v.technical_solution || {};
+  const list = (arr)=> (arr||[]).map(x=>'<li class="text-slate-300 text-sm">'+x+'</li>').join('');
+  out.classList.remove('hidden');
+  out.innerHTML =
+    '<div class="flex items-center gap-3 mb-3">'+
+      '<span class="text-2xl font-black '+vc+'">'+(T.verdict[v.verdict]||v.verdict)+'</span>'+
+      '<span class="text-slate-400 text-sm">'+T.fit+': <b class="text-slate-200">'+v.fit_score+'/10</b></span>'+
+      '<span class="text-slate-400 text-sm">'+T.window+': <b class="text-slate-200">'+(ts.delivery_window||'2 weeks')+'</b></span>'+
+    '</div>'+
+    '<p class="text-slate-300 text-sm mb-3">'+(v.problem_in_our_words||'')+'</p>'+
+    (ts.summary?'<p class="text-slate-400 text-sm mb-3">'+ts.summary+'</p>':'')+
+    (ts.what_we_build&&ts.what_we_build.length?'<div class="text-[11px] uppercase text-slate-500 mb-1">'+(LANG==='es'?'Qué construimos':'What we build')+'</div><ul class="list-disc pl-5 mb-2">'+list(ts.what_we_build)+'</ul>':'');
+}
+
+async function submitToFactory(){
+  const f = collectForm();
+  const full_name = document.getElementById('full_name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const err = document.getElementById('submit_err');
+  err.classList.add('hidden');
+  if (!full_name || !email){ err.textContent = LANG==='es'?'Nombre y correo son obligatorios.':'Name and email are required.'; err.classList.remove('hidden'); return; }
+  if (!f.project_title || !f.problem){ err.textContent = LANG==='es'?'Falta el título o el problema.':'Project title and problem are required.'; err.classList.remove('hidden'); return; }
+  const btn = document.getElementById('submit_btn');
+  btn.disabled = true; document.getElementById('submit_label').textContent = t().submit_ing;
+  try {
+    const payload = Object.assign({}, f, { full_name, email });
+    const r = await fetch('/projects/api/v1/intake/public/request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'Submission failed');
+    document.getElementById('result').classList.add('hidden');
+    document.querySelector('.card').closest('main');
+    const succ = document.getElementById('success');
+    succ.classList.remove('hidden');
+    if (d.url){ document.getElementById('success_url').href = d.url; document.getElementById('success_url').textContent = d.url; document.getElementById('success_open').href = d.url; }
+    window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e){
+    err.textContent = e.message || 'Submission failed'; err.classList.remove('hidden');
+    btn.disabled = false; document.getElementById('submit_label').textContent = t().submit;
+  }
+}
+
+setLang('en');
+</script>
+</body>
+</html>

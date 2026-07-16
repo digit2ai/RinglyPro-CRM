@@ -708,6 +708,183 @@ Produce the triage verdict + technical solution as a single JSON object. Respond
 });
 
 // =====================================================
+// PROJECT REQUEST CREATOR — subject/idea -> full structured request
+// =====================================================
+//
+// POST /generate-request
+//   Public (rate-limited via the shared triage bucket). Takes a short
+//   subject or rough idea and expands it into a COMPLETE, structured
+//   project request whose fields map 1:1 onto the /public/request intake
+//   payload (project_title, project_description, problem, target_users,
+//   current_process, data_sources, timeline, budget_range,
+//   success_metrics, ai_category[], industry).
+//
+//   This is the front-of-funnel: the output is meant to be reviewed,
+//   optionally edited, then (a) run through /public-triage-preview and
+//   (b) submitted to /public/request so the AI factory (deep search ->
+//   triage -> business plan -> Claude premortem) can ingest it.
+//
+//   Body: { subject: string, language?: 'en'|'es' }
+//   Returns: { success, data: { ...all intake fields... } }
+// =====================================================
+
+// The fixed ai_category enum the intake form + factory expect. The
+// generator MUST pick from this list (multi-select) so downstream
+// categorization stays consistent with dashboard/intake/request.html.
+const AI_CATEGORY_ENUM = [
+  'Voice agent (inbound / outbound)',
+  'Conversational AI / chatbot',
+  'Document understanding (OCR, extraction)',
+  'Computer vision',
+  'Compliance / wire-screening / fraud',
+  'Predictive analytics / forecasting',
+  'Generative AI / content generation',
+  'Recommendation / personalization',
+  'Other / not sure'
+];
+
+const REQUEST_GENERATOR_SYSTEM_PROMPT = `You are the Project Request Writer for Digit2AI's Neural Intelligence platform.
+
+Your job: take a SHORT subject line or rough idea from a prospect and expand it into a COMPLETE, well-structured project request that Digit2AI's AI factory can ingest for triage, business-plan generation, and a premortem risk report.
+
+The prospect gave you very little. You must infer sensible, realistic detail from the subject — the way an experienced solutions architect would flesh out a one-line idea into a proper brief. Never leave a field blank; make reasonable, concrete assumptions and phrase them as the prospect's own request (first person: "I need...", "I want...").
+
+RULES
+- Be concrete and specific, never generic marketing fluff. Prefer nouns and verbs a builder can act on.
+- Realistic, not grandiose. Assume a normal SMB / mid-market buyer unless the subject says otherwise.
+- Timeline MUST be expressed in WEEKS and be short: default "2 weeks" for an MVP, up to "4 weeks" max for a complex build. Never days, never months.
+- Budget must be a plausible range for a 2-4 week AI MVP (e.g. "$5,000 - $15,000", "$15,000 - $40,000"). Never $0. Never six figures for an MVP.
+- ai_category MUST be an array of 1-3 values chosen ONLY from this exact enum (copy the strings verbatim):
+${AI_CATEGORY_ENUM.map(c => '  - ' + c).join('\n')}
+- project_description is the polished narrative: 2-4 short paragraphs OR a lead sentence followed by a bulleted list of what the system does. This is the centerpiece the prospect reads and approves.
+- problem is 1-2 sentences: the pain in plain language.
+- If the subject implies a voice / conversational component, include it in ai_category and describe it.
+
+OUTPUT FORMAT
+Respond with a SINGLE JSON object, no prose, no markdown fences, beginning with { and ending with }:
+
+{
+  "language": "en" | "es",
+  "project_title": "4-8 word project name",
+  "industry": "best-guess industry, 1-4 words",
+  "project_description": "the polished narrative (2-4 paragraphs or lead + bullets, plain text with \\n line breaks)",
+  "problem": "1-2 sentence pain statement",
+  "target_users": "who uses it, 1-2 sentences",
+  "current_process": "how they do it today / what's broken, 1-2 sentences",
+  "data_sources": "systems, files, feeds or volume involved, 1-2 sentences",
+  "timeline": "2 weeks | 3 weeks | 4 weeks",
+  "budget_range": "plausible USD range for a 2-4 week MVP",
+  "success_metrics": "how the prospect will know it worked, 1-2 sentences",
+  "ai_category": ["one or more verbatim enum strings"]
+}
+
+Respond with the JSON object only.`;
+
+router.post('/generate-request', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: `Too many generations from this IP. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).`,
+        retry_in_seconds: rl.retryInSec
+      });
+    }
+
+    const body = req.body || {};
+    const subject = String(body.subject || '').trim();
+    if (!subject || subject.length < 6) {
+      return res.status(400).json({ success: false, error: 'Subject / idea must be at least 6 characters.' });
+    }
+    if (subject.length > 2000) {
+      return res.status(400).json({ success: false, error: 'Subject / idea must be under 2000 characters.' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ success: false, error: 'Generator not configured (no API key on server).' });
+    }
+    let Anthropic;
+    try { Anthropic = require('@anthropic-ai/sdk'); } catch (_) {
+      return res.status(503).json({ success: false, error: 'Generator SDK unavailable on server.' });
+    }
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const lang = body.language === 'en' || body.language === 'es' ? body.language : _detectLang(subject);
+    const userMsg = `Today is ${new Date().toISOString().slice(0, 10)}.
+
+RESPONSE LANGUAGE: ${lang === 'es'
+      ? 'Write every free-text field in fluent business Spanish with proper orthography (tildes, ñ, ¿¡). The ai_category enum strings stay in English (they are code identifiers).'
+      : 'Write every field in English.'}
+
+PROSPECT SUBJECT / IDEA
+${subject}
+
+Expand this into the complete project request JSON. Respond with the JSON only.`;
+
+    const MODEL = process.env.REQUEST_GENERATOR_MODEL || process.env.TRIAGE_PREVIEW_MODEL || 'claude-sonnet-4-6';
+    let resp;
+    try {
+      resp = await client.messages.create({
+        model: MODEL,
+        max_tokens: 2500,
+        system: REQUEST_GENERATOR_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMsg }]
+      });
+    } catch (err) {
+      console.error('[D2AI-Intake] generate-request Claude call failed:', err.message);
+      return res.status(502).json({ success: false, error: 'Generator upstream call failed. Please try again.' });
+    }
+    const rawText = resp?.content?.[0]?.text || '';
+    let parsed = _safeParseJson(rawText);
+    if (!parsed) {
+      try {
+        const retry = await client.messages.create({
+          model: MODEL,
+          max_tokens: 2500,
+          system: REQUEST_GENERATOR_SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: userMsg },
+            { role: 'assistant', content: rawText || '(empty)' },
+            { role: 'user', content: 'Your last response was not valid JSON. Reply again with the COMPLETE JSON object only, no preamble, no markdown fences. Begin with { and end with }.' }
+          ]
+        });
+        parsed = _safeParseJson(retry?.content?.[0]?.text || '');
+      } catch (_) {}
+    }
+    if (!parsed) {
+      return res.status(502).json({ success: false, error: 'Generator returned a malformed response. Please rephrase your idea and try again.' });
+    }
+
+    // Normalize ai_category to the fixed enum (drop anything off-list).
+    let cats = Array.isArray(parsed.ai_category) ? parsed.ai_category : (parsed.ai_category ? [parsed.ai_category] : []);
+    cats = cats.map(c => String(c).trim()).filter(c => AI_CATEGORY_ENUM.includes(c));
+    if (!cats.length) cats = ['Other / not sure'];
+
+    const out = {
+      language: parsed.language === 'es' ? 'es' : 'en',
+      project_title: String(parsed.project_title || '').trim().slice(0, 120) || 'Untitled Project',
+      industry: String(parsed.industry || '').trim().slice(0, 80),
+      project_description: String(parsed.project_description || '').trim().slice(0, 5000),
+      problem: String(parsed.problem || '').trim().slice(0, 2000),
+      target_users: String(parsed.target_users || '').trim().slice(0, 1000),
+      current_process: String(parsed.current_process || '').trim().slice(0, 1000),
+      data_sources: String(parsed.data_sources || '').trim().slice(0, 1000),
+      timeline: String(parsed.timeline || '2 weeks').trim().slice(0, 60),
+      budget_range: String(parsed.budget_range || '').trim().slice(0, 60),
+      success_metrics: String(parsed.success_metrics || '').trim().slice(0, 1000),
+      ai_category: cats,
+      model: MODEL
+    };
+
+    res.json({ success: true, data: out });
+  } catch (err) {
+    console.error('[D2AI-Intake] generate-request error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// =====================================================
 // PARTNERSHIP ORB — voice-driven triage (champion-teaser orb)
 // =====================================================
 //
