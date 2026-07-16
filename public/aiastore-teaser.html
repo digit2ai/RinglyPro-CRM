@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Health AI — Live Interactive Demo | Digit2AI</title>
+<meta name="description" content="Store Health AI monitors your retail fleet in real time, scores every store Red / Yellow / Green, and makes AI voice calls to managers before problems cost you sales.">
+<style>
+  :root{
+    --bg:#0a0e14; --bg2:#0f1622; --card:#141d2b; --card2:#0e1723;
+    --line:#22304a; --txt:#e8eef7; --mut:#93a4bd;
+    --blue:#3b82f6; --blue2:#60a5fa; --cyan:#34d3ff; --violet:#9b7bff;
+    --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --gold:#f0c674;
+    /* light app surfaces (inside device) */
+    --a-bg:#f5f7fb; --a-card:#ffffff; --a-line:#e6ebf2; --a-txt:#0f1b2d; --a-mut:#64748b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 82% -10%,rgba(59,130,246,.16),transparent 60%),
+               radial-gradient(1000px 700px at -10% 15%,rgba(52,211,255,.10),transparent 55%),
+               radial-gradient(900px 700px at 50% 120%,rgba(155,123,255,.10),transparent 55%),
+               var(--bg);
+    color:var(--txt); line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 90px}
+  a{color:inherit}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.01em}
+  .brand .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--cyan));
+    display:grid;place-items:center;box-shadow:0 8px 24px rgba(59,130,246,.35)}
+  .brand .logo svg{width:22px;height:22px}
+  .brand small{display:block;font-weight:500;font-size:11px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase}
+  .langtoggle{display:flex;gap:4px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .langtoggle button{background:transparent;border:0;color:var(--mut);font:inherit;font-size:13px;font-weight:600;
+    padding:5px 13px;border-radius:999px;cursor:pointer}
+  .langtoggle button.on{background:var(--blue);color:#fff}
+
+  /* hero */
+  .hero{text-align:center;padding:40px 0 12px}
+  .badge{display:inline-block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);
+    border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:20px;background:rgba(52,211,255,.06)}
+  h1{font-size:clamp(30px,5.4vw,52px);line-height:1.1;font-weight:800;letter-spacing:-.025em}
+  h1 .grad{background:linear-gradient(90deg,var(--cyan),var(--blue2),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{max-width:660px;margin:18px auto 0;font-size:clamp(16px,2.2vw,19px);color:var(--mut)}
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .btn{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:12px;padding:13px 22px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:9px;text-decoration:none}
+  .btn.primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;box-shadow:0 12px 30px rgba(59,130,246,.35)}
+  .btn.ghost{background:rgba(255,255,255,.05);color:var(--txt);border:1px solid var(--line)}
+  .btn:active{transform:translateY(1px)}
+
+  /* trust strip */
+  .trust{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin:34px 0 6px;color:var(--mut);font-size:13px}
+  .trust b{color:var(--txt)}
+
+  /* Lina/voice orb panel */
+  .lina{margin:38px auto 8px;max-width:660px;background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:20px;padding:24px;display:flex;gap:20px;align-items:center;
+    box-shadow:0 22px 60px rgba(0,0,0,.45)}
+  .orb{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#9dd0ff,#3b82f6 46%,#122a6b 100%);box-shadow:0 0 0 0 rgba(59,130,246,.5);cursor:pointer}
+  .orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(59,130,246,.35)}
+  .orb.speaking{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,.45)}70%{box-shadow:0 0 0 22px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
+  .lina-meta{flex:1;min-width:0}
+  .lina-name{font-weight:700;font-size:17px}
+  .lina-role{color:var(--mut);font-size:13px;margin-bottom:13px}
+  .controls{display:flex;gap:9px;flex-wrap:wrap}
+  .controls button{font:inherit;font-weight:600;font-size:13px;border-radius:9px;padding:9px 13px;cursor:pointer;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--txt)}
+  .controls button.primary{background:linear-gradient(135deg,var(--blue),var(--cyan));border:0;color:#fff}
+  .controls button:disabled{opacity:.45;cursor:default}
+  .status{font-size:12.5px;color:var(--mut);margin-top:11px;min-height:16px}
+  .voicepick{margin-top:11px;font-size:12.5px;color:var(--mut)}
+  .voicepick select{font:inherit;background:#16233a;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-left:6px}
+  #voiceMode{margin-left:8px;color:var(--green)}
+
+  /* section headings */
+  .sec-h{text-align:center;margin:70px 0 8px;font-size:clamp(22px,3.6vw,32px);font-weight:800;letter-spacing:-.02em}
+  .sec-p{text-align:center;color:var(--mut);max-width:640px;margin:0 auto 30px;font-size:15.5px}
+
+  /* ===== SIMULATOR ===== */
+  .sim-shell{margin:20px auto 0;max-width:900px}
+  .device{background:linear-gradient(180deg,#0c1420,#0a1019);border:1px solid var(--line);border-radius:22px;
+    padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .device-bar{display:flex;align-items:center;gap:7px;padding:4px 6px 12px}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .urlbar{flex:1;margin-left:8px;background:#0c1626;border:1px solid var(--line);border-radius:8px;color:var(--mut);
+    font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:8px}
+  .urlbar .lock{color:var(--green)}
+  .livedot{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--green);font-size:11px;font-weight:600}
+  .livedot i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* the app inside device (light theme like the real product) */
+  .app{background:var(--a-bg);border-radius:12px;overflow:hidden;color:var(--a-txt);min-height:560px;position:relative}
+  .app-top{background:#fff;border-bottom:1px solid var(--a-line);display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+  .app-top .t-l{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+  .app-top .t-l .m{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center}
+  .app-top .t-l .m svg{width:16px;height:16px}
+  .app-top .t-r{display:flex;align-items:center;gap:14px;color:var(--a-mut);font-size:13px}
+  .bell{position:relative}
+  .bell .cnt{position:absolute;top:-6px;right:-8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 5px}
+  .app-nav{display:flex;gap:2px;background:#fff;border-bottom:1px solid var(--a-line);padding:0 10px;overflow-x:auto}
+  .app-nav button{font:inherit;font-size:13.5px;font-weight:600;color:var(--a-mut);background:transparent;border:0;border-bottom:2px solid transparent;
+    padding:12px 14px;cursor:pointer;white-space:nowrap}
+  .app-nav button.on{color:var(--blue);border-bottom-color:var(--blue)}
+  .app-body{padding:16px}
+  .scr{display:none;animation:fade .35s ease}
+  .scr.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .a-date{display:flex;align-items:center;justify-content:space-between;color:var(--a-mut);font-size:12.5px;margin-bottom:12px}
+  .panel{background:var(--a-card);border:1px solid var(--a-line);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .panel h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--a-mut);margin-bottom:14px;font-weight:700}
+  .kpi-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .kc{background:var(--a-card);border:1px solid var(--a-line);border-radius:12px;padding:13px}
+  .kc .n{font-size:26px;font-weight:800;line-height:1}
+  .kc .l{font-size:11.5px;color:var(--a-mut);margin-top:5px}
+  .kc.g .n{color:var(--green)}.kc.y .n{color:var(--yellow)}.kc.r .n{color:var(--red)}.kc.b .n{color:var(--blue)}
+
+  .hrow{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+  .hrow .ic{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
+  .hrow .lab{width:150px;font-size:13px;font-weight:600}
+  .bar{flex:1;height:12px;background:#eef2f7;border-radius:999px;overflow:hidden}
+  .bar > span{display:block;height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+  .hrow .pct{width:44px;text-align:right;font-size:13px;font-weight:700;color:var(--a-mut)}
+  .g-bg{background:var(--green)}.y-bg{background:var(--yellow)}.r-bg{background:var(--red)}.b-bg{background:var(--blue)}
+
+  .score-big{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+  .score-big .v{font-size:34px;font-weight:800}
+  .score-big .m{color:var(--a-mut);font-size:13px}
+
+  /* alert cards */
+  .alert{border:1px solid var(--a-line);border-left-width:4px;border-radius:10px;padding:13px 14px;margin-bottom:11px;background:#fff;cursor:pointer;transition:.15s}
+  .alert:hover{box-shadow:0 6px 18px rgba(16,24,40,.08);transform:translateY(-1px)}
+  .alert.r{border-left-color:var(--red)}.alert.y{border-left-color:var(--yellow)}.alert.g{border-left-color:var(--green)}
+  .alert .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+  .alert .id{font-weight:800;font-size:14px}
+  .tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .tag.r{background:#fee2e2;color:#b91c1c}.tag.y{background:#fef3c7;color:#b45309}.tag.g{background:#dcfce7;color:#15803d}
+  .tag.blue{background:#dbeafe;color:#1d4ed8}.tag.new{background:var(--red);color:#fff}.tag.ack{background:#dcfce7;color:#15803d}
+  .alert .kpi{font-size:13px;color:var(--a-txt);font-weight:600;margin:3px 0}
+  .alert .meta{font-size:12px;color:var(--a-mut)}
+  .alert .btns{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+  .alert .btns button{font:inherit;font-size:12px;font-weight:600;border-radius:7px;padding:6px 11px;cursor:pointer;border:1px solid var(--a-line);background:#f8fafc;color:var(--a-txt)}
+  .alert .btns button.p{background:var(--blue);color:#fff;border:0}
+
+  .filters{display:flex;gap:7px;margin-bottom:12px}
+  .filters button{font:inherit;font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 14px;cursor:pointer;border:1px solid var(--a-line);background:#fff;color:var(--a-mut)}
+  .filters button.on{background:var(--a-txt);color:#fff;border-color:var(--a-txt)}
+
+  .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--blue);font-weight:600;font-size:13px;cursor:pointer;margin-bottom:12px}
+  .store-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .store-hd h2{font-size:19px;font-weight:800}
+  .store-hd .addr{color:var(--a-mut);font-size:12.5px}
+  .statusbanner{border-radius:12px;padding:16px;margin:12px 0 14px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .statusbanner.r{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+  .statusbanner .st{font-size:19px;font-weight:800}
+  .statusbanner .sm{font-size:12.5px;opacity:.9}
+  .statusbanner .rt{text-align:right}
+  .kpi-detail .hrow{margin-bottom:16px}
+  .kpi-detail .lab{width:180px}
+  .kpi-detail .sub2{font-size:11.5px;color:var(--a-mut);font-weight:500;margin-top:2px}
+
+  /* AI call sim */
+  .callcard{background:linear-gradient(135deg,#0f1b2d,#132a4d);color:#fff;border-radius:14px;padding:18px;text-align:center}
+  .callcard .avatar{width:70px;height:70px;border-radius:50%;margin:4px auto 10px;background:radial-gradient(circle at 35% 30%,#9dd0ff,#3b82f6 50%,#122a6b);position:relative}
+  .callcard.ringing .avatar{animation:pulse 1.1s infinite}
+  .callcard .who{font-weight:800;font-size:17px}
+  .callcard .st2{color:#9dc0ff;font-size:12.5px;margin-top:2px;min-height:16px}
+  .callctrls{display:flex;gap:10px;justify-content:center;margin-top:14px}
+  .callctrls button{font:inherit;font-weight:700;font-size:13px;border:0;border-radius:999px;padding:11px 20px;cursor:pointer;color:#fff}
+  .callctrls .dial{background:var(--green)}.callctrls .hang{background:var(--red)}
+  .callctrls button:disabled{opacity:.4;cursor:default}
+  .transcript{margin-top:16px;text-align:left;max-height:230px;overflow-y:auto}
+  .tline{margin-bottom:10px;display:flex;gap:9px;align-items:flex-start;animation:fade .3s ease}
+  .tline .av{width:26px;height:26px;border-radius:50%;flex:0 0 26px;display:grid;place-items:center;font-size:11px;font-weight:800}
+  .tline.ai .av{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}
+  .tline.mgr .av{background:#e6ebf2;color:#334155}
+  .tline .bub{background:rgba(255,255,255,.08);border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.5}
+  .tline.mgr .bub{background:rgba(255,255,255,.03)}
+  .tline .who2{font-size:10.5px;color:#9dc0ff;font-weight:700;margin-bottom:2px}
+
+  /* tasks */
+  .task{background:#fff;border:1px solid var(--a-line);border-radius:10px;padding:13px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+  .task .chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--a-line);flex:0 0 20px;margin-top:2px;cursor:pointer;display:grid;place-items:center}
+  .task.done .chk{background:var(--green);border-color:var(--green)}
+  .task.done .ttitle{text-decoration:line-through;color:var(--a-mut)}
+  .task .ttitle{font-weight:700;font-size:13.5px}
+  .task .tmeta{font-size:12px;color:var(--a-mut);margin-top:3px}
+  .prio{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:auto;flex:0 0 auto}
+  .prio.p1{background:#fee2e2;color:#b91c1c}.prio.p3{background:#fef3c7;color:#b45309}
+
+  .toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%) translateY(80px);background:#0f1b2d;color:#fff;
+    padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.35);opacity:0;transition:.35s;pointer-events:none;z-index:20}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* how it works */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+  .feat{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:20px}
+  .feat .fi{width:42px;height:42px;border-radius:11px;background:rgba(59,130,246,.14);display:grid;place-items:center;margin-bottom:12px}
+  .feat h4{font-size:16px;font-weight:800;margin-bottom:6px}
+  .feat p{font-size:13.5px;color:var(--mut)}
+  .steps{counter-reset:s;max-width:760px;margin:8px auto 0}
+  .step{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:0}
+  .step .num{counter-increment:s;flex:0 0 40px;height:40px;border-radius:11px;background:rgba(59,130,246,.14);color:var(--blue2);
+    display:grid;place-items:center;font-weight:800}
+  .step .num::before{content:counter(s)}
+  .step h4{font-size:16px;font-weight:700}
+  .step p{font-size:14px;color:var(--mut)}
+
+  /* final cta */
+  .final{margin-top:70px;text-align:center;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(52,211,255,.08));
+    border:1px solid var(--line);border-radius:22px;padding:44px 24px}
+  .final h2{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-.02em}
+  .final p{color:var(--mut);max-width:560px;margin:12px auto 24px;font-size:16px}
+  footer{text-align:center;color:var(--mut);font-size:13px;margin-top:44px}
+  footer .logo-sm{font-weight:800;color:var(--txt)}
+
+  @media(max-width:720px){
+    .kpi-cards{grid-template-columns:repeat(2,1fr)}
+    .grid3{grid-template-columns:1fr}
+    .lina{flex-direction:column;text-align:center}.controls{justify-content:center}
+    .hrow .lab{width:112px}.kpi-detail .lab{width:120px}
+    .app-body{padding:12px}
+  }
+  .en,.es{display:none}
+  body[data-lang="en"] .en{display:revert}
+  body[data-lang="es"] .es{display:revert}
+  .lina .en,.lina .es,.controls .en,.controls .es{display:none}
+  body[data-lang="en"] .lina .en,body[data-lang="en"] .controls .en{display:inline}
+  body[data-lang="es"] .lina .es,body[data-lang="es"] .controls .es{display:inline}
+</style>
+</head>
+<body data-lang="en">
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span>
+      <div>Store Health AI<small>by Digit2AI</small></div>
+    </div>
+    <div class="langtoggle">
+      <button id="langEn" class="on" onclick="setLang('en')">EN</button>
+      <button id="langEs" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="badge en">Live Interactive Demo</span>
+    <span class="badge es">Demo Interactivo en Vivo</span>
+    <h1>
+      <span class="en">Every store, scored <span class="grad">Red · Yellow · Green</span> — in real time.</span>
+      <span class="es">Cada tienda, calificada <span class="grad">Rojo · Amarillo · Verde</span> — en tiempo real.</span>
+    </h1>
+    <p class="sub">
+      <span class="en">Store Health AI watches your entire retail fleet, predicts operational risk before it costs you sales, and makes AI voice calls to the right manager the moment a store goes critical.</span>
+      <span class="es">Store Health AI vigila toda tu red de tiendas, predice el riesgo operativo antes de que te cueste ventas, y llama por voz con IA al gerente correcto en el momento en que una tienda entra en estado crítico.</span>
+    </p>
+    <div class="cta-row">
+      <a href="#sim" class="btn primary">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+        <span class="en">Try the live dashboard</span><span class="es">Probar el panel en vivo</span>
+      </a>
+      <button class="btn ghost" onclick="document.getElementById('playAll').click();document.getElementById('lina').scrollIntoView({behavior:'smooth',block:'center'})">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg>
+        <span class="en">Let the AI explain it</span><span class="es">Que la IA lo explique</span>
+      </button>
+    </div>
+    <div class="trust">
+      <div class="en"><b>20</b> stores monitored</div><div class="es"><b>20</b> tiendas monitoreadas</div>
+      <div class="en"><b>4</b> live KPIs / store</div><div class="es"><b>4</b> KPIs en vivo / tienda</div>
+      <div class="en"><b>3-level</b> auto-escalation</div><div class="es"><b>3 niveles</b> de escalamiento</div>
+      <div class="en"><b>24/7</b> AI voice calls</div><div class="es"><b>24/7</b> llamadas de voz IA</div>
+    </div>
+  </section>
+
+  <!-- LINA VOICE ORB -->
+  <div class="lina" id="lina">
+    <div class="orb" id="orb"></div>
+    <div class="lina-meta">
+      <div class="lina-name"><span class="en">Lina · AI Voice by Digit2AI</span><span class="es">Lina · Voz AI de Digit2AI</span></div>
+      <div class="lina-role"><span class="en">Your Store Health AI guide</span><span class="es">Tu guía de Store Health AI</span></div>
+      <div class="controls">
+        <button class="primary" id="playAll"><span class="en">▶ Let the AI walk me through it</span><span class="es">▶ Que la IA me lo explique todo</span></button>
+        <button id="pause" disabled><span class="en">❚❚ Pause</span><span class="es">❚❚ Pausar</span></button>
+        <button id="stop" disabled><span class="en">■ Stop</span><span class="es">■ Detener</span></button>
+      </div>
+      <div class="status" id="status"><span class="en">Tap the button and the AI will present the whole demo.</span><span class="es">Pulsa el botón y la IA presentará todo el demo.</span></div>
+      <div class="voicepick">
+        <label><input type="checkbox" id="neuralToggle" checked> <span class="en">Neural HD voice</span><span class="es">Voz neural HD</span></label>
+        &nbsp;·&nbsp; <span class="en">Voice:</span><span class="es">Voz:</span>
+        <select id="voiceSel">
+          <option value="ava" selected>English (Ava)</option>
+          <option value="guy">English (Guy)</option>
+          <option value="lina">Español México (Dalia)</option>
+          <option value="paloma">Español EE.UU. (Paloma)</option>
+          <option value="salome">Español Colombia (Salomé)</option>
+        </select>
+        <span id="voiceMode"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SIMULATOR ===================== -->
+  <h2 class="sec-h" id="sim"><span class="en">The real software — try it yourself</span><span class="es">El software real — pruébalo tú mismo</span></h2>
+  <p class="sec-p"><span class="en">This is a working simulation of the actual Store Health AI dashboard. Click around: open a critical store, acknowledge alerts, and watch the AI place a voice call to a manager.</span><span class="es">Esta es una simulación funcional del panel real de Store Health AI. Explora: abre una tienda crítica, reconoce alertas y observa cómo la IA hace una llamada de voz a un gerente.</span></p>
+
+  <div class="sim-shell sec" data-i="0">
+    <div class="device">
+      <div class="device-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="urlbar"><span class="lock">🔒</span> aiagent.ringlypro.com/aiastore</span>
+        <span class="livedot"><i></i> LIVE</span>
+      </div>
+
+      <div class="app" id="app">
+        <div class="app-top">
+          <div class="t-l"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></span> Store Health AI</div>
+          <div class="t-r">
+            <span class="bell">🔔<span class="cnt" id="bellCnt">3</span></span>
+            <span>👤 <span class="en">Admin</span><span class="es">Admin</span></span>
+          </div>
+        </div>
+        <div class="app-nav">
+          <button class="on" data-scr="overview" onclick="nav('overview')"><span class="en">Overview</span><span class="es">Resumen</span></button>
+          <button data-scr="alerts" onclick="nav('alerts')"><span class="en">Alerts</span><span class="es">Alertas</span> <span id="navAlertCnt">(3)</span></button>
+          <button data-scr="tasks" onclick="nav('tasks')"><span class="en">Tasks</span><span class="es">Tareas</span></button>
+          <button data-scr="call" onclick="nav('call')"><span class="en">AI Voice Call</span><span class="es">Llamada IA</span></button>
+        </div>
+
+        <div class="app-body">
+
+          <!-- OVERVIEW -->
+          <div class="scr on" id="scr-overview">
+            <div class="a-date">
+              <span>📅 <span class="en">Monday, July 13, 2026</span><span class="es">Lunes, 13 de julio de 2026</span></span>
+              <span>🔄 <span class="en">Updated 2 min ago</span><span class="es">Actualizado hace 2 min</span></span>
+            </div>
+            <div class="kpi-cards">
+              <div class="kc g"><div class="n">12</div><div class="l"><span class="en">Healthy stores</span><span class="es">Tiendas sanas</span></div></div>
+              <div class="kc y"><div class="n">5</div><div class="l"><span class="en">Need attention</span><span class="es">Requieren atención</span></div></div>
+              <div class="kc r"><div class="n">3</div><div class="l"><span class="en">Critical</span><span class="es">Críticas</span></div></div>
+              <div class="kc b"><div class="n">78.5</div><div class="l"><span class="en">Avg health score</span><span class="es">Salud promedio</span></div></div>
+            </div>
+
+            <div class="panel">
+              <h3><span class="en">System Health Summary</span><span class="es">Resumen de Salud del Sistema</span></h3>
+              <div class="hrow"><span class="ic g-bg"></span><span class="lab">🟢 <span class="en">Healthy</span><span class="es">Sanas</span></span><span class="bar"><span class="g-bg" data-w="60"></span></span><span class="pct">60%</span></div>
+              <div class="hrow"><span class="ic y-bg"></span><span class="lab">🟡 <span class="en">Attention</span><span class="es">Atención</span></span><span class="bar"><span class="y-bg" data-w="25"></span></span><span class="pct">25%</span></div>
+              <div class="hrow"><span class="ic r-bg"></span><span class="lab">🔴 <span class="en">Critical</span><span class="es">Críticas</span></span><span class="bar"><span class="r-bg" data-w="15"></span></span><span class="pct">15%</span></div>
+              <div class="score-big"><span class="v">78.5</span><span class="m">/100 · <span class="en">8 stores require action</span><span class="es">8 tiendas requieren acción</span></span></div>
+            </div>
+
+            <div class="panel">
+              <h3>🔴 <span class="en">Critical Alerts (3)</span><span class="es">Alertas Críticas (3)</span></h3>
+              <div class="alert r" onclick="openStore('DT-001')">
+                <div class="top"><span class="id">DT-001 · Manhattan 42nd St</span><span class="tag r">RED</span></div>
+                <div class="kpi"><span class="en">Labor Coverage: 85% — Understaffed</span><span class="es">Cobertura de Personal: 85% — Falta personal</span></div>
+                <div class="meta"><span class="en">Level 3 · AI Call scheduled · Mgr: Alice Martinez · Due 6h</span><span class="es">Nivel 3 · Llamada IA agendada · Ger: Alice Martinez · Vence 6h</span></div>
+              </div>
+              <div class="alert r" onclick="openStore('DT-005')">
+                <div class="top"><span class="id">DT-005 · Bronx Grand Concourse</span><span class="tag r">RED</span></div>
+                <div class="kpi"><span class="en">Sales: -12.5% vs 4-week avg — Critical variance</span><span class="es">Ventas: -12.5% vs promedio 4 sem — Varianza crítica</span></div>
+                <div class="meta"><span class="en">Level 2 · Task assigned · Mgr: David Park · Due 18h</span><span class="es">Nivel 2 · Tarea asignada · Ger: David Park · Vence 18h</span></div>
+              </div>
+              <div class="alert r" onclick="openStore('DT-012')">
+                <div class="top"><span class="id">DT-012 · Staten Island Mall</span><span class="tag r">RED</span></div>
+                <div class="kpi"><span class="en">Inventory OOS: 8.5% — Top SKUs unavailable</span><span class="es">Agotados: 8.5% — SKUs top sin stock</span></div>
+                <div class="meta"><span class="en">Level 2 · Action required · Mgr: Maria Santos · Due 2d</span><span class="es">Nivel 2 · Acción requerida · Ger: Maria Santos · Vence 2d</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ALERTS -->
+          <div class="scr" id="scr-alerts">
+            <div class="filters">
+              <button class="on" onclick="filterAlerts(this,'all')"><span class="en">All</span><span class="es">Todas</span></button>
+              <button onclick="filterAlerts(this,'r')">🔴 Red</button>
+              <button onclick="filterAlerts(this,'y')">🟡 Yellow</button>
+            </div>
+            <div id="alertList">
+              <div class="alert r" data-sev="r">
+                <div class="top"><span class="id"><span class="en">Alert #147 · Level 3</span><span class="es">Alerta #147 · Nivel 3</span></span><span class="tag new">NEW</span></div>
+                <div class="kpi">DT-001 Manhattan 42nd St · <span class="en">Labor Coverage</span><span class="es">Cobertura de Personal</span></div>
+                <div class="meta"><span class="en">85% coverage (RED) — 2 unfilled call-outs during peak · AI Call 3:00 PM</span><span class="es">85% cobertura (ROJO) — 2 ausencias sin cubrir en hora pico · Llamada IA 3:00 PM</span></div>
+                <div class="btns"><button class="p" onclick="ack(this)"><span class="en">Acknowledge</span><span class="es">Reconocer</span></button><button onclick="openStore('DT-001')"><span class="en">View store</span><span class="es">Ver tienda</span></button></div>
+              </div>
+              <div class="alert r" data-sev="r">
+                <div class="top"><span class="id"><span class="en">Alert #146 · Level 2</span><span class="es">Alerta #146 · Nivel 2</span></span><span class="tag ack">✓ ACK</span></div>
+                <div class="kpi">DT-005 Bronx Grand Concourse · <span class="en">Sales Performance</span><span class="es">Desempeño de Ventas</span></div>
+                <div class="meta"><span class="en">-12.5% vs 4W avg (RED) · Acknowledged by David Park · Task due tomorrow 5 PM</span><span class="es">-12.5% vs prom 4 sem (ROJO) · Reconocida por David Park · Tarea vence mañana 5 PM</span></div>
+              </div>
+              <div class="alert y" data-sev="y">
+                <div class="top"><span class="id"><span class="en">Alert #145 · Level 1</span><span class="es">Alerta #145 · Nivel 1</span></span><span class="tag y">YELLOW</span></div>
+                <div class="kpi">DT-012 Staten Island Mall · <span class="en">Conversion Rate</span><span class="es">Tasa de Conversión</span></div>
+                <div class="meta"><span class="en">-2.1% variance (YELLOW) · Slight decline · Assigned: Maria Santos</span><span class="es">-2.1% varianza (AMARILLO) · Ligera caída · Asignada: Maria Santos</span></div>
+                <div class="btns"><button class="p" onclick="ack(this)"><span class="en">Acknowledge</span><span class="es">Reconocer</span></button><button onclick="dismissAlert(this)"><span class="en">Dismiss</span><span class="es">Descartar</span></button></div>
+              </div>
+              <div class="alert y" data-sev="y">
+                <div class="top"><span class="id"><span class="en">Alert #144 · Level 1</span><span class="es">Alerta #144 · Nivel 1</span></span><span class="tag g">✓ RESOLVED</span></div>
+                <div class="kpi">DT-018 Queens Center · <span class="en">Inventory OOS Rate</span><span class="es">Tasa de Agotados</span></div>
+                <div class="meta"><span class="en">4.5% OOS (YELLOW) · Resolved by Robert Lee · Restocked today</span><span class="es">4.5% agotados (AMARILLO) · Resuelta por Robert Lee · Reabastecido hoy</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TASKS -->
+          <div class="scr" id="scr-tasks">
+            <div class="panel">
+              <h3>📋 <span class="en">Active Tasks</span><span class="es">Tareas Activas</span></h3>
+              <div class="task" onclick="toggleTask(this)">
+                <span class="chk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <div><div class="ttitle"><span class="en">Fill open shifts at DT-001 immediately</span><span class="es">Cubrir turnos abiertos en DT-001 de inmediato</span></div><div class="tmeta"><span class="en">DT-001 · Labor Coverage RED · Due today 11:59 PM (6h)</span><span class="es">DT-001 · Cobertura ROJO · Vence hoy 11:59 PM (6h)</span></div></div>
+                <span class="prio p1">P1</span>
+              </div>
+              <div class="task" onclick="toggleTask(this)">
+                <span class="chk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <div><div class="ttitle"><span class="en">Investigate sales drop at DT-005</span><span class="es">Investigar caída de ventas en DT-005</span></div><div class="tmeta"><span class="en">DT-005 · Sales -12.5% · Due tomorrow 5:00 PM</span><span class="es">DT-005 · Ventas -12.5% · Vence mañana 5:00 PM</span></div></div>
+                <span class="prio p1">P1</span>
+              </div>
+              <div class="task" onclick="toggleTask(this)">
+                <span class="chk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <div><div class="ttitle"><span class="en">Restock top SKUs at DT-012</span><span class="es">Reabastecer SKUs top en DT-012</span></div><div class="tmeta"><span class="en">DT-012 · Inventory OOS 8.5% · Due in 2 days</span><span class="es">DT-012 · Agotados 8.5% · Vence en 2 días</span></div></div>
+                <span class="prio p3">P3</span>
+              </div>
+              <div class="task done" onclick="toggleTask(this)">
+                <span class="chk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <div><div class="ttitle"><span class="en">Review traffic decline at DT-018</span><span class="es">Revisar caída de tráfico en DT-018</span></div><div class="tmeta"><span class="en">DT-018 · Completed by Robert Lee</span><span class="es">DT-018 · Completada por Robert Lee</span></div></div>
+                <span class="prio p3">P3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- STORE DETAIL -->
+          <div class="scr" id="scr-store">
+            <span class="backlink" onclick="nav('overview')">← <span class="en">Back to dashboard</span><span class="es">Volver al panel</span></span>
+            <div class="store-hd">
+              <div>
+                <h2 id="storeTitle">DT-001 · Manhattan 42nd St</h2>
+                <div class="addr" id="storeAddr">📍 123 West 42nd Street, New York, NY 10036 · 👤 Alice Martinez</div>
+              </div>
+              <span class="tag r" style="font-size:12px;padding:5px 12px">🔴 <span class="en">ACTION REQUIRED</span><span class="es">ACCIÓN REQUERIDA</span></span>
+            </div>
+            <div class="statusbanner r">
+              <div><div class="st">🔴 RED</div><div class="sm"><span class="en">Escalation Level 2 · Updated 15 min ago</span><span class="es">Escalamiento Nivel 2 · Actualizado hace 15 min</span></div></div>
+              <div class="rt"><div class="st" id="storeScore">68.5</div><div class="sm">/100 · <span class="en">KPI: 🟢2 🟡1 🔴1</span><span class="es">KPI: 🟢2 🟡1 🔴1</span></div></div>
+            </div>
+            <div class="panel kpi-detail">
+              <h3><span class="en">KPI Performance · Today vs Rolling 4 Weeks</span><span class="es">Desempeño KPI · Hoy vs Últimas 4 Semanas</span></h3>
+              <div class="hrow"><span class="lab">💰 <span class="en">Sales</span><span class="es">Ventas</span><div class="sub2"><span class="en">$13,500 vs $12,000 · +12.5%</span><span class="es">$13,500 vs $12,000 · +12.5%</span></div></span><span class="bar"><span class="g-bg" data-w="82"></span></span><span class="pct"><span class="tag g">🟢</span></span></div>
+              <div class="hrow"><span class="lab">👥 <span class="en">Traffic</span><span class="es">Tráfico</span><div class="sub2"><span class="en">380 vs 432 · -12.0%</span><span class="es">380 vs 432 · -12.0%</span></div></span><span class="bar"><span class="y-bg" data-w="55"></span></span><span class="pct"><span class="tag y">🟡</span></span></div>
+              <div class="hrow"><span class="lab">🎯 <span class="en">Conversion</span><span class="es">Conversión</span><div class="sub2"><span class="en">35.5% vs 33.8% · +1.7 pts</span><span class="es">35.5% vs 33.8% · +1.7 pts</span></div></span><span class="bar"><span class="g-bg" data-w="88"></span></span><span class="pct"><span class="tag g">🟢</span></span></div>
+              <div class="hrow"><span class="lab">👷 <span class="en">Labor Coverage</span><span class="es">Cobertura Personal</span><div class="sub2"><span class="en">85% vs 95% target · -10% · 2 unfilled call-outs</span><span class="es">85% vs meta 95% · -10% · 2 ausencias</span></div></span><span class="bar"><span class="r-bg" data-w="42"></span></span><span class="pct"><span class="tag r">🔴</span></span></div>
+            </div>
+            <div style="text-align:center">
+              <button class="btn primary" style="font-size:14px;padding:11px 20px" onclick="nav('call')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .6 3.6 1 1 0 0 1-.25 1z"/></svg>
+                <span class="en">Trigger AI voice call to manager</span><span class="es">Llamar por voz IA al gerente</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- AI CALL -->
+          <div class="scr" id="scr-call">
+            <div class="callcard" id="callCard">
+              <div class="avatar"></div>
+              <div class="who">Alice Martinez</div>
+              <div class="sm" style="color:var(--a-mut);font-size:12px">DT-001 · Manhattan 42nd St · <span class="en">Store Manager</span><span class="es">Gerente de Tienda</span></div>
+              <div class="st2" id="callStatus"><span class="en">Ready to place AI voice call about the RED labor-coverage alert.</span><span class="es">Listo para llamar por voz IA sobre la alerta ROJA de cobertura.</span></div>
+              <div class="callctrls">
+                <button class="dial" id="dialBtn" onclick="startCall()"><span class="en">📞 Place AI call</span><span class="es">📞 Iniciar llamada IA</span></button>
+                <button class="hang" id="hangBtn" onclick="endCall()" disabled><span class="en">■ End</span><span class="es">■ Colgar</span></button>
+              </div>
+              <div class="transcript" id="transcript"></div>
+            </div>
+          </div>
+
+        </div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <h2 class="sec-h"><span class="en">How Store Health AI works</span><span class="es">Cómo funciona Store Health AI</span></h2>
+  <div class="grid3 sec" data-i="1">
+    <div class="feat">
+      <div class="fi">📊</div>
+      <h4><span class="en">Scores every store</span><span class="es">Califica cada tienda</span></h4>
+      <p><span class="en">Pulls POS, foot traffic, inventory and labor data, then computes a 0–100 health score and a Red / Yellow / Green status for each location.</span><span class="es">Toma datos de POS, tráfico, inventario y personal, y calcula un puntaje de salud 0–100 y un estado Rojo / Amarillo / Verde por local.</span></p>
+    </div>
+    <div class="feat">
+      <div class="fi">🔔</div>
+      <h4><span class="en">Escalates automatically</span><span class="es">Escala automáticamente</span></h4>
+      <p><span class="en">When a KPI breaches its threshold, it opens an alert, assigns a task to the manager, and escalates through 3 levels if it isn't resolved in time.</span><span class="es">Cuando un KPI cruza su umbral, abre una alerta, asigna una tarea al gerente y escala en 3 niveles si no se resuelve a tiempo.</span></p>
+    </div>
+    <div class="feat">
+      <div class="fi">📞</div>
+      <h4><span class="en">Calls the manager</span><span class="es">Llama al gerente</span></h4>
+      <p><span class="en">At Level 3, the AI voice agent phones the right manager, explains the issue in plain language, captures their response, and logs it — 24/7.</span><span class="es">En Nivel 3, el agente de voz IA llama al gerente correcto, explica el problema en lenguaje claro, registra su respuesta y la guarda — 24/7.</span></p>
+    </div>
+  </div>
+
+  <h2 class="sec-h"><span class="en">From data to a phone call — in 4 steps</span><span class="es">De los datos a una llamada — en 4 pasos</span></h2>
+  <div class="steps sec" data-i="2">
+    <div class="step"><span class="num"></span><div><h4><span class="en">Ingest</span><span class="es">Ingesta</span></h4><p><span class="en">Nightly ETL and 15-minute pollers pull sales, traffic, inventory and staffing from your existing systems.</span><span class="es">ETL nocturno y sondeos cada 15 min traen ventas, tráfico, inventario y personal desde tus sistemas actuales.</span></p></div></div>
+    <div class="step"><span class="num"></span><div><h4><span class="en">Score & compare</span><span class="es">Puntúa y compara</span></h4><p><span class="en">Each KPI is compared to its rolling 4-week baseline and threshold to assign Green, Yellow or Red.</span><span class="es">Cada KPI se compara con su línea base de 4 semanas y su umbral para asignar Verde, Amarillo o Rojo.</span></p></div></div>
+    <div class="step"><span class="num"></span><div><h4><span class="en">Alert & assign</span><span class="es">Alerta y asigna</span></h4><p><span class="en">Red KPIs create alerts and tasks, routed to the responsible manager with clear next actions.</span><span class="es">Los KPI en rojo crean alertas y tareas, enrutadas al gerente responsable con acciones claras.</span></p></div></div>
+    <div class="step"><span class="num"></span><div><h4><span class="en">Escalate & call</span><span class="es">Escala y llama</span></h4><p><span class="en">Unresolved criticals escalate and, at Level 3, trigger an AI voice call — every step logged for audit.</span><span class="es">Los críticos sin resolver escalan y, en Nivel 3, disparan una llamada de voz IA — cada paso auditado.</span></p></div></div>
+  </div>
+
+  <!-- FINAL CTA -->
+  <div class="final">
+    <h2><span class="en">Stop finding out about a bad day after it's over.</span><span class="es">Deja de enterarte de un mal día cuando ya terminó.</span></h2>
+    <p><span class="en">Store Health AI is a Digit2AI build — deployed on your fleet in weeks, not months. Let's wire it to your stores.</span><span class="es">Store Health AI es una solución de Digit2AI — desplegada en tu red en semanas, no meses. Conectémosla a tus tiendas.</span></p>
+    <div class="cta-row">
+      <a href="https://aiagent.ringlypro.com/aiastore/" target="_blank" class="btn primary"><span class="en">Open the live product →</span><span class="es">Abrir el producto en vivo →</span></a>
+      <a href="mailto:info@digit2ai.com?subject=Store%20Health%20AI%20demo" class="btn ghost"><span class="en">Talk to Digit2AI</span><span class="es">Hablar con Digit2AI</span></a>
+    </div>
+  </div>
+
+  <footer>
+    <div><span class="logo-sm">Digit2AI</span> · Store Health AI</div>
+    <div style="margin-top:6px"><span class="en">Interactive demo · figures are illustrative sample data</span><span class="es">Demo interactivo · las cifras son datos de muestra ilustrativos</span></div>
+  </footer>
+
+</div>
+
+<script>
+/* ---------- language ---------- */
+function setLang(l){
+  document.body.setAttribute('data-lang',l);
+  document.getElementById('langEn').classList.toggle('on',l==='en');
+  document.getElementById('langEs').classList.toggle('on',l==='es');
+  try{localStorage.setItem('sha_lang',l);}catch(e){}
+}
+try{var sl=localStorage.getItem('sha_lang'); if(sl) setLang(sl);}catch(e){}
+
+/* ---------- simulator nav ---------- */
+var animatedOverview=false, animatedStore=false;
+function nav(scr){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  var el=document.getElementById('scr-'+scr); if(el) el.classList.add('on');
+  document.querySelectorAll('.app-nav button').forEach(function(b){b.classList.toggle('on', b.getAttribute('data-scr')===scr);});
+  if(scr==='overview'){ animateBars('#scr-overview'); }
+  if(scr==='store'){ animateBars('#scr-store'); }
+  if(scr!=='call') resetCall();
+}
+function openStore(id){
+  var map={
+    'DT-001':{t:'DT-001 · Manhattan 42nd St',a:'📍 123 West 42nd Street, New York, NY 10036 · 👤 Alice Martinez',s:'68.5'},
+    'DT-005':{t:'DT-005 · Bronx Grand Concourse',a:'📍 610 E 149th St, Bronx, NY 10455 · 👤 David Park',s:'64.0'},
+    'DT-012':{t:'DT-012 · Staten Island Mall',a:'📍 2655 Richmond Ave, Staten Island, NY 10314 · 👤 Maria Santos',s:'66.2'}
+  };
+  var d=map[id]||map['DT-001'];
+  document.getElementById('storeTitle').textContent=d.t;
+  document.getElementById('storeAddr').innerHTML=d.a;
+  document.getElementById('storeScore').textContent=d.s;
+  // switch nav highlight off the tabs; store isn't a tab
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  document.getElementById('scr-store').classList.add('on');
+  document.querySelectorAll('.app-nav button').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('scr-store').scrollIntoView({behavior:'smooth',block:'nearest'});
+  animateBars('#scr-store');
+  toast(document.body.getAttribute('data-lang')==='es'?'Abriendo '+id:'Opening '+id);
+}
+function animateBars(sel){
+  document.querySelectorAll(sel+' .bar > span').forEach(function(s){
+    s.style.width='0'; var w=s.getAttribute('data-w');
+    requestAnimationFrame(function(){ setTimeout(function(){ s.style.width=w+'%'; },60); });
+  });
+}
+window.addEventListener('load',function(){ animateBars('#scr-overview'); });
+
+/* ---------- alerts ---------- */
+function ack(btn){
+  var card=btn.closest('.alert');
+  var tag=card.querySelector('.tag');
+  tag.className='tag ack'; tag.textContent='✓ ACK';
+  card.querySelector('.btns').remove();
+  bumpBell(-1);
+  toast(document.body.getAttribute('data-lang')==='es'?'Alerta reconocida':'Alert acknowledged');
+}
+function dismissAlert(btn){
+  var card=btn.closest('.alert'); card.style.opacity='0'; card.style.height=card.offsetHeight+'px';
+  setTimeout(function(){card.style.height='0';card.style.margin='0';card.style.padding='0';card.style.overflow='hidden';},180);
+  toast(document.body.getAttribute('data-lang')==='es'?'Alerta descartada':'Alert dismissed');
+}
+function filterAlerts(btn,sev){
+  document.querySelectorAll('#scr-alerts .filters button').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  document.querySelectorAll('#alertList .alert').forEach(function(a){
+    a.style.display=(sev==='all'||a.getAttribute('data-sev')===sev)?'':'none';
+  });
+}
+var bellN=3;
+function bumpBell(d){ bellN=Math.max(0,bellN+d); document.getElementById('bellCnt').textContent=bellN;
+  document.getElementById('navAlertCnt').textContent='('+bellN+')'; }
+
+/* ---------- tasks ---------- */
+function toggleTask(t){ t.classList.toggle('done');
+  toast(t.classList.contains('done')?(document.body.getAttribute('data-lang')==='es'?'Tarea completada':'Task completed'):(document.body.getAttribute('data-lang')==='es'?'Tarea reabierta':'Task reopened')); }
+
+/* ---------- toast ---------- */
+var toastT;
+function toast(msg){ var el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(function(){el.classList.remove('show');},2000); }
+
+/* ---------- AI voice call sim ---------- */
+var callScript={
+  en:[
+    {who:'ai',n:'Store Health AI',t:"Hi Alice, this is the Store Health AI assistant calling about your Manhattan 42nd Street location."},
+    {who:'mgr',n:'Alice Martinez',t:"Oh — hi. What's going on?"},
+    {who:'ai',n:'Store Health AI',t:"Labor coverage just dropped to 85%, which is in the red. You have two unfilled call-outs during today's peak hours."},
+    {who:'mgr',n:'Alice Martinez',t:"Right, two people called out this morning. I'm on it."},
+    {who:'ai',n:'Store Health AI',t:"Great. I've created a Priority-1 task to fill those shifts and pinged your two backup associates. Want me to escalate to the district manager if they're not covered in an hour?"},
+    {who:'mgr',n:'Alice Martinez',t:"Yes, do that. I'll call the backups now."},
+    {who:'ai',n:'Store Health AI',t:"Done. I've logged that you're handling it and set a 1-hour check. Thanks Alice — talk soon."}
+  ],
+  es:[
+    {who:'ai',n:'Store Health AI',t:"Hola Alice, soy el asistente de Store Health AI llamando por tu tienda de Manhattan calle 42."},
+    {who:'mgr',n:'Alice Martinez',t:"Ah, hola. ¿Qué sucede?"},
+    {who:'ai',n:'Store Health AI',t:"La cobertura de personal bajó a 85%, en estado rojo. Tienes dos ausencias sin cubrir en la hora pico de hoy."},
+    {who:'mgr',n:'Alice Martinez',t:"Sí, dos personas se reportaron enfermas esta mañana. Ya me encargo."},
+    {who:'ai',n:'Store Health AI',t:"Perfecto. Creé una tarea de Prioridad 1 para cubrir esos turnos y avisé a tus dos asociados de respaldo. ¿Escalo al gerente de distrito si no se cubre en una hora?"},
+    {who:'mgr',n:'Alice Martinez',t:"Sí, hazlo. Llamo a los de respaldo ahora."},
+    {who:'ai',n:'Store Health AI',t:"Listo. Registré que lo estás atendiendo y programé una revisión en 1 hora. Gracias Alice, hablamos pronto."}
+  ]
+};
+var callTimers=[], callActive=false;
+function resetCall(){
+  callActive=false; callTimers.forEach(clearTimeout); callTimers=[];
+  var c=document.getElementById('callCard'); c.classList.remove('ringing');
+  document.getElementById('transcript').innerHTML='';
+  document.getElementById('dialBtn').disabled=false; document.getElementById('hangBtn').disabled=true;
+  setCallStatus(document.body.getAttribute('data-lang')==='es'?'Listo para llamar por voz IA sobre la alerta ROJA de cobertura.':'Ready to place AI voice call about the RED labor-coverage alert.');
+}
+function setCallStatus(s){ document.getElementById('callStatus').textContent=s; }
+function startCall(){
+  resetCall(); callActive=true;
+  var lang=document.body.getAttribute('data-lang'); var lines=callScript[lang]||callScript.en;
+  var card=document.getElementById('callCard'); card.classList.add('ringing');
+  document.getElementById('dialBtn').disabled=true; document.getElementById('hangBtn').disabled=false;
+  setCallStatus(lang==='es'?'Llamando…':'Ringing…');
+  callTimers.push(setTimeout(function(){
+    if(!callActive) return;
+    setCallStatus(lang==='es'?'Conectado · 00:0'+ '2':'Connected · 00:02');
+    playLines(lines,0);
+  },1600));
+}
+function playLines(lines,i){
+  if(!callActive || i>=lines.length){
+    if(i>=lines.length){ setCallStatus(document.body.getAttribute('data-lang')==='es'?'Llamada completada · registrada en el historial':'Call complete · logged to history'); document.getElementById('callCard').classList.remove('ringing'); }
+    return;
+  }
+  var ln=lines[i]; var tr=document.getElementById('transcript');
+  var div=document.createElement('div'); div.className='tline '+ln.who;
+  div.innerHTML='<span class="av">'+(ln.who==='ai'?'AI':'👤')+'</span><div><div class="who2">'+ln.n+'</div><div class="bub">'+ln.t+'</div></div>';
+  tr.appendChild(div); tr.scrollTop=tr.scrollHeight;
+  var dur=Math.min(4200, 1300+ln.t.length*32);
+  callTimers.push(setTimeout(function(){ playLines(lines,i+1); },dur));
+}
+function endCall(){ callActive=false; callTimers.forEach(clearTimeout); callTimers=[];
+  document.getElementById('callCard').classList.remove('ringing');
+  document.getElementById('dialBtn').disabled=false; document.getElementById('hangBtn').disabled=true;
+  setCallStatus(document.body.getAttribute('data-lang')==='es'?'Llamada finalizada.':'Call ended.'); }
+
+/* ============================================================
+   LINA / VOICE ORB — neural-first (Edge TTS) w/ browser fallback
+   ============================================================ */
+(function(){
+  var SEGMENTS={
+    en:[
+      "Hi, I'm Lina, the AI voice from Digit2AI. Let me walk you through Store Health AI, a real product that keeps watch over your entire retail fleet.",
+      "At the top you see the whole fleet at a glance. Twelve stores are healthy in green, five need attention in yellow, and three are critical in red. The average health score across every location is seventy-eight point five out of one hundred.",
+      "Below that are the critical alerts. Store D-T-zero-zero-one in Manhattan has labor coverage at only eighty-five percent, which is red. Click any alert to open that store.",
+      "Inside a store you get the four live K-P-Is: sales, traffic, conversion, and labor coverage, each compared to the rolling four-week average and colored green, yellow, or red.",
+      "And here is what makes it different. When a store stays critical, Store Health AI places a real voice call to the right manager, explains the problem in plain language, captures their answer, and logs everything, twenty-four seven.",
+      "That's the whole idea: you stop finding out about a bad day after it's over. Digit2AI can wire this to your stores in weeks. Press play again any time, or reach out to talk."
+    ],
+    es:[
+      "Hola, soy Lina, la voz de inteligencia artificial de Digit2AI. Te voy a explicar Store Health AI, un producto real que vigila toda tu red de tiendas.",
+      "Arriba ves toda la red de un vistazo. Doce tiendas están sanas en verde, cinco requieren atención en amarillo y tres están críticas en rojo. El puntaje de salud promedio de todas las tiendas es setenta y ocho punto cinco de cien.",
+      "Debajo están las alertas críticas. La tienda D-T-cero-cero-uno en Manhattan tiene la cobertura de personal en solo ochenta y cinco por ciento, en rojo. Toca cualquier alerta para abrir esa tienda.",
+      "Dentro de una tienda ves los cuatro indicadores en vivo: ventas, tráfico, conversión y cobertura de personal, cada uno comparado con el promedio de las últimas cuatro semanas y coloreado en verde, amarillo o rojo.",
+      "Y esto es lo que la hace diferente. Cuando una tienda sigue crítica, Store Health AI hace una llamada de voz real al gerente correcto, le explica el problema en lenguaje claro, registra su respuesta y lo guarda todo, veinticuatro siete.",
+      "Esa es la idea: dejas de enterarte de un mal día cuando ya terminó. Digit2AI puede conectarla a tus tiendas en semanas. Pulsa reproducir de nuevo cuando quieras, o escríbenos para conversar."
+    ]
+  };
+  function segs(){ return SEGMENTS[document.body.getAttribute('data-lang')] || SEGMENTS.en; }
+
+  var synth=window.speechSynthesis;
+  var orb=document.getElementById('orb');
+  var status=document.getElementById('status');
+  var playAll=document.getElementById('playAll');
+  var pauseBtn=document.getElementById('pause');
+  var stopBtn=document.getElementById('stop');
+  var voiceSel=document.getElementById('voiceSel');
+  var neuralToggle=document.getElementById('neuralToggle');
+  var voiceMode=document.getElementById('voiceMode');
+
+  var NEURAL_URL='/api/tts/edge';
+  var queue=[], qi=0, runToken=0, paused=false;
+  var playbackMode=null, currentAudio=null, neuralOK=true, audioCache={};
+  var browserVoice=null, voiceName='ava';
+
+  function langCode(){ return voiceName==='ava'||voiceName==='guy' ? 'en' : 'es'; }
+  function pickBrowserVoice(){ if(!synth) return; var vs=synth.getVoices();
+    var pref=vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf(langCode())===0;});
+    browserVoice=pref[0]||vs[0]||null; }
+  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
+
+  function useNeural(){ return neuralToggle.checked && neuralOK; }
+  function setMode(){ voiceMode.textContent=useNeural()?'● HD':'○ browser'; }
+  setMode();
+
+  voiceSel.addEventListener('change',function(){ voiceName=this.value; pickBrowserVoice(); clearCache(); });
+  neuralToggle.addEventListener('change',setMode);
+  function clearCache(){ Object.keys(audioCache).forEach(function(k){try{URL.revokeObjectURL(audioCache[k]);}catch(e){}}); audioCache={}; }
+
+  function fetchNeural(idx){
+    var key=voiceName+'|'+document.body.getAttribute('data-lang')+'|'+idx;
+    if(audioCache[key]) return Promise.resolve(audioCache[key]);
+    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:segs()[idx],voice:voiceName})})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
+      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
+  }
+  function statusSpeaking(){ status.textContent=(document.body.getAttribute('data-lang')==='es'?'Lina está hablando… (':'Lina is speaking… (')+(qi+1)+(document.body.getAttribute('data-lang')==='es'?' de ':' of ')+queue.length+')'; }
+
+  function runQueue(token){
+    if(token!==runToken) return;
+    if(qi>=queue.length){ finish(); return; }
+    var idx=queue[qi];
+    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
+    if(useNeural()){
+      status.textContent=document.body.getAttribute('data-lang')==='es'?'Preparando voz neural…':'Preparing neural voice…';
+      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
+      fetchNeural(idx).then(function(url){
+        if(token!==runToken) return;
+        playbackMode='neural'; currentAudio=new Audio(url);
+        currentAudio.onended=advance;
+        currentAudio.onerror=function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); };
+        orb.classList.add('speaking'); statusSpeaking();
+        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
+      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
+    } else { browserSpeak(idx,advance); }
+  }
+  function browserSpeak(idx,onEnd){
+    if(!synth){ onEnd(); return; }
+    playbackMode='browser';
+    var u=new SpeechSynthesisUtterance(segs()[idx]);
+    if(browserVoice) u.voice=browserVoice;
+    u.lang=browserVoice?browserVoice.lang:(langCode()==='es'?'es-MX':'en-US');
+    u.rate=0.98; u.pitch=1.03;
+    u.onstart=function(){ orb.classList.add('speaking'); statusSpeaking(); };
+    u.onend=onEnd; u.onerror=onEnd;
+    synth.speak(u);
+  }
+  function start(){
+    if(synth) synth.cancel();
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    queue=segs().map(function(_,i){return i;}); qi=0; paused=false; runToken++;
+    pauseBtn.disabled=false; stopBtn.disabled=false; playAll.disabled=true;
+    runQueue(runToken);
+  }
+  function finish(){
+    runToken++; orb.classList.remove('speaking');
+    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
+    pauseBtn.disabled=true; stopBtn.disabled=true; playAll.disabled=false;
+    status.textContent=document.body.getAttribute('data-lang')==='es'?'Presentación terminada. Pulsa de nuevo para repetir.':'Presentation finished. Press again to replay.';
+  }
+  playAll.addEventListener('click',start);
+  orb.addEventListener('click',function(){ if(playAll.disabled) return; start(); });
+  pauseBtn.addEventListener('click',function(){
+    var es=document.body.getAttribute('data-lang')==='es';
+    if(!paused){ paused=true; orb.classList.remove('speaking'); status.textContent=es?'En pausa.':'Paused.';
+      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
+    else { paused=false; orb.classList.add('speaking'); statusSpeaking();
+      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
+  });
+  stopBtn.addEventListener('click',finish);
+  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){try{currentAudio.pause();}catch(e){}} });
+})();
+</script>
+</body>
+</html>
