@@ -2805,7 +2805,7 @@ const ORBUP_PWA_HEAD = `<meta name="theme-color" content="#0a0a0e">
 
 app.get('/orbup', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
-  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
   res.send(`<!DOCTYPE html>
@@ -2838,7 +2838,7 @@ ${content}
 
 app.get('/orbup-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
-  const ogImage = 'https://storage.googleapis.com/msgsndr/3lSeAHXNU9t09Hhp9oai/media/6993610c54da04ac2f53e10e.png';
+  const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', orbupFrameCsp);
   res.send(`<!DOCTYPE html>

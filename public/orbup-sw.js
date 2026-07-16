@@ -1,6 +1,6 @@
 /* OrbUp PWA service worker — root-scoped, registered ONLY on orbup.app.
    Offline shell for the landing + cached brand icons. Never touches API calls. */
-const CACHE = 'orbup-v1';
+const CACHE = 'orbup-v2';
 const ASSETS = [
   '/orbup-assets/icon-192.png',
   '/orbup-assets/icon-512.png',
