@@ -1091,12 +1091,95 @@
     }catch(x){}
   })();
 
-  // Save contact + create project (autosave to inbox) -> plan -> shareable teaser.
+  // ---- BIG BUILD PROGRESS (backend-at-work theatre) ----
+  // The customer never sees the raw analysis card. Instead: a big countdown +
+  // animated step notifications while the AI workforce builds, then a completion
+  // screen that opens the teaser (with the live simulator) in a full window and
+  // offers the "book your installation" CTA.
+  var _buildTimers=[];
+  function injectBuildStyles(){
+    if(document.getElementById('d2b-build-css')) return;
+    var s=document.createElement('style'); s.id='d2b-build-css';
+    s.textContent='.d2b .d2b-build{max-width:560px;margin:6px auto 0;background:linear-gradient(180deg,rgba(20,28,46,.92),rgba(11,15,23,.92));border:1px solid var(--line,#233149);border-radius:22px;padding:34px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}'
+      +'.d2b .d2b-count{font-family:var(--font-mono,ui-monospace,monospace);font-size:74px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}'
+      +'.d2b .d2b-count-u{display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--ink-mute,#8ea0bd);margin-top:8px}'
+      +'.d2b .d2b-build-title{font-size:20px;font-weight:700;margin:20px 0 4px;color:var(--ink,#e9eef7)}'
+      +'.d2b .d2b-build-sub{font-size:13.5px;color:var(--ink-mute,#8ea0bd);margin-bottom:22px}'
+      +'.d2b .d2b-steps{list-style:none;margin:0;padding:0;text-align:left;display:flex;flex-direction:column;gap:11px;max-width:360px;margin-inline:auto}'
+      +'.d2b .d2b-steps li{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink-mute,#8ea0bd);opacity:.45;transition:opacity .45s,color .45s}'
+      +'.d2b .d2b-steps li .sdot{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:2px solid var(--line,#33405c);display:flex;align-items:center;justify-content:center;font-size:11px;color:#06101f;transition:all .45s}'
+      +'.d2b .d2b-steps li.active{opacity:1;color:var(--ink,#e9eef7)}'
+      +'.d2b .d2b-steps li.active .sdot{border-color:var(--accent-cyan,#22d3ee);box-shadow:0 0 0 4px rgba(34,211,238,.14)}'
+      +'.d2b .d2b-steps li.active .sdot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-cyan,#22d3ee);animation:d2bp 1s infinite}'
+      +'.d2b .d2b-steps li.done{opacity:1;color:#9fb2cf}'
+      +'.d2b .d2b-steps li.done .sdot{border-color:var(--good,#34d399);background:var(--good,#34d399)}'
+      +'.d2b .d2b-steps li.done .sdot::after{content:"\\2713";font-weight:800}'
+      +'@keyframes d2bp{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.5}}'
+      +'.d2b .d2b-check{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));display:flex;align-items:center;justify-content:center;font-size:36px;color:#06101f;font-weight:800}'
+      +'.d2b .d2b-open{display:block;text-decoration:none;text-align:center;border-radius:14px;padding:17px;font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--accent-cyan,#22d3ee),var(--accent-violet,#7c5cff));color:#06101f;margin:8px 0 12px;box-shadow:0 14px 40px rgba(124,92,255,.35);animation:d2bglow 2.4s ease-in-out infinite}'
+      +'@keyframes d2bglow{0%,100%{box-shadow:0 14px 40px rgba(124,92,255,.30)}50%{box-shadow:0 14px 52px rgba(34,211,238,.45)}}'
+      +'.d2b .d2b-book2{display:block;width:100%;border:1px solid var(--line,#33405c);background:rgba(255,255,255,.05);color:var(--ink,#e9eef7);border-radius:14px;padding:15px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}'
+      +'.d2b .d2b-done-hint{font-size:12px;color:var(--ink-mute,#8ea0bd);margin-top:14px}';
+    document.head.appendChild(s);
+  }
+  function startBuild(){
+    injectBuildStyles();
+    var es=(D2B_LANG==='es');
+    var steps=es
+      ? ['Analizando tu solicitud','Organizando el desarrollo','Reuniendo la fuerza de 83 agentes de IA','Construyendo tu app interactiva','Grabando la presentación de voz','Finalizando los detalles']
+      : ['Analyzing your request','Organizing the build','Assembling the 83-agent AI workforce','Building your interactive app','Recording the voice walkthrough','Finalizing the details'];
+    var title=es?'Construyendo tu producto de IA…':'Building your AI product…';
+    var sub=es?'Nuestra fuerza de trabajo de IA está en marcha. Míralo en tiempo real.':'Our AI workforce is on it — watch it happen in real time.';
+    var lis=steps.map(function(x,i){ return '<li data-i="'+i+'"><span class="sdot"></span><span>'+x+'</span></li>'; }).join('');
+    result.className='show';
+    result.innerHTML='<div class="d2b-build" id="d2b-build"><div class="d2b-count"><span id="d2b-num">75</span><span class="d2b-count-u">'+(es?'segundos':'seconds')+'</span></div><div class="d2b-build-title">'+title+'</div><div class="d2b-build-sub">'+sub+'</div><ul class="d2b-steps" id="d2b-steps">'+lis+'</ul></div>';
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+    var left=75, numEl=document.getElementById('d2b-num');
+    _buildTimers.push(setInterval(function(){
+      left--;
+      if(left<=0){ numEl.style.fontSize='30px'; numEl.textContent=(es?'ya casi':'almost'); }
+      else numEl.textContent=left;
+    },1000));
+    var lisEls=[].slice.call(document.querySelectorAll('#d2b-steps li'));
+    var cur=0;
+    function activate(i){ lisEls.forEach(function(el,j){ el.classList.toggle('done', j<i); el.classList.toggle('active', j===i); }); }
+    activate(0);
+    var per=Math.floor((75*1000)/steps.length);
+    _buildTimers.push(setInterval(function(){ if(cur<steps.length-1){ cur++; activate(cur); } }, per));
+  }
+  function stopBuild(){ _buildTimers.forEach(function(t){ clearInterval(t); }); _buildTimers=[]; }
+  function failBuild(msg){
+    stopBuild(); loading(false);
+    showError(msg || (D2B_LANG==='es'?'No se pudo completar. Verifica tu conexión e inténtalo de nuevo.':'Could not complete. Check your connection and try again.'));
+  }
+  function finishBuild(url){
+    stopBuild(); loading(false);
+    var es=(D2B_LANG==='es');
+    // Best-effort auto-open in a new full window (may be popup-blocked after the
+    // async build; the big button below is the reliable path).
+    try{ window.open(url,'_blank','noopener'); }catch(e){}
+    result.className='show';
+    result.innerHTML=''
+      +'<div class="d2b-build d2b-done">'
+      +'<div class="d2b-check">&#10003;</div>'
+      +'<div class="d2b-build-title">'+(es?'Tu producto de IA está listo':'Your AI product is ready')+'</div>'
+      +'<div class="d2b-build-sub">'+(es?'Ábrelo para escuchar la presentación y probar tu app — en vivo, al mismo tiempo.':'Open it to hear the walkthrough and play with your app — live, at the same time.')+'</div>'
+      +'<a class="d2b-open" id="d2b-open-btn" href="'+esc(url)+'" target="_blank" rel="noopener">'+(es?'&#9654; Abrir tu demo + simulador':'&#9654; Open your demo + simulator')+'</a>'
+      +'<button type="button" class="d2b-book2" id="d2b-book2">'+(es?'Agenda tu instalación ahora &rarr;':'Book your installation now &rarr;')+'</button>'
+      +'<div class="d2b-done-hint">'+(es?'Se abre en una ventana nueva.':'Opens in a new window.')+'</div>'
+      +'</div>';
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+    var bk=document.getElementById('d2b-book2'); if(bk) bk.addEventListener('click', function(){ openBookModal(); });
+  }
+
+  // Save contact + create project (autosave to inbox) -> teaser (voice + live simulator).
+  // The analysis card is intentionally NOT shown; the client sees the build theatre
+  // then opens the full teaser+simulator experience.
   function runFullFlow(desc, name, phone, email){
     removePoc(); removeSim();
-    var planData=null;
-    result.className='';
-    loading(true,'Saving your details…');
+    contact.name=name||contact.name; contact.email=email||contact.email; contact.phone=phone||contact.phone;
+    loading(true, D2B_LANG==='es'?'Iniciando…':'Starting…');
+    startBuild();
     var projectId=null;
     fetch('/projects/api/v1/intake/public/request', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -1105,32 +1188,16 @@
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
     .then(function(reg){ if(reg && reg.success){ projectId=reg.project_id; pendingProjectId=reg.project_id; } })
     .catch(function(){})
-    .then(function(){ loading(true,'Analyzing your project…'); return fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, language: D2B_LANG }) }); })
-    .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
-    .then(function(res){
-      if(res.status===200 && res.json && res.json.success){ planData=res.json.data; render(res.json.data); }
-      else { var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.'; if(res.status===429) msg='You\'ve generated several plans already. '+msg; showError(msg); throw new Error('triage'); }
-      if(projectId){
-        loading(true,'Building your shareable demo…');
-        appendPocLoading();
-        return fetch('/projects/api/v1/intake/public/teaser/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG }) })
-          .then(function(r){ return r.json(); })
-          .then(function(tz){ if(tz && tz.success && tz.url){ renderPoc(tz.url, name, phone); } else { removePoc(); } })
-          .catch(function(){ removePoc(); });
-      }
-    })
     .then(function(){
-      // Interactive app-mockup simulator — the client sees the app they requested.
-      if(!projectId) return;
-      loading(true,'Building your app simulator…');
-      appendSimLoading();
-      return fetch('/projects/api/v1/intake/public/simulator/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG, plan: planData }) })
-        .then(function(r){ return r.json(); })
-        .then(function(sm){ if(sm && sm.success && sm.url){ renderSim(sm.url, sm.app_name, sm.platform); } else { removeSim(); } })
-        .catch(function(){ removeSim(); });
+      if(!projectId) throw new Error('noproject');
+      // One call builds the teaser (Lina voice walkthrough) AND the embedded live simulator.
+      return fetch('/projects/api/v1/intake/public/teaser/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG }) }).then(function(r){ return r.json(); });
     })
-    .then(function(){ loading(false); })
-    .catch(function(err){ loading(false); if(err && err.message!=='triage'){ showError('Could not reach the build engine. Check your connection and try again.'); } });
+    .then(function(tz){
+      if(tz && tz.success && tz.url){ finishBuild(tz.url); }
+      else { throw new Error('teaser'); }
+    })
+    .catch(function(){ failBuild(); });
   }
 
   // "Start building" -> booking modal with open calendar slots from /projects.
