@@ -88,7 +88,7 @@ function renderSimulatorPage(bp, meta = {}) {
   const screensHtml = screens.map(s => `
     <section class="screen" data-screen="${esc(s.id)}" data-tab="${esc(s.tab)}" hidden>
       <div class="topbar"><span>${esc(s.title || '')}</span></div>
-      <div class="scroll">${(s.blocks || []).map(renderBlock).join('')}</div>
+      <div class="scroll">${(s.blocks || []).map(function (bl) { return renderBlock(bl, es); }).join('')}</div>
     </section>`).join('');
 
   const navHtml = tabs.map(t => `
@@ -122,8 +122,14 @@ function renderSimulatorPage(bp, meta = {}) {
 .device.web .chrome{height:38px;background:#0a1120;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;padding:0 14px;flex:0 0 38px}
 .device.web .chrome i{width:11px;height:11px;border-radius:50%;background:#33405c;display:inline-block}
 .device.web .chrome .url{margin-left:12px;font-size:12px;color:var(--mut);background:#111a2c;padding:4px 12px;border-radius:8px}
+.screenhost{position:relative;flex:1;overflow:hidden}   /* contain absolute screens (was only set for web -> mobile screens covered the nav) */
+.device.mobile .screenhost{order:1}
+.device.mobile .nav{order:2}                            /* bottom tab bar on mobile */
 .screen{position:absolute;inset:0;display:flex;flex-direction:column}
-.device.web .screenhost{position:relative;flex:1}
+.screen[hidden]{display:none}                           /* fix: [hidden] was overridden by display:flex -> every screen rendered at once */
+.screen:not([hidden]){animation:scrIn .3s cubic-bezier(.22,.61,.36,1)}
+@keyframes scrIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+.device.web .screenhost{flex:1}
 .topbar{flex:0 0 auto;padding:${'18px 18px 12px'};font-weight:700;font-size:18px;
   background:linear-gradient(180deg,hsl(var(--hue) 40% 14%),transparent);}
 .device.mobile .topbar{padding-top:34px}
@@ -139,20 +145,44 @@ function renderSimulatorPage(bp, meta = {}) {
 .metric .v{font-size:22px;font-weight:750}.metric .l{color:var(--mut);font-size:11.5px;margin-top:2px}
 .metric .d{font-size:11px;color:var(--good);margin-top:4px}
 .sec-t{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);margin:4px 2px -2px}
-.row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:default}
-.row.tap{cursor:pointer}.row.tap:active{transform:scale(.99)}
-.row .rt{font-weight:650;font-size:14.5px}.row .rs{color:var(--mut);font-size:12.5px;margin-top:2px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:default;transition:transform .08s ease,border-color .15s ease,background .15s ease}
+.row.tap,.row.check{cursor:pointer}
+.row.tap:hover,.row.check:hover{border-color:hsl(var(--hue) 50% 45%)}
+.row.tap:active,.row.check:active{transform:scale(.985)}
+.row .rt{font-weight:650;font-size:14.5px;transition:opacity .2s}.row .rs{color:var(--mut);font-size:12.5px;margin-top:2px}
 .row .badge{margin-left:auto;background:hsl(var(--hue) 60% 30%);color:#eaf1ff;font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .row .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex:0 0 34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#06101f}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px}
+.row .chev{margin-left:auto;color:var(--mut);font-size:20px;line-height:1;flex:0 0 auto}
+.row .chk{margin-left:auto;width:26px;height:26px;flex:0 0 26px;border-radius:50%;border:2px solid #3a4a66;display:flex;align-items:center;justify-content:center;color:#06101f;font-size:14px;font-weight:800;transition:all .18s ease}
+.row.checked .chk{background:var(--good);border-color:var(--good)}
+.row.checked .chk::after{content:"\\2713"}
+.row.checked .rt{text-decoration:line-through;opacity:.5}
+.row.checked{opacity:.92}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;transition:transform .08s ease,border-color .15s ease}
+.card.tap{cursor:pointer}.card.tap:hover{border-color:hsl(var(--hue) 50% 45%)}.card.tap:active{transform:scale(.99)}
 .card h3{margin:0 0 6px;font-size:15px}.card p{margin:0;color:#c7d3ea;font-size:13px;line-height:1.55}
 .card .tag{display:inline-block;margin-bottom:8px;font-size:11px;color:var(--accent);border:1px solid var(--line);padding:2px 9px;border-radius:999px}
-.btn{display:block;width:100%;text-align:center;border:0;border-radius:13px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+.metric{transition:transform .08s ease}.metric:active{transform:scale(.97)}
+.btn{display:block;width:100%;text-align:center;border:0;border-radius:13px;padding:13px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:transform .08s ease,filter .15s ease;position:relative;overflow:hidden}
+.btn:hover{filter:brightness(1.06)}.btn:active{transform:scale(.98)}
 .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#06101f}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .5s ease-out;pointer-events:none}
+@keyframes rip{to{transform:scale(2.4);opacity:0}}
 .form label{display:block;font-size:12px;color:var(--mut);margin:10px 2px 5px}
-.form input,.form select,.form textarea{width:100%;background:#0c1322;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px;font:inherit}
+.form input,.form select,.form textarea{width:100%;background:#0c1322;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px;font:inherit;transition:border-color .15s ease}
+.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--accent)}
 .form textarea{min-height:64px;resize:none}
+.chatbar{display:flex;gap:8px;margin-top:10px}
+.chatbar input{flex:1;background:#0c1322;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:11px 15px;font:inherit}
+.chatbar input:focus{outline:none;border-color:var(--accent)}
+.chatbar button{flex:0 0 auto;border:0;border-radius:999px;padding:0 16px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#06101f;font-weight:800;cursor:pointer;font-family:inherit}
+.typing{display:inline-flex;gap:3px;align-items:center}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--mut);animation:ty 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes ty{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.sim-toast{position:absolute;left:50%;bottom:78px;transform:translateX(-50%) translateY(12px);background:rgba(8,14,24,.96);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:600;padding:10px 16px;border-radius:12px;opacity:0;transition:all .25s ease;pointer-events:none;z-index:20;box-shadow:0 12px 30px rgba(0,0,0,.5);white-space:nowrap}
+.sim-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .chart{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px}
 .chart h3{margin:0 0 12px;font-size:14px}
 .bars{display:flex;align-items:flex-end;gap:8px;height:110px}
@@ -208,20 +238,71 @@ function renderSimulatorPage(bp, meta = {}) {
 <script>
 (function(){
   var FIRST = ${JSON.stringify(firstScreenByTab)};
+  var ES = ${JSON.stringify(!!es)};
+  var app = document.querySelector('.app');
   var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
   var navs = Array.prototype.slice.call(document.querySelectorAll('.navbtn'));
+
+  // lightweight toast for tap feedback
+  var toast = document.createElement('div'); toast.className='sim-toast'; if(app) app.appendChild(toast);
+  var toastT;
+  function showToast(msg){ if(!toast) return; toast.textContent=msg; toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){ toast.classList.remove('show'); }, 1500); }
+
   function show(id){
     var target = screens.filter(function(s){return s.getAttribute('data-screen')===id;})[0];
     if(!target) target = screens[0];
+    if(!target) return;
     var tab = target.getAttribute('data-tab');
     screens.forEach(function(s){ s.hidden = (s!==target); });
     navs.forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-goto-tab')===tab); });
     var sc = target.querySelector('.scroll'); if(sc) sc.scrollTop = 0;
   }
   navs.forEach(function(n){ n.addEventListener('click', function(){ show(FIRST[n.getAttribute('data-goto-tab')]); }); });
-  document.querySelectorAll('[data-goto]').forEach(function(el){
-    el.addEventListener('click', function(){ var g=el.getAttribute('data-goto'); if(g) show(g); });
+
+  function ripple(e, el){
+    try{
+      var r=el.getBoundingClientRect(), d=Math.max(r.width,r.height);
+      var sp=document.createElement('span'); sp.className='ripple';
+      sp.style.width=sp.style.height=d+'px';
+      sp.style.left=(((e.clientX||r.left+r.width/2)-r.left)-d/2)+'px';
+      sp.style.top=(((e.clientY||r.top+r.height/2)-r.top)-d/2)+'px';
+      el.appendChild(sp); setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 500);
+    }catch(x){}
+  }
+
+  function chatSend(chatEl){
+    if(!chatEl) return;
+    var input=chatEl.querySelector('[data-chat-input]'), log=chatEl.querySelector('.chat-log');
+    if(!input||!log) return;
+    var v=(input.value||'').trim(); if(!v) return; input.value='';
+    var u=document.createElement('div'); u.className='msg user'; u.textContent=v; log.appendChild(u);
+    var t=document.createElement('div'); t.className='msg ai typing'; t.innerHTML='<i></i><i></i><i></i>'; log.appendChild(t);
+    var sc=chatEl.closest('.scroll'); if(sc) sc.scrollTop=sc.scrollHeight;
+    var replies = ES ? ['Claro, lo tengo en cuenta.','Perfecto, aquí tienes la información.','Hecho. ¿Algo más?','Buena idea — lo agrego.']
+                     : ['Got it — noted.','Sure, here you go.','Done. Anything else?','Great idea — adding that.'];
+    setTimeout(function(){
+      t.classList.remove('typing');
+      t.textContent = replies[Math.floor(Math.random()*replies.length)];
+      if(sc) sc.scrollTop=sc.scrollHeight;
+    }, 850);
+  }
+
+  // one delegated click handler for the whole app
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    var send = t.closest && t.closest('[data-chat-send]');
+    if(send){ chatSend(send.closest('.chat')); return; }
+    var goto = t.closest && t.closest('[data-goto]');
+    if(goto){ var g=goto.getAttribute('data-goto'); if(g){ ripple(e, goto); show(g); return; } }
+    var chk = t.closest && t.closest('[data-check]');
+    if(chk){ chk.classList.toggle('checked'); showToast(chk.classList.contains('checked') ? (ES?'Marcado ✓':'Checked ✓') : (ES?'Desmarcado':'Unchecked')); return; }
+    var btn = t.closest && t.closest('.btn');
+    if(btn){ ripple(e, btn); if(!btn.getAttribute('data-goto')){ var inForm=btn.closest('.form'); showToast(inForm ? (ES?'Guardado ✓':'Saved ✓') : (ES?'¡Listo! ✓':'Done! ✓')); } return; }
   });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ var i=e.target.closest && e.target.closest('[data-chat-input]'); if(i){ e.preventDefault(); chatSend(i.closest('.chat')); } }
+  });
+
   // start on the first tab
   show(FIRST[navs[0] && navs[0].getAttribute('data-goto-tab')] || (screens[0] && screens[0].getAttribute('data-screen')));
 })();
@@ -229,7 +310,7 @@ function renderSimulatorPage(bp, meta = {}) {
 </body></html>`;
 }
 
-function renderBlock(b) {
+function renderBlock(b, es) {
   if (!b || !b.type) return '';
   switch (b.type) {
     case 'hero': {
@@ -242,7 +323,17 @@ function renderBlock(b) {
       return `<div class="metrics">${m}</div>`;
     }
     case 'list': {
-      const items = (b.items || []).map(it => `<div class="row ${it.goto ? 'tap' : ''}" ${it.goto ? `data-goto="${esc(it.goto)}"` : ''}><div><div class="rt">${esc(it.title || '')}</div>${it.subtitle ? `<div class="rs">${esc(it.subtitle)}</div>` : ''}</div>${it.badge ? `<span class="badge">${esc(it.badge)}</span>` : ''}</div>`).join('');
+      const isCheck = s => /[✅✓✔☑☒☐✅]/.test(String(s || '')) || /^(done|packed|complete|listo|hecho|ok)$/i.test(String(s || '').trim());
+      const items = (b.items || []).map(it => {
+        const body = `<div><div class="rt">${esc(it.title || '')}</div>${it.subtitle ? `<div class="rs">${esc(it.subtitle)}</div>` : ''}</div>`;
+        // Navigational row -> chevron, taps through to another screen.
+        if (it.goto) return `<div class="row tap" data-goto="${esc(it.goto)}">${body}<span class="chev">&rsaquo;</span></div>`;
+        // Text status badge (e.g. "Top", "Overdue") -> keep as a static pill.
+        if (it.badge && !isCheck(it.badge)) return `<div class="row tap">${body}<span class="badge">${esc(it.badge)}</span></div>`;
+        // Otherwise an interactive checkbox row (starts checked if the badge was a check glyph).
+        const checked = it.badge && isCheck(it.badge) ? ' checked' : '';
+        return `<div class="row check${checked}" data-check="1">${body}<span class="chk"></span></div>`;
+      }).join('');
       return `${b.title ? `<div class="sec-t">${esc(b.title)}</div>` : ''}${items}`;
     }
     case 'card':
@@ -270,7 +361,9 @@ function renderBlock(b) {
     }
     case 'chat': {
       const m = (b.messages || []).map(x => `<div class="msg ${x.from === 'user' ? 'user' : 'ai'}">${esc(x.text || '')}</div>`).join('');
-      return `<div class="chat">${m}</div>`;
+      const ph = es ? 'Escribe un mensaje…' : 'Type a message…';
+      const send = es ? 'Enviar' : 'Send';
+      return `<div class="chat"><div class="chat-log">${m}</div><div class="chatbar"><input type="text" placeholder="${ph}" data-chat-input><button type="button" data-chat-send>${esc(send)}</button></div></div>`;
     }
     case 'note':
       return `<div class="note">${esc(b.text || '')}</div>`;
