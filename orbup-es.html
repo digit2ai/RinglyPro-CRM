@@ -685,8 +685,8 @@
         </div>
         <div class="step">
           <div class="num">3</div>
-          <h3>Revisa y lanza</h3>
-          <p>Lo pruebas en un enlace privado y lo apruebas. Lo desplegamos en vivo en una plataforma que operamos, monitoreamos y soportamos por ti &mdash; voz, facturación y autenticación incluidas.</p>
+          <h3>Previsualiza, revisa y lanza</h3>
+          <p>Navega por un simulador interactivo de tu app en segundos &mdash; luego pruebas el desarrollo real en un enlace privado y lo apruebas. Lo desplegamos en vivo en una plataforma que operamos, monitoreamos y soportamos por ti &mdash; voz, facturación y autenticación incluidas.</p>
         </div>
       </div>
     </div>
@@ -928,6 +928,36 @@
     d.scrollIntoView({behavior:'smooth',block:'center'});
   }
 
+  // ---- simulador de app interactivo ("ve la app que pediste") ----
+  function removeSim(){ ['d2b-sim','d2b-sim-loading'].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); }); }
+  function appendSimLoading(){
+    removeSim();
+    var d=document.createElement('div'); d.className='poc-card poc-loading'; d.id='d2b-sim-loading';
+    d.innerHTML='<span class="spinner dark"></span> Construyendo un simulador interactivo de tu app&hellip;';
+    result.appendChild(d);
+  }
+  function renderSim(url, appName, platform){
+    removeSim();
+    var d=document.createElement('div'); d.className='poc-card'; d.id='d2b-sim';
+    var kind=(platform==='web')?'app web':'app móvil';
+    d.innerHTML=''
+      +'<div class="poc-head"><span class="poc-badge">Simulador</span><div class="poc-title">Ve la app que pediste</div></div>'
+      +'<div class="poc-sub">Un simulador interactivo de tu '+esc(kind)+(appName?(' &mdash; '+esc(appName)):'')+'. Navega por las pantallas; incluye un botón &ldquo;Agendar y construir&rdquo;.</div>'
+      +'<div class="poc-actions">'
+      +'<a class="poc-btn wa" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir simulador</a>'
+      +'<button type="button" class="poc-btn ghost" id="sim-copy">Copiar enlace</button>'
+      +'</div>'
+      +'<div class="poc-note" id="sim-note"></div>';
+    result.appendChild(d);
+    var cp=d.querySelector('#sim-copy');
+    cp.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ d.querySelector('#sim-note').textContent='Enlace copiado.'; }).catch(function(){ window.prompt('Copia este enlace:', url); });
+      } else { window.prompt('Copia este enlace:', url); }
+    });
+    d.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
   // ---- contact modal + booking state ----
   var pendingProjectId=null, contact={name:'',phone:'',email:''}, selectedSlot=null;
   var contactModal=root.querySelector('#d2b-contact-modal');
@@ -1038,7 +1068,8 @@
 
   // Save contact + create project (autosave to inbox) -> plan -> shareable teaser.
   function runFullFlow(desc, name, phone, email){
-    removePoc();
+    removePoc(); removeSim();
+    var planData=null;
     result.className='';
     loading(true,'Guardando tus datos…');
     var projectId=null;
@@ -1052,7 +1083,7 @@
     .then(function(){ loading(true,'Analizando tu proyecto…'); return fetch(ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, language: D2B_LANG }) }); })
     .then(function(r){ return r.json().then(function(j){ return {status:r.status, json:j}; }); })
     .then(function(res){
-      if(res.status===200 && res.json && res.json.success){ render(res.json.data); }
+      if(res.status===200 && res.json && res.json.success){ planData=res.json.data; render(res.json.data); }
       else { var msg=(res.json && res.json.error) ? res.json.error : 'Something went wrong. Please try again.'; if(res.status===429) msg='Ya generaste varios planes. '+msg; showError(msg); throw new Error('triage'); }
       if(projectId){
         loading(true,'Creando tu demo para compartir…');
@@ -1062,6 +1093,16 @@
           .then(function(tz){ if(tz && tz.success && tz.url){ renderPoc(tz.url, name, phone); } else { removePoc(); } })
           .catch(function(){ removePoc(); });
       }
+    })
+    .then(function(){
+      // Simulador de app interactivo — el cliente ve la app que pidió.
+      if(!projectId) return;
+      loading(true,'Construyendo tu simulador de app…');
+      appendSimLoading();
+      return fetch('/projects/api/v1/intake/public/simulator/'+projectId, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ lang: D2B_LANG, plan: planData }) })
+        .then(function(r){ return r.json(); })
+        .then(function(sm){ if(sm && sm.success && sm.url){ renderSim(sm.url, sm.app_name, sm.platform); } else { removeSim(); } })
+        .catch(function(){ removeSim(); });
     })
     .then(function(){ loading(false); })
     .catch(function(err){ loading(false); if(err && err.message!=='triage'){ showError('No se pudo conectar con el motor. Verifica tu conexión e inténtalo de nuevo.'); } });
@@ -1126,6 +1167,17 @@
       .catch(function(){ if(st){ st.textContent='No se pudo conectar con el servidor. Inténtalo de nuevo.'; st.className='modal-status err'; } bkBtn.disabled=false; bkBtn.textContent='Confirmar reserva'; });
     });
   }
+
+  // Deep-link desde el simulador: /orbup-es?book=1&pid=<id> abre la reserva.
+  (function handleBookDeepLink(){
+    try{
+      var q=new URLSearchParams(window.location.search);
+      if(q.get('book')!=='1') return;
+      var pid=q.get('pid');
+      if(pid && /^[0-9]+$/.test(pid)) pendingProjectId=parseInt(pid,10);
+      if(pendingProjectId){ setTimeout(function(){ openBookModal(); }, 400); }
+    }catch(x){}
+  })();
 })();
 </script>
 

@@ -160,6 +160,11 @@ app.use('/artifact', require('./routes/agentArtifactShare'));
 // Mounted BEFORE the authenticated routers so the path isn't hijacked.
 app.use('/teaser', require('./routes/teasers').publicRouter);
 
+// Public app-mockup simulator viewer — client opens /projects/simulator/<token>
+// and clicks through an interactive mockup of the app they requested, with a
+// "Book a call & ship" CTA back to OrbUp. Token-gated, no auth.
+app.use('/simulator', require('./routes/appSimulator').publicRouter);
+
 // Public read-only Registry Agent catalog (NIN org chart node source).
 // Non-sensitive roster data — departments, agents, input/output schemas, owners.
 // Mounted BEFORE the authenticated /api/v1/agents router so the org chart and
@@ -733,6 +738,32 @@ app.get('*', (req, res) => {
       }
     }
     console.log('[D2AI-Projects] Voice teaser table ready');
+
+    // App-mockup simulators (interactive "see the app you requested" step)
+    const simulatorMigrations = [
+      `CREATE TABLE IF NOT EXISTS d2_project_simulators (
+        id SERIAL PRIMARY KEY,
+        workspace_id INTEGER NOT NULL DEFAULT 1,
+        project_id INTEGER NOT NULL,
+        token UUID NOT NULL UNIQUE,
+        app_name TEXT,
+        lang VARCHAR(8) DEFAULT 'en',
+        platform VARCHAR(12) DEFAULT 'mobile',
+        content_json JSONB NOT NULL DEFAULT '{}',
+        status VARCHAR(20) DEFAULT 'ready',
+        model VARCHAR(60),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_simulators_project ON d2_project_simulators(project_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_d2_project_simulators_token ON d2_project_simulators(token)`
+    ];
+    for (const sql of simulatorMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!e.message.includes('already exists')) console.log('[D2AI-Projects] Simulator migration notice:', e.message.substring(0, 100));
+      }
+    }
+    console.log('[D2AI-Projects] App simulator table ready');
 
     // Calendar: recurrence_group_id column for linked-recurring-events support
     try {

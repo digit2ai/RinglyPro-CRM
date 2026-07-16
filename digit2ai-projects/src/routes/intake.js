@@ -324,6 +324,52 @@ router.post('/public/teaser/:projectId', async (req, res) => {
   }
 });
 
+// POST /public/simulator/:projectId
+// Generates the interactive APP MOCKUP SIMULATOR the prospect can click
+// through (the "see the app you are requesting" step). Stores the
+// blueprint and returns a magic link /projects/simulator/<token>.
+// Optional body: { lang, plan } — plan is the triage-preview data so the
+// mockup aligns with the scoped build card.
+router.post('/public/simulator/:projectId', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    const rl = _triageRateLimit(ip);
+    if (!rl.allowed) {
+      return res.status(429).json({ success: false, error: `Too many requests. Try again in ${Math.ceil(rl.retryInSec / 60)} minute(s).` });
+    }
+    const project = await Project.findByPk(req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found' });
+
+    const generator = require('../services/appSimulatorGenerator');
+    const blueprint = await generator.generate(project.toJSON(), {
+      lang: (req.body && req.body.lang),
+      plan: (req.body && req.body.plan) || null
+    });
+
+    const crypto = require('crypto');
+    const token = crypto.randomUUID();
+    const baseUrl = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    await sequelize.query(
+      `INSERT INTO d2_project_simulators (workspace_id, project_id, token, app_name, lang, platform, content_json, status, model, created_at, updated_at)
+       VALUES (:workspace_id, :project_id, :token, :app_name, :lang, :platform, CAST(:content AS JSONB), 'ready', :model, NOW(), NOW())`,
+      { replacements: {
+        workspace_id: project.workspace_id || 1,
+        project_id: project.id,
+        token,
+        app_name: String(blueprint.app_name || '').slice(0, 120),
+        lang: blueprint.lang || 'en',
+        platform: blueprint.platform || 'mobile',
+        content: JSON.stringify(blueprint),
+        model: blueprint.model || null
+      } }
+    );
+    res.json({ success: true, token, url: `${baseUrl}/projects/simulator/${token}`, app_name: blueprint.app_name, platform: blueprint.platform });
+  } catch (err) {
+    console.error('[D2AI-Intake] public simulator gen failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // PUBLIC KICKOFF SCHEDULING (no auth) — /digit2ai "Start building"
 // =====================================================
