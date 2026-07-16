@@ -294,16 +294,8 @@ async function streamTriagePdf({ project, lang, res }) {
     });
   }
 
-  // Portfolio synergies
-  if (s && Array.isArray(s.portfolio_synergies) && s.portfolio_synergies.length) {
-    sectionHeading(doc, lbl.synergies);
-    s.portfolio_synergies.forEach(p => {
-      doc.font('Helvetica-Bold').fillColor(COLOR_INK).text(`• ${p.product || ''}`, { continued: true });
-      if (p.angle) doc.font('Helvetica').fillColor(COLOR_MUTED).text(` — ${p.angle}`);
-      else doc.text('');
-      doc.moveDown(0.15);
-    });
-  }
+  // Portfolio synergies — INTERNAL ONLY (which Digit2AI products fit). Deliberately
+  // omitted from the client-facing Qualify PDF; it still shows in the internal inbox.
 
   // Monetization options
   if (s && Array.isArray(s.monetization_options) && s.monetization_options.length) {
