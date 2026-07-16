@@ -413,6 +413,10 @@
 .d2b .deck-stat .n{font-size:22px;font-weight:840;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .d2b .deck-stat .l{font-size:12px;color:var(--mut);margin-top:2px}
 @media(max-width:680px){.d2b .deck-frame{height:72vh;min-height:460px}.d2b .deck-tt{display:none}}
+
+/* MCP Brain diagram embed (fuerza de trabajo de 83 agentes) */
+.d2b .mcp-embed{max-width:1120px;margin:0 auto}
+.d2b .mcp-frame{display:block;width:100%;border:0;background:transparent;height:640px;transition:height .2s ease}
 </style>
 
 <div class="d2b">
@@ -619,6 +623,26 @@
       <b>Impulsando 21 plataformas en vivo en 22 verticales de la industria</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
     </div>
   </header>
+
+  <section class="blk" id="mcp-brain">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">Fuerza de trabajo de 83 agentes</div>
+        <h2>Un cerebro. Ocho agentes siempre activos.</h2>
+        <p>Un solo cerebro MCP enruta el trabajo entre una fuerza de trabajo de 83 agentes &mdash; 8 agentes centrales y 75 especialistas a demanda &mdash; cada uno conectado a tus sistemas en vivo a través del Model Context Protocol abierto.</p>
+      </div>
+      <div class="mcp-embed">
+        <iframe id="mcp-brain-frame" class="mcp-frame" src="/digit2ai-mcp-brain.html"
+                title="DIGIT2AI MCP Brain — fuerza de trabajo de 83 agentes" loading="eager" scrolling="no"></iframe>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function(){ window.addEventListener('message', function(e){
+    var d=e&&e.data; if(d&&d.__d2mcp&&typeof d.height==='number'){
+      var f=document.getElementById('mcp-brain-frame'); if(f) f.style.height=Math.max(360,d.height)+'px'; }
+  }); })();
+  </script>
 
   <section class="blk" id="meet">
     <div class="wrap">

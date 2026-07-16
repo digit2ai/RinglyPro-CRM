@@ -435,6 +435,10 @@
 .d2b .deck-stat .n{font-size:22px;font-weight:840;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .d2b .deck-stat .l{font-size:12px;color:var(--mut);margin-top:2px}
 @media(max-width:680px){.d2b .deck-frame{height:72vh;min-height:460px}.d2b .deck-tt{display:none}}
+
+/* MCP Brain diagram embed (83-agent workforce) */
+.d2b .mcp-embed{max-width:1120px;margin:0 auto}
+.d2b .mcp-frame{display:block;width:100%;border:0;background:transparent;height:640px;transition:height .2s ease}
 </style>
 
 <div class="d2b">
@@ -641,6 +645,26 @@
       <b>Powering 21 live platforms across 22 industry verticals</b> &nbsp;&middot;&nbsp; RinglyPro &nbsp;&middot;&nbsp; SurgicalMind &nbsp;&middot;&nbsp; EquiMind &nbsp;&middot;&nbsp; AgroMercado &nbsp;&middot;&nbsp; Veritas
     </div>
   </header>
+
+  <section class="blk" id="mcp-brain">
+    <div class="wrap">
+      <div class="blk-head">
+        <div class="kick">83-agent workforce</div>
+        <h2>One brain. Eight always-on agents.</h2>
+        <p>A single MCP brain routes work across an 83-agent workforce &mdash; 8 core agents plus 75 specialists on call &mdash; each wired to your live systems through the open Model Context Protocol.</p>
+      </div>
+      <div class="mcp-embed">
+        <iframe id="mcp-brain-frame" class="mcp-frame" src="/digit2ai-mcp-brain.html"
+                title="DIGIT2AI MCP Brain — 83-agent workforce" loading="eager" scrolling="no"></iframe>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function(){ window.addEventListener('message', function(e){
+    var d=e&&e.data; if(d&&d.__d2mcp&&typeof d.height==='number'){
+      var f=document.getElementById('mcp-brain-frame'); if(f) f.style.height=Math.max(360,d.height)+'px'; }
+  }); })();
+  </script>
 
   <section class="blk" id="meet">
     <div class="wrap">
