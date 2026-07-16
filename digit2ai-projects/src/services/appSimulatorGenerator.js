@@ -275,14 +275,8 @@ Design the interactive app mockup blueprint as a single JSON object per the requ
 
   const parsed = safeJson(raw);
   if (!parsed) {
-    const dbg = {
-      raw_len: (raw || '').length,
-      raw_head: (raw || '').slice(0, 400),
-      raw_tail: (raw || '').slice(-400),
-      stop_reason: (typeof _lastStop !== 'undefined' ? _lastStop : null)
-    };
-    console.error('[AppSimulator] parse failed. len=%d head=%s', dbg.raw_len, dbg.raw_head.slice(0, 120));
-    return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic-fallback', lang, _debug: dbg };
+    console.error('[AppSimulator] parse failed. len=%d stop=%s head=%s', (raw || '').length, _lastStop, (raw || '').slice(0, 120));
+    return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic-fallback', lang };
   }
   const bp = normalizeBlueprint(parsed, fallbackName);
   return { ...bp, model, lang };
