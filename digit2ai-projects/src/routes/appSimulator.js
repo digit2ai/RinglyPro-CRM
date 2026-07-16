@@ -17,7 +17,10 @@ const { sequelize } = require('../models');
 
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function loadSim(token) {
+  if (!UUID_RE.test(String(token || ''))) return null;  // avoid uuid-cast errors on junk tokens
   const [rows] = await sequelize.query(
     'SELECT * FROM d2_project_simulators WHERE token = :token LIMIT 1',
     { replacements: { token } }
