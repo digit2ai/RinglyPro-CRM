@@ -260,7 +260,7 @@ Design the interactive app mockup blueprint as a single JSON object per the requ
   try {
     const resp = await client.messages.create({
       model,
-      max_tokens: 3000,
+      max_tokens: 6000,   // rich, domain-specific blueprints run ~3-5k tokens; 3k truncated -> parse fail
       system: SIM_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMsg }]
     });
@@ -283,10 +283,65 @@ function safeJson(text) {
   let s = String(text).trim();
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence) s = fence[1].trim();
-  const first = s.indexOf('{'); const last = s.lastIndexOf('}');
-  if (first === -1 || last === -1 || last <= first) return null;
-  s = s.slice(first, last + 1);
-  try { return JSON.parse(s); } catch (_) { return null; }
+  const first = s.indexOf('{');
+  if (first === -1) return null;
+  const last = s.lastIndexOf('}');
+  if (last > first) {
+    try { return JSON.parse(s.slice(first, last + 1)); } catch (_) {}
+  }
+  // Repair a truncated object: from the first '{', close any brackets/quotes
+  // the model didn't finish (drops the incomplete tail so the rest survives).
+  return repairTruncatedJson(s.slice(first));
 }
 
-module.exports = { generate, normalizeBlueprint, heuristicBlueprint, BLOCK_TYPES };
+function repairTruncatedJson(s) {
+  let inStr = false, esc = false;
+  const stack = [];
+  let lastSafe = -1;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; continue; }
+    if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']');
+    else if (c === '}' || c === ']') stack.pop();
+    // a comma or closer at depth>=1 marks a point we can safely truncate to
+    if (!inStr && stack.length >= 1 && (c === ',' || c === '}' || c === ']')) lastSafe = i;
+  }
+  const candidates = [];
+  // 1) close everything still open from the full string
+  candidates.push(closeOpen(s, inStr, cloneClosers(s)));
+  // 2) truncate to the last safe boundary, then close
+  if (lastSafe > 0) {
+    let t = s.slice(0, lastSafe + 1).replace(/,\s*$/, '');
+    candidates.push(closeOpen(t, false, cloneClosers(t)));
+  }
+  for (const cand of candidates) {
+    try { const o = JSON.parse(cand); if (o && typeof o === 'object') return o; } catch (_) {}
+  }
+  return null;
+}
+function cloneClosers(s) {
+  let inStr = false, esc = false; const stack = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') stack.push('}');
+    else if (c === '[') stack.push(']');
+    else if (c === '}' || c === ']') stack.pop();
+  }
+  return stack;
+}
+function closeOpen(s, inStr, stack) {
+  let out = s.replace(/,\s*$/, '');
+  if (inStr) out += '"';
+  for (let i = stack.length - 1; i >= 0; i--) out += stack[i];
+  return out;
+}
+
+module.exports = { generate, normalizeBlueprint, heuristicBlueprint, BLOCK_TYPES, safeJson };
