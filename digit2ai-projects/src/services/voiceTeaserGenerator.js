@@ -130,6 +130,12 @@ async function generate(project, options = {}) {
   // language. Listeners can still switch accent in the teaser's voice picker.
   const voice = 'lina';
 
+  // Kick off the app-simulator blueprint IN PARALLEL with the teaser narration.
+  // Both are independent Sonnet calls; running them sequentially pushed the
+  // teaser endpoint to ~90-100s and tripped the Cloudflare ceiling (502/524).
+  // Parallel => total ≈ max(teaser, sim) instead of the sum.
+  const simPromise = buildSimulator(project, lang, options.plan);
+
   let teaser;
   if (Anthropic && (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)) {
     try {
@@ -159,7 +165,8 @@ async function generate(project, options = {}) {
   // Attach the CLICKABLE app simulator blueprint so the teaser page can embed a
   // live, navigable mockup of the client's product. Never let this fail the
   // teaser — a static POC fallback still renders when the simulator is absent.
-  teaser.simulator = await buildSimulator(project, lang, options.plan);
+  // (Started in parallel above; here we just await the result.)
+  teaser.simulator = await simPromise;
   return teaser;
 }
 
