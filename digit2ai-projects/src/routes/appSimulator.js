@@ -53,7 +53,8 @@ publicRouter.get('/:token', async (req, res) => {
     const row = await loadSim(req.params.token);
     if (!row) return res.status(404).type('html').send('<h1 style="font-family:system-ui;padding:40px">Simulator not found</h1>');
     const bp = blueprintOf(row);
-    res.type('html').send(renderSimulatorPage(bp, { token: req.params.token, projectId: row.project_id }));
+    const embed = req.query.embed === '1' || req.query.embed === 'true';
+    res.type('html').send(renderSimulatorPage(bp, { token: req.params.token, projectId: row.project_id, embed }));
   } catch (err) {
     console.error('[AppSimulator] render error:', err);
     res.status(500).type('html').send('<h1 style="font-family:system-ui;padding:40px">Could not load simulator</h1>');
