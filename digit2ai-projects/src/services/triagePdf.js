@@ -61,6 +61,13 @@ const L = {
     synergies: 'Sinergias de portafolio',
     monetization: 'Opciones de monetización',
     competitors: 'Competidores a observar',
+    premortem: 'Análisis Premortem (Claude)',
+    verdictWord: 'Veredicto',
+    premortemVerdict: { PROCEED: 'PROCEDER', PROCEED_WITH_MITIGATIONS: 'Proceder con mitigaciones', RESHAPE: 'Rediseñar', DECLINE: 'Declinar', PENDING: 'Pendiente' },
+    failureModes: 'Modos de falla',
+    mitigations: 'Mitigaciones principales',
+    pmOwner: 'Responsable',
+    pmTrigger: 'Señal de alerta',
     questions: 'Preguntas para el stakeholder',
     questionsSub: 'Por favor responda estas preguntas en la próxima reunión, o por escrito a través del enlace seguro que recibió por correo.',
     page: 'Página',
@@ -84,6 +91,13 @@ const L = {
     synergies: 'Portfolio Synergies',
     monetization: 'Monetization Options',
     competitors: 'Competitors to Watch',
+    premortem: 'Premortem Analysis (Claude)',
+    verdictWord: 'Verdict',
+    premortemVerdict: { PROCEED: 'PROCEED', PROCEED_WITH_MITIGATIONS: 'Proceed with mitigations', RESHAPE: 'Reshape', DECLINE: 'Decline', PENDING: 'Pending' },
+    failureModes: 'Failure Modes',
+    mitigations: 'Top Mitigations',
+    pmOwner: 'Owner',
+    pmTrigger: 'Trigger',
     questions: 'Stakeholder Questions',
     questionsSub: 'Please answer these in the upcoming meeting, or in writing via the secure magic link you received by email.',
     page: 'Page',
@@ -100,6 +114,16 @@ function trafficColor(rec) {
   if (rec === 'accept_with_conditions') return COLOR_WARN;
   if (rec === 'reject') return COLOR_STOP;
   return COLOR_MUTED;
+}
+
+function premortemColor(v) {
+  switch (String(v || '').toUpperCase()) {
+    case 'PROCEED': return COLOR_GO;
+    case 'PROCEED_WITH_MITIGATIONS': return COLOR_ACCENT2;
+    case 'RESHAPE': return COLOR_WARN;
+    case 'DECLINE': return COLOR_STOP;
+    default: return COLOR_MUTED;
+  }
 }
 
 // Pick questions array based on language; fall back to the other if missing.
@@ -297,6 +321,45 @@ async function streamTriagePdf({ project, lang, res }) {
       doc.font('Helvetica').fillColor(COLOR_INK).text(`• ${c}`);
       doc.moveDown(0.1);
     });
+  }
+
+  // Claude Premortem — adversarial risk analysis that rides with the triage.
+  const pm = project.premortem_structured || null;
+  if (pm && ((Array.isArray(pm.failure_modes) && pm.failure_modes.length) || pm.verdict)) {
+    if (doc.y > doc.page.height - 220) doc.addPage();
+    sectionHeading(doc, lbl.premortem);
+    const vLabel = (lbl.premortemVerdict && lbl.premortemVerdict[String(pm.verdict || '').toUpperCase()]) || pm.verdict || '';
+    if (vLabel) {
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(premortemColor(pm.verdict)).text(`${lbl.verdictWord}: ${vLabel}`);
+    }
+    if (pm.verdict_rationale) {
+      doc.font('Helvetica').fontSize(9.5).fillColor(COLOR_MUTED).text(String(pm.verdict_rationale), { align: 'left' });
+    }
+    doc.moveDown(0.35);
+    if (Array.isArray(pm.failure_modes) && pm.failure_modes.length) {
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(COLOR_INK).text(lbl.failureModes);
+      doc.moveDown(0.2);
+      pm.failure_modes.forEach(f => {
+        if (doc.y > doc.page.height - 130) doc.addPage();
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(COLOR_INK).text(`• ${String(f.title || '')}`, { continued: !!f.category });
+        if (f.category) doc.font('Helvetica').fontSize(8.5).fillColor(COLOR_MUTED).text(`   [${f.category}]`);
+        else doc.text('');
+        if (f.narrative) doc.font('Helvetica').fontSize(9.5).fillColor(COLOR_MUTED).text(String(f.narrative), { align: 'left' });
+        doc.moveDown(0.3);
+      });
+    }
+    if (Array.isArray(pm.top_mitigations) && pm.top_mitigations.length) {
+      if (doc.y > doc.page.height - 150) doc.addPage();
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(COLOR_INK).text(lbl.mitigations);
+      doc.moveDown(0.2);
+      pm.top_mitigations.forEach(m => {
+        if (doc.y > doc.page.height - 110) doc.addPage();
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(COLOR_INK).text(`• ${String(m.mitigation || '')}`, { align: 'left' });
+        const meta = [m.owner_agent ? `${lbl.pmOwner}: ${m.owner_agent}` : '', m.trigger_condition ? `${lbl.pmTrigger}: ${m.trigger_condition}` : ''].filter(Boolean).join('   ·   ');
+        if (meta) doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(COLOR_MUTED).text(meta, { align: 'left' });
+        doc.moveDown(0.25);
+      });
+    }
   }
 
   // Stakeholder questions (the headline of the document)
