@@ -2484,10 +2484,52 @@ function renderInboxTriagePanel(p) {
       </summary>
       <div style="padding:12px 14px;border-top:1px solid rgba(124,92,255,0.2);font-size:13px;line-height:1.55;color:var(--text-secondary)">
         ${renderTriageScoreBanner(structured)}
-        ${simpleMarkdownToHtml(brief)}
+        ${simpleMarkdownToHtml(stripAppendedPremortem(brief, p.premortem_brief))}
+        ${renderInboxPremortemBlock(p)}
       </div>
     </details>`;
 }
+
+// Compact premortem block for the inbox list (verdict chip + brief, or a Run button).
+function renderInboxPremortemBlock(p) {
+  if (!p) return '';
+  const hasTriage = !!(p.triage_structured || p.triage_brief);
+  if (!p.premortem_brief) {
+    const disabled = hasTriage ? '' : 'disabled';
+    const op = hasTriage ? '' : 'style="opacity:.5;cursor:not-allowed"';
+    return `
+      <div style="margin-top:12px;padding:10px 12px;border-top:1px dashed rgba(124,92,255,0.25);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-muted)">🧭 Claude Premortem — adversarial risk check not run yet.</span>
+        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();event.preventDefault();runInboxPremortem(${p.id})" ${disabled} ${op} style="font-size:11px">Run Premortem</button>
+      </div>`;
+  }
+  const vs = premortemVerdictStyle(p.premortem_verdict);
+  const struct = p.premortem_structured || null;
+  const fmCount = struct && Array.isArray(struct.failure_modes) ? struct.failure_modes.length : null;
+  return `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(124,92,255,0.25)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:${vs.fg};background:${vs.bg};border:1px solid ${vs.border};border-radius:999px;padding:4px 11px">${vs.light} Premortem — ${escHtml(vs.label)}${fmCount !== null ? ' · ' + fmCount + ' failure mode' + (fmCount === 1 ? '' : 's') : ''}</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();event.preventDefault();runInboxPremortem(${p.id})" style="font-size:11px">Re-run</button>
+      </div>
+      ${simpleMarkdownToHtml(p.premortem_brief)}
+    </div>`;
+}
+window.renderInboxPremortemBlock = renderInboxPremortemBlock;
+
+async function runInboxPremortem(projectId) {
+  if (typeof showCopyToast === 'function') showCopyToast('Claude Premortem running… (15-25s) — adversarial failure-mode analysis');
+  try {
+    const r = await api('/agents/premortem/' + projectId, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success && r.error === 'no_api_key') { alert('Premortem unavailable: ANTHROPIC_API_KEY is not configured on the server.'); return; }
+    if (r.success && typeof showCopyToast === 'function') showCopyToast('Premortem complete · ' + String(r.verdict || '').replace(/_/g, ' ') + (r.flagged ? ' — flagged for review' : ''));
+  } catch (e) {
+    alert('Premortem error: ' + (e.message || e));
+    return;
+  }
+  navigateTo('inbox');
+}
+window.runInboxPremortem = runInboxPremortem;
 
 // Project-detail variant — same brief and banner, but always expanded by
 // default since the user clicked into a specific project, and styled as a
@@ -2517,11 +2559,97 @@ function renderProjectTriagePanel(p) {
         </div>
       </div>
       ${renderTriageScoreBanner(structured)}
-      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(stripAppendedPremortem(brief, p.premortem_brief))}</div>
       <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:right">${p.triage_model ? 'Model: ' + escHtml(p.triage_model) : ''}${stamp}</div>
     </div>`;
 }
 window.renderProjectTriagePanel = renderProjectTriagePanel;
+
+// =====================================================
+// CLAUDE PREMORTEM PANEL — adversarial risk analysis that rides
+// alongside the AI Triage (Gary Klein prospective hindsight).
+// =====================================================
+function premortemVerdictStyle(v) {
+  switch (String(v || '').toUpperCase()) {
+    case 'PROCEED':                  return { light: '🟢', label: 'Proceed',                   fg: '#16a34a', bg: 'rgba(22,163,74,0.10)',  border: 'rgba(22,163,74,0.35)' };
+    case 'PROCEED_WITH_MITIGATIONS': return { light: '🟢', label: 'Proceed with mitigations',  fg: '#0891b2', bg: 'rgba(8,145,178,0.10)',  border: 'rgba(8,145,178,0.35)' };
+    case 'RESHAPE':                  return { light: '🟡', label: 'Reshape',                   fg: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.35)' };
+    case 'DECLINE':                  return { light: '🔴', label: 'Decline',                   fg: '#ef4444', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.35)' };
+    case 'PENDING':                  return { light: '⏳', label: 'Pending',                   fg: '#8b8b8b', bg: 'rgba(139,139,139,0.10)',border: 'rgba(139,139,139,0.30)' };
+    default:                         return { light: '🧭', label: (v || '—'),                  fg: '#7c5cff', bg: 'rgba(124,92,255,0.08)',border: 'rgba(124,92,255,0.25)' };
+  }
+}
+window.premortemVerdictStyle = premortemVerdictStyle;
+
+// The premortem endpoint stitches its section into triage_brief so the two
+// artifacts travel together for PDF/export. In the UI we show them as two
+// panels, so strip that appended copy from the triage brief when displaying.
+function stripAppendedPremortem(brief, premortemBrief) {
+  if (!brief) return brief;
+  if (premortemBrief) return brief.split('\n\n---\n\n' + premortemBrief).join('').trim();
+  return brief;
+}
+window.stripAppendedPremortem = stripAppendedPremortem;
+
+function renderPremortemPanel(p) {
+  if (!p) return '';
+  const hasTriage = !!(p.triage_structured || p.triage_brief);
+  const brief = p.premortem_brief;
+  if (!brief) {
+    const disabled = hasTriage ? '' : 'disabled';
+    const tip = hasTriage ? '' : 'title="Run AI Triage first — the premortem stress-tests the triage output"';
+    const op = hasTriage ? '' : 'style="opacity:.5;cursor:not-allowed"';
+    return `
+      <div class="detail-section">
+        <h4>🧭 Claude Premortem</h4>
+        <div style="padding:12px 14px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.25);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text-muted)">No premortem yet. Adversarial risk analysis (prospective hindsight) that imagines this project already failed — and names why — before you commit.</span>
+          <button class="btn btn-primary btn-sm" onclick="runProjectPremortem(${p.id})" ${disabled} ${op} ${tip}>Run Premortem</button>
+        </div>
+      </div>`;
+  }
+  const vs = premortemVerdictStyle(p.premortem_verdict);
+  const stamp = p.premortem_at ? ` · Generated ${fmtDateTime(p.premortem_at)}` : '';
+  const struct = p.premortem_structured || null;
+  const fmCount = struct && Array.isArray(struct.failure_modes) ? struct.failure_modes.length : null;
+  const flag = p.premortem_flagged
+    ? `<span style="font-size:11px;color:#ef4444;font-weight:600">⚠ Flagged for review</span>` : '';
+  return `
+    <div class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <h4 style="margin:0">🧭 Claude Premortem</h4>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${flag}
+          <button class="btn btn-ghost btn-sm" onclick="runProjectPremortem(${p.id})">Re-run</button>
+        </div>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:${vs.fg};background:${vs.bg};border:1px solid ${vs.border};border-radius:999px;padding:5px 13px;margin-bottom:10px">
+        ${vs.light} Premortem — ${escHtml(vs.label)}${fmCount !== null ? ' · ' + fmCount + ' failure mode' + (fmCount === 1 ? '' : 's') : ''}
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:14px 16px">${simpleMarkdownToHtml(brief)}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:right">${p.premortem_model ? 'Model: ' + escHtml(p.premortem_model) : ''}${stamp}</div>
+    </div>`;
+}
+window.renderPremortemPanel = renderPremortemPanel;
+
+async function runProjectPremortem(projectId) {
+  if (typeof showCopyToast === 'function') showCopyToast('Claude Premortem running… (15-25s) — adversarial failure-mode analysis');
+  try {
+    const r = await api('/agents/premortem/' + projectId, { method: 'POST', body: JSON.stringify({}) });
+    if (!r.success) {
+      const msg = r.error === 'no_api_key'
+        ? 'Premortem unavailable: ANTHROPIC_API_KEY is not configured on the server.'
+        : 'Premortem failed: ' + (r.error || 'unknown');
+      alert(msg);
+    } else if (typeof showCopyToast === 'function') {
+      showCopyToast('Premortem complete · ' + String(r.verdict || '').replace(/_/g, ' ') + (r.flagged ? ' — flagged for review' : ''));
+    }
+  } catch (e) {
+    alert('Premortem error: ' + (e.message || e));
+    return;
+  }
+  showProjectDetail(projectId);
+}
+window.runProjectPremortem = runProjectPremortem;
 
 async function openTriageEditModal(projectId) {
   const projRes = await api('/projects/' + projectId);
@@ -6475,6 +6603,7 @@ async function showProjectDetail(id) {
             <div id="project-notes-${p.id}" contenteditable="true" data-original="${escHtml(renderNotesHtml(p.notes || ''))}" oninput="onProjectNotesChange(${p.id})" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:260px;max-height:600px;overflow-y:auto;outline:none" data-placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record.">${renderNotesHtml(p.notes || '')}</div>
           </div>
           ${renderProjectTriagePanel(p)}
+          ${renderPremortemPanel(p)}
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}
           ${p.blockers ? `<div class="detail-section"><h4>Blockers</h4><p style="font-size:14px;color:var(--danger)">${p.blockers}</p></div>` : ''}
           ${p.next_step ? `<div class="detail-section"><h4>Next Step</h4><p style="font-size:14px;color:var(--success)">${p.next_step}</p></div>` : ''}
