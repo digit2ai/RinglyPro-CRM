@@ -19,6 +19,7 @@ const crypto = require('crypto');
 const { sequelize, Project, Company } = require('../models');
 const generator = require('../services/voiceTeaserGenerator');
 const teaserSend = require('../services/teaserSend');
+const appSimulator = require('./appSimulator'); // renderSimulatorPage — embedded in the teaser
 
 const PUBLIC_BASE = (process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com').replace(/\/+$/, '');
 
@@ -170,11 +171,33 @@ publicRouter.get('/:token/segments', async (req, res) => {
   }
 });
 
+// Interactive app-mockup simulator carried by THIS teaser. Rendered as a
+// standalone page in "embed" mode so the teaser can iframe it inline. Keeps the
+// whole experience (voice + clickable app) under a single teaser magic link.
+publicRouter.get('/:token/simulator', async (req, res) => {
+  try {
+    const row = await loadTeaser(req.params.token);
+    if (!row) return res.status(404).type('html').send('<h1>Not found</h1>');
+    const t = contentOf(row);
+    if (!t || !t.simulator) {
+      return res.status(404).type('html').send('<h1 style="font-family:system-ui;padding:24px;color:#888">No simulator for this teaser.</h1>');
+    }
+    res.type('html').send(appSimulator.renderSimulatorPage(t.simulator, {
+      token: row.token,
+      projectId: row.project_id,
+      embed: req.query.embed === '1'
+    }));
+  } catch (err) {
+    console.error('[teasers] simulator viewer failed:', err);
+    res.status(500).type('html').send('<h1>Error</h1>');
+  }
+});
+
 publicRouter.get('/:token', async (req, res) => {
   try {
     const row = await loadTeaser(req.params.token);
     if (!row) return res.status(404).type('html').send('<h1>Teaser not found</h1>');
-    res.type('html').send(renderTeaserPage(contentOf(row), { projectId: row.project_id }));
+    res.type('html').send(renderTeaserPage(contentOf(row), { projectId: row.project_id, token: row.token }));
   } catch (err) {
     console.error('[teasers] viewer failed:', err);
     res.status(500).type('html').send('<h1>Error</h1><pre>' + esc(err.message) + '</pre>');
@@ -191,6 +214,12 @@ function esc(s) {
 function renderTeaserPage(t, meta = {}) {
   const es = t.lang === 'es';
   const projectId = meta.projectId || '';
+  const token = meta.token || '';
+  // The teaser carries a clickable app-mockup simulator (generated alongside it).
+  // When present, the POC section embeds the LIVE, navigable simulator via iframe
+  // so the client can try their product; otherwise it falls back to the static mock.
+  const hasSim = !!(t.simulator && token);
+  const simHeight = hasSim && t.simulator.platform === 'web' ? 720 : 812;
   const segs = JSON.stringify(t.segments || []);
   // Brand default: the teaser voice is always México (Dalia) = Lina, regardless of
   // the teaser's narration language. The listener can switch via the accent picker.
@@ -259,6 +288,12 @@ button:disabled{opacity:.45;cursor:default}
 .poc-intro{color:var(--mut);font-size:13.5px;margin-bottom:14px}
 .poc-frame{background:#0a122a;border:1px solid var(--line);border-radius:14px;padding:18px;overflow-x:auto}
 .poc-frame *{max-width:100%}
+.sim-badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.3px;color:#7cf2c0;background:rgba(124,242,192,.08);border:1px solid rgba(124,242,192,.25);border-radius:999px;padding:6px 13px;margin-bottom:14px}
+.sim-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#7cf2c0;box-shadow:0 0 10px #7cf2c0;animation:pulse 1.4s infinite}
+.sim-embed{background:#0a122a;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.sim-open{margin-top:12px;text-align:center;font-size:13px}
+.sim-open a{color:var(--cyan);text-decoration:none;font-weight:600}
+.sim-open a:hover{text-decoration:underline}
 .phases{display:grid;gap:12px;margin-top:8px}
 .phase{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .phase-name{font-weight:700;color:#cfe0ff}
@@ -328,7 +363,15 @@ button:disabled{opacity:.45;cursor:default}
 
   ${section('challenge', t.challenge.heading, safe(t.challenge.body_html))}
   ${section('solution', t.solution.heading, safe(t.solution.body_html))}
-  ${section('poc', t.poc.heading, `<div class="poc-intro">${esc(t.poc.intro)}</div><div class="poc-frame">${t.poc.html}</div>`)}
+  ${section('poc', t.poc.heading,
+    hasSim
+      ? `<div class="poc-intro">${esc(t.poc.intro)}</div>
+         <div class="sim-badge">${es ? 'Simulador interactivo — toca los botones y navega tu app' : 'Interactive simulator — tap the buttons and navigate your app'}</div>
+         <div class="sim-embed">
+           <iframe src="/projects/teaser/${esc(token)}/simulator?embed=1" title="${esc(t.simulator.app_name || 'App simulator')}" loading="lazy" style="width:100%;height:${simHeight}px;border:0;display:block" allow="clipboard-write"></iframe>
+         </div>
+         <div class="sim-open"><a href="/projects/teaser/${esc(token)}/simulator" target="_blank" rel="noopener">${es ? 'Abrir el simulador en pantalla completa &rarr;' : 'Open the simulator full-screen &rarr;'}</a></div>`
+      : `<div class="poc-intro">${esc(t.poc.intro)}</div><div class="poc-frame">${t.poc.html}</div>`)}
   ${section('value', t.value.heading, bullets(t.value.bullets))}
   ${t.deliverables.items && t.deliverables.items.length ? section('deliverables', t.deliverables.heading, bullets(t.deliverables.items)) : ''}
   ${section('plan', t.plan.heading, `${t.plan.summary ? `<p>${esc(t.plan.summary)}</p>` : ''}${phases(t.plan.phases)}`)}

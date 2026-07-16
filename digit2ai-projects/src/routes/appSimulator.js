@@ -66,6 +66,7 @@ publicRouter.get('/:token', async (req, res) => {
 function renderSimulatorPage(bp, meta = {}) {
   bp = bp || {};
   const es = bp.lang === 'es';
+  const embed = !!meta.embed;   // embedded inside the teaser page (drop outer chrome/CTA)
   const hue = Number.isFinite(Number(bp.brand_hue)) ? Number(bp.brand_hue) : 210;
   const isMobile = bp.platform !== 'web';
   const tabs = Array.isArray(bp.tabs) && bp.tabs.length ? bp.tabs : [{ id: 'home', label: 'Home', icon: 'home' }];
@@ -101,8 +102,8 @@ function renderSimulatorPage(bp, meta = {}) {
 :root{--hue:${hue};--accent:hsl(var(--hue) 82% 56%);--accent-2:hsl(calc(var(--hue) + 28) 82% 60%);
   --bg:#0b0f17;--panel:#0f1524;--card:#141c2e;--line:#233149;--ink:#e9eef7;--mut:#8ea0bd;--good:#34d399;}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
-  background:radial-gradient(1200px 700px at 20% -10%,hsl(var(--hue) 60% 18% / .5),transparent 60%),var(--bg);color:var(--ink);
-  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:26px 16px 40px}
+  background:${embed ? 'transparent' : 'radial-gradient(1200px 700px at 20% -10%,hsl(var(--hue) 60% 18% / .5),transparent 60%),var(--bg)'};color:var(--ink);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:${embed ? '10px 8px 14px' : '26px 16px 40px'}}
 .wrap{width:100%;max-width:940px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .brandbar{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 0 14px var(--accent)}
@@ -185,7 +186,7 @@ function renderSimulatorPage(bp, meta = {}) {
 </style></head>
 <body>
 <div class="wrap">
-  <div class="brandbar"><span class="dot"></span><b>${esc(bp.app_name || 'App')}</b><span class="tg">${esc(bp.tagline || T.preview)}</span></div>
+  ${embed ? '' : `<div class="brandbar"><span class="dot"></span><b>${esc(bp.app_name || 'App')}</b><span class="tg">${esc(bp.tagline || T.preview)}</span></div>`}
   <div class="stage">
     <div class="device ${isMobile ? 'mobile' : 'web'}">
       ${isMobile ? '<div class="notch"></div>' : '<div class="chrome"><i></i><i></i><i></i><span class="url">' + esc((bp.app_name || 'app').toLowerCase().replace(/[^a-z0-9]/g, '')) + '.app</span></div>'}
@@ -195,11 +196,13 @@ function renderSimulatorPage(bp, meta = {}) {
       </div>
     </div>
   </div>
-  <div class="foot">
+  ${embed
+    ? `<div class="foot"><p class="disclaimer">${esc(T.disclaimer)}</p></div>`
+    : `<div class="foot">
     <p class="disclaimer">${esc(T.disclaimer)}</p>
     <a class="bookbtn" href="${esc(bookHref)}">${esc(T.book)} &rarr;</a>
     <div class="credit">${esc(T.built)} <b>Orb<span class="up">Up</span></b> &middot; 83-agent AI workforce</div>
-  </div>
+  </div>`}
 </div>
 <script>
 (function(){

@@ -21,6 +21,12 @@
 let Anthropic = null;
 try { Anthropic = require('@anthropic-ai/sdk'); } catch (_) { /* optional */ }
 
+// The interactive app-mockup blueprint generator. Every teaser now carries a
+// CLICKABLE simulator of the client's app (embedded in the teaser page), so a
+// single voice-generated magic link shows AND lets them try their product.
+let appSimulator = null;
+try { appSimulator = require('./appSimulatorGenerator'); } catch (_) { /* optional */ }
+
 const MODEL = process.env.TEASER_MODEL || process.env.ARCHITECT_MODEL || 'claude-opus-4-8';
 
 const SPANISH_COUNTRIES = new Set([
@@ -124,6 +130,7 @@ async function generate(project, options = {}) {
   // language. Listeners can still switch accent in the teaser's voice picker.
   const voice = 'lina';
 
+  let teaser;
   if (Anthropic && (process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY)) {
     try {
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY });
@@ -140,14 +147,34 @@ async function generate(project, options = {}) {
       const data = extractJson(text);
       const usage = response.usage || {};
       console.log(`[voiceTeaser] generated for project ${project.id} — tokens in=${usage.input_tokens} out=${usage.output_tokens}`);
-      return normalize(data, { lang, voice, project, model: MODEL });
+      teaser = normalize(data, { lang, voice, project, model: MODEL });
     } catch (e) {
       console.error('[voiceTeaser] LLM generation failed, using fallback:', e.message);
     }
   } else {
     console.log('[voiceTeaser] ANTHROPIC_API_KEY not set; using deterministic fallback teaser.');
   }
-  return normalize(fallbackTeaser(project, lang), { lang, voice, project, model: 'fallback-template' });
+  if (!teaser) teaser = normalize(fallbackTeaser(project, lang), { lang, voice, project, model: 'fallback-template' });
+
+  // Attach the CLICKABLE app simulator blueprint so the teaser page can embed a
+  // live, navigable mockup of the client's product. Never let this fail the
+  // teaser — a static POC fallback still renders when the simulator is absent.
+  teaser.simulator = await buildSimulator(project, lang, options.plan);
+  return teaser;
+}
+
+// Generate the interactive app-mockup blueprint (Sonnet, or zero-key heuristic)
+// that the teaser embeds. Returns null on any failure so the teaser degrades to
+// the static poc.html mock instead of breaking.
+async function buildSimulator(project, lang, plan) {
+  if (!appSimulator || typeof appSimulator.generate !== 'function') return null;
+  try {
+    const bp = await appSimulator.generate(project, { lang, plan: plan || null });
+    return bp || null;
+  } catch (e) {
+    console.error('[voiceTeaser] simulator blueprint generation failed:', e.message);
+    return null;
+  }
 }
 
 // Guarantee the stored shape is complete & safe regardless of LLM output drift.
