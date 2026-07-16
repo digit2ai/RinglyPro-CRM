@@ -222,11 +222,15 @@ function heuristicBlueprint(desc, lang, name) {
 }
 
 async function generate(project, opts = {}) {
-  const desc = String(project.project_description || project.problem || project.project_title || '').trim();
+  // d2_projects stores the title in `name` and the brief in `description`.
+  // Keep the legacy field names as fallbacks in case an object shape differs.
+  const desc = String(
+    project.description || project.project_description || project.problem || project.name || project.project_title || ''
+  ).trim();
   const lang = opts.lang === 'es' || opts.lang === 'en'
     ? opts.lang
     : (/[áéíóúñ¿¡]/i.test(desc) || /\b(que|para|con|una|los|las|del)\b/i.test(desc) ? 'es' : 'en');
-  const fallbackName = String(project.project_title || 'Your App').slice(0, 40);
+  const fallbackName = String(project.name || project.project_title || 'Your App').slice(0, 40);
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return { ...heuristicBlueprint(desc, lang, fallbackName), model: 'heuristic', lang };
@@ -248,7 +252,7 @@ async function generate(project, opts = {}) {
   const userMsg = `RESPONSE LANGUAGE: ${lang === 'es' ? 'Spanish (proper orthography: tildes, ñ, ¿¡).' : 'English.'}
 
 PROSPECT PRODUCT DESCRIPTION:
-${desc || project.project_title || '(no description)'}${planLine}
+${desc || project.name || '(no description)'}${planLine}
 
 Design the interactive app mockup blueprint as a single JSON object per the required shape. Respond with JSON only.`;
 
