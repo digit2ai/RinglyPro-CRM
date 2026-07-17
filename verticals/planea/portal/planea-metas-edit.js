@@ -27,11 +27,14 @@
   }
 
   var selType = 'Viaje';
+  var customType = '';
 
   function formHtml() {
+    var otro = selType === 'Otro';
     return '<div class="me-form">' +
       '<div class="me-h">Nueva meta</div>' +
       '<div class="me-types">' + TYPES.map(function (o) { return '<button class="me-type' + (o.t === selType ? ' on' : '') + '" data-type="' + o.t + '">' + svg(o.ic) + '<span>' + o.t + '</span></button>'; }).join('') + '</div>' +
+      '<div id="me-custom-wrap" style="' + (otro ? '' : 'display:none') + '"><label class="me-l">Categoría personalizada</label><input class="me-in" id="me-custom" placeholder="Ej: Negocio, Boda, Fondo médico…" value="' + esc(customType) + '"></div>' +
       '<label class="me-l">¿Para qué es?</label><input class="me-in" id="me-name" placeholder="Ej: Viaje a Cartagena">' +
       '<div class="me-grid"><div><label class="me-l">Meta total ($)</label><div class="me-money"><span>$</span><input class="me-in" id="me-target" inputmode="numeric" placeholder="5.000.000"></div></div>' +
       '<div><label class="me-l">Ya ahorrado ($)</label><div class="me-money"><span>$</span><input class="me-in" id="me-current" inputmode="numeric" placeholder="0"></div></div></div>' +
@@ -63,7 +66,11 @@
     var monthly = parseInt(digits(document.getElementById('me-monthly').value), 10) || 0;
     if (!name || !target) { alert('Escribe para qué es y la meta total.'); return; }
     if (!person) { alert('Inicia sesión para guardar tu meta.'); return; }
-    var row = { person_id: person.id, name: name, type: selType, target_amount: target, current_savings: current, monthly_saving: monthly };
+    // Custom category: when "Otro" is picked, use the free-text type the user entered.
+    var customEl = document.getElementById('me-custom');
+    customType = customEl ? customEl.value.trim() : customType;
+    var type = selType === 'Otro' ? (customType || 'Otro') : selType;
+    var row = { person_id: person.id, name: name, type: type, target_amount: target, current_savings: current, monthly_saving: monthly };
     PlaneaSB.post('persons_long_term_goals', row)
       .then(function () { location.reload(); })
       .catch(function (e) { if (window.console) console.warn('[metas] save failed', e && e.message); alert('No se pudo guardar la meta. Revisa tu sesión.'); });
@@ -74,7 +81,17 @@
     if (!t) return;
     if (t.hasAttribute('data-me-open')) { open = true; render(); return; }
     if (t.hasAttribute('data-me-cancel')) { open = false; render(); return; }
-    if (t.hasAttribute('data-type')) { selType = t.getAttribute('data-type'); render(); return; }
+    if (t.hasAttribute('data-type')) {
+      selType = t.getAttribute('data-type');
+      // Update in place (do NOT re-render — that would wipe what the user typed).
+      mount.querySelectorAll('.me-type').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-type') === selType); });
+      var wrap = document.getElementById('me-custom-wrap');
+      if (wrap) {
+        wrap.style.display = selType === 'Otro' ? '' : 'none';
+        if (selType === 'Otro') { var ci = document.getElementById('me-custom'); if (ci) ci.focus(); }
+      }
+      return;
+    }
     if (t.hasAttribute('data-me-save')) { save(); return; }
   }
 
