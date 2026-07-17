@@ -16,17 +16,34 @@
 
 const BUILD_SYSTEM = `You are a senior front-end engineer at OrbUp. Build a COMPLETE, genuinely working, self-contained single-file web application from the user's description.
 
-HARD REQUIREMENTS
-- Output ONE HTML document ONLY. Start with <!doctype html> and end with </html>. No prose, no markdown fences, no explanation.
-- Inline everything: all CSS in a <style> tag, all JS in a <script> tag. NO external resources of any kind — no CDN scripts, no external stylesheets, no remote fonts, no <img src="http...">, no fetch/XHR to third parties. Use system fonts, CSS, inline SVG, and emoji. Embed any imagery as inline SVG or a data: URI.
-- The app must be genuinely FUNCTIONAL, not a static mock: real interactivity, working forms, add/edit/delete, filtering, calculations — whatever the description implies. Wire up every button.
-- Persist user data with localStorage so it survives refresh (use a unique key). Seed with 2-4 realistic sample records so the app looks alive on first open.
-- Responsive and polished: looks great on phone and desktop, thoughtful spacing, a coherent color system, hover/active states, empty states, and small touches (transitions, a header, a footer).
-- Accessible: labels on inputs, sufficient contrast, keyboard-usable.
-- Self-contained state only — no login/backend. If the description implies a backend feature, simulate it convincingly client-side.
+⚠️ NO EXTERNAL RESOURCES — THIS IS ENFORCED. The app runs under a strict Content-Security-Policy that BLOCKS every network request. Any CDN script, external stylesheet, remote font, remote image, or fetch/XHR to another host WILL be blocked and your app WILL appear broken/empty. Therefore:
+- Do NOT use Chart.js, D3, Tailwind CDN, Bootstrap CDN, Google Fonts, Font Awesome, jQuery, React, or ANY library loaded from a URL.
+- Build charts and graphs yourself with inline <svg> or a <canvas> drawn in plain JS (bars, lines, donuts, sparklines — all doable by hand).
+- Icons = emoji or hand-written inline <svg>. Fonts = the system font stack (-apple-system, system-ui, sans-serif). Images = inline <svg> or a data: URI.
+- No fetch/XHR/WebSocket to any external API.
+
+MUST WORK ON FIRST LOAD — NO EMPTY SHELLS
+- Never render an empty dashboard, list, table, chart, or log on first open. SEED 4-8 realistic sample records that match the domain and RENDER them immediately, so the app looks alive and populated the moment it opens.
+- Every stat card shows a real number, every chart shows real data, every list shows real rows.
+
+EVERYTHING MUST BE WIRED
+- Wire EVERY interactive element. There are no dead buttons. The primary action button MUST produce an immediate, visible result.
+- For any action the description implies a backend for (scan, analyze, monitor, fetch, search, generate, send, detect), SIMULATE it convincingly client-side: on click, generate realistic results, add them to the data, update every affected stat/chart/list, and give visible feedback (a toast, a spinner→result, a new row). It must feel live.
+- Persist all state to localStorage under a unique key so it survives refresh.
+
+CODE QUALITY — MUST RUN WITHOUT ERRORS
+- Vanilla JS only. Put the <script> at the END of <body>, or initialize on DOMContentLoaded, so the DOM exists when it runs.
+- Guard DOM lookups; wire listeners with addEventListener. No undefined-variable or null-reference errors. Assume the browser console must be clean.
+- Render the initial UI from the seeded data in the same load — define a render() function and call it once on start.
+
+SCOPE — COMPLETE BEATS AMBITIOUS
+- A smaller app where EVERY feature works end-to-end is far better than a large shell with unfinished, non-functional parts. If the concept is broad, implement a focused, coherent, fully-working version. Do not leave placeholders or "TODO"s. Do not exceed what you can fully implement and wire in one file.
+
+OUTPUT
+- ONE HTML document ONLY. Start with <!doctype html> and end with </html>. No prose, no markdown fences.
 
 STYLE
-- Modern, clean, confident. Pick a palette that fits the product's domain. Avoid generic AI aesthetics (no default Inter-on-white purple-gradient look). Give it character.
+- Modern, clean, confident; responsive (phone + desktop); a coherent palette fitting the domain; hover/active states and small transitions. Accessible: labels, contrast, keyboard-usable.
 
 Return ONLY the HTML.`;
 
@@ -34,8 +51,9 @@ const EDIT_SYSTEM = `You are a senior front-end engineer at OrbUp. You are given
 
 HARD REQUIREMENTS
 - Output ONE complete HTML document ONLY. Start with <!doctype html> (or <html>) and end with </html>. No prose, no markdown fences.
-- Keep everything self-contained: inline CSS/JS, NO external resources, localStorage persistence preserved.
-- Preserve existing functionality and data-shape unless the request says otherwise. Make the smallest change that satisfies the request well, then return the whole file.
+- The app runs under a strict CSP that BLOCKS all network requests — keep everything self-contained: inline CSS/JS, NO external resources (no CDN libs, fonts, or remote images). Charts = inline SVG/canvas. Icons = emoji/inline SVG.
+- Preserve existing functionality, seeded data, and localStorage persistence unless the request says otherwise. Every button stays wired; the app must still be fully functional and populated on load.
+- Make the smallest change that satisfies the request well, then return the WHOLE file (never a fragment or a diff).
 
 Return ONLY the updated HTML.`;
 
@@ -84,20 +102,32 @@ async function callClaude({ system, user, maxTokens }) {
     });
     const msg = await stream.finalMessage();
     const block = Array.isArray(msg.content) ? msg.content.find(c => c && c.type === 'text') : null;
-    return { text: block ? block.text : '', model };
+    return { text: block ? block.text : '', model, stop_reason: msg && msg.stop_reason };
   } catch (err) {
     console.error('[orbupAppGenerator] Claude call failed:', err.message);
     return { text: '', model, error: err.message };
   }
 }
 
+// A cut-off app is a broken app. Truncation shows up as stop_reason "max_tokens"
+// or a body that ends without closing its <script>/</html> — the JS at the tail
+// (the wiring) is exactly what gets lost.
+function looksTruncated(res, code) {
+  if (res && res.stop_reason === 'max_tokens') return true;
+  const raw = String((res && res.text) || '');
+  if (raw && !/<\/html\s*>/i.test(raw)) return true;                 // never closed
+  if (/<script[\s>]/i.test(code) && !/<\/script\s*>/i.test(code)) return true; // open script, no close
+  return false;
+}
+
 async function generate({ prompt, name }) {
   const desc = String(prompt || '').trim();
   const title = (name && String(name).trim()) || titleFrom(desc);
   const user = `Build this web app:\n\n${desc || 'A simple, useful web app.'}\n\nApp name (use it as the document title and in the header): ${title}`;
-  const res = await callClaude({ system: BUILD_SYSTEM, user, maxTokens: 14000 });
-  if (!res || !res.text) return { code: fallbackApp(desc), model: 'fallback', title };
-  return { code: stripToHtml(res.text), model: res.model, title };
+  const res = await callClaude({ system: BUILD_SYSTEM, user, maxTokens: 16000 });
+  if (!res || !res.text) return { code: fallbackApp(desc), model: 'fallback', title, truncated: false };
+  const code = stripToHtml(res.text);
+  return { code, model: res.model, title, truncated: looksTruncated(res, code) };
 }
 
 async function edit({ code, instruction }) {
@@ -105,7 +135,7 @@ async function edit({ code, instruction }) {
   const req = String(instruction || '').trim();
   if (!existing) return { code: fallbackApp(req), model: 'fallback' };
   const user = `Change request:\n${req}\n\n--- CURRENT APP (full HTML) ---\n${existing}`;
-  const res = await callClaude({ system: EDIT_SYSTEM, user, maxTokens: 14000 });
+  const res = await callClaude({ system: EDIT_SYSTEM, user, maxTokens: 16000 });
   if (!res || !res.text) return { code: existing, model: 'fallback' };
   return { code: stripToHtml(res.text), model: res.model };
 }

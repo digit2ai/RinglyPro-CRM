@@ -146,13 +146,21 @@ apiRouter.post('/build', async (req, res) => {
       return res.status(402).json({ success: false, error: 'insufficient_credits', credits: paid.credits, needed: NEW_APP_COST });
     }
 
+    async function refund() { await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: NEW_APP_COST, email } }).catch(() => {}); }
+
     let built;
     try {
       built = await generator.generate({ prompt, name: b.name });
     } catch (e) {
-      // refund on hard generation failure
-      await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: NEW_APP_COST, email } }).catch(() => {});
+      await refund();
       return res.status(502).json({ success: false, error: 'Build failed. Your credits were not charged.' });
+    }
+    // Don't save (or charge for) a cut-off, non-functional app.
+    if (built.model === 'fallback' || built.truncated || !built.code || built.code.length < 400) {
+      await refund();
+      return res.status(502).json({ success: false, error: built.truncated
+        ? 'That app was a bit too big to finish in one build — try a more focused description and we won\'t charge you.'
+        : 'Build failed. Your credits were not charged.' });
     }
 
     const token = crypto.randomUUID();
@@ -221,7 +229,9 @@ viewerRouter.get('/:token', async (req, res) => {
     const app = rows && rows[0];
     if (!app) return res.status(404).type('html').send('<h1 style="font-family:system-ui;padding:40px">App not found</h1>');
     res.removeHeader('X-Frame-Options');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline' 'self'; img-src data: blob:; font-src data:; connect-src 'none'; base-uri 'none'; form-action 'none';");
+    // Allow everything the app needs offline (inline JS/CSS, data:/blob: assets,
+    // canvas/svg) while blocking ALL network egress (connect-src 'none').
+    res.setHeader('Content-Security-Policy', "default-src 'self' data: blob:; script-src 'unsafe-inline' 'self' blob:; style-src 'unsafe-inline' 'self'; img-src data: blob: 'self'; font-src data: 'self'; media-src data: blob: 'self'; connect-src 'none'; base-uri 'none'; form-action 'none';");
     res.type('html').send(app.code);
   } catch (err) {
     console.error('[orbupApps] viewer error:', err);
