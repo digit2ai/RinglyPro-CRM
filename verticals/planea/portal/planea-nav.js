@@ -8,11 +8,11 @@
     { k: 'diagnostico', label: 'Mi Puntaje', icon: 'circle:12,12,9|M12 7v5l3 2' },
     { k: 'patrimonio', label: 'Mi Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
     { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
-    { k: 'ahorro', label: 'Ahorro', icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },
-    { k: 'deuda', label: 'Deuda', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19|M6 15.5h4' },
-    { k: 'inversion', label: 'Inversión', icon: 'M3 17l6-6 4 4 8-8|M15 7h6v6' },
-    { k: 'seguros', label: 'Seguros', icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z|M9 12l2 2 4-4' },
-    { k: 'retiro', label: 'Retiro', icon: 'circle:12,12,9|M12 7v5l3 3' },
+    { k: 'ahorro', label: 'Ahorro', module: true, icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },
+    { k: 'deuda', label: 'Deuda', module: true, icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19|M6 15.5h4' },
+    { k: 'inversion', label: 'Inversión', module: true, icon: 'M3 17l6-6 4 4 8-8|M15 7h6v6' },
+    { k: 'seguros', label: 'Seguros', module: true, icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z|M9 12l2 2 4-4' },
+    { k: 'retiro', label: 'Retiro', module: true, icon: 'circle:12,12,9|M12 7v5l3 3' },
     { k: 'cuentas', label: 'Cuentas vinculadas', icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19' },
     { k: 'maya', label: 'Planea IA', icon: 'M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z', plus: true, action: 'maya' },
     { k: 'guia', label: 'Guía de uso', icon: 'M12 6.5V21|M12 6.5C10 5 6 4.5 4 5v13c2-.5 6 0 8 1.5|M12 6.5C14 5 18 4.5 20 5v13c-2-.5-6 0-8 1.5' },
@@ -28,6 +28,72 @@
     });
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
   }
+
+  // ── Module state (which optional modules are active) ────────────────────────
+  // Persisted per user in Supabase persons.progress_data.modules ({key:bool}),
+  // mirrored to localStorage for instant nav render. Drives which module tabs
+  // appear in the drawer. Default = all 5 ON (matches "5 de 7 activos").
+  var MODULE_KEYS = ['ahorro', 'deuda', 'inversion', 'seguros', 'retiro'];
+  var SBU = 'https://mfxujzvvrnsbiqcefvtg.supabase.co';
+  var SBK = 'sb_publishable_0dMP5Pof56t9H4fyCNJn9Q_NKGuorXc';
+  var LS_MODULES = 'planea-modules';
+
+  function mSession() {
+    try {
+      var key = null;
+      for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/^sb-.*-auth-token$/.test(k)) { key = k; break; } }
+      if (!key) return null;
+      var o = JSON.parse(localStorage.getItem(key));
+      var s = o && o.access_token ? o : (o && o.currentSession) ? o.currentSession : null;
+      return s && s.access_token ? s : null;
+    } catch (e) { return null; }
+  }
+  function mReq(method, pq, body) {
+    var s = mSession(); if (!s) return Promise.reject(new Error('no session'));
+    var h = { apikey: SBK, Authorization: 'Bearer ' + s.access_token, Accept: 'application/json' };
+    if (body != null) h['Content-Type'] = 'application/json';
+    if (method === 'PATCH') h.Prefer = 'return=representation';
+    return fetch(SBU + '/rest/v1/' + pq, { method: method, headers: h, body: body != null ? JSON.stringify(body) : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('sb ' + r.status); return r.status === 204 ? null : r.json(); });
+  }
+  function readCache() { try { return JSON.parse(localStorage.getItem(LS_MODULES)) || null; } catch (e) { return null; } }
+  function writeCache(m) { try { localStorage.setItem(LS_MODULES, JSON.stringify(m)); } catch (e) {} }
+  function activeSet() {
+    var c = readCache(); if (c) return c;
+    var d = {}; MODULE_KEYS.forEach(function (k) { d[k] = true; }); return d;
+  }
+  function isActive(k) { return activeSet()[k] !== false; }
+  function activeCount() { var s = activeSet(); return MODULE_KEYS.filter(function (k) { return s[k] !== false; }).length; }
+
+  function syncModulesFromDB() {
+    if (!mSession()) return Promise.resolve();
+    return mReq('GET', 'persons?select=progress_data&limit=1').then(function (rows) {
+      var pd = (rows && rows[0] && rows[0].progress_data) || {};
+      if (pd && pd.modules && typeof pd.modules === 'object') {
+        var norm = {}; MODULE_KEYS.forEach(function (k) { norm[k] = pd.modules[k] !== false; });
+        writeCache(norm);
+        try { window.dispatchEvent(new CustomEvent('planea:modules', { detail: norm })); } catch (e) {}
+      }
+      return pd;
+    }).catch(function () {});
+  }
+  function setModule(k, on) {
+    if (MODULE_KEYS.indexOf(k) < 0) return Promise.resolve();
+    var m = activeSet(); m[k] = !!on; writeCache(m);
+    try { window.dispatchEvent(new CustomEvent('planea:modules', { detail: m })); } catch (e) {}
+    if (!mSession()) return Promise.resolve(m);
+    // merge into progress_data so we never clobber other keys
+    return mReq('GET', 'persons?select=id,user_id,progress_data&limit=1').then(function (rows) {
+      var row = (rows && rows[0]) || {}; var pd = row.progress_data || {};
+      pd.modules = m;
+      var uid = row.user_id;
+      return mReq('PATCH', 'persons?' + (uid ? 'user_id=eq.' + uid : 'id=eq.' + row.id), { progress_data: pd });
+    }).catch(function (e) { if (window.console) console.warn('[modules] save failed', e && e.message); return m; });
+  }
+  window.PlaneaModules = {
+    keys: MODULE_KEYS, isActive: isActive, activeSet: activeSet, activeCount: activeCount,
+    setModule: setModule, reload: syncModulesFromDB
+  };
 
   var LOGO = '<svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
   // New Planea brand: white horizontal lockup (mark + wordmark). Inverts to ink on light theme via CSS.
@@ -52,15 +118,17 @@
     // Scrim + drawer
     var scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.id = 'pl-scrim';
     var d = document.createElement('aside'); d.className = 'drawer'; d.id = 'pl-drawer';
-    var nav = ITEMS.map(function (it) {
-      var on = (it.k === current) ? ' on' : '';
-      var href = it.action === 'maya' ? '#' : BASE + it.k;
-      var plus = it.plus ? '<span class="plus">+</span>' : '';
-      return '<a href="' + href + '"' + (it.action ? ' data-action="' + it.action + '"' : '') + ' class="' + on.trim() + '">' + svg(it.icon) + it.label + plus + '</a>';
-    }).join('');
+    function navHtml() {
+      return ITEMS.filter(function (it) { return !it.module || isActive(it.k); }).map(function (it) {
+        var on = (it.k === current) ? ' on' : '';
+        var href = it.action === 'maya' ? '#' : BASE + it.k;
+        var plus = it.plus ? '<span class="plus">+</span>' : '';
+        return '<a href="' + href + '"' + (it.action ? ' data-action="' + it.action + '"' : '') + ' class="' + on.trim() + '">' + svg(it.icon) + it.label + plus + '</a>';
+      }).join('');
+    }
     d.innerHTML =
       '<div class="dbrand">' + LOGO_IMG + '</div>' +
-      '<nav class="dnav">' + nav + '</nav>' +
+      '<nav class="dnav">' + navHtml() + '</nav>' +
       '<div class="dsep"></div>' +
       '<button class="dbtn" id="pl-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar módulo</button>' +
       '<button class="dbtn solid" id="pl-install" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Instalar Planea</button>' +
@@ -98,9 +166,15 @@
     document.getElementById('pl-theme').addEventListener('click', toggleTheme);
     document.getElementById('pl-theme2').addEventListener('click', toggleTheme);
     document.getElementById('pl-add').addEventListener('click', function () { location.href = BASE + 'configuracion'; });
-    d.querySelectorAll('[data-action="maya"]').forEach(function (a) {
-      a.addEventListener('click', function (e) { e.preventDefault(); closeD(); if (window.MayaChat) window.MayaChat.open(); });
-    });
+    // Maya links (drawer + anywhere) are handled by the global [data-action="maya"]
+    // delegate in maya-chat.js, so a single click opens Maya once (no double-toggle).
+
+    // Live-update the drawer module tabs when the user flips a toggle in Configuración
+    // or when the DB sync lands. Re-render only the <nav> so state/handlers stay intact.
+    var dnavEl = d.querySelector('.dnav');
+    function renderNav() { if (dnavEl) dnavEl.innerHTML = navHtml(); }
+    window.addEventListener('planea:modules', renderNav);
+    syncModulesFromDB(); // pull the authoritative set from the DB, then re-render via event
     // Logout: clear the Supabase session + local tokens, back to login.
     document.getElementById('pl-logout').addEventListener('click', function () {
       try {

@@ -8,6 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="planea-app.css">
+<style>
+  .sw{cursor:pointer}
+  .modcard .sw{transition:background .18s}
+</style>
 </head>
 <body>
 <div class="app"><div class="wrap">
@@ -15,23 +19,23 @@
   <div class="phead"><div><h1>Configuración</h1><p class="lede">Tu portal, hecho a tu medida.</p></div></div>
 
   <div class="groupt">Mis módulos</div>
-  <div class="subt">Activa solo los que necesitas. Cada módulo aparece como un tab en la barra lateral. <strong style="color:var(--txt)">5 de 7 activos.</strong></div>
+  <div class="subt">Activa solo los que necesitas. Cada módulo aparece como un tab en la barra lateral. <strong style="color:var(--txt)"><span id="mod-count">5</span> de 7 activos.</strong></div>
 
   <div class="grid2">
 
-    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M15 12h7v4h-7a2 2 0 0 1 0-4Z"/></svg></span><h3>Ahorro</h3><span class="sw on"></span></div><p>Tu fondo de emergencia y hábitos de ahorro en un solo lugar.</p><div class="who"><div class="q">¿Para quién es?</div><p>Para todos: construir un colchón de 3 a 6 meses de gastos es la base.</p></div></div>
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M15 12h7v4h-7a2 2 0 0 1 0-4Z"/></svg></span><h3>Ahorro</h3><span class="sw on" role="switch" aria-checked="true" aria-label="Activar módulo Ahorro" tabindex="0" data-mod="ahorro"></span></div><p>Tu fondo de emergencia y hábitos de ahorro en un solo lugar.</p><div class="who"><div class="q">¿Para quién es?</div><p>Para todos: construir un colchón de 3 a 6 meses de gastos es la base.</p></div></div>
 
-    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><h3>Deuda</h3><span class="sw on"></span></div><p>Consolida tus créditos, tarjetas y planea cómo salir más rápido.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes tarjetas, libre inversión, vehículo o hipoteca activos.</p></div></div>
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10.5h19"/><path d="M6 15.5h4"/></svg></span><h3>Deuda</h3><span class="sw on" role="switch" aria-checked="true" aria-label="Activar módulo Deuda" tabindex="0" data-mod="deuda"></span></div><p>Consolida tus créditos, tarjetas y planea cómo salir más rápido.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes tarjetas, libre inversión, vehículo o hipoteca activos.</p></div></div>
 
-    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3>Inversión</h3><span class="sw on"></span></div><p>Lleva tu portafolio y rendimiento en un solo lugar.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes inversiones fuera de tu cuenta de ahorros: acciones, fondos, ETFs o CDTs.</p></div></div>
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3>Inversión</h3><span class="sw on" role="switch" aria-checked="true" aria-label="Activar módulo Inversión" tabindex="0" data-mod="inversion"></span></div><p>Lleva tu portafolio y rendimiento en un solo lugar.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes inversiones fuera de tu cuenta de ahorros: acciones, fondos, ETFs o CDTs.</p></div></div>
 
-    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><h3>Seguros</h3><span class="sw on"></span></div><p>Todas tus pólizas y los huecos de cobertura.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes pólizas activas o dependientes económicos que proteger.</p></div></div>
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><h3>Seguros</h3><span class="sw on" role="switch" aria-checked="true" aria-label="Activar módulo Seguros" tabindex="0" data-mod="seguros"></span></div><p>Todas tus pólizas y los huecos de cobertura.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes pólizas activas o dependientes económicos que proteger.</p></div></div>
 
-    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><h3>Retiro</h3><span class="sw on"></span></div><p>Proyección de tu pensión y aportes voluntarios.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si ya piensas en cómo vivir cuando dejes de trabajar.</p></div></div>
+    <div class="modcard"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><h3>Retiro</h3><span class="sw on" role="switch" aria-checked="true" aria-label="Activar módulo Retiro" tabindex="0" data-mod="retiro"></span></div><p>Proyección de tu pensión y aportes voluntarios.</p><div class="who"><div class="q">¿Para quién es?</div><p>Si ya piensas en cómo vivir cuando dejes de trabajar.</p></div></div>
 
-    <div class="modcard off gold"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></svg></span><h3>Impuestos</h3></div><p>Estima tu renta y encuentra deducciones que te ahorran plata.</p><a class="btn gold" href="#" data-action="maya" style="margin-top:14px">Contacta un asesor</a><div class="who"><div class="q">¿Para quién es?</div><p>Si declaras renta o estás cerca del umbral DIAN.</p></div></div>
+    <div class="modcard off gold"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></svg></span><h3>Impuestos</h3></div><p>Estima tu renta y encuentra deducciones que te ahorran plata.</p><a class="btn gold" href="mailto:asesor@planea.co?subject=Quiero%20hablar%20con%20un%20asesor%20Planea" style="margin-top:14px">Contacta un asesor</a><div class="who"><div class="q">¿Para quién es?</div><p>Si declaras renta o estás cerca del umbral DIAN.</p></div></div>
 
-    <div class="modcard off gold"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 3v6M9 6h6M4 21h16M6 21V11h12v10"/></svg></span><h3>Sucesión patrimonial</h3></div><p>Planea cómo se transfiere tu patrimonio a la siguiente generación.</p><a class="btn gold" href="#" data-action="maya" style="margin-top:14px">Contacta un asesor</a><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes patrimonio, empresa familiar, hijos o beneficiarios.</p></div></div>
+    <div class="modcard off gold"><div class="mh"><span class="mi"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/></svg></span><h3>Sucesión patrimonial</h3></div><p>Planea cómo se transfiere tu patrimonio a la siguiente generación.</p><a class="btn gold" href="mailto:asesor@planea.co?subject=Quiero%20hablar%20con%20un%20asesor%20Planea" style="margin-top:14px">Contacta un asesor</a><div class="who"><div class="q">¿Para quién es?</div><p>Si tienes patrimonio, empresa familiar, hijos o beneficiarios.</p></div></div>
 
   </div>
 
@@ -40,6 +44,57 @@
 
 </div></div>
 <script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
+<script defer>
+(function () {
+  'use strict';
+  function boot() {
+    var PM = window.PlaneaModules;
+    var counter = document.getElementById('mod-count');
+    var switches = Array.prototype.slice.call(document.querySelectorAll('.sw[data-mod]'));
+
+    function paint() {
+      var active = PM ? PM.activeSet() : {};
+      switches.forEach(function (sw) {
+        var on = active[sw.getAttribute('data-mod')] !== false;
+        sw.classList.toggle('on', on);
+        sw.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      if (counter) counter.textContent = PM ? PM.activeCount() : switches.length;
+    }
+
+    function flip(sw) {
+      if (!PM) return;
+      var k = sw.getAttribute('data-mod');
+      var on = !(PM.activeSet()[k] !== false); // next state
+      sw.classList.toggle('on', on);
+      sw.setAttribute('aria-checked', on ? 'true' : 'false');
+      if (counter) {
+        // recompute after optimistic class change
+        var n = switches.filter(function (s) { return s.classList.contains('on'); }).length;
+        counter.textContent = n;
+      }
+      PM.setModule(k, on); // persists to Supabase + fires planea:modules (nav re-renders)
+    }
+
+    switches.forEach(function (sw) {
+      sw.addEventListener('click', function () { flip(sw); });
+      sw.addEventListener('keydown', function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(sw); } });
+    });
+    // Reflect DB-authoritative state when the sync lands
+    window.addEventListener('planea:modules', paint);
+    paint();
+    if (PM && PM.reload) PM.reload();
+  }
+  // planea-nav.js (defer) exposes window.PlaneaModules; wait for it if needed.
+  function wait(n) {
+    if (window.PlaneaModules || n > 40) return boot();
+    setTimeout(function () { wait(n + 1); }, 50);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { wait(0); });
+  else wait(0);
+})();
+</script>
 </body>
 </html>

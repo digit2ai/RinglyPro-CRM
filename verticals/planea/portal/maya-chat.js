@@ -550,6 +550,18 @@
       makeFab();
     }
     window.MayaChat = { open: open, close: close, toggle: toggle };
+
+    // Global delegate: ANY element with data-action="maya" (nav drawer link, Más tiles,
+    // "Habla con Planea IA", etc.) opens the Maya overlay — never navigates away.
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-action="maya"]');
+      if (!t) return;
+      e.preventDefault();
+      var dr = document.getElementById('pl-drawer'), sc = document.getElementById('pl-scrim');
+      if (dr) dr.classList.remove('open');
+      if (sc) sc.classList.remove('open');
+      open();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

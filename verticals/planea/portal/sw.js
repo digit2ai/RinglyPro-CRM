@@ -1,7 +1,7 @@
 /* PLANEA PWA service worker — app-shell caching.
    Network-first for navigations (so new deploys show), cache-first for static
    assets, never touches /api/. Scope: /planea/portal/. */
-var CACHE = 'planea-shell-v6';
+var CACHE = 'planea-shell-v7';
 var BASE = '/planea/portal/';
 var SHELL = [
   BASE + 'inicio', BASE + 'patrimonio', BASE + 'metas', BASE + 'cuentas', BASE + 'diagnostico',
