@@ -9136,7 +9136,18 @@ window.deleteMilestone = deleteMilestone;
 // Quick Add menu
 function showQuickAdd() {
   openModal('What would you like to create?', `
-    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Choose what you'd like to add:</p>
+    <a href="/projects/intake/create.html" style="display:block;text-decoration:none;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;
+                  background:linear-gradient(135deg,rgba(56,189,248,.16),rgba(167,139,250,.16));
+                  border:1px solid rgba(56,189,248,.45);cursor:pointer">
+        <span style="font-size:26px">&#9889;</span>
+        <div style="text-align:left">
+          <strong style="display:block;color:var(--text-primary);font-size:15px">Create a Project Request with AI</strong>
+          <span style="font-size:12px;color:var(--text-secondary)">Just describe an idea &mdash; the Neural Brain writes a complete, structured request &rarr;</span>
+        </div>
+      </div>
+    </a>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Or choose what you'd like to add:</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <button class="btn btn-ghost" onclick="closeModal();openContactModal()" style="padding:20px;font-size:15px;flex-direction:column;gap:4px">
         <span style="font-size:24px">&#128100;</span>
