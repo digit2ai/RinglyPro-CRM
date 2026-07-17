@@ -9,7 +9,12 @@
 /* sidebar */
 .oww-side{flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px}
 .oww-side .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 16px}
-.oww-side .brand img{height:34px;width:auto}
+.oww-side .brand{padding:2px 8px 18px}
+.oww-side .brand img{height:58px;width:auto;display:block}
+.oww-logout{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:11px 12px;border-radius:12px;
+  background:transparent;border:1px solid var(--line);color:var(--mut);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
+.oww-logout:hover{background:var(--card);color:var(--ink);border-color:var(--line2)}
+.oww-logout svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .oww-ws{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:14px}
 .oww-ws .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06101f;font-size:13px;flex:0 0 28px}
 .oww-ws .nm{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -91,6 +96,10 @@
       <p>Monthly build credits, private projects, real-time collaboration.</p>
       <a href="/pricing">Upgrade to Pro</a>
     </div>
+    <button class="oww-logout" id="oww-logout" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Log out
+    </button>
   </aside>
 
   <main class="oww-main">
@@ -137,6 +146,13 @@
   document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s OrbUp";
   document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
   document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
+
+  // Log out — clear the remembered session on this browser and return to login.
+  var logoutBtn=document.getElementById('oww-logout');
+  if(logoutBtn) logoutBtn.addEventListener('click', function(){
+    try{ localStorage.removeItem('d2ai_contact'); }catch(e){}
+    window.location.href='/orbup/login';
+  });
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   var creditsEl=document.getElementById('oww-plan');
