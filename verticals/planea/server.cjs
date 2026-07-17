@@ -29,6 +29,11 @@ const privateDir = path.join(__dirname, 'private');
 const portalDir = path.join(__dirname, 'portal');
 const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 
+// TEMPORARY: auto-confirm new signups when a Supabase service_role key is set
+// (PLANEA_SERVICE_ROLE_KEY), so users log in without email verification while SMTP
+// is unconfigured. No-op when the key is absent. See emailAutoConfirm.cjs.
+try { require('./emailAutoConfirm.cjs').start(); } catch (e) { console.log('planea auto-confirm not started:', e.message); }
+
 // ── Private technical architecture doc — GET /planea/tech_architecture ──
 // Gated behind a single admin credential. Signed HttpOnly cookie (HMAC), 30d.
 // Override the defaults with env on prod: PLANEA_DOCS_PASSWORD / PLANEA_DOCS_SECRET.
