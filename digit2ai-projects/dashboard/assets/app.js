@@ -2185,8 +2185,13 @@ async function renderInbox(container) {
   if (items.length === 0) {
     container.innerHTML = `
       <div class="detail-panel">
-        <h2 style="margin-top:0">Project Request Inbox</h2>
-        <p style="color:var(--text-muted)">${countLine}</p>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin-top:0">Project Request Inbox</h2>
+            <p style="color:var(--text-muted)">${countLine}</p>
+          </div>
+          ${inboxCreateBtn()}
+        </div>
         <div class="empty-state" style="margin-top:24px">
           <h3>All caught up</h3>
           <p>New prospect submissions from <a href="/projects/intake/request.html" target="_blank" style="color:var(--accent)">/projects/intake/request.html</a> will appear here.</p>
@@ -2197,12 +2202,31 @@ async function renderInbox(container) {
 
   container.innerHTML = `
     <div class="detail-panel">
-      <h2 style="margin-top:0">Project Request Inbox</h2>
-      <p style="color:var(--text-muted);margin-bottom:18px">${countLine}</p>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin-top:0">Project Request Inbox</h2>
+          <p style="color:var(--text-muted);margin-bottom:18px">${countLine}</p>
+        </div>
+        ${inboxCreateBtn()}
+      </div>
       <div id="inbox-list" style="display:flex;flex-direction:column;gap:14px">
         ${items.map(p => renderInboxCard(p)).join('')}
       </div>
     </div>`;
+}
+
+// Visible "describe an idea -> AI writes the request" button, shown at the top
+// of the inbox so the Project Request Creator is one click away (not buried in
+// the + Create menu).
+function inboxCreateBtn() {
+  return `
+    <a href="/projects/intake/create.html"
+       style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap;
+              padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;color:#04121f;
+              background:linear-gradient(135deg,#38bdf8,#a78bfa);box-shadow:0 8px 24px rgba(124,92,255,.35)">
+      <span style="font-size:16px">&#9889;</span>
+      <span>Create request with AI</span>
+    </a>`;
 }
 
 function buildMeetingEmail({ toEmail, toName, company, projectName, shareUrl }) {
