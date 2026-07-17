@@ -6,7 +6,7 @@
 <title>Pricing — OrbUp</title>
 <meta name="description" content="Simple credit-based pricing for OrbUp. Start free, scale with monthly build credits. Powered by Stripe.">
 <meta property="og:title" content="Pricing — OrbUp">
-<meta property="og:description" content="Start free. Scale with monthly AI build credits. Pro from $25/mo, Business from $50/mo, Enterprise volume pricing.">
+<meta property="og:description" content="Start free. Scale with monthly AI build credits. Pro from $25/mo, Enterprise volume pricing.">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image" content="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png">
 <meta name="twitter:image" content="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png">
@@ -272,26 +272,18 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
         es:["Todo lo de Gratis","Créditos mensuales","Proyectos privados","Roles y permisos","Dominios personalizados","Soporte estándar"]
       }
     },
-    business:{
-      name:{en:"Business",es:"Business"},
-      sub:{en:"For teams that need scale, security and control.",es:"Para equipos que necesitan escala, seguridad y control."},
-      feats:{
-        en:["Everything in Pro","SSO","Security center","Design templates","Priority support"],
-        es:["Todo lo de Pro","SSO","Centro de seguridad","Plantillas de diseño","Soporte prioritario"]
-      }
-    },
     enterprise:{
       name:{en:"Enterprise",es:"Enterprise"},
       sub:{en:"Built for large orgs needing flexibility, scale and governance.",es:"Para grandes organizaciones que necesitan flexibilidad, escala y gobernanza."},
       feats:{
-        en:["All Business features","Volume-based credit pricing","Dedicated support","Onboarding services","Design systems","SCIM","Custom connectors","Publishing & sharing controls"],
-        es:["Todo lo de Business","Precios por volumen","Soporte dedicado","Servicios de onboarding","Sistemas de diseño","SCIM","Conectores personalizados","Controles de publicación"]
+        en:["All Pro features","Volume-based credit pricing","SSO & security center","Dedicated support","Onboarding services","Design systems","SCIM","Custom connectors","Publishing & sharing controls"],
+        es:["Todo lo de Pro","Precios por volumen","SSO y centro de seguridad","Soporte dedicado","Servicios de onboarding","Sistemas de diseño","SCIM","Conectores personalizados","Controles de publicación"]
       }
     }
   };
 
   var MATRIX = null; // fetched from /api/pricing/plans
-  var selected = { pro:100, business:100 };
+  var selected = { pro:100 };
 
   function t(k){ return (I18N[lang]&&I18N[lang][k])||I18N.en[k]||k; }
   function fmt(n){ return n.toLocaleString('en-US'); }
@@ -356,15 +348,6 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       +'<div class="cta"><button class="btn btn-primary" data-buy="pro">'+t('getstarted')+'</button></div>'
       +feats('pro')+'</div>';
 
-    // BUSINESS
-    var biz='<div class="card">'
-      +'<div class="tier">'+TIERS.business.name[lang]+'</div>'
-      +'<div class="tier-sub">'+TIERS.business.sub[lang]+'</div>'
-      +'<div class="price"><span class="amt" id="business-amt">$'+fmt(priceCard('business'))+'</span><span class="per">'+t('per')+'</span></div>'
-      +'<div class="sel"><select id="business-sel" aria-label="Business credits">'+creditOptions('business')+'</select></div>'
-      +'<div class="cta"><button class="btn btn-ghost" data-buy="business">'+t('getstarted')+'</button></div>'
-      +feats('business')+'</div>';
-
     // ENTERPRISE
     var ent='<div class="card">'
       +'<div class="tier">'+TIERS.enterprise.name[lang]+'</div>'
@@ -373,10 +356,10 @@ nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:
       +'<div class="cta"><button class="btn btn-ghost" id="ent-book">'+t('bookDemo')+'</button></div>'
       +feats('enterprise')+'</div>';
 
-    g.innerHTML = free+pro+biz+ent;
+    g.innerHTML = free+pro+ent;
 
     // wire selects
-    ['pro','business'].forEach(function(plan){
+    ['pro'].forEach(function(plan){
       var sel=document.getElementById(plan+'-sel');
       if(sel) sel.addEventListener('change',function(){
         selected[plan]=Number(sel.value);
