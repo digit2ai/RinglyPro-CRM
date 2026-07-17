@@ -43,7 +43,10 @@
   function render() {
     mount.innerHTML = open
       ? formHtml()
-      : '<button class="btn ghost" data-me-open style="width:100%;justify-content:center;border-style:dashed">+ Crear una meta</button>';
+      : '<button class="me-add-btn" data-me-open aria-label="Crear una meta personalizada">' +
+          '<span class="me-plus" aria-hidden="true">+</span>' +
+          '<span class="me-add-tx"><span class="t">Nueva meta</span><span class="s">Crea una meta personalizada</span></span>' +
+        '</button>';
     if (open) {
       ['me-target', 'me-current', 'me-monthly'].forEach(function (id) {
         var el = document.getElementById(id);
