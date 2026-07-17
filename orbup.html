@@ -137,7 +137,23 @@
 .d2b .btn-primary{background:var(--pill);color:var(--pill-ink);padding:11px 20px;font-size:14.5px;box-shadow:var(--shadow-sm)}
 .d2b .btn-primary:hover{filter:brightness(1.05)}
 .d2b .btn-grad{background:var(--grad);color:#fff;padding:13px 24px;font-size:15px;box-shadow:var(--shadow)}
-@media(max-width:680px){.d2b .nav-links > a:not(.btn){display:none}}
+.d2b .nav-burger{display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1px solid var(--line2);cursor:pointer;color:var(--ink);flex:0 0 auto}
+.d2b .nav-burger svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+.d2b .nav-burger .ic-x{display:none}
+.d2b nav.nav-open .nav-burger .ic-m{display:none}
+.d2b nav.nav-open .nav-burger .ic-x{display:block}
+@media(max-width:680px){
+  .d2b .nav-burger{display:inline-flex}
+  .d2b .nav-links{position:absolute;top:calc(100% + 8px);right:16px;left:16px;flex-direction:column;align-items:stretch;
+    gap:4px;background:#14151d;border:1px solid var(--line2);border-radius:16px;padding:12px;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);display:none;z-index:30}
+  .d2b nav.nav-open .nav-links{display:flex}
+  .d2b .nav-links > a{display:block;padding:12px 12px;border-radius:10px;font-size:15.5px;color:var(--ink)}
+  .d2b .nav-links > a:hover{background:rgba(255,255,255,.06)}
+  .d2b .nav-links > a.btn{margin-top:6px;justify-content:center}
+  .d2b .nav-links .lang-toggle{align-self:flex-start;margin:4px 2px}
+}
 @media(max-width:600px){
   .d2b nav{padding:16px 16px}
   .d2b .nav-links{gap:12px}
@@ -470,7 +486,22 @@
       <a href="/orbup/login">Log in</a>
       <a href="/orbup/start" class="btn btn-primary">Get started</a>
     </div>
+    <button class="nav-burger" id="navBurger" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+      <svg class="ic-m" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg class="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </nav>
+  <script>(function(){
+    var nav=document.querySelector('.d2b nav'), b=document.getElementById('navBurger');
+    if(!nav||!b) return;
+    var links=nav.querySelector('.nav-links'); if(links) links.id='navLinks';
+    function set(open){ nav.classList.toggle('nav-open',open); b.setAttribute('aria-expanded',open?'true':'false'); }
+    b.addEventListener('click', function(e){ e.stopPropagation(); set(!nav.classList.contains('nav-open')); });
+    // close after tapping a menu link, or tapping outside
+    if(links) links.addEventListener('click', function(e){ if(e.target.closest('a')) set(false); });
+    document.addEventListener('click', function(e){ if(nav.classList.contains('nav-open') && !nav.contains(e.target)) set(false); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') set(false); });
+  })();</script>
 
   <header class="hero">
     <div class="wrap">
