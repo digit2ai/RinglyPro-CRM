@@ -63,6 +63,22 @@
 .oww-pbtn.solid{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f;border:0}
 .oww-pbtn:hover{filter:brightness(1.08)}
 .oww-empty{text-align:center;color:var(--mut);padding:36px 20px;border:1px dashed var(--line2);border-radius:16px;font-size:14px}
+/* build/edit theatre — countdown + stage tracker */
+.oww-theatre{max-width:620px;margin:0 auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:30px 24px 32px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.oww-count{font-family:ui-monospace,Menlo,monospace;font-size:64px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.oww-count-u{display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--faint);margin-top:8px}
+.oww-th-title{font-size:18px;font-weight:700;margin:18px 0 4px;color:var(--ink)}
+.oww-th-sub{font-size:13px;color:var(--mut);margin-bottom:22px}
+.oww-steps{list-style:none;margin:0 auto;padding:0;text-align:left;max-width:340px;display:flex;flex-direction:column;gap:11px}
+.oww-steps li{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--mut);opacity:.42;transition:opacity .4s,color .4s}
+.oww-steps li .sd{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:2px solid #33405c;display:flex;align-items:center;justify-content:center;color:#06101f;font-size:11px;font-weight:800;transition:all .4s}
+.oww-steps li.active{opacity:1;color:var(--ink)}
+.oww-steps li.active .sd{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.14)}
+.oww-steps li.active .sd::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:owwPulse 1s infinite}
+.oww-steps li.done{opacity:1;color:#9fb2cf}
+.oww-steps li.done .sd{border-color:var(--good);background:var(--good)}
+.oww-steps li.done .sd::after{content:"\2713"}
+@keyframes owwPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.5}}
 .oww-spin{width:15px;height:15px;border:2px solid rgba(6,16,31,.35);border-top-color:#06101f;border-radius:50%;animation:owwSpin .8s linear infinite;display:inline-block}
 @keyframes owwSpin{to{transform:rotate(360deg)}}
 .oww-side-toggle{display:none}
@@ -171,29 +187,53 @@
     ch.addEventListener('click', function(){ var d=document.getElementById('oww-desc'); d.value=ch.getAttribute('data-p'); d.focus(); });
   });
 
+  // ---- countdown + stage tracker (shown in the apps area during any AI generation) ----
+  var _thTimers=[];
+  function theatreStart(steps, est, title, sub){
+    var host=document.getElementById('oww-list');
+    var lis=steps.map(function(s,i){ return '<li data-i="'+i+'"><span class="sd"></span><span>'+esc(s)+'</span></li>'; }).join('');
+    host.innerHTML='<div class="oww-theatre"><div class="oww-count"><span id="oww-num">'+est+'</span><span class="oww-count-u">seconds</span></div>'
+      +'<div class="oww-th-title">'+esc(title)+'</div><div class="oww-th-sub">'+esc(sub)+'</div>'
+      +'<ul class="oww-steps" id="oww-steps">'+lis+'</ul></div>';
+    try{ host.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+    var left=est, num=document.getElementById('oww-num');
+    _thTimers.push(setInterval(function(){ left--; if(left<=0){ num.style.fontSize='30px'; num.textContent='almost'; } else num.textContent=left; }, 1000));
+    var els=[].slice.call(document.querySelectorAll('#oww-steps li')), cur=0;
+    function act(i){ els.forEach(function(el,j){ el.classList.toggle('done', j<i); el.classList.toggle('active', j===i); }); }
+    act(0);
+    var per=Math.max(4000, Math.floor(est*1000/steps.length));
+    _thTimers.push(setInterval(function(){ if(cur<steps.length-1){ cur++; act(cur); } }, per));
+  }
+  function theatreStop(){ _thTimers.forEach(function(t){ clearInterval(t); }); _thTimers=[]; }
+  var BUILD_STEPS=['Understanding your idea','Designing the interface','Assembling the AI workforce','Writing the code','Wiring up interactions','Finalizing your app'];
+  var EDIT_STEPS=['Reading your app','Planning the change','Rewriting the code','Finalizing'];
+
   var buildBtn=document.getElementById('oww-build');
   var buildErr=document.getElementById('oww-build-err');
   function build(){
     var desc=(document.getElementById('oww-desc').value||'').trim();
     buildErr.textContent='';
     if(desc.length<12){ document.getElementById('oww-desc').focus(); buildErr.textContent='Describe the app in a bit more detail.'; return; }
-    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Building your app… (~1 min)';
+    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Building…';
+    theatreStart(BUILD_STEPS, 70, 'Building your app…', 'Our AI workforce is scoping, designing, and coding it — live.');
     fetch(API+'/build', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,prompt:desc})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
-        buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;';
+        buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop();
         if(res.status===200 && res.json && res.json.success){
           document.getElementById('oww-desc').value='';
           if(typeof res.json.credits!=='undefined') setCredits(res.json.credits, 'Free');
           try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
           loadApps();
         } else if(res.status===402){
+          loadApps();
           buildErr.innerHTML='Out of credits ('+(res.json.credits||0)+' left, need '+(res.json.needed||COST)+'). <a href="/pricing" style="color:var(--cyan)">Upgrade to Pro</a> for more.';
         } else {
+          loadApps();
           buildErr.textContent=(res.json && res.json.error) ? res.json.error : 'Build failed. Please try again.';
         }
       })
-      .catch(function(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; buildErr.textContent='Could not reach the server. Please try again.'; });
+      .catch(function(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop(); loadApps(); buildErr.textContent='Could not reach the server. Please try again.'; });
   }
   buildBtn.addEventListener('click', build);
   document.getElementById('oww-desc').addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') build(); });
@@ -202,22 +242,22 @@
     var instruction=window.prompt('What should change in this app?');
     if(!instruction || !instruction.trim()) return;
     if(cardBtn){ cardBtn.disabled=true; cardBtn.textContent='Editing…'; }
+    theatreStart(EDIT_STEPS, 45, 'Updating your app…', 'Applying your change and rebuilding — live.');
     fetch(API+'/apps/'+token+'/edit', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,instruction:instruction.trim()})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
+        theatreStop();
         if(res.status===200 && res.json && res.json.success){
           if(typeof res.json.credits!=='undefined') setCredits(res.json.credits,'Free');
           try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
           loadApps();
         } else if(res.status===402){
-          alert('Out of credits. Upgrade to Pro for more.');
-          if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; }
+          loadApps(); alert('Out of credits. Upgrade to Pro for more.');
         } else {
-          alert((res.json && res.json.error) || 'Edit failed.');
-          if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; }
+          loadApps(); alert((res.json && res.json.error) || 'Edit failed.');
         }
       })
-      .catch(function(){ alert('Could not reach the server.'); if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; } });
+      .catch(function(){ theatreStop(); loadApps(); alert('Could not reach the server.'); });
   }
   window.__owwEdit=editApp;
 
