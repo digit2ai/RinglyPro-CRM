@@ -165,6 +165,11 @@ app.use('/teaser', require('./routes/teasers').publicRouter);
 // "Book a call & ship" CTA back to OrbUp. Token-gated, no auth.
 app.use('/simulator', require('./routes/appSimulator').publicRouter);
 
+// OrbUp App Builder — public app viewer (/projects/app/:token) + API.
+const orbupApps = require('./routes/orbupApps');
+app.use('/app', orbupApps.viewerRouter);
+app.use('/api/v1/orbup', express.json({ limit: '2mb' }), orbupApps.apiRouter);
+
 // Public read-only Registry Agent catalog (NIN org chart node source).
 // Non-sensitive roster data — departments, agents, input/output schemas, owners.
 // Mounted BEFORE the authenticated /api/v1/agents router so the org chart and
@@ -787,6 +792,43 @@ app.get('*', (req, res) => {
       }
     }
     console.log('[D2AI-Projects] OrbUp users table ready');
+
+    // OrbUp App Builder — credits + generated apps (Lovable-style real apps)
+    const orbupAppMigrations = [
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 0`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS grant_day DATE`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS grant_month VARCHAR(7)`,
+      `ALTER TABLE orbup_users ADD COLUMN IF NOT EXISTS month_granted INTEGER DEFAULT 0`,
+      `CREATE TABLE IF NOT EXISTS orbup_apps (
+        id SERIAL PRIMARY KEY,
+        token UUID NOT NULL UNIQUE,
+        owner_email TEXT NOT NULL,
+        name TEXT,
+        prompt TEXT,
+        code TEXT NOT NULL,
+        model VARCHAR(60),
+        version INTEGER DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_apps_owner ON orbup_apps(lower(owner_email))`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_apps_token ON orbup_apps(token)`,
+      `CREATE TABLE IF NOT EXISTS orbup_credit_txns (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL,
+        delta INTEGER NOT NULL,
+        reason VARCHAR(40),
+        balance_after INTEGER,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_credit_txns_email ON orbup_credit_txns(email)`
+    ];
+    for (const sql of orbupAppMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!/already exists/i.test(e.message)) console.log('[D2AI-Projects] OrbUp apps migration notice:', e.message.substring(0, 120));
+      }
+    }
+    console.log('[D2AI-Projects] OrbUp app builder tables ready');
 
     // Calendar: recurrence_group_id column for linked-recurring-events support
     try {

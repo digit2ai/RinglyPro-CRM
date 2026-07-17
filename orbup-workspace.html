@@ -76,7 +76,7 @@
     <a class="brand" href="/orbup" aria-label="OrbUp"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580b27c06d2134c6e06440.png" alt="OrbUp"></a>
     <div class="oww-ws">
       <div class="av" id="oww-av">O</div>
-      <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl">Free plan</div></div>
+      <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl" id="oww-plan">Free plan</div></div>
     </div>
     <nav class="oww-nav">
       <a href="/orbup/workspace" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg> Dashboard</a>
@@ -97,23 +97,24 @@
     <div class="oww-hero">
       <h1 id="oww-greet">What should we build?</h1>
       <div class="oww-prompt">
-        <textarea id="oww-desc" rows="2" placeholder="Describe the tool your business needs…"></textarea>
+        <textarea id="oww-desc" rows="2" placeholder="Describe the app you want to build…"></textarea>
         <div class="row">
-          <span class="hint">Workspace-private · Free plan</span>
+          <span class="hint" id="oww-cost">Builds a real app · 5 credits</span>
           <button class="oww-build" id="oww-build">Build it &rarr;</button>
         </div>
       </div>
       <div class="oww-chips" id="oww-chips">
-        <button class="oww-chip" data-p="An outbound AI voice agent that calls customers who missed their appointment and reschedules them.">Missed-appointment caller</button>
-        <button class="oww-chip" data-p="A dashboard that shows my store's real-time performance and alerts me when sales drop.">Store dashboard</button>
-        <button class="oww-chip" data-p="An AI that reads inbound emails, drafts replies, and books meetings on my calendar.">Inbox autopilot</button>
+        <button class="oww-chip" data-p="A habit tracker where I add daily habits, check them off each day, and see a streak count and a weekly grid.">Habit tracker</button>
+        <button class="oww-chip" data-p="An invoice generator: add line items with price and quantity, auto-calculate totals and tax, and print/save the invoice.">Invoice generator</button>
+        <button class="oww-chip" data-p="A personal expense tracker with categories, a running balance, a monthly summary, and a simple bar chart of spending by category.">Expense tracker</button>
       </div>
+      <div class="oww-err" id="oww-build-err" style="text-align:center;color:#fca5a5;font-size:12.5px;margin-top:12px;min-height:16px"></div>
     </div>
 
     <section class="oww-projects" id="projects">
-      <h2>Your projects</h2>
-      <p class="psub">Private to your workspace — every build you start lives here.</p>
-      <div id="oww-list"><div class="oww-empty">Loading your projects…</div></div>
+      <h2>Your apps</h2>
+      <p class="psub">Real, working apps you built — open, share, or edit any one. Private to your workspace.</p>
+      <div id="oww-list"><div class="oww-empty">Loading your apps…</div></div>
     </section>
   </main>
 </div>
@@ -122,7 +123,7 @@
 (function(){
   var root=document.getElementById('oww');
   if(!root) return;
-  var WS_URL='/projects/api/v1/intake/orbup/workspace';
+  var API='/projects/api/v1/orbup';
 
   // identity (passwordless free tier): email in localStorage from signup
   var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
@@ -130,57 +131,101 @@
   if(!email){ window.location.replace('/orbup/start'); return; }
   var name=(contact.name||'').trim();
   var first = name ? name.split(' ')[0] : '';
+  var COST=5;
 
-  // header personalization
   document.getElementById('oww-greet').textContent = first ? ('What should we build, '+first+'?') : 'What should we build?';
   document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s OrbUp";
   document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
-
   document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  var creditsEl=document.getElementById('oww-plan');
+  function setCredits(c, plan){ creditsEl.textContent = (plan||'Free')+' plan · '+c+' credit'+(c===1?'':'s'); }
 
-  // chips + build
+  function loadCredits(){
+    return fetch(API+'/credits?email='+encodeURIComponent(email)).then(function(r){return r.json();}).then(function(j){
+      if(j && j.success){ COST=j.new_app_cost||5; setCredits(j.credits, (j.plan||'free').charAt(0).toUpperCase()+(j.plan||'free').slice(1));
+        document.getElementById('oww-cost').textContent='Builds a real app · '+COST+' credits'; }
+      return j;
+    }).catch(function(){});
+  }
+
+  // chips
   document.getElementById('oww-chips').querySelectorAll('.oww-chip').forEach(function(ch){
     ch.addEventListener('click', function(){ var d=document.getElementById('oww-desc'); d.value=ch.getAttribute('data-p'); d.focus(); });
   });
+
   var buildBtn=document.getElementById('oww-build');
+  var buildErr=document.getElementById('oww-build-err');
   function build(){
     var desc=(document.getElementById('oww-desc').value||'').trim();
-    if(desc.length<20){ document.getElementById('oww-desc').focus(); return; }
-    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Opening…';
-    // Hand to the OrbUp build engine (contact already saved) -> build theatre.
-    window.location.href='/orbup?desc='+encodeURIComponent(desc)+'&from=start';
+    buildErr.textContent='';
+    if(desc.length<12){ document.getElementById('oww-desc').focus(); buildErr.textContent='Describe the app in a bit more detail.'; return; }
+    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Building your app… (~1 min)';
+    fetch(API+'/build', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,prompt:desc})})
+      .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
+      .then(function(res){
+        buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;';
+        if(res.status===200 && res.json && res.json.success){
+          document.getElementById('oww-desc').value='';
+          if(typeof res.json.credits!=='undefined') setCredits(res.json.credits, 'Free');
+          try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
+          loadApps();
+        } else if(res.status===402){
+          buildErr.innerHTML='Out of credits ('+(res.json.credits||0)+' left, need '+(res.json.needed||COST)+'). <a href="/pricing" style="color:var(--cyan)">Upgrade to Pro</a> for more.';
+        } else {
+          buildErr.textContent=(res.json && res.json.error) ? res.json.error : 'Build failed. Please try again.';
+        }
+      })
+      .catch(function(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; buildErr.textContent='Could not reach the server. Please try again.'; });
   }
   buildBtn.addEventListener('click', build);
   document.getElementById('oww-desc').addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') build(); });
 
-  // load workspace projects
-  function statusLabel(s){ return String(s||'planning').replace(/_/g,' '); }
-  fetch(WS_URL+'?email='+encodeURIComponent(email))
-    .then(function(r){ return r.json(); })
-    .then(function(res){
+  function editApp(token, cardBtn){
+    var instruction=window.prompt('What should change in this app?');
+    if(!instruction || !instruction.trim()) return;
+    if(cardBtn){ cardBtn.disabled=true; cardBtn.textContent='Editing…'; }
+    fetch(API+'/apps/'+token+'/edit', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,instruction:instruction.trim()})})
+      .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
+      .then(function(res){
+        if(res.status===200 && res.json && res.json.success){
+          if(typeof res.json.credits!=='undefined') setCredits(res.json.credits,'Free');
+          try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
+          loadApps();
+        } else if(res.status===402){
+          alert('Out of credits. Upgrade to Pro for more.');
+          if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; }
+        } else {
+          alert((res.json && res.json.error) || 'Edit failed.');
+          if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; }
+        }
+      })
+      .catch(function(){ alert('Could not reach the server.'); if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; } });
+  }
+  window.__owwEdit=editApp;
+
+  function loadApps(){
+    return fetch(API+'/apps?email='+encodeURIComponent(email)).then(function(r){return r.json();}).then(function(res){
       var list=document.getElementById('oww-list');
-      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
-      if(res.user && res.user.name && !name){ // backfill from server
-        document.getElementById('oww-greet').textContent='What should we build, '+res.user.name.split(' ')[0]+'?';
-      }
-      var ps=res.projects||[];
-      if(!ps.length){ list.innerHTML='<div class="oww-empty">No projects yet — describe your first build above and we’ll scope, build, and ship it.</div>'; return; }
-      list.innerHTML='<div class="oww-grid">'+ps.map(function(p){
-        var acts='';
-        if(p.teaser_url) acts+='<a class="oww-pbtn solid" href="'+esc(p.teaser_url)+'" target="_blank" rel="noopener">Open demo</a>';
-        if(p.simulator_url) acts+='<a class="oww-pbtn" href="'+esc(p.simulator_url)+'" target="_blank" rel="noopener">Simulator</a>';
-        if(!acts) acts='<span class="oww-pbtn" style="opacity:.6;cursor:default">Building…</span>';
-        var when=''; try{ when=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
+      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your apps. Please refresh.</div>'; return; }
+      var apps=res.apps||[];
+      if(!apps.length){ list.innerHTML='<div class="oww-empty">No apps yet — describe one above and OrbUp builds a real, working app you can use and share.</div>'; return; }
+      list.innerHTML='<div class="oww-grid">'+apps.map(function(a){
+        var when=''; try{ when=new Date(a.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
         return '<div class="oww-pcard">'
-          +'<div class="pt">'+esc(p.name||'Untitled build')+'</div>'
-          +(p.description?'<div class="pd">'+esc(p.description)+'</div>':'')
-          +'<div class="pmeta"><span class="oww-badge">'+esc(statusLabel(p.status))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
-          +'<div class="oww-pacts">'+acts+'</div>'
-          +'</div>';
+          +'<div class="pt">'+esc(a.name||'Untitled app')+'</div>'
+          +(a.prompt?'<div class="pd">'+esc(a.prompt)+'</div>':'')
+          +'<div class="pmeta"><span class="oww-badge">v'+(a.version||1)+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
+          +'<div class="oww-pacts">'
+          +'<a class="oww-pbtn solid" href="'+esc(a.url)+'" target="_blank" rel="noopener">Open app</a>'
+          +'<button class="oww-pbtn" onclick="window.__owwEdit(\''+esc(a.token)+'\',this)">Edit</button>'
+          +'</div></div>';
       }).join('')+'</div>';
-    })
-    .catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
+    }).catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
+  }
+
+  loadCredits();
+  loadApps();
 })();
 </script>
