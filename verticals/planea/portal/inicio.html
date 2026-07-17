@@ -11,10 +11,13 @@
 <style>
   .hero{position:relative;border-radius:22px;overflow:hidden;min-height:340px;display:flex;flex-direction:column;
     background:
-      linear-gradient(180deg,rgba(9,16,13,.28) 0%,rgba(9,16,13,.5) 52%,rgba(9,16,13,.92) 100%),
-      url('/planea/portal/hero-valle.png') center 28%/cover no-repeat,
-      #0d1712;
+      radial-gradient(130% 90% at 12% 6%, rgba(63,192,106,.30), transparent 55%),
+      radial-gradient(120% 90% at 92% 10%, rgba(23,166,166,.36), transparent 55%),
+      linear-gradient(158deg,#103029 0%,#0d231e 46%,#0a1613 100%);
     border:1px solid var(--line);padding:26px 22px 22px;margin-top:8px}
+  /* Brand mark watermark, bottom-right */
+  .hero::after{content:"";position:absolute;right:-40px;bottom:-46px;width:280px;height:280px;z-index:0;pointer-events:none;
+    background:url('/planea/portal/planea-mark-white.png') no-repeat center/contain;opacity:.06;transform:rotate(-8deg)}
   @media(min-width:1024px){.hero{min-height:400px}}
   .hero-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
   .hero h1{font-family:'Inter',sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;line-height:1.05;color:#fff}
@@ -50,7 +53,7 @@
     </div>
     <div class="divg"></div>
     <div class="hoy"><div class="lbl">HOY</div><div class="fecha">Martes, 14 de julio</div></div>
-    <span class="pill-loc"><span class="dot"></span>Valle de Cocora <span class="m">· Quindío</span></span>
+    <span class="pill-loc"><span class="dot"></span>Tus finanzas <span class="m">· Colombia</span></span>
   </section>
 
   <section class="sec">

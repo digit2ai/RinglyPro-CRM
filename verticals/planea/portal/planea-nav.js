@@ -30,6 +30,9 @@
   }
 
   var LOGO = '<svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M13 2 L24 20 L14.5 20 L14.5 11 Z" fill="currentColor"/><path d="M11.5 6.5 L11.5 20 L2 20 Z" fill="currentColor"/></svg>';
+  // New Planea brand: white horizontal lockup (mark + wordmark). Inverts to ink on light theme via CSS.
+  var LOGO_IMG = '<img src="' + BASE + 'planea-logo-white.png" alt="Planea" class="pl-logo-img">';
+  var MARK_IMG = '<img src="' + BASE + 'planea-mark-white.png" alt="" class="pl-mark-img">';
   var current = (location.pathname.split('/').pop() || 'inicio').replace('.html', '');
 
   function build() {
@@ -42,7 +45,7 @@
     top.className = 'topbar';
     top.innerHTML =
       '<button class="iconbtn" id="pl-menu" aria-label="Menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>' +
-      '<span class="brand" style="color:var(--txt)">' + LOGO + 'Planea</span><span class="sp"></span>' +
+      '<span class="brand">' + LOGO_IMG + '</span><span class="sp"></span>' +
       '<button class="iconbtn" id="pl-theme" aria-label="Cambiar tema"></button>';
     document.body.insertBefore(top, document.body.firstChild);
 
@@ -56,7 +59,7 @@
       return '<a href="' + href + '"' + (it.action ? ' data-action="' + it.action + '"' : '') + ' class="' + on.trim() + '">' + svg(it.icon) + it.label + plus + '</a>';
     }).join('');
     d.innerHTML =
-      '<div class="dbrand"><span class="mk" style="color:var(--txt)">' + LOGO + '</span><span>Planea</span></div>' +
+      '<div class="dbrand">' + LOGO_IMG + '</div>' +
       '<nav class="dnav">' + nav + '</nav>' +
       '<div class="dsep"></div>' +
       '<button class="dbtn" id="pl-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar módulo</button>' +
@@ -115,13 +118,15 @@
   // ── PWA: manifest + icons + service worker + install prompt ──
   function initPWA() {
     function head(tag, attrs) { var el = document.createElement(tag); for (var k in attrs) el.setAttribute(k, attrs[k]); document.head.appendChild(el); }
+    // Fraunces display serif (Planea brand headings) — injected once, applies site-wide
+    head('link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap' });
     head('link', { rel: 'manifest', href: '/planea/portal/manifest.webmanifest' });
     head('meta', { name: 'theme-color', content: '#0a1310' });
     head('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
     head('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' });
     head('meta', { name: 'apple-mobile-web-app-title', content: 'Planea' });
-    head('link', { rel: 'apple-touch-icon', href: '/planea/portal/icon-192.png' });
-    head('link', { rel: 'icon', type: 'image/svg+xml', href: '/planea/portal/icon.svg' });
+    head('link', { rel: 'apple-touch-icon', href: '/planea/portal/apple-touch-icon.png' });
+    head('link', { rel: 'icon', type: 'image/png', href: '/planea/portal/icon-192.png' });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/planea/portal/sw.js').catch(function () {});
     }

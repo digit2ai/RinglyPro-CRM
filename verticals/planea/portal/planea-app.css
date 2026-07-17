@@ -297,3 +297,16 @@ body:not(.light) .pe-save,body:not(.light) .me-save{background:#12494b;color:#ea
 .me-type.on{border-color:var(--green);background:var(--green-soft);color:var(--txt)}
 .me-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:480px){.me-grid{grid-template-columns:1fr}}
+
+/* ── Brand logo images (planea-logo-white.png lockup + mark) ──────────────── */
+.pl-logo-img{height:24px;width:auto;display:block}
+.dbrand .pl-logo-img{height:30px}
+.pl-mark-img{height:100%;width:auto;display:block;object-fit:contain}
+/* White lockup on dark theme; invert to ink on light theme so it stays legible */
+body.light .pl-logo-img,body.light .pl-mark-img{filter:invert(1) brightness(.85)}
+.topbar .brand{display:flex;align-items:center}
+.dbrand{display:flex;align-items:center;gap:10px}
+.dbrand .logo-wordmark{display:none}
+
+/* ── Fraunces display headings (matches the Planea reference design) ──────── */
+.phead h1,.hero h1,.dg-hd h1{font-family:'Fraunces','Inter',serif;font-weight:600;letter-spacing:-0.01em}
