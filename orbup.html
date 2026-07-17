@@ -467,7 +467,7 @@
         <a href="/orbup?lang=en" class="lang-opt active" aria-current="true">EN</a>
         <a href="/orbup-es?lang=es" class="lang-opt">ES</a>
       </span>
-      <a href="#d2b-form" class="btn btn-primary" id="d2b-getstarted">Get started</a>
+      <a href="/orbup/start" class="btn btn-primary">Get started</a>
     </div>
   </nav>
 
@@ -1306,6 +1306,25 @@
       var pid=q.get('pid');
       if(pid && /^[0-9]+$/.test(pid)) pendingProjectId=parseInt(pid,10);
       if(pendingProjectId){ setTimeout(function(){ openBookModal(); }, 400); }
+    }catch(x){}
+  })();
+
+  // Hand-off from the signup wizard (/orbup/start): /orbup?desc=<…>&from=start
+  // prefills the idea and — since the user just signed up (contact in
+  // localStorage) — auto-starts the build so onboarding flows straight in.
+  (function handleStartHandoff(){
+    try{
+      var q=new URLSearchParams(window.location.search);
+      var desc=q.get('desc'); if(!desc) return;
+      desc=String(desc).slice(0,5000);
+      if(input){ input.value=desc; updateHint(); }
+      if(form){ form.scrollIntoView({behavior:'smooth',block:'center'}); }
+      if(q.get('from')==='start'){
+        var c={}; try{ c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
+        if(c && c.name && c.email && desc.trim().length>=30){
+          setTimeout(function(){ runFullFlow(desc.trim(), c.name, c.phone||'', c.email); }, 600);
+        } else if(input){ setTimeout(function(){ input.focus(); }, 650); }
+      }
     }catch(x){}
   })();
 })();

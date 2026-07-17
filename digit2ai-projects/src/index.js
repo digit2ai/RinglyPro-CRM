@@ -765,6 +765,29 @@ app.get('*', (req, res) => {
     }
     console.log('[D2AI-Projects] App simulator table ready');
 
+    // OrbUp Free-tier accounts (workspace-private projects, self-serve signup)
+    const orbupUserMigrations = [
+      `CREATE TABLE IF NOT EXISTS orbup_users (
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        email TEXT UNIQUE NOT NULL,
+        style_pref VARCHAR(10),
+        role VARCHAR(40),
+        company_size VARCHAR(20),
+        first_project TEXT,
+        plan VARCHAR(20) DEFAULT 'free',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_orbup_users_email ON orbup_users(email)`
+    ];
+    for (const sql of orbupUserMigrations) {
+      try { await sequelize.query(sql); } catch (e) {
+        if (!e.message.includes('already exists')) console.log('[D2AI-Projects] OrbUp users migration notice:', e.message.substring(0, 100));
+      }
+    }
+    console.log('[D2AI-Projects] OrbUp users table ready');
+
     // Calendar: recurrence_group_id column for linked-recurring-events support
     try {
       await sequelize.query('ALTER TABLE d2_calendar_events ADD COLUMN IF NOT EXISTS recurrence_group_id UUID');

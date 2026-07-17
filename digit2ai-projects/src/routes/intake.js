@@ -370,6 +370,43 @@ router.post('/public/simulator/:projectId', async (req, res) => {
   }
 });
 
+// POST /orbup/signup — OrbUp Free-tier signup + onboarding (workspace-private
+// projects). Idempotent upsert by email; the wizard calls it after the sign
+// form (name+email) and again as onboarding answers come in. No auth (free
+// self-serve); the email is the workspace identity.
+router.post('/orbup/signup', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const name = String(b.name || '').trim().slice(0, 120);
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email is required' });
+    }
+    const style = ['light', 'dark'].includes(b.style) ? b.style : null;
+    const role = b.role ? String(b.role).trim().slice(0, 40) : null;
+    const company_size = b.company_size ? String(b.company_size).trim().slice(0, 20) : null;
+    const first_project = b.first_project ? String(b.first_project).trim().slice(0, 500) : null;
+
+    await sequelize.query(
+      `INSERT INTO orbup_users (name, email, style_pref, role, company_size, first_project, plan, created_at, updated_at)
+       VALUES (:name, :email, :style, :role, :size, :fp, 'free', NOW(), NOW())
+       ON CONFLICT (email) DO UPDATE SET
+         name         = COALESCE(NULLIF(EXCLUDED.name, ''), orbup_users.name),
+         style_pref   = COALESCE(EXCLUDED.style_pref, orbup_users.style_pref),
+         role         = COALESCE(EXCLUDED.role, orbup_users.role),
+         company_size = COALESCE(EXCLUDED.company_size, orbup_users.company_size),
+         first_project= COALESCE(EXCLUDED.first_project, orbup_users.first_project),
+         updated_at   = NOW()`,
+      { replacements: { name, email, style, role, size: company_size, fp: first_project } }
+    );
+    const [rows] = await sequelize.query('SELECT id FROM orbup_users WHERE email = :email LIMIT 1', { replacements: { email } });
+    res.json({ success: true, user_id: rows && rows[0] ? rows[0].id : null, plan: 'free' });
+  } catch (err) {
+    console.error('[D2AI-Intake] orbup signup failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // PUBLIC KICKOFF SCHEDULING (no auth) — /digit2ai "Start building"
 // =====================================================

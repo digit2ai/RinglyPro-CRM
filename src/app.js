@@ -2844,6 +2844,29 @@ ${content}
 </html>`);
 });
 
+// OrbUp Free-tier signup + onboarding wizard (workspace-private projects).
+// Sign form -> pick style -> role -> company size -> workspace prompt.
+app.get('/orbup/start', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-start.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get started — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<meta name="description" content="Create your free OrbUp workspace — workspace-private projects, 5 build credits a day, no credit card.">
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
 app.get('/orbup-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
