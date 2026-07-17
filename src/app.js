@@ -2672,6 +2672,14 @@ const D2AI_GEO_REDIRECT_SCRIPT = (targetLang) => `<script>
 })();
 </script>`;
 
+// Neural Intelligence deck — clean, framable URL so digit2ai.com (GHL) can use it
+// as a landing page (full-bleed iframe or redirect). Serves the standalone doc as-is.
+app.get('/neural-intelligence', (req, res) => {
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://digit2ai.com https://*.digit2ai.com https://*.gohighlevel.com https://*.msgsndr.com https://*.leadconnectorhq.com;");
+  res.sendFile(path.join(__dirname, '../public/neural-intelligence.html'));
+});
+
 app.get('/digit2ai', (req, res) => {
   const contentPath = path.join(__dirname, '../digit2ai.html');
   const content = fs.readFileSync(contentPath, 'utf8');
