@@ -2867,6 +2867,28 @@ ${content}
 </html>`);
 });
 
+// OrbUp signed-in workspace (workspace-private projects). Passwordless free
+// tier — the client-side page reads the account email from localStorage.
+app.get('/orbup/workspace', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-workspace.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
 app.get('/orbup-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';

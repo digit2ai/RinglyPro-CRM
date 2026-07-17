@@ -1166,11 +1166,13 @@
       +'<div class="d2b-build-sub">'+(es?'Ábrelo para escuchar la presentación y probar tu app — en vivo, al mismo tiempo.':'Open it to hear the walkthrough and play with your app — live, at the same time.')+'</div>'
       +'<a class="d2b-open" id="d2b-open-btn" href="'+esc(url)+'" target="_blank" rel="noopener">'+(es?'&#9654; Abrir tu demo + simulador':'&#9654; Open your demo + simulator')+'</a>'
       +'<button type="button" class="d2b-book2" id="d2b-book2">'+(es?'Agenda tu instalación ahora &rarr;':'Book your installation now &rarr;')+'</button>'
+      +(_isSignedIn()?'<div class="d2b-done-hint"><a href="/orbup/workspace" style="color:var(--accent-cyan,#22d3ee);text-decoration:none;font-weight:600">'+(es?'&larr; Volver a tu workspace':'&larr; Back to your workspace')+'</a></div>':'')
       +'<div class="d2b-done-hint">'+(es?'Se abre en una ventana nueva.':'Opens in a new window.')+'</div>'
       +'</div>';
     result.scrollIntoView({behavior:'smooth',block:'start'});
     var bk=document.getElementById('d2b-book2'); if(bk) bk.addEventListener('click', function(){ openBookModal(); });
   }
+  function _isSignedIn(){ try{ var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); return !!(c&&c.email); }catch(e){ return false; } }
 
   // Silently turn the raw dictated/typed idea into an ORGANIZED, structured
   // request (same brain as /projects/intake/create.html). This does NOT change
@@ -1325,6 +1327,16 @@
           setTimeout(function(){ runFullFlow(desc.trim(), c.name, c.phone||'', c.email); }, 600);
         } else if(input){ setTimeout(function(){ input.focus(); }, 650); }
       }
+    }catch(x){}
+  })();
+
+  // Signed-in users: turn the nav "Get started" into "Workspace".
+  (function signedInNav(){
+    try{
+      var c=JSON.parse(localStorage.getItem('d2ai_contact')||'{}');
+      if(!c || !c.email) return;
+      var el=document.querySelector('nav a.btn.btn-primary[href="/orbup/start"]') || document.querySelector('a.btn.btn-primary[href="/orbup/start"]');
+      if(el){ el.setAttribute('href','/orbup/workspace'); el.textContent=(D2B_LANG==='es'?'Workspace':'Workspace'); }
     }catch(x){}
   })();
 })();

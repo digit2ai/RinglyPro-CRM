@@ -407,6 +407,59 @@ router.post('/orbup/signup', async (req, res) => {
   }
 });
 
+// GET /orbup/workspace?email=X — the signed-in user's private workspace:
+// their account + their workspace-private projects (each with its latest
+// teaser + simulator magic links). Passwordless free tier — email is identity.
+router.get('/orbup/workspace', async (req, res) => {
+  try {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email is required' });
+    }
+    const [uRows] = await sequelize.query(
+      'SELECT id, name, email, plan, role, company_size, created_at FROM orbup_users WHERE email = :email LIMIT 1',
+      { replacements: { email } }
+    );
+    const user = uRows && uRows[0] ? uRows[0] : { email, name: '', plan: 'free' };
+
+    const [projects] = await sequelize.query(
+      `SELECT p.id, p.name, p.description, p.status, p.stage, p.created_at,
+              t.token AS teaser_token,
+              s.token AS simulator_token
+         FROM d2_projects p
+         LEFT JOIN LATERAL (
+           SELECT token FROM d2_project_teasers WHERE project_id = p.id ORDER BY created_at DESC LIMIT 1
+         ) t ON true
+         LEFT JOIN LATERAL (
+           SELECT token FROM d2_project_simulators WHERE project_id = p.id AND status = 'ready' ORDER BY created_at DESC LIMIT 1
+         ) s ON true
+        WHERE p.workspace_id = 1 AND lower(p.submitter_email) = :email
+        ORDER BY p.created_at DESC
+        LIMIT 60`,
+      { replacements: { email } }
+    );
+
+    const base = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+    res.json({
+      success: true,
+      user,
+      projects: (projects || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        status: p.status,
+        stage: p.stage,
+        created_at: p.created_at,
+        teaser_url: p.teaser_token ? `${base}/projects/teaser/${p.teaser_token}` : null,
+        simulator_url: p.simulator_token ? `${base}/projects/simulator/${p.simulator_token}` : null
+      }))
+    });
+  } catch (err) {
+    console.error('[D2AI-Intake] orbup workspace failed:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // =====================================================
 // PUBLIC KICKOFF SCHEDULING (no auth) — /digit2ai "Start building"
 // =====================================================

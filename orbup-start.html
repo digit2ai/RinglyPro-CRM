@@ -141,29 +141,10 @@
       <div class="ows-actions"><button class="ows-back" data-back>&larr; Back</button></div>
     </section>
 
-    <!-- STEP 5 — Workspace -->
-    <section class="ows-step" data-step="4">
-      <h1 id="ows-ws-title">What should we build?</h1>
-      <p class="sub">Describe the tool your business needs. Our AI workforce scopes it, builds it, and ships it — privately in your workspace.</p>
-      <div class="ows-prompt">
-        <textarea id="ows-desc" rows="2" placeholder="I need a voice AI that calls my customers who missed their appointment and reschedules them…"></textarea>
-        <div class="row">
-          <span style="color:var(--faint);font-size:12.5px">Workspace-private · Free plan</span>
-          <button class="ows-btn primary" id="ows-build">Build it &rarr;</button>
-        </div>
-      </div>
-      <div class="ows-chiprow" id="ows-chips">
-        <button class="ows-chip" data-p="I need an outbound AI voice agent that calls my two elderly parents every morning for a warm wellness check-in and texts me a summary.">Wellness check-in caller</button>
-        <button class="ows-chip" data-p="A dashboard that shows my store's real-time performance and alerts me when sales drop.">Store performance dashboard</button>
-        <button class="ows-chip" data-p="An AI that reads inbound customer emails, drafts replies, and books meetings on my calendar.">Inbox autopilot</button>
-      </div>
-      <div class="ows-err" id="ows-err4" style="text-align:center"></div>
-    </section>
-
   </div>
 
   <div class="ows-dots" id="ows-dots">
-    <span class="ows-dot on"></span><span class="ows-dot"></span><span class="ows-dot"></span><span class="ows-dot"></span><span class="ows-dot"></span>
+    <span class="ows-dot on"></span><span class="ows-dot"></span><span class="ows-dot"></span><span class="ows-dot"></span>
   </div>
 </div>
 
@@ -187,11 +168,6 @@
     cur = Math.max(0, Math.min(steps.length-1, i));
     steps.forEach(function(s,k){ s.classList.toggle('active', k===cur); });
     dots.forEach(function(d,k){ d.classList.toggle('on', k<=cur); });
-    if(cur===4){
-      var t=document.getElementById('ows-ws-title');
-      t.textContent = state.name ? ('What should we build, '+state.name.split(' ')[0]+'?') : 'What should we build?';
-      setTimeout(function(){ document.getElementById('ows-desc').focus(); }, 300);
-    }
     window.scrollTo(0,0);
   }
   root.querySelectorAll('[data-back]').forEach(function(b){ b.addEventListener('click', function(){ show(cur-1); }); });
@@ -232,26 +208,18 @@
   wireChoice('ows-style','style',false);
   document.getElementById('ows-go1').addEventListener('click', function(){ show(2); });
   wireChoice('ows-role','role',true);          // picking a role advances
-  wireChoice('ows-size','company_size',true);   // picking a size advances -> workspace
 
-  // STEP 5 — workspace build
-  var descEl=document.getElementById('ows-desc'), err4=document.getElementById('ows-err4');
-  document.getElementById('ows-chips').querySelectorAll('.ows-chip').forEach(function(ch){
-    ch.addEventListener('click', function(){ descEl.value=ch.getAttribute('data-p'); descEl.focus(); });
-  });
-  var buildBtn=document.getElementById('ows-build');
-  buildBtn.addEventListener('click', function(){
-    var desc=(descEl.value||'').trim();
-    if(desc.length<20){ err4.textContent='Add a little more detail (at least 20 characters).'; descEl.focus(); return; }
-    err4.textContent=''; buildBtn.disabled=true; buildBtn.innerHTML='<span class="ows-spin"></span> Opening your workspace…';
-    state.desc=desc;
-    saveAccount({ first_project: desc.slice(0,200) }).then(function(){
-      // Hand off to the OrbUp build engine with contact prefilled -> it runs
-      // request -> teaser+simulator -> book, straight into the "build theatre".
-      var url='/orbup?desc='+encodeURIComponent(desc)+'&from=start';
-      window.location.href = url;
+  // Company size is the last onboarding step -> save + drop into the workspace.
+  (function(){
+    var grid=document.getElementById('ows-size');
+    grid.querySelectorAll('.ows-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        grid.querySelectorAll('.ows-card').forEach(function(c){ c.classList.remove('sel'); });
+        card.classList.add('sel');
+        state.company_size=card.getAttribute('data-val');
+        saveAccount().then(function(){ window.location.href='/orbup/workspace'; });
+      });
     });
-  });
-  descEl.addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey) && e.key==='Enter') buildBtn.click(); });
+  })();
 })();
 </script>
