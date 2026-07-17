@@ -300,9 +300,15 @@
     .rhead{gap:10px}
     .head h1{font-size:26px}
   }
+/* ---- Chrome-less embed mode: ?embed=stage renders ONLY the animated MCP-Brain
+       diagram (for iframing into other pages, e.g. digit2ai.com/neural-intelligence). ---- */
+body.embed-stage{background:#070a12;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body.embed-stage > *{display:none !important}
+body.embed-stage > .viewport{display:block !important;width:100%;margin:0 !important}
 </style>
 </head>
 <body>
+<script>if(/[?&]embed=/i.test(location.search)){document.documentElement.className+=' embed';document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('embed-stage');window.dispatchEvent(new Event('resize'));});}</script>
 
   <div class="wrap head">
     <h1>How the Digit2AI AI Factory works</h1>
