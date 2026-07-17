@@ -1,7 +1,8 @@
 /* PLANEA PWA service worker — app-shell caching.
-   Network-first for navigations (so new deploys show), cache-first for static
-   assets, never touches /api/. Scope: /planea/portal/. */
-var CACHE = 'planea-shell-v11';
+   Network-first for navigations AND for the portal's own CSS/JS (so deploys show
+   immediately, no stale styles), cache-first for images/manifest, never /api/.
+   Scope: /planea/portal/. */
+var CACHE = 'planea-shell-v12';
 var BASE = '/planea/portal/';
 var SHELL = [
   BASE + 'inicio', BASE + 'patrimonio', BASE + 'metas', BASE + 'cuentas', BASE + 'diagnostico',
@@ -47,8 +48,19 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Static assets under /planea/portal/ → cache-first, then network.
   if (url.pathname.indexOf(BASE) === 0) {
+    // Portal CSS/JS → network-first so code/style deploys are never stale; fall
+    // back to cache offline. Images/manifest/fonts → cache-first (rarely change).
+    if (/\.(css|js)$/i.test(url.pathname)) {
+      e.respondWith(
+        fetch(req).then(function (res) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+          return res;
+        }).catch(function () { return caches.match(req); })
+      );
+      return;
+    }
     e.respondWith(
       caches.match(req).then(function (m) {
         return m || fetch(req).then(function (res) {
