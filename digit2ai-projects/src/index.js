@@ -811,6 +811,9 @@ app.get('*', (req, res) => {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      `ALTER TABLE orbup_apps ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ready'`,
+      `ALTER TABLE orbup_apps ADD COLUMN IF NOT EXISTS error TEXT`,
+      `ALTER TABLE orbup_apps ALTER COLUMN code DROP NOT NULL`,
       `CREATE INDEX IF NOT EXISTS idx_orbup_apps_owner ON orbup_apps(lower(owner_email))`,
       `CREATE INDEX IF NOT EXISTS idx_orbup_apps_token ON orbup_apps(token)`,
       `CREATE TABLE IF NOT EXISTS orbup_credit_txns (

@@ -208,8 +208,26 @@
   var BUILD_STEPS=['Understanding your idea','Designing the interface','Assembling the AI workforce','Writing the code','Wiring up interactions','Finalizing your app'];
   var EDIT_STEPS=['Reading your app','Planning the change','Rewriting the code','Finalizing'];
 
+  // Poll a background build/edit job until ready or error (~6 min ceiling).
+  function pollStatus(token, onReady, onError){
+    var tries=0, max=95;
+    (function tick(){
+      tries++;
+      fetch(API+'/apps/'+token+'/status').then(function(r){ return r.json(); }).then(function(j){
+        if(!j || !j.success){ if(tries>=max) return onError('Timed out. Check your apps shortly.'); return setTimeout(tick,4000); }
+        if(j.status==='ready') return onReady(j.url);
+        if(j.status==='error'){ return onError(j.error==='too_big'
+          ? 'That app was too big to finish in one build — try a more focused description. You weren’t charged.'
+          : 'The build didn’t finish. You weren’t charged — please try again.'); }
+        if(tries>=max) return onError('Still working — it’ll appear in your apps when done.');
+        setTimeout(tick,4000);
+      }).catch(function(){ if(tries>=max) return onError('Lost connection. Check your apps shortly.'); setTimeout(tick,4000); });
+    })();
+  }
+
   var buildBtn=document.getElementById('oww-build');
   var buildErr=document.getElementById('oww-build-err');
+  function buildDone(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop(); }
   function build(){
     var desc=(document.getElementById('oww-desc').value||'').trim();
     buildErr.textContent='';
@@ -219,21 +237,19 @@
     fetch(API+'/build', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,prompt:desc})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
-        buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop();
-        if(res.status===200 && res.json && res.json.success){
+        if(res.status===200 && res.json && res.json.success && res.json.token){
           document.getElementById('oww-desc').value='';
           if(typeof res.json.credits!=='undefined') setCredits(res.json.credits, 'Free');
-          try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
-          loadApps();
-        } else if(res.status===402){
-          loadApps();
-          buildErr.innerHTML='Out of credits ('+(res.json.credits||0)+' left, need '+(res.json.needed||COST)+'). <a href="/pricing" style="color:var(--cyan)">Upgrade to Pro</a> for more.';
+          pollStatus(res.json.token,
+            function(url){ buildDone(); try{ window.open(url,'_blank','noopener'); }catch(e){} loadApps(); },
+            function(msg){ buildDone(); loadApps(); loadCredits(); buildErr.textContent=msg; });
         } else {
-          loadApps();
-          buildErr.textContent=(res.json && res.json.error) ? res.json.error : 'Build failed. Please try again.';
+          buildDone(); loadApps();
+          if(res.status===402){ buildErr.innerHTML='Out of credits ('+(res.json.credits||0)+' left, need '+(res.json.needed||COST)+'). <a href="/pricing" style="color:var(--cyan)">Upgrade to Pro</a> for more.'; }
+          else { buildErr.textContent=(res.json && res.json.error) ? res.json.error : 'Build failed. Please try again.'; }
         }
       })
-      .catch(function(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop(); loadApps(); buildErr.textContent='Could not reach the server. Please try again.'; });
+      .catch(function(){ buildDone(); loadApps(); buildErr.textContent='Could not reach the server. Please try again.'; });
   }
   buildBtn.addEventListener('click', build);
   document.getElementById('oww-desc').addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') build(); });
@@ -243,21 +259,22 @@
     if(!instruction || !instruction.trim()) return;
     if(cardBtn){ cardBtn.disabled=true; cardBtn.textContent='Editing…'; }
     theatreStart(EDIT_STEPS, 45, 'Updating your app…', 'Applying your change and rebuilding — live.');
+    function restore(){ if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; } }
     fetch(API+'/apps/'+token+'/edit', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,instruction:instruction.trim()})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
       .then(function(res){
-        theatreStop();
-        if(res.status===200 && res.json && res.json.success){
+        if(res.status===200 && res.json && res.json.success && res.json.token){
           if(typeof res.json.credits!=='undefined') setCredits(res.json.credits,'Free');
-          try{ window.open(res.json.url,'_blank','noopener'); }catch(e){}
-          loadApps();
-        } else if(res.status===402){
-          loadApps(); alert('Out of credits. Upgrade to Pro for more.');
+          pollStatus(res.json.token,
+            function(url){ theatreStop(); restore(); try{ window.open(url,'_blank','noopener'); }catch(e){} loadApps(); },
+            function(msg){ theatreStop(); restore(); loadApps(); loadCredits(); alert(msg); });
         } else {
-          loadApps(); alert((res.json && res.json.error) || 'Edit failed.');
+          theatreStop(); restore(); loadApps();
+          if(res.status===402){ alert('Out of credits. Upgrade to Pro for more.'); }
+          else { alert((res.json && res.json.error) || 'Edit failed.'); }
         }
       })
-      .catch(function(){ theatreStop(); loadApps(); alert('Could not reach the server.'); });
+      .catch(function(){ theatreStop(); restore(); loadApps(); alert('Could not reach the server.'); });
   }
   window.__owwEdit=editApp;
 
@@ -269,14 +286,16 @@
       if(!apps.length){ list.innerHTML='<div class="oww-empty">No apps yet — describe one above and OrbUp builds a real, working app you can use and share.</div>'; return; }
       list.innerHTML='<div class="oww-grid">'+apps.map(function(a){
         var when=''; try{ when=new Date(a.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
+        var building=(a.status==='building');
+        var acts = building
+          ? '<span class="oww-pbtn" style="opacity:.7;cursor:default"><span class="oww-spin"></span> Building…</span>'
+          : '<a class="oww-pbtn solid" href="'+esc(a.url)+'" target="_blank" rel="noopener">Open app</a>'
+            +'<button class="oww-pbtn" onclick="window.__owwEdit(\''+esc(a.token)+'\',this)">Edit</button>';
         return '<div class="oww-pcard">'
           +'<div class="pt">'+esc(a.name||'Untitled app')+'</div>'
           +(a.prompt?'<div class="pd">'+esc(a.prompt)+'</div>':'')
-          +'<div class="pmeta"><span class="oww-badge">v'+(a.version||1)+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
-          +'<div class="oww-pacts">'
-          +'<a class="oww-pbtn solid" href="'+esc(a.url)+'" target="_blank" rel="noopener">Open app</a>'
-          +'<button class="oww-pbtn" onclick="window.__owwEdit(\''+esc(a.token)+'\',this)">Edit</button>'
-          +'</div></div>';
+          +'<div class="pmeta"><span class="oww-badge">'+(building?'Building':'v'+(a.version||1))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
+          +'<div class="oww-pacts">'+acts+'</div></div>';
       }).join('')+'</div>';
     }).catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
   }

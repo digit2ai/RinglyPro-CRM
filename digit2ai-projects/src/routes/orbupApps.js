@@ -114,20 +114,35 @@ apiRouter.get('/apps', async (req, res) => {
     const email = String(req.query.email || '').trim().toLowerCase();
     if (!validEmail(email)) return res.status(400).json({ success: false, error: 'A valid email is required' });
     const [rows] = await sequelize.query(
-      `SELECT token, name, prompt, model, version, created_at, updated_at
-         FROM orbup_apps WHERE lower(owner_email) = :email ORDER BY updated_at DESC LIMIT 60`,
+      `SELECT token, name, prompt, model, version, status, created_at, updated_at
+         FROM orbup_apps WHERE lower(owner_email) = :email AND COALESCE(status,'ready') <> 'error'
+         ORDER BY updated_at DESC LIMIT 60`,
       { replacements: { email } }
     );
     res.json({
       success: true,
       apps: (rows || []).map(a => ({
-        token: a.token, name: a.name, prompt: a.prompt, version: a.version,
+        token: a.token, name: a.name, prompt: a.prompt, version: a.version, status: a.status || 'ready',
         created_at: a.created_at, updated_at: a.updated_at,
         url: `${PUBLIC_BASE}/projects/app/${a.token}`
       }))
     });
   } catch (err) {
     console.error('[orbupApps] list error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Poll target for the async build/edit — the workspace hits this every few seconds.
+apiRouter.get('/apps/:token/status', async (req, res) => {
+  try {
+    const token = req.params.token;
+    if (!UUID_RE.test(String(token || ''))) return res.status(404).json({ success: false, error: 'not_found' });
+    const [rows] = await sequelize.query('SELECT token, name, status, version, error FROM orbup_apps WHERE token = :token LIMIT 1', { replacements: { token } });
+    const a = rows && rows[0];
+    if (!a) return res.status(404).json({ success: false, error: 'not_found' });
+    res.json({ success: true, status: a.status || 'ready', name: a.name, version: a.version, error: a.error || null, url: `${PUBLIC_BASE}/projects/app/${token}` });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -146,30 +161,39 @@ apiRouter.post('/build', async (req, res) => {
       return res.status(402).json({ success: false, error: 'insufficient_credits', credits: paid.credits, needed: NEW_APP_COST });
     }
 
-    async function refund() { await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: NEW_APP_COST, email } }).catch(() => {}); }
-
-    let built;
-    try {
-      built = await generator.generate({ prompt, name: b.name });
-    } catch (e) {
-      await refund();
-      return res.status(502).json({ success: false, error: 'Build failed. Your credits were not charged.' });
-    }
-    // Don't save (or charge for) a cut-off, non-functional app.
-    if (built.model === 'fallback' || built.truncated || !built.code || built.code.length < 400) {
-      await refund();
-      return res.status(502).json({ success: false, error: built.truncated
-        ? 'That app was a bit too big to finish in one build — try a more focused description and we won\'t charge you.'
-        : 'Build failed. Your credits were not charged.' });
-    }
-
+    // Generation of a rich app runs 60-120s — past the Cloudflare edge ceiling.
+    // So we CREATE the app row as 'building', return immediately, and generate in
+    // the background; the client polls GET /apps/:token/status.
     const token = crypto.randomUUID();
+    const provisionalName = generator.titleFrom(prompt);
     await sequelize.query(
-      `INSERT INTO orbup_apps (token, owner_email, name, prompt, code, model, version, created_at, updated_at)
-       VALUES (:token, :email, :name, :prompt, :code, :model, 1, NOW(), NOW())`,
-      { replacements: { token, email, name: String(built.title || 'App').slice(0, 120), prompt: prompt.slice(0, 2000), code: built.code, model: built.model } }
+      `INSERT INTO orbup_apps (token, owner_email, name, prompt, code, model, version, status, created_at, updated_at)
+       VALUES (:token, :email, :name, :prompt, NULL, NULL, 1, 'building', NOW(), NOW())`,
+      { replacements: { token, email, name: provisionalName.slice(0, 120), prompt: prompt.slice(0, 2000) } }
     );
-    res.json({ success: true, token, url: `${PUBLIC_BASE}/projects/app/${token}`, name: built.title, credits: paid.credits, model: built.model });
+    res.json({ success: true, token, url: `${PUBLIC_BASE}/projects/app/${token}`, name: provisionalName, status: 'building', credits: paid.credits });
+
+    // ---- background build (fire-and-forget) ----
+    (async () => {
+      async function refund() { await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: NEW_APP_COST, email } }).catch(() => {}); }
+      try {
+        const built = await generator.generate({ prompt, name: b.name });
+        if (built.model === 'fallback' || built.truncated || !built.code || built.code.length < 400) {
+          await refund();
+          await sequelize.query("UPDATE orbup_apps SET status='error', error=:e, updated_at=NOW() WHERE token=:token",
+            { replacements: { token, e: built.truncated ? 'too_big' : 'generation_failed' } }).catch(() => {});
+          return;
+        }
+        await sequelize.query(
+          "UPDATE orbup_apps SET code=:code, name=:name, model=:model, status='ready', updated_at=NOW() WHERE token=:token",
+          { replacements: { token, code: built.code, name: String(built.title || provisionalName).slice(0, 120), model: built.model } }
+        );
+      } catch (e) {
+        console.error('[orbupApps] background build failed:', e && e.message);
+        await refund();
+        await sequelize.query("UPDATE orbup_apps SET status='error', error=:e, updated_at=NOW() WHERE token=:token", { replacements: { token, e: String((e && e.message) || 'error').slice(0, 300) } }).catch(() => {});
+      }
+    })();
   } catch (err) {
     console.error('[orbupApps] build error:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -197,19 +221,28 @@ apiRouter.post('/apps/:token/edit', async (req, res) => {
       return res.status(402).json({ success: false, error: 'insufficient_credits', credits: paid.credits, needed: EDIT_COST });
     }
 
-    let edited;
-    try {
-      edited = await generator.edit({ code: app.code, instruction });
-    } catch (e) {
-      await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: EDIT_COST, email } }).catch(() => {});
-      return res.status(502).json({ success: false, error: 'Edit failed. Your credit was not charged.' });
-    }
-    const version = (app.version || 1) + 1;
-    await sequelize.query(
-      'UPDATE orbup_apps SET code = :code, model = :model, version = :v, updated_at = NOW() WHERE token = :token',
-      { replacements: { code: edited.code, model: edited.model, v: version, token } }
-    );
-    res.json({ success: true, token, url: `${PUBLIC_BASE}/projects/app/${token}`, version, credits: paid.credits });
+    // Background edit (keeps the old code live until the new one is ready).
+    await sequelize.query("UPDATE orbup_apps SET status='building', updated_at=NOW() WHERE token=:token", { replacements: { token } }).catch(() => {});
+    res.json({ success: true, token, url: `${PUBLIC_BASE}/projects/app/${token}`, status: 'building', credits: paid.credits });
+
+    (async () => {
+      async function refund() { await sequelize.query('UPDATE orbup_users SET credits = credits + :c WHERE email = :email', { replacements: { c: EDIT_COST, email } }).catch(() => {}); }
+      try {
+        const edited = await generator.edit({ code: app.code, instruction });
+        if (!edited || !edited.code || edited.code.length < 400 || edited.model === 'fallback') {
+          await refund();
+          await sequelize.query("UPDATE orbup_apps SET status='ready', updated_at=NOW() WHERE token=:token", { replacements: { token } }).catch(() => {});
+          return;
+        }
+        const version = (app.version || 1) + 1;
+        await sequelize.query("UPDATE orbup_apps SET code=:code, model=:model, version=:v, status='ready', updated_at=NOW() WHERE token=:token",
+          { replacements: { code: edited.code, model: edited.model, v: version, token } });
+      } catch (e) {
+        console.error('[orbupApps] background edit failed:', e && e.message);
+        await refund();
+        await sequelize.query("UPDATE orbup_apps SET status='ready', updated_at=NOW() WHERE token=:token", { replacements: { token } }).catch(() => {});
+      }
+    })();
   } catch (err) {
     console.error('[orbupApps] edit error:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -225,9 +258,16 @@ viewerRouter.get('/:token', async (req, res) => {
   try {
     const token = req.params.token;
     if (!UUID_RE.test(String(token || ''))) return res.status(404).type('html').send('<h1 style="font-family:system-ui;padding:40px">App not found</h1>');
-    const [rows] = await sequelize.query('SELECT code FROM orbup_apps WHERE token = :token LIMIT 1', { replacements: { token } });
+    const [rows] = await sequelize.query('SELECT code, status FROM orbup_apps WHERE token = :token LIMIT 1', { replacements: { token } });
     const app = rows && rows[0];
     if (!app) return res.status(404).type('html').send('<h1 style="font-family:system-ui;padding:40px">App not found</h1>');
+    // Still generating (fresh build, no code yet) — auto-refreshing placeholder.
+    if (!app.code) {
+      const building = app.status === 'building';
+      return res.type('html').send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${building ? '<meta http-equiv="refresh" content="4">' : ''}<title>${building ? 'Building your app…' : 'App unavailable'}</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0f17;color:#e9eef7;font-family:-apple-system,system-ui,sans-serif;text-align:center;padding:24px}.b{max-width:420px}.s{width:48px;height:48px;border:4px solid #233149;border-top-color:#7c5cff;border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 20px}@keyframes sp{to{transform:rotate(360deg)}}h1{font-size:20px;margin:0 0 8px}p{color:#8ea0bd;line-height:1.6;font-size:14px}</style></head>
+<body><div class="b">${building ? '<div class="s"></div><h1>Building your app…</h1><p>Our AI is writing it now — this page refreshes automatically and opens the moment it’s ready (about a minute).</p>' : '<h1>This build didn’t finish</h1><p>Head back to your workspace and try a more focused description — you weren’t charged.</p>'}</div></body></html>`);
+    }
     res.removeHeader('X-Frame-Options');
     // Allow everything the app needs offline (inline JS/CSS, data:/blob: assets,
     // canvas/svg) while blocking ALL network egress (connect-src 'none').
