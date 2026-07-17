@@ -239,6 +239,10 @@
             return fund(x.nombre, cop(x.valor_cop), esc(x.tipo || 'Inversión') + ' · ' + share + '% del portafolio');
           }).join('');
         }
+      } else if (type === 'activos') {
+        rows = prof.activos || [];
+        var maxV = rows.reduce(function (m, x) { return Math.max(m, x.valor_cop); }, 0) || 1;
+        html = rows.map(function (x) { return pocket(x.nombre, x.tipo, cop(x.valor_cop), Math.round(x.valor_cop / maxV * 100)); }).join('');
       } else if (type === 'metas') {
         rows = prof.metas || [];
         html = rows.map(metacard).join('');
