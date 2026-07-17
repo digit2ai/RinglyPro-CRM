@@ -416,6 +416,26 @@ app.use((req, res, next) => {
   next();
 });
 
+// Custom domain: planea.vip -> Planea (personal-finance app), served IN PLACE so the
+// address bar stays on planea.vip. GHL domain + Render are configured, so this app
+// now sees the Host header. The entire Planea app already lives under /planea (SPA
+// basename="/planea", /planea/assets, and the portal's absolute /planea/portal/*
+// links + scripts), so all those requests pass through untouched; only the root and
+// auth vanity paths are mapped into the app. Query strings are preserved.
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase();
+  if (host === 'planea.vip' || host === 'www.planea.vip') {
+    const p = req.path;
+    // App namespace, API and any static asset (has a file extension) already resolve.
+    if (p.startsWith('/planea') || p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+    const q = req.url.slice(p.length); // preserve ?query
+    if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/portal/inicio' + q;
+    else if (p === '/register' || p === '/signup' || p === '/start') req.url = '/planea/register' + q;
+    else req.url = '/planea' + req.url; // /login, /score, /home, ... map into the app
+  }
+  next();
+});
+
 // Custom domain: orbup.app -> OrbUp (voice-orb-first brand) marketing landing,
 // served IN PLACE so the address bar stays on orbup.app. GHL domain + Render are
 // configured, so this app now sees the Host header. Root serves the EN landing;
