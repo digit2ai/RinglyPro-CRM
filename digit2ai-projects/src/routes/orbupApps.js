@@ -79,6 +79,23 @@ async function spend(email, amount, reason) {
 // ------------------------------------------------------------------
 const apiRouter = express.Router();
 
+// Passwordless "return by email" login — matches an existing account so the
+// user can get back into their workspace on a new device/browser. No secret is
+// sent (free tier, no sensitive data); email is the workspace identity.
+apiRouter.post('/login', async (req, res) => {
+  try {
+    const email = String((req.body || {}).email || '').trim().toLowerCase();
+    if (!validEmail(email)) return res.status(400).json({ success: false, error: 'A valid email is required' });
+    const [rows] = await sequelize.query('SELECT name, email, plan FROM orbup_users WHERE email = :email LIMIT 1', { replacements: { email } });
+    const u = rows && rows[0];
+    if (!u) return res.status(404).json({ success: false, error: 'account_not_found' });
+    res.json({ success: true, name: u.name || '', email: u.email, plan: u.plan || 'free' });
+  } catch (err) {
+    console.error('[orbupApps] login error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 apiRouter.get('/credits', async (req, res) => {
   try {
     const email = String(req.query.email || '').trim().toLowerCase();

@@ -2889,6 +2889,27 @@ ${content}
 </html>`);
 });
 
+// OrbUp passwordless "return by email" login — get back into your workspace.
+app.get('/orbup/login', (req, res) => {
+  const content = fs.readFileSync(path.join(__dirname, '../orbup-login.html'), 'utf8');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', orbupFrameCsp);
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — OrbUp</title>
+${ORBUP_PWA_HEAD}
+<meta name="robots" content="noindex">
+<style>html,body{margin:0;padding:0;background:#0a0a0e;}</style>
+</head>
+<body>
+${content}
+</body>
+</html>`);
+});
+
 app.get('/orbup-es', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup-es.html'), 'utf8');
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';
