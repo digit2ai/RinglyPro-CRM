@@ -17,6 +17,9 @@ Turns the app into a **championship judge**: it classifies the gait **modality**
 
 **Pose note:** server does not decode video (no native deps). Pose keypoints arrive as a JSON contract (equine-pose model in production). For the zero-setup live demo, the gait is **synthesized on the server** (`lib/synth.js`, `demo_modalidad`) and the **real** pipeline runs end-to-end; sessions are tagged `modelo_pose='synthetic-demo'` for traceability. Only the 4 `casco_*` keypoints are persisted (volume control; partition by `sesion_id` when real volume arrives).
 
+## Authoritative judging rules — FEDEQUINAS
+The official scoring rubric, gait/andar definitions, minimum heights, disqualifying defects (prepista + in-ring), and the 2026 resolutions live in **[`REGLAMENTO_FEDEQUINAS.md`](REGLAMENTO_FEDEQUINAS.md)** (distilled from the 13‑Jan‑2026 reglamento, 151 pp). That doc also **audits** this engine's rubric against the official one: the engine covers **Movimientos** well but the official rubric is **Movimientos 40 / Adiestramiento 25 / Fenotipo 35** — Suavidad (the #1‑weighted line), Compensación, Quietud de anca, Adiestramiento, and all of Fenotipo/Aplomos/Alzada/Pintas are gaps, the last being the domain of `equimind-gs-engine`. Reconcile scoring by editing that doc + `lib/thresholds.js`, never the engine code.
+
 ## Runbook
 Auto-mounted by `src/app.js` at `/evaluacion-del-caballo-de-paso-fino`. Sequelize against `DATABASE_URL` with in-memory fallback (`ECPF_FORCE_MEMORY=1`). All championship tables/enums are prefixed `ecpf_` (they share RinglyPro's Postgres; generic names like `eventos`/`resultados` would collide). Canonical DDL: `migrations/002_championship.sql` (idempotent: `IF NOT EXISTS` + `ON CONFLICT`; Sequelize `sync({alter:false})` also creates them on boot). Writes require a RinglyPro JWT (`JWT_SECRET`); the UI auto-acquires a demo session (`GET /api/v1/session/demo`) so judges never paste a token. Reads are public.
 

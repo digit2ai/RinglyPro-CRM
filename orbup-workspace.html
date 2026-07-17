@@ -9,12 +9,7 @@
 /* sidebar */
 .oww-side{flex:0 0 250px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px}
 .oww-side .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 16px}
-.oww-side .brand{padding:2px 8px 18px}
-.oww-side .brand img{height:58px;width:auto;display:block}
-.oww-logout{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:11px 12px;border-radius:12px;
-  background:transparent;border:1px solid var(--line);color:var(--mut);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
-.oww-logout:hover{background:var(--card);color:var(--ink);border-color:var(--line2)}
-.oww-logout svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.oww-side .brand img{height:34px;width:auto}
 .oww-ws{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:14px}
 .oww-ws .av{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06101f;font-size:13px;flex:0 0 28px}
 .oww-ws .nm{font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -63,22 +58,6 @@
 .oww-pbtn.solid{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06101f;border:0}
 .oww-pbtn:hover{filter:brightness(1.08)}
 .oww-empty{text-align:center;color:var(--mut);padding:36px 20px;border:1px dashed var(--line2);border-radius:16px;font-size:14px}
-/* build/edit theatre — countdown + stage tracker */
-.oww-theatre{max-width:620px;margin:0 auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:30px 24px 32px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-.oww-count{font-family:ui-monospace,Menlo,monospace;font-size:64px;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.oww-count-u{display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--faint);margin-top:8px}
-.oww-th-title{font-size:18px;font-weight:700;margin:18px 0 4px;color:var(--ink)}
-.oww-th-sub{font-size:13px;color:var(--mut);margin-bottom:22px}
-.oww-steps{list-style:none;margin:0 auto;padding:0;text-align:left;max-width:340px;display:flex;flex-direction:column;gap:11px}
-.oww-steps li{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--mut);opacity:.42;transition:opacity .4s,color .4s}
-.oww-steps li .sd{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:2px solid #33405c;display:flex;align-items:center;justify-content:center;color:#06101f;font-size:11px;font-weight:800;transition:all .4s}
-.oww-steps li.active{opacity:1;color:var(--ink)}
-.oww-steps li.active .sd{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(34,211,238,.14)}
-.oww-steps li.active .sd::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:owwPulse 1s infinite}
-.oww-steps li.done{opacity:1;color:#9fb2cf}
-.oww-steps li.done .sd{border-color:var(--good);background:var(--good)}
-.oww-steps li.done .sd::after{content:"\2713"}
-@keyframes owwPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.5}}
 .oww-spin{width:15px;height:15px;border:2px solid rgba(6,16,31,.35);border-top-color:#06101f;border-radius:50%;animation:owwSpin .8s linear infinite;display:inline-block}
 @keyframes owwSpin{to{transform:rotate(360deg)}}
 .oww-side-toggle{display:none}
@@ -97,7 +76,7 @@
     <a class="brand" href="/orbup" aria-label="OrbUp"><img src="https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580b27c06d2134c6e06440.png" alt="OrbUp"></a>
     <div class="oww-ws">
       <div class="av" id="oww-av">O</div>
-      <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl" id="oww-plan">Free plan</div></div>
+      <div style="min-width:0"><div class="nm" id="oww-wsname">Your workspace</div><div class="pl">Free plan</div></div>
     </div>
     <nav class="oww-nav">
       <a href="/orbup/workspace" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg> Dashboard</a>
@@ -112,34 +91,29 @@
       <p>Monthly build credits, private projects, real-time collaboration.</p>
       <a href="/pricing">Upgrade to Pro</a>
     </div>
-    <button class="oww-logout" id="oww-logout" type="button">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-      Log out
-    </button>
   </aside>
 
   <main class="oww-main">
     <div class="oww-hero">
       <h1 id="oww-greet">What should we build?</h1>
       <div class="oww-prompt">
-        <textarea id="oww-desc" rows="2" placeholder="Describe the app you want to build…"></textarea>
+        <textarea id="oww-desc" rows="2" placeholder="Describe the tool your business needs…"></textarea>
         <div class="row">
-          <span class="hint" id="oww-cost">Builds a real app · 5 credits</span>
+          <span class="hint">Workspace-private · Free plan</span>
           <button class="oww-build" id="oww-build">Build it &rarr;</button>
         </div>
       </div>
       <div class="oww-chips" id="oww-chips">
-        <button class="oww-chip" data-p="A habit tracker where I add daily habits, check them off each day, and see a streak count and a weekly grid.">Habit tracker</button>
-        <button class="oww-chip" data-p="An invoice generator: add line items with price and quantity, auto-calculate totals and tax, and print/save the invoice.">Invoice generator</button>
-        <button class="oww-chip" data-p="A personal expense tracker with categories, a running balance, a monthly summary, and a simple bar chart of spending by category.">Expense tracker</button>
+        <button class="oww-chip" data-p="An outbound AI voice agent that calls customers who missed their appointment and reschedules them.">Missed-appointment caller</button>
+        <button class="oww-chip" data-p="A dashboard that shows my store's real-time performance and alerts me when sales drop.">Store dashboard</button>
+        <button class="oww-chip" data-p="An AI that reads inbound emails, drafts replies, and books meetings on my calendar.">Inbox autopilot</button>
       </div>
-      <div class="oww-err" id="oww-build-err" style="text-align:center;color:#fca5a5;font-size:12.5px;margin-top:12px;min-height:16px"></div>
     </div>
 
     <section class="oww-projects" id="projects">
-      <h2>Your apps</h2>
-      <p class="psub">Real, working apps you built — open, share, or edit any one. Private to your workspace.</p>
-      <div id="oww-list"><div class="oww-empty">Loading your apps…</div></div>
+      <h2>Your projects</h2>
+      <p class="psub">Private to your workspace — every build you start lives here.</p>
+      <div id="oww-list"><div class="oww-empty">Loading your projects…</div></div>
     </section>
   </main>
 </div>
@@ -148,7 +122,7 @@
 (function(){
   var root=document.getElementById('oww');
   if(!root) return;
-  var API='/projects/api/v1/orbup';
+  var WS_URL='/projects/api/v1/intake/orbup/workspace';
 
   // identity (passwordless free tier): email in localStorage from signup
   var contact={}; try{ contact=JSON.parse(localStorage.getItem('d2ai_contact')||'{}'); }catch(e){}
@@ -156,151 +130,57 @@
   if(!email){ window.location.replace('/orbup/start'); return; }
   var name=(contact.name||'').trim();
   var first = name ? name.split(' ')[0] : '';
-  var COST=5;
 
+  // header personalization
   document.getElementById('oww-greet').textContent = first ? ('What should we build, '+first+'?') : 'What should we build?';
   document.getElementById('oww-wsname').textContent = (name || email.split('@')[0]) + "'s OrbUp";
   document.getElementById('oww-av').textContent = (name||email).charAt(0).toUpperCase();
+
   document.getElementById('oww-toggle').addEventListener('click', function(){ root.classList.toggle('side-open'); });
 
-  // Log out — clear the remembered session on this browser and return to login.
-  var logoutBtn=document.getElementById('oww-logout');
-  if(logoutBtn) logoutBtn.addEventListener('click', function(){
-    try{ localStorage.removeItem('d2ai_contact'); }catch(e){}
-    window.location.href='/orbup/login';
-  });
-
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-  var creditsEl=document.getElementById('oww-plan');
-  function setCredits(c, plan){ creditsEl.textContent = (plan||'Free')+' plan · '+c+' credit'+(c===1?'':'s'); }
 
-  function loadCredits(){
-    return fetch(API+'/credits?email='+encodeURIComponent(email)).then(function(r){return r.json();}).then(function(j){
-      if(j && j.success){ COST=j.new_app_cost||5; setCredits(j.credits, (j.plan||'free').charAt(0).toUpperCase()+(j.plan||'free').slice(1));
-        document.getElementById('oww-cost').textContent='Builds a real app · '+COST+' credits'; }
-      return j;
-    }).catch(function(){});
-  }
-
-  // chips
+  // chips + build
   document.getElementById('oww-chips').querySelectorAll('.oww-chip').forEach(function(ch){
     ch.addEventListener('click', function(){ var d=document.getElementById('oww-desc'); d.value=ch.getAttribute('data-p'); d.focus(); });
   });
-
-  // ---- countdown + stage tracker (shown in the apps area during any AI generation) ----
-  var _thTimers=[];
-  function theatreStart(steps, est, title, sub){
-    var host=document.getElementById('oww-list');
-    var lis=steps.map(function(s,i){ return '<li data-i="'+i+'"><span class="sd"></span><span>'+esc(s)+'</span></li>'; }).join('');
-    host.innerHTML='<div class="oww-theatre"><div class="oww-count"><span id="oww-num">'+est+'</span><span class="oww-count-u">seconds</span></div>'
-      +'<div class="oww-th-title">'+esc(title)+'</div><div class="oww-th-sub">'+esc(sub)+'</div>'
-      +'<ul class="oww-steps" id="oww-steps">'+lis+'</ul></div>';
-    try{ host.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
-    var left=est, num=document.getElementById('oww-num');
-    _thTimers.push(setInterval(function(){ left--; if(left<=0){ num.style.fontSize='30px'; num.textContent='almost'; } else num.textContent=left; }, 1000));
-    var els=[].slice.call(document.querySelectorAll('#oww-steps li')), cur=0;
-    function act(i){ els.forEach(function(el,j){ el.classList.toggle('done', j<i); el.classList.toggle('active', j===i); }); }
-    act(0);
-    var per=Math.max(4000, Math.floor(est*1000/steps.length));
-    _thTimers.push(setInterval(function(){ if(cur<steps.length-1){ cur++; act(cur); } }, per));
-  }
-  function theatreStop(){ _thTimers.forEach(function(t){ clearInterval(t); }); _thTimers=[]; }
-  var BUILD_STEPS=['Understanding your idea','Designing the interface','Assembling the AI workforce','Writing the code','Wiring up interactions','Finalizing your app'];
-  var EDIT_STEPS=['Reading your app','Planning the change','Rewriting the code','Finalizing'];
-
-  // Poll a background build/edit job until ready or error (~6 min ceiling).
-  function pollStatus(token, onReady, onError){
-    var tries=0, max=95;
-    (function tick(){
-      tries++;
-      fetch(API+'/apps/'+token+'/status').then(function(r){ return r.json(); }).then(function(j){
-        if(!j || !j.success){ if(tries>=max) return onError('Timed out. Check your apps shortly.'); return setTimeout(tick,4000); }
-        if(j.status==='ready') return onReady(j.url);
-        if(j.status==='error'){ return onError(j.error==='too_big'
-          ? 'That app was too big to finish in one build — try a more focused description. You weren’t charged.'
-          : 'The build didn’t finish. You weren’t charged — please try again.'); }
-        if(tries>=max) return onError('Still working — it’ll appear in your apps when done.');
-        setTimeout(tick,4000);
-      }).catch(function(){ if(tries>=max) return onError('Lost connection. Check your apps shortly.'); setTimeout(tick,4000); });
-    })();
-  }
-
   var buildBtn=document.getElementById('oww-build');
-  var buildErr=document.getElementById('oww-build-err');
-  function buildDone(){ buildBtn.disabled=false; buildBtn.innerHTML='Build it &rarr;'; theatreStop(); }
   function build(){
     var desc=(document.getElementById('oww-desc').value||'').trim();
-    buildErr.textContent='';
-    if(desc.length<12){ document.getElementById('oww-desc').focus(); buildErr.textContent='Describe the app in a bit more detail.'; return; }
-    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Building…';
-    theatreStart(BUILD_STEPS, 70, 'Building your app…', 'Our AI workforce is scoping, designing, and coding it — live.');
-    fetch(API+'/build', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,prompt:desc})})
-      .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
-      .then(function(res){
-        if(res.status===200 && res.json && res.json.success && res.json.token){
-          document.getElementById('oww-desc').value='';
-          if(typeof res.json.credits!=='undefined') setCredits(res.json.credits, 'Free');
-          pollStatus(res.json.token,
-            function(url){ buildDone(); try{ window.open(url,'_blank','noopener'); }catch(e){} loadApps(); },
-            function(msg){ buildDone(); loadApps(); loadCredits(); buildErr.textContent=msg; });
-        } else {
-          buildDone(); loadApps();
-          if(res.status===402){ buildErr.innerHTML='Out of credits ('+(res.json.credits||0)+' left, need '+(res.json.needed||COST)+'). <a href="/pricing" style="color:var(--cyan)">Upgrade to Pro</a> for more.'; }
-          else { buildErr.textContent=(res.json && res.json.error) ? res.json.error : 'Build failed. Please try again.'; }
-        }
-      })
-      .catch(function(){ buildDone(); loadApps(); buildErr.textContent='Could not reach the server. Please try again.'; });
+    if(desc.length<20){ document.getElementById('oww-desc').focus(); return; }
+    buildBtn.disabled=true; buildBtn.innerHTML='<span class="oww-spin"></span> Opening…';
+    // Hand to the OrbUp build engine (contact already saved) -> build theatre.
+    window.location.href='/orbup?desc='+encodeURIComponent(desc)+'&from=start';
   }
   buildBtn.addEventListener('click', build);
   document.getElementById('oww-desc').addEventListener('keydown', function(e){ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') build(); });
 
-  function editApp(token, cardBtn){
-    var instruction=window.prompt('What should change in this app?');
-    if(!instruction || !instruction.trim()) return;
-    if(cardBtn){ cardBtn.disabled=true; cardBtn.textContent='Editing…'; }
-    theatreStart(EDIT_STEPS, 45, 'Updating your app…', 'Applying your change and rebuilding — live.');
-    function restore(){ if(cardBtn){ cardBtn.disabled=false; cardBtn.textContent='Edit'; } }
-    fetch(API+'/apps/'+token+'/edit', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,instruction:instruction.trim()})})
-      .then(function(r){ return r.json().then(function(j){ return {status:r.status,json:j}; }); })
-      .then(function(res){
-        if(res.status===200 && res.json && res.json.success && res.json.token){
-          if(typeof res.json.credits!=='undefined') setCredits(res.json.credits,'Free');
-          pollStatus(res.json.token,
-            function(url){ theatreStop(); restore(); try{ window.open(url,'_blank','noopener'); }catch(e){} loadApps(); },
-            function(msg){ theatreStop(); restore(); loadApps(); loadCredits(); alert(msg); });
-        } else {
-          theatreStop(); restore(); loadApps();
-          if(res.status===402){ alert('Out of credits. Upgrade to Pro for more.'); }
-          else { alert((res.json && res.json.error) || 'Edit failed.'); }
-        }
-      })
-      .catch(function(){ theatreStop(); restore(); loadApps(); alert('Could not reach the server.'); });
-  }
-  window.__owwEdit=editApp;
-
-  function loadApps(){
-    return fetch(API+'/apps?email='+encodeURIComponent(email)).then(function(r){return r.json();}).then(function(res){
+  // load workspace projects
+  function statusLabel(s){ return String(s||'planning').replace(/_/g,' '); }
+  fetch(WS_URL+'?email='+encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
       var list=document.getElementById('oww-list');
-      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your apps. Please refresh.</div>'; return; }
-      var apps=res.apps||[];
-      if(!apps.length){ list.innerHTML='<div class="oww-empty">No apps yet — describe one above and OrbUp builds a real, working app you can use and share.</div>'; return; }
-      list.innerHTML='<div class="oww-grid">'+apps.map(function(a){
-        var when=''; try{ when=new Date(a.updated_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
-        var building=(a.status==='building');
-        var acts = building
-          ? '<span class="oww-pbtn" style="opacity:.7;cursor:default"><span class="oww-spin"></span> Building…</span>'
-          : '<a class="oww-pbtn solid" href="'+esc(a.url)+'" target="_blank" rel="noopener">Open app</a>'
-            +'<button class="oww-pbtn" onclick="window.__owwEdit(\''+esc(a.token)+'\',this)">Edit</button>';
+      if(!res || !res.success){ list.innerHTML='<div class="oww-empty">Could not load your workspace. Please refresh.</div>'; return; }
+      if(res.user && res.user.name && !name){ // backfill from server
+        document.getElementById('oww-greet').textContent='What should we build, '+res.user.name.split(' ')[0]+'?';
+      }
+      var ps=res.projects||[];
+      if(!ps.length){ list.innerHTML='<div class="oww-empty">No projects yet — describe your first build above and we’ll scope, build, and ship it.</div>'; return; }
+      list.innerHTML='<div class="oww-grid">'+ps.map(function(p){
+        var acts='';
+        if(p.teaser_url) acts+='<a class="oww-pbtn solid" href="'+esc(p.teaser_url)+'" target="_blank" rel="noopener">Open demo</a>';
+        if(p.simulator_url) acts+='<a class="oww-pbtn" href="'+esc(p.simulator_url)+'" target="_blank" rel="noopener">Simulator</a>';
+        if(!acts) acts='<span class="oww-pbtn" style="opacity:.6;cursor:default">Building…</span>';
+        var when=''; try{ when=new Date(p.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }catch(e){}
         return '<div class="oww-pcard">'
-          +'<div class="pt">'+esc(a.name||'Untitled app')+'</div>'
-          +(a.prompt?'<div class="pd">'+esc(a.prompt)+'</div>':'')
-          +'<div class="pmeta"><span class="oww-badge">'+(building?'Building':'v'+(a.version||1))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
-          +'<div class="oww-pacts">'+acts+'</div></div>';
+          +'<div class="pt">'+esc(p.name||'Untitled build')+'</div>'
+          +(p.description?'<div class="pd">'+esc(p.description)+'</div>':'')
+          +'<div class="pmeta"><span class="oww-badge">'+esc(statusLabel(p.status))+'</span>'+(when?'<span>'+when+'</span>':'')+'</div>'
+          +'<div class="oww-pacts">'+acts+'</div>'
+          +'</div>';
       }).join('')+'</div>';
-    }).catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
-  }
-
-  loadCredits();
-  loadApps();
+    })
+    .catch(function(){ document.getElementById('oww-list').innerHTML='<div class="oww-empty">Could not reach the server. Please refresh.</div>'; });
 })();
 </script>
