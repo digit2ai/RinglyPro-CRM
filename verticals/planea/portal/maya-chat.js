@@ -50,8 +50,13 @@
     '¿Estoy listo para mi meta de vivienda?'
   ];
 
+  // TEMPORARY: voice disabled — text-only chatbot for now. Set to true to restore
+  // Maya's voice (mic dictation, hands-free mode, spoken replies). No voice code was
+  // removed; this flag just hides the controls and stops auto-speaking.
+  var VOICE_ENABLED = false;
+
   var history = []; // {role, content}
-  var speaking = true; // auto-speak Maya replies
+  var speaking = VOICE_ENABLED; // auto-speak Maya replies (off while voice disabled)
   var recognizing = false;
   var recog = null;
   var handsFree = false; // hands-free conversation mode
@@ -275,6 +280,12 @@
     els.hf.addEventListener('click', function () { handsFree ? stopHF() : startHF(); });
     els.stageOrb.addEventListener('click', function () { if (!handsFree) startHF(); });
     els.stageStop.addEventListener('click', stopHF);
+
+    // TEMPORARY: voice off → hide mic, hands-free and speaker toggle; text-only UI.
+    if (!VOICE_ENABLED) {
+      [els.mic, els.hf, els.voz].forEach(function (b) { if (b) b.style.display = 'none'; });
+      if (els.input) els.input.setAttribute('placeholder', 'Escríbele a Maya…');
+    }
     renderSug();
   }
 
@@ -315,7 +326,7 @@
       var nom = p.nombre ? ' ' + p.nombre : '';
       var msg = p.sin_diagnostico
         ? 'Hola' + nom + ', soy Maya, tu guía financiera. Aún no veo tu diagnóstico. Cuando quieras, hacemos tu Planea Score en dos minutos y te digo exactamente por dónde empezar. ¿Te cuento cómo funciona?'
-        : 'Hola' + nom + ', soy Maya. Puedo explicarte tu Planea Score, revisar tus metas y decirte qué hacer primero. Escríbeme o toca el micrófono.';
+        : 'Hola' + nom + ', soy Maya. Puedo explicarte tu Planea Score, revisar tus metas y decirte qué hacer primero. ' + (VOICE_ENABLED ? 'Escríbeme o toca el micrófono.' : 'Escríbeme por aquí.');
       addMsg('maya', msg);
     }
   }
