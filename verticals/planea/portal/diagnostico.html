@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Diagnóstico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="planea-app.css">
+<style>
+  .dg-hd{margin:6px 0 14px}
+  .dg-hd .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .dg-hd h1{font-family:'Inter',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.02em;margin-top:6px}
+  .dg-hd p{color:var(--mut);font-size:14px;margin-top:6px;max-width:360px}
+
+  .dg-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 22px;box-shadow:0 8px 30px rgba(0,0,0,.18);animation:dgIn .28s ease}
+  body.light .dg-card{box-shadow:0 10px 34px rgba(20,40,30,.08)}
+  @keyframes dgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .dg-tag{display:inline-flex;align-items:center;gap:6px;background:var(--group);color:var(--txt);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 11px;border-radius:99px}
+  .dg-q{font-family:'Inter',sans-serif;font-weight:800;font-size:20px;line-height:1.25;letter-spacing:-0.01em;margin-top:14px}
+  .dg-hint{color:var(--mut);font-size:14px;margin-top:8px}
+
+  .dg-opts{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .dg-opt{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px;font-family:inherit;font-size:15px;font-weight:600;color:var(--txt);cursor:pointer;transition:border-color .15s,background .15s}
+  .dg-opt:hover{border-color:var(--green)}
+  .dg-opt.sel{border-color:var(--green);background:var(--green-soft)}
+  .dg-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;position:relative;transition:border-color .15s}
+  .dg-opt.sel .dg-check{border-color:var(--green)}
+  .dg-opt.sel .dg-check::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--green)}
+  .dg-emoji{font-size:18px;line-height:1}
+  .dg-lbl{flex:1}
+
+  .dg-exact{position:relative;margin-top:4px}
+  .dg-exact .pfx{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--mut);font-weight:700}
+  .dg-exact input,.dg-email{width:100%;padding:14px 16px 14px 28px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);color:var(--txt);font-size:16px;font-family:inherit;outline:none}
+  .dg-email{padding-left:16px}
+  .dg-exact input:focus,.dg-email:focus{border-color:var(--green)}
+
+  .dg-binary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .dg-bin{background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:20px 12px;font-family:inherit;font-size:14.5px;font-weight:700;color:var(--txt);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .15s,background .15s}
+  .dg-bin .ic{font-size:20px}
+  .dg-bin.yes{border-color:var(--green);background:var(--green-soft)}
+  .dg-bin.no{border-color:var(--red);background:var(--red-soft)}
+
+  .dg-maya{display:flex;gap:11px;align-items:flex-start;background:var(--group);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:16px;opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s}
+  .dg-maya.show{opacity:1;transform:none}
+  .dg-maya-av{width:30px;height:30px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .dg-maya p{font-size:13.5px;color:var(--txt);line-height:1.4}
+
+  .dg-nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
+  .dg-nav.solo{justify-content:flex-end}
+  .dg-back{background:transparent;border:1.5px solid var(--line);color:var(--mut);border-radius:99px;padding:12px 20px;font-family:inherit;font-weight:600;font-size:14.5px;cursor:pointer}
+  .dg-next,.dg-calc{background:var(--cream);color:var(--ink);border:none;border-radius:99px;padding:13px 26px;font-family:'Inter',sans-serif;font-weight:700;font-size:14.5px;cursor:pointer;box-shadow:0 4px 16px rgba(22,55,58,.25)}
+  body:not(.light) .dg-next,body:not(.light) .dg-calc{background:#12494b;color:#eafff4}
+  .dg-next[disabled],.dg-calc[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+  .dg-calc{width:100%;margin-top:20px}
+
+  /* Calculating */
+  .dg-calc-screen{text-align:center;padding:40px 22px}
+  .dg-spinner{width:46px;height:46px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--green);margin:0 auto 20px;animation:dgSpin .8s linear infinite}
+  @keyframes dgSpin{to{transform:rotate(360deg)}}
+  .dg-calc-title{font-family:'Inter';font-weight:800;font-size:18px}
+  .dg-calc-sub{color:var(--mut);font-size:13.5px;margin-top:6px}
+  .dg-calc-steps{margin-top:24px;display:flex;flex-direction:column;gap:12px;text-align:left;max-width:300px;margin-left:auto;margin-right:auto}
+  .dg-calc-item{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--mut);opacity:.5;transition:opacity .3s,color .3s}
+  .dg-calc-item.done{opacity:1;color:var(--txt)}
+  .dg-cdot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;position:relative}
+  .dg-calc-item.done .dg-cdot{border-color:var(--green);background:var(--green)}
+  .dg-calc-item.done .dg-cdot::after{content:"✓";position:absolute;inset:0;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center}
+
+  /* Result */
+  .dg-result{text-align:center}
+  .dg-res-tag{font-size:11px;letter-spacing:.16em;font-weight:700;color:var(--green)}
+  .dg-res-head{font-family:'Inter';font-weight:800;font-size:20px;line-height:1.25;margin-top:10px}
+  .dg-ringwrap{position:relative;width:180px;height:180px;margin:22px auto 4px}
+  .dg-ringwrap svg{width:180px;height:180px}
+  .dg-ring{transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1)}
+  #dg-ring{transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1)}
+  .dg-res-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .dg-res-num b{font-family:'Inter';font-weight:800;font-size:46px;line-height:1}
+  .dg-res-num small{font-size:10px;letter-spacing:.16em;color:var(--mut);margin-top:2px}
+  .dg-res-badge{display:inline-block;border:1.5px solid;border-radius:99px;padding:6px 16px;font-family:'Inter';font-weight:700;font-size:14px;margin-top:4px}
+  .dg-res-sub{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--mut);margin-top:26px;text-align:left}
+  .dg-pilares{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+  .dg-pilar{display:flex;gap:12px;align-items:center;text-align:left}
+  .dg-pilar .ic{width:38px;height:38px;border-radius:11px;background:var(--group);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .dg-pilar .body{flex:1}
+  .dg-pilar .cab{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700}
+  .dg-pilar .cab .w{color:var(--mut);font-weight:500;font-size:12px}
+  .dg-pilar .cab .num{font-family:'Inter';font-weight:800;font-size:16px}
+  .dg-pilar .track{height:7px;border-radius:99px;background:var(--line);margin-top:7px;overflow:hidden}
+  .dg-pilar .fill{height:100%;border-radius:99px;background:var(--green);transition:width .7s ease}
+
+  .dg-rec{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--group);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:24px}
+  .dg-rec-av{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .dg-rec-goal{font-family:'Inter';font-weight:700;font-size:14.5px;line-height:1.35}
+  .dg-rec-msg{font-size:13px;color:var(--mut);line-height:1.5;margin-top:8px}
+  .dg-rec-time{font-size:12px;color:var(--green);font-weight:700;margin-top:10px}
+
+  .dg-res-links{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:13.5px}
+  .dg-res-links a{color:var(--mut);font-weight:600}
+  .dg-res-links a#dg-done{color:var(--green)}
+  .dg-saved{font-size:12.5px;color:var(--green);margin-top:14px;font-weight:600}
+  .dg-saved.warn{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap" style="max-width:560px">
+
+  <div class="dg-hd">
+    <div class="eyebrow">Diagnóstico Planea</div>
+    <h1>Calcula tu Puntaje Planea</h1>
+    <p>Un cuestionario de dos minutos evalúa tus 4 pilares (fondo de emergencia, flujo de caja, deuda y estabilidad) con la metodología del CFP Board.</p>
+  </div>
+
+  <div id="dg-root"><!-- flow renders here --></div>
+
+</div></div>
+<script src="/planea/portal/planea-nav.js" defer></script>
+<script src="/planea/portal/planea-sb.js" defer></script>
+<script src="/planea/portal/planea-diagnostico.js" defer></script>
+<script src="/planea/portal/maya-chat.js" defer></script>
+</body>
+</html>

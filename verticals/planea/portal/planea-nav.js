@@ -5,6 +5,7 @@
   var BASE = '/planea/portal/';
   var ITEMS = [
     { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
+    { k: 'diagnostico', label: 'Mi Puntaje', icon: 'circle:12,12,9|M12 7v5l3 2' },
     { k: 'patrimonio', label: 'Mi Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
     { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
     { k: 'ahorro', label: 'Ahorro', icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },

@@ -248,3 +248,52 @@ a{color:inherit;text-decoration:none}
 .chatbot .t1{font-weight:700;font-size:15px;color:var(--txt)}
 .chatbot .t2{font-size:11.5px;color:var(--mut)}
 @media (max-width:420px){.chatbot .txt{display:none}}
+
+/* ── Patrimonio editor (planea-patrimonio-edit.js) ────────────────────────── */
+.pe-sec{margin-top:8px}
+.pe-vivienda{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pe-viv{display:flex;flex-direction:column;gap:3px;text-align:left;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;font-family:inherit;font-weight:700;font-size:13.5px;color:var(--txt);cursor:pointer}
+.pe-viv:hover{border-color:var(--green)}
+.pe-viv span{font-weight:500;font-size:11.5px;color:var(--mut)}
+.pe-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:560px){.pe-cols{grid-template-columns:1fr}.pe-vivienda{grid-template-columns:1fr}}
+.pe-col{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.pe-head{display:flex;justify-content:space-between;align-items:center;font-family:'Inter';font-weight:800;font-size:14px;margin-bottom:8px}
+.pe-add{background:transparent;border:none;color:var(--green);font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.pe-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.pe-row:first-of-type{border-top:none}
+.pe-nm{font-weight:700;font-size:14px}
+.pe-ty{font-size:12px;color:var(--mut)}
+.pe-amt{margin-left:auto;font-family:'Inter';font-weight:700;font-size:14px}
+.pe-del{background:transparent;border:none;color:var(--mut2);cursor:pointer;font-size:14px;padding:2px 4px}
+.pe-empty{color:var(--mut);font-size:13px;padding:8px 0}
+.pe-def{margin-top:16px;font-size:12.5px;color:var(--mut);line-height:1.5;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.pe-def b{color:var(--txt)}
+.pe-backdrop{position:fixed;inset:0;background:rgba(4,10,8,.6);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0}
+@media(min-width:560px){.pe-backdrop{align-items:center;padding:20px}}
+.pe-form{background:var(--bg-elev);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px;animation:peUp .24s ease}
+@media(min-width:560px){.pe-form{border-radius:20px}}
+@keyframes peUp{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+.pe-form-h{display:flex;justify-content:space-between;align-items:center;font-family:'Inter';font-weight:800;font-size:18px;margin-bottom:14px}
+.pe-x,.me-h .pe-x{background:transparent;border:none;color:var(--mut);font-size:18px;cursor:pointer}
+.pe-l,.me-l{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin:12px 0 6px}
+.pe-in,.me-in{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card2);color:var(--txt);font-size:15px;font-family:inherit;outline:none}
+.pe-in:focus,.me-in:focus{border-color:var(--green)}
+.pe-money,.me-money{position:relative}
+.pe-money span,.me-money span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mut);font-weight:700}
+.pe-money input,.me-money input{padding-left:26px}
+.pe-actions,.me-actions{display:flex;gap:10px;margin-top:20px}
+.pe-cancel,.me-cancel{flex:1;background:transparent;border:1.5px solid var(--line);color:var(--mut);border-radius:99px;padding:13px;font-family:inherit;font-weight:600;cursor:pointer}
+.pe-save,.me-save{flex:2;background:var(--cream);color:var(--ink);border:none;border-radius:99px;padding:13px;font-family:'Inter';font-weight:700;cursor:pointer}
+body:not(.light) .pe-save,body:not(.light) .me-save{background:#12494b;color:#eafff4}
+
+/* ── Metas editor (planea-metas-edit.js) ─────────────────────────────────── */
+.me-form{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px}
+.me-h{font-family:'Inter';font-weight:800;font-size:17px;margin-bottom:14px}
+.me-types{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
+@media(max-width:480px){.me-types{grid-template-columns:repeat(3,1fr)}}
+.me-type{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card2);border:1.5px solid var(--line);border-radius:13px;padding:12px 6px;font-family:inherit;font-weight:600;font-size:12px;color:var(--mut);cursor:pointer}
+.me-type svg{width:22px;height:22px}
+.me-type.on{border-color:var(--green);background:var(--green-soft);color:var(--txt)}
+.me-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.me-grid{grid-template-columns:1fr}}
