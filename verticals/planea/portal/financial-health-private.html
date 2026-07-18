@@ -679,9 +679,8 @@
   }
   function hero(m){
     var cls=m.nfhi>=85?'robusta':m.nfhi>=70?'sólida':m.nfhi>=55?'estable':m.nfhi>=40?'frágil':'crítica';
-    return '<section id="fic-hero" class="reveal"><div class="glass p-4 sm:p-6 relative overflow-hidden">'+
-      cockpit(m,'h')+
-      '<div class="text-center mt-6">'+
+    return '<section id="fic-hero" class="reveal"><div class="glass p-6 sm:p-10 relative overflow-hidden">'+
+      '<div class="text-center">'+
       '<div class="horb" id="voxorb"><div class="ring"></div><div class="ring r2"></div><div class="pulse"></div><div class="core"></div>'+
       '<div class="glyph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></div></div>'+
       '<h1 class="text-[26px] sm:text-[33px] font-black tracking-tight mt-5">Centro de Inteligencia Financiera</h1>'+
