@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="planea-app.css?v=12">
+<link rel="stylesheet" href="/planea/portal/planea-app.css?v=12">
 <style>
   .hero{position:relative;border-radius:22px;overflow:hidden;min-height:340px;display:flex;flex-direction:column;
     background:
@@ -52,7 +52,7 @@
       </div>
     </div>
     <div class="divg"></div>
-    <div class="hoy"><div class="lbl">HOY</div><div class="fecha">Martes, 14 de julio</div></div>
+    <div class="hoy"><div class="lbl">HOY</div><div class="fecha" id="hoy-fecha">—</div></div>
     <span class="pill-loc"><span class="dot"></span>Tus finanzas <span class="m">· Colombia</span></span>
   </section>
 
@@ -102,6 +102,17 @@
   </section>
 
 </div></div>
+<script>
+  // "HOY" banner — always the real current date, in Spanish, capitalized.
+  (function () {
+    try {
+      var f = document.getElementById('hoy-fecha');
+      if (!f) return;
+      var s = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+      f.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+    } catch (e) {}
+  })();
+</script>
 <script src="/planea/portal/planea-nav.js" defer></script>
 <script src="/planea/portal/planea-data.js" defer></script>
 <script src="/planea/portal/maya-chat.js" defer></script>
