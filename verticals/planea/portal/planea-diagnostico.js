@@ -467,7 +467,11 @@
         var sd = d && d.score_data;
         if (sd && sd.score != null && sd.answers && !/[?&]edit=1/.test(location.search)) {
           answers = sd.answers;
-          showResult(computeScore(answers), { skipPersist: true }); // view saved result
+          var res = computeScore(answers);
+          // Self-heal: if the stored score is stale/wrong (e.g. from the old recompute),
+          // re-save the correct one computed from the answers. Otherwise just view it.
+          var stale = sd.score !== res.score;
+          showResult(res, { skipPersist: !stale });
         } else {
           if (sd && sd.answers) answers = sd.answers; // ?edit=1 → pre-fill for amend
           startSurvey();

@@ -143,6 +143,9 @@ function publicUser(u) { return { id: u.id, email: u.email, full_name: u.full_na
 function build() {
   const router = express.Router();
   router.use(express.json({ limit: '256kb' }));
+  // Never cache API responses — a stale cached GET must not mask an expired session
+  // (which would then let writes silently 401). Always hit the network + auth fresh.
+  router.use(function (req, res, next) { res.set('Cache-Control', 'no-store, must-revalidate'); next(); });
 
   router.get('/auth/status', (req, res) => res.json({ ready, error: initErr || null }));
 
