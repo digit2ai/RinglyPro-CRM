@@ -472,7 +472,11 @@
           if (sd && sd.answers) answers = sd.answers; // ?edit=1 → pre-fill for amend
           startSurvey();
         }
-      }).catch(startSurvey);
+      }).catch(function (e) {
+        // 401 here means not authenticated on this domain → log in first.
+        if (e && /\b401\b/.test(e.message || '')) { location.replace('/planea/login'); return; }
+        startSurvey();
+      });
     } else { startSurvey(); }
   }
 

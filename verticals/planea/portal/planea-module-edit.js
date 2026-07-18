@@ -87,7 +87,12 @@
     if (!window.PlaneaSB) { closeForm(); return; }
     var op = editItem ? PlaneaSB.itemUpdate(editItem.id, body) : PlaneaSB.itemCreate(body);
     closeForm();
-    op.then(reload).catch(function (e) { if (window.console) console.warn('[module-edit] save failed', e && e.message); alert('No se pudo guardar. Vuelve a iniciar sesión.'); });
+    op.then(reload).catch(function (e) {
+      if (window.console) console.warn('[module-edit] save failed', e && e.message);
+      // 401 = not authenticated on this domain -> go log in here, then come back.
+      if (e && /\b401\b/.test(e.message || '')) { location.href = '/planea/login'; return; }
+      alert('No se pudo guardar. Intenta de nuevo.');
+    });
   }
   function del(id) {
     if (!confirm('¿Eliminar este ' + cfg.noun.replace(/s$/, '') + '?')) return;

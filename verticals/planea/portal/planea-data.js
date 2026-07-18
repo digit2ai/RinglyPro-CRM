@@ -345,9 +345,20 @@
       return null;
     } catch (e) { return null; }
   }
+  function onAuthPage() { return /\/(login|register|signup|start)(\/|$)/.test(location.pathname); }
   function buildProfileFromBackend(sess) {
     return fetch('/planea/api/v1/me/profile', { credentials: 'include' })
-      .then(function (r) { if (!r.ok) throw new Error('me ' + r.status); return r.json(); })
+      .then(function (r) {
+        // 401 = not authenticated ON THIS DOMAIN (e.g. logged in on aiagent but
+        // browsing planea.vip; cookies don't cross domains). Send them to log in
+        // here instead of silently showing $0 and failing every save.
+        if (r.status === 401) {
+          if (!onAuthPage()) location.replace('/planea/login');
+          var e = new Error('unauth'); e.unauth = true; throw e;
+        }
+        if (!r.ok) throw new Error('me ' + r.status);
+        return r.json();
+      })
       .then(function (d) {
         var prof = {
           loaded: true, logged_in: true,
@@ -436,6 +447,7 @@
       }
       render(prof);
     }).catch(function (e) {
+      if (e && e.unauth) return; // redirecting to /planea/login
       if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
       var sess = sbSession();
       if (sess) { buildProfile(sess).then(render).catch(function () { render(emptyProfile()); }); return; }
