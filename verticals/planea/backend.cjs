@@ -83,7 +83,10 @@ init();
 // portal's client scripts can detect the session synchronously (no network).
 function setSession(res, user) {
   res.cookie(COOKIE, sign(user), { httpOnly: true, secure: true, sameSite: 'none', maxAge: MAX_AGE, path: '/planea' });
-  const hint = encodeURIComponent(JSON.stringify({ id: user.id, email: user.email, full_name: user.full_name || '' }));
+  // Pass RAW JSON — Express's res.cookie URL-encodes the value itself. (Encoding
+  // it here too double-encoded it, so JSON.parse threw in the browser and every
+  // parse-based session check silently failed.)
+  const hint = JSON.stringify({ id: user.id, email: user.email, full_name: user.full_name || '' });
   res.cookie('planea_user', hint, { httpOnly: false, secure: true, sameSite: 'none', maxAge: MAX_AGE, path: '/planea' });
 }
 function clearSession(res) {

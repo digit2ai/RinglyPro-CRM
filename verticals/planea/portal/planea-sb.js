@@ -16,7 +16,13 @@
     try {
       var m = (document.cookie || '').match(/(?:^|;\s*)planea_user=([^;]+)/);
       if (!m) return null;
-      return JSON.parse(decodeURIComponent(m[1]));
+      var v = m[1]; // tolerate single- or (legacy) double-URL-encoding
+      for (var i = 0; i < 3; i++) {
+        try { return JSON.parse(v); } catch (e) {}
+        var d; try { d = decodeURIComponent(v); } catch (e) { break; }
+        if (d === v) break; v = d;
+      }
+      return null;
     } catch (e) { return null; }
   }
 

@@ -325,7 +325,14 @@
   function ourSession() {
     try {
       var m = (document.cookie || '').match(/(?:^|;\s*)planea_user=([^;]+)/);
-      return m ? JSON.parse(decodeURIComponent(m[1])) : null;
+      if (!m) return null;
+      var v = m[1];
+      for (var i = 0; i < 3; i++) {
+        try { return JSON.parse(v); } catch (e) {}
+        var d; try { d = decodeURIComponent(v); } catch (e) { break; }
+        if (d === v) break; v = d;
+      }
+      return null;
     } catch (e) { return null; }
   }
   function buildProfileFromBackend(sess) {
