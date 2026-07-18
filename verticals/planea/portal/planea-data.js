@@ -300,7 +300,63 @@
     try { window.dispatchEvent(new CustomEvent('planea:profile', { detail: prof })); } catch (e) {}
   }
 
+  // ── Our own backend (Postgres) — preferred over Supabase ────────────────────
+  function ourSession() {
+    try {
+      var m = (document.cookie || '').match(/(?:^|;\s*)planea_user=([^;]+)/);
+      return m ? JSON.parse(decodeURIComponent(m[1])) : null;
+    } catch (e) { return null; }
+  }
+  function buildProfileFromBackend(sess) {
+    return fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+      .then(function (r) { if (!r.ok) throw new Error('me ' + r.status); return r.json(); })
+      .then(function (d) {
+        var prof = {
+          loaded: true, logged_in: true,
+          nombre: firstName(d.full_name, d.email),
+          full_name: d.full_name || '',
+          email: d.email || ''
+        };
+        var sd = d.score_data || {};
+        if (sd && sd.score != null) {
+          prof.planea_score = sd.score;
+          prof.rango = rangoDe(sd.score);
+          prof.escenario = sd.scenario || null;
+          var pl = sd.pillars || {};
+          prof.score_pilares_pct = {
+            fondo_emergencia: pl.emergency_fund != null ? pl.emergency_fund : null,
+            flujo_caja: pl.cash_flow != null ? pl.cash_flow : null,
+            salud_deuda: pl.debt_health != null ? pl.debt_health : null,
+            estabilidad: pl.stability != null ? pl.stability : null
+          };
+        } else {
+          prof.sin_diagnostico = true;
+        }
+        var assets = Array.isArray(d.assets_data) ? d.assets_data : [];
+        var liab = Array.isArray(d.liabilities_data) ? d.liabilities_data : [];
+        var at = assets.reduce(function (a, x) { return a + num(x.value); }, 0);
+        var lt = liab.reduce(function (a, x) { return a + num(x.value); }, 0);
+        prof.activos_total_cop = at;
+        prof.pasivos_total_cop = lt;
+        prof.patrimonio_neto_cop = at - lt;
+        prof.activos = assets.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), bucket: assetBucket(x) }; });
+        prof.pasivos = liab.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
+        prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(function (g) {
+          return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
+        });
+        window.PLANEA_PROFILE = prof;
+        return prof;
+      });
+  }
+
   function boot() {
+    // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
+    if (ourSession()) {
+      buildProfileFromBackend().then(render).catch(function (e) {
+        if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
+      });
+      return;
+    }
     var sess = sbSession();
     if (!sess) return; // not logged in → keep static demo
     buildProfile(sess).then(render).catch(function (e) {

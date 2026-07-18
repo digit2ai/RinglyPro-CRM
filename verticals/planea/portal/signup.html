@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Crear cuenta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1613;--card:#0f231e;--line:#24413b;--txt:#eaf1ec;--mut:#9db3ab;--green:#3fc06a;--greenb:#8fd9ac;--teal:#17a6a6}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(120% 90% at 12% 4%,rgba(63,192,106,.16),transparent 55%),radial-gradient(120% 90% at 92% 8%,rgba(23,166,166,.20),transparent 55%),var(--bg);color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}
+  .box{width:100%;max-width:420px}
+  .brand{display:flex;justify-content:center;margin-bottom:18px}
+  .brand .mk{width:74px;height:74px;border-radius:20px;border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;background:#0f231e}
+  h1{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;text-align:center;margin:0 0 6px;letter-spacing:-.02em}
+  .sub{text-align:center;color:var(--mut);font-size:14px;margin:0 0 20px}
+  label{display:block;font-weight:700;font-size:14px;margin:16px 0 7px}
+  input{width:100%;background:#16302a;border:1px solid var(--line);border-radius:12px;padding:14px 15px;color:var(--txt);font-family:inherit;font-size:15px}
+  input:focus{outline:2px solid var(--green);border-color:transparent}
+  .btn{width:100%;margin-top:22px;background:linear-gradient(120deg,var(--green),var(--teal));color:#06130f;border:none;border-radius:12px;padding:15px;font-family:'Inter',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .msg{margin-top:16px;padding:12px 14px;border-radius:12px;font-size:14px;display:none}
+  .msg.err{display:block;background:#2a1414;color:#ff9d9d;border:1px solid #52201f}
+  .msg.ok{display:block;background:#12271c;color:var(--greenb);border:1px solid #24513a}
+  .foot{text-align:center;margin-top:22px;color:var(--mut);font-size:14px}
+  .foot a{color:var(--greenb);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="brand"><span class="mk"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2.5 20 20l-8-4.6L4 20 12 2.5Z" fill="#fff"/></svg></span></div>
+    <h1>Crear cuenta</h1>
+    <p class="sub">Sin confirmación por correo — entras de inmediato.</p>
+    <div id="msg" class="msg"></div>
+    <form id="f">
+      <label for="name">Nombre</label>
+      <input id="name" type="text" autocomplete="name" placeholder="Tu nombre">
+      <label for="email">Correo electrónico</label>
+      <input id="email" type="email" autocomplete="email" required placeholder="tu@correo.com">
+      <label for="pw">Contraseña</label>
+      <input id="pw" type="password" autocomplete="new-password" required placeholder="Mínimo 6 caracteres">
+      <button class="btn" id="go" type="submit">Crear cuenta</button>
+    </form>
+    <div class="foot">¿Ya tienes cuenta? <a href="/planea/login">Inicia sesión</a></div>
+  </div>
+<script>
+(function(){
+  var API='/planea/api/v1/auth/signup';
+  var f=document.getElementById('f'), msg=document.getElementById('msg'), go=document.getElementById('go');
+  function show(t,ok){ msg.textContent=t; msg.className='msg '+(ok?'ok':'err'); }
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=document.getElementById('name').value.trim();
+    var email=document.getElementById('email').value.trim(), pw=document.getElementById('pw').value;
+    if(pw.length<6){ show('La contraseña debe tener al menos 6 caracteres.',false); return; }
+    go.disabled=true; go.textContent='Creando…';
+    fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:name,email:email,password:pw})})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+      .then(function(res){
+        if(!res.ok){ show(res.j.error||'No se pudo crear la cuenta.',false); go.disabled=false; go.textContent='Crear cuenta'; return; }
+        show('Cuenta creada. Entrando…',true);
+        location.href='/planea/portal/inicio';
+      })
+      .catch(function(){ show('Error de conexión. Intenta de nuevo.',false); go.disabled=false; go.textContent='Crear cuenta'; });
+  });
+})();
+</script>
+</body>
+</html>

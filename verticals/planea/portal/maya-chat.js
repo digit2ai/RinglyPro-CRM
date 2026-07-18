@@ -103,8 +103,36 @@
   // to a logged-in user. Async: enrich with their real financial data.
   function bootstrapProfile() {
     // planea-data.js (dashboard loader) owns window.PLANEA_PROFILE when present —
-    // it fetches the same user with person_id-scoped queries. Don't double-fetch.
+    // it fetches the same user. Don't double-fetch.
     if (window.__planeaDataLoader) return;
+
+    // Prefer OUR backend (Postgres) via the readable session cookie.
+    try {
+      var mc = (document.cookie || '').match(/(?:^|;\s*)planea_user=([^;]+)/);
+      if (mc) {
+        var cu = JSON.parse(decodeURIComponent(mc[1]));
+        window.PLANEA_PROFILE = { nombre: firstName(cu.full_name, cu.email), email: cu.email || '', sin_diagnostico: true };
+        fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (!d) return;
+            var prof = { nombre: firstName(d.full_name, d.email), email: d.email || '' };
+            var sd = d.score_data || {};
+            if (sd && sd.score != null) { prof.planea_score = sd.score; prof.rango = rangoDe(sd.score); prof.score_pilares_pct = sd.pillars || null; }
+            else prof.sin_diagnostico = true;
+            var assets = d.assets_data || [], liab = d.liabilities_data || [];
+            if (assets.length || liab.length) {
+              var at = assets.reduce(function (a, x) { return a + (+x.value || 0); }, 0);
+              var lt = liab.reduce(function (a, x) { return a + (+x.value || 0); }, 0);
+              prof.activos_total_cop = at; prof.pasivos_total_cop = lt; prof.patrimonio_neto_cop = at - lt;
+            }
+            if (d.goals && d.goals.length) prof.metas = d.goals.map(function (g) { return { nombre: g.name, objetivo_cop: g.target_amount, actual_cop: g.current_savings, aporte_mensual_cop: g.monthly_saving }; });
+            window.PLANEA_PROFILE = prof;
+          }).catch(function () {});
+        return;
+      }
+    } catch (e) {}
+
     var sess = sbSession();
     if (!sess) return; // portal preview / not logged in → keep demo
     var user = sess.user || {};

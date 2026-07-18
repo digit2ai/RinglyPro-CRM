@@ -29,6 +29,11 @@ const privateDir = path.join(__dirname, 'private');
 const portalDir = path.join(__dirname, 'portal');
 const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 
+// Self-owned backend (auth + data on OUR Postgres) — replaces the third-party
+// Supabase dependency. Mounted at /planea/api/v1 below. No email confirmation.
+let planeaBackend = null;
+try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
+
 // TEMPORARY: auto-confirm new signups when a Supabase service_role key is set
 // (PLANEA_SERVICE_ROLE_KEY), so users log in without email verification while SMTP
 // is unconfigured. No-op when the key is absent. See emailAutoConfirm.cjs.
@@ -92,6 +97,7 @@ router.get('/health', (req, res) => {
     dist: hasBuild,
     portal: hasPortal,
     admin: { service_key: !!SB_SERVICE_KEY, endpoints: !!SB_SERVICE_KEY },
+    backend: planeaBackend ? planeaBackend.status() : { ready: false, error: 'not-loaded' },
     ts: new Date().toISOString(),
   });
 });
@@ -313,6 +319,19 @@ router.post('/api/v1/admin/confirm', express.json(), async (req, res) => {
     res.status(502).json({ error: e.message });
   }
 });
+
+// ── Self-owned auth + data API (our Postgres) ──
+if (planeaBackend) {
+  try { router.use('/api/v1', planeaBackend.build()); } catch (e) { console.log('planea backend mount failed:', e.message); }
+}
+
+// ── Our own login / signup pages (replace the Supabase-bound SPA auth screens) ──
+// Registered BEFORE the SPA catch-all so /planea/login + /planea/signup serve OUR
+// dark-theme pages that talk to /planea/api/v1/auth/* (no email confirmation).
+if (hasPortal) {
+  router.get('/login', (req, res) => res.sendFile(path.join(portalDir, 'login.html')));
+  router.get(['/signup', '/register', '/start'], (req, res) => res.sendFile(path.join(portalDir, 'signup.html')));
+}
 
 if (hasPortal) {
   // /planea/portal → inicio; /planea/portal/<page> → <page>.html; plus the css.

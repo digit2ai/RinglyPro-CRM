@@ -183,7 +183,11 @@
           if (/^sb-.*-auth-token$/.test(k) || k === 'token' || k === 'planea-profile') localStorage.removeItem(k);
         }
       } catch (e) {}
-      location.href = '/planea/login';
+      // Clear OUR backend session (HttpOnly JWT + readable hint cookie), then go.
+      var done = function () { location.href = '/planea/login'; };
+      try {
+        fetch('/planea/api/v1/auth/logout', { method: 'POST', credentials: 'include' }).then(done, done);
+      } catch (e) { done(); }
     });
     themeLabel();
     initPWA();
