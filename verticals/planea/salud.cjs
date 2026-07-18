@@ -99,13 +99,14 @@ function computeSalud(items, meta) {
       formula: 'Retiro = ahorro de retiro ÷ meta por edad (edad ' + age + ').', target: (retFactor(age)).toFixed(1) + '× ingreso anual' },
   ].map(function (b) { b.light = lightOf(b.score); return b; });
 
-  var mesesGasto = G > 0 ? A / G : (A > 0 ? 99 : 0);
+  // Fund coverage in months of income — consistent with S1 (fill = meses / 6).
+  var mesesIng = I > 0 ? A / I : (A > 0 ? 99 : 0);
   var savingsRate = I > 0 ? (I - G) / I : 0;
 
   var instruments = {
     score: { value: r.overall },
-    // fuel gauge E→F : F = S1 full (6× monthly income). Also months of expenses for the plate.
-    emergency: { frac: clamp01(A / (6 * I)), meses: Math.round(mesesGasto * 10) / 10, target: 6 },
+    // fuel gauge E→F : F = S1 full (6× monthly income); plate = months of income covered.
+    emergency: { frac: clamp01(A / (6 * I)), meses: Math.min(99, Math.round(mesesIng * 10) / 10), target: 6 },
     // vertical speed indicator: climb (+) saving, descent (−) overspending
     savings: { rate: savingsRate, frac: clamp01(savingsRate / 0.20) },
     // engine temperature: debt / annual income, red as →1

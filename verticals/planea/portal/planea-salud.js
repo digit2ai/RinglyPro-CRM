@@ -328,7 +328,7 @@
       net_worth: netWorth, total_assets: totalAssets, total_liabilities: t.D,
       instruments: {
         score: { value: overall },
-        emergency: { frac: cl01(t.A / (6 * t.I)), meses: Math.round(t.A / t.G * 10) / 10, target: 6 },
+        emergency: { frac: cl01(t.A / (6 * t.I)), meses: Math.round(t.A / t.I * 10) / 10, target: 6 },
         savings: { rate: (t.I - t.G) / t.I, frac: cl01(((t.I - t.G) / t.I) / .2) },
         dti: { frac: Math.min(t.D / annual, 1.3), ratio: t.D / annual },
         retirement: { frac: cl01(S5), pct: Math.round(S5 * 100) },
