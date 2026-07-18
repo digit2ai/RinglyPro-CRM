@@ -116,6 +116,36 @@ function build() {
 
   router.get('/auth/status', (req, res) => res.json({ ready, error: initErr || null }));
 
+  // ── Admin: list our own users (planea_users) — no Supabase, no service_role ──
+  // Gated by PLANEA_ADMIN_TOKEN (default matches the docs password). ?html=1 → table.
+  const ADMIN_TOKEN = process.env.PLANEA_ADMIN_TOKEN || 'Digit2Ai@7';
+  function adminAuthed(req) {
+    const t = (req.query && req.query.token) || req.headers['x-planea-admin'] || '';
+    return !!t && String(t) === ADMIN_TOKEN;
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  router.get('/admin/accounts', async (req, res) => {
+    if (!requireReady(res)) return;
+    if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized', hint: 'Pass ?token=<PLANEA_ADMIN_TOKEN>' });
+    try {
+      const rows = await User.findAll({ order: [['created_at', 'DESC']], attributes: ['id', 'email', 'full_name', 'created_at', 'last_login_at'] });
+      const users = rows.map((u) => ({
+        id: u.id, email: u.email, full_name: u.full_name || '',
+        created_at: u.created_at, last_login_at: u.last_login_at || null,
+      }));
+      if (req.query.html) {
+        const trs = users.map((u) => '<tr><td>' + u.id + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.full_name) +
+          '</td><td>' + esc(String(u.created_at || '').slice(0, 10)) + '</td><td>' + esc(String(u.last_login_at || '').slice(0, 10) || '—') + '</td></tr>').join('');
+        return res.type('html').send('<!doctype html><meta charset="utf-8"><title>Planea — Usuarios</title>' +
+          '<style>body{font-family:system-ui,sans-serif;background:#0d1f1c;color:#eaf1ec;padding:24px}h1{font-size:20px}' +
+          'table{border-collapse:collapse;width:100%;max-width:820px}th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #24413b;font-size:14px}th{color:#8fd9ac}</style>' +
+          '<h1>Usuarios de Planea (nuestro backend) — ' + users.length + ' total</h1>' +
+          '<table><tr><th>ID</th><th>Correo</th><th>Nombre</th><th>Creado</th><th>Últ. ingreso</th></tr>' + trs + '</table>');
+      }
+      res.json({ count: users.length, users });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // Open free signup — NO email confirmation.
   router.post('/auth/signup', async (req, res) => {
     if (!requireReady(res)) return;
