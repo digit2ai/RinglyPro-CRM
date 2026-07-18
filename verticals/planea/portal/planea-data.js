@@ -290,11 +290,32 @@
     })();
   }
 
+  // The "Maya sugiere" card on the dashboard — shows the survey's first insight
+  // (scenario A–I goal + message) when present, else prompts the diagnostic.
+  function fillInsight(prof) {
+    var card = document.querySelector('[data-pl-insight]');
+    if (!card) return;
+    var goalEl = card.querySelector('[data-pl-insight-goal]');
+    var msgEl = card.querySelector('[data-pl-insight-msg]');
+    var ctaEl = card.querySelector('[data-pl-insight-cta]');
+    var rec = prof.recommendation;
+    if (rec && rec.goalText) {
+      if (goalEl) goalEl.textContent = rec.goalText;
+      if (msgEl) msgEl.textContent = rec.mayaMessage || '';
+      if (ctaEl) { ctaEl.textContent = 'Ver con Maya →'; ctaEl.setAttribute('href', '#'); ctaEl.setAttribute('data-action', 'maya'); }
+    } else if (prof.sin_diagnostico) {
+      if (goalEl) goalEl.textContent = 'Haz tu diagnóstico Planea';
+      if (msgEl) msgEl.textContent = 'Responde 8 preguntas y Maya te dice exactamente por dónde empezar.';
+      if (ctaEl) { ctaEl.textContent = 'Empezar diagnóstico →'; ctaEl.setAttribute('href', '/planea/portal/diagnostico'); ctaEl.removeAttribute('data-action'); }
+    }
+  }
+
   function render(prof) {
     try { fillScalars(prof); } catch (e) {}
     try { fillRing(prof); } catch (e) {}
     try { fillBars(prof); } catch (e) {}
     try { fillLists(prof); } catch (e) {}
+    try { fillInsight(prof); } catch (e) {}
     try { updateNav(prof); } catch (e) {}
     document.body.classList.add('pl-data-ready');
     try { window.dispatchEvent(new CustomEvent('planea:profile', { detail: prof })); } catch (e) {}
@@ -322,6 +343,7 @@
           prof.planea_score = sd.score;
           prof.rango = rangoDe(sd.score);
           prof.escenario = sd.scenario || null;
+          prof.recommendation = sd.recommendation || null;
           var pl = sd.pillars || {};
           prof.score_pilares_pct = {
             fondo_emergencia: pl.emergency_fund != null ? pl.emergency_fund : null,

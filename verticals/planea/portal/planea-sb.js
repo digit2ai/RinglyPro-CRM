@@ -72,11 +72,14 @@
       _profile = null;
       return req('PUT', '/me/profile', pb).then(function () { return [body]; });
     }
-    // persons: score_data / full_name / progress_data
+    // persons: score_data / full_name / progress_data. Return a row WITH an id
+    // (= user id) so callers that chain on rows[0].id (e.g. the diagnostic's
+    // first-meta creation) keep working — our data is session-scoped anyway.
     var upd = {};
     ['score_data', 'full_name', 'progress_data'].forEach(function (k) { if (body[k] !== undefined) upd[k] = body[k]; });
     _profile = null;
-    return req('PUT', '/me/profile', upd).then(function () { return [body]; });
+    var uid = (u() || {}).id;
+    return req('PUT', '/me/profile', upd).then(function () { return [{ id: uid, user_id: uid }]; });
   }
 
   function post(path, body) {

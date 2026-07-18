@@ -341,16 +341,16 @@
     var entry = {
       timestamp: new Date().toISOString(), company: null, score: res.score, scenario: rec.scenario, source: 'survey',
       pillars: { emergency_fund: res.p1, cash_flow: res.p2, debt_health: res.p3, stability: res.p4 },
+      // The first insight Planea generates before any user interaction (spec §5).
+      recommendation: { scenario: rec.scenario, goalText: rec.goalText, mayaMessage: rec.mayaMessage, timeline: rec.timeline },
       answers: answers
     };
     PlaneaSB.patch('persons?user_id=eq.' + u.id, { score_data: entry })
       .then(function (rows) {
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje guardado en tu perfil ✓';
-        var pid = rows && rows[0] && rows[0].id;
-        if (pid) {
-          PlaneaSB.post('persons_score_history', { person_id: pid, scored_at: entry.timestamp, score_data: entry }).catch(function () {});
-          autoCreateFundGoal(pid); // the "primera meta" generated before any interaction
-        }
+        var pid = (rows && rows[0] && rows[0].id) || u.id;
+        PlaneaSB.post('persons_score_history', { person_id: pid, scored_at: entry.timestamp, score_data: entry }).catch(function () {});
+        autoCreateFirstMeta(pid, rec, res); // the "primera meta" generated before any interaction
       })
       .catch(function (e) {
         var el = document.getElementById('dg-saved'); if (el) { el.textContent = 'No se pudo guardar el puntaje (revisa tu sesión).'; el.className = 'dg-saved warn'; }
@@ -358,22 +358,34 @@
       });
   }
 
-  // Auto-generate the emergency-fund meta from the survey (spec §4 meta_colchon).
-  function autoCreateFundGoal(personId) {
+  // The scenario-driven "primera meta" (spec §5 "Meta que aparece en la app").
+  // Fund scenarios (B,D,E,F,G) create a real Fondo de emergencia goal with computed
+  // amounts; action scenarios (A,C,H,I) carry their meta in score_data.recommendation
+  // (surfaced on the dashboard) rather than a misleading savings goal.
+  function firstMeta(rec) {
     var exp = exactOr('P2_exact', EXP_MAP, answers.P2, answers, 3200000);
     var inc = exactOr('P1_exact', INC_MAP, answers.P1, answers, 4000000);
     var cuotas = answers.P3 === 'yes' ? exactOr('P4_exact', CUOTA_MAP, answers.P4, answers, 500000) : 0;
-    var target = fundTarget(answers);
+    var margenLibre = Math.max(0, inc - exp - cuotas);
     var current = Math.round(mesesCobertura(answers) * exp);
-    var monthly = Math.max(0, Math.round((inc - exp - cuotas) * 0.5));
+    switch (rec.scenario) {
+      case 'B': return { name: 'Colchón mínimo de emergencia', type: 'emergency', target_amount: 500000, current_savings: 0, monthly_saving: Math.max(0, inc - exp) };
+      case 'E': return { name: 'Fondo de emergencia', type: 'emergency', target_amount: Math.round(exp), current_savings: 0, monthly_saving: Math.round(exp) };
+      case 'F': return { name: 'Fondo de emergencia', type: 'emergency', target_amount: Math.round(exp), current_savings: current, monthly_saving: margenLibre };
+      case 'G': return { name: 'Fondo de emergencia', type: 'emergency', target_amount: fundTarget(answers), current_savings: current, monthly_saving: margenLibre };
+      case 'D': return { name: 'Fondo de emergencia', type: 'emergency', target_amount: fundTarget(answers), current_savings: current, monthly_saving: Math.round(margenLibre * 0.5) };
+      default: return null; // A, C, H, I → insight only (no fund goal)
+    }
+  }
+  function autoCreateFirstMeta(personId, rec, res) {
+    var meta = firstMeta(rec);
+    if (!meta) return;
     PlaneaSB.get('persons_long_term_goals?person_id=eq.' + personId + '&select=id,name')
       .then(function (rows) {
         var has = (rows || []).some(function (g) { return /emergen|colch/i.test(g.name || ''); });
         if (has) return;
-        return PlaneaSB.post('persons_long_term_goals', {
-          person_id: personId, name: 'Fondo de emergencia', type: 'emergency',
-          target_amount: target, current_savings: current, monthly_saving: monthly
-        });
+        meta.person_id = personId;
+        return PlaneaSB.post('persons_long_term_goals', meta);
       }).catch(function () {});
   }
 
