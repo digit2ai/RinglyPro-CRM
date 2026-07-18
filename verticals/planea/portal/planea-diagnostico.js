@@ -428,7 +428,9 @@
 
     var ou = readOurUser();
     var onboarding = /[?&]onboarding=1/.test(location.search);
-    var loggedIn = (window.PlaneaSB && PlaneaSB.loggedIn()) || !!ou;
+    function hasSbSession() { try { for (var i = 0; i < localStorage.length; i++) { if (/^sb-.*-auth-token$/.test(localStorage.key(i))) return true; } } catch (e) {} return false; }
+    // Logged in via ANY signal (our cookie, PlaneaSB, or a legacy Supabase token).
+    var loggedIn = (window.PlaneaSB && PlaneaSB.loggedIn()) || !!ou || hasSbSession();
     // We already know who they are — never ask for the email again.
     if (ou) profile = { nombre: (ou.full_name || '').trim().split(/\s+/)[0] || '', email: ou.email || '' };
 
