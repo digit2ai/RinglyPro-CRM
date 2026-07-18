@@ -70,6 +70,8 @@
   var INV_RE = /invers|accion|acción|fondo|fic|cripto|bono|etf|cdt|portafol|renta/i;
   var SAV_RE = /ahorro|efectivo|cuenta|emergenc|cesant|caja|liquid|líquid/i;
   function assetBucket(a) {
+    // Explicit category (set by the Ahorro/Inversión module editors) wins.
+    if (a.cat === 'ahorro' || a.cat === 'inversion') return a.cat;
     var s = ((a.type || '') + ' ' + (a.name || '')).toLowerCase();
     if (INV_RE.test(s)) return 'inversion';
     if (SAV_RE.test(s)) return 'ahorro';

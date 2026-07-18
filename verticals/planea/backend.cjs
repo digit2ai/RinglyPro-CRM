@@ -52,6 +52,8 @@ function defineModels(sq) {
     assets_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     liabilities_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     goals: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
+    seguros_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
+    retiro_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
   }, { tableName: 'planea_profiles', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   return { U, P };
@@ -69,6 +71,9 @@ async function init() {
     const m = defineModels(sequelize);
     User = m.U; Profile = m.P;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
+    // Idempotent add of newer columns (sync never adds columns to an existing table).
+    await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
+    await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -230,6 +235,8 @@ function build() {
         assets_data: Array.isArray(p.assets_data) ? p.assets_data : [],
         liabilities_data: Array.isArray(p.liabilities_data) ? p.liabilities_data : [],
         goals: Array.isArray(p.goals) ? p.goals : [],
+        seguros_data: Array.isArray(p.seguros_data) ? p.seguros_data : [],
+        retiro_data: Array.isArray(p.retiro_data) ? p.retiro_data : [],
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -252,6 +259,8 @@ function build() {
       if (Array.isArray(b.assets_data)) p.assets_data = b.assets_data;
       if (Array.isArray(b.liabilities_data)) p.liabilities_data = b.liabilities_data;
       if (Array.isArray(b.goals)) p.goals = b.goals;
+      if (Array.isArray(b.seguros_data)) p.seguros_data = b.seguros_data;
+      if (Array.isArray(b.retiro_data)) p.retiro_data = b.retiro_data;
       await p.save();
       res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }

@@ -125,6 +125,9 @@
     patch: patch,
     post: post,
     person: person,
+    // Direct profile access (used by the module editors: ahorro/deuda/inversion/seguros/retiro).
+    meGet: function () { _profile = null; return req('GET', '/me/profile'); },
+    mePut: function (fields) { _profile = null; return req('PUT', '/me/profile', fields); },
     logout: function () { return req('POST', '/auth/logout').catch(function () {}); }
   };
 })();
