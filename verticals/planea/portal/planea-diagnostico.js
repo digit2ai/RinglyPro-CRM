@@ -416,8 +416,14 @@
     root = document.getElementById('dg-root'); if (!root) return;
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
-    function start() { paint(); }
-    if (window.PlaneaSB && PlaneaSB.loggedIn()) {
+    var loggedIn = window.PlaneaSB && PlaneaSB.loggedIn();
+    function start() {
+      // Onboarding / logged-in users already gave name+email at signup — skip the
+      // intro email step and drop them straight into question 1 of the survey.
+      if (loggedIn) current = seq()[0];
+      paint();
+    }
+    if (loggedIn) {
       PlaneaSB.get('persons?select=full_name&limit=1').then(function (rows) {
         var pr = (rows && rows[0]) || {};
         var full = pr.full_name || (PlaneaSB.user() && PlaneaSB.user().user_metadata && PlaneaSB.user().user_metadata.full_name) || '';
