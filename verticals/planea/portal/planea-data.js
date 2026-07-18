@@ -153,6 +153,8 @@
       case 'activos_total': return cop(prof.activos_total_cop || 0);
       case 'pasivos_total':
       case 'deuda_total': return cop(prof.pasivos_total_cop || 0);
+      case 'salud_score': return prof.salud_score == null ? '—' : String(prof.salud_score);
+      case 'salud_rango': return prof.salud_rango || 'Agrega tus datos';
       case 'ingreso_total': return cop(prof.ingreso_mensual_cop || 0);
       case 'gasto_total': return cop(prof.gasto_mensual_cop || 0);
       case 'seguros_total': return cop(prof.seguros_total_cop || 0);
@@ -178,6 +180,10 @@
     var score = prof.sin_diagnostico || prof.planea_score == null ? 0 : Math.max(0, Math.min(100, prof.planea_score));
     var off = Math.round(C * (1 - score / 100));
     document.querySelectorAll('[data-pl-ring]').forEach(function (c) { c.setAttribute('stroke-dashoffset', off); });
+    // Salud Financiera ring (data-pl-ring-salud)
+    var ss = prof.salud_score == null ? 0 : Math.max(0, Math.min(100, prof.salud_score));
+    var soff = Math.round(C * (1 - ss / 100));
+    document.querySelectorAll('[data-pl-ring-salud]').forEach(function (c) { c.setAttribute('stroke-dashoffset', soff); });
   }
   function fillBars(prof) {
     var at = prof.activos_total_cop || 0, lt = prof.pasivos_total_cop || 0;
@@ -399,6 +405,10 @@
         prof.pasivos_total_cop = num(sum.deuda);             // debt balances
         prof.deuda_cuota_cop = num(sum.deuda_cuota);
         prof.patrimonio_neto_cop = num(sum.patrimonio_neto);
+        // Salud Financiera — computed from actual data (separate from the survey score).
+        prof.salud_score = (sum.salud_score == null) ? null : sum.salud_score;
+        prof.salud_rango = sum.salud_rango || null;
+        prof.salud_pillars = sum.salud_pillars || null;
 
         prof.ingresos = byCat('ingreso').map(toRow);
         prof.gastos = byCat('gasto').map(toRow);
