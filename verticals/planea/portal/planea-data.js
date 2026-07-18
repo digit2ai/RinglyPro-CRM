@@ -155,6 +155,8 @@
       case 'deuda_total': return cop(prof.pasivos_total_cop || 0);
       case 'ingreso_total': return cop(prof.ingreso_mensual_cop || 0);
       case 'gasto_total': return cop(prof.gasto_mensual_cop || 0);
+      case 'seguros_total': return cop(prof.seguros_total_cop || 0);
+      case 'retiro_total': return cop(prof.retiro_total_cop || 0);
       case 'ahorro_total': return cop(sumBucket(prof, 'ahorro'));
       case 'inversion_total': return cop(sumBucket(prof, 'inversion'));
       case 'metas_count': return String((prof.metas || []).length);
@@ -275,8 +277,12 @@
             '<div class="pie" style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;color:var(--mut)">' +
             '<span><strong style="color:var(--txt)">' + fp + '%</strong> de tu meta de fondo</span></div>';
         }
-      } else if (type === 'seguros' || type === 'retiro') {
-        rows = []; // no dedicated Supabase source yet → always empty state
+      } else if (type === 'seguros') {
+        rows = prof.seguros || [];
+        html = rows.map(function (x) { return fund(x.nombre, cop(x.valor_cop), esc(x.tipo || 'Póliza') + ' · valor asegurado'); }).join('');
+      } else if (type === 'retiro') {
+        rows = prof.retiro || [];
+        html = rows.map(function (x) { return fund(x.nombre, cop(x.valor_cop), esc(x.tipo || 'Fondo de retiro')); }).join('');
       }
 
       box.innerHTML = html || ('<div class="pl-empty" style="padding:22px 4px;color:var(--mut);font-size:14px">' + esc(empty) + '</div>');
@@ -367,13 +373,23 @@
         }
         var assets = Array.isArray(d.assets_data) ? d.assets_data : [];
         var liab = Array.isArray(d.liabilities_data) ? d.liabilities_data : [];
+        var retiro = Array.isArray(d.retiro_data) ? d.retiro_data : [];
+        var seguros = Array.isArray(d.seguros_data) ? d.seguros_data : [];
         var at = assets.reduce(function (a, x) { return a + num(x.value); }, 0);
+        var rt = retiro.reduce(function (a, x) { return a + num(x.value); }, 0);
         var lt = liab.reduce(function (a, x) { return a + num(x.value); }, 0);
-        prof.activos_total_cop = at;
+        // Net worth = liquid/invested assets + retirement funds − debts.
+        // Seguros are protection (a cost), NOT net worth — excluded.
+        prof.activos_total_cop = at + rt;
         prof.pasivos_total_cop = lt;
-        prof.patrimonio_neto_cop = at - lt;
-        prof.activos = assets.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), bucket: assetBucket(x) }; });
+        prof.patrimonio_neto_cop = (at + rt) - lt;
+        prof.activos = assets.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), bucket: assetBucket(x) }; })
+          .concat(retiro.map(function (x) { return { nombre: x.name, tipo: x.type || 'Retiro', valor_cop: num(x.value), bucket: 'retiro' }; }));
         prof.pasivos = liab.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
+        prof.seguros = seguros.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
+        prof.retiro = retiro.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
+        prof.seguros_total_cop = seguros.reduce(function (a, x) { return a + num(x.value); }, 0);
+        prof.retiro_total_cop = rt;
         prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(function (g) {
           return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
         });

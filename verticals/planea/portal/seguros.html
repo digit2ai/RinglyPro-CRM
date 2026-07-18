@@ -7,34 +7,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="planea-app.css?v=12">
+<link rel="stylesheet" href="/planea/portal/planea-app.css?v=12">
 </head>
 <body>
 <div class="app"><div class="wrap">
 
-  <div class="phead"><div><h1>Seguros</h1><p class="lede">¿Qué pasa si algo sale mal? Aquí ves lo que estás protegiendo y lo que no.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="32"/></svg><div class="num" data-pl="score">89</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango" data-pl="rango">Sólido</div></div></div>
+  <div class="phead"><div><h1>Seguros</h1><p class="lede">¿Qué pasa si algo sale mal? Aquí ves lo que estás protegiendo.</p></div><div class="scoreblock"><div class="ring"><svg viewBox="0 0 104 104"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--card2)" stroke-width="7"/><circle data-pl-ring cx="52" cy="52" r="46" fill="none" stroke="#8fd9ac" stroke-width="7" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/></svg><div class="num" data-pl="score">—</div></div><div class="cap">PUNTAJE PLANEA</div><div class="rango" data-pl="rango">Sin diagnóstico</div></div></div>
 
-  <div id="mod-edit" data-cat="seguros">
-  <div class="eyebrow">Lo que pagas en seguros este año</div>
-  <div class="big-money">$6.180.000<span class="cur">COP</span></div>
-
-  <div class="eyebrow" style="margin-top:22px">Nivel de protección de tu patrimonio</div>
-  <div class="legend"><span><i class="dot d1"></i>Cubierto <b>72%</b></span><span><i class="dot d2"></i>Con vacíos <b>28%</b></span><span><i class="dot d3"></i>Pólizas activas <b>3</b></span></div>
+  <div class="eyebrow">Cobertura total · valor asegurado</div>
+  <div class="big-money"><span data-pl="seguros_total">$0</span><span class="cur">COP</span></div>
 
   <div class="divider-h"></div>
 
   <div class="group">
-    <div class="group-head"><div><div class="gt">Tus pólizas activas</div><div class="gs">3 pólizas cubriendo tu vida diaria</div></div><div class="gv">3 activas <span class="chev">^</span></div></div>
-    <div class="group-body">
-
-      <div class="fund"><div class="top"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><div class="nm">Salud prepagada</div></div><div class="val mo">$280.000/mes</div><div class="meta">meta: <b>TuPrimero Seguros</b> · Familiar · consulta, hospitalización y cirugía · <b>Activa</b></div></div>
-
-      <div class="fund"><div class="top"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><div class="nm">Todo riesgo vehículo</div></div><div class="val mo">$1.980.000/año</div><div class="meta">meta: <b>TuPrimero Seguros</b> · Mazda CX-30 · daños, hurto, RC $2.400M · <b>Activa</b></div></div>
-
-      <div class="fund"><div class="top"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/></svg></span><div class="nm">Seguro de vida</div></div><div class="val mo">$95.000/mes</div><div class="meta">meta: <b>TuPrimero Seguros</b> · beneficiarios: familia · <b>Activa</b></div></div>
-
-    </div>
-  </div>
+    <div class="group-head"><div><div class="gt">Tus pólizas</div><div class="gs">Agrega cada seguro que tengas</div></div></div>
+    <div class="group-body"><div id="mod-edit" data-cat="seguros"></div></div>
   </div>
 
 </div></div>

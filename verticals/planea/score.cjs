@@ -44,7 +44,9 @@ function deriveInputs(p) {
     tiene_ahorro: ahorros > 0,
     tipo_ingreso: meta.tipo_ingreso || 'fijo',
     dependientes: meta.dependientes || 'nadie',
-    meses_cobertura: gas > 0 ? ahorros / gas : 0,
+    // Coverage months. If no expenses are tracked yet but there ARE savings,
+    // treat coverage as effectively complete rather than collapsing the pillar to 0.
+    meses_cobertura: gas > 0 ? ahorros / gas : (ahorros > 0 ? 999 : 0),
     nombre: (p.full_name || '').trim().split(/\s+/)[0] || ''
   };
 }
