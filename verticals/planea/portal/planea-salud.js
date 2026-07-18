@@ -50,10 +50,13 @@
       ticks += '<line x1="' + o[0].toFixed(1) + '" y1="' + o[1].toFixed(1) + '" x2="' + i[0].toFixed(1) + '" y2="' + i[1].toFixed(1) + '" stroke="rgba(255,255,255,.45)" stroke-width="' + (v % 20 === 0 ? 2 : 1) + '"/>';
       if (v % 20 === 0) { var lp = polar(cx, cy, R - w - 24, a); ticks += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] + 4).toFixed(1) + '" fill="rgba(255,255,255,.55)" font-size="11" font-family="Inter" text-anchor="middle">' + v + '</text>'; }
     }
-    var na = ang270(score == null ? 0 : score);
-    var tip = polar(cx, cy, R - w + 4, na), tail = polar(cx, cy, -18, na);
-    var needle = '<g id="sf-needle" style="transform-box:fill-box;transform-origin:' + cx + 'px ' + cy + 'px;transition:transform 1s cubic-bezier(.2,.9,.2,1)">' +
-      '<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/></g>';
+    // Needle drawn at value 0 (lower-left); animatePrimary rotates it around the
+    // gauge center to the score angle. transform-box:view-box => origin in viewBox units.
+    var na0 = ang270(0);
+    var tip = polar(cx, cy, R - w + 3, na0), tail = polar(cx, cy, 20, na0 + 180), tipTip = polar(cx, cy, R - w + 11, na0);
+    var needle = '<g id="sf-needle" style="transform-box:view-box;transform-origin:' + cx + 'px ' + cy + 'px;transform:rotate(0deg);transition:transform 1.1s cubic-bezier(.2,.9,.2,1)">' +
+      '<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' +
+      '<circle cx="' + tipTip[0].toFixed(1) + '" cy="' + tipTip[1].toFixed(1) + '" r="4.5" fill="' + c + '"/></g>';
     return '<svg viewBox="0 0 260 250">' + bands + ticks + needle +
       '<circle cx="' + cx + '" cy="' + cy + '" r="12" fill="#0a1a16" stroke="#fff" stroke-width="2"/>' +
       '<text id="sf-score" x="' + cx + '" y="' + (cy + 58) + '" fill="' + c + '" font-size="52" font-weight="800" font-family="Inter" text-anchor="middle">' + (score == null ? '--' : 0) + '</text>' +
