@@ -329,8 +329,9 @@ if (planeaBackend) {
 // Registered BEFORE the SPA catch-all so /planea/login + /planea/signup serve OUR
 // dark-theme pages that talk to /planea/api/v1/auth/* (no email confirmation).
 if (hasPortal) {
-  router.get('/login', (req, res) => res.sendFile(path.join(portalDir, 'login.html')));
-  router.get(['/signup', '/register', '/start'], (req, res) => res.sendFile(path.join(portalDir, 'signup.html')));
+  const noCache = (res) => res.set('Cache-Control', 'no-store, must-revalidate');
+  router.get('/login', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'login.html')); });
+  router.get(['/signup', '/register', '/start'], (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'signup.html')); });
 }
 
 if (hasPortal) {

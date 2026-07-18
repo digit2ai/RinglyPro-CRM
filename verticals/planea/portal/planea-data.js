@@ -383,10 +383,21 @@
     };
   }
 
+  // Onboarding is mandatory: a logged-in user who hasn't done the diagnostic is
+  // sent into the survey before seeing the dashboard (no matter how they signed
+  // up or what's cached). Only from /inicio, so the survey page itself is exempt.
+  function onInicio() { return /\/inicio\/?$/.test(location.pathname); }
+
   function boot() {
     // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
     if (ourSession()) {
-      buildProfileFromBackend().then(render).catch(function (e) {
+      buildProfileFromBackend().then(function (prof) {
+        if (prof.sin_diagnostico && onInicio()) {
+          location.replace('/planea/portal/diagnostico?onboarding=1');
+          return;
+        }
+        render(prof);
+      }).catch(function (e) {
         if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
         render(emptyProfile());
       });
