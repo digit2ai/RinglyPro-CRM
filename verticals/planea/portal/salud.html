@@ -98,6 +98,33 @@
   .sim-out .base{font-size:12px;color:var(--mut);margin-top:8px}
   .sim-out .reset{margin-top:12px;font-size:12px;color:var(--mut);background:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
 
+  /* Neural Findings */
+  .nf{margin-top:18px;border-radius:20px;border:1px solid rgba(96,165,250,.28);padding:22px;
+    background:radial-gradient(120% 120% at 100% 0%,rgba(96,165,250,.10),transparent 55%),linear-gradient(180deg,#0e2620,#0a1a16)}
+  .nf-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .nf-mark{font-family:'Inter';font-weight:800;font-size:15px;letter-spacing:.16em;display:flex;align-items:center;gap:9px}
+  .nf-mark .nf-diamond{color:#60a5fa;font-size:16px;filter:drop-shadow(0 0 6px rgba(96,165,250,.6))}
+  .nf-meta{display:flex;gap:8px;flex-wrap:wrap}
+  .nf-chip{font-size:11px;font-weight:800;letter-spacing:.06em;padding:5px 11px;border-radius:99px;border:1px solid rgba(96,165,250,.4);color:#9cc7fb;background:rgba(96,165,250,.08)}
+  .nf-chip.live{border-color:rgba(63,192,106,.5);color:var(--grn);background:rgba(63,192,106,.10)}
+  .nf-chip.alt{border-color:var(--line);color:var(--mut);background:transparent}
+  .nf-sub{color:var(--mut);font-size:13px;margin-top:8px;line-height:1.5;max-width:720px}
+  .nf-lead{margin-top:16px;border-radius:14px;border:1px solid rgba(63,192,106,.32);background:linear-gradient(180deg,rgba(63,192,106,.10),transparent);padding:15px 16px;display:flex;gap:13px;align-items:flex-start}
+  .nf-lead .av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:var(--grn);color:#04120c;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Inter'}
+  .nf-lead .who{font-weight:800;font-size:13px}
+  .nf-lead .msg{font-size:14px;margin-top:4px;line-height:1.55}
+  .nf-lead .goal{font-size:12.5px;color:var(--grn);font-weight:700;margin-top:8px}
+  .nf-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .nf-row{display:flex;gap:11px;align-items:flex-start;border-radius:12px;background:rgba(0,0,0,.20);border:1px solid var(--cok-line);padding:13px 14px}
+  .nf-row .nf-dot{flex:0 0 10px;width:10px;height:10px;border-radius:50%;margin-top:5px}
+  .nf-area{font-weight:800;font-size:13px}
+  .nf-txt{font-size:13px;color:var(--cok-ink);line-height:1.5;margin-top:3px}
+  .nf-txt.load{color:var(--mut);font-style:italic}
+  .nf-foot{margin-top:16px;display:flex;justify-content:flex-end}
+  .nf-refresh{font-size:12.5px;font-weight:700;color:#9cc7fb;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.4);border-radius:99px;padding:8px 16px;cursor:pointer}
+  .nf-refresh:disabled{opacity:.5;cursor:default}
+  @media(max-width:640px){ .nf-grid{grid-template-columns:1fr} }
+
   .sf-empty{margin-top:20px;border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--mut)}
 
   @media(max-width:900px){
@@ -124,7 +151,7 @@
 </div></div>
 <script src="/planea/portal/planea-nav.js?v=39" defer></script>
 <script src="/planea/portal/planea-sb.js?v=39" defer></script>
-<script src="/planea/portal/planea-salud.js?v=40" defer></script>
+<script src="/planea/portal/planea-salud.js?v=41" defer></script>
 <script src="/planea/portal/maya-chat.js?v=39" defer></script>
 </body>
 </html>

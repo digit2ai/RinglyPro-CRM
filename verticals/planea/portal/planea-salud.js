@@ -146,11 +146,23 @@
       '</div></div></div>';
   }
 
-  function featuredBlock() {
-    return '<div class="maya-fx" id="sf-featured" style="display:none">' +
-      '<div class="av">M</div><div style="flex:1">' +
-      '<div class="who">Maya <span class="src" id="sf-fx-src"></span></div>' +
-      '<div class="msg" id="sf-fx-msg"></div><div class="goal" id="sf-fx-goal"></div></div></div>';
+  function neuralFindings(d) {
+    var rows = d.buckets.map(function (b) {
+      return '<div class="nf-row"><span class="nf-dot" style="background:' + col(b.light) + '"></span>' +
+        '<div><div class="nf-area">' + esc(b.label) + ' · ' + b.score + '/100</div>' +
+        '<div class="nf-txt load" data-nftxt="' + b.key + '">Analizando tus datos…</div></div></div>';
+    }).join('');
+    return '<div class="nf" id="sf-neural">' +
+      '<div class="nf-hd"><div class="nf-mark"><span class="nf-diamond">◈</span> NEURAL FINDINGS</div>' +
+      '<div class="nf-meta"><span class="nf-chip" id="nf-src">Analizando…</span><span class="nf-chip alt" id="nf-scn" style="display:none"></span></div></div>' +
+      '<div class="nf-sub">Análisis de tu situación por el motor neural de Digit2AI — priorizado según la pirámide de prioridades del CFP y consciente de todas tus áreas a la vez.</div>' +
+      '<div class="nf-lead"><div class="av">M</div><div style="flex:1">' +
+      '<div class="who">Maya · recomendación principal</div>' +
+      '<div class="msg" id="nf-fx-msg">Analizando tus datos para darte la recomendación principal…</div>' +
+      '<div class="goal" id="nf-fx-goal"></div></div></div>' +
+      '<div class="nf-grid">' + rows + '</div>' +
+      '<div class="nf-foot"><button class="nf-refresh" id="nf-refresh">Actualizar análisis</button></div>' +
+      '</div>';
   }
 
   function simulator(d) {
@@ -267,25 +279,52 @@
 
   function loadFindings(demo) {
     var apply = function (f) {
-      var fx = document.getElementById('sf-featured');
-      if (f && f.featured && f.featured.text && fx) {
-        fx.style.display = 'flex';
-        document.getElementById('sf-fx-msg').textContent = f.featured.text;
-        document.getElementById('sf-fx-src').textContent = f.source === 'neural' ? '· análisis neural' : '· guía';
-        var g = document.getElementById('sf-fx-goal');
-        if (f.featured.goal) { g.textContent = 'Meta sugerida: ' + f.featured.goal; } else g.textContent = '';
+      f = f || {};
+      var fallbackTxt = 'Registra o actualiza los datos de esta área para recibir una recomendación.';
+      // Neural Findings — featured recommendation
+      var msg = document.getElementById('nf-fx-msg'), goal = document.getElementById('nf-fx-goal');
+      if (msg) msg.textContent = (f.featured && f.featured.text) || 'Aún no hay una recomendación principal. Completa tus datos para activar el análisis.';
+      if (goal) goal.textContent = (f.featured && f.featured.goal) ? 'Meta sugerida: ' + f.featured.goal : '';
+      // source + scenario chips
+      var src = document.getElementById('nf-src'), scn = document.getElementById('nf-scn');
+      if (src) {
+        if (f.source === 'neural') { src.textContent = 'Análisis neural en vivo'; src.className = 'nf-chip live'; }
+        else if (f.source === 'fallback') { src.textContent = 'Guía basada en reglas'; src.className = 'nf-chip'; }
+        else { src.textContent = 'Sin análisis'; src.className = 'nf-chip alt'; }
       }
+      if (scn) { if (f.scenario) { scn.textContent = 'Escenario ' + f.scenario; scn.style.display = ''; } else scn.style.display = 'none'; }
+      // Neural Findings — per-área rows
+      document.querySelectorAll('[data-nftxt]').forEach(function (el) {
+        var k = el.getAttribute('data-nftxt'), txt = f.buckets && f.buckets[k];
+        el.classList.remove('load'); el.textContent = txt || fallbackTxt;
+      });
+      // bucket cards (drill-down hallazgos)
       document.querySelectorAll('[data-find]').forEach(function (el) {
-        var k = el.getAttribute('data-find'), txt = f && f.buckets && f.buckets[k];
+        var k = el.getAttribute('data-find'), txt = f.buckets && f.buckets[k];
         el.classList.remove('load');
-        el.innerHTML = '<span class="fh">HALLAZGOS DE MAYA</span>' + esc(txt || 'Registra o actualiza los datos de esta área para recibir una recomendación.');
+        el.innerHTML = '<span class="fh">HALLAZGOS DE MAYA</span>' + esc(txt || fallbackTxt);
       });
     };
-    if (demo) { apply(DEMO_FINDINGS); return; }
-    fetch('/planea/api/v1/me/salud/findings', { credentials: 'include' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (f) { apply(f || {}); })
-      .catch(function () { apply({}); });
+    var setLoading = function () {
+      document.querySelectorAll('[data-nftxt]').forEach(function (el) { el.classList.add('load'); el.textContent = 'Analizando tus datos…'; });
+      var src = document.getElementById('nf-src'); if (src) { src.textContent = 'Analizando…'; src.className = 'nf-chip'; }
+    };
+    var wireRefresh = function () {
+      var rb = document.getElementById('nf-refresh');
+      if (rb && !rb.__wired) {
+        rb.__wired = true;
+        rb.addEventListener('click', function () { rb.disabled = true; setLoading(); run(function () { rb.disabled = false; }); });
+      }
+    };
+    var run = function (done) {
+      if (demo) { apply(DEMO_FINDINGS); done && done(); return; }
+      fetch('/planea/api/v1/me/salud/findings', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (f) { apply(f || {}); done && done(); })
+        .catch(function () { apply({}); done && done(); });
+    };
+    wireRefresh();
+    run();
   }
 
   function render(d, demo) {
@@ -297,10 +336,10 @@
         '<div style="margin-top:10px"><a href="?demo=1" style="color:var(--mut);font-size:12.5px">Ver el tablero con datos de ejemplo →</a></div></div>';
       return;
     }
-    root.innerHTML = cockpit(d) + featuredBlock() + chartsBlock() +
+    root.innerHTML = cockpit(d) + chartsBlock() +
       '<div class="sf-card" style="border:none;background:none;padding:6px 2px"><h2>Detalle por área</h2><div class="sub">Toca una tarjeta para ver su fórmula y los hallazgos de Maya.</div></div>' +
       '<div class="sf-grid">' + d.buckets.map(bucketCard).join('') + '</div>' +
-      simulator(d);
+      simulator(d) + neuralFindings(d);
     animatePrimary(d.overall);
     drawCharts(d);
     bindCards();
