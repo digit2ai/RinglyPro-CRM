@@ -7,49 +7,124 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/planea/portal/planea-app.css?v=38">
+<link rel="stylesheet" href="/planea/portal/planea-app.css?v=39">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
+  :root{ --cok-face:#0c1f1a; --cok-line:rgba(255,255,255,.10); --grn:#3fc06a; --amb:#e0a020; --red:#e5533c; --cok-ink:#dff3ea; }
   .sf-head h1{font-family:'Inter',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em}
   .sf-head .lede{color:var(--mut);font-size:14.5px;margin-top:4px}
-  .sf-hero{margin-top:18px;border-radius:20px;border:1px solid var(--line);padding:24px;display:flex;gap:26px;align-items:center;flex-wrap:wrap;
-    background:radial-gradient(120% 120% at 12% 0%,rgba(63,192,106,.10),transparent 60%),var(--card,#0f231e)}
-  .sf-gauge{position:relative;width:168px;height:168px;flex:0 0 168px}
-  .sf-gauge .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .sf-gauge .n b{font-family:'Inter';font-weight:800;font-size:46px;line-height:1}
-  .sf-gauge .n small{font-size:11px;letter-spacing:.16em;color:var(--mut);margin-top:2px}
-  .sf-hero-info{flex:1;min-width:220px}
-  .sf-badge{display:inline-block;padding:5px 13px;border-radius:99px;font-weight:800;font-size:14px}
-  .sf-lights{display:flex;gap:10px;margin-top:14px}
-  .sf-lights .lt{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)}
-  .sf-lights .dot{width:12px;height:12px;border-radius:50%}
-  .sf-sub{color:var(--mut);font-size:13.5px;margin-top:12px;line-height:1.5}
+  .sf-head .demo{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:700;letter-spacing:.12em;color:var(--amb);border:1px solid var(--amb);padding:3px 10px;border-radius:99px}
+
+  /* Cockpit shell */
+  .cok{margin-top:18px;border-radius:22px;border:1px solid var(--cok-line);padding:20px;
+    background:radial-gradient(120% 130% at 50% -10%,rgba(63,192,106,.10),transparent 55%),linear-gradient(180deg,#0e2620,#0a1a16)}
+  .cok-top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:stretch}
+  .cok-primary{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px}
+  .cok-primary svg{width:100%;max-width:300px;height:auto}
+  .cok-primary .cap{margin-top:2px;text-align:center}
+  .cok-primary .cap .badge{display:inline-block;padding:5px 14px;border-radius:99px;font-weight:800;font-size:14px}
+  .cok-primary .cap .rng{color:var(--mut);font-size:12.5px;margin-top:6px;letter-spacing:.04em}
+
+  /* Altimeter (net worth) */
+  .alt{border-radius:16px;border:1px solid var(--cok-line);background:rgba(0,0,0,.22);padding:16px 18px;display:flex;flex-direction:column;justify-content:center}
+  .alt .lbl{font-size:11px;letter-spacing:.18em;color:var(--mut);font-weight:700}
+  .alt .val{font-family:'Inter';font-weight:800;font-size:30px;letter-spacing:-.01em;margin-top:6px;font-variant-numeric:tabular-nums}
+  .alt .trend{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12.5px;font-weight:700}
+  .alt .split{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+  .alt .split .c{flex:1;min-width:120px}
+  .alt .split .c .k{font-size:10.5px;letter-spacing:.12em;color:var(--mut);font-weight:700}
+  .alt .split .c .v{font-size:15px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+  .alt .split .c small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
+
+  /* Six-pack */
+  .six{margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .inst{border-radius:16px;border:1px solid var(--cok-line);background:rgba(0,0,0,.22);padding:12px 10px 10px;text-align:center}
+  .inst svg{width:100%;max-width:132px;height:auto}
+  .inst .t{font-size:10.5px;letter-spacing:.1em;color:var(--mut);font-weight:800;margin-bottom:2px}
+  .inst .rv{font-family:'Inter';font-weight:800;font-size:17px;margin-top:1px;font-variant-numeric:tabular-nums}
+  .inst .rs{font-size:10.5px;color:var(--mut);margin-top:1px}
+
+  /* Cards / charts */
   .sf-card{margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:20px}
   .sf-card h2{font-size:16px;font-weight:800}
   .sf-card .sub{color:var(--mut);font-size:13px;margin-top:2px}
-  .sf-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-  .sf-b{border-radius:16px;border:1px solid var(--line);background:var(--card,#0f231e);padding:18px}
-  .sf-b .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .sf-b .nm{font-weight:800;font-size:15.5px}
-  .sf-b .sc{font-family:'Inter';font-weight:800;font-size:26px;line-height:1}
-  .sf-b .track{height:8px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:12px;overflow:hidden}
-  .sf-b .fill{height:100%;border-radius:99px}
-  .sf-b .tgt{font-size:12px;color:var(--mut);margin-top:8px}
-  .sf-m{margin-top:12px;display:flex;flex-direction:column;gap:7px}
-  .sf-m .row{display:flex;justify-content:space-between;font-size:13px;gap:12px}
-  .sf-m .row .k{color:var(--mut)}
-  .sf-m .row .v{font-weight:700}
+  .charts{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .chartbox{border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:18px}
+  .chartbox h2{font-size:15px;font-weight:800}
+  .chartbox .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .chartbox .cwrap{position:relative;margin-top:12px;height:260px}
+
+  /* Featured finding */
+  .maya-fx{margin-top:16px;border-radius:16px;border:1px solid rgba(63,192,106,.35);background:linear-gradient(180deg,rgba(63,192,106,.10),transparent);padding:16px 18px;display:flex;gap:13px;align-items:flex-start}
+  .maya-fx .av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:var(--grn);color:#04120c;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Inter'}
+  .maya-fx .who{font-weight:800;font-size:13px}
+  .maya-fx .src{font-size:10.5px;color:var(--mut);letter-spacing:.08em}
+  .maya-fx .msg{font-size:14px;margin-top:5px;line-height:1.5}
+  .maya-fx .goal{font-size:12.5px;color:var(--grn);font-weight:700;margin-top:7px}
+
+  /* Bucket breakdown */
+  .sf-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .sf-b{border-radius:16px;border:1px solid var(--line);background:var(--card,#0f231e);padding:0;overflow:hidden}
+  .sf-b .hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
+  .sf-b .hd .nm{font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:9px}
   .sf-tl{display:inline-flex;width:11px;height:11px;border-radius:50%;flex:0 0 11px}
+  .sf-b .sc{font-family:'Inter';font-weight:800;font-size:24px;line-height:1;display:flex;align-items:center;gap:9px}
+  .sf-b .chev{color:var(--mut);transition:transform .2s;font-size:12px}
+  .sf-b.open .chev{transform:rotate(90deg)}
+  .sf-b .track{height:7px;border-radius:99px;background:rgba(255,255,255,.08);margin:0 18px;overflow:hidden}
+  .sf-b .fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .sf-b .body{max-height:0;overflow:hidden;transition:max-height .28s ease;padding:0 18px}
+  .sf-b.open .body{max-height:520px}
+  .sf-b .body .inner{padding:14px 0 18px}
+  .sf-b .formula{font-size:12.5px;color:var(--mut);line-height:1.5;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px}
+  .sf-b .tgt{font-size:12px;color:var(--mut);margin-top:10px}
+  .sf-b .find{font-size:13.5px;line-height:1.55;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+  .sf-b .find .fh{font-size:10.5px;letter-spacing:.12em;color:var(--grn);font-weight:800;margin-bottom:5px}
+  .sf-b .find.load{color:var(--mut);font-style:italic}
+
+  /* Simulator */
+  .sim{margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:20px}
+  .sim h2{font-size:16px;font-weight:800}
+  .sim .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .sim-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}
+  .sim-controls .ctl{margin-bottom:16px}
+  .sim-controls .ctl .cl{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px}
+  .sim-controls .ctl .cl .cv{color:var(--grn);font-variant-numeric:tabular-nums}
+  .sim-controls input[type=range]{width:100%;accent-color:var(--grn);height:4px}
+  .sim-out{text-align:center;border-radius:16px;border:1px solid var(--cok-line);background:rgba(0,0,0,.22);padding:18px}
+  .sim-out .now{font-size:12px;color:var(--mut);letter-spacing:.1em;font-weight:700}
+  .sim-out .big{font-family:'Inter';font-weight:800;font-size:52px;line-height:1;margin-top:6px}
+  .sim-out .delta{font-size:14px;font-weight:800;margin-top:6px}
+  .sim-out .base{font-size:12px;color:var(--mut);margin-top:8px}
+  .sim-out .reset{margin-top:12px;font-size:12px;color:var(--mut);background:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+
   .sf-empty{margin-top:20px;border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--mut)}
+
+  @media(max-width:900px){
+    .cok-top{grid-template-columns:1fr}
+    .charts{grid-template-columns:1fr}
+    .sim-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .six{grid-template-columns:1fr 1fr}
+    .sf-head h1{font-size:24px}
+    .alt .val{font-size:26px}
+    .cok{padding:14px}
+  }
 </style>
 </head>
 <body>
 <div class="app"><div class="wrap">
-  <div class="sf-head"><h1>Salud Financiera</h1><p class="lede">Tu salud financiera real, calculada a partir de tus datos — no de una encuesta.</p></div>
+  <div class="sf-head">
+    <h1>Salud Financiera</h1>
+    <p class="lede">Tu tablero de vuelo financiero — calculado con tus datos reales, no con una encuesta.</p>
+    <span id="sf-demo" class="demo" style="display:none">MODO DEMOSTRACIÓN</span>
+  </div>
   <div id="salud-root"></div>
 </div></div>
-<script src="/planea/portal/planea-nav.js?v=38" defer></script>
-<script src="/planea/portal/planea-sb.js?v=38" defer></script>
-<script src="/planea/portal/planea-salud.js?v=38" defer></script>
-<script src="/planea/portal/maya-chat.js?v=38" defer></script>
+<script src="/planea/portal/planea-nav.js?v=39" defer></script>
+<script src="/planea/portal/planea-sb.js?v=39" defer></script>
+<script src="/planea/portal/planea-salud.js?v=39" defer></script>
+<script src="/planea/portal/maya-chat.js?v=39" defer></script>
 </body>
 </html>

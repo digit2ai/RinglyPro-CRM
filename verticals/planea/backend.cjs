@@ -82,6 +82,9 @@ function defineModels(sq) {
     user_id: { type: DataTypes.INTEGER, allowNull: false },
     snap_date: { type: DataTypes.DATEONLY, allowNull: false },
     overall: { type: DataTypes.INTEGER, allowNull: true },
+    net_worth: { type: DataTypes.DOUBLE, allowNull: true },
+    income: { type: DataTypes.DOUBLE, allowNull: true },
+    expense: { type: DataTypes.DOUBLE, allowNull: true },
     buckets: { type: DataTypes.JSONB, allowNull: true },
   }, { tableName: 'planea_salud_history', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
@@ -102,6 +105,9 @@ async function init() {
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS net_worth DOUBLE PRECISION').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS income DOUBLE PRECISION').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS expense DOUBLE PRECISION').catch(function () {});
     // Idempotent add of newer columns (sync never adds columns to an existing table).
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
@@ -404,18 +410,99 @@ function build() {
     const a = authUser(req);
     if (!a) return res.status(401).json({ error: 'unauthorized' });
     try {
+      const u = await User.findByPk(a.id);
+      const prof = await Profile.findOne({ where: { user_id: a.id } });
+      const meta = (prof && prof.finance_meta) || {};
       const rows = await Item.findAll({ where: { user_id: a.id } });
-      const result = salud.computeSalud(rows.map(itemOut));
+      const result = salud.computeSalud(rows.map(itemOut), meta);
       if (result.overall != null) {
         const today = new Date().toISOString().slice(0, 10);
         const snap = result.buckets.map(function (b) { return { key: b.key, score: b.score }; });
+        const vals = { overall: result.overall, net_worth: result.net_worth, income: result.inputs.I, expense: result.inputs.G, buckets: snap };
         const existing = await SaludH.findOne({ where: { user_id: a.id, snap_date: today } });
-        if (existing) { existing.overall = result.overall; existing.buckets = snap; await existing.save(); }
-        else { await SaludH.create({ user_id: a.id, snap_date: today, overall: result.overall, buckets: snap }); }
+        if (existing) { Object.assign(existing, vals); await existing.save(); }
+        else { await SaludH.create(Object.assign({ user_id: a.id, snap_date: today }, vals)); }
       }
-      const hist = await SaludH.findAll({ where: { user_id: a.id }, order: [['snap_date', 'ASC']], limit: 90 });
-      result.history = hist.map(function (h) { return { date: h.snap_date, overall: h.overall }; });
+      const hist = await SaludH.findAll({ where: { user_id: a.id }, order: [['snap_date', 'ASC']], limit: 120 });
+      result.history = hist.map(function (h) { return { date: h.snap_date, overall: h.overall, net_worth: h.net_worth, income: h.income, expense: h.expense }; });
       res.json(result);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Neural Findings — data-derived, cross-bucket-aware insights in Maya's voice,
+  // grounded on the CFP pyramid + the A–I scenario tree. Claude-backed with a
+  // deterministic fallback if the model is unavailable.
+  const FIND_MODEL = process.env.PLANEA_MAYA_MODEL || 'claude-haiku-4-5-20251001';
+  function fallbackFindings(sal, rec) {
+    const tip = function (b) {
+      if (b.score >= 85) return 'Vas muy bien en ' + b.label.toLowerCase() + '. Mantén el hábito.';
+      if (b.key === 'savings') return 'Tu fondo de emergencia aún es corto. Sepáralo antes de invertir; es tu escudo.';
+      if (b.key === 'debt') return 'La deuda pesa sobre tu ingreso. Atácala primero: cada peso ahí rinde más que cualquier inversión.';
+      if (b.key === 'expenses') return 'Tus gastos consumen buena parte del ingreso. Revisa en qué se va la plata este mes.';
+      if (b.key === 'income') return 'Tu margen para ahorrar es ajustado. Sube ingresos o baja gastos para liberar flujo.';
+      if (b.key === 'investments') return 'Tu patrimonio puede crecer más. Cuando tengas fondo y sin deuda cara, pon tu plata a trabajar.';
+      if (b.key === 'insurance') return 'Estás poco protegido. Un imprevisto grande podría borrar tu progreso; evalúa una póliza.';
+      if (b.key === 'retirement') return 'Vas corto para el retiro según tu edad. Aportes voluntarios pequeños hoy suman mucho mañana.';
+      return 'Sigue registrando tus datos para afinar esta recomendación.';
+    };
+    const buckets = {};
+    (sal.buckets || []).forEach(function (b) { buckets[b.key] = tip(b); });
+    const low = (sal.buckets || []).slice().sort(function (a, b) { return a.score - b.score; })[0];
+    return { source: 'fallback', featured: { bucket: low && low.key, text: (rec && rec.mayaMessage) || (low ? tip(low) : 'Registra tus datos para empezar.'), goal: rec && rec.goalText, scenario: rec && rec.scenario }, buckets: buckets };
+  }
+  router.get('/me/salud/findings', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const u = await User.findByPk(a.id);
+      const prof = await Profile.findOne({ where: { user_id: a.id } });
+      const meta = (prof && prof.finance_meta) || {};
+      const rows = await Item.findAll({ where: { user_id: a.id } });
+      const items = rows.map(itemOut);
+      const sal = salud.computeSalud(items, meta);
+      const t = salud.totalsFromItems(items);
+      // scenario (A–I) from the CFP decision tree
+      const inp = {
+        ingresos: t.I, gastos: t.G, cuotas: t.C, tiene_deuda: (t.D > 0 || t.C > 0),
+        meses_cobertura: t.G > 0 ? t.A / t.G : (t.A > 0 ? 99 : 0),
+        tipo_ingreso: meta.tipo_ingreso || 'fijo', dependientes: meta.dependientes || 'nadie',
+        nombre: (u && u.full_name || '').trim().split(/\s+/)[0] || '',
+      };
+      const rec = (sal.overall != null) ? score.recommendation(inp) : null;
+
+      if (sal.overall == null) return res.json({ source: 'none', featured: null, buckets: {} });
+
+      // Try Claude; fall back on any error / missing key.
+      const key = process.env.ANTHROPIC_API_KEY;
+      if (!key) return res.json(fallbackFindings(sal, rec));
+      const bucketLines = sal.buckets.map(function (b) { return '- ' + b.label + ' (' + b.key + '): ' + b.score + '/100, meta: ' + b.target; }).join('\n');
+      const sys = 'Eres Maya, la guía financiera de Planea. Analizas la salud financiera REAL del usuario a partir de sus datos, siguiendo la Pirámide de Prioridades del CFP Board (1 colchón mínimo, 2 pagar deuda cara, 3 fondo 3-6 meses, 4 metas, 5 invertir) y el árbol de 9 escenarios (A-I). Reglas: español neutro, SIN emojis, tono cálido y directo, cada hallazgo debe basarse en los NÚMEROS y ser consciente de las otras áreas (ej: ingreso alto pero ahorro bajo, o deuda creciendo mientras la inversión está quieta). Devuelve SOLO JSON válido.';
+      const usr = 'Datos del usuario (COP):\n' +
+        'Ingreso mensual: ' + t.I + ' | Gasto mensual: ' + t.G + ' | Cuotas de deuda: ' + t.C + '\n' +
+        'Ahorro: ' + t.A + ' | Inversión: ' + t.V + ' | Retiro: ' + t.R + ' | Deuda saldo: ' + t.D + ' | Seguros: ' + t.S + '\n' +
+        'Patrimonio neto: ' + sal.net_worth + ' | Edad: ' + sal.age + '\n' +
+        'Puntaje Salud Financiera: ' + sal.overall + '/100 (' + sal.rango + ')\n' +
+        'Sub-puntajes por área:\n' + bucketLines + '\n' +
+        'Escenario CFP: ' + (rec ? rec.scenario : '?') + ' — ' + (rec ? rec.goalText : '') + '\n\n' +
+        'Devuelve JSON: {"featured":{"bucket":"<key del área más débil>","text":"<recomendación principal de Maya, 2-3 frases, accionable>","goal":"<meta en pesos>"},"buckets":{"income":"<hallazgo>","expenses":"<hallazgo>","savings":"<hallazgo>","debt":"<hallazgo>","investments":"<hallazgo>","insurance":"<hallazgo>","retirement":"<hallazgo>"}}. Cada hallazgo: 1-2 frases, específico a sus números.';
+      const ctrl = new AbortController();
+      const to = setTimeout(function () { ctrl.abort(); }, 12000);
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: FIND_MODEL, max_tokens: 900, system: sys, messages: [{ role: 'user', content: usr }] }),
+      }).catch(function () { return null; });
+      clearTimeout(to);
+      if (!r || !r.ok) return res.json(fallbackFindings(sal, rec));
+      const data = await r.json();
+      let txt = (data && data.content && data.content[0] && data.content[0].text) || '';
+      let parsed = null;
+      try { parsed = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)); } catch (e) { parsed = null; }
+      if (!parsed || !parsed.buckets) return res.json(fallbackFindings(sal, rec));
+      parsed.source = 'neural';
+      parsed.scenario = rec ? rec.scenario : null;
+      res.json(parsed);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

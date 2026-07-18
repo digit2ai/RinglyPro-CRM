@@ -1,126 +1,130 @@
 /**
- * PLANEA — Salud Financiera engine.
+ * PLANEA — Salud Financiera engine (glass-cockpit spec).
  *
- * A dedicated financial-health score computed from the user's ACTUAL data
- * (planea_items). Distinct from the survey Puntaje Planea. Every bucket
- * (Ingresos, Gastos, Ahorro, Deuda, Inversión, Seguros, Retiro) gets its own
- * 0–100 score, a traffic light (red/yellow/green) and its key metrics; the
- * overall score is the weighted composite. Null when there is no income yet.
+ * Score = 20·S1 + 15·S2 + 20·S3 + 10·S4 + 20·S5 + 15·S6  (range 1–100)
+ *   S1 Fondo emergencia = min(ahorro / (6 × ingreso_mensual), 1)
+ *   S2 Tasa de ahorro   = clamp(((ingreso − gasto)/ingreso) / 0.20, 0, 1)
+ *   S3 Deuda            = max(1 − (deuda_total / ingreso_anual), 0)
+ *   S4 Solvencia        = clamp(patrimonio_neto / activos_totales, 0, 1)
+ *   S5 Retiro           = min(retiro / meta_edad, 1)   meta = ing_anual × factor(edad)
+ *   S6 Seguros          = min(cobertura / (10 × ingreso_anual), 1)
+ * Net worth = activos_totales − deuda_total.
+ * Also emits per-bucket (7) scores + flight-instrument data for the cockpit.
+ * Same formula runs client-side (planea-salud.js) for the live simulator.
  */
 'use strict';
 
-function clamp(x) { return Math.max(0, Math.min(100, x)); }
 function num(x) { var v = +x; return isNaN(v) ? 0 : v; }
-function pct(x) { return (Math.round(x * 1000) / 10) + '%'; }
-function cop(n) { return '$' + Math.round(+n || 0).toLocaleString('es-CO'); }
-function mult(a, b) { return (b > 0 ? (a / b) : 0).toFixed(2) + '×'; }
-
-function rangoDe(s) { return s <= 30 ? 'Punto de partida' : s <= 50 ? 'Construyendo' : s <= 70 ? 'En camino' : s <= 85 ? 'Sólido' : 'Planeado'; }
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+function round(x) { return Math.round(x); }
+function rangoDe(s) { return s == null ? null : s <= 30 ? 'Punto de partida' : s <= 50 ? 'Construyendo' : s <= 70 ? 'En camino' : s <= 85 ? 'Sólido' : 'Planeado'; }
 function lightOf(s) { return s == null ? 'gray' : s >= 70 ? 'green' : s >= 40 ? 'yellow' : 'red'; }
 
-// Bucket weights in the overall composite (sum = 1.00).
-var WEIGHTS = { ingreso: 0.15, gasto: 0.15, ahorro: 0.20, deuda: 0.20, inversion: 0.12, seguros: 0.08, retiro: 0.10 };
-var LABELS = { ingreso: 'Ingresos', gasto: 'Gastos', ahorro: 'Ahorro', deuda: 'Deuda', inversion: 'Inversión', seguros: 'Seguros', retiro: 'Retiro' };
-var TARGETS = {
-  ingreso: 'Superávit ≥ 20% + fuentes diversas',
-  gasto: 'Gastar ≤ 50% del ingreso',
-  ahorro: '6 meses de fondo + 20% de ahorro',
-  deuda: 'DTI < 36% y deuda baja',
-  inversion: 'Invertir ≥ 2× tu ingreso anual',
-  seguros: 'Cobertura ≥ 5× tu ingreso anual',
-  retiro: 'Acumular ≥ 3× tu ingreso anual',
-};
-
-function emptyBuckets() {
-  return Object.keys(WEIGHTS).map(function (k) {
-    return { key: k, label: LABELS[k], weight: WEIGHTS[k], score: null, light: 'gray', target: TARGETS[k], metrics: [] };
-  });
+// Age-based retirement goal factor (× annual income), interpolated: 30→1, 40→3, 50→6, 60→8.
+function retFactor(age) {
+  var pts = [[30, 1], [40, 3], [50, 6], [60, 8]];
+  if (age <= 30) return 1;
+  if (age >= 60) return 8;
+  for (var i = 0; i < pts.length - 1; i++) {
+    if (age >= pts[i][0] && age <= pts[i + 1][0]) {
+      var a0 = pts[i][0], f0 = pts[i][1], a1 = pts[i + 1][0], f1 = pts[i + 1][1];
+      return f0 + (f1 - f0) * (age - a0) / (a1 - a0);
+    }
+  }
+  return 3;
 }
 
-function computeSalud(items) {
+function totalsFromItems(items) {
   items = items || [];
   var sum = function (cat, field) { return items.filter(function (i) { return i.category === cat; }).reduce(function (a, i) { return a + num(i[field || 'value']); }, 0); };
   var cnt = function (cat) { return items.filter(function (i) { return i.category === cat; }).length; };
-
-  var I = sum('ingreso'), G = sum('gasto'), C = sum('deuda', 'monthly');
-  var A = sum('ahorro'), V = sum('inversion'), R = sum('retiro'), D = sum('deuda'), S = sum('seguros');
-  var annual = I * 12;
-  var inputs = { I: I, G: G, C: C, A: A, V: V, R: R, D: D, S: S, annual: annual };
-
-  if (I <= 0) {
-    return { overall: null, rango: null, light: 'gray', buckets: emptyBuckets(), inputs: inputs };
-  }
-
-  var surplus = (I - G - C) / I;              // margen libre / ingreso
-  var meses = G > 0 ? A / G : (A > 0 ? 99 : 0); // meses de fondo de emergencia
-  var dti = C / I;                            // deuda/ingreso (cuotas)
-  var gastoRatio = G / I;
-
-  var b = {};
-
-  // Ingresos — superávit + diversificación
-  var i_sup = clamp(surplus / 0.20 * 100);
-  var i_div = clamp(cnt('ingreso') / 3 * 100);
-  b.ingreso = { score: Math.round(0.7 * i_sup + 0.3 * i_div), metrics: [
-    { label: 'Superávit mensual', value: pct(surplus), good: surplus >= 0.20 },
-    { label: 'Fuentes de ingreso', value: String(cnt('ingreso')), good: cnt('ingreso') >= 2 },
-    { label: 'Ingreso mensual', value: cop(I) },
-  ] };
-
-  // Gastos — control del gasto (≤50% ideal, ≥90% crítico)
-  b.gasto = { score: Math.round(clamp((0.9 - gastoRatio) / (0.9 - 0.5) * 100)), metrics: [
-    { label: 'Gasto sobre ingreso', value: pct(gastoRatio), good: gastoRatio <= 0.5 },
-    { label: 'Gasto mensual', value: cop(G) },
-    { label: 'Meta', value: '≤ 50%' },
-  ] };
-
-  // Ahorro — fondo de emergencia + tasa de ahorro
-  var a_f = clamp(meses / 6 * 100);
-  var a_r = clamp(surplus / 0.20 * 100);
-  b.ahorro = { score: Math.round(0.6 * a_f + 0.4 * a_r), metrics: [
-    { label: 'Fondo de emergencia', value: meses.toFixed(1) + ' meses', good: meses >= 6 },
-    { label: 'Tasa de ahorro', value: pct(surplus), good: surplus >= 0.20 },
-    { label: 'Ahorro total', value: cop(A) },
-  ] };
-
-  // Deuda — DTI + carga sobre ingreso anual
-  var ds;
-  if (D === 0 && C === 0) ds = 100;
-  else { var d_dti = clamp((1 - dti / 0.36) * 100), d_bur = clamp((1 - D / annual) * 100); ds = Math.round(0.6 * d_dti + 0.4 * d_bur); }
-  b.deuda = { score: ds, metrics: [
-    { label: 'DTI (cuotas/ingreso)', value: pct(dti), good: dti < 0.36 },
-    { label: 'Deuda vs ingreso anual', value: mult(D, annual), good: D <= annual },
-    { label: 'Saldo de deuda', value: cop(D) },
-  ] };
-
-  // Inversión — crecimiento del patrimonio (2× ingreso anual = 100)
-  b.inversion = { score: Math.round(clamp((V / annual) / 2 * 100)), metrics: [
-    { label: 'Inversión acumulada', value: cop(V) },
-    { label: 'vs ingreso anual', value: mult(V, annual), good: V >= annual },
-    { label: 'Meta', value: '2× ingreso anual' },
-  ] };
-
-  // Seguros — protección (5× ingreso anual = 100)
-  b.seguros = { score: Math.round(clamp((S / annual) / 5 * 100)), metrics: [
-    { label: 'Cobertura total', value: cop(S) },
-    { label: 'vs ingreso anual', value: mult(S, annual), good: S >= annual * 5 },
-    { label: 'Meta', value: '5× ingreso anual' },
-  ] };
-
-  // Retiro — preparación (3× ingreso anual = 100)
-  b.retiro = { score: Math.round(clamp((R / annual) / 3 * 100)), metrics: [
-    { label: 'Ahorro para retiro', value: cop(R) },
-    { label: 'vs ingreso anual', value: mult(R, annual), good: R >= annual },
-    { label: 'Meta', value: '3× ingreso anual' },
-  ] };
-
-  var overall = Math.round(Object.keys(WEIGHTS).reduce(function (a, k) { return a + b[k].score * WEIGHTS[k]; }, 0));
-
-  var buckets = Object.keys(WEIGHTS).map(function (k) {
-    return { key: k, label: LABELS[k], weight: WEIGHTS[k], score: b[k].score, light: lightOf(b[k].score), target: TARGETS[k], metrics: b[k].metrics };
-  });
-
-  return { overall: overall, rango: rangoDe(overall), light: lightOf(overall), buckets: buckets, inputs: inputs };
+  return {
+    I: sum('ingreso'), G: sum('gasto'), C: sum('deuda', 'monthly'),
+    A: sum('ahorro'), V: sum('inversion'), R: sum('retiro'), D: sum('deuda'), S: sum('seguros'),
+    n_ing: cnt('ingreso'),
+  };
 }
 
-module.exports = { computeSalud: computeSalud, rangoDe: rangoDe, lightOf: lightOf };
+// Core score from raw totals (identical to the client simulator).
+function scoreFromTotals(t, age) {
+  var I = t.I, G = t.G, A = t.A, V = t.V, R = t.R, D = t.D, S = t.S;
+  var annual = I * 12;
+  var totalAssets = A + V + R;
+  var netWorth = totalAssets - D;
+  var goalRet = annual * retFactor(age || 35);
+
+  var S1 = I > 0 ? clamp01(A / (6 * I)) : 0;
+  var S2 = I > 0 ? clamp01(((I - G) / I) / 0.20) : 0;
+  var S3 = annual > 0 ? Math.max(1 - D / annual, 0) : (D > 0 ? 0 : 1);
+  var S4 = totalAssets > 0 ? clamp01(netWorth / totalAssets) : (D > 0 ? 0 : 1);
+  var S5 = goalRet > 0 ? clamp01(R / goalRet) : 0;
+  var S6 = annual > 0 ? clamp01(S / (10 * annual)) : 0;
+
+  var raw = 20 * S1 + 15 * S2 + 20 * S3 + 10 * S4 + 20 * S5 + 15 * S6;
+  var overall = I > 0 ? Math.max(1, Math.min(100, round(raw))) : null;
+  return { overall: overall, S1: S1, S2: S2, S3: S3, S4: S4, S5: S5, S6: S6, annual: annual, totalAssets: totalAssets, netWorth: netWorth, goalRet: goalRet };
+}
+
+function computeSalud(items, meta) {
+  var t = totalsFromItems(items);
+  var age = (meta && +meta.age) || 35;
+  var r = scoreFromTotals(t, age);
+  var I = t.I, G = t.G, D = t.D, A = t.A, R = t.R;
+
+  if (r.overall == null) {
+    return {
+      overall: null, rango: null, light: 'gray', age: age,
+      net_worth: r.netWorth, total_assets: r.totalAssets, total_liabilities: D,
+      pillars: null, instruments: null, buckets: null,
+      inputs: { I: t.I, G: t.G, A: t.A, V: t.V, R: t.R, D: t.D, S: t.S, C: t.C, annual: r.annual, goalRet: r.goalRet, age: age },
+    };
+  }
+
+  // Per-bucket (7) display scores — mapped to the pillars per the data model.
+  var expScore = I > 0 ? round(clamp01((0.9 - G / I) / (0.9 - 0.5)) * 100) : 0;
+  var buckets = [
+    { key: 'income', label: 'Ingresos', pillar: 'S2', score: round(r.S2 * 100),
+      formula: 'Capacidad de ahorro = (ingreso − gasto) ÷ ingreso, meta 20%.', target: '≥ 20% de superávit' },
+    { key: 'expenses', label: 'Gastos', pillar: 'S2', score: expScore,
+      formula: 'Control del gasto: gastar ≤ 50% del ingreso es saludable.', target: '≤ 50% del ingreso' },
+    { key: 'savings', label: 'Ahorro', pillar: 'S1', score: round(r.S1 * 100),
+      formula: 'Fondo de emergencia = ahorro ÷ (6 × ingreso mensual).', target: '6 meses de ingreso' },
+    { key: 'debt', label: 'Deuda', pillar: 'S3', score: round(r.S3 * 100),
+      formula: 'Salud de deuda = 1 − (deuda total ÷ ingreso anual).', target: 'Deuda ≤ ingreso anual' },
+    { key: 'investments', label: 'Inversiones', pillar: 'S4', score: round(r.S4 * 100),
+      formula: 'Solvencia = patrimonio neto ÷ activos totales.', target: 'Patrimonio positivo' },
+    { key: 'insurance', label: 'Seguros', pillar: 'S6', score: round(r.S6 * 100),
+      formula: 'Protección = cobertura ÷ (10 × ingreso anual).', target: '10× ingreso anual' },
+    { key: 'retirement', label: 'Retiro', pillar: 'S5', score: round(r.S5 * 100),
+      formula: 'Retiro = ahorro de retiro ÷ meta por edad (edad ' + age + ').', target: (retFactor(age)).toFixed(1) + '× ingreso anual' },
+  ].map(function (b) { b.light = lightOf(b.score); return b; });
+
+  var mesesGasto = G > 0 ? A / G : (A > 0 ? 99 : 0);
+  var savingsRate = I > 0 ? (I - G) / I : 0;
+
+  var instruments = {
+    score: { value: r.overall },
+    // fuel gauge E→F : F = S1 full (6× monthly income). Also months of expenses for the plate.
+    emergency: { frac: clamp01(A / (6 * I)), meses: Math.round(mesesGasto * 10) / 10, target: 6 },
+    // vertical speed indicator: climb (+) saving, descent (−) overspending
+    savings: { rate: savingsRate, frac: clamp01(savingsRate / 0.20) },
+    // engine temperature: debt / annual income, red as →1
+    dti: { frac: r.annual > 0 ? Math.min(D / r.annual, 1.3) : 0, ratio: r.annual > 0 ? D / r.annual : 0 },
+    // compass/arc: % toward age-based retirement target
+    retirement: { frac: clamp01(r.S5), pct: Math.round(r.S5 * 100) },
+  };
+
+  return {
+    overall: r.overall, rango: rangoDe(r.overall), light: lightOf(r.overall), age: age,
+    net_worth: r.netWorth, total_assets: r.totalAssets, total_liabilities: D,
+    pillars: {
+      S1: r.S1, S2: r.S2, S3: r.S3, S4: r.S4, S5: r.S5, S6: r.S6,
+      weights: { S1: 20, S2: 15, S3: 20, S4: 10, S5: 20, S6: 15 },
+    },
+    instruments: instruments,
+    buckets: buckets,
+    inputs: { I: t.I, G: t.G, A: t.A, V: t.V, R: t.R, D: t.D, S: t.S, C: t.C, n_ing: t.n_ing, annual: r.annual, goalRet: r.goalRet, age: age },
+  };
+}
+
+module.exports = { computeSalud: computeSalud, scoreFromTotals: scoreFromTotals, totalsFromItems: totalsFromItems, retFactor: retFactor, rangoDe: rangoDe, lightOf: lightOf };
