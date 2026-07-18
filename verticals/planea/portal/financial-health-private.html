@@ -476,6 +476,11 @@
         '<div><div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Prioridades</div>'+weak.map(function(s){return '<div class="flex justify-between text-[13px] py-1 border-b border-white/5"><span class="text-slate-300">'+s.label+'</span><span class="mono '+bandTxt(s.v)+'">'+Math.round(s.v)+'</span></div>';}).join('')+'</div>'+
       '</div>')+'</section>');
 
+    // Closing cockpit summary (two consoles, stack on mobile)
+    H.push('<section id="fic-cockpit-b" class="reveal">'+card(
+      secHead('','Resumen — Glass Cockpit','Su panorama financiero completo en formato Garmin G1000: dos consolas, PFD y MFD.')+
+      cockpit(m,'b'))+'</section>');
+
     app.innerHTML=H.join('');
     $('gate').classList.add('hidden'); app.classList.remove('hidden');
     var d=new Date(); $('asof').textContent='AS OF '+d.toISOString().slice(0,10);
@@ -558,7 +563,8 @@
     ];
   }
   // Garmin G1000-style financial glass cockpit (instruments driven by the model)
-  function cockpit(m){
+  function cockpit(m,tag){
+    tag=tag||'';
     function avc(v){ return v>=70?'#57e08a':v>=45?'#ffd400':'#ff5c5c'; }
     var nf=m.nfhi, nfc=avc(nf);
     var asT=Math.min(100,nf+20),as1=Math.min(100,nf+10),as3=Math.max(0,nf-10),asB=Math.max(0,nf-20);
@@ -579,92 +585,94 @@
     var wptSvg=wpts.map(function(g,i){ var p=wptXY[i]||wptXY[2]; return '<rect x="'+(p[0]-8)+'" y="'+(p[1]-8)+'" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" transform="rotate(45 '+p[0]+' '+p[1]+')"/><text x="'+(p[0]+14)+'" y="'+(p[1]-4)+'" fill="#fff" font-size="12">'+esc(g.n)+'</text><text x="'+(p[0]+14)+'" y="'+(p[1]+11)+'" fill="#57e08a" font-size="11">'+Math.round(g.p)+'%</text>'; }).join('');
     var cls=nf>=85?'ROBUSTA':nf>=70?'SÓLIDA':nf>=55?'ESTABLE':nf>=40?'FRÁGIL':'CRÍTICA';
 
-    return '<div style="overflow-x:auto" class="rounded-2xl"><svg viewBox="0 0 1600 700" style="width:100%;min-width:940px;height:auto;display:block" font-family="Arial,Helvetica,sans-serif">'+
-    '<defs>'+
-    '<linearGradient id="czb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4d52"/><stop offset=".5" stop-color="#33363b"/><stop offset="1" stop-color="#1f2125"/></linearGradient>'+
-    '<linearGradient id="csky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1273d8"/><stop offset="1" stop-color="#57a8f0"/></linearGradient>'+
-    '<linearGradient id="cgnd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a2b"/><stop offset="1" stop-color="#5e3d1d"/></linearGradient>'+
-    '<radialGradient id="cknob" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#6a6e74"/><stop offset="1" stop-color="#26282c"/></radialGradient>'+
-    '<linearGradient id="cmap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#284d28"/><stop offset="1" stop-color="#1d3a1d"/></linearGradient>'+
-    '</defs>'+
-    // ---- PFD ----
-    '<rect x="20" y="20" width="760" height="660" rx="22" fill="url(#czb)" stroke="#0d0e10" stroke-width="3"/>'+
-    '<rect x="95" y="70" width="610" height="470" rx="6" fill="#000"/>'+
-    '<clipPath id="cpfd"><rect x="95" y="70" width="610" height="470" rx="6"/></clipPath>'+
-    '<g clip-path="url(#cpfd)">'+
-      '<g transform="translate(0 '+dy+')">'+
-        '<rect x="95" y="-140" width="610" height="450" fill="url(#csky)"/>'+
-        '<rect x="95" y="310" width="610" height="470" fill="url(#cgnd)"/>'+
-        '<line x1="95" y1="310" x2="705" y2="310" stroke="#fff" stroke-width="3"/>'+
-        '<g stroke="#fff" stroke-width="2" fill="#fff" font-size="14" text-anchor="middle">'+
-          '<line x1="360" y1="250" x2="440" y2="250"/><text x="345" y="255">10</text><text x="458" y="255">10</text>'+
-          '<line x1="375" y1="280" x2="425" y2="280"/><line x1="375" y1="340" x2="425" y2="340"/>'+
-          '<line x1="360" y1="370" x2="440" y2="370"/></g>'+
+    var sp=tag+'p', sm=tag+'m';
+    function defs(s){ return '<defs>'+
+      '<linearGradient id="czb'+s+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4d52"/><stop offset=".5" stop-color="#33363b"/><stop offset="1" stop-color="#1f2125"/></linearGradient>'+
+      '<linearGradient id="csky'+s+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1273d8"/><stop offset="1" stop-color="#57a8f0"/></linearGradient>'+
+      '<linearGradient id="cgnd'+s+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a2b"/><stop offset="1" stop-color="#5e3d1d"/></linearGradient>'+
+      '<radialGradient id="cknob'+s+'" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#6a6e74"/><stop offset="1" stop-color="#26282c"/></radialGradient>'+
+      '<linearGradient id="cmap'+s+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#284d28"/><stop offset="1" stop-color="#1d3a1d"/></linearGradient>'+
+      '</defs>'; }
+
+    // ---- PFD console (own SVG, viewBox 0..800) ----
+    var pfd='<svg viewBox="0 0 800 700" style="width:100%;height:auto;display:block" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="Panorama financiero PFD">'+defs(sp)+
+      '<rect x="20" y="20" width="760" height="660" rx="22" fill="url(#czb'+sp+')" stroke="#0d0e10" stroke-width="3"/>'+
+      '<rect x="95" y="70" width="610" height="470" rx="6" fill="#000"/>'+
+      '<clipPath id="cpfd'+sp+'"><rect x="95" y="70" width="610" height="470" rx="6"/></clipPath>'+
+      '<g clip-path="url(#cpfd'+sp+')">'+
+        '<g transform="translate(0 '+dy+')">'+
+          '<rect x="95" y="-140" width="610" height="450" fill="url(#csky'+sp+')"/>'+
+          '<rect x="95" y="310" width="610" height="470" fill="url(#cgnd'+sp+')"/>'+
+          '<line x1="95" y1="310" x2="705" y2="310" stroke="#fff" stroke-width="3"/>'+
+          '<g stroke="#fff" stroke-width="2" fill="#fff" font-size="14" text-anchor="middle">'+
+            '<line x1="360" y1="250" x2="440" y2="250"/><text x="345" y="255">10</text><text x="458" y="255">10</text>'+
+            '<line x1="375" y1="280" x2="425" y2="280"/><line x1="375" y1="340" x2="425" y2="340"/>'+
+            '<line x1="360" y1="370" x2="440" y2="370"/></g>'+
+        '</g>'+
+        '<g stroke="#ffd400" stroke-width="5" fill="none"><path d="M 330 310 L 375 310 L 390 325"/><path d="M 470 310 L 425 310 L 410 325"/></g>'+
+        '<rect x="396" y="306" width="8" height="8" fill="#ffd400"/>'+
+        '<g stroke="#fff" stroke-width="2" fill="none"><path d="M 310 150 A 105 105 0 0 1 490 150"/><line x1="400" y1="102" x2="400" y2="88"/><line x1="345" y1="117" x2="338" y2="104"/><line x1="455" y1="117" x2="462" y2="104"/></g>'+
+        '<path d="M 400 108 L 392 122 L 408 122 Z" fill="#fff"/>'+
+        '<rect x="110" y="120" width="80" height="380" fill="#3a3f45" opacity=".85"/>'+
+        '<g fill="#fff" font-size="16" text-anchor="end"><text x="182" y="150">'+asT+'</text><text x="182" y="215">'+as1+'</text><text x="182" y="410">'+as3+'</text><text x="182" y="475">'+asB+'</text></g>'+
+        '<rect x="106" y="322" width="88" height="36" fill="#000" stroke="'+nfc+'" stroke-width="3"/><path d="M 194 322 L 210 340 L 194 358 Z" fill="#000" stroke="'+nfc+'" stroke-width="3"/>'+
+        '<text x="150" y="348" fill="'+nfc+'" font-size="24" font-weight="bold" text-anchor="middle">'+nf+'</text>'+
+        '<text x="150" y="112" fill="#9fd3ff" font-size="13" text-anchor="middle">NFHI</text>'+
+        '<rect x="610" y="120" width="84" height="380" fill="#3a3f45" opacity=".85"/>'+
+        '<g fill="#fff" font-size="14" text-anchor="start"><text x="616" y="150">'+altT+'</text><text x="616" y="215">'+alt1+'</text><text x="616" y="410">'+alt3+'</text><text x="616" y="475">'+altB+'</text></g>'+
+        '<rect x="606" y="322" width="92" height="36" fill="#000" stroke="#4dc3ff" stroke-width="2"/><path d="M 606 322 L 590 340 L 606 358 Z" fill="#000" stroke="#4dc3ff" stroke-width="2"/>'+
+        '<text x="654" y="347" fill="#fff" font-size="18" font-weight="bold" text-anchor="middle">'+copS(nw)+'</text>'+
+        '<text x="652" y="112" fill="#9fd3ff" font-size="13" text-anchor="middle">PATRIMONIO</text>'+
+        '<rect x="610" y="74" width="84" height="24" fill="#000" stroke="#4dc3ff" stroke-width="1.5"/><text x="652" y="92" fill="#4dc3ff" font-size="13" text-anchor="middle">'+copS(m.mc?m.mc.target:nw)+'</text>'+
+        '<g transform="translate(400,545)"><circle r="118" fill="#22262b" opacity=".9"/><circle r="100" fill="none" stroke="#fff" stroke-width="2"/>'+
+          '<g stroke="#fff" stroke-width="2" fill="#fff" font-size="15" text-anchor="middle"><line x1="0" y1="-100" x2="0" y2="-86"/><text x="0" y="-68">N</text><line x1="100" y1="0" x2="86" y2="0"/><text x="72" y="6">E</text><line x1="-100" y1="0" x2="-86" y2="0"/><text x="-72" y="6">W</text></g>'+
+          '<g stroke="#e100d9" stroke-width="5"><line x1="0" y1="-92" x2="0" y2="-30"/><line x1="0" y1="30" x2="0" y2="92"/></g><path d="M 0 -92 L -9 -74 L 9 -74 Z" fill="#e100d9"/><path d="M 0 -14 L 5 4 L 0 0 L -5 4 Z" fill="#fff"/></g>'+
+        '<rect x="356" y="418" width="88" height="26" fill="#000" stroke="#fff" stroke-width="2"/><text x="400" y="438" fill="#fff" font-size="15" font-weight="bold" text-anchor="middle">RIESGO '+Math.round(m.riskScore)+'</text>'+
+        '<rect x="95" y="70" width="610" height="26" fill="#101418"/>'+
+        '<text x="118" y="88" fill="#4dc3ff" font-size="14">PLANEA FIC</text><text x="250" y="88" fill="#7cff7c" font-size="14">NFHI '+nf+'</text><text x="380" y="88" fill="#fff" font-size="14">SALUD '+cls+'</text><text x="592" y="88" fill="#4dc3ff" font-size="14">CONF '+m.confidence+'%</text>'+
       '</g>'+
-      '<g stroke="#ffd400" stroke-width="5" fill="none"><path d="M 330 310 L 375 310 L 390 325"/><path d="M 470 310 L 425 310 L 410 325"/></g>'+
-      '<rect x="396" y="306" width="8" height="8" fill="#ffd400"/>'+
-      // roll
-      '<g stroke="#fff" stroke-width="2" fill="none"><path d="M 310 150 A 105 105 0 0 1 490 150"/><line x1="400" y1="102" x2="400" y2="88"/><line x1="345" y1="117" x2="338" y2="104"/><line x1="455" y1="117" x2="462" y2="104"/></g>'+
-      '<path d="M 400 108 L 392 122 L 408 122 Z" fill="#fff"/>'+
-      // airspeed = NFHI
-      '<rect x="110" y="120" width="80" height="380" fill="#3a3f45" opacity=".85"/>'+
-      '<g fill="#fff" font-size="16" text-anchor="end">'+
-        '<text x="182" y="150">'+asT+'</text><text x="182" y="215">'+as1+'</text><text x="182" y="410">'+as3+'</text><text x="182" y="475">'+asB+'</text></g>'+
-      '<rect x="106" y="322" width="88" height="36" fill="#000" stroke="'+nfc+'" stroke-width="3"/><path d="M 194 322 L 210 340 L 194 358 Z" fill="#000" stroke="'+nfc+'" stroke-width="3"/>'+
-      '<text x="150" y="348" fill="'+nfc+'" font-size="24" font-weight="bold" text-anchor="middle">'+nf+'</text>'+
-      '<text x="150" y="112" fill="#9fd3ff" font-size="13" text-anchor="middle">NFHI</text>'+
-      // altitude = net worth
-      '<rect x="610" y="120" width="84" height="380" fill="#3a3f45" opacity=".85"/>'+
-      '<g fill="#fff" font-size="14" text-anchor="start"><text x="616" y="150">'+altT+'</text><text x="616" y="215">'+alt1+'</text><text x="616" y="410">'+alt3+'</text><text x="616" y="475">'+altB+'</text></g>'+
-      '<rect x="606" y="322" width="92" height="36" fill="#000" stroke="#4dc3ff" stroke-width="2"/><path d="M 606 322 L 590 340 L 606 358 Z" fill="#000" stroke="#4dc3ff" stroke-width="2"/>'+
-      '<text x="654" y="347" fill="#fff" font-size="18" font-weight="bold" text-anchor="middle">'+copS(nw)+'</text>'+
-      '<text x="652" y="112" fill="#9fd3ff" font-size="13" text-anchor="middle">PATRIMONIO</text>'+
-      '<rect x="610" y="74" width="84" height="24" fill="#000" stroke="#4dc3ff" stroke-width="1.5"/><text x="652" y="92" fill="#4dc3ff" font-size="13" text-anchor="middle">'+copS(m.mc?m.mc.target:nw)+'</text>'+
-      // HSI = riesgo
-      '<g transform="translate(400,545)"><circle r="118" fill="#22262b" opacity=".9"/><circle r="100" fill="none" stroke="#fff" stroke-width="2"/>'+
-        '<g stroke="#fff" stroke-width="2" fill="#fff" font-size="15" text-anchor="middle"><line x1="0" y1="-100" x2="0" y2="-86"/><text x="0" y="-68">N</text><line x1="100" y1="0" x2="86" y2="0"/><text x="72" y="6">E</text><line x1="-100" y1="0" x2="-86" y2="0"/><text x="-72" y="6">W</text></g>'+
-        '<g stroke="#e100d9" stroke-width="5"><line x1="0" y1="-92" x2="0" y2="-30"/><line x1="0" y1="30" x2="0" y2="92"/></g><path d="M 0 -92 L -9 -74 L 9 -74 Z" fill="#e100d9"/><path d="M 0 -14 L 5 4 L 0 0 L -5 4 Z" fill="#fff"/></g>'+
-      '<rect x="356" y="418" width="88" height="26" fill="#000" stroke="#fff" stroke-width="2"/><text x="400" y="438" fill="#fff" font-size="15" font-weight="bold" text-anchor="middle">RIESGO '+Math.round(m.riskScore)+'</text>'+
-      // annunciator
-      '<rect x="95" y="70" width="610" height="26" fill="#101418"/>'+
-      '<text x="118" y="88" fill="#4dc3ff" font-size="14">PLANEA FIC</text><text x="250" y="88" fill="#7cff7c" font-size="14">NFHI '+nf+'</text><text x="380" y="88" fill="#fff" font-size="14">SALUD '+cls+'</text><text x="592" y="88" fill="#4dc3ff" font-size="14">CONF '+m.confidence+'%</text>'+
-    '</g>'+
-    '<text x="400" y="52" fill="#d7dade" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="3">PANORAMA FINANCIERO</text>'+
-    // knobs (decor)
-    '<circle cx="57" cy="140" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="57" cy="330" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="57" cy="520" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/>'+
-    '<circle cx="743" cy="140" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="743" cy="380" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/>'+
-    // ---- MFD ----
-    '<rect x="820" y="20" width="760" height="660" rx="22" fill="url(#czb)" stroke="#0d0e10" stroke-width="3"/>'+
-    '<rect x="895" y="70" width="610" height="470" rx="6" fill="#000"/>'+
-    '<clipPath id="cmfd"><rect x="895" y="70" width="610" height="470" rx="6"/></clipPath>'+
-    '<g clip-path="url(#cmfd)">'+
-      '<rect x="1040" y="96" width="465" height="444" fill="url(#cmap)"/>'+
-      '<path d="M 1350 96 Q 1300 200 1360 300 Q 1420 380 1380 540 L 1505 540 L 1505 96 Z" fill="#123a5e"/>'+
-      '<path d="M 1060 480 Q 1120 420 1180 470 Q 1230 500 1290 460" fill="none" stroke="#3f6b3f" stroke-width="3"/>'+
-      '<path d="M 1120 500 L 1230 330 L 1400 220" fill="none" stroke="#e100d9" stroke-width="4"/>'+
-      wptSvg+
-      '<g transform="translate(1120,500) rotate(33)"><path d="M 0 -14 L 10 10 L 0 4 L -10 10 Z" fill="#fff" stroke="#000" stroke-width="1"/></g>'+
-      '<circle cx="1120" cy="500" r="150" fill="none" stroke="#8fa2b5" stroke-width="1.5" stroke-dasharray="5 6"/><text x="1236" y="440" fill="#8fa2b5" font-size="12">METAS</text>'+
-      // EIS = motor financiero
-      '<rect x="895" y="96" width="145" height="444" fill="#14171b"/>'+
-      '<text x="967" y="118" fill="#d7dade" font-size="12" font-weight="bold" text-anchor="middle">MOTOR</text>'+
-      '<g font-size="12" fill="#c9ccd1">'+
-        '<g transform="translate(967,182)"><path d="'+arc(0,0,44,225,495)+'" fill="none" stroke="#3a3f45" stroke-width="9"/><path d="'+rpmArc+'" fill="none" stroke="#57e08a" stroke-width="9"/><line x1="0" y1="0" x2="'+rpm[0].toFixed(0)+'" y2="'+rpm[1].toFixed(0)+'" stroke="#fff" stroke-width="3"/><text y="44" text-anchor="middle" fill="#fff">'+pct(m.savingsRate)+' AHORRO</text></g>'+
-        '<text x="907" y="266">FLUJO/MES</text><rect x="907" y="274" width="120" height="10" fill="#3a3f45"/><rect x="907" y="274" width="'+flowW+'" height="10" fill="'+avc(m.subs.cashflow)+'"/><text x="1027" y="300" text-anchor="end" fill="#fff">'+copS(m.surplusM)+'</text>'+
-        '<text x="907" y="330">LIQUIDEZ</text><rect x="907" y="338" width="120" height="10" fill="#3a3f45"/><rect x="907" y="338" width="'+liqW+'" height="10" fill="'+avc(m.subs.liquidity)+'"/>'+
-        '<text x="907" y="374">DEUDA</text><rect x="907" y="382" width="120" height="10" fill="#3a3f45"/><rect x="907" y="382" width="'+tempW+'" height="10" fill="'+tempC+'"/>'+
-        '<text x="907" y="420">RIESGO</text><text x="1027" y="420" text-anchor="end" fill="#fff">'+Math.round(m.riskScore)+'</text>'+
-        '<text x="907" y="444">PRONÓST</text><text x="1027" y="444" text-anchor="end" fill="#fff">'+Math.round(m.subs.forecast)+'</text>'+
-        '<text x="907" y="482">FONDO (MESES)</text><rect x="907" y="490" width="55" height="10" fill="#3a3f45"/><rect x="907" y="490" width="'+fuelL+'" height="10" fill="'+avc(clamp01(m.monthsExp/6)*100)+'"/><rect x="972" y="490" width="55" height="10" fill="#3a3f45"/><rect x="972" y="490" width="'+fuelR+'" height="10" fill="#57e08a"/>'+
-        '<text x="934" y="518" text-anchor="middle" fill="#fff">'+mesesL+'</text><text x="999" y="518" text-anchor="middle" fill="#fff">'+mesesR+'</text>'+
+      '<text x="400" y="52" fill="#d7dade" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="3">PANORAMA FINANCIERO</text>'+
+      '<circle cx="57" cy="140" r="22" fill="url(#cknob'+sp+')" stroke="#000" stroke-width="2"/><circle cx="57" cy="330" r="22" fill="url(#cknob'+sp+')" stroke="#000" stroke-width="2"/><circle cx="57" cy="520" r="22" fill="url(#cknob'+sp+')" stroke="#000" stroke-width="2"/>'+
+      '<circle cx="743" cy="140" r="22" fill="url(#cknob'+sp+')" stroke="#000" stroke-width="2"/><circle cx="743" cy="380" r="22" fill="url(#cknob'+sp+')" stroke="#000" stroke-width="2"/>'+
+      '</svg>';
+
+    // ---- MFD console (own SVG, viewBox 810..1590) ----
+    var mfd='<svg viewBox="810 0 780 700" style="width:100%;height:auto;display:block" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="Sistemas financieros MFD">'+defs(sm)+
+      '<rect x="820" y="20" width="760" height="660" rx="22" fill="url(#czb'+sm+')" stroke="#0d0e10" stroke-width="3"/>'+
+      '<rect x="895" y="70" width="610" height="470" rx="6" fill="#000"/>'+
+      '<clipPath id="cmfd'+sm+'"><rect x="895" y="70" width="610" height="470" rx="6"/></clipPath>'+
+      '<g clip-path="url(#cmfd'+sm+')">'+
+        '<rect x="1040" y="96" width="465" height="444" fill="url(#cmap'+sm+')"/>'+
+        '<path d="M 1350 96 Q 1300 200 1360 300 Q 1420 380 1380 540 L 1505 540 L 1505 96 Z" fill="#123a5e"/>'+
+        '<path d="M 1060 480 Q 1120 420 1180 470 Q 1230 500 1290 460" fill="none" stroke="#3f6b3f" stroke-width="3"/>'+
+        '<path d="M 1120 500 L 1230 330 L 1400 220" fill="none" stroke="#e100d9" stroke-width="4"/>'+
+        wptSvg+
+        '<g transform="translate(1120,500) rotate(33)"><path d="M 0 -14 L 10 10 L 0 4 L -10 10 Z" fill="#fff" stroke="#000" stroke-width="1"/></g>'+
+        '<circle cx="1120" cy="500" r="150" fill="none" stroke="#8fa2b5" stroke-width="1.5" stroke-dasharray="5 6"/><text x="1236" y="440" fill="#8fa2b5" font-size="12">METAS</text>'+
+        '<rect x="895" y="96" width="145" height="444" fill="#14171b"/>'+
+        '<text x="967" y="118" fill="#d7dade" font-size="12" font-weight="bold" text-anchor="middle">MOTOR</text>'+
+        '<g font-size="12" fill="#c9ccd1">'+
+          '<g transform="translate(967,182)"><path d="'+arc(0,0,44,225,495)+'" fill="none" stroke="#3a3f45" stroke-width="9"/><path d="'+rpmArc+'" fill="none" stroke="#57e08a" stroke-width="9"/><line x1="0" y1="0" x2="'+rpm[0].toFixed(0)+'" y2="'+rpm[1].toFixed(0)+'" stroke="#fff" stroke-width="3"/><text y="44" text-anchor="middle" fill="#fff">'+pct(m.savingsRate)+' AHORRO</text></g>'+
+          '<text x="907" y="266">FLUJO/MES</text><rect x="907" y="274" width="120" height="10" fill="#3a3f45"/><rect x="907" y="274" width="'+flowW+'" height="10" fill="'+avc(m.subs.cashflow)+'"/><text x="1027" y="300" text-anchor="end" fill="#fff">'+copS(m.surplusM)+'</text>'+
+          '<text x="907" y="330">LIQUIDEZ</text><rect x="907" y="338" width="120" height="10" fill="#3a3f45"/><rect x="907" y="338" width="'+liqW+'" height="10" fill="'+avc(m.subs.liquidity)+'"/>'+
+          '<text x="907" y="374">DEUDA</text><rect x="907" y="382" width="120" height="10" fill="#3a3f45"/><rect x="907" y="382" width="'+tempW+'" height="10" fill="'+tempC+'"/>'+
+          '<text x="907" y="420">RIESGO</text><text x="1027" y="420" text-anchor="end" fill="#fff">'+Math.round(m.riskScore)+'</text>'+
+          '<text x="907" y="444">PRONÓST</text><text x="1027" y="444" text-anchor="end" fill="#fff">'+Math.round(m.subs.forecast)+'</text>'+
+          '<text x="907" y="482">FONDO (MESES)</text><rect x="907" y="490" width="55" height="10" fill="#3a3f45"/><rect x="907" y="490" width="'+fuelL+'" height="10" fill="'+avc(clamp01(m.monthsExp/6)*100)+'"/><rect x="972" y="490" width="55" height="10" fill="#3a3f45"/><rect x="972" y="490" width="'+fuelR+'" height="10" fill="#57e08a"/>'+
+          '<text x="934" y="518" text-anchor="middle" fill="#fff">'+mesesL+'</text><text x="999" y="518" text-anchor="middle" fill="#fff">'+mesesR+'</text>'+
+        '</g>'+
+        '<rect x="895" y="70" width="610" height="26" fill="#101418"/>'+
+        '<g fill="#e100d9" font-size="14"><text x="1055" y="88">AHORRO '+copS(Math.max(m.surplusM,0))+'</text><text x="1200" y="88">META '+esc(topG.n)+'</text><text x="1340" y="88">PROG '+Math.round(topG.p)+'%</text><text x="1440" y="88">ETE '+ete+'</text></g>'+
+        '<text x="920" y="88" fill="#4dc3ff" font-size="14">METAS</text>'+
       '</g>'+
-      '<rect x="895" y="70" width="610" height="26" fill="#101418"/>'+
-      '<g fill="#e100d9" font-size="14"><text x="1055" y="88">AHORRO '+copS(Math.max(m.surplusM,0))+'</text><text x="1200" y="88">META '+esc(topG.n)+'</text><text x="1340" y="88">PROG '+Math.round(topG.p)+'%</text><text x="1440" y="88">ETE '+ete+'</text></g>'+
-      '<text x="920" y="88" fill="#4dc3ff" font-size="14">METAS</text>'+
-    '</g>'+
-    '<text x="1200" y="52" fill="#d7dade" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="3">SISTEMAS FINANCIEROS</text>'+
-    '<circle cx="857" cy="140" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="857" cy="380" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="1543" cy="140" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/><circle cx="1543" cy="380" r="22" fill="url(#cknob)" stroke="#000" stroke-width="2"/>'+
-    '</svg></div>'+
+      '<text x="1200" y="52" fill="#d7dade" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="3">SISTEMAS FINANCIEROS</text>'+
+      '<circle cx="857" cy="140" r="22" fill="url(#cknob'+sm+')" stroke="#000" stroke-width="2"/><circle cx="857" cy="380" r="22" fill="url(#cknob'+sm+')" stroke="#000" stroke-width="2"/><circle cx="1543" cy="140" r="22" fill="url(#cknob'+sm+')" stroke="#000" stroke-width="2"/><circle cx="1543" cy="380" r="22" fill="url(#cknob'+sm+')" stroke="#000" stroke-width="2"/>'+
+      '</svg>';
+
+    return '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">'+
+      '<div class="rounded-2xl overflow-hidden" style="background:#0a0c10">'+pfd+'</div>'+
+      '<div class="rounded-2xl overflow-hidden" style="background:#0a0c10">'+mfd+'</div>'+
+    '</div>'+
     '<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 justify-center text-[10.5px] text-slate-500">'+
       '<span><b class="text-slate-300">Velocidad</b> = NFHI</span><span><b class="text-slate-300">Altitud</b> = Patrimonio</span><span><b class="text-slate-300">Horizonte</b> = Flujo de caja</span><span><b class="text-slate-300">RPM</b> = Tasa de ahorro</span><span><b class="text-slate-300">Combustible</b> = Fondo de emergencia</span><span><b class="text-slate-300">Temp</b> = Deuda</span><span><b class="text-slate-300">Plan de vuelo</b> = Metas</span>'+
     '</div>';
@@ -672,7 +680,7 @@
   function hero(m){
     var cls=m.nfhi>=85?'robusta':m.nfhi>=70?'sólida':m.nfhi>=55?'estable':m.nfhi>=40?'frágil':'crítica';
     return '<section id="fic-hero" class="reveal"><div class="glass p-4 sm:p-6 relative overflow-hidden">'+
-      cockpit(m)+
+      cockpit(m,'h')+
       '<div class="text-center mt-6">'+
       '<div class="horb" id="voxorb"><div class="ring"></div><div class="ring r2"></div><div class="pulse"></div><div class="core"></div>'+
       '<div class="glyph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></div></div>'+
