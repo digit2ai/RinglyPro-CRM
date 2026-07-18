@@ -384,15 +384,16 @@
   }
 
   // Onboarding is mandatory: a logged-in user who hasn't done the diagnostic is
-  // sent into the survey before seeing the dashboard (no matter how they signed
-  // up or what's cached). Only from /inicio, so the survey page itself is exempt.
-  function onInicio() { return /\/inicio\/?$/.test(location.pathname); }
+  // sent into the survey before seeing ANY dashboard page (no matter how they
+  // signed up or what's cached). The survey page itself never loads this script,
+  // so it's naturally exempt (guard is defensive).
+  function notOnSurvey() { return !/\/diagnostico\/?$/.test(location.pathname); }
 
   function boot() {
     // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
     if (ourSession()) {
       buildProfileFromBackend().then(function (prof) {
-        if (prof.sin_diagnostico && onInicio()) {
+        if (prof.sin_diagnostico && notOnSurvey()) {
           location.replace('/planea/portal/diagnostico?onboarding=1');
           return;
         }

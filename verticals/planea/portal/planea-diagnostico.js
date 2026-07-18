@@ -351,6 +351,9 @@
         var pid = (rows && rows[0] && rows[0].id) || u.id;
         PlaneaSB.post('persons_score_history', { person_id: pid, scored_at: entry.timestamp, score_data: entry }).catch(function () {});
         autoCreateFirstMeta(pid, rec, res); // the "primera meta" generated before any interaction
+        // Onboarding complete → unlock the rest of the nav.
+        try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
+        try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
       })
       .catch(function (e) {
         var el = document.getElementById('dg-saved'); if (el) { el.textContent = 'No se pudo guardar el puntaje (revisa tu sesión).'; el.className = 'dg-saved warn'; }

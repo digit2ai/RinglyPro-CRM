@@ -38,6 +38,13 @@
   var SBK = 'sb_publishable_0dMP5Pof56t9H4fyCNJn9Q_NKGuorXc';
   var LS_MODULES = 'planea-modules';
 
+  // ── Onboarding lock ─────────────────────────────────────────────────────────
+  // Until a logged-in user completes the survey (Mi Puntaje), every nav link is
+  // locked EXCEPT 'diagnostico' (Mi Puntaje), so they can't wander off. Unlocked
+  // automatically when the survey saves (planea:onboarded event / DB confirm).
+  function ourCookie() { try { return /(?:^|;\s*)planea_user=/.test(document.cookie || ''); } catch (e) { return false; } }
+  function onboardedFlag() { try { return localStorage.getItem('planea-onboarded') === '1'; } catch (e) { return false; } }
+
   function mSession() {
     try {
       var key = null;
@@ -106,6 +113,13 @@
     try { if (localStorage.getItem('planea-theme') === 'light') document.body.classList.add('light'); } catch (e) {}
     var isLight = document.body.classList.contains('light');
 
+    // Onboarding lock state (mutable — flipped when the survey completes)
+    var locked = ourCookie() && !onboardedFlag();
+    var lockStyle = document.createElement('style');
+    lockStyle.textContent = '.dnav a.locked{opacity:.36;pointer-events:none} .dnav a.locked .lockic{margin-left:auto;width:15px;height:15px;flex-shrink:0;opacity:.85}';
+    document.head.appendChild(lockStyle);
+    var LOCK_IC = '<svg class="lockic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="11" width="15" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
     // Top bar
     var top = document.createElement('div');
     top.className = 'topbar';
@@ -121,9 +135,12 @@
     function navHtml() {
       return ITEMS.filter(function (it) { return !it.module || isActive(it.k); }).map(function (it) {
         var on = (it.k === current) ? ' on' : '';
-        var href = it.action === 'maya' ? '#' : BASE + it.k;
+        var disabled = locked && it.k !== 'diagnostico';
+        var href = disabled ? '#' : (it.action === 'maya' ? '#' : BASE + it.k);
         var plus = it.plus ? '<span class="plus">+</span>' : '';
-        return '<a href="' + href + '"' + (it.action ? ' data-action="' + it.action + '"' : '') + ' class="' + on.trim() + '">' + svg(it.icon) + it.label + plus + '</a>';
+        var cls = (on + (disabled ? ' locked' : '')).trim();
+        var attrs = disabled ? ' aria-disabled="true" tabindex="-1"' : (it.action ? ' data-action="' + it.action + '"' : '');
+        return '<a href="' + href + '"' + attrs + ' class="' + cls + '">' + svg(it.icon) + it.label + plus + (disabled ? LOCK_IC : '') + '</a>';
       }).join('');
     }
     d.innerHTML =
@@ -175,6 +192,29 @@
     function renderNav() { if (dnavEl) dnavEl.innerHTML = navHtml(); }
     window.addEventListener('planea:modules', renderNav);
     syncModulesFromDB(); // pull the authoritative set from the DB, then re-render via event
+
+    // ── Apply / release the onboarding lock ──
+    function applyLock(v) {
+      locked = v; renderNav();
+      var addb = document.getElementById('pl-add');
+      if (addb) { addb.style.opacity = v ? '.4' : ''; addb.style.pointerEvents = v ? 'none' : ''; }
+    }
+    applyLock(locked); // reflect initial state on the add-module button
+    // Confirm against our backend: if the survey is already done, unlock.
+    if (ourCookie()) {
+      fetch('/planea/api/v1/me/profile', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var done = !!(data && data.score_data && data.score_data.score != null);
+          try { done ? localStorage.setItem('planea-onboarded', '1') : localStorage.removeItem('planea-onboarded'); } catch (e) {}
+          applyLock(ourCookie() && !done);
+        }).catch(function () {});
+    }
+    // Unlock live the moment the survey is completed (fired by planea-diagnostico.js).
+    window.addEventListener('planea:onboarded', function () {
+      try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
+      applyLock(false);
+    });
     // Logout: clear the Supabase session + local tokens, back to login.
     document.getElementById('pl-logout').addEventListener('click', function () {
       try {
