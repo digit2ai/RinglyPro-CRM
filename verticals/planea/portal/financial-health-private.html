@@ -295,7 +295,7 @@
             metric('Confianza del modelo', m.confidence+'%', m.confidence>=70?'datos completos':'faltan datos', m.confidence>=70?'text-pos':'text-warn')+
             metric('Clasificación', cls, 'banda '+(m.nfhi>=70?'verde':m.nfhi>=45?'ámbar':'roja'), clsCol)+
           '</div>'+
-          '<div class="mt-4"><canvas id="ch-nfhi-radar" height="150"></canvas></div>'+
+          '<div class="mt-4" style="position:relative;height:210px"><canvas id="ch-nfhi-radar"></canvas></div>'+
         '</div>'+
       '</div>')+'</section>');
 
@@ -309,7 +309,7 @@
         '</div>'+ barRow('Índice de liquidez',m.subs.liquidity)+
         '<div class="text-[12px] text-slate-500 mt-2">Un fondo de 6 meses de gastos es el estándar CFP. Actualmente cubres '+(m.monthsExp>=99?'más de 6':m.monthsExp.toFixed(1))+' meses.</div>')+
       card(secHead('03','Cash Flow Intelligence','Entrada vs. salida y tu superávit real.')+
-        '<canvas id="ch-flow" height="150"></canvas>'+
+        '<div style="position:relative;height:200px"><canvas id="ch-flow"></canvas></div>'+
         '<div class="grid grid-cols-3 gap-3 mt-4">'+
           metric('Superávit', cop(m.surplusM)+'/m', 'ingreso − gasto − deuda', m.surplusM>=0?'text-pos':'text-neg')+
           metric('Tasa de ahorro', pct(m.savingsRate), 'meta 20%', m.savingsRate>=0.2?'text-pos':'text-warn')+
@@ -329,7 +329,7 @@
         '<div class="text-[12px] text-slate-500 mt-2">Servicio de deuda mensual: '+cop(m.C)+'. '+(m.dti>0.36?'Tu DTI supera el 36% recomendado; prioriza amortizar.':'Tu DTI está dentro del rango saludable.')+'</div>')+
       card(secHead('05','Asset Intelligence','Composición y concentración de tu patrimonio.')+
         '<div class="grid grid-cols-[130px,1fr] gap-4 items-center">'+
-          '<canvas id="ch-alloc" height="130"></canvas>'+
+          '<div style="position:relative;height:150px"><canvas id="ch-alloc"></canvas></div>'+
           '<div>'+
             '<div class="flex justify-between text-[12.5px] py-1 border-b border-white/5"><span class="text-slate-400">Ahorro líquido</span><span class="mono">'+cop(m.A)+'</span></div>'+
             '<div class="flex justify-between text-[12.5px] py-1 border-b border-white/5"><span class="text-slate-400">Inversiones</span><span class="mono">'+cop(m.V)+'</span></div>'+
@@ -353,7 +353,7 @@
     }
     H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
       card(secHead('06','Savings Intelligence','Ritmo de ahorro y adecuación de tu fondo.')+
-        '<canvas id="ch-savings" height="150"></canvas>'+
+        '<div style="position:relative;height:200px"><canvas id="ch-savings"></canvas></div>'+
         '<div class="grid grid-cols-2 gap-3 mt-4">'+
           metric('Fondo de emergencia', pct(clamp01(m.monthsExp/6)), 'de la meta de 6 meses', m.monthsExp>=6?'text-pos':'text-warn')+
           metric('Ahorro anualizado', cop(Math.max(m.surplusM,0)*12), 'si mantienes el ritmo', 'text-pos')+
@@ -366,7 +366,7 @@
       secHead('08','Monte Carlo Simulation','400 trayectorias de tu patrimonio a 10 años (retorno 7% ± 12% anual sobre lo invertido, más tu superávit mensual real).',
         '<span class="chip '+(m.mc.success>=0.7?'text-pos':m.mc.success>=0.4?'text-warn':'text-neg')+'" style="border-color:currentColor">'+pct(m.mc.success)+' prob. de meta</span>')+
       '<div class="grid lg:grid-cols-[1fr,260px] gap-5 items-center">'+
-        '<canvas id="ch-mc" height="150"></canvas>'+
+        '<div style="position:relative;height:220px"><canvas id="ch-mc"></canvas></div>'+
         '<div class="space-y-3">'+
           metric('Percentil 90 (optimista)', cop(m.mc.p90), 'a 10 años', 'text-pos')+
           metric('Percentil 50 (mediana)', cop(m.mc.p50), 'escenario central', 'text-accent')+
@@ -412,7 +412,7 @@
     H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
       card(secHead('12','Financial Concentration','Curva de Lorenz y coeficiente de Gini de tus activos.')+
         '<div class="grid grid-cols-[1fr,150px] gap-4 items-center">'+
-          '<canvas id="ch-lorenz" height="150"></canvas>'+
+          '<div style="position:relative;height:180px"><canvas id="ch-lorenz"></canvas></div>'+
           '<div>'+metric('Gini de activos', m.giniAssets.toFixed(3), m.giniAssets>0.6?'alta concentración':m.giniAssets>0.4?'moderada':'diversificado', m.giniAssets>0.6?'text-neg':m.giniAssets>0.4?'text-warn':'text-pos')+
           '<div class="text-[11.5px] text-slate-500 mt-2">0 = perfectamente distribuido · 1 = todo en un solo activo. La diversificación reduce riesgo idiosincrático.</div></div></div>')+
       card(secHead('13','Behavioral Analysis','Disciplina y consistencia derivadas de tu historial.')+
@@ -430,7 +430,7 @@
     H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
       card(secHead('14','Forecast Engine','Proyección de patrimonio a 12 meses.',
         '<span class="chip text-slate-400">'+esc(m.fc.method.split(' ')[0])+' · conf. '+m.fc.conf+'</span>')+
-        '<canvas id="ch-fc" height="150"></canvas>'+
+        '<div style="position:relative;height:200px"><canvas id="ch-fc"></canvas></div>'+
         '<div class="text-[11.5px] text-slate-500 mt-2">Método: '+esc(m.fc.method)+'. Ritmo estimado: '+cop(m.fc.monthly)+'/mes. Proxy de ARIMA/Prophet/LSTM sobre tus datos.</div>')+
       card(secHead('15','Anomaly Detection','Distancia de Mahalanobis sobre tu historial ingreso-gasto.')+anomHtml)+
     '</section>');
