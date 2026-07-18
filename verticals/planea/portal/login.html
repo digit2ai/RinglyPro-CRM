@@ -43,6 +43,12 @@
 <script>
 (function(){
   var API='/planea/api/v1/auth/login';
+  // Optional ?next= return path (must be a same-app /planea path — no open redirect).
+  function nextPath(){
+    try{ var n=new URLSearchParams(location.search).get('next'); if(n && /^\/planea\//.test(n)) return n; }catch(e){}
+    return '/planea/portal/inicio';
+  }
+  var DEST=nextPath();
   var f=document.getElementById('f'), msg=document.getElementById('msg'), go=document.getElementById('go');
   function show(t,ok){ msg.textContent=t; msg.className='msg '+(ok?'ok':'err'); }
   f.addEventListener('submit',function(e){
@@ -54,7 +60,7 @@
       .then(function(res){
         if(!res.ok){ show(res.j.error||'No se pudo iniciar sesión.',false); go.disabled=false; go.textContent='Ingresar'; return; }
         show('Listo. Entrando…',true);
-        location.href='/planea/portal/inicio';
+        location.href=DEST;
       })
       .catch(function(){ show('Error de conexión. Intenta de nuevo.',false); go.disabled=false; go.textContent='Ingresar'; });
   });

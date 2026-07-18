@@ -480,20 +480,42 @@
 
   function reveal(){ var els=document.querySelectorAll('.reveal'); var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.08}); els.forEach(function(el){ io.observe(el); }); }
 
+  // ---------- demo (clearly-labeled sample, not real data) ----------
+  function DEMO(){
+    var inp={I:9000000,G:5400000,A:22000000,V:35000000,R:48000000,D:28000000,S:180000000,C:900000,annual:108000000,goalRet:324000000,age:42};
+    var assets=inp.A+inp.V+inp.R, nw=assets-inp.D;
+    var hist=[
+      {date:'2026-02-28',net_worth:nw-13000000,income:8400000,expense:5700000,overall:71},
+      {date:'2026-03-31',net_worth:nw-10500000,income:8600000,expense:6200000,overall:72},
+      {date:'2026-04-30',net_worth:nw-7000000,income:8800000,expense:5300000,overall:74},
+      {date:'2026-05-31',net_worth:nw-4200000,income:9000000,expense:5500000,overall:76},
+      {date:'2026-06-30',net_worth:nw-1800000,income:9000000,expense:5400000,overall:77},
+      {date:'2026-07-18',net_worth:nw,income:inp.I,expense:inp.G,overall:79}
+    ];
+    return { overall:79, rango:'Sólido', light:'green', age:inp.age, net_worth:nw, total_assets:assets, total_liabilities:inp.D, buckets:[], inputs:inp, history:hist };
+  }
+  var DEMO_PROF={ goals:[ {name:'Fondo de emergencia',target:32400000,current:22000000}, {name:'Cuota inicial vivienda',target:80000000,current:35000000}, {name:'Viaje familiar',target:12000000,current:9000000} ] };
+  function markDemo(){ var d=$('live-dot'); if(d){ d.innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-warn"></span> DATOS DE EJEMPLO'; d.className='chip text-warn flex items-center gap-1.5'; } }
+
   // ---------- boot ----------
   function gateMsg(html){ $('gate').innerHTML='<div class="glass p-8 text-center">'+html+'</div>'; }
   function boot(){
+    if(/[?&]demo=1/.test(location.search)){
+      try{ var ds=DEMO(); render(analyze(ds,DEMO_PROF), ds, DEMO_PROF); markDemo(); }
+      catch(e){ console.error(e); gateMsg('<div class="text-neg font-bold">Error demo</div><p class="text-sm text-slate-400 mt-2">'+esc(e.message)+'</p>'); }
+      return;
+    }
     Promise.all([
       fetch('/planea/api/v1/me/salud',{credentials:'include'}),
       fetch('/planea/api/v1/me/profile',{credentials:'include'}).catch(function(){return null;})
     ]).then(function(rs){
       var sr=rs[0];
-      if(sr.status===401){ gateMsg('<div class="text-lg font-bold">Acceso privado</div><p class="text-sm text-slate-400 mt-2">Inicia sesión en Planea para ver tu Centro de Inteligencia Financiera.</p><a href="/planea/login" class="inline-block mt-5 px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Iniciar sesión</a>'); return null; }
+      if(sr.status===401){ var back=encodeURIComponent('/planea/portal/financial-health-private.html'); gateMsg('<div class="text-lg font-bold">Acceso privado</div><p class="text-sm text-slate-400 mt-2">Inicia sesión en Planea para ver tu Centro de Inteligencia Financiera.</p><a href="/planea/login?next='+back+'" class="inline-block mt-5 px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Iniciar sesión</a>'); return null; }
       if(!sr.ok) throw new Error('salud '+sr.status);
       return Promise.all([ sr.json(), rs[1]&&rs[1].ok?rs[1].json():Promise.resolve({}) ]);
     }).then(function(data){
       if(!data) return; var sal=data[0], prof=data[1]||{};
-      if(sal.overall==null){ gateMsg('<div class="text-lg font-bold">Aún no hay datos suficientes</div><p class="text-sm text-slate-400 mt-2">Registra al menos tus ingresos en Planea para activar el centro de inteligencia.</p><a href="/planea/portal/ingreso" class="inline-block mt-5 px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Agregar datos</a>'); return; }
+      if(sal.overall==null){ gateMsg('<div class="text-lg font-bold">Aún no hay datos suficientes</div><p class="text-sm text-slate-400 mt-2">Esta cuenta no tiene ingresos ni activos registrados, así que el centro no tiene cifras reales que analizar. Registra tus datos en Planea o abre el modo de ejemplo.</p><div class="mt-5 flex gap-3 justify-center flex-wrap"><a href="/planea/portal/ingreso" class="inline-block px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Agregar datos</a><a href="?demo=1" class="inline-block px-5 py-2.5 rounded-xl border border-white/15 text-slate-200 font-bold text-sm">Ver con datos de ejemplo</a></div>'); return; }
       try{ render(analyze(sal,prof), sal, prof); }catch(e){ console.error(e); gateMsg('<div class="text-neg font-bold">Error al procesar</div><p class="text-sm text-slate-400 mt-2">'+esc(e.message)+'</p>'); }
     }).catch(function(e){ console.error(e); gateMsg('<div class="text-neg font-bold">No se pudo cargar</div><p class="text-sm text-slate-400 mt-2">Recarga la página. '+esc(e.message)+'</p>'); });
   }
