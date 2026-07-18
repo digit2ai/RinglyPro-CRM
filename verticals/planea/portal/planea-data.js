@@ -383,22 +383,13 @@
     };
   }
 
-  // Onboarding is mandatory: a logged-in user who hasn't done the diagnostic is
-  // sent into the survey before seeing ANY dashboard page (no matter how they
-  // signed up or what's cached). The survey page itself never loads this script,
-  // so it's naturally exempt (guard is defensive).
-  function notOnSurvey() { return !/\/diagnostico\/?$/.test(location.pathname); }
-
   function boot() {
     // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
+    // Onboarding is NOT a forced redirect: the dashboard renders (empty, "Sin
+    // diagnóstico") and the nav lock (planea-nav.js) leaves only Mi Puntaje
+    // clickable, funnelling the user into the survey by choice.
     if (ourSession()) {
-      buildProfileFromBackend().then(function (prof) {
-        if (prof.sin_diagnostico && notOnSurvey()) {
-          location.replace('/planea/portal/diagnostico?onboarding=1');
-          return;
-        }
-        render(prof);
-      }).catch(function (e) {
+      buildProfileFromBackend().then(render).catch(function (e) {
         if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
         render(emptyProfile());
       });
