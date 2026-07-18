@@ -369,24 +369,6 @@ function build() {
     s.deuda_cuota = items.filter(function (i) { return i.category === 'deuda'; }).reduce(function (a, i) { return a + (+i.monthly || 0); }, 0);
     s.activos = s.ahorro + s.inversion + s.retiro;          // net-worth assets
     s.patrimonio_neto = s.activos - s.deuda;                 // seguros excluded (protection)
-
-    // ── Salud Financiera — a score from the user's ACTUAL data (distinct from the
-    //    survey Puntaje). 0–100, five weighted pillars. Null when no income yet. ──
-    const clamp = function (x) { return Math.max(0, Math.min(100, x)); };
-    const I = s.ingreso, G = s.gasto, C = s.deuda_cuota;
-    if (I > 0) {
-      const p1 = G > 0 ? clamp((s.ahorro / G) / 6 * 100) : (s.ahorro > 0 ? 100 : 0);   // fondo emergencia (6 meses)
-      const p2 = clamp(((I - G - C) / I) / 0.20 * 100);                                 // tasa de ahorro (20%)
-      const p3 = (s.deuda === 0 && C === 0) ? 100 : clamp((1 - (C / I) / 0.36) * 100);  // salud de deuda (DTI < 36%)
-      const p4 = clamp(((s.inversion + s.retiro) / (I * 12)) / 1 * 100);                // inversión + retiro (1 año de ingresos)
-      const p5 = clamp((s.seguros / (I * 12)) / 5 * 100);                               // protección (5× ingresos anuales)
-      const salud = Math.round(p1 * 0.25 + p2 * 0.20 + p3 * 0.20 + p4 * 0.20 + p5 * 0.15);
-      s.salud_score = salud;
-      s.salud_pillars = { emergencia: Math.round(p1), ahorro: Math.round(p2), deuda: Math.round(p3), inversion: Math.round(p4), proteccion: Math.round(p5) };
-      s.salud_rango = salud <= 30 ? 'Punto de partida' : salud <= 50 ? 'Construyendo' : salud <= 70 ? 'En camino' : salud <= 85 ? 'Sólido' : 'Planeado';
-    } else {
-      s.salud_score = null; s.salud_pillars = null; s.salud_rango = null;
-    }
     return s;
   }
 
