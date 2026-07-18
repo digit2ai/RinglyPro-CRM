@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planea — Salud Financiera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/planea/portal/planea-app.css?v=38">
+<style>
+  .sf-head h1{font-family:'Inter',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em}
+  .sf-head .lede{color:var(--mut);font-size:14.5px;margin-top:4px}
+  .sf-hero{margin-top:18px;border-radius:20px;border:1px solid var(--line);padding:24px;display:flex;gap:26px;align-items:center;flex-wrap:wrap;
+    background:radial-gradient(120% 120% at 12% 0%,rgba(63,192,106,.10),transparent 60%),var(--card,#0f231e)}
+  .sf-gauge{position:relative;width:168px;height:168px;flex:0 0 168px}
+  .sf-gauge .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .sf-gauge .n b{font-family:'Inter';font-weight:800;font-size:46px;line-height:1}
+  .sf-gauge .n small{font-size:11px;letter-spacing:.16em;color:var(--mut);margin-top:2px}
+  .sf-hero-info{flex:1;min-width:220px}
+  .sf-badge{display:inline-block;padding:5px 13px;border-radius:99px;font-weight:800;font-size:14px}
+  .sf-lights{display:flex;gap:10px;margin-top:14px}
+  .sf-lights .lt{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)}
+  .sf-lights .dot{width:12px;height:12px;border-radius:50%}
+  .sf-sub{color:var(--mut);font-size:13.5px;margin-top:12px;line-height:1.5}
+  .sf-card{margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--card,#0f231e);padding:20px}
+  .sf-card h2{font-size:16px;font-weight:800}
+  .sf-card .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .sf-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .sf-b{border-radius:16px;border:1px solid var(--line);background:var(--card,#0f231e);padding:18px}
+  .sf-b .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .sf-b .nm{font-weight:800;font-size:15.5px}
+  .sf-b .sc{font-family:'Inter';font-weight:800;font-size:26px;line-height:1}
+  .sf-b .track{height:8px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:12px;overflow:hidden}
+  .sf-b .fill{height:100%;border-radius:99px}
+  .sf-b .tgt{font-size:12px;color:var(--mut);margin-top:8px}
+  .sf-m{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .sf-m .row{display:flex;justify-content:space-between;font-size:13px;gap:12px}
+  .sf-m .row .k{color:var(--mut)}
+  .sf-m .row .v{font-weight:700}
+  .sf-tl{display:inline-flex;width:11px;height:11px;border-radius:50%;flex:0 0 11px}
+  .sf-empty{margin-top:20px;border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="sf-head"><h1>Salud Financiera</h1><p class="lede">Tu salud financiera real, calculada a partir de tus datos — no de una encuesta.</p></div>
+  <div id="salud-root"></div>
+</div></div>
+<script src="/planea/portal/planea-nav.js?v=38" defer></script>
+<script src="/planea/portal/planea-sb.js?v=38" defer></script>
+<script src="/planea/portal/planea-salud.js?v=38" defer></script>
+<script src="/planea/portal/maya-chat.js?v=38" defer></script>
+</body>
+</html>

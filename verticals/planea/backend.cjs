@@ -21,6 +21,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Sequelize, DataTypes } = require('sequelize');
 const score = require('./score.cjs');
+const salud = require('./salud.cjs');
 
 const SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
 const COOKIE = 'planea_session';
@@ -33,6 +34,7 @@ let sequelize = null;
 let User = null;
 let Profile = null;
 let Item = null;
+let SaludH = null;
 let ready = false;
 let initErr = null;
 
@@ -74,7 +76,16 @@ function defineModels(sq) {
     monthly: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
   }, { tableName: 'planea_items', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-  return { U, P, I };
+  // Daily snapshot of the Salud Financiera score (for the over-time chart).
+  const H = sq.define('PlaneaSaludHistory', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    snap_date: { type: DataTypes.DATEONLY, allowNull: false },
+    overall: { type: DataTypes.INTEGER, allowNull: true },
+    buckets: { type: DataTypes.JSONB, allowNull: true },
+  }, { tableName: 'planea_salud_history', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+  return { U, P, I, H };
 }
 
 async function init() {
@@ -87,9 +98,10 @@ async function init() {
       pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
     });
     const m = defineModels(sequelize);
-    User = m.U; Profile = m.P; Item = m.I;
+    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
     // Idempotent add of newer columns (sync never adds columns to an existing table).
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
@@ -382,6 +394,28 @@ function build() {
       const rows = await Item.findAll({ where, order: [['created_at', 'ASC']] });
       const items = rows.map(itemOut);
       res.json({ items: items, summary: itemsSummary(items) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // Salud Financiera — full per-bucket breakdown + records a daily snapshot for
+  // the over-time chart. Distinct from Mi Puntaje (survey).
+  router.get('/me/salud', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const rows = await Item.findAll({ where: { user_id: a.id } });
+      const result = salud.computeSalud(rows.map(itemOut));
+      if (result.overall != null) {
+        const today = new Date().toISOString().slice(0, 10);
+        const snap = result.buckets.map(function (b) { return { key: b.key, score: b.score }; });
+        const existing = await SaludH.findOne({ where: { user_id: a.id, snap_date: today } });
+        if (existing) { existing.overall = result.overall; existing.buckets = snap; await existing.save(); }
+        else { await SaludH.create({ user_id: a.id, snap_date: today, overall: result.overall, buckets: snap }); }
+      }
+      const hist = await SaludH.findAll({ where: { user_id: a.id }, order: [['snap_date', 'ASC']], limit: 90 });
+      result.history = hist.map(function (h) { return { date: h.snap_date, overall: h.overall }; });
+      res.json(result);
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
