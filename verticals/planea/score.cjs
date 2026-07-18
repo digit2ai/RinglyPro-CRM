@@ -135,4 +135,33 @@ function scoreFromProfile(p) {
   return { score: score, rango: rangoDe(score), scenario: rec.scenario, pillars: pl, recommendation: rec, inputs: inp };
 }
 
-module.exports = { scoreFromProfile: scoreFromProfile, deriveInputs: deriveInputs, pillars: pillars, recommendation: recommendation };
+// Rebuild the editable data arrays from a legacy survey that only stored answers
+// (P1–P8). Used to self-heal accounts created before the modules were connected.
+var INC_MID = { A: 1200000, B: 2250000, C: 4000000, D: 6500000, E: 9000000 };
+var CUOTA_MID = { A: 200000, B: 500000, C: 1100000, D: 2250000, E: 3500000 };
+var MESES_MID = { A: 0.5, B: 2, C: 4.5, D: 9, E: 12 };
+function amt(key, map, exact) {
+  if (key === 'X') return Math.max(0, parseInt(exact || '0', 10) || 0);
+  return map[key] != null ? map[key] : 0;
+}
+function dataFromAnswers(a) {
+  a = a || {};
+  var inc = amt(a.P1, INC_MID, a.P1_exact);
+  var exp = amt(a.P2, INC_MID, a.P2_exact); // gastos use the same range midpoints
+  var tieneDeuda = a.P3 === 'yes';
+  var cuota = tieneDeuda ? amt(a.P4, CUOTA_MID, a.P4_exact) : 0;
+  var tieneAhorro = a.P5 !== 'no';
+  var meses = tieneAhorro ? (MESES_MID[a.P6] != null ? MESES_MID[a.P6] : 0) : 0;
+  var ahorros = Math.round(meses * exp);
+  var tipo = a.P7 === 'A' ? 'fijo' : a.P7 === 'B' ? 'varia_poco' : 'cambia';
+  var deps = a.P8 === 'A' ? 'nadie' : a.P8 === 'B' ? '1-2' : '3+';
+  return {
+    ingresos_data: [{ name: 'Ingreso mensual', type: 'Salario', value: inc }],
+    gastos_data: [{ name: 'Gastos mensuales', type: 'General', value: exp }],
+    liabilities_data: tieneDeuda ? [{ name: 'Cuotas de deuda', type: 'Crédito', value: 0, monthly: cuota }] : [],
+    assets_data: (tieneAhorro && ahorros > 0) ? [{ name: 'Ahorros', type: 'Cuenta de ahorros', cat: 'ahorro', value: ahorros }] : [],
+    finance_meta: { tipo_ingreso: tipo, dependientes: deps }
+  };
+}
+
+module.exports = { scoreFromProfile: scoreFromProfile, deriveInputs: deriveInputs, pillars: pillars, recommendation: recommendation, dataFromAnswers: dataFromAnswers };

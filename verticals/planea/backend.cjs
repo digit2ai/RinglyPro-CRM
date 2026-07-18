@@ -234,6 +234,22 @@ function build() {
       if (!u) return res.status(401).json({ error: 'unauthorized' });
       let p = await Profile.findOne({ where: { user_id: u.id } });
       if (!p) p = await Profile.create({ user_id: u.id, full_name: u.full_name, assets_data: [], liabilities_data: [], goals: [] });
+
+      // Self-heal: legacy surveys stored only score_data.answers. Rebuild the
+      // editable data arrays (income/expenses/debt/savings) from them once, so
+      // the Ingresos/Gastos/Deuda/Ahorro modules aren't empty. Runs a single time
+      // (finance_meta.tipo_ingreso is set afterwards, guarding re-runs).
+      if (p.score_data && p.score_data.answers && (!p.finance_meta || !p.finance_meta.tipo_ingreso)) {
+        try {
+          const bf = score.dataFromAnswers(p.score_data.answers);
+          p.ingresos_data = bf.ingresos_data; p.gastos_data = bf.gastos_data;
+          p.liabilities_data = bf.liabilities_data; p.assets_data = bf.assets_data;
+          p.finance_meta = bf.finance_meta;
+          const c = score.scoreFromProfile({ assets_data: p.assets_data, liabilities_data: p.liabilities_data, ingresos_data: p.ingresos_data, gastos_data: p.gastos_data, finance_meta: p.finance_meta, full_name: p.full_name });
+          if (c) p.score_data = { score: c.score, rango: c.rango, scenario: c.scenario, pillars: c.pillars, recommendation: c.recommendation, answers: p.score_data.answers, source: p.score_data.source || 'survey', timestamp: new Date().toISOString() };
+          await p.save();
+        } catch (e) { console.log('planea backfill skipped:', e.message); }
+      }
       res.json({
         email: u.email,
         full_name: p.full_name || u.full_name || '',
