@@ -335,35 +335,23 @@
     persist(res, rec);
   }
 
-  // The survey writes the UNDERLYING financial data (income/expenses/debt/savings
-  // + fijo-variable/dependientes). The backend recomputes the Puntaje from it — so
-  // the same data is later editable from the Ingresos/Gastos/Deuda/Ahorro modules
-  // and the score stays in sync. (res/rec are the local mirror for instant display.)
+  // Mi Puntaje is a SEPARATE benchmark: the survey stores ONLY its own score
+  // (computed here from the 8 answers) — it does NOT write into the actual-data
+  // modules (Ingresos/Gastos/Deuda/Ahorro), which the user fills in with real
+  // figures independently.
   function persist(res, rec) {
-    if (!window.PlaneaSB || !PlaneaSB.loggedIn()) return;
-    var u = PlaneaSB.user(); if (!u) return;
-    var a = answers;
-    var inc = exactOr('P1_exact', INC_MAP, a.P1, a, 4000000);
-    var exp = exactOr('P2_exact', EXP_MAP, a.P2, a, 3200000);
-    var tieneDeuda = a.P3 === 'yes';
-    var cuota = tieneDeuda ? exactOr('P4_exact', CUOTA_MAP, a.P4, a, 500000) : 0;
-    var tieneAhorro = a.P5 !== 'no';
-    var ahorros = Math.round(mesesCobertura(a) * exp);
-    var tipo = a.P7 === 'A' ? 'fijo' : a.P7 === 'B' ? 'varia_poco' : 'cambia';
-    var deps = a.P8 === 'A' ? 'nadie' : a.P8 === 'B' ? '1-2' : '3+';
-
-    var body = {
-      ingresos_data: [{ name: 'Ingreso mensual', type: 'Salario', value: inc }],
-      gastos_data: [{ name: 'Gastos mensuales', type: 'General', value: exp }],
-      liabilities_data: tieneDeuda ? [{ name: 'Cuotas de deuda', type: 'Crédito', value: 0, monthly: cuota }] : [],
-      assets_data: (tieneAhorro && ahorros > 0) ? [{ name: 'Ahorros', type: 'Cuenta de ahorros', cat: 'ahorro', value: ahorros }] : [],
-      finance_meta: { tipo_ingreso: tipo, dependientes: deps },
-      score_data: { answers: a, source: 'survey' } // backend fills score/pillars/scenario/recommendation
+    if (!window.PlaneaSB) return;
+    var entry = {
+      timestamp: new Date().toISOString(), source: 'survey',
+      score: res.score, rango: getScoreLabel(res.score).name, scenario: rec.scenario,
+      pillars: { emergency_fund: res.p1, cash_flow: res.p2, debt_health: res.p3, stability: res.p4 },
+      recommendation: { scenario: rec.scenario, goalText: rec.goalText, mayaMessage: rec.mayaMessage, timeline: rec.timeline },
+      answers: answers
     };
-    PlaneaSB.mePut(body)
+    PlaneaSB.mePut({ score_data: entry })
       .then(function () {
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje guardado en tu perfil ✓';
-        autoCreateFirstMeta(u.id, rec, res); // the "primera meta" generated before any interaction
+        autoCreateFirstMeta(rec); // the "primera meta" generated before any interaction
         // Onboarding complete → unlock the rest of the nav.
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
@@ -393,14 +381,14 @@
       default: return null; // A, C, H, I → insight only (no fund goal)
     }
   }
-  function autoCreateFirstMeta(personId, rec, res) {
+  function autoCreateFirstMeta(rec) {
     var meta = firstMeta(rec);
     if (!meta) return;
-    PlaneaSB.get('persons_long_term_goals?person_id=eq.' + personId + '&select=id,name')
+    // Goals are session-scoped server-side; the person_id filter is ignored by the client.
+    PlaneaSB.get('persons_long_term_goals?select=id,name')
       .then(function (rows) {
         var has = (rows || []).some(function (g) { return /emergen|colch/i.test(g.name || ''); });
         if (has) return;
-        meta.person_id = personId;
         return PlaneaSB.post('persons_long_term_goals', meta);
       }).catch(function () {});
   }

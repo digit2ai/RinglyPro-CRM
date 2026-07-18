@@ -162,6 +162,27 @@ function build() {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Clear the actual-data modules (keeps Mi Puntaje score_data + goals). Used to
+  // wipe survey-injected phantom entries now that the two are separated.
+  // ?token=..&email=X   (or &all=1 for every account)
+  router.get('/admin/reset-data', async (req, res) => {
+    if (!requireReady(res)) return;
+    if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const blank = { ingresos_data: [], gastos_data: [], liabilities_data: [], assets_data: [], seguros_data: [], retiro_data: [], finance_meta: {} };
+      if (req.query.all === '1') {
+        const [n] = await sequelize.query("UPDATE planea_profiles SET ingresos_data='[]'::jsonb, gastos_data='[]'::jsonb, liabilities_data='[]'::jsonb, assets_data='[]'::jsonb, seguros_data='[]'::jsonb, retiro_data='[]'::jsonb, finance_meta='{}'::jsonb");
+        return res.json({ success: true, reset: 'all' });
+      }
+      const email = String((req.query && req.query.email) || '').toLowerCase().trim();
+      const u = await User.findOne({ where: { email } });
+      if (!u) return res.status(404).json({ error: 'not_found', email });
+      const p = await Profile.findOne({ where: { user_id: u.id } });
+      if (p) { Object.assign(p, blank); await p.save(); }
+      res.json({ success: true, reset: email });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   router.get('/admin/accounts', async (req, res) => {
     if (!requireReady(res)) return;
     if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized', hint: 'Pass ?token=<PLANEA_ADMIN_TOKEN>' });
@@ -258,23 +279,10 @@ function build() {
       let p = await Profile.findOne({ where: { user_id: u.id } });
       if (!p) p = await Profile.create({ user_id: u.id, full_name: u.full_name, assets_data: [], liabilities_data: [], goals: [] });
 
-      // Self-heal: legacy surveys stored only score_data.answers. Rebuild the
-      // editable data arrays (income/expenses/debt/savings) from them once, so
-      // the Ingresos/Gastos/Deuda/Ahorro modules aren't empty. Runs a single time
-      // (finance_meta.tipo_ingreso is set afterwards, guarding re-runs).
-      var emptyArr = function (a) { return !Array.isArray(a) || a.length === 0; };
-      if (p.score_data && p.score_data.answers && (!p.finance_meta || !p.finance_meta.tipo_ingreso)
-          && emptyArr(p.ingresos_data) && emptyArr(p.gastos_data) && emptyArr(p.liabilities_data) && emptyArr(p.assets_data)) {
-        try {
-          const bf = score.dataFromAnswers(p.score_data.answers);
-          p.ingresos_data = bf.ingresos_data; p.gastos_data = bf.gastos_data;
-          p.liabilities_data = bf.liabilities_data; p.assets_data = bf.assets_data;
-          p.finance_meta = bf.finance_meta;
-          const c = score.scoreFromProfile({ assets_data: p.assets_data, liabilities_data: p.liabilities_data, ingresos_data: p.ingresos_data, gastos_data: p.gastos_data, finance_meta: p.finance_meta, full_name: p.full_name });
-          if (c) p.score_data = { score: c.score, rango: c.rango, scenario: c.scenario, pillars: c.pillars, recommendation: c.recommendation, answers: p.score_data.answers, source: p.score_data.source || 'survey', timestamp: new Date().toISOString() };
-          await p.save();
-        } catch (e) { console.log('planea backfill skipped:', e.message); }
-      }
+      // ARCHITECTURE: Mi Puntaje (score_data, the survey benchmark) and the actual
+      // data modules (ingresos/gastos/deuda/ahorro/...) are SEPARATE. The survey no
+      // longer seeds the modules and the modules no longer recompute the score — no
+      // backfill, no cross-writes. Each is stored and returned independently.
       res.json({
         email: u.email,
         full_name: p.full_name || u.full_name || '',
@@ -315,25 +323,8 @@ function build() {
       if (Array.isArray(b.ingresos_data)) p.ingresos_data = b.ingresos_data;
       if (Array.isArray(b.gastos_data)) p.gastos_data = b.gastos_data;
       if (b.finance_meta && typeof b.finance_meta === 'object') p.finance_meta = b.finance_meta;
-      if (b.score_data !== undefined) p.score_data = b.score_data;
-
-      // Recompute the Puntaje from the CURRENT data (income/expenses/debt/savings)
-      // so the survey AND any later module edit keep the score in sync.
-      var computed = score.scoreFromProfile({
-        assets_data: p.assets_data, liabilities_data: p.liabilities_data,
-        ingresos_data: p.ingresos_data, gastos_data: p.gastos_data,
-        finance_meta: p.finance_meta, full_name: p.full_name,
-      });
-      if (computed) {
-        var prev = p.score_data || {};
-        p.score_data = {
-          score: computed.score, rango: computed.rango, scenario: computed.scenario,
-          pillars: computed.pillars, recommendation: computed.recommendation,
-          answers: prev.answers || (b.score_data && b.score_data.answers) || undefined,
-          source: (b.score_data && b.score_data.source) || prev.source || 'auto',
-          timestamp: new Date().toISOString(),
-        };
-      }
+      // Mi Puntaje is SEPARATE from the actual-data modules: module edits just persist,
+      // they do NOT recompute or touch score_data. score_data is set only by the survey.
       await p.save();
       res.json({ success: true, score_data: p.score_data || null });
     } catch (e) { res.status(500).json({ error: e.message }); }
