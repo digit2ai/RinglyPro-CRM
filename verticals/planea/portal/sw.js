@@ -2,10 +2,10 @@
    Network-first for navigations AND for the portal's own CSS/JS (so deploys show
    immediately, no stale styles), cache-first for images/manifest, never /api/.
    Scope: /planea/portal/. */
-var CACHE = 'planea-shell-v25';
+var CACHE = 'planea-shell-v26';
 var BASE = '/planea/portal/';
 var SHELL = [
-  BASE + 'inicio', BASE + 'patrimonio', BASE + 'metas', BASE + 'cuentas', BASE + 'diagnostico',
+  BASE + 'inicio', BASE + 'patrimonio', BASE + 'metas', BASE + 'ingreso', BASE + 'cuentas', BASE + 'diagnostico',
   BASE + 'retiro', BASE + 'ahorro', BASE + 'deuda', BASE + 'inversion',
   BASE + 'seguros', BASE + 'mas', BASE + 'configuracion', BASE + 'guia',
   BASE + 'planea-app.css', BASE + 'planea-nav.js', BASE + 'planea-data.js', BASE + 'planea-sb.js',

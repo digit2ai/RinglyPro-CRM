@@ -54,6 +54,7 @@ function defineModels(sq) {
     goals: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     seguros_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     retiro_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
+    ingresos_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
   }, { tableName: 'planea_profiles', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   return { U, P };
@@ -74,6 +75,7 @@ async function init() {
     // Idempotent add of newer columns (sync never adds columns to an existing table).
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
+    await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS ingresos_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -237,6 +239,7 @@ function build() {
         goals: Array.isArray(p.goals) ? p.goals : [],
         seguros_data: Array.isArray(p.seguros_data) ? p.seguros_data : [],
         retiro_data: Array.isArray(p.retiro_data) ? p.retiro_data : [],
+        ingresos_data: Array.isArray(p.ingresos_data) ? p.ingresos_data : [],
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -261,6 +264,7 @@ function build() {
       if (Array.isArray(b.goals)) p.goals = b.goals;
       if (Array.isArray(b.seguros_data)) p.seguros_data = b.seguros_data;
       if (Array.isArray(b.retiro_data)) p.retiro_data = b.retiro_data;
+      if (Array.isArray(b.ingresos_data)) p.ingresos_data = b.ingresos_data;
       await p.save();
       res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }

@@ -153,6 +153,7 @@
       case 'activos_total': return cop(prof.activos_total_cop || 0);
       case 'pasivos_total':
       case 'deuda_total': return cop(prof.pasivos_total_cop || 0);
+      case 'ingreso_total': return cop(prof.ingreso_mensual_cop || 0);
       case 'ahorro_total': return cop(sumBucket(prof, 'ahorro'));
       case 'inversion_total': return cop(sumBucket(prof, 'inversion'));
       case 'metas_count': return String((prof.metas || []).length);
@@ -375,6 +376,8 @@
         prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(function (g) {
           return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
         });
+        var ing = Array.isArray(d.ingresos_data) ? d.ingresos_data : [];
+        prof.ingreso_mensual_cop = ing.reduce(function (a, x) { return a + num(x.value); }, 0);
         window.PLANEA_PROFILE = prof;
         return prof;
       });

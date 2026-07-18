@@ -8,6 +8,7 @@
     { k: 'diagnostico', label: 'Mi Puntaje', icon: 'circle:12,12,9|M12 7v5l3 2' },
     { k: 'patrimonio', label: 'Mi Patrimonio', icon: 'M3 21h18|M6 21V10M11 21V6M16 21V12M21 21V8' },
     { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
+    { k: 'ingreso', label: 'Ingresos', plus: true, icon: 'rect:2.5,7,19,10,2|circle:12,12,2.2|M6 10v.01M18 14v.01' },
     { k: 'ahorro', label: 'Ahorro', module: true, plus: true, icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },
     { k: 'deuda', label: 'Deuda', module: true, plus: true, icon: 'rect:2.5,6,19,13,2.5|M2.5 10.5h19|M6 15.5h4' },
     { k: 'inversion', label: 'Inversión', module: true, plus: true, icon: 'M3 17l6-6 4 4 8-8|M15 7h6v6' },
