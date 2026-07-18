@@ -247,8 +247,14 @@
     head('meta', { name: 'apple-mobile-web-app-title', content: 'Planea' });
     head('link', { rel: 'apple-touch-icon', href: '/planea/portal/apple-touch-icon.png' });
     head('link', { rel: 'icon', type: 'image/png', href: '/planea/portal/icon-192.png' });
+    // Service worker retired — it repeatedly served stale JS. Proactively unregister
+    // any existing SW and clear its caches so every asset loads fresh (freshness is
+    // handled by the ?v=NN version stamps). Do NOT re-register.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/planea/portal/sw.js').catch(function () {});
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { r.unregister(); });
+      }).catch(function () {});
+      if (window.caches && caches.keys) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }).catch(function () {}); }
     }
     var installBtn = document.getElementById('pl-install'), deferred = null;
     window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; if (installBtn) installBtn.style.display = 'flex'; });
