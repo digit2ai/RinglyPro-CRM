@@ -548,6 +548,32 @@
   function close() { els.panel.classList.remove('abierto'); stopHF(); stopAudio(); if (recognizing) try { recog.stop(); } catch (e) {} }
   function toggle() { els.panel.classList.contains('abierto') ? close() : open(); }
 
+  // ── Route gating ────────────────────────────────────────────────────────────
+  // Maya must NOT appear on the login/signup screens. The SPA serves those from the
+  // same index.html (Maya injected once), so gate by route — and re-check on client
+  // navigation (SPA pushState/popstate) so it hides/shows without a full reload.
+  function isAuthPage() {
+    var p = (location.pathname || '').toLowerCase();
+    return /(^|\/)(login|register|signup|sign-up|start)(\/|$)/.test(p);
+  }
+  function applyRouteVisibility() {
+    var hide = isAuthPage();
+    if (els.fab) els.fab.style.display = hide ? 'none' : '';
+    document.querySelectorAll('.chatbot').forEach(function (b) { b.style.display = hide ? 'none' : ''; });
+    if (hide && els.panel && els.panel.classList.contains('abierto')) close();
+  }
+  function watchRoute() {
+    ['pushState', 'replaceState'].forEach(function (m) {
+      var orig = history[m];
+      if (typeof orig !== 'function' || orig.__mayaWrapped) return;
+      var wrapped = function () { var r = orig.apply(this, arguments); try { applyRouteVisibility(); } catch (e) {} return r; };
+      wrapped.__mayaWrapped = true;
+      history[m] = wrapped;
+    });
+    window.addEventListener('popstate', applyRouteVisibility);
+    window.addEventListener('hashchange', applyRouteVisibility);
+  }
+
   function init() {
     bootstrapProfile(); // load the real logged-in user (if any) before the greeting
     css();
@@ -558,9 +584,13 @@
     if (btns.length) {
       btns.forEach(function (b) { b.removeAttribute('onclick'); b.addEventListener('click', toggle); });
     } else {
-      makeFab();
+      els.fab = makeFab();
     }
     window.MayaChat = { open: open, close: close, toggle: toggle };
+
+    // Hide Maya on login/signup; keep it everywhere else. Re-checks on SPA navigation.
+    applyRouteVisibility();
+    watchRoute();
 
     // Global delegate: ANY element with data-action="maya" (nav drawer link, Más tiles,
     // "Habla con Planea IA", etc.) opens the Maya overlay — never navigates away.
