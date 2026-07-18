@@ -149,6 +149,23 @@ function build() {
 
   router.get('/auth/status', (req, res) => res.json({ ready, error: initErr || null }));
 
+  // Session diagnostic — open in the SAME browser to see if THIS device is authed.
+  router.get('/me/whoami', (req, res) => {
+    const tok = readCookie(req);
+    const u = authUser(req);
+    const ok = !!u;
+    res.type('html').send('<!doctype html><meta charset="utf-8"><title>Sesión Planea</title>' +
+      '<body style="font-family:system-ui,sans-serif;background:#0d1f1c;color:#eaf1ec;padding:28px;line-height:1.6">' +
+      '<h2>Diagnóstico de sesión</h2>' +
+      '<p>Dominio: <b>' + (req.get('host') || '') + '</b></p>' +
+      '<p>Cookie de sesión recibida: <b>' + (tok ? 'SÍ' : 'NO') + '</b></p>' +
+      '<p>Autenticado: <b style="color:' + (ok ? '#3fc06a' : '#ff8a8a') + '">' + (ok ? 'SÍ — user_id ' + u.id + ' (' + (u.email || '') + ')' : 'NO') + '</b></p>' +
+      (ok
+        ? '<p style="color:#3fc06a">Tu sesión es válida en este dominio. Guardar debe funcionar. Si no guarda, es JS en caché — recarga con Cmd+Shift+R.</p>'
+        : '<p style="color:#ff8a8a">No hay sesión válida en <b>' + (req.get('host') || 'este dominio') + '</b>. Por eso no guarda. <a style="color:#8fd9ac" href="/planea/login">Inicia sesión aquí</a> y vuelve a intentar.</p>') +
+      '</body>');
+  });
+
   // ── Admin: list our own users (planea_users) — no Supabase, no service_role ──
   // Gated by PLANEA_ADMIN_TOKEN (default matches the docs password). ?html=1 → table.
   const ADMIN_TOKEN = process.env.PLANEA_ADMIN_TOKEN || 'Digit2Ai@7';
