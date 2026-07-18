@@ -59,9 +59,9 @@
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(res){
         if(!res.ok){ show(res.j.error||'No se pudo crear la cuenta.',false); go.disabled=false; go.textContent='Crear cuenta'; return; }
-        show('Cuenta creada. Entrando…',true);
-        // Onboarding: open the dashboard with the nav locked to Mi Puntaje.
-        location.href='/planea/portal/inicio';
+        show('Cuenta creada. Empecemos…',true);
+        // Onboarding: open the survey (Mi Puntaje) directly.
+        location.href='/planea/portal/diagnostico?onboarding=1';
       })
       .catch(function(){ show('Error de conexión. Intenta de nuevo.',false); go.disabled=false; go.textContent='Crear cuenta'; });
   });

@@ -390,13 +390,21 @@
     };
   }
 
+  // After sign-in, open the survey directly until it's completed: any dashboard
+  // page for a logged-in user with no diagnosis redirects to Mi Puntaje. The
+  // survey page never loads this script, so it's naturally exempt.
+  function notOnSurvey() { return !/\/diagnostico\/?$/.test(location.pathname); }
+
   function boot() {
     // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
-    // Onboarding is NOT a forced redirect: the dashboard renders (empty, "Sin
-    // diagnóstico") and the nav lock (planea-nav.js) leaves only Mi Puntaje
-    // clickable, funnelling the user into the survey by choice.
     if (ourSession()) {
-      buildProfileFromBackend().then(render).catch(function (e) {
+      buildProfileFromBackend().then(function (prof) {
+        if (prof.sin_diagnostico && notOnSurvey()) {
+          location.replace('/planea/portal/diagnostico?onboarding=1');
+          return;
+        }
+        render(prof);
+      }).catch(function (e) {
         if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
         render(emptyProfile());
       });
