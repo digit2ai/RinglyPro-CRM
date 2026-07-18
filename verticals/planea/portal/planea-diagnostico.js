@@ -415,22 +415,36 @@
     }
   }
 
+  // Read our session identity straight from the readable cookie (no network).
+  function readOurUser() {
+    try { var m = (document.cookie || '').match(/(?:^|;\s*)planea_user=([^;]+)/); return m ? JSON.parse(decodeURIComponent(m[1])) : null; }
+    catch (e) { return null; }
+  }
+
   function boot() {
     root = document.getElementById('dg-root'); if (!root) return;
     root.addEventListener('click', onClick);
     root.addEventListener('input', onInput);
-    var loggedIn = window.PlaneaSB && PlaneaSB.loggedIn();
+
+    var ou = readOurUser();
+    var onboarding = /[?&]onboarding=1/.test(location.search);
+    var loggedIn = (window.PlaneaSB && PlaneaSB.loggedIn()) || !!ou;
+    // We already know who they are — never ask for the email again.
+    if (ou) profile = { nombre: (ou.full_name || '').trim().split(/\s+/)[0] || '', email: ou.email || '' };
+
     function start() {
-      // Onboarding / logged-in users already gave name+email at signup — skip the
-      // intro email step and drop them straight into question 1 of the survey.
-      if (loggedIn) current = seq()[0];
+      // Logged-in / onboarding users gave name+email at signup → skip the intro
+      // email step entirely and start at question 1.
+      if (loggedIn || onboarding) current = seq()[0];
       paint();
     }
-    if (loggedIn) {
+
+    // Enrich the name from the backend profile if possible (non-blocking).
+    if (window.PlaneaSB && PlaneaSB.loggedIn()) {
       PlaneaSB.get('persons?select=full_name&limit=1').then(function (rows) {
         var pr = (rows && rows[0]) || {};
-        var full = pr.full_name || (PlaneaSB.user() && PlaneaSB.user().user_metadata && PlaneaSB.user().user_metadata.full_name) || '';
-        profile = { nombre: (full || '').trim().split(/\s+/)[0] || '', email: (PlaneaSB.user() && PlaneaSB.user().email) || '' };
+        var full = pr.full_name || (ou && ou.full_name) || '';
+        profile = { nombre: (full || '').trim().split(/\s+/)[0] || '', email: (ou && ou.email) || (PlaneaSB.user() && PlaneaSB.user().email) || '' };
         start();
       }).catch(start);
     } else { start(); }
