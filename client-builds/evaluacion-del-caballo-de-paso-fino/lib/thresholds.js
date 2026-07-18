@@ -51,8 +51,21 @@ const DEFAULT_MODEL = {
       paso_fino:     { min: 540, ideal: 654, max: 760, estimado: false },
       trocha:        { min: 560, ideal: 680, max: 800, estimado: false },
       trocha_galope: { min: 520, ideal: 660, max: 800, estimado: true },
-      trote_galope:  { min: 190, ideal: 285, max: 400, estimado: true }
+      trote_galope:  { min: 190, ideal: 285, max: 400, estimado: true },
+      // Asnales y mulares: no hay estudio cinemático publicado; bandas amplias
+      // marcadas estimado:true para validación por juez certificado.
+      asnal:         { min: 150, ideal: 240, max: 360, estimado: true },
+      mular:         { min: 150, ideal: 260, max: 420, estimado: true }
     },
+    // Referencias de normalización para las métricas de pose (0..1). Derivan del
+    // rango vertical del tronco/cabeza relativo al cuadro; calibrables por juez.
+    // Un tronco que "cabecea" poco (paso fino suave) => suavidad alta.
+    suavidad_bob_ref: 0.14,      // rango vertical de cruz/dorso que ~anula suavidad
+    quietud_anca_vert_ref: 0.12, // rango vertical de grupa que ~anula la quietud
+    quietud_anca_sway_ref: 0.06, // vaivén horizontal (detrend) que ~anula la quietud
+    posicion_cabeza_ref: 0.10,   // oscilación de nuca/hocico que ~anula la estabilidad
+    compensacion_ref: 0.45,      // |elev_ant - elev_post| que ~anula la compensación
+    sostenimiento_drift_k: 3.0,  // sensibilidad a la deriva de cadencia (1a vs 2a mitad)
     // Compat (motor viejo): banda paso fino en las claves planas.
     cadencia_paso_fino_min_ppm: 540,
     cadencia_paso_fino_ideal_ppm: 654,

@@ -82,7 +82,7 @@ const TABLES = {
   },
   metricas_mov: {
     table: P + 'metricas_movimiento',
-    attrs: { sesion_id: T(DataTypes.BIGINT, false), cadencia_ppm: DataTypes.FLOAT, regularidad_ritmo: DataTypes.FLOAT, simetria_lateral: DataTypes.FLOAT, uniformidad_4_tiempos: DataTypes.FLOAT, coef_variacion_intervalos: DataTypes.FLOAT, elevacion_anterior: DataTypes.FLOAT, elevacion_posterior: DataTypes.FLOAT, longitud_paso: DataTypes.FLOAT, velocidad_promedio: DataTypes.FLOAT }
+    attrs: { sesion_id: T(DataTypes.BIGINT, false), cadencia_ppm: DataTypes.FLOAT, regularidad_ritmo: DataTypes.FLOAT, simetria_lateral: DataTypes.FLOAT, uniformidad_4_tiempos: DataTypes.FLOAT, coef_variacion_intervalos: DataTypes.FLOAT, elevacion_anterior: DataTypes.FLOAT, elevacion_posterior: DataTypes.FLOAT, longitud_paso: DataTypes.FLOAT, velocidad_promedio: DataTypes.FLOAT, suavidad: DataTypes.FLOAT, compensacion: DataTypes.FLOAT, quietud_anca: DataTypes.FLOAT, posicion_cabeza: DataTypes.FLOAT, sostenimiento: DataTypes.FLOAT }
   },
   metricas_son: {
     table: P + 'metricas_sonido',

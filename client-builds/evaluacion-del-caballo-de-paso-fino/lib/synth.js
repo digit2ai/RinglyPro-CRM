@@ -41,6 +41,15 @@ const PATRONES = {
 // pisadas/min, no 240 de demo).
 const CYCLE_MS = { paso_fino: 368, trocha: 353, trote: 435, galope: 400, trocha_galope: 360 };
 
+// Cabeceo vertical del TRONCO (cruz/dorso/grupa) por modalidad, en unidades de
+// cuadro (y 0..1). El paso fino es suave (poco cabeceo); el trote rebota mucho.
+// Alimenta las métricas de Suavidad / Quietud de anca del rubro oficial, de modo
+// que la simulación de referencia produce un puntaje de suavidad realista
+// (paso fino alto, trote bajo). Vaivén horizontal (sway) análogo.
+const TRONCO_BOB = { paso_fino: 0.018, trocha: 0.026, trote: 0.060, galope: 0.050, trocha_galope: 0.036 };
+const ANCA_SWAY  = { paso_fino: 0.010, trocha: 0.016, trote: 0.032, galope: 0.028, trocha_galope: 0.020 };
+const HEAD_BOB   = { paso_fino: 0.008, trocha: 0.012, trote: 0.022, galope: 0.020, trocha_galope: 0.014 };
+
 function mulberry(seed) {
   let a = seed >>> 0;
   return function () {
@@ -126,6 +135,16 @@ function syntheticFrames(modalidad, opts = {}) {
     return ground - lift * Math.sin(Math.PI * phase);
   }
 
+  // Cabeceo del tronco/cabeza para las métricas del rubro oficial (Suavidad,
+  // Quietud de anca, Posición de cabeza). Amplitud por modalidad: paso fino suave,
+  // trote rebota. Base de la modalidad (para combos usa la clave compuesta).
+  const bobCycle = opts.cycleMs || CYCLE_MS[modalidad] || 400;
+  const troncoBob = (TRONCO_BOB[modalidad] != null ? TRONCO_BOB[modalidad] : TRONCO_BOB.paso_fino);
+  const ancaSway = (ANCA_SWAY[modalidad] != null ? ANCA_SWAY[modalidad] : ANCA_SWAY.paso_fino);
+  const headBob = (HEAD_BOB[modalidad] != null ? HEAD_BOB[modalidad] : HEAD_BOB.paso_fino);
+  // y base (0..1, crece hacia abajo) de cada punto de tronco/cabeza.
+  const BASE_Y = { cruz: 0.34, dorso: 0.40, grupa: 0.42, nuca: 0.24, hocico: 0.30 };
+
   const frames = [];
   let n = 0;
   for (let tms = 0; tms <= endMs; tms += dtMs) {
@@ -136,6 +155,15 @@ function syntheticFrames(modalidad, opts = {}) {
       const x = 0.5 + 0.0001 * tms + (ext.endsWith('_der') ? 0.04 : -0.04);
       keypoints[codigo] = { x: Number(x.toFixed(4)), y: Number(yAt(ext, tms).toFixed(4)), confianza: 0.9 };
     }
+    // Puntos de tronco y cabeza (oscilación vertical + traslación/sway horizontal).
+    const bob = Math.sin(2 * Math.PI * tms / bobCycle);
+    const bob2 = Math.sin(2 * Math.PI * tms / bobCycle + 0.6); // fase ligeramente distinta para la grupa
+    const travel = 0.5 + 0.0001 * tms;
+    keypoints.cruz   = { x: Number(travel.toFixed(4)), y: Number((BASE_Y.cruz  + troncoBob * bob).toFixed(4)), confianza: 0.9 };
+    keypoints.dorso  = { x: Number(travel.toFixed(4)), y: Number((BASE_Y.dorso + troncoBob * bob).toFixed(4)), confianza: 0.9 };
+    keypoints.grupa  = { x: Number((travel + ancaSway * bob2).toFixed(4)), y: Number((BASE_Y.grupa + troncoBob * bob2).toFixed(4)), confianza: 0.9 };
+    keypoints.nuca   = { x: Number(travel.toFixed(4)), y: Number((BASE_Y.nuca  + headBob * bob).toFixed(4)), confianza: 0.9 };
+    keypoints.hocico = { x: Number(travel.toFixed(4)), y: Number((BASE_Y.hocico + headBob * bob).toFixed(4)), confianza: 0.9 };
     frames.push({ numero_frame: n, timestamp_ms: Math.round(tms), keypoints });
     n++;
   }

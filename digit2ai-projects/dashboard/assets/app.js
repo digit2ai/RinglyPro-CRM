@@ -2383,6 +2383,7 @@ function renderInboxCard(p) {
         ${p.description ? `<div style="font-size:13px;color:var(--text-secondary);white-space:pre-wrap;margin-bottom:10px"><strong style="color:var(--text-primary)">Description:</strong> ${escHtml(p.description)}</div>` : ''}
         ${qaList}
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          ${p.teaser_token ? `<a class="btn btn-sm" href="/projects/teaser/${p.teaser_token}" target="_blank" rel="noopener" title="Open the voice teaser + interactive simulator" style="background:linear-gradient(135deg,#22d3ee,#7c5cff);color:#06122b;border:0;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px">&#127916; Teaser + Simulator</a>` : ''}
           ${(() => {
             const hasTriage = !!(p.triage_structured && (Array.isArray(p.triage_structured.stakeholder_questions_es) || Array.isArray(p.triage_structured.stakeholder_questions_en)));
             const disabled = hasTriage ? '' : 'disabled';
@@ -6626,6 +6627,11 @@ async function showProjectDetail(id) {
             </div>
             <div id="project-notes-${p.id}" contenteditable="true" data-original="${escHtml(renderNotesHtml(p.notes || ''))}" oninput="onProjectNotesChange(${p.id})" style="width:100%;font-family:inherit;font-size:14px;line-height:1.55;padding:12px;border-radius:0 0 var(--radius) var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);min-height:260px;max-height:600px;overflow-y:auto;outline:none" data-placeholder="Write notes for this project. Paste meeting summaries, decisions, follow-ups, links — anything you want kept with the project record.">${renderNotesHtml(p.notes || '')}</div>
           </div>
+          ${p.teaser_token ? `<div class="detail-section"><h4>&#127916; Teaser + Simulator</h4>
+            <div style="padding:12px 14px;background:rgba(34,211,238,0.06);border:1px solid rgba(124,92,255,0.3);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:13px;color:var(--text-muted)">Voice walkthrough + interactive app simulator generated for this request.</span>
+              <a class="btn btn-sm" href="/projects/teaser/${p.teaser_token}" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#22d3ee,#7c5cff);color:#06122b;border:0;font-weight:700;text-decoration:none">Open teaser + simulator &rarr;</a>
+            </div></div>` : ''}
           ${renderProjectTriagePanel(p)}
           ${renderPremortemPanel(p)}
           ${p.description ? `<div class="detail-section"><h4>Description</h4><p style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap">${p.description}</p></div>` : ''}

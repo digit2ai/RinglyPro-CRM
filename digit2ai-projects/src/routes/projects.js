@@ -181,6 +181,16 @@ router.get('/inbox', async (req, res) => {
         obj.share_token = token ? token.token : null;
       }
 
+      // Latest teaser (with embedded simulator) generated for this project — so
+      // the owner can open the same magic link from the inbox.
+      try {
+        const [tr] = await sequelize.query(
+          "SELECT token FROM d2_project_teasers WHERE project_id = :pid AND status = 'ready' ORDER BY created_at DESC LIMIT 1",
+          { replacements: { pid: p.id } }
+        );
+        obj.teaser_token = tr && tr[0] ? tr[0].token : null;
+      } catch (_) { obj.teaser_token = null; }
+
       return obj;
     }));
 
@@ -269,7 +279,16 @@ router.get('/:id', async (req, res) => {
       share_token = token ? token.token : null;
     }
 
-    res.json({ success: true, data: { ...project.toJSON(), activity, share_token, batch_id } });
+    let teaser_token = null;
+    try {
+      const [tr] = await sequelize.query(
+        "SELECT token FROM d2_project_teasers WHERE project_id = :pid AND status = 'ready' ORDER BY created_at DESC LIMIT 1",
+        { replacements: { pid: project.id } }
+      );
+      teaser_token = tr && tr[0] ? tr[0].token : null;
+    } catch (_) {}
+
+    res.json({ success: true, data: { ...project.toJSON(), activity, share_token, batch_id, teaser_token } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

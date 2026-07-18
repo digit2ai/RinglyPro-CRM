@@ -43,9 +43,19 @@ function calidad(v, L) {
   return L ? 'poor' : 'muy deficiente';
 }
 
+const TIPO_LABEL = {
+  caballo: { es: 'Caballo Criollo Colombiano', en: 'Colombian Criollo horse' },
+  campeon_joven: { es: 'Campeón/Campeona Joven', en: 'Young Champion' },
+  grupo_yeguas: { es: 'Grupo de Yeguas', en: 'Group of Mares' },
+  asnal: { es: 'Asnal', en: 'Donkey (asnal)' },
+  mular: { es: 'Mular', en: 'Mule (mular)' }
+};
+
 function generar(fallo, lang) {
   const L = String(lang || 'es').slice(0, 2) === 'en';
   const U = DEFAULT_MODEL.umbrales;
+  const tipo = fallo.tipo || 'caballo';
+  const tipoLabel = (TIPO_LABEL[tipo] && TIPO_LABEL[tipo][L ? 'en' : 'es']) || tipo;
   const c = fallo.clasificacion || {};
   const mov = fallo.metricas_movimiento || {};
   const son = fallo.metricas_sonido || {};
@@ -131,13 +141,13 @@ function generar(fallo, lang) {
         `Esto rompe la impresión limpia de cuatro tiempos y se penaliza fuertemente — apunta a un problema de coordinación, equilibrio o condición, no a un desliz momentáneo.`;
     recomendaciones.push(L ? 'Veterinary check to rule out lameness/asymmetry, then structured rhythm schooling.' : 'Revisión veterinaria para descartar claudicación/asimetría, luego adiestramiento estructurado de ritmo.');
   }
-  secciones.push({ nivel: nivelRitmo, titulo: L ? 'Rhythm and regularity (35%)' : 'Ritmo y regularidad (35%)', cuerpo: cuerpoRitmo });
+  secciones.push({ nivel: nivelRitmo, titulo: L ? 'Rhythm and regularity' : 'Ritmo y regularidad', cuerpo: cuerpoRitmo });
 
   // ---- Estructura de apoyos / claridad de 4 tiempos ----
   const clar = son.claridad_4_tiempos != null ? son.claridad_4_tiempos : mov.uniformidad_4_tiempos;
   secciones.push({
     nivel: clar != null && clar >= 0.6 ? 'ok' : 'aviso',
-    titulo: L ? 'Four-beat clarity & support structure (25%)' : 'Claridad de 4 tiempos y estructura de apoyos (25%)',
+    titulo: L ? 'Four-beat clarity & support structure' : 'Claridad de 4 tiempos y estructura de apoyos',
     cuerpo: L
       ? `The footfall sequence resolves into ${nBeats != null ? nBeats : 'four'} beats per cycle${suppEn}; four-beat clarity scores ${calidad(clar, L)} (${pct(clar)}). ` +
         `In the Paso Fino each hoof must strike the ground as a distinct, audible beat — the cleaner the separation between the four contacts, the higher the merit. A blurred or paired beat suggests the gait is drifting toward a two-beat (trochy/trot) structure.`
@@ -165,13 +175,13 @@ function generar(fallo, lang) {
       ? `Cadence is ${num(cad)} footfalls/min, inside the ideal ${U.cadencia_paso_fino_min_ppm}-${U.cadencia_paso_fino_max_ppm} band (target ~${U.cadencia_paso_fino_ideal_ppm}). The horse shows the rapid, short, energetic step that defines Paso Fino brío.`
       : `La cadencia es ${num(cad)} pisadas/min, dentro de la banda ideal ${U.cadencia_paso_fino_min_ppm}-${U.cadencia_paso_fino_max_ppm} (objetivo ~${U.cadencia_paso_fino_ideal_ppm}). El caballo muestra el paso rápido, corto y enérgico que define el brío del Paso Fino.`;
   }
-  secciones.push({ nivel: nivelCad, titulo: L ? 'Cadence & brío (15%)' : 'Cadencia y brío (15%)', cuerpo: cuerpoCad });
+  secciones.push({ nivel: nivelCad, titulo: L ? 'Cadence & brío' : 'Cadencia y brío', cuerpo: cuerpoCad });
 
   // ---- Simetría lateral ----
   const sim = mov.simetria_lateral;
   secciones.push({
     nivel: sim != null && sim >= 0.7 ? 'ok' : 'aviso',
-    titulo: L ? 'Lateral symmetry (15%)' : 'Simetría lateral (15%)',
+    titulo: L ? 'Lateral symmetry' : 'Simetría lateral',
     cuerpo: L
       ? `Left/right balance of support scores ${pct(sim)} (${calidad(sim, L)}). A symmetric horse loads both sides evenly; a marked imbalance can indicate a one-sided preference, a developing lameness, or rider influence. ${sim != null && sim < 0.7 ? 'The asymmetry here is worth a closer in-hand inspection.' : 'No material asymmetry was detected.'}`
       : `El balance izquierda/derecha de los apoyos es ${pct(sim)} (${calidad(sim, L)}). Un caballo simétrico carga ambos lados por igual; un desbalance marcado puede indicar preferencia de un lado, una claudicación en desarrollo o influencia del jinete. ${sim != null && sim < 0.7 ? 'La asimetría aquí amerita una inspección a la mano más detallada.' : 'No se detectó asimetría material.'}`
@@ -183,7 +193,7 @@ function generar(fallo, lang) {
   if (ea != null || ep != null) {
     secciones.push({
       nivel: 'info',
-      titulo: L ? 'Elevation & reach (10%)' : 'Elevación y amplitud (10%)',
+      titulo: L ? 'Elevation & reach' : 'Elevación y amplitud',
       cuerpo: L
         ? `Forelimb elevation reads ${pct(ea)} and hindlimb ${pct(ep)} of frame-normalized range. Elevation contributes to the showy, lofty action valued in the breed, but must not come at the expense of rhythm. ${(ea != null && ep != null && Math.abs(ea - ep) > 0.25) ? 'A notable front/hind elevation gap was observed.' : 'Front and hind action are reasonably matched.'}`
         : `La elevación anterior es ${pct(ea)} y la posterior ${pct(ep)} del rango normalizado al cuadro. La elevación aporta la acción vistosa y alta valorada en la raza, pero no debe lograrse a costa del ritmo. ${(ea != null && ep != null && Math.abs(ea - ep) > 0.25) ? 'Se observó una brecha notable de elevación entre tren anterior y posterior.' : 'La acción anterior y posterior están razonablemente equiparadas.'}`
@@ -193,13 +203,69 @@ function generar(fallo, lang) {
     if (ea != null && ep != null && Math.abs(ea - ep) > 0.15) recomendaciones.push(L ? 'Balance front vs. hind action with symmetry/straightness work; compare both elevation arcs on the next 3D scan.' : 'Equilibrar la acción anterior vs. posterior con trabajo de simetría/rectitud; comparar ambos arcos de elevación en el próximo escaneo 3D.');
   }
 
-  // ---- Desglose de puntuación ----
-  if (punt.length) {
-    const lineas = punt.map((p) => `- ${p.nombre} (${num(p.peso_porcentaje, 0)}%): ${num(p.puntaje_normalizado, 0)}/100 — ${calidad((p.puntaje_normalizado || 0) / 100, L)}`);
+  // ---- Movimientos avanzados del rubro oficial (pose de tronco/cabeza) ----
+  const adv = [
+    ['suavidad', L ? 'Softness & naturalness (Suavidad)' : 'Suavidad y naturalidad', L ? 'the single highest-weighted line — comfort of the ride' : 'la línea de mayor peso — comodidad del transporte'],
+    ['compensacion', L ? 'Compensation (fore/hind harmony)' : 'Compensación (armonía ant/post)', ''],
+    ['quietud_anca', L ? 'Croup stillness (Quietud de anca)' : 'Quietud de anca', ''],
+    ['sostenimiento', L ? 'Consistency (Sostenimiento)' : 'Sostenimiento (constancia)', ''],
+    ['posicion_cabeza', L ? 'Head carriage / collection' : 'Posición de cabeza / reunión', '']
+  ].filter(([k]) => mov[k] != null);
+  if (adv.length) {
+    const lineas = adv.map(([k, lbl, note]) => `- ${lbl}: ${pct(mov[k])} (${calidad(mov[k], L)})${note ? ' — ' + note : ''}`);
     secciones.push({
       nivel: 'info',
-      titulo: L ? 'Score breakdown' : 'Desglose de puntuación',
-      cuerpo: (L ? 'Weighted criteria contributing to the final score:\n' : 'Criterios ponderados que componen el puntaje final:\n') + lineas.join('\n')
+      titulo: L ? 'Advanced movement metrics' : 'Métricas de movimiento avanzadas',
+      cuerpo: (L
+        ? 'Derived from torso/head pose (withers, back, croup, poll). These map to the official Movimientos block lines beyond rhythm:\n'
+        : 'Derivadas de la pose del tronco/cabeza (cruz, dorso, grupa, nuca). Mapean las líneas del bloque Movimientos más allá del ritmo:\n') + lineas.join('\n')
+    });
+  }
+
+  // ---- Rubro oficial aplicado + subtotales por bloque ----
+  if (punt.length) {
+    const bloques = {};
+    for (const p of punt) {
+      const b = p.bloque || '—';
+      if (!bloques[b]) bloques[b] = { peso: 0, medPeso: 0, acum: 0 };
+      bloques[b].peso += Number(p.peso_porcentaje) || 0;
+      if (p.medible !== false && p.puntaje_normalizado != null) {
+        bloques[b].medPeso += Number(p.peso_porcentaje) || 0;
+        bloques[b].acum += p.puntaje_normalizado * (Number(p.peso_porcentaje) || 0);
+      }
+    }
+    const bloqueLineas = Object.keys(bloques).map((b) => {
+      const x = bloques[b];
+      const sub = x.medPeso > 0 ? (x.acum / x.medPeso) : null;
+      const covPct = x.peso > 0 ? Math.round((x.medPeso / x.peso) * 100) : 0;
+      const val = sub != null
+        ? `${num(sub, 0)}/100 (${L ? 'measured ' : 'medido '}${covPct}% ${L ? 'of block' : 'del bloque'})`
+        : (L ? 'pending — requires 3D scan / judge input' : 'pendiente — requiere escaneo 3D / evaluación del juez');
+      return `- ${b} (${num(x.peso, 0)}%): ${val}`;
+    });
+    secciones.push({
+      nivel: 'info',
+      titulo: L ? `Official FEDEQUINAS rubric applied — ${tipoLabel}` : `Rubro oficial FEDEQUINAS aplicado — ${tipoLabel}`,
+      cuerpo: (L
+        ? `Scored against the official FEDEQUINAS scoring table for this entry type (see REGLAMENTO_FEDEQUINAS.md). Block subtotals:\n`
+        : `Puntuado con la tabla oficial de puntajes FEDEQUINAS para este tipo de inscripción (ver REGLAMENTO_FEDEQUINAS.md). Subtotales por bloque:\n`)
+        + bloqueLineas.join('\n')
+        + (fallo.cobertura != null ? `\n\n${L ? 'Overall measured coverage' : 'Cobertura medida total'}: ${Math.round(fallo.cobertura * 100)}% — ${L ? 'the score is renormalized over the criteria that could be measured; Fenotipo/Aplomos come from the 3D conformation engine.' : 'el puntaje se renormaliza sobre los criterios que sí se pudieron medir; Fenotipo/Aplomos provienen del motor de conformación 3D.'}` : '')
+    });
+
+    // ---- Desglose por criterio (honesto sobre lo no medido) ----
+    const lineas = punt.map((p) => {
+      let val;
+      if (p.puntaje_normalizado != null) val = `${num(p.puntaje_normalizado, 0)}/100 — ${calidad((p.puntaje_normalizado || 0) / 100, L)}`;
+      else if (p.origen === 'gs') val = L ? 'requires 3D conformation scan' : 'requiere escaneo de conformación 3D';
+      else if (p.origen === 'manual') val = L ? 'judge/rein input' : 'evaluación del juez / rienda';
+      else val = L ? 'not measurable' : 'no medible';
+      return `- ${p.nombre} (${num(p.peso_porcentaje, 0)}%): ${val}`;
+    });
+    secciones.push({
+      nivel: 'info',
+      titulo: L ? 'Criterion breakdown' : 'Desglose por criterio',
+      cuerpo: (L ? 'Every line of the official table:\n' : 'Cada línea de la tabla oficial:\n') + lineas.join('\n')
     });
   }
 

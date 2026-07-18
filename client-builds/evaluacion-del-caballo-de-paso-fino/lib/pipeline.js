@@ -13,7 +13,7 @@
 const footfall = require('./footfall');
 const metrics = require('./metrics');
 const { classify, esModalidadValida } = require('./classifier');
-const { score } = require('./scoring');
+const { score, rubricFor, tipoDeCategoria } = require('./scoring');
 const { CASCOS } = require('./anatomy');
 const dictamen = require('./dictamen');
 const neural = require('./neuralEngine');
@@ -24,6 +24,9 @@ async function runPipeline(store, ctx) {
   const { repo } = store;
   const { sesion, inscripcion, categoria, frames, audioOnsets, audioMeta, durSec } = ctx;
   const superficie = sesion.superficie;
+  // Tipo de ejemplar (caballo | campeon_joven | grupo_yeguas | asnal | mular) —
+  // determina el RUBRO oficial a aplicar (REGLAMENTO_FEDEQUINAS.md §2).
+  const tipo = tipoDeCategoria(categoria);
 
   // 1. Persistir frames + SOLO keypoints de casco_* (control de volumen).
   if (Array.isArray(frames) && frames.length) {
@@ -74,6 +77,9 @@ async function runPipeline(store, ctx) {
     clas.confianza = Math.min(clas.confianza != null ? clas.confianza : 0, 0.5);
     valida = null; // estimada por audio: ni válida ni inválida (no bandera roja)
   }
+  // Asnales, mulares y grupos NO se juzgan por un andar del CCC: la validez de
+  // "modalidad vs categoría" no aplica (se evalúan por armonía/conformación).
+  if (tipo === 'asnal' || tipo === 'mular' || tipo === 'grupo_yeguas') valida = null;
   await repo.create('clasificaciones', {
     sesion_id: sesion.id, modalidad_detectada: clas.modalidad_detectada, confianza: clas.confianza,
     modelo_id: activeModel ? activeModel.id : null, es_modalidad_valida: valida
@@ -85,10 +91,12 @@ async function runPipeline(store, ctx) {
   await repo.create('metricas_mov', Object.assign({ sesion_id: sesion.id }, mov));
   await repo.create('metricas_son', Object.assign({ sesion_id: sesion.id }, son));
 
-  // 5. Puntuación por criterios de la modalidad (de la categoría, o detectada).
+  // 5. Puntuación por el RUBRO OFICIAL FEDEQUINAS del tipo de ejemplar
+  // (rubricFor: caballo 40/25/35, campeón joven 35/35/30, grupos, asnal, mular).
+  // Los criterios de Fenotipo/Aplomos (origen 'gs') y manuales salen medible:false
+  // y score() renormaliza por cobertura — nunca castiga con 0.
   const modalidadPuntuar = (categoria && categoria.modalidad) || clas.modalidad_detectada || 'paso_fino';
-  let criterios = await repo.findAll('criterios', { modalidad: modalidadPuntuar });
-  if (!criterios.length) criterios = await repo.findAll('criterios', { modalidad: 'paso_fino' });
+  const criterios = rubricFor(tipo, modalidadPuntuar);
   const { puntuaciones, puntaje_total, cobertura, cadencia_band } = score(criterios, mov, son, umbrales, modalidadPuntuar);
   const puntajeGuardar = puntaje_total == null ? 0 : puntaje_total;
   await repo.bulk('puntuaciones', puntuaciones.map((p) => ({
@@ -109,6 +117,7 @@ async function runPipeline(store, ctx) {
   const fallo = {
     sesion_id: sesion.id,
     superficie,
+    tipo,               // tipo de ejemplar → rubro oficial aplicado
     clasificacion: Object.assign({ es_modalidad_valida: valida, modalidad_categoria: categoria ? categoria.modalidad : null }, clas),
     metricas_movimiento: mov,
     metricas_sonido: son,
