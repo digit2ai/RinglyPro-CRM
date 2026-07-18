@@ -142,8 +142,8 @@
   function scalar(prof, key) {
     var sin = prof.sin_diagnostico;
     switch (key) {
-      case 'nombre': return prof.nombre || 'ahí';
-      case 'saludo': return 'Hola, ' + (prof.nombre || 'ahí');
+      case 'nombre': return prof.nombre || '';
+      case 'saludo': return prof.nombre ? 'Hola, ' + prof.nombre : 'Hola';
       case 'score': return sin || prof.planea_score == null ? '—' : String(prof.planea_score);
       case 'rango': return sin ? 'Sin diagnóstico' : (prof.rango || '—');
       case 'patrimonio_total':
@@ -349,20 +349,36 @@
       });
   }
 
+  // Clean, honest empty profile — NO demo. Used when nobody is logged in so the
+  // portal never shows fabricated numbers (score/patrimonio/etc.).
+  function emptyProfile() {
+    return {
+      loaded: true, logged_in: false, sin_diagnostico: true,
+      nombre: '', full_name: '', email: '',
+      planea_score: null, rango: null, score_pilares_pct: null,
+      activos: [], pasivos: [], metas: [],
+      activos_total_cop: 0, pasivos_total_cop: 0, patrimonio_neto_cop: 0
+    };
+  }
+
   function boot() {
     // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
     if (ourSession()) {
       buildProfileFromBackend().then(render).catch(function (e) {
         if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
+        render(emptyProfile());
       });
       return;
     }
     var sess = sbSession();
-    if (!sess) return; // not logged in → keep static demo
-    buildProfile(sess).then(render).catch(function (e) {
-      // Network/auth failure: don't wipe the page to zeros, keep whatever is shown.
-      if (window.console) console.warn('[planea-data] load failed:', e && e.message);
-    });
+    if (sess) {
+      buildProfile(sess).then(render).catch(function (e) {
+        if (window.console) console.warn('[planea-data] load failed:', e && e.message);
+        render(emptyProfile());
+      });
+      return;
+    }
+    render(emptyProfile()); // not logged in → CLEAN empty state, never demo
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

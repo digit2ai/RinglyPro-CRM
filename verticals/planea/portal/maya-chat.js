@@ -7,38 +7,10 @@
 (function () {
   'use strict';
 
-  // ── Demo profile (mockup data) — overridden by window.PLANEA_PROFILE in the real app ──
-  var DEMO_PROFILE = {
-    nombre: 'Manuel',
-    planea_score: 89,
-    rango: 'Sólido',
-    ingreso_mensual_cop: 10800000,
-    gasto_mensual_cop: 4500000,
-    pilares_planeacion_pct: { ahorro: 82, deuda: 55, inversion: 70, seguros: 68, impuestos: 84, pension: 60, legado: 35 },
-    score_pilares_pct: { fondo_emergencia: 78, flujo_caja: 92, salud_deuda: 84, estabilidad: 88 },
-    patrimonio_neto_cop: 128500000,
-    activos_total_cop: 172000000,
-    pasivos_total_cop: 43500000,
-    activos: [
-      { nombre: 'Ahorro líquido', valor_cop: 18400000 }, { nombre: 'Inversiones', valor_cop: 27000000 },
-      { nombre: 'Vivienda', valor_cop: 95000000 }, { nombre: 'Vehículo', valor_cop: 22000000 },
-      { nombre: 'Otros activos', valor_cop: 9600000 }
-    ],
-    pasivos: [
-      { nombre: 'Crédito de vehículo', valor_cop: 28000000, tasa_ea: 0.142 },
-      { nombre: 'Crédito de libre inversión', valor_cop: 11000000, tasa_ea: 0.189 },
-      { nombre: 'Tarjeta de crédito', valor_cop: 4500000, tasa_ea: 0.275 }
-    ],
-    fondo_emergencia_meses: 4.1,
-    meta_prioritaria: { nombre: 'Fondo de emergencia', objetivo_cop: 22000000, actual_cop: 16800000, progreso_pct: 76, meses_restantes: 2 },
-    metas: [
-      { nombre: 'Vivienda (cuota inicial)', objetivo_cop: 70000000, actual_cop: 42000000, pct: 60, meses_restantes: 12, prioridad: 'alta' },
-      { nombre: 'Viajes (Europa 2027)', objetivo_cop: 18000000, actual_cop: 6800000, pct: 38, meses_restantes: 11, prioridad: 'alta' },
-      { nombre: 'Retiro (pensión voluntaria)', objetivo_cop: 250000000, actual_cop: 34000000, pct: 14, prioridad: 'alta' },
-      { nombre: 'Educación (maestría)', objetivo_cop: 35000000, actual_cop: 14000000, pct: 40, meses_restantes: 15, prioridad: 'alta' },
-      { nombre: 'Pagar deuda (tarjeta)', objetivo_cop: 5500000, actual_cop: 1800000, pct: 33, meses_restantes: 7, prioridad: 'baja' }
-    ]
-  };
+  // Neutral empty profile — NO demo/mockup financials. Overridden by
+  // window.PLANEA_PROFILE (real user) when logged in; otherwise Maya speaks
+  // generically and invites the user to do their diagnóstico.
+  var DEMO_PROFILE = { nombre: '', sin_diagnostico: true };
 
   var API = '/planea/api/v1/maya/chat';
   var TTS = '/api/tts/edge';
