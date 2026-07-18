@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>PLANEA · Private Financial Intelligence Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily: { sans: ['Inter','sans-serif'], mono: ['JetBrains Mono','monospace'] },
+    colors: { ink:'#05070d', panel:'#0b1120', edge:'rgba(255,255,255,.08)',
+      pos:'#34d399', warn:'#fbbf24', neg:'#f87171', accent:'#60a5fa', violet:'#a78bfa' } } } };
+</script>
+<style>
+  :root{ color-scheme:dark; }
+  body{ background:#05070d; background-image:
+    radial-gradient(60% 50% at 0% 0%,rgba(96,165,250,.10),transparent 60%),
+    radial-gradient(50% 45% at 100% 0%,rgba(167,139,250,.10),transparent 60%),
+    radial-gradient(60% 50% at 50% 100%,rgba(52,211,153,.06),transparent 60%);
+    font-family:'Inter',sans-serif; }
+  .glass{ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.08); backdrop-filter:blur(14px); border-radius:18px; }
+  .mono{ font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; }
+  .tnum{ font-variant-numeric:tabular-nums; }
+  .kpi-up{ color:#34d399 } .kpi-dn{ color:#f87171 }
+  .grad-txt{ background:linear-gradient(90deg,#60a5fa,#a78bfa 60%,#34d399); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sec-num{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.2em; color:#5b6b86; }
+  .chip{ font-size:11px; font-weight:700; letter-spacing:.05em; padding:3px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.14); }
+  .heat{ border-radius:6px; height:34px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+  .bartrack{ height:8px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .barfill{ height:100%; border-radius:999px; transition:width 1s cubic-bezier(.2,.8,.2,1); }
+  .flash{ animation:fl 1.6s ease-in-out infinite; } @keyframes fl{50%{opacity:.45}}
+  .reveal{ opacity:0; transform:translateY(10px); transition:opacity .5s, transform .5s; }
+  .reveal.in{ opacity:1; transform:none; }
+  canvas{ max-width:100%; }
+  ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
+</style>
+</head>
+<body class="text-slate-200 min-h-screen">
+
+<!-- Top bar -->
+<header class="sticky top-0 z-30 border-b border-white/5 bg-[#05070d]/80 backdrop-blur-xl">
+  <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-violet flex items-center justify-center font-black text-ink">P</div>
+      <div class="min-w-0">
+        <div class="text-[13px] font-extrabold tracking-tight truncate">PLANEA <span class="text-slate-500 font-medium">· Private Intelligence Center</span></div>
+        <div class="text-[10px] text-slate-500 mono tracking-widest">CONFIDENTIAL · EXECUTIVE PROTOTYPE</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="live-dot" class="chip text-slate-400 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-500 flash"></span> conectando</span>
+      <span id="asof" class="chip text-slate-400 hidden sm:inline mono"></span>
+    </div>
+  </div>
+</header>
+
+<!-- Gate / loading -->
+<div id="gate" class="max-w-md mx-auto mt-24 px-6 text-center">
+  <div class="glass p-8">
+    <div class="w-10 h-10 mx-auto rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+    <div class="mt-5 text-sm text-slate-400">Cargando tu inteligencia financiera…</div>
+  </div>
+</div>
+
+<main id="app" class="hidden max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-5"></main>
+
+<footer class="max-w-[1400px] mx-auto px-6 py-10 text-center text-[11px] text-slate-600">
+  PLANEA Private Financial Intelligence Center · prototipo confidencial para demostración ejecutiva · construido por Digit2AI Neural.<br>
+  Todas las cifras se calculan a partir de tus datos reales de Planea. Los modelos (Altman, Piotroski, Ohlson, Monte Carlo, etc.) son adaptaciones a finanzas personales, no asesoría de inversión.
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  // ---------- helpers ----------
+  var $ = function(id){ return document.getElementById(id); };
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function clamp01(x){ return clamp(x,0,1); }
+  function num(x){ var v=+x; return isNaN(v)?0:v; }
+  function cop(n){ n=Math.round(num(n)); var s=n<0; n=Math.abs(n); return (s?'-':'')+'$'+n.toLocaleString('es-CO'); }
+  function copS(n){ var s=n<0,a=Math.abs(num(n)); var t=a>=1e9?(a/1e9).toFixed(a>=1e10?0:1)+'MM':a>=1e6?(a/1e6).toFixed(a>=1e7?0:1)+'M':a>=1e3?(a/1e3).toFixed(0)+'K':Math.round(a); return (s?'-':'')+'$'+t; }
+  function pct(x,d){ return (num(x)*100).toFixed(d==null?0:d)+'%'; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  function mean(a){ return a.length? a.reduce(function(x,y){return x+y;},0)/a.length : 0; }
+  function std(a){ if(a.length<2) return 0; var m=mean(a); return Math.sqrt(a.reduce(function(s,x){return s+(x-m)*(x-m);},0)/(a.length-1)); }
+  function cv(a){ var m=mean(a); return m>0? std(a)/m : 0; }
+  var COL={pos:'#34d399',warn:'#fbbf24',neg:'#f87171',accent:'#60a5fa',violet:'#a78bfa',slate:'#64748b'};
+  function band(v){ return v>=70?COL.pos:v>=45?COL.warn:COL.neg; }
+  function bandTxt(v){ return v>=70?'text-pos':v>=45?'text-warn':'text-neg'; }
+
+  var CH={};
+  function chart(id,cfg){ var el=$(id); if(!el||typeof Chart==='undefined') return; if(CH[id]) CH[id].destroy(); CH[id]=new Chart(el,cfg); }
+  var CG='rgba(255,255,255,.06)', CT='#64748b';
+  function axes(extra){ return Object.assign({ x:{grid:{color:CG},ticks:{color:CT,font:{size:10}}}, y:{grid:{color:CG},ticks:{color:CT,font:{size:10}}} }, extra||{}); }
+
+  // ---------- section scaffold ----------
+  function card(inner,cls){ return '<div class="glass p-5 '+(cls||'')+'">'+inner+'</div>'; }
+  function secHead(n,title,sub,right){
+    return '<div class="flex items-start justify-between gap-3 mb-4">'+
+      '<div><div class="sec-num">SECTION '+n+'</div><h2 class="text-[17px] font-extrabold tracking-tight mt-0.5">'+title+'</h2>'+
+      (sub?'<p class="text-[12.5px] text-slate-500 mt-0.5 max-w-xl">'+sub+'</p>':'')+'</div>'+
+      (right||'')+'</div>';
+  }
+  function metric(label,val,sub,tone){
+    return '<div class="glass p-4"><div class="text-[11px] uppercase tracking-wider text-slate-500">'+label+'</div>'+
+      '<div class="text-[22px] font-extrabold mt-1 tnum '+(tone||'')+'">'+val+'</div>'+
+      (sub?'<div class="text-[11.5px] text-slate-500 mt-0.5">'+sub+'</div>':'')+'</div>';
+  }
+  function barRow(label,v,color,right){
+    return '<div class="mb-2.5"><div class="flex justify-between text-[12px] mb-1"><span class="text-slate-300">'+label+'</span><span class="mono '+ (right&&right.cls||'') +'">'+(right&&right.txt!=null?right.txt:Math.round(v))+'</span></div>'+
+      '<div class="bartrack"><div class="barfill" style="width:'+clamp(v,0,100)+'%;background:'+(color||band(v))+'"></div></div></div>';
+  }
+
+  // ---------- radial gauge (SVG, 270deg) ----------
+  function polar(cx,cy,r,deg){ var a=(deg-90)*Math.PI/180; return [cx+r*Math.cos(a),cy+r*Math.sin(a)]; }
+  function ang(v){ return 225+clamp(v,0,100)/100*270; }
+  function arc(cx,cy,r,a0,a1){ var p0=polar(cx,cy,r,a0),p1=polar(cx,cy,r,a1),l=(a1-a0)%360>180?1:0; return 'M'+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+' A'+r+' '+r+' 0 '+l+' 1 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1); }
+  function gauge(v,label,size){
+    size=size||230; var cx=size/2,cy=size/2,R=size*0.40,w=size*0.075,c=band(v);
+    var segs=[[0,44.5,COL.neg],[44.5,69.5,COL.warn],[69.5,100,COL.pos]].map(function(s){return '<path d="'+arc(cx,cy,R,ang(s[0]),ang(s[1]))+'" fill="none" stroke="'+s[2]+'" stroke-width="'+w+'" opacity=".9"/>';}).join('');
+    var ticks=''; for(var t=0;t<=100;t+=20){ var a=ang(t),o=polar(cx,cy,R-w-2,a),i=polar(cx,cy,R-w-11,a); ticks+='<line x1="'+o[0].toFixed(1)+'" y1="'+o[1].toFixed(1)+'" x2="'+i[0].toFixed(1)+'" y2="'+i[1].toFixed(1)+'" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>'; }
+    var na0=ang(0),tip=polar(cx,cy,R-w+2,na0),tail=polar(cx,cy,18,na0+180),deg=v/100*270;
+    return '<svg viewBox="0 0 '+size+' '+size+'" style="width:100%;max-width:'+size+'px">'+segs+ticks+
+      '<g style="transform-box:view-box;transform-origin:'+cx+'px '+cy+'px;transform:rotate('+deg+'deg);transition:transform 1.2s cubic-bezier(.2,.9,.2,1)">'+
+      '<line x1="'+tail[0].toFixed(1)+'" y1="'+tail[1].toFixed(1)+'" x2="'+tip[0].toFixed(1)+'" y2="'+tip[1].toFixed(1)+'" stroke="#fff" stroke-width="'+(size*0.016)+'" stroke-linecap="round"/></g>'+
+      '<circle cx="'+cx+'" cy="'+cy+'" r="'+(size*0.05)+'" fill="#0b1120" stroke="#fff" stroke-width="2"/>'+
+      '<text x="'+cx+'" y="'+(cy+size*0.20)+'" text-anchor="middle" font-size="'+(size*0.22)+'" font-weight="900" fill="'+c+'" font-family="Inter">'+Math.round(v)+'</text>'+
+      '<text x="'+cx+'" y="'+(cy+size*0.29)+'" text-anchor="middle" font-size="'+(size*0.048)+'" letter-spacing="3" fill="#64748b" font-family="JetBrains Mono">'+(label||'')+'</text></svg>';
+  }
+
+  // ================= ANALYTICS =================
+  function analyze(sal, prof){
+    var inp=sal.inputs||{};
+    var I=num(inp.I),G=num(inp.G),A=num(inp.A),V=num(inp.V),R=num(inp.R),D=num(inp.D),Si=num(inp.S),C=num(inp.C);
+    var annual=I*12, assets=num(sal.total_assets), liab=num(sal.total_liabilities), nw=num(sal.net_worth);
+    var surplusM=I-G-C, surplusA=surplusM*12;
+    var savingsRate=I>0?(I-G)/I:0, freeRate=I>0?(I-G-C)/I:0;
+    var monthsExp=G>0?A/G:(A>0?99:0), dti=I>0?C/I:0, debtAnnual=annual>0?D/annual:(D>0?9:0);
+    var hist=(sal.history||[]).filter(function(h){return h.net_worth!=null||h.income!=null;});
+    var histNW=hist.map(function(h){return num(h.net_worth);});
+    var histInc=hist.map(function(h){return num(h.income);});
+    var histExp=hist.map(function(h){return num(h.expense);});
+
+    // sub-scores 0..100
+    var liquidity=clamp01(monthsExp/6)*100;
+    var cashflow=clamp01(freeRate/0.20)*100;
+    var savings=clamp01(0.5*(monthsExp/6)+0.5*clamp01(savingsRate/0.20))*100;
+    var debtScore=clamp01(1-debtAnnual)*100*(dti>0.36?0.75:1);
+    var assetScore=assets>0?clamp01(nw/assets)*100:(D>0?0:100);
+    // behavior
+    var behavior=60, behConf='baja';
+    if(hist.length>=2){ var good=0; hist.forEach(function(h){ if(num(h.income)>num(h.expense)) good++; }); var disc=good/hist.length; var ev=cv(histExp); behavior=clamp01(0.6*disc+0.4*(1-Math.min(ev,1)))*100; behConf=hist.length>=4?'alta':'media'; }
+    // risk engine
+    var leverage=assets>0?clamp01(D/assets):(D>0?1:0);
+    var giniAssets=gini([A,V,R]);
+    var liqRisk=1-clamp01(monthsExp/6);
+    var vol=hist.length>=3?Math.min(cv(histNW.map(Math.abs)),1):0.3;
+    var riskScore=clamp01(0.30*leverage+0.22*giniAssets+0.28*liqRisk+0.20*vol)*100;
+    // forecast trajectory
+    var lin=linreg(histNW); var slopePos=(hist.length>=3?lin.slope:surplusM)>0;
+    var forecastScore=clamp01(0.5 + (surplusM/(G||1))*0.5 + (slopePos?0.1:-0.1))*100;
+
+    var subs={ liquidity:liquidity, cashflow:cashflow, savings:savings, debt:debtScore, assets:assetScore, behavior:behavior, risk:100-riskScore, forecast:forecastScore };
+    var W={ liquidity:.20, cashflow:.20, savings:.15, debt:.15, assets:.10, behavior:.10, risk:.05, forecast:.05 };
+    var nfhi=0; Object.keys(W).forEach(function(k){ nfhi+=W[k]*subs[k]; });
+    nfhi=Math.round(nfhi);
+
+    // confidence
+    var cats=[I,G,A,V,R,D,Si]; var filled=cats.filter(function(x){return x>0;}).length;
+    var completeness=filled/7, histConf=Math.min(hist.length/6,1);
+    var confidence=Math.round((0.62*completeness+0.38*histConf)*100);
+
+    // trend of NFHI proxy = trend of salud overall history
+    var overs=hist.map(function(h){return num(h.overall);}).filter(function(x){return x>0;});
+    var nfhiTrend=overs.length>=2? overs[overs.length-1]-overs[0] : 0;
+
+    // Altman Z'
+    var WC=A - C*12;
+    var Z = assets>0 ? (1.2*(WC/assets)+1.4*((A+V)/assets)+3.3*(surplusA/assets)+0.6*(nw/(liab||1))+1.0*(annual/assets)) : (D>0?0:5);
+    // Piotroski (9)
+    var nwImproved = hist.length>=2? histNW[histNW.length-1]>histNW[0] : nw>0;
+    var pio=[ ['Patrimonio neto positivo',nw>0], ['Flujo de caja libre positivo',surplusM>0], ['Tasa de ahorro ≥ 20%',savingsRate>=0.20], ['Fondo ≥ 3 meses',monthsExp>=3], ['DTI ≤ 20%',dti<=0.20], ['Deuda ≤ ingreso anual',debtAnnual<=1], ['Ahorro de retiro presente',R>0], ['Con cobertura de seguros',Si>0], ['Patrimonio en mejora',nwImproved] ];
+    var pioScore=pio.filter(function(p){return p[1];}).length;
+    // Ohlson-inspired distress prob
+    var TLTA=assets>0?liab/assets:(D>0?1.5:0), WCTA=assets>0?WC/assets:0, NITA=assets>0?surplusA/assets:0;
+    var ox=-1.3+5.0*TLTA-3.0*WCTA-4.0*NITA+(surplusM<0?1.5:0)+(nw<0?2.2:0)-0.6*clamp01(monthsExp/6);
+    var pDistress=1/(1+Math.exp(-ox));
+    // Gini/Lorenz over assets
+    var lor=lorenz([A,V,R]);
+    // anomalies (Mahalanobis on income/expense history)
+    var anom=mahalanobis(hist);
+    // forecast series (12 mo)
+    var fc=forecast(histNW, nw, surplusM, 12);
+    // Monte Carlo
+    var mc=monteCarlo(nw, surplusM, V+R, 120, 400, inp.goalRet||annual*3);
+
+    return { I:I,G:G,A:A,V:V,R:R,D:D,Si:Si,C:C, annual:annual, assets:assets, liab:liab, nw:nw,
+      surplusM:surplusM, surplusA:surplusA, savingsRate:savingsRate, freeRate:freeRate, monthsExp:monthsExp, dti:dti, debtAnnual:debtAnnual,
+      hist:hist, histNW:histNW, histInc:histInc, histExp:histExp, subs:subs, W:W, nfhi:nfhi, nfhiTrend:nfhiTrend, confidence:confidence,
+      leverage:leverage, giniAssets:giniAssets, riskScore:riskScore, Z:Z, pio:pio, pioScore:pioScore, pDistress:pDistress, lor:lor, anom:anom, fc:fc, mc:mc,
+      buckets:sal.buckets||[], overall:sal.overall, age:inp.age, goals:(prof&&prof.goals)||[], goalRet:inp.goalRet };
+  }
+  function gini(arr){ arr=arr.filter(function(x){return x>=0;}); var n=arr.length; if(!n) return 0; var s=arr.slice().sort(function(a,b){return a-b;}); var sum=s.reduce(function(a,b){return a+b;},0); if(sum===0) return 0; var cum=0; for(var i=0;i<n;i++) cum+=(i+1)*s[i]; return clamp01((2*cum)/(n*sum)-(n+1)/n); }
+  function lorenz(arr){ arr=arr.filter(function(x){return x>=0;}).sort(function(a,b){return a-b;}); var n=arr.length,sum=arr.reduce(function(a,b){return a+b;},0); var pts=[{x:0,y:0}]; var c=0; for(var i=0;i<n;i++){ c+=arr[i]; pts.push({x:(i+1)/n*100,y:sum>0?c/sum*100:0}); } return pts; }
+  function linreg(y){ var n=y.length; if(n<2) return {slope:0,intercept:n?y[0]:0}; var sx=0,sy=0,sxy=0,sxx=0; for(var i=0;i<n;i++){ sx+=i;sy+=y[i];sxy+=i*y[i];sxx+=i*i; } var d=n*sxx-sx*sx; var slope=d?(n*sxy-sx*sy)/d:0; return {slope:slope,intercept:(sy-slope*sx)/n}; }
+  function forecast(histNW, nw, surplusM, months){
+    var base=nw, lin=linreg(histNW); var useLin=histNW.length>=3;
+    var monthly = useLin ? lin.slope : surplusM;
+    var vol = histNW.length>=3? std(histNW)*0.5 : Math.abs(surplusM)*2;
+    var out=[]; for(var m=1;m<=months;m++){ var v=base+monthly*m; out.push({m:m,mid:v,lo:v-vol*Math.sqrt(m)/3,hi:v+vol*Math.sqrt(m)/3}); }
+    return { out:out, monthly:monthly, method: useLin?'Regresión lineal sobre tu historial':'Proyección por flujo de caja (historial corto)', conf: histNW.length>=3?'media':'baja' };
+  }
+  function mahalanobis(hist){
+    if(hist.length<3) return { ok:false, points:[] };
+    var X=hist.map(function(h){return [num(h.income),num(h.expense)];});
+    var mx=mean(X.map(function(r){return r[0];})), my=mean(X.map(function(r){return r[1];}));
+    var vxx=0,vyy=0,vxy=0,n=X.length; X.forEach(function(r){ vxx+=(r[0]-mx)*(r[0]-mx); vyy+=(r[1]-my)*(r[1]-my); vxy+=(r[0]-mx)*(r[1]-my); }); vxx/=(n-1);vyy/=(n-1);vxy/=(n-1);
+    var det=vxx*vyy-vxy*vxy; if(Math.abs(det)<1e-6) det=1e-6;
+    var iaa=vyy/det, iab=-vxy/det, ibb=vxx/det;
+    var pts=X.map(function(r,i){ var dx=r[0]-mx,dy=r[1]-my; var d2=dx*(iaa*dx+iab*dy)+dy*(iab*dx+ibb*dy); return { i:i, date:hist[i].date, d2:d2, flag:d2>5.99, income:r[0], expense:r[1] }; });
+    return { ok:true, points:pts };
+  }
+  function monteCarlo(nw, surplusM, invested, months, paths, target){
+    var muM=0.07/12, sigM=0.12/Math.sqrt(12); var finals=[], series=[];
+    for(var p=0;p<paths;p++){ var v=nw, inv=Math.max(invested,0); var path=[v];
+      for(var m=1;m<=months;m++){ var z=gauss(); var ret=inv*(muM+sigM*z); v=v+surplusM+ret; inv=Math.max(inv+surplusM*0.6+ret,0); if(m%6===0) path.push(v); }
+      finals.push(v); if(p<60) series.push(path); }
+    finals.sort(function(a,b){return a-b;});
+    var q=function(f){ return finals[Math.floor(clamp(f,0,0.999)*finals.length)]; };
+    var success=finals.filter(function(x){return x>=target;}).length/finals.length;
+    return { p10:q(0.10), p50:q(0.50), p90:q(0.90), success:success, target:target, series:series, months:months };
+  }
+  var _g2=null; function gauss(){ if(_g2!=null){var g=_g2;_g2=null;return g;} var u=Math.random()||1e-9,v=Math.random(); var r=Math.sqrt(-2*Math.log(u)); _g2=r*Math.sin(2*Math.PI*v); return r*Math.cos(2*Math.PI*v); }
+
+  // ================= RENDER =================
+  function render(m, sal, prof){
+    var app=$('app'); var H=[];
+    var cls=m.nfhi>=85?'Robusto':m.nfhi>=70?'Sólido':m.nfhi>=55?'Estable':m.nfhi>=40?'Frágil':'Crítico';
+    var clsCol=bandTxt(m.nfhi);
+    var trendTxt=(m.nfhiTrend>0?'+':'')+m.nfhiTrend;
+
+    // 1 — Executive Overview
+    H.push('<section class="reveal">'+card(
+      '<div class="grid lg:grid-cols-[300px,1fr] gap-6 items-center">'+
+        '<div class="text-center">'+gauge(m.nfhi,'NFHI / 100',240)+
+          '<div class="mt-1"><span class="chip '+clsCol+'" style="border-color:currentColor">'+cls.toUpperCase()+'</span></div></div>'+
+        '<div>'+secHead('01','Executive Overview','Neural Financial Health Index — síntesis ponderada de 8 dimensiones sobre tus datos reales de Planea.','')+
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'+
+            metric('Patrimonio neto', cop(m.nw), (m.nw>=0?'solvente':'negativo'), m.nw>=0?'text-pos':'text-neg')+
+            metric('Tendencia NFHI', trendTxt+' pts', m.hist.length>=2?'vs. primer registro':'sin histórico', m.nfhiTrend>=0?'text-pos':'text-neg')+
+            metric('Confianza del modelo', m.confidence+'%', m.confidence>=70?'datos completos':'faltan datos', m.confidence>=70?'text-pos':'text-warn')+
+            metric('Clasificación', cls, 'banda '+(m.nfhi>=70?'verde':m.nfhi>=45?'ámbar':'roja'), clsCol)+
+          '</div>'+
+          '<div class="mt-4"><canvas id="ch-nfhi-radar" height="150"></canvas></div>'+
+        '</div>'+
+      '</div>')+'</section>');
+
+    // 2 — Liquidity Engine
+    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+      card(secHead('02','Liquidity Engine','Capacidad de absorber imprevistos sin endeudarte.')+
+        '<div class="grid grid-cols-3 gap-3 mb-4">'+
+          metric('Meses de cobertura', m.monthsExp>=99?'6+':m.monthsExp.toFixed(1), 'meta 6 meses', m.monthsExp>=6?'text-pos':m.monthsExp>=3?'text-warn':'text-neg')+
+          metric('Activos líquidos', copS(m.A), 'efectivo + ahorro')+
+          metric('Quick ratio', (m.G>0?(m.A/m.G).toFixed(1):'—'), 'líquido / gasto mes')+
+        '</div>'+ barRow('Índice de liquidez',m.subs.liquidity)+
+        '<div class="text-[12px] text-slate-500 mt-2">Un fondo de 6 meses de gastos es el estándar CFP. Actualmente cubres '+(m.monthsExp>=99?'más de 6':m.monthsExp.toFixed(1))+' meses.</div>')+
+      card(secHead('03','Cash Flow Intelligence','Entrada vs. salida y tu superávit real.')+
+        '<canvas id="ch-flow" height="150"></canvas>'+
+        '<div class="grid grid-cols-3 gap-3 mt-4">'+
+          metric('Superávit', cop(m.surplusM)+'/m', 'ingreso − gasto − deuda', m.surplusM>=0?'text-pos':'text-neg')+
+          metric('Tasa de ahorro', pct(m.savingsRate), 'meta 20%', m.savingsRate>=0.2?'text-pos':'text-warn')+
+          metric('Free cash flow', pct(m.freeRate), 'tras servicio de deuda', m.freeRate>=0.2?'text-pos':'text-warn')+
+        '</div>')+
+    '</section>');
+
+    // 4 & 5 — Debt + Asset
+    var alloc=[m.A,m.V,m.R];
+    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+      card(secHead('04','Debt Intelligence','Apalancamiento y presión de la deuda sobre tu ingreso.')+
+        '<div class="grid grid-cols-3 gap-3 mb-4">'+
+          metric('Deuda total', copS(m.D), 'saldo', m.D>0?'text-warn':'text-pos')+
+          metric('DTI', pct(m.dti), 'cuota / ingreso', m.dti<=0.2?'text-pos':m.dti<=0.36?'text-warn':'text-neg')+
+          metric('Deuda / ingreso anual', (m.debtAnnual).toFixed(2)+'x', m.debtAnnual<=1?'saludable':'elevado', m.debtAnnual<=1?'text-pos':'text-neg')+
+        '</div>'+ barRow('Salud de deuda',m.subs.debt)+
+        '<div class="text-[12px] text-slate-500 mt-2">Servicio de deuda mensual: '+cop(m.C)+'. '+(m.dti>0.36?'Tu DTI supera el 36% recomendado; prioriza amortizar.':'Tu DTI está dentro del rango saludable.')+'</div>')+
+      card(secHead('05','Asset Intelligence','Composición y concentración de tu patrimonio.')+
+        '<div class="grid grid-cols-[130px,1fr] gap-4 items-center">'+
+          '<canvas id="ch-alloc" height="130"></canvas>'+
+          '<div>'+
+            '<div class="flex justify-between text-[12.5px] py-1 border-b border-white/5"><span class="text-slate-400">Ahorro líquido</span><span class="mono">'+cop(m.A)+'</span></div>'+
+            '<div class="flex justify-between text-[12.5px] py-1 border-b border-white/5"><span class="text-slate-400">Inversiones</span><span class="mono">'+cop(m.V)+'</span></div>'+
+            '<div class="flex justify-between text-[12.5px] py-1 border-b border-white/5"><span class="text-slate-400">Retiro</span><span class="mono">'+cop(m.R)+'</span></div>'+
+            '<div class="flex justify-between text-[12.5px] py-1"><span class="text-slate-300 font-semibold">Activos totales</span><span class="mono font-bold">'+cop(m.assets)+'</span></div>'+
+            '<div class="mt-2 text-[12px] text-slate-500">Concentración (Gini): <span class="mono '+(m.giniAssets>0.6?'text-neg':m.giniAssets>0.4?'text-warn':'text-pos')+'">'+m.giniAssets.toFixed(2)+'</span> — '+(m.giniAssets>0.6?'muy concentrado':m.giniAssets>0.4?'moderado':'diversificado')+'</div>'+
+          '</div></div>')+
+    '</section>');
+
+    // 6 & 7 — Savings + Goals
+    var goalsHtml;
+    if(m.goals && m.goals.length){
+      goalsHtml=m.goals.slice(0,5).map(function(g){
+        var tgt=num(g.target||g.amount||g.monto||0), cur=num(g.current||g.saved||g.ahorrado||0);
+        var p=tgt>0?clamp01(cur/tgt)*100:(m.A>0?Math.min(m.A/(tgt||m.A),1)*100:0);
+        var name=esc(g.name||g.nombre||g.title||'Meta');
+        return barRow(name+ (tgt>0?' · '+copS(cur)+' / '+copS(tgt):''), p, p>=100?COL.pos:COL.accent, {txt:Math.round(p)+'%'});
+      }).join('');
+    } else {
+      goalsHtml='<div class="text-[12.5px] text-slate-500">No hay metas registradas en Planea. Al crear metas en el módulo "Mis metas", su avance aparecerá aquí en tiempo real.</div>';
+    }
+    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+      card(secHead('06','Savings Intelligence','Ritmo de ahorro y adecuación de tu fondo.')+
+        '<canvas id="ch-savings" height="150"></canvas>'+
+        '<div class="grid grid-cols-2 gap-3 mt-4">'+
+          metric('Fondo de emergencia', pct(clamp01(m.monthsExp/6)), 'de la meta de 6 meses', m.monthsExp>=6?'text-pos':'text-warn')+
+          metric('Ahorro anualizado', cop(Math.max(m.surplusM,0)*12), 'si mantienes el ritmo', 'text-pos')+
+        '</div>')+
+      card(secHead('07','Goal Achievement Engine','Progreso hacia tus objetivos financieros.')+goalsHtml)+
+    '</section>');
+
+    // 8 — Monte Carlo
+    H.push('<section class="reveal">'+card(
+      secHead('08','Monte Carlo Simulation','400 trayectorias de tu patrimonio a 10 años (retorno 7% ± 12% anual sobre lo invertido, más tu superávit mensual real).',
+        '<span class="chip '+(m.mc.success>=0.7?'text-pos':m.mc.success>=0.4?'text-warn':'text-neg')+'" style="border-color:currentColor">'+pct(m.mc.success)+' prob. de meta</span>')+
+      '<div class="grid lg:grid-cols-[1fr,260px] gap-5 items-center">'+
+        '<canvas id="ch-mc" height="150"></canvas>'+
+        '<div class="space-y-3">'+
+          metric('Percentil 90 (optimista)', cop(m.mc.p90), 'a 10 años', 'text-pos')+
+          metric('Percentil 50 (mediana)', cop(m.mc.p50), 'escenario central', 'text-accent')+
+          metric('Percentil 10 (adverso)', cop(m.mc.p10), 'a 10 años', 'text-warn')+
+          '<div class="text-[11.5px] text-slate-500">Meta de referencia: '+cop(m.mc.target)+' (tu objetivo de retiro por edad).</div>'+
+        '</div></div>')+'</section>');
+
+    // 9,10,11 — Altman / Piotroski / Ohlson
+    var zBand=m.Z>=2.99?['ZONA SEGURA',COL.pos]:m.Z>=1.8?['ZONA GRIS',COL.warn]:['ZONA DE ALERTA',COL.neg];
+    var pioBand=m.pioScore>=7?COL.pos:m.pioScore>=4?COL.warn:COL.neg;
+    var oBand=m.pDistress<=0.2?['BAJO',COL.pos]:m.pDistress<=0.5?['MODERADO',COL.warn]:['ELEVADO',COL.neg];
+    H.push('<section class="reveal grid lg:grid-cols-3 gap-5">'+
+      card(secHead('09','Altman-inspired Stability','Z-score adaptado a finanzas personales.')+
+        '<div class="text-center py-2"><div class="text-[42px] font-black tnum" style="color:'+zBand[1]+'">'+m.Z.toFixed(2)+'</div>'+
+        '<div class="chip mt-1" style="color:'+zBand[1]+';border-color:'+zBand[1]+'">'+zBand[0]+'</div></div>'+
+        '<div class="text-[11.5px] text-slate-500 mt-2">Combina capital de trabajo, ahorro acumulado, superávit, solvencia y rotación de ingreso. &gt;2.99 estable · 1.8–2.99 vigilar · &lt;1.8 alerta.</div>')+
+      card(secHead('10','Piotroski-inspired Score','9 señales binarias de fortaleza financiera.')+
+        '<div class="text-center mb-2"><span class="text-[42px] font-black tnum" style="color:'+pioBand+'">'+m.pioScore+'</span><span class="text-slate-500 text-xl font-bold"> / 9</span></div>'+
+        '<div class="space-y-1.5">'+m.pio.map(function(p){ return '<div class="flex items-center gap-2 text-[12px]"><span class="w-4 h-4 rounded flex items-center justify-center text-[10px] font-black" style="background:'+(p[1]?'rgba(52,211,153,.15)':'rgba(248,113,113,.12)')+';color:'+(p[1]?COL.pos:COL.neg)+'">'+(p[1]?'✓':'×')+'</span><span class="'+(p[1]?'text-slate-300':'text-slate-500')+'">'+p[0]+'</span></div>'; }).join('')+'</div>')+
+      card(secHead('11','Ohlson-inspired Distress','Probabilidad de estrés financiero (regresión logística).')+
+        '<div class="text-center py-2"><div class="text-[42px] font-black tnum" style="color:'+oBand[1]+'">'+pct(m.pDistress)+'</div>'+
+        '<div class="chip mt-1" style="color:'+oBand[1]+';border-color:'+oBand[1]+'">RIESGO '+oBand[0]+'</div></div>'+
+        '<div class="bartrack mt-3"><div class="barfill" style="width:'+(m.pDistress*100)+'%;background:'+oBand[1]+'"></div></div>'+
+        '<div class="text-[11.5px] text-slate-500 mt-2">Función de apalancamiento, capital de trabajo, retorno y liquidez. Menor es mejor.</div>')+
+    '</section>');
+
+    // 12,13 — Gini/Lorenz + Behavioral
+    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+      card(secHead('12','Financial Concentration','Curva de Lorenz y coeficiente de Gini de tus activos.')+
+        '<div class="grid grid-cols-[1fr,150px] gap-4 items-center">'+
+          '<canvas id="ch-lorenz" height="150"></canvas>'+
+          '<div>'+metric('Gini de activos', m.giniAssets.toFixed(3), m.giniAssets>0.6?'alta concentración':m.giniAssets>0.4?'moderada':'diversificado', m.giniAssets>0.6?'text-neg':m.giniAssets>0.4?'text-warn':'text-pos')+
+          '<div class="text-[11.5px] text-slate-500 mt-2">0 = perfectamente distribuido · 1 = todo en un solo activo. La diversificación reduce riesgo idiosincrático.</div></div></div>')+
+      card(secHead('13','Behavioral Analysis','Disciplina y consistencia derivadas de tu historial.')+
+        '<div class="grid grid-cols-2 gap-3 mb-3">'+
+          metric('Disciplina de gasto', Math.round(m.subs.behavior), 'consistencia mensual', bandTxt(m.subs.behavior))+
+          metric('Volatilidad de gasto', m.histExp.length>=2?pct(cv(m.histExp)):'—', 'menor es mejor')+
+        '</div>'+ barRow('Índice conductual',m.subs.behavior)+
+        '<div class="text-[11.5px] text-slate-500 mt-2">'+(m.hist.length>=2?'Basado en '+m.hist.length+' registros. Meses con superávit vs. déficit y estabilidad del gasto.':'Historial corto: registra tu Salud Financiera en distintos meses para afinar este análisis.')+'</div>')+
+    '</section>');
+
+    // 14,15 — Forecast + Anomaly
+    var anomHtml;
+    if(!m.anom.ok){ anomHtml='<div class="text-[12.5px] text-slate-500">Se requieren al menos 3 meses de historial para detección de anomalías (Mahalanobis). Sigue registrando tus datos.</div>'; }
+    else { var flagged=m.anom.points.filter(function(p){return p.flag;}); anomHtml='<div class="space-y-1.5">'+m.anom.points.map(function(p){ var c=p.flag?COL.neg:COL.pos; return '<div class="flex items-center justify-between text-[12px]"><span class="text-slate-400 mono">'+esc(String(p.date).slice(0,7))+'</span><span class="flex items-center gap-2"><span class="mono text-slate-500">d²='+p.d2.toFixed(1)+'</span><span class="chip" style="color:'+c+';border-color:'+c+'">'+(p.flag?'ANOMALÍA':'normal')+'</span></span></div>'; }).join('')+'</div>'+(flagged.length?'<div class="text-[11.5px] text-warn mt-2">'+flagged.length+' mes(es) atípico(s) detectado(s) — revisa ingresos/gastos fuera de patrón.</div>':'<div class="text-[11.5px] text-pos mt-2">Sin anomalías: tu patrón ingreso-gasto es estable.</div>'); }
+    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+      card(secHead('14','Forecast Engine','Proyección de patrimonio a 12 meses.',
+        '<span class="chip text-slate-400">'+esc(m.fc.method.split(' ')[0])+' · conf. '+m.fc.conf+'</span>')+
+        '<canvas id="ch-fc" height="150"></canvas>'+
+        '<div class="text-[11.5px] text-slate-500 mt-2">Método: '+esc(m.fc.method)+'. Ritmo estimado: '+cop(m.fc.monthly)+'/mes. Proxy de ARIMA/Prophet/LSTM sobre tus datos.</div>')+
+      card(secHead('15','Anomaly Detection','Distancia de Mahalanobis sobre tu historial ingreso-gasto.')+anomHtml)+
+    '</section>');
+
+    // 16 — Risk Engine
+    H.push('<section class="reveal">'+card(
+      secHead('16','Financial Risk Engine','Riesgo compuesto: apalancamiento, concentración, liquidez y volatilidad.',
+        '<span class="chip '+(m.riskScore<=30?'text-pos':m.riskScore<=55?'text-warn':'text-neg')+'" style="border-color:currentColor">'+(m.riskScore<=30?'BAJO':m.riskScore<=55?'MEDIO':'ALTO')+' · '+Math.round(m.riskScore)+'</span>')+
+      '<div class="grid sm:grid-cols-4 gap-4">'+
+        '<div>'+barRow('Apalancamiento',m.leverage*100,COL.neg)+'</div>'+
+        '<div>'+barRow('Concentración',m.giniAssets*100,COL.warn)+'</div>'+
+        '<div>'+barRow('Riesgo de liquidez',(1-clamp01(m.monthsExp/6))*100,COL.accent)+'</div>'+
+        '<div>'+barRow('Volatilidad',Math.min(m.hist.length>=3?cv(m.histNW.map(Math.abs))*100:30,100),COL.violet)+'</div>'+
+      '</div>')+'</section>');
+
+    // 17 — AI Financial Advisor (existing findings endpoint)
+    H.push('<section class="reveal">'+card(
+      secHead('17','AI Financial Advisor','Recomendación del motor neural de Digit2AI, priorizada por la pirámide del CFP y consciente de todas tus áreas.',
+        '<span id="ai-src" class="chip text-slate-400 flash">analizando…</span>')+
+      '<div id="ai-featured" class="glass p-4 flex gap-3 items-start mb-3"><div class="w-9 h-9 rounded-full bg-gradient-to-br from-pos to-accent flex items-center justify-center font-black text-ink">M</div>'+
+        '<div><div class="text-[12px] font-bold text-slate-300">Maya · recomendación principal</div><div id="ai-msg" class="text-[13.5px] mt-1 text-slate-200">Consultando el motor neural…</div><div id="ai-goal" class="text-[12px] text-pos font-semibold mt-1.5"></div></div></div>'+
+      '<div id="ai-rows" class="grid sm:grid-cols-2 gap-2"></div>')+'</section>');
+
+    // 18 — NFHI breakdown
+    var lbl={liquidity:'Liquidez',cashflow:'Flujo de caja',savings:'Ahorro',debt:'Deuda',assets:'Activos',behavior:'Conducta',risk:'Riesgo (inv.)',forecast:'Pronóstico'};
+    H.push('<section class="reveal">'+card(
+      secHead('18','Neural Financial Health Index','Descomposición ponderada del NFHI. Cada dimensión contribuye según su peso.',
+        '<span class="chip '+clsCol+'" style="border-color:currentColor">NFHI '+m.nfhi+' · '+cls+'</span>')+
+      '<div class="grid sm:grid-cols-2 gap-x-8">'+Object.keys(m.W).map(function(k){ return barRow(lbl[k]+' <span class="text-slate-600 mono">'+Math.round(m.W[k]*100)+'%</span>', m.subs[k], band(m.subs[k]), {txt:Math.round(m.subs[k])}); }).join('')+'</div>'+
+      '<div class="text-[11.5px] text-slate-500 mt-2">NFHI = Σ (peso × dimensión). Pesos: Liquidez 20 · Flujo 20 · Ahorro 15 · Deuda 15 · Activos 10 · Conducta 10 · Riesgo 5 · Pronóstico 5.</div>')+'</section>');
+
+    // 19 — Executive Summary
+    var subsArr=Object.keys(m.subs).map(function(k){return {k:k,label:lbl[k],v:m.subs[k]};});
+    var strong=subsArr.slice().sort(function(a,b){return b.v-a.v;}).slice(0,3);
+    var weak=subsArr.slice().sort(function(a,b){return a.v-b.v;}).slice(0,3);
+    H.push('<section class="reveal">'+card(
+      secHead('19','Executive Summary','')+
+      '<div class="grid lg:grid-cols-3 gap-5">'+
+        '<div><div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Diagnóstico</div>'+
+          '<div class="text-[15px] leading-relaxed text-slate-200">Salud financiera <span class="font-bold '+clsCol+'">'+cls.toLowerCase()+'</span> (NFHI '+m.nfhi+'/100, confianza '+m.confidence+'%). '+
+          'Patrimonio neto de <span class="font-bold">'+cop(m.nw)+'</span>'+(m.surplusM>=0?' con superávit mensual de '+cop(m.surplusM)+'.':' con déficit mensual de '+cop(-m.surplusM)+'.')+'</div></div>'+
+        '<div><div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Fortalezas</div>'+strong.map(function(s){return '<div class="flex justify-between text-[13px] py-1 border-b border-white/5"><span class="text-slate-300">'+s.label+'</span><span class="mono text-pos">'+Math.round(s.v)+'</span></div>';}).join('')+'</div>'+
+        '<div><div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Prioridades</div>'+weak.map(function(s){return '<div class="flex justify-between text-[13px] py-1 border-b border-white/5"><span class="text-slate-300">'+s.label+'</span><span class="mono '+bandTxt(s.v)+'">'+Math.round(s.v)+'</span></div>';}).join('')+'</div>'+
+      '</div>')+'</section>');
+
+    app.innerHTML=H.join('');
+    $('gate').classList.add('hidden'); app.classList.remove('hidden');
+    var d=new Date(); $('asof').textContent='AS OF '+d.toISOString().slice(0,10);
+    $('live-dot').innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-pos"></span> datos en vivo'; $('live-dot').className='chip text-pos flex items-center gap-1.5';
+
+    drawCharts(m);
+    reveal();
+    loadAdvisor();
+  }
+
+  function drawCharts(m){
+    // NFHI radar
+    var lbl={liquidity:'Liquidez',cashflow:'Flujo',savings:'Ahorro',debt:'Deuda',assets:'Activos',behavior:'Conducta',risk:'Riesgo',forecast:'Pronóstico'};
+    chart('ch-nfhi-radar',{ type:'radar', data:{ labels:Object.keys(m.W).map(function(k){return lbl[k];}), datasets:[{ data:Object.keys(m.W).map(function(k){return Math.round(m.subs[k]);}), backgroundColor:'rgba(96,165,250,.18)', borderColor:COL.accent, pointBackgroundColor:Object.keys(m.W).map(function(k){return band(m.subs[k]);}), pointRadius:3, borderWidth:2 }] },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ r:{ min:0,max:100, ticks:{stepSize:25,color:CT,backdropColor:'transparent',font:{size:9}}, grid:{color:CG},angleLines:{color:CG}, pointLabels:{color:'#94a3b8',font:{size:10,weight:'600'}} } } } });
+    // cash flow bar
+    chart('ch-flow',{ type:'bar', data:{ labels:['Ingreso','Gasto','Deuda','Superávit'], datasets:[{ data:[m.I,m.G,m.C,Math.max(m.surplusM,0)], backgroundColor:[COL.accent,COL.neg,COL.warn,COL.pos], borderRadius:6 }] },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return cop(c.parsed.y);}}}}, scales:axes({y:{grid:{color:CG},ticks:{color:CT,font:{size:10},callback:function(v){return copS(v);}}}}) } });
+    // allocation doughnut
+    chart('ch-alloc',{ type:'doughnut', data:{ labels:['Ahorro','Inversión','Retiro'], datasets:[{ data:[m.A,m.V,m.R], backgroundColor:[COL.accent,COL.violet,COL.pos], borderColor:'#0b1120', borderWidth:2 }] },
+      options:{ responsive:true,maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+cop(c.parsed);}}}} } });
+    // savings trend
+    var sLabels=m.hist.length>=2?m.hist.map(function(h){return String(h.date).slice(5);}):['inicio','hoy'];
+    var sData=m.hist.length>=2?m.hist.map(function(h){var e=num(h.expense);return e>0?num(h.net_worth)/ (m.G||e):0;}):null;
+    chart('ch-savings',{ type:'line', data:{ labels:sLabels, datasets:[{ label:'Tasa de ahorro', data:m.hist.length>=2?m.hist.map(function(h){var i=num(h.income),e=num(h.expense);return i>0?Math.round((i-e)/i*100):0;}):[0,Math.round(m.savingsRate*100)], borderColor:COL.pos, backgroundColor:'rgba(52,211,153,.12)', fill:true, tension:.3, pointRadius:3, borderWidth:2.5 }] },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:axes({y:{grid:{color:CG},ticks:{color:CT,font:{size:10},callback:function(v){return v+'%';}}}}) } });
+    // monte carlo
+    var mcLabels=[]; for(var i=0;i<=m.mc.months/6;i++) mcLabels.push((i*6)+'m');
+    var mcDs=m.mc.series.map(function(p){ return { data:p, borderColor:'rgba(96,165,250,.10)', borderWidth:1, pointRadius:0, fill:false, tension:.2 }; });
+    chart('ch-mc',{ type:'line', data:{ labels:mcLabels, datasets:mcDs.concat([{ data:mcLabels.map(function(_,i){ return m.nw + (m.mc.p50-m.nw)*(i/(m.mc.months/6)); }), borderColor:COL.pos, borderWidth:2.5, pointRadius:0, tension:.3 }]) },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:axes({y:{grid:{color:CG},ticks:{color:CT,font:{size:10},callback:function(v){return copS(v);}}}}) } });
+    // lorenz
+    chart('ch-lorenz',{ type:'line', data:{ labels:m.lor.map(function(p){return Math.round(p.x)+'%';}), datasets:[
+      { label:'Lorenz', data:m.lor.map(function(p){return p.y;}), borderColor:COL.warn, backgroundColor:'rgba(251,191,36,.12)', fill:true, tension:.1, pointRadius:2, borderWidth:2 },
+      { label:'Igualdad', data:m.lor.map(function(p){return p.x;}), borderColor:'rgba(255,255,255,.25)', borderDash:[4,4], pointRadius:0, borderWidth:1 } ] },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:axes({y:{grid:{color:CG},ticks:{color:CT,font:{size:9},callback:function(v){return v+'%';}}}}) } });
+    // forecast
+    chart('ch-fc',{ type:'line', data:{ labels:m.fc.out.map(function(o){return '+'+o.m+'m';}), datasets:[
+      { label:'Proyección', data:m.fc.out.map(function(o){return o.mid;}), borderColor:COL.accent, backgroundColor:'rgba(96,165,250,.12)', fill:true, tension:.3, pointRadius:0, borderWidth:2.5 },
+      { label:'Banda alta', data:m.fc.out.map(function(o){return o.hi;}), borderColor:'rgba(96,165,250,.25)', borderDash:[3,3], pointRadius:0, borderWidth:1 },
+      { label:'Banda baja', data:m.fc.out.map(function(o){return o.lo;}), borderColor:'rgba(96,165,250,.25)', borderDash:[3,3], pointRadius:0, borderWidth:1 } ] },
+      options:{ responsive:true,maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return cop(c.parsed.y);}}}}, scales:axes({y:{grid:{color:CG},ticks:{color:CT,font:{size:10},callback:function(v){return copS(v);}}}}) } });
+  }
+
+  function loadAdvisor(){
+    fetch('/planea/api/v1/me/salud/findings',{credentials:'include'})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(f){ f=f||{};
+        var src=$('ai-src'); if(src){ src.classList.remove('flash'); if(f.source==='neural'){src.textContent='Análisis neural en vivo';src.className='chip text-pos';} else if(f.source==='fallback'){src.textContent='Guía basada en reglas';src.className='chip text-slate-400';} else {src.textContent='Sin análisis';src.className='chip text-slate-500';} }
+        if($('ai-msg')) $('ai-msg').textContent=(f.featured&&f.featured.text)||'Completa tus datos para activar el análisis neural.';
+        if($('ai-goal')) $('ai-goal').textContent=(f.featured&&f.featured.goal)?'Meta sugerida: '+f.featured.goal:'';
+        var lbl={income:'Ingresos',expenses:'Gastos',savings:'Ahorro',debt:'Deuda',investments:'Inversiones',insurance:'Seguros',retirement:'Retiro'};
+        var rows=$('ai-rows'); if(rows&&f.buckets){ rows.innerHTML=Object.keys(lbl).map(function(k){ var t=f.buckets[k]; if(!t) return ''; return '<div class="glass p-3"><div class="text-[11px] font-bold text-accent mb-0.5">'+lbl[k]+'</div><div class="text-[12.5px] text-slate-300 leading-snug">'+esc(t)+'</div></div>'; }).join(''); }
+      }).catch(function(){ var src=$('ai-src'); if(src){src.textContent='análisis no disponible';src.className='chip text-slate-500';} });
+  }
+
+  function reveal(){ var els=document.querySelectorAll('.reveal'); var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.08}); els.forEach(function(el){ io.observe(el); }); }
+
+  // ---------- boot ----------
+  function gateMsg(html){ $('gate').innerHTML='<div class="glass p-8 text-center">'+html+'</div>'; }
+  function boot(){
+    Promise.all([
+      fetch('/planea/api/v1/me/salud',{credentials:'include'}),
+      fetch('/planea/api/v1/me/profile',{credentials:'include'}).catch(function(){return null;})
+    ]).then(function(rs){
+      var sr=rs[0];
+      if(sr.status===401){ gateMsg('<div class="text-lg font-bold">Acceso privado</div><p class="text-sm text-slate-400 mt-2">Inicia sesión en Planea para ver tu Centro de Inteligencia Financiera.</p><a href="/planea/login" class="inline-block mt-5 px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Iniciar sesión</a>'); return null; }
+      if(!sr.ok) throw new Error('salud '+sr.status);
+      return Promise.all([ sr.json(), rs[1]&&rs[1].ok?rs[1].json():Promise.resolve({}) ]);
+    }).then(function(data){
+      if(!data) return; var sal=data[0], prof=data[1]||{};
+      if(sal.overall==null){ gateMsg('<div class="text-lg font-bold">Aún no hay datos suficientes</div><p class="text-sm text-slate-400 mt-2">Registra al menos tus ingresos en Planea para activar el centro de inteligencia.</p><a href="/planea/portal/ingreso" class="inline-block mt-5 px-5 py-2.5 rounded-xl bg-accent text-ink font-bold text-sm">Agregar datos</a>'); return; }
+      try{ render(analyze(sal,prof), sal, prof); }catch(e){ console.error(e); gateMsg('<div class="text-neg font-bold">Error al procesar</div><p class="text-sm text-slate-400 mt-2">'+esc(e.message)+'</p>'); }
+    }).catch(function(e){ console.error(e); gateMsg('<div class="text-neg font-bold">No se pudo cargar</div><p class="text-sm text-slate-400 mt-2">Recarga la página. '+esc(e.message)+'</p>'); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+</body>
+</html>
