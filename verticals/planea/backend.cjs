@@ -20,6 +20,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Sequelize, DataTypes } = require('sequelize');
+const score = require('./score.cjs');
 
 const SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
 const COOKIE = 'planea_session';
@@ -55,6 +56,8 @@ function defineModels(sq) {
     seguros_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     retiro_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
     ingresos_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
+    gastos_data: { type: DataTypes.JSONB, allowNull: true, defaultValue: [] },
+    finance_meta: { type: DataTypes.JSONB, allowNull: true, defaultValue: {} },
   }, { tableName: 'planea_profiles', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   return { U, P };
@@ -76,6 +79,8 @@ async function init() {
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS ingresos_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
+    await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS gastos_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
+    await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS finance_meta JSONB DEFAULT '{}'::jsonb").catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -240,6 +245,8 @@ function build() {
         seguros_data: Array.isArray(p.seguros_data) ? p.seguros_data : [],
         retiro_data: Array.isArray(p.retiro_data) ? p.retiro_data : [],
         ingresos_data: Array.isArray(p.ingresos_data) ? p.ingresos_data : [],
+        gastos_data: Array.isArray(p.gastos_data) ? p.gastos_data : [],
+        finance_meta: p.finance_meta || {},
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -265,8 +272,29 @@ function build() {
       if (Array.isArray(b.seguros_data)) p.seguros_data = b.seguros_data;
       if (Array.isArray(b.retiro_data)) p.retiro_data = b.retiro_data;
       if (Array.isArray(b.ingresos_data)) p.ingresos_data = b.ingresos_data;
+      if (Array.isArray(b.gastos_data)) p.gastos_data = b.gastos_data;
+      if (b.finance_meta && typeof b.finance_meta === 'object') p.finance_meta = b.finance_meta;
+      if (b.score_data !== undefined) p.score_data = b.score_data;
+
+      // Recompute the Puntaje from the CURRENT data (income/expenses/debt/savings)
+      // so the survey AND any later module edit keep the score in sync.
+      var computed = score.scoreFromProfile({
+        assets_data: p.assets_data, liabilities_data: p.liabilities_data,
+        ingresos_data: p.ingresos_data, gastos_data: p.gastos_data,
+        finance_meta: p.finance_meta, full_name: p.full_name,
+      });
+      if (computed) {
+        var prev = p.score_data || {};
+        p.score_data = {
+          score: computed.score, rango: computed.rango, scenario: computed.scenario,
+          pillars: computed.pillars, recommendation: computed.recommendation,
+          answers: prev.answers || (b.score_data && b.score_data.answers) || undefined,
+          source: (b.score_data && b.score_data.source) || prev.source || 'auto',
+          timestamp: new Date().toISOString(),
+        };
+      }
       await p.save();
-      res.json({ success: true });
+      res.json({ success: true, score_data: p.score_data || null });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

@@ -11,11 +11,14 @@
   var CATS = {
     ingreso:   { source: 'ingresos_data', title: 'Tus fuentes de ingreso', noun: 'ingresos', amount: 'Monto mensual', ph: 'Ej: Salario',
       types: ['Salario', 'Freelance / honorarios', 'Negocio propio', 'Arriendos / rentas', 'Pensión', 'Comisiones', 'Otro'] },
+    gastos:    { source: 'gastos_data', title: 'Tus gastos mensuales', noun: 'gastos', amount: 'Monto mensual', ph: 'Ej: Arriendo',
+      types: ['Vivienda / arriendo', 'Alimentación', 'Transporte', 'Servicios públicos', 'Entretenimiento', 'Educación', 'Salud', 'Suscripciones', 'Otro'] },
     ahorro:    { source: 'assets_data', cat: 'ahorro', title: 'Tus cuentas de ahorro', noun: 'ahorros', amount: 'Valor actual', ph: 'Ej: Cuenta de ahorros',
       types: ['Cuenta de ahorros', 'Efectivo', 'CDT', 'Fondo (FIC)', 'Cuenta AFC', 'Otro'] },
     inversion: { source: 'assets_data', cat: 'inversion', title: 'Tus inversiones', noun: 'inversiones', amount: 'Valor actual', ph: 'Ej: Fondo de inversión',
       types: ['Acciones', 'Fondo de inversión', 'CDT', 'Cripto', 'Bonos', 'ETF', 'Portafolio', 'Otro'] },
     deuda:     { source: 'liabilities_data', title: 'Tus deudas', noun: 'deudas', amount: 'Saldo que debes', ph: 'Ej: Tarjeta Visa',
+      extra: { key: 'monthly', label: 'Cuota mensual' },
       types: ['Tarjeta de crédito', 'Crédito de libre inversión', 'Crédito de vehículo', 'Crédito hipotecario', 'Crédito educativo', 'Deuda informal', 'Otro'] },
     seguros:   { source: 'seguros_data', title: 'Tus pólizas', noun: 'seguros', amount: 'Valor asegurado', ph: 'Ej: Seguro de vida',
       types: ['Vida', 'Salud', 'Vehículo', 'Hogar', 'Educativo', 'Exequial', 'Otro'] },
@@ -52,8 +55,10 @@
     var items = view();
     var body = items.length
       ? items.map(function (o) {
+          var sub = o.x.type || '';
+          if (cfg.extra && o.x[cfg.extra.key]) sub += (sub ? ' · ' : '') + 'cuota ' + cop(o.x[cfg.extra.key]) + '/mes';
           return '<div class="pe-row"><div><div class="pe-nm">' + esc(o.x.name || '—') + '</div>' +
-            (o.x.type ? '<div class="pe-ty">' + esc(o.x.type) + '</div>' : '') + '</div>' +
+            (sub ? '<div class="pe-ty">' + esc(sub) + '</div>' : '') + '</div>' +
             '<div class="pe-amt">' + cop(o.x.value) + '</div>' +
             '<button class="pe-edit" data-edit="' + o.i + '" title="Editar" aria-label="Editar">✎</button>' +
             '<button class="pe-del" data-del="' + o.i + '" title="Eliminar" aria-label="Eliminar">✕</button></div>';
@@ -72,14 +77,17 @@
         cfg.types.map(function (t) { return '<option' + (prefill && prefill.type === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
       '<label class="pe-l">' + esc(cfg.amount) + ' ($)</label><div class="pe-money"><span>$</span>' +
         '<input class="pe-in" id="pe-value" inputmode="numeric" placeholder="0" value="' + (prefill && prefill.value ? (+prefill.value).toLocaleString('es-CO') : '') + '"></div>' +
+      (cfg.extra ? '<label class="pe-l">' + esc(cfg.extra.label) + ' ($)</label><div class="pe-money"><span>$</span>' +
+        '<input class="pe-in" id="pe-extra" inputmode="numeric" placeholder="0" value="' + (prefill && prefill[cfg.extra.key] ? (+prefill[cfg.extra.key]).toLocaleString('es-CO') : '') + '"></div>' : '') +
       '<div class="pe-actions"><button class="pe-cancel" data-close>Cancelar</button><button class="pe-save" data-save>Guardar</button></div>' +
       '</div></div>';
   }
   function openForm(prefill) {
     editIdx = (prefill && typeof prefill.i === 'number') ? prefill.i : null;
     document.body.insertAdjacentHTML('beforeend', formHtml(prefill));
-    var val = document.getElementById('pe-value');
-    val.addEventListener('input', function () { var d = digits(val.value); val.value = d ? parseInt(d, 10).toLocaleString('es-CO') : ''; });
+    var fmt = function (el) { if (!el) return; el.addEventListener('input', function () { var d = digits(el.value); el.value = d ? parseInt(d, 10).toLocaleString('es-CO') : ''; }); };
+    fmt(document.getElementById('pe-value'));
+    fmt(document.getElementById('pe-extra'));
     document.getElementById('pe-name').focus();
   }
   function closeForm() { var m = document.getElementById('pe-modal'); if (m) m.remove(); editIdx = null; }
@@ -91,6 +99,7 @@
     if (!name || !value) { alert('Escribe un nombre y un valor.'); return; }
     var item = { name: name, type: type, value: value };
     if (cfg.cat) item.cat = cfg.cat; // tag ahorro/inversión so bucketing is exact
+    if (cfg.extra) item[cfg.extra.key] = parseInt(digits((document.getElementById('pe-extra') || {}).value || ''), 10) || 0;
     if (!profile) profile = {};
     if (!Array.isArray(profile[cfg.source])) profile[cfg.source] = [];
     if (editIdx != null) profile[cfg.source][editIdx] = item;
@@ -117,7 +126,7 @@
     if (e.target.id === 'pe-modal') { closeForm(); return; }
     var t = e.target.closest('button'); if (!t) return;
     if (t.hasAttribute('data-add')) { openForm(null); return; }
-    if (t.hasAttribute('data-edit')) { var i = +t.getAttribute('data-edit'); openForm({ i: i, name: arr()[i].name, type: arr()[i].type, value: arr()[i].value }); return; }
+    if (t.hasAttribute('data-edit')) { var i = +t.getAttribute('data-edit'); var it = arr()[i] || {}; openForm(Object.assign({}, it, { i: i })); return; }
     if (t.hasAttribute('data-del')) { del(+t.getAttribute('data-del')); return; }
     if (t.hasAttribute('data-close')) { closeForm(); return; }
     if (t.hasAttribute('data-save')) { save(); return; }

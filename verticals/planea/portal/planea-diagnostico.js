@@ -335,22 +335,35 @@
     persist(res, rec);
   }
 
+  // The survey writes the UNDERLYING financial data (income/expenses/debt/savings
+  // + fijo-variable/dependientes). The backend recomputes the Puntaje from it — so
+  // the same data is later editable from the Ingresos/Gastos/Deuda/Ahorro modules
+  // and the score stays in sync. (res/rec are the local mirror for instant display.)
   function persist(res, rec) {
     if (!window.PlaneaSB || !PlaneaSB.loggedIn()) return;
     var u = PlaneaSB.user(); if (!u) return;
-    var entry = {
-      timestamp: new Date().toISOString(), company: null, score: res.score, scenario: rec.scenario, source: 'survey',
-      pillars: { emergency_fund: res.p1, cash_flow: res.p2, debt_health: res.p3, stability: res.p4 },
-      // The first insight Planea generates before any user interaction (spec §5).
-      recommendation: { scenario: rec.scenario, goalText: rec.goalText, mayaMessage: rec.mayaMessage, timeline: rec.timeline },
-      answers: answers
+    var a = answers;
+    var inc = exactOr('P1_exact', INC_MAP, a.P1, a, 4000000);
+    var exp = exactOr('P2_exact', EXP_MAP, a.P2, a, 3200000);
+    var tieneDeuda = a.P3 === 'yes';
+    var cuota = tieneDeuda ? exactOr('P4_exact', CUOTA_MAP, a.P4, a, 500000) : 0;
+    var tieneAhorro = a.P5 !== 'no';
+    var ahorros = Math.round(mesesCobertura(a) * exp);
+    var tipo = a.P7 === 'A' ? 'fijo' : a.P7 === 'B' ? 'varia_poco' : 'cambia';
+    var deps = a.P8 === 'A' ? 'nadie' : a.P8 === 'B' ? '1-2' : '3+';
+
+    var body = {
+      ingresos_data: [{ name: 'Ingreso mensual', type: 'Salario', value: inc }],
+      gastos_data: [{ name: 'Gastos mensuales', type: 'General', value: exp }],
+      liabilities_data: tieneDeuda ? [{ name: 'Cuotas de deuda', type: 'Crédito', value: 0, monthly: cuota }] : [],
+      assets_data: (tieneAhorro && ahorros > 0) ? [{ name: 'Ahorros', type: 'Cuenta de ahorros', cat: 'ahorro', value: ahorros }] : [],
+      finance_meta: { tipo_ingreso: tipo, dependientes: deps },
+      score_data: { answers: a, source: 'survey' } // backend fills score/pillars/scenario/recommendation
     };
-    PlaneaSB.patch('persons?user_id=eq.' + u.id, { score_data: entry })
-      .then(function (rows) {
+    PlaneaSB.mePut(body)
+      .then(function () {
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje guardado en tu perfil ✓';
-        var pid = (rows && rows[0] && rows[0].id) || u.id;
-        PlaneaSB.post('persons_score_history', { person_id: pid, scored_at: entry.timestamp, score_data: entry }).catch(function () {});
-        autoCreateFirstMeta(pid, rec, res); // the "primera meta" generated before any interaction
+        autoCreateFirstMeta(u.id, rec, res); // the "primera meta" generated before any interaction
         // Onboarding complete → unlock the rest of the nav.
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
         try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
