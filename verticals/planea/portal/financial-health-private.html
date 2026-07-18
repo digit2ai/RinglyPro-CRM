@@ -34,8 +34,21 @@
   .bartrack{ height:8px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; }
   .barfill{ height:100%; border-radius:999px; transition:width 1s cubic-bezier(.2,.8,.2,1); }
   .flash{ animation:fl 1.6s ease-in-out infinite; } @keyframes fl{50%{opacity:.45}}
-  .reveal{ opacity:0; transform:translateY(10px); transition:opacity .5s, transform .5s; }
+  .reveal{ opacity:1; transform:none; transition:box-shadow .45s, transform .5s; }
   .reveal.in{ opacity:1; transform:none; }
+  /* guided narration highlight */
+  section.narr{ border-radius:24px; box-shadow:0 0 0 2px rgba(124,92,255,.6), 0 0 46px rgba(124,92,255,.22); }
+  /* hero orb */
+  .horb{ position:relative; width:132px; height:132px; margin:0 auto; cursor:pointer; }
+  .horb .core{ position:absolute; inset:18px; border-radius:50%; background:radial-gradient(circle at 34% 28%,#d6c9ff,#8b6cff 46%,#4c34b8 100%); box-shadow:0 10px 40px rgba(124,92,255,.5); }
+  .horb .ring{ position:absolute; inset:0; border-radius:50%; border:1px solid rgba(124,92,255,.35); }
+  .horb .ring.r2{ inset:10px; border-color:rgba(124,92,255,.22); }
+  .horb .pulse{ position:absolute; inset:18px; border-radius:50%; box-shadow:0 0 0 0 rgba(124,92,255,.5); }
+  .horb.speaking .pulse{ animation:voxpulse 1.15s ease-in-out infinite; }
+  .horb .glyph{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  @keyframes voxpulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.5)}70%{box-shadow:0 0 0 26px rgba(124,92,255,0)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .horb.speaking .ring{ animation:spin 8s linear infinite; }
   canvas{ max-width:100%; }
   ::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
 </style>
@@ -74,35 +87,6 @@
   Todas las cifras se calculan a partir de tus datos reales de Planea. Los modelos (Altman, Piotroski, Ohlson, Monte Carlo, etc.) son adaptaciones a finanzas personales, no asesoría de inversión.
 </footer>
 
-<!-- Lina voice orb (zero-key Edge neural TTS · browser fallback) -->
-<div id="voxwrap" class="hidden fixed z-40" style="bottom:20px;right:20px">
-  <div id="voxpanel" class="hidden glass p-4 mb-3" style="width:290px">
-    <div class="flex items-center gap-2 mb-2">
-      <span class="w-2 h-2 rounded-full" style="background:#7c5cff"></span>
-      <div class="text-[13px] font-extrabold">Lina</div>
-      <span class="text-[10px] text-slate-500 tracking-wider">VOZ AI · DIGIT2AI</span>
-      <button id="voxclose" class="ml-auto text-slate-500 hover:text-slate-300 text-lg leading-none">&times;</button>
-    </div>
-    <div id="voxstatus" class="text-[12px] text-slate-400 mb-3 min-h-[16px]">Pulsa reproducir para escuchar el resumen ejecutivo.</div>
-    <div class="flex gap-2">
-      <button id="voxplay" class="flex-1 px-3 py-2 rounded-lg text-ink text-[12.5px] font-bold" style="background:#60a5fa">Reproducir</button>
-      <button id="voxpause" class="px-3 py-2 rounded-lg border border-white/15 text-[12.5px]" disabled>Pausa</button>
-      <button id="voxstop" class="px-3 py-2 rounded-lg border border-white/15 text-[12.5px]" disabled>Detener</button>
-    </div>
-    <label class="flex items-center gap-2 mt-3 text-[11.5px] text-slate-500 cursor-pointer">
-      <input id="voxneural" type="checkbox" checked> Voz neural HD <span id="voxmode" class="ml-auto mono"></span>
-    </label>
-  </div>
-  <button id="voxorb" class="block ml-auto rounded-full shadow-2xl relative" style="width:58px;height:58px;background:radial-gradient(circle at 35% 30%,#c9b8ff,#7c5cff 48%,#3b2f9e 100%)" aria-label="Lina voz">
-    <span id="voxring" class="absolute inset-0 rounded-full" style="box-shadow:0 0 0 0 rgba(124,92,255,.5)"></span>
-    <svg viewBox="0 0 24 24" width="24" height="24" class="mx-auto" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
-  </button>
-</div>
-<style>
-  @keyframes voxpulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.5)}70%{box-shadow:0 0 0 18px rgba(124,92,255,0)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
-  #voxorb.speaking #voxring{animation:voxpulse 1.2s ease-in-out infinite}
-</style>
-
 <script>
 (function(){
   'use strict';
@@ -140,6 +124,29 @@
     return '<div class="glass p-4"><div class="text-[11px] uppercase tracking-wider text-slate-500">'+label+'</div>'+
       '<div class="text-[22px] font-extrabold mt-1 tnum '+(tone||'')+'">'+val+'</div>'+
       (sub?'<div class="text-[11.5px] text-slate-500 mt-0.5">'+sub+'</div>':'')+'</div>';
+  }
+  function simSlider(id,label,min,max,step){
+    return '<div class="mb-5"><div class="flex justify-between text-[13px] mb-2"><span class="text-slate-300">'+label+'</span><span class="mono text-accent" id="'+id+'-v">$0</span></div>'+
+      '<input id="'+id+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="0" class="w-full" style="accent-color:#60a5fa;height:4px"></div>';
+  }
+  function wireSim(m){
+    var ex=$('sim-extra'),ct=$('sim-cut'),db=$('sim-debt'); if(!ex) return;
+    function calc(){
+      var xe=+ex.value,xc=+ct.value,xd=+db.value;
+      $('sim-extra-v').textContent=cop(xe); $('sim-cut-v').textContent=cop(xc); $('sim-debt-v').textContent=cop(xd);
+      var A=m.A+(xe+xc)*12, G=Math.max(0,m.G-xc), D=Math.max(0,m.D-xd);
+      var annual=m.annual, assets=A+m.V+m.R, nw=assets-D;
+      var monthsExp=G>0?A/G:(A>0?99:0), freeRate=m.I>0?(m.I-G-m.C)/m.I:0, savingsRate=m.I>0?(m.I-G)/m.I:0, debtAnnual=annual>0?D/annual:(D>0?9:0), dti=m.I>0?m.C/m.I:0;
+      var subs={ liquidity:clamp01(monthsExp/6)*100, cashflow:clamp01(freeRate/0.20)*100,
+        savings:clamp01(0.5*(monthsExp/6)+0.5*clamp01(savingsRate/0.20))*100,
+        debt:clamp01(1-debtAnnual)*100*(dti>0.36?0.75:1), assets:assets>0?clamp01(nw/assets)*100:100,
+        behavior:m.subs.behavior, risk:m.subs.risk, forecast:m.subs.forecast };
+      var nf=0; Object.keys(m.W).forEach(function(k){ nf+=m.W[k]*subs[k]; }); nf=Math.max(1,Math.min(100,Math.round(nf)));
+      var el=$('sim-nfhi'); el.textContent=nf; el.style.color=band(nf);
+      var d=nf-m.nfhi, dd=$('sim-nfhi-d'); dd.textContent=d===0?'sin cambios':(d>0?'+'+d+' pts':d+' pts'); dd.className='text-[13px] font-bold '+(d>0?'text-pos':d<0?'text-neg':'text-slate-500');
+      var surplus=m.I-G-m.C; $('sim-nw').textContent=cop(nw+surplus*12);
+    }
+    [ex,ct,db].forEach(function(el){ el.addEventListener('input',calc); });
   }
   function barRow(label,v,color,right){
     return '<div class="mb-2.5"><div class="flex justify-between text-[12px] mb-1"><span class="text-slate-300">'+label+'</span><span class="mono '+ (right&&right.cls||'') +'">'+(right&&right.txt!=null?right.txt:Math.round(v))+'</span></div>'+
@@ -274,8 +281,10 @@
     var clsCol=bandTxt(m.nfhi);
     var trendTxt=(m.nfhiTrend>0?'+':'')+m.nfhiTrend;
 
+    // 0 — Hero (Lina voice teaser)
+    H.push(hero(m));
     // 1 — Executive Overview
-    H.push('<section class="reveal">'+card(
+    H.push('<section id="fic-nfhi" class="reveal">'+card(
       '<div class="grid lg:grid-cols-[300px,1fr] gap-6 items-center">'+
         '<div class="text-center">'+gauge(m.nfhi,'NFHI / 100',240)+
           '<div class="mt-1"><span class="chip '+clsCol+'" style="border-color:currentColor">'+cls.toUpperCase()+'</span></div></div>'+
@@ -291,7 +300,7 @@
       '</div>')+'</section>');
 
     // 2 — Liquidity Engine
-    H.push('<section class="reveal grid lg:grid-cols-2 gap-5">'+
+    H.push('<section id="fic-flow" class="reveal grid lg:grid-cols-2 gap-5">'+
       card(secHead('02','Liquidity Engine','Capacidad de absorber imprevistos sin endeudarte.')+
         '<div class="grid grid-cols-3 gap-3 mb-4">'+
           metric('Meses de cobertura', m.monthsExp>=99?'6+':m.monthsExp.toFixed(1), 'meta 6 meses', m.monthsExp>=6?'text-pos':m.monthsExp>=3?'text-warn':'text-neg')+
@@ -353,7 +362,7 @@
     '</section>');
 
     // 8 — Monte Carlo
-    H.push('<section class="reveal">'+card(
+    H.push('<section id="fic-mc" class="reveal">'+card(
       secHead('08','Monte Carlo Simulation','400 trayectorias de tu patrimonio a 10 años (retorno 7% ± 12% anual sobre lo invertido, más tu superávit mensual real).',
         '<span class="chip '+(m.mc.success>=0.7?'text-pos':m.mc.success>=0.4?'text-warn':'text-neg')+'" style="border-color:currentColor">'+pct(m.mc.success)+' prob. de meta</span>')+
       '<div class="grid lg:grid-cols-[1fr,260px] gap-5 items-center">'+
@@ -365,11 +374,26 @@
           '<div class="text-[11.5px] text-slate-500">Meta de referencia: '+cop(m.mc.target)+' (tu objetivo de retiro por edad).</div>'+
         '</div></div>')+'</section>');
 
+    // SIM — interactive what-if
+    H.push('<section id="fic-sim" class="reveal">'+card(
+      secHead('','Simulador — ¿Qué pasa si…?','Muevan los controles y observen cómo cambian su NFHI y su patrimonio al instante.','<span class="chip text-accent" style="border-color:currentColor">INTERACTIVO</span>')+
+      '<div class="grid lg:grid-cols-2 gap-6 items-center">'+
+        '<div>'+
+          simSlider('sim-extra','Ahorro extra al mes',0,Math.max(500000,Math.round(m.I*0.4)),10000)+
+          simSlider('sim-cut','Recorte de gasto al mes',0,Math.max(300000,Math.round(m.G*0.5)),10000)+
+          simSlider('sim-debt','Abono a la deuda',0,Math.max(500000,Math.round(m.D)),50000)+
+        '</div>'+
+        '<div class="grid grid-cols-2 gap-4">'+
+          '<div class="glass p-5 text-center"><div class="text-[11px] uppercase tracking-wider text-slate-500">NFHI proyectado</div><div id="sim-nfhi" class="text-[46px] font-black tnum mt-1" style="color:'+band(m.nfhi)+'">'+m.nfhi+'</div><div id="sim-nfhi-d" class="text-[13px] font-bold text-slate-500">sin cambios</div></div>'+
+          '<div class="glass p-5 text-center"><div class="text-[11px] uppercase tracking-wider text-slate-500">Patrimonio a 12 meses</div><div id="sim-nw" class="text-[22px] font-extrabold tnum mt-3">'+cop(m.nw+m.surplusM*12)+'</div><div class="text-[12px] text-slate-500 mt-1">proyección lineal</div></div>'+
+        '</div>'+
+      '</div>')+'</section>');
+
     // 9,10,11 — Altman / Piotroski / Ohlson
     var zBand=m.Z>=2.99?['ZONA SEGURA',COL.pos]:m.Z>=1.8?['ZONA GRIS',COL.warn]:['ZONA DE ALERTA',COL.neg];
     var pioBand=m.pioScore>=7?COL.pos:m.pioScore>=4?COL.warn:COL.neg;
     var oBand=m.pDistress<=0.2?['BAJO',COL.pos]:m.pDistress<=0.5?['MODERADO',COL.warn]:['ELEVADO',COL.neg];
-    H.push('<section class="reveal grid lg:grid-cols-3 gap-5">'+
+    H.push('<section id="fic-models" class="reveal grid lg:grid-cols-3 gap-5">'+
       card(secHead('09','Altman-inspired Stability','Z-score adaptado a finanzas personales.')+
         '<div class="text-center py-2"><div class="text-[42px] font-black tnum" style="color:'+zBand[1]+'">'+m.Z.toFixed(2)+'</div>'+
         '<div class="chip mt-1" style="color:'+zBand[1]+';border-color:'+zBand[1]+'">'+zBand[0]+'</div></div>'+
@@ -442,7 +466,7 @@
     var subsArr=Object.keys(m.subs).map(function(k){return {k:k,label:lbl[k],v:m.subs[k]};});
     var strong=subsArr.slice().sort(function(a,b){return b.v-a.v;}).slice(0,3);
     var weak=subsArr.slice().sort(function(a,b){return a.v-b.v;}).slice(0,3);
-    H.push('<section class="reveal">'+card(
+    H.push('<section id="fic-summary" class="reveal">'+card(
       secHead('19','Executive Summary','')+
       '<div class="grid lg:grid-cols-3 gap-5">'+
         '<div><div class="text-[11px] uppercase tracking-wider text-slate-500 mb-2">Diagnóstico</div>'+
@@ -459,6 +483,7 @@
 
     reveal();                 // show content first — never let a chart error blank the page
     setupVoice(m);
+    wireSim(m);
     try{ drawCharts(m); }catch(e){ console.warn('charts',e); }
     loadAdvisor();
   }
@@ -523,34 +548,50 @@
     var strong=arr.slice().sort(function(a,b){return b.v-a.v;})[0];
     var weak=arr.slice().sort(function(a,b){return a.v-b.v;})[0];
     return [
-      'Hola, soy Lina, la voz de inteligencia financiera de Digit2AI. Te presento el Centro de Inteligencia Financiera Privado de Planea.',
-      'Tu Índice Neural de Salud Financiera es de '+m.nfhi+' sobre cien, en categoría '+cls+', con una confianza del '+m.confidence+' por ciento.',
-      'Tu patrimonio neto es de '+money(m.nw)+'. '+(m.surplusM>=0?'Cada mes generas un superávit de '+money(m.surplusM)+'.':'Cada mes tienes un déficit de '+money(-m.surplusM)+', algo que conviene corregir.'),
-      'Tu fondo de emergencia cubre '+(m.monthsExp>=99?'más de seis':m.monthsExp.toFixed(1))+' meses de gastos, y tu deuda equivale a '+m.debtAnnual.toFixed(2)+' veces tu ingreso anual.',
+      'Hola Eduardo y Juan. Soy Lina, la voz de Planea. Bienvenidos a su Centro de Inteligencia Financiera Privado. Con gusto les presento su panorama financiero completo.',
+      'Su Índice Neural de Salud Financiera es de '+m.nfhi+' sobre cien, en categoría '+cls+', con una confianza del '+m.confidence+' por ciento.',
+      'Su patrimonio neto es de '+money(m.nw)+'. '+(m.surplusM>=0?'Cada mes generan un superávit de '+money(m.surplusM)+'.':'Cada mes tienen un déficit de '+money(-m.surplusM)+', algo que conviene corregir.'),
+      'Su fondo de emergencia cubre '+(m.monthsExp>=99?'más de seis':m.monthsExp.toFixed(1))+' meses de gastos, y su deuda equivale a '+m.debtAnnual.toFixed(2)+' veces el ingreso anual.',
       'Los modelos de estabilidad respaldan el diagnóstico. El índice tipo Altman es '+m.Z.toFixed(1)+', el puntaje tipo Piotroski es '+m.pioScore+' de nueve, y la probabilidad de estrés financiero es del '+Math.round(m.pDistress*100)+' por ciento.',
-      'La simulación de Monte Carlo proyecta un patrimonio mediano de '+money(m.mc.p50)+' a diez años, con una probabilidad del '+Math.round(m.mc.success*100)+' por ciento de alcanzar tu meta.',
-      'Tu mayor fortaleza es '+lbl[strong.k]+', y tu prioridad principal es mejorar '+lbl[weak.k]+'. Explora cada sección para el detalle completo. Soy Lina, gracias por tu atención.'
+      'La simulación de Monte Carlo proyecta un patrimonio mediano de '+money(m.mc.p50)+' a diez años, con una probabilidad del '+Math.round(m.mc.success*100)+' por ciento de alcanzar la meta.',
+      'Su mayor fortaleza es '+lbl[strong.k]+', y su prioridad principal es mejorar '+lbl[weak.k]+'. Pueden usar el simulador para ver el efecto de sus decisiones. Soy Lina, la voz de Planea. Gracias por su atención.'
     ];
+  }
+  function hero(m){
+    var cls=m.nfhi>=85?'robusta':m.nfhi>=70?'sólida':m.nfhi>=55?'estable':m.nfhi>=40?'frágil':'crítica';
+    return '<section id="fic-hero" class="reveal"><div class="glass p-6 sm:p-10 text-center relative overflow-hidden">'+
+      '<div class="horb" id="voxorb"><div class="ring"></div><div class="ring r2"></div><div class="pulse"></div><div class="core"></div>'+
+      '<div class="glyph"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></div></div>'+
+      '<h1 class="text-[26px] sm:text-[33px] font-black tracking-tight mt-5">Centro de Inteligencia Financiera</h1>'+
+      '<p class="text-slate-400 text-[14px] mt-2 max-w-xl mx-auto leading-relaxed">Bienvenidos, <b class="text-slate-200">Eduardo y Juan</b>. Soy <b class="grad-txt">Lina</b>, la voz de Planea. Les presento su panorama financiero completo — su NFHI es <b class="'+bandTxt(m.nfhi)+'">'+m.nfhi+'</b>, salud '+cls+'.</p>'+
+      '<div class="flex items-center justify-center gap-2 mt-6 flex-wrap">'+
+        '<button id="voxplay" class="px-6 py-3 rounded-xl font-bold text-ink text-[14px]" style="background:linear-gradient(90deg,#60a5fa,#a78bfa)">Escuchar a Lina</button>'+
+        '<button id="voxpause" class="px-4 py-3 rounded-xl border border-white/15 text-[13px]" disabled>Pausa</button>'+
+        '<button id="voxstop" class="px-4 py-3 rounded-xl border border-white/15 text-[13px]" disabled>Detener</button>'+
+      '</div>'+
+      '<div id="voxstatus" class="text-[12.5px] text-slate-500 mt-3 min-h-[16px]">Pulsa "Escuchar a Lina" para el recorrido guiado por voz.</div>'+
+      '<label class="inline-flex items-center gap-2 mt-1 text-[11.5px] text-slate-500 cursor-pointer"><input id="voxneural" type="checkbox" checked> Voz neural HD <span id="voxmode" class="mono"></span></label>'+
+      '</div></section>';
   }
   function setupVoice(m){
     var SEG=voiceSegments(m);
-    var wrap=$('voxwrap'), panel=$('voxpanel'), orb=$('voxorb'), status=$('voxstatus');
-    var play=$('voxplay'), pause=$('voxpause'), stop=$('voxstop'), neural=$('voxneural'), modeEl=$('voxmode'), closeB=$('voxclose');
-    if(!wrap) return; wrap.classList.remove('hidden');
+    var ANCHOR=['fic-hero','fic-nfhi','fic-flow','fic-flow','fic-models','fic-mc','fic-summary'];
+    var orb=$('voxorb'), status=$('voxstatus');
+    var play=$('voxplay'), pause=$('voxpause'), stop=$('voxstop'), neural=$('voxneural'), modeEl=$('voxmode');
+    if(!play) return;
     var synth=window.speechSynthesis, queue=[],qi=0,token=0,paused=false,pmode=null,audio=null,neuralOK=true,cache={},bvoice=null;
     function pickV(){ if(!synth) return; var vs=synth.getVoices(); bvoice=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('es')===0;})[0]||vs[0]||null; }
     if(synth){ pickV(); synth.onvoiceschanged=pickV; }
     function useN(){ return neural.checked&&neuralOK; }
-    function setMode(){ modeEl.textContent=useN()?'HD':'estándar'; modeEl.className='ml-auto mono '+(useN()?'text-pos':'text-slate-500'); }
+    function setMode(){ modeEl.textContent=useN()?'HD':'estándar'; modeEl.className='mono '+(useN()?'text-pos':'text-slate-500'); }
     setMode(); neural.addEventListener('change',setMode);
-    orb.addEventListener('click',function(){ panel.classList.toggle('hidden'); });
-    closeB.addEventListener('click',function(){ panel.classList.add('hidden'); });
+    function highlight(i){ [].slice.call(document.querySelectorAll('section.narr')).forEach(function(s){ s.classList.remove('narr'); }); var a=ANCHOR[i], el=a&&$(a); if(el){ el.classList.add('narr'); try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} } }
     function fetchN(i){ if(cache[i]) return Promise.resolve(cache[i]);
       return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SEG[i],voice:'lina'})})
         .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
         .then(function(b){ if(!b||b.size<200) throw 0; var u=URL.createObjectURL(b); cache[i]=u; return u; }); }
     function run(t){ if(t!==token) return; if(qi>=queue.length){ done(); return; }
-      var i=queue[qi]; status.textContent='Lina está hablando… ('+(qi+1)+' de '+queue.length+')';
+      var i=queue[qi]; highlight(i); status.textContent='Lina está hablando… ('+(qi+1)+' de '+queue.length+')';
       function next(){ if(t!==token) return; qi++; run(t); }
       if(useN()){ if(qi+1<queue.length) fetchN(queue[qi+1]).catch(function(){});
         fetchN(i).then(function(url){ if(t!==token) return; pmode='neural'; audio=new Audio(url); audio.onended=next; audio.onerror=function(){ neuralOK=false; setMode(); bspeak(i,next); }; orb.classList.add('speaking'); audio.play().catch(function(){ neuralOK=false; setMode(); bspeak(i,next); }); })
@@ -558,8 +599,9 @@
       else bspeak(i,next); }
     function bspeak(i,end){ if(!synth){ end(); return; } pmode='browser'; var u=new SpeechSynthesisUtterance(SEG[i]); if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-MX'; u.rate=1; u.pitch=1.03; u.onstart=function(){ orb.classList.add('speaking'); }; u.onend=end; u.onerror=end; synth.speak(u); }
     function start(){ if(synth) synth.cancel(); if(audio){ try{audio.pause();}catch(e){} audio=null; } queue=SEG.map(function(_,i){return i;}); qi=0; paused=false; token++; pause.disabled=false; stop.disabled=false; play.disabled=true; pause.textContent='Pausa'; run(token); }
-    function done(){ token++; orb.classList.remove('speaking'); if(audio){ try{audio.pause();}catch(e){} audio=null; } pause.disabled=true; stop.disabled=true; play.disabled=false; status.textContent='Listo. Pulsa reproducir para repetir.'; }
+    function done(){ token++; orb.classList.remove('speaking'); if(audio){ try{audio.pause();}catch(e){} audio=null; } [].slice.call(document.querySelectorAll('section.narr')).forEach(function(s){ s.classList.remove('narr'); }); pause.disabled=true; stop.disabled=true; play.disabled=false; status.textContent='Recorrido terminado. Pulsa para repetir.'; }
     play.addEventListener('click',start);
+    orb.addEventListener('click',function(){ if(!play.disabled) start(); });
     stop.addEventListener('click',done);
     pause.addEventListener('click',function(){ if(!paused){ paused=true; pause.textContent='Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.'; if(pmode==='neural'&&audio) audio.pause(); else if(synth) synth.pause(); } else { paused=false; pause.textContent='Pausa'; orb.classList.add('speaking'); status.textContent='Reproduciendo…'; if(pmode==='neural'&&audio) audio.play(); else if(synth) synth.resume(); } });
     window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(audio){ try{audio.pause();}catch(e){} } });
