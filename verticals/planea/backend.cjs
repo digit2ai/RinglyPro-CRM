@@ -139,6 +139,29 @@ function build() {
     return !!t && String(t) === ADMIN_TOKEN;
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  // Inspect one user's full financial profile (debug). ?token=..&email=X
+  router.get('/admin/profile', async (req, res) => {
+    if (!requireReady(res)) return;
+    if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const email = String((req.query && req.query.email) || '').toLowerCase().trim();
+      const u = await User.findOne({ where: { email } });
+      if (!u) return res.status(404).json({ error: 'not_found', email });
+      const p = await Profile.findOne({ where: { user_id: u.id } });
+      const sum = (a) => (Array.isArray(a) ? a.reduce((s, x) => s + (+x.value || 0), 0) : 0);
+      res.json({
+        email: u.email, user_id: u.id,
+        ingresos_data: (p && p.ingresos_data) || [], ingresos_total: sum(p && p.ingresos_data),
+        gastos_data: (p && p.gastos_data) || [], gastos_total: sum(p && p.gastos_data),
+        liabilities_data: (p && p.liabilities_data) || [],
+        assets_data: (p && p.assets_data) || [],
+        finance_meta: (p && p.finance_meta) || {},
+        score: p && p.score_data && p.score_data.score,
+        has_answers: !!(p && p.score_data && p.score_data.answers),
+      });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   router.get('/admin/accounts', async (req, res) => {
     if (!requireReady(res)) return;
     if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized', hint: 'Pass ?token=<PLANEA_ADMIN_TOKEN>' });
