@@ -74,6 +74,35 @@
   Todas las cifras se calculan a partir de tus datos reales de Planea. Los modelos (Altman, Piotroski, Ohlson, Monte Carlo, etc.) son adaptaciones a finanzas personales, no asesoría de inversión.
 </footer>
 
+<!-- Lina voice orb (zero-key Edge neural TTS · browser fallback) -->
+<div id="voxwrap" class="hidden fixed z-40" style="bottom:20px;right:20px">
+  <div id="voxpanel" class="hidden glass p-4 mb-3" style="width:290px">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="w-2 h-2 rounded-full" style="background:#7c5cff"></span>
+      <div class="text-[13px] font-extrabold">Lina</div>
+      <span class="text-[10px] text-slate-500 tracking-wider">VOZ AI · DIGIT2AI</span>
+      <button id="voxclose" class="ml-auto text-slate-500 hover:text-slate-300 text-lg leading-none">&times;</button>
+    </div>
+    <div id="voxstatus" class="text-[12px] text-slate-400 mb-3 min-h-[16px]">Pulsa reproducir para escuchar el resumen ejecutivo.</div>
+    <div class="flex gap-2">
+      <button id="voxplay" class="flex-1 px-3 py-2 rounded-lg text-ink text-[12.5px] font-bold" style="background:#60a5fa">Reproducir</button>
+      <button id="voxpause" class="px-3 py-2 rounded-lg border border-white/15 text-[12.5px]" disabled>Pausa</button>
+      <button id="voxstop" class="px-3 py-2 rounded-lg border border-white/15 text-[12.5px]" disabled>Detener</button>
+    </div>
+    <label class="flex items-center gap-2 mt-3 text-[11.5px] text-slate-500 cursor-pointer">
+      <input id="voxneural" type="checkbox" checked> Voz neural HD <span id="voxmode" class="ml-auto mono"></span>
+    </label>
+  </div>
+  <button id="voxorb" class="block ml-auto rounded-full shadow-2xl relative" style="width:58px;height:58px;background:radial-gradient(circle at 35% 30%,#c9b8ff,#7c5cff 48%,#3b2f9e 100%)" aria-label="Lina voz">
+    <span id="voxring" class="absolute inset-0 rounded-full" style="box-shadow:0 0 0 0 rgba(124,92,255,.5)"></span>
+    <svg viewBox="0 0 24 24" width="24" height="24" class="mx-auto" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+  </button>
+</div>
+<style>
+  @keyframes voxpulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.5)}70%{box-shadow:0 0 0 18px rgba(124,92,255,0)}100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}}
+  #voxorb.speaking #voxring{animation:voxpulse 1.2s ease-in-out infinite}
+</style>
+
 <script>
 (function(){
   'use strict';
@@ -94,7 +123,8 @@
   function bandTxt(v){ return v>=70?'text-pos':v>=45?'text-warn':'text-neg'; }
 
   var CH={};
-  function chart(id,cfg){ var el=$(id); if(!el||typeof Chart==='undefined') return; if(CH[id]) CH[id].destroy(); CH[id]=new Chart(el,cfg); }
+  function chart(id,cfg){ var el=$(id); if(!el||typeof Chart==='undefined') return; try{ if(CH[id]) CH[id].destroy(); CH[id]=new Chart(el,cfg); }catch(e){ console.warn('chart '+id,e); } }
+  function money(n){ n=Math.round(num(n)); var s=n<0?'menos ':''; n=Math.abs(n); if(n>=1e9) return s+(Math.round(n/1e8)/10)+' mil millones de pesos'; if(n>=1e6) return s+Math.round(n/1e6)+' millones de pesos'; if(n>=1e3) return s+Math.round(n/1e3)+' mil pesos'; return s+n+' pesos'; }
   var CG='rgba(255,255,255,.06)', CT='#64748b';
   function axes(extra){ return Object.assign({ x:{grid:{color:CG},ticks:{color:CT,font:{size:10}}}, y:{grid:{color:CG},ticks:{color:CT,font:{size:10}}} }, extra||{}); }
 
@@ -427,8 +457,9 @@
     var d=new Date(); $('asof').textContent='AS OF '+d.toISOString().slice(0,10);
     $('live-dot').innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-pos"></span> datos en vivo'; $('live-dot').className='chip text-pos flex items-center gap-1.5';
 
-    drawCharts(m);
-    reveal();
+    reveal();                 // show content first — never let a chart error blank the page
+    setupVoice(m);
+    try{ drawCharts(m); }catch(e){ console.warn('charts',e); }
     loadAdvisor();
   }
 
@@ -478,7 +509,61 @@
       }).catch(function(){ var src=$('ai-src'); if(src){src.textContent='análisis no disponible';src.className='chip text-slate-500';} });
   }
 
-  function reveal(){ var els=document.querySelectorAll('.reveal'); var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.08}); els.forEach(function(el){ io.observe(el); }); }
+  function reveal(){ var els=[].slice.call(document.querySelectorAll('.reveal'));
+    try{ var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.06}); els.forEach(function(el){ io.observe(el); }); }
+    catch(e){ els.forEach(function(el){ el.classList.add('in'); }); }
+    // safety: guarantee everything is visible even if the observer never fires
+    setTimeout(function(){ els.forEach(function(el){ el.classList.add('in'); }); }, 1800); }
+
+  // ---------- Lina voice (neural-first, browser fallback) ----------
+  function voiceSegments(m){
+    var cls=m.nfhi>=85?'robusta':m.nfhi>=70?'sólida':m.nfhi>=55?'estable':m.nfhi>=40?'frágil':'crítica';
+    var lbl={liquidity:'la liquidez',cashflow:'el flujo de caja',savings:'el ahorro',debt:'la deuda',assets:'los activos',behavior:'la conducta financiera',risk:'el control del riesgo',forecast:'la proyección'};
+    var arr=Object.keys(m.subs).map(function(k){return {k:k,v:m.subs[k]};});
+    var strong=arr.slice().sort(function(a,b){return b.v-a.v;})[0];
+    var weak=arr.slice().sort(function(a,b){return a.v-b.v;})[0];
+    return [
+      'Hola, soy Lina, la voz de inteligencia financiera de Digit2AI. Te presento el Centro de Inteligencia Financiera Privado de Planea.',
+      'Tu Índice Neural de Salud Financiera es de '+m.nfhi+' sobre cien, en categoría '+cls+', con una confianza del '+m.confidence+' por ciento.',
+      'Tu patrimonio neto es de '+money(m.nw)+'. '+(m.surplusM>=0?'Cada mes generas un superávit de '+money(m.surplusM)+'.':'Cada mes tienes un déficit de '+money(-m.surplusM)+', algo que conviene corregir.'),
+      'Tu fondo de emergencia cubre '+(m.monthsExp>=99?'más de seis':m.monthsExp.toFixed(1))+' meses de gastos, y tu deuda equivale a '+m.debtAnnual.toFixed(2)+' veces tu ingreso anual.',
+      'Los modelos de estabilidad respaldan el diagnóstico. El índice tipo Altman es '+m.Z.toFixed(1)+', el puntaje tipo Piotroski es '+m.pioScore+' de nueve, y la probabilidad de estrés financiero es del '+Math.round(m.pDistress*100)+' por ciento.',
+      'La simulación de Monte Carlo proyecta un patrimonio mediano de '+money(m.mc.p50)+' a diez años, con una probabilidad del '+Math.round(m.mc.success*100)+' por ciento de alcanzar tu meta.',
+      'Tu mayor fortaleza es '+lbl[strong.k]+', y tu prioridad principal es mejorar '+lbl[weak.k]+'. Explora cada sección para el detalle completo. Soy Lina, gracias por tu atención.'
+    ];
+  }
+  function setupVoice(m){
+    var SEG=voiceSegments(m);
+    var wrap=$('voxwrap'), panel=$('voxpanel'), orb=$('voxorb'), status=$('voxstatus');
+    var play=$('voxplay'), pause=$('voxpause'), stop=$('voxstop'), neural=$('voxneural'), modeEl=$('voxmode'), closeB=$('voxclose');
+    if(!wrap) return; wrap.classList.remove('hidden');
+    var synth=window.speechSynthesis, queue=[],qi=0,token=0,paused=false,pmode=null,audio=null,neuralOK=true,cache={},bvoice=null;
+    function pickV(){ if(!synth) return; var vs=synth.getVoices(); bvoice=vs.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf('es')===0;})[0]||vs[0]||null; }
+    if(synth){ pickV(); synth.onvoiceschanged=pickV; }
+    function useN(){ return neural.checked&&neuralOK; }
+    function setMode(){ modeEl.textContent=useN()?'HD':'estándar'; modeEl.className='ml-auto mono '+(useN()?'text-pos':'text-slate-500'); }
+    setMode(); neural.addEventListener('change',setMode);
+    orb.addEventListener('click',function(){ panel.classList.toggle('hidden'); });
+    closeB.addEventListener('click',function(){ panel.classList.add('hidden'); });
+    function fetchN(i){ if(cache[i]) return Promise.resolve(cache[i]);
+      return fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:SEG[i],voice:'lina'})})
+        .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
+        .then(function(b){ if(!b||b.size<200) throw 0; var u=URL.createObjectURL(b); cache[i]=u; return u; }); }
+    function run(t){ if(t!==token) return; if(qi>=queue.length){ done(); return; }
+      var i=queue[qi]; status.textContent='Lina está hablando… ('+(qi+1)+' de '+queue.length+')';
+      function next(){ if(t!==token) return; qi++; run(t); }
+      if(useN()){ if(qi+1<queue.length) fetchN(queue[qi+1]).catch(function(){});
+        fetchN(i).then(function(url){ if(t!==token) return; pmode='neural'; audio=new Audio(url); audio.onended=next; audio.onerror=function(){ neuralOK=false; setMode(); bspeak(i,next); }; orb.classList.add('speaking'); audio.play().catch(function(){ neuralOK=false; setMode(); bspeak(i,next); }); })
+          .catch(function(){ if(t!==token) return; neuralOK=false; setMode(); bspeak(i,next); }); }
+      else bspeak(i,next); }
+    function bspeak(i,end){ if(!synth){ end(); return; } pmode='browser'; var u=new SpeechSynthesisUtterance(SEG[i]); if(bvoice) u.voice=bvoice; u.lang=bvoice?bvoice.lang:'es-MX'; u.rate=1; u.pitch=1.03; u.onstart=function(){ orb.classList.add('speaking'); }; u.onend=end; u.onerror=end; synth.speak(u); }
+    function start(){ if(synth) synth.cancel(); if(audio){ try{audio.pause();}catch(e){} audio=null; } queue=SEG.map(function(_,i){return i;}); qi=0; paused=false; token++; pause.disabled=false; stop.disabled=false; play.disabled=true; pause.textContent='Pausa'; run(token); }
+    function done(){ token++; orb.classList.remove('speaking'); if(audio){ try{audio.pause();}catch(e){} audio=null; } pause.disabled=true; stop.disabled=true; play.disabled=false; status.textContent='Listo. Pulsa reproducir para repetir.'; }
+    play.addEventListener('click',start);
+    stop.addEventListener('click',done);
+    pause.addEventListener('click',function(){ if(!paused){ paused=true; pause.textContent='Reanudar'; orb.classList.remove('speaking'); status.textContent='En pausa.'; if(pmode==='neural'&&audio) audio.pause(); else if(synth) synth.pause(); } else { paused=false; pause.textContent='Pausa'; orb.classList.add('speaking'); status.textContent='Reproduciendo…'; if(pmode==='neural'&&audio) audio.play(); else if(synth) synth.resume(); } });
+    window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(audio){ try{audio.pause();}catch(e){} } });
+  }
 
   // ---------- demo (clearly-labeled sample, not real data) ----------
   function DEMO(){
