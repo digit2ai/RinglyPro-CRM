@@ -114,12 +114,14 @@
   }
 
   function commit() {
-    if (!(window.PlaneaSB && PlaneaSB.loggedIn())) { closeForm(); render(); return; }
+    // Auth is the httpOnly JWT (sent automatically); do NOT gate on the readable
+    // cookie — always attempt the save. A 401 (truly logged out) surfaces the alert.
+    if (!window.PlaneaSB) { closeForm(); render(); return; }
     var fields = {}; fields[cfg.source] = profile[cfg.source] || [];
     closeForm();
     PlaneaSB.mePut(fields)
       .then(function () { location.reload(); }) // refresh header totals/rings via planea-data
-      .catch(function (e) { if (window.console) console.warn('[module-edit] save failed', e && e.message); alert('No se pudo guardar. Revisa tu sesión.'); render(); });
+      .catch(function (e) { if (window.console) console.warn('[module-edit] save failed', e && e.message); alert('No se pudo guardar. Revisa tu sesión (vuelve a iniciar sesión).'); render(); });
   }
 
   function onClick(e) {
@@ -147,8 +149,9 @@
     style();
     render();
     document.addEventListener('click', onClick);
-    if (window.PlaneaSB && PlaneaSB.loggedIn()) {
-      PlaneaSB.meGet().then(function (d) { profile = d || {}; render(); }).catch(function () {});
+    // Always load via the JWT (don't gate on the readable cookie). 401 => empty.
+    if (window.PlaneaSB) {
+      PlaneaSB.meGet().then(function (d) { profile = d || {}; render(); }).catch(function () { render(); });
     }
   }
 

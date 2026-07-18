@@ -239,7 +239,9 @@ function build() {
       // editable data arrays (income/expenses/debt/savings) from them once, so
       // the Ingresos/Gastos/Deuda/Ahorro modules aren't empty. Runs a single time
       // (finance_meta.tipo_ingreso is set afterwards, guarding re-runs).
-      if (p.score_data && p.score_data.answers && (!p.finance_meta || !p.finance_meta.tipo_ingreso)) {
+      var emptyArr = function (a) { return !Array.isArray(a) || a.length === 0; };
+      if (p.score_data && p.score_data.answers && (!p.finance_meta || !p.finance_meta.tipo_ingreso)
+          && emptyArr(p.ingresos_data) && emptyArr(p.gastos_data) && emptyArr(p.liabilities_data) && emptyArr(p.assets_data)) {
         try {
           const bf = score.dataFromAnswers(p.score_data.answers);
           p.ingresos_data = bf.ingresos_data; p.gastos_data = bf.gastos_data;

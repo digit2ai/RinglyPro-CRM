@@ -420,29 +420,21 @@
   function notOnSurvey() { return !/\/diagnostico\/?$/.test(location.pathname); }
 
   function boot() {
-    // Prefer OUR backend (Postgres). Fall back to legacy Supabase session.
-    if (ourSession()) {
-      buildProfileFromBackend().then(function (prof) {
-        if (prof.sin_diagnostico && notOnSurvey()) {
-          location.replace('/planea/portal/diagnostico?onboarding=1');
-          return;
-        }
-        render(prof);
-      }).catch(function (e) {
-        if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
-        render(emptyProfile());
-      });
-      return;
-    }
-    var sess = sbSession();
-    if (sess) {
-      buildProfile(sess).then(render).catch(function (e) {
-        if (window.console) console.warn('[planea-data] load failed:', e && e.message);
-        render(emptyProfile());
-      });
-      return;
-    }
-    render(emptyProfile()); // not logged in → CLEAN empty state, never demo
+    // Auth is the httpOnly JWT (sent automatically with credentials). The readable
+    // cookie may be missing/unparseable, so DON'T gate on ourSession() — always try
+    // our backend. A 401 (throws) => not logged in => legacy Supabase, else clean empty.
+    buildProfileFromBackend().then(function (prof) {
+      if (prof.sin_diagnostico && notOnSurvey()) {
+        location.replace('/planea/portal/diagnostico?onboarding=1');
+        return;
+      }
+      render(prof);
+    }).catch(function (e) {
+      if (window.console) console.warn('[planea-data] backend load failed:', e && e.message);
+      var sess = sbSession();
+      if (sess) { buildProfile(sess).then(render).catch(function () { render(emptyProfile()); }); return; }
+      render(emptyProfile()); // not logged in → CLEAN empty state, never demo
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
