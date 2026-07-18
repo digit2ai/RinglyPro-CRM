@@ -32,6 +32,7 @@ const databaseUrl = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
 let sequelize = null;
 let User = null;
 let Profile = null;
+let Item = null;
 let ready = false;
 let initErr = null;
 
@@ -60,7 +61,20 @@ function defineModels(sq) {
     finance_meta: { type: DataTypes.JSONB, allowNull: true, defaultValue: {} },
   }, { tableName: 'planea_profiles', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-  return { U, P };
+  // Each financial entry is its OWN row in its OWN table — independent per module
+  // (ingreso|gasto|ahorro|inversion|deuda|seguros|retiro). value = amount (monthly
+  // for ingreso/gasto; balance/coverage otherwise); monthly = cuota (deuda).
+  const I = sq.define('PlaneaItem', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
+    category: { type: DataTypes.STRING, allowNull: false },
+    name: { type: DataTypes.STRING, allowNull: true },
+    type: { type: DataTypes.STRING, allowNull: true },
+    value: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
+    monthly: { type: DataTypes.DOUBLE, allowNull: false, defaultValue: 0 },
+  }, { tableName: 'planea_items', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+  return { U, P, I };
 }
 
 async function init() {
@@ -73,8 +87,9 @@ async function init() {
       pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
     });
     const m = defineModels(sequelize);
-    User = m.U; Profile = m.P;
+    User = m.U; Profile = m.P; Item = m.I;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
+    await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
     // Idempotent add of newer columns (sync never adds columns to an existing table).
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS seguros_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS retiro_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
@@ -277,25 +292,20 @@ function build() {
       const u = await User.findByPk(a.id);
       if (!u) return res.status(401).json({ error: 'unauthorized' });
       let p = await Profile.findOne({ where: { user_id: u.id } });
-      if (!p) p = await Profile.create({ user_id: u.id, full_name: u.full_name, assets_data: [], liabilities_data: [], goals: [] });
+      if (!p) p = await Profile.create({ user_id: u.id, full_name: u.full_name, goals: [] });
 
-      // ARCHITECTURE: Mi Puntaje (score_data, the survey benchmark) and the actual
-      // data modules (ingresos/gastos/deuda/ahorro/...) are SEPARATE. The survey no
-      // longer seeds the modules and the modules no longer recompute the score — no
-      // backfill, no cross-writes. Each is stored and returned independently.
+      // ARCHITECTURE: Mi Puntaje (score_data, the survey benchmark) lives on the
+      // profile; the actual-data modules are independent ROWS in planea_items. They
+      // are separate — the survey never seeds items and items never touch the score.
+      const rows = await Item.findAll({ where: { user_id: u.id }, order: [['created_at', 'ASC']] });
+      const items = rows.map(itemOut);
       res.json({
         email: u.email,
         full_name: p.full_name || u.full_name || '',
         score_data: p.score_data || null,
-        progress_data: p.progress_data || null,
-        assets_data: Array.isArray(p.assets_data) ? p.assets_data : [],
-        liabilities_data: Array.isArray(p.liabilities_data) ? p.liabilities_data : [],
         goals: Array.isArray(p.goals) ? p.goals : [],
-        seguros_data: Array.isArray(p.seguros_data) ? p.seguros_data : [],
-        retiro_data: Array.isArray(p.retiro_data) ? p.retiro_data : [],
-        ingresos_data: Array.isArray(p.ingresos_data) ? p.ingresos_data : [],
-        gastos_data: Array.isArray(p.gastos_data) ? p.gastos_data : [],
-        finance_meta: p.finance_meta || {},
+        items: items,
+        summary: itemsSummary(items),
       });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -327,6 +337,75 @@ function build() {
       // they do NOT recompute or touch score_data. score_data is set only by the survey.
       await p.save();
       res.json({ success: true, score_data: p.score_data || null });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  // ── Financial items (own table planea_items, one row per entry) ─────────────
+  const ITEM_CATS = ['ingreso', 'gasto', 'ahorro', 'inversion', 'deuda', 'seguros', 'retiro'];
+  function itemOut(i) { return { id: i.id, category: i.category, name: i.name || '', type: i.type || '', value: +i.value || 0, monthly: +i.monthly || 0 }; }
+  function itemsSummary(items) {
+    const s = {};
+    ITEM_CATS.forEach(function (c) { s[c] = items.filter(function (i) { return i.category === c; }).reduce(function (a, i) { return a + (+i.value || 0); }, 0); });
+    s.deuda_cuota = items.filter(function (i) { return i.category === 'deuda'; }).reduce(function (a, i) { return a + (+i.monthly || 0); }, 0);
+    s.activos = s.ahorro + s.inversion + s.retiro;          // net-worth assets
+    s.patrimonio_neto = s.activos - s.deuda;                 // seguros excluded (protection)
+    return s;
+  }
+
+  router.get('/me/items', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const where = { user_id: a.id };
+      if (req.query.category) where.category = String(req.query.category);
+      const rows = await Item.findAll({ where, order: [['created_at', 'ASC']] });
+      const items = rows.map(itemOut);
+      res.json({ items: items, summary: itemsSummary(items) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/me/items', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const b = req.body || {};
+      const category = String(b.category || '');
+      if (ITEM_CATS.indexOf(category) < 0) return res.status(400).json({ error: 'invalid_category' });
+      const item = await Item.create({
+        user_id: a.id, category: category,
+        name: String(b.name || '').slice(0, 160), type: String(b.type || '').slice(0, 80),
+        value: +b.value || 0, monthly: +b.monthly || 0,
+      });
+      res.json({ success: true, item: itemOut(item) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.patch('/me/items/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const item = await Item.findOne({ where: { id: req.params.id, user_id: a.id } });
+      if (!item) return res.status(404).json({ error: 'not_found' });
+      const b = req.body || {};
+      if (b.name != null) item.name = String(b.name).slice(0, 160);
+      if (b.type != null) item.type = String(b.type).slice(0, 80);
+      if (b.value != null) item.value = +b.value || 0;
+      if (b.monthly != null) item.monthly = +b.monthly || 0;
+      await item.save();
+      res.json({ success: true, item: itemOut(item) });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.delete('/me/items/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    const a = authUser(req);
+    if (!a) return res.status(401).json({ error: 'unauthorized' });
+    try {
+      const n = await Item.destroy({ where: { id: req.params.id, user_id: a.id } });
+      res.json({ success: true, deleted: n });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 

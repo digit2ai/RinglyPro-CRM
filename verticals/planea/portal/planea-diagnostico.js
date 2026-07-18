@@ -285,9 +285,9 @@
       '<div class="dg-res-badge" style="border-color:' + label.color + ';color:' + label.color + '">' + label.name + '</div>' +
       '<div class="dg-res-sub">DESGLOSE POR PILARES</div><div class="dg-pilares">' + prows + '</div>' +
       '<div class="dg-rec"><div class="dg-rec-av">🦜</div><div><div class="dg-rec-goal">' + esc(rec.goalText) + '</div><p class="dg-rec-msg">' + esc(rec.mayaMessage) + '</p><div class="dg-rec-time">⏱ ' + esc(rec.timeline) + '</div></div></div>' +
-      '<button class="dg-calc" id="dg-maya-btn">Ver recomendaciones con Maya</button>' +
-      '<div class="dg-res-links"><a href="/planea/portal/inicio" id="dg-done">Ir a mi panel →</a><a href="#" id="dg-retake">Volver a empezar</a></div>' +
-      (PlaneaSB.loggedIn() ? '<div class="dg-saved" id="dg-saved"></div>' : '<div class="dg-saved warn">Inicia sesión para guardar tu puntaje.</div>') +
+      '<button class="dg-calc" id="dg-amend">✎ Editar mis respuestas</button>' +
+      '<div class="dg-res-links"><a href="/planea/portal/inicio" id="dg-done">Ir a mi panel →</a><a href="#" id="dg-maya-btn">Hablar con Maya</a> · <a href="#" id="dg-retake">Empezar de cero</a></div>' +
+      '<div class="dg-saved" id="dg-saved"></div>' +
       '</div>';
   }
 
@@ -324,7 +324,8 @@
     setTimeout(function () { showResult(res); }, 3400);
   }
 
-  function showResult(res) {
+  function showResult(res, opts) {
+    current = 'result';
     var rec = getRecommendation(answers, profile ? profile.nombre : '');
     root.innerHTML = renderResult(res, rec);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -332,8 +333,14 @@
     setTimeout(function () { if (ring) ring.setAttribute('stroke-dashoffset', C - (res.score / 100) * C); }, 140);
     var numEl = document.getElementById('dg-score'), t0 = performance.now(), dur = 1400;
     (function tick(now) { var p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3); if (numEl) numEl.textContent = Math.round(res.score * e); if (p < 1) requestAnimationFrame(tick); })(performance.now());
-    persist(res, rec);
+    // Save only when this is a fresh/amended completion — not when just viewing the
+    // already-stored result (opts.skipPersist).
+    if (!(opts && opts.skipPersist)) persist(res, rec);
   }
+
+  // Amend: re-open the survey pre-filled with the saved answers so the user edits
+  // and recomputes. (Empezar de cero = retake() clears everything.)
+  function amend() { current = seq()[0]; paint(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
   // Mi Puntaje is a SEPARATE benchmark: the survey stores ONLY its own score
   // (computed here from the 8 answers) — it does NOT write into the actual-data
@@ -403,6 +410,7 @@
     if (t.classList.contains('dg-next')) { e.preventDefault(); if (!t.hasAttribute('disabled')) next(+t.getAttribute('data-step')); return; }
     if (t.classList.contains('dg-back')) { e.preventDefault(); back(+t.getAttribute('data-step')); return; }
     if (t.hasAttribute('data-calc')) { e.preventDefault(); if (!t.hasAttribute('disabled')) startCalc(); return; }
+    if (t.id === 'dg-amend') { e.preventDefault(); amend(); return; }
     if (t.id === 'dg-maya-btn') { e.preventDefault(); if (window.MayaChat) MayaChat.open(); else location.href = '/planea/portal/inicio'; return; }
     if (t.id === 'dg-retake') { e.preventDefault(); retake(); return; }
   }
@@ -444,22 +452,28 @@
     // We already know who they are — never ask for the email again.
     if (ou) profile = { nombre: (ou.full_name || '').trim().split(/\s+/)[0] || '', email: ou.email || '' };
 
-    function start() {
+    function startSurvey() {
       // Logged-in / onboarding users gave name+email at signup → skip the intro
       // email step entirely and start at question 1.
       if (loggedIn || onboarding) current = seq()[0];
       paint();
     }
 
-    // Enrich the name from the backend profile if possible (non-blocking).
-    if (window.PlaneaSB && PlaneaSB.loggedIn()) {
-      PlaneaSB.get('persons?select=full_name&limit=1').then(function (rows) {
-        var pr = (rows && rows[0]) || {};
-        var full = pr.full_name || (ou && ou.full_name) || '';
-        profile = { nombre: (full || '').trim().split(/\s+/)[0] || '', email: (ou && ou.email) || (PlaneaSB.user() && PlaneaSB.user().email) || '' };
-        start();
-      }).catch(start);
-    } else { start(); }
+    // If the survey was already completed → show the SAVED result (score + insight)
+    // with an "Editar mis respuestas" option, instead of re-running the questions.
+    if (window.PlaneaSB) {
+      PlaneaSB.meGet().then(function (d) {
+        if (d && d.full_name) profile = { nombre: (d.full_name || '').trim().split(/\s+/)[0] || '', email: d.email || '' };
+        var sd = d && d.score_data;
+        if (sd && sd.score != null && sd.answers && !/[?&]edit=1/.test(location.search)) {
+          answers = sd.answers;
+          showResult(computeScore(answers), { skipPersist: true }); // view saved result
+        } else {
+          if (sd && sd.answers) answers = sd.answers; // ?edit=1 → pre-fill for amend
+          startSurvey();
+        }
+      }).catch(startSurvey);
+    } else { startSurvey(); }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

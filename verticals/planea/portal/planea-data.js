@@ -157,8 +157,8 @@
       case 'gasto_total': return cop(prof.gasto_mensual_cop || 0);
       case 'seguros_total': return cop(prof.seguros_total_cop || 0);
       case 'retiro_total': return cop(prof.retiro_total_cop || 0);
-      case 'ahorro_total': return cop(sumBucket(prof, 'ahorro'));
-      case 'inversion_total': return cop(sumBucket(prof, 'inversion'));
+      case 'ahorro_total': return cop(prof.ahorro_total_cop || 0);
+      case 'inversion_total': return cop(prof.inversion_total_cop || 0);
       case 'metas_count': return String((prof.metas || []).length);
       default: return null;
     }
@@ -234,7 +234,7 @@
         var maxL = rows.reduce(function (m, x) { return Math.max(m, x.valor_cop); }, 0) || 1;
         html = rows.map(function (x) { return pocket(x.nombre, x.tipo, cop(x.valor_cop), Math.round(x.valor_cop / maxL * 100), true); }).join('');
       } else if (type === 'ahorro' || type === 'inversion') {
-        rows = (prof.activos || []).filter(function (a) { return a.bucket === type; });
+        rows = (type === 'ahorro' ? prof.ahorros : prof.inversiones) || [];
         var tot = rows.reduce(function (s, a) { return s + a.valor_cop; }, 0) || 1;
         if (type === 'ahorro') {
           var maxA = rows.reduce(function (m, x) { return Math.max(m, x.valor_cop); }, 0) || 1;
@@ -371,32 +371,38 @@
         } else {
           prof.sin_diagnostico = true;
         }
-        var assets = Array.isArray(d.assets_data) ? d.assets_data : [];
-        var liab = Array.isArray(d.liabilities_data) ? d.liabilities_data : [];
-        var retiro = Array.isArray(d.retiro_data) ? d.retiro_data : [];
-        var seguros = Array.isArray(d.seguros_data) ? d.seguros_data : [];
-        var at = assets.reduce(function (a, x) { return a + num(x.value); }, 0);
-        var rt = retiro.reduce(function (a, x) { return a + num(x.value); }, 0);
-        var lt = liab.reduce(function (a, x) { return a + num(x.value); }, 0);
-        // Net worth = liquid/invested assets + retirement funds − debts.
-        // Seguros are protection (a cost), NOT net worth — excluded.
-        prof.activos_total_cop = at + rt;
-        prof.pasivos_total_cop = lt;
-        prof.patrimonio_neto_cop = (at + rt) - lt;
-        prof.activos = assets.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), bucket: assetBucket(x) }; })
-          .concat(retiro.map(function (x) { return { nombre: x.name, tipo: x.type || 'Retiro', valor_cop: num(x.value), bucket: 'retiro' }; }));
-        prof.pasivos = liab.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
-        prof.seguros = seguros.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
-        prof.retiro = retiro.map(function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value) }; });
-        prof.seguros_total_cop = seguros.reduce(function (a, x) { return a + num(x.value); }, 0);
-        prof.retiro_total_cop = rt;
+        // Actual-data modules now live as independent rows (planea_items); the
+        // backend returns them + a per-category summary.
+        var items = Array.isArray(d.items) ? d.items : [];
+        var sum = d.summary || {};
+        var byCat = function (c) { return items.filter(function (x) { return x.category === c; }); };
+        var toRow = function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), monthly_cop: num(x.monthly) }; };
+
+        prof.ingreso_mensual_cop = num(sum.ingreso);
+        prof.gasto_mensual_cop = num(sum.gasto);
+        prof.ahorro_total_cop = num(sum.ahorro);
+        prof.inversion_total_cop = num(sum.inversion);
+        prof.seguros_total_cop = num(sum.seguros);
+        prof.retiro_total_cop = num(sum.retiro);
+        prof.activos_total_cop = num(sum.activos);           // ahorro + inversión + retiro
+        prof.pasivos_total_cop = num(sum.deuda);             // debt balances
+        prof.deuda_cuota_cop = num(sum.deuda_cuota);
+        prof.patrimonio_neto_cop = num(sum.patrimonio_neto);
+
+        prof.ingresos = byCat('ingreso').map(toRow);
+        prof.gastos = byCat('gasto').map(toRow);
+        prof.ahorros = byCat('ahorro').map(toRow);
+        prof.inversiones = byCat('inversion').map(toRow);
+        prof.pasivos = byCat('deuda').map(toRow);
+        prof.seguros = byCat('seguros').map(toRow);
+        prof.retiro = byCat('retiro').map(toRow);
+        // Net-worth asset list (for the patrimonio "activos" view): ahorro+inversión+retiro
+        prof.activos = byCat('ahorro').map(toRow).concat(byCat('inversion').map(toRow))
+          .concat(byCat('retiro').map(function (x) { return { nombre: x.name, tipo: x.type || 'Retiro', valor_cop: num(x.value) }; }));
+
         prof.metas = (Array.isArray(d.goals) ? d.goals : []).map(function (g) {
           return { nombre: g.name, tipo: g.type, objetivo_cop: num(g.target_amount), actual_cop: num(g.current_savings), aporte_mensual_cop: num(g.monthly_saving) };
         });
-        var ing = Array.isArray(d.ingresos_data) ? d.ingresos_data : [];
-        prof.ingreso_mensual_cop = ing.reduce(function (a, x) { return a + num(x.value); }, 0);
-        var gas = Array.isArray(d.gastos_data) ? d.gastos_data : [];
-        prof.gasto_mensual_cop = gas.reduce(function (a, x) { return a + num(x.value); }, 0);
         window.PLANEA_PROFILE = prof;
         return prof;
       });
