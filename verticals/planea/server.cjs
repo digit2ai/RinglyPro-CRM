@@ -91,6 +91,7 @@ router.get('/health', (req, res) => {
     app: 'Planea - copiloto financiero personal',
     dist: hasBuild,
     portal: hasPortal,
+    admin: { service_key: !!SB_SERVICE_KEY, endpoints: !!SB_SERVICE_KEY },
     ts: new Date().toISOString(),
   });
 });
@@ -214,6 +215,102 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
   } catch (e) {
     console.error('Maya chat error', e.message);
     res.status(500).json({ error: e.message, reply: 'Ocurrió un error. Intenta de nuevo.' });
+  }
+});
+
+// ── Admin: users list + email confirm (server-side, on Render) ──────────────
+// Brings the local scripts/confirm-user.mjs capability into the running app so
+// user management (list / confirm) works from a URL on Render — no local script,
+// no per-run key handling. Uses the SAME Supabase service_role key the poller
+// reads (PLANEA_SERVICE_ROLE_KEY / SUPABASE_SERVICE_ROLE_KEY, set on Render) via
+// plain fetch (no @supabase/supabase-js runtime dependency).
+//   GET  /planea/api/v1/admin/users?token=...[&html=1]     → list all users + status
+//   POST /planea/api/v1/admin/confirm?token=...  {email} | {all:true}  → confirm
+// Gated by an admin token (PLANEA_ADMIN_TOKEN; falls back to the docs password).
+// Returns 503 until the service_role key is set on Render.
+const SB_ADMIN_URL = 'https://mfxujzvvrnsbiqcefvtg.supabase.co';
+const SB_SERVICE_KEY = process.env.PLANEA_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const ADMIN_TOKEN = process.env.PLANEA_ADMIN_TOKEN || DOCS_PASSWORD;
+
+function adminAuthed(req) {
+  const t = (req.query && req.query.token) || req.headers['x-planea-admin'] || (req.body && req.body.token) || '';
+  return !!t && String(t) === String(ADMIN_TOKEN);
+}
+function sbAdmin(pathQuery, opts) {
+  return fetch(SB_ADMIN_URL + '/auth/v1/admin/' + pathQuery, Object.assign({
+    headers: { apikey: SB_SERVICE_KEY, Authorization: 'Bearer ' + SB_SERVICE_KEY, 'Content-Type': 'application/json' },
+  }, opts || {}));
+}
+async function listAllUsers() {
+  const out = [];
+  for (let page = 1; page <= 50; page++) {
+    const r = await sbAdmin('users?page=' + page + '&per_page=200');
+    if (!r.ok) throw new Error('list ' + r.status);
+    const j = await r.json();
+    const users = (j && j.users) || (Array.isArray(j) ? j : []);
+    out.push(...users);
+    if (!users.length || users.length < 200) break;
+  }
+  return out;
+}
+function normUser(u) {
+  return {
+    email: u.email || '',
+    id: u.id,
+    confirmed: !!(u.email_confirmed_at || u.confirmed_at),
+    created_at: u.created_at || null,
+    last_sign_in_at: u.last_sign_in_at || null,
+  };
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+router.get('/api/v1/admin/users', async (req, res) => {
+  if (!SB_SERVICE_KEY) return res.status(503).json({ error: 'service_role_key_not_set', hint: 'Set PLANEA_SERVICE_ROLE_KEY on Render.' });
+  if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized', hint: 'Pass ?token=<PLANEA_ADMIN_TOKEN>' });
+  try {
+    const rows = (await listAllUsers()).map(normUser)
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const unconfirmed = rows.filter((r) => !r.confirmed).length;
+    if (req.query.html) {
+      const trs = rows.map((r) => '<tr class="' + (r.confirmed ? '' : 'u') + '"><td>' + esc(r.email) +
+        '</td><td>' + (r.confirmed ? 'Sí' : '<b>No</b>') + '</td><td>' + esc((r.created_at || '').slice(0, 10)) +
+        '</td><td>' + esc((r.last_sign_in_at || '').slice(0, 10) || '—') + '</td></tr>').join('');
+      return res.type('html').send('<!doctype html><meta charset="utf-8"><title>Planea — Usuarios</title>' +
+        '<style>body{font-family:system-ui,sans-serif;background:#0d1f1c;color:#eaf1ec;padding:24px}h1{font-size:20px}' +
+        'table{border-collapse:collapse;width:100%;max-width:820px}th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #24413b;font-size:14px}' +
+        'th{color:#8fd9ac}tr.u{background:#2a1414}small{color:#7fa}</style>' +
+        '<h1>Usuarios de Planea — ' + rows.length + ' total · ' + unconfirmed + ' sin confirmar</h1>' +
+        '<table><tr><th>Correo</th><th>Confirmado</th><th>Creado</th><th>Último ingreso</th></tr>' + trs + '</table>');
+    }
+    res.json({ count: rows.length, unconfirmed, users: rows });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+router.post('/api/v1/admin/confirm', express.json(), async (req, res) => {
+  if (!SB_SERVICE_KEY) return res.status(503).json({ error: 'service_role_key_not_set', hint: 'Set PLANEA_SERVICE_ROLE_KEY on Render.' });
+  if (!adminAuthed(req)) return res.status(401).json({ error: 'unauthorized' });
+  try {
+    const all = req.body && (req.body.all === true || req.body.all === 'true');
+    const email = req.body && req.body.email;
+    if (!all && !email) return res.status(400).json({ error: 'provide {email} or {all:true}' });
+    const users = await listAllUsers();
+    let targets;
+    if (all) targets = users.filter((u) => !(u.email_confirmed_at || u.confirmed_at));
+    else {
+      const u = users.find((x) => (x.email || '').toLowerCase() === String(email).toLowerCase());
+      if (!u) return res.status(404).json({ error: 'not_found', email });
+      targets = [u];
+    }
+    const results = [];
+    for (const u of targets) {
+      const r = await sbAdmin('users/' + u.id, { method: 'PUT', body: JSON.stringify({ email_confirm: true }) });
+      results.push({ email: u.email, ok: r.ok });
+    }
+    res.json({ confirmed: results.filter((r) => r.ok).length, total: targets.length, results });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
   }
 });
 
