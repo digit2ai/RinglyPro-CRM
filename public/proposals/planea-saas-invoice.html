@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Digit2AI — Factura de Servicios · Planea</title>
+<style>
+  :root{ --ink:#0f172a; --mut:#64748b; --line:#e2e8f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669; --bg:#f8fafc; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page{ max-width:920px; margin:24px auto; background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(15,23,42,.06); }
+  .top{ padding:28px 34px; background:linear-gradient(120deg,#111827,#312e81 70%,#0e7490); color:#fff; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .brand{ font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .brand small{ display:block; font-weight:500; font-size:12px; opacity:.8; letter-spacing:.02em; margin-top:3px; }
+  .doc{ text-align:right; }
+  .doc h1{ margin:0; font-size:17px; letter-spacing:.16em; font-weight:700; }
+  .doc .meta{ font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.7; }
+  .parties{ display:flex; gap:24px; padding:22px 34px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .parties .col{ flex:1; min-width:220px; }
+  .parties .k{ font-size:10.5px; letter-spacing:.14em; color:var(--mut); font-weight:700; text-transform:uppercase; }
+  .parties .v{ font-size:13.5px; margin-top:5px; line-height:1.6; }
+  .sec{ padding:22px 34px; }
+  .sec h2{ font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--brand); margin:0 0 4px; }
+  .sec .lead{ font-size:12.5px; color:var(--mut); margin:0 0 14px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); border-bottom:2px solid var(--line); padding:8px 6px; }
+  td{ padding:9px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td.num,th.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .desc small{ display:block; color:var(--mut); font-size:11.5px; margin-top:2px; }
+  tfoot td{ border-bottom:none; padding:6px; font-size:13px; }
+  tfoot .tot td{ font-weight:800; font-size:15px; border-top:2px solid var(--ink); padding-top:10px; }
+  tfoot .grand td{ color:var(--brand); font-size:17px; }
+  .pill{ display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; background:#eef2ff; color:var(--brand); }
+  .pill.ok{ background:#ecfdf5; color:var(--ok); }
+  .note{ background:#f1f5f9; border-radius:10px; padding:14px 16px; font-size:12px; color:#334155; line-height:1.6; margin-top:14px; }
+  .note b{ color:var(--ink); }
+  .foot{ padding:20px 34px 30px; font-size:11.5px; color:var(--mut); line-height:1.7; border-top:1px solid var(--line); }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .card{ border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card .big{ font-size:26px; font-weight:800; letter-spacing:-.02em; margin-top:4px; }
+  .card .sub{ font-size:11.5px; color:var(--mut); margin-top:4px; }
+  .print{ display:block; text-align:center; margin:14px auto 30px; }
+  .print button{ font:inherit; font-weight:700; font-size:13px; background:var(--brand); color:#fff; border:0; border-radius:10px; padding:11px 22px; cursor:pointer; }
+  @media(max-width:640px){ .two{ grid-template-columns:1fr; } .top,.parties,.sec,.foot{ padding-left:18px; padding-right:18px; } }
+  @media print{ body{ background:#fff; } .page{ box-shadow:none; border:none; margin:0; max-width:100%; } .print{ display:none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div class="brand">DIGIT2AI<small>Inteligencia Artificial · Plataformas a la medida</small></div>
+    <div class="doc">
+      <h1>FACTURA DE SERVICIOS</h1>
+      <div class="meta">
+        No. <b>DGT-PLANEA-2026-07</b><br>
+        Fecha de emisión: 18 de julio de 2026<br>
+        Vencimiento: 1 de agosto de 2026<br>
+        Moneda: USD · IVA Colombia 19%
+      </div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Desarrollo, IA y operación de plataforma</div></div>
+    <div class="col"><div class="k">Facturar a</div><div class="v"><b>Planea</b> (planea.vip)<br>Producto: App de finanzas personales (PWA)<br>Atención: Propietario del proyecto</div></div>
+    <div class="col"><div class="k">Periodo</div><div class="v">Construcción: 10–18 jul 2026<br>73 commits · 6 días · 62 archivos<br>Operación: mensual desde ago 2026</div></div>
+  </div>
+
+  <!-- SECTION A -->
+  <div class="sec">
+    <h2>A · Desarrollo de la plataforma <span class="pill">Cargo único</span></h2>
+    <p class="lead">Esfuerzo profesional equivalente entregado (ingeniería full-stack + ciencia de datos/cuantitativa + diseño). Tarifa cliente $119/hora.</p>
+    <table>
+      <thead><tr><th>Componente</th><th class="num">Horas</th><th class="num">Tarifa</th><th class="num">Importe</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Migración Supabase → PostgreSQL propio + autenticación (JWT, cookies, multidominio)<small>Independencia total del proveedor externo; sesión segura en aiagent.ringlypro.com y planea.vip</small></td><td class="num">24</td><td class="num">$119</td><td class="num">$2.856</td></tr>
+        <tr><td class="desc">Backend + modelos + motores de cálculo<small>API auth/perfil/ítems (CRUD)/salud/hallazgos/admin; motor Salud Financiera S1–S6; motor de puntaje CFP</small></td><td class="num">40</td><td class="num">$119</td><td class="num">$4.760</td></tr>
+        <tr><td class="desc">Encuesta "Mi Puntaje" + árbol de escenarios CFP (A–I) + 7 módulos financieros<small>Ingresos, Gastos, Ahorro, Deuda, Inversión, Seguros, Retiro — cada uno con su tabla y CRUD</small></td><td class="num">28</td><td class="num">$119</td><td class="num">$3.332</td></tr>
+        <tr><td class="desc">Panel "Salud Financiera" glass-cockpit<small>Instrumentos SVG animados, semáforos, Chart.js, histórico y evolución</small></td><td class="num">26</td><td class="num">$119</td><td class="num">$3.094</td></tr>
+        <tr><td class="desc">Neural Findings (motor de recomendaciones IA)<small>Integración Claude, pirámide CFP, análisis cruzado por área, respaldo determinista</small></td><td class="num">14</td><td class="num">$119</td><td class="num">$1.666</td></tr>
+        <tr><td class="desc">Maya (chat IA) + voz neural Lina<small>Edge TTS sin llave (costo cero de síntesis), fallback de voz del navegador</small></td><td class="num">12</td><td class="num">$119</td><td class="num">$1.428</td></tr>
+        <tr><td class="desc">Centro de Inteligencia Financiera Privado (19 secciones)<small>Altman, Piotroski, Ohlson, Montecarlo, Gini/Lorenz, Mahalanobis; NFHI ponderado; simulador; cockpit Garmin G1000; teaser de voz</small></td><td class="num">48</td><td class="num">$119</td><td class="num">$5.712</td></tr>
+        <tr><td class="desc">PWA, tematización, responsivo, dominio planea.vip, despliegue y QA<small>Instalable, offline shell, versionado anti-caché, verificación en producción</small></td><td class="num">18</td><td class="num">$119</td><td class="num">$2.142</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="tot"><td>Subtotal desarrollo</td><td class="num">210 h</td><td class="num"></td><td class="num">$24.990</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">
+      <b>Costos de producción incluidos (informativo, ya contemplados en el cargo anterior):</b> cómputo de IA para desarrollo asistido — tokens Claude Opus estimados <b>~$450</b>; supervisión humana ~27 h. No se facturan por separado: forman parte del precio fijo por alcance entregado.
+    </div>
+  </div>
+
+  <!-- SECTION B -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <h2>B · Operación SaaS <span class="pill ok">Recurrente mensual</span></h2>
+    <p class="lead">Infraestructura, consumo de IA en producción, dominio y operación gestionada con disponibilidad 99.9%.</p>
+    <table>
+      <thead><tr><th>Concepto</th><th>Proveedor</th><th class="num">Mensual</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Cómputo web (servicio de aplicación)<small>Ejecuta el backend y sirve la PWA</small></td><td>Render</td><td class="num">$25</td></tr>
+        <tr><td class="desc">Base de datos PostgreSQL<small>Datos de usuarios, ítems, salud, histórico</small></td><td>Render</td><td class="num">$19</td></tr>
+        <tr><td class="desc">Consumo de tokens de IA — Maya + Neural Findings<small>Claude Haiku, uso variable; estimado a volumen bajo/medio</small></td><td>Anthropic</td><td class="num">$20</td></tr>
+        <tr><td class="desc">Voz neural Lina (síntesis)<small>Microsoft Edge Read Aloud — sin llave, sin costo</small></td><td>Microsoft</td><td class="num">$0</td></tr>
+        <tr><td class="desc">Dominio planea.vip<small>Amortizado (~$35/año)</small></td><td>Registrador</td><td class="num">$3</td></tr>
+        <tr><td class="desc">Correo transaccional<small>Nivel gratuito actual (aumenta con volumen)</small></td><td>SendGrid</td><td class="num">$0</td></tr>
+        <tr><td class="desc">Operación gestionada, monitoreo, respaldos, actualizaciones y soporte<small>SLA 99.9% · parches de seguridad · mejoras menores</small></td><td>Digit2AI</td><td class="num">$183</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="tot"><td colspan="2">Subtotal operación mensual</td><td class="num">$250</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">
+      <b>Ahorro obtenido:</b> la migración a backend propio elimina el costo y la dependencia de <b>Supabase ($0 en adelante)</b>. La voz Lina usa TTS neural sin llave, por lo que <b>no genera costo de síntesis</b>. Los rubros de proveedor (Render, Anthropic, dominio) son <b>pass-through</b> y se ajustan al consumo real; la operación gestionada es la única tarifa con margen de servicio.
+    </div>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <div class="two">
+      <div class="card">
+        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Total desarrollo (único)</div>
+        <table style="margin-top:8px">
+          <tr><td>Subtotal</td><td class="num">$24.990,00</td></tr>
+          <tr><td>IVA 19%</td><td class="num">$4.748,10</td></tr>
+          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total a pagar</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$29.738,10</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Total operación (mensual)</div>
+        <table style="margin-top:8px">
+          <tr><td>Subtotal</td><td class="num">$250,00</td></tr>
+          <tr><td>IVA 19%</td><td class="num">$47,50</td></tr>
+          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total mensual</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$297,50</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Condiciones.</b> Precios en USD. IVA Colombia 19%. El desarrollo es un cargo único; la operación SaaS se factura por mes adelantado desde agosto de 2026. Los rubros de proveedor (Render, Anthropic, dominio, correo) son pass-through y pueden variar según el consumo real de tráfico, tokens y almacenamiento. La tarifa de operación gestionada incluye monitoreo, respaldos, parches de seguridad, disponibilidad 99.9% y mejoras menores; nuevas funcionalidades se cotizan por separado.<br><br>
+    Digit2AI LLC · digit2ai.com · info@digit2ai.com
+  </div>
+</div>
+<div class="print"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+</body>
+</html>
