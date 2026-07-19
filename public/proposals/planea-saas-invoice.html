@@ -40,10 +40,33 @@
   .card{ border:1px solid var(--line); border-radius:12px; padding:16px; }
   .card .big{ font-size:26px; font-weight:800; letter-spacing:-.02em; margin-top:4px; }
   .card .sub{ font-size:11.5px; color:var(--mut); margin-top:4px; }
+  .pay{ margin-top:18px; border:1px solid var(--line); border-radius:12px; padding:16px; background:#f8fafc; }
+  .pay-h{ font-size:10.5px; letter-spacing:.14em; color:var(--mut); font-weight:700; text-transform:uppercase; margin-bottom:10px; }
+  .pay-row{ display:flex; gap:26px; flex-wrap:wrap; }
+  .pay-row .pk{ display:block; font-size:11px; color:var(--mut); margin-bottom:2px; }
+  .pay-row b{ font-size:15px; letter-spacing:.01em; }
   .print{ display:block; text-align:center; margin:14px auto 30px; }
   .print button{ font:inherit; font-weight:700; font-size:13px; background:var(--brand); color:#fff; border:0; border-radius:10px; padding:11px 22px; cursor:pointer; }
-  @media(max-width:640px){ .two{ grid-template-columns:1fr; } .top,.parties,.sec,.foot{ padding-left:18px; padding-right:18px; } }
-  @media print{ body{ background:#fff; } .page{ box-shadow:none; border:none; margin:0; max-width:100%; } .print{ display:none; } }
+  @media(max-width:640px){ .two{ grid-template-columns:1fr; } .top,.parties,.sec,.foot{ padding-left:18px; padding-right:18px; } .pay-row{ gap:14px; } }
+  @media print{
+    @page{ size:A4; margin:11mm; }
+    html,body{ background:#fff; font-size:10.5px; }
+    .page{ box-shadow:none; border:none; margin:0; max-width:100%; border-radius:0; }
+    .print{ display:none; }
+    .top{ padding:14px 20px; }
+    .parties{ padding:12px 20px; }
+    .sec{ padding:12px 20px; page-break-inside:avoid; }
+    .foot{ padding:10px 20px 6px; font-size:9.5px; }
+    h2{ page-break-after:avoid; }
+    table{ font-size:10px; }
+    td{ padding:5px 5px; }
+    th{ padding:5px 5px; }
+    .desc small{ font-size:9px; margin-top:1px; }
+    .note{ padding:9px 11px; font-size:9.5px; margin-top:9px; page-break-inside:avoid; }
+    tr{ page-break-inside:avoid; }
+    .pay{ padding:11px 13px; margin-top:12px; page-break-inside:avoid; }
+    .pay-row b{ font-size:13px; }
+  }
 </style>
 </head>
 <body>
@@ -131,6 +154,14 @@
           <tr><td>Subtotal</td><td class="num">$397,00</td></tr>
           <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total mensual</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$397,00</td></tr>
         </table>
+      </div>
+    </div>
+    <div class="pay">
+      <div class="pay-h">Datos de pago · Payable to</div>
+      <div class="pay-row">
+        <div><span class="pk">Beneficiario</span><b>DIGIT2AI LLC</b></div>
+        <div><span class="pk">Account number</span><b>898164442619</b></div>
+        <div><span class="pk">Routing number</span><b>063100277</b></div>
       </div>
     </div>
   </div>
