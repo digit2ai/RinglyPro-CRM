@@ -416,6 +416,53 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── planea.vip DEV-ENVIRONMENT GATE ─────────────────────────────────────────
+// planea.vip is the Planea DEV environment. A single shared login protects the
+// WHOLE site + every subfolder with one cookie at Path=/ (SSO — log in once, no
+// per-page login). Only affects the planea.vip host; aiagent.ringlypro.com/planea
+// stays open for internal work. Override creds via PLANEA_DEV_USER/PLANEA_DEV_PASS.
+const _pcrypto = require('crypto');
+const PLANEA_DEV_USER = (process.env.PLANEA_DEV_USER || 'test@planea.vip').toLowerCase();
+const PLANEA_DEV_PASS = process.env.PLANEA_DEV_PASS || 'Digit2Ai@7';
+const PLANEA_DEV_TOKEN = _pcrypto.createHash('sha256').update('planea-dev|' + PLANEA_DEV_USER + '|' + PLANEA_DEV_PASS).digest('hex').slice(0, 40);
+function planeaGateHtml(nextUrl, err) {
+  const nx = String(nextUrl || '/').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex,nofollow"><title>Planea — Entorno de desarrollo</title>' +
+    '<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,-apple-system,sans-serif;color:#eaf2ee;background:radial-gradient(120% 80% at 50% 0,rgba(126,224,160,.12),transparent 55%),linear-gradient(180deg,#0a1a14,#06100c)}' +
+    '.card{width:100%;max-width:380px;padding:34px 28px;margin:16px}.mark{width:60px;height:60px;border-radius:16px;border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}' +
+    'h1{font-size:22px;font-weight:800;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#8fb3a3;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:22px}' +
+    'label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 6px}input{width:100%;background:#e9edf3;color:#0a100e;border:0;border-radius:12px;padding:13px 14px;font-size:14px}' +
+    'button{width:100%;margin-top:18px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:14px;color:#06100c;background:linear-gradient(90deg,#6fce88,#3fb0a8);cursor:pointer}' +
+    '.err{background:rgba(214,75,58,.15);border:1px solid rgba(214,75,58,.5);color:#f3b6ad;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;text-align:center}' +
+    '.ft{text-align:center;color:#5c7267;font-size:11px;margin-top:18px}</style></head><body><form class="card" method="POST" action="/__dev-login">' +
+    '<div class="mark"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L22 12 L12 22 L2 12 Z"/><path d="M9 14 L12 8 L15 14"/></svg></div>' +
+    '<h1>Planea</h1><div class="sub">Entorno de desarrollo</div>' +
+    (err ? '<div class="err">Credenciales incorrectas.</div>' : '') +
+    '<input type="hidden" name="next" value="' + nx + '">' +
+    '<label>Correo</label><input name="email" type="email" autocomplete="username" placeholder="test@planea.vip" required autofocus>' +
+    '<label>Contraseña</label><input name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>' +
+    '<button type="submit">Entrar</button><div class="ft">Acceso restringido · un solo ingreso para todo el sitio</div></form></body></html>';
+}
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (host !== 'planea.vip' && host !== 'www.planea.vip') return next();
+  const cookie = req.headers.cookie || '';
+  const authed = cookie.split(';').some(c => c.trim() === 'planea_dev=' + PLANEA_DEV_TOKEN);
+  if (authed) return next();
+  if (req.method === 'POST' && req.path === '/__dev-login') {
+    const b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase();
+    const pass = String(b.password || '');
+    if (email === PLANEA_DEV_USER && pass === PLANEA_DEV_PASS) {
+      res.setHeader('Set-Cookie', 'planea_dev=' + PLANEA_DEV_TOKEN + '; Path=/; Domain=planea.vip; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax');
+      let nx = String(b.next || '/'); if (!nx.startsWith('/')) nx = '/';
+      return res.redirect(302, nx);
+    }
+    return res.status(401).send(planeaGateHtml(String(b.next || '/'), true));
+  }
+  return res.status(401).send(planeaGateHtml(req.originalUrl || '/', false));
+});
+
 // Custom domain: planea.vip -> Planea (personal-finance app), served IN PLACE so the
 // address bar stays on planea.vip. GHL domain + Render are configured, so this app
 // now sees the Host header. The entire Planea app already lives under /planea (SPA
