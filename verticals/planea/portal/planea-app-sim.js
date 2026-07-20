@@ -213,7 +213,7 @@
   root.querySelector('.psim-phone').addEventListener('mouseleave', restart);
 
   function mount() {
-    var cta = document.querySelector('#hero a[href*="app.planea.co/score"]') || document.querySelector('#hero a[href*="/score"]');
+    var cta = document.querySelector('#hero a[href*="diagnostico"]') || document.querySelector('#hero a[href*="score"]') || Array.prototype.slice.call(document.querySelectorAll('#hero a')).filter(function (a) { return /salud financiera/i.test(a.textContent); })[0];
     var anchor = cta ? cta.closest('div') : null;
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(root, anchor.nextSibling);
     else { var hero = document.querySelector('#hero .max-w-4xl') || document.querySelector('#hero') || document.body; hero.appendChild(root); }
