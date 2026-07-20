@@ -92,6 +92,7 @@ function defineModels(sq) {
   // UAT run: one row per saved test session (public checklist at /planea/uat).
   const T = sq.define('PlaneaUatRun', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    session_key: { type: DataTypes.STRING, allowNull: true },
     tester: { type: DataTypes.STRING, allowNull: true },
     notes: { type: DataTypes.TEXT, allowNull: true },
     suite: { type: DataTypes.STRING, allowNull: true },
@@ -129,6 +130,8 @@ async function init() {
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS ingresos_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS gastos_data JSONB DEFAULT '[]'::jsonb").catch(function () {});
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS finance_meta JSONB DEFAULT '{}'::jsonb").catch(function () {});
+    await sequelize.query('ALTER TABLE planea_uat_runs ADD COLUMN IF NOT EXISTS session_key VARCHAR(120)').catch(function () {});
+    await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_uat_session ON planea_uat_runs(session_key) WHERE session_key IS NOT NULL').catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -203,8 +206,30 @@ function build() {
   router.get('/uat/runs', async (req, res) => {
     if (!requireReady(res)) return;
     try {
-      const rows = await Uat.findAll({ order: [['created_at', 'DESC']], limit: 60, attributes: ['id', 'tester', 'suite', 'total', 'passed', 'failed', 'pending', 'na', 'created_at'] });
+      const rows = await Uat.findAll({ where: { session_key: null }, order: [['created_at', 'DESC']], limit: 60, attributes: ['id', 'tester', 'suite', 'total', 'passed', 'failed', 'pending', 'na', 'created_at'] });
       res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  // Live auto-save: one shared row per session_key (upsert). Survives cache clears.
+  router.post('/uat/save', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const b = req.body || {};
+      const key = String(b.session_key || 'live').slice(0, 120);
+      const arr = Array.isArray(b.results) ? b.results : [];
+      const c = function (k) { return arr.filter(function (r) { return (r && r.status) === k; }).length; };
+      const vals = { tester: String(b.tester || 'Anónimo').slice(0, 120), notes: String(b.notes || '').slice(0, 6000), suite: 'planea-uat-v1', total: arr.length, passed: c('pass'), failed: c('fail'), na: c('na'), pending: arr.length - c('pass') - c('fail') - c('na'), results: arr.slice(0, 400) };
+      let run = await Uat.findOne({ where: { session_key: key } });
+      if (run) { await run.update(vals); } else { run = await Uat.create(Object.assign({ session_key: key }, vals)); }
+      res.json({ ok: true, id: run.id, saved_at: new Date().toISOString() });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.get('/uat/state', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const key = String(req.query.key || 'live').slice(0, 120);
+      const run = await Uat.findOne({ where: { session_key: key } });
+      res.json(run || { results: [], tester: '', notes: '' });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
   router.get('/uat/runs/:id', async (req, res) => {

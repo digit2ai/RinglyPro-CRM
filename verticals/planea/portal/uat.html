@@ -49,6 +49,12 @@
   .stbtn.sel.na{background:#5c6b64;color:#fff;border-color:#5c6b64}
   .test textarea{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;resize:vertical;min-height:38px;background:#fbfdfc}
   .test.done-pass{border-left:3px solid var(--grn)}.test.done-fail{border-left:3px solid var(--red)}
+  .test.locked{background:#f6f9f7;opacity:.72}
+  .test.locked .stbtn{cursor:default}.test.locked textarea{background:#eef2f0;color:#5c6b64}
+  .locktag{margin-left:auto;font-size:11px;font-weight:700;color:var(--mut);display:inline-flex;align-items:center;gap:5px}
+  .edit-lnk{font-size:12px;font-weight:700;color:var(--grn);cursor:pointer;text-decoration:underline;margin-left:4px}
+  .saveind{font-size:12px;color:var(--mut);font-weight:600;white-space:nowrap;min-width:96px;text-align:right}
+  .saveind.ok{color:var(--grn)}.saveind.err{color:var(--red)}.saveind.saving{color:var(--amb)}
   .foot-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#0f1a17;color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;transition:.3s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.3)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -84,13 +90,15 @@
     <span class="chip pend" id="c-pend">Pendiente 0</span>
     <span class="chip n" id="c-na">N/A 0</span>
   </div>
+  <span class="saveind" id="saveind">Guardado automático</span>
   <button class="btn" id="hist">Historial</button>
-  <button class="btn primary" id="save">Guardar resultados</button>
+  <button class="btn primary" id="save">Guardar copia</button>
 </div></div>
 
 <div class="wrap"><div id="list"></div>
   <div class="foot-actions">
-    <button class="btn primary" id="save2">Guardar resultados en Postgres</button>
+    <div style="color:var(--mut);font-size:12.5px;align-self:center">Cada respuesta se guarda automáticamente en Postgres y queda bloqueada. Usa "Editar" para corregir.</div>
+    <button class="btn primary" id="save2">Guardar copia en historial</button>
     <button class="btn" id="print">Imprimir / PDF</button>
     <button class="btn" id="reset">Reiniciar checklist</button>
   </div>
@@ -208,6 +216,20 @@
   var state = {};
   try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ state = {}; }
   var meta = state.__meta || {}; delete state.__meta;
+  var SESSION_KEY = 'live';
+  var editing = new Set();
+  var saveTimer = null;
+  function ind(cls, txt){ var s=document.getElementById('saveind'); if(s){ s.className='saveind '+(cls||''); s.textContent=txt; } }
+  function autosaveLive(){
+    if(saveTimer) clearTimeout(saveTimer);
+    ind('saving','Guardando…');
+    saveTimer=setTimeout(function(){
+      fetch(API+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_key:SESSION_KEY,tester:document.getElementById('tester').value||'Anónimo',notes:document.getElementById('notes').value||'',results:collect()})})
+        .then(function(r){return r.json();})
+        .then(function(j){ ind(j&&j.ok?'ok':'err', j&&j.ok?'Guardado en Postgres ✓':'Error al guardar'); })
+        .catch(function(){ ind('err','Sin conexión — reintenta'); });
+    },600);
+  }
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
   function $(id){ return document.getElementById(id); }
@@ -219,16 +241,19 @@
       html+='<h2 class="sec">'+esc(sec.s)+'</h2>';
       sec.t.forEach(function(tt){
         var k=tt[0], st=(state[k]&&state[k].status)||'', cm=(state[k]&&state[k].comment)||'';
-        var cls = st==='pass'?'done-pass':st==='fail'?'done-fail':'';
+        var locked = !!st && !editing.has(k);
+        var cls = (st==='pass'?'done-pass ':st==='fail'?'done-fail ':'')+(locked?'locked':'');
+        var dis = locked?' disabled':'';
         html+='<div class="test '+cls+'" data-k="'+k+'" data-sec="'+esc(sec.s)+'" data-title="'+esc(tt[1])+'">'+
           '<div class="hd"><div><div class="t">'+esc(tt[1])+'</div><div class="s">'+esc(tt[2])+'</div></div>'+
           '<a class="open" href="'+tt[3]+'" target="_blank" rel="noopener">Abrir ↗</a></div>'+
           '<div class="row2">'+
-            '<button class="stbtn pass'+(st==='pass'?' sel':'')+'" data-st="pass">'+CHK+'Aprobado</button>'+
-            '<button class="stbtn fail'+(st==='fail'?' sel':'')+'" data-st="fail">'+XIC+'Falló</button>'+
-            '<button class="stbtn na'+(st==='na'?' sel':'')+'" data-st="na">'+NAI+'N/A</button>'+
+            '<button class="stbtn pass'+(st==='pass'?' sel':'')+'" data-st="pass"'+dis+'>'+CHK+'Aprobado</button>'+
+            '<button class="stbtn fail'+(st==='fail'?' sel':'')+'" data-st="fail"'+dis+'>'+XIC+'Falló</button>'+
+            '<button class="stbtn na'+(st==='na'?' sel':'')+'" data-st="na"'+dis+'>'+NAI+'N/A</button>'+
+            (locked?'<span class="locktag">Guardado · <span class="edit-lnk" data-edit="'+k+'">Editar</span></span>':'')+
           '</div>'+
-          '<textarea placeholder="Comentario (opcional)…">'+esc(cm)+'</textarea>'+
+          '<textarea placeholder="Comentario (opcional)…"'+dis+'>'+esc(cm)+'</textarea>'+
         '</div>';
       });
     });
@@ -246,21 +271,21 @@
 
   // events (delegated)
   $('list').addEventListener('click', function(e){
-    var b=e.target.closest('.stbtn'); if(!b) return;
+    var ed=e.target.closest('.edit-lnk');
+    if(ed){ editing.add(ed.getAttribute('data-edit')); render(); return; }
+    var b=e.target.closest('.stbtn'); if(!b || b.disabled) return;
     var test=b.closest('.test'), k=test.getAttribute('data-k'), st=b.getAttribute('data-st');
     state[k]=state[k]||{}; state[k].status = state[k].status===st ? '' : st;
-    // toggle UI
-    test.querySelectorAll('.stbtn').forEach(function(x){x.classList.remove('sel');});
-    if(state[k].status) b.classList.add('sel');
-    test.classList.remove('done-pass','done-fail'); if(state[k].status==='pass')test.classList.add('done-pass'); if(state[k].status==='fail')test.classList.add('done-fail');
-    save(); updateSummary();
+    if(state[k].status){ editing.delete(k); }   // answered -> lock (grayed out)
+    else { editing.add(k); }                      // cleared -> keep editable
+    save(); render(); autosaveLive();             // auto-save each mark to Postgres
   });
   $('list').addEventListener('input', function(e){
     if(e.target.tagName!=='TEXTAREA') return;
-    var k=e.target.closest('.test').getAttribute('data-k'); state[k]=state[k]||{}; state[k].comment=e.target.value; save();
+    var k=e.target.closest('.test').getAttribute('data-k'); state[k]=state[k]||{}; state[k].comment=e.target.value; save(); autosaveLive();
   });
   $('tester').value=meta.tester||''; $('notes').value=meta.notes||'';
-  $('tester').addEventListener('input',save); $('notes').addEventListener('input',save);
+  $('tester').addEventListener('input',function(){save();autosaveLive();}); $('notes').addEventListener('input',function(){save();autosaveLive();});
 
   function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3200); }
 
@@ -278,7 +303,7 @@
   $('save').addEventListener('click',function(){doSave(this);});
   $('save2').addEventListener('click',function(){doSave(this);});
   $('print').addEventListener('click',function(){window.print();});
-  $('reset').addEventListener('click',function(){ if(confirm('¿Reiniciar el checklist? Se borran las marcas locales (los guardados en Postgres se conservan).')){ state={}; save(); render(); } });
+  $('reset').addEventListener('click',function(){ if(confirm('¿Reiniciar el checklist? Se borran TODAS las marcas, local y en Postgres.')){ state={}; editing=new Set(); save(); render(); autosaveLive(); } });
 
   // history modal
   function openModal(html){ $('mbody').innerHTML=html; $('modal').classList.add('show'); }
@@ -304,7 +329,19 @@
   }
   function bindClose(){ var b=document.getElementById('mclose2'); if(b) b.addEventListener('click',function(){$('modal').classList.remove('show');}); }
 
-  render();
+  // Load the saved state from Postgres so completed tests survive a cache clear.
+  function boot(){
+    fetch(API+'/state?key='+SESSION_KEY).then(function(r){return r.ok?r.json():null;}).then(function(srv){
+      if(srv && Array.isArray(srv.results) && srv.results.length){
+        srv.results.forEach(function(r){ if(r&&r.key){ state[r.key]={status:r.status||'',comment:r.comment||''}; } });
+        if(srv.tester && !$('tester').value) $('tester').value=srv.tester;
+        if(srv.notes && !$('notes').value) $('notes').value=srv.notes;
+        save(); ind('ok','Sincronizado con Postgres');
+      } else { ind('','Guardado automático'); }
+      render();
+    }).catch(function(){ ind('err','Sin conexión'); render(); });
+  }
+  boot();
 })();
 </script>
 </body>
