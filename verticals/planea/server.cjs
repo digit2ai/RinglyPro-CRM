@@ -336,6 +336,10 @@ if (hasPortal) {
   if (fs.existsSync(path.join(portalDir, 'main.html'))) {
     router.get(['/main', '/main/'], (req, res) => { res.sendFile(path.join(portalDir, 'main.html')); });
   }
+  // Public UAT checklist (planea.vip/uat) — results saved to Postgres.
+  if (fs.existsSync(path.join(portalDir, 'uat.html'))) {
+    router.get(['/uat', '/uat/'], (req, res) => { res.sendFile(path.join(portalDir, 'uat.html')); });
+  }
 }
 
 if (hasPortal) {

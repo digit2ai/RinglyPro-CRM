@@ -35,6 +35,7 @@ let User = null;
 let Profile = null;
 let Item = null;
 let SaludH = null;
+let Uat = null;
 let ready = false;
 let initErr = null;
 
@@ -88,7 +89,21 @@ function defineModels(sq) {
     buckets: { type: DataTypes.JSONB, allowNull: true },
   }, { tableName: 'planea_salud_history', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-  return { U, P, I, H };
+  // UAT run: one row per saved test session (public checklist at /planea/uat).
+  const T = sq.define('PlaneaUatRun', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    tester: { type: DataTypes.STRING, allowNull: true },
+    notes: { type: DataTypes.TEXT, allowNull: true },
+    suite: { type: DataTypes.STRING, allowNull: true },
+    total: { type: DataTypes.INTEGER, allowNull: true },
+    passed: { type: DataTypes.INTEGER, allowNull: true },
+    failed: { type: DataTypes.INTEGER, allowNull: true },
+    pending: { type: DataTypes.INTEGER, allowNull: true },
+    na: { type: DataTypes.INTEGER, allowNull: true },
+    results: { type: DataTypes.JSONB, allowNull: true },
+  }, { tableName: 'planea_uat_runs', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+  return { U, P, I, H, T };
 }
 
 async function init() {
@@ -101,7 +116,7 @@ async function init() {
       pool: { max: 5, min: 0, acquire: 30000, idle: 10000 },
     });
     const m = defineModels(sequelize);
-    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H;
+    User = m.U; Profile = m.P; Item = m.I; SaludH = m.H; Uat = m.T;
     await sequelize.sync({ alter: false }); // create tables if absent (never alters existing)
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_items_user_cat ON planea_items(user_id, category)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
@@ -166,6 +181,37 @@ function build() {
   router.use(function (req, res, next) { res.set('Cache-Control', 'no-store, must-revalidate'); next(); });
 
   router.get('/auth/status', (req, res) => res.json({ ready, error: initErr || null }));
+
+  // ── UAT (public test-checklist results, saved to Postgres) ────────────────
+  router.post('/uat/runs', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const b = req.body || {};
+      const arr = Array.isArray(b.results) ? b.results : [];
+      const c = function (k) { return arr.filter(function (r) { return (r && r.status) === k; }).length; };
+      const run = await Uat.create({
+        tester: String(b.tester || 'Anónimo').slice(0, 120),
+        notes: String(b.notes || '').slice(0, 6000),
+        suite: String(b.suite || 'planea-uat-v1').slice(0, 60),
+        total: arr.length, passed: c('pass'), failed: c('fail'), na: c('na'),
+        pending: arr.length - c('pass') - c('fail') - c('na'),
+        results: arr.slice(0, 400),
+      });
+      res.json({ ok: true, id: run.id, created_at: run.created_at });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.get('/uat/runs', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const rows = await Uat.findAll({ order: [['created_at', 'DESC']], limit: 60, attributes: ['id', 'tester', 'suite', 'total', 'passed', 'failed', 'pending', 'na', 'created_at'] });
+      res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+  router.get('/uat/runs/:id', async (req, res) => {
+    if (!requireReady(res)) return;
+    try { const r = await Uat.findByPk(req.params.id); if (!r) return res.status(404).json({ error: 'not found' }); res.json(r); }
+    catch (e) { res.status(500).json({ error: e.message }); }
+  });
 
   // Session diagnostic — open in the SAME browser to see if THIS device is authed.
   router.get('/me/whoami', (req, res) => {

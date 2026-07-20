@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Planea — UAT (Pruebas de aceptación)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0f1a17; --mut:#607068; --line:#e4ebe7; --bg:#f5f8f6; --grn:#2f9e63; --grn2:#eafaf0; --red:#d64b3a; --red2:#fdeeeb; --amb:#c98a1a; --card:#fff; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  a{color:var(--grn)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px 80px}
+  header.top{background:linear-gradient(120deg,#0f2a20,#164e37 70%,#0e6b53);color:#fff;padding:26px 0 22px}
+  header.top .in{max-width:960px;margin:0 auto;padding:0 16px}
+  header.top h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
+  header.top p{margin:6px 0 0;font-size:13.5px;color:rgba(255,255,255,.75);max-width:640px}
+  .meta{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap}
+  .meta label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);display:block;margin-bottom:4px;font-weight:700}
+  .meta input{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;min-width:220px}
+  .meta input::placeholder{color:rgba(255,255,255,.55)}
+  /* sticky summary */
+  .bar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar .in{max-width:960px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .prog{flex:1;min-width:160px}
+  .prog .track{height:9px;border-radius:99px;background:#e4ebe7;overflow:hidden;display:flex}
+  .prog .pf{height:100%;background:var(--grn)}.prog .ff{height:100%;background:var(--red)}.prog .nf{height:100%;background:#c9d2cd}
+  .prog .lbl{font-size:12px;color:var(--mut);margin-top:5px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:99px;border:1px solid var(--line)}
+  .chip.p{color:var(--grn);background:var(--grn2)}.chip.f{color:var(--red);background:var(--red2)}.chip.n{color:var(--mut)}.chip.pend{color:var(--amb);background:#fdf6e7}
+  .btn{font:inherit;font-weight:700;font-size:13px;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .btn.primary{background:var(--grn);color:#fff;border-color:var(--grn)}
+  .btn.primary:disabled{opacity:.5;cursor:default}
+  /* sections */
+  h2.sec{font-size:15px;font-weight:800;margin:26px 0 10px;letter-spacing:-.01em}
+  .test{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+  .test .hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .test .t{font-weight:700;font-size:14.5px}
+  .test .s{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.5}
+  .test .open{white-space:nowrap;font-size:12px;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--grn)}
+  .row2{display:flex;gap:8px;align-items:center;margin-top:11px;flex-wrap:wrap}
+  .stbtn{font:inherit;font-size:12.5px;font-weight:700;border-radius:8px;padding:7px 12px;cursor:pointer;border:1px solid var(--line);background:#fafcfb;color:var(--mut);display:inline-flex;align-items:center;gap:6px}
+  .stbtn .k{width:15px;height:15px;display:inline-flex}
+  .stbtn.sel.pass{background:var(--grn);color:#fff;border-color:var(--grn)}
+  .stbtn.sel.fail{background:var(--red);color:#fff;border-color:var(--red)}
+  .stbtn.sel.na{background:#5c6b64;color:#fff;border-color:#5c6b64}
+  .test textarea{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;resize:vertical;min-height:38px;background:#fbfdfc}
+  .test.done-pass{border-left:3px solid var(--grn)}.test.done-fail{border-left:3px solid var(--red)}
+  .foot-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#0f1a17;color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;transition:.3s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(15,26,23,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .modal.show{display:flex}
+  .modal .box{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:82vh;overflow:auto;padding:20px}
+  .modal h3{margin:0 0 12px;font-size:16px}
+  .run{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .run:hover{background:#f5f8f6}
+  .run .who{font-weight:700;font-size:13.5px}.run .dt{color:var(--mut);font-size:11.5px}
+  .run .nums{font-size:12.5px;font-weight:700}
+  .close{float:right;border:0;background:none;font-size:22px;cursor:pointer;color:var(--mut);line-height:1}
+  @media print{.bar,.foot-actions,.open,.top .meta,.modal{display:none!important}.test{break-inside:avoid}body{background:#fff}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <h1>Planea — Pruebas de aceptación (UAT)</h1>
+  <p>Recorre la aplicación empezando por la página principal y marca cada función como Aprobado, Falló o N/A. Agrega comentarios y guarda los resultados. Todo queda registrado.</p>
+  <div class="meta">
+    <div><label>Nombre del tester</label><input id="tester" placeholder="Tu nombre" autocomplete="name"></div>
+    <div><label>Notas generales</label><input id="notes" placeholder="Dispositivo, navegador, observaciones…"></div>
+  </div>
+</div></header>
+
+<div class="bar"><div class="in">
+  <div class="prog"><div class="track"><div class="pf" id="pf"></div><div class="ff" id="ff"></div><div class="nf" id="nf"></div></div>
+    <div class="lbl" id="proglbl">0 de 0 evaluados</div></div>
+  <div class="chips">
+    <span class="chip p" id="c-pass">Aprobado 0</span>
+    <span class="chip f" id="c-fail">Falló 0</span>
+    <span class="chip pend" id="c-pend">Pendiente 0</span>
+    <span class="chip n" id="c-na">N/A 0</span>
+  </div>
+  <button class="btn" id="hist">Historial</button>
+  <button class="btn primary" id="save">Guardar resultados</button>
+</div></div>
+
+<div class="wrap"><div id="list"></div>
+  <div class="foot-actions">
+    <button class="btn primary" id="save2">Guardar resultados en Postgres</button>
+    <button class="btn" id="print">Imprimir / PDF</button>
+    <button class="btn" id="reset">Reiniciar checklist</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="box"><button class="close" id="mclose">&times;</button><div id="mbody"></div></div></div>
+
+<script>
+(function(){
+  'use strict';
+  var API='/planea/api/v1/uat';
+  var CHK='<svg class="k" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+  var XIC='<svg class="k" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var NAI='<svg class="k" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg>';
+
+  var SUITE=[
+    {s:'1 · Landing (página principal)', t:[
+      ['land-load','La página carga sin errores','Abre planea.vip/main; el hero y el menú se ven completos.','https://planea.vip/main'],
+      ['land-hero','Hero y branding','Se ve el título "Entiende tu dinero, Planea tu futuro" y el logo Planea.','https://planea.vip/main'],
+      ['land-icons','Íconos financieros (sin emojis)','En "Qué hacemos", los pilares y los pasos muestran íconos de línea, no emojis.','https://planea.vip/main'],
+      ['land-ingresa','Botón "Ingresa" abre login','Clic en Ingresa/Ingresar abre planea.vip/planea/login.','https://planea.vip/planea/login'],
+      ['land-empieza','Botón "Empieza ya" abre registro','Clic en Empieza ya abre planea.vip/planea/signup.','https://planea.vip/planea/signup'],
+      ['land-irapp','Botón "Ir al app" abre la app','Clic en Ir al app abre planea.vip/.','https://planea.vip/'],
+      ['land-cta-salud','"Descubre tu salud financiera" abre diagnóstico','Botón del hero abre planea.vip/planea/portal/diagnostico.','https://planea.vip/planea/portal/diagnostico'],
+      ['land-sim','Simulador interactivo del app','Debajo del botón del hero aparece el teléfono y avanza Login → Inicio → módulos.','https://planea.vip/main'],
+      ['land-empezar-diag','"Empezar mi diagnóstico" abre diagnóstico','El botón de la sección de oferta abre el diagnóstico.','https://planea.vip/main'],
+      ['land-descubrir','"Descubrir mi Puntaje" abre diagnóstico','El botón del bloque de diagnóstico abre el diagnóstico.','https://planea.vip/main'],
+      ['land-mobile','Responsive en móvil','En pantalla angosta el menú hamburguesa y el contenido se ven bien.','https://planea.vip/main']
+    ]},
+    {s:'2 · Registro e ingreso', t:[
+      ['auth-signup-load','Página de registro carga','Abre planea.vip/planea/signup; el formulario es visible.','https://planea.vip/planea/signup'],
+      ['auth-signup','Crear una cuenta nueva','Regístrate con un correo nuevo; entra a la app.','https://planea.vip/planea/signup'],
+      ['auth-login-load','Página de login carga','Abre planea.vip/planea/login.','https://planea.vip/planea/login'],
+      ['auth-login-ok','Ingreso con credenciales válidas','Inicia sesión; llega al Inicio.','https://planea.vip/planea/login'],
+      ['auth-login-bad','Ingreso con credenciales inválidas','Muestra un mensaje de error claro (no entra).','https://planea.vip/planea/login'],
+      ['auth-logout','Cerrar sesión','Desde el menú, cerrar sesión regresa al login.','https://planea.vip/planea/portal/inicio']
+    ]},
+    {s:'3 · Inicio (dashboard)', t:[
+      ['home-load','Inicio carga tras ingresar','Se ve "Hola, <nombre>" y el resumen.','https://planea.vip/planea/portal/inicio'],
+      ['home-score','Puntaje Planea visible','Anillo con el puntaje y su rango.','https://planea.vip/planea/portal/inicio'],
+      ['home-patrimonio','Patrimonio total','Muestra el patrimonio neto en COP.','https://planea.vip/planea/portal/inicio'],
+      ['home-nav','Navegación lateral','El menú abre cada módulo correctamente.','https://planea.vip/planea/portal/inicio']
+    ]},
+    {s:'4 · Ingresos', t:[
+      ['ing-add','Agregar una fuente de ingreso','+ Agregar guarda una nueva entrada.','https://planea.vip/planea/portal/ingreso'],
+      ['ing-total','El total mensual se actualiza','La suma refleja las entradas.','https://planea.vip/planea/portal/ingreso'],
+      ['ing-edit','Editar una entrada','El lápiz permite cambiar el monto y guarda.','https://planea.vip/planea/portal/ingreso'],
+      ['ing-del','Eliminar una entrada','La X elimina la entrada.','https://planea.vip/planea/portal/ingreso'],
+      ['ing-persist','Persiste al recargar','Recarga: los datos siguen ahí.','https://planea.vip/planea/portal/ingreso']
+    ]},
+    {s:'5 · Gastos', t:[
+      ['gas-add','Agregar un gasto','+ Agregar guarda un gasto con categoría.','https://planea.vip/planea/portal/gastos'],
+      ['gas-total','Total mensual correcto','La suma de gastos es correcta.','https://planea.vip/planea/portal/gastos'],
+      ['gas-editdel','Editar / eliminar','Lápiz y X funcionan.','https://planea.vip/planea/portal/gastos']
+    ]},
+    {s:'6 · Ahorro', t:[
+      ['aho-add','Agregar cuenta de ahorro','+ Agregar guarda.','https://planea.vip/planea/portal/ahorro'],
+      ['aho-total','Total ahorrado correcto','Suma correcta.','https://planea.vip/planea/portal/ahorro'],
+      ['aho-editdel','Editar / eliminar','Funciona.','https://planea.vip/planea/portal/ahorro']
+    ]},
+    {s:'7 · Deuda', t:[
+      ['deu-add','Agregar deuda con cuota','+ Agregar guarda saldo y cuota mensual.','https://planea.vip/planea/portal/deuda'],
+      ['deu-total','Saldo total correcto','Suma correcta.','https://planea.vip/planea/portal/deuda'],
+      ['deu-editdel','Editar / eliminar','Funciona.','https://planea.vip/planea/portal/deuda']
+    ]},
+    {s:'8 · Inversión', t:[
+      ['inv-add','Agregar inversión','+ Agregar guarda.','https://planea.vip/planea/portal/inversion'],
+      ['inv-total','Portafolio total correcto','Suma correcta.','https://planea.vip/planea/portal/inversion'],
+      ['inv-editdel','Editar / eliminar','Funciona.','https://planea.vip/planea/portal/inversion']
+    ]},
+    {s:'9 · Seguros', t:[
+      ['seg-add','Agregar póliza','+ Agregar guarda con cobertura.','https://planea.vip/planea/portal/seguros'],
+      ['seg-total','Cobertura total correcta','Suma correcta.','https://planea.vip/planea/portal/seguros'],
+      ['seg-editdel','Editar / eliminar','Funciona.','https://planea.vip/planea/portal/seguros']
+    ]},
+    {s:'10 · Retiro', t:[
+      ['ret-add','Agregar fondo de retiro','+ Agregar guarda.','https://planea.vip/planea/portal/retiro'],
+      ['ret-total','Total para el retiro correcto','Suma correcta.','https://planea.vip/planea/portal/retiro'],
+      ['ret-editdel','Editar / eliminar','Funciona.','https://planea.vip/planea/portal/retiro']
+    ]},
+    {s:'11 · Mi Patrimonio', t:[
+      ['pat-neto','Patrimonio neto = activos − pasivos','El neto coincide con activos menos pasivos.','https://planea.vip/planea/portal/patrimonio'],
+      ['pat-desglose','Desglose activos / pasivos','Barras y montos correctos.','https://planea.vip/planea/portal/patrimonio']
+    ]},
+    {s:'12 · Mis metas', t:[
+      ['met-add','Crear una meta','Nueva meta se guarda con monto objetivo.','https://planea.vip/planea/portal/metas'],
+      ['met-prog','Progreso y tiempo restante','Muestra % y meses restantes.','https://planea.vip/planea/portal/metas'],
+      ['met-editdel','Editar / eliminar meta','Funciona.','https://planea.vip/planea/portal/metas']
+    ]},
+    {s:'13 · Diagnóstico (Mi Puntaje)', t:[
+      ['dia-flow','Completar la encuesta','Responde las preguntas y calcula el puntaje.','https://planea.vip/planea/portal/diagnostico'],
+      ['dia-score','Puntaje y rango','Muestra el puntaje 0–100 y su rango.','https://planea.vip/planea/portal/diagnostico'],
+      ['dia-pilares','Desglose por pilares','Fondo de emergencia / Flujo / Deuda / Estabilidad con %.','https://planea.vip/planea/portal/diagnostico'],
+      ['dia-amend','Editar respuestas','Permite reeditar y recalcula.','https://planea.vip/planea/portal/diagnostico']
+    ]},
+    {s:'14 · Salud Financiera', t:[
+      ['sal-empty','Estado vacío sin datos','Sin datos, invita a agregar ingresos.','https://planea.vip/planea/portal/salud'],
+      ['sal-cockpit','Tablero con datos reales','Con datos, el cockpit e instrumentos se calculan.','https://planea.vip/planea/portal/salud'],
+      ['sal-demo','Modo de ejemplo (?demo=1)','El tablero se ve completo con datos de ejemplo.','https://planea.vip/planea/portal/salud?demo=1'],
+      ['sal-neural','Neural Findings','La sección de hallazgos muestra recomendaciones.','https://planea.vip/planea/portal/salud?demo=1']
+    ]},
+    {s:'15 · Maya (guía IA)', t:[
+      ['maya-open','El orbe de Maya abre','"Pregúntale a Maya" abre el chat.','https://planea.vip/planea/portal/inicio'],
+      ['maya-answer','Maya responde','Escribe una pregunta y recibe una respuesta.','https://planea.vip/planea/portal/inicio']
+    ]},
+    {s:'16 · General', t:[
+      ['gen-theme','Cambio de tema claro / oscuro','El botón de tema funciona.','https://planea.vip/planea/portal/inicio'],
+      ['gen-mobile','Responsive en móvil','Todas las pantallas se ven bien en móvil.','https://planea.vip/planea/portal/inicio'],
+      ['gen-persist','Persistencia tras re-login','Los datos siguen tras cerrar y volver a entrar.','https://planea.vip/planea/portal/inicio']
+    ]}
+  ];
+
+  var KEY='planea_uat_draft_v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(e){ state = {}; }
+  var meta = state.__meta || {}; delete state.__meta;
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);}); }
+  function $(id){ return document.getElementById(id); }
+  function save(){ var o=Object.assign({}, state, {__meta:{tester:$('tester').value, notes:$('notes').value}}); localStorage.setItem(KEY, JSON.stringify(o)); }
+
+  function render(){
+    var html='';
+    SUITE.forEach(function(sec){
+      html+='<h2 class="sec">'+esc(sec.s)+'</h2>';
+      sec.t.forEach(function(tt){
+        var k=tt[0], st=(state[k]&&state[k].status)||'', cm=(state[k]&&state[k].comment)||'';
+        var cls = st==='pass'?'done-pass':st==='fail'?'done-fail':'';
+        html+='<div class="test '+cls+'" data-k="'+k+'" data-sec="'+esc(sec.s)+'" data-title="'+esc(tt[1])+'">'+
+          '<div class="hd"><div><div class="t">'+esc(tt[1])+'</div><div class="s">'+esc(tt[2])+'</div></div>'+
+          '<a class="open" href="'+tt[3]+'" target="_blank" rel="noopener">Abrir ↗</a></div>'+
+          '<div class="row2">'+
+            '<button class="stbtn pass'+(st==='pass'?' sel':'')+'" data-st="pass">'+CHK+'Aprobado</button>'+
+            '<button class="stbtn fail'+(st==='fail'?' sel':'')+'" data-st="fail">'+XIC+'Falló</button>'+
+            '<button class="stbtn na'+(st==='na'?' sel':'')+'" data-st="na">'+NAI+'N/A</button>'+
+          '</div>'+
+          '<textarea placeholder="Comentario (opcional)…">'+esc(cm)+'</textarea>'+
+        '</div>';
+      });
+    });
+    $('list').innerHTML=html;
+    updateSummary();
+  }
+
+  function count(){ var c={pass:0,fail:0,na:0,total:0}; SUITE.forEach(function(sec){sec.t.forEach(function(tt){c.total++;var s=state[tt[0]]&&state[tt[0]].status;if(s==='pass')c.pass++;else if(s==='fail')c.fail++;else if(s==='na')c.na++;});}); c.pend=c.total-c.pass-c.fail-c.na; return c; }
+  function updateSummary(){
+    var c=count();
+    $('c-pass').textContent='Aprobado '+c.pass; $('c-fail').textContent='Falló '+c.fail; $('c-na').textContent='N/A '+c.na; $('c-pend').textContent='Pendiente '+c.pend;
+    $('pf').style.width=(c.pass/c.total*100)+'%'; $('ff').style.width=(c.fail/c.total*100)+'%'; $('nf').style.width=(c.na/c.total*100)+'%';
+    $('proglbl').textContent=(c.pass+c.fail+c.na)+' de '+c.total+' evaluados';
+  }
+
+  // events (delegated)
+  $('list').addEventListener('click', function(e){
+    var b=e.target.closest('.stbtn'); if(!b) return;
+    var test=b.closest('.test'), k=test.getAttribute('data-k'), st=b.getAttribute('data-st');
+    state[k]=state[k]||{}; state[k].status = state[k].status===st ? '' : st;
+    // toggle UI
+    test.querySelectorAll('.stbtn').forEach(function(x){x.classList.remove('sel');});
+    if(state[k].status) b.classList.add('sel');
+    test.classList.remove('done-pass','done-fail'); if(state[k].status==='pass')test.classList.add('done-pass'); if(state[k].status==='fail')test.classList.add('done-fail');
+    save(); updateSummary();
+  });
+  $('list').addEventListener('input', function(e){
+    if(e.target.tagName!=='TEXTAREA') return;
+    var k=e.target.closest('.test').getAttribute('data-k'); state[k]=state[k]||{}; state[k].comment=e.target.value; save();
+  });
+  $('tester').value=meta.tester||''; $('notes').value=meta.notes||'';
+  $('tester').addEventListener('input',save); $('notes').addEventListener('input',save);
+
+  function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3200); }
+
+  function collect(){
+    var out=[]; SUITE.forEach(function(sec){sec.t.forEach(function(tt){var k=tt[0];out.push({key:k,section:sec.s,title:tt[1],status:(state[k]&&state[k].status)||'',comment:(state[k]&&state[k].comment)||''});});}); return out;
+  }
+  function doSave(btn){
+    var results=collect(); var c=count();
+    btn && (btn.disabled=true);
+    fetch(API+'/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tester:$('tester').value||'Anónimo',notes:$('notes').value||'',suite:'planea-uat-v1',results:results})})
+      .then(function(r){return r.json();})
+      .then(function(j){ btn&&(btn.disabled=false); if(j&&j.ok){ toast('Guardado en Postgres · run #'+j.id+' — '+c.pass+' aprobados, '+c.fail+' fallos'); } else { toast('No se pudo guardar: '+((j&&j.error)||'error')); } })
+      .catch(function(){ btn&&(btn.disabled=false); toast('Error de conexión al guardar.'); });
+  }
+  $('save').addEventListener('click',function(){doSave(this);});
+  $('save2').addEventListener('click',function(){doSave(this);});
+  $('print').addEventListener('click',function(){window.print();});
+  $('reset').addEventListener('click',function(){ if(confirm('¿Reiniciar el checklist? Se borran las marcas locales (los guardados en Postgres se conservan).')){ state={}; save(); render(); } });
+
+  // history modal
+  function openModal(html){ $('mbody').innerHTML=html; $('modal').classList.add('show'); }
+  $('mclose').addEventListener('click',function(){$('modal').classList.remove('show');});
+  $('modal').addEventListener('click',function(e){ if(e.target===$('modal')) $('modal').classList.remove('show'); });
+  $('hist').addEventListener('click',function(){
+    openModal('<h3>Historial de pruebas</h3><div style="color:var(--mut);font-size:13px">Cargando…</div>');
+    fetch(API+'/runs').then(function(r){return r.json();}).then(function(rows){
+      if(!Array.isArray(rows)||!rows.length){ $('mbody').innerHTML='<button class="close" id="mclose2">&times;</button><h3>Historial</h3><p style="color:var(--mut)">Aún no hay pruebas guardadas.</p>'; bindClose(); return; }
+      var h='<h3>Historial de pruebas ('+rows.length+')</h3>';
+      rows.forEach(function(r){ h+='<div class="run" data-id="'+r.id+'"><div><div class="who">'+esc(r.tester||'Anónimo')+' · run #'+r.id+'</div><div class="dt">'+new Date(r.created_at).toLocaleString('es-CO')+'</div></div><div class="nums"><span style="color:var(--grn)">'+r.passed+'✓</span> &nbsp;<span style="color:var(--red)">'+r.failed+'✗</span> &nbsp;<span style="color:var(--mut)">'+r.pending+' pend</span></div></div>'; });
+      openModal(h);
+      $('mbody').querySelectorAll('.run').forEach(function(el){ el.addEventListener('click',function(){ viewRun(el.getAttribute('data-id')); }); });
+    }).catch(function(){ $('mbody').innerHTML='<h3>Historial</h3><p style="color:var(--red)">No se pudo cargar.</p>'; });
+  });
+  function viewRun(id){
+    openModal('<h3>Run #'+id+'</h3><div style="color:var(--mut)">Cargando…</div>');
+    fetch(API+'/runs/'+id).then(function(r){return r.json();}).then(function(r){
+      var h='<h3>Run #'+r.id+' · '+esc(r.tester||'Anónimo')+'</h3><p style="color:var(--mut);font-size:12.5px;margin-top:-6px">'+new Date(r.created_at).toLocaleString('es-CO')+' · '+r.passed+' aprobados · '+r.failed+' fallos · '+r.pending+' pendientes'+(r.notes?' · '+esc(r.notes):'')+'</p>';
+      (r.results||[]).forEach(function(t){ var col=t.status==='pass'?'var(--grn)':t.status==='fail'?'var(--red)':'var(--mut)'; var lbl=t.status==='pass'?'✓':t.status==='fail'?'✗':t.status==='na'?'N/A':'—'; h+='<div style="border-top:1px solid var(--line);padding:8px 0;font-size:13px"><b style="color:'+col+'">'+lbl+'</b> '+esc(t.title)+(t.comment?'<div style="color:var(--mut);font-size:12px;margin-top:2px">'+esc(t.comment)+'</div>':'')+'</div>'; });
+      openModal(h);
+    }).catch(function(){ $('mbody').innerHTML='<h3>Run</h3><p style="color:var(--red)">No se pudo cargar.</p>'; });
+  }
+  function bindClose(){ var b=document.getElementById('mclose2'); if(b) b.addEventListener('click',function(){$('modal').classList.remove('show');}); }
+
+  render();
+})();
+</script>
+</body>
+</html>
