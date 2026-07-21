@@ -10,7 +10,8 @@ const fs = require('fs');
 // ── Claude Vision Analysis ──────────────────────────────────────────
 // Sends an uploaded image to Claude Vision for medical image analysis.
 // Returns structured findings for the copilot report workflow.
-async function analyzeImageWithClaude(filePath, mimeType, caseContext) {
+// Accepts either a Buffer/base64 string of image bytes, or a filesystem path (back-compat).
+async function analyzeImageWithClaude(imageSource, mimeType, caseContext) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || process.env.MSK_ANTHROPIC_KEY;
   if (!ANTHROPIC_KEY) return null;
 
@@ -20,8 +21,17 @@ async function analyzeImageWithClaude(filePath, mimeType, caseContext) {
   if (!mappedMime) return null;
 
   try {
-    const imageData = fs.readFileSync(filePath);
-    const base64Image = imageData.toString('base64');
+    let base64Image;
+    if (Buffer.isBuffer(imageSource)) {
+      base64Image = imageSource.toString('base64');
+    } else if (typeof imageSource === 'string' && fs.existsSync(imageSource)) {
+      base64Image = fs.readFileSync(imageSource).toString('base64');
+    } else if (typeof imageSource === 'string') {
+      // Assume already-base64-encoded image bytes (from DB file_data)
+      base64Image = imageSource;
+    } else {
+      return null;
+    }
 
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
@@ -466,16 +476,22 @@ router.post('/analyze/:fileId', async (req, res) => {
     if (files.length === 0) return res.status(404).json({ error: 'File not found' });
     const file = files[0];
 
-    if (!file.storage_path || !fs.existsSync(file.storage_path)) {
-      return res.status(400).json({ error: 'Image file not found on disk' });
+    // Resolve image bytes: prefer disk (fast), fall back to DB base64 (survives Render redeploys).
+    let imageSource = null;
+    if (file.storage_path && fs.existsSync(file.storage_path)) {
+      imageSource = file.storage_path;
+    } else if (file.file_data) {
+      imageSource = file.file_data; // base64 string stored at upload time
+    } else {
+      return res.status(400).json({ error: 'Image bytes not available — file missing from disk and no stored copy in the database.' });
     }
 
     const caseContext = `Chief complaint: ${file.chief_complaint || 'N/A'}. Pain location: ${file.pain_location || 'N/A'}. Mechanism: ${file.injury_mechanism || 'N/A'}. Severity: ${file.severity || 'N/A'}/10. Sport context: ${file.sport_context || 'N/A'}.`;
 
-    const analysis = await analyzeImageWithClaude(file.storage_path, file.mime_type, caseContext);
+    const analysis = await analyzeImageWithClaude(imageSource, file.mime_type, caseContext);
 
     if (!analysis) {
-      return res.status(500).json({ error: 'Analysis failed — check ANTHROPIC_API_KEY is set and file is a supported image type (JPEG, PNG, WebP)' });
+      return res.status(500).json({ error: 'Analysis failed — check ANTHROPIC_API_KEY is set and file is a supported image type (JPEG, PNG, WebP).' });
     }
 
     await sequelize.query(

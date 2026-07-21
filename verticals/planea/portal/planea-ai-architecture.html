@@ -97,6 +97,18 @@
   .para{margin-top:26px;border:1px solid rgba(163,230,53,.22);border-radius:16px;padding:20px 22px;background:rgba(163,230,53,.04);font-size:14.5px;line-height:1.7;color:var(--ink)}
   .para b{color:#c7ef7a}
   .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--grn2);border:1px solid rgba(163,230,53,.35);border-radius:99px;padding:3px 10px;margin:2px 4px 2px 0}
+  .funcs{margin-top:36px}
+  .funcs .fh{font-size:20px;font-weight:800;text-align:center;letter-spacing:-.01em;margin:0 0 6px}
+  .funcs .fsub{color:var(--mut);text-align:center;font-size:14px;line-height:1.55;max-width:640px;margin:0 auto 22px}
+  .func-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .func{border:1px solid rgba(120,170,230,.16);border-radius:14px;padding:16px 18px;background:rgba(255,255,255,.02);display:flex;gap:13px;align-items:flex-start}
+  .func .fi{width:40px;height:40px;flex:0 0 40px;border-radius:11px;background:rgba(74,168,232,.12);color:var(--cy2);display:flex;align-items:center;justify-content:center}
+  .func h4{margin:0 0 4px;font-size:15px;font-weight:800}
+  .func p{margin:0;font-size:13px;color:var(--mut);line-height:1.55}
+  .flowline{margin-top:22px;border:1px solid rgba(163,230,53,.24);border-radius:16px;padding:18px 20px;background:rgba(163,230,53,.05);font-size:14px;line-height:1.65;color:var(--ink);text-align:center}
+  .flowline .fl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.03em;margin-bottom:12px}
+  .flowline .fl b{color:var(--grn2)}.flowline .fl .ar{color:var(--cy)}
+  @media(max-width:600px){.func-grid{grid-template-columns:1fr}}
 
   @media(max-width:820px){ .arch,.footbar{display:none} .stack{display:block} .steps{grid-template-columns:1fr 1fr} }
   @media(max-width:480px){ .steps{grid-template-columns:1fr} .stack .grid{grid-template-columns:1fr} }
@@ -132,6 +144,27 @@
       En pocas palabras: <b>cada área trabaja por separado, pero piensan juntas.</b> Los siete agentes le pasan su información al Centro de Inteligencia Financiera, que actúa como el cerebro del ecosistema. Ese cerebro no solo suma números: entiende cómo se relaciona todo — por ejemplo, si tu deuda crece mientras tu ahorro baja — y prioriza qué atender primero. El resultado es tu <b>Puntaje Planea</b> y un conjunto de <b>recomendaciones accionables</b> que Maya te explica paso a paso. Tú te concentras en decidir; Planea se encarga del análisis.
       <div style="margin-top:14px">
         <span class="tag">Salud Financiera</span><span class="tag">Puntaje Planea</span><span class="tag">Neural Findings</span><span class="tag">Maya · guía IA</span><span class="tag">Datos privados y seguros</span>
+      </div>
+    </div>
+
+    <div class="funcs">
+      <h3 class="fh">Qué hace cada pieza — y cómo el Financial Intelligence Center las organiza</h3>
+      <p class="fsub">El Financial Intelligence Center es el director de orquesta: recibe la información de los siete agentes y la convierte en algo útil para ti.</p>
+      <div class="func-grid">
+        <div class="func"><div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></div>
+          <div><h4>Salud Financiera</h4><p>Un tablero que califica tu bienestar financiero de 0 a 100, combinando tus siete áreas. Con semáforos y un tablero visual ves al instante qué está bien y qué necesita atención.</p></div></div>
+        <div class="func"><div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l3.5-2.6"/><circle cx="12" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+          <div><h4>Puntaje Planea</h4><p>Tu número único de salud financiera, de 0 a 100, con su rango (Construyendo, En camino, Sólido…). Es tu brújula: de un vistazo sabes cómo vas y si mejoras con el tiempo.</p></div></div>
+        <div class="func"><div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></div>
+          <div><h4>Neural Findings</h4><p>El motor de hallazgos con IA. Cruza todas tus áreas y detecta lo importante — por ejemplo, deuda cara que crece o un fondo de emergencia corto — siguiendo la pirámide de prioridades del CFP, y te dice qué atender primero.</p></div></div>
+        <div class="func"><div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="13" cy="10" r="1" fill="currentColor" stroke="none"/></svg></div>
+          <div><h4>Maya · guía IA</h4><p>Tu copiloto financiero. Toma los hallazgos y te los explica en español sencillo, responde tus preguntas y te arma un plan paso a paso, sin tecnicismos.</p></div></div>
+        <div class="func"><div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+          <div><h4>Datos privados y seguros</h4><p>Tu información es tuya. Planea solo lee, nunca mueve tu dinero, y cada dato se guarda de forma cifrada y privada.</p></div></div>
+      </div>
+      <div class="flowline">
+        <div class="fl">7 AGENTES <span class="ar">→</span> <b>FINANCIAL INTELLIGENCE CENTER</b> <span class="ar">→</span> SALUD + PUNTAJE + FINDINGS <span class="ar">→</span> <b>MAYA</b> <span class="ar">→</span> TÚ</div>
+        Cada vez que actualizas un dato, el Financial Intelligence Center vuelve a leer las siete áreas, recalcula tu <b style="color:#c7ef7a">Salud Financiera</b> y tu <b style="color:#c7ef7a">Puntaje</b>, ejecuta <b style="color:#c7ef7a">Neural Findings</b> para priorizar lo importante, y le entrega todo a <b style="color:#c7ef7a">Maya</b> para que te guíe — todo de forma automática, privada y segura.
       </div>
     </div>
   </div>

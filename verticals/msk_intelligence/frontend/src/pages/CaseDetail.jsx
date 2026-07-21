@@ -35,6 +35,8 @@ export default function CaseDetail() {
   const [triaging, setTriaging] = useState(false);
   const [imagingFiles, setImagingFiles] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [analyzingFileId, setAnalyzingFileId] = useState(null);
+  const [analyzeError, setAnalyzeError] = useState(null);
   const user = api.getUser();
 
   useEffect(() => { loadCase(); loadImagingFiles(); }, [id]);
@@ -60,11 +62,16 @@ export default function CaseDetail() {
   };
 
   const reanalyzeImage = async (fileId) => {
+    setAnalyzingFileId(fileId);
+    setAnalyzeError(null);
     try {
       await api.post(`/imaging/analyze/${fileId}`, {});
       await loadImagingFiles();
     } catch (err) {
       console.error(err);
+      setAnalyzeError(err?.response?.data?.error || err?.message || 'Analysis failed. Please try again.');
+    } finally {
+      setAnalyzingFileId(null);
     }
   };
 
@@ -344,8 +351,8 @@ export default function CaseDetail() {
                             }`}>
                               {analysis.confidenceLevel} Confidence
                             </span>
-                            <button onClick={() => reanalyzeImage(file.id)} className="text-xs text-dark-400 hover:text-msk-400">
-                              Re-analyze
+                            <button onClick={() => reanalyzeImage(file.id)} disabled={analyzingFileId === file.id} className="text-xs text-dark-400 hover:text-msk-400 disabled:opacity-60">
+                              {analyzingFileId === file.id ? 'Analyzing…' : 'Re-analyze'}
                             </button>
                           </div>
                         </div>
@@ -419,9 +426,16 @@ export default function CaseDetail() {
                     ) : (
                       <div className="bg-dark-900 rounded-lg border border-dark-700 p-4 text-center">
                         <p className="text-dark-400 text-sm mb-2">No AI analysis available for this file</p>
-                        <button onClick={() => reanalyzeImage(file.id)} className="btn-primary text-sm">
-                          Run AI Analysis
+                        <button
+                          onClick={() => reanalyzeImage(file.id)}
+                          disabled={analyzingFileId === file.id}
+                          className="btn-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {analyzingFileId === file.id ? 'Analyzing…' : 'Run AI Analysis'}
                         </button>
+                        {analyzeError && analyzingFileId === null && (
+                          <p className="text-red-400 text-xs mt-2">{analyzeError}</p>
+                        )}
                       </div>
                     )}
                   </div>

@@ -260,6 +260,17 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'imagingmind.app' || host === 'www.imagingmind.app') {
     const p = req.path;
+    // On the custom domain the SPA router basename is '/', so browser-facing SPA
+    // routes like /msk/cases/17 don't match any route and render a 404. Redirect
+    // navigational /msk/* URLs to their root-relative form. Assets/API/health under
+    // /msk must still pass through untouched (they legitimately live at /msk/*).
+    if (p.startsWith('/msk/') && req.method === 'GET' &&
+        !p.startsWith('/msk/api/') && !p.startsWith('/msk/assets/') &&
+        !p.startsWith('/msk/health') && !/\.[a-z0-9]+$/i.test(p)) {
+      const stripped = p.slice('/msk'.length) || '/';
+      const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+      return res.redirect(301, stripped + qs);
+    }
     // Already under /msk — pass through
     if (p.startsWith('/msk')) return next();
     // Static assets (audio, images) — pass through
