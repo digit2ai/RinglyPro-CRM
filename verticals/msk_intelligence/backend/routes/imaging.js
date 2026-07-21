@@ -21,16 +21,39 @@ async function analyzeImageWithClaude(imageSource, mimeType, caseContext) {
   if (!mappedMime) return null;
 
   try {
-    let base64Image;
+    // Resolve raw image bytes from any of: Buffer, filesystem path, or base64 string (DB file_data).
+    let rawBuffer;
     if (Buffer.isBuffer(imageSource)) {
-      base64Image = imageSource.toString('base64');
+      rawBuffer = imageSource;
     } else if (typeof imageSource === 'string' && fs.existsSync(imageSource)) {
-      base64Image = fs.readFileSync(imageSource).toString('base64');
+      rawBuffer = fs.readFileSync(imageSource);
     } else if (typeof imageSource === 'string') {
-      // Assume already-base64-encoded image bytes (from DB file_data)
-      base64Image = imageSource;
+      // Already-base64-encoded image bytes (from DB file_data). Strip any data-URI prefix.
+      const b64 = imageSource.replace(/^data:[^;]+;base64,/, '');
+      rawBuffer = Buffer.from(b64, 'base64');
     } else {
       return null;
+    }
+
+    // Anthropic's vision API caps images at ~5MB (base64) and 8000px per side; large
+    // clinical PNGs (8-10MB) exceed that and the request fails. Downscale + re-encode to
+    // a JPEG whose long edge is <= 1568px (Anthropic's recommended max) so the call succeeds
+    // and stays cheap, without meaningful loss for read purposes.
+    let sendMime = mappedMime;
+    let base64Image;
+    try {
+      const sharp = require('sharp');
+      const jpegBuffer = await sharp(rawBuffer, { failOn: 'none' })
+        .rotate() // honor EXIF orientation (phone photos)
+        .resize({ width: 1568, height: 1568, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 82 })
+        .toBuffer();
+      base64Image = jpegBuffer.toString('base64');
+      sendMime = 'image/jpeg';
+    } catch (resizeErr) {
+      // If sharp can't process it, fall back to the raw bytes (may still work if small enough).
+      console.error('[ImagingMind Imaging] Image downscale failed, sending original:', resizeErr.message);
+      base64Image = rawBuffer.toString('base64');
     }
 
     const Anthropic = require('@anthropic-ai/sdk');
@@ -62,7 +85,7 @@ IMPORTANT: This is an AI-assisted preliminary read — it must be reviewed and f
             type: 'image',
             source: {
               type: 'base64',
-              media_type: mappedMime,
+              media_type: sendMime,
               data: base64Image
             }
           },
