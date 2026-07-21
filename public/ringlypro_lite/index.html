@@ -316,7 +316,7 @@
     <p><span data-en>Start free for 7 days. No card charged today.</span><span data-es>Gratis por 7 días. Sin cobro hoy.</span></p>
   </div>
   <div class="price">
-    <div class="amt">$49<span>/<span data-en>mo</span><span data-es>mes</span></span></div>
+    <div class="amt">$<span id="planPrice">26</span><span>/<span data-en>mo</span><span data-es>mes</span></span></div>
     <div class="free"><span data-en>7-day free trial · cancel anytime</span><span data-es>7 días gratis · cancela cuando quieras</span></div>
     <ul>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-en>150 answered minutes / month included</span><span data-es>150 minutos contestados / mes incluidos</span></li>
@@ -334,7 +334,7 @@
 <section><div class="wrap">
   <div class="center"><span class="kicker">FAQ</span><h2><span data-en>Questions</span><span data-es>Preguntas</span></h2></div>
   <details><summary><span data-en>Does it change my phone number?</span><span data-es>¿Cambia mi número de teléfono?</span></summary><p><span data-en>No. You keep your number and phone. You forward calls to your AI line only when you can't answer.</span><span data-es>No. Conservas tu número y teléfono. Reenvías las llamadas a tu línea AI solo cuando no puedes contestar.</span></p></details>
-  <details><summary><span data-en>What happens after the 7-day trial?</span><span data-es>¿Qué pasa después de los 7 días?</span></summary><p><span data-en>Your card is charged $49/mo only if you keep it. Cancel anytime during the trial and you pay nothing.</span><span data-es>Se cobra $49/mes solo si continúas. Cancela durante la prueba y no pagas nada.</span></p></details>
+  <details><summary><span data-en>What happens after the 7-day trial?</span><span data-es>¿Qué pasa después de los 7 días?</span></summary><p><span data-en>Your card is charged $26/mo only if you keep it. Cancel anytime during the trial and you pay nothing.</span><span data-es>Se cobra $69/mes solo si continúas. Cancela durante la prueba y no pagas nada.</span></p></details>
   <details><summary><span data-en>Can it really book appointments?</span><span data-es>¿De verdad agenda citas?</span></summary><p><span data-en>Yes. Set your weekly hours and Lina offers open times, confirms, and books — with no double-booking.</span><span data-es>Sí. Configura tu horario y Lina ofrece horas disponibles, confirma y agenda — sin choques.</span></p></details>
   <details><summary><span data-en>Does it speak Spanish?</span><span data-es>¿Habla español?</span></summary><p><span data-en>Yes — set your greeting language and Lina answers in English or Spanish.</span><span data-es>Sí — elige el idioma del saludo y Lina contesta en inglés o español.</span></p></details>
 </div></section>
@@ -427,6 +427,8 @@
   function setLang(l){
     root.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'EN':'ES';
     try{localStorage.setItem('rpl_lang',l)}catch(e){}
+    // Price mirrors billing.js plan(): US (EN) $26/mo, CO (ES) $69/mo.
+    var pp=document.getElementById('planPrice');if(pp)pp.textContent=l==='es'?'69':'26';
     var links=root.querySelectorAll('a[href*="/signup"]');for(var i=0;i<links.length;i++){links[i].href='https://ringlypro-lite.onrender.com/signup?lang='+l;}
     var d=DEMO[l];
     var b=document.getElementById('demoBtn');if(b)b.href='tel:'+d.tel;

@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * Stripe billing — RinglyPro Lite US plan (config-driven, overridable via env):
- *   - One-time SETUP fee: $49
- *   - Monthly subscription: $49/mo, includes 150 answered minutes
+ * Stripe billing — RinglyPro Lite plan (country-aware, config-driven via env):
+ *   - Monthly subscription: US $26/mo · CO $69/mo, each includes 150 answered minutes
  *   - Overage: $0.40 per minute beyond the included allowance
+ *   - No setup fee (0 = disabled)
  *   - 7-day trial; failed payment suspends answering (voicemail) but keeps the DID
  *
  * Overage is metered from lite_calls duration for the current billing period and
@@ -32,12 +32,28 @@ const TRIAL_DAYS = int('LITE_TRIAL_DAYS', 7);
 const RECHARGE_AMOUNTS_USD = (process.env.LITE_RECHARGE_AMOUNTS || '10,20,40,60,80,100')
   .split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n > 0);
 
-// US plan (the only market for now). All amounts config-overridable.
-function plan() {
+// Country-aware plan pricing. All amounts config-overridable via env.
+//   US: $26/mo, 150 included minutes (COGS ~$13/mo → ~50% margin)
+//   CO: $69/mo, 150 included minutes (Colombia PSTN + DID run ~3x US COGS)
+// Any other country falls back to the US plan.
+function plan(country) {
+  const cc = String(country || 'US').toUpperCase();
+  if (cc === 'CO') {
+    return {
+      priceId: process.env.LITE_STRIPE_PRICE_CO || null,     // optional pre-made recurring Price
+      setupPriceId: process.env.LITE_STRIPE_SETUP_PRICE_CO || null, // optional one-time Price
+      monthlyCents: int('LITE_PRICE_CO_CENTS', 6900),        // $69/mo
+      setupCents: int('LITE_SETUP_CO_CENTS', 0),             // no setup fee (0 = disabled)
+      includedMinutes: int('LITE_INCLUDED_MIN_CO', 150),     // 150 min included
+      overagePerMinCents: int('LITE_OVERAGE_CO_CENTS', 40),  // $0.40/min
+      currency: (process.env.LITE_PRICE_CO_CURRENCY || 'usd').toLowerCase(),
+      name: 'RinglyPro Lite'
+    };
+  }
   return {
     priceId: process.env.LITE_STRIPE_PRICE_US || null,     // optional pre-made recurring Price
     setupPriceId: process.env.LITE_STRIPE_SETUP_PRICE_US || null, // optional one-time Price
-    monthlyCents: int('LITE_PRICE_US_CENTS', 4900),        // $49/mo
+    monthlyCents: int('LITE_PRICE_US_CENTS', 2600),        // $26/mo
     setupCents: int('LITE_SETUP_US_CENTS', 0),             // no setup fee (0 = disabled)
     includedMinutes: int('LITE_INCLUDED_MIN_US', 150),     // 150 min included
     overagePerMinCents: int('LITE_OVERAGE_US_CENTS', 40),  // $0.40/min
@@ -53,7 +69,7 @@ router.get('/status', requireAuth, async (req, res) => {
   const tenant = await Tenant.findByPk(req.tenantId);
   // Advance banked minutes if the billing period rolled over.
   try { await minutesSvc.reconcileRollover(tenant); } catch (_) {}
-  const p = plan();
+  const p = plan(tenant.country);
   res.json({
     subscription_status: tenant.subscription_status,
     trial_ends_at: tenant.trial_ends_at,
@@ -76,7 +92,7 @@ router.get('/status', requireAuth, async (req, res) => {
 router.get('/usage', requireAuth, async (req, res) => {
   try {
     const tenant = await Tenant.findByPk(req.tenantId);
-    const p = plan();
+    const p = plan(tenant.country);
     const snap = await minutesSvc.usageSnapshot(tenant);
     res.json({
       ...snap,
@@ -113,7 +129,7 @@ router.post('/recharge', requireAuth, async (req, res) => {
   try {
     const s = stripe();
     const tenant = await Tenant.findByPk(req.tenantId);
-    const p = plan();
+    const p = plan(tenant.country);
     const amountUsd = parseInt((req.body && req.body.amount_usd), 10);
     if (!RECHARGE_AMOUNTS_USD.includes(amountUsd)) {
       return res.status(400).json({ error: 'invalid_amount', allowed: RECHARGE_AMOUNTS_USD });
@@ -184,7 +200,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
   try {
     const s = stripe();
     const tenant = await Tenant.findByPk(req.tenantId);
-    const p = plan();
+    const p = plan(tenant.country);
     const base = (process.env.LITE_WEBHOOK_BASE_URL || 'https://localhost').replace(/\/$/, '');
 
     const recurring = p.priceId
@@ -206,7 +222,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
       line_items,
       subscription_data: {
         trial_period_days: TRIAL_DAYS,
-        metadata: { tenant_id: String(tenant.id), country: tenant.country, plan: 'us_lite_49' }
+        metadata: { tenant_id: String(tenant.id), country: tenant.country, plan: `lite_${String(tenant.country || 'US').toLowerCase()}_${p.monthlyCents / 100}` }
       },
       success_url: `${base}/onboarding?paid=1&sid={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/onboarding?paid=0`,
@@ -227,7 +243,7 @@ router.post('/overage/bill', async (req, res) => {
     if (!key || (req.headers['x-admin-key'] || req.query.key) !== key) return res.status(401).json({ error: 'unauthorized' });
     const tenant = await Tenant.findByPk(Number(req.body && req.body.tenant_id || req.query.tenant_id));
     if (!tenant || !tenant.stripe_customer_id) return res.status(400).json({ error: 'no_customer' });
-    const p = plan();
+    const p = plan(tenant.country);
     const since = await periodStart(tenant);
     const { minutes } = await minutesSvc.usedMinutes(tenant.id, since);
     // Only bill beyond ALL banked minutes (included + rollover + prepaid).

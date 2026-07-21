@@ -86,7 +86,7 @@
     <div class="hint" data-i="trh">Add a card to activate your AI number. You won't be charged today.</div>
     <div class="trialbox">
       <div class="row"><span data-i="trToday">Charged today</span><b>$0.00</b></div>
-      <div class="row"><span data-i="trAfter">After 7-day trial</span><b>$49/mo</b></div>
+      <div class="row"><span data-i="trAfter">After 7-day trial</span><b id="trialPrice">$26/mo</b></div>
       <div class="row"><span data-i="trCancel">Cancel anytime in the trial</span><b data-i="trFree">Free</b></div>
     </div>
     <button id="goTrial" data-i="starttrial">Start free trial — $0 today</button>
@@ -136,11 +136,12 @@ function dots(n){[1,2,3].forEach(i=>$('d'+i).classList.toggle('on',i<=n));}
 function goStep2(){ if(BILLING){show('s2trial');} else {show('s2num');} dots(2); window.scrollTo(0,0); }
 function goForwarding(){ show('s3fwd'); dots(3); loadCarriers(); window.scrollTo(0,0); }
 
-// Country → dial code + default greeting language
+// Country → dial code + default greeting language + monthly price
 const DIAL={US:'+1',CO:'+57'};
+const PRICE={US:26,CO:69};   // monthly USD, mirrors billing.js plan()
 let localeTouched=false;
 $('locale').addEventListener('change',()=>{localeTouched=true});
-function applyCountry(){const cc=country.value;$('dialcode').textContent=DIAL[cc]||'+1';if(!localeTouched){$('locale').value=cc==='CO'?'es':'en';}}
+function applyCountry(){const cc=country.value;$('dialcode').textContent=DIAL[cc]||'+1';const tp=$('trialPrice');if(tp)tp.textContent='$'+(PRICE[cc]||26)+'/mo';if(!localeTouched){$('locale').value=cc==='CO'?'es':'en';}}
 country.addEventListener('change',applyCountry);applyCountry();
 // Inherit language from the landing (?lang=es|en): set the UI + default the
 // greeting language so the client's AI speaks their language.
