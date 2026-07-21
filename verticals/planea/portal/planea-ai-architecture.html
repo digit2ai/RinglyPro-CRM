@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Planea — Arquitectura de IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#060a16; --cy:#4aa8e8; --cy2:#7fd0ff; --grn:#a3e635; --grn2:#7ee787; --mut:#6b7a99; --ink:#cfe0f5; --line:rgba(120,170,230,.22); }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;
+    background-image:radial-gradient(120% 90% at 50% -10%,rgba(74,168,232,.10),transparent 55%),radial-gradient(80% 60% at 50% 120%,rgba(163,230,53,.06),transparent 55%);}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .head{max-width:1100px;margin:0 auto;padding:34px 20px 6px;text-align:center}
+  .head .kick{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.28em;color:var(--cy);text-transform:uppercase}
+  .head h1{font-size:clamp(26px,4.5vw,40px);font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .head p{color:var(--mut);font-size:15px;max-width:640px;margin:0 auto;line-height:1.55}
+
+  /* ---- radial diagram ---- */
+  .archwrap{max-width:1080px;margin:18px auto 0;padding:0 12px}
+  .arch{position:relative;width:100%;aspect-ratio:1080/660;border-radius:20px;overflow:hidden;
+    background:radial-gradient(60% 55% at 50% 46%,rgba(74,168,232,.06),transparent 70%);border:1px solid rgba(120,170,230,.10)}
+  .arch svg.wires{position:absolute;inset:0;width:100%;height:100%}
+  .stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#9fc0ff;opacity:.5;animation:tw 3s ease-in-out infinite}
+  @keyframes tw{50%{opacity:.12}}
+  .ring{position:absolute;left:50%;top:46%;border:1px solid rgba(120,170,230,.08);border-radius:50%;transform:translate(-50%,-50%)}
+
+  .node{position:absolute;transform:translate(-50%,-50%);text-align:center;width:150px}
+  .dev{position:relative;width:120px;height:52px;margin:0 auto;border-radius:12px;border:1.5px solid rgba(90,150,220,.45);
+    background:linear-gradient(180deg,rgba(20,34,60,.9),rgba(12,20,38,.9));box-shadow:0 0 0 1px rgba(90,150,220,.12),0 8px 24px rgba(0,0,0,.4);
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.4s}
+  .dev .ant{position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:2px;height:11px;background:rgba(90,150,220,.6)}
+  .dev .ant::after{content:"";position:absolute;top:-4px;left:-2px;width:6px;height:6px;border-radius:50%;background:var(--cy2);box-shadow:0 0 8px var(--cy2)}
+  .dev .chip{display:flex;align-items:center;gap:5px}
+  .dev .chip .dot{width:5px;height:5px;border-radius:50%;background:rgba(120,180,240,.7)}
+  .dev .chip .bar{width:26px;height:3px;border-radius:3px;background:rgba(120,180,240,.35)}
+  .dev .ic{color:#7fb6e8;display:flex}
+  .node .nlabel{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.12em;color:var(--cy2);margin-top:12px}
+  .node .ndesc{font-size:11.5px;color:var(--mut);margin-top:3px}
+  .node.on .dev{border-color:var(--cy2);box-shadow:0 0 0 1px var(--cy2),0 0 26px rgba(127,208,255,.45),0 8px 24px rgba(0,0,0,.4);transform:translateY(-2px)}
+  .node.on .dev .ic{color:var(--cy2)}
+  .node.on .nlabel{color:#bfe6ff}
+
+  /* hub */
+  .hub{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:230px;z-index:5;
+    border-radius:18px;border:1px solid rgba(120,170,230,.28);background:linear-gradient(180deg,rgba(15,26,48,.96),rgba(9,16,33,.97));
+    box-shadow:0 0 60px rgba(74,168,232,.18),0 20px 50px rgba(0,0,0,.5);padding:14px}
+  .hub .strip{border:1px solid rgba(120,170,230,.16);border-radius:10px;padding:9px 11px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  .hub .strip .d3{display:flex;gap:5px}.hub .strip .d3 i{width:6px;height:6px;border-radius:50%;background:rgba(120,180,240,.5)}.hub .strip .d3 i.a{background:#e0a020}
+  .hub .strip .lines{display:flex;flex-direction:column;gap:3px}.hub .strip .lines b{width:34px;height:3px;border-radius:3px;background:rgba(120,180,240,.35)}
+  .hub .strip .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--mut)}
+  .hub .brain{border:1px solid rgba(163,230,53,.5);border-radius:12px;padding:14px 10px;text-align:center;background:rgba(163,230,53,.05);box-shadow:0 0 24px rgba(163,230,53,.12) inset}
+  .hub .brain .t{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--grn)}
+  .hub .brain .b{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;letter-spacing:.06em;margin:5px 0 7px}
+  .hub .brain .sub{font-size:10.5px;color:var(--grn2);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;border-top:1px solid rgba(163,230,53,.25);padding-top:7px}
+  .hub .orch{border:1px solid rgba(120,170,230,.16);border-radius:10px;padding:9px 11px;margin-top:8px}
+  .hub .orch .top{display:flex;align-items:center;justify-content:space-between}
+  .hub .orch .prog{display:flex;gap:4px}.hub .orch .prog i{width:6px;height:6px;border-radius:50%;background:rgba(120,180,240,.35)}.hub .orch .prog i.on{background:var(--cy2);box-shadow:0 0 6px var(--cy2)}
+  .hub .orch .live{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--grn2);display:flex;align-items:center;gap:6px}
+  .hub .orch .live .ld{width:7px;height:7px;border-radius:50%;background:var(--grn2);box-shadow:0 0 8px var(--grn2);animation:blink 1.4s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .hub .orch .now{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink);margin-top:7px;letter-spacing:.04em}
+  .hub .caption{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--mut)}
+
+  .wire{stroke:var(--line);stroke-width:1.4;stroke-dasharray:5 7;fill:none;animation:flow 2.2s linear infinite}
+  .wire.on{stroke:rgba(127,208,255,.85);stroke-width:1.8}
+  @keyframes flow{to{stroke-dashoffset:-24}}
+  .pulse{fill:#7fd0ff;filter:drop-shadow(0 0 4px #7fd0ff)}
+
+  .footbar{text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.18em;color:var(--grn2);margin:44px 0 6px;display:flex;align-items:center;justify-content:center;gap:9px}
+  .footbar .g{width:8px;height:8px;border-radius:50%;background:var(--grn2);box-shadow:0 0 8px var(--grn2)}
+
+  /* ---- stacked (mobile) ---- */
+  .stack{display:none;max-width:520px;margin:8px auto 0;padding:0 16px}
+  .stack .hub2{border:1px solid rgba(163,230,53,.5);border-radius:16px;padding:16px;text-align:center;background:rgba(163,230,53,.05)}
+  .stack .hub2 .t{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;color:var(--grn)}
+  .stack .hub2 .b{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;margin:5px 0}
+  .stack .hub2 .sub{font-size:11px;color:var(--grn2);font-family:'JetBrains Mono',monospace}
+  .stack .conn{width:2px;height:22px;background:linear-gradient(var(--cy),transparent);margin:0 auto}
+  .stack .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stack .m{border:1px solid rgba(90,150,220,.32);border-radius:12px;padding:12px;background:linear-gradient(180deg,rgba(20,34,60,.7),rgba(12,20,38,.7));display:flex;gap:10px;align-items:center}
+  .stack .m .ic{color:#7fb6e8;flex:0 0 auto}
+  .stack .m .l{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--cy2)}
+  .stack .m .d{font-size:10.5px;color:var(--mut);margin-top:1px}
+
+  /* ---- explanation ---- */
+  .explain{max-width:900px;margin:8px auto 0;padding:34px 20px 60px}
+  .explain h2{font-size:24px;font-weight:800;text-align:center;letter-spacing:-.01em}
+  .explain .lead{color:var(--mut);text-align:center;font-size:15px;line-height:1.6;max-width:680px;margin:10px auto 26px}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .step{border:1px solid rgba(120,170,230,.16);border-radius:16px;padding:18px 16px;background:rgba(255,255,255,.02)}
+  .step .n{width:34px;height:34px;border-radius:10px;background:rgba(74,168,232,.14);color:var(--cy2);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+  .step h3{font-size:15.5px;font-weight:800;margin:0 0 6px}
+  .step p{font-size:13px;color:var(--mut);line-height:1.55;margin:0}
+  .para{margin-top:26px;border:1px solid rgba(163,230,53,.22);border-radius:16px;padding:20px 22px;background:rgba(163,230,53,.04);font-size:14.5px;line-height:1.7;color:var(--ink)}
+  .para b{color:#c7ef7a}
+  .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--grn2);border:1px solid rgba(163,230,53,.35);border-radius:99px;padding:3px 10px;margin:2px 4px 2px 0}
+
+  @media(max-width:820px){ .arch,.footbar{display:none} .stack{display:block} .steps{grid-template-columns:1fr 1fr} }
+  @media(max-width:480px){ .steps{grid-template-columns:1fr} .stack .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="kick">Planea · Ecosistema de IA</div>
+    <h1>La arquitectura, en un vistazo</h1>
+    <p>Cada área de tus finanzas es un agente de inteligencia artificial. Todos se conectan a un cerebro central que lo entiende todo por ti: el Centro de Inteligencia Financiera.</p>
+  </div>
+
+  <div class="archwrap"><div class="arch" id="arch"></div></div>
+  <div class="footbar"><span class="g"></span> 7 AGENTES FINANCIEROS · ORQUESTADOS POR EL CENTRO DE INTELIGENCIA</div>
+
+  <!-- mobile stacked -->
+  <div class="stack">
+    <div class="hub2"><div class="t">MCP · ORQUESTADOR</div><div class="b">Centro de Inteligencia Financiera</div><div class="sub">7 agentes · conectados</div></div>
+    <div class="conn"></div>
+    <div class="grid" id="stackGrid"></div>
+  </div>
+
+  <div class="explain">
+    <h2>¿Cómo funciona? En palabras simples</h2>
+    <p class="lead">Piensa en Planea como un equipo. Tú das la información; el equipo la organiza, la analiza y te dice qué hacer. Así de fácil.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Tú registras</h3><p>Anotas lo básico de cada área: cuánto ganas, cuánto gastas, qué ahorras, qué debes. Sin tecnicismos.</p></div>
+      <div class="step"><div class="n">2</div><h3>Los agentes organizan</h3><p>Cada área — Ingresos, Gastos, Ahorro, Deuda, Inversión, Seguros y Retiro — es un agente que ordena y entiende esa parte de tu vida financiera.</p></div>
+      <div class="step"><div class="n">3</div><h3>El centro conecta todo</h3><p>El Centro de Inteligencia Financiera junta las siete áreas, calcula tu Salud Financiera y detecta lo más importante para ti.</p></div>
+      <div class="step"><div class="n">4</div><h3>Maya te guía</h3><p>Recibes recomendaciones claras y personalizadas, en español sencillo, con un plan concreto para mejorar.</p></div>
+    </div>
+    <div class="para">
+      En pocas palabras: <b>cada área trabaja por separado, pero piensan juntas.</b> Los siete agentes le pasan su información al Centro de Inteligencia Financiera, que actúa como el cerebro del ecosistema. Ese cerebro no solo suma números: entiende cómo se relaciona todo — por ejemplo, si tu deuda crece mientras tu ahorro baja — y prioriza qué atender primero. El resultado es tu <b>Puntaje Planea</b> y un conjunto de <b>recomendaciones accionables</b> que Maya te explica paso a paso. Tú te concentras en decidir; Planea se encarga del análisis.
+      <div style="margin-top:14px">
+        <span class="tag">Salud Financiera</span><span class="tag">Puntaje Planea</span><span class="tag">Neural Findings</span><span class="tag">Maya · guía IA</span><span class="tag">Datos privados y seguros</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var HX=540, HY=304, VBW=1080, VBH=660;
+  var IC={
+    ingresos:'<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/>',
+    gastos:'<path d="M6 2.5h12v19l-2.4-1.6-2.4 1.6-2.4-1.6-2.4 1.6L6 21.5z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/>',
+    ahorro:'<circle cx="9" cy="9" r="6"/><circle cx="15.5" cy="15.5" r="6"/>',
+    deuda:'<rect x="2.5" y="5" width="19" height="14" rx="2.2"/><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/>',
+    inversion:'<polyline points="3 16 9 10 13 14 21 6"/><polyline points="15 6 21 6 21 12"/>',
+    seguros:'<path d="M12 3l7 2.5v5.5c0 4.3-2.9 7.2-7 8.5-4.1-1.3-7-4.2-7-8.5V5.5z"/>',
+    retiro:'<path d="M6 3h12M6 21h12M8 3v3.4L12 12l-4 5.6V21M16 3v3.4L12 12l4 5.6V21"/>'
+  };
+  function svgIc(k,s){ return '<svg width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+IC[k]+'</svg>'; }
+  var M=[
+    {k:'ingresos',l:'INGRESOS',d:'lo que entra',x:185,y:112},
+    {k:'gastos',l:'GASTOS',d:'lo que sale',x:895,y:112},
+    {k:'ahorro',l:'AHORRO',d:'tu colchón',x:95,y:308},
+    {k:'deuda',l:'DEUDA',d:'lo que debes',x:985,y:308},
+    {k:'inversion',l:'INVERSIÓN',d:'tu dinero trabajando',x:210,y:520},
+    {k:'seguros',l:'SEGUROS',d:'tu protección',x:870,y:520},
+    {k:'retiro',l:'RETIRO',d:'tu futuro',x:540,y:582}
+  ];
+  var arch=document.getElementById('arch');
+
+  // stars
+  var stars='<div class="stars">';
+  var seed=7; function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+  for(var i=0;i<46;i++){ stars+='<i style="left:'+(rnd()*100).toFixed(1)+'%;top:'+(rnd()*100).toFixed(1)+'%;animation-delay:'+(rnd()*3).toFixed(1)+'s"></i>'; }
+  stars+='</div>';
+
+  // rings
+  var rings=''; [180,320,470].forEach(function(r){ rings+='<div class="ring" style="width:'+r+'px;height:'+r+'px"></div>'; });
+
+  // wires + pulses (svg)
+  var wires='<svg class="wires" viewBox="0 0 '+VBW+' '+VBH+'" preserveAspectRatio="none">';
+  M.forEach(function(m,i){
+    var p='M '+m.x+' '+m.y+' L '+HX+' '+HY;
+    wires+='<path id="w-'+m.k+'" class="wire" d="'+p+'"/>';
+    wires+='<circle class="pulse" r="3.2"><animateMotion dur="'+(2+i*0.18).toFixed(2)+'s" repeatCount="indefinite" path="'+p+'"/></circle>';
+  });
+  wires+='</svg>';
+
+  // nodes
+  var nodes='';
+  M.forEach(function(m){
+    nodes+='<div class="node" id="n-'+m.k+'" style="left:'+(m.x/VBW*100).toFixed(2)+'%;top:'+(m.y/VBH*100).toFixed(2)+'%">'+
+      '<div class="dev"><span class="ant"></span><span class="ic">'+svgIc(m.k,18)+'</span>'+
+      '<span class="chip"><span class="dot"></span><span class="bar"></span></span></div>'+
+      '<div class="nlabel">'+m.l+'</div><div class="ndesc">'+m.d+'</div></div>';
+  });
+
+  // hub
+  var prog=''; for(var j=0;j<7;j++) prog+='<i class="prog-i"></i>';
+  var hub='<div class="hub">'+
+    '<div class="strip"><span class="d3"><i></i><i></i><i class="a"></i></span><span class="lbl">CORE · DATOS</span><span class="lines"><b></b><b></b></span></div>'+
+    '<div class="strip"><span class="d3"><i></i><i></i><i class="a"></i></span><span class="lbl">CORE · ANÁLISIS</span><span class="lines"><b></b><b></b></span></div>'+
+    '<div class="brain"><div class="t">CENTRO · MCP</div><div class="b">CEREBRO</div><div class="sub">7 agentes · conectados</div></div>'+
+    '<div class="orch"><div class="top"><span class="prog">'+prog+'</span><span class="live"><span class="ld"></span>EN VIVO</span></div>'+
+    '<div class="now" id="orchNow">Orquestando · INGRESOS [1/7]</div></div>'+
+    '<div class="caption">▾ CENTRO DE INTELIGENCIA FINANCIERA ▴</div></div>';
+
+  arch.innerHTML=stars+rings+wires+nodes+hub;
+
+  // stacked grid (mobile)
+  var sg=document.getElementById('stackGrid');
+  sg.innerHTML=M.map(function(m){ return '<div class="m"><span class="ic">'+svgIc(m.k,20)+'</span><div><div class="l">'+m.l+'</div><div class="d">'+m.d+'</div></div></div>'; }).join('');
+
+  // active cycle
+  var idx=0;
+  var progs=arch.querySelectorAll('.prog-i');
+  function cycle(){
+    M.forEach(function(m){ document.getElementById('n-'+m.k).classList.remove('on'); var w=document.getElementById('w-'+m.k); if(w) w.classList.remove('on'); });
+    progs.forEach(function(p){ p.classList.remove('on'); });
+    var m=M[idx];
+    document.getElementById('n-'+m.k).classList.add('on');
+    var w=document.getElementById('w-'+m.k); if(w) w.classList.add('on');
+    if(progs[idx]) progs[idx].classList.add('on');
+    var o=document.getElementById('orchNow'); if(o) o.textContent='Orquestando · '+m.l+' ['+(idx+1)+'/7]';
+    idx=(idx+1)%M.length;
+  }
+  cycle(); setInterval(cycle, 2200);
+})();
+</script>
+</body>
+</html>

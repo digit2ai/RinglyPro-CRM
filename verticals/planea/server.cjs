@@ -340,6 +340,10 @@ if (hasPortal) {
   if (fs.existsSync(path.join(portalDir, 'uat.html'))) {
     router.get(['/uat', '/uat/'], (req, res) => { res.sendFile(path.join(portalDir, 'uat.html')); });
   }
+  // Animated AI architecture diagram (planea.vip/planea_ai_architecture).
+  if (fs.existsSync(path.join(portalDir, 'planea-ai-architecture.html'))) {
+    router.get(['/planea_ai_architecture', '/planea-ai-architecture'], (req, res) => { res.sendFile(path.join(portalDir, 'planea-ai-architecture.html')); });
+  }
 }
 
 if (hasPortal) {
