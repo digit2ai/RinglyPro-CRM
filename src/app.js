@@ -446,6 +446,10 @@ function planeaGateHtml(nextUrl, err) {
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase().split(':')[0];
   if (host !== 'planea.vip' && host !== 'www.planea.vip') return next();
+  // OPEN (no gate): the public landing /main + its simulator asset. Everything
+  // else on planea.vip (app, portal, /uat, etc.) stays behind the dev login.
+  const op = req.path;
+  if (op === '/main' || op === '/main/' || op === '/planea/portal/planea-app-sim.js') return next();
   const cookie = req.headers.cookie || '';
   const authed = cookie.split(';').some(c => c.trim() === 'planea_dev=' + PLANEA_DEV_TOKEN);
   if (authed) return next();
