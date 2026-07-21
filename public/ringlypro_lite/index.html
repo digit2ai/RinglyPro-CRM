@@ -438,16 +438,11 @@
   function detectLang(){
     try{
       var saved=localStorage.getItem('rpl_lang');if(saved==='es'||saved==='en')return saved;
-      var tz=(Intl.DateTimeFormat().resolvedOptions().timeZone||'');
       var nav=(navigator.language||'').toLowerCase();
-      var esTZ=/(America\/(Bogota|Lima|Mexico_City|Monterrey|Tijuana|Argentina|Buenos_Aires|Cordoba|Santiago|Caracas|Guayaquil|La_Paz|Asuncion|Montevideo|Panama|Costa_Rica|Guatemala|El_Salvador|Tegucigalpa|Managua|Santo_Domingo|Havana)|Atlantic\/Canary|Europe\/Madrid|Africa\/Ceuta)/i;
-      var enTZ=/(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Detroit|Toronto|Vancouver|Anchorage|Boise|Indiana|Kentucky|Halifax|Winnipeg|Edmonton)|Europe\/London|Australia\/|Pacific\/Auckland|Africa\/Johannesburg)/i;
-      if(esTZ.test(tz))return 'es';
-      if(enTZ.test(tz))return nav.indexOf('es')===0?'es':'en';
+      // Default to English; only serve Spanish when the browser locale is explicitly Spanish.
       if(nav.indexOf('es')===0)return 'es';
-      if(nav.indexOf('en')===0)return 'en';
-      return 'es';
-    }catch(e){return 'es';}
+      return 'en';
+    }catch(e){return 'en';}
   }
   setLang(detectLang());
 

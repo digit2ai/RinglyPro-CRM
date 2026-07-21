@@ -54,7 +54,7 @@ app.use(express.static(PUBLIC));
 const page = (file) => (req, res) => res.sendFile(path.join(PUBLIC, file));
 // Bare app root → dashboard if logged in, else the branded marketing landing
 // (so ringlypro-lite.onrender.com shows the RinglyPro Lite page, not a raw login).
-const LANDING_URL = process.env.LITE_LANDING_URL || 'https://aiagent.ringlypro.com/ringlypro_lite/';
+const LANDING_URL = process.env.LITE_LANDING_URL || 'https://ringlypro.com/';
 app.get('/', optionalAuth, (req, res) => res.redirect(req.user ? '/dashboard' : LANDING_URL));
 app.get('/login', page('login.html'));
 app.get('/signup', page('onboarding.html'));
