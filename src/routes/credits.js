@@ -32,19 +32,22 @@ router.get('/balance', authenticateAndGetClient, async (req, res) => {
             return res.status(404).json({ error: 'Client not found' });
         }
         
+        const unlimited = creditSystem.isUnlimited(req.clientId);
+
         res.json({
             success: true,
             data: {
                 clientId: creditData.client_id,
                 businessName: creditData.business_name,
+                unlimited,
                 balance: parseFloat(creditData.balance),
                 freeMinutesUsed: creditData.free_minutes_used,
-                freeMinutesRemaining: creditData.free_minutes_remaining,
+                freeMinutesRemaining: unlimited ? 999999 : creditData.free_minutes_remaining,
                 totalMinutesUsed: creditData.total_minutes_used,
                 monthlyFreeMinutes: creditData.monthly_free_minutes,
                 perMinuteRate: parseFloat(creditData.per_minute_rate),
-                estimatedMinutesRemaining: creditData.estimated_minutes_remaining,
-                isLowBalance: creditData.is_low_balance,
+                estimatedMinutesRemaining: unlimited ? 999999 : creditData.estimated_minutes_remaining,
+                isLowBalance: unlimited ? false : creditData.is_low_balance,
                 needsMonthlyReset: creditData.needs_monthly_reset,
                 lastUsageDate: creditData.last_usage_date,
                 freeMinutesResetDate: creditData.free_minutes_reset_date,

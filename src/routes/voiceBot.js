@@ -9,6 +9,8 @@ const chrono = require('chrono-node');
 const availabilityService = require('../services/availabilityService');
 const appointmentService = require('../services/appointmentService');
 const elevenLabsService = require('../services/elevenLabsService');
+const CreditSystem = require('../services/creditSystem');
+const creditSystem = new CreditSystem();
 
 // Import models safely
 let Call, Message, Contact, Appointment, sequelize;
@@ -1060,7 +1062,14 @@ router.post('/voice/forward-to-owner/:client_id', async (req, res) => {
 async function checkClientCredits(clientId) {
     try {
         console.log(`💳 Checking credits for client ${clientId}`);
-        
+
+        // Unlimited/owner accounts (e.g. client 15, mstagg@ringlypro.com) are never
+        // gated on balance or free minutes — always allow the call.
+        if (creditSystem.isUnlimited && creditSystem.isUnlimited(clientId)) {
+            console.log(`♾️  Client ${clientId} is unlimited — skipping credit gate`);
+            return { sufficient: true, freeMinutes: 999999, balance: '999999.00', reason: 'unlimited' };
+        }
+
         const response = await axios.get(`http://localhost:3000/api/credits/test/client/${clientId}`, {
             timeout: 3000 // 3 second timeout
         });

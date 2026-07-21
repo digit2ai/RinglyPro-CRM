@@ -109,6 +109,21 @@
   .flowline .fl{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.03em;margin-bottom:12px}
   .flowline .fl b{color:var(--grn2)}.flowline .fl .ar{color:var(--cy)}
   @media(max-width:600px){.func-grid{grid-template-columns:1fr}}
+  .agents{margin-top:38px}
+  .agents .fh{font-size:20px;font-weight:800;text-align:center;letter-spacing:-.01em;margin:0 0 6px}
+  .agents .fsub{color:var(--mut);text-align:center;font-size:14px;line-height:1.55;max-width:640px;margin:0 auto 22px}
+  .agent-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .agent{border:1px solid rgba(120,170,230,.18);border-radius:16px;padding:18px;background:linear-gradient(180deg,rgba(22,36,64,.4),rgba(255,255,255,.015))}
+  .agent .ahd{display:flex;align-items:center;gap:12px}
+  .agent .aic{width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:rgba(74,168,232,.14);color:var(--cy2);display:flex;align-items:center;justify-content:center}
+  .agent .an{font-size:16px;font-weight:800}
+  .agent .atag{font-size:12px;color:var(--mut);margin-top:1px}
+  .agent .abadge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:var(--grn2);border:1px solid rgba(163,230,53,.35);border-radius:99px;padding:3px 9px;align-self:flex-start}
+  .agent .ap{font-size:13px;color:var(--mut);line-height:1.55;margin:13px 0 11px}
+  .agent .alist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .agent .alist li{font-size:12.5px;color:var(--ink);padding-left:18px;position:relative;line-height:1.45}
+  .agent .alist li::before{content:"";position:absolute;left:2px;top:6px;width:6px;height:6px;border-radius:2px;background:var(--cy)}
+  @media(max-width:600px){.agent-grid{grid-template-columns:1fr}}
 
   @media(max-width:820px){ .arch,.footbar{display:none} .stack{display:block} .steps{grid-template-columns:1fr 1fr} }
   @media(max-width:480px){ .steps{grid-template-columns:1fr} .stack .grid{grid-template-columns:1fr} }
@@ -144,6 +159,48 @@
       En pocas palabras: <b>cada área trabaja por separado, pero piensan juntas.</b> Los siete agentes le pasan su información al Centro de Inteligencia Financiera, que actúa como el cerebro del ecosistema. Ese cerebro no solo suma números: entiende cómo se relaciona todo — por ejemplo, si tu deuda crece mientras tu ahorro baja — y prioriza qué atender primero. El resultado es tu <b>Puntaje Planea</b> y un conjunto de <b>recomendaciones accionables</b> que Maya te explica paso a paso. Tú te concentras en decidir; Planea se encarga del análisis.
       <div style="margin-top:14px">
         <span class="tag">Salud Financiera</span><span class="tag">Puntaje Planea</span><span class="tag">Neural Findings</span><span class="tag">Maya · guía IA</span><span class="tag">Datos privados y seguros</span>
+      </div>
+    </div>
+
+    <div class="agents">
+      <h3 class="fh">Los 7 agentes financieros — en detalle</h3>
+      <p class="fsub">Cada área de tus finanzas es un agente de IA que trabaja por ti. Esto hace cada uno:</p>
+      <div class="agent-grid">
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg></span><div><div class="an">Agente de Ingresos</div><div class="atag">lo que entra</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Es la base de todo. Ordena y suma lo que ganas cada mes y mide cuánto te queda para construir.</p>
+          <ul class="alist"><li>Registra cada fuente: salario, freelance, arriendos, negocio.</li><li>Calcula tu ingreso total y tu capacidad de ahorro.</li><li>Identifica si tu ingreso es fijo o variable (afecta tu estabilidad).</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12v19l-2.4-1.6-2.4 1.6-2.4-1.6-2.4 1.6L6 21.5z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></span><div><div class="an">Agente de Gastos</div><div class="atag">lo que sale</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Te muestra a dónde va tu plata cada mes, para decidir con datos y no a ciegas.</p>
+          <ul class="alist"><li>Ordena tus gastos por categoría: vivienda, comida, transporte, servicios.</li><li>Calcula tu gasto total y tu tasa de ahorro (ingreso menos gasto).</li><li>Detecta en qué se va tu dinero y dónde puedes optimizar.</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15.5" cy="15.5" r="6"/></svg></span><div><div class="an">Agente de Ahorro</div><div class="atag">tu colchón</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Cuida tu escudo: qué tan preparado estás para un imprevisto sin tener que endeudarte.</p>
+          <ul class="alist"><li>Suma tu ahorro líquido disponible.</li><li>Calcula cuántos meses puedes vivir sin ingresos (fondo de emergencia).</li><li>Te avisa si tu colchón es corto ante un imprevisto.</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/></svg></span><div><div class="an">Agente de Deuda</div><div class="atag">lo que debes</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Mide la presión de la deuda sobre tu ingreso y te arma la estrategia para salir de ella.</p>
+          <ul class="alist"><li>Ordena tus créditos y tarjetas de mayor a menor saldo.</li><li>Calcula cuánto de tu ingreso se va en cuotas (relación deuda-ingreso).</li><li>Prioriza qué deuda atacar primero: la más cara.</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 6"/><polyline points="15 6 21 6 21 12"/></svg></span><div><div class="an">Agente de Inversión</div><div class="atag">tu dinero trabajando</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Ve si tu dinero está trabajando por ti y cómo aporta al crecimiento de tu patrimonio.</p>
+          <ul class="alist"><li>Rastrea dónde está tu dinero: CDT, acciones, fondos, cripto.</li><li>Suma tu portafolio total invertido.</li><li>Evalúa tu solvencia y el crecimiento de tu patrimonio.</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 2.5v5.5c0 4.3-2.9 7.2-7 8.5-4.1-1.3-7-4.2-7-8.5V5.5z"/></svg></span><div><div class="an">Agente de Seguros</div><div class="atag">tu protección</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Revisa qué estás protegiendo, para que un evento inesperado no borre tu progreso.</p>
+          <ul class="alist"><li>Registra tus pólizas: vida, salud, exequial.</li><li>Suma tu cobertura total asegurada.</li><li>Evalúa si estás bien protegido frente a tu ingreso.</li></ul>
+        </div>
+        <div class="agent">
+          <div class="ahd"><span class="aic"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M8 3v3.4L12 12l-4 5.6V21M16 3v3.4L12 12l4 5.6V21"/></svg></span><div><div class="an">Agente de Retiro</div><div class="atag">tu futuro</div></div><span class="abadge">AGENTE IA</span></div>
+          <p class="ap">Cuida tu futuro de largo plazo: cuánto necesitas y si las decisiones de hoy te acercan.</p>
+          <ul class="alist"><li>Suma tus fondos de retiro: pensión voluntaria, fondos privados.</li><li>Los compara con la meta según tu edad.</li><li>Te dice si vas en camino para retirarte tranquilo.</li></ul>
+        </div>
       </div>
     </div>
 

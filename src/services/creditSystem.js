@@ -27,6 +27,13 @@ pool.on('error', (err) => {
     console.error('Unexpected error on idle PostgreSQL client', err);
 });
 
+// Owner / comp accounts that are NEVER charged, gated, or limited (unlimited usage).
+// Comma-separated client IDs, env-overridable. Default: 15 (mstagg@ringlypro.com — project owner).
+const UNLIMITED_CLIENT_IDS = new Set(
+    String(process.env.UNLIMITED_CLIENT_IDS || '15')
+        .split(',').map(s => parseInt(s.trim(), 10)).filter(Number.isFinite)
+);
+
 // Conditional Stripe initialization
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -39,6 +46,11 @@ class CreditSystem {
     constructor() {
         // Use native pg Pool - supports $1, $2, $3 syntax natively
         this.pool = pool;
+    }
+
+    // True for owner/comp accounts that are never charged or limited.
+    isUnlimited(clientId) {
+        return UNLIMITED_CLIENT_IDS.has(parseInt(clientId, 10));
     }
 
     // Get comprehensive credit summary for a client
@@ -104,11 +116,25 @@ class CreditSystem {
         await this.checkMonthlyReset(creditAccount);
         
         let usageResult;
-        if (usageType === 'voice_call') {
+        if (this.isUnlimited(clientId)) {
+            // Unlimited/owner account — log the usage at zero cost. Never charge the
+            // balance, never consume free minutes, never throw on low balance.
+            const durationMinutes = usageType === 'voice_call' ? Math.ceil(durationSeconds / 60) : 0;
+            const bal = parseFloat(creditAccount.balance);
+            usageResult = {
+                cost: 0,
+                chargedFrom: 'unlimited',
+                balanceBefore: bal,
+                balanceAfter: bal,
+                freeMinutesBefore: creditAccount.free_minutes_used,
+                freeMinutesAfter: creditAccount.free_minutes_used,
+                durationMinutes
+            };
+        } else if (usageType === 'voice_call') {
             const durationMinutes = Math.ceil(durationSeconds / 60);
             usageResult = await this.calculateVoiceUsageCharge(
-                creditAccount, 
-                durationMinutes, 
+                creditAccount,
+                durationMinutes,
                 client.rows[0].per_minute_rate
             );
         } else if (usageType === 'sms') {
