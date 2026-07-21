@@ -37,7 +37,39 @@ export default function CaseDetail() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [analyzingFileId, setAnalyzingFileId] = useState(null);
   const [analyzeError, setAnalyzeError] = useState(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const user = api.getUser();
+
+  // Downloads the full case PDF (images + AI analysis). Fetches with the auth header —
+  // a plain link fails because the endpoint requires a Bearer token, not a cookie.
+  const downloadReport = async () => {
+    setDownloadingPdf(true);
+    try {
+      const token = localStorage.getItem('msk_token');
+      const res = await fetch(`/msk/api/v1/fhir/cases/${id}/export/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        let msg = 'Export failed';
+        try { msg = (await res.json()).error || msg; } catch {}
+        throw new Error(msg);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ImagingMind-Case-${caseData?.case_number || id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert(`Could not generate the report: ${err.message}`);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => { loadCase(); loadImagingFiles(); }, [id]);
 
@@ -616,9 +648,9 @@ export default function CaseDetail() {
               <Link to={`/proms?caseId=${id}`} className="btn-secondary w-full text-center text-sm block">
                 📝 Assessments (PROMs)
               </Link>
-              <a href={`/msk/api/v1/fhir/cases/${id}/export/pdf`} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full text-center text-sm block">
-                📄 Export PDF
-              </a>
+              <button onClick={downloadReport} disabled={downloadingPdf} className="btn-secondary w-full text-center text-sm block disabled:opacity-60 disabled:cursor-not-allowed">
+                {downloadingPdf ? 'Generating PDF…' : '📄 Download Full Report (PDF)'}
+              </button>
               {['admin', 'radiologist', 'staff'].includes(user?.role) && (
                 <Link to={`/rehab/create?caseId=${id}&patientId=${caseData.patient_id || ''}`} className="btn-secondary w-full text-center text-sm block">
                   🏋️ Create Exercise Program

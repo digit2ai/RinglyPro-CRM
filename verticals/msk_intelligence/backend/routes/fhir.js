@@ -4,6 +4,38 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, sequelize } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
+const fs = require('fs');
+
+// Resolve an imaging file's bytes (disk or persistent DB base64) and downscale to a
+// PDF-friendly JPEG buffer. Returns null for non-image files (DICOM/PDF/NIfTI) or on failure.
+async function loadImageBufferForPdf(file) {
+  const supported = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!supported.includes(file.mime_type)) return null;
+  let raw = null;
+  try {
+    if (file.storage_path && fs.existsSync(file.storage_path)) {
+      raw = fs.readFileSync(file.storage_path);
+    } else if (file.file_data) {
+      raw = Buffer.from(String(file.file_data).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    }
+  } catch { return null; }
+  if (!raw) return null;
+  try {
+    const sharp = require('sharp');
+    return await sharp(raw, { failOn: 'none' })
+      .rotate()
+      .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+  } catch { return null; }
+}
+
+// ai_analysis is stored as JSONB (object) but may arrive as a JSON string on some drivers.
+function parseObjectSafe(val) {
+  if (val && typeof val === 'object' && !Array.isArray(val)) return val;
+  if (typeof val === 'string') { try { return JSON.parse(val); } catch { return null; } }
+  return null;
+}
 
 // ─── FHIR R4 Helpers ───────────────────────────────────────────────────────────
 
@@ -616,6 +648,95 @@ router.get('/cases/:id/export/pdf', authenticate, async (req, res) => {
       }
 
       doc.moveDown(0.5);
+    }
+
+    // ─── Imaging Studies & AI Analysis ──────────────────────────────────────────
+    let imagingFilesForPdf = [];
+    try {
+      const [imgRows] = await sequelize.query(`
+        SELECT id, file_name, file_type, mime_type, storage_path, file_data, ai_analysis, ai_analyzed_at, created_at
+        FROM msk_imaging_files WHERE case_id = $1 ORDER BY id
+      `, { bind: [req.params.id] });
+      imagingFilesForPdf = imgRows;
+    } catch (e) {
+      console.error('[ImagingMind-FHIR] imaging fetch for PDF failed:', e.message);
+    }
+
+    if (imagingFilesForPdf.length > 0) {
+      doc.addPage();
+      sectionHeader(doc, 'Imaging Studies & AI Analysis');
+      doc.fontSize(8).font('Helvetica-Oblique').fillColor('#888888')
+        .text('AI-assisted preliminary reads — must be reviewed and finalized by a qualified radiologist.', { width: pageWidth });
+      doc.moveDown(0.5);
+
+      for (const f of imagingFilesForPdf) {
+        checkPageBreak(doc, 360);
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#1a3c6e')
+          .text(f.file_name || `Image ${f.id}`);
+        doc.fontSize(8).font('Helvetica').fillColor('#888888')
+          .text(`Type: ${(f.file_type || 'image').toUpperCase()}${f.created_at ? '   Uploaded: ' + new Date(f.created_at).toLocaleDateString('en-US') : ''}`);
+        doc.moveDown(0.3);
+
+        const imgBuf = await loadImageBufferForPdf(f);
+        if (imgBuf) {
+          try {
+            doc.image(imgBuf, { fit: [pageWidth, 300], align: 'center' });
+          } catch (imgErr) {
+            doc.fontSize(9).font('Helvetica-Oblique').fillColor('#999999')
+              .text(`(Unable to embed image preview: ${imgErr.message})`);
+          }
+        } else {
+          doc.fontSize(9).font('Helvetica-Oblique').fillColor('#999999')
+            .text(`(Preview not available — ${(f.file_type || 'file').toUpperCase()} format is not renderable in the report)`);
+        }
+        doc.moveDown(0.5);
+
+        const ai = parseObjectSafe(f.ai_analysis);
+        if (ai) {
+          checkPageBreak(doc, 160);
+          doc.fontSize(10).font('Helvetica-Bold').fillColor('#333333').text('AI Analysis');
+          doc.moveDown(0.1);
+          if (ai.modality || ai.bodyRegion) {
+            infoRow(doc, 'Study', [ai.modality, ai.bodyRegion].filter(Boolean).join(' — '));
+          }
+          if (ai.impression) {
+            doc.moveDown(0.2);
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333').text('Impression');
+            doc.fontSize(9).font('Helvetica').fillColor('#444444').text(ai.impression, { width: pageWidth });
+          }
+          if (ai.findings) {
+            doc.moveDown(0.2);
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333').text('Findings');
+            doc.fontSize(9).font('Helvetica').fillColor('#444444').text(ai.findings, { width: pageWidth });
+          }
+          if (Array.isArray(ai.abnormalitiesDetected) && ai.abnormalitiesDetected.length) {
+            doc.moveDown(0.2);
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333').text('Abnormalities Detected');
+            doc.fontSize(9).font('Helvetica').fillColor('#444444');
+            for (const a of ai.abnormalitiesDetected) doc.text(`  - ${a}`, { width: pageWidth });
+          }
+          if (Array.isArray(ai.normalFindings) && ai.normalFindings.length) {
+            doc.moveDown(0.2);
+            doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333').text('Normal / Unremarkable');
+            doc.fontSize(9).font('Helvetica').fillColor('#444444');
+            for (const n of ai.normalFindings) doc.text(`  - ${n}`, { width: pageWidth });
+          }
+          if (Array.isArray(ai.icd10Suggestions) && ai.icd10Suggestions.length) {
+            doc.moveDown(0.2);
+            const codes = ai.icd10Suggestions.map(c => typeof c === 'string' ? c : `${c.code} ${c.description || ''}`.trim());
+            infoRow(doc, 'ICD-10 (suggested)', codes.join('; '));
+          }
+          if (ai.recommendedFollowUp) infoRow(doc, 'Recommended Follow-Up', ai.recommendedFollowUp);
+          if (ai.confidenceLevel) infoRow(doc, 'AI Confidence', ai.confidenceLevel);
+          if (ai.limitations) {
+            doc.moveDown(0.1);
+            doc.fontSize(8).font('Helvetica-Oblique').fillColor('#888888').text(`Limitations: ${ai.limitations}`, { width: pageWidth });
+          }
+        } else {
+          doc.fontSize(9).font('Helvetica-Oblique').fillColor('#999999').text('No AI analysis available for this image.');
+        }
+        doc.moveDown(0.8);
+      }
     }
 
     // ─── Footer ─────────────────────────────────────────────────────────────────
