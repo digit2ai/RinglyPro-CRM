@@ -21,7 +21,7 @@ const server = app.listen(0, async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let pass = 0, fail = 0;
   const ok = (c, m) => { c ? (pass++, console.log('PASS ' + m)) : (fail++, console.log('FAIL ' + m)); };
-  const PW = process.env.SPEAKUP_TEAM_PASSWORD || 'speakup@2026';
+  const PW = process.env.SPEAKUP_TEAM_PASSWORD || 'Palindrome@7';
 
   try {
     await wait(4000); // let sync + seed finish
@@ -51,6 +51,13 @@ const server = app.listen(0, async () => {
     ok((await fetch(base + '/api/v1/recordings/' + rid + '/summarize', { method: 'POST', headers: H }).then(j)).summary, 'summarize');
     ok((await fetch(base + '/api/v1/translate', { method: 'POST', headers: H, body: JSON.stringify({ recording_id: rid, target_lang: 'English' }) }).then(j)).translation.text, 'translate');
     ok((await fetch(base + '/api/v1/rewrite', { method: 'POST', headers: H, body: JSON.stringify({ recording_id: rid, tone: 'bullets' }) }).then(j)).edit.output_text, 'rewrite');
+
+    for (const type of ['minutes', 'next_steps', 'presentation', 'project_plan']) {
+      const g = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
+        body: JSON.stringify({ type, lang: 'es' }) }).then(j);
+      ok(g.success && g.document.content && g.document.kind === type, 'generate ' + type);
+    }
+    ok((await fetch(base + '/api/v1/recordings/' + rid, { headers: H }).then(j)).documents.length >= 4, 'detail returns documents');
 
     const ex = await fetch(base + '/api/v1/recordings/' + rid + '/export?format=md', { headers: H });
     ok(ex.ok && (await ex.text()).includes('# SIT'), 'export md');

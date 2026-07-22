@@ -110,6 +110,23 @@ const Edit = sequelize.define('SpeakEdit', {
   indexes: [{ fields: ['tenant_id'] }, { fields: ['recording_id'] }]
 });
 
+// ─── su_documents ─────────────────────────────────────────────────────────────
+// A generated deliverable from a recording: meeting minutes, full details,
+// next steps, presentation outline, or project plan. Markdown content.
+const Document = sequelize.define('SpeakDocument', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+  recording_id: { type: DataTypes.INTEGER, allowNull: false },
+  kind: { type: DataTypes.STRING },     // minutes|details|next_steps|presentation|project_plan
+  title: { type: DataTypes.STRING },
+  content: { type: DataTypes.TEXT },    // markdown
+  model: { type: DataTypes.STRING },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'su_documents', timestamps: false,
+  indexes: [{ fields: ['tenant_id'] }, { fields: ['recording_id'] }, { fields: ['kind'] }]
+});
+
 // ─── su_usage ─────────────────────────────────────────────────────────────────
 // Lightweight per-tenant usage log (transcription minutes, AI calls).
 const Usage = sequelize.define('SpeakUsage', {
@@ -133,5 +150,7 @@ Recording.hasMany(Translation, { foreignKey: 'recording_id' });
 Translation.belongsTo(Recording, { foreignKey: 'recording_id' });
 Recording.hasMany(Edit, { foreignKey: 'recording_id' });
 Edit.belongsTo(Recording, { foreignKey: 'recording_id' });
+Recording.hasMany(Document, { foreignKey: 'recording_id' });
+Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
-module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Usage };
+module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage };

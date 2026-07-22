@@ -19,7 +19,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
-const { Recording, Transcript, Summary, Translation, Edit, Usage } = require('../models');
+const { Recording, Transcript, Summary, Translation, Edit, Document, Usage } = require('../models');
 const stt = require('../services/stt');
 const ai = require('../services/ai-editor');
 
@@ -208,7 +208,8 @@ router.get('/:id', async (req, res) => {
     const summaries = await Summary.findAll({ where: { recording_id: rec.id }, order: [['id', 'DESC']] });
     const translations = await Translation.findAll({ where: { recording_id: rec.id }, order: [['id', 'DESC']] });
     const edits = await Edit.findAll({ where: { recording_id: rec.id }, order: [['id', 'DESC']] });
-    res.json({ success: true, recording: rec, transcript, summaries, translations, edits });
+    const documents = await Document.findAll({ where: { recording_id: rec.id }, order: [['id', 'DESC']] });
+    res.json({ success: true, recording: rec, transcript, summaries, translations, edits, documents });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -251,6 +252,31 @@ router.post('/:id/summarize', async (req, res) => {
   }
 });
 
+// ── Generate a deliverable from this recording (minutes/details/next_steps/
+//    presentation/project_plan) — Voice-Memos-style "what to do with it" ────────
+router.post('/:id/generate', async (req, res) => {
+  try {
+    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
+    const type = String(req.body.type || 'minutes');
+    if (!ai.DOC_TYPES.includes(type)) return res.status(400).json({ error: 'Tipo no válido' });
+    const trans = await Transcript.findOne({ where: { recording_id: rec.id } });
+    const text = trans ? trans.text : '';
+    if (!text || !text.trim()) return res.status(400).json({ error: 'La grabación no tiene transcripción' });
+
+    const result = await ai.generateDocument(text, type, req.body.lang || rec.lang || 'es');
+    const doc = await Document.create({
+      tenant_id: tenantOf(req), recording_id: rec.id,
+      kind: type, title: result.title, content: result.content, model: ai.activeModel()
+    });
+    await logUsage(req, 'generate');
+    res.json({ success: true, document: doc });
+  } catch (e) {
+    console.error('SpeakUp generate error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Poll status ───────────────────────────────────────────────────────────────
 router.get('/:id/status', async (req, res) => {
   try {
@@ -273,6 +299,7 @@ router.delete('/:id', async (req, res) => {
     await Summary.destroy({ where: { recording_id: rec.id } });
     await Translation.destroy({ where: { recording_id: rec.id } });
     await Edit.destroy({ where: { recording_id: rec.id } });
+    await Document.destroy({ where: { recording_id: rec.id } });
     await rec.destroy();
     res.json({ success: true });
   } catch (e) {

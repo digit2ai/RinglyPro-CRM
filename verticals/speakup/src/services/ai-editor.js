@@ -134,4 +134,72 @@ function heuristicRewrite(text, tone) {
   return cap + '\n\n[Edición completa disponible al configurar ANTHROPIC_API_KEY.]';
 }
 
-module.exports = { summarize, translate, rewrite, activeModel, TONES: Object.keys(TONES) };
+// ── Deliverables: turn one recording into a chosen document ───────────────────
+// minutes | details | next_steps | presentation | project_plan
+const DOC_SPECS = {
+  minutes: {
+    title: { es: 'Acta de reunión', en: 'Meeting minutes' },
+    instr: 'Write formal meeting MINUTES in Markdown. Include: a title, date/context if inferable, attendees or speakers if identifiable, an agenda/topics-discussed section, key decisions made, and an action-items table (task, owner if mentioned, due date if mentioned). Be faithful to the transcript; do not invent facts.'
+  },
+  details: {
+    title: { es: 'Detalle completo', en: 'Full details' },
+    instr: 'Write a COMPREHENSIVE, detailed set of notes in Markdown that captures everything discussed, organized by topic with clear headings and sub-bullets. Preserve nuance, numbers, names and context. This is the long-form record, not a summary.'
+  },
+  next_steps: {
+    title: { es: 'Próximos pasos', en: 'Next steps' },
+    instr: 'Extract the NEXT STEPS in Markdown: a prioritized, numbered list of concrete action items. For each, include the owner (if mentioned) and a suggested timeframe. End with any open questions or blockers. Imperative phrasing.'
+  },
+  presentation: {
+    title: { es: 'Presentación', en: 'Presentation' },
+    instr: 'Turn this into a PRESENTATION outline in Markdown, slide by slide. Use "## Slide N: <title>" for each slide followed by 3-6 concise bullet points. Include an opening title slide and a closing next-steps slide. 6-12 slides. Ready to paste into slides.'
+  },
+  project_plan: {
+    title: { es: 'Plan de proyecto', en: 'Project plan' },
+    instr: 'Produce a PROJECT PLAN in Markdown: objective, scope, phases with milestones, a task breakdown (task, owner, estimate in weeks), a simple week-by-week timeline (weeks, never months), risks/mitigations, and success criteria. Keep the timeline realistic and short.'
+  }
+};
+
+async function generateDocument(text, type, lang) {
+  const spec = DOC_SPECS[type] || DOC_SPECS.minutes;
+  const clean = String(text || '').trim();
+  const uiLang = lang === 'en' ? 'en' : 'es';
+  if (!anthropic || !clean) return heuristicDocument(clean, type, uiLang, spec);
+
+  const system = 'You transform a meeting/conversation transcript into a specific business deliverable. ' +
+    'Reply with ONLY the Markdown document, no preamble. Match the language of the transcript. No emojis. Never fabricate facts not supported by the transcript.';
+  const user = `${spec.instr}\n\nTRANSCRIPT:\n"""${clean.slice(0, 28000)}"""`;
+  try {
+    const md = await callClaude({ system, user, max_tokens: 3000 });
+    return { title: firstHeading(md) || spec.title[uiLang], content: md || heuristicDocument(clean, type, uiLang, spec).content };
+  } catch (e) {
+    console.error('SpeakUp generateDocument error:', e.message);
+    return heuristicDocument(clean, type, uiLang, spec);
+  }
+}
+
+function firstHeading(md) {
+  const m = String(md || '').match(/^#+\s+(.+)$/m);
+  return m ? m[1].trim().slice(0, 160) : null;
+}
+
+function heuristicDocument(text, type, uiLang, spec) {
+  const s = heuristicSummary(text);
+  const T = spec.title[uiLang];
+  let body = `# ${T}\n\n`;
+  if (type === 'presentation') {
+    body += `## Slide 1: ${T}\n\n`;
+    s.bullets.forEach((b, i) => { body += `## Slide ${i + 2}: ${b.slice(0, 60)}\n\n- ${b}\n\n`; });
+    body += `## Slide ${s.bullets.length + 2}: ${uiLang === 'en' ? 'Next steps' : 'Próximos pasos'}\n\n${s.action_items.map(a => `- ${a}`).join('\n')}\n`;
+  } else if (type === 'next_steps') {
+    body += (s.action_items.length ? s.action_items.map((a, i) => `${i + 1}. ${a}`).join('\n') : (uiLang === 'en' ? '_No explicit next steps found._' : '_No se encontraron próximos pasos explícitos._'));
+  } else if (type === 'project_plan') {
+    body += `**${uiLang === 'en' ? 'Objective' : 'Objetivo'}:** ${s.summary}\n\n## ${uiLang === 'en' ? 'Tasks' : 'Tareas'}\n\n${s.bullets.map(b => `- ${b}`).join('\n')}\n\n## ${uiLang === 'en' ? 'Next steps' : 'Próximos pasos'}\n\n${s.action_items.map(a => `- ${a}`).join('\n')}\n`;
+  } else { // minutes / details
+    body += `## ${uiLang === 'en' ? 'Summary' : 'Resumen'}\n\n${s.summary}\n\n## ${uiLang === 'en' ? 'Key points' : 'Puntos clave'}\n\n${s.bullets.map(b => `- ${b}`).join('\n')}\n\n## ${uiLang === 'en' ? 'Action items' : 'Acciones'}\n\n${s.action_items.map(a => `- ${a}`).join('\n')}\n`;
+  }
+  body += `\n\n_${uiLang === 'en' ? 'Full AI deliverable available with ANTHROPIC_API_KEY.' : 'Entrega AI completa disponible al configurar ANTHROPIC_API_KEY.'}_`;
+  return { title: T, content: body };
+}
+
+module.exports = { summarize, translate, rewrite, generateDocument, activeModel,
+  TONES: Object.keys(TONES), DOC_TYPES: Object.keys(DOC_SPECS) };

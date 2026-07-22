@@ -66,6 +66,15 @@
   .result{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px;white-space:pre-wrap;line-height:1.6}
   .result h4{margin:0 0 8px;font-size:14px;color:var(--acc)}
   .result ul{margin:6px 0;padding-left:20px}
+  .mdbody{margin-top:10px}
+  .mdbody h3{font-size:18px;margin:14px 0 6px}
+  .mdbody h4{font-size:16px;margin:12px 0 6px;color:var(--txt)}
+  .mdbody h5,.mdbody h6{font-size:14px;margin:10px 0 5px;color:var(--acc)}
+  .mdbody p{margin:8px 0;line-height:1.6}
+  .mdbody ul,.mdbody ol{margin:6px 0;padding-left:22px}
+  .mdbody li{margin:3px 0;line-height:1.5}
+  .mdbody code{background:#0c1320;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:13px}
+  .mdbody strong{color:var(--txt)}
   .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--acc);
     border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
   @keyframes sp{to{transform:rotate(360deg)}}
@@ -148,7 +157,9 @@ const I18N = {
     rewriteBtn:'Reescribir',professional:'Profesional',concise:'Conciso',friendly:'Cercano',email:'Correo',
     grammar:'Corregir gramática',bulletize:'A viñetas',processing:'Procesando…',noTranscript:'Sin transcripción.',
     saved:'Guardado',deleted:'Eliminado',confirmDel:'¿Eliminar esta grabación?',micUnsupported:'Tu navegador no soporta grabación de voz en vivo. Usa "Subir archivo".',
-    simulated:'simulada',original:'Texto original',copy:'Copiar',copied:'Copiado',pdf:'PDF',uploading:'Subiendo…'},
+    simulated:'simulada',original:'Texto original',copy:'Copiar',copied:'Copiado',pdf:'PDF',uploading:'Subiendo…',
+    generate:'Generar',whatToDo:'¿Qué quieres hacer con esta grabación?',minutes:'Acta de reunión',details:'Detalle completo',
+    nextSteps:'Próximos pasos',presentation:'Presentación',projectPlan:'Plan de proyecto',download:'Descargar',generating:'Generando…'},
   en:{logout:'Sign out',newRec:'New recording',tapToRec:'Tap to record your voice (microphone)',
     recording:'Recording… tap to stop',recMeeting:'Record meeting (system audio)',
     noBot:'We capture your own device audio. No bot joins your call.',
@@ -161,7 +172,9 @@ const I18N = {
     rewriteBtn:'Rewrite',professional:'Professional',concise:'Concise',friendly:'Friendly',email:'Email',
     grammar:'Fix grammar',bulletize:'To bullets',processing:'Processing…',noTranscript:'No transcript.',
     saved:'Saved',deleted:'Deleted',confirmDel:'Delete this recording?',micUnsupported:'Your browser does not support live voice recording. Use "Upload file".',
-    simulated:'simulated',original:'Original text',copy:'Copy',copied:'Copied',pdf:'PDF',uploading:'Uploading…'}
+    simulated:'simulated',original:'Original text',copy:'Copy',copied:'Copied',pdf:'PDF',uploading:'Uploading…',
+    generate:'Generate',whatToDo:'What do you want to do with this recording?',minutes:'Meeting minutes',details:'Full details',
+    nextSteps:'Next steps',presentation:'Presentation',projectPlan:'Project plan',download:'Download',generating:'Generating…'}
 };
 let lang = localStorage.getItem('speakup_lang') || 'es';
 function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
@@ -357,13 +370,20 @@ function renderDetail(d){
     (text ?
     '<div class="card">'+
       '<div class="tabs">'+
-        '<div class="tab on" onclick="showTab(this,\'sum\')">'+t('summary')+'</div>'+
+        '<div class="tab on" onclick="showTab(this,\'gen\')">'+t('generate')+'</div>'+
         '<div class="tab" onclick="showTab(this,\'trn\')">'+t('translate')+'</div>'+
         '<div class="tab" onclick="showTab(this,\'rew\')">'+t('rewrite')+'</div>'+
       '</div>'+
-      '<div id="pane-sum">'+
-        '<button class="btn" onclick="doSummarize('+r.id+')">'+t('summarize')+'</button>'+
-        '<div id="sumResult">'+renderSummaries(d.summaries)+'</div>'+
+      '<div id="pane-gen">'+
+        '<div class="muted" style="margin-bottom:12px">'+t('whatToDo')+'</div>'+
+        '<div class="row">'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'minutes\')">'+t('minutes')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'details\')">'+t('details')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'next_steps\')">'+t('nextSteps')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'presentation\')">'+t('presentation')+'</button>'+
+          '<button class="btn sm" onclick="doGenerate('+r.id+',\'project_plan\')">'+t('projectPlan')+'</button>'+
+        '</div>'+
+        '<div id="genResult">'+renderDocuments(d.documents)+'</div>'+
       '</div>'+
       '<div id="pane-trn" style="display:none">'+
         '<div class="row" style="align-items:flex-end"><div style="flex:1"><label class="muted">'+t('toLang')+'</label>'+
@@ -389,7 +409,49 @@ function renderDetail(d){
 }
 function showTab(tab,which){
   tab.parentNode.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); tab.classList.add('on');
-  ['sum','trn','rew'].forEach(p=>{ document.getElementById('pane-'+p).style.display = p===which?'block':'none'; });
+  ['gen','trn','rew'].forEach(p=>{ const el=document.getElementById('pane-'+p); if(el) el.style.display = p===which?'block':'none'; });
+}
+// minimal markdown -> HTML (headings, bold, ul, ol, paragraphs)
+function mdToHtml(md){
+  const lines = String(md||'').split('\n'); let html='', inUl=false, inOl=false;
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>');
+  for(let raw of lines){
+    const l=raw.replace(/\s+$/,'');
+    let m;
+    if((m=l.match(/^(#{1,4})\s+(.+)$/))){ closeLists(); const n=m[1].length; html+='<h'+(n+2)+'>'+inline(m[2])+'</h'+(n+2)+'>'; }
+    else if((m=l.match(/^\s*[-*]\s+(.+)$/))){ if(!inUl){closeLists();html+='<ul>';inUl=true;} html+='<li>'+inline(m[1])+'</li>'; }
+    else if((m=l.match(/^\s*\d+\.\s+(.+)$/))){ if(!inOl){closeLists();html+='<ol>';inOl=true;} html+='<li>'+inline(m[1])+'</li>'; }
+    else if(l.trim()===''){ closeLists(); }
+    else { closeLists(); html+='<p>'+inline(l)+'</p>'; }
+  }
+  closeLists(); return html;
+}
+function docLabel(kind){ const map={minutes:'minutes',details:'details',next_steps:'nextSteps',presentation:'presentation',project_plan:'projectPlan'}; return t(map[kind]||kind); }
+window.__docs = {};
+function renderDocuments(list){
+  if(!list||!list.length) return '';
+  return list.map(x=>{ window.__docs[x.id]=x;
+    return '<div class="result"><div class="row" style="justify-content:space-between;align-items:center">'+
+      '<h4 style="margin:0">'+docLabel(x.kind)+'</h4>'+
+      '<div class="row"><button class="btn sec sm" onclick="copyText(\'doc'+x.id+'\')">'+t('copy')+'</button>'+
+      '<button class="btn sec sm" onclick="downloadDoc('+x.id+')">'+t('download')+'</button></div></div>'+
+      '<div id="doc'+x.id+'" class="mdbody">'+mdToHtml(x.content)+'</div></div>';
+  }).join('');
+}
+function downloadDoc(id){ const d=window.__docs[id]; if(!d) return;
+  const blob=new Blob([d.content],{type:'text/markdown'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=(d.title||'speakup').replace(/[^a-z0-9]+/gi,'-').slice(0,50)+'.md';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+async function doGenerate(id,type){
+  const box=document.getElementById('genResult');
+  const prev=box.innerHTML;
+  box.innerHTML='<div class="result"><span class="spin"></span> '+t('generating')+'</div>'+prev;
+  try{ const d=await api('/recordings/'+id+'/generate',{method:'POST',body:JSON.stringify({type,lang})});
+    // re-fetch to show all docs newest-first
+    const full=await api('/recordings/'+id); current=full; box.innerHTML=renderDocuments(full.documents);
+  }catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'+prev; }
 }
 function renderSummaries(list){
   if (!list||!list.length) return '';

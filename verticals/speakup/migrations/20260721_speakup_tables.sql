@@ -85,6 +85,20 @@ CREATE TABLE IF NOT EXISTS su_edits (
 CREATE INDEX IF NOT EXISTS idx_su_edits_tenant ON su_edits(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_su_edits_rec ON su_edits(recording_id);
 
+CREATE TABLE IF NOT EXISTS su_documents (
+  id           SERIAL PRIMARY KEY,
+  tenant_id    INTEGER NOT NULL DEFAULT 1,
+  recording_id INTEGER NOT NULL,
+  kind         VARCHAR(40),   -- minutes|details|next_steps|presentation|project_plan
+  title        VARCHAR(255),
+  content      TEXT,
+  model        VARCHAR(60),
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_su_documents_tenant ON su_documents(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_su_documents_rec ON su_documents(recording_id);
+CREATE INDEX IF NOT EXISTS idx_su_documents_kind ON su_documents(kind);
+
 CREATE TABLE IF NOT EXISTS su_usage (
   id         SERIAL PRIMARY KEY,
   tenant_id  INTEGER NOT NULL DEFAULT 1,
