@@ -110,11 +110,12 @@ router.post('/', async (req, res) => {
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
+    const src = ['upload', 'meeting', 'call'].includes(req.body.source) ? req.body.source : 'upload';
     const rec = await Recording.create({
       tenant_id: tenantOf(req),
       user_id: userOf(req),
       title: String(req.body.title || req.file.originalname || 'Archivo').slice(0, 200),
-      source: 'upload',
+      source: src,
       lang: req.body.lang ? String(req.body.lang).slice(0, 12) : null,
       status: 'processing',
       file_path: req.file.path,
