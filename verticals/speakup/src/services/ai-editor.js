@@ -159,10 +159,19 @@ const DOC_SPECS = {
   }
 };
 
-async function generateDocument(text, type, lang) {
-  const spec = DOC_SPECS[type] || DOC_SPECS.minutes;
-  const clean = String(text || '').trim();
+async function generateDocument(text, type, lang, instruction) {
   const uiLang = lang === 'en' ? 'en' : 'es';
+  let spec;
+  if (type === 'custom') {
+    const instr = String(instruction || '').trim();
+    spec = {
+      title: { es: 'Personalizado', en: 'Custom' },
+      instr: `Follow the user's own instruction to produce a Markdown document from the transcript. If it fits, give the document a short "# " title. USER INSTRUCTION: "${instr.slice(0, 1000)}"`
+    };
+  } else {
+    spec = DOC_SPECS[type] || DOC_SPECS.minutes;
+  }
+  const clean = String(text || '').trim();
   if (!anthropic || !clean) return heuristicDocument(clean, type, uiLang, spec);
 
   const system = 'You transform a meeting/conversation transcript into a specific business deliverable. ' +
@@ -202,4 +211,4 @@ function heuristicDocument(text, type, uiLang, spec) {
 }
 
 module.exports = { summarize, translate, rewrite, generateDocument, activeModel,
-  TONES: Object.keys(TONES), DOC_TYPES: Object.keys(DOC_SPECS) };
+  TONES: Object.keys(TONES), DOC_TYPES: [...Object.keys(DOC_SPECS), 'custom'] };

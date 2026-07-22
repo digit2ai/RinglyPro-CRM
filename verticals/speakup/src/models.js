@@ -117,8 +117,9 @@ const Document = sequelize.define('SpeakDocument', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   recording_id: { type: DataTypes.INTEGER, allowNull: false },
-  kind: { type: DataTypes.STRING },     // minutes|details|next_steps|presentation|project_plan
+  kind: { type: DataTypes.STRING },     // minutes|details|next_steps|presentation|project_plan|custom
   title: { type: DataTypes.STRING },
+  prompt: { type: DataTypes.TEXT },     // free-form instruction (when kind=custom)
   content: { type: DataTypes.TEXT },    // markdown
   model: { type: DataTypes.STRING },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }

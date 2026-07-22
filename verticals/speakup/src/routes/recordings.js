@@ -260,14 +260,17 @@ router.post('/:id/generate', async (req, res) => {
     if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
     const type = String(req.body.type || 'minutes');
     if (!ai.DOC_TYPES.includes(type)) return res.status(400).json({ error: 'Tipo no válido' });
+    const instruction = String(req.body.instruction || '').trim();
+    if (type === 'custom' && !instruction) return res.status(400).json({ error: 'Escribe una instrucción' });
     const trans = await Transcript.findOne({ where: { recording_id: rec.id } });
     const text = trans ? trans.text : '';
     if (!text || !text.trim()) return res.status(400).json({ error: 'La grabación no tiene transcripción' });
 
-    const result = await ai.generateDocument(text, type, req.body.lang || rec.lang || 'es');
+    const result = await ai.generateDocument(text, type, req.body.lang || rec.lang || 'es', instruction);
     const doc = await Document.create({
       tenant_id: tenantOf(req), recording_id: rec.id,
-      kind: type, title: result.title, content: result.content, model: ai.activeModel()
+      kind: type, title: result.title, prompt: type === 'custom' ? instruction : null,
+      content: result.content, model: ai.activeModel()
     });
     await logUsage(req, 'generate');
     res.json({ success: true, document: doc });

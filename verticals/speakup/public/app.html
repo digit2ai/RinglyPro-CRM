@@ -159,7 +159,8 @@ const I18N = {
     saved:'Guardado',deleted:'Eliminado',confirmDel:'¿Eliminar esta grabación?',micUnsupported:'Tu navegador no soporta grabación de voz en vivo. Usa "Subir archivo".',
     simulated:'simulada',original:'Texto original',copy:'Copiar',copied:'Copiado',pdf:'PDF',uploading:'Subiendo…',
     generate:'Generar',whatToDo:'¿Qué quieres hacer con esta grabación?',minutes:'Acta de reunión',details:'Detalle completo',
-    nextSteps:'Próximos pasos',presentation:'Presentación',projectPlan:'Plan de proyecto',download:'Descargar',generating:'Generando…'},
+    nextSteps:'Próximos pasos',presentation:'Presentación',projectPlan:'Plan de proyecto',download:'Descargar',generating:'Generando…',
+    customField:'O escribe tu propia instrucción (lo que quieras hacer con esta nota)',customPh:'Ej: redacta un correo para el cliente con los acuerdos',customLabel:'Personalizado',writeInstr:'Escribe una instrucción'},
   en:{logout:'Sign out',newRec:'New recording',tapToRec:'Tap to record your voice (microphone)',
     recording:'Recording… tap to stop',recMeeting:'Record meeting (system audio)',
     noBot:'We capture your own device audio. No bot joins your call.',
@@ -174,7 +175,8 @@ const I18N = {
     saved:'Saved',deleted:'Deleted',confirmDel:'Delete this recording?',micUnsupported:'Your browser does not support live voice recording. Use "Upload file".',
     simulated:'simulated',original:'Original text',copy:'Copy',copied:'Copied',pdf:'PDF',uploading:'Uploading…',
     generate:'Generate',whatToDo:'What do you want to do with this recording?',minutes:'Meeting minutes',details:'Full details',
-    nextSteps:'Next steps',presentation:'Presentation',projectPlan:'Project plan',download:'Download',generating:'Generating…'}
+    nextSteps:'Next steps',presentation:'Presentation',projectPlan:'Project plan',download:'Download',generating:'Generating…',
+    customField:'Or write your own instruction (whatever you want to do with this note)',customPh:'e.g. draft an email to the client with the agreements',customLabel:'Custom',writeInstr:'Write an instruction'}
 };
 let lang = localStorage.getItem('speakup_lang') || 'es';
 function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
@@ -383,6 +385,9 @@ function renderDetail(d){
           '<button class="btn sm" onclick="doGenerate('+r.id+',\'presentation\')">'+t('presentation')+'</button>'+
           '<button class="btn sm" onclick="doGenerate('+r.id+',\'project_plan\')">'+t('projectPlan')+'</button>'+
         '</div>'+
+        '<label class="muted" style="display:block;margin-top:16px">'+t('customField')+'</label>'+
+        '<textarea id="genCustom" rows="2" placeholder="'+t('customPh')+'" style="margin:6px 0 10px"></textarea>'+
+        '<button class="btn sm" onclick="doGenerateCustom('+r.id+')">'+t('generate')+'</button>'+
         '<div id="genResult">'+renderDocuments(d.documents)+'</div>'+
       '</div>'+
       '<div id="pane-trn" style="display:none">'+
@@ -427,13 +432,15 @@ function mdToHtml(md){
   }
   closeLists(); return html;
 }
-function docLabel(kind){ const map={minutes:'minutes',details:'details',next_steps:'nextSteps',presentation:'presentation',project_plan:'projectPlan'}; return t(map[kind]||kind); }
+function docLabel(x){ const map={minutes:'minutes',details:'details',next_steps:'nextSteps',presentation:'presentation',project_plan:'projectPlan'};
+  if(x.kind==='custom') return esc(x.title || x.prompt || t('customLabel'));
+  return t(map[x.kind]||x.kind); }
 window.__docs = {};
 function renderDocuments(list){
   if(!list||!list.length) return '';
   return list.map(x=>{ window.__docs[x.id]=x;
     return '<div class="result"><div class="row" style="justify-content:space-between;align-items:center">'+
-      '<h4 style="margin:0">'+docLabel(x.kind)+'</h4>'+
+      '<h4 style="margin:0">'+docLabel(x)+'</h4>'+
       '<div class="row"><button class="btn sec sm" onclick="copyText(\'doc'+x.id+'\')">'+t('copy')+'</button>'+
       '<button class="btn sec sm" onclick="downloadDoc('+x.id+')">'+t('download')+'</button></div></div>'+
       '<div id="doc'+x.id+'" class="mdbody">'+mdToHtml(x.content)+'</div></div>';
@@ -444,14 +451,20 @@ function downloadDoc(id){ const d=window.__docs[id]; if(!d) return;
   const a=document.createElement('a'); a.href=url; a.download=(d.title||'speakup').replace(/[^a-z0-9]+/gi,'-').slice(0,50)+'.md';
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
-async function doGenerate(id,type){
+async function doGenerate(id,type,instruction){
   const box=document.getElementById('genResult');
   const prev=box.innerHTML;
   box.innerHTML='<div class="result"><span class="spin"></span> '+t('generating')+'</div>'+prev;
-  try{ const d=await api('/recordings/'+id+'/generate',{method:'POST',body:JSON.stringify({type,lang})});
+  try{ await api('/recordings/'+id+'/generate',{method:'POST',body:JSON.stringify({type,lang,instruction:instruction||undefined})});
     // re-fetch to show all docs newest-first
     const full=await api('/recordings/'+id); current=full; box.innerHTML=renderDocuments(full.documents);
+    if(instruction){ const f=document.getElementById('genCustom'); if(f) f.value=''; }
   }catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'+prev; }
+}
+function doGenerateCustom(id){
+  const f=document.getElementById('genCustom'); const instr=(f?f.value:'').trim();
+  if(!instr){ toast(t('writeInstr')); return; }
+  doGenerate(id,'custom',instr);
 }
 function renderSummaries(list){
   if (!list||!list.length) return '';

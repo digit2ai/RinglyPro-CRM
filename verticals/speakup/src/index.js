@@ -74,6 +74,7 @@ router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
       await sequelize.query('UPDATE su_users SET tenant_id = id WHERE tenant_id IS NULL');
       await sequelize.query('ALTER TABLE su_transcripts ADD COLUMN IF NOT EXISTS is_simulated BOOLEAN DEFAULT false');
       await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS error TEXT');
+      await sequelize.query('ALTER TABLE su_documents ADD COLUMN IF NOT EXISTS prompt TEXT');
     } catch (mErr) {
       console.error('  SPEAKUP column ensure error:', mErr.message);
     }

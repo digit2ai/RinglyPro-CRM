@@ -57,7 +57,13 @@ const server = app.listen(0, async () => {
         body: JSON.stringify({ type, lang: 'es' }) }).then(j);
       ok(g.success && g.document.content && g.document.kind === type, 'generate ' + type);
     }
-    ok((await fetch(base + '/api/v1/recordings/' + rid, { headers: H }).then(j)).documents.length >= 4, 'detail returns documents');
+    const gc = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
+      body: JSON.stringify({ type: 'custom', lang: 'es', instruction: 'Escribe un correo breve al equipo con los acuerdos.' }) }).then(j);
+    ok(gc.success && gc.document.kind === 'custom' && gc.document.prompt, 'generate custom (free-write)');
+    const gcBad = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
+      body: JSON.stringify({ type: 'custom', lang: 'es' }) });
+    ok(gcBad.status === 400, 'custom without instruction rejected (400)');
+    ok((await fetch(base + '/api/v1/recordings/' + rid, { headers: H }).then(j)).documents.length >= 5, 'detail returns documents');
 
     const ex = await fetch(base + '/api/v1/recordings/' + rid + '/export?format=md', { headers: H });
     ok(ex.ok && (await ex.text()).includes('# SIT'), 'export md');

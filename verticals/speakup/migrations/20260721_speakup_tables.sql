@@ -89,8 +89,9 @@ CREATE TABLE IF NOT EXISTS su_documents (
   id           SERIAL PRIMARY KEY,
   tenant_id    INTEGER NOT NULL DEFAULT 1,
   recording_id INTEGER NOT NULL,
-  kind         VARCHAR(40),   -- minutes|details|next_steps|presentation|project_plan
+  kind         VARCHAR(40),   -- minutes|details|next_steps|presentation|project_plan|custom
   title        VARCHAR(255),
+  prompt       TEXT,          -- free-form instruction (kind=custom)
   content      TEXT,
   model        VARCHAR(60),
   created_at   TIMESTAMPTZ DEFAULT NOW()
