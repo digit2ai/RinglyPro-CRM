@@ -44,6 +44,26 @@ const MODULES = {
 };
 const ORDER = ['overview', 'timeline', 'evidence', 'providers', 'communications', 'contradictions', 'policies', 'comparisons', 'questions', 'escalations', 'correspondence', 'analyst'];
 
+// Shared form builder used by both Add and Edit. `values` (optional) pre-fills inputs.
+function makeForm(fields, values) {
+  const form = el('div', 'form two');
+  const inputs = {};
+  fields.forEach(f => {
+    const wrap = el('div'); wrap.appendChild(el('label', '', esc(f.label)));
+    let inp;
+    if (f.type === 'area') { inp = el('textarea'); inp.rows = 3; wrap.style.gridColumn = '1 / -1'; }
+    else if (f.type === 'select') { inp = el('select'); inp.innerHTML = f.opts.map(o => `<option value="${esc(o)}">${esc(o || '—')}</option>`).join(''); }
+    else { inp = el('input'); inp.type = f.type; }
+    if (values && values[f.name] != null && values[f.name] !== '') {
+      let v = values[f.name];
+      if (f.type === 'date' && typeof v === 'string') v = v.slice(0, 10);
+      inp.value = v;
+    }
+    inputs[f.name] = inp; wrap.appendChild(inp); form.appendChild(wrap);
+  });
+  return { form, inputs };
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 (async function init() {
   try {
@@ -56,11 +76,12 @@ const ORDER = ['overview', 'timeline', 'evidence', 'providers', 'communications'
   await refreshCases();
 })();
 
-async function refreshCases() {
+async function refreshCases(preferId) {
   const d = await api('/cases'); CASES = d.cases || [];
   const sel = $('#caseSel'); sel.innerHTML = CASES.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
   if (!CASES.length) { $('#main').innerHTML = '<div class="empty">No cases yet. Create one with + Case.</div>'; $('#nav').innerHTML = ''; return; }
-  await loadCase(CASES[0].id);
+  const keep = preferId && CASES.some(c => c.id == preferId) ? preferId : CASES[0].id;
+  await loadCase(keep);
 }
 
 async function loadCase(id) {
@@ -89,8 +110,35 @@ function render() {
 function renderOverview(main) {
   const c = CASE, cn = DATA.counts || {};
   main.innerHTML = '';
-  main.appendChild(el('h2', '', esc(c.title)));
-  main.appendChild(el('p', 'lead', esc(c.subject_org || '') + ' · ' + esc(c.status) + ' · priority ' + esc(c.priority)));
+  const head = el('div', 'row'); head.style.cssText = 'justify-content:space-between;align-items:flex-start';
+  const htext = el('div');
+  htext.appendChild(el('h2', '', esc(c.title)));
+  htext.appendChild(el('p', 'lead', esc(c.subject_org || '') + ' · ' + esc(c.status) + ' · priority ' + esc(c.priority)));
+  const editCase = el('button', 'btn sec sm', 'Edit case');
+  head.appendChild(htext); head.appendChild(editCase);
+  main.appendChild(head);
+
+  const CASE_FIELDS = [
+    F('title', 'Title'), F('subject_org', 'Subject organization'),
+    F('status', 'Status', 'select', ['open', 'escalating', 'resolved', 'closed']),
+    F('priority', 'Priority', 'select', ['high', 'medium', 'low']),
+    F('opened_at', 'Opened', 'date'),
+    F('summary', 'Summary', 'area'), F('objective', 'Objective', 'area')
+  ];
+  editCase.onclick = () => {
+    const { form, inputs } = makeForm(CASE_FIELDS, c);
+    const save = el('button', 'btn sm', 'Save case'); save.style.gridColumn = '1 / -1';
+    const cancel = el('button', 'btn sec sm', 'Cancel'); cancel.style.gridColumn = '1 / -1';
+    save.onclick = async () => {
+      const body = {}; Object.keys(inputs).forEach(k => { body[k] = inputs[k].value; });
+      try { await api('/cases/' + c.id, { method: 'PATCH', body: JSON.stringify(body) }); toast('Case updated'); await refreshCases(c.id); }
+      catch (e) { toast(e.message); }
+    };
+    cancel.onclick = () => render();
+    form.appendChild(save); form.appendChild(cancel);
+    const card = el('div', 'card'); card.appendChild(el('h4', '', 'Edit case')); card.appendChild(form);
+    main.innerHTML = ''; main.appendChild(card);
+  };
   const kpis = el('div', 'kpis');
   [['evidence', 'Evidence'], ['timeline', 'Timeline'], ['contradictions', 'Contradictions'], ['policies', 'KB entries'], ['questions', 'Questions'], ['escalations', 'Escalations']]
     .forEach(([k, l]) => kpis.appendChild(el('div', 'kpi', `<b>${cn[k] || 0}</b><span>${l}</span>`)));
@@ -123,16 +171,7 @@ function renderModule(main, key) {
   const addBtn = el('button', 'btn sm', '+ Add');
   const formWrap = el('div'); formWrap.style.display = 'none';
   addBtn.onclick = () => { formWrap.style.display = formWrap.style.display === 'none' ? 'block' : 'none'; };
-  const form = el('div', 'form two');
-  const inputs = {};
-  m.add.forEach(f => {
-    const wrap = el('div'); wrap.appendChild(el('label', '', esc(f.label)));
-    let inp;
-    if (f.type === 'area') { inp = el('textarea'); inp.rows = 3; wrap.style.gridColumn = '1 / -1'; }
-    else if (f.type === 'select') { inp = el('select'); inp.innerHTML = f.opts.map(o => `<option value="${esc(o)}">${esc(o || '—')}</option>`).join(''); }
-    else { inp = el('input'); inp.type = f.type; }
-    inputs[f.name] = inp; wrap.appendChild(inp); form.appendChild(wrap);
-  });
+  const { form, inputs } = makeForm(m.add);
   const save = el('button', 'btn', 'Save'); save.style.gridColumn = '1 / -1';
   save.onclick = async () => {
     const body = {}; Object.keys(inputs).forEach(k => { const v = inputs[k].value; if (v !== '') body[k] = v; });
@@ -158,11 +197,29 @@ function renderModule(main, key) {
   // List
   if (!items.length) { main.appendChild(el('div', 'empty', 'No items yet.')); return; }
   items.forEach(r => {
-    const it = el('div', 'item', m.render(r));
-    const del = el('button', 'del', 'Delete'); del.style.float = 'right';
-    del.onclick = async () => { if (!confirm('Delete this item?')) return; try { await api(`/${key}/${r.id}`, { method: 'DELETE' }); toast('Deleted'); await loadCase(CASE.id); } catch (e) { toast(e.message); } };
-    it.insertBefore(del, it.firstChild);
+    const it = el('div', 'item');
+    const actions = el('div', 'row'); actions.style.cssText = 'justify-content:flex-end;gap:14px;margin-bottom:4px';
+    const editBtn = el('button', 'del', 'Edit');
+    const del = el('button', 'del', 'Delete');
+    actions.appendChild(editBtn); actions.appendChild(del);
+    const view = el('div'); view.innerHTML = m.render(r);
+    it.appendChild(actions); it.appendChild(view);
     main.appendChild(it);
+
+    del.onclick = async () => { if (!confirm('Delete this item?')) return; try { await api(`/${key}/${r.id}`, { method: 'DELETE' }); toast('Deleted'); await loadCase(CASE.id); } catch (e) { toast(e.message); } };
+    editBtn.onclick = () => {
+      const { form, inputs } = makeForm(m.add, r);
+      const save = el('button', 'btn sm', 'Save changes'); save.style.gridColumn = '1 / -1';
+      const cancel = el('button', 'btn sec sm', 'Cancel'); cancel.style.gridColumn = '1 / -1';
+      save.onclick = async () => {
+        const body = {}; Object.keys(inputs).forEach(k => { body[k] = inputs[k].value; });
+        try { await api(`/${key}/${r.id}`, { method: 'PATCH', body: JSON.stringify(body) }); toast('Updated'); await loadCase(CASE.id); }
+        catch (e) { toast(e.message); }
+      };
+      cancel.onclick = () => render();
+      form.appendChild(save); form.appendChild(cancel);
+      it.innerHTML = ''; it.appendChild(form);
+    };
   });
 
   // Wire item action buttons

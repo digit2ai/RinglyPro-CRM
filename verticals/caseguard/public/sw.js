@@ -1,5 +1,5 @@
 /* CaseGuard service worker — offline shell. Network-first for navigations; never caches /api/. */
-const CACHE = 'caseguard-v1';
+const CACHE = 'caseguard-v2';
 const SHELL = ['/caseguard/', '/caseguard/app.html', '/caseguard/app.js', '/caseguard/login.html', '/caseguard/favicon.svg', '/caseguard/manifest.webmanifest'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
