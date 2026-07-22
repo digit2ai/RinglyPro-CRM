@@ -79,6 +79,9 @@
   .mdbody ul,.mdbody ol{margin:6px 0;padding-left:22px}
   .mdbody li{margin:3px 0}
   .mdbody code{background:#0c1320;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:13px}
+  .mdbody table{border-collapse:collapse;font-size:13px;margin:8px 0}
+  .mdbody th,.mdbody td{border:1px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap}
+  .mdbody th{background:#0c1320}
   .transcript{white-space:pre-wrap;line-height:1.6;font-size:15px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px}
   details.sec-collapse>summary{cursor:pointer;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:700;list-style:none;padding:2px 0}
   details.sec-collapse>summary::-webkit-details-marker{display:none}
@@ -409,20 +412,28 @@ function showTab(tab,which){
   tab.parentNode.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); tab.classList.add('on');
   ['gen','trn','rew'].forEach(p=>{ const el=document.getElementById('pane-'+p); if(el) el.style.display = p===which?'block':'none'; });
 }
-// minimal markdown -> HTML
+// minimal markdown -> HTML (headings, bold, ul, ol, tables, paragraphs)
 function mdToHtml(md){
-  const lines = String(md||'').split('\n'); let html='', inUl=false, inOl=false;
-  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const lines = String(md||'').split('\n'); let html='', inUl=false, inOl=false, tbl=[];
   const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>');
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const flushTable=()=>{ if(!tbl.length) return;
+    const rows=tbl.filter(r=>!/^[\s|:\-]+$/.test(r));
+    html+='<div style="overflow-x:auto"><table>';
+    rows.forEach((r,i)=>{ const cells=r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      html+='<tr>'+cells.map(c=>(i===0?'<th>'+inline(c)+'</th>':'<td>'+inline(c)+'</td>')).join('')+'</tr>'; });
+    html+='</table></div>'; tbl=[]; };
   for(let raw of lines){
     const l=raw.replace(/\s+$/,''); let m;
+    if(/^\s*\|.*\|\s*$/.test(l)){ closeLists(); tbl.push(l.trim()); continue; }
+    if(tbl.length) flushTable();
     if((m=l.match(/^(#{1,4})\s+(.+)$/))){ closeLists(); const n=m[1].length; html+='<h'+(n+2)+'>'+inline(m[2])+'</h'+(n+2)+'>'; }
     else if((m=l.match(/^\s*[-*]\s+(.+)$/))){ if(!inUl){closeLists();html+='<ul>';inUl=true;} html+='<li>'+inline(m[1])+'</li>'; }
     else if((m=l.match(/^\s*\d+\.\s+(.+)$/))){ if(!inOl){closeLists();html+='<ol>';inOl=true;} html+='<li>'+inline(m[1])+'</li>'; }
     else if(l.trim()===''){ closeLists(); }
     else { closeLists(); html+='<p>'+inline(l)+'</p>'; }
   }
-  closeLists(); return html;
+  flushTable(); closeLists(); return html;
 }
 function docLabel(x){ const map={minutes:'minutes',details:'details',next_steps:'nextSteps',presentation:'presentation',project_plan:'projectPlan'};
   if(x.kind==='custom') return esc(x.title || x.prompt || t('customLabel'));

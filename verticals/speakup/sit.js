@@ -57,6 +57,11 @@ const server = app.listen(0, async () => {
         body: JSON.stringify({ type, lang: 'es' }) }).then(j);
       ok(g.success && g.document.content && g.document.kind === type, 'generate ' + type);
     }
+    // language follows the UI selection, not the transcript (heuristic + real path)
+    const gEs = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H, body: JSON.stringify({ type: 'minutes', lang: 'es' }) }).then(j);
+    const gEn = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H, body: JSON.stringify({ type: 'minutes', lang: 'en' }) }).then(j);
+    ok(/Resumen|Acciones|Acta/i.test(gEs.document.content) && !/^#\s*Meeting Minutes/im.test(gEs.document.content), 'ES selection -> Spanish document');
+    ok(/Summary|Action items|Minutes/i.test(gEn.document.content), 'EN selection -> English document');
     const gc = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
       body: JSON.stringify({ type: 'custom', lang: 'es', instruction: 'Escribe un correo breve al equipo con los acuerdos.' }) }).then(j);
     ok(gc.success && gc.document.kind === 'custom' && gc.document.prompt, 'generate custom (free-write)');

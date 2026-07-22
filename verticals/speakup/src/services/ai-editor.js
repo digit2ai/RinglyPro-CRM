@@ -139,7 +139,7 @@ function heuristicRewrite(text, tone) {
 const DOC_SPECS = {
   minutes: {
     title: { es: 'Acta de reunión', en: 'Meeting minutes' },
-    instr: 'Write formal meeting MINUTES in Markdown. Include: a title, date/context if inferable, attendees or speakers if identifiable, an agenda/topics-discussed section, key decisions made, and an action-items table (task, owner if mentioned, due date if mentioned). Be faithful to the transcript; do not invent facts.'
+    instr: 'Write formal meeting MINUTES in Markdown. Include: a title, date/context if inferable, attendees or speakers if identifiable, an agenda/topics-discussed section, key decisions made, and an action-items list (each item: the task, plus owner and due date if mentioned). Be faithful to the transcript; do not invent facts.'
   },
   details: {
     title: { es: 'Detalle completo', en: 'Full details' },
@@ -155,7 +155,7 @@ const DOC_SPECS = {
   },
   project_plan: {
     title: { es: 'Plan de proyecto', en: 'Project plan' },
-    instr: 'Produce a PROJECT PLAN in Markdown: objective, scope, phases with milestones, a task breakdown (task, owner, estimate in weeks), a simple week-by-week timeline (weeks, never months), risks/mitigations, and success criteria. Keep the timeline realistic and short.'
+    instr: 'Produce a PROJECT PLAN in Markdown using headings and bulleted lists: objective, scope, phases with milestones, a task breakdown (each task with owner and estimate in weeks), a simple week-by-week timeline (weeks, never months), risks/mitigations, and success criteria. Keep the timeline realistic and short.'
   }
 };
 
@@ -174,8 +174,11 @@ async function generateDocument(text, type, lang, instruction) {
   const clean = String(text || '').trim();
   if (!anthropic || !clean) return heuristicDocument(clean, type, uiLang, spec);
 
-  const system = 'You transform a meeting/conversation transcript into a specific business deliverable. ' +
-    'Reply with ONLY the Markdown document, no preamble. Match the language of the transcript. No emojis. Never fabricate facts not supported by the transcript.';
+  const langName = uiLang === 'en' ? 'English' : 'Spanish';
+  const system = `You transform a meeting/conversation transcript into a specific business deliverable. ` +
+    `Write the ENTIRE document in ${langName} (translate the content as needed), UNLESS the instruction explicitly asks for another language. ` +
+    `Reply with ONLY the Markdown document, no preamble. Use headings and bulleted lists — DO NOT use Markdown tables (they must render on a phone). ` +
+    `No emojis. Never fabricate facts not supported by the transcript.`;
   const user = `${spec.instr}\n\nTRANSCRIPT:\n"""${clean.slice(0, 28000)}"""`;
   try {
     const md = await callClaude({ system, user, max_tokens: 3000 });
