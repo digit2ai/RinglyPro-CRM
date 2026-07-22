@@ -1,5 +1,5 @@
 /* SpeakUp — service worker (PWA offline shell). */
-const CACHE = 'speakup-v3';
+const CACHE = 'speakup-v4';
 const SHELL = [
   '/speakup/',
   '/speakup/login',
@@ -28,6 +28,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin !== location.origin) return; // never touch CDN / model downloads
   if (url.pathname.includes('/api/')) return;
 
   const isAsset = /\.(png|svg|webmanifest|css|js|woff2?)$/.test(url.pathname);

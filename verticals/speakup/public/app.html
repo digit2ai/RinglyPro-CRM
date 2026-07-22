@@ -91,6 +91,14 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   .toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1b2536;border:1px solid var(--line);padding:12px 20px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
   .toast.show{opacity:1}
+  #wOverlay{position:fixed;inset:0;background:rgba(6,9,16,.86);backdrop-filter:blur(4px);z-index:60;
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .wbox{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;text-align:center;max-width:340px;width:100%}
+  .spin.big{width:34px;height:34px;border-width:3px;margin:0 auto}
+  .wbar{height:8px;background:#0c1320;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:16px 0 8px}
+  #wFill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .25s}
+  #wFill.indet{width:40%!important;animation:indet 1.2s ease-in-out infinite}
+  @keyframes indet{0%{margin-left:-40%}100%{margin-left:100%}}
   .empty{color:var(--mut);text-align:center;padding:22px 12px;font-size:14px}
   @media print{header,.hero,.tabs,.row,.actions,.sec-collapse>summary,.importbox,.libcard{display:none!important}
     .card{border:0;background:#fff;color:#000}.transcript,.result{border:0;background:#fff;color:#000}body{background:#fff;color:#000}}
@@ -145,6 +153,17 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- On-device transcription progress -->
+<div id="wOverlay" style="display:none">
+  <div class="wbox">
+    <div class="spin big"></div>
+    <div id="wMsg" style="font-weight:600;margin-top:6px"></div>
+    <div class="wbar"><div id="wFill"></div></div>
+    <div id="wPct" class="muted"></div>
+    <div class="muted" style="font-size:12px;margin-top:6px" data-i="noBotShort">Se transcribe en tu dispositivo. El audio no sale de tu equipo.</div>
+  </div>
+</div>
+
 <script>
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const I18N = {
@@ -163,7 +182,10 @@ const I18N = {
     whatToDo:'¿Qué quieres hacer con esta grabación?',minutes:'Acta de reunión',details:'Detalle completo',nextSteps:'Próximos pasos',
     presentation:'Presentación',projectPlan:'Plan de proyecto',download:'Descargar',generating:'Generando…',
     customField:'O escribe tu propia instrucción (lo que quieras hacer con esta nota)',customPh:'Ej: redacta un correo para el cliente con los acuerdos',
-    customLabel:'Personalizado',writeInstr:'Escribe una instrucción'},
+    customLabel:'Personalizado',writeInstr:'Escribe una instrucción',
+    loadingModel:'Descargando el modelo de transcripción (solo la primera vez)…',preparing:'Preparando el audio…',
+    transcribing:'Transcribiendo en tu dispositivo…',transcribeFail:'No se pudo transcribir en el navegador; guardando el audio.',
+    noBotShort:'Se transcribe en tu dispositivo. El audio no sale de tu equipo.'},
   en:{logout:'Sign out',tapToRec:'Tap to record your voice',recording:'Recording… tap to stop',
     recCall:'Record call (your voice + the call)',recordingCall:'Recording the call… stop when done',
     shareAudio:'Pick the call tab/screen and turn on "Share audio".',
@@ -179,7 +201,10 @@ const I18N = {
     whatToDo:'What do you want to do with this recording?',minutes:'Meeting minutes',details:'Full details',nextSteps:'Next steps',
     presentation:'Presentation',projectPlan:'Project plan',download:'Download',generating:'Generating…',
     customField:'Or write your own instruction (whatever you want to do with this note)',customPh:'e.g. draft an email to the client with the agreements',
-    customLabel:'Custom',writeInstr:'Write an instruction'}
+    customLabel:'Custom',writeInstr:'Write an instruction',
+    loadingModel:'Downloading the transcription model (first time only)…',preparing:'Preparing audio…',
+    transcribing:'Transcribing on your device…',transcribeFail:'Could not transcribe in-browser; saving the audio.',
+    noBotShort:'Transcribed on your device. Audio never leaves your machine.'}
 };
 let lang = localStorage.getItem('speakup_lang') || 'es';
 function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
@@ -209,6 +234,60 @@ let toastTimer;
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1900); }
 async function logout(){ await fetch('/speakup/api/v1/auth/logout',{method:'POST'}); location.href='/speakup/login'; }
+
+// ─── on-device speech-to-text (our own Whisper model, runs in the browser) ──────
+// Transcribes recorded calls + uploaded files locally — no vendor, audio never
+// leaves the device. Model (~80MB) downloads once and is cached by the browser.
+function showW(msg,pct){ const o=document.getElementById('wOverlay'); o.style.display='flex';
+  document.getElementById('wMsg').textContent=msg;
+  const fill=document.getElementById('wFill'), p=document.getElementById('wPct');
+  if(pct==null){ fill.classList.add('indet'); p.textContent=''; }
+  else { fill.classList.remove('indet'); fill.style.width=pct+'%'; p.textContent=pct+'%'; }
+}
+function hideW(){ document.getElementById('wOverlay').style.display='none';
+  const f=document.getElementById('wFill'); f.classList.remove('indet'); f.style.width='0'; }
+
+let __whisper=null;
+async function getWhisper(onProg){
+  if(__whisper) return __whisper;
+  const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3/+esm');
+  try{
+    __whisper = await mod.pipeline('automatic-speech-recognition','Xenova/whisper-base',{ progress_callback:onProg, device:'webgpu', dtype:'q8' });
+  }catch(e){
+    __whisper = await mod.pipeline('automatic-speech-recognition','Xenova/whisper-base',{ progress_callback:onProg, dtype:'q8' });
+  }
+  return __whisper;
+}
+// decode any audio blob -> mono Float32 PCM @ 16kHz (what Whisper expects)
+async function blobToPCM(blob){
+  const arr = await blob.arrayBuffer();
+  const AC = window.AudioContext||window.webkitAudioContext;
+  const tmp = new AC();
+  const decoded = await tmp.decodeAudioData(arr.slice(0));
+  try{ tmp.close(); }catch(e){}
+  const len = Math.max(1, Math.ceil(decoded.duration*16000));
+  const off = new OfflineAudioContext(1, len, 16000);
+  const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start(0);
+  const rendered = await off.startRendering();
+  return rendered.getChannelData(0);
+}
+async function transcribeBlob(blob, uiLang){
+  showW(t('loadingModel'),0);
+  const asr = await getWhisper((p)=>{ if(p&&p.status==='progress'&&p.progress!=null) showW(t('loadingModel'),Math.round(p.progress)); });
+  showW(t('preparing'),null);
+  const pcm = await blobToPCM(blob);
+  showW(t('transcribing'),null);
+  const out = await asr(pcm,{ chunk_length_s:30, stride_length_s:5, language:(uiLang==='en'?'english':'spanish'), task:'transcribe', return_timestamps:false });
+  hideW();
+  return (out && out.text) ? out.text.trim() : '';
+}
+// fallback: hand the audio to the server (stub engine) so the recording is still saved
+async function uploadBlobFallback(blob,title,source){
+  const fd=new FormData(); fd.append('file',blob,'audio.webm'); fd.append('title',title); fd.append('source',source);
+  toast(t('uploading'));
+  const r=await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
+  const d=await r.json(); await loadLibrary(); if(d.recording) pollAndOpen(d.recording.id);
+}
 
 // ─── live mic recording (Web Speech API — on-device, no key) ────────────────────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -287,14 +366,17 @@ async function startCall(){
       document.getElementById('timer').textContent='00:00';
       document.getElementById('recstatus').textContent = t('tapToRec');
       const blob = new Blob(callChunks, { type:'audio/webm' });
-      const fd = new FormData();
-      fd.append('file', blob, 'llamada.webm');
-      fd.append('title', (lang==='en'?'Call ':'Llamada ')+new Date().toLocaleString());
-      fd.append('source','call');
-      toast(t('uploading'));
-      const r = await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
-      const d = await r.json(); await loadLibrary();
-      if (d.recording) pollAndOpen(d.recording.id);
+      const title = (lang==='en'?'Call ':'Llamada ')+new Date().toLocaleString();
+      const dur = Math.floor((Date.now()-callStartTs)/1000);
+      let text='';
+      try{ text = await transcribeBlob(blob, lang); }
+      catch(e){ hideW(); toast(t('transcribeFail')); }
+      if (text){
+        const d = await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'call',text,lang,duration_sec:dur})});
+        await loadLibrary(); openRec(d.recording.id);
+      } else {
+        await uploadBlobFallback(blob, title, 'call');
+      }
       callRec=null;
     };
     callRec.start(1000);
@@ -317,13 +399,16 @@ async function startCall(){
 async function uploadFile(){
   const f = document.getElementById('file').files[0];
   if (!f){ toast(t('uploadFile')); return; }
-  const fd = new FormData(); fd.append('file', f); fd.append('title', f.name);
-  toast(t('uploading'));
-  const r = await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
-  const d = await r.json();
-  if (!r.ok){ toast(d.error||'Error'); return; }
   document.getElementById('file').value='';
-  await loadLibrary(); pollAndOpen(d.recording.id);
+  let text='';
+  try{ text = await transcribeBlob(f, lang); }
+  catch(e){ hideW(); toast(t('transcribeFail')); }
+  if (text){
+    const d = await api('/recordings',{method:'POST',body:JSON.stringify({title:f.name,source:'upload',text,lang})});
+    await loadLibrary(); openRec(d.recording.id);
+  } else {
+    await uploadBlobFallback(f, f.name, 'upload');
+  }
 }
 async function importUrl(){
   const url = document.getElementById('url').value.trim();

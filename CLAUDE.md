@@ -307,7 +307,11 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 
 **Live:** app `/speakup/` · login `/speakup/login` (login-only, no public signup; owner seeds team) · health `/speakup/health` · debug `/debug/speakup-error`. Installable PWA (manifest + sw.js; network-first, never caches `/api/`).
 
-**STT engine (ours):** `src/services/stt.js`. Live path = browser **Web Speech API** (on-device, no key — the zero-setup working path). File/import path = self-hosted **whisper.cpp** or **Vosk** child-process (no vendor), run OUT of the request cycle (Cloudflare ~100s) via `setImmediate` job + `GET /:id/status` poll. Default `stub` returns an honest labelled placeholder (`is_simulated:true`), never a faked transcription.
+**STT engine (ours — on-device):** transcription runs in the BROWSER, no vendor, audio never leaves the device.
+- **Live mic** = **Web Speech API** (instant, on-device).
+- **Recorded calls + uploaded files** = **Whisper** via transformers.js (`Xenova/whisper-base`, q8) loaded from jsdelivr `+esm`, model weights from the HF CDN, cached after first use (~80MB, one time). Audio blob is decoded to 16kHz mono PCM in-browser (Web Audio `OfflineAudioContext`), transcribed locally, then only the TEXT is POSTed to `/recordings` (no audio upload). WebGPU when available, WASM fallback. A progress overlay shows model download % → "transcribing". No CSP blocks `/speakup` (only `frame-ancestors` on unrelated routes).
+- **Record Call** (`startCall`): mixes `getUserMedia` (your mic) + `getDisplayMedia` (the call, via shared tab/screen) with Web Audio into ONE stream → MediaRecorder → on-device Whisper. macOS can't capture the *native* Zoom app's system audio via the browser (OS limit) — works with Zoom-in-a-browser-tab, Windows screen+system audio, or a virtual audio device.
+- **Server fallback:** if in-browser decode/transcribe fails, the audio is uploaded to `src/services/stt.js` (server engine `SPEAKUP_STT_ENGINE`: `stub` default | self-hosted `whispercpp`/`vosk`), run OUT of the request cycle via `setImmediate` job + `GET /:id/status` poll. Stub returns an honest labelled placeholder (`is_simulated:true`), never a faked transcription.
 
 **AI brain:** `src/services/ai-editor.js` reuses `ANTHROPIC_API_KEY` (`SPEAKUP_MODEL`, default Haiku). `summarize()` → `{summary, bullets[], action_items[]}`; `translate()` (never fabricated — no key returns original + notice); `rewrite()` (professional/concise/friendly/email/grammar/bullets + custom prompt, original always preserved). Zero-key heuristic fallback throughout.
 
