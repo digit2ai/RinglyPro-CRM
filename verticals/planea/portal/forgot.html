@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Planea — Iniciar sesión</title>
+<title>Planea — Restablecer contraseña</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -13,15 +13,17 @@
   .box{width:100%;max-width:420px}
   .brand{display:flex;justify-content:center;margin-bottom:18px}
   .brand .mk{width:74px;height:74px;border-radius:20px;border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;background:#0f231e}
-  h1{font-family:'Inter',sans-serif;font-weight:800;font-size:26px;text-align:center;margin:0 0 22px;letter-spacing:-.02em}
+  h1{font-family:'Inter',sans-serif;font-weight:800;font-size:24px;text-align:center;margin:0 0 6px;letter-spacing:-.02em}
+  .lead{text-align:center;color:var(--mut);font-size:14px;margin:0 0 22px;line-height:1.5}
   label{display:block;font-weight:700;font-size:14px;margin:16px 0 7px}
   input{width:100%;background:#16302a;border:1px solid var(--line);border-radius:12px;padding:14px 15px;color:var(--txt);font-family:inherit;font-size:15px}
   input:focus{outline:2px solid var(--green);border-color:transparent}
   .btn{width:100%;margin-top:22px;background:linear-gradient(120deg,var(--green),var(--teal));color:#06130f;border:none;border-radius:12px;padding:15px;font-family:'Inter',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
   .btn:disabled{opacity:.6;cursor:default}
-  .msg{margin-top:16px;padding:12px 14px;border-radius:12px;font-size:14px;display:none}
+  .msg{margin-top:16px;padding:12px 14px;border-radius:12px;font-size:14px;display:none;line-height:1.5}
   .msg.err{display:block;background:#2a1414;color:#ff9d9d;border:1px solid #52201f}
   .msg.ok{display:block;background:#12271c;color:var(--greenb);border:1px solid #24513a}
+  .msg a{color:var(--greenb);font-weight:700}
   .foot{text-align:center;margin-top:22px;color:var(--mut);font-size:14px}
   .foot a{color:var(--greenb);font-weight:700;text-decoration:none}
 </style>
@@ -29,41 +31,35 @@
 <body>
   <div class="box">
     <div class="brand"><span class="mk"><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2.5 20 20l-8-4.6L4 20 12 2.5Z" fill="#fff"/></svg></span></div>
-    <h1>Iniciar sesión</h1>
+    <h1>Restablecer contraseña</h1>
+    <p class="lead">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</p>
     <div id="msg" class="msg"></div>
     <form id="f">
       <label for="email">Correo electrónico</label>
-      <input id="email" type="email" autocomplete="email" required placeholder="tu@correo.com">
-      <label for="pw">Contraseña</label>
-      <input id="pw" type="password" autocomplete="current-password" required placeholder="••••••••">
-      <button class="btn" id="go" type="submit">Ingresar</button>
+      <input id="email" type="email" autocomplete="email" required placeholder="tu@correo.com" autofocus>
+      <button class="btn" id="go" type="submit">Enviar enlace</button>
     </form>
-    <div class="foot" style="margin-top:16px"><a href="/planea/forgot">¿Olvidaste tu contraseña? Restablécela</a></div>
-    <div class="foot">¿No tienes cuenta? <a href="/planea/signup">Regístrate</a></div>
+    <div class="foot"><a href="/planea/login">Volver a iniciar sesión</a></div>
   </div>
 <script>
 (function(){
-  var API='/planea/api/v1/auth/login';
-  // Optional ?next= return path (must be a same-app /planea path — no open redirect).
-  function nextPath(){
-    try{ var n=new URLSearchParams(location.search).get('next'); if(n && /^\/planea\//.test(n)) return n; }catch(e){}
-    return '/planea/portal/inicio';
-  }
-  var DEST=nextPath();
+  var API='/planea/api/v1/auth/forgot';
   var f=document.getElementById('f'), msg=document.getElementById('msg'), go=document.getElementById('go');
-  function show(t,ok){ msg.textContent=t; msg.className='msg '+(ok?'ok':'err'); }
+  function show(html,ok){ msg.innerHTML=html; msg.className='msg '+(ok?'ok':'err'); }
   f.addEventListener('submit',function(e){
     e.preventDefault();
-    var email=document.getElementById('email').value.trim(), pw=document.getElementById('pw').value;
-    go.disabled=true; go.textContent='Ingresando…';
-    fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})})
+    var email=document.getElementById('email').value.trim();
+    go.disabled=true; go.textContent='Enviando…';
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(res){
-        if(!res.ok){ show(res.j.error||'No se pudo iniciar sesión.',false); go.disabled=false; go.textContent='Ingresar'; return; }
-        show('Listo. Entrando…',true);
-        location.href=DEST;
+        go.textContent='Enviar enlace';
+        if(!res.ok){ show(res.j.error||'No se pudo procesar.',false); go.disabled=false; return; }
+        var m='Si ese correo tiene una cuenta, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja (y spam).';
+        if(res.j.dev_link){ m+='<br><br><b>Modo desarrollo:</b> <a href="'+res.j.dev_link+'">Abrir enlace de restablecimiento</a>'; }
+        show(m,true); go.disabled=true;
       })
-      .catch(function(){ show('Error de conexión. Intenta de nuevo.',false); go.disabled=false; go.textContent='Ingresar'; });
+      .catch(function(){ show('Error de conexión. Intenta de nuevo.',false); go.disabled=false; go.textContent='Enviar enlace'; });
   });
 })();
 </script>

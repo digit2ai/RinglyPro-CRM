@@ -19,6 +19,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { Sequelize, DataTypes } = require('sequelize');
 const score = require('./score.cjs');
 const salud = require('./salud.cjs');
@@ -46,6 +47,8 @@ function defineModels(sq) {
     password_hash: { type: DataTypes.STRING, allowNull: false },
     full_name: { type: DataTypes.STRING, allowNull: true },
     last_login_at: { type: DataTypes.DATE, allowNull: true },
+    reset_token: { type: DataTypes.STRING, allowNull: true },
+    reset_expires: { type: DataTypes.DATE, allowNull: true },
   }, { tableName: 'planea_users', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   const P = sq.define('PlaneaProfile', {
@@ -132,6 +135,8 @@ async function init() {
     await sequelize.query("ALTER TABLE planea_profiles ADD COLUMN IF NOT EXISTS finance_meta JSONB DEFAULT '{}'::jsonb").catch(function () {});
     await sequelize.query('ALTER TABLE planea_uat_runs ADD COLUMN IF NOT EXISTS session_key VARCHAR(120)').catch(function () {});
     await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_uat_session ON planea_uat_runs(session_key) WHERE session_key IS NOT NULL').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(80)').catch(function () {});
+    await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ').catch(function () {});
     ready = true;
     console.log('✅ Planea self-owned backend ready (planea_users, planea_profiles on CRM Postgres)');
   } catch (e) {
@@ -379,6 +384,56 @@ function build() {
   router.post('/auth/logout', (req, res) => {
     clearSession(res);
     res.json({ success: true });
+  });
+
+  // ── Password reset (email-based, with dev fallback link) ──────────────────
+  async function sendResetEmail(email, link) {
+    const key = process.env.SENDGRID_API_KEY, from = process.env.SENDGRID_FROM_EMAIL;
+    if (!key || !from) return false;
+    try {
+      const sg = require('@sendgrid/mail'); sg.setApiKey(key);
+      await sg.send({
+        to: email, from: from, subject: 'Restablece tu contraseña de Planea',
+        text: 'Recibimos una solicitud para restablecer tu contraseña de Planea. Abre este enlace (válido 1 hora): ' + link + '\n\nSi no lo solicitaste, ignora este correo.',
+        html: '<div style="font-family:Inter,Arial,sans-serif;max-width:460px;margin:auto;color:#0f231e"><h2 style="color:#17a6a6">Planea</h2><p>Recibimos una solicitud para restablecer tu contraseña.</p><p><a href="' + link + '" style="display:inline-block;background:#17a6a6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700">Restablecer mi contraseña</a></p><p style="color:#607068;font-size:13px">El enlace vence en 1 hora. Si no lo solicitaste, ignora este correo.</p></div>',
+      });
+      return true;
+    } catch (e) { console.error('Planea reset email error:', e.message); return false; }
+  }
+  router.post('/auth/forgot', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const email = String(req.body.email || '').toLowerCase().trim();
+      if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Correo inválido' });
+      const user = await User.findOne({ where: { email } });
+      let devLink = null;
+      if (user) {
+        const token = crypto.randomBytes(24).toString('hex');
+        user.reset_token = token; user.reset_expires = new Date(Date.now() + 3600000); await user.save();
+        const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'planea.vip').split(',')[0].trim();
+        const link = 'https://' + host + '/planea/reset?token=' + token;
+        const sent = await sendResetEmail(email, link);
+        if (!sent) devLink = link; // dev fallback so the flow is testable without SendGrid
+      }
+      // Always ok — never reveal whether the email exists.
+      res.json({ ok: true, dev_link: devLink });
+    } catch (e) { console.error('Planea forgot error:', e.message); res.status(500).json({ error: e.message }); }
+  });
+  router.post('/auth/reset', async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const token = String(req.body.token || '').trim();
+      const password = String(req.body.password || '');
+      if (!token) return res.status(400).json({ error: 'Enlace inválido.' });
+      if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+      const user = await User.findOne({ where: { reset_token: token } });
+      if (!user || !user.reset_expires || new Date(user.reset_expires).getTime() < Date.now()) {
+        return res.status(400).json({ error: 'El enlace no es válido o venció. Solicita uno nuevo.' });
+      }
+      user.password_hash = await bcrypt.hash(password, 12);
+      user.reset_token = null; user.reset_expires = null; await user.save();
+      res.json({ ok: true });
+    } catch (e) { console.error('Planea reset error:', e.message); res.status(500).json({ error: e.message }); }
   });
 
   router.get('/auth/me', async (req, res) => {
