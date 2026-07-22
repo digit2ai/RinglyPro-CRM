@@ -1,0 +1,13 @@
+{
+  "name": "CaseGuard — Administrative Review",
+  "short_name": "CaseGuard",
+  "description": "Private administrative-review and regulatory-escalation case manager.",
+  "start_url": "/caseguard/",
+  "scope": "/caseguard/",
+  "display": "standalone",
+  "background_color": "#0a1220",
+  "theme_color": "#0f2a4a",
+  "icons": [
+    { "src": "/caseguard/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

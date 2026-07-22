@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CaseGuard</title>
+<link rel="icon" href="/caseguard/favicon.svg">
+<link rel="manifest" href="/caseguard/manifest.webmanifest">
+<meta name="theme-color" content="#0f2a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root{--bg:#0a1220;--bg2:#0c1728;--card:#111c30;--line:#233248;--txt:#e9eef7;--mut:#8598b2;
+    --acc:#2f7ad1;--acc2:#0f2a4a;--ok:#3fc06a;--warn:#f2b34b;--err:#ff8f8f;--crit:#ff6b6b}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  a{color:var(--acc)}
+  header{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,18,32,.95);backdrop-filter:blur(10px);z-index:30}
+  header svg.logo{width:26px;height:26px}
+  header h1{font-size:17px;margin:0;letter-spacing:-.3px}
+  header .grow{flex:1}
+  select,input,textarea{background:#0b1526;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 11px;font-size:14px;font-family:inherit;width:100%}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--acc)}
+  .hsel{width:auto;max-width:44vw}
+  .hbtn{background:#182740;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;font-size:13px;cursor:pointer;white-space:nowrap}
+  .layout{display:flex;max-width:1200px;margin:0 auto;min-height:calc(100vh - 52px)}
+  nav{width:210px;flex:0 0 210px;border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:52px;height:calc(100vh - 52px);overflow:auto}
+  nav button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:none;border:0;color:var(--mut);
+    padding:10px 12px;border-radius:10px;font-size:14px;cursor:pointer;margin-bottom:2px}
+  nav button.on{background:#14233b;color:var(--txt);font-weight:600}
+  nav button .cnt{background:#0b1526;border:1px solid var(--line);border-radius:20px;font-size:11px;padding:1px 8px;color:var(--mut)}
+  main{flex:1;min-width:0;padding:18px 20px 60px}
+  h2{font-size:20px;margin:2px 0 4px;letter-spacing:-.3px}
+  .lead{color:var(--mut);font-size:13px;margin:0 0 16px;line-height:1.5}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px;margin-bottom:12px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px}
+  .kpi b{display:block;font-size:24px;letter-spacing:-.5px}
+  .kpi span{font-size:12px;color:var(--mut)}
+  .btn{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;border:0;border-radius:11px;padding:11px 15px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn.sec{background:#182740;border:1px solid var(--line);font-weight:500}
+  .btn.sm{padding:8px 11px;font-size:13px}
+  .btn:disabled{opacity:.5}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .item{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:9px}
+  .item h4{margin:0 0 5px;font-size:15px}
+  .item p{margin:4px 0;font-size:13px;color:#cdd8ea;line-height:1.5;white-space:pre-wrap}
+  .meta{font-size:12px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .pill{font-size:11px;border-radius:20px;padding:2px 9px;border:1px solid var(--line);color:var(--mut)}
+  .pill.high,.pill.critical{color:#ffd0d0;border-color:#5a2a2a;background:#2a1620}
+  .pill.medium{color:#ffe4b3;border-color:#5a4620;background:#2a2210}
+  .pill.low{color:#bfe6c8;border-color:#274a30;background:#14251a}
+  .pill.ok{color:#bfe6c8;border-color:#274a30;background:#14251a}
+  .del{background:none;border:0;color:var(--mut);cursor:pointer;font-size:12px}
+  .del:hover{color:var(--err)}
+  .form{display:grid;gap:9px;margin-top:6px}
+  .form.two{grid-template-columns:1fr 1fr}
+  .form label{font-size:12px;color:var(--mut);margin-bottom:-3px}
+  .muted{color:var(--mut);font-size:13px;line-height:1.5}
+  .out{white-space:pre-wrap;font-size:13px;line-height:1.6;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+  .sim{font-size:11px;color:var(--warn);margin-top:6px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#14233b;border:1px solid var(--line);color:var(--txt);
+    padding:11px 16px;border-radius:11px;font-size:13px;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .empty{color:var(--mut);font-size:13px;padding:14px;text-align:center}
+  @media(max-width:760px){nav{position:fixed;left:0;top:52px;z-index:25;background:var(--bg);transform:translateX(-100%);transition:transform .2s;box-shadow:8px 0 30px rgba(0,0,0,.5)}
+    nav.open{transform:translateX(0)} .layout{display:block} .form.two{grid-template-columns:1fr} .hsel{max-width:38vw}}
+  .menu{display:none;background:#182740;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 11px;cursor:pointer}
+  @media(max-width:760px){.menu{display:block}}
+</style>
+</head>
+<body>
+<header>
+  <button class="menu" id="menu">☰</button>
+  <svg class="logo" viewBox="0 0 48 48" fill="none"><path d="M24 3l17 6v11c0 11-7.3 20.3-17 25C14.3 40.3 7 31 7 20V9l17-6z" fill="#12395f" stroke="#2f7ad1" stroke-width="2"/><path d="M16 24l6 6 11-12" stroke="#3fc06a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h1>CaseGuard</h1>
+  <select class="hsel" id="caseSel" title="Active case"></select>
+  <div class="grow"></div>
+  <button class="hbtn" id="newCase">+ Case</button>
+  <button class="hbtn" id="logout">Sign out</button>
+</header>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main id="main"><div class="empty">Loading...</div></main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/caseguard/app.js"></script>
+</body>
+</html>

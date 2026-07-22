@@ -66,7 +66,8 @@
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} · %{size_download}b · %{content_type}\\\\n' https://orbup.app/)",
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} · %{size_download}b · %{content_type}\\\\n' https://orbup.app/orbup)",
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code} · %{size_download}b · %{content_type}\\\\n' https://orbup.app/pricing)",
-      "Bash(curl -s https://orbup.app/orbup)"
+      "Bash(curl -s https://orbup.app/orbup)",
+      "WebFetch(domain:www.floridaortho.com)"
     ]
   }
 }

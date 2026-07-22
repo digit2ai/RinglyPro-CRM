@@ -1743,6 +1743,36 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
+// CASEGUARD — Administrative Review & Regulatory Escalation Case Manager (served at /caseguard/)
+// =====================================================
+
+let caseguardApp = null;
+let caseguardError = null;
+try {
+  caseguardApp = require('../verticals/caseguard/src/index');
+  app.get('/caseguard', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/caseguard/');
+    next();
+  });
+  app.use('/caseguard', caseguardApp);
+  console.log('CaseGuard Case Manager mounted at /caseguard');
+  console.log('   - App UI: /caseguard/');
+  console.log('   - Health Check: /caseguard/health');
+  console.log('   - API: /caseguard/api/v1/*');
+} catch (error) {
+  caseguardError = error;
+  console.log('⚠️ CaseGuard not available:', error.message);
+}
+
+app.get('/debug/caseguard-error', (req, res) => {
+  res.json({
+    service: 'CaseGuard Administrative Review Case Manager',
+    available: !caseguardError,
+    error: caseguardError ? { message: caseguardError.message, stack: caseguardError.stack } : null
+  });
+});
+
+// =====================================================
 // EXECUTIVE ENGLISH COACHING — Digit2AI multi-tenant coaching (served at /coaching-english/)
 // =====================================================
 
