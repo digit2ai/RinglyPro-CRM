@@ -73,6 +73,27 @@ const server = app.listen(0, async () => {
     const ex = await fetch(base + '/api/v1/recordings/' + rid + '/export?format=md', { headers: H });
     ok(ex.ok && (await ex.text()).includes('# SIT'), 'export md');
 
+    // ── autosave + crash-recovery lifecycle ──
+    const live = await fetch(base + '/api/v1/recordings', { method: 'POST', headers: H, body: JSON.stringify({ title: 'Live', source: 'call', lang: 'es', status: 'recording' }) }).then(j);
+    ok(live.recording.status === 'recording', 'create live recording (status=recording)');
+    const lid = live.recording.id;
+    await fetch(base + '/api/v1/recordings/' + lid + '/transcript', { method: 'PUT', headers: H, body: JSON.stringify({ text: 'parte uno.', lang: 'es' }) });
+    await fetch(base + '/api/v1/recordings/' + lid + '/transcript', { method: 'PUT', headers: H, body: JSON.stringify({ text: 'parte uno. parte dos.', lang: 'es' }) });
+    const ld = await fetch(base + '/api/v1/recordings/' + lid, { headers: H }).then(j);
+    ok(ld.transcript && ld.transcript.text === 'parte uno. parte dos.', 'autosave PUT replaces transcript');
+    const pat = await fetch(base + '/api/v1/recordings/' + lid, { method: 'PATCH', headers: H, body: JSON.stringify({ status: 'done', duration_sec: 120 }) }).then(j);
+    ok(pat.success && pat.recording.status === 'done', 'PATCH finalize (status=done)');
+    // simulate a crash: a stale 'recording' row with autosaved text is recoverable
+    const live2 = await fetch(base + '/api/v1/recordings', { method: 'POST', headers: H, body: JSON.stringify({ title: 'Crashed', source: 'call', lang: 'es', status: 'recording' }) }).then(j);
+    await fetch(base + '/api/v1/recordings/' + live2.recording.id + '/transcript', { method: 'PUT', headers: H, body: JSON.stringify({ text: 'antes del corte', lang: 'es' }) });
+    const listLive = await fetch(base + '/api/v1/recordings', { headers: H }).then(j);
+    ok(listLive.recordings.some(r => r.id === live2.recording.id && r.status === 'recording'), 'stale recording discoverable for recovery');
+    await fetch(base + '/api/v1/recordings/' + live2.recording.id, { method: 'PATCH', headers: H, body: JSON.stringify({ status: 'done' }) });
+    const recd = await fetch(base + '/api/v1/recordings/' + live2.recording.id, { headers: H }).then(j);
+    ok(recd.recording.status === 'done' && recd.transcript.text === 'antes del corte', 'recovery finalizes + keeps autosaved text');
+    await fetch(base + '/api/v1/recordings/' + lid, { method: 'DELETE', headers: H });
+    await fetch(base + '/api/v1/recordings/' + live2.recording.id, { method: 'DELETE', headers: H });
+
     // Upload → async stub transcription → poll
     const fd = new FormData();
     fd.append('file', new Blob([Buffer.from('audio')], { type: 'audio/mpeg' }), 'clip.mp3');

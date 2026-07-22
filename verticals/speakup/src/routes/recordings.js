@@ -82,14 +82,15 @@ async function runTranscriptionJob(recordingId, meta) {
 router.post('/', async (req, res) => {
   try {
     const text = String(req.body.text || '').trim();
+    const status = ['recording', 'done'].includes(req.body.status) ? req.body.status : 'done';
     const rec = await Recording.create({
       tenant_id: tenantOf(req),
       user_id: userOf(req),
       title: String(req.body.title || 'Grabación').slice(0, 200),
-      source: ['mic', 'meeting', 'upload', 'import'].includes(req.body.source) ? req.body.source : 'mic',
+      source: ['mic', 'meeting', 'call', 'upload', 'import'].includes(req.body.source) ? req.body.source : 'mic',
       lang: req.body.lang ? String(req.body.lang).slice(0, 12) : null,
       duration_sec: parseInt(req.body.duration_sec, 10) || null,
-      status: 'done',
+      status,
       engine: text ? 'webspeech' : null
     });
     if (text) {
@@ -277,6 +278,49 @@ router.post('/:id/generate', async (req, res) => {
     res.json({ success: true, document: doc });
   } catch (e) {
     console.error('SpeakUp generate error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Autosave: replace the transcript text (idempotent upsert) ─────────────────
+// Called every chunk during a live recording so nothing is lost on a crash.
+router.put('/:id/transcript', async (req, res) => {
+  try {
+    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
+    const text = String(req.body.text || '').slice(0, 800000);
+    let tr = await Transcript.findOne({ where: { recording_id: rec.id } });
+    if (tr) {
+      tr.text = text;
+      tr.engine = req.body.engine || tr.engine || 'whisper';
+      if (req.body.lang) tr.lang_detected = req.body.lang;
+      tr.is_simulated = false;
+      await tr.save();
+    } else {
+      tr = await Transcript.create({
+        tenant_id: rec.tenant_id, recording_id: rec.id, text,
+        engine: req.body.engine || 'whisper', lang_detected: req.body.lang || null, is_simulated: false
+      });
+    }
+    if (!rec.lang && req.body.lang) { rec.lang = String(req.body.lang).slice(0, 12); await rec.save(); }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Update recording metadata (finalize: status/title/duration) ───────────────
+router.patch('/:id', async (req, res) => {
+  try {
+    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
+    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
+    if (req.body.status && ['recording', 'processing', 'done', 'error'].includes(req.body.status)) rec.status = req.body.status;
+    if (req.body.title) rec.title = String(req.body.title).slice(0, 200);
+    if (req.body.duration_sec != null) rec.duration_sec = parseInt(req.body.duration_sec, 10) || rec.duration_sec;
+    if (req.body.engine) rec.engine = String(req.body.engine).slice(0, 20);
+    await rec.save();
+    res.json({ success: true, recording: rec });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

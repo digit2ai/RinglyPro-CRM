@@ -185,7 +185,8 @@ const I18N = {
     customLabel:'Personalizado',writeInstr:'Escribe una instrucción',
     loadingModel:'Descargando el modelo de transcripción (solo la primera vez)…',preparing:'Preparando el audio…',
     transcribing:'Transcribiendo en tu dispositivo…',transcribeFail:'No se pudo transcribir en el navegador; guardando el audio.',
-    noBotShort:'Se transcribe en tu dispositivo. El audio no sale de tu equipo.'},
+    noBotShort:'Se transcribe en tu dispositivo. El audio no sale de tu equipo.',
+    recovered:'Grabación recuperada tras una interrupción.',autosaved:'Guardado automático activo'},
   en:{logout:'Sign out',tapToRec:'Tap to record your voice',recording:'Recording… tap to stop',
     recCall:'Record call (your voice + the call)',recordingCall:'Recording the call… stop when done',
     shareAudio:'Pick the call tab/screen and turn on "Share audio".',
@@ -204,7 +205,8 @@ const I18N = {
     customLabel:'Custom',writeInstr:'Write an instruction',
     loadingModel:'Downloading the transcription model (first time only)…',preparing:'Preparing audio…',
     transcribing:'Transcribing on your device…',transcribeFail:'Could not transcribe in-browser; saving the audio.',
-    noBotShort:'Transcribed on your device. Audio never leaves your machine.'}
+    noBotShort:'Transcribed on your device. Audio never leaves your machine.',
+    recovered:'Recording recovered after an interruption.',autosaved:'Autosave on'}
 };
 let lang = localStorage.getItem('speakup_lang') || 'es';
 function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
@@ -271,14 +273,15 @@ async function blobToPCM(blob){
   const rendered = await off.startRendering();
   return rendered.getChannelData(0);
 }
-async function transcribeBlob(blob, uiLang){
-  showW(t('loadingModel'),0);
-  const asr = await getWhisper((p)=>{ if(p&&p.status==='progress'&&p.progress!=null) showW(t('loadingModel'),Math.round(p.progress)); });
-  showW(t('preparing'),null);
+async function transcribeBlob(blob, uiLang, background){
+  const setMsg=(m,pct)=>{ if(background){ document.getElementById('recstatus').textContent = m + (pct!=null?' '+pct+'%':''); } else { showW(m,pct); } };
+  setMsg(t('loadingModel'),0);
+  const asr = await getWhisper((p)=>{ if(p&&p.status==='progress'&&p.progress!=null) setMsg(t('loadingModel'),Math.round(p.progress)); });
+  setMsg(t('preparing'),null);
   const pcm = await blobToPCM(blob);
-  showW(t('transcribing'),null);
+  setMsg(t('transcribing'),null);
   const out = await asr(pcm,{ chunk_length_s:30, stride_length_s:5, language:(uiLang==='en'?'english':'spanish'), task:'transcribe', return_timestamps:false });
-  hideW();
+  if(!background) hideW();
   return (out && out.text) ? out.text.trim() : '';
 }
 // fallback: hand the audio to the server (stub engine) so the recording is still saved
@@ -289,19 +292,22 @@ async function uploadBlobFallback(blob,title,source){
   const d=await r.json(); await loadLibrary(); if(d.recording) pollAndOpen(d.recording.id);
 }
 
-// ─── live mic recording (Web Speech API — on-device, no key) ────────────────────
+// ─── live-session state (shared by mic + call; only one active at a time) ───────
+let liveRecId=null, liveMode=null, liveText='', micAutosave=null;
+
+// ─── live mic recording (Web Speech API — on-device, no key), with autosave ─────
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recog=null, recording=false, transcriptBuf='', startTs=0, timerInt=null;
 function fmt(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
 function tick(){ document.getElementById('timer').textContent = fmt(Math.floor((Date.now()-startTs)/1000)); }
 
 document.getElementById('orb').addEventListener('click', () => {
-  if (callRec){ return; } // a call recording is in progress — use the call button to stop
+  if (liveMode==='call'){ return; } // a call is recording — use the call button to stop
   if (!SR){ toast(t('micUnsupported')); return; }
   recording ? stopMic() : startMic();
 });
-function startMic(){
-  transcriptBuf=''; recog = new SR();
+async function startMic(){
+  transcriptBuf=''; liveText=''; recog = new SR();
   recog.lang = lang==='en' ? 'en-US' : 'es-ES';
   recog.continuous = true; recog.interimResults = true;
   let finals='';
@@ -317,30 +323,64 @@ function startMic(){
   recog.onerror = ()=>{};
   recog.onend = ()=>{ if (recording){ try{recog.start();}catch(e){} } };
   recog.start();
-  recording=true; startTs=Date.now(); timerInt=setInterval(tick,1000);
+  recording=true; liveMode='mic'; startTs=Date.now(); timerInt=setInterval(tick,1000);
   document.getElementById('orb').classList.add('rec');
   document.getElementById('recstatus').textContent = t('recording');
+  // create the autosave target row on the server
+  try{
+    const c = await api('/recordings',{method:'POST',body:JSON.stringify({ title:(lang==='en'?'Voice note ':'Nota de voz ')+new Date().toLocaleString(), source:'mic', lang:recog.lang.slice(0,2), status:'recording' })});
+    liveRecId = c.recording.id;
+  }catch(e){ liveRecId=null; }
+  // autosave every 12s while recording (survives crash / dead battery / closed tab)
+  micAutosave = setInterval(async ()=>{
+    const txt = transcriptBuf.trim();
+    if (liveRecId && txt && txt !== liveText){
+      liveText = txt;
+      localStorage.setItem('speakup_live', JSON.stringify({ id:liveRecId, text:txt, ts:Date.now() }));
+      try{ await api('/recordings/'+liveRecId+'/transcript',{method:'PUT',body:JSON.stringify({text:txt,lang})}); }catch(e){}
+    }
+  }, 12000);
 }
 async function stopMic(){
-  recording=false; clearInterval(timerInt);
+  recording=false; liveMode=null; clearInterval(timerInt); clearInterval(micAutosave);
   document.getElementById('orb').classList.remove('rec');
   try{ recog.stop(); }catch(e){}
   const dur = Math.floor((Date.now()-startTs)/1000);
   const text = transcriptBuf.trim();
   document.getElementById('timer').textContent='00:00';
   document.getElementById('recstatus').textContent = t('tapToRec');
-  if (!text){ toast(t('noTranscript')); return; }
-  const title = text.split(/[.!?\n]/)[0].slice(0,60) || 'Grabación';
-  const d = await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'mic',text,lang:recog.lang.slice(0,2),duration_sec:dur})});
-  toast(t('saved')); await loadLibrary(); openRec(d.recording.id);
+  const id = liveRecId; liveRecId=null;
+  if (!text){
+    if (id){ try{ await api('/recordings/'+id,{method:'DELETE'}); }catch(e){} }
+    localStorage.removeItem('speakup_live');
+    toast(t('noTranscript')); return;
+  }
+  const title = text.split(/[.!?\n]/)[0].slice(0,60) || 'Nota de voz';
+  if (id){
+    try{
+      await api('/recordings/'+id+'/transcript',{method:'PUT',body:JSON.stringify({text,lang})});
+      await api('/recordings/'+id,{method:'PATCH',body:JSON.stringify({status:'done',title,duration_sec:dur})});
+    }catch(e){}
+    localStorage.removeItem('speakup_live');
+    toast(t('saved')); await loadLibrary(); openRec(id);
+  } else {
+    // server row was never created — save now in one shot
+    const d = await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'mic',text,lang:recog.lang.slice(0,2),duration_sec:dur})});
+    toast(t('saved')); await loadLibrary(); openRec(d.recording.id);
+  }
 }
 
-// ─── record CALL: mix mic + call/system audio into one recording ────────────────
-// getUserMedia (your voice) + getDisplayMedia (the other participants, via the
-// shared tab/screen) mixed with Web Audio, recorded, uploaded, then transcribed.
+// ─── record CALL: rolling-chunk transcription + continuous autosave ─────────────
+// getUserMedia (your voice) + getDisplayMedia (the call) mixed with Web Audio.
+// Recorded in ~2.5-min segments; each segment is transcribed on-device and the
+// growing transcript is saved to the server immediately. So a 2-hour meeting uses
+// FLAT memory and nothing is lost if the tab/app/battery dies mid-call.
+const SEGMENT_MS = 150000; // 2.5 min
 let callRec=null, callChunks=[], callCtx=null, callStreams=[], callTimerInt=null, callStartTs=0;
+let segStopping=false, segRotateTimer=null, pendingTx=Promise.resolve();
+
 async function startCall(){
-  if (callRec){ callRec.stop(); return; }
+  if (liveMode==='call'){ stopCall(); return; }
   let mic=null, disp=null;
   try{
     mic = await navigator.mediaDevices.getUserMedia({ audio:true });
@@ -355,45 +395,75 @@ async function startCall(){
     const dest = callCtx.createMediaStreamDestination();
     callCtx.createMediaStreamSource(mic).connect(dest);   // your voice
     callCtx.createMediaStreamSource(disp).connect(dest);  // the call
-    callChunks=[]; callRec = new MediaRecorder(dest.stream);
-    callRec.ondataavailable = e => { if (e.data.size) callChunks.push(e.data); };
-    callRec.onstop = async () => {
-      callStreams.forEach(s=>s.getTracks().forEach(x=>x.stop())); callStreams=[];
-      try{ callCtx.close(); }catch(e){}
-      clearInterval(callTimerInt);
-      document.getElementById('callBtn').textContent = t('recCall');
-      document.getElementById('orb').classList.remove('rec');
-      document.getElementById('timer').textContent='00:00';
-      document.getElementById('recstatus').textContent = t('tapToRec');
-      const blob = new Blob(callChunks, { type:'audio/webm' });
-      const title = (lang==='en'?'Call ':'Llamada ')+new Date().toLocaleString();
-      const dur = Math.floor((Date.now()-callStartTs)/1000);
-      let text='';
-      try{ text = await transcribeBlob(blob, lang); }
-      catch(e){ hideW(); toast(t('transcribeFail')); }
-      if (text){
-        const d = await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'call',text,lang,duration_sec:dur})});
-        await loadLibrary(); openRec(d.recording.id);
-      } else {
-        await uploadBlobFallback(blob, title, 'call');
-      }
-      callRec=null;
-    };
-    callRec.start(1000);
+    // create the autosave target row up front
+    liveMode='call'; liveText=''; segStopping=false; pendingTx=Promise.resolve();
+    const title=(lang==='en'?'Call ':'Llamada ')+new Date().toLocaleString();
+    const created=await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'call',lang,status:'recording'})});
+    liveRecId=created.recording.id;
+    localStorage.setItem('speakup_live', JSON.stringify({id:liveRecId,text:'',ts:Date.now()}));
     callStartTs=Date.now();
     callTimerInt=setInterval(()=>{ document.getElementById('timer').textContent = fmt(Math.floor((Date.now()-callStartTs)/1000)); },1000);
     document.getElementById('orb').classList.add('rec');
     document.getElementById('recstatus').textContent = t('recordingCall');
     document.getElementById('callBtn').textContent = '■ '+t('recording');
-    // if the user ends screen-share from the browser bar, stop + save.
+    startSegment(dest.stream);
+    segRotateTimer=setInterval(()=>{ if (callRec && callRec.state==='recording') callRec.stop(); }, SEGMENT_MS);
     const vt = disp.getVideoTracks()[0];
-    if (vt) vt.addEventListener('ended', ()=>{ if (callRec) callRec.stop(); });
+    if (vt) vt.addEventListener('ended', ()=>stopCall());
   }catch(e){
     if (mic) mic.getTracks().forEach(x=>x.stop());
     if (disp) disp.getTracks().forEach(x=>x.stop());
-    toast(e.message); callRec=null;
+    toast(e.message); resetCallState();
   }
 }
+function startSegment(stream){
+  callChunks=[];
+  callRec = new MediaRecorder(stream);
+  callRec.ondataavailable = e => { if (e.data.size) callChunks.push(e.data); };
+  callRec.onstop = () => {
+    const blob = new Blob(callChunks, { type:'audio/webm' });
+    if (!segStopping) startSegment(stream);   // resume recording immediately (tiny gap)
+    pendingTx = pendingTx.then(()=>transcribeSegment(blob)).catch(()=>{});
+    if (segStopping) pendingTx.then(()=>finalizeCall());
+  };
+  callRec.start();
+}
+async function transcribeSegment(blob){
+  if (!blob || blob.size < 1200) return;
+  let seg='';
+  try{ seg = await transcribeBlob(blob, lang, true); }catch(e){ /* keep going */ }
+  if (seg){
+    liveText += (liveText? ' ':'') + seg;
+    if (liveMode==='call') document.getElementById('recstatus').textContent = t('recordingCall');
+    localStorage.setItem('speakup_live', JSON.stringify({id:liveRecId,text:liveText,ts:Date.now()}));
+    try{ await api('/recordings/'+liveRecId+'/transcript',{method:'PUT',body:JSON.stringify({text:liveText,lang})}); }catch(e){}
+  }
+}
+function stopCall(){
+  if (liveMode!=='call' || segStopping) return;
+  segStopping=true;
+  clearInterval(segRotateTimer); clearInterval(callTimerInt);
+  document.getElementById('orb').classList.remove('rec');
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('recstatus').textContent = t('transcribing');
+  document.getElementById('callBtn').textContent = t('recCall');
+  if (callRec && callRec.state==='recording') callRec.stop(); // final onstop -> finalizeCall
+  else pendingTx.then(()=>finalizeCall());
+}
+async function finalizeCall(){
+  if (!liveRecId) return;
+  const id=liveRecId, dur=Math.floor((Date.now()-callStartTs)/1000), hadText=!!liveText;
+  callStreams.forEach(s=>s.getTracks().forEach(x=>x.stop()));
+  try{ callCtx && callCtx.close(); }catch(e){}
+  try{ await api('/recordings/'+id+'/transcript',{method:'PUT',body:JSON.stringify({text:liveText,lang})}); }catch(e){}
+  try{ await api('/recordings/'+id,{method:'PATCH',body:JSON.stringify({status:'done',duration_sec:dur})}); }catch(e){}
+  localStorage.removeItem('speakup_live');
+  document.getElementById('recstatus').textContent = t('tapToRec');
+  resetCallState();
+  await loadLibrary();
+  if (hadText) openRec(id); else toast(t('noTranscript'));
+}
+function resetCallState(){ liveRecId=null; liveMode=null; liveText=''; segStopping=false; callRec=null; callChunks=[]; callStreams=[]; }
 
 // ─── upload / import ────────────────────────────────────────────────────────────
 async function uploadFile(){
@@ -614,11 +684,30 @@ async function delRec(id){
   document.getElementById('mainEmpty').style.display='block'; toast(t('deleted')); loadLibrary();
 }
 
+// ─── crash recovery: finalize any recording left 'recording' by an interruption ─
+async function recoverSessions(){
+  try{
+    const d = await api('/recordings');
+    const stale = (d.recordings||[]).filter(r=>r.status==='recording');
+    if (!stale.length){ localStorage.removeItem('speakup_live'); return; }
+    let ls=null; try{ ls=JSON.parse(localStorage.getItem('speakup_live')||'null'); }catch(e){}
+    for (const r of stale){
+      // flush any tail saved locally but not yet synced, then finalize
+      if (ls && ls.id===r.id && ls.text){ try{ await api('/recordings/'+r.id+'/transcript',{method:'PUT',body:JSON.stringify({text:ls.text,lang})}); }catch(e){} }
+      try{ await api('/recordings/'+r.id,{method:'PATCH',body:JSON.stringify({status:'done'})}); }catch(e){}
+    }
+    localStorage.removeItem('speakup_live');
+    toast(t('recovered'));
+    await loadLibrary();
+  }catch(e){}
+}
+
 // ─── boot ────────────────────────────────────────────────────────────────────────
-(function(){
+(async function(){
   setLang(lang);
   if (!SR){ document.getElementById('recstatus').textContent = t('micUnsupported'); }
-  loadLibrary();
+  await loadLibrary();
+  recoverSessions();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(()=>{});
 })();
 </script>

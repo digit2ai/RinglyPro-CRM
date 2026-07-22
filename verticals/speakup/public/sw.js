@@ -1,5 +1,5 @@
 /* SpeakUp — service worker (PWA offline shell). */
-const CACHE = 'speakup-v4';
+const CACHE = 'speakup-v5';
 const SHELL = [
   '/speakup/',
   '/speakup/login',
