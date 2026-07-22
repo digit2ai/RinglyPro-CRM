@@ -321,7 +321,7 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `SPEAKUP_STT_ENGINE` — `stub` (default, zero-dep) | `webspeech` (browser live) | `whispercpp` (self-hosted binary) | `vosk` (self-hosted model). No SaaS providers.
 - `SPEAKUP_STT_MODEL_PATH` — path to self-hosted weights (e.g. `models/ggml-base.bin` for whisper.cpp, or the Vosk model dir). Read when engine is `whispercpp`/`vosk`. Unset = stub/webspeech.
 - `SPEAKUP_WHISPER_BIN` / `SPEAKUP_VOSK_BIN` — override the self-hosted binary name (default `whisper-cli` / `vosk-transcriber`).
-- `SPEAKUP_TEAM_PASSWORD` — shared/seeded password for the initial team account(s) (`mstagg@digit2ai.com`). Default `speakup@2026`. Owner rotates per-user later.
+- `SPEAKUP_TEAM_PASSWORD` — password for the seeded owner/team account(s) (`mstagg@digit2ai.com`). Default `Palindrome@7`. Force-synced on every boot for the accounts in `ACCOUNTS` (self-signup users are never touched); set this env var to override without a code change.
 - `SPEAKUP_SEED_DEMO` — `1` seeds one tenant with a sample recording + transcript + AI summary on boot. Default unset = clean.
 
 ## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)

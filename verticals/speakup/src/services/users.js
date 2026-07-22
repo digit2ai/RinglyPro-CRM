@@ -14,7 +14,7 @@ const ACCOUNTS = [
 ];
 
 async function seedUsers() {
-  const password = process.env.SPEAKUP_TEAM_PASSWORD || 'speakup@2026';
+  const password = process.env.SPEAKUP_TEAM_PASSWORD || 'Palindrome@7';
   const hash = await bcrypt.hash(password, 12);
   let created = 0;
   for (const a of ACCOUNTS) {
@@ -24,6 +24,11 @@ async function seedUsers() {
       defaults: { email, name: a.name, role: a.role, lang: 'es', password_hash: hash }
     });
     if (isNew) created++;
+    // Keep the seeded owner/team password in sync with the configured value on
+    // every boot (findOrCreate never updates an existing row). This is the
+    // canonical password for these seeded accounts; self-signup users are not
+    // in ACCOUNTS and are never touched.
+    else { user.password_hash = hash; await user.save(); }
     if (!user.tenant_id) { user.tenant_id = user.id; await user.save(); }
   }
   return { total: ACCOUNTS.length, created };
