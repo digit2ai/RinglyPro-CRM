@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SpeakUp</title>
+<link rel="icon" href="/speakup/favicon.svg">
+<link rel="manifest" href="/speakup/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
+<meta name="theme-color" content="#5a3fe0">
+<style>
+  :root{--bg:#0a0e18;--bg2:#0e1522;--card:#131b2b;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
+    --acc:#7b6bff;--acc2:#5a3fe0;--ok:#3fc06a;--warn:#f2b34b;--err:#ff8f8f}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);
+    padding-bottom:env(safe-area-inset-bottom)}
+  a{color:var(--acc)}
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;background:rgba(10,14,24,.92);backdrop-filter:blur(8px);z-index:20}
+  header img{width:30px;height:30px}
+  header h1{font-size:19px;margin:0;letter-spacing:-.4px;flex:1}
+  .pill{font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  .hbtn{background:#1b2536;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:7px 11px;
+    font-size:13px;cursor:pointer}
+  .hbtn.on{background:var(--acc2);border-color:var(--acc2)}
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:0;min-height:calc(100vh - 56px)}
+  .side{border-right:1px solid var(--line);padding:16px;overflow:auto}
+  .main{padding:22px;overflow:auto}
+  @media(max-width:820px){.wrap{grid-template-columns:1fr}.side{border-right:0;border-bottom:1px solid var(--line)}
+    .main.hide-mobile{display:none}.side.hide-mobile{display:none}}
+  h2{font-size:15px;margin:0 0 12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+  .orbwrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0}
+  .orb{width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bda4ff,#6a4bff 45%,#2a1f6b 100%);
+    box-shadow:0 0 0 0 rgba(123,107,255,.5);cursor:pointer;border:0;position:relative;transition:transform .15s}
+  .orb:active{transform:scale(.96)}
+  .orb.rec{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(123,107,255,.5)}70%{box-shadow:0 0 0 24px rgba(123,107,255,0)}100%{box-shadow:0 0 0 0 rgba(123,107,255,0)}}
+  .timer{font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;letter-spacing:1px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;border:0;border-radius:10px;
+    padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn.sec{background:#1b2536;border:1px solid var(--line);color:var(--txt);font-weight:500}
+  .btn.danger{background:#2a1620;border:1px solid #5a2a3a;color:#ff9fb0;font-weight:500}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sm{padding:8px 11px;font-size:13px}
+  input,select,textarea{background:#0c1320;border:1px solid var(--line);color:var(--txt);border-radius:10px;
+    padding:10px 12px;font-size:14px;font-family:inherit;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+  .muted{color:var(--mut);font-size:13px}
+  .reclist{display:flex;flex-direction:column;gap:8px}
+  .recitem{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 13px;cursor:pointer}
+  .recitem:hover{border-color:var(--acc)}
+  .recitem.active{border-color:var(--acc);background:#161f33}
+  .recitem .t{font-weight:600;font-size:14px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recitem .m{font-size:11px;color:var(--mut);display:flex;gap:8px;align-items:center}
+  .badge{font-size:10px;padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+  .badge.processing{color:var(--warn);border-color:#4a3a1a}
+  .badge.error{color:var(--err);border-color:#5a2a3a}
+  .badge.sim{color:var(--warn);border-color:#4a3a1a}
+  .transcript{white-space:pre-wrap;line-height:1.6;font-size:15px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px;max-height:none}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tab{background:#1b2536;border:1px solid var(--line);color:var(--mut);border-radius:9px;padding:8px 12px;font-size:13px;cursor:pointer}
+  .tab.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+  .result{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px;white-space:pre-wrap;line-height:1.6}
+  .result h4{margin:0 0 8px;font-size:14px;color:var(--acc)}
+  .result ul{margin:6px 0;padding-left:20px}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--acc);
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1b2536;border:1px solid var(--line);
+    padding:11px 18px;border-radius:11px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .empty{color:var(--mut);text-align:center;padding:40px 20px}
+  .backbtn{display:none}
+  @media(max-width:820px){.backbtn{display:inline-block}}
+  .note{font-size:12px;color:var(--mut);margin-top:8px;line-height:1.5}
+  @media print{header,.side,.tabs,.row,.backbtn,.actions{display:none!important}.wrap{display:block}.main{padding:0}
+    .card{border:0}.transcript,.result{border:0;background:#fff;color:#000}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header>
+  <img src="/speakup/favicon.svg" alt="">
+  <h1>SpeakUp</h1>
+  <span class="pill" id="engine"></span>
+  <button class="hbtn" id="langEs" onclick="setLang('es')">ES</button>
+  <button class="hbtn" id="langEn" onclick="setLang('en')">EN</button>
+  <button class="hbtn" onclick="logout()" data-i="logout">Salir</button>
+</header>
+
+<div class="wrap">
+  <!-- SIDEBAR: capture + library -->
+  <div class="side" id="side">
+    <div class="card">
+      <h2 data-i="newRec">Nueva grabación</h2>
+      <div class="orbwrap">
+        <button class="orb" id="orb" title="Grabar"></button>
+        <div class="timer" id="timer">00:00</div>
+        <div class="muted" id="recstatus" data-i="tapToRec">Pulsa para grabar tu voz (micrófono)</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sec sm" id="meetingBtn" onclick="startMeeting()" data-i="recMeeting">Grabar reunión (audio del sistema)</button>
+      </div>
+      <p class="note" data-i="noBot">Capturamos el audio de tu propio dispositivo. Ningún bot se une a tu llamada.</p>
+    </div>
+
+    <div class="card">
+      <h2 data-i="importT">Importar</h2>
+      <label class="muted" data-i="uploadFile">Subir archivo de audio/video</label>
+      <input type="file" id="file" accept="audio/*,video/*" style="margin:6px 0 12px">
+      <button class="btn sm" onclick="uploadFile()" data-i="upload">Subir y transcribir</button>
+      <label class="muted" style="display:block;margin-top:14px" data-i="pasteUrl">O pega un enlace (YouTube, etc.)</label>
+      <input type="url" id="url" placeholder="https://..." style="margin:6px 0 10px">
+      <button class="btn sec sm" onclick="importUrl()" data-i="import">Importar enlace</button>
+    </div>
+
+    <div class="card">
+      <h2 data-i="library">Biblioteca</h2>
+      <div class="reclist" id="reclist"><div class="empty muted" data-i="loading">Cargando…</div></div>
+    </div>
+  </div>
+
+  <!-- MAIN: recording detail -->
+  <div class="main" id="main">
+    <div class="empty" id="mainEmpty">
+      <p style="font-size:16px" data-i="pickOne">Graba, sube o elige una grabación para ver su transcripción.</p>
+    </div>
+    <div id="detail" style="display:none"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+const I18N = {
+  es:{logout:'Salir',newRec:'Nueva grabación',tapToRec:'Pulsa para grabar tu voz (micrófono)',
+    recording:'Grabando… pulsa para detener',recMeeting:'Grabar reunión (audio del sistema)',
+    noBot:'Capturamos el audio de tu propio dispositivo. Ningún bot se une a tu llamada.',
+    importT:'Importar',uploadFile:'Subir archivo de audio/video',upload:'Subir y transcribir',
+    pasteUrl:'O pega un enlace (YouTube, etc.)',import:'Importar enlace',library:'Biblioteca',loading:'Cargando…',
+    pickOne:'Graba, sube o elige una grabación para ver su transcripción.',empty:'Sin grabaciones todavía.',
+    transcript:'Transcripción',summary:'Resumen',translate:'Traducir',rewrite:'Reescribir',export:'Exportar',
+    delete:'Eliminar',back:'Volver',summarize:'Resumir',bullets:'Puntos clave',actions:'Acciones',
+    toLang:'Idioma destino',translateBtn:'Traducir',tone:'Tono',custom:'Instrucción personalizada',
+    rewriteBtn:'Reescribir',professional:'Profesional',concise:'Conciso',friendly:'Cercano',email:'Correo',
+    grammar:'Corregir gramática',bulletize:'A viñetas',processing:'Procesando…',noTranscript:'Sin transcripción.',
+    saved:'Guardado',deleted:'Eliminado',confirmDel:'¿Eliminar esta grabación?',micUnsupported:'Tu navegador no soporta grabación de voz en vivo. Usa "Subir archivo".',
+    simulated:'simulada',original:'Texto original',copy:'Copiar',copied:'Copiado',pdf:'PDF',uploading:'Subiendo…'},
+  en:{logout:'Sign out',newRec:'New recording',tapToRec:'Tap to record your voice (microphone)',
+    recording:'Recording… tap to stop',recMeeting:'Record meeting (system audio)',
+    noBot:'We capture your own device audio. No bot joins your call.',
+    importT:'Import',uploadFile:'Upload audio/video file',upload:'Upload & transcribe',
+    pasteUrl:'Or paste a link (YouTube, etc.)',import:'Import link',library:'Library',loading:'Loading…',
+    pickOne:'Record, upload, or pick a recording to see its transcript.',empty:'No recordings yet.',
+    transcript:'Transcript',summary:'Summary',translate:'Translate',rewrite:'Rewrite',export:'Export',
+    delete:'Delete',back:'Back',summarize:'Summarize',bullets:'Key points',actions:'Action items',
+    toLang:'Target language',translateBtn:'Translate',tone:'Tone',custom:'Custom instruction',
+    rewriteBtn:'Rewrite',professional:'Professional',concise:'Concise',friendly:'Friendly',email:'Email',
+    grammar:'Fix grammar',bulletize:'To bullets',processing:'Processing…',noTranscript:'No transcript.',
+    saved:'Saved',deleted:'Deleted',confirmDel:'Delete this recording?',micUnsupported:'Your browser does not support live voice recording. Use "Upload file".',
+    simulated:'simulated',original:'Original text',copy:'Copy',copied:'Copied',pdf:'PDF',uploading:'Uploading…'}
+};
+let lang = localStorage.getItem('speakup_lang') || 'es';
+function t(k){ return (I18N[lang] && I18N[lang][k]) || k; }
+function setLang(l){
+  lang = l; localStorage.setItem('speakup_lang', l); document.documentElement.lang = l;
+  document.getElementById('langEs').classList.toggle('on', l==='es');
+  document.getElementById('langEn').classList.toggle('on', l==='en');
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.getAttribute('data-i')); });
+  if (current) renderDetail(current); else loadLibrary();
+}
+
+const LANGS = ['Español','English','Português','Français','Deutsch','Italiano','中文 (Chinese)','日本語 (Japanese)',
+  '한국어 (Korean)','العربية (Arabic)','हिन्दी (Hindi)','Русский (Russian)','Nederlands','Polski','Türkçe',
+  'Svenska','Norsk','Dansk','Suomi','Ελληνικά (Greek)','עברית (Hebrew)','ไทย (Thai)','Tiếng Việt','Bahasa Indonesia',
+  'Filipino','Українська','Čeština','Magyar','Română','Català','Tagalog'];
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+async function api(path, opts){
+  const r = await fetch('/speakup/api/v1'+path, Object.assign({headers:{'Content-Type':'application/json'}}, opts||{}));
+  if (r.status === 401) { location.href='/speakup/login'; throw new Error('401'); }
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error || ('HTTP '+r.status));
+  return d;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+let toastTimer;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1800); }
+async function logout(){ await fetch('/speakup/api/v1/auth/logout',{method:'POST'}); location.href='/speakup/login'; }
+
+// ─── live mic recording (Web Speech API — on-device, no key) ────────────────────
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog=null, recording=false, transcriptBuf='', startTs=0, timerInt=null;
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+function tick(){ document.getElementById('timer').textContent = fmt(Math.floor((Date.now()-startTs)/1000)); }
+
+document.getElementById('orb').addEventListener('click', () => {
+  if (!SR) { toast(t('micUnsupported')); return; }
+  recording ? stopMic() : startMic();
+});
+function startMic(){
+  transcriptBuf=''; recog = new SR();
+  recog.lang = lang==='en' ? 'en-US' : 'es-ES';
+  recog.continuous = true; recog.interimResults = true;
+  let finals='';
+  recog.onresult = (e) => {
+    let interim='';
+    for (let i=e.resultIndex;i<e.results.length;i++){
+      const txt=e.results[i][0].transcript;
+      if (e.results[i].isFinal) finals+=txt+' '; else interim+=txt;
+    }
+    transcriptBuf = finals;
+    document.getElementById('recstatus').textContent = (finals+interim).slice(-90) || t('recording');
+  };
+  recog.onerror = ()=>{};
+  recog.onend = ()=>{ if (recording) { try{recog.start();}catch(e){} } };
+  recog.start();
+  recording=true; startTs=Date.now(); timerInt=setInterval(tick,1000);
+  document.getElementById('orb').classList.add('rec');
+  document.getElementById('recstatus').textContent = t('recording');
+}
+async function stopMic(){
+  recording=false; clearInterval(timerInt);
+  document.getElementById('orb').classList.remove('rec');
+  try{ recog.stop(); }catch(e){}
+  const dur = Math.floor((Date.now()-startTs)/1000);
+  const text = transcriptBuf.trim();
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('recstatus').textContent = t('tapToRec');
+  if (!text){ toast(t('noTranscript')); return; }
+  const title = text.split(/[.!?\n]/)[0].slice(0,60) || 'Grabación';
+  const d = await api('/recordings',{method:'POST',body:JSON.stringify({title,source:'mic',text,lang:recog.lang.slice(0,2),duration_sec:dur})});
+  toast(t('saved')); await loadLibrary(); openRec(d.recording.id);
+}
+
+// ─── meeting capture (getDisplayMedia audio → MediaRecorder → upload) ────────────
+let mediaRec=null, chunks=[];
+async function startMeeting(){
+  if (mediaRec){ mediaRec.stop(); return; }
+  try{
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video:true, audio:true });
+    const audioTracks = stream.getAudioTracks();
+    if (!audioTracks.length){ toast('No audio track — enable "Share tab audio".'); stream.getTracks().forEach(x=>x.stop()); return; }
+    chunks=[]; mediaRec = new MediaRecorder(stream);
+    mediaRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    mediaRec.onstop = async () => {
+      stream.getTracks().forEach(x=>x.stop());
+      document.getElementById('meetingBtn').textContent = t('recMeeting');
+      const blob = new Blob(chunks, { type:'audio/webm' });
+      const fd = new FormData(); fd.append('file', blob, 'reunion.webm'); fd.append('title','Reunión '+new Date().toLocaleString());
+      toast(t('uploading'));
+      const r = await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
+      const d = await r.json(); await loadLibrary();
+      if (d.recording) pollAndOpen(d.recording.id);
+      mediaRec=null;
+    };
+    mediaRec.start();
+    document.getElementById('meetingBtn').textContent = '■ '+t('recording');
+  }catch(e){ toast(e.message); mediaRec=null; }
+}
+
+// ─── upload / import ────────────────────────────────────────────────────────────
+async function uploadFile(){
+  const f = document.getElementById('file').files[0];
+  if (!f){ toast(t('uploadFile')); return; }
+  const fd = new FormData(); fd.append('file', f); fd.append('title', f.name);
+  toast(t('uploading'));
+  const r = await fetch('/speakup/api/v1/recordings/upload',{method:'POST',body:fd});
+  const d = await r.json();
+  if (!r.ok){ toast(d.error||'Error'); return; }
+  document.getElementById('file').value='';
+  await loadLibrary(); pollAndOpen(d.recording.id);
+}
+async function importUrl(){
+  const url = document.getElementById('url').value.trim();
+  if (!url){ return; }
+  const d = await api('/recordings/import',{method:'POST',body:JSON.stringify({url})});
+  document.getElementById('url').value='';
+  await loadLibrary(); openRec(d.recording.id);
+}
+async function pollAndOpen(id){
+  for (let i=0;i<40;i++){
+    const s = await api('/recordings/'+id+'/status').catch(()=>null);
+    if (!s) break;
+    if (s.status==='done' || s.status==='error'){ await loadLibrary(); openRec(id); return; }
+    await new Promise(r=>setTimeout(r,1500));
+  }
+  await loadLibrary(); openRec(id);
+}
+
+// ─── library ────────────────────────────────────────────────────────────────────
+let current=null;
+async function loadLibrary(){
+  const el = document.getElementById('reclist');
+  try{
+    const d = await api('/recordings');
+    if (!d.recordings.length){ el.innerHTML = '<div class="empty muted">'+t('empty')+'</div>'; return; }
+    el.innerHTML = d.recordings.map(r=>{
+      let badge='';
+      if (r.status==='processing') badge='<span class="badge processing">'+t('processing')+'</span>';
+      else if (r.status==='error') badge='<span class="badge error">error</span>';
+      else if (r.is_simulated) badge='<span class="badge sim">'+t('simulated')+'</span>';
+      const date = new Date(r.created_at).toLocaleDateString();
+      return '<div class="recitem'+(current&&current.recording.id===r.id?' active':'')+'" onclick="openRec('+r.id+')">'+
+        '<div class="t">'+esc(r.title)+'</div>'+
+        '<div class="m"><span>'+date+'</span><span>·</span><span>'+esc(r.source)+'</span>'+badge+'</div></div>';
+    }).join('');
+  }catch(e){ el.innerHTML='<div class="empty muted">'+esc(e.message)+'</div>'; }
+}
+
+// ─── detail view ────────────────────────────────────────────────────────────────
+async function openRec(id){
+  document.getElementById('mainEmpty').style.display='none';
+  const detail = document.getElementById('detail'); detail.style.display='block';
+  detail.innerHTML = '<div class="card"><span class="spin"></span> '+t('loading')+'</div>';
+  try{
+    const d = await api('/recordings/'+id);
+    current = d; renderDetail(d); loadLibrary();
+    if (window.innerWidth<=820){ document.getElementById('side').classList.add('hide-mobile'); document.getElementById('main').classList.remove('hide-mobile'); }
+  }catch(e){ detail.innerHTML='<div class="card">'+esc(e.message)+'</div>'; }
+}
+function backToList(){ document.getElementById('side').classList.remove('hide-mobile'); document.getElementById('main').classList.add('hide-mobile'); }
+
+function renderDetail(d){
+  const r = d.recording, tr = d.transcript;
+  const text = tr ? tr.text : '';
+  const sim = tr && tr.is_simulated;
+  const langOpts = LANGS.map(l=>'<option>'+l+'</option>').join('');
+  const el = document.getElementById('detail');
+  el.innerHTML =
+    '<button class="btn sec sm backbtn" onclick="backToList()">‹ '+t('back')+'</button>'+
+    '<div class="card"><div class="row" style="justify-content:space-between;align-items:center">'+
+      '<div><div style="font-size:19px;font-weight:700">'+esc(r.title)+'</div>'+
+      '<div class="muted">'+new Date(r.created_at).toLocaleString()+' · '+esc(r.source)+(r.engine?' · '+esc(r.engine):'')+'</div></div>'+
+      '<div class="row actions">'+
+        '<a class="btn sec sm" href="/speakup/api/v1/recordings/'+r.id+'/export?format=txt" download>TXT</a>'+
+        '<a class="btn sec sm" href="/speakup/api/v1/recordings/'+r.id+'/export?format=md" download>MD</a>'+
+        '<button class="btn sec sm" onclick="window.print()">'+t('pdf')+'</button>'+
+        '<button class="btn danger sm" onclick="delRec('+r.id+')">'+t('delete')+'</button>'+
+      '</div></div>'+
+      (r.status==='processing' ? '<div class="muted" style="margin-top:10px"><span class="spin"></span> '+t('processing')+'</div>' : '')+
+      (r.status==='error' ? '<div class="muted" style="margin-top:10px;color:var(--err)">'+esc(r.error||'error')+'</div>' : '')+
+    '</div>'+
+
+    '<div class="card">'+
+      '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">'+
+        '<h2 style="margin:0">'+t('transcript')+(sim?' <span class="badge sim">'+t('simulated')+'</span>':'')+'</h2>'+
+        '<button class="btn sec sm" onclick="copyText(\'tr'+r.id+'\')">'+t('copy')+'</button>'+
+      '</div>'+
+      '<div class="transcript" id="tr'+r.id+'">'+(text?esc(text):('<span class="muted">'+t('noTranscript')+'</span>'))+'</div>'+
+    '</div>'+
+
+    (text ?
+    '<div class="card">'+
+      '<div class="tabs">'+
+        '<div class="tab on" onclick="showTab(this,\'sum\')">'+t('summary')+'</div>'+
+        '<div class="tab" onclick="showTab(this,\'trn\')">'+t('translate')+'</div>'+
+        '<div class="tab" onclick="showTab(this,\'rew\')">'+t('rewrite')+'</div>'+
+      '</div>'+
+      '<div id="pane-sum">'+
+        '<button class="btn" onclick="doSummarize('+r.id+')">'+t('summarize')+'</button>'+
+        '<div id="sumResult">'+renderSummaries(d.summaries)+'</div>'+
+      '</div>'+
+      '<div id="pane-trn" style="display:none">'+
+        '<div class="row" style="align-items:flex-end"><div style="flex:1"><label class="muted">'+t('toLang')+'</label>'+
+          '<select id="tlang">'+langOpts+'</select></div>'+
+          '<button class="btn" onclick="doTranslate('+r.id+')">'+t('translateBtn')+'</button></div>'+
+        '<div id="trnResult">'+renderTranslations(d.translations)+'</div>'+
+      '</div>'+
+      '<div id="pane-rew" style="display:none">'+
+        '<div class="row"><select id="rtone" style="flex:1">'+
+          '<option value="professional">'+t('professional')+'</option>'+
+          '<option value="concise">'+t('concise')+'</option>'+
+          '<option value="friendly">'+t('friendly')+'</option>'+
+          '<option value="email">'+t('email')+'</option>'+
+          '<option value="grammar">'+t('grammar')+'</option>'+
+          '<option value="bullets">'+t('bulletize')+'</option>'+
+        '</select></div>'+
+        '<label class="muted" style="display:block;margin-top:8px">'+t('custom')+'</label>'+
+        '<input id="rcustom" placeholder="..." style="margin:6px 0 10px">'+
+        '<button class="btn" onclick="doRewrite('+r.id+')">'+t('rewriteBtn')+'</button>'+
+        '<div id="rewResult">'+renderEdits(d.edits)+'</div>'+
+      '</div>'+
+    '</div>' : '');
+}
+function showTab(tab,which){
+  tab.parentNode.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); tab.classList.add('on');
+  ['sum','trn','rew'].forEach(p=>{ document.getElementById('pane-'+p).style.display = p===which?'block':'none'; });
+}
+function renderSummaries(list){
+  if (!list||!list.length) return '';
+  const s=list[0];
+  return '<div class="result"><h4>'+t('summary')+'</h4>'+esc(s.summary)+
+    (s.bullets&&s.bullets.length?'<h4 style="margin-top:12px">'+t('bullets')+'</h4><ul>'+s.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>':'')+
+    (s.action_items&&s.action_items.length?'<h4 style="margin-top:12px">'+t('actions')+'</h4><ul>'+s.action_items.map(a=>'<li>'+esc(a)+'</li>').join('')+'</ul>':'')+
+    '</div>';
+}
+function renderTranslations(list){
+  if (!list||!list.length) return '';
+  return list.slice(0,3).map(x=>'<div class="result"><h4>'+esc(x.target_lang)+'</h4>'+esc(x.text)+'</div>').join('');
+}
+function renderEdits(list){
+  if (!list||!list.length) return '';
+  return list.slice(0,4).map(x=>'<div class="result"><h4>'+esc(x.kind)+'</h4>'+esc(x.output_text)+'</div>').join('');
+}
+function copyText(id){ const el=document.getElementById(id); navigator.clipboard.writeText(el.innerText).then(()=>toast(t('copied'))); }
+
+async function doSummarize(id){
+  const box=document.getElementById('sumResult'); box.innerHTML='<div class="result"><span class="spin"></span> '+t('processing')+'</div>';
+  try{ const d=await api('/recordings/'+id+'/summarize',{method:'POST'}); box.innerHTML=renderSummaries([d.summary]); }
+  catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'; }
+}
+async function doTranslate(id){
+  const target=document.getElementById('tlang').value;
+  const box=document.getElementById('trnResult'); box.innerHTML='<div class="result"><span class="spin"></span> '+t('processing')+'</div>';
+  try{ const d=await api('/translate',{method:'POST',body:JSON.stringify({recording_id:id,target_lang:target})});
+    box.innerHTML=renderTranslations([d.translation]); }
+  catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'; }
+}
+async function doRewrite(id){
+  const tone=document.getElementById('rtone').value, custom=document.getElementById('rcustom').value.trim();
+  const box=document.getElementById('rewResult'); box.innerHTML='<div class="result"><span class="spin"></span> '+t('processing')+'</div>';
+  try{ const d=await api('/rewrite',{method:'POST',body:JSON.stringify({recording_id:id,tone,custom_prompt:custom})});
+    box.innerHTML=renderEdits([d.edit]); }
+  catch(e){ box.innerHTML='<div class="result">'+esc(e.message)+'</div>'; }
+}
+async function delRec(id){
+  if (!confirm(t('confirmDel'))) return;
+  await api('/recordings/'+id,{method:'DELETE'});
+  current=null; document.getElementById('detail').style.display='none';
+  document.getElementById('mainEmpty').style.display='block'; toast(t('deleted')); loadLibrary(); backToList();
+}
+
+// ─── boot ────────────────────────────────────────────────────────────────────────
+(async function(){
+  setLang(lang);
+  if (!SR){ document.getElementById('recstatus').textContent = t('micUnsupported'); }
+  try{ const h = await fetch('/speakup/health').then(r=>r.json()); document.getElementById('engine').textContent = 'STT: '+h.stt_engine+' · AI: '+(h.ai_model==='heuristic-fallback'?'heurístico':'Claude'); }catch(e){}
+  loadLibrary();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>

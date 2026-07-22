@@ -1713,6 +1713,36 @@ app.get('/debug/coachtrack-error', (req, res) => {
 });
 
 // =====================================================
+// SPEAKUP — Voice-to-Text + AI editing (internal team tool, served at /speakup/)
+// =====================================================
+
+let speakupApp = null;
+let speakupError = null;
+try {
+  speakupApp = require('../verticals/speakup/src/index');
+  app.get('/speakup', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) return res.redirect('/speakup/');
+    next();
+  });
+  app.use('/speakup', speakupApp);
+  console.log('SpeakUp Voice-to-Text mounted at /speakup');
+  console.log('   - App UI: /speakup/');
+  console.log('   - Health Check: /speakup/health');
+  console.log('   - API: /speakup/api/v1/*');
+} catch (error) {
+  speakupError = error;
+  console.log('⚠️ SpeakUp not available:', error.message);
+}
+
+app.get('/debug/speakup-error', (req, res) => {
+  res.json({
+    service: 'SpeakUp Voice-to-Text + AI editing',
+    available: !speakupError,
+    error: speakupError ? { message: speakupError.message, stack: speakupError.stack } : null
+  });
+});
+
+// =====================================================
 // EXECUTIVE ENGLISH COACHING — Digit2AI multi-tenant coaching (served at /coaching-english/)
 // =====================================================
 

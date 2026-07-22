@@ -297,6 +297,33 @@ Full build status + remaining external dependencies (provider keys, AWS Rekognit
 - `COACHTRACK_DEFAULT_PASSWORD` — seeded admin password (`mstagg@digit2ai.com`). Default `coachtrack@2026`. (Regular users self-signup; no shared password.)
 - `COACHTRACK_SEED_DEMO` — `1` seeds one sample session on boot. Default unset = clean.
 
+## SpeakUp — Voice-to-Text + AI editing (internal team tool, folder: speakup)
+
+**Purpose:** Private, login-only voice-to-text + AI editing app for the owner + team (a self-hosted SpeakApp.com work-alike). Record or upload audio, transcribe with OUR OWN engine, then one-tap **summarize, translate (50+ langs, auto-detect), or rewrite the tone**. Records meetings by capturing the user's own device audio in the browser — **no bot joins the call**. NOT a product: no public landing, no free web tool, no pricing, no FAQ. Mounted at `/speakup`. Spanish-first, bilingual ES/EN, emoji-free.
+
+**Ownership:** transcription, auth, storage, hosting = 100% ours (no STT vendor, no per-minute fees, nothing leaves our servers). The ONLY external dependency is Claude for AI text editing (reuses `ANTHROPIC_API_KEY`). Everything degrades gracefully with no keys (stub STT + heuristic AI), so it runs on Render immediately.
+
+**Location:** `verticals/speakup/` — self-contained Express Router, own Sequelize via `src/db.js` (`CRM_DATABASE_URL || DATABASE_URL`). Tables auto-create on boot via `sync({alter:false})`; canonical migration `verticals/speakup/migrations/20260721_speakup_tables.sql`. Multi-tenant (`tenant_id` = user id), `su_` prefix: `su_users, su_recordings, su_transcripts, su_summaries, su_translations, su_edits, su_usage`. New columns ensured via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in `index.js` init.
+
+**Live:** app `/speakup/` · login `/speakup/login` (login-only, no public signup; owner seeds team) · health `/speakup/health` · debug `/debug/speakup-error`. Installable PWA (manifest + sw.js; network-first, never caches `/api/`).
+
+**STT engine (ours):** `src/services/stt.js`. Live path = browser **Web Speech API** (on-device, no key — the zero-setup working path). File/import path = self-hosted **whisper.cpp** or **Vosk** child-process (no vendor), run OUT of the request cycle (Cloudflare ~100s) via `setImmediate` job + `GET /:id/status` poll. Default `stub` returns an honest labelled placeholder (`is_simulated:true`), never a faked transcription.
+
+**AI brain:** `src/services/ai-editor.js` reuses `ANTHROPIC_API_KEY` (`SPEAKUP_MODEL`, default Haiku). `summarize()` → `{summary, bullets[], action_items[]}`; `translate()` (never fabricated — no key returns original + notice); `rewrite()` (professional/concise/friendly/email/grammar/bullets + custom prompt, original always preserved). Zero-key heuristic fallback throughout.
+
+**REST API (`/speakup/api/v1/*`):** auth `POST /auth/login|logout` + `GET /auth/me` · recordings `POST /recordings` (live mic text), `POST /recordings/upload` (multer→async STT), `POST /recordings/import` (file|url), `GET /recordings`, `GET /recordings/:id`, `POST /recordings/:id/transcribe`, `GET /recordings/:id/status`, `POST /recordings/:id/summarize`, `DELETE /recordings/:id`, `GET /recordings/:id/export?format=txt|md` · AI `POST /translate`, `POST /rewrite`.
+
+**SIT:** `node verticals/speakup/sit.js` (from repo root) → 15/15, no external keys (STT stub + AI heuristic). Boots the router against the dev DB and exercises login→create→summarize→translate→rewrite→export→upload/poll→tenant-isolation→delete.
+
+**Environment Variables:**
+- `SPEAKUP_JWT_SECRET` — signs the `speakup_token` cookie (fallback `JWT_SECRET`), 30d. SET on prod.
+- `SPEAKUP_MODEL` — Anthropic model for AI editing. Default `claude-haiku-4-5-20251001`. Reuses `ANTHROPIC_API_KEY`.
+- `SPEAKUP_STT_ENGINE` — `stub` (default, zero-dep) | `webspeech` (browser live) | `whispercpp` (self-hosted binary) | `vosk` (self-hosted model). No SaaS providers.
+- `SPEAKUP_STT_MODEL_PATH` — path to self-hosted weights (e.g. `models/ggml-base.bin` for whisper.cpp, or the Vosk model dir). Read when engine is `whispercpp`/`vosk`. Unset = stub/webspeech.
+- `SPEAKUP_WHISPER_BIN` / `SPEAKUP_VOSK_BIN` — override the self-hosted binary name (default `whisper-cli` / `vosk-transcriber`).
+- `SPEAKUP_TEAM_PASSWORD` — shared/seeded password for the initial team account(s) (`mstagg@digit2ai.com`). Default `speakup@2026`. Owner rotates per-user later.
+- `SPEAKUP_SEED_DEMO` — `1` seeds one tenant with a sample recording + transcript + AI summary on boot. Default unset = clean.
+
 ## Executive English Coaching — Multi-tenant AI Coaching (folder: exec-coaching)
 
 **Purpose:** Digit2AI vertical for **executive English coaching for international leadership** (trade, investment, diplomacy, press). Built from Fernando de la Espriella García's coaching program for Dr. Mauricio Gómez Amín (new Colombian Minister of Comercio, Industria y Turismo). A coach logs 1:1 sessions, records + transcribes (voice or typed), and the AI generates the program's **5 post-session deliverables** + an **"80% student speaks" meter**. Spanish-first, emoji-free. Mounted at `/coaching-english`.

@@ -1,0 +1,14 @@
+{
+  "name": "SpeakUp — Voz a texto + AI",
+  "short_name": "SpeakUp",
+  "description": "Graba o sube audio, transcribe con motor propio, y resume, traduce o reescribe con IA. Sin bots en tus llamadas.",
+  "start_url": "/speakup/",
+  "scope": "/speakup/",
+  "display": "standalone",
+  "background_color": "#0d1320",
+  "theme_color": "#5a3fe0",
+  "icons": [
+    { "src": "/speakup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/speakup/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
