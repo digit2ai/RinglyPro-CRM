@@ -327,6 +327,11 @@ button:disabled{opacity:.45;cursor:default}
 .ts-phone{display:flex;gap:8px}
 .ts-cc{flex:0 0 auto;max-width:140px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 8px;color:var(--txt);font-family:inherit;font-size:.9rem}
 .ts-phone .ts-inp{flex:1 1 auto}
+.ts-pick-lbl{font-size:.78rem;color:var(--mut);margin:2px 0 -6px}
+.ts-done{text-align:center;padding:14px 6px 6px}
+.ts-done-check{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#34d399;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.4)}
+.ts-done-t{font-size:1.05rem;font-weight:700;color:#eafff5;line-height:1.45}
+.ts-done-s{font-size:.86rem;color:var(--mut);margin-top:10px}
 @media(max-width:480px){.ts-slots{grid-template-columns:1fr}}
 .foot{margin-top:34px;text-align:center;color:#5f7197;font-size:12px}
 @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
@@ -486,23 +491,27 @@ button:disabled{opacity:.45;cursor:default}
   <div class="ts-modal-box" role="dialog" aria-modal="true">
     <button class="ts-modal-x" data-close aria-label="Close">&times;</button>
     <div class="ts-modal-title">${es ? 'Agenda tu cita' : 'Book your appointment'}</div>
-    <div class="ts-modal-sub">${es ? 'Elige un horario disponible &mdash; en hora de Colombia (COT).' : 'Pick an open slot &mdash; times shown in Colombia time (COT).'}</div>
-    <div class="ts-slots" id="ts-slots"></div>
-    <div class="ts-fields">
-      <div>
-        <div class="ts-fld-lbl">${es ? 'Tu nombre' : 'Your name'}</div>
-        <input type="text" class="ts-inp" id="ts-name" autocomplete="name" placeholder="${es ? 'Nombre y apellido' : 'First and last name'}">
-      </div>
-      <div>
-        <div class="ts-fld-lbl">${es ? 'Celular (te enviamos la confirmación por SMS)' : 'Mobile (we text you the confirmation)'}</div>
-        <div class="ts-phone">
-          <select class="ts-cc" id="ts-cc" aria-label="${es ? 'País' : 'Country'}"></select>
-          <input type="tel" inputmode="tel" class="ts-inp" id="ts-tel" autocomplete="tel-national" placeholder="${es ? 'Número de celular' : 'Phone number'}">
+    <div id="ts-form">
+      <div class="ts-modal-sub">${es ? 'Déjanos tus datos, elige un horario y confirma &mdash; en hora de Colombia (COT).' : 'Enter your details, pick a time, and confirm &mdash; times in Colombia time (COT).'}</div>
+      <div class="ts-fields">
+        <div>
+          <div class="ts-fld-lbl">${es ? '1. Tu nombre' : '1. Your name'}</div>
+          <input type="text" class="ts-inp" id="ts-name" autocomplete="name" placeholder="${es ? 'Nombre y apellido' : 'First and last name'}">
+        </div>
+        <div>
+          <div class="ts-fld-lbl">${es ? '2. Celular (te enviamos la confirmación por SMS)' : '2. Mobile (we text you the confirmation)'}</div>
+          <div class="ts-phone">
+            <select class="ts-cc" id="ts-cc" aria-label="${es ? 'País' : 'Country'}"></select>
+            <input type="tel" inputmode="tel" class="ts-inp" id="ts-tel" autocomplete="tel-national" placeholder="${es ? 'Número de celular' : 'Phone number'}">
+          </div>
         </div>
       </div>
+      <div class="ts-pick-lbl">${es ? '3. Elige un horario' : '3. Pick a time'}</div>
+      <div class="ts-slots" id="ts-slots"></div>
+      <button type="button" class="ts-modal-go" id="ts-confirm" disabled>${es ? 'Reservar cita' : 'Book appointment'}</button>
+      <div class="ts-modal-status" id="ts-status" aria-live="polite"></div>
     </div>
-    <button type="button" class="ts-modal-go" id="ts-confirm" disabled>${es ? 'Confirmar cita' : 'Confirm appointment'}</button>
-    <div class="ts-modal-status" id="ts-status" aria-live="polite"></div>
+    <div id="ts-done" class="ts-done" style="display:none"></div>
   </div>
 </div>
 <script>
@@ -551,14 +560,16 @@ button:disabled{opacity:.45;cursor:default}
     return cc+nat;
   }
   var T = ES ? {
-    loading:'Cargando horarios…', confirm:'Confirmar cita', booking:'Reservando…',
+    loading:'Cargando horarios…', confirm:'Reservar cita', booking:'Reservando…',
+    doneSub:'Revisa tu teléfono — te enviamos la confirmación por SMS.',
     none:'Sin horarios disponibles ahora — te contactaremos para agendar.',
     fail:'No se pudieron cargar los horarios. Inténtalo de nuevo.',
     booked:function(w){return 'Reservado para '+w+' COT. Te enviamos la confirmación por SMS — ¡nos vemos!';},
     err:'No se pudo reservar. Inténtalo de nuevo.', net:'No se pudo conectar. Inténtalo de nuevo.',
     needPhone:'Ingresa tu número de celular para enviarte la confirmación.'
   } : {
-    loading:'Loading open slots…', confirm:'Confirm appointment', booking:'Booking…',
+    loading:'Loading open slots…', confirm:'Book appointment', booking:'Booking…',
+    doneSub:'Check your phone — we just sent your confirmation by SMS.',
     none:'No open slots right now — we\\'ll reach out to schedule.',
     fail:'Could not load slots. Please try again.',
     booked:function(w){return 'Booked for '+w+' COT. We just texted you the confirmation — see you then!';},
@@ -568,6 +579,8 @@ button:disabled{opacity:.45;cursor:default}
   function open(){ modal.style.display='flex'; document.body.style.overflow='hidden'; load(); }
   function close(){ modal.style.display='none'; document.body.style.overflow=''; }
   function load(){
+    var form=document.getElementById('ts-form'); if(form) form.style.display='';
+    var done=document.getElementById('ts-done'); if(done){ done.style.display='none'; done.innerHTML=''; }
     sel=null; confirmBtn.disabled=true; confirmBtn.style.display=''; confirmBtn.textContent=T.confirm; statusEl.textContent='';
     slotsEl.innerHTML='<div class="ts-slots-load">'+T.loading+'</div>';
     fetch('/projects/api/v1/intake/public/slots?count=6').then(function(r){return r.json();}).then(function(res){
@@ -594,8 +607,9 @@ button:disabled{opacity:.45;cursor:default}
       .then(function(r){return r.json();}).then(function(res){
         if(res&&res.success){
           var w=new Date(sel.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
-          slotsEl.innerHTML='<div class="ts-slots-load" style="color:#34d399">'+T.booked(w)+'</div>';
-          confirmBtn.style.display='none';
+          var form=document.getElementById('ts-form'); if(form) form.style.display='none';
+          var done=document.getElementById('ts-done');
+          if(done){ done.style.display='block'; done.innerHTML='<div class="ts-done-check">&#10003;</div><div class="ts-done-t">'+T.booked(w)+'</div><div class="ts-done-s">'+T.doneSub+'</div>'; }
         } else { statusEl.textContent=(res&&res.error)||T.err; confirmBtn.disabled=false; confirmBtn.textContent=T.confirm; }
       }).catch(function(){ statusEl.textContent=T.net; confirmBtn.disabled=false; confirmBtn.textContent=T.confirm; });
   };
