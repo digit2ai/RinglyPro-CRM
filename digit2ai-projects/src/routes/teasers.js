@@ -319,6 +319,14 @@ button:disabled{opacity:.45;cursor:default}
 .ts-modal-go{width:100%;margin-top:6px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#06122b;font-weight:700;border:none;cursor:pointer;padding:13px;border-radius:10px;font-size:1rem;font-family:inherit}
 .ts-modal-go:disabled{opacity:.5;cursor:not-allowed}
 .ts-modal-status{text-align:center;color:#fca5a5;font-size:.85rem;margin-top:10px;min-height:14px}
+.ts-fields{display:flex;flex-direction:column;gap:9px;margin:2px 0 14px}
+.ts-fld-lbl{font-size:.78rem;color:var(--mut);margin-bottom:-3px}
+.ts-inp{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--txt);font-family:inherit;font-size:.95rem}
+.ts-inp:focus{outline:none;border-color:var(--violet)}
+.ts-inp::placeholder{color:#5f7197}
+.ts-phone{display:flex;gap:8px}
+.ts-cc{flex:0 0 auto;max-width:140px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 8px;color:var(--txt);font-family:inherit;font-size:.9rem}
+.ts-phone .ts-inp{flex:1 1 auto}
 @media(max-width:480px){.ts-slots{grid-template-columns:1fr}}
 .foot{margin-top:34px;text-align:center;color:#5f7197;font-size:12px}
 @media(max-width:560px){.lina{flex-direction:column;text-align:center}.controls{justify-content:center}.voicepick{justify-content:center}}
@@ -480,6 +488,19 @@ button:disabled{opacity:.45;cursor:default}
     <div class="ts-modal-title">${es ? 'Agenda tu cita' : 'Book your appointment'}</div>
     <div class="ts-modal-sub">${es ? 'Elige un horario disponible &mdash; en hora de Colombia (COT).' : 'Pick an open slot &mdash; times shown in Colombia time (COT).'}</div>
     <div class="ts-slots" id="ts-slots"></div>
+    <div class="ts-fields">
+      <div>
+        <div class="ts-fld-lbl">${es ? 'Tu nombre' : 'Your name'}</div>
+        <input type="text" class="ts-inp" id="ts-name" autocomplete="name" placeholder="${es ? 'Nombre y apellido' : 'First and last name'}">
+      </div>
+      <div>
+        <div class="ts-fld-lbl">${es ? 'Celular (te enviamos la confirmación por SMS)' : 'Mobile (we text you the confirmation)'}</div>
+        <div class="ts-phone">
+          <select class="ts-cc" id="ts-cc" aria-label="${es ? 'País' : 'Country'}"></select>
+          <input type="tel" inputmode="tel" class="ts-inp" id="ts-tel" autocomplete="tel-national" placeholder="${es ? 'Número de celular' : 'Phone number'}">
+        </div>
+      </div>
+    </div>
     <button type="button" class="ts-modal-go" id="ts-confirm" disabled>${es ? 'Confirmar cita' : 'Confirm appointment'}</button>
     <div class="ts-modal-status" id="ts-status" aria-live="polite"></div>
   </div>
@@ -494,20 +515,55 @@ button:disabled{opacity:.45;cursor:default}
   var slotsEl = document.getElementById('ts-slots');
   var confirmBtn = document.getElementById('ts-confirm');
   var statusEl = document.getElementById('ts-status');
+  var nameEl = document.getElementById('ts-name');
+  var ccEl = document.getElementById('ts-cc');
+  var telEl = document.getElementById('ts-tel');
   var sel = null;
   var loc = ES ? 'es-CO' : 'en-US';
+  // Friendly country picker — user types their local number, we format E.164.
+  var COUNTRIES = [
+    ['US','United States','+1'],['CO','Colombia','+57'],['MX','México','+52'],
+    ['ES','España','+34'],['AR','Argentina','+54'],['PE','Perú','+51'],
+    ['CL','Chile','+56'],['VE','Venezuela','+58'],['EC','Ecuador','+593'],
+    ['PA','Panamá','+507'],['GT','Guatemala','+502'],['DO','Rep. Dominicana','+1'],
+    ['CR','Costa Rica','+506'],['BO','Bolivia','+591'],['UY','Uruguay','+598'],
+    ['PY','Paraguay','+595'],['HN','Honduras','+504'],['SV','El Salvador','+503'],
+    ['NI','Nicaragua','+505'],['PR','Puerto Rico','+1'],['CA','Canada','+1'],
+    ['BR','Brasil','+55'],['GB','United Kingdom','+44']
+  ];
+  (function fillCC(){
+    if(!ccEl) return;
+    var def = ES ? 'CO' : 'US';
+    COUNTRIES.forEach(function(c){
+      var o=document.createElement('option');
+      o.value=c[2]; o.textContent=c[1]+' ('+c[2]+')';
+      if(c[0]===def) o.selected=true;
+      ccEl.appendChild(o);
+    });
+  })();
+  function e164(){
+    var raw=(telEl&&telEl.value||'').trim();
+    if(!raw) return '';
+    if(raw.charAt(0)==='+') return '+'+raw.slice(1).replace(/[^0-9]/g,'');
+    var nat=raw.replace(/[^0-9]/g,'').replace(/^0+/,'');
+    if(!nat) return '';
+    var cc=(ccEl&&ccEl.value||'+1').replace(/[^0-9+]/g,'');
+    return cc+nat;
+  }
   var T = ES ? {
     loading:'Cargando horarios…', confirm:'Confirmar cita', booking:'Reservando…',
     none:'Sin horarios disponibles ahora — te contactaremos para agendar.',
     fail:'No se pudieron cargar los horarios. Inténtalo de nuevo.',
-    booked:function(w){return 'Reservado para '+w+' COT. Te contactaremos — ¡nos vemos!';},
-    err:'No se pudo reservar. Inténtalo de nuevo.', net:'No se pudo conectar. Inténtalo de nuevo.'
+    booked:function(w){return 'Reservado para '+w+' COT. Te enviamos la confirmación por SMS — ¡nos vemos!';},
+    err:'No se pudo reservar. Inténtalo de nuevo.', net:'No se pudo conectar. Inténtalo de nuevo.',
+    needPhone:'Ingresa tu número de celular para enviarte la confirmación.'
   } : {
     loading:'Loading open slots…', confirm:'Confirm appointment', booking:'Booking…',
     none:'No open slots right now — we\\'ll reach out to schedule.',
     fail:'Could not load slots. Please try again.',
-    booked:function(w){return 'Booked for '+w+' COT. We\\'ll be in touch — see you then!';},
-    err:'Could not book. Please try again.', net:'Could not reach the server. Please try again.'
+    booked:function(w){return 'Booked for '+w+' COT. We just texted you the confirmation — see you then!';},
+    err:'Could not book. Please try again.', net:'Could not reach the server. Please try again.',
+    needPhone:'Enter your mobile number so we can text you the confirmation.'
   };
   function open(){ modal.style.display='flex'; document.body.style.overflow='hidden'; load(); }
   function close(){ modal.style.display='none'; document.body.style.overflow=''; }
@@ -530,8 +586,11 @@ button:disabled{opacity:.45;cursor:default}
   }
   confirmBtn.onclick=function(){
     if(!sel) return;
+    var phone=e164();
+    if(!phone || phone.replace(/[^0-9]/g,'').length<7){ statusEl.textContent=T.needPhone; if(telEl) telEl.focus(); return; }
+    statusEl.textContent='';
     confirmBtn.disabled=true; confirmBtn.textContent=T.booking;
-    fetch('/projects/api/v1/intake/public/book/'+PID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_time:sel.start_time,end_time:sel.end_time})})
+    fetch('/projects/api/v1/intake/public/book/'+PID,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_time:sel.start_time,end_time:sel.end_time,name:(nameEl&&nameEl.value||'').trim(),phone:phone,lang:(ES?'es':'en')})})
       .then(function(r){return r.json();}).then(function(res){
         if(res&&res.success){
           var w=new Date(sel.start_time).toLocaleString(loc,{timeZone:'America/Bogota',weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});

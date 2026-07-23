@@ -62,6 +62,39 @@ function notifyTeamOfLead(lead) {
   } catch (e) { console.warn('[D2AI-Intake] lead notify error:', e.message); }
 }
 
+// ---------------------------------------------------------------
+// OrbUp client SMS — booking confirmations texted back to the
+// client from the SMS-compliant toll-free number (888-610-3810).
+//   Config: TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN required.
+//   From:   ORBUP_SMS_FROM (default +18886103810).
+// NOTE: US carriers do not allow an alphanumeric sender name, so
+// the number shows as the toll-free number; "OrbUp" branding lives
+// in the message body. (Voice caller-ID name is a CNAM carrier
+// registration on the number, done in the Twilio console.)
+// Fire-and-forget: never throws into the request path.
+// ---------------------------------------------------------------
+let _twilioSms = null;
+function _twilio() {
+  if (_twilioSms) return _twilioSms;
+  try {
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      _twilioSms = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    }
+  } catch (_) { _twilioSms = null; }
+  return _twilioSms;
+}
+function sendOrbUpSms(to, body) {
+  try {
+    const client = _twilio();
+    const from = process.env.ORBUP_SMS_FROM || '+18886103810';
+    if (!client) { console.log('[OrbUp-SMS] skipped (Twilio not configured) →', to); return; }
+    if (!to) return;
+    client.messages.create({ from, to, body })
+      .then(m => console.log('[OrbUp-SMS] sent', m.sid, '→', to))
+      .catch(e => console.warn('[OrbUp-SMS] send failed →', to, e.message));
+  } catch (e) { console.warn('[OrbUp-SMS] error:', e.message); }
+}
+
 // =====================================================
 // HEALTH (unauthenticated)
 // =====================================================
@@ -551,6 +584,24 @@ router.post('/public/book/:projectId', async (req, res) => {
       project.kickoff_scheduled_at = start;
       await project.save();
     } catch (_) { /* columns optional */ }
+
+    // OrbUp-branded confirmation SMS back to the client, from the toll-free
+    // SMS-compliant number (888-610-3810 => +18886103810). Fire-and-forget:
+    // never let an SMS failure break the booking response.
+    if (phone) {
+      const smsLang = String(b.lang || '').toLowerCase() === 'es' ? 'es' : 'en';
+      let when = '';
+      try {
+        when = start.toLocaleString(smsLang === 'es' ? 'es-CO' : 'en-US', {
+          timeZone: 'America/Bogota', weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        });
+      } catch (_) { when = start.toISOString(); }
+      const firstName = (name || '').split(/\s+/)[0] || '';
+      const body = smsLang === 'es'
+        ? `OrbUp: ${firstName ? firstName + ', ' : ''}¡tu cita quedó reservada! Arranque el ${when} (hora de Colombia). Te contactamos a esa hora. Responde a este mensaje si necesitas algo. — OrbUp`
+        : `OrbUp: ${firstName ? firstName + ', ' : ''}your call is booked! Kickoff ${when} (Colombia time). We'll reach out then. Reply to this message anytime. — OrbUp`;
+      setImmediate(() => sendOrbUpSms(phone, body));
+    }
 
     res.json({ success: true, data: { event_id: event.id, start_time: start.toISOString(), end_time: end.toISOString() } });
   } catch (err) {
