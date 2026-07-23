@@ -493,7 +493,21 @@ async function call(method, url, body, opts = {}) {
     const books = await call('GET', `${BASE}/api/v1/admin/reports/books`, null, { jar: 'staff' });
     ok('books export produces CSV', books.data.success === true && typeof books.data.csv === 'string');
 
-    // ── 22. Cleanup ───────────────────────────────────────────────────────
+    // ── 22. PWA assets serve pre-login ────────────────────────────────────
+    console.log('\n[22] App shell assets');
+    for (const asset of ['/portal/manifest.webmanifest', '/portal/sw.js', '/portal/app.css',
+                         '/portal/data.js', '/admin/app.css', '/admin/data.js', '/styles.css', '/orb.js']) {
+      const res = await fetch(`${BASE}${asset}`, { redirect: 'manual' });
+      ok(`${asset} serves without a session`, res.status === 200, `HTTP ${res.status}`);
+    }
+    const gatedPage = await fetch(`${BASE}/portal/inicio`, { redirect: 'manual' });
+    ok('portal pages still redirect when signed out', [301, 302].includes(gatedPage.status),
+       `HTTP ${gatedPage.status}`);
+    const gatedAdmin = await fetch(`${BASE}/admin/ai-staff`, { redirect: 'manual' });
+    ok('admin pages still redirect when signed out', [301, 302].includes(gatedAdmin.status),
+       `HTTP ${gatedAdmin.status}`);
+
+    // ── 23. Cleanup ───────────────────────────────────────────────────────
     console.log('\n[22] Cleanup');
     await models.Appointment.destroy({ where: { tenant_id: OTHER_TENANT } });
     await models.Invoice.destroy({ where: { tenant_id: OTHER_TENANT } });

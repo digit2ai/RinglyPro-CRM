@@ -97,12 +97,18 @@ router.get('/admin/login', (req, res) => res.sendFile(path.join(publicDir, 'admi
 
 router.get('/quote/:token', (req, res) => res.sendFile(path.join(publicDir, 'quote.html')));
 
+// PWA + app-shell assets must serve BEFORE the auth gate, or the app cannot
+// install and the service worker never registers. Anything with a file
+// extension is a static asset, not a page.
+const ASSET = /\.[a-z0-9]{2,16}$/i;
+
 // Customer portal — app shell, gated.
 router.get(['/portal', '/portal/'], (req, res) => {
   if (!req.customer) return res.redirect('/lawncopilot/login');
   res.sendFile(path.join(publicDir, 'portal', 'inicio.html'));
 });
 router.get('/portal/:page', (req, res, next) => {
+  if (ASSET.test(req.params.page)) return next();          // static asset
   if (!req.customer) return res.redirect('/lawncopilot/login');
   const page = String(req.params.page).replace(/[^a-z0-9-]/gi, '');
   res.sendFile(path.join(publicDir, 'portal', `${page}.html`), (err) => { if (err) next(); });
@@ -114,6 +120,7 @@ router.get(['/admin', '/admin/'], (req, res) => {
   res.sendFile(path.join(publicDir, 'admin', 'inicio.html'));
 });
 router.get('/admin/:page', (req, res, next) => {
+  if (ASSET.test(req.params.page)) return next();          // static asset
   const page = String(req.params.page).replace(/[^a-z0-9-]/gi, '');
   if (page === 'login') return res.sendFile(path.join(publicDir, 'admin-login.html'));
   if (!req.staff) return res.redirect('/lawncopilot/admin/login');
