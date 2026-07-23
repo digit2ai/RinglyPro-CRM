@@ -148,6 +148,10 @@ async function call(method, url, body, opts = {}) {
        !!(r.data.data && r.data.data.pricing && r.data.data.pricing.weekly && r.data.data.pricing.biweekly
           && r.data.data.pricing.monthly && r.data.data.pricing.one_time));
 
+    ok('one address turn always ends holding real numbers (no narration-only reply)',
+       !!(r.data.data && r.data.data.measurement && r.data.data.pricing),
+       `driver=${r.data.driver}`);
+
     const convoMeasurement = r.data.data.measurement;
     const convoPricing = r.data.data.pricing;
     ok('measurement is labeled as an estimate when inferred',

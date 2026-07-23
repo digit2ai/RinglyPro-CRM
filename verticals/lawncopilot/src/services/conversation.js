@@ -359,7 +359,20 @@ async function turn({ tenant_id, session_id, text, channel }) {
   let out;
   if (hasLLM()) {
     out = await llmTurn({ session, text, ctx });
-    if (!out.reply) out = await scriptedTurn({ session, text, ctx }); // LLM down -> scripted, same tools
+
+    // The LLM makes it sound human; the scripted driver guarantees progress.
+    //
+    // A chatty model will happily answer "let me measure that now" WITHOUT
+    // emitting the tool call, leaving the customer with narration instead of a
+    // price. So whenever the visitor has handed us something address-shaped and
+    // the turn produced no measurement, we run the deterministic path — same
+    // Brain, same tools, same numbers — and the customer always ends the turn
+    // holding real figures.
+    const st = stateOf(session);
+    const stalled = !out.reply
+      || (looksLikeAddress(text) && !st.property_id && !(out.data && out.data.measurement));
+
+    if (stalled) out = await scriptedTurn({ session, text, ctx });
   } else {
     out = await scriptedTurn({ session, text, ctx });
   }
